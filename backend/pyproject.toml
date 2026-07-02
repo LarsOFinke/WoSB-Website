@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wosb-backend"
+version = "0.4.5"
+description = "FastAPI Backend Blueprint für die WoSB Gruppenmanagement-Webseite."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "WoSB Gruppenmanagement" }
+]
+keywords = ["fastapi", "sqlalchemy", "vue", "wosb", "groups"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.34.0",
+  "sqlalchemy==2.0.36",
+  "pydantic-settings==2.7.1",
+  "python-multipart==0.0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.27.0,<1.0.0",
+  "pytest>=8.0.0,<9.0.0",
+  "ruff>=0.8.0,<1.0.0",
+]
+
+[project.scripts]
+wosb-dev = "scripts.dev:main"
+wosb-seed = "scripts.seed:main"
+wosb-clean-pycache = "scripts.clean_pycache:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["app*", "scripts*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = []
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
