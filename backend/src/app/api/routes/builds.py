@@ -1,34 +1,73 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
-from app.api.dependencies import CurrentUser, DbSession, OptionalCurrentUser
-from app.schemas.build import BuildCreate, BuildOptionRead, BuildRead
-from app.services import BuildNotFoundError, BuildOptionService, BuildService
+from app.core.dependencies import require_user
+from app.db.session import get_db
+from app.models import User
+from app.schemas import BuildCreate, BuildOptionsCatalog, BuildRead
+from app.services.build_option_service import list_build_options
+from app.services.build_service import (
+    BuildValidationError,
+    create_build,
+    delete_user_build,
+    get_build,
+    list_builds,
+    list_user_builds,
+)
 
 router = APIRouter(prefix="/builds", tags=["builds"])
 
 
 @router.get("", response_model=list[BuildRead])
-def list_builds(db: DbSession, user: OptionalCurrentUser) -> list[BuildRead]:
-    return BuildService(db).list_builds(viewer=user)
-
-
-@router.get("/options/catalog", response_model=list[BuildOptionRead])
-def list_build_options(
-    db: DbSession,
-    category: str | None = None,
-    ship_id: int | None = None,
-) -> list[BuildOptionRead]:
-    return BuildOptionService(db).list_options(category=category, ship_id=ship_id)
-
-
-@router.get("/{build_id}", response_model=BuildRead)
-def get_build(build_id: int, db: DbSession, user: OptionalCurrentUser) -> BuildRead:
-    try:
-        return BuildService(db).get_build(build_id, viewer=user)
-    except BuildNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+def get_builds(
+    search: str | None = Query(default=None, max_length=120),
+    build_type: str | None = Query(default=None, max_length=32),
+    db: Session = Depends(get_db),
+) -> list[BuildRead]:
+    return list_builds(db, search=search, build_type=build_type)
 
 
 @router.post("", response_model=BuildRead, status_code=status.HTTP_201_CREATED)
-def create_build(payload: BuildCreate, db: DbSession, user: CurrentUser) -> BuildRead:
-    return BuildService(db).create_build(payload, author=user)
+def post_build(
+    build: BuildCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> BuildRead:
+    try:
+        return create_build(db, build, owner_id=current_user.id)
+    except BuildValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/options", response_model=BuildOptionsCatalog)
+def get_build_options(db: Session = Depends(get_db)) -> BuildOptionsCatalog:
+    return list_build_options(db)
+
+
+@router.get("/mine", response_model=list[BuildRead])
+def get_my_builds(
+    search: str | None = Query(default=None, max_length=120),
+    build_type: str | None = Query(default=None, max_length=32),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> list[BuildRead]:
+    return list_user_builds(db, current_user.id, search=search, build_type=build_type)
+
+
+@router.delete("/mine/{build_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_build(
+    build_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> None:
+    deleted = delete_user_build(db, build_id, current_user.id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+
+
+@router.get("/{build_id}", response_model=BuildRead)
+def get_build_detail(build_id: int, db: Session = Depends(get_db)) -> BuildRead:
+    build = get_build(db, build_id)
+    if build is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    return build

@@ -1,3 +1,20 @@
-from app.api.routes import admin, auth, builds, groups, health, profile, ships
+from fastapi import APIRouter
 
-__all__ = ["admin", "auth", "builds", "groups", "health", "profile", "ships"]
+from app.api.routes.admin import router as admin_router
+from app.api.routes.auth import router as auth_router
+from app.api.routes.builds import router as builds_router
+from app.api.routes.groups import router as groups_router
+from app.api.routes.health import router as health_router
+from app.api.routes.home import router as home_router
+from app.api.routes.profile import router as profile_router
+from app.api.routes.ships import router as ships_router
+
+router = APIRouter()
+router.include_router(health_router, tags=["health"])
+router.include_router(groups_router)
+router.include_router(auth_router)
+router.include_router(admin_router)
+router.include_router(home_router, tags=["home"])
+router.include_router(profile_router)
+router.include_router(ships_router)
+router.include_router(builds_router)

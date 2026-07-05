@@ -1,32 +1,30 @@
-from functools import lru_cache
-
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dataclasses import dataclass, field
+import os
 
 
-class Settings(BaseSettings):
-    app_name: str = "WoSB Gruppenmanagement API"
-    app_env: str = "local"
-    api_v1_prefix: str = "/api/v1"
-    database_url: str = "sqlite:///./wosb.db"
-    seed_on_startup: bool = True
-    auth_secret_key: str = "change-me-in-production"
-    access_token_ttl_seconds: int = 60 * 60 * 24 * 7
-    cors_origins_raw: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173",
-        alias="CORS_ORIGINS",
+def _split_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+@dataclass(frozen=True)
+class Settings:
+    app_name: str = os.getenv("APP_NAME", "WoSB Community Hub")
+    app_version: str = os.getenv("APP_VERSION", "0.4.0")
+    api_prefix: str = os.getenv("API_PREFIX", "/api")
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./wosb_minimal.db")
+
+    session_cookie_name: str = os.getenv("SESSION_COOKIE_NAME", "wosb_session")
+    session_cookie_secure: bool = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
+    session_cookie_samesite: str = os.getenv("SESSION_COOKIE_SAMESITE", "lax")
+    session_ttl_hours: int = int(os.getenv("SESSION_TTL_HOURS", "24"))
+    seed_admin_username: str = os.getenv("SEED_ADMIN_USERNAME", "admin")
+    seed_admin_password: str = os.getenv("SEED_ADMIN_PASSWORD", "admin123")
+    seed_admin_display_name: str = os.getenv("SEED_ADMIN_DISPLAY_NAME", "Community Admin")
+    cors_origins: list[str] = field(
+        default_factory=lambda: _split_csv(
+            os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+        )
     )
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
-    @property
-    def cors_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
-
-
-@lru_cache
-def get_settings() -> Settings:
-    return Settings()
-
-
-settings = get_settings()
+settings = Settings()

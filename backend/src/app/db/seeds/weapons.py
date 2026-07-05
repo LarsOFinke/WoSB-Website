@@ -1,0 +1,51 @@
+"""Weapon option seeds from the public WoSB wiki weapon catalog.
+
+The current minimal UI does not expose weapon slots yet, but the data is
+seeded now so the Build Manager can add cannon/position slots without a
+later catalog migration.
+"""
+
+WEAPON_OPTIONS = [
+    {"category": "weapon", "name": "6-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "6-pdr Culverin", "source": "wiki"},
+    {"category": "weapon", "name": "6-pdr Rusty Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "7-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "8-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "8-pdr Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "8-pdr Culverin", "source": "wiki"},
+    {"category": "weapon", "name": "9-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "10-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "11-inch Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "12-pdr Carronade", "source": "wiki"},
+    {"category": "weapon", "name": "16-pdr Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "16-pdr Carronade", "source": "wiki"},
+    {"category": "weapon", "name": "16-pdr Culverin", "source": "wiki"},
+    {"category": "weapon", "name": "18-pdr Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "18-pdr Long Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "20-pdr Admiral", "source": "wiki"},
+    {"category": "weapon", "name": "22-pdr Scorcher", "source": "wiki"},
+    {"category": "weapon", "name": "24-pdr Carronade", "source": "wiki"},
+    {"category": "weapon", "name": "28-pdr Carronade", "source": "wiki"},
+    {"category": "weapon", "name": "32-pdr Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "32-pdr Long Cannon", "source": "wiki"},
+    {"category": "weapon", "name": "32-pdr Stormbringer", "source": "wiki"},
+    {"category": "weapon", "name": "36-pdr Inrog", "source": "wiki"},
+    {"category": "weapon", "name": "38-pdr Jericho", "source": "wiki"},
+    {"category": "weapon", "name": "42-pdr Carronade", "source": "wiki"},
+    {"category": "weapon", "name": "48-pdr Colossus", "source": "wiki"},
+    {"category": "weapon", "name": "Alchemical Fire", "source": "wiki"},
+    {"category": "weapon", "name": "Barrel Launcher", "source": "wiki"},
+    {"category": "weapon", "name": "Basilisk", "source": "wiki"},
+    {"category": "weapon", "name": "Gilgamesh", "source": "wiki"},
+    {"category": "weapon", "name": "Heavy Mortar", "source": "wiki"},
+    {"category": "weapon", "name": "Imperial Bombard", "source": "wiki"},
+    {"category": "weapon", "name": "Mjolnir", "source": "wiki"},
+    {"category": "weapon", "name": "Onager", "source": "wiki"},
+    {"category": "weapon", "name": "Poseidon", "source": "wiki"},
+    {"category": "weapon", "name": "Triple 10-pdr", "source": "wiki"},
+    {"category": "weapon", "name": "Triple 16-pdr", "source": "wiki"},
+    {"category": "weapon", "name": "Twin 6-pdr", "source": "wiki"},
+    {"category": "weapon", "name": "Twin 14-pdr", "source": "wiki"},
+    {"category": "weapon", "name": "Twin 20-pdr", "source": "wiki"},
+    {"category": "weapon", "name": "Zeus", "source": "wiki"},
+]

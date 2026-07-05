@@ -1,2 +1,0 @@
-class ProfileNotFoundError(Exception):
-    pass

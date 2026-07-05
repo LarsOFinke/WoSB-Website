@@ -1,3 +1,3 @@
-from app.db.seeds.ship_seed_data import SHIP_SEED_DATA, SOURCE_NOTE_FULL, SOURCE_NOTE_PARTIAL, SOURCE_URL
+from app.db.seeds.manager import SeedManager
 
-__all__ = ["SHIP_SEED_DATA", "SOURCE_NOTE_FULL", "SOURCE_NOTE_PARTIAL", "SOURCE_URL"]
+__all__ = ["SeedManager"]

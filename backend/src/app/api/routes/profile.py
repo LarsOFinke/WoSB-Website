@@ -1,23 +1,24 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from app.api.dependencies import CurrentUserId, DbSession
-from app.schemas.profile import ProfileRead, ProfileUpdate
-from app.services import ProfileNotFoundError, ProfileService
+from app.core.dependencies import require_user
+from app.db.session import get_db
+from app.models import User
+from app.schemas import ProfileUpdate, UserRead
+from app.services.profile_service import update_profile
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
 
-@router.get("/me", response_model=ProfileRead)
-def get_my_profile(db: DbSession, user_id: CurrentUserId) -> ProfileRead:
-    try:
-        return ProfileService(db).get_profile(user_id=user_id)
-    except ProfileNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+@router.get("", response_model=UserRead)
+def get_profile(current_user: User = Depends(require_user)) -> UserRead:
+    return UserRead.model_validate(current_user)
 
 
-@router.put("/me", response_model=ProfileRead)
-def update_my_profile(payload: ProfileUpdate, db: DbSession, user_id: CurrentUserId) -> ProfileRead:
-    try:
-        return ProfileService(db).update_profile(payload, user_id=user_id)
-    except ProfileNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+@router.put("", response_model=UserRead)
+def put_profile(
+    payload: ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> UserRead:
+    return UserRead.model_validate(update_profile(db, current_user, payload))

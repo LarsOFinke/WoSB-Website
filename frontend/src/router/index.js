@@ -1,54 +1,54 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { useSession } from '@/composables/useSession'
-import AdminPanelPage from '@/views/AdminPanelPage.vue'
-import BuildsPage from '@/views/BuildsPage.vue'
-import GroupManagementPage from '@/views/GroupManagementPage.vue'
-import GroupsPage from '@/views/GroupsPage.vue'
-import HomePage from '@/views/HomePage.vue'
-import LoginPage from '@/views/LoginPage.vue'
-import ProfilePage from '@/views/ProfilePage.vue'
-import RegisterPage from '@/views/RegisterPage.vue'
+import AdminPage from '@/pages/AdminPage.vue'
+import HomePage from '@/pages/HomePage.vue'
+import LoginPage from '@/pages/LoginPage.vue'
+import ProfilePage from '@/pages/ProfilePage.vue'
+import MyBuildsPage from '@/pages/MyBuildsPage.vue'
+import MyGroupsPage from '@/pages/MyGroupsPage.vue'
+import RegisterPage from '@/pages/RegisterPage.vue'
+import BuildCreatePage from '@/pages/builds/BuildCreatePage.vue'
+import BuildDetailPage from '@/pages/builds/BuildDetailPage.vue'
+import BuildListPage from '@/pages/builds/BuildListPage.vue'
+import GroupCreatePage from '@/pages/groups/GroupCreatePage.vue'
+import GroupDetailPage from '@/pages/groups/GroupDetailPage.vue'
+import GroupListPage from '@/pages/groups/GroupListPage.vue'
+import { loadSession, useSession } from '@/services/session'
+
+const routes = [
+  { path: '/', redirect: '/home' },
+  { path: '/home', name: 'home', component: HomePage },
+  { path: '/login', name: 'login', component: LoginPage },
+  { path: '/register', name: 'register', component: RegisterPage },
+  { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresUser: true } },
+  { path: '/profile/builds', name: 'my-builds', component: MyBuildsPage, meta: { requiresUser: true } },
+  { path: '/profile/groups', name: 'my-groups', component: MyGroupsPage, meta: { requiresUser: true } },
+  { path: '/admin', name: 'admin', component: AdminPage, meta: { requiresStaff: true } },
+  { path: '/builds', name: 'builds', component: BuildListPage },
+  { path: '/groups', name: 'groups', component: GroupListPage },
+  { path: '/groups/new', name: 'groups-new', component: GroupCreatePage, meta: { requiresUser: true } },
+  { path: '/groups/:id', name: 'groups-detail', component: GroupDetailPage, props: true },
+  { path: '/builds/new', name: 'builds-new', component: BuildCreatePage, meta: { requiresUser: true } },
+  { path: '/builds/:id', name: 'builds-detail', component: BuildDetailPage, props: true },
+]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    { path: '/', name: 'home', component: HomePage, meta: { public: true } },
-    { path: '/login', name: 'login', component: LoginPage, meta: { public: true, guestOnly: true } },
-    { path: '/register', name: 'register', component: RegisterPage, meta: { public: true, guestOnly: true } },
-    { path: '/groups', name: 'groups', component: GroupsPage, meta: { public: true } },
-    {
-      path: '/group-management',
-      name: 'group-management',
-      component: GroupManagementPage,
-      meta: { requiresAuth: true },
-    },
-    { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
-    { path: '/builds', name: 'builds', component: BuildsPage, meta: { public: true } },
-    { path: '/admin', name: 'admin', component: AdminPanelPage, meta: { requiresAuth: true, requiresAdmin: true } },
-  ],
+  history: createWebHistory(),
+  routes,
 })
 
 router.beforeEach(async (to) => {
-  const { isAuthenticated, isAdmin, isSessionReady, refreshSession } = useSession()
+  if (!to.meta.requiresStaff && !to.meta.requiresUser) return true
 
-  if (!isSessionReady.value) {
-    await refreshSession()
+  const { isAuthenticated, isStaff, sessionState } = useSession()
+  if (!sessionState.isReady) {
+    await loadSession()
   }
 
-  if (to.meta.requiresAuth && !isAuthenticated.value) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+  if (to.meta.requiresStaff) {
+    return isStaff.value ? true : '/login'
   }
-
-  if (to.meta.requiresAdmin && !isAdmin.value) {
-    return { name: 'groups' }
-  }
-
-  if (to.meta.guestOnly && isAuthenticated.value) {
-    return { name: 'groups' }
-  }
-
-  return true
+  return isAuthenticated.value ? true : '/login'
 })
 
 export default router

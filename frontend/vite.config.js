@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [vue()],
@@ -11,11 +11,9 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      },
+      '/api': 'http://127.0.0.1:8000',
     },
   },
 })
