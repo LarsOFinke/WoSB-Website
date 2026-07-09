@@ -3,11 +3,19 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import Guide, GuideAttachment, User
 from app.schemas import FileRead, GuideCreate, GuideRead, GuideSummary
+from app.services.content_embed_service import ContentEmbedValidationError, validate_content_embeds
 from app.services.file_service import get_files_for_owner
 
 
 class GuideValidationError(ValueError):
     pass
+
+
+def _validate_guide_embeds(body: str, files) -> None:
+    try:
+        validate_content_embeds(body, files)
+    except ContentEmbedValidationError as exc:
+        raise GuideValidationError(str(exc)) from exc
 
 
 def _guide_summary(guide: Guide) -> GuideSummary:
@@ -55,6 +63,7 @@ def get_guide(db: Session, guide_id: int) -> GuideRead | None:
 
 def create_guide(db: Session, payload: GuideCreate, author: User) -> GuideRead:
     files = get_files_for_owner(db, payload.file_ids, author)
+    _validate_guide_embeds(payload.body, files)
     guide = Guide(
         title=payload.title,
         category=payload.category,

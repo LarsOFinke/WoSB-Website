@@ -2,8 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
+import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
 import { deleteGuide, getGuide } from '@/services/guides'
+import { unembeddedAttachments } from '@/services/richTextEmbeds'
 import { useSession } from '@/services/session'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -15,6 +17,7 @@ const deleting = ref(false)
 const error = ref('')
 
 const canManage = computed(() => guide.value && user.value && (guide.value.owner_id === user.value.id || isStaff.value))
+const galleryAttachments = computed(() => guide.value ? unembeddedAttachments(guide.value.attachments || [], guide.value.body) : [])
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString() : '—'
@@ -67,8 +70,8 @@ onMounted(loadGuide)
       <template v-else-if="guide">
         <article class="wire-section guide-content-card">
           <p v-if="guide.summary" class="guide-summary">{{ guide.summary }}</p>
-          <p class="preserve-lines">{{ guide.body }}</p>
-          <AttachmentGallery :attachments="guide.attachments" />
+          <RichTextRenderer :body="guide.body" :attachments="guide.attachments" />
+          <AttachmentGallery :attachments="galleryAttachments" />
         </article>
 
         <section v-if="canManage" class="wire-section guide-management-panel">

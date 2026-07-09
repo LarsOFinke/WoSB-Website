@@ -21,6 +21,11 @@ const fleetMemberships = ref([])
 
 const activeFleetMemberships = computed(() => fleetMemberships.value.filter((membership) => ['active', 'pending'].includes(membership.status)))
 const leadershipMemberships = computed(() => fleetMemberships.value.filter((membership) => membership.status === 'active' && ['fleet_admiral', 'fleet_lieutenant'].includes(membership.role)))
+const primaryFleetMembership = computed(() => {
+  if (!form.fleet_membership_id) return null
+  return fleetMemberships.value.find((membership) => membership.id === form.fleet_membership_id) || null
+})
+const hasOfficialFleetLink = computed(() => Boolean(form.fleet_id && form.fleet_membership_status))
 
 const focusOptions = [
   'pve_farming',
@@ -37,6 +42,10 @@ const form = reactive({
   username: '',
   display_name: '',
   fleet_name: '',
+  fleet_id: null,
+  fleet_membership_id: null,
+  fleet_membership_status: '',
+  fleet_membership_role: '',
   preferred_focus: '',
   note: '',
   role: 'user',
@@ -52,6 +61,10 @@ function fillForm(user) {
   form.username = user.username || ''
   form.display_name = user.display_name || ''
   form.fleet_name = user.fleet_name || ''
+  form.fleet_id = user.fleet_id || null
+  form.fleet_membership_id = user.fleet_membership_id || null
+  form.fleet_membership_status = user.fleet_membership_status || ''
+  form.fleet_membership_role = user.fleet_membership_role || ''
   form.preferred_focus = user.preferred_focus || ''
   form.note = user.note || ''
   form.role = user.role || 'user'
@@ -85,11 +98,12 @@ async function saveProfile() {
   try {
     const updated = await updateProfile({
       display_name: form.display_name,
-      fleet_name: form.fleet_name || null,
+      fleet_name: hasOfficialFleetLink.value ? null : form.fleet_name || null,
       preferred_focus: form.preferred_focus || null,
       note: form.note || null,
     })
     fillForm(updated)
+    await loadMemberships()
     setSessionUser(updated)
     success.value = t('profile.saved')
   } catch (err) {
@@ -150,25 +164,41 @@ onMounted(loadProfile)
               <small>{{ t(`roles.${form.role}`) }}</small>
             </div>
 
-            <section class="profile-fleet-card">
+            <section class="profile-fleet-card official-fleet-card">
               <div>
                 <p class="eyebrow">{{ t('profile.fleetMemberships.eyebrow') }}</p>
                 <h2>{{ t('profile.fleetMemberships.title') }}</h2>
                 <p>{{ t('profile.fleetMemberships.subtitle') }}</p>
               </div>
+
+              <article v-if="hasOfficialFleetLink" class="profile-primary-fleet-row">
+                <div>
+                  <span class="summary-pill primary-fleet-pill">{{ t('profile.fleetMemberships.primary') }}</span>
+                  <strong>{{ form.fleet_name }}</strong>
+                  <small v-if="primaryFleetMembership">{{ t(`fleets.focus.${primaryFleetMembership.fleet.focus}`) }}</small>
+                  <small v-else>{{ t('profile.fleetMemberships.syncedHint') }}</small>
+                </div>
+                <div class="member-pill-row">
+                  <span class="summary-pill">{{ t(`fleets.status.${form.fleet_membership_status}`) }}</span>
+                  <span class="summary-pill">{{ t(`fleets.roles.${form.fleet_membership_role || 'member'}`) }}</span>
+                </div>
+              </article>
+              <p v-else class="muted">{{ t('profile.fleetMemberships.empty') }}</p>
+
               <div v-if="activeFleetMemberships.length" class="profile-membership-list">
-                <article v-for="membership in activeFleetMemberships" :key="membership.id" class="profile-membership-row">
+                <article v-for="membership in activeFleetMemberships" :key="membership.id" class="profile-membership-row" :class="{ 'is-primary-membership': membership.id === form.fleet_membership_id }">
                   <div>
                     <strong>{{ membership.fleet.name }}</strong>
                     <span>{{ t(`fleets.focus.${membership.fleet.focus}`) }}</span>
                   </div>
                   <div class="member-pill-row">
+                    <span v-if="membership.id === form.fleet_membership_id" class="summary-pill">{{ t('profile.fleetMemberships.primary') }}</span>
                     <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
                     <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
                   </div>
                 </article>
               </div>
-              <p v-else class="muted">{{ t('profile.fleetMemberships.empty') }}</p>
+
               <div class="form-actions compact-actions">
                 <RouterLink class="button-box" to="/fleets">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
                 <RouterLink v-if="leadershipMemberships.length" class="button-box primary-action" to="/fleets/manage">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
@@ -180,9 +210,10 @@ onMounted(loadProfile)
               <input v-model="form.display_name" required maxlength="120" />
             </label>
 
-            <label class="input-panel embedded-field">
-              <span>{{ t('profile.fleetName') }}</span>
+            <label v-if="!hasOfficialFleetLink" class="input-panel embedded-field">
+              <span>{{ t('profile.externalFleetName') }}</span>
               <input v-model="form.fleet_name" maxlength="120" :placeholder="t('profile.fleetPlaceholder')" />
+              <small>{{ t('profile.externalFleetHint') }}</small>
             </label>
 
             <label class="input-panel embedded-field">
@@ -218,7 +249,6 @@ onMounted(loadProfile)
             <p>{{ t('myBuilds.profileCardText') }}</p>
             <RouterLink class="button-box" to="/profile/builds">{{ t('myBuilds.open') }}</RouterLink>
           </section>
-
 
           <section class="wire-section profile-panel profile-groups-panel">
             <p class="eyebrow">{{ t('myGroups.eyebrow') }}</p>

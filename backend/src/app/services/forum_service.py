@@ -3,11 +3,19 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import ForumPost, ForumPostAttachment, ForumThread, User
 from app.schemas import FileRead, ForumPostCreate, ForumPostRead, ForumThreadCreate, ForumThreadRead, ForumThreadSummary
+from app.services.content_embed_service import ContentEmbedValidationError, validate_content_embeds
 from app.services.file_service import get_files_for_owner
 
 
 class ForumValidationError(ValueError):
     pass
+
+
+def _validate_post_embeds(body: str, files) -> None:
+    try:
+        validate_content_embeds(body, files)
+    except ContentEmbedValidationError as exc:
+        raise ForumValidationError(str(exc)) from exc
 
 
 def _post_to_read(post: ForumPost) -> ForumPostRead:
@@ -69,6 +77,7 @@ def get_thread(db: Session, thread_id: int) -> ForumThreadRead | None:
 
 def create_thread(db: Session, payload: ForumThreadCreate, author: User) -> ForumThreadRead:
     files = get_files_for_owner(db, payload.file_ids, author)
+    _validate_post_embeds(payload.body, files)
     thread = ForumThread(title=payload.title, category=payload.category, owner_id=author.id)
     first_post = ForumPost(body=payload.body, author_id=author.id)
     for index, file in enumerate(files):
@@ -87,6 +96,7 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     if thread is None:
         return None
     files = get_files_for_owner(db, payload.file_ids, author)
+    _validate_post_embeds(payload.body, files)
     post = ForumPost(thread_id=thread.id, body=payload.body, author_id=author.id)
     for index, file in enumerate(files):
         post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))

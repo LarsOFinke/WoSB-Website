@@ -1,10 +1,13 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
+import AttachmentInsertPanel from '@/core/components/AttachmentInsertPanel.vue'
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
+import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
 import { createPost, getThread } from '@/services/forum'
+import { createEmbedToken, unembeddedAttachments } from '@/services/richTextEmbeds'
 import { useSession } from '@/services/session'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -16,20 +19,48 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 const replyAttachments = ref([])
+const replyInput = ref(null)
 const reply = reactive({ body: '' })
 
 const canReply = computed(() => reply.body.trim() && !saving.value)
+const replyGalleryAttachments = computed(() => unembeddedAttachments(replyAttachments.value, reply.body))
+
+function postGalleryAttachments(post) {
+  return unembeddedAttachments(post.attachments || [], post.body)
+}
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString() : '—'
 }
 
 function addReplyAttachment(file) {
-  replyAttachments.value.push(file)
+  if (!replyAttachments.value.some((item) => item.id === file.id)) {
+    replyAttachments.value.push(file)
+  }
 }
 
 function removeReplyAttachment(fileId) {
   replyAttachments.value = replyAttachments.value.filter((file) => file.id !== fileId)
+}
+
+async function insertReplyAttachment({ file, size }) {
+  const token = createEmbedToken(file.id, size)
+  const input = replyInput.value
+  if (!input) {
+    reply.body = `${reply.body}${reply.body.endsWith('\n') || !reply.body ? '' : '\n\n'}${token}\n\n`
+    return
+  }
+
+  const start = input.selectionStart ?? reply.body.length
+  const end = input.selectionEnd ?? reply.body.length
+  const before = reply.body.slice(0, start)
+  const after = reply.body.slice(end)
+  const paddedToken = `${before && !before.endsWith('\n') ? '\n\n' : ''}${token}${after && !after.startsWith('\n') ? '\n\n' : ''}`
+  reply.body = `${before}${paddedToken}${after}`
+  await nextTick()
+  const cursorPosition = before.length + paddedToken.length
+  input.focus()
+  input.setSelectionRange(cursorPosition, cursorPosition)
 }
 
 async function loadThread() {
@@ -87,20 +118,24 @@ onMounted(loadThread)
             <strong>{{ post.author.display_name }}</strong>
             <span>{{ formatDate(post.created_at) }}</span>
           </div>
-          <p class="preserve-lines">{{ post.body }}</p>
-          <AttachmentGallery :attachments="post.attachments" />
+          <RichTextRenderer :body="post.body" :attachments="post.attachments" />
+          <AttachmentGallery :attachments="postGalleryAttachments(post)" />
         </article>
 
         <section v-if="isAuthenticated" class="wire-section form-section reply-panel">
           <div class="section-title"><span>↳</span><h2>{{ t('forum.detail.replyTitle') }}</h2></div>
+          <p class="section-helper-text">{{ t('files.inlineEditorHint') }}</p>
           <label class="input-panel embedded-field textarea-shell">
-            <textarea v-model="reply.body" rows="5" maxlength="8000" :placeholder="t('forum.detail.replyPlaceholder')"></textarea>
+            <textarea ref="replyInput" v-model="reply.body" rows="5" maxlength="8000" :placeholder="t('forum.detail.replyPlaceholder')"></textarea>
           </label>
           <FileUploadPanel usage-context="forum" @uploaded="addReplyAttachment" />
-          <AttachmentGallery :attachments="replyAttachments" />
-          <div v-if="replyAttachments.length" class="attachment-chip-row">
-            <button v-for="file in replyAttachments" :key="file.id" class="chip-remove" type="button" @click="removeReplyAttachment(file.id)">× {{ file.original_name }}</button>
-          </div>
+          <AttachmentInsertPanel :attachments="replyAttachments" @insert="insertReplyAttachment" @remove="removeReplyAttachment" />
+          <AttachmentGallery :attachments="replyGalleryAttachments" />
+          <section v-if="reply.body.trim() || replyAttachments.length" class="reply-preview-panel">
+            <p class="eyebrow">{{ t('files.previewTitle') }}</p>
+            <RichTextRenderer :body="reply.body" :attachments="replyAttachments" />
+            <AttachmentGallery :attachments="replyGalleryAttachments" />
+          </section>
           <button class="wire-section form-button primary" type="button" :disabled="!canReply" @click="submitReply">
             {{ saving ? t('forum.detail.replySaving') : t('forum.detail.reply') }}
           </button>

@@ -120,3 +120,8 @@ Registration loads `/api/fleets` and lets users indicate whether they belong to 
 ## Demo content
 
 Fresh backend seeds include two guides and two forum threads with SVG image attachments. They render through `AttachmentGallery.vue`, so local demo content uses the same upload embed path as real user uploads.
+
+
+## Inline media embeds
+
+Forum posts and guides now support explicit inline placement for uploaded files via markers such as `[[file:123|large]]`. The UI inserts these markers for users from the upload panel, renders a live preview, and leaves unused files as normal attachments. See `docs/INLINE_MEDIA_EMBEDS.md` for syntax and validation rules.

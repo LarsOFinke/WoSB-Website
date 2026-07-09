@@ -119,7 +119,7 @@ fleet_memberships
 fleet_events
 ```
 
-`builds` contains no repeated slot columns and no JSON inventory lists. Loadout elements live in `build_slots` and reference `build_item_options`. Quantities are stored only on slots where they are meaningful. Upgrade modifiers live in `build_item_effects` and are aggregated into `ship_stats` for API consumers. Public profile data lives in `user_profiles`; official fleet state lives in `fleet_memberships`, not duplicated on `users`.
+`builds` contains no repeated slot columns and no JSON inventory lists. Loadout elements live in `build_slots` and reference `build_item_options`. Quantities are stored only on slots where they are meaningful. Upgrade modifiers live in `build_item_effects` and are aggregated into `ship_stats` for API consumers. Public profile data lives in `user_profiles`; official fleet state lives in `fleet_memberships`, not duplicated on `users`. The displayed profile fleet is centralized through `user_profiles.primary_fleet_membership_id`, which points to the membership row that holds fleet, role and status.
 
 ## Seeds
 
@@ -173,3 +173,8 @@ fleet_events` stores public calendar entries with title, category, optional loca
 - `docs/ARCHITECTURE.md` — backend/frontend structure and permission model.
 - `docs/DATABASE_SCHEMA.md` — table overview and normalization notes.
 - `docs/UI_UX_NOTES.md` — form, filter and registration UX conventions.
+
+
+## Inline media embeds
+
+Forum posts and guides now support explicit inline placement for uploaded files via markers such as `[[file:123|large]]`. The UI inserts these markers for users from the upload panel, renders a live preview, and leaves unused files as normal attachments. See `docs/INLINE_MEDIA_EMBEDS.md` for syntax and validation rules.

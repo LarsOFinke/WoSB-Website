@@ -49,6 +49,9 @@ class UserRead(BaseModel):
     is_active: bool
     fleet_name: str | None = None
     fleet_id: int | None = None
+    fleet_membership_id: int | None = None
+    fleet_membership_status: str | None = None
+    fleet_membership_role: str | None = None
     preferred_focus: str | None = None
     note: str | None = None
     created_at: datetime

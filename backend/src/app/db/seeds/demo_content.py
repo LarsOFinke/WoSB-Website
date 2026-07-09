@@ -37,14 +37,32 @@ DEMO_GUIDES = [
         "title": "Port-Battle Line Basics",
         "category": "combat",
         "summary": "A compact starter doctrine for line discipline, focus calls and repair timing.",
-        "body": """Use this as a lightweight doctrine before port-battle practice.\n\n1. Hold the assigned line unless the caller explicitly breaks formation.\n2. Announce disabled sails, fire and low crew early.\n3. Save hard turns for command calls or survival.\n4. Repair on tempo: hull first, rigging when the line needs speed, crew only when boarding risk is real.\n\nThe goal is not perfect theorycrafting; it is shared vocabulary and fewer surprises during the first engagement.""",
+        "body": """Use this as a lightweight doctrine before port-battle practice.
+
+[[file:{file_id}|large]]
+
+1. Hold the assigned line unless the caller explicitly breaks formation.
+2. Announce disabled sails, fire and low crew early.
+3. Save hard turns for command calls or survival.
+4. Repair on tempo: hull first, rigging when the line needs speed, crew only when boarding risk is real.
+
+The goal is not perfect theorycrafting; it is shared vocabulary and fewer surprises during the first engagement.""",
         "file": "demo/line-battle.svg",
     },
     {
         "title": "Trade Convoy Checklist",
         "category": "economy",
         "summary": "A practical checklist for safe fleet trade runs and escort handoff.",
-        "body": """Before departure, the convoy lead should publish route, cargo risk and escort needs.\n\nChecklist:\n- Confirm port of departure and fallback port.\n- Split valuable cargo across multiple holds.\n- Assign at least one scout ahead of the convoy.\n- Keep voice comms short: sighting, heading, distance, ship count.\n- Log losses and bottlenecks after the run so logistics can adapt the next route.""",
+        "body": """Before departure, the convoy lead should publish route, cargo risk and escort needs.
+
+[[file:{file_id}|medium]]
+
+Checklist:
+- Confirm port of departure and fallback port.
+- Split valuable cargo across multiple holds.
+- Assign at least one scout ahead of the convoy.
+- Keep voice comms short: sighting, heading, distance, ship count.
+- Log losses and bottlenecks after the run so logistics can adapt the next route.""",
         "file": "demo/trade-convoy.svg",
     },
 ]
@@ -53,13 +71,21 @@ DEMO_THREADS = [
     {
         "title": "Practice feedback: line turns and repair cadence",
         "category": "training",
-        "body": "Last training showed better focus fire, but our turn timing still spreads the line. Please post short feedback: what call was clear, where did you lose the caller, and which repair timing felt too late?",
+        "body": """Last training showed better focus fire, but our turn timing still spreads the line.
+
+[[file:{file_id}|medium]]
+
+Please post short feedback: what call was clear, where did you lose the caller, and which repair timing felt too late?""",
         "file": "demo/line-battle.svg",
     },
     {
         "title": "Weekly logistics: escort slots for trade convoy",
         "category": "logistics",
-        "body": "The trade fleet is collecting escort availability for this week. Reply with your usual play window, ship rate and whether you prefer scout, screen or rear guard.",
+        "body": """The trade fleet is collecting escort availability for this week.
+
+[[file:{file_id}|small]]
+
+Reply with your usual play window, ship rate and whether you prefer scout, screen or rear guard.""",
         "file": "demo/trade-convoy.svg",
     },
 ]
@@ -102,12 +128,13 @@ def seed_demo_content(db: Session) -> None:
     for data in DEMO_GUIDES:
         existing = db.scalar(select(Guide).where(Guide.title == data["title"]))
         file = files[data["file"]]
+        body = data["body"].format(file_id=file.id)
         if existing is None:
             guide = Guide(
                 title=data["title"],
                 category=data["category"],
                 summary=data["summary"],
-                body=data["body"],
+                body=body,
                 owner_id=owner.id,
             )
             guide.attachments.append(GuideAttachment(file_id=file.id, sort_order=0))
@@ -115,7 +142,7 @@ def seed_demo_content(db: Session) -> None:
             continue
         existing.category = data["category"]
         existing.summary = data["summary"]
-        existing.body = data["body"]
+        existing.body = body
         existing.is_published = True
         if not any(attachment.file_id == file.id for attachment in existing.attachments):
             existing.attachments.append(GuideAttachment(file_id=file.id, sort_order=len(existing.attachments)))
@@ -123,10 +150,16 @@ def seed_demo_content(db: Session) -> None:
     for data in DEMO_THREADS:
         existing = db.scalar(select(ForumThread).where(ForumThread.title == data["title"]))
         file = files[data["file"]]
+        body = data["body"].format(file_id=file.id)
         if existing is not None:
+            first_post = existing.posts[0] if existing.posts else None
+            if first_post is not None:
+                first_post.body = body
+                if not any(attachment.file_id == file.id for attachment in first_post.attachments):
+                    first_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=len(first_post.attachments)))
             continue
         thread = ForumThread(title=data["title"], category=data["category"], owner_id=owner.id)
-        first_post = ForumPost(body=data["body"], author_id=owner.id)
+        first_post = ForumPost(body=body, author_id=owner.id)
         first_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=0))
         thread.posts.append(first_post)
         db.add(thread)

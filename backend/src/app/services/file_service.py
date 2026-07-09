@@ -41,7 +41,9 @@ ALLOWED_EXTENSIONS = {
     ".pdf",
     ".txt",
 }
-MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+MAX_UPLOAD_BYTES = 80 * 1024 * 1024
+MAX_IMAGE_BYTES = 12 * 1024 * 1024
+MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 
 
 def _safe_extension(filename: str, content_type: str | None) -> str:
@@ -65,11 +67,31 @@ def _mime_type(upload: UploadFile, extension: str) -> str:
     return guessed or "application/octet-stream"
 
 
+def _max_size_for_mime_type(mime_type: str) -> int:
+    if mime_type.startswith("image/"):
+        return MAX_IMAGE_BYTES
+    if mime_type in {"application/pdf", "text/plain"}:
+        return MAX_DOCUMENT_BYTES
+    return MAX_UPLOAD_BYTES
+
+
+def _format_size(size_bytes: int) -> str:
+    value = float(size_bytes)
+    unit = "B"
+    for unit in ["B", "KB", "MB", "GB"]:
+        if value < 1024 or unit == "GB":
+            break
+        value /= 1024
+    return f"{value:.0f} {unit}" if value >= 10 or unit == "B" else f"{value:.1f} {unit}"
+
+
 def upload_file(db: Session, upload: UploadFile, owner: User, usage_context: str = "general") -> StoredFile:
     extension = _safe_extension(upload.filename or "upload", upload.content_type)
     mime_type = _mime_type(upload, extension)
     if not extension or mime_type not in ALLOWED_MIME_TYPES:
         raise FileValidationError("Unsupported file type. Allowed: GIF, MP4, JPEG, PNG, WebP, SVG, WebM, MOV, PDF and TXT.")
+
+    max_size = _max_size_for_mime_type(mime_type)
 
     now = datetime.utcnow()
     folder = Path(settings.upload_dir) / f"{now:%Y}" / f"{now:%m}"
@@ -84,11 +106,15 @@ def upload_file(db: Session, upload: UploadFile, owner: User, usage_context: str
             if not chunk:
                 break
             size += len(chunk)
-            if size > MAX_UPLOAD_BYTES:
+            if size > max_size:
                 handle.close()
                 target.unlink(missing_ok=True)
-                raise FileValidationError("File is too large. Maximum size is 100 MB.")
+                raise FileValidationError(f"File is too large. Maximum size for this type is {_format_size(max_size)}.")
             handle.write(chunk)
+
+    if size <= 0:
+        target.unlink(missing_ok=True)
+        raise FileValidationError("Empty files cannot be uploaded.")
 
     relative_path = str(target.relative_to(Path(settings.upload_dir))).replace("\\", "/")
     db_file = StoredFile(

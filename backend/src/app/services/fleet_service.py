@@ -20,6 +20,66 @@ class FleetValidationError(ValueError):
     pass
 
 
+def _membership_priority(membership: FleetMembership) -> tuple[int, int, int]:
+    """Sort active memberships before pending ones, newest first within status."""
+
+    status_rank = 0 if membership.status == FLEET_MEMBER_ACTIVE else 1 if membership.status == FLEET_MEMBER_PENDING else 2
+    timestamp = membership.updated_at or membership.joined_at
+    return (status_rank, -int(timestamp.timestamp()), -membership.id)
+
+
+def _select_profile_membership(memberships: list[FleetMembership]) -> FleetMembership | None:
+    candidates = [row for row in memberships if row.status in {FLEET_MEMBER_ACTIVE, FLEET_MEMBER_PENDING}]
+    return sorted(candidates, key=_membership_priority)[0] if candidates else None
+
+
+def sync_user_primary_fleet(
+    db: Session,
+    user: User,
+    *,
+    preferred_membership: FleetMembership | None = None,
+    force_preferred: bool = False,
+) -> User:
+    """Keep the single profile fleet pointer aligned with official memberships.
+
+    ``user_profiles.primary_fleet_membership_id`` is the canonical profile-level
+    fleet value. It intentionally points to a membership row instead of copying a
+    fleet name or fleet id, so role/status/fleet data cannot drift apart.
+    """
+
+    profile = user._ensure_profile()
+    current = profile.primary_fleet_membership
+
+    if (
+        current is not None
+        and current.user_id == user.id
+        and current.status in {FLEET_MEMBER_ACTIVE, FLEET_MEMBER_PENDING}
+        and not force_preferred
+    ):
+        return user
+
+    target = None
+    if (
+        preferred_membership is not None
+        and preferred_membership.user_id == user.id
+        and preferred_membership.status in {FLEET_MEMBER_ACTIVE, FLEET_MEMBER_PENDING}
+    ):
+        target = preferred_membership
+
+    if target is None:
+        memberships = list(db.scalars(
+            select(FleetMembership)
+            .where(FleetMembership.user_id == user.id)
+            .options(selectinload(FleetMembership.fleet))
+        ).all())
+        target = _select_profile_membership(memberships)
+
+    profile.primary_fleet_membership_id = target.id if target is not None else None
+    db.add(profile)
+    db.flush()
+    return user
+
+
 def _summary_counts(db: Session) -> dict[int, tuple[int, int]]:
     rows = db.execute(
         select(FleetMembership.fleet_id, FleetMembership.status, func.count(FleetMembership.id))
@@ -40,7 +100,7 @@ def _attach_summary(db: Session, fleets: list[Fleet]) -> list[Fleet]:
     counts = _summary_counts(db)
     leader_rows = db.scalars(
         select(FleetMembership)
-        .options(selectinload(FleetMembership.user))
+        .options(selectinload(FleetMembership.user), selectinload(FleetMembership.fleet))
         .where(FleetMembership.role.in_(FLEET_LEADERSHIP_ROLES), FleetMembership.status == FLEET_MEMBER_ACTIVE)
         .order_by(FleetMembership.role, FleetMembership.joined_at)
     ).all()
@@ -76,12 +136,14 @@ def get_fleet(db: Session, fleet_id: int, *, include_members: bool = False) -> F
 
 
 def list_user_memberships(db: Session, user: User) -> list[FleetMembership]:
-    return list(db.scalars(
+    memberships = list(db.scalars(
         select(FleetMembership)
         .where(FleetMembership.user_id == user.id)
         .options(selectinload(FleetMembership.user), selectinload(FleetMembership.fleet))
         .order_by(FleetMembership.status, FleetMembership.joined_at.desc())
     ).all())
+    sync_user_primary_fleet(db, user)
+    return memberships
 
 
 def user_leadership_memberships(db: Session, user: User) -> list[FleetMembership]:
@@ -145,11 +207,15 @@ def join_fleet(db: Session, user: User, payload: FleetJoinRequest) -> FleetMembe
     if existing is not None:
         existing.status = FLEET_MEMBER_PENDING if existing.status == "inactive" else existing.status
         existing.note = payload.note
+        db.flush()
+        sync_user_primary_fleet(db, user, preferred_membership=existing)
         db.commit()
         db.refresh(existing)
         return existing
     membership = FleetMembership(fleet_id=fleet.id, user_id=user.id, role=FLEET_ROLE_MEMBER, status=FLEET_MEMBER_PENDING, note=payload.note)
     db.add(membership)
+    db.flush()
+    sync_user_primary_fleet(db, user, preferred_membership=membership)
     db.commit()
     db.refresh(membership)
     return membership
@@ -168,6 +234,13 @@ def update_membership(db: Session, membership_id: int, payload: FleetMembershipU
         raise FleetValidationError("Invalid membership status.")
     for field, value in data.items():
         setattr(membership, field, value)
+    db.flush()
+    force_preferred = membership.status == FLEET_MEMBER_ACTIVE
+    sync_user_primary_fleet(db, membership.user, preferred_membership=membership, force_preferred=force_preferred)
+    if membership.status == "inactive" and membership.user.profile and membership.user.profile.primary_fleet_membership_id == membership.id:
+        membership.user.profile.primary_fleet_membership_id = None
+        db.flush()
+        sync_user_primary_fleet(db, membership.user)
     db.commit()
     db.refresh(membership)
     return membership
@@ -187,6 +260,8 @@ def assign_fleet_role(db: Session, fleet_id: int, user_id: int, role: str = FLEE
     else:
         membership.role = role
         membership.status = FLEET_MEMBER_ACTIVE
+    db.flush()
+    sync_user_primary_fleet(db, user, preferred_membership=membership, force_preferred=True)
     db.commit()
     db.refresh(membership)
     return membership

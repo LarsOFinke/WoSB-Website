@@ -9,6 +9,7 @@ ROLE_USER = "user"
 ROLE_MODERATOR = "moderator"
 ROLE_ADMIN = "admin"
 STAFF_ROLES = {ROLE_MODERATOR, ROLE_ADMIN}
+OFFICIAL_FLEET_PROFILE_STATUSES = {"active", "pending"}
 
 
 class User(Base):
@@ -25,8 +26,12 @@ class User(Base):
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    profile: Mapped["UserProfile | None"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin")
-    fleet_memberships: Mapped[list["FleetMembership"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    profile: Mapped["UserProfile | None"] = relationship(
+        back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin"
+    )
+    fleet_memberships: Mapped[list["FleetMembership"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", foreign_keys="FleetMembership.user_id"
+    )
 
     @property
     def display_name(self) -> str:
@@ -37,7 +42,24 @@ class User(Base):
         self._ensure_profile().display_name = (value or self.username).strip() or self.username
 
     @property
+    def primary_fleet_membership(self) -> "FleetMembership | None":
+        if self.profile is None:
+            return None
+        membership = self.profile.primary_fleet_membership
+        if membership is None or membership.user_id != self.id or membership.status not in OFFICIAL_FLEET_PROFILE_STATUSES:
+            return None
+        return membership
+
+    @property
+    def fleet_id(self) -> int | None:
+        membership = self.primary_fleet_membership
+        return membership.fleet_id if membership else None
+
+    @property
     def fleet_name(self) -> str | None:
+        membership = self.primary_fleet_membership
+        if membership and membership.fleet:
+            return membership.fleet.name
         return self.profile.external_fleet_name if self.profile else None
 
     @fleet_name.setter
@@ -45,12 +67,19 @@ class User(Base):
         self._ensure_profile().external_fleet_name = value.strip() or None if isinstance(value, str) else None
 
     @property
-    def fleet_id(self) -> int | None:
-        memberships = sorted(
-            self.fleet_memberships or [],
-            key=lambda item: (item.status != "active", item.status != "pending", item.joined_at),
-        )
-        return memberships[0].fleet_id if memberships else None
+    def fleet_membership_id(self) -> int | None:
+        membership = self.primary_fleet_membership
+        return membership.id if membership else None
+
+    @property
+    def fleet_membership_status(self) -> str | None:
+        membership = self.primary_fleet_membership
+        return membership.status if membership else None
+
+    @property
+    def fleet_membership_role(self) -> str | None:
+        membership = self.primary_fleet_membership
+        return membership.role if membership else None
 
     @property
     def preferred_focus(self) -> str | None:

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 import { useLocale } from '@/locales'
-import { uploadFile } from '@/services/files'
+import { ACCEPT_ATTRIBUTE, formatFileSize, maxBytesForFile, uploadFile, validateFileForUpload } from '@/services/files'
 
 const props = defineProps({
   usageContext: {
@@ -16,6 +16,13 @@ const { t } = useLocale()
 const uploading = ref(false)
 const error = ref('')
 
+function validationMessage(file, result) {
+  if (result.reason === 'type') return t('files.validation.unsupportedType', { name: file.name })
+  if (result.reason === 'empty') return t('files.validation.empty', { name: file.name })
+  if (result.reason === 'size') return t('files.validation.tooLarge', { name: file.name, limit: formatFileSize(maxBytesForFile(file)) })
+  return t('files.uploadError')
+}
+
 async function handleFiles(event) {
   const files = Array.from(event.target.files || [])
   if (!files.length) return
@@ -23,6 +30,11 @@ async function handleFiles(event) {
   error.value = ''
   try {
     for (const file of files) {
+      const validation = validateFileForUpload(file)
+      if (!validation.valid) {
+        error.value = validationMessage(file, validation)
+        continue
+      }
       const uploaded = await uploadFile(file, props.usageContext)
       emit('uploaded', uploaded)
     }
@@ -43,7 +55,7 @@ async function handleFiles(event) {
       <input
         type="file"
         multiple
-        accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,video/mp4,video/webm,video/quicktime,application/pdf,text/plain"
+        :accept="ACCEPT_ATTRIBUTE"
         :disabled="uploading"
         @change="handleFiles"
       />

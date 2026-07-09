@@ -40,10 +40,10 @@ id, username, password_hash, role, is_active, created_at, updated_at
 Mutable public profile information moved to `user_profiles`:
 
 ```text
-user_id, display_name, external_fleet_name, preferred_focus, note
+user_id, display_name, external_fleet_name, primary_fleet_membership_id, preferred_focus, note
 ```
 
-Official fleet membership is not stored on `users`. It lives in `fleet_memberships`, which avoids redundant `fleet_id` / `fleet_name` pairs on the user account.
+Official fleet membership is not stored on `users`. It lives in `fleet_memberships`, which avoids redundant `fleet_id` / `fleet_name` pairs on the user account. The profile points to exactly one canonical membership through `primary_fleet_membership_id`; profile fleet name, role and status are derived from that row. Registration with a planned fleet creates the membership application and stores that pointer immediately. When fleet leadership accepts the application, the same membership row switches to `active`, so the profile changes automatically without a second free-text update.
 
 ### Build effects split
 

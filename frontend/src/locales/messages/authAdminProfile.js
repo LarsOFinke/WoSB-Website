@@ -54,6 +54,8 @@ export const authAdminProfileMessages = {
       account: 'Konto',
       displayName: 'Display name',
       fleetName: 'Fleet',
+      externalFleetName: 'External fleet note',
+      externalFleetHint: 'Official fleet membership is managed through applications and approvals.',
       fleetPlaceholder: 'Optional fleet name',
       preferredFocus: 'Preferred focus',
       noPreferredFocus: 'No preferred focus',
@@ -112,7 +114,7 @@ export const authAdminProfileMessages = {
     },
     profile: {
       eyebrow: 'Account', title: 'Dein Profil', subtitle: 'Halte dein öffentliches WoSB-Profil kompakt und nützlich für spätere Module.',
-      loading: 'Profil wird geladen ...', account: 'Account', displayName: 'Anzeigename', fleetName: 'Flotte', fleetPlaceholder: 'Optionale Flotte',
+      loading: 'Profil wird geladen ...', account: 'Account', displayName: 'Anzeigename', fleetName: 'Flotte', externalFleetName: 'Externe Flottennotiz', externalFleetHint: 'Offizielle Flottenmitgliedschaften werden über Bewerbungen und Freigaben verwaltet.', fleetPlaceholder: 'Optionale Flotte',
       preferredFocus: 'Bevorzugter Fokus', noPreferredFocus: 'Kein bevorzugter Fokus', note: 'Profilnotiz', notePlaceholder: 'Optionale kurze Notiz für spätere Gruppen- und Community-Tools.',
       save: 'Profil speichern', saving: 'Speichert ...', saved: 'Profil gespeichert.', loadError: 'Profil konnte nicht geladen werden.', saveError: 'Profil konnte nicht gespeichert werden.',
     },

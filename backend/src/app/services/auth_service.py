@@ -44,7 +44,7 @@ def create_user(
         role=role,
         profile=UserProfile(
             display_name=display_name.strip() or normalized_username,
-            external_fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) else None,
+            external_fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) and fleet_id is None else None,
         ),
     )
     db.add(user)

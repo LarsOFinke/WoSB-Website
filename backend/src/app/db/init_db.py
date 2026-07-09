@@ -35,6 +35,11 @@ def _ensure_sqlite_columns() -> None:
         if "owner_id" not in build_columns:
             statements.append("ALTER TABLE builds ADD COLUMN owner_id INTEGER")
 
+    if "user_profiles" in table_names:
+        profile_columns = {column["name"] for column in inspector.get_columns("user_profiles")}
+        if "primary_fleet_membership_id" not in profile_columns:
+            statements.append("ALTER TABLE user_profiles ADD COLUMN primary_fleet_membership_id INTEGER")
+
     if not statements:
         return
 
@@ -72,6 +77,32 @@ def _migrate_user_profiles() -> None:
             LEFT JOIN user_profiles ON user_profiles.user_id = users.id
             WHERE user_profiles.user_id IS NULL
         """))
+        profile_columns = {column["name"] for column in inspector.get_columns("user_profiles")}
+        if "primary_fleet_membership_id" in profile_columns and "fleet_memberships" in table_names:
+            connection.execute(text("""
+                UPDATE user_profiles
+                SET primary_fleet_membership_id = (
+                    SELECT fleet_memberships.id
+                    FROM fleet_memberships
+                    WHERE fleet_memberships.user_id = user_profiles.user_id
+                      AND fleet_memberships.status = 'active'
+                    ORDER BY fleet_memberships.updated_at DESC, fleet_memberships.id DESC
+                    LIMIT 1
+                )
+                WHERE primary_fleet_membership_id IS NULL
+            """))
+            connection.execute(text("""
+                UPDATE user_profiles
+                SET primary_fleet_membership_id = (
+                    SELECT fleet_memberships.id
+                    FROM fleet_memberships
+                    WHERE fleet_memberships.user_id = user_profiles.user_id
+                      AND fleet_memberships.status = 'pending'
+                    ORDER BY fleet_memberships.updated_at DESC, fleet_memberships.id DESC
+                    LIMIT 1
+                )
+                WHERE primary_fleet_membership_id IS NULL
+            """))
 
 def create_tables() -> None:
     Base.metadata.create_all(bind=engine)

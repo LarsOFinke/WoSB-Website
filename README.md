@@ -116,6 +116,7 @@ http://127.0.0.1:5173/admin
 - Locale coverage completed for the registration/profile layer across DE / EN / FR / ES / PT / RU / CN, with English still merged as the canonical fallback for every feature module.
 - Fresh seeds now include two mock Guides and two mock Forum threads with local SVG ship/convoy images embedded through the real upload attachment pipeline.
 - Backend schema cleanup moved public profile data into `user_profiles` and build option modifiers into `build_item_effects`, removing the major prototype-era transitive/serialized fields from new databases.
+- Official fleet display is now centralized by `user_profiles.primary_fleet_membership_id`, so registration applications, fleet approvals and the profile all read the same membership row.
 - Documentation added under `docs/` for architecture, UI/UX conventions and schema normalization.
 
 ## Previous update
@@ -199,3 +200,8 @@ This build adds a first vertical slice for the planned fleet structure:
 - Administrators can manage all fleets and can promote approved members into fleet leadership roles from the same management UI.
 
 The public overview is available at `/fleets`.
+
+
+## Inline media embeds
+
+Forum posts and guides now support explicit inline placement for uploaded files via markers such as `[[file:123|large]]`. The UI inserts these markers for users from the upload panel, renders a live preview, and leaves unused files as normal attachments. See `docs/INLINE_MEDIA_EMBEDS.md` for syntax and validation rules.

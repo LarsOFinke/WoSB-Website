@@ -49,7 +49,7 @@ def post_reply(
 ) -> ForumPostRead:
     try:
         post = add_post(db, thread_id, payload, current_user)
-    except FileValidationError as exc:
+    except (FileValidationError, ForumValidationError) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found.")
