@@ -1,6 +1,6 @@
 # Iron Crown Fleet Hub
 
-Small, intentionally clean fullstack foundation for the Iron Crown Fleet Hub. Current modules are the Build Manager, Fleet Announcements, a minimal Forum, a minimal Guide area, a Fleet Calendar, a connected Fleet Management module and a compact Staff Panel.
+Small, intentionally clean fullstack foundation for the Iron Crown Fleet Hub. Current modules are the Build Manager, Group Search, a minimal Forum, a minimal Guide area, a Fleet Calendar, a connected Fleet Management module and a compact Staff Panel.
 
 ```text
 backend/   FastAPI + SQLAlchemy + SQLite + cookie sessions
@@ -17,10 +17,10 @@ frontend/  Vue 3 + Vite
 - `/login` as minimal session login
 - `/profile` as protected profile page with password change, personal fleet status and links into fleet management
 - `/profile/builds` as personal build management for own builds
-- `/groups` as public announcement board with search, focus filter and rate-span filter
-- `/groups/{id}` as public announcement detail page
-- `/groups/new` as protected announcement creation
-- `/profile/groups` as personal fleet announcement for own fleet announcements
+- `/groups` as public group-search board with search, focus filter and rate-span filter
+- `/groups/{id}` as public group-search detail page
+- `/groups/new` as protected group-search creation
+- `/profile/groups` as personal group-search management for own group searches
 - `/forum` and `/forum/new` as a minimal file-backed discussion board
 - `/calendar` as public fleet month calendar with category filter and selected-day agenda
 - `/calendar/new` as staff-only appointment creation for admins and moderators
@@ -106,7 +106,7 @@ http://127.0.0.1:5173/admin
 ## Latest update
 
 - Major enterprise app-shell overhaul: the crowded single navbar was replaced with a focused topbar plus collapsible left sidebar for expandable module navigation.
-- Header responsibilities are now separated: brand/account/profile/fleet management/staff/language/session in the topbar; Home, Builds, Announcements, Forum, Calendar, Fleets and Guides in the sidebar.
+- Header responsibilities are now separated: brand/account/profile/fleet management/staff/language/session in the topbar; Home, Builds, Guides, Group Search, Calendar, Forum and Fleets in the sidebar.
 - Sidebar state persists on desktop, while tablet/mobile uses an off-canvas drawer with scrim and touch-safe navigation targets.
 - Responsive scaling was reworked again around shell grid behavior, topbar wrapping, mobile drawer behavior, stronger form surfaces and more consistent card/filter spacing.
 - Documentation added in `docs/APP_SHELL_UI.md`; locale coverage remains complete through `npm run check:locales`.
@@ -197,7 +197,7 @@ The staff panel now covers day-to-day moderator/admin work in one place:
 
 - calendar operations for upcoming fleet appointments
 - quick actions for new calendar entries, forum threads and guides
-- content moderation for forum threads, guides and fleet announcements
+- content moderation for forum threads, guides and group searches
 - build cleanup and admin-only moderator account creation
 
 Admins and moderators can open `/admin`; regular users are redirected to login.

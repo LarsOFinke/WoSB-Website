@@ -3788,7 +3788,7 @@ body.sidebar-collapsed .app-shell {
   z-index: 45;
   min-height: var(--topbar-min-height);
   display: grid;
-  grid-template-columns: minmax(14rem, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(14rem, auto) auto minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(0.65rem, 1.25vw, 1.15rem);
   padding: 0.68rem;
@@ -3806,6 +3806,7 @@ body.sidebar-collapsed .app-shell {
 .topbar-primary,
 .topbar-actions,
 .topbar-session,
+.topbar-section-label,
 .mobile-menu-button,
 .sidebar-head,
 .sidebar-collapse-button,
@@ -3835,7 +3836,7 @@ body.sidebar-collapsed .app-shell {
 
 .topbar-primary {
   min-width: 0;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.38rem;
   overflow-x: auto;
   padding: 0.25rem;
@@ -3858,13 +3859,25 @@ body.sidebar-collapsed .app-shell {
   gap: 0.55rem;
 }
 
+.topbar-section-label {
+  min-height: 2.2rem;
+  padding: 0 0.72rem;
+  border-right: 1px solid rgba(221, 231, 244, 0.12);
+  color: var(--muted-soft);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .topbar-locale,
 .topbar-session {
   flex: 0 0 auto;
 }
 
 .topbar-locale {
-  max-width: min(34vw, 22rem);
+  max-width: min(24vw, 20rem);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -4203,16 +4216,20 @@ textarea:focus-visible {
   }
 
   .app-topbar {
-    grid-template-columns: minmax(12rem, auto) minmax(0, 1fr);
-  }
-
-  .topbar-actions {
-    grid-column: 1 / -1;
-    justify-content: space-between;
+    grid-template-columns: minmax(12rem, auto) minmax(0, 1fr) auto;
   }
 
   .topbar-locale {
-    max-width: min(58vw, 36rem);
+    max-width: none;
+  }
+
+  .topbar-primary {
+    grid-column: 1 / -1;
+    order: 4;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
   }
 }
 
@@ -4400,6 +4417,13 @@ textarea:focus-visible {
   .topbar-primary,
   .topbar-actions {
     gap: 0.35rem;
+  }
+
+  .topbar-section-label {
+    width: 100%;
+    justify-content: flex-start;
+    border-right: 0;
+    border-bottom: 1px solid rgba(221, 231, 244, 0.1);
   }
 
   .topbar-link,

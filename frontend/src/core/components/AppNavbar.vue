@@ -18,19 +18,16 @@ const isMobileMenuOpen = ref(false)
 const workspaceLinks = computed(() => [
   { to: '/home', label: t('common.home'), icon: '⌂', exact: true },
   { to: '/builds', label: t('common.builds'), icon: '⚙' },
-  { to: '/groups', label: t('common.groups'), icon: '◈' },
-  { to: '/forum', label: t('common.forum'), icon: '✦' },
-  { to: '/calendar', label: t('common.calendar'), icon: '□' },
-  { to: '/fleets', label: t('common.fleets'), icon: '△' },
   { to: '/guides', label: t('common.guides'), icon: '☰' },
+  { to: '/groups', label: t('common.groups'), icon: '◈' },
+  { to: '/calendar', label: t('common.calendar'), icon: '□' },
+  { to: '/forum', label: t('common.forum'), icon: '✦' },
+  { to: '/fleets', label: t('common.fleets'), icon: '△' },
 ])
 
-const personalLinks = computed(() => {
-  if (!isAuthenticated.value) return []
-  return [
-    { to: '/profile/builds', label: t('common.myBuilds'), icon: '◇' },
-    { to: '/profile/groups', label: t('common.myAnnouncements'), icon: '◌' },
-  ]
+const profileLinkLabel = computed(() => {
+  const displayName = user.value?.display_name || user.value?.username
+  return displayName ? `${t('common.profile')} · ${displayName}` : t('common.profile')
 })
 
 function syncShellClass() {
@@ -100,28 +97,30 @@ onMounted(() => {
       </RouterLink>
     </div>
 
+    <div class="locale-switcher topbar-locale" :aria-label="t('common.language')">
+      <button
+        v-for="entry in supportedLocales"
+        :key="entry.code"
+        class="locale-button"
+        :class="{ 'is-active': locale === entry.code }"
+        type="button"
+        @click="setLocale(entry.code)"
+      >
+        {{ entry.label }}
+      </button>
+    </div>
+
     <nav class="topbar-primary" :aria-label="t('common.accountNavigation')">
-      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile">{{ t('common.profile') }}</RouterLink>
+      <span v-if="isAuthenticated" class="topbar-section-label">{{ t('common.personalArea') }}</span>
+      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile">{{ profileLinkLabel }}</RouterLink>
+      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile/builds">{{ t('common.myBuilds') }}</RouterLink>
+      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile/groups">{{ t('common.myGroupSearches') }}</RouterLink>
       <RouterLink v-if="isAuthenticated" class="topbar-link" to="/fleets/manage">{{ t('common.fleetManagement') }}</RouterLink>
       <RouterLink v-if="isStaff" class="topbar-link topbar-link-strong" to="/admin">{{ t('common.staffPanel') }}</RouterLink>
     </nav>
 
     <div class="topbar-actions">
-      <div class="locale-switcher topbar-locale" :aria-label="t('common.language')">
-        <button
-          v-for="entry in supportedLocales"
-          :key="entry.code"
-          class="locale-button"
-          :class="{ 'is-active': locale === entry.code }"
-          type="button"
-          @click="setLocale(entry.code)"
-        >
-          {{ entry.label }}
-        </button>
-      </div>
-
       <div class="topbar-session">
-        <span v-if="isAuthenticated" class="session-user">{{ user.display_name }}</span>
         <button v-if="isAuthenticated" class="topbar-action" type="button" @click="handleLogout">
           {{ t('auth.logout') }}
         </button>
@@ -171,15 +170,5 @@ onMounted(() => {
         <span class="sidebar-link-label">{{ link.label }}</span>
       </RouterLink>
     </nav>
-
-    <div v-if="personalLinks.length" class="sidebar-section">
-      <span class="sidebar-section-label">{{ t('common.personalArea') }}</span>
-      <nav class="sidebar-nav sidebar-nav-compact" :aria-label="t('common.personalArea')">
-        <RouterLink v-for="link in personalLinks" :key="link.to" class="sidebar-link" :to="link.to" :title="link.label">
-          <span class="sidebar-link-icon" aria-hidden="true">{{ link.icon }}</span>
-          <span class="sidebar-link-label">{{ link.label }}</span>
-        </RouterLink>
-      </nav>
-    </div>
   </aside>
 </template>

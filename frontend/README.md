@@ -46,7 +46,7 @@ Routes:
 
 ## UI foundation
 
-The current layout uses a two-level enterprise app shell: a focused topbar for brand/account/staff/session controls and a collapsible left sidebar for the expandable module menu. The sidebar contains Home, Builds, Announcements, Forum, Calendar, Fleets and Guides. On desktop it can collapse to an icon rail; on tablet and mobile it becomes an off-canvas drawer. See `../docs/APP_SHELL_UI.md`.
+The current layout uses a two-level enterprise app shell: a focused topbar for brand/account/staff/session controls and a collapsible left sidebar for the expandable module menu. The sidebar contains Home, Builds, Guides, Group Search, Calendar, Forum and Fleets. On desktop it can collapse to an icon rail; on tablet and mobile it becomes an off-canvas drawer. See `../docs/APP_SHELL_UI.md`.
 
 The latest UI pass adds explicit desktop/tablet/mobile breakpoints at 1280px, 1024px, 768px, 560px and 420px. Navigation groups scroll horizontally on small screens, controls use touch-safe targets, and calendar/filter/management layouts scale without horizontal overflow.
 
@@ -108,7 +108,7 @@ admin / admin123
 
 ## Staff Panel
 
-The `/admin` route is the operational workspace for admins and moderators. It now includes quick actions, calendar appointment management and a content moderation view for forum threads, guides and fleet announcements.
+The `/admin` route is the operational workspace for admins and moderators. It now includes quick actions, calendar appointment management and a content moderation view for forum threads, guides and group searches.
 
 ## Fleet management UI
 
