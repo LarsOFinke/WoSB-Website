@@ -109,20 +109,18 @@ def _upgrade_access(ship: Ship, selected_upgrades: dict[int, BuildItemOption]) -
             continue
         unlock_effect_slots += int(_option_effects(option).get("extra_upgrade_slots", 0))
 
-    slot_5_supported = int(ship.upgrade_slots or 0) >= UNLOCKABLE_UPGRADE_SLOT
-    slot_5_unlocked = slot_5_supported and unlock_effect_slots > 0
-    slot_6_available = int(ship.upgrade_slots or 0) >= SHIP_EXTRA_UPGRADE_SLOT
+    unlocked_by_upgrades = min(max(unlock_effect_slots, 0), UPGRADE_SLOT_LIMIT - base_slots)
+    slot_5_unlocked = unlocked_by_upgrades >= 1
+    ship_extra_slots = 1 if int(ship.upgrade_slots or 0) >= SHIP_EXTRA_UPGRADE_SLOT else 0
+    slot_6_available = ship_extra_slots > 0 or unlocked_by_upgrades >= 2
 
     return {
         "base_slots": base_slots,
         "slot_5_unlocked": slot_5_unlocked,
         "slot_6_available": slot_6_available,
-        "unlock_effect_slots": max(unlock_effect_slots, 0),
-        "ship_extra_slots": 1 if slot_6_available else 0,
-        "available_slots": min(
-            UPGRADE_SLOT_LIMIT,
-            base_slots + (1 if slot_5_unlocked else 0) + (1 if slot_6_available else 0),
-        ),
+        "unlock_effect_slots": unlocked_by_upgrades,
+        "ship_extra_slots": ship_extra_slots,
+        "available_slots": min(UPGRADE_SLOT_LIMIT, base_slots + max(unlocked_by_upgrades, ship_extra_slots)),
     }
 
 
@@ -255,7 +253,7 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
         )
     if _normalize_name(build.upgrade_6) and not bool(upgrade_access["slot_6_available"]):
         raise BuildValidationError(
-            "Upgrade slot 6 is only available on ships with an extra upgrade slot."
+            "Upgrade slot 6 requires a ship extra slot or a +2 expansion effect in slots 1-4."
         )
 
     total_effects: dict[str, int | float] = {}

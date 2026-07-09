@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models import BuildItemCategory, BuildItemOption
 from app.schemas import BuildItemCategoryRead, BuildItemOptionRead, BuildOptionsCatalog
+from app.services.build_stat_service import stat_definitions_for_api
 
 
 def list_build_options(db: Session) -> BuildOptionsCatalog:
@@ -42,4 +43,5 @@ def list_build_options(db: Session) -> BuildOptionsCatalog:
     return BuildOptionsCatalog(
         categories=[BuildItemCategoryRead.model_validate(category) for category in categories],
         options=grouped,
+        stat_definitions=stat_definitions_for_api(),
     )

@@ -26,6 +26,20 @@ class BuildItemOptionRead(BaseModel):
     updated_at: datetime
 
 
+class BuildStatDefinitionRead(BaseModel):
+    key: str
+    label: str
+    category: str
+    base_field: str | None = None
+    unit: str | None = None
+    pct_effect: str | None = None
+    flat_effect: str | None = None
+    precision: int = 0
+    positive_is_good: bool = True
+    source: str | None = None
+
+
 class BuildOptionsCatalog(BaseModel):
     categories: list[BuildItemCategoryRead]
     options: dict[str, list[BuildItemOptionRead]]
+    stat_definitions: list[BuildStatDefinitionRead] = Field(default_factory=list)

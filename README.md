@@ -127,3 +127,7 @@ This repository is now a much cleaner prototype foundation, but before real user
 ## Single Fleet Refactor
 
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+
+## Build Designer Accuracy
+
+The Build Designer now uses a complete ship-stat catalog, normalized upgrade effects and a visible base/modifier/effective stat breakdown. See `docs/BUILD_DESIGNER_ACCURACY.md`.

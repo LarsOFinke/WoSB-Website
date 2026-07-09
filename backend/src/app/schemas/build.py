@@ -19,6 +19,21 @@ class InventorySlot(BaseModel):
         return self
 
 
+class BuildStatRow(BaseModel):
+    key: str
+    label: str
+    category: str
+    base: int | float | None = None
+    modifier: int | float | None = None
+    effective: int | float | None = None
+    unit: str | None = None
+    precision: int = 0
+    modifier_kind: str = "flat"
+    effect_key: str | None = None
+    is_debuff: bool = False
+    source: str | None = None
+
+
 class ShipStats(BaseModel):
     crew_total: int
     crew_capacity: int
@@ -40,6 +55,9 @@ class ShipStats(BaseModel):
     upgrade_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_buffs: dict[str, int | float] = Field(default_factory=dict)
     upgrade_debuffs: dict[str, int | float] = Field(default_factory=dict)
+    base_stats: dict[str, int | float | str | None] = Field(default_factory=dict)
+    effective_stats: dict[str, int | float | None] = Field(default_factory=dict)
+    stat_rows: list[BuildStatRow] = Field(default_factory=list)
     stat_warnings: list[str] = Field(default_factory=list)
     weapon_slots: dict[str, int]
     weapon_total: int

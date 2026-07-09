@@ -53,22 +53,40 @@ function buildTypeLabel(value) {
   return t(`builds.types.${value || 'balanced'}`)
 }
 
-function formatEffectKey(key) {
-  return String(key).replaceAll('_pct', '%').replaceAll('_', ' ')
+function roundByPrecision(value, precision = 0) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
+  const factor = 10 ** Number(precision || 0)
+  const rounded = Math.round(Number(value) * factor) / factor
+  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
 }
 
-function effectValue(value) {
-  const number = Number(value)
-  if (!Number.isFinite(number) || number === 0) return ''
-  return number > 0 ? `+${number}` : String(number)
+function formatStatValue(value, unit, precision = 0) {
+  const number = roundByPrecision(value, precision)
+  if (number === null) return '—'
+  return `${number}${unit ? ` ${unit}` : ''}`
 }
 
-const upgradeEffectRows = computed(() => Object.entries(build.value?.ship_stats?.upgrade_effects || {}).map(([key, value]) => ({
-  key,
-  label: formatEffectKey(key),
-  value: effectValue(value),
-  isDebuff: Number(value) < 0,
+function formatModifier(row) {
+  const value = Number(row.modifier || 0)
+  if (!Number.isFinite(value) || value === 0) return '—'
+  const sign = value > 0 ? '+' : ''
+  const suffix = row.modifier_kind === 'percent' || row.unit === '%' || String(row.effect_key || '').endsWith('_pct') ? '%' : (row.unit ? ` ${row.unit}` : '')
+  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
+}
+
+const statRows = computed(() => (build.value?.ship_stats?.stat_rows || []).map((row) => ({
+  ...row,
+  label: t(`builds.statLabels.${row.key}`),
 })))
+
+const upgradeEffectRows = computed(() => statRows.value
+  .filter((row) => Number(row.modifier || 0) !== 0)
+  .map((row) => ({
+    key: row.key,
+    label: row.label,
+    value: formatModifier(row),
+    isDebuff: row.is_debuff,
+  })))
 
 async function loadBuild() {
   loading.value = true
@@ -137,6 +155,27 @@ onMounted(loadBuild)
               <li v-for="warning in build.ship_stats.stat_warnings" :key="warning">{{ warning }}</li>
             </ul>
           </div>
+
+          <section class="wire-section build-stat-breakdown detail">
+            <div class="stat-breakdown-heading">
+              <strong>{{ t('builds.stats.breakdownTitle') }}</strong>
+              <span>{{ t('builds.stats.breakdownDetailHint') }}</span>
+            </div>
+            <div class="stat-comparison-table" role="table" :aria-label="t('builds.stats.breakdownTitle')">
+              <div class="stat-table-row stat-table-head" role="row">
+                <span role="columnheader">{{ t('builds.stats.columns.stat') }}</span>
+                <span role="columnheader">{{ t('builds.stats.columns.base') }}</span>
+                <span role="columnheader">{{ t('builds.stats.columns.modifier') }}</span>
+                <span role="columnheader">{{ t('builds.stats.columns.effective') }}</span>
+              </div>
+              <div v-for="row in statRows" :key="row.key" class="stat-table-row" :class="{ 'is-debuff': row.is_debuff, 'has-modifier': Number(row.modifier) !== 0 }" role="row">
+                <span role="cell">{{ row.label }}</span>
+                <span role="cell">{{ formatStatValue(row.base, row.unit, row.precision) }}</span>
+                <span role="cell">{{ formatModifier(row) }}</span>
+                <strong role="cell">{{ formatStatValue(row.effective, row.unit, row.precision) }}</strong>
+              </div>
+            </div>
+          </section>
 
           <div class="detail-grid two-cols">
             <article class="detail-card">

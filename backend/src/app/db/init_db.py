@@ -35,6 +35,22 @@ def _ensure_sqlite_columns() -> None:
         if "owner_id" not in build_columns:
             statements.append("ALTER TABLE builds ADD COLUMN owner_id INTEGER")
 
+    if "ships" in table_names:
+        ship_columns = {column["name"] for column in inspector.get_columns("ships")}
+        ship_column_defaults = {
+            "durability": "INTEGER NOT NULL DEFAULT 0",
+            "speed_knots": "FLOAT NOT NULL DEFAULT 0",
+            "maneuverability": "FLOAT NOT NULL DEFAULT 0",
+            "armor": "FLOAT NOT NULL DEFAULT 0",
+            "hold_capacity": "INTEGER NOT NULL DEFAULT 0",
+            "weapon_layout": "VARCHAR(40)",
+            "displacement_tons": "INTEGER NOT NULL DEFAULT 0",
+            "source": "VARCHAR(120)",
+        }
+        for column_name, ddl in ship_column_defaults.items():
+            if column_name not in ship_columns:
+                statements.append(f"ALTER TABLE ships ADD COLUMN {column_name} {ddl}")
+
     if "user_profiles" in table_names:
         profile_columns = {column["name"] for column in inspector.get_columns("user_profiles")}
         if "primary_fleet_membership_id" not in profile_columns:

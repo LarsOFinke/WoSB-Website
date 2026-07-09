@@ -102,15 +102,49 @@ function effectValue(value) {
   return number > 0 ? `+${number}` : String(number)
 }
 
-function formatEffectKey(key) {
-  return String(key).replaceAll('_pct', '%').replaceAll('_', ' ')
+function statDefinitionForEffect(key) {
+  return (optionCatalog.value.stat_definitions || []).find(
+    (definition) => definition.pct_effect === key || definition.flat_effect === key || definition.key === key,
+  )
+}
+
+function statLabel(key) {
+  const definition = statDefinitionForEffect(key)
+  return t(`builds.statLabels.${definition?.key || key}`)
 }
 
 function formatEffects(name) {
   const effects = upgradeEffects(name)
   const entries = Object.entries(effects).filter(([, value]) => Number(value) !== 0)
   if (!entries.length) return ''
-  return entries.map(([key, value]) => `${formatEffectKey(key)} ${effectValue(value)}`).join(' · ')
+  return entries.map(([key, value]) => `${statLabel(key)} ${effectValue(value)}${key.endsWith('_pct') ? '%' : ''}`).join(' · ')
+}
+
+function getBaseStat(definition) {
+  if (!definition?.base_field || !selectedShip.value) return null
+  const value = selectedShip.value[definition.base_field]
+  return Number.isFinite(Number(value)) ? Number(value) : null
+}
+
+function roundByPrecision(value, precision = 0) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
+  const factor = 10 ** Number(precision || 0)
+  const rounded = Math.round(Number(value) * factor) / factor
+  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
+}
+
+function formatStatValue(value, unit, precision = 0) {
+  const number = roundByPrecision(value, precision)
+  if (number === null) return '—'
+  return `${number}${unit ? ` ${unit}` : ''}`
+}
+
+function formatModifier(row) {
+  const value = Number(row.modifier || 0)
+  if (!Number.isFinite(value) || value === 0) return '—'
+  const sign = value > 0 ? '+' : ''
+  const suffix = row.modifier_kind === 'percent' || row.unit === '%' || String(row.effect_key || '').endsWith('_pct') ? '%' : (row.unit ? ` ${row.unit}` : '')
+  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
 }
 
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
@@ -134,9 +168,11 @@ const upgradeEffectTotals = computed(() => {
   return totals
 })
 const baseUpgradeSlots = computed(() => Math.min(Math.max(Number(selectedShip.value?.upgrade_slots || 5), 0), 4))
-const upgradeSlot5Unlocked = computed(() => Math.max(0, Number(firstFourUpgradeEffects.value.extra_upgrade_slots) || 0) > 0)
-const upgradeSlot6Available = computed(() => Number(selectedShip.value?.upgrade_slots || 5) >= 6)
-const availableUpgradeSlots = computed(() => baseUpgradeSlots.value + (upgradeSlot5Unlocked.value ? 1 : 0) + (upgradeSlot6Available.value ? 1 : 0))
+const unlockedByUpgrades = computed(() => Math.min(Math.max(0, Number(firstFourUpgradeEffects.value.extra_upgrade_slots) || 0), equipmentUpgradeCount - baseUpgradeSlots.value))
+const shipExtraUpgradeSlots = computed(() => Number(selectedShip.value?.upgrade_slots || 5) >= 6 ? 1 : 0)
+const upgradeSlot5Unlocked = computed(() => unlockedByUpgrades.value >= 1)
+const upgradeSlot6Available = computed(() => shipExtraUpgradeSlots.value > 0 || unlockedByUpgrades.value >= 2)
+const availableUpgradeSlots = computed(() => Math.min(equipmentUpgradeCount, baseUpgradeSlots.value + Math.max(unlockedByUpgrades.value, shipExtraUpgradeSlots.value)))
 const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(upgradeEffectTotals.value.crew_capacity) || 0)))
 const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(upgradeEffectTotals.value.sailor_minimum) || 0)))
 
@@ -157,6 +193,33 @@ const shipStatsPreview = computed(() => ({
   inventorySlots: slotCount('ammunition_slots') + slotCount('consumable_slots') + slotCount('hold_slots'),
   upgrades: upgradeSlotsUsed.value,
 }))
+
+const statDefinitions = computed(() => optionCatalog.value.stat_definitions || [])
+const buildStatRows = computed(() => statDefinitions.value
+  .map((definition) => {
+    const base = getBaseStat(definition)
+    const pctModifier = Number(upgradeEffectTotals.value[definition.pct_effect] || 0)
+    const flatModifier = Number(upgradeEffectTotals.value[definition.flat_effect] || 0)
+    const modifier = pctModifier + flatModifier
+    if (base === null && modifier === 0) return null
+
+    let effective = base
+    if (effective !== null && definition.pct_effect) effective *= (1 + pctModifier / 100)
+    if (effective !== null && definition.flat_effect) effective += flatModifier
+    if (effective === null && definition.flat_effect) effective = flatModifier
+
+    return {
+      ...definition,
+      label: t(`builds.statLabels.${definition.key}`),
+      base: roundByPrecision(base, definition.precision),
+      modifier: roundByPrecision(modifier, definition.precision),
+      effective: roundByPrecision(effective, definition.precision),
+      modifier_kind: definition.pct_effect && definition.base_field ? 'percent' : 'flat',
+      effect_key: definition.pct_effect || definition.flat_effect,
+      isDebuff: modifier !== 0 && (definition.positive_is_good === false ? modifier > 0 : modifier < 0),
+    }
+  })
+  .filter(Boolean))
 
 const canSubmit = computed(
   () => form.build_name.trim()
@@ -357,11 +420,26 @@ onMounted(async () => {
         <div v-if="selectedShip" class="ship-stat-row" :aria-label="t('builds.create.sections.ship')">
           <span>{{ t('builds.create.stats.rate', { value: selectedShip.rate }) }}</span>
           <span>{{ t('builds.create.stats.type', { value: selectedShip.ship_type }) }}</span>
+          <span>{{ t('builds.create.stats.durability', { value: selectedShip.durability }) }}</span>
+          <span>{{ t('builds.create.stats.speed', { value: selectedShip.speed_knots }) }}</span>
           <span>{{ t('builds.create.stats.crew', { value: selectedShip.crew_capacity }) }}</span>
           <span>{{ t('builds.create.stats.sailorMinimum', { value: selectedShip.sailor_minimum }) }}</span>
           <span>{{ t('builds.create.stats.upgrades', { count: availableUpgradeSlots }) }}</span>
           <span>{{ t('builds.create.stats.weapons', { value: shipStatsPreview.weaponTotal }) }}</span>
           <span>{{ t('builds.create.stats.specialCrew', { value: shipStatsPreview.specialCrew }) }}</span>
+        </div>
+        <div v-if="selectedShip" class="build-stat-breakdown compact">
+          <div class="stat-breakdown-heading">
+            <strong>{{ t('builds.stats.breakdownTitle') }}</strong>
+            <span>{{ t('builds.stats.breakdownHint') }}</span>
+          </div>
+          <div class="stat-breakdown-grid">
+            <article v-for="row in buildStatRows" :key="row.key" class="stat-breakdown-row" :class="{ 'is-debuff': row.isDebuff, 'has-modifier': Number(row.modifier) !== 0 }">
+              <span>{{ row.label }}</span>
+              <strong>{{ formatStatValue(row.effective, row.unit, row.precision) }}</strong>
+              <small>{{ t('builds.stats.baseAndModifier', { base: formatStatValue(row.base, row.unit, row.precision), modifier: formatModifier(row) }) }}</small>
+            </article>
+          </div>
         </div>
       </section>
 

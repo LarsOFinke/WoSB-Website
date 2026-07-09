@@ -66,3 +66,7 @@ See `../docs/FRONTEND_ARCHITECTURE.md` for frontend conventions.
 ## Single Fleet Refactor
 
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+
+## Build stat breakdown
+
+Build create/detail views show base ship stats, selected upgrade modifiers and effective build values using the stat definitions returned by `/api/builds/options`.

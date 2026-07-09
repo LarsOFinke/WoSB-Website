@@ -1,7 +1,7 @@
 from app.schemas.admin import AppLogRead, AppLogSummary, ModeratorCreate, ModeratorCreateResponse, RegistrationDecision, RegistrationRequestRead
 from app.schemas.auth import LoginRequest, LoginResponse, PasswordChangeRequest, PasswordChangeResponse, ProfileUpdate, RegisterRequest, RegisterResponse, RegistrationRequestPublic, UserRead
 from app.schemas.build import BuildCreate, BuildRead
-from app.schemas.build_option import BuildItemCategoryRead, BuildItemOptionRead, BuildOptionsCatalog
+from app.schemas.build_option import BuildItemCategoryRead, BuildItemOptionRead, BuildOptionsCatalog, BuildStatDefinitionRead
 from app.schemas.ship import ShipRead
 from app.schemas.group import GroupCreate, GroupJoinRequest, GroupMemberRead, GroupRead
 from app.schemas.file_asset import FileRead
@@ -31,6 +31,7 @@ __all__ = [
     "BuildItemCategoryRead",
     "BuildItemOptionRead",
     "BuildOptionsCatalog",
+    "BuildStatDefinitionRead",
     "FileRead",
     "FleetCreate",
     "FleetDetail",

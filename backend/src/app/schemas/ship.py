@@ -8,8 +8,16 @@ class ShipRead(BaseModel):
     name: str
     rate: int
     ship_type: str
+    durability: int
+    speed_knots: float
+    maneuverability: float
+    armor: float
+    hold_capacity: int
     crew_capacity: int
     sailor_minimum: int
+    weapon_layout: str | None = None
+    displacement_tons: int
+    source: str | None = None
     sail_slots: int
     upgrade_slots: int
     has_lantern: bool

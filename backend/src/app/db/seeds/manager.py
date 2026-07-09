@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.seeds.ammunition import AMMUNITION_OPTIONS
+from app.db.seeds.build_catalog_quality import validate_ship_seed_data, validate_upgrade_seed_data
 from app.db.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.db.seeds.consumables import CONSUMABLE_OPTIONS
 from app.db.seeds.demo_builds import DEMO_BUILD_DATA
@@ -73,6 +74,7 @@ class SeedManager:
         self.db.commit()
 
     def seed_ships(self) -> None:
+        validate_ship_seed_data(SHIP_SEED_DATA)
         for ship_data in SHIP_SEED_DATA:
             existing = self.db.scalar(select(Ship).where(Ship.name == ship_data["name"]))
             if existing is None:
@@ -83,6 +85,7 @@ class SeedManager:
         self.db.commit()
 
     def seed_build_options(self) -> None:
+        validate_upgrade_seed_data(UPGRADE_OPTIONS)
         categories: dict[str, BuildItemCategory] = {}
         active_category_keys = {category["key"] for category in BUILD_ITEM_CATEGORIES}
 

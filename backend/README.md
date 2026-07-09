@@ -72,3 +72,7 @@ Before production, add Alembic migrations and move from SQLite to PostgreSQL. Se
 ## Single Fleet Refactor
 
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+
+## Build Designer catalog checks
+
+Ship and upgrade seeds are validated before seeding via `app.db.seeds.build_catalog_quality`. Build stat rows are calculated centrally in `app.services.build_stat_service`.

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.ship import Ship
+from app.services.build_stat_service import build_base_stats, build_stat_rows, effective_stats_from_rows
 
 WEAPON_SLOT_TYPE_BY_ARC = {
     "front": "weapon_front",
@@ -14,6 +15,7 @@ WEAPON_SLOT_TYPE_BY_ARC = {
     "starboard": "weapon_starboard",
 }
 UPGRADE_SLOT_NUMBERS = (1, 2, 3, 4, 5, 6)
+UPGRADE_SLOT_LIMIT = len(UPGRADE_SLOT_NUMBERS)
 BASE_UPGRADE_SLOT_LIMIT = 4
 UNLOCKABLE_UPGRADE_SLOT = 5
 SHIP_EXTRA_UPGRADE_SLOT = 6
@@ -187,17 +189,19 @@ class Build(Base):
         upgrade_slots_used = sum(1 for name in upgrade_names if name)
         base_upgrade_slots_available = min(max(int(self.ship.upgrade_slots or 0), 0), BASE_UPGRADE_SLOT_LIMIT)
         extra_upgrade_slots = max(0, int(unlock_effects.get("extra_upgrade_slots", 0)))
-        upgrade_slot_5_unlocked = int(self.ship.upgrade_slots or 0) >= UNLOCKABLE_UPGRADE_SLOT and extra_upgrade_slots > 0
+        unlocked_by_upgrades = min(extra_upgrade_slots, UPGRADE_SLOT_LIMIT - base_upgrade_slots_available)
+        upgrade_slot_5_unlocked = unlocked_by_upgrades >= 1
         ship_extra_upgrade_slots = 1 if int(self.ship.upgrade_slots or 0) >= SHIP_EXTRA_UPGRADE_SLOT else 0
-        upgrade_slot_6_available = ship_extra_upgrade_slots > 0
+        upgrade_slot_6_available = ship_extra_upgrade_slots > 0 or unlocked_by_upgrades >= 2
         upgrade_slots_available = min(
-            6,
-            base_upgrade_slots_available
-            + (1 if upgrade_slot_5_unlocked else 0)
-            + ship_extra_upgrade_slots,
+            UPGRADE_SLOT_LIMIT,
+            base_upgrade_slots_available + max(unlocked_by_upgrades, ship_extra_upgrade_slots),
         )
         # Backward-compatible name for existing frontend/API consumers.
-        upgrade_slot_6_unlocked = upgrade_slot_6_available
+        upgrade_slot_6_unlocked = upgrade_slot_6_available and unlocked_by_upgrades >= 2
+        stat_rows = build_stat_rows(self.ship, effects)
+        base_stats = build_base_stats(self.ship)
+        effective_stats = effective_stats_from_rows(stat_rows)
         debuffs = {key: value for key, value in effects.items() if value < 0 or key.startswith("debuff_") or key in DEBUFF_KEYS and value < 0}
         buffs = {key: value for key, value in effects.items() if key not in debuffs and key != "extra_upgrade_slots"}
         warnings: list[str] = []
@@ -231,6 +235,9 @@ class Build(Base):
             "upgrade_effects": effects,
             "upgrade_buffs": buffs,
             "upgrade_debuffs": debuffs,
+            "base_stats": base_stats,
+            "effective_stats": effective_stats,
+            "stat_rows": stat_rows,
             "stat_warnings": warnings,
             "weapon_slots": weapon_slots,
             "weapon_total": sum(weapon_slots.values()),
