@@ -45,6 +45,9 @@ class GroupBase(BaseModel):
     title: str = Field(min_length=1, max_length=140)
     focus: str = Field(default="pve_general", max_length=80)
     description: str | None = Field(default=None, max_length=2000)
+    expectations: str | None = Field(default=None, max_length=2000)
+    activity_plan: str | None = Field(default=None, max_length=2000)
+    contact_note: str | None = Field(default=None, max_length=300)
     max_members: int = Field(default=5, ge=2, le=50)
     min_ship_rate: int | None = Field(default=None, ge=1, le=7)
     max_ship_rate: int | None = Field(default=None, ge=1, le=7)
@@ -63,7 +66,7 @@ class GroupBase(BaseModel):
     def normalize_strings(self) -> "GroupBase":
         if self.min_ship_rate is not None and self.max_ship_rate is not None and self.max_ship_rate > self.min_ship_rate:
             raise ValueError("Maximum rate must be numerically lower than or equal to minimum rate.")
-        for field_name in ("title", "description", "fleet_restriction"):
+        for field_name in ("title", "description", "expectations", "activity_plan", "contact_note", "fleet_restriction"):
             value = getattr(self, field_name)
             if isinstance(value, str):
                 stripped = value.strip()

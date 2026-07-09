@@ -39,10 +39,6 @@ const rateRangeInvalid = computed(() =>
   minShipRate.value && maxShipRate.value && Number(maxShipRate.value) > Number(minShipRate.value),
 )
 
-function memberSummary(group) {
-  return t('groups.list.members', { current: group.active_members_count, max: group.max_members })
-}
-
 function rateRequirement(group) {
   if (group.min_ship_rate && group.max_ship_rate) {
     return t('groups.list.rateRange', { max: group.max_ship_rate, min: group.min_ship_rate })
@@ -53,9 +49,8 @@ function rateRequirement(group) {
 }
 
 function groupMeta(group) {
-  const parts = [t(`focus.${group.focus}`), memberSummary(group)]
+  const parts = [t(`focus.${group.focus}`), t('groups.list.announcementMode')]
   if (group.min_ship_rate || group.max_ship_rate) parts.push(rateRequirement(group))
-  if (group.allow_guests) parts.push(t('groups.list.guestsAllowed'))
   return parts.join(' · ')
 }
 
@@ -163,7 +158,7 @@ onMounted(loadGroups)
 
             <div class="build-card-meta refined-meta">
               <span>{{ t('groups.list.leader', { name: group.owner.display_name }) }}</span>
-              <span>{{ t('groups.list.spotsLeft', { count: group.spots_left }) }}</span>
+              <span>{{ t('groups.list.announcementMode') }}</span>
               <span>{{ rateRequirement(group) }}</span>
               <span>{{ group.fleet_restriction || t('groups.list.noFleetRestriction') }}</span>
             </div>

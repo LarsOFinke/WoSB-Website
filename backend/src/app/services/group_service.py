@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Group, GroupMember, Ship, User
-from app.models.group import GROUP_STATUS_CLOSED, GROUP_STATUS_FULL, GROUP_STATUS_OPEN, DEFAULT_GROUP_LIFETIME_HOURS
+from app.models import Group, GroupMember, User
+from app.models.group import GROUP_STATUS_CLOSED, GROUP_STATUS_OPEN, DEFAULT_GROUP_LIFETIME_HOURS
 from app.schemas.group import GroupCreate, GroupJoinRequest
 
 
@@ -26,7 +26,7 @@ def _normalize_like(value: str | None) -> str | None:
 def _refresh_group_status(group: Group) -> None:
     if group.status == GROUP_STATUS_CLOSED:
         return
-    group.status = GROUP_STATUS_FULL if group.active_members_count >= group.max_members else GROUP_STATUS_OPEN
+    group.status = GROUP_STATUS_OPEN
 
 
 def list_groups(
@@ -36,12 +36,16 @@ def list_groups(
     min_ship_rate: int | None = None,
     max_ship_rate: int | None = None,
 ) -> list[Group]:
-    statement = _group_query().where(Group.status.in_([GROUP_STATUS_OPEN, GROUP_STATUS_FULL]))
+    statement = _group_query().where(Group.status == GROUP_STATUS_OPEN)
     if search := _normalize_like(search):
         like = f"%{search}%"
         statement = statement.where(
             Group.title.ilike(like)
             | Group.focus.ilike(like)
+            | Group.description.ilike(like)
+            | Group.expectations.ilike(like)
+            | Group.activity_plan.ilike(like)
+            | Group.contact_note.ilike(like)
             | Group.fleet_restriction.ilike(like)
         )
     if focus := _normalize_like(focus):
@@ -61,7 +65,14 @@ def list_user_groups(db: Session, owner_id: int, search: str | None = None) -> l
     statement = _group_query().where(Group.owner_id == owner_id)
     if search := _normalize_like(search):
         like = f"%{search}%"
-        statement = statement.where(Group.title.ilike(like) | Group.focus.ilike(like))
+        statement = statement.where(
+            Group.title.ilike(like)
+            | Group.focus.ilike(like)
+            | Group.description.ilike(like)
+            | Group.expectations.ilike(like)
+            | Group.activity_plan.ilike(like)
+            | Group.contact_note.ilike(like)
+        )
     statement = statement.order_by(Group.created_at.desc(), Group.id.desc())
     return list(db.scalars(statement).unique().all())
 
@@ -81,6 +92,9 @@ def create_group(db: Session, payload: GroupCreate, owner_id: int) -> Group:
         title=payload.title,
         focus=payload.focus,
         description=payload.description,
+        expectations=payload.expectations,
+        activity_plan=payload.activity_plan,
+        contact_note=payload.contact_note,
         max_members=payload.max_members,
         min_ship_rate=payload.min_ship_rate,
         max_ship_rate=payload.max_ship_rate,
@@ -153,38 +167,5 @@ def _require_joinable(group: Group, payload: GroupJoinRequest, current_user: Use
 def join_group(db: Session, group_id: int, payload: GroupJoinRequest, current_user: User | None) -> Group:
     group = get_group(db, group_id)
     if group is None:
-        raise GroupValidationError("Group not found.")
-
-    ship = None
-    ship_rate = payload.ship_rate
-    ship_name = payload.ship_name
-    if payload.ship_id is not None:
-        ship = db.get(Ship, payload.ship_id)
-        if ship is None or not ship.is_active:
-            raise GroupValidationError("The selected ship does not exist.")
-        ship_rate = ship.rate
-        ship_name = ship.name
-
-    resolved_payload = payload.model_copy(update={"ship_rate": ship_rate, "ship_name": ship_name})
-    _require_joinable(group, resolved_payload, current_user)
-
-    display_name = payload.display_name or (current_user.display_name if current_user else None)
-    if not display_name:
-        raise GroupValidationError("Display name is required.")
-
-    member = GroupMember(
-        group_id=group.id,
-        user_id=current_user.id if current_user else None,
-        is_guest=current_user is None,
-        display_name=display_name,
-        fleet_name=payload.fleet_name or (current_user.fleet_name if current_user else None),
-        ship_id=ship.id if ship else None,
-        ship_name=ship_name,
-        ship_rate=ship_rate,
-        note=payload.note,
-    )
-    db.add(member)
-    db.flush()
-    _refresh_group_status(group)
-    db.commit()
-    return get_group(db, group_id) or group
+        raise GroupValidationError("Announcement not found.")
+    raise GroupValidationError("Joining is disabled while groups are used as fleet announcements.")

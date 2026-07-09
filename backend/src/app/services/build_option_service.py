@@ -1,8 +1,26 @@
+import json
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import BuildItemCategory, BuildItemOption
 from app.schemas import BuildItemCategoryRead, BuildItemOptionRead, BuildOptionsCatalog
+
+
+def _parse_effects(raw: str | None) -> dict[str, int | float]:
+    if not raw:
+        return {}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        str(key): value
+        for key, value in payload.items()
+        if isinstance(value, (int, float))
+    }
 
 
 def list_build_options(db: Session) -> BuildOptionsCatalog:
@@ -31,6 +49,7 @@ def list_build_options(db: Session) -> BuildOptionsCatalog:
                 name=option.name,
                 source=option.source,
                 notes=option.notes,
+                stat_effects=_parse_effects(option.stat_effects),
                 sort_order=option.sort_order,
                 created_at=option.created_at,
                 updated_at=option.updated_at,

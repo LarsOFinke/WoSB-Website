@@ -16,7 +16,13 @@ const saving = ref(false)
 const error = ref('')
 
 const slotPlaceholderSrc = '/icons/slot-placeholder.svg'
-const equipmentUpgradeCount = 5
+const equipmentUpgradeCount = 6
+const weaponArcFields = [
+  { fieldName: 'front_weapon_slots', labelKey: 'builds.create.weapons.front', altKey: 'builds.create.weapons.frontAlt' },
+  { fieldName: 'rear_weapon_slots', labelKey: 'builds.create.weapons.rear', altKey: 'builds.create.weapons.rearAlt' },
+  { fieldName: 'port_weapon_slots', labelKey: 'builds.create.weapons.port', altKey: 'builds.create.weapons.portAlt' },
+  { fieldName: 'starboard_weapon_slots', labelKey: 'builds.create.weapons.starboard', altKey: 'builds.create.weapons.starboardAlt' },
+]
 
 const buildTypeOptions = computed(() => [
   { value: 'balanced', label: t('builds.types.balanced') },
@@ -25,7 +31,12 @@ const buildTypeOptions = computed(() => [
   { value: 'defensive', label: t('builds.types.defensive') },
 ])
 
-const inventoryLimits = {
+const slotLimits = {
+  front_weapon_slots: 12,
+  rear_weapon_slots: 12,
+  port_weapon_slots: 12,
+  starboard_weapon_slots: 12,
+  special_crew_slots: 8,
   ammunition_slots: 12,
   consumable_slots: 3,
   hold_slots: 24,
@@ -59,11 +70,17 @@ const form = reactive({
   upgrade_3: '',
   upgrade_4: '',
   upgrade_5: '',
+  upgrade_6: '',
   lantern: '',
   sailors: 0,
   soldiers: 0,
   musketeers: 0,
   mercenaries: 0,
+  front_weapon_slots: [emptySlot()],
+  rear_weapon_slots: [emptySlot()],
+  port_weapon_slots: [emptySlot()],
+  starboard_weapon_slots: [emptySlot()],
+  special_crew_slots: [emptySlot()],
   ammunition_slots: [emptySlot()],
   consumable_slots: [emptySlot()],
   hold_slots: [emptySlot()],
@@ -71,8 +88,57 @@ const form = reactive({
 })
 
 const selectedShip = computed(() => ships.value.find((ship) => ship.id === Number(form.ship_id)))
-const crewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
-const sailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
+function optionMeta(categoryKey, name) {
+  return (optionCatalog.value.options?.[categoryKey] || []).find((option) => option.name === name)
+}
+
+function upgradeEffects(name) {
+  return optionMeta('upgrade', name)?.stat_effects || {}
+}
+
+function effectValue(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number) || number === 0) return ''
+  return number > 0 ? `+${number}` : String(number)
+}
+
+function formatEffectKey(key) {
+  return String(key).replaceAll('_pct', '%').replaceAll('_', ' ')
+}
+
+function formatEffects(name) {
+  const effects = upgradeEffects(name)
+  const entries = Object.entries(effects).filter(([, value]) => Number(value) !== 0)
+  if (!entries.length) return ''
+  return entries.map(([key, value]) => `${formatEffectKey(key)} ${effectValue(value)}`).join(' · ')
+}
+
+const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
+const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
+const firstFourUpgradeEffects = computed(() => {
+  const totals = {}
+  for (const name of [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4].filter(Boolean)) {
+    for (const [key, value] of Object.entries(upgradeEffects(name))) {
+      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
+    }
+  }
+  return totals
+})
+const upgradeEffectTotals = computed(() => {
+  const totals = {}
+  for (const name of [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean)) {
+    for (const [key, value] of Object.entries(upgradeEffects(name))) {
+      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
+    }
+  }
+  return totals
+})
+const baseUpgradeSlots = computed(() => Math.min(Math.max(Number(selectedShip.value?.upgrade_slots || 5), 0), 4))
+const upgradeSlot5Unlocked = computed(() => Math.max(0, Number(firstFourUpgradeEffects.value.extra_upgrade_slots) || 0) > 0)
+const upgradeSlot6Available = computed(() => Number(selectedShip.value?.upgrade_slots || 5) >= 6)
+const availableUpgradeSlots = computed(() => baseUpgradeSlots.value + (upgradeSlot5Unlocked.value ? 1 : 0) + (upgradeSlot6Available.value ? 1 : 0))
+const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(upgradeEffectTotals.value.crew_capacity) || 0)))
+const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(upgradeEffectTotals.value.sailor_minimum) || 0)))
 
 const crewTotal = computed(
   () => Number(form.sailors) + Number(form.soldiers) + Number(form.musketeers) + Number(form.mercenaries),
@@ -82,8 +148,23 @@ const crewOverLimit = computed(() => crewCapacity.value > 0 && crewTotal.value >
 const sailorsBelowMinimum = computed(() => Number(form.sailors) < sailorMinimum.value)
 const crewInvalid = computed(() => crewOverLimit.value || sailorsBelowMinimum.value)
 
+const upgradeSlotsUsed = computed(() =>
+  [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean).length,
+)
+const shipStatsPreview = computed(() => ({
+  weaponTotal: allWeaponQuantityTotal(),
+  specialCrew: slotQuantityTotal('special_crew_slots'),
+  inventorySlots: slotCount('ammunition_slots') + slotCount('consumable_slots') + slotCount('hold_slots'),
+  upgrades: upgradeSlotsUsed.value,
+}))
+
 const canSubmit = computed(
-  () => form.build_name.trim() && form.ship_id && !crewInvalid.value && !saving.value,
+  () => form.build_name.trim()
+    && form.ship_id
+    && !crewInvalid.value
+    && (!form.upgrade_5 || upgradeSlot5Unlocked.value)
+    && (!form.upgrade_6 || upgradeSlot6Available.value)
+    && !saving.value,
 )
 
 function normalizeInventorySlots(slots) {
@@ -95,16 +176,36 @@ function normalizeInventorySlots(slots) {
     .filter((slot) => slot.item)
 }
 
-function inventoryCount(fieldName) {
+function slotCount(fieldName) {
   return normalizeInventorySlots(form[fieldName]).length
+}
+
+function slotQuantityTotal(fieldName) {
+  return normalizeInventorySlots(form[fieldName]).reduce((total, slot) => total + (Number(slot.quantity) || 1), 0)
+}
+
+function allWeaponQuantityTotal() {
+  return weaponArcFields.reduce((total, arc) => total + slotQuantityTotal(arc.fieldName), 0)
 }
 
 function isOptionUsed(slots, option, currentIndex) {
   return slots.some((slot, index) => index !== currentIndex && slot.item === option)
 }
 
+function isUpgradeSlotDisabled(index) {
+  if (index === 5) return !upgradeSlot5Unlocked.value
+  if (index === 6) return !upgradeSlot6Available.value
+  return false
+}
+
+function upgradeSlotPlaceholder(index) {
+  if (index === 5 && !upgradeSlot5Unlocked.value) return t('builds.create.equipment.lockedUpgrade5')
+  if (index === 6 && !upgradeSlot6Available.value) return t('builds.create.equipment.lockedUpgrade6')
+  return t('common.empty')
+}
+
 function onInventorySlotChange(fieldName) {
-  const maxSlots = inventoryLimits[fieldName]
+  const maxSlots = slotLimits[fieldName]
   const filled = normalizeInventorySlots(form[fieldName]).slice(0, maxSlots)
 
   if (filled.length < maxSlots) {
@@ -121,10 +222,10 @@ function setCrewToShipMinimum() {
   form.mercenaries = 0
 }
 
-function resetInventory() {
-  form.ammunition_slots = [emptySlot()]
-  form.consumable_slots = [emptySlot()]
-  form.hold_slots = [emptySlot()]
+function resetSlots() {
+  for (const fieldName of Object.keys(slotLimits)) {
+    form[fieldName] = [emptySlot()]
+  }
 }
 
 function buildPayload() {
@@ -135,6 +236,11 @@ function buildPayload() {
     soldiers: Number(form.soldiers),
     musketeers: Number(form.musketeers),
     mercenaries: Number(form.mercenaries),
+    front_weapon_slots: normalizeInventorySlots(form.front_weapon_slots),
+    rear_weapon_slots: normalizeInventorySlots(form.rear_weapon_slots),
+    port_weapon_slots: normalizeInventorySlots(form.port_weapon_slots),
+    starboard_weapon_slots: normalizeInventorySlots(form.starboard_weapon_slots),
+    special_crew_slots: normalizeInventorySlots(form.special_crew_slots),
     ammunition_slots: normalizeInventorySlots(form.ammunition_slots),
     consumable_slots: normalizeInventorySlots(form.consumable_slots),
     hold_slots: normalizeInventorySlots(form.hold_slots),
@@ -169,6 +275,18 @@ watch(sailorMinimum, (minimum) => {
   }
 })
 
+watch(upgradeSlot5Unlocked, (isUnlocked) => {
+  if (!isUnlocked) {
+    form.upgrade_5 = ''
+  }
+})
+
+watch(upgradeSlot6Available, (isAvailable) => {
+  if (!isAvailable) {
+    form.upgrade_6 = ''
+  }
+})
+
 onMounted(async () => {
   loading.value = true
   error.value = ''
@@ -177,7 +295,7 @@ onMounted(async () => {
     ships.value = sortShipsForDropdown(shipRows)
     optionCatalog.value = options
     form.ship_id = ships.value[0]?.id || ''
-    resetInventory()
+    resetSlots()
     setCrewToShipMinimum()
   } catch (err) {
     error.value = err.message || t('builds.create.loadError')
@@ -241,7 +359,9 @@ onMounted(async () => {
           <span>{{ t('builds.create.stats.type', { value: selectedShip.ship_type }) }}</span>
           <span>{{ t('builds.create.stats.crew', { value: selectedShip.crew_capacity }) }}</span>
           <span>{{ t('builds.create.stats.sailorMinimum', { value: selectedShip.sailor_minimum }) }}</span>
-          <span>{{ t('builds.create.stats.upgrades') }}</span>
+          <span>{{ t('builds.create.stats.upgrades', { count: availableUpgradeSlots }) }}</span>
+          <span>{{ t('builds.create.stats.weapons', { value: shipStatsPreview.weaponTotal }) }}</span>
+          <span>{{ t('builds.create.stats.specialCrew', { value: shipStatsPreview.specialCrew }) }}</span>
         </div>
       </section>
 
@@ -266,10 +386,15 @@ onMounted(async () => {
             <span class="slot-visual"><img :src="slotPlaceholderSrc" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.upgrade', { index }) }}</span>
             <span class="select-shell">
-              <select v-model="form[`upgrade_${index}`]" :aria-label="t('builds.create.equipment.upgrade', { index })">
-                <option value="">{{ t('common.empty') }}</option>
+              <select
+                v-model="form[`upgrade_${index}`]"
+                :aria-label="t('builds.create.equipment.upgrade', { index })"
+                :disabled="isUpgradeSlotDisabled(index)"
+              >
+                <option value="">{{ upgradeSlotPlaceholder(index) }}</option>
                 <option v-for="option in optionsFor('upgrade')" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
+              <small v-if="form[`upgrade_${index}`]" class="slot-effect-text">{{ formatEffects(form[`upgrade_${index}`]) }}</small>
             </span>
           </label>
 
@@ -286,9 +411,89 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section class="wire-section form-section crew-section" :aria-label="t('builds.create.sections.crew')">
+      <section class="wire-section form-section weapons-section" :aria-label="t('builds.create.sections.weapons')">
         <div class="section-title">
           <span>04</span>
+          <h2>{{ t('builds.create.sections.weapons') }}</h2>
+        </div>
+        <p class="section-helper-text">{{ t('builds.create.weapons.hint') }}</p>
+        <div class="inventory-grid weapon-arc-grid four-columns">
+          <div v-for="arc in weaponArcFields" :key="arc.fieldName" class="inventory-panel weapon-arc-panel">
+            <div class="inventory-heading">
+              <strong>{{ t(arc.labelKey) }}</strong>
+              <span>{{ t('builds.create.inventory.slotCount', { count: slotCount(arc.fieldName) }) }}</span>
+            </div>
+            <label v-for="(slot, index) in form[arc.fieldName]" :key="`${arc.fieldName}-${index}`" class="inventory-slot-select with-quantity">
+              <span class="slot-image-cell">
+                <img :src="slotPlaceholderSrc" :alt="t(arc.altKey, { index: index + 1 })" />
+              </span>
+              <select v-model="slot.item" @change="onInventorySlotChange(arc.fieldName)">
+                <option value="">{{ t('common.empty') }}</option>
+                <option
+                  v-for="option in optionsFor('weapon')"
+                  :key="option"
+                  :value="option"
+                  :disabled="isOptionUsed(form[arc.fieldName], option, index)"
+                >
+                  {{ optionLabel(option) }}
+                </option>
+              </select>
+              <input
+                v-model.number="slot.quantity"
+                type="number"
+                min="1"
+                max="999999"
+                :aria-label="t('common.quantity')"
+                @change="onInventorySlotChange(arc.fieldName)"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="wire-section form-section special-crew-section" :aria-label="t('builds.create.sections.specialCrew')">
+        <div class="section-title">
+          <span>05</span>
+          <h2>{{ t('builds.create.sections.specialCrew') }}</h2>
+        </div>
+        <p class="section-helper-text">{{ t('builds.create.specialCrew.hint') }}</p>
+        <div class="inventory-grid special-crew-grid single-column">
+          <div class="inventory-panel special-crew-panel">
+            <div class="inventory-heading">
+              <strong>{{ t('builds.create.specialCrew.title') }}</strong>
+              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotCount('special_crew_slots'), max: 8 }) }}</span>
+            </div>
+            <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select with-quantity">
+              <span class="slot-image-cell">
+                <img :src="slotPlaceholderSrc" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
+              </span>
+              <select v-model="slot.item" @change="onInventorySlotChange('special_crew_slots')">
+                <option value="">{{ t('common.empty') }}</option>
+                <option
+                  v-for="option in optionsFor('special_crew')"
+                  :key="option"
+                  :value="option"
+                  :disabled="isOptionUsed(form.special_crew_slots, option, index)"
+                >
+                  {{ optionLabel(option) }}
+                </option>
+              </select>
+              <input
+                v-model.number="slot.quantity"
+                type="number"
+                min="1"
+                max="999999"
+                :aria-label="t('common.quantity')"
+                @change="onInventorySlotChange('special_crew_slots')"
+              />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="wire-section form-section crew-section" :aria-label="t('builds.create.sections.crew')">
+        <div class="section-title">
+          <span>06</span>
           <h2>{{ t('builds.create.sections.crew') }}</h2>
         </div>
         <div class="crew-status" :class="{ 'is-invalid': crewInvalid }">
@@ -324,14 +529,14 @@ onMounted(async () => {
 
       <section class="wire-section form-section inventory-section" :aria-label="t('builds.create.sections.inventory')">
         <div class="section-title">
-          <span>05</span>
+          <span>07</span>
           <h2>{{ t('builds.create.sections.inventory') }}</h2>
         </div>
         <div class="inventory-grid three-columns">
           <div class="inventory-panel ammunition-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.inventory.ammunition') }}</strong>
-              <span>{{ t('builds.create.inventory.slotCount', { count: inventoryCount('ammunition_slots') }) }}</span>
+              <span>{{ t('builds.create.inventory.slotCount', { count: slotCount('ammunition_slots') }) }}</span>
             </div>
             <p class="slot-hint">{{ t('builds.create.inventory.ammunitionHint') }}</p>
             <label v-for="(slot, index) in form.ammunition_slots" :key="`ammo-${index}`" class="inventory-slot-select with-quantity">
@@ -363,7 +568,7 @@ onMounted(async () => {
           <div class="inventory-panel consumable-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.inventory.consumables') }}</strong>
-              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: inventoryCount('consumable_slots'), max: 3 }) }}</span>
+              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotCount('consumable_slots'), max: 3 }) }}</span>
             </div>
             <p class="slot-hint">{{ t('builds.create.inventory.consumablesHint') }}</p>
             <label v-for="(slot, index) in form.consumable_slots" :key="`consumable-${index}`" class="inventory-slot-select with-quantity">
@@ -395,7 +600,7 @@ onMounted(async () => {
           <div class="inventory-panel hold-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.inventory.hold') }}</strong>
-              <span>{{ t('builds.create.inventory.slotCount', { count: inventoryCount('hold_slots') }) }}</span>
+              <span>{{ t('builds.create.inventory.slotCount', { count: slotCount('hold_slots') }) }}</span>
             </div>
             <p class="slot-hint">{{ t('builds.create.inventory.holdHint') }}</p>
             <label v-for="(slot, index) in form.hold_slots" :key="`hold-${index}`" class="inventory-slot-select with-quantity">
@@ -428,7 +633,7 @@ onMounted(async () => {
 
       <section class="wire-section form-section details-section" :aria-label="t('builds.create.sections.details')">
         <div class="section-title">
-          <span>06</span>
+          <span>08</span>
           <h2>{{ t('builds.create.sections.details') }}</h2>
         </div>
         <label class="input-panel embedded-field details-field">

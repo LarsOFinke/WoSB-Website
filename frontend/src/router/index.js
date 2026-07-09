@@ -13,6 +13,14 @@ import BuildListPage from '@/pages/builds/BuildListPage.vue'
 import GroupCreatePage from '@/pages/groups/GroupCreatePage.vue'
 import GroupDetailPage from '@/pages/groups/GroupDetailPage.vue'
 import GroupListPage from '@/pages/groups/GroupListPage.vue'
+import ForumCreatePage from '@/pages/forum/ForumCreatePage.vue'
+import ForumDetailPage from '@/pages/forum/ForumDetailPage.vue'
+import ForumListPage from '@/pages/forum/ForumListPage.vue'
+import GuideCreatePage from '@/pages/guides/GuideCreatePage.vue'
+import GuideDetailPage from '@/pages/guides/GuideDetailPage.vue'
+import GuideListPage from '@/pages/guides/GuideListPage.vue'
+import CalendarCreatePage from '@/pages/calendar/CalendarCreatePage.vue'
+import CalendarPage from '@/pages/calendar/CalendarPage.vue'
 import { loadSession, useSession } from '@/services/session'
 
 const routes = [
@@ -26,6 +34,14 @@ const routes = [
   { path: '/admin', name: 'admin', component: AdminPage, meta: { requiresStaff: true } },
   { path: '/builds', name: 'builds', component: BuildListPage },
   { path: '/groups', name: 'groups', component: GroupListPage },
+  { path: '/forum', name: 'forum', component: ForumListPage },
+  { path: '/calendar', name: 'calendar', component: CalendarPage },
+  { path: '/calendar/new', name: 'calendar-new', component: CalendarCreatePage, meta: { requiresStaff: true } },
+  { path: '/forum/new', name: 'forum-new', component: ForumCreatePage, meta: { requiresUser: true } },
+  { path: '/forum/:id', name: 'forum-detail', component: ForumDetailPage, props: true },
+  { path: '/guides', name: 'guides', component: GuideListPage },
+  { path: '/guides/new', name: 'guides-new', component: GuideCreatePage, meta: { requiresUser: true } },
+  { path: '/guides/:id', name: 'guides-detail', component: GuideDetailPage, props: true },
   { path: '/groups/new', name: 'groups-new', component: GroupCreatePage, meta: { requiresUser: true } },
   { path: '/groups/:id', name: 'groups-detail', component: GroupDetailPage, props: true },
   { path: '/builds/new', name: 'builds-new', component: BuildCreatePage, meta: { requiresUser: true } },

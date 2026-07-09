@@ -1,6 +1,6 @@
-# WoSB Community Hub
+# Iron Crown Fleet Hub
 
-Small, intentionally clean fullstack foundation for the WoSB Community Hub. The first modules are the Build Manager and a minimal Group Management area; the first protected area is a compact Staff Panel.
+Small, intentionally clean fullstack foundation for the Iron Crown Fleet Hub. Current modules are the Build Manager, Fleet Announcements, a minimal Forum, a minimal Guide area, a Fleet Calendar and a compact Staff Panel.
 
 ```text
 backend/   FastAPI + SQLAlchemy + SQLite + cookie sessions
@@ -9,18 +9,23 @@ frontend/  Vue 3 + Vite
 
 ## Current scope
 
-- `/home` as the WoSB Community Hub landing page with an expandable module showcase
+- `/home` as the Iron Crown Fleet Hub landing page with an expandable module showcase
 - `/builds` as public Build Manager list with search and build-type filter
 - `/builds/{id}` as public build detail page
-- `/builds/new` as minimal build designer, reachable only via the button on `/builds`
+- `/builds/new` as minimal build designer with six upgrade slots, upgrade-based stat calculation, weapons by arc and special crew
 - `/register` as public user registration
 - `/login` as minimal session login
 - `/profile` as protected minimalist profile page with password change
 - `/profile/builds` as personal build management for own builds
-- `/groups` as public group board with search, focus filter and rate-span filter
-- `/groups/{id}` as public group detail page with join form
-- `/groups/new` as protected group creation
-- `/profile/groups` as personal group management for own group calls
+- `/groups` as public announcement board with search, focus filter and rate-span filter
+- `/groups/{id}` as public announcement detail page
+- `/groups/new` as protected announcement creation
+- `/profile/groups` as personal fleet announcement for own fleet announcements
+- `/forum` and `/forum/new` as a minimal file-backed discussion board
+- `/calendar` as public fleet month calendar with category filter and selected-day agenda
+- `/calendar/new` as staff-only appointment creation for admins and moderators
+- `/guides` and `/guides/new` as a minimal file-backed guide module
+- `/files` API for shared uploads used by Forum and Guides
 - `/admin` as protected staff panel for admins and moderators
 - Admin/moderator tab for deleting builds
 - Admin-only moderator creation tab
@@ -60,6 +65,10 @@ http://127.0.0.1:8000/api/ships
 http://127.0.0.1:8000/api/builds
 http://127.0.0.1:8000/api/builds/options
 http://127.0.0.1:8000/api/groups
+http://127.0.0.1:8000/api/forum/threads
+http://127.0.0.1:8000/api/calendar/events
+http://127.0.0.1:8000/api/guides
+http://127.0.0.1:8000/api/files
 http://127.0.0.1:8000/api/admin/builds
 ```
 
@@ -77,13 +86,53 @@ Frontend:
 http://127.0.0.1:5173/home
 http://127.0.0.1:5173/builds
 http://127.0.0.1:5173/groups
+http://127.0.0.1:5173/forum
+http://127.0.0.1:5173/calendar
+http://127.0.0.1:5173/guides
 http://127.0.0.1:5173/register
 http://127.0.0.1:5173/login
 http://127.0.0.1:5173/profile
 http://127.0.0.1:5173/admin
 ```
 
-## Latest cleanup
+## Latest update
+
+- Fleet Calendar prototype added with a Windows-style month grid, selected-day agenda and event-type filter.
+- Backend now exposes `/api/calendar/events` with public reads and staff-only create/update/delete operations for admins and moderators.
+- New staff form `/calendar/new` follows the existing sectioned form style for title, type, location, timing and operational notes.
+- Demo calendar events are seeded for fresh databases so the calendar has immediate content after reset.
+- Home showcase, navbar and locale layers now include the Fleet Calendar module.
+
+## Previous update
+
+- UI foundation refreshed with a calmer dark visual system, stronger spacing rhythm, card hierarchy and higher-contrast typography.
+- Main navigation is grouped into brand, primary modules, account links, locale controls and session actions for clearer scanning.
+- List filters were restyled as dedicated task panels with clearer search/select affordances, focus states and responsive stacking.
+- The main container now uses a stable max-width shell and softer page surfaces instead of the earlier wireframe-style borders.
+- `frontend/src/styles/main.css` was reorganized from an accumulated override file into a smaller design-system-oriented stylesheet.
+- Frontend build tooling was updated to Vite 8 / Vue plugin 6; full `npm audit` now reports no vulnerabilities.
+
+## Previous update
+
+- Forum posts and Guides now render uploaded files as inline embeds instead of only listing them: images/GIFs/SVGs, videos, PDFs and TXT files are displayed directly in the content card, while unsupported file types remain available as openable links.
+- Frontend file URL handling now resolves backend-hosted `/uploads/...` URLs correctly when the API is served from another origin via `VITE_API_BASE_URL`.
+- The Vite dev server now proxies `/uploads` to the FastAPI backend, so local media previews work alongside the existing `/api` proxy.
+
+## Previous update
+
+- Frontend localization was split from one large `src/locales/index.js` file into config, runtime utilities, feature/domain message layers and option glossaries. The public `useLocale` API remains unchanged.
+- Frontend API services now share one query-string helper instead of duplicating URL parameter code per module.
+- Build tooling dependencies were moved to `devDependencies`; production audit via `npm audit --omit=dev` reports no vulnerabilities after the cleanup.
+- Generated `__pycache__`, `node_modules` and `dist` artifacts are excluded from the packaged repo.
+
+## Earlier update
+
+- Build Manager now supports a fifth unlockable upgrade slot plus ship-specific sixth upgrade slot. Slot 5 is locked until an unlock upgrade such as Structural Expansion is selected in slots 1-4; slot 6 is only available on ships marked with an extra upgrade slot. Expansion debuffs are included in validation and display.
+- Upgrade stat modifiers are seeded and aggregated into `ship_stats`, including buffs, debuffs, effective crew capacity/minimum and warnings.
+- Backend file module stores uploaded GIF, MP4, JPEG, PNG, WebP, WebM, MOV, PDF and TXT files under `UPLOAD_DIR` and serves them through `/uploads`.
+- Minimal Forum and Guide modules use the shared file module for embedded attachments.
+
+## Earlier cleanup
 
 - Group-rate logic corrected for Ship-of-the-Line rates: rate 1 is strongest, rate 7 is lightest.
 - Minimum rate now means “that rate or better”, so a group requiring rate 4 allows 1–4 and blocks 5–7.

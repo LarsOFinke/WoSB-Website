@@ -1,11 +1,13 @@
 from collections.abc import Iterable
+import json
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Build, BuildItemCategory, BuildItemOption, BuildSlot, Ship
+from app.models.build import WEAPON_SLOT_TYPE_BY_ARC
 from app.schemas import BuildCreate
-from app.schemas.build import BUILD_TYPE_VALUES, InventorySlot
+from app.schemas.build import BUILD_TYPE_VALUES, InventorySlot, WEAPON_ARC_KEYS
 
 
 class BuildValidationError(ValueError):
@@ -23,8 +25,13 @@ INVENTORY_SLOT_MAP = {
     "hold": "hold",
 }
 
-UPGRADE_SLOT_LIMIT = 5
+UPGRADE_SLOT_LIMIT = 6
+BASE_UPGRADE_SLOT_LIMIT = 4
+UNLOCKABLE_UPGRADE_SLOT = 5
+SHIP_EXTRA_UPGRADE_SLOT = 6
 CONSUMABLE_SLOT_LIMIT = 3
+SPECIAL_CREW_SLOT_LIMIT = 8
+WEAPON_ARC_SLOT_LIMIT = 12
 
 
 def _crew_total(build: BuildCreate) -> int:
@@ -71,6 +78,63 @@ def _require_option(
     return option
 
 
+def _option_effects(option: BuildItemOption) -> dict[str, int | float]:
+    if not option.stat_effects:
+        return {}
+    try:
+        payload = json.loads(option.stat_effects)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return {str(key): value for key, value in payload.items() if isinstance(value, (int, float))}
+
+
+def _selected_upgrade_options(
+    option_map: dict[tuple[str, str], BuildItemOption], build: BuildCreate
+) -> dict[int, BuildItemOption]:
+    selected: dict[int, BuildItemOption] = {}
+    for index in range(1, UPGRADE_SLOT_LIMIT + 1):
+        name = _normalize_name(getattr(build, f"upgrade_{index}"))
+        if not name:
+            continue
+        selected[index] = _require_option(option_map, name, "upgrade", f"Upgrade {index}")
+    return selected
+
+
+def _upgrade_access(ship: Ship, selected_upgrades: dict[int, BuildItemOption]) -> dict[str, int | bool]:
+    """Return slot access flags for the six-slot Build Manager.
+
+    Slots 1-4 are normal ship upgrade slots. Slot 5 is unlocked by an
+    expansion upgrade selected in one of those normal slots. Slot 6 is not
+    unlocked by upgrades; it is a ship-specific extra slot represented by
+    ``Ship.upgrade_slots >= 6`` in the catalog.
+    """
+
+    base_slots = min(max(int(ship.upgrade_slots or 0), 0), BASE_UPGRADE_SLOT_LIMIT)
+    unlock_effect_slots = 0
+    for index, option in selected_upgrades.items():
+        if index > BASE_UPGRADE_SLOT_LIMIT:
+            continue
+        unlock_effect_slots += int(_option_effects(option).get("extra_upgrade_slots", 0))
+
+    slot_5_supported = int(ship.upgrade_slots or 0) >= UNLOCKABLE_UPGRADE_SLOT
+    slot_5_unlocked = slot_5_supported and unlock_effect_slots > 0
+    slot_6_available = int(ship.upgrade_slots or 0) >= SHIP_EXTRA_UPGRADE_SLOT
+
+    return {
+        "base_slots": base_slots,
+        "slot_5_unlocked": slot_5_unlocked,
+        "slot_6_available": slot_6_available,
+        "unlock_effect_slots": max(unlock_effect_slots, 0),
+        "ship_extra_slots": 1 if slot_6_available else 0,
+        "available_slots": min(
+            UPGRADE_SLOT_LIMIT,
+            base_slots + (1 if slot_5_unlocked else 0) + (1 if slot_6_available else 0),
+        ),
+    }
+
+
 def _selected_item_names(build: BuildCreate) -> list[str]:
     names: list[str] = []
     for value in (
@@ -81,12 +145,20 @@ def _selected_item_names(build: BuildCreate) -> list[str]:
         build.upgrade_3,
         build.upgrade_4,
         build.upgrade_5,
+        build.upgrade_6,
     ):
         normalized = _normalize_name(value)
         if normalized:
             names.append(normalized)
 
-    for slots in (build.ammunition_slots, build.consumable_slots, build.hold_slots):
+    for arc in WEAPON_ARC_KEYS:
+        names.extend(slot.item for slot in getattr(build, f"{arc}_weapon_slots"))
+    for slots in (
+        build.special_crew_slots,
+        build.ammunition_slots,
+        build.consumable_slots,
+        build.hold_slots,
+    ):
         names.extend(slot.item for slot in slots)
     return names
 
@@ -103,12 +175,32 @@ def _build_slots(db: Session, build: BuildCreate) -> list[BuildSlot]:
         option = _require_option(option_map, build.lantern, "lantern", "Lantern")
         slots.append(BuildSlot(slot_type="lantern", slot_index=1, option_id=option.id))
 
-    for index in range(1, UPGRADE_SLOT_LIMIT + 1):
-        name = _normalize_name(getattr(build, f"upgrade_{index}"))
-        if not name:
-            continue
-        option = _require_option(option_map, name, "upgrade", f"Upgrade {index}")
+    for index, option in _selected_upgrade_options(option_map, build).items():
         slots.append(BuildSlot(slot_type="upgrade", slot_index=index, option_id=option.id))
+
+    for arc in WEAPON_ARC_KEYS:
+        form_slots = getattr(build, f"{arc}_weapon_slots")
+        for index, slot in enumerate(form_slots, start=1):
+            option = _require_option(option_map, slot.item, "weapon", f"{arc.title()} weapon")
+            slots.append(
+                BuildSlot(
+                    slot_type=WEAPON_SLOT_TYPE_BY_ARC[arc],
+                    slot_index=index,
+                    option_id=option.id,
+                    quantity=slot.quantity,
+                )
+            )
+
+    for index, slot in enumerate(build.special_crew_slots, start=1):
+        option = _require_option(option_map, slot.item, "special_crew", "Special crew")
+        slots.append(
+            BuildSlot(
+                slot_type="special_crew",
+                slot_index=index,
+                option_id=option.id,
+                quantity=slot.quantity,
+            )
+        )
 
     for slot_type, category_key in INVENTORY_SLOT_MAP.items():
         form_slots = getattr(build, f"{slot_type}_slots")
@@ -162,18 +254,45 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
     if ship is None or not ship.is_active:
         raise BuildValidationError("The selected ship does not exist.")
 
-    crew_total = _crew_total(build)
-    if build.sailors < ship.sailor_minimum:
-        raise BuildValidationError(f"This ship requires at least {ship.sailor_minimum} sailors.")
-    if crew_total > ship.crew_capacity:
+    option_map = _load_option_map(db, _selected_item_names(build))
+    selected_upgrades = _selected_upgrade_options(option_map, build)
+    upgrade_access = _upgrade_access(ship, selected_upgrades)
+
+    if _normalize_name(build.upgrade_5) and not bool(upgrade_access["slot_5_unlocked"]):
         raise BuildValidationError(
-            f"The crew distribution ({crew_total}) exceeds the ship capacity ({ship.crew_capacity})."
+            "Upgrade slot 5 is locked. Select an unlock upgrade in slots 1-4 first."
+        )
+    if _normalize_name(build.upgrade_6) and not bool(upgrade_access["slot_6_available"]):
+        raise BuildValidationError(
+            "Upgrade slot 6 is only available on ships with an extra upgrade slot."
         )
 
+    total_effects: dict[str, int | float] = {}
+    for option in selected_upgrades.values():
+        for key, value in _option_effects(option).items():
+            total_effects[key] = total_effects.get(key, 0) + value
 
+    effective_crew_capacity = max(0, ship.crew_capacity + int(total_effects.get("crew_capacity", 0)))
+    effective_sailor_minimum = max(0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0)))
+    crew_total = _crew_total(build)
+    if build.sailors < effective_sailor_minimum:
+        raise BuildValidationError(f"This ship requires at least {effective_sailor_minimum} sailors after upgrade modifiers.")
+    if crew_total > effective_crew_capacity:
+        raise BuildValidationError(
+            f"The crew distribution ({crew_total}) exceeds the effective ship capacity ({effective_crew_capacity})."
+        )
+
+    for arc in WEAPON_ARC_KEYS:
+        arc_slots = getattr(build, f"{arc}_weapon_slots")
+        _validate_unique_slots(arc_slots, f"{arc.title()} weapons")
+        if len(arc_slots) > WEAPON_ARC_SLOT_LIMIT:
+            raise BuildValidationError(f"{arc.title()} weapons are limited to {WEAPON_ARC_SLOT_LIMIT} slots.")
+    _validate_unique_slots(build.special_crew_slots, "Special crew")
     _validate_unique_slots(build.ammunition_slots, "Ammunition")
     _validate_unique_slots(build.consumable_slots, "Consumables")
     _validate_unique_slots(build.hold_slots, "Hold")
+    if len(build.special_crew_slots) > SPECIAL_CREW_SLOT_LIMIT:
+        raise BuildValidationError(f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} slots.")
     if len(build.consumable_slots) > CONSUMABLE_SLOT_LIMIT:
         raise BuildValidationError(f"Consumables are limited to {CONSUMABLE_SLOT_LIMIT} slots.")
 
@@ -202,6 +321,7 @@ def delete_build(db: Session, build_id: int) -> bool:
     db.commit()
     return True
 
+
 def list_user_builds(
     db: Session,
     user_id: int,
@@ -218,4 +338,3 @@ def delete_user_build(db: Session, build_id: int, user_id: int) -> bool:
     db.delete(build)
     db.commit()
     return True
-

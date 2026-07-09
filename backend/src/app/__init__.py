@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router as api_router
 from app.core.config import settings
@@ -19,7 +22,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Minimal WoSB Community Hub API with Build Manager and Group Management prototypes.",
+        description="Minimal Iron Crown Fleet Hub API with Build Manager and Fleet Announcements prototypes.",
         lifespan=lifespan,
     )
 
@@ -30,6 +33,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    upload_path = Path(settings.upload_dir)
+    upload_path.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
 
     app.include_router(api_router, prefix=settings.api_prefix)
 

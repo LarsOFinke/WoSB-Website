@@ -7,13 +7,30 @@ DEMO_BUILD_DATA = [
         "upgrade_1": "Sturdy Frames",
         "upgrade_2": "Strong Beams",
         "upgrade_3": "Repair Arsenal",
-        "upgrade_4": "Fortified Gun Ports",
-        "upgrade_5": "Cellars",
+        "upgrade_4": "Structural Expansion",
+        "upgrade_5": "Fortified Gun Ports",
+        "upgrade_6": "Teak Frames",
         "lantern": "Golden Lantern",
         "sailors": 82,
         "soldiers": 42,
         "musketeers": 56,
         "mercenaries": 18,
+        "front_weapon_slots": [
+            {"item": "Heavy Mortar", "quantity": 2},
+        ],
+        "rear_weapon_slots": [
+            {"item": "12-pdr Carronade", "quantity": 2},
+        ],
+        "port_weapon_slots": [
+            {"item": "32-pdr Cannon", "quantity": 18},
+        ],
+        "starboard_weapon_slots": [
+            {"item": "32-pdr Cannon", "quantity": 18},
+        ],
+        "special_crew_slots": [
+            {"item": "Master Gunner", "quantity": 1},
+            {"item": "Carpenter", "quantity": 1},
+        ],
         "ammunition_slots": [
             {"item": "Round Shots", "quantity": 240},
             {"item": "Bar Shots", "quantity": 90},
@@ -42,6 +59,22 @@ DEMO_BUILD_DATA = [
         "soldiers": 14,
         "musketeers": 26,
         "mercenaries": 6,
+        "front_weapon_slots": [
+            {"item": "Twin 14-pdr", "quantity": 1},
+        ],
+        "rear_weapon_slots": [
+            {"item": "8-pdr Culverin", "quantity": 2},
+        ],
+        "port_weapon_slots": [
+            {"item": "16-pdr Culverin", "quantity": 8},
+        ],
+        "starboard_weapon_slots": [
+            {"item": "16-pdr Culverin", "quantity": 8},
+        ],
+        "special_crew_slots": [
+            {"item": "Navigator", "quantity": 1},
+            {"item": "Lookout", "quantity": 1},
+        ],
         "ammunition_slots": [
             {"item": "Bar Shots", "quantity": 120},
             {"item": "Grapeshot", "quantity": 60},

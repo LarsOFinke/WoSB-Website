@@ -32,11 +32,22 @@ def _ensure_sqlite_columns() -> None:
             statements.append("ALTER TABLE groups ADD COLUMN closed_at DATETIME")
         if "max_ship_rate" not in group_columns:
             statements.append("ALTER TABLE groups ADD COLUMN max_ship_rate INTEGER")
+        if "expectations" not in group_columns:
+            statements.append("ALTER TABLE groups ADD COLUMN expectations TEXT")
+        if "activity_plan" not in group_columns:
+            statements.append("ALTER TABLE groups ADD COLUMN activity_plan TEXT")
+        if "contact_note" not in group_columns:
+            statements.append("ALTER TABLE groups ADD COLUMN contact_note VARCHAR(300)")
 
     if "builds" in table_names:
         build_columns = {column["name"] for column in inspector.get_columns("builds")}
         if "owner_id" not in build_columns:
             statements.append("ALTER TABLE builds ADD COLUMN owner_id INTEGER")
+
+    if "build_item_options" in table_names:
+        option_columns = {column["name"] for column in inspector.get_columns("build_item_options")}
+        if "stat_effects" not in option_columns:
+            statements.append("ALTER TABLE build_item_options ADD COLUMN stat_effects TEXT")
 
     if not statements:
         return

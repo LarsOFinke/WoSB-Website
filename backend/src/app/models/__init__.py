@@ -1,9 +1,30 @@
+from app.models.auth_session import AuthSession
 from app.models.build import Build
 from app.models.build_option import BuildItemCategory, BuildItemOption
 from app.models.build_slot import BuildSlot
-from app.models.ship import Ship
+from app.models.file_asset import StoredFile
+from app.models.fleet_event import FleetEvent
+from app.models.forum import ForumPost, ForumPostAttachment, ForumThread
 from app.models.group import Group, GroupMember
+from app.models.guide import Guide, GuideAttachment
+from app.models.ship import Ship
 from app.models.user import User
-from app.models.auth_session import AuthSession
 
-__all__ = ["AuthSession", "Build", "BuildItemCategory", "BuildItemOption", "BuildSlot", "Group", "GroupMember", "Ship", "User"]
+__all__ = [
+    "AuthSession",
+    "Build",
+    "BuildItemCategory",
+    "BuildItemOption",
+    "BuildSlot",
+    "FleetEvent",
+    "ForumPost",
+    "ForumPostAttachment",
+    "ForumThread",
+    "Group",
+    "GroupMember",
+    "Guide",
+    "GuideAttachment",
+    "Ship",
+    "StoredFile",
+    "User",
+]

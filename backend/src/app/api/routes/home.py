@@ -7,7 +7,7 @@ router = APIRouter()
 def get_home() -> dict[str, object]:
     return {
         "route": "/home",
-        "title": "WoSB Community Hub",
+        "title": "Iron Crown Fleet Hub",
         "subtitle": "A focused hub for community tools around World of Sea Battle.",
         "modules": [
             {
@@ -17,7 +17,17 @@ def get_home() -> dict[str, object]:
             },
             {
                 "key": "groups",
-                "title": "Group Management",
+                "title": "Fleet Announcements",
+                "status": "prototype",
+            },
+            {
+                "key": "forum",
+                "title": "Forum",
+                "status": "prototype",
+            },
+            {
+                "key": "guides",
+                "title": "Guides",
                 "status": "prototype",
             }
         ],

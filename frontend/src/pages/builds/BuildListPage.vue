@@ -39,21 +39,29 @@ function crewTotal(build) {
 }
 
 function slotSummary(build) {
-  const slots = [build.upgrade_1, build.upgrade_2, build.upgrade_3, build.upgrade_4, build.upgrade_5]
-    .filter(Boolean)
-    .length
-  return t('builds.list.upgradeSummary', { used: slots })
+  const stats = build.ship_stats || {}
+  const used = stats.upgrade_slots_used ?? [build.upgrade_1, build.upgrade_2, build.upgrade_3, build.upgrade_4, build.upgrade_5, build.upgrade_6].filter(Boolean).length
+  const max = stats.upgrade_slots_available || 5
+  return t('builds.list.upgradeSummary', { used, max })
 }
 
 function inventorySummary(build) {
-  const ammoCount = build.ammunition_slots?.length || 0
-  const consumableCount = build.consumable_slots?.length || 0
-  const holdCount = build.hold_slots?.length || 0
+  const stats = build.ship_stats || {}
   return t('builds.list.inventorySummary', {
-    ammo: ammoCount,
-    consumables: consumableCount,
-    hold: holdCount,
+    ammo: stats.ammunition_slots_used ?? build.ammunition_slots?.length ?? 0,
+    consumables: stats.consumable_slots_used ?? build.consumable_slots?.length ?? 0,
+    hold: stats.hold_slots_used ?? build.hold_slots?.length ?? 0,
   })
+}
+
+function weaponSummary(build) {
+  const stats = build.ship_stats || {}
+  return t('builds.list.weaponSummary', { count: stats.weapon_total || 0 })
+}
+
+function specialCrewSummary(build) {
+  const stats = build.ship_stats || {}
+  return t('builds.list.specialCrewSummary', { count: stats.special_crew_total || 0 })
 }
 
 function slotLabel(slot) {
@@ -146,16 +154,18 @@ onMounted(loadBuilds)
             </div>
 
             <div class="build-card-meta refined-meta">
-              <span>{{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span>
-              <span>{{ t('builds.list.sailorMin', { value: build.ship.sailor_minimum }) }}</span>
+              <span>{{ t('builds.list.crew', { current: crewTotal(build), max: (build.ship_stats?.crew_capacity || build.ship.crew_capacity) }) }}</span>
+              <span>{{ t('builds.list.sailorMin', { value: (build.ship_stats?.sailor_minimum || build.ship.sailor_minimum) }) }}</span>
               <span>{{ slotSummary(build) }}</span>
+              <span>{{ weaponSummary(build) }}</span>
+              <span>{{ specialCrewSummary(build) }}</span>
               <span>{{ inventorySummary(build) }}</span>
             </div>
 
             <div class="build-card-preview refined-preview">
+              <span>{{ t('builds.list.weaponPreview', { items: previewItems([...(build.front_weapon_slots || []), ...(build.port_weapon_slots || []), ...(build.starboard_weapon_slots || []), ...(build.rear_weapon_slots || [])]) }) }}</span>
+              <span>{{ t('builds.list.specialCrewPreview', { items: previewItems(build.special_crew_slots) }) }}</span>
               <span>{{ t('builds.list.ammunitionPreview', { items: previewItems(build.ammunition_slots) }) }}</span>
-              <span>{{ t('builds.list.consumablesPreview', { items: previewItems(build.consumable_slots) }) }}</span>
-              <span>{{ t('builds.list.holdPreview', { items: previewItems(build.hold_slots) }) }}</span>
             </div>
           </RouterLink>
         </div>

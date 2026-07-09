@@ -5,6 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.schemas.ship import ShipRead
 
 BUILD_TYPE_VALUES = {"balanced", "gunnery", "boarding", "defensive"}
+WEAPON_ARC_KEYS = ("front", "rear", "port", "starboard")
+WEAPON_SLOT_FIELDS = tuple(f"{arc}_weapon_slots" for arc in WEAPON_ARC_KEYS)
 
 
 class InventorySlot(BaseModel):
@@ -15,6 +17,37 @@ class InventorySlot(BaseModel):
     def normalize_item(self) -> "InventorySlot":
         self.item = self.item.strip()
         return self
+
+
+class ShipStats(BaseModel):
+    crew_total: int
+    crew_capacity: int
+    crew_remaining: int
+    sailor_minimum: int
+    sailors_required_met: bool
+    upgrade_slots_used: int
+    upgrade_slots_available: int
+    base_upgrade_slots_available: int | None = None
+    extra_upgrade_slots: int = 0
+    ship_extra_upgrade_slots: int = 0
+    upgrade_slot_5_unlocked: bool = False
+    upgrade_slot_6_available: bool = False
+    upgrade_slot_6_unlocked: bool = False
+    base_crew_capacity: int | None = None
+    effective_crew_capacity: int | None = None
+    base_sailor_minimum: int | None = None
+    effective_sailor_minimum: int | None = None
+    upgrade_effects: dict[str, int | float] = Field(default_factory=dict)
+    upgrade_buffs: dict[str, int | float] = Field(default_factory=dict)
+    upgrade_debuffs: dict[str, int | float] = Field(default_factory=dict)
+    stat_warnings: list[str] = Field(default_factory=list)
+    weapon_slots: dict[str, int]
+    weapon_total: int
+    special_crew_total: int
+    inventory_slots_used: int
+    ammunition_slots_used: int
+    consumable_slots_used: int
+    hold_slots_used: int
 
 
 class BuildBase(BaseModel):
@@ -28,6 +61,7 @@ class BuildBase(BaseModel):
     upgrade_3: str | None = Field(default=None, max_length=140)
     upgrade_4: str | None = Field(default=None, max_length=140)
     upgrade_5: str | None = Field(default=None, max_length=140)
+    upgrade_6: str | None = Field(default=None, max_length=140)
     lantern: str | None = Field(default=None, max_length=140)
 
     sailors: int = Field(default=0, ge=0)
@@ -35,6 +69,11 @@ class BuildBase(BaseModel):
     musketeers: int = Field(default=0, ge=0)
     mercenaries: int = Field(default=0, ge=0)
 
+    front_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
+    rear_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
+    port_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
+    starboard_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
+    special_crew_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     ammunition_slots: list[InventorySlot] = Field(default_factory=list, max_length=16)
     consumable_slots: list[InventorySlot] = Field(default_factory=list, max_length=3)
     hold_slots: list[InventorySlot] = Field(default_factory=list, max_length=32)
@@ -48,7 +87,17 @@ class BuildBase(BaseModel):
             raise ValueError("Invalid build type.")
         return normalized
 
-    @field_validator("ammunition_slots", "consumable_slots", "hold_slots", mode="before")
+    @field_validator(
+        "front_weapon_slots",
+        "rear_weapon_slots",
+        "port_weapon_slots",
+        "starboard_weapon_slots",
+        "special_crew_slots",
+        "ammunition_slots",
+        "consumable_slots",
+        "hold_slots",
+        mode="before",
+    )
     @classmethod
     def normalize_slot_lists(cls, value: object) -> list[dict[str, object]]:
         if value is None or value == "":
@@ -92,6 +141,7 @@ class BuildBase(BaseModel):
             "upgrade_3",
             "upgrade_4",
             "upgrade_5",
+            "upgrade_6",
             "lantern",
             "details",
         ):
@@ -113,5 +163,6 @@ class BuildRead(BuildBase):
     id: int
     owner_id: int | None = None
     ship: ShipRead
+    ship_stats: ShipStats
     created_at: datetime
     updated_at: datetime

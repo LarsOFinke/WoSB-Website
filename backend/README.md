@@ -1,6 +1,6 @@
-# Backend - WoSB Community Hub
+# Backend - Iron Crown Fleet Hub
 
-Minimal FastAPI prototype with SQLAlchemy, SQLite, password hashing, registration, profiles, roles, cookie sessions, builds and groups.
+Minimal FastAPI prototype with SQLAlchemy, SQLite, password hashing, registration, profiles, roles, cookie sessions, builds, announcements, file uploads, forum threads, guides and fleet calendar events.
 
 ## Start
 
@@ -45,6 +45,22 @@ GET    /api/builds/mine
 POST   /api/builds
 DELETE /api/builds/mine/{id}
 GET    /api/builds/{id}
+GET    /api/files
+POST   /api/files
+DELETE /api/files/{id}
+GET    /api/forum/threads
+POST   /api/forum/threads
+GET    /api/forum/threads/{id}
+POST   /api/forum/threads/{id}/posts
+GET    /api/calendar/events
+POST   /api/calendar/events
+GET    /api/calendar/events/{id}
+PUT    /api/calendar/events/{id}
+DELETE /api/calendar/events/{id}
+GET    /api/guides
+POST   /api/guides
+GET    /api/guides/{id}
+DELETE /api/guides/{id}
 GET    /api/groups
 POST   /api/groups
 GET    /api/groups/mine
@@ -82,9 +98,16 @@ build_item_options
 build_slots
 groups
 group_members
+stored_files
+forum_threads
+forum_posts
+forum_post_attachments
+guides
+guide_attachments
+fleet_events
 ```
 
-`builds` contains no repeated slot columns and no JSON inventory lists. Loadout elements live in `build_slots` and reference `build_item_options`. Quantities are stored only on slots where they are meaningful.
+`builds` contains no repeated slot columns and no JSON inventory lists. Loadout elements live in `build_slots` and reference `build_item_options`. Quantities are stored only on slots where they are meaningful. Upgrade options can also carry compact stat modifiers that are aggregated into `ship_stats`.
 
 ## Seeds
 
@@ -103,8 +126,11 @@ src/app/db/seeds/hold_items.py
 src/app/db/seeds/weapons.py
 src/app/db/seeds/demo_builds.py
 src/app/db/seeds/demo_groups.py
+src/app/db/seeds/demo_fleet_events.py
 src/app/db/seeds/manager.py
 ```
+
+Uploads are written below `UPLOAD_DIR` (default `storage/uploads`) and served as `/uploads/<relative_path>`. Forum and Guide attachments only store file IDs and reuse this shared module.
 
 Reset and seed:
 
@@ -121,3 +147,7 @@ For groups:
 - `min_ship_rate` means the weakest allowed rate. Example: `4` allows rates `1–4`.
 - `max_ship_rate` means the strongest allowed rate. Example: `2` together with `min_ship_rate = 4` allows rates `2–4`.
 - Backend join validation always enforces the span.
+
+## Fleet calendar
+
+`fleet_events` stores public calendar entries with title, category, optional location/description, start/end datetimes, all-day flag and owner. Reads are public; create, update and delete require `require_staff`, so both admins and moderators can manage fleet appointments. Delete is implemented as a soft cancel via `is_cancelled`.

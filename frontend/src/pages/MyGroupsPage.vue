@@ -82,7 +82,7 @@ onMounted(loadGroups)
             <RouterLink class="admin-build-main" :to="`/groups/${group.id}`">
               <strong>{{ group.title }}</strong>
               <span>
-                {{ t(`focus.${group.focus}`) }} · {{ group.active_members_count }}/{{ group.max_members }} ·
+                {{ t(`focus.${group.focus}`) }} · {{ t('groups.list.announcementMode') }} ·
                 {{ t(`groups.status.${group.status}`) }}
               </span>
             </RouterLink>

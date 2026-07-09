@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BuildItemCategoryRead(BaseModel):
@@ -20,6 +20,7 @@ class BuildItemOptionRead(BaseModel):
     name: str
     source: str | None = None
     notes: str | None = None
+    stat_effects: dict[str, int | float] = Field(default_factory=dict)
     sort_order: int
     created_at: datetime
     updated_at: datetime

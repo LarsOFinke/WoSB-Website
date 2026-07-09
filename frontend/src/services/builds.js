@@ -1,18 +1,16 @@
 import { deleteRequest, get, post } from './api'
+import { withQuery } from './query'
 
-function buildQuery(search = '', buildType = '') {
-  const params = new URLSearchParams()
-  if (search) params.set('search', search)
-  if (buildType) params.set('build_type', buildType)
-  return params.toString() ? `?${params.toString()}` : ''
+function buildFilters(search = '', buildType = '') {
+  return { search, build_type: buildType }
 }
 
 export function listBuilds(search = '', buildType = '') {
-  return get(`/builds${buildQuery(search, buildType)}`)
+  return get(withQuery('/builds', buildFilters(search, buildType)))
 }
 
 export function listMyBuilds(search = '', buildType = '') {
-  return get(`/builds/mine${buildQuery(search, buildType)}`)
+  return get(withQuery('/builds/mine', buildFilters(search, buildType)))
 }
 
 export function deleteMyBuild(id) {

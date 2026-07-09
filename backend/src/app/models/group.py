@@ -32,6 +32,9 @@ class Group(Base):
     title: Mapped[str] = mapped_column(String(140), nullable=False, index=True)
     focus: Mapped[str] = mapped_column(String(80), nullable=False, default="pve_general", index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    expectations: Mapped[str | None] = mapped_column(Text, nullable=True)
+    activity_plan: Mapped[str | None] = mapped_column(Text, nullable=True)
+    contact_note: Mapped[str | None] = mapped_column(String(300), nullable=True)
     max_members: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     min_ship_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_ship_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -61,15 +64,15 @@ class Group(Base):
 
     @property
     def active_members_count(self) -> int:
-        return sum(1 for member in self.members if member.is_active)
+        return 0
 
     @property
     def spots_left(self) -> int:
-        return max(self.max_members - self.active_members_count, 0)
+        return 0
 
     @property
     def is_joinable(self) -> bool:
-        return self.status == GROUP_STATUS_OPEN and self.spots_left > 0
+        return False
 
 
 class GroupMember(Base):

@@ -1,20 +1,21 @@
 import { get, post } from './api'
+import { withQuery } from './query'
 
-function buildQuery({ search = '', focus = '', minShipRate = '', maxShipRate = '' } = {}) {
-  const params = new URLSearchParams()
-  if (search) params.set('search', search)
-  if (focus) params.set('focus', focus)
-  if (minShipRate) params.set('min_ship_rate', minShipRate)
-  if (maxShipRate) params.set('max_ship_rate', maxShipRate)
-  return params.toString() ? `?${params.toString()}` : ''
+function groupFilters({ search = '', focus = '', minShipRate = '', maxShipRate = '' } = {}) {
+  return {
+    search,
+    focus,
+    min_ship_rate: minShipRate,
+    max_ship_rate: maxShipRate,
+  }
 }
 
 export function listGroups(filters = {}) {
-  return get(`/groups${buildQuery(filters)}`)
+  return get(withQuery('/groups', groupFilters(filters)))
 }
 
 export function listMyGroups(search = '') {
-  return get(`/groups/mine${buildQuery({ search })}`)
+  return get(withQuery('/groups/mine', { search }))
 }
 
 export function getGroup(id) {

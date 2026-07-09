@@ -8,10 +8,11 @@ def _split_csv(value: str) -> list[str]:
 
 @dataclass(frozen=True)
 class Settings:
-    app_name: str = os.getenv("APP_NAME", "WoSB Community Hub")
+    app_name: str = os.getenv("APP_NAME", "Iron Crown Fleet Hub")
     app_version: str = os.getenv("APP_VERSION", "0.4.0")
     api_prefix: str = os.getenv("API_PREFIX", "/api")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./wosb_minimal.db")
+    upload_dir: str = os.getenv("UPLOAD_DIR", "storage/uploads")
 
     session_cookie_name: str = os.getenv("SESSION_COOKIE_NAME", "wosb_session")
     session_cookie_secure: bool = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"

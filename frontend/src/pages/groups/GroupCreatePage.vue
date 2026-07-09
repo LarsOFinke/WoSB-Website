@@ -27,10 +27,11 @@ const form = reactive({
   title: '',
   focus: 'pve_general',
   description: '',
-  max_members: 5,
+  expectations: '',
+  activity_plan: '',
+  contact_note: '',
   min_ship_rate: '',
   max_ship_rate: '',
-  allow_guests: true,
   fleet_restriction: '',
 })
 
@@ -51,10 +52,13 @@ async function submitGroup() {
       title: form.title,
       focus: form.focus,
       description: form.description || null,
-      max_members: Number(form.max_members),
+      expectations: form.expectations || null,
+      activity_plan: form.activity_plan || null,
+      contact_note: form.contact_note || null,
+      max_members: 2,
       min_ship_rate: form.min_ship_rate ? Number(form.min_ship_rate) : null,
       max_ship_rate: form.max_ship_rate ? Number(form.max_ship_rate) : null,
-      allow_guests: form.allow_guests,
+      allow_guests: false,
       fleet_restriction: form.fleet_restriction || null,
     })
     router.push(`/groups/${created.id}`)
@@ -85,7 +89,7 @@ async function submitGroup() {
         </div>
         <p class="section-helper-text">{{ t('groups.create.sections.basicsText') }}</p>
 
-        <div class="section-fields group-basic-grid">
+        <div class="section-fields group-basic-grid announcement-basic-grid">
           <label class="field-stack group-title-field">
             <span class="field-label">{{ t('groups.fields.title') }}</span>
             <span class="input-panel embedded-field">
@@ -101,13 +105,6 @@ async function submitGroup() {
               </select>
             </span>
           </label>
-
-          <label class="field-stack">
-            <span class="field-label">{{ t('groups.fields.maxMembers') }}</span>
-            <span class="input-panel embedded-field compact-number-field">
-              <input v-model.number="form.max_members" type="number" min="2" max="50" required />
-            </span>
-          </label>
         </div>
       </section>
 
@@ -118,7 +115,7 @@ async function submitGroup() {
         </div>
         <p class="section-helper-text">{{ t('groups.create.sections.requirementsText') }}</p>
 
-        <div class="section-fields group-requirement-grid">
+        <div class="section-fields group-requirement-grid announcement-requirement-grid">
           <label class="field-stack">
             <span class="field-label">{{ t('groups.fields.maxShipRate') }}</span>
             <span class="select-shell full-select-shell">
@@ -139,14 +136,6 @@ async function submitGroup() {
             </span>
           </label>
 
-          <label class="toggle-card">
-            <span>
-              <strong>{{ t('groups.fields.allowGuests') }}</strong>
-              <small>{{ t('groups.create.allowGuestsHint') }}</small>
-            </span>
-            <input v-model="form.allow_guests" type="checkbox" />
-          </label>
-
           <label class="field-stack group-fleet-field">
             <span class="field-label">{{ t('groups.fields.fleetRestriction') }}</span>
             <span class="input-panel embedded-field">
@@ -163,12 +152,35 @@ async function submitGroup() {
         </div>
         <p class="section-helper-text">{{ t('groups.create.sections.detailsText') }}</p>
 
-        <label class="field-stack details-field">
-          <span class="field-label">{{ t('groups.fields.description') }}</span>
-          <span class="input-panel embedded-field textarea-shell">
-            <textarea v-model="form.description" rows="6" maxlength="2000" :placeholder="t('groups.create.descriptionPlaceholder')"></textarea>
-          </span>
-        </label>
+        <div class="announcement-copy-grid">
+          <label class="field-stack details-field">
+            <span class="field-label">{{ t('groups.fields.description') }}</span>
+            <span class="input-panel embedded-field textarea-shell">
+              <textarea v-model="form.description" rows="5" maxlength="2000" :placeholder="t('groups.create.descriptionPlaceholder')"></textarea>
+            </span>
+          </label>
+
+          <label class="field-stack details-field">
+            <span class="field-label">{{ t('groups.fields.expectations') }}</span>
+            <span class="input-panel embedded-field textarea-shell">
+              <textarea v-model="form.expectations" rows="5" maxlength="2000" :placeholder="t('groups.create.expectationsPlaceholder')"></textarea>
+            </span>
+          </label>
+
+          <label class="field-stack details-field">
+            <span class="field-label">{{ t('groups.fields.activityPlan') }}</span>
+            <span class="input-panel embedded-field textarea-shell">
+              <textarea v-model="form.activity_plan" rows="5" maxlength="2000" :placeholder="t('groups.create.activityPlanPlaceholder')"></textarea>
+            </span>
+          </label>
+
+          <label class="field-stack details-field">
+            <span class="field-label">{{ t('groups.fields.contactNote') }}</span>
+            <span class="input-panel embedded-field textarea-shell">
+              <textarea v-model="form.contact_note" rows="3" maxlength="300" :placeholder="t('groups.create.contactPlaceholder')"></textarea>
+            </span>
+          </label>
+        </div>
       </section>
 
       <p v-if="rateRangeInvalid" class="error-text form-message">{{ t('groups.create.rateRangeInvalid') }}</p>

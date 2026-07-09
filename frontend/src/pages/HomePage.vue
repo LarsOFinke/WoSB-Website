@@ -30,6 +30,42 @@ const showcaseModules = computed(() => [
       t('home.showcase.groups.metaManage'),
     ],
   },
+  {
+    key: 'forum',
+    route: '/forum',
+    eyebrow: t('home.showcase.forum.eyebrow'),
+    title: t('home.showcase.forum.title'),
+    description: t('home.showcase.forum.description'),
+    meta: [
+      t('home.showcase.forum.metaThreads'),
+      t('home.showcase.forum.metaFiles'),
+      t('home.showcase.forum.metaReplies'),
+    ],
+  },
+  {
+    key: 'calendar',
+    route: '/calendar',
+    eyebrow: t('home.showcase.calendar.eyebrow'),
+    title: t('home.showcase.calendar.title'),
+    description: t('home.showcase.calendar.description'),
+    meta: [
+      t('home.showcase.calendar.metaMonth'),
+      t('home.showcase.calendar.metaStaff'),
+      t('home.showcase.calendar.metaEvents'),
+    ],
+  },
+  {
+    key: 'guides',
+    route: '/guides',
+    eyebrow: t('home.showcase.guides.eyebrow'),
+    title: t('home.showcase.guides.title'),
+    description: t('home.showcase.guides.description'),
+    meta: [
+      t('home.showcase.guides.metaCreate'),
+      t('home.showcase.guides.metaMedia'),
+      t('home.showcase.guides.metaBrowse'),
+    ],
+  },
 ])
 </script>
 

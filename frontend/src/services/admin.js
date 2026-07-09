@@ -1,11 +1,8 @@
 import { deleteRequest, get, post } from './api'
+import { withQuery } from './query'
 
 export function listAdminBuilds(search = '', buildType = '') {
-  const params = new URLSearchParams()
-  if (search) params.set('search', search)
-  if (buildType) params.set('build_type', buildType)
-  const query = params.toString() ? `?${params.toString()}` : ''
-  return get(`/admin/builds${query}`)
+  return get(withQuery('/admin/builds', { search, build_type: buildType }))
 }
 
 export function deleteAdminBuild(id) {

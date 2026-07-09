@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,14 +8,16 @@ from app.db.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.db.seeds.consumables import CONSUMABLE_OPTIONS
 from app.db.seeds.demo_builds import DEMO_BUILD_DATA
 from app.db.seeds.demo_groups import DEMO_GROUP_DATA
+from app.db.seeds.demo_fleet_events import demo_fleet_event_data
 from app.db.seeds.hold_items import HOLD_OPTIONS
 from app.db.seeds.lanterns import LANTERN_OPTIONS
 from app.db.seeds.sails import SAIL_OPTIONS
 from app.db.seeds.ships import SHIP_SEED_DATA
+from app.db.seeds.special_crew import SPECIAL_CREW_OPTIONS
 from app.db.seeds.upgrades import UPGRADE_OPTIONS
 from app.db.seeds.users import seed_admin_user
 from app.db.seeds.weapons import WEAPON_OPTIONS
-from app.models import Build, BuildItemCategory, BuildItemOption, Group, Ship, User
+from app.models import Build, BuildItemCategory, BuildItemOption, FleetEvent, Group, Ship, User
 from app.schemas import BuildCreate
 from app.services.build_service import BuildValidationError, create_build
 from app.schemas.group import GroupCreate
@@ -27,6 +31,7 @@ BUILD_OPTION_SEED_GROUPS = (
     CONSUMABLE_OPTIONS,
     HOLD_OPTIONS,
     WEAPON_OPTIONS,
+    SPECIAL_CREW_OPTIONS,
 )
 
 
@@ -44,6 +49,7 @@ class SeedManager:
         self.seed_build_options()
         self.seed_demo_builds()
         self.seed_demo_groups()
+        self.seed_demo_fleet_events()
 
     def seed_users(self) -> None:
         seed_admin_user(self.db)
@@ -92,11 +98,13 @@ class SeedManager:
                     BuildItemOption.name == option_name,
                 )
                 existing = self.db.scalar(lookup)
+                stat_effects = option_data.get("stat_effects")
                 payload = {
                     "category_id": category.id,
                     "name": option_name,
                     "source": option_data.get("source"),
                     "notes": option_data.get("notes"),
+                    "stat_effects": json.dumps(stat_effects) if isinstance(stat_effects, dict) else None,
                     "sort_order": sort_order * 10,
                     "is_active": option_data.get("is_active", True),
                 }
@@ -145,3 +153,17 @@ class SeedManager:
 
         for group_data in DEMO_GROUP_DATA:
             create_group(self.db, GroupCreate(**group_data), owner_id=demo_owner.id)
+
+
+    def seed_demo_fleet_events(self) -> None:
+        existing_event = self.db.scalar(select(FleetEvent.id).limit(1))
+        if existing_event is not None:
+            return
+
+        demo_owner = self.db.scalar(select(User).where(User.role == "admin").order_by(User.id))
+        if demo_owner is None:
+            return
+
+        for event_data in demo_fleet_event_data():
+            self.db.add(FleetEvent(owner_id=demo_owner.id, **event_data))
+        self.db.commit()
