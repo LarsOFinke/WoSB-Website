@@ -4,6 +4,7 @@ from app.api.routes.admin import router as admin_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.builds import router as builds_router
 from app.api.routes.files import router as files_router
+from app.api.routes.fleets import router as fleets_router
 from app.api.routes.fleet_events import router as fleet_events_router
 from app.api.routes.forum import router as forum_router
 from app.api.routes.groups import router as groups_router
@@ -17,6 +18,7 @@ router = APIRouter()
 router.include_router(health_router, tags=["health"])
 router.include_router(groups_router)
 router.include_router(files_router)
+router.include_router(fleets_router)
 router.include_router(fleet_events_router)
 router.include_router(forum_router)
 router.include_router(guides_router)

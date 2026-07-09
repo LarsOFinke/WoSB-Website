@@ -21,6 +21,8 @@ import GuideDetailPage from '@/pages/guides/GuideDetailPage.vue'
 import GuideListPage from '@/pages/guides/GuideListPage.vue'
 import CalendarCreatePage from '@/pages/calendar/CalendarCreatePage.vue'
 import CalendarPage from '@/pages/calendar/CalendarPage.vue'
+import FleetListPage from '@/pages/fleets/FleetListPage.vue'
+import FleetManagePage from '@/pages/fleets/FleetManagePage.vue'
 import { loadSession, useSession } from '@/services/session'
 
 const routes = [
@@ -36,6 +38,8 @@ const routes = [
   { path: '/groups', name: 'groups', component: GroupListPage },
   { path: '/forum', name: 'forum', component: ForumListPage },
   { path: '/calendar', name: 'calendar', component: CalendarPage },
+  { path: '/fleets', name: 'fleets', component: FleetListPage },
+  { path: '/fleets/manage', name: 'fleets-manage', component: FleetManagePage, meta: { requiresUser: true } },
   { path: '/calendar/new', name: 'calendar-new', component: CalendarCreatePage, meta: { requiresStaff: true } },
   { path: '/forum/new', name: 'forum-new', component: ForumCreatePage, meta: { requiresUser: true } },
   { path: '/forum/:id', name: 'forum-detail', component: ForumDetailPage, props: true },

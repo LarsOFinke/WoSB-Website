@@ -1,6 +1,6 @@
 # Iron Crown Fleet Hub
 
-Small, intentionally clean fullstack foundation for the Iron Crown Fleet Hub. Current modules are the Build Manager, Fleet Announcements, a minimal Forum, a minimal Guide area, a Fleet Calendar and a compact Staff Panel.
+Small, intentionally clean fullstack foundation for the Iron Crown Fleet Hub. Current modules are the Build Manager, Fleet Announcements, a minimal Forum, a minimal Guide area, a Fleet Calendar, a connected Fleet Management module and a compact Staff Panel.
 
 ```text
 backend/   FastAPI + SQLAlchemy + SQLite + cookie sessions
@@ -15,7 +15,7 @@ frontend/  Vue 3 + Vite
 - `/builds/new` as minimal build designer with six upgrade slots, upgrade-based stat calculation, weapons by arc and special crew
 - `/register` as public user registration
 - `/login` as minimal session login
-- `/profile` as protected minimalist profile page with password change
+- `/profile` as protected profile page with password change, personal fleet status and links into fleet management
 - `/profile/builds` as personal build management for own builds
 - `/groups` as public announcement board with search, focus filter and rate-span filter
 - `/groups/{id}` as public announcement detail page
@@ -27,6 +27,8 @@ frontend/  Vue 3 + Vite
 - `/guides` and `/guides/new` as a minimal file-backed guide module
 - `/files` API for shared uploads used by Forum and Guides
 - `/admin` as protected staff panel for admins and moderators
+- `/fleets` as public fleet overview with application actions for signed-in users
+- `/fleets/manage` as protected fleet-leadership workspace for profile, applications and member directory
 - Admin/moderator tab for deleting builds
 - Admin-only moderator creation tab
 - Passwords are stored with salted PBKDF2-SHA256 hashes
@@ -69,6 +71,8 @@ http://127.0.0.1:8000/api/forum/threads
 http://127.0.0.1:8000/api/calendar/events
 http://127.0.0.1:8000/api/guides
 http://127.0.0.1:8000/api/files
+http://127.0.0.1:8000/api/fleets
+http://127.0.0.1:8000/api/fleets/memberships/me
 http://127.0.0.1:8000/api/admin/builds
 ```
 
@@ -80,6 +84,8 @@ npm install
 npm run dev
 ```
 
+The dev script already binds Vite to `0.0.0.0:5173`, so do not pass positional host/port values. For local-only binding, use `npm run dev:local`.
+
 Frontend:
 
 ```text
@@ -88,6 +94,8 @@ http://127.0.0.1:5173/builds
 http://127.0.0.1:5173/groups
 http://127.0.0.1:5173/forum
 http://127.0.0.1:5173/calendar
+http://127.0.0.1:5173/fleets
+http://127.0.0.1:5173/fleets/manage
 http://127.0.0.1:5173/guides
 http://127.0.0.1:5173/register
 http://127.0.0.1:5173/login
@@ -97,6 +105,16 @@ http://127.0.0.1:5173/admin
 
 ## Latest update
 
+- Fleet module connected end-to-end across registration, profile, public fleet overview and fleet leadership management.
+- `/api/fleets/memberships/me` exposes the signed-in user's official fleet applications and memberships for frontend status displays.
+- `/fleets` now lets authenticated users apply to individual fleets directly from the public list, including an optional note for fleet leadership.
+- `/profile` now shows official fleet applications/memberships separately from the free-text profile field and links to fleet browsing or management.
+- `/fleets/manage` now has dedicated tabs for fleet profile, pending applications and a searchable/filterable member directory.
+- Third cleanup pass kept the implementation in the existing design system, validated build/API smoke paths and excludes generated artifacts from the package.
+
+## Previous update
+
+- Frontend dev startup is now explicit and Windows-friendly: `npm run dev` binds Vite to `0.0.0.0:5173`, `npm run dev:local` binds to `127.0.0.1:5173`, and the Vite config also declares the default host/port.
 - Fleet Calendar prototype added with a Windows-style month grid, selected-day agenda and event-type filter.
 - Backend now exposes `/api/calendar/events` with public reads and staff-only create/update/delete operations for admins and moderators.
 - New staff form `/calendar/new` follows the existing sectioned form style for title, type, location, timing and operational notes.
@@ -140,3 +158,29 @@ http://127.0.0.1:5173/admin
 - `/groups` now includes a rate-span filter in addition to search and focus.
 - Group locale keys are filled for DE / EN / FR / ES / PT / RU / CN, with EN kept as safe canonical fallback.
 - Spring-clean pass: generated caches/local DB removed from the packaged ZIP and imports/syntax verified.
+
+## Staff Panel operations
+
+The staff panel now covers day-to-day moderator/admin work in one place:
+
+- calendar operations for upcoming fleet appointments
+- quick actions for new calendar entries, forum threads and guides
+- content moderation for forum threads, guides and fleet announcements
+- build cleanup and admin-only moderator account creation
+
+Admins and moderators can open `/admin`; regular users are redirected to login.
+
+## Fleet management prototype
+
+This build adds a first vertical slice for the planned fleet structure:
+
+- Ten seeded fleets with focus areas such as trade, faction fleets, port battle, training, farming, recon and support.
+- Users can select one of the known fleets during registration. This creates a pending fleet membership claim.
+- Fleet leadership roles are scoped to a fleet rather than being global app roles:
+  - `fleet_admiral`
+  - `fleet_lieutenant`
+  - `member`
+- Fleet admirals and lieutenants can open `/fleets/manage` to maintain their fleet description, standing orders and member statuses.
+- Administrators can manage all fleets and can promote approved members into fleet leadership roles from the same management UI.
+
+The public overview is available at `/fleets`.

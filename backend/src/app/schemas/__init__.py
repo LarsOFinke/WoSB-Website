@@ -5,6 +5,7 @@ from app.schemas.build_option import BuildItemCategoryRead, BuildItemOptionRead,
 from app.schemas.ship import ShipRead
 from app.schemas.group import GroupCreate, GroupJoinRequest, GroupMemberRead, GroupRead
 from app.schemas.file_asset import FileRead
+from app.schemas.fleet import FleetCreate, FleetDetail, FleetJoinRequest, FleetMembershipRead, FleetMembershipSelfRead, FleetMembershipUpdate, FleetRead, FleetUpdate
 from app.schemas.fleet_event import FleetEventCreate, FleetEventRead, FleetEventUpdate
 from app.schemas.forum import ForumPostCreate, ForumPostRead, ForumThreadCreate, ForumThreadRead, ForumThreadSummary
 from app.schemas.guide import GuideCreate, GuideRead, GuideSummary
@@ -26,6 +27,14 @@ __all__ = [
     "BuildItemOptionRead",
     "BuildOptionsCatalog",
     "FileRead",
+    "FleetCreate",
+    "FleetDetail",
+    "FleetJoinRequest",
+    "FleetMembershipRead",
+    "FleetMembershipSelfRead",
+    "FleetMembershipUpdate",
+    "FleetRead",
+    "FleetUpdate",
     "FleetEventCreate",
     "FleetEventRead",
     "FleetEventUpdate",

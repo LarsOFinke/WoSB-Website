@@ -3,6 +3,8 @@ import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
 import { fleetCalendarMessages } from './fleetCalendar'
+import { fleetManagementMessages } from './fleetManagement'
+import { staffPanelMessages } from './staffPanel'
 import { groupManagementMessages } from './groupManagement'
 import { ironCrownFleetHubMessages } from './ironCrownFleetHub'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
@@ -14,6 +16,8 @@ const messageLayers = [
   ironCrownFleetHubMessages,
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,
+  fleetManagementMessages,
+  staffPanelMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

@@ -36,11 +36,13 @@ onMounted(() => {
       <RouterLink class="nav-link" to="/groups">{{ t('common.groups') }}</RouterLink>
       <RouterLink class="nav-link" to="/forum">{{ t('common.forum') }}</RouterLink>
       <RouterLink class="nav-link" to="/calendar">{{ t('common.calendar') }}</RouterLink>
+      <RouterLink class="nav-link" to="/fleets">{{ t('common.fleets') }}</RouterLink>
       <RouterLink class="nav-link" to="/guides">{{ t('common.guides') }}</RouterLink>
     </div>
 
     <div class="nav-account" aria-label="Account">
       <RouterLink v-if="isAuthenticated" class="nav-link nav-link-secondary" to="/profile">{{ t('common.profile') }}</RouterLink>
+      <RouterLink v-if="isAuthenticated" class="nav-link nav-link-secondary" to="/fleets/manage">{{ t('common.fleetManagement') }}</RouterLink>
       <RouterLink v-if="isStaff" class="nav-link nav-link-secondary" to="/admin">{{ t('common.staffPanel') }}</RouterLink>
     </div>
 

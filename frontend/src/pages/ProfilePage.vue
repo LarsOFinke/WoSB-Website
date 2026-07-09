@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { changePassword } from '@/services/auth'
+import { listMyFleetMemberships } from '@/services/fleets'
 import { getProfile, updateProfile } from '@/services/profile'
 import { useSession } from '@/services/session'
 
@@ -16,6 +17,10 @@ const error = ref('')
 const success = ref('')
 const passwordError = ref('')
 const passwordSuccess = ref('')
+const fleetMemberships = ref([])
+
+const activeFleetMemberships = computed(() => fleetMemberships.value.filter((membership) => ['active', 'pending'].includes(membership.status)))
+const leadershipMemberships = computed(() => fleetMemberships.value.filter((membership) => membership.status === 'active' && ['fleet_admiral', 'fleet_lieutenant'].includes(membership.role)))
 
 const focusOptions = [
   'pve_farming',
@@ -52,11 +57,20 @@ function fillForm(user) {
   form.role = user.role || 'user'
 }
 
+async function loadMemberships() {
+  try {
+    fleetMemberships.value = await listMyFleetMemberships()
+  } catch {
+    fleetMemberships.value = []
+  }
+}
+
 async function loadProfile() {
   loading.value = true
   error.value = ''
   try {
     fillForm(await getProfile())
+    await loadMemberships()
   } catch (err) {
     error.value = err.message || t('profile.loadError')
   } finally {
@@ -135,6 +149,31 @@ onMounted(loadProfile)
               <strong>{{ form.username }}</strong>
               <small>{{ t(`roles.${form.role}`) }}</small>
             </div>
+
+            <section class="profile-fleet-card">
+              <div>
+                <p class="eyebrow">{{ t('profile.fleetMemberships.eyebrow') }}</p>
+                <h2>{{ t('profile.fleetMemberships.title') }}</h2>
+                <p>{{ t('profile.fleetMemberships.subtitle') }}</p>
+              </div>
+              <div v-if="activeFleetMemberships.length" class="profile-membership-list">
+                <article v-for="membership in activeFleetMemberships" :key="membership.id" class="profile-membership-row">
+                  <div>
+                    <strong>{{ membership.fleet.name }}</strong>
+                    <span>{{ t(`fleets.focus.${membership.fleet.focus}`) }}</span>
+                  </div>
+                  <div class="member-pill-row">
+                    <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
+                    <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
+                  </div>
+                </article>
+              </div>
+              <p v-else class="muted">{{ t('profile.fleetMemberships.empty') }}</p>
+              <div class="form-actions compact-actions">
+                <RouterLink class="button-box" to="/fleets">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
+                <RouterLink v-if="leadershipMemberships.length" class="button-box primary-action" to="/fleets/manage">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
+              </div>
+            </section>
 
             <label class="input-panel embedded-field">
               <span>{{ t('profile.displayName') }}</span>

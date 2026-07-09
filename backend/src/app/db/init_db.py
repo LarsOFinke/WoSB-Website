@@ -19,6 +19,8 @@ def _ensure_sqlite_columns() -> None:
         user_columns = {column["name"] for column in inspector.get_columns("users")}
         if "fleet_name" not in user_columns:
             statements.append("ALTER TABLE users ADD COLUMN fleet_name VARCHAR(120)")
+        if "fleet_id" not in user_columns:
+            statements.append("ALTER TABLE users ADD COLUMN fleet_id INTEGER")
         if "preferred_focus" not in user_columns:
             statements.append("ALTER TABLE users ADD COLUMN preferred_focus VARCHAR(80)")
         if "note" not in user_columns:

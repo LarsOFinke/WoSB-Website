@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import create_session_token, hash_password, hash_session_token, verify_password
 from app.models import AuthSession, User
+from app.schemas.fleet import FleetJoinRequest
+from app.services.fleet_service import FleetValidationError, join_fleet
 from app.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
 
 VALID_ROLES = {ROLE_USER, ROLE_MODERATOR, ROLE_ADMIN}
@@ -23,6 +25,7 @@ def create_user(
     display_name: str,
     role: str = ROLE_USER,
     fleet_name: str | None = None,
+    fleet_id: int | None = None,
 ) -> User:
     normalized_username = username.strip().lower()
     if not normalized_username:
@@ -40,8 +43,16 @@ def create_user(
         password_hash=hash_password(password),
         role=role,
         fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) else None,
+        fleet_id=fleet_id,
     )
     db.add(user)
+    db.flush()
+    if fleet_id is not None:
+        try:
+            join_fleet(db, user, FleetJoinRequest(fleet_id=fleet_id, note="Registration claim"))
+        except FleetValidationError as exc:
+            db.rollback()
+            raise AuthError(str(exc)) from exc
     db.commit()
     db.refresh(user)
     return user

@@ -31,6 +31,8 @@ Routes:
 /forum/:id
 /calendar
 /calendar/new
+/fleets
+/fleets/manage
 /guides
 /guides/new
 /guides/:id
@@ -85,3 +87,16 @@ Seeded admin:
 ```text
 admin / admin123
 ```
+
+## Staff Panel
+
+The `/admin` route is the operational workspace for admins and moderators. It now includes quick actions, calendar appointment management and a content moderation view for forum threads, guides and fleet announcements.
+
+## Fleet management UI
+
+New frontend routes:
+
+- `/fleets` — public overview of all active fleets with focus filter, leadership chips and member counts.
+- `/fleets/manage` — authenticated management workspace for fleet admirals, fleet lieutenants and admins.
+
+Registration loads `/api/fleets` and lets users indicate whether they belong to one of the planned fleets. The backend stores this as a pending membership claim. The public `/fleets` list also lets signed-in users apply to a fleet with an optional note. `/profile` shows current official applications/memberships, while `/fleets/manage` gives fleet admirals, fleet lieutenants and admins a tabbed workspace for profile text, pending applications and member administration.

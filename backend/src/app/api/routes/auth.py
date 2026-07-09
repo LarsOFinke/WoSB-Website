@@ -36,6 +36,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> Registe
             password=payload.password,
             display_name=payload.display_name,
             fleet_name=payload.fleet_name,
+            fleet_id=payload.fleet_id,
         )
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
 import { useSession } from '@/services/session'
+import { listFleets } from '@/services/fleets'
 
 const router = useRouter()
 const { t } = useLocale()
@@ -12,6 +13,8 @@ const { register } = useSession()
 const username = ref('')
 const displayName = ref('')
 const fleetName = ref('')
+const fleetId = ref('')
+const fleets = ref([])
 const password = ref('')
 const isSubmitting = ref(false)
 const error = ref('')
@@ -26,6 +29,7 @@ async function submitRegister() {
       username: username.value,
       display_name: displayName.value,
       fleet_name: fleetName.value || null,
+      fleet_id: fleetId.value ? Number(fleetId.value) : null,
       password: password.value,
     })
     success.value = true
@@ -36,6 +40,14 @@ async function submitRegister() {
     isSubmitting.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    fleets.value = await listFleets()
+  } catch {
+    fleets.value = []
+  }
+})
 </script>
 
 <template>
@@ -61,6 +73,15 @@ async function submitRegister() {
 
           <label>
             <span>{{ t('profile.fleetName') }}</span>
+            <select v-model="fleetId" autocomplete="organization">
+              <option value="">{{ t('fleets.registration.noFleet') }}</option>
+              <option v-for="fleet in fleets" :key="fleet.id" :value="String(fleet.id)">{{ fleet.name }}</option>
+            </select>
+            <small class="field-hint">{{ t('fleets.registration.applicationHint') }}</small>
+          </label>
+
+          <label v-if="!fleetId">
+            <span>{{ t('fleets.registration.freeTextFleet') }}</span>
             <input v-model="fleetName" type="text" autocomplete="organization" maxlength="120" />
           </label>
 

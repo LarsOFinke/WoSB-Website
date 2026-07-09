@@ -95,3 +95,12 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     db.commit()
     db.refresh(post)
     return _post_to_read(post)
+
+
+def delete_thread(db: Session, thread_id: int, user: User) -> bool:
+    thread = db.get(ForumThread, thread_id)
+    if thread is None or (thread.owner_id != user.id and not user.can_moderate):
+        return False
+    db.delete(thread)
+    db.commit()
+    return True

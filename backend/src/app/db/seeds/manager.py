@@ -9,6 +9,7 @@ from app.db.seeds.consumables import CONSUMABLE_OPTIONS
 from app.db.seeds.demo_builds import DEMO_BUILD_DATA
 from app.db.seeds.demo_groups import DEMO_GROUP_DATA
 from app.db.seeds.demo_fleet_events import demo_fleet_event_data
+from app.db.seeds.fleets import FLEET_SEED_DATA
 from app.db.seeds.hold_items import HOLD_OPTIONS
 from app.db.seeds.lanterns import LANTERN_OPTIONS
 from app.db.seeds.sails import SAIL_OPTIONS
@@ -17,7 +18,7 @@ from app.db.seeds.special_crew import SPECIAL_CREW_OPTIONS
 from app.db.seeds.upgrades import UPGRADE_OPTIONS
 from app.db.seeds.users import seed_admin_user
 from app.db.seeds.weapons import WEAPON_OPTIONS
-from app.models import Build, BuildItemCategory, BuildItemOption, FleetEvent, Group, Ship, User
+from app.models import Build, BuildItemCategory, BuildItemOption, Fleet, FleetEvent, Group, Ship, User
 from app.schemas import BuildCreate
 from app.services.build_service import BuildValidationError, create_build
 from app.schemas.group import GroupCreate
@@ -45,6 +46,7 @@ class SeedManager:
 
     def run(self) -> None:
         self.seed_users()
+        self.seed_fleets()
         self.seed_ships()
         self.seed_build_options()
         self.seed_demo_builds()
@@ -53,6 +55,22 @@ class SeedManager:
 
     def seed_users(self) -> None:
         seed_admin_user(self.db)
+
+
+    def seed_fleets(self) -> None:
+        active_slugs = {row["slug"] for row in FLEET_SEED_DATA}
+        for fleet_data in FLEET_SEED_DATA:
+            existing = self.db.scalar(select(Fleet).where(Fleet.slug == fleet_data["slug"]))
+            payload = {**fleet_data, "is_active": fleet_data.get("is_active", True)}
+            if existing is None:
+                self.db.add(Fleet(**payload))
+                continue
+            for field_name, value in payload.items():
+                setattr(existing, field_name, value)
+        for fleet in self.db.scalars(select(Fleet)).all():
+            if fleet.slug not in active_slugs and fleet.sort_order >= 10:
+                fleet.is_active = False
+        self.db.commit()
 
     def seed_ships(self) -> None:
         for ship_data in SHIP_SEED_DATA:

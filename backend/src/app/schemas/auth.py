@@ -25,6 +25,7 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=6, max_length=200)
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
+    fleet_id: int | None = None
 
     @model_validator(mode="after")
     def normalize(self) -> "RegisterRequest":
@@ -44,6 +45,7 @@ class UserRead(BaseModel):
     role: str
     is_active: bool
     fleet_name: str | None = None
+    fleet_id: int | None = None
     preferred_focus: str | None = None
     note: str | None = None
     created_at: datetime
@@ -75,6 +77,7 @@ class PasswordChangeResponse(BaseModel):
 class ProfileUpdate(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
+    fleet_id: int | None = None
     preferred_focus: str | None = Field(default=None, max_length=80)
     note: str | None = Field(default=None, max_length=1000)
 

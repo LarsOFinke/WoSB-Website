@@ -2026,3 +2026,427 @@ input[type='range'] {
     text-align: left;
   }
 }
+
+/* Staff panel workspace */
+.staff-workspace-frame {
+  gap: 1.15rem;
+}
+
+.staff-hero {
+  align-items: flex-start;
+}
+
+.staff-hero-actions,
+.staff-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.staff-command-center {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.staff-command-card {
+  display: flex;
+  min-height: 8.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.1rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.staff-command-card:hover,
+.staff-command-card:focus-visible {
+  border-color: rgba(227, 177, 94, 0.5);
+  background: linear-gradient(145deg, rgba(227, 177, 94, 0.16), rgba(255, 255, 255, 0.035));
+  transform: translateY(-1px);
+}
+
+.staff-command-card span,
+.staff-command-card small {
+  color: var(--text-muted);
+}
+
+.staff-command-card strong {
+  font-size: 1.08rem;
+}
+
+.staff-tabs {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 5;
+  backdrop-filter: blur(16px);
+}
+
+.staff-management-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.staff-filter-row {
+  justify-content: space-between;
+}
+
+.staff-event-list,
+.staff-content-grid {
+  gap: 0.8rem;
+}
+
+.staff-event-row {
+  border-left: 3px solid rgba(227, 177, 94, 0.55);
+}
+
+.staff-content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.staff-content-column {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.staff-content-column h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.staff-content-column .admin-build-row {
+  align-items: flex-start;
+  padding: 0.85rem;
+}
+
+@media (max-width: 1100px) {
+  .staff-command-center,
+  .staff-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-tabs {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .staff-hero-actions,
+  .staff-filter-row {
+    justify-content: flex-start;
+  }
+}
+
+/* Fleet management prototype */
+.fleet-frame {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.fleet-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+
+.fleet-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.fleet-card {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 260px;
+}
+
+.fleet-card-header,
+.fleet-leaders {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fleet-leaders {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.fleet-management-panel,
+.fleet-editor,
+.fleet-member-board {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.fleet-member-board {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
+}
+
+.fleet-member-column {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+
+.fleet-member-row {
+  align-items: center;
+}
+
+.compact-select select {
+  min-width: 150px;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+@media (max-width: 760px) {
+  .fleet-hero {
+    flex-direction: column;
+  }
+}
+
+/* Fleet management iteration: connected applications and member directory */
+.hero-action-stack,
+.compact-actions,
+.member-pill-row,
+.application-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hero-action-stack {
+  justify-content: flex-end;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.fleet-filter-panel,
+.fleet-application-strip,
+.fleet-member-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.fleet-application-strip {
+  align-items: center;
+  border-color: rgba(241, 184, 91, 0.22);
+  background: linear-gradient(135deg, rgba(241, 184, 91, 0.10), rgba(255, 255, 255, 0.035));
+}
+
+.fleet-application-card {
+  align-content: start;
+}
+
+.fleet-application-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.fleet-inline-application {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(241, 184, 91, 0.24);
+  border-radius: var(--radius-lg);
+  background: rgba(241, 184, 91, 0.07);
+}
+
+.fleet-status-pill {
+  border-color: rgba(118, 202, 153, 0.28);
+  background: rgba(118, 202, 153, 0.10);
+}
+
+.profile-fleet-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(241, 184, 91, 0.20);
+  border-radius: var(--radius-lg);
+  background: rgba(241, 184, 91, 0.06);
+}
+
+.profile-fleet-card h2,
+.fleet-section-heading h2 {
+  margin: 0;
+}
+
+.profile-membership-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.profile-membership-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.profile-membership-row div:first-child,
+.fleet-section-heading,
+.fleet-management-panel,
+.fleet-member-directory,
+.fleet-request-board {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.profile-membership-row span {
+  color: var(--muted);
+}
+
+.fleet-command-bar {
+  align-items: end;
+}
+
+.fleet-management-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.compact-summary-card {
+  min-height: auto;
+  padding: var(--space-3);
+}
+
+.compact-summary-card span {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.compact-summary-card strong {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.fleet-management-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.fleet-tab-button {
+  flex: 1 1 12rem;
+}
+
+.tab-count {
+  min-width: 1.5rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.20);
+  color: var(--text);
+  font-size: 0.75rem;
+}
+
+.fleet-request-board,
+.fleet-member-directory {
+  padding-top: var(--space-2);
+}
+
+.fleet-request-row,
+.fleet-directory-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.member-note {
+  margin: 0.35rem 0 0;
+  max-width: 70ch;
+}
+
+.member-admin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.compact-select {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+@media (max-width: 820px) {
+  .hero-action-stack,
+  .fleet-application-actions,
+  .member-admin-controls {
+    justify-content: flex-start;
+  }
+
+  .fleet-management-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-request-row,
+  .fleet-directory-row,
+  .profile-membership-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+}
+
+.compact-summary-card {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
