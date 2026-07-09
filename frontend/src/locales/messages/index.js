@@ -7,6 +7,7 @@ import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildSta
 import { fleetCalendarMessages } from './fleetCalendar'
 import { fleetManagementMessages } from './fleetManagement'
 import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup'
+import { localeCompletenessMessages } from './localeCompleteness'
 import { staffPanelMessages } from './staffPanel'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -40,3 +41,7 @@ for (const localeCode of Object.keys(messages)) {
 }
 
 fillLocalizedMessages(messages)
+
+for (const localeCode of Object.keys(messages)) {
+  mergeMessages(messages[localeCode], localeCompletenessMessages[localeCode])
+}

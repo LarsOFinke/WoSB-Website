@@ -17,7 +17,7 @@ const error = ref('')
 const attachments = ref([])
 const bodyInput = ref(null)
 
-const categories = ['general', 'builds', 'events', 'support']
+const categories = ['general', 'builds', 'events', 'support', 'training', 'logistics']
 const form = reactive({ title: '', category: 'general', body: '' })
 const canSubmit = computed(() => form.title.trim() && form.body.trim() && !saving.value)
 const galleryAttachments = computed(() => unembeddedAttachments(attachments.value, form.body))

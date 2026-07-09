@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.constants import normalize_forum_category
 from app.models import ForumPost, ForumPostAttachment, ForumThread, User
 from app.schemas import FileRead, ForumPostCreate, ForumPostRead, ForumThreadCreate, ForumThreadRead, ForumThreadSummary
 from app.services.content_embed_service import ContentEmbedValidationError, validate_content_embeds
@@ -35,7 +36,7 @@ def _thread_summary(thread: ForumThread) -> ForumThreadSummary:
     return ForumThreadSummary(
         id=thread.id,
         title=thread.title,
-        category=thread.category,
+        category=normalize_forum_category(thread.category),
         owner_id=thread.owner_id,
         owner=thread.owner,
         reply_count=thread.reply_count,
@@ -55,7 +56,7 @@ def list_threads(db: Session, search: str | None = None, category: str | None = 
         like = f"%{search.strip()}%"
         statement = statement.where(ForumThread.title.ilike(like) | ForumThread.category.ilike(like))
     if category:
-        statement = statement.where(ForumThread.category == category.strip().lower())
+        statement = statement.where(ForumThread.category == normalize_forum_category(category))
     threads = db.scalars(statement).unique().all()
     return [_thread_summary(thread) for thread in threads]
 
@@ -78,7 +79,7 @@ def get_thread(db: Session, thread_id: int) -> ForumThreadRead | None:
 def create_thread(db: Session, payload: ForumThreadCreate, author: User) -> ForumThreadRead:
     files = get_files_for_owner(db, payload.file_ids, author)
     _validate_post_embeds(payload.body, files)
-    thread = ForumThread(title=payload.title, category=payload.category, owner_id=author.id)
+    thread = ForumThread(title=payload.title, category=normalize_forum_category(payload.category), owner_id=author.id)
     first_post = ForumPost(body=payload.body, author_id=author.id)
     for index, file in enumerate(files):
         first_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))

@@ -29,6 +29,12 @@ function postGalleryAttachments(post) {
   return unembeddedAttachments(post.attachments || [], post.body)
 }
 
+function normalizeForumCategory(value) {
+  const normalized = String(value || 'general').trim().toLowerCase()
+  if (normalized === 'loistics' || normalized === 'logistic') return 'logistics'
+  return normalized || 'general'
+}
+
 function formatDate(value) {
   return value ? new Date(value).toLocaleString() : '—'
 }
@@ -103,7 +109,7 @@ onMounted(loadThread)
       <header class="wire-section detail-header forum-detail-header">
         <RouterLink class="small-action" to="/forum">{{ t('common.back') }}</RouterLink>
         <div v-if="thread">
-          <p class="eyebrow">{{ t(`forum.categories.${thread.category}`) }}</p>
+          <p class="eyebrow">{{ t(`forum.categories.${normalizeForumCategory(thread.category)}`) }}</p>
           <h1 id="forum-detail-title">{{ thread.title }}</h1>
           <p>{{ t('forum.detail.meta', { name: thread.owner.display_name, value: formatDate(thread.created_at) }) }}</p>
         </div>

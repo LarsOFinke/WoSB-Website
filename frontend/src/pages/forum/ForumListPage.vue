@@ -21,12 +21,20 @@ const categories = computed(() => [
   { value: 'builds', label: t('forum.categories.builds') },
   { value: 'events', label: t('forum.categories.events') },
   { value: 'support', label: t('forum.categories.support') },
+  { value: 'training', label: t('forum.categories.training') },
+  { value: 'logistics', label: t('forum.categories.logistics') },
 ])
 
 const summary = computed(() => threads.value.length === 1 ? t('forum.list.summaryOne') : t('forum.list.summaryMany', { count: threads.value.length }))
 
+function normalizeForumCategory(value) {
+  const normalized = String(value || 'general').trim().toLowerCase()
+  if (normalized === 'loistics' || normalized === 'logistic') return 'logistics'
+  return normalized || 'general'
+}
+
 function categoryLabel(value) {
-  return t(`forum.categories.${value || 'general'}`)
+  return t(`forum.categories.${normalizeForumCategory(value)}`)
 }
 
 function formatDate(value) {

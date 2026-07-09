@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.core.constants import normalize_forum_category
+
 from app.schemas.auth import UserRead
 from app.schemas.file_asset import FileRead
 
@@ -24,7 +26,7 @@ class ForumThreadCreate(ForumPostCreate):
     @model_validator(mode="after")
     def normalize_thread(self) -> "ForumThreadCreate":
         self.title = self.title.strip()
-        self.category = self.category.strip().lower() or "general"
+        self.category = normalize_forum_category(self.category)
         return self
 
 
