@@ -9,8 +9,10 @@ from app.models import (
     ForumPost,
     ForumPostAttachment,
     ForumThread,
+    Build,
     Guide,
     GuideAttachment,
+    GuideBuildReference,
     StoredFile,
     User,
 )
@@ -41,6 +43,9 @@ DEMO_GUIDES = [
 
 [[file:{file_id}|large]]
 
+Recommended reference build:
+[[build:{build_id}|card]]
+
 1. Hold the assigned line unless the caller explicitly breaks formation.
 2. Announce disabled sails, fire and low crew early.
 3. Save hard turns for command calls or survival.
@@ -48,6 +53,7 @@ DEMO_GUIDES = [
 
 The goal is not perfect theorycrafting; it is shared vocabulary and fewer surprises during the first engagement.""",
         "file": "demo/line-battle.svg",
+        "build": "Victory Defensive Line",
     },
     {
         "title": "Trade Convoy Checklist",
@@ -57,6 +63,9 @@ The goal is not perfect theorycrafting; it is shared vocabulary and fewer surpri
 
 [[file:{file_id}|medium]]
 
+Scout escort build:
+[[build:{build_id}|compact]]
+
 Checklist:
 - Confirm port of departure and fallback port.
 - Split valuable cargo across multiple holds.
@@ -64,6 +73,7 @@ Checklist:
 - Keep voice comms short: sighting, heading, distance, ship count.
 - Log losses and bottlenecks after the run so logistics can adapt the next route.""",
         "file": "demo/trade-convoy.svg",
+        "build": "Surprise Gunnery Scout",
     },
 ]
 
@@ -124,11 +134,13 @@ def seed_demo_content(db: Session) -> None:
         return
 
     files = {row["relative_path"]: _stored_file(db, owner, row) for row in DEMO_FILES}
+    builds = {build.build_name: build for build in db.scalars(select(Build)).all()}
 
     for data in DEMO_GUIDES:
         existing = db.scalar(select(Guide).where(Guide.title == data["title"]))
         file = files[data["file"]]
-        body = data["body"].format(file_id=file.id)
+        build = builds.get(data.get("build", ""))
+        body = data["body"].format(file_id=file.id, build_id=build.id if build else 0)
         if existing is None:
             guide = Guide(
                 title=data["title"],
@@ -138,6 +150,8 @@ def seed_demo_content(db: Session) -> None:
                 owner_id=owner.id,
             )
             guide.attachments.append(GuideAttachment(file_id=file.id, sort_order=0))
+            if build is not None:
+                guide.build_references.append(GuideBuildReference(build_id=build.id, sort_order=0))
             db.add(guide)
             continue
         existing.category = data["category"]
@@ -146,11 +160,14 @@ def seed_demo_content(db: Session) -> None:
         existing.is_published = True
         if not any(attachment.file_id == file.id for attachment in existing.attachments):
             existing.attachments.append(GuideAttachment(file_id=file.id, sort_order=len(existing.attachments)))
+        if build is not None and not any(reference.build_id == build.id for reference in existing.build_references):
+            existing.build_references.append(GuideBuildReference(build_id=build.id, sort_order=len(existing.build_references)))
 
     for data in DEMO_THREADS:
         existing = db.scalar(select(ForumThread).where(ForumThread.title == data["title"]))
         file = files[data["file"]]
-        body = data["body"].format(file_id=file.id)
+        build = builds.get(data.get("build", ""))
+        body = data["body"].format(file_id=file.id, build_id=build.id if build else 0)
         if existing is not None:
             first_post = existing.posts[0] if existing.posts else None
             if first_post is not None:

@@ -25,6 +25,7 @@ forum_posts
 forum_post_attachments
 guides
 guide_attachments
+guide_build_references
 ```
 
 ## 3NF-oriented changes in this pass
@@ -54,6 +55,16 @@ option_id, effect_key, effect_value
 ```
 
 The API still returns `stat_effects` as a dictionary for frontend convenience, but the persisted data is normalized and queryable.
+
+### Guide Build references
+
+Guides link Builds through `guide_build_references` instead of copying Build names, ships or stats into the guide row:
+
+```text
+guide_build_references(guide_id, build_id, sort_order)
+```
+
+Inline markers such as `[[build:12|card]]` only control placement inside the guide body. The persisted source of truth is the join table, which keeps the schema normalized and lets Build data stay in the Build module.
 
 ### File attachments
 

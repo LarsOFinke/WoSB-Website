@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.auth import UserRead
+from app.schemas.build import BuildRead
 from app.schemas.file_asset import FileRead
 
 
@@ -12,6 +13,7 @@ class GuideCreate(BaseModel):
     summary: str | None = Field(default=None, max_length=400)
     body: str = Field(min_length=1, max_length=20000)
     file_ids: list[int] = Field(default_factory=list, max_length=20)
+    build_ids: list[int] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def normalize(self) -> "GuideCreate":
@@ -21,6 +23,7 @@ class GuideCreate(BaseModel):
         if isinstance(self.summary, str):
             self.summary = self.summary.strip() or None
         self.file_ids = list(dict.fromkeys(int(file_id) for file_id in self.file_ids if int(file_id) > 0))
+        self.build_ids = list(dict.fromkeys(int(build_id) for build_id in self.build_ids if int(build_id) > 0))
         return self
 
 
@@ -34,6 +37,7 @@ class GuideSummary(BaseModel):
     owner_id: int
     owner: UserRead
     attachment_count: int = 0
+    build_reference_count: int = 0
     created_at: datetime
     updated_at: datetime
 
@@ -41,3 +45,4 @@ class GuideSummary(BaseModel):
 class GuideRead(GuideSummary):
     body: str
     attachments: list[FileRead] = Field(default_factory=list)
+    builds: list[BuildRead] = Field(default_factory=list)

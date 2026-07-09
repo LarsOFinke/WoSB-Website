@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -26,6 +26,12 @@ class Guide(Base):
         lazy="selectin",
         order_by="GuideAttachment.sort_order",
     )
+    build_references: Mapped[list["GuideBuildReference"]] = relationship(
+        back_populates="guide",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="GuideBuildReference.sort_order",
+    )
 
 
 class GuideAttachment(Base):
@@ -38,3 +44,16 @@ class GuideAttachment(Base):
 
     guide: Mapped[Guide] = relationship(back_populates="attachments")
     file: Mapped["StoredFile"] = relationship(lazy="joined")
+
+
+class GuideBuildReference(Base):
+    __tablename__ = "guide_build_references"
+    __table_args__ = (UniqueConstraint("guide_id", "build_id", name="uq_guide_build_reference"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    guide_id: Mapped[int] = mapped_column(ForeignKey("guides.id", ondelete="CASCADE"), nullable=False, index=True)
+    build_id: Mapped[int] = mapped_column(ForeignKey("builds.id", ondelete="CASCADE"), nullable=False, index=True)
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    guide: Mapped[Guide] = relationship(back_populates="build_references")
+    build: Mapped["Build"] = relationship(lazy="joined")

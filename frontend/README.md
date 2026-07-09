@@ -125,3 +125,13 @@ Fresh backend seeds include two guides and two forum threads with SVG image atta
 ## Inline media embeds
 
 Forum posts and guides now support explicit inline placement for uploaded files via markers such as `[[file:123|large]]`. The UI inserts these markers for users from the upload panel, renders a live preview, and leaves unused files as normal attachments. See `docs/INLINE_MEDIA_EMBEDS.md` for syntax and validation rules.
+
+
+## Guide Build references
+
+The Guide editor now loads the public Build catalog and exposes a dedicated Build dropdown. Authors can:
+
+- link a Build as a general Guide reference, or
+- insert the Build inline at the current cursor position.
+
+Inline markers are inserted by the UI as `[[build:id|layout]]`. `RichTextRenderer.vue` renders them as Build cards and `LinkedBuildList.vue` shows linked Builds that are not embedded in the body.

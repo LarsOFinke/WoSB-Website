@@ -24,7 +24,7 @@ frontend/  Vue 3 + Vite
 - `/forum` and `/forum/new` as a minimal file-backed discussion board
 - `/calendar` as public fleet month calendar with category filter and selected-day agenda
 - `/calendar/new` as staff-only appointment creation for admins and moderators
-- `/guides` and `/guides/new` as a minimal file-backed guide module
+- `/guides` and `/guides/new` as a minimal file- and build-backed guide module
 - `/files` API for shared uploads used by Forum and Guides
 - `/admin` as protected staff panel for admins and moderators
 - `/fleets` as public fleet overview with application actions for signed-in users
@@ -104,6 +104,14 @@ http://127.0.0.1:5173/admin
 ```
 
 ## Latest update
+
+- Guides can now reference existing website Builds through a dedicated dropdown in the guide editor.
+- Selected Builds can either be linked as general guide references or inserted inline into the body with `[[build:id|layout]]` tokens.
+- Inline Build cards are server-validated against the guide's linked Build references, matching the existing file-embed validation model.
+- Guide detail pages and live previews render linked Builds as enterprise-style cards and keep non-inline Build links in a dedicated reference section.
+- Documentation added in `docs/GUIDE_BUILD_EMBEDS.md`; locale coverage remains complete through `npm run check:locales`.
+
+## Previous update
 
 - Full locale hardening pass: all supported languages now pass key coverage and unapproved-English-fallback validation through `npm run check:locales`.
 - Enterprise UI pass added global design-token aliases, stronger responsive breakpoints, mobile/touch target rules, scrollable navigation groups and tighter scaling for calendar/filter/management layouts.

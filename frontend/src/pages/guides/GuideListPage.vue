@@ -97,7 +97,10 @@ onMounted(loadGuides)
                 <strong>{{ guide.title }}</strong>
                 <span>{{ categoryLabel(guide.category) }} · {{ t('guides.list.by', { name: guide.owner.display_name }) }}</span>
               </div>
-              <span class="type-pill">{{ t('guides.list.attachments', { count: guide.attachment_count }) }}</span>
+              <div class="guide-list-pills">
+                <span class="type-pill">{{ t('guides.list.attachments', { count: guide.attachment_count }) }}</span>
+                <span v-if="guide.build_reference_count" class="type-pill">{{ t('buildEmbeds.referenceCount', { count: guide.build_reference_count }) }}</span>
+              </div>
             </div>
             <p class="group-card-description">{{ guide.summary || t('guides.list.noSummary') }}</p>
           </RouterLink>

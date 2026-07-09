@@ -114,6 +114,7 @@ forum_posts
 forum_post_attachments
 guides
 guide_attachments
+guide_build_references
 fleets
 fleet_memberships
 fleet_events
@@ -178,3 +179,13 @@ fleet_events` stores public calendar entries with title, category, optional loca
 ## Inline media embeds
 
 Forum posts and guides now support explicit inline placement for uploaded files via markers such as `[[file:123|large]]`. The UI inserts these markers for users from the upload panel, renders a live preview, and leaves unused files as normal attachments. See `docs/INLINE_MEDIA_EMBEDS.md` for syntax and validation rules.
+
+
+## Guide Build embeds
+
+Guides can reference Builds in two ways:
+
+- `build_ids` in `POST /api/guides` stores general guide-to-build references in `guide_build_references`.
+- Inline body markers such as `[[build:12|card]]` render Build cards at a specific text location.
+
+The backend validates that every inline Build marker points to a Build linked through `build_ids`. Supported layouts are `compact`, `card` and `full`. Invalid IDs or layouts return `400 Bad Request`.

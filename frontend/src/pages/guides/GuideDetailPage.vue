@@ -2,10 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
+import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
 import { deleteGuide, getGuide } from '@/services/guides'
-import { unembeddedAttachments } from '@/services/richTextEmbeds'
+import { unembeddedAttachments, unembeddedBuilds } from '@/services/richTextEmbeds'
 import { useSession } from '@/services/session'
 
 const props = defineProps({ id: { type: String, required: true } })
@@ -18,6 +19,7 @@ const error = ref('')
 
 const canManage = computed(() => guide.value && user.value && (guide.value.owner_id === user.value.id || isStaff.value))
 const galleryAttachments = computed(() => guide.value ? unembeddedAttachments(guide.value.attachments || [], guide.value.body) : [])
+const linkedBuildCards = computed(() => guide.value ? unembeddedBuilds(guide.value.builds || [], guide.value.body) : [])
 
 function formatDate(value) {
   return value ? new Date(value).toLocaleString() : '—'
@@ -70,7 +72,8 @@ onMounted(loadGuide)
       <template v-else-if="guide">
         <article class="wire-section guide-content-card">
           <p v-if="guide.summary" class="guide-summary">{{ guide.summary }}</p>
-          <RichTextRenderer :body="guide.body" :attachments="guide.attachments" />
+          <RichTextRenderer :body="guide.body" :attachments="guide.attachments" :builds="guide.builds" />
+          <LinkedBuildList :builds="linkedBuildCards" />
           <AttachmentGallery :attachments="galleryAttachments" />
         </article>
 

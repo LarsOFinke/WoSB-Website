@@ -7,7 +7,7 @@ from app.models.fleet import Fleet, FleetMembership
 from app.models.fleet_event import FleetEvent
 from app.models.forum import ForumPost, ForumPostAttachment, ForumThread
 from app.models.group import Group, GroupMember
-from app.models.guide import Guide, GuideAttachment
+from app.models.guide import Guide, GuideAttachment, GuideBuildReference
 from app.models.ship import Ship
 from app.models.user import User
 from app.models.user_profile import UserProfile
@@ -29,6 +29,7 @@ __all__ = [
     "GroupMember",
     "Guide",
     "GuideAttachment",
+    "GuideBuildReference",
     "Ship",
     "StoredFile",
     "User",
