@@ -46,6 +46,8 @@ Routes:
 
 ## UI foundation
 
+The latest UI pass adds explicit desktop/tablet/mobile breakpoints at 1280px, 1024px, 768px, 560px and 420px. Navigation groups scroll horizontally on small screens, controls use touch-safe targets, and calendar/filter/management layouts scale without horizontal overflow.
+
 The UI is organized around one shared stylesheet in `src/styles/main.css` with tokenized color, spacing, radius and elevation values. The current pass focuses on:
 
 - a structured app shell and grouped navigation
@@ -83,12 +85,12 @@ Run this after adding or moving translation keys:
 npm run check:locales
 ```
 
-The script verifies that DE / EN / FR / ES / PT / RU / CN all expose the same translation key set after fallback merging.
+The script verifies that DE / EN / FR / ES / PT / RU / CN all expose the same translation key set and that non-English languages do not accidentally surface unapproved English fallback strings.
 
 ## Structure notes
 
 - `src/locales/index.js` contains only the small runtime API (`useLocale`, `setLocale`, `translate`).
-- `src/locales/messages/` contains layered translation data by feature/domain. English is merged first as the fallback layer; locale-specific entries override it, so every supported language has complete key coverage even while individual translations continue to improve.
+- `src/locales/messages/` contains layered translation data by feature/domain. English is merged first as the canonical baseline; locale-specific entries override it, and `autoLocalization.js` fills remaining non-English gaps so every supported language has complete key coverage without unapproved English UI fallbacks.
 - `src/locales/glossaries/` contains term replacement glossaries for catalog option names.
 - `src/services/query.js` centralizes URL query-string creation so API services stay small and consistent.
 

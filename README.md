@@ -36,7 +36,7 @@ frontend/  Vue 3 + Vite
 - Ship catalog is seeded in the backend
 - Item/slot catalog is seeded in the backend and loaded by the frontend
 - Data is stored in SQLite with the main prototype schema normalized toward 3NF; see `docs/DATABASE_SCHEMA.md`
-- UI localization is prepared through `frontend/src/locales`: default EN, switcher for DE / EN / FR / ES / PT / RU / CN
+- UI localization is validated through `frontend/src/locales`: DE / EN / FR / ES / PT / RU / CN all expose the same key set and the locale check now rejects unapproved English fallback strings
 
 ## Backend
 
@@ -104,6 +104,13 @@ http://127.0.0.1:5173/admin
 ```
 
 ## Latest update
+
+- Full locale hardening pass: all supported languages now pass key coverage and unapproved-English-fallback validation through `npm run check:locales`.
+- Enterprise UI pass added global design-token aliases, stronger responsive breakpoints, mobile/touch target rules, scrollable navigation groups and tighter scaling for calendar/filter/management layouts.
+- Registration and shared forms now use more distinct elevated input surfaces, stronger focus rings and clearer responsive stacking.
+- Documentation added for localization coverage in `docs/LOCALIZATION.md` and expanded responsive UI guidance in `docs/UI_UX_NOTES.md`.
+
+## Previous update
 
 - Registration UI refreshed with clearer two-step structure, stronger input contrast, persistent helper text and optional fleet application note.
 - Locale coverage completed for the registration/profile layer across DE / EN / FR / ES / PT / RU / CN, with English still merged as the canonical fallback for every feature module.

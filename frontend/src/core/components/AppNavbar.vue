@@ -30,7 +30,7 @@ onMounted(() => {
       <span class="brand-copy">{{ t('common.projectName') }}</span>
     </RouterLink>
 
-    <div class="nav-links" aria-label="Primary">
+    <div class="nav-links" :aria-label="t('common.primaryNavigation')">
       <RouterLink class="nav-link" to="/home">{{ t('common.home') }}</RouterLink>
       <RouterLink class="nav-link" to="/builds">{{ t('common.builds') }}</RouterLink>
       <RouterLink class="nav-link" to="/groups">{{ t('common.groups') }}</RouterLink>
@@ -40,7 +40,7 @@ onMounted(() => {
       <RouterLink class="nav-link" to="/guides">{{ t('common.guides') }}</RouterLink>
     </div>
 
-    <div class="nav-account" aria-label="Account">
+    <div class="nav-account" :aria-label="t('common.accountNavigation')">
       <RouterLink v-if="isAuthenticated" class="nav-link nav-link-secondary" to="/profile">{{ t('common.profile') }}</RouterLink>
       <RouterLink v-if="isAuthenticated" class="nav-link nav-link-secondary" to="/fleets/manage">{{ t('common.fleetManagement') }}</RouterLink>
       <RouterLink v-if="isStaff" class="nav-link nav-link-secondary" to="/admin">{{ t('common.staffPanel') }}</RouterLink>

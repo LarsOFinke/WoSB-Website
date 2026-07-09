@@ -2632,3 +2632,715 @@ input[type='range'] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Enterprise-grade UI pass: token aliases, adaptive spacing and resilient mobile layouts. */
+:root {
+  --space-1: 0.35rem;
+  --space-2: 0.55rem;
+  --space-3: 0.85rem;
+  --space-4: 1.15rem;
+  --space-5: 1.65rem;
+  --space-6: 2.35rem;
+  --color-text: var(--text);
+  --color-text-muted: var(--muted);
+  --text-muted: var(--muted);
+  --color-surface: rgba(13, 24, 36, 0.92);
+  --color-surface-muted: rgba(255, 255, 255, 0.045);
+  --color-surface-strong: rgba(19, 35, 52, 0.94);
+  --color-border-soft: rgba(221, 231, 244, 0.16);
+  --color-border-strong: rgba(221, 231, 244, 0.30);
+  --control-height: 2.85rem;
+  --touch-target: 2.75rem;
+  --page-width: min(1500px, calc(100vw - clamp(1rem, 3vw, 2.5rem)));
+  --reading-width: 72ch;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 6rem;
+}
+
+body {
+  accent-color: var(--accent);
+}
+
+img,
+video,
+iframe,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea,
+.nav-link,
+.nav-action,
+.button-box,
+.form-button,
+.small-action,
+.tab-button {
+  min-height: var(--touch-target);
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--accent-strong);
+}
+
+::selection {
+  color: #08111b;
+  background: rgba(241, 184, 91, 0.92);
+}
+
+.app-shell {
+  isolation: isolate;
+}
+
+.page-frame {
+  overflow: clip;
+}
+
+.wire-section,
+.auth-form,
+.register-form-section,
+.fleet-card,
+.staff-command-card,
+.home-card,
+.build-card,
+.guide-card,
+.thread-card,
+.calendar-day,
+.calendar-agenda-card,
+.profile-fleet-card,
+.fleet-member-column {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.header-block p,
+.header-info p,
+.about-block p,
+.home-hero p,
+.build-list-hero p,
+.profile-hero p,
+.admin-hero p,
+.create-topline p,
+.detail-header p,
+.auth-copy p,
+.guide-content-card p,
+.content-post-card p {
+  max-width: var(--reading-width);
+}
+
+.navbar {
+  grid-template-columns: minmax(220px, auto) minmax(340px, 1fr) minmax(180px, auto) minmax(220px, auto);
+  gap: clamp(0.45rem, 1vw, 0.85rem);
+}
+
+.nav-link.router-link-active,
+.nav-link.router-link-exact-active,
+.tab-button.is-active,
+.fleet-tab-button.is-active {
+  border-color: rgba(241, 184, 91, 0.34);
+  background:
+    linear-gradient(135deg, rgba(241, 184, 91, 0.18), rgba(255, 255, 255, 0.045));
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.locale-switcher {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.auth-page,
+.auth-frame {
+  min-width: 0;
+}
+
+.auth-card,
+.refined-auth-card,
+.polished-auth-card,
+.register-card {
+  container-type: inline-size;
+}
+
+.auth-card,
+.register-card {
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.register-card {
+  background:
+    radial-gradient(circle at 8% 8%, rgba(241, 184, 91, 0.12), transparent 19rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.018)),
+    rgba(13, 24, 36, 0.82);
+}
+
+.register-copy {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.register-copy h1 {
+  font-size: clamp(2rem, 4vw, 3.8rem);
+}
+
+.register-benefits span {
+  min-height: 2.25rem;
+}
+
+.register-form {
+  border: 1px solid rgba(221, 231, 244, 0.30);
+  border-radius: var(--radius-lg);
+}
+
+.register-form-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.register-form-section::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(241, 184, 91, 0.74), rgba(241, 184, 91, 0.08));
+}
+
+.elevated-input-panel,
+.input-panel,
+.filter-box,
+.select-shell,
+.file-drop-box {
+  backdrop-filter: blur(10px);
+}
+
+.elevated-input-panel span,
+.auth-form label > span,
+.input-panel > span,
+.filter-box > span,
+.compact-select span {
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.elevated-input-panel input,
+.elevated-input-panel select,
+.elevated-input-panel textarea,
+.auth-form input,
+.auth-form select,
+.auth-form textarea,
+.profile-form input,
+.profile-form select,
+.profile-form textarea,
+.password-form input,
+.moderator-form input,
+.filter-box input,
+.filter-box select,
+.select-shell select {
+  min-height: var(--control-height);
+  border-radius: 0.95rem;
+}
+
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+  border: 1px solid rgba(221, 231, 244, 0.22);
+  padding: 0.68rem 0.8rem;
+  background: rgba(5, 12, 20, 0.78);
+}
+
+.auth-form input:focus,
+.auth-form select:focus,
+.auth-form textarea:focus,
+.filter-box:focus-within,
+.select-shell:focus-within,
+.input-panel:focus-within,
+.file-drop-box:focus-within {
+  border-color: rgba(241, 184, 91, 0.64);
+  box-shadow:
+    0 0 0 4px rgba(241, 184, 91, 0.11),
+    0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.form-button.primary-action,
+.button-box.primary-action,
+.nav-action-strong {
+  background:
+    linear-gradient(135deg, rgba(255, 210, 122, 0.28), rgba(241, 184, 91, 0.13));
+  color: var(--text);
+}
+
+.build-filter-panel,
+.fleet-filter-panel,
+.fleet-member-filters,
+.staff-filter-row,
+.calendar-filter-panel {
+  border-color: rgba(221, 231, 244, 0.20);
+}
+
+.filter-box,
+.select-shell,
+.input-panel {
+  border-color: rgba(221, 231, 244, 0.22);
+  background: rgba(5, 12, 20, 0.46);
+}
+
+.list-toolbar,
+.refined-toolbar,
+.group-filter-toolbar,
+.fleet-filter-panel,
+.fleet-member-filters,
+.calendar-toolbar {
+  min-width: 0;
+}
+
+.staff-command-center {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.staff-command-card,
+.fleet-card,
+.profile-fleet-card,
+.calendar-agenda-card,
+.fleet-member-row,
+.profile-membership-row {
+  border-color: rgba(221, 231, 244, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.024)),
+    rgba(11, 22, 34, 0.88);
+}
+
+.staff-content-grid,
+.fleet-member-board,
+.fleet-management-summary,
+.home-content-grid,
+.hub-module-grid,
+.enduser-module-grid,
+.refined-module-grid {
+  container-type: inline-size;
+}
+
+.admin-tabs,
+.fleet-management-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-tabs .tab-button,
+.fleet-management-tabs .tab-button,
+.fleet-tab-button {
+  min-width: max-content;
+}
+
+.filter-table,
+.build-results-panel,
+.group-results-panel,
+.forum-results-panel,
+.guides-results-panel,
+.staff-content-column,
+.fleet-member-directory,
+.fleet-request-board {
+  min-width: 0;
+}
+
+.admin-build-row,
+.my-build-row,
+.my-group-row,
+.fleet-request-row,
+.fleet-directory-row,
+.profile-membership-row {
+  gap: var(--space-3);
+}
+
+.calendar-day {
+  min-height: clamp(6.75rem, 9.5vw, 9.5rem);
+}
+
+.calendar-event-chip,
+.calendar-more-chip,
+.summary-pill,
+.type-pill,
+.fleet-status-pill,
+.tab-count {
+  text-wrap: nowrap;
+}
+
+.attachment-gallery,
+.fleet-calendar-grid,
+.fleet-card-grid,
+.staff-content-grid,
+.inventory-grid,
+.equipment-unified-grid {
+  min-width: 0;
+}
+
+@media (max-width: 1280px) {
+  .navbar {
+    grid-template-columns: minmax(200px, auto) minmax(0, 1fr);
+  }
+
+  .nav-account,
+  .nav-utilities {
+    justify-content: flex-start;
+  }
+
+  .nav-links,
+  .nav-account,
+  .nav-utilities {
+    grid-column: 1 / -1;
+  }
+
+  .calendar-layout,
+  .detail-grid,
+  .profile-dashboard-grid,
+  .group-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-agenda-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --page-width: min(100vw - 1.25rem, 1500px);
+    --content-gap: 0.9rem;
+  }
+
+  .page-frame {
+    padding: 0.85rem;
+  }
+
+  .home-hero,
+  .build-list-hero,
+  .profile-hero,
+  .admin-hero,
+  .detail-header,
+  .create-topline,
+  .group-create-topline-clean {
+    align-items: start;
+  }
+
+  .hero-actions,
+  .staff-hero-actions,
+  .calendar-toolbar,
+  .calendar-navigation,
+  .form-actions,
+  .profile-actions,
+  .group-create-actions {
+    justify-content: flex-start;
+  }
+
+  .register-card,
+  .auth-card,
+  .build-filter-panel,
+  .calendar-basic-grid,
+  .calendar-time-grid,
+  .fleet-management-summary,
+  .staff-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --page-width: min(100vw - 0.9rem, 1500px);
+    --touch-target: 2.85rem;
+    font-size: 15px;
+  }
+
+  .app-shell {
+    padding-top: 0.45rem;
+  }
+
+  .navbar {
+    top: 0.45rem;
+    padding: 0.55rem;
+    border-radius: 1.25rem;
+  }
+
+  .nav-brand {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nav-links,
+  .nav-account,
+  .locale-switcher,
+  .nav-session {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    border-radius: 1rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar,
+  .nav-account::-webkit-scrollbar,
+  .locale-switcher::-webkit-scrollbar,
+  .nav-session::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-link,
+  .nav-action,
+  .locale-button {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  .page-frame,
+  .wire-section,
+  .register-form-section {
+    border-radius: 1rem;
+  }
+
+  .wire-section {
+    padding: 0.85rem;
+  }
+
+  .home-hero h1,
+  .build-list-hero h1,
+  .profile-hero h1,
+  .admin-hero h1,
+  .auth-copy h1,
+  .create-topline h1,
+  .detail-header h1 {
+    line-height: 1.05;
+  }
+
+  .list-toolbar,
+  .list-toolbar.has-type-filter,
+  .refined-toolbar,
+  .group-filter-toolbar,
+  .fleet-filter-panel,
+  .fleet-member-filters,
+  .calendar-toolbar,
+  .staff-filter-row,
+  .member-admin-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .filter-box,
+  .select-shell,
+  .input-panel,
+  .file-drop-box,
+  .button-box,
+  .form-button,
+  .small-action,
+  .danger-action {
+    width: 100%;
+  }
+
+  .calendar-weekday {
+    display: block;
+    padding-inline: 0.15rem;
+    font-size: 0.62rem;
+  }
+
+  .fleet-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .calendar-day {
+    min-height: 4.9rem;
+    padding: 0.35rem;
+    border-radius: 0.75rem;
+  }
+
+  .calendar-day-number {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: 0.82rem;
+  }
+
+  .calendar-event-chip {
+    display: none;
+  }
+
+  .calendar-more-chip {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.62rem;
+    text-align: center;
+  }
+
+  .calendar-month-heading p:last-child {
+    text-align: left;
+  }
+
+  .attachment-document-frame {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --page-width: min(100vw - 0.6rem, 1500px);
+    --control-height: 2.95rem;
+  }
+
+  .app-shell {
+    gap: 0.65rem;
+  }
+
+  .page-frame {
+    padding: 0.55rem;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+  }
+
+  .brand-copy {
+    max-width: 19ch;
+  }
+
+  .home-status-card,
+  .refined-status-card,
+  .admin-status-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .register-form {
+    padding: 0.75rem;
+  }
+
+  .compact-form-heading {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+
+  .elevated-input-panel,
+  .auth-form label.elevated-input-panel,
+  .profile-form .input-panel,
+  .password-form .input-panel,
+  .moderator-form .input-panel {
+    padding: 0.7rem;
+  }
+
+  .staff-command-card,
+  .fleet-card,
+  .profile-fleet-card,
+  .calendar-agenda-card {
+    padding: 0.85rem;
+  }
+
+  .fleet-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-calendar-grid {
+    gap: 0.18rem;
+  }
+
+  .calendar-day {
+    min-height: 4.2rem;
+    padding: 0.25rem;
+  }
+
+  .calendar-day-number {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+
+  .footer {
+    display: grid;
+    justify-items: start;
+    gap: 0.45rem;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    font-size: 14.5px;
+  }
+
+  .navbar,
+  .page-frame {
+    border-radius: 0.95rem;
+  }
+
+  .nav-brand {
+    padding-inline: 0.2rem;
+  }
+
+  .brand-mark {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .brand-copy {
+    max-width: 16ch;
+  }
+
+  .register-benefits span,
+  .summary-pill,
+  .type-pill {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .fleet-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-weekday {
+    font-size: 0.56rem;
+  }
+
+  .calendar-day {
+    min-height: 3.7rem;
+  }
+
+  .calendar-more-chip {
+    display: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .nav-link,
+  .nav-action,
+  .button-box,
+  .form-button,
+  .small-action,
+  .danger-action,
+  .tab-button,
+  .locale-button,
+  .calendar-day {
+    min-height: 44px;
+  }
+
+  .calendar-day:hover,
+  .button-box:hover,
+  .form-button:hover,
+  .small-action:hover,
+  .tab-button:hover,
+  .staff-command-card:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

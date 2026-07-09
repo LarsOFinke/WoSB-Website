@@ -278,7 +278,7 @@ onMounted(async () => {
       </section>
 
       <template v-else>
-        <section class="wire-section staff-command-center" aria-label="Staff quick actions">
+        <section class="wire-section staff-command-center" :aria-label="t('admin.quickActions.label')">
           <RouterLink class="staff-command-card" to="/calendar/new">
             <span>{{ t('admin.quickActions.scheduleLabel') }}</span>
             <strong>{{ t('admin.quickActions.newEvent') }}</strong>

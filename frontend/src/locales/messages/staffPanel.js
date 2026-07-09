@@ -8,6 +8,7 @@ export const staffPanelMessages = {
         content: 'Content',
       },
       quickActions: {
+        label: 'Staff quick actions',
         scheduleLabel: 'Fleet calendar',
         newEvent: 'New appointment',
         scheduleText: 'Schedule port battles, trainings and farming rounds.',
@@ -68,6 +69,7 @@ export const staffPanelMessages = {
         content: 'Inhalte',
       },
       quickActions: {
+        label: 'Team-Schnellaktionen',
         scheduleLabel: 'Flottenkalender',
         newEvent: 'Neuer Termin',
         scheduleText: 'Port-Battles, Trainings und Farmrunden planen.',

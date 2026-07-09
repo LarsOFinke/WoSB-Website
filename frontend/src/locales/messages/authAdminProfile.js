@@ -47,11 +47,11 @@ export const authAdminProfileMessages = {
       },
     },
     profile: {
-      eyebrow: 'Account',
+      eyebrow: 'Konto',
       title: 'Your profile',
       subtitle: 'Keep your public WoSB profile compact and useful for later modules.',
       loading: 'Loading profile ...',
-      account: 'Account',
+      account: 'Konto',
       displayName: 'Display name',
       fleetName: 'Fleet',
       fleetPlaceholder: 'Optional fleet name',

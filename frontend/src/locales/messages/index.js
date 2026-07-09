@@ -5,6 +5,7 @@ import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildSta
 import { fleetCalendarMessages } from './fleetCalendar'
 import { fleetManagementMessages } from './fleetManagement'
 import { staffPanelMessages } from './staffPanel'
+import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
 import { ironCrownFleetHubMessages } from './ironCrownFleetHub'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
@@ -31,3 +32,5 @@ for (const localeCode of Object.keys(messages)) {
     mergeMessages(messages[localeCode], layer[localeCode])
   }
 }
+
+fillLocalizedMessages(messages)

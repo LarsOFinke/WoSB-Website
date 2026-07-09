@@ -17,6 +17,8 @@ export const baseMessages = {
       quantity: 'Quantity',
       slots: 'slots',
       mainNavigation: 'Main navigation',
+      primaryNavigation: 'Primary navigation',
+      accountNavigation: 'Account navigation',
       admin: 'Admin',
     },
     footer: { text: 'Iron Crown Fleet Hub MVP' },
@@ -204,7 +206,7 @@ export const baseMessages = {
   },
   de: {
     common: {
-      home: 'Start', builds: 'Builds', back: 'Zurück', cancel: 'Abbrechen', empty: 'Leer', language: 'Sprache', rate: 'Rate', type: 'Typ', crew: 'Crew', free: 'Frei', upgrades: 'Upgrades', sailorMinimum: 'Matrosenminimum', quantity: 'Anzahl', slots: 'Slots', mainNavigation: 'Hauptnavigation',
+      home: 'Start', builds: 'Builds', back: 'Zurück', cancel: 'Abbrechen', empty: 'Leer', language: 'Sprache', rate: 'Rate', type: 'Typ', crew: 'Crew', free: 'Frei', upgrades: 'Upgrades', sailorMinimum: 'Matrosenminimum', quantity: 'Anzahl', slots: 'Slots', mainNavigation: 'Hauptnavigation', primaryNavigation: 'Primäre Navigation', accountNavigation: 'Account-Navigation',
     },
     footer: { text: 'Iron Crown Fleet Hub MVP' },
     home: {
