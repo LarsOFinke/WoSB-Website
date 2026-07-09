@@ -30,7 +30,7 @@ Die Registrierung erzeugt weiterhin zuerst eine Admin-Freigabe in `registration_
 
 ## Verwaltung
 
-`/fleets/manage` ist jetzt auf die zentrale Flotte ausgerichtet. Die Ansicht enthält:
+`/fleets` ist jetzt die Flottenverwaltung für die zentrale Flotte. `/fleets/manage` bleibt als Redirect aus älteren Builds erhalten. Die Ansicht enthält:
 
 - Flottenprofil / Leitlinien,
 - Bewerbungen,

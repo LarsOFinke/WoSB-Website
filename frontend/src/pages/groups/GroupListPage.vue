@@ -48,8 +48,17 @@ function rateRequirement(group) {
   return t('groups.detail.anyRate')
 }
 
+function formatSchedule(group) {
+  if (!group.scheduled_start_at) return t('groups.detail.noSchedule')
+  const start = new Date(group.scheduled_start_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  if (!group.scheduled_end_at) return start
+  const end = new Date(group.scheduled_end_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  return `${start} – ${end}`
+}
+
 function groupMeta(group) {
-  const parts = [t(`focus.${group.focus}`), t('groups.list.announcementMode')]
+  const parts = [t(`focus.${group.focus}`)]
+  if (group.scheduled_start_at) parts.push(formatSchedule(group))
   if (group.min_ship_rate || group.max_ship_rate) parts.push(rateRequirement(group))
   return parts.join(' · ')
 }
@@ -158,7 +167,8 @@ onMounted(loadGroups)
 
             <div class="build-card-meta refined-meta">
               <span>{{ t('groups.list.leader', { name: group.owner.display_name }) }}</span>
-              <span>{{ t('groups.list.announcementMode') }}</span>
+              <span>{{ t('groups.list.members', { current: group.active_members_count, max: group.max_members }) }}</span>
+              <span>{{ formatSchedule(group) }}</span>
               <span>{{ rateRequirement(group) }}</span>
               <span>{{ group.fleet_restriction || t('groups.list.noFleetRestriction') }}</span>
             </div>

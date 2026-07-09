@@ -13,6 +13,7 @@ WEAPON_SLOT_TYPE_BY_ARC = {
     "rear": "weapon_rear",
     "port": "weapon_port",
     "starboard": "weapon_starboard",
+    "mortar": "weapon_mortar",
 }
 UPGRADE_SLOT_NUMBERS = (1, 2, 3, 4, 5, 6)
 UPGRADE_SLOT_LIMIT = len(UPGRADE_SLOT_NUMBERS)
@@ -142,6 +143,10 @@ class Build(Base):
         return self._inventory_slots(WEAPON_SLOT_TYPE_BY_ARC["starboard"])
 
     @property
+    def mortar_weapon_slots(self) -> list[dict[str, Any]]:
+        return self._inventory_slots(WEAPON_SLOT_TYPE_BY_ARC["mortar"])
+
+    @property
     def special_crew_slots(self) -> list[dict[str, Any]]:
         return self._inventory_slots("special_crew")
 
@@ -169,9 +174,28 @@ class Build(Base):
                 totals[key] = totals.get(key, 0) + value
         return totals
 
+    def _special_crew_effect_totals(self) -> dict[str, int | float]:
+        totals: dict[str, int | float] = {}
+        for slot in self.slots:
+            if slot.slot_type != "special_crew":
+                continue
+            for key, value in slot.option.stat_effects.items():
+                totals[key] = totals.get(key, 0) + value
+        return totals
+
+    @staticmethod
+    def _combine_effects(*effect_sets: dict[str, int | float]) -> dict[str, int | float]:
+        totals: dict[str, int | float] = {}
+        for effect_set in effect_sets:
+            for key, value in effect_set.items():
+                totals[key] = totals.get(key, 0) + value
+        return totals
+
     @property
     def ship_stats(self) -> dict[str, Any]:
-        effects = self._upgrade_effect_totals()
+        upgrade_effects = self._upgrade_effect_totals()
+        special_crew_effects = self._special_crew_effect_totals()
+        effects = self._combine_effects(upgrade_effects, special_crew_effects)
         unlock_effects = self._upgrade_effect_totals(max_index=BASE_UPGRADE_SLOT_LIMIT)
         crew_total = self.sailors + self.soldiers + self.musketeers + self.mercenaries
         base_crew_capacity = self.ship.crew_capacity
@@ -181,6 +205,13 @@ class Build(Base):
         weapon_slots = {
             arc: self._slot_quantity_total(slot_type)
             for arc, slot_type in WEAPON_SLOT_TYPE_BY_ARC.items()
+        }
+        weapon_capacity = {
+            "front": int(self.ship.front_weapon_capacity or 0),
+            "rear": int(self.ship.rear_weapon_capacity or 0),
+            "port": int(self.ship.broadside_weapon_capacity or 0),
+            "starboard": int(self.ship.broadside_weapon_capacity or 0),
+            "mortar": int(self.ship.mortar_weapon_capacity or 0),
         }
         ammunition_count = len(self.ammunition_slots)
         consumable_count = len(self.consumable_slots)
@@ -232,7 +263,9 @@ class Build(Base):
             "upgrade_slot_5_unlocked": upgrade_slot_5_unlocked,
             "upgrade_slot_6_available": upgrade_slot_6_available,
             "upgrade_slot_6_unlocked": upgrade_slot_6_unlocked,
-            "upgrade_effects": effects,
+            "item_effects": effects,
+            "upgrade_effects": upgrade_effects,
+            "special_crew_effects": special_crew_effects,
             "upgrade_buffs": buffs,
             "upgrade_debuffs": debuffs,
             "base_stats": base_stats,
@@ -240,7 +273,9 @@ class Build(Base):
             "stat_rows": stat_rows,
             "stat_warnings": warnings,
             "weapon_slots": weapon_slots,
+            "weapon_capacity": weapon_capacity,
             "weapon_total": sum(weapon_slots.values()),
+            "weapon_capacity_total": sum(weapon_capacity.values()),
             "special_crew_total": self._slot_quantity_total("special_crew"),
             "inventory_slots_used": ammunition_count + consumable_count + hold_count,
             "ammunition_slots_used": ammunition_count,

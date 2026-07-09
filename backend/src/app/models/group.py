@@ -32,6 +32,7 @@ class Group(Base):
         CheckConstraint("max_members >= 2 and max_members <= 50", name="ck_groups_max_members"),
         CheckConstraint("min_ship_rate is null or (min_ship_rate >= 1 and min_ship_rate <= 7)", name="ck_groups_min_ship_rate"),
         CheckConstraint("max_ship_rate is null or (max_ship_rate >= 1 and max_ship_rate <= 7)", name="ck_groups_max_ship_rate"),
+        CheckConstraint("scheduled_end_at is null or scheduled_start_at is null or scheduled_end_at > scheduled_start_at", name="ck_groups_schedule_range"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -41,6 +42,8 @@ class Group(Base):
     expectations: Mapped[str | None] = mapped_column(Text, nullable=True)
     activity_plan: Mapped[str | None] = mapped_column(Text, nullable=True)
     contact_note: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    scheduled_start_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    scheduled_end_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     max_members: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     min_ship_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_ship_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -95,6 +98,7 @@ class GroupMember(Base):
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
     fleet_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     ship_id: Mapped[int | None] = mapped_column(ForeignKey("ships.id"), nullable=True, index=True)
+    build_id: Mapped[int | None] = mapped_column(ForeignKey("builds.id"), nullable=True, index=True)
     ship_name: Mapped[str | None] = mapped_column(String(140), nullable=True)
     ship_rate: Mapped[int | None] = mapped_column(Integer, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -105,3 +109,4 @@ class GroupMember(Base):
 
     user: Mapped[User | None] = relationship(lazy="joined")
     ship: Mapped["Ship | None"] = relationship("Ship", lazy="joined")
+    build: Mapped["Build | None"] = relationship("Build", lazy="joined")

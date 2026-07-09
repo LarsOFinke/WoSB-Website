@@ -24,7 +24,7 @@ const profileLinkLabel = computed(() => {
 async function handleLogout() {
   await logout()
   if (router.currentRoute.value.meta.requiresStaff || router.currentRoute.value.meta.requiresUser) {
-    router.push('/home')
+    router.push('/')
   }
 }
 
@@ -42,7 +42,7 @@ onMounted(() => {
         <span aria-hidden="true">☰</span>
       </button>
 
-      <RouterLink class="topbar-brand" to="/home">
+      <RouterLink class="topbar-brand" to="/">
         <span class="brand-mark" aria-hidden="true">IC</span>
         <span class="brand-copy">{{ t('common.projectName') }}</span>
       </RouterLink>
@@ -66,7 +66,7 @@ onMounted(() => {
       <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile">{{ profileLinkLabel }}</RouterLink>
       <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile/builds">{{ t('common.myBuilds') }}</RouterLink>
       <RouterLink v-if="isAuthenticated" class="topbar-link" to="/profile/groups">{{ t('common.myGroupSearches') }}</RouterLink>
-      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/fleets/manage">{{ t('common.fleetManagement') }}</RouterLink>
+      <RouterLink v-if="isAuthenticated" class="topbar-link" to="/fleets">{{ t('common.fleetManagement') }}</RouterLink>
       <RouterLink v-if="isStaff" class="topbar-link topbar-link-strong" to="/admin">{{ t('common.staffPanel') }}</RouterLink>
     </nav>
 

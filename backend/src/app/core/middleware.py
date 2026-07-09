@@ -11,6 +11,16 @@ from starlette.responses import Response
 logger = logging.getLogger("app.request")
 
 
+def _client_ip(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip() or None
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip() or None
+    return request.client.host if request.client else None
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Add request IDs and compact access logs for every HTTP request."""
 
@@ -35,5 +45,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "status_code": status_code,
                     "duration_ms": duration_ms,
                     "client": request.client.host if request.client else None,
+                    "client_ip": _client_ip(request),
+                    "forwarded_for": request.headers.get("x-forwarded-for"),
+                    "user_agent": request.headers.get("user-agent"),
+                    "query_string": request.url.query or None,
                 },
             )

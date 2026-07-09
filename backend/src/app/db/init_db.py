@@ -29,11 +29,32 @@ def _ensure_sqlite_columns() -> None:
             statements.append("ALTER TABLE groups ADD COLUMN activity_plan TEXT")
         if "contact_note" not in group_columns:
             statements.append("ALTER TABLE groups ADD COLUMN contact_note VARCHAR(300)")
+        if "scheduled_start_at" not in group_columns:
+            statements.append("ALTER TABLE groups ADD COLUMN scheduled_start_at DATETIME")
+        if "scheduled_end_at" not in group_columns:
+            statements.append("ALTER TABLE groups ADD COLUMN scheduled_end_at DATETIME")
+
+    if "group_members" in table_names:
+        group_member_columns = {column["name"] for column in inspector.get_columns("group_members")}
+        if "build_id" not in group_member_columns:
+            statements.append("ALTER TABLE group_members ADD COLUMN build_id INTEGER")
 
     if "builds" in table_names:
         build_columns = {column["name"] for column in inspector.get_columns("builds")}
         if "owner_id" not in build_columns:
             statements.append("ALTER TABLE builds ADD COLUMN owner_id INTEGER")
+
+    if "app_logs" in table_names:
+        app_log_columns = {column["name"] for column in inspector.get_columns("app_logs")}
+        app_log_column_defaults = {
+            "client_ip": "VARCHAR(120)",
+            "forwarded_for": "VARCHAR(300)",
+            "user_agent": "VARCHAR(300)",
+            "query_string": "VARCHAR(500)",
+        }
+        for column_name, ddl in app_log_column_defaults.items():
+            if column_name not in app_log_columns:
+                statements.append(f"ALTER TABLE app_logs ADD COLUMN {column_name} {ddl}")
 
     if "ships" in table_names:
         ship_columns = {column["name"] for column in inspector.get_columns("ships")}
@@ -50,6 +71,17 @@ def _ensure_sqlite_columns() -> None:
         for column_name, ddl in ship_column_defaults.items():
             if column_name not in ship_columns:
                 statements.append(f"ALTER TABLE ships ADD COLUMN {column_name} {ddl}")
+
+    if "build_item_options" in table_names:
+        option_columns = {column["name"] for column in inspector.get_columns("build_item_options")}
+        option_column_defaults = {
+            "option_kind": "VARCHAR(40)",
+            "allowed_slot_types": "VARCHAR(160)",
+            "weapon_caliber_inches": "FLOAT",
+        }
+        for column_name, ddl in option_column_defaults.items():
+            if column_name not in option_columns:
+                statements.append(f"ALTER TABLE build_item_options ADD COLUMN {column_name} {ddl}")
 
     if "user_profiles" in table_names:
         profile_columns = {column["name"] for column in inspector.get_columns("user_profiles")}

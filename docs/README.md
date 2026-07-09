@@ -37,3 +37,6 @@ Feature documents are kept because they describe working prototype behavior. The
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
 
 - [Build Designer Accuracy](BUILD_DESIGNER_ACCURACY.md)
+- [Build Designer: Waffenvalidierung & Special Crew](BUILD_DESIGNER_WEAPONS_AND_CREW.md)
+
+- `FLEET_HOME_GROUP_SIGNUPS_LOGGING.md` — fleet portal home route, group signup workflow and DB logging policy.

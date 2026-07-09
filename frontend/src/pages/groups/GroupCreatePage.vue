@@ -30,6 +30,10 @@ const form = reactive({
   expectations: '',
   activity_plan: '',
   contact_note: '',
+  scheduled_start_at: '',
+  scheduled_end_at: '',
+  max_members: 5,
+  allow_guests: false,
   min_ship_rate: '',
   max_ship_rate: '',
   fleet_restriction: '',
@@ -39,10 +43,18 @@ const rateRangeInvalid = computed(() =>
   form.min_ship_rate && form.max_ship_rate && Number(form.max_ship_rate) > Number(form.min_ship_rate),
 )
 
+const timeRangeInvalid = computed(() =>
+  form.scheduled_start_at && form.scheduled_end_at && new Date(form.scheduled_end_at) <= new Date(form.scheduled_start_at),
+)
+
 async function submitGroup() {
   error.value = ''
   if (rateRangeInvalid.value) {
     error.value = t('groups.create.rateRangeInvalid')
+    return
+  }
+  if (timeRangeInvalid.value) {
+    error.value = t('groups.create.timeRangeInvalid')
     return
   }
 
@@ -55,10 +67,12 @@ async function submitGroup() {
       expectations: form.expectations || null,
       activity_plan: form.activity_plan || null,
       contact_note: form.contact_note || null,
-      max_members: 2,
+      scheduled_start_at: form.scheduled_start_at || null,
+      scheduled_end_at: form.scheduled_end_at || null,
+      max_members: Number(form.max_members) || 5,
       min_ship_rate: form.min_ship_rate ? Number(form.min_ship_rate) : null,
       max_ship_rate: form.max_ship_rate ? Number(form.max_ship_rate) : null,
-      allow_guests: false,
+      allow_guests: Boolean(form.allow_guests),
       fleet_restriction: form.fleet_restriction || null,
     })
     router.push(`/groups/${created.id}`)
@@ -142,12 +156,50 @@ async function submitGroup() {
               <input v-model="form.fleet_restriction" maxlength="120" :placeholder="t('groups.create.fleetPlaceholder')" />
             </span>
           </label>
+
+          <label class="field-stack">
+            <span class="field-label">{{ t('groups.fields.maxMembers') }}</span>
+            <span class="input-panel embedded-field">
+              <input v-model.number="form.max_members" type="number" min="2" max="50" />
+            </span>
+          </label>
+
+          <label class="field-stack checkbox-field-stack">
+            <span class="field-label">{{ t('groups.fields.allowGuests') }}</span>
+            <span class="checkbox-card-control inline-checkbox-control">
+              <input v-model="form.allow_guests" type="checkbox" />
+              <strong>{{ t('groups.create.allowGuestsHint') }}</strong>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="wire-section form-section group-form-section" :aria-label="t('groups.create.sections.schedule')">
+        <div class="section-title">
+          <span>03</span>
+          <h2>{{ t('groups.create.sections.schedule') }}</h2>
+        </div>
+        <p class="section-helper-text">{{ t('groups.create.sections.scheduleText') }}</p>
+
+        <div class="section-fields group-time-grid">
+          <label class="field-stack">
+            <span class="field-label">{{ t('groups.fields.startTime') }}</span>
+            <span class="input-panel embedded-field">
+              <input v-model="form.scheduled_start_at" type="datetime-local" />
+            </span>
+          </label>
+          <label class="field-stack">
+            <span class="field-label">{{ t('groups.fields.endTime') }}</span>
+            <span class="input-panel embedded-field">
+              <input v-model="form.scheduled_end_at" type="datetime-local" />
+            </span>
+          </label>
         </div>
       </section>
 
       <section class="wire-section form-section group-form-section" :aria-label="t('groups.create.sections.details')">
         <div class="section-title">
-          <span>03</span>
+          <span>04</span>
           <h2>{{ t('groups.create.sections.details') }}</h2>
         </div>
         <p class="section-helper-text">{{ t('groups.create.sections.detailsText') }}</p>
@@ -184,9 +236,10 @@ async function submitGroup() {
       </section>
 
       <p v-if="rateRangeInvalid" class="error-text form-message">{{ t('groups.create.rateRangeInvalid') }}</p>
+      <p v-if="timeRangeInvalid" class="error-text form-message">{{ t('groups.create.timeRangeInvalid') }}</p>
       <p v-if="error" class="error-text form-message">{{ error }}</p>
       <div class="form-actions group-create-actions">
-        <button class="wire-section form-button primary" type="submit" :disabled="saving || rateRangeInvalid">
+        <button class="wire-section form-button primary" type="submit" :disabled="saving || rateRangeInvalid || timeRangeInvalid">
           {{ saving ? t('groups.create.saving') : t('groups.create.save') }}
         </button>
       </div>

@@ -8,6 +8,8 @@ The schema is designed around 3NF for the current prototype scope: facts about u
 users
 user_profiles
 auth_sessions
+registration_requests
+app_logs
 ships
 builds
 build_item_categories
@@ -124,3 +126,14 @@ The main remaining production task is adding a real migration layer so these con
 ## Single Fleet Refactor
 
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+
+
+## Group search scheduling and signups
+
+`groups` now stores an optional signup time window through `scheduled_start_at` and `scheduled_end_at`. The end time is optional, but when both values are present the database and API require `scheduled_end_at > scheduled_start_at`.
+
+`group_members` remains the signup table. A member row may reference either a ship directly or a saved build through `build_id`. When a build is linked, ship/rate values are derived from the build during signup validation. This keeps the signup workflow convenient without copying Build details into the group itself.
+
+## App logs
+
+`app_logs` stores request/application log rows for the Admin Dashboard. Request metadata includes direct client host, resolved client IP, forwarded IP, user-agent and query string. Console logging is disabled by default; the dashboard and database are the operational source for routine log inspection.

@@ -31,6 +31,21 @@ SHIP_EXTRA_UPGRADE_SLOT = 6
 CONSUMABLE_SLOT_LIMIT = 3
 SPECIAL_CREW_SLOT_LIMIT = 8
 WEAPON_ARC_SLOT_LIMIT = 12
+MORTAR_SLOT_LIMIT = 8
+WEAPON_SLOT_TYPE_BY_FIELD = {
+    "front_weapon_slots": "weapon_front",
+    "rear_weapon_slots": "weapon_rear",
+    "port_weapon_slots": "weapon_port",
+    "starboard_weapon_slots": "weapon_starboard",
+    "mortar_weapon_slots": "weapon_mortar",
+}
+WEAPON_FIELD_LABELS = {
+    "front_weapon_slots": "Front weapons",
+    "rear_weapon_slots": "Rear weapons",
+    "port_weapon_slots": "Port weapons",
+    "starboard_weapon_slots": "Starboard weapons",
+    "mortar_weapon_slots": "Mortars",
+}
 
 
 def _crew_total(build: BuildCreate) -> int:
@@ -81,6 +96,14 @@ def _option_effects(option: BuildItemOption) -> dict[str, int | float]:
     return option.stat_effects
 
 
+def _sum_effects(options: Iterable[BuildItemOption]) -> dict[str, int | float]:
+    totals: dict[str, int | float] = {}
+    for option in options:
+        for key, value in _option_effects(option).items():
+            totals[key] = totals.get(key, 0) + value
+    return totals
+
+
 def _selected_upgrade_options(
     option_map: dict[tuple[str, str], BuildItemOption], build: BuildCreate
 ) -> dict[int, BuildItemOption]:
@@ -91,6 +114,15 @@ def _selected_upgrade_options(
             continue
         selected[index] = _require_option(option_map, name, "upgrade", f"Upgrade {index}")
     return selected
+
+
+def _selected_special_crew_options(
+    option_map: dict[tuple[str, str], BuildItemOption], build: BuildCreate
+) -> list[BuildItemOption]:
+    return [
+        _require_option(option_map, slot.item, "special_crew", "Special crew")
+        for slot in build.special_crew_slots
+    ]
 
 
 def _upgrade_access(ship: Ship, selected_upgrades: dict[int, BuildItemOption]) -> dict[str, int | bool]:
@@ -140,8 +172,8 @@ def _selected_item_names(build: BuildCreate) -> list[str]:
         if normalized:
             names.append(normalized)
 
-    for arc in WEAPON_ARC_KEYS:
-        names.extend(slot.item for slot in getattr(build, f"{arc}_weapon_slots"))
+    for field_name in WEAPON_SLOT_TYPE_BY_FIELD:
+        names.extend(slot.item for slot in getattr(build, field_name))
     for slots in (
         build.special_crew_slots,
         build.ammunition_slots,
@@ -150,6 +182,56 @@ def _selected_item_names(build: BuildCreate) -> list[str]:
     ):
         names.extend(slot.item for slot in slots)
     return names
+
+
+def _weapon_capacity_by_field(ship: Ship) -> dict[str, int]:
+    return {
+        "front_weapon_slots": int(ship.front_weapon_capacity or 0),
+        "rear_weapon_slots": int(ship.rear_weapon_capacity or 0),
+        "port_weapon_slots": int(ship.broadside_weapon_capacity or 0),
+        "starboard_weapon_slots": int(ship.broadside_weapon_capacity or 0),
+        "mortar_weapon_slots": int(ship.mortar_weapon_capacity or 0),
+    }
+
+
+def _validate_weapon_loadout(
+    ship: Ship,
+    build: BuildCreate,
+    option_map: dict[tuple[str, str], BuildItemOption],
+) -> None:
+    capacities = _weapon_capacity_by_field(ship)
+    for field_name, slot_type in WEAPON_SLOT_TYPE_BY_FIELD.items():
+        slots = getattr(build, field_name)
+        label = WEAPON_FIELD_LABELS[field_name]
+        _validate_unique_slots(slots, label)
+        field_limit = MORTAR_SLOT_LIMIT if field_name == "mortar_weapon_slots" else WEAPON_ARC_SLOT_LIMIT
+        if len(slots) > field_limit:
+            raise BuildValidationError(f"{label} are limited to {field_limit} item rows.")
+
+        capacity = capacities[field_name]
+        quantity_total = sum(slot.quantity or 1 for slot in slots)
+        if quantity_total > capacity:
+            raise BuildValidationError(
+                f"{label}: selected quantity ({quantity_total}) exceeds this ship's capacity ({capacity})."
+            )
+        if quantity_total > 0 and capacity <= 0:
+            raise BuildValidationError(f"{label}: this ship has no valid slots for that weapon position.")
+
+        for slot in slots:
+            option = _require_option(option_map, slot.item, "weapon", label)
+            allowed_slots = option.allowed_slots
+            if slot_type not in allowed_slots:
+                raise BuildValidationError(f"{label}: '{slot.item}' cannot be mounted in this slot type.")
+            if slot_type == "weapon_mortar":
+                max_caliber = ship.max_mortar_caliber_inches
+                if option.option_kind != "mortar":
+                    raise BuildValidationError(f"{label}: '{slot.item}' is not a mortar weapon.")
+                if max_caliber is not None and option.weapon_caliber_inches is not None and option.weapon_caliber_inches > float(max_caliber):
+                    raise BuildValidationError(
+                        f"{label}: '{slot.item}' exceeds this ship's mortar caliber limit ({max_caliber} in)."
+                    )
+            elif option.option_kind == "mortar":
+                raise BuildValidationError(f"{label}: mortars must be placed in the dedicated mortar slot.")
 
 
 def _build_slots(db: Session, build: BuildCreate) -> list[BuildSlot]:
@@ -167,13 +249,13 @@ def _build_slots(db: Session, build: BuildCreate) -> list[BuildSlot]:
     for index, option in _selected_upgrade_options(option_map, build).items():
         slots.append(BuildSlot(slot_type="upgrade", slot_index=index, option_id=option.id))
 
-    for arc in WEAPON_ARC_KEYS:
-        form_slots = getattr(build, f"{arc}_weapon_slots")
+    for field_name, slot_type in WEAPON_SLOT_TYPE_BY_FIELD.items():
+        form_slots = getattr(build, field_name)
         for index, slot in enumerate(form_slots, start=1):
-            option = _require_option(option_map, slot.item, "weapon", f"{arc.title()} weapon")
+            option = _require_option(option_map, slot.item, "weapon", WEAPON_FIELD_LABELS[field_name])
             slots.append(
                 BuildSlot(
-                    slot_type=WEAPON_SLOT_TYPE_BY_ARC[arc],
+                    slot_type=slot_type,
                     slot_index=index,
                     option_id=option.id,
                     quantity=slot.quantity,
@@ -245,6 +327,7 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
 
     option_map = _load_option_map(db, _selected_item_names(build))
     selected_upgrades = _selected_upgrade_options(option_map, build)
+    selected_special_crew = _selected_special_crew_options(option_map, build)
     upgrade_access = _upgrade_access(ship, selected_upgrades)
 
     if _normalize_name(build.upgrade_5) and not bool(upgrade_access["slot_5_unlocked"]):
@@ -256,26 +339,21 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
             "Upgrade slot 6 requires a ship extra slot or a +2 expansion effect in slots 1-4."
         )
 
-    total_effects: dict[str, int | float] = {}
-    for option in selected_upgrades.values():
-        for key, value in _option_effects(option).items():
-            total_effects[key] = total_effects.get(key, 0) + value
+    upgrade_effects = _sum_effects(selected_upgrades.values())
+    special_crew_effects = _sum_effects(selected_special_crew)
+    total_effects = _sum_effects([*selected_upgrades.values(), *selected_special_crew])
 
     effective_crew_capacity = max(0, ship.crew_capacity + int(total_effects.get("crew_capacity", 0)))
     effective_sailor_minimum = max(0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0)))
     crew_total = _crew_total(build)
     if build.sailors < effective_sailor_minimum:
-        raise BuildValidationError(f"This ship requires at least {effective_sailor_minimum} sailors after upgrade modifiers.")
+        raise BuildValidationError(f"This ship requires at least {effective_sailor_minimum} sailors after item modifiers.")
     if crew_total > effective_crew_capacity:
         raise BuildValidationError(
             f"The crew distribution ({crew_total}) exceeds the effective ship capacity ({effective_crew_capacity})."
         )
 
-    for arc in WEAPON_ARC_KEYS:
-        arc_slots = getattr(build, f"{arc}_weapon_slots")
-        _validate_unique_slots(arc_slots, f"{arc.title()} weapons")
-        if len(arc_slots) > WEAPON_ARC_SLOT_LIMIT:
-            raise BuildValidationError(f"{arc.title()} weapons are limited to {WEAPON_ARC_SLOT_LIMIT} slots.")
+    _validate_weapon_loadout(ship, build, option_map)
     _validate_unique_slots(build.special_crew_slots, "Special crew")
     _validate_unique_slots(build.ammunition_slots, "Ammunition")
     _validate_unique_slots(build.consumable_slots, "Consumables")

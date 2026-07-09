@@ -76,3 +76,17 @@ Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. 
 ## Build Designer catalog checks
 
 Ship and upgrade seeds are validated before seeding via `app.db.seeds.build_catalog_quality`. Build stat rows are calculated centrally in `app.services.build_stat_service`.
+
+## Build Designer Waffen/Special Crew
+
+- Special Crew ist Teil des Build-Katalogs und wirkt über normalisierte `build_item_effects` in die Stat-Vorschau.
+- Waffenoptionen besitzen Slot-Metadaten (`option_kind`, `allowed_slot_types`, `weapon_caliber_inches`).
+- Der Mörser-Slot ist separat validiert; Mortars können nur dort und nur bis zum Schiffskaliber-Limit gesetzt werden.
+- Details: `docs/BUILD_DESIGNER_WEAPONS_AND_CREW.md`.
+
+## Latest foundation update
+
+- `/` now opens the official fleet portal and `/home` redirects there.
+- Group search supports optional time windows, member signup, ship selection and optional saved-build linking.
+- Request logs are stored in the database/Admin Dashboard; backend console logging is disabled by default while IP, forwarded IP, user-agent and query metadata are persisted.
+- See `docs/FLEET_HOME_GROUP_SIGNUPS_LOGGING.md` for details.

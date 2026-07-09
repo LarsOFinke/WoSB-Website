@@ -16,6 +16,11 @@ class ShipRead(BaseModel):
     crew_capacity: int
     sailor_minimum: int
     weapon_layout: str | None = None
+    front_weapon_capacity: int = 0
+    broadside_weapon_capacity: int = 0
+    rear_weapon_capacity: int = 0
+    mortar_weapon_capacity: int = 0
+    max_mortar_caliber_inches: int | float | None = None
     displacement_tons: int
     source: str | None = None
     sail_slots: int

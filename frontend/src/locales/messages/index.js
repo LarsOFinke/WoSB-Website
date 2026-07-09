@@ -6,6 +6,7 @@ import { baseMessages } from './base'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
 import { fleetCalendarMessages } from './fleetCalendar'
 import { fleetManagementMessages } from './fleetManagement'
+import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup'
 import { staffPanelMessages } from './staffPanel'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -23,6 +24,7 @@ const messageLayers = [
   fleetManagementMessages,
   staffPanelMessages,
   adminDashboardMessages,
+  finalNavigationAndGroupSignupMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

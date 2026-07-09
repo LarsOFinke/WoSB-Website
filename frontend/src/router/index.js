@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import AdminPage from '@/pages/AdminPage.vue'
-import HomePage from '@/pages/HomePage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import MyBuildsPage from '@/pages/MyBuildsPage.vue'
@@ -26,8 +25,8 @@ import FleetManagePage from '@/pages/fleets/FleetManagePage.vue'
 import { loadSession, useSession } from '@/services/session'
 
 const routes = [
-  { path: '/', redirect: '/home' },
-  { path: '/home', name: 'home', component: HomePage },
+  { path: '/', name: 'fleet-portal', component: FleetListPage },
+  { path: '/home', redirect: '/' },
   { path: '/login', name: 'login', component: LoginPage },
   { path: '/register', name: 'register', component: RegisterPage },
   { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresUser: true } },
@@ -38,8 +37,8 @@ const routes = [
   { path: '/groups', name: 'groups', component: GroupListPage },
   { path: '/forum', name: 'forum', component: ForumListPage },
   { path: '/calendar', name: 'calendar', component: CalendarPage },
-  { path: '/fleets', name: 'fleets', component: FleetListPage },
-  { path: '/fleets/manage', name: 'fleets-manage', component: FleetManagePage, meta: { requiresUser: true } },
+  { path: '/fleets', name: 'fleets', component: FleetManagePage, meta: { requiresUser: true } },
+  { path: '/fleets/manage', redirect: '/fleets' },
   { path: '/calendar/new', name: 'calendar-new', component: CalendarCreatePage, meta: { requiresStaff: true } },
   { path: '/forum/new', name: 'forum-new', component: ForumCreatePage, meta: { requiresUser: true } },
   { path: '/forum/:id', name: 'forum-detail', component: ForumDetailPage, props: true },

@@ -19,7 +19,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for key in ("request_id", "method", "path", "status_code", "duration_ms", "client"):
+        for key in ("request_id", "method", "path", "status_code", "duration_ms", "client", "client_ip", "forwarded_for", "user_agent", "query_string"):
             value = getattr(record, key, None)
             if value is not None:
                 payload[key] = value
@@ -53,6 +53,10 @@ class DatabaseLogHandler(logging.Handler):
                     status_code=getattr(record, "status_code", None),
                     duration_ms=getattr(record, "duration_ms", None),
                     client=getattr(record, "client", None),
+                    client_ip=getattr(record, "client_ip", None),
+                    forwarded_for=getattr(record, "forwarded_for", None),
+                    user_agent=getattr(record, "user_agent", None),
+                    query_string=getattr(record, "query_string", None),
                     exception=self.formatException(record.exc_info) if record.exc_info else None,
                 )
                 db.add(entry)
@@ -77,9 +81,18 @@ def configure_logging() -> None:
             "formatter": "default",
         },
     }
-    app_handlers = ["console"]
+    root_handlers = ["console"] if settings.console_logging_enabled else []
+    app_handlers: list[str] = []
+    if settings.console_logging_enabled:
+        app_handlers.append("console")
     if settings.db_logging_enabled:
         app_handlers.append("database")
+    if not app_handlers:
+        app_handlers.append("null")
+    if not root_handlers:
+        root_handlers.append("null")
+
+    handlers["null"] = {"class": "logging.NullHandler"}
 
     logging.config.dictConfig(
         {
@@ -96,7 +109,7 @@ def configure_logging() -> None:
             "handlers": handlers,
             "root": {
                 "level": settings.log_level,
-                "handlers": ["console"],
+                "handlers": root_handlers,
             },
             "loggers": {
                 "app": {"level": settings.log_level, "handlers": app_handlers, "propagate": False},

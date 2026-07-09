@@ -67,13 +67,13 @@ http://127.0.0.1:8000/api/admin/builds
 Frontend:
 
 ```text
-http://127.0.0.1:5173/home
+http://127.0.0.1:5173/            # public fleet portal
 http://127.0.0.1:5173/builds
 http://127.0.0.1:5173/guides
 http://127.0.0.1:5173/groups
 http://127.0.0.1:5173/calendar
 http://127.0.0.1:5173/forum
-http://127.0.0.1:5173/fleets
+http://127.0.0.1:5173/fleets     # fleet management
 http://127.0.0.1:5173/profile
 http://127.0.0.1:5173/admin
 ```
@@ -131,3 +131,17 @@ Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. 
 ## Build Designer Accuracy
 
 The Build Designer now uses a complete ship-stat catalog, normalized upgrade effects and a visible base/modifier/effective stat breakdown. See `docs/BUILD_DESIGNER_ACCURACY.md`.
+
+## Build Designer Waffen/Special Crew
+
+- Special Crew ist Teil des Build-Katalogs und wirkt über normalisierte `build_item_effects` in die Stat-Vorschau.
+- Waffenoptionen besitzen Slot-Metadaten (`option_kind`, `allowed_slot_types`, `weapon_caliber_inches`).
+- Der Mörser-Slot ist separat validiert; Mortars können nur dort und nur bis zum Schiffskaliber-Limit gesetzt werden.
+- Details: `docs/BUILD_DESIGNER_WEAPONS_AND_CREW.md`.
+
+## Latest foundation update
+
+- `/` now opens the official fleet portal, `/home` redirects there, and `/fleets` is reserved for fleet management.
+- Group search supports optional time windows, member signup, ship selection and optional saved-build linking.
+- Request logs are stored in the database/Admin Dashboard; backend console logging is disabled by default while IP, forwarded IP, user-agent and query metadata are persisted.
+- See `docs/FLEET_HOME_GROUP_SIGNUPS_LOGGING.md` for details.

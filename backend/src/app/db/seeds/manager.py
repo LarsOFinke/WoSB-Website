@@ -2,7 +2,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.seeds.ammunition import AMMUNITION_OPTIONS
-from app.db.seeds.build_catalog_quality import validate_ship_seed_data, validate_upgrade_seed_data
+from app.db.seeds.build_catalog_quality import (
+    validate_ship_seed_data,
+    validate_special_crew_seed_data,
+    validate_upgrade_seed_data,
+    validate_weapon_seed_data,
+)
 from app.db.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.db.seeds.consumables import CONSUMABLE_OPTIONS
 from app.db.seeds.demo_builds import DEMO_BUILD_DATA
@@ -86,6 +91,8 @@ class SeedManager:
 
     def seed_build_options(self) -> None:
         validate_upgrade_seed_data(UPGRADE_OPTIONS)
+        validate_weapon_seed_data(WEAPON_OPTIONS)
+        validate_special_crew_seed_data(SPECIAL_CREW_OPTIONS)
         categories: dict[str, BuildItemCategory] = {}
         active_category_keys = {category["key"] for category in BUILD_ITEM_CATEGORIES}
 
@@ -125,6 +132,9 @@ class SeedManager:
                     "name": option_name,
                     "source": option_data.get("source"),
                     "notes": option_data.get("notes"),
+                    "option_kind": option_data.get("option_kind"),
+                    "allowed_slot_types": option_data.get("allowed_slot_types"),
+                    "weapon_caliber_inches": option_data.get("weapon_caliber_inches"),
                     "sort_order": sort_order * 10,
                     "is_active": option_data.get("is_active", True),
                 }

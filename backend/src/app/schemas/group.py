@@ -5,12 +5,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.models.group import GROUP_FOCUS_VALUES
 from app.schemas.ship import ShipRead
 from app.schemas.auth import UserRead
+from app.schemas.build import BuildRead
 
 
 class GroupMemberBase(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
     ship_id: int | None = None
+    build_id: int | None = None
     ship_name: str | None = Field(default=None, max_length=140)
     ship_rate: int | None = Field(default=None, ge=1, le=7)
     note: str | None = Field(default=None, max_length=1000)
@@ -39,6 +41,7 @@ class GroupMemberRead(GroupMemberBase):
     joined_at: datetime
     left_at: datetime | None = None
     ship: ShipRead | None = None
+    build: BuildRead | None = None
 
 
 class GroupBase(BaseModel):
@@ -48,6 +51,8 @@ class GroupBase(BaseModel):
     expectations: str | None = Field(default=None, max_length=2000)
     activity_plan: str | None = Field(default=None, max_length=2000)
     contact_note: str | None = Field(default=None, max_length=300)
+    scheduled_start_at: datetime | None = None
+    scheduled_end_at: datetime | None = None
     max_members: int = Field(default=5, ge=2, le=50)
     min_ship_rate: int | None = Field(default=None, ge=1, le=7)
     max_ship_rate: int | None = Field(default=None, ge=1, le=7)
@@ -66,6 +71,8 @@ class GroupBase(BaseModel):
     def normalize_strings(self) -> "GroupBase":
         if self.min_ship_rate is not None and self.max_ship_rate is not None and self.max_ship_rate > self.min_ship_rate:
             raise ValueError("Maximum rate must be numerically lower than or equal to minimum rate.")
+        if self.scheduled_start_at and self.scheduled_end_at and self.scheduled_end_at <= self.scheduled_start_at:
+            raise ValueError("End time must be after start time.")
         for field_name in ("title", "description", "expectations", "activity_plan", "contact_note", "fleet_restriction"):
             value = getattr(self, field_name)
             if isinstance(value, str):

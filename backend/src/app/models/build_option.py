@@ -41,6 +41,9 @@ class BuildItemOption(Base):
     name: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
     source: Mapped[str | None] = mapped_column(String(120), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    option_kind: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
+    allowed_slot_types: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    weapon_caliber_inches: Mapped[float | None] = mapped_column(Float, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
@@ -56,6 +59,12 @@ class BuildItemOption(Base):
     @property
     def stat_effects(self) -> dict[str, int | float]:
         return {effect.effect_key: effect.normalized_value for effect in self.effects}
+
+    @property
+    def allowed_slots(self) -> list[str]:
+        if not self.allowed_slot_types:
+            return []
+        return [slot.strip() for slot in self.allowed_slot_types.split(",") if slot.strip()]
 
 
 class BuildItemEffect(Base):

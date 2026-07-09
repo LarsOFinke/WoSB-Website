@@ -22,6 +22,7 @@ const weaponArcFields = [
   { fieldName: 'rear_weapon_slots', labelKey: 'builds.create.weapons.rear', altKey: 'builds.create.weapons.rearAlt' },
   { fieldName: 'port_weapon_slots', labelKey: 'builds.create.weapons.port', altKey: 'builds.create.weapons.portAlt' },
   { fieldName: 'starboard_weapon_slots', labelKey: 'builds.create.weapons.starboard', altKey: 'builds.create.weapons.starboardAlt' },
+  { fieldName: 'mortar_weapon_slots', labelKey: 'builds.create.weapons.mortar', altKey: 'builds.create.weapons.mortarAlt' },
 ]
 
 const buildTypeOptions = computed(() => [
@@ -36,6 +37,7 @@ const slotLimits = {
   rear_weapon_slots: 12,
   port_weapon_slots: 12,
   starboard_weapon_slots: 12,
+  mortar_weapon_slots: 8,
   special_crew_slots: 8,
   ammunition_slots: 12,
   consumable_slots: 3,
@@ -80,6 +82,7 @@ const form = reactive({
   rear_weapon_slots: [emptySlot()],
   port_weapon_slots: [emptySlot()],
   starboard_weapon_slots: [emptySlot()],
+  mortar_weapon_slots: [emptySlot()],
   special_crew_slots: [emptySlot()],
   ammunition_slots: [emptySlot()],
   consumable_slots: [emptySlot()],
@@ -92,8 +95,16 @@ function optionMeta(categoryKey, name) {
   return (optionCatalog.value.options?.[categoryKey] || []).find((option) => option.name === name)
 }
 
+function optionEffects(categoryKey, name) {
+  return optionMeta(categoryKey, name)?.stat_effects || {}
+}
+
 function upgradeEffects(name) {
-  return optionMeta('upgrade', name)?.stat_effects || {}
+  return optionEffects('upgrade', name)
+}
+
+function specialCrewEffects(name) {
+  return optionEffects('special_crew', name)
 }
 
 function effectValue(value) {
@@ -113,8 +124,8 @@ function statLabel(key) {
   return t(`builds.statLabels.${definition?.key || key}`)
 }
 
-function formatEffects(name) {
-  const effects = upgradeEffects(name)
+function formatEffects(name, categoryKey = 'upgrade') {
+  const effects = optionEffects(categoryKey, name)
   const entries = Object.entries(effects).filter(([, value]) => Number(value) !== 0)
   if (!entries.length) return ''
   return entries.map(([key, value]) => `${statLabel(key)} ${effectValue(value)}${key.endsWith('_pct') ? '%' : ''}`).join(' · ')
@@ -167,14 +178,30 @@ const upgradeEffectTotals = computed(() => {
   }
   return totals
 })
+const specialCrewEffectTotals = computed(() => {
+  const totals = {}
+  for (const slot of normalizeInventorySlots(form.special_crew_slots)) {
+    for (const [key, value] of Object.entries(specialCrewEffects(slot.item))) {
+      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
+    }
+  }
+  return totals
+})
+const buildEffectTotals = computed(() => {
+  const totals = { ...upgradeEffectTotals.value }
+  for (const [key, value] of Object.entries(specialCrewEffectTotals.value)) {
+    totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
+  }
+  return totals
+})
 const baseUpgradeSlots = computed(() => Math.min(Math.max(Number(selectedShip.value?.upgrade_slots || 5), 0), 4))
 const unlockedByUpgrades = computed(() => Math.min(Math.max(0, Number(firstFourUpgradeEffects.value.extra_upgrade_slots) || 0), equipmentUpgradeCount - baseUpgradeSlots.value))
 const shipExtraUpgradeSlots = computed(() => Number(selectedShip.value?.upgrade_slots || 5) >= 6 ? 1 : 0)
 const upgradeSlot5Unlocked = computed(() => unlockedByUpgrades.value >= 1)
 const upgradeSlot6Available = computed(() => shipExtraUpgradeSlots.value > 0 || unlockedByUpgrades.value >= 2)
 const availableUpgradeSlots = computed(() => Math.min(equipmentUpgradeCount, baseUpgradeSlots.value + Math.max(unlockedByUpgrades.value, shipExtraUpgradeSlots.value)))
-const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(upgradeEffectTotals.value.crew_capacity) || 0)))
-const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(upgradeEffectTotals.value.sailor_minimum) || 0)))
+const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(buildEffectTotals.value.crew_capacity) || 0)))
+const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
 
 const crewTotal = computed(
   () => Number(form.sailors) + Number(form.soldiers) + Number(form.musketeers) + Number(form.mercenaries),
@@ -198,8 +225,8 @@ const statDefinitions = computed(() => optionCatalog.value.stat_definitions || [
 const buildStatRows = computed(() => statDefinitions.value
   .map((definition) => {
     const base = getBaseStat(definition)
-    const pctModifier = Number(upgradeEffectTotals.value[definition.pct_effect] || 0)
-    const flatModifier = Number(upgradeEffectTotals.value[definition.flat_effect] || 0)
+    const pctModifier = Number(buildEffectTotals.value[definition.pct_effect] || 0)
+    const flatModifier = Number(buildEffectTotals.value[definition.flat_effect] || 0)
     const modifier = pctModifier + flatModifier
     if (base === null && modifier === 0) return null
 
@@ -227,6 +254,7 @@ const canSubmit = computed(
     && !crewInvalid.value
     && (!form.upgrade_5 || upgradeSlot5Unlocked.value)
     && (!form.upgrade_6 || upgradeSlot6Available.value)
+    && allWeaponsValid.value
     && !saving.value,
 )
 
@@ -255,6 +283,75 @@ function isOptionUsed(slots, option, currentIndex) {
   return slots.some((slot, index) => index !== currentIndex && slot.item === option)
 }
 
+
+function weaponSlotTypeForField(fieldName) {
+  return {
+    front_weapon_slots: 'weapon_front',
+    rear_weapon_slots: 'weapon_rear',
+    port_weapon_slots: 'weapon_port',
+    starboard_weapon_slots: 'weapon_starboard',
+    mortar_weapon_slots: 'weapon_mortar',
+  }[fieldName]
+}
+
+function weaponCapacityForField(fieldName) {
+  if (!selectedShip.value) return slotLimits[fieldName] || 0
+  const capacityMap = {
+    front_weapon_slots: selectedShip.value.front_weapon_capacity,
+    rear_weapon_slots: selectedShip.value.rear_weapon_capacity,
+    port_weapon_slots: selectedShip.value.broadside_weapon_capacity,
+    starboard_weapon_slots: selectedShip.value.broadside_weapon_capacity,
+    mortar_weapon_slots: selectedShip.value.mortar_weapon_capacity,
+  }
+  return Math.max(0, Number(capacityMap[fieldName]) || 0)
+}
+
+function slotLimitForField(fieldName) {
+  if (weaponSlotTypeForField(fieldName)) {
+    return Math.min(slotLimits[fieldName] || 0, Math.max(weaponCapacityForField(fieldName), 0))
+  }
+  return slotLimits[fieldName]
+}
+
+function isWeaponOptionAllowedForField(option, fieldName) {
+  const slotType = weaponSlotTypeForField(fieldName)
+  if (!slotType) return true
+  const allowedSlots = Array.isArray(option.allowed_slot_types) ? option.allowed_slot_types : []
+  if (!allowedSlots.includes(slotType)) return false
+  if (slotType === 'weapon_mortar') {
+    const maxCaliber = Number(selectedShip.value?.max_mortar_caliber_inches)
+    const optionCaliber = Number(option.weapon_caliber_inches)
+    if (Number.isFinite(maxCaliber) && Number.isFinite(optionCaliber) && optionCaliber > maxCaliber) return false
+  }
+  return true
+}
+
+function weaponOptionsForField(fieldName) {
+  return (optionCatalog.value.options?.weapon || [])
+    .filter((option) => isWeaponOptionAllowedForField(option, fieldName))
+    .map((option) => option.name)
+    .sort((left, right) => optionLabel(left).localeCompare(optionLabel(right), undefined, { sensitivity: 'base' }))
+}
+
+function isWeaponFieldUnavailable(fieldName) {
+  return Boolean(weaponSlotTypeForField(fieldName)) && weaponCapacityForField(fieldName) <= 0
+}
+
+function weaponFieldOverCapacity(fieldName) {
+  return slotQuantityTotal(fieldName) > weaponCapacityForField(fieldName)
+}
+
+function weaponSelectionInvalid(fieldName, optionName) {
+  if (!optionName) return false
+  const option = optionMeta('weapon', optionName)
+  return !option || !isWeaponOptionAllowedForField(option, fieldName)
+}
+
+const allWeaponsValid = computed(() => weaponArcFields.every((arc) => {
+  if (weaponFieldOverCapacity(arc.fieldName)) return false
+  return normalizeInventorySlots(form[arc.fieldName]).every((slot) => !weaponSelectionInvalid(arc.fieldName, slot.item))
+}))
+
 function isUpgradeSlotDisabled(index) {
   if (index === 5) return !upgradeSlot5Unlocked.value
   if (index === 6) return !upgradeSlot6Available.value
@@ -268,10 +365,12 @@ function upgradeSlotPlaceholder(index) {
 }
 
 function onInventorySlotChange(fieldName) {
-  const maxSlots = slotLimits[fieldName]
-  const filled = normalizeInventorySlots(form[fieldName]).slice(0, maxSlots)
+  const maxSlots = slotLimitForField(fieldName)
+  const filled = normalizeInventorySlots(form[fieldName])
+    .filter((slot) => !weaponSelectionInvalid(fieldName, slot.item))
+    .slice(0, maxSlots)
 
-  if (filled.length < maxSlots) {
+  if (maxSlots > 0 && filled.length < maxSlots) {
     filled.push(emptySlot())
   }
 
@@ -287,7 +386,7 @@ function setCrewToShipMinimum() {
 
 function resetSlots() {
   for (const fieldName of Object.keys(slotLimits)) {
-    form[fieldName] = [emptySlot()]
+    form[fieldName] = slotLimitForField(fieldName) > 0 ? [emptySlot()] : []
   }
 }
 
@@ -303,6 +402,7 @@ function buildPayload() {
     rear_weapon_slots: normalizeInventorySlots(form.rear_weapon_slots),
     port_weapon_slots: normalizeInventorySlots(form.port_weapon_slots),
     starboard_weapon_slots: normalizeInventorySlots(form.starboard_weapon_slots),
+    mortar_weapon_slots: normalizeInventorySlots(form.mortar_weapon_slots),
     special_crew_slots: normalizeInventorySlots(form.special_crew_slots),
     ammunition_slots: normalizeInventorySlots(form.ammunition_slots),
     consumable_slots: normalizeInventorySlots(form.consumable_slots),
@@ -329,6 +429,7 @@ watch(
   () => form.ship_id,
   () => {
     setCrewToShipMinimum()
+    for (const arc of weaponArcFields) onInventorySlotChange(arc.fieldName)
   },
 )
 
@@ -495,20 +596,21 @@ onMounted(async () => {
           <h2>{{ t('builds.create.sections.weapons') }}</h2>
         </div>
         <p class="section-helper-text">{{ t('builds.create.weapons.hint') }}</p>
-        <div class="inventory-grid weapon-arc-grid four-columns">
+        <div class="inventory-grid weapon-arc-grid five-columns">
           <div v-for="arc in weaponArcFields" :key="arc.fieldName" class="inventory-panel weapon-arc-panel">
             <div class="inventory-heading">
               <strong>{{ t(arc.labelKey) }}</strong>
-              <span>{{ t('builds.create.inventory.slotCount', { count: slotCount(arc.fieldName) }) }}</span>
+              <span>{{ t('builds.create.weapons.capacity', { count: slotQuantityTotal(arc.fieldName), max: weaponCapacityForField(arc.fieldName) }) }}</span>
             </div>
-            <label v-for="(slot, index) in form[arc.fieldName]" :key="`${arc.fieldName}-${index}`" class="inventory-slot-select with-quantity">
+            <p v-if="isWeaponFieldUnavailable(arc.fieldName)" class="slot-hint">{{ t('builds.create.weapons.unavailable') }}</p>
+            <label v-for="(slot, index) in form[arc.fieldName]" :key="`${arc.fieldName}-${index}`" class="inventory-slot-select with-quantity" :class="{ 'is-invalid': weaponSelectionInvalid(arc.fieldName, slot.item) || weaponFieldOverCapacity(arc.fieldName) }">
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t(arc.altKey, { index: index + 1 })" />
               </span>
               <select v-model="slot.item" @change="onInventorySlotChange(arc.fieldName)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
-                  v-for="option in optionsFor('weapon')"
+                  v-for="option in weaponOptionsForField(arc.fieldName)"
                   :key="option"
                   :value="option"
                   :disabled="isOptionUsed(form[arc.fieldName], option, index)"
@@ -520,7 +622,7 @@ onMounted(async () => {
                 v-model.number="slot.quantity"
                 type="number"
                 min="1"
-                max="999999"
+                :max="weaponCapacityForField(arc.fieldName) || 999999"
                 :aria-label="t('common.quantity')"
                 @change="onInventorySlotChange(arc.fieldName)"
               />
@@ -556,6 +658,7 @@ onMounted(async () => {
                   {{ optionLabel(option) }}
                 </option>
               </select>
+              <small v-if="slot.item" class="slot-effect-text">{{ formatEffects(slot.item, 'special_crew') }}</small>
               <input
                 v-model.number="slot.quantity"
                 type="number"

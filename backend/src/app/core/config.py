@@ -28,6 +28,7 @@ class Settings:
     sql_log_level: str = os.getenv("SQL_LOG_LEVEL", "WARNING").upper()
     db_logging_enabled: bool = _bool_env("DB_LOGGING_ENABLED", True)
     db_log_level: str = os.getenv("DB_LOG_LEVEL", "INFO").upper()
+    console_logging_enabled: bool = _bool_env("CONSOLE_LOGGING_ENABLED", False)
 
     session_cookie_name: str = os.getenv("SESSION_COOKIE_NAME", "wosb_session")
     session_cookie_secure: bool = _bool_env("SESSION_COOKIE_SECURE", False)

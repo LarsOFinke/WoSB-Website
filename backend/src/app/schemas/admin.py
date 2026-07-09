@@ -70,6 +70,10 @@ class AppLogRead(BaseModel):
     status_code: int | None = None
     duration_ms: float | None = None
     client: str | None = None
+    client_ip: str | None = None
+    forwarded_for: str | None = None
+    user_agent: str | None = None
+    query_string: str | None = None
     exception: str | None = None
 
 

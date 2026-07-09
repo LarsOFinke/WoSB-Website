@@ -120,7 +120,7 @@ onMounted(loadFleetDetail)
           <p>{{ t('fleets.manage.subtitle') }}</p>
         </div>
         <div class="hero-action-stack">
-          <RouterLink class="button-box" to="/fleets">{{ t('fleets.openOverview') }}</RouterLink>
+          <RouterLink class="button-box" to="/">{{ t('fleets.openOverview') }}</RouterLink>
           <RouterLink class="button-box" to="/profile">{{ t('common.profile') }}</RouterLink>
         </div>
       </header>

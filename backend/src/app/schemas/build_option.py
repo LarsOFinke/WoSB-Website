@@ -20,6 +20,9 @@ class BuildItemOptionRead(BaseModel):
     name: str
     source: str | None = None
     notes: str | None = None
+    option_kind: str | None = None
+    allowed_slot_types: list[str] = Field(default_factory=list)
+    weapon_caliber_inches: float | None = None
     stat_effects: dict[str, int | float] = Field(default_factory=dict)
     sort_order: int
     created_at: datetime

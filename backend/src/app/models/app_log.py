@@ -22,4 +22,8 @@ class AppLog(Base):
     status_code: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
     client: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    client_ip: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    forwarded_for: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    query_string: Mapped[str | None] = mapped_column(String(500), nullable=True)
     exception: Mapped[str | None] = mapped_column(Text, nullable=True)

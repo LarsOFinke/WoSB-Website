@@ -7,6 +7,7 @@ from app.schemas.ship import ShipRead
 BUILD_TYPE_VALUES = {"balanced", "gunnery", "boarding", "defensive"}
 WEAPON_ARC_KEYS = ("front", "rear", "port", "starboard")
 WEAPON_SLOT_FIELDS = tuple(f"{arc}_weapon_slots" for arc in WEAPON_ARC_KEYS)
+WEAPON_LOADOUT_FIELDS = (*WEAPON_SLOT_FIELDS, "mortar_weapon_slots")
 
 
 class InventorySlot(BaseModel):
@@ -52,7 +53,9 @@ class ShipStats(BaseModel):
     effective_crew_capacity: int | None = None
     base_sailor_minimum: int | None = None
     effective_sailor_minimum: int | None = None
+    item_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_effects: dict[str, int | float] = Field(default_factory=dict)
+    special_crew_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_buffs: dict[str, int | float] = Field(default_factory=dict)
     upgrade_debuffs: dict[str, int | float] = Field(default_factory=dict)
     base_stats: dict[str, int | float | str | None] = Field(default_factory=dict)
@@ -60,7 +63,9 @@ class ShipStats(BaseModel):
     stat_rows: list[BuildStatRow] = Field(default_factory=list)
     stat_warnings: list[str] = Field(default_factory=list)
     weapon_slots: dict[str, int]
+    weapon_capacity: dict[str, int] = Field(default_factory=dict)
     weapon_total: int
+    weapon_capacity_total: int = 0
     special_crew_total: int
     inventory_slots_used: int
     ammunition_slots_used: int
@@ -91,6 +96,7 @@ class BuildBase(BaseModel):
     rear_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
     port_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
     starboard_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
+    mortar_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     special_crew_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     ammunition_slots: list[InventorySlot] = Field(default_factory=list, max_length=16)
     consumable_slots: list[InventorySlot] = Field(default_factory=list, max_length=3)
@@ -110,6 +116,7 @@ class BuildBase(BaseModel):
         "rear_weapon_slots",
         "port_weapon_slots",
         "starboard_weapon_slots",
+        "mortar_weapon_slots",
         "special_crew_slots",
         "ammunition_slots",
         "consumable_slots",

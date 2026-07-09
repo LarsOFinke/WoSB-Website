@@ -16,7 +16,7 @@ DEMO_BUILD_DATA = [
         "musketeers": 56,
         "mercenaries": 18,
         "front_weapon_slots": [
-            {"item": "Heavy Mortar", "quantity": 2},
+            {"item": "Basilisk", "quantity": 2},
         ],
         "rear_weapon_slots": [
             {"item": "12-pdr Carronade", "quantity": 2},
@@ -27,6 +27,7 @@ DEMO_BUILD_DATA = [
         "starboard_weapon_slots": [
             {"item": "32-pdr Cannon", "quantity": 18},
         ],
+        "mortar_weapon_slots": [],
         "special_crew_slots": [
             {"item": "Master Gunner", "quantity": 1},
             {"item": "Carpenter", "quantity": 1},
@@ -59,11 +60,9 @@ DEMO_BUILD_DATA = [
         "soldiers": 14,
         "musketeers": 26,
         "mercenaries": 6,
-        "front_weapon_slots": [
-            {"item": "Twin 14-pdr", "quantity": 1},
-        ],
+        "front_weapon_slots": [],
         "rear_weapon_slots": [
-            {"item": "8-pdr Culverin", "quantity": 2},
+            {"item": "Twin 14-pdr", "quantity": 2},
         ],
         "port_weapon_slots": [
             {"item": "16-pdr Culverin", "quantity": 8},
@@ -71,6 +70,7 @@ DEMO_BUILD_DATA = [
         "starboard_weapon_slots": [
             {"item": "16-pdr Culverin", "quantity": 8},
         ],
+        "mortar_weapon_slots": [],
         "special_crew_slots": [
             {"item": "Navigator", "quantity": 1},
             {"item": "Lookout", "quantity": 1},
@@ -88,5 +88,43 @@ DEMO_BUILD_DATA = [
             {"item": "Fabric", "quantity": 30},
         ],
         "details": "Fast sample build for scouting and pressure on sails/positioning.",
+    },
+
+    {
+        "build_name": "Adventure Mortar Support",
+        "ship_name": "Adventure",
+        "build_type": "gunnery",
+        "sails": "Imported Sails",
+        "upgrade_1": "Long-Range Mortars",
+        "upgrade_2": "Swivel Mortars",
+        "upgrade_3": "Maneuverable Helm",
+        "lantern": "Storm Lantern",
+        "sailors": 56,
+        "soldiers": 20,
+        "musketeers": 36,
+        "mercenaries": 8,
+        "front_weapon_slots": [],
+        "rear_weapon_slots": [],
+        "port_weapon_slots": [],
+        "starboard_weapon_slots": [],
+        "mortar_weapon_slots": [
+            {"item": "10-inch Mortar", "quantity": 2},
+        ],
+        "special_crew_slots": [
+            {"item": "Mortar Officer", "quantity": 1},
+            {"item": "Navigator", "quantity": 1},
+        ],
+        "ammunition_slots": [
+            {"item": "Round Shots", "quantity": 180},
+            {"item": "Heated Shots", "quantity": 80},
+        ],
+        "consumable_slots": [
+            {"item": "Iron Repair Kit", "quantity": 8},
+        ],
+        "hold_slots": [
+            {"item": "Wood", "quantity": 90},
+            {"item": "Fabric", "quantity": 45},
+        ],
+        "details": "Siege sample build that exercises the dedicated mortar slot and caliber validation.",
     },
 ]

@@ -377,7 +377,7 @@ onMounted(async () => {
             <strong>{{ t('admin.quickActions.newGuide') }}</strong>
             <small>{{ t('admin.quickActions.guidesText') }}</small>
           </RouterLink>
-          <RouterLink class="staff-command-card" to="/fleets/manage">
+          <RouterLink class="staff-command-card" to="/fleets">
             <span>{{ t('fleets.manage.eyebrow') }}</span>
             <strong>{{ t('common.fleetManagement') }}</strong>
             <small>{{ t('fleets.manage.subtitle') }}</small>
@@ -450,6 +450,7 @@ onMounted(async () => {
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong></article>
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
           </div>
+          <p class="muted log-storage-note">{{ t('logs.dbOnly') }}</p>
           <div class="staff-filter-row">
             <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
             <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
@@ -463,6 +464,9 @@ onMounted(async () => {
                 <strong>{{ entry.level }} · {{ entry.method || entry.logger }}</strong>
                 <span>{{ formatDateTime(entry.created_at) }} · {{ entry.path || entry.message }} · {{ entry.status_code || '—' }} · {{ formatDuration(entry.duration_ms) }}</span>
                 <small v-if="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
+                <small v-if="entry.client_ip">{{ t('logs.clientIp') }}: {{ entry.client_ip }}</small>
+                <small v-if="entry.query_string">{{ t('logs.queryString') }}: {{ entry.query_string }}</small>
+                <small v-if="entry.user_agent">{{ t('logs.userAgent') }}: {{ entry.user_agent }}</small>
                 <p v-if="entry.exception" class="error-text">{{ entry.exception }}</p>
               </div>
             </article>

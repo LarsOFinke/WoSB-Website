@@ -163,7 +163,7 @@ onMounted(loadBuilds)
             </div>
 
             <div class="build-card-preview refined-preview">
-              <span>{{ t('builds.list.weaponPreview', { items: previewItems([...(build.front_weapon_slots || []), ...(build.port_weapon_slots || []), ...(build.starboard_weapon_slots || []), ...(build.rear_weapon_slots || [])]) }) }}</span>
+              <span>{{ t('builds.list.weaponPreview', { items: previewItems([...(build.front_weapon_slots || []), ...(build.port_weapon_slots || []), ...(build.starboard_weapon_slots || []), ...(build.rear_weapon_slots || []), ...(build.mortar_weapon_slots || [])]) }) }}</span>
               <span>{{ t('builds.list.specialCrewPreview', { items: previewItems(build.special_crew_slots) }) }}</span>
               <span>{{ t('builds.list.ammunitionPreview', { items: previewItems(build.ammunition_slots) }) }}</span>
             </div>

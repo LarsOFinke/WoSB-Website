@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Group, GroupMember, User
+from app.models import Build, Group, GroupMember, Ship, User
 from app.models.group import GROUP_STATUS_CLOSED, GROUP_STATUS_OPEN, DEFAULT_GROUP_LIFETIME_HOURS
 from app.schemas.group import GroupCreate, GroupJoinRequest
 
@@ -26,7 +26,7 @@ def _normalize_like(value: str | None) -> str | None:
 def _refresh_group_status(group: Group) -> None:
     if group.status == GROUP_STATUS_CLOSED:
         return
-    group.status = GROUP_STATUS_OPEN
+    group.status = "full" if group.active_members_count >= group.max_members else GROUP_STATUS_OPEN
 
 
 def list_groups(
@@ -95,6 +95,8 @@ def create_group(db: Session, payload: GroupCreate, owner_id: int) -> Group:
         expectations=payload.expectations,
         activity_plan=payload.activity_plan,
         contact_note=payload.contact_note,
+        scheduled_start_at=payload.scheduled_start_at,
+        scheduled_end_at=payload.scheduled_end_at,
         max_members=payload.max_members,
         min_ship_rate=payload.min_ship_rate,
         max_ship_rate=payload.max_ship_rate,
@@ -150,6 +152,8 @@ def _require_joinable(group: Group, payload: GroupJoinRequest, current_user: Use
     _refresh_group_status(group)
     if group.status != GROUP_STATUS_OPEN:
         raise GroupValidationError("This group is not open for new members.")
+    if group.spots_left <= 0:
+        raise GroupValidationError("This group is already full.")
     if current_user is None and not group.allow_guests:
         raise GroupValidationError("This group only accepts signed-in members.")
     if current_user is not None:
@@ -164,8 +168,73 @@ def _require_joinable(group: Group, payload: GroupJoinRequest, current_user: Use
             raise GroupValidationError(f"The selected ship is outside the allowed range ({requirement}).")
 
 
+def _resolve_join_ship_and_build(
+    db: Session,
+    group: Group,
+    payload: GroupJoinRequest,
+    current_user: User | None,
+) -> tuple[int | None, int | None, str | None, int | None]:
+    build_id = payload.build_id
+    ship_id = payload.ship_id
+    ship_name = payload.ship_name
+    ship_rate = payload.ship_rate
+
+    if build_id is not None:
+        if current_user is None:
+            raise GroupValidationError("Build links require a signed-in account.")
+        build = db.get(Build, build_id)
+        if build is None or build.owner_id != current_user.id:
+            raise GroupValidationError("The selected build does not belong to your account.")
+        ship_id = build.ship_id
+        ship_name = build.ship.name
+        ship_rate = build.ship.rate
+
+    if ship_id is not None and build_id is None:
+        ship = db.get(Ship, ship_id)
+        if ship is None or not ship.is_active:
+            raise GroupValidationError("The selected ship does not exist.")
+        ship_name = ship.name
+        ship_rate = ship.rate
+
+    if _requires_ship_rate(group) and not _ship_rate_allowed(group, ship_rate):
+        requirement = _rate_requirement_label(group)
+        raise GroupValidationError(f"The selected ship is outside the allowed range ({requirement}).")
+
+    return build_id, ship_id, ship_name, ship_rate
+
+
 def join_group(db: Session, group_id: int, payload: GroupJoinRequest, current_user: User | None) -> Group:
     group = get_group(db, group_id)
     if group is None:
-        raise GroupValidationError("Announcement not found.")
-    raise GroupValidationError("Joining is disabled while groups are used as fleet announcements.")
+        raise GroupValidationError("Group search not found.")
+
+    build_id, ship_id, ship_name, ship_rate = _resolve_join_ship_and_build(db, group, payload, current_user)
+    normalized_payload = payload.model_copy(update={
+        "build_id": build_id,
+        "ship_id": ship_id,
+        "ship_name": ship_name,
+        "ship_rate": ship_rate,
+    })
+    _require_joinable(group, normalized_payload, current_user)
+
+    display_name = normalized_payload.display_name
+    if current_user is not None and (not display_name or display_name == current_user.username):
+        display_name = current_user.display_name
+
+    member = GroupMember(
+        group_id=group.id,
+        user_id=current_user.id if current_user else None,
+        is_guest=current_user is None,
+        display_name=display_name,
+        fleet_name=normalized_payload.fleet_name,
+        ship_id=ship_id,
+        build_id=build_id,
+        ship_name=ship_name,
+        ship_rate=ship_rate,
+        note=normalized_payload.note,
+    )
+    db.add(member)
+    db.flush()
+    _refresh_group_status(group)
+    db.commit()
+    return get_group(db, group.id) or group

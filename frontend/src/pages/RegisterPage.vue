@@ -1,9 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useLocale } from '@/locales'
 import { useSession } from '@/services/session'
 import { getOfficialFleet } from '@/services/fleets'
 
+const route = useRoute()
 const { t } = useLocale()
 const { register } = useSession()
 
@@ -61,10 +63,12 @@ async function submitRegister() {
 }
 
 onMounted(async () => {
+  wantsFleetMembership.value = route.query.fleet === 'apply'
   try {
     officialFleet.value = await getOfficialFleet()
   } catch {
     officialFleet.value = null
+    wantsFleetMembership.value = false
   }
 })
 </script>

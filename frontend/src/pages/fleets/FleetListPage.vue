@@ -102,8 +102,8 @@ onMounted(loadFleet)
           <p>{{ t('fleets.subtitle') }}</p>
         </div>
         <div class="hero-action-stack">
-          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/fleets/manage">{{ t('fleets.manageCta') }}</RouterLink>
-          <RouterLink v-else class="button-box primary-action" to="/register">{{ t('fleets.registerCta') }}</RouterLink>
+          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/fleets">{{ t('fleets.manageCta') }}</RouterLink>
+          <RouterLink v-else class="button-box primary-action" to="/register?fleet=apply">{{ t('fleets.application.applyWithoutLogin') }}</RouterLink>
           <RouterLink v-if="isAuthenticated && hasMembership" class="button-box" to="/profile">{{ t('fleets.profileCta') }}</RouterLink>
         </div>
       </header>
@@ -149,7 +149,7 @@ onMounted(loadFleet)
               {{ membership?.status === 'inactive' ? t('fleets.application.reapply') : t('fleets.application.apply') }}
             </button>
           </template>
-          <RouterLink v-else class="button-box" to="/login">{{ t('fleets.application.loginToApply') }}</RouterLink>
+          <RouterLink v-else class="button-box" to="/register?fleet=apply">{{ t('fleets.application.applyWithoutLogin') }}</RouterLink>
 
           <form v-if="applicationOpen" class="fleet-inline-application" @submit.prevent="submitApplication">
             <label class="input-panel embedded-field">
