@@ -86,3 +86,41 @@ For a clean schema during local development, run:
 ```bash
 wosb-seed --reset
 ```
+
+## Integrity constraints added in the production-foundation pass
+
+Fresh schemas now include additional database-level checks for common application invariants:
+
+- `users.role` is constrained to `user`, `moderator` or `admin`.
+- `fleet_memberships.role` is constrained to member/admiral/lieutenant values.
+- `fleet_memberships.status` is constrained to pending/active/inactive values.
+- group status and ship rates are constrained to valid ranges.
+- fleet event `end_at` must not be before `start_at`.
+- build crew counts, slot indexes and slot quantities are non-negative/positive where appropriate.
+
+These checks complement Pydantic/service validation. They are not a substitute for migrations; they make new clean schemas safer while the prototype still uses `create_all`.
+
+## 3NF review
+
+The current schema is 3NF-oriented for the prototype scope:
+
+- non-key facts about users are in `user_profiles`, not duplicated in `users`;
+- official fleet state is stored once in `fleet_memberships` and referenced by profile;
+- build option stat effects are individual rows, not serialized JSON;
+- Guide↔Build and content↔File relationships are join tables;
+- demo/catalog names are not copied into dependent content rows except where a historical snapshot is intentionally useful for user-generated text.
+
+The main remaining production task is adding a real migration layer so these constraints and future schema changes can be reviewed and applied safely.
+
+
+## Admin Dashboard Update
+
+- Registrations are now staged in `registration_requests` and must be approved by an admin before a user account is created.
+- Admins can approve/reject requests in the new access review view.
+- Application/request logs are persisted in `app_logs` and surfaced in the admin dashboard.
+- See `docs/ADMIN_DASHBOARD.md` for the flow and operational details.
+
+
+## Single Fleet Refactor
+
+Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.

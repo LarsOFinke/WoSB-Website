@@ -1,12 +1,10 @@
 FLEET_SEED_DATA = [
-    {"name": "Iron Crown Trade Fleet", "slug": "trade-fleet", "focus": "trade", "description": "Handelskonvois, Materiallogistik und sichere Warenrouten.", "standing_orders": "Konvois früh ankündigen, Laderaum und Eskortenbedarf klar nennen.", "sort_order": 10},
-    {"name": "Port-Battle Main Fleet", "slug": "port-battle-main", "focus": "port_battle", "description": "Hauptflotte für Port-Battles, Line-Fights und vorbereitete Gefechtsfenster.", "standing_orders": "Buildvorgaben, Voice-Pflicht und Rollenverteilung vor jedem Einsatz prüfen.", "sort_order": 20},
-    {"name": "Training Squadron", "slug": "training-squadron", "focus": "training", "description": "Ausbildung für neue und zurückkehrende Kapitäne.", "standing_orders": "Trainings niedrigschwellig halten und Feedback nach jedem Block dokumentieren.", "sort_order": 30},
-    {"name": "Fleet Farm Wing", "slug": "fleet-farm-wing", "focus": "farming", "description": "Organisierte Farmrunden für XP, Ressourcen und Crew-Aufbau.", "standing_orders": "Farmrouten, Mindestvorräte und Beuteverteilung im Termin notieren.", "sort_order": 40},
-    {"name": "French Line Fleet", "slug": "french-line-fleet", "focus": "faction", "description": "Fraktionsflotte für französische Interessen und regionale Präsenz.", "standing_orders": "Fraktionsziele mit Diplomatie und Port-Battle-Planung abstimmen.", "sort_order": 50},
-    {"name": "British Line Fleet", "slug": "british-line-fleet", "focus": "faction", "description": "Fraktionsflotte für britische Interessen und regionale Präsenz.", "standing_orders": "Regionale Lage regelmäßig melden und Eskortenbedarf früh eskalieren.", "sort_order": 60},
-    {"name": "Spanish Line Fleet", "slug": "spanish-line-fleet", "focus": "faction", "description": "Fraktionsflotte für spanische Interessen und regionale Präsenz.", "standing_orders": "Handels- und Kampfaufträge sauber trennen und im Kalender sichtbar machen.", "sort_order": 70},
-    {"name": "Dutch Line Fleet", "slug": "dutch-line-fleet", "focus": "faction", "description": "Fraktionsflotte für niederländische Interessen und regionale Präsenz.", "standing_orders": "Aufklärungsinfos bündeln und an Staff/Admiräle weitergeben.", "sort_order": 80},
-    {"name": "Recon & Screening Fleet", "slug": "recon-screening", "focus": "recon", "description": "Aufklärung, Screening, Vorposten und schnelle Lagebilder.", "standing_orders": "Kontaktberichte kurz, zeitnah und mit Gebiet/Feindstärke festhalten.", "sort_order": 90},
-    {"name": "Support & Logistics Fleet", "slug": "support-logistics", "focus": "support", "description": "Reparatur, Nachschub, Reserveaufgaben und operative Unterstützung.", "standing_orders": "Supportbedarf für große Aktionen vorab aus Kalender und Gruppen ableiten.", "sort_order": 100},
+    {
+        "name": "Iron Crown Fleet",
+        "slug": "iron-crown-fleet",
+        "focus": "mixed",
+        "description": "Die zentrale Iron-Crown-Flotte für Port-Battles, Trainings, Handel, Flottenfarmrunden und koordinierte Fraktionsaktivitäten.",
+        "standing_orders": "Bewerbungen über die Webseite prüfen, Mitgliederrollen aktuell halten, Einsätze über Kalender und Gruppensuche vorbereiten und verfügbare Kapitäne im Mitgliederverzeichnis pflegen.",
+        "sort_order": 10,
+    },
 ]

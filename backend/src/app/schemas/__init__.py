@@ -1,5 +1,5 @@
-from app.schemas.admin import ModeratorCreate, ModeratorCreateResponse
-from app.schemas.auth import LoginRequest, LoginResponse, PasswordChangeRequest, PasswordChangeResponse, ProfileUpdate, RegisterRequest, RegisterResponse, UserRead
+from app.schemas.admin import AppLogRead, AppLogSummary, ModeratorCreate, ModeratorCreateResponse, RegistrationDecision, RegistrationRequestRead
+from app.schemas.auth import LoginRequest, LoginResponse, PasswordChangeRequest, PasswordChangeResponse, ProfileUpdate, RegisterRequest, RegisterResponse, RegistrationRequestPublic, UserRead
 from app.schemas.build import BuildCreate, BuildRead
 from app.schemas.build_option import BuildItemCategoryRead, BuildItemOptionRead, BuildOptionsCatalog
 from app.schemas.ship import ShipRead
@@ -18,9 +18,14 @@ __all__ = [
     "ProfileUpdate",
     "RegisterRequest",
     "RegisterResponse",
+    "RegistrationRequestPublic",
     "UserRead",
+    "AppLogRead",
+    "AppLogSummary",
     "ModeratorCreate",
     "ModeratorCreateResponse",
+    "RegistrationDecision",
+    "RegistrationRequestRead",
     "BuildCreate",
     "BuildRead",
     "BuildItemCategoryRead",

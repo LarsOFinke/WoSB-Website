@@ -26,7 +26,12 @@ class RegisterRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
     fleet_id: int | None = None
+    wants_fleet_membership: bool = False
     fleet_application_note: str | None = Field(default=None, max_length=1000)
+    fleet_availability: str | None = Field(default=None, max_length=240)
+    fleet_preferred_ships: str | None = Field(default=None, max_length=300)
+    fleet_timezone: str | None = Field(default=None, max_length=80)
+    fleet_discord_handle: str | None = Field(default=None, max_length=120)
 
     @model_validator(mode="after")
     def normalize(self) -> "RegisterRequest":
@@ -34,8 +39,12 @@ class RegisterRequest(BaseModel):
         self.display_name = self.display_name.strip()
         if isinstance(self.fleet_name, str):
             self.fleet_name = self.fleet_name.strip() or None
-        if isinstance(self.fleet_application_note, str):
-            self.fleet_application_note = self.fleet_application_note.strip() or None
+        for field_name in ["fleet_application_note", "fleet_availability", "fleet_preferred_ships", "fleet_timezone", "fleet_discord_handle"]:
+            value = getattr(self, field_name)
+            if isinstance(value, str):
+                setattr(self, field_name, value.strip() or None)
+        if self.fleet_id is not None:
+            self.wants_fleet_membership = True
         return self
 
 
@@ -61,8 +70,19 @@ class LoginResponse(BaseModel):
     user: UserRead
 
 
+class RegistrationRequestPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    display_name: str
+    status: str
+    created_at: datetime
+
+
 class RegisterResponse(BaseModel):
-    user: UserRead
+    request: RegistrationRequestPublic
+    message: str = "Registration request submitted for admin review."
 
 
 class PasswordChangeRequest(BaseModel):

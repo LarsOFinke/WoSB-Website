@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -8,7 +8,11 @@ from app.db.session import Base
 
 class BuildSlot(Base):
     __tablename__ = "build_slots"
-    __table_args__ = (UniqueConstraint("build_id", "slot_type", "slot_index", name="uq_build_slot_position"),)
+    __table_args__ = (
+        UniqueConstraint("build_id", "slot_type", "slot_index", name="uq_build_slot_position"),
+        CheckConstraint("slot_index >= 0", name="ck_build_slots_slot_index"),
+        CheckConstraint("quantity is null or quantity >= 1", name="ck_build_slots_quantity"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     build_id: Mapped[int] = mapped_column(

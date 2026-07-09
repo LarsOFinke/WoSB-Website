@@ -1,19 +1,21 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.constants import OFFICIAL_FLEET_PROFILE_STATUSES, STAFF_ROLES, SiteRole
 from app.db.session import Base
 
-ROLE_USER = "user"
-ROLE_MODERATOR = "moderator"
-ROLE_ADMIN = "admin"
-STAFF_ROLES = {ROLE_MODERATOR, ROLE_ADMIN}
-OFFICIAL_FLEET_PROFILE_STATUSES = {"active", "pending"}
+ROLE_USER = SiteRole.USER.value
+ROLE_MODERATOR = SiteRole.MODERATOR.value
+ROLE_ADMIN = SiteRole.ADMIN.value
 
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint("role in ('user', 'moderator', 'admin')", name="ck_users_role"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)

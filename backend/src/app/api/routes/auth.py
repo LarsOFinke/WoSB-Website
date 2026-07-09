@@ -6,7 +6,8 @@ from app.core.dependencies import get_current_user, require_user
 from app.db.session import get_db
 from app.models import User
 from app.schemas import LoginRequest, LoginResponse, PasswordChangeRequest, PasswordChangeResponse, RegisterRequest, RegisterResponse, UserRead
-from app.services.auth_service import AuthError, authenticate_user, change_user_password, create_user, create_user_session, delete_session_by_token
+from app.services.auth_service import AuthError, authenticate_user, change_user_password, create_user_session, delete_session_by_token
+from app.services.registration_service import RegistrationRequestError, submit_registration_request
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,21 +28,13 @@ def _clear_session_cookie(response: Response) -> None:
     response.delete_cookie(key=settings.session_cookie_name, path="/")
 
 
-@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_202_ACCEPTED)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> RegisterResponse:
     try:
-        user = create_user(
-            db,
-            username=payload.username,
-            password=payload.password,
-            display_name=payload.display_name,
-            fleet_name=payload.fleet_name,
-            fleet_id=payload.fleet_id,
-            fleet_application_note=payload.fleet_application_note,
-        )
-    except AuthError as exc:
+        request = submit_registration_request(db, payload)
+    except RegistrationRequestError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return RegisterResponse(user=UserRead.model_validate(user))
+    return RegisterResponse(request=request)
 
 
 @router.post("/login", response_model=LoginResponse)

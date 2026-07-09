@@ -9,7 +9,7 @@ def update_profile(db: Session, user: User, payload: ProfileUpdate) -> User:
     """Update public profile fields while keeping official fleet data centralized.
 
     Free-text fleet data remains available only for users who are not connected
-    to one of the planned fleets. Official fleet display is derived from the
+    to the official fleet. Official fleet display is derived from the
     single profile pointer to ``fleet_memberships``.
     """
 

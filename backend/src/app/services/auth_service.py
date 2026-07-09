@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import create_session_token, hash_password, hash_session_token, verify_password
-from app.models import AuthSession, User, UserProfile
+from app.models import AuthSession, RegistrationRequest, User, UserProfile
 from app.schemas.fleet import FleetJoinRequest
 from app.services.fleet_service import FleetValidationError, join_fleet
+from app.models.registration_request import REGISTRATION_PENDING
 from app.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
 
 VALID_ROLES = {ROLE_USER, ROLE_MODERATOR, ROLE_ADMIN}
@@ -37,6 +38,8 @@ def create_user(
         raise AuthError("Password must contain at least 6 characters.")
     if db.scalar(select(User).where(User.username == normalized_username)) is not None:
         raise AuthError("Username already exists.")
+    if db.scalar(select(RegistrationRequest.id).where(RegistrationRequest.username == normalized_username, RegistrationRequest.status == REGISTRATION_PENDING)) is not None:
+        raise AuthError("A registration request for this username is already waiting for review.")
 
     user = User(
         username=normalized_username,

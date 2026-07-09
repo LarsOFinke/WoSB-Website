@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy import delete, select
@@ -8,6 +9,8 @@ from app.core.config import settings
 from app.core.security import hash_session_token
 from app.db.session import get_db
 from app.models import AuthSession, User
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_user(
@@ -25,6 +28,7 @@ def get_current_user(
     if auth_session.expires_at <= datetime.utcnow():
         db.execute(delete(AuthSession).where(AuthSession.id == auth_session.id))
         db.commit()
+        logger.info("expired session removed", extra={"user_id": auth_session.user_id})
         return None
 
     if not auth_session.user.is_active:

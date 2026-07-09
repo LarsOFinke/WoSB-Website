@@ -40,6 +40,34 @@ def _ensure_sqlite_columns() -> None:
         if "primary_fleet_membership_id" not in profile_columns:
             statements.append("ALTER TABLE user_profiles ADD COLUMN primary_fleet_membership_id INTEGER")
 
+    if "fleet_memberships" in table_names:
+        membership_columns = {column["name"] for column in inspector.get_columns("fleet_memberships")}
+        if "assignment" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN assignment VARCHAR(120)")
+        if "availability" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN availability VARCHAR(240)")
+        if "preferred_ships" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN preferred_ships VARCHAR(300)")
+        if "timezone" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN timezone VARCHAR(80)")
+        if "discord_handle" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN discord_handle VARCHAR(120)")
+        if "admin_note" not in membership_columns:
+            statements.append("ALTER TABLE fleet_memberships ADD COLUMN admin_note TEXT")
+
+    if "registration_requests" in table_names:
+        request_columns = {column["name"] for column in inspector.get_columns("registration_requests")}
+        if "wants_fleet_membership" not in request_columns:
+            statements.append("ALTER TABLE registration_requests ADD COLUMN wants_fleet_membership BOOLEAN NOT NULL DEFAULT 0")
+        if "fleet_availability" not in request_columns:
+            statements.append("ALTER TABLE registration_requests ADD COLUMN fleet_availability VARCHAR(240)")
+        if "fleet_preferred_ships" not in request_columns:
+            statements.append("ALTER TABLE registration_requests ADD COLUMN fleet_preferred_ships VARCHAR(300)")
+        if "fleet_timezone" not in request_columns:
+            statements.append("ALTER TABLE registration_requests ADD COLUMN fleet_timezone VARCHAR(80)")
+        if "fleet_discord_handle" not in request_columns:
+            statements.append("ALTER TABLE registration_requests ADD COLUMN fleet_discord_handle VARCHAR(120)")
+
     if not statements:
         return
 

@@ -1,43 +1,58 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
 import { useLocale } from '@/locales'
 import { useSession } from '@/services/session'
-import { listFleets } from '@/services/fleets'
+import { getOfficialFleet } from '@/services/fleets'
 
-const router = useRouter()
 const { t } = useLocale()
 const { register } = useSession()
 
 const username = ref('')
 const displayName = ref('')
-const fleetName = ref('')
-const fleetId = ref('')
-const fleetApplicationNote = ref('')
-const fleets = ref([])
 const password = ref('')
+const officialFleet = ref(null)
+const wantsFleetMembership = ref(false)
+const fleetApplicationNote = ref('')
+const fleetAvailability = ref('')
+const fleetPreferredShips = ref('')
+const fleetTimezone = ref('')
+const fleetDiscordHandle = ref('')
 const isSubmitting = ref(false)
 const error = ref('')
 const success = ref(false)
+const submittedRequest = ref(null)
 
-const selectedFleet = computed(() => fleets.value.find((fleet) => String(fleet.id) === fleetId.value) || null)
+const selectedFleet = computed(() => wantsFleetMembership.value ? officialFleet.value : null)
 
 async function submitRegister() {
   isSubmitting.value = true
   error.value = ''
   success.value = false
   try {
-    await register({
+    const response = await register({
       username: username.value,
       display_name: displayName.value,
-      fleet_name: fleetName.value || null,
-      fleet_id: fleetId.value ? Number(fleetId.value) : null,
-      fleet_application_note: fleetApplicationNote.value || null,
+      fleet_name: null,
+      fleet_id: wantsFleetMembership.value && officialFleet.value ? Number(officialFleet.value.id) : null,
+      wants_fleet_membership: wantsFleetMembership.value,
+      fleet_application_note: wantsFleetMembership.value ? fleetApplicationNote.value || null : null,
+      fleet_availability: wantsFleetMembership.value ? fleetAvailability.value || null : null,
+      fleet_preferred_ships: wantsFleetMembership.value ? fleetPreferredShips.value || null : null,
+      fleet_timezone: wantsFleetMembership.value ? fleetTimezone.value || null : null,
+      fleet_discord_handle: wantsFleetMembership.value ? fleetDiscordHandle.value || null : null,
       password: password.value,
     })
+    submittedRequest.value = response.request
     success.value = true
-    window.setTimeout(() => router.push('/login'), 700)
+    username.value = ''
+    displayName.value = ''
+    password.value = ''
+    wantsFleetMembership.value = false
+    fleetApplicationNote.value = ''
+    fleetAvailability.value = ''
+    fleetPreferredShips.value = ''
+    fleetTimezone.value = ''
+    fleetDiscordHandle.value = ''
   } catch (err) {
     error.value = err.message || t('auth.registerError')
   } finally {
@@ -47,9 +62,9 @@ async function submitRegister() {
 
 onMounted(async () => {
   try {
-    fleets.value = await listFleets()
+    officialFleet.value = await getOfficialFleet()
   } catch {
-    fleets.value = []
+    officialFleet.value = null
   }
 })
 </script>
@@ -108,36 +123,48 @@ onMounted(async () => {
               </div>
             </div>
 
-            <label class="input-panel elevated-input-panel select-field-panel">
-              <span>{{ t('auth.fleetChoice') }}</span>
-              <select v-model="fleetId" autocomplete="organization">
-                <option value="">{{ t('fleets.registration.noFleet') }}</option>
-                <option v-for="fleet in fleets" :key="fleet.id" :value="String(fleet.id)">{{ fleet.name }}</option>
-              </select>
+            <label class="input-panel elevated-input-panel fleet-membership-toggle">
+              <span>{{ t('auth.joinOfficialFleet') }}</span>
+              <div class="checkbox-card-control">
+                <input v-model="wantsFleetMembership" type="checkbox" :disabled="!officialFleet" />
+                <strong>{{ officialFleet?.name || t('fleets.manage.noFleet') }}</strong>
+              </div>
               <small class="field-hint">{{ t('fleets.registration.applicationHint') }}</small>
             </label>
 
             <article v-if="selectedFleet" class="selected-fleet-preview">
-              <span class="summary-pill">{{ t(`fleets.focus.${selectedFleet.focus}`) }}</span>
+              <span class="summary-pill">{{ t('fleets.singleBadge') }}</span>
               <strong>{{ selectedFleet.name }}</strong>
               <p>{{ selectedFleet.description || t('fleets.noDescription') }}</p>
             </article>
 
-            <label v-if="fleetId" class="input-panel elevated-input-panel textarea-input-panel">
-              <span>{{ t('auth.fleetApplicationNote') }}</span>
-              <textarea v-model="fleetApplicationNote" rows="4" maxlength="1000" :placeholder="t('auth.fleetApplicationNotePlaceholder')"></textarea>
-              <small>{{ t('auth.fleetApplicationNoteHint') }}</small>
-            </label>
-
-            <label v-else class="input-panel elevated-input-panel">
-              <span>{{ t('fleets.registration.freeTextFleet') }}</span>
-              <input v-model="fleetName" type="text" autocomplete="organization" maxlength="120" :placeholder="t('auth.freeFleetPlaceholder')" />
-              <small>{{ t('auth.freeFleetHint') }}</small>
-            </label>
+            <div v-if="wantsFleetMembership" class="directory-form-grid register-directory-grid">
+              <label class="input-panel elevated-input-panel textarea-input-panel directory-note-field">
+                <span>{{ t('auth.fleetApplicationNote') }}</span>
+                <textarea v-model="fleetApplicationNote" rows="4" maxlength="1000" :placeholder="t('auth.fleetApplicationNotePlaceholder')"></textarea>
+                <small>{{ t('auth.fleetApplicationNoteHint') }}</small>
+              </label>
+              <label class="input-panel elevated-input-panel">
+                <span>{{ t('fleets.directory.availability') }}</span>
+                <input v-model="fleetAvailability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" />
+              </label>
+              <label class="input-panel elevated-input-panel">
+                <span>{{ t('fleets.directory.preferredShips') }}</span>
+                <input v-model="fleetPreferredShips" maxlength="300" :placeholder="t('fleets.directory.preferredShipsPlaceholder')" />
+              </label>
+              <label class="input-panel elevated-input-panel">
+                <span>{{ t('fleets.directory.timezone') }}</span>
+                <input v-model="fleetTimezone" maxlength="80" placeholder="CET / UTC+1" />
+              </label>
+              <label class="input-panel elevated-input-panel">
+                <span>{{ t('fleets.directory.discord') }}</span>
+                <input v-model="fleetDiscordHandle" maxlength="120" placeholder="Captain#1234" />
+              </label>
+            </div>
           </section>
 
           <p v-if="error" class="error-text">{{ error }}</p>
-          <p v-if="success" class="success-text">{{ t('auth.registerSuccess') }}</p>
+          <div v-if="success" class="success-panel registration-review-panel"><strong>{{ t('auth.registerPendingTitle') }}</strong><p>{{ t('auth.registerSuccess') }}</p><small v-if="submittedRequest">{{ t('auth.registerRequestId', { id: submittedRequest.id }) }}</small></div>
 
           <button class="form-button primary-action register-submit" type="submit" :disabled="isSubmitting">
             {{ isSubmitting ? t('auth.creatingAccount') : t('auth.createAccount') }}

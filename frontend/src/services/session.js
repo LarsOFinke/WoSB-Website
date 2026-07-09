@@ -31,7 +31,8 @@ export async function login(username, password) {
 export async function register(payload) {
   const response = await registerRequest(payload)
   state.isReady = true
-  return response.user
+  state.user = null
+  return response
 }
 
 export async function logout() {

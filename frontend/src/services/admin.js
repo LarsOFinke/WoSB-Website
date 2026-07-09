@@ -1,6 +1,26 @@
 import { deleteRequest, get, post } from './api'
 import { withQuery } from './query'
 
+export function listRegistrationRequests(status = 'pending') {
+  return get(withQuery('/admin/registration-requests', { status }))
+}
+
+export function approveRegistrationRequest(id, note = '') {
+  return post(`/admin/registration-requests/${id}/approve`, { note: note || null })
+}
+
+export function rejectRegistrationRequest(id, note = '') {
+  return post(`/admin/registration-requests/${id}/reject`, { note: note || null })
+}
+
+export function listAdminLogs({ level = '', path = '', limit = 120 } = {}) {
+  return get(withQuery('/admin/logs', { level, path, limit }))
+}
+
+export function getAdminLogSummary() {
+  return get('/admin/logs/summary')
+}
+
 export function listAdminBuilds(search = '', buildType = '') {
   return get(withQuery('/admin/builds', { search, build_type: buildType }))
 }

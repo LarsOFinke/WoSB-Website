@@ -1,4 +1,5 @@
 import { cloneMessages, mergeMessages } from '../utils'
+import { adminDashboardMessages } from './adminDashboard'
 import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
@@ -21,6 +22,7 @@ const messageLayers = [
   fleetCalendarMessages,
   fleetManagementMessages,
   staffPanelMessages,
+  adminDashboardMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

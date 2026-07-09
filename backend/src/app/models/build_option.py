@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -8,6 +8,9 @@ from app.db.session import Base
 
 class BuildItemCategory(Base):
     __tablename__ = "build_item_categories"
+    __table_args__ = (
+        CheckConstraint("sort_order >= 0", name="ck_build_item_categories_sort_order"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     key: Mapped[str] = mapped_column(String(40), unique=True, nullable=False, index=True)
@@ -26,7 +29,10 @@ class BuildItemCategory(Base):
 
 class BuildItemOption(Base):
     __tablename__ = "build_item_options"
-    __table_args__ = (UniqueConstraint("category_id", "name", name="uq_build_item_option_category_name"),)
+    __table_args__ = (
+        UniqueConstraint("category_id", "name", name="uq_build_item_option_category_name"),
+        CheckConstraint("sort_order >= 0", name="ck_build_item_options_sort_order"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     category_id: Mapped[int] = mapped_column(

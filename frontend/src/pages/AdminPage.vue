@@ -3,14 +3,19 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useLocale } from '@/locales'
 import {
+  approveRegistrationRequest,
   createModerator,
   deleteAdminBuild,
   deleteAdminForumThread,
   deleteAdminGuide,
+  getAdminLogSummary,
   listAdminBuilds,
   listAdminForumThreads,
   listAdminGuides,
+  listAdminLogs,
+  listRegistrationRequests,
   listUsers,
+  rejectRegistrationRequest,
 } from '@/services/admin'
 import { closeGroup, listGroups } from '@/services/groups'
 import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/services/fleetCalendar'
@@ -26,19 +31,30 @@ const fleetEvents = ref([])
 const forumThreads = ref([])
 const guides = ref([])
 const groups = ref([])
+const registrationRequests = ref([])
+const appLogs = ref([])
+const logSummary = ref({ total: 0, errors: 0, warnings: 0, slow_requests: 0, recent_status: {} })
 const search = ref('')
 const contentSearch = ref('')
 const calendarCategory = ref('')
+const registrationStatus = ref('pending')
+const logLevel = ref('')
+const logPath = ref('')
 const loading = ref(false)
 const userLoading = ref(false)
 const calendarLoading = ref(false)
 const contentLoading = ref(false)
+const registrationLoading = ref(false)
+const logsLoading = ref(false)
 const error = ref('')
 const userError = ref('')
 const calendarError = ref('')
 const contentError = ref('')
+const registrationError = ref('')
+const logsError = ref('')
 const moderatorSuccess = ref('')
 const pendingDelete = reactive({ type: '', id: null })
+const registrationDecisionNotes = reactive({})
 const apiStatus = ref(t('admin.status.loading'))
 const apiStatusDetail = ref(t('admin.status.loadingDetail'))
 let searchTimer = null
@@ -50,6 +66,8 @@ const buildCountLabel = computed(() => builds.value.length === 1 ? t('admin.buil
 const userCountLabel = computed(() => users.value.length === 1 ? t('admin.users.summaryOne') : t('admin.users.summaryMany', { count: users.value.length }))
 const eventCountLabel = computed(() => fleetEvents.value.length === 1 ? t('admin.calendar.summaryOne') : t('admin.calendar.summaryMany', { count: fleetEvents.value.length }))
 const contentCountLabel = computed(() => t('admin.content.summary', { count: forumThreads.value.length + guides.value.length + groups.value.length }))
+const registrationCountLabel = computed(() => registrationRequests.value.length === 1 ? t('admin.registrations.summaryOne') : t('admin.registrations.summaryMany', { count: registrationRequests.value.length }))
+const logsCountLabel = computed(() => t('admin.logs.summary', { count: logSummary.value.total || appLogs.value.length }))
 const upcomingEvents = computed(() => [...fleetEvents.value].sort((a, b) => new Date(a.start_at) - new Date(b.start_at)).slice(0, 12))
 const categoryOptions = computed(() => [{ value: '', label: t('calendar.categories.all') }, ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) }))])
 
@@ -120,6 +138,64 @@ async function loadStatus() {
     apiStatus.value = t('admin.status.offline')
     apiStatusDetail.value = t('admin.status.offlineDetail')
   }
+}
+
+async function loadRegistrations() {
+  if (!isAdmin.value) return
+  registrationLoading.value = true
+  registrationError.value = ''
+  try {
+    registrationRequests.value = await listRegistrationRequests(registrationStatus.value)
+  } catch (err) {
+    registrationError.value = err.message || t('admin.registrations.loadError')
+  } finally {
+    registrationLoading.value = false
+  }
+}
+
+async function approveRegistration(id) {
+  registrationError.value = ''
+  try {
+    await approveRegistrationRequest(id, registrationDecisionNotes[id] || '')
+    delete registrationDecisionNotes[id]
+    await Promise.all([loadRegistrations(), loadUsers()])
+  } catch (err) {
+    registrationError.value = err.message || t('admin.registrations.approveError')
+  }
+}
+
+async function rejectRegistration(id) {
+  registrationError.value = ''
+  try {
+    await rejectRegistrationRequest(id, registrationDecisionNotes[id] || '')
+    delete registrationDecisionNotes[id]
+    await loadRegistrations()
+  } catch (err) {
+    registrationError.value = err.message || t('admin.registrations.rejectError')
+  }
+}
+
+async function loadLogs() {
+  if (!isAdmin.value) return
+  logsLoading.value = true
+  logsError.value = ''
+  try {
+    const [summary, rows] = await Promise.all([
+      getAdminLogSummary(),
+      listAdminLogs({ level: logLevel.value, path: logPath.value, limit: 140 }),
+    ])
+    logSummary.value = summary
+    appLogs.value = rows
+  } catch (err) {
+    logsError.value = err.message || t('admin.logs.loadError')
+  } finally {
+    logsLoading.value = false
+  }
+}
+
+function formatDuration(value) {
+  if (value === null || value === undefined) return '—'
+  return `${Math.round(value)} ms`
 }
 
 async function loadCalendar() {
@@ -240,12 +316,16 @@ watch(contentSearch, () => {
 })
 
 watch(calendarCategory, loadCalendar)
+watch(registrationStatus, loadRegistrations)
+watch([logLevel, logPath], loadLogs)
 
 watch(activeTab, async (tab) => {
   clearConfirmation()
   if (tab === 'builds') await loadBuilds()
   if (tab === 'status') await loadStatus()
   if (tab === 'users') await loadUsers()
+  if (tab === 'registrations') await loadRegistrations()
+  if (tab === 'logs') await loadLogs()
   if (tab === 'calendar') await loadCalendar()
   if (tab === 'content') await loadContent()
 })
@@ -253,6 +333,9 @@ watch(activeTab, async (tab) => {
 onMounted(async () => {
   if (!sessionState.isReady) await loadSession()
   await loadStatus()
+  if (isAdmin.value) {
+    await Promise.all([loadRegistrations(), loadLogs()])
+  }
 })
 </script>
 
@@ -303,6 +386,8 @@ onMounted(async () => {
 
         <section class="wire-section admin-tabs staff-tabs" :aria-label="t('admin.tabsLabel')">
           <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'">{{ t('admin.tabs.status') }}</button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'">{{ t('admin.tabs.registrations') }}</button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'">{{ t('admin.tabs.logs') }}</button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'">{{ t('admin.tabs.calendar') }}</button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'">{{ t('admin.tabs.content') }}</button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'">{{ t('admin.tabs.builds') }}</button>
@@ -314,6 +399,74 @@ onMounted(async () => {
           <aside class="home-status-card refined-status-card admin-status-card" aria-live="polite">
             <span>{{ t('admin.status.cardLabel') }}</span><strong>{{ apiStatus }}</strong><p>{{ apiStatusDetail }}</p>
           </aside>
+          <div v-if="isAdmin" class="admin-dashboard-grid">
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.registrations.dashboardLabel') }}</span><strong>{{ registrationRequests.length }}</strong><p>{{ t('admin.registrations.dashboardHint') }}</p></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong><p>{{ t('admin.logs.dashboardHint') }}</p></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong><p>{{ t('admin.logs.errorHint') }}</p></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong><p>{{ t('admin.logs.slowHint') }}</p></article>
+          </div>
+        </section>
+
+        <section v-if="activeTab === 'registrations' && isAdmin" class="wire-section admin-panel staff-management-panel">
+          <div class="admin-panel-heading">
+            <div><h2>{{ t('admin.registrations.title') }}</h2><p>{{ t('admin.registrations.subtitle') }}</p></div>
+            <span class="summary-pill">{{ registrationCountLabel }}</span>
+          </div>
+          <div class="staff-filter-row">
+            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="registrationStatus"><option value="pending">{{ t('admin.registrations.status.pending') }}</option><option value="approved">{{ t('admin.registrations.status.approved') }}</option><option value="rejected">{{ t('admin.registrations.status.rejected') }}</option><option value="">{{ t('admin.registrations.status.all') }}</option></select></label>
+          </div>
+          <p v-if="registrationLoading" class="muted table-state">{{ t('admin.registrations.loading') }}</p>
+          <p v-else-if="registrationError" class="error-text table-state">{{ registrationError }}</p>
+          <p v-else-if="registrationRequests.length === 0" class="muted table-state">{{ t('admin.registrations.empty') }}</p>
+          <div v-else class="admin-build-list registration-review-list">
+            <article v-for="request in registrationRequests" :key="request.id" class="admin-build-row registration-review-row">
+              <div class="admin-build-main">
+                <strong>{{ request.display_name }}</strong>
+                <span>{{ request.username }} · {{ formatDateTime(request.created_at) }} · {{ t(`admin.registrations.status.${request.status}`) }}</span>
+                <small v-if="request.fleet">{{ t('admin.registrations.fleetApplication') }}: {{ request.fleet.name }}</small>
+                <small v-else-if="request.external_fleet_name">{{ t('admin.registrations.externalFleet') }}: {{ request.external_fleet_name }}</small>
+                <div v-if="request.wants_fleet_membership" class="member-directory-meta">
+                  <span v-if="request.fleet_availability">{{ t('fleets.directory.availability') }}: {{ request.fleet_availability }}</span>
+                  <span v-if="request.fleet_preferred_ships">{{ t('fleets.directory.preferredShips') }}: {{ request.fleet_preferred_ships }}</span>
+                  <span v-if="request.fleet_timezone">{{ t('fleets.directory.timezone') }}: {{ request.fleet_timezone }}</span>
+                  <span v-if="request.fleet_discord_handle">{{ t('fleets.directory.discord') }}: {{ request.fleet_discord_handle }}</span>
+                </div>
+                <p v-if="request.fleet_application_note" class="muted">{{ request.fleet_application_note }}</p>
+                <p v-if="request.decision_note" class="muted">{{ t('admin.registrations.decisionNote') }}: {{ request.decision_note }}</p>
+              </div>
+              <div v-if="request.status === 'pending'" class="registration-actions">
+                <label class="input-panel embedded-field"><span>{{ t('admin.registrations.noteLabel') }}</span><input v-model="registrationDecisionNotes[request.id]" maxlength="1000" :placeholder="t('admin.registrations.notePlaceholder')" /></label>
+                <div class="hero-actions"><button class="form-button primary-action" type="button" @click="approveRegistration(request.id)">{{ t('admin.registrations.approve') }}</button><button class="danger-action" type="button" @click="rejectRegistration(request.id)">{{ t('admin.registrations.reject') }}</button></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section v-if="activeTab === 'logs' && isAdmin" class="wire-section admin-panel staff-management-panel">
+          <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><span class="summary-pill">{{ logsCountLabel }}</span></div>
+          <div class="admin-dashboard-grid log-summary-grid">
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong></article>
+            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
+          </div>
+          <div class="staff-filter-row">
+            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
+            <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
+          </div>
+          <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>
+          <p v-else-if="logsError" class="error-text table-state">{{ logsError }}</p>
+          <p v-else-if="appLogs.length === 0" class="muted table-state">{{ t('admin.logs.empty') }}</p>
+          <div v-else class="admin-build-list admin-log-list">
+            <article v-for="entry in appLogs" :key="entry.id" class="admin-build-row admin-log-row">
+              <div class="admin-build-main">
+                <strong>{{ entry.level }} · {{ entry.method || entry.logger }}</strong>
+                <span>{{ formatDateTime(entry.created_at) }} · {{ entry.path || entry.message }} · {{ entry.status_code || '—' }} · {{ formatDuration(entry.duration_ms) }}</span>
+                <small v-if="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
+                <p v-if="entry.exception" class="error-text">{{ entry.exception }}</p>
+              </div>
+            </article>
+          </div>
         </section>
 
         <section v-if="activeTab === 'calendar'" class="wire-section admin-panel staff-management-panel">

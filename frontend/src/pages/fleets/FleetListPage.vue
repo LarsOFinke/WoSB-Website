@@ -2,42 +2,43 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { useLocale } from '@/locales'
-import { joinFleet, listFleets, listMyFleetMemberships } from '@/services/fleets'
+import { getOfficialFleet, joinFleet, listMyFleetMemberships } from '@/services/fleets'
 import { useSession } from '@/services/session'
 
 const { t } = useLocale()
 const { isAuthenticated } = useSession()
-const fleets = ref([])
+const fleet = ref(null)
 const myMemberships = ref([])
 const loading = ref(false)
 const applying = ref(false)
 const error = ref('')
 const applicationError = ref('')
 const applicationSuccess = ref('')
-const focusFilter = ref('')
-const applyingFleetId = ref('')
+const applicationOpen = ref(false)
 const applicationNote = ref('')
+const applicationDetails = ref({ availability: '', preferred_ships: '', timezone: '', discord_handle: '' })
 
-const filteredFleets = computed(() => focusFilter.value ? fleets.value.filter((fleet) => fleet.focus === focusFilter.value) : fleets.value)
-const focusOptions = computed(() => [...new Set(fleets.value.map((fleet) => fleet.focus))])
-const membershipByFleet = computed(() => Object.fromEntries(myMemberships.value.map((membership) => [membership.fleet_id, membership])))
-const hasMemberships = computed(() => myMemberships.value.length > 0)
-const activeApplications = computed(() => myMemberships.value.filter((membership) => ['active', 'pending'].includes(membership.status)))
+const membership = computed(() => myMemberships.value[0] || null)
+const canApply = computed(() => isAuthenticated.value && (!membership.value || membership.value.status === 'inactive'))
+const hasMembership = computed(() => Boolean(membership.value && ['active', 'pending'].includes(membership.value.status)))
 
-function membershipFor(fleet) {
-  return membershipByFleet.value[fleet.id] || null
-}
-
-function openApplication(fleet) {
+function openApplication() {
   applicationError.value = ''
   applicationSuccess.value = ''
-  applyingFleetId.value = String(fleet.id)
-  applicationNote.value = membershipFor(fleet)?.note || ''
+  applicationOpen.value = true
+  applicationNote.value = membership.value?.note || ''
+  applicationDetails.value = {
+    availability: membership.value?.availability || '',
+    preferred_ships: membership.value?.preferred_ships || '',
+    timezone: membership.value?.timezone || '',
+    discord_handle: membership.value?.discord_handle || '',
+  }
 }
 
 function closeApplication() {
-  applyingFleetId.value = ''
+  applicationOpen.value = false
   applicationNote.value = ''
+  applicationDetails.value = { availability: '', preferred_ships: '', timezone: '', discord_handle: '' }
 }
 
 async function loadMemberships() {
@@ -52,11 +53,11 @@ async function loadMemberships() {
   }
 }
 
-async function loadFleets() {
+async function loadFleet() {
   loading.value = true
   error.value = ''
   try {
-    fleets.value = await listFleets()
+    fleet.value = await getOfficialFleet()
     await loadMemberships()
   } catch (err) {
     error.value = err.message || t('fleets.loadError')
@@ -65,15 +66,22 @@ async function loadFleets() {
   }
 }
 
-async function submitApplication(fleet) {
+async function submitApplication() {
   applying.value = true
   applicationError.value = ''
   applicationSuccess.value = ''
   try {
-    await joinFleet({ fleet_id: fleet.id, note: applicationNote.value || null })
-    applicationSuccess.value = t('fleets.application.sent', { fleet: fleet.name })
+    await joinFleet({
+      fleet_id: fleet.value?.id || null,
+      note: applicationNote.value || null,
+      availability: applicationDetails.value.availability || null,
+      preferred_ships: applicationDetails.value.preferred_ships || null,
+      timezone: applicationDetails.value.timezone || null,
+      discord_handle: applicationDetails.value.discord_handle || null,
+    })
+    applicationSuccess.value = t('fleets.application.sent', { fleet: fleet.value?.name || t('common.fleets') })
     closeApplication()
-    await loadFleets()
+    await loadFleet()
   } catch (err) {
     applicationError.value = err.message || t('fleets.application.error')
   } finally {
@@ -81,13 +89,13 @@ async function submitApplication(fleet) {
   }
 }
 
-onMounted(loadFleets)
+onMounted(loadFleet)
 </script>
 
 <template>
   <section class="fleet-page" aria-labelledby="fleet-title">
-    <div class="wire-frame page-frame fleet-frame">
-      <header class="wire-section page-hero fleet-hero">
+    <div class="wire-frame page-frame fleet-frame single-fleet-frame">
+      <header class="wire-section page-hero fleet-hero single-fleet-hero">
         <div>
           <p class="eyebrow">{{ t('fleets.eyebrow') }}</p>
           <h1 id="fleet-title">{{ t('fleets.title') }}</h1>
@@ -96,77 +104,76 @@ onMounted(loadFleets)
         <div class="hero-action-stack">
           <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/fleets/manage">{{ t('fleets.manageCta') }}</RouterLink>
           <RouterLink v-else class="button-box primary-action" to="/register">{{ t('fleets.registerCta') }}</RouterLink>
-          <RouterLink v-if="isAuthenticated && hasMemberships" class="button-box" to="/profile">{{ t('fleets.profileCta') }}</RouterLink>
+          <RouterLink v-if="isAuthenticated && hasMembership" class="button-box" to="/profile">{{ t('fleets.profileCta') }}</RouterLink>
         </div>
       </header>
-
-      <section class="wire-section filter-panel fleet-filter-panel">
-        <div>
-          <p class="eyebrow">{{ t('fleets.filterEyebrow') }}</p>
-          <h2>{{ t('fleets.filterTitle') }}</h2>
-        </div>
-        <label class="filter-box select-shell toolbar-select-shell">
-          <span>{{ t('fleets.focusFilter') }}</span>
-          <select v-model="focusFilter">
-            <option value="">{{ t('fleets.allFleets') }}</option>
-            <option v-for="focus in focusOptions" :key="focus" :value="focus">{{ t(`fleets.focus.${focus}`) }}</option>
-          </select>
-        </label>
-      </section>
-
-      <section v-if="isAuthenticated && activeApplications.length" class="wire-section fleet-application-strip">
-        <div>
-          <p class="eyebrow">{{ t('fleets.application.myStatus') }}</p>
-          <h2>{{ t('fleets.application.myFleets') }}</h2>
-        </div>
-        <div class="application-status-list">
-          <span v-for="membership in activeApplications" :key="membership.id" class="summary-pill">
-            {{ membership.fleet.name }} · {{ t(`fleets.status.${membership.status}`) }}
-          </span>
-        </div>
-      </section>
 
       <p v-if="loading" class="muted table-state">{{ t('fleets.loading') }}</p>
       <p v-else-if="error" class="error-text table-state">{{ error }}</p>
       <p v-if="applicationError" class="error-text table-state">{{ applicationError }}</p>
       <p v-if="applicationSuccess" class="success-text table-state">{{ applicationSuccess }}</p>
 
-      <section v-if="!loading && !error" class="fleet-card-grid">
-        <article v-for="fleet in filteredFleets" :key="fleet.id" class="wire-section fleet-card fleet-application-card">
+      <section v-if="!loading && !error && fleet" class="single-fleet-layout">
+        <article class="wire-section fleet-card single-fleet-card">
           <div class="fleet-card-header">
-            <span class="summary-pill">{{ t(`fleets.focus.${fleet.focus}`) }}</span>
+            <span class="summary-pill">{{ t('fleets.singleBadge') }}</span>
             <span class="muted">{{ t('fleets.memberSummary', { active: fleet.active_members_count, pending: fleet.pending_members_count }) }}</span>
           </div>
           <h2>{{ fleet.name }}</h2>
           <p>{{ fleet.description || t('fleets.noDescription') }}</p>
+          <div v-if="fleet.standing_orders" class="fleet-orders-block">
+            <strong>{{ t('fleets.standingOrders') }}</strong>
+            <p>{{ fleet.standing_orders }}</p>
+          </div>
           <div class="fleet-leaders">
             <strong>{{ t('fleets.leadership') }}</strong>
             <span v-if="fleet.leaders.length === 0" class="muted">{{ t('fleets.noLeaders') }}</span>
             <span v-for="leader in fleet.leaders" :key="leader.id" class="summary-pill">{{ leader.user.display_name }} · {{ t(`fleets.roles.${leader.role}`) }}</span>
           </div>
+        </article>
 
-          <div class="fleet-application-actions">
-            <template v-if="isAuthenticated">
-              <span v-if="membershipFor(fleet)" class="summary-pill fleet-status-pill">
-                {{ t(`fleets.status.${membershipFor(fleet).status}`) }} · {{ t(`fleets.roles.${membershipFor(fleet).role}`) }}
-              </span>
-              <button
-                v-if="!membershipFor(fleet) || membershipFor(fleet).status === 'inactive'"
-                class="form-button"
-                type="button"
-                @click="openApplication(fleet)"
-              >
-                {{ membershipFor(fleet)?.status === 'inactive' ? t('fleets.application.reapply') : t('fleets.application.apply') }}
-              </button>
-            </template>
-            <RouterLink v-else class="button-box" to="/login">{{ t('fleets.application.loginToApply') }}</RouterLink>
+        <aside class="wire-section fleet-join-panel">
+          <p class="eyebrow">{{ t('fleets.application.myStatus') }}</p>
+          <h2>{{ t('fleets.application.title') }}</h2>
+          <p>{{ t('fleets.application.subtitle') }}</p>
+
+          <div v-if="membership" class="fleet-status-stack">
+            <span class="summary-pill fleet-status-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
+            <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
+            <small v-if="membership.availability">{{ t('fleets.directory.availability') }}: {{ membership.availability }}</small>
           </div>
+          <p v-else class="muted">{{ t('fleets.application.empty') }}</p>
 
-          <form v-if="applyingFleetId === String(fleet.id)" class="fleet-inline-application" @submit.prevent="submitApplication(fleet)">
+          <template v-if="isAuthenticated">
+            <button v-if="canApply" class="form-button primary-action" type="button" @click="openApplication">
+              {{ membership?.status === 'inactive' ? t('fleets.application.reapply') : t('fleets.application.apply') }}
+            </button>
+          </template>
+          <RouterLink v-else class="button-box" to="/login">{{ t('fleets.application.loginToApply') }}</RouterLink>
+
+          <form v-if="applicationOpen" class="fleet-inline-application" @submit.prevent="submitApplication">
             <label class="input-panel embedded-field">
               <span>{{ t('fleets.application.noteLabel') }}</span>
               <textarea v-model="applicationNote" rows="4" maxlength="1000" :placeholder="t('fleets.application.notePlaceholder')" />
             </label>
+            <div class="directory-form-grid">
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.availability') }}</span>
+                <input v-model="applicationDetails.availability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" />
+              </label>
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.preferredShips') }}</span>
+                <input v-model="applicationDetails.preferred_ships" maxlength="300" :placeholder="t('fleets.directory.preferredShipsPlaceholder')" />
+              </label>
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.timezone') }}</span>
+                <input v-model="applicationDetails.timezone" maxlength="80" placeholder="CET / UTC+1" />
+              </label>
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.discord') }}</span>
+                <input v-model="applicationDetails.discord_handle" maxlength="120" placeholder="Captain#1234" />
+              </label>
+            </div>
             <div class="form-actions compact-actions">
               <button class="form-button primary-action" type="submit" :disabled="applying">
                 {{ applying ? t('common.saving') : t('fleets.application.submit') }}
@@ -174,7 +181,7 @@ onMounted(loadFleets)
               <button class="form-button secondary-action" type="button" @click="closeApplication">{{ t('common.cancel') }}</button>
             </div>
           </form>
-        </article>
+        </aside>
       </section>
     </div>
   </section>

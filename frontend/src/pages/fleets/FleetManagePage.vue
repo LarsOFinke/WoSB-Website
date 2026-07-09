@@ -1,14 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import { useLocale } from '@/locales'
-import { FLEET_MEMBER_STATUSES, FLEET_ROLES, getFleetManagementDetail, listManageableFleets, updateFleet, updateFleetMembership } from '@/services/fleets'
+import { FLEET_MEMBER_STATUSES, FLEET_ROLES, getOfficialFleetManagementDetail, updateFleet, updateFleetMembership } from '@/services/fleets'
 import { useSession } from '@/services/session'
 
 const { t } = useLocale()
 const { user } = useSession()
-const fleets = ref([])
-const selectedFleetId = ref('')
 const selectedFleet = ref(null)
 const activeTab = ref('profile')
 const loading = ref(false)
@@ -31,6 +29,7 @@ const tabs = computed(() => [
   { key: 'profile', label: t('fleets.manage.tabs.profile'), count: null },
   { key: 'requests', label: t('fleets.manage.tabs.requests'), count: pendingMembers.value.length },
   { key: 'members', label: t('fleets.manage.tabs.members'), count: activeMembers.value.length + inactiveMembers.value.length },
+  { key: 'directory', label: t('fleets.manage.tabs.directory'), count: activeMembers.value.length },
 ])
 
 const filteredMembers = computed(() => {
@@ -38,39 +37,34 @@ const filteredMembers = computed(() => {
   return memberships.value.filter((membership) => {
     const matchesStatus = memberStatusFilter.value ? membership.status === memberStatusFilter.value : true
     const matchesRole = memberRoleFilter.value ? membership.role === memberRoleFilter.value : true
-    const haystack = `${membership.user.display_name} ${membership.user.username} ${membership.note || ''}`.toLowerCase()
+    const haystack = [
+      membership.user.display_name,
+      membership.user.username,
+      membership.note,
+      membership.assignment,
+      membership.availability,
+      membership.preferred_ships,
+      membership.timezone,
+      membership.discord_handle,
+      membership.admin_note,
+    ].filter(Boolean).join(' ').toLowerCase()
     return matchesStatus && matchesRole && (!query || haystack.includes(query))
   })
 })
+
+const activeDirectoryMembers = computed(() => filteredMembers.value.filter((membership) => membership.status === 'active'))
 
 function syncForm() {
   form.description = selectedFleet.value?.description || ''
   form.standing_orders = selectedFleet.value?.standing_orders || ''
 }
 
-async function loadManageable() {
-  loading.value = true
-  error.value = ''
-  try {
-    fleets.value = await listManageableFleets()
-    if (!selectedFleetId.value && fleets.value.length > 0) selectedFleetId.value = String(fleets.value[0].id)
-  } catch (err) {
-    error.value = err.message || t('fleets.manage.loadError')
-  } finally {
-    loading.value = false
-  }
-}
-
 async function loadFleetDetail() {
-  if (!selectedFleetId.value) {
-    selectedFleet.value = null
-    return
-  }
   loading.value = true
   error.value = ''
   try {
-    selectedFleet.value = await getFleetManagementDetail(selectedFleetId.value)
-    syncForm()
+    selectedFleet.value = await getOfficialFleetManagementDetail()
+    if (selectedFleet.value) syncForm()
   } catch (err) {
     error.value = err.message || t('fleets.manage.loadError')
   } finally {
@@ -109,18 +103,11 @@ async function setMember(membership, payload) {
   }
 }
 
-watch(selectedFleetId, async () => {
-  activeTab.value = 'profile'
-  memberSearch.value = ''
-  memberStatusFilter.value = 'active'
-  memberRoleFilter.value = ''
-  await loadFleetDetail()
-})
+function fieldPayload(field, event) {
+  return { [field]: event.target.value || null }
+}
 
-onMounted(async () => {
-  await loadManageable()
-  await loadFleetDetail()
-})
+onMounted(loadFleetDetail)
 </script>
 
 <template>
@@ -140,13 +127,10 @@ onMounted(async () => {
 
       <section class="wire-section fleet-management-panel">
         <div class="staff-filter-row fleet-command-bar">
-          <label class="filter-box select-shell toolbar-select-shell">
-            <span>{{ t('fleets.manage.selectFleet') }}</span>
-            <select v-model="selectedFleetId">
-              <option value="">{{ t('fleets.manage.noFleet') }}</option>
-              <option v-for="fleet in fleets" :key="fleet.id" :value="String(fleet.id)">{{ fleet.name }}</option>
-            </select>
-          </label>
+          <div>
+            <p class="eyebrow">{{ t('fleets.manage.commandScope') }}</p>
+            <h2>{{ selectedFleet?.name || t('fleets.manage.noFleet') }}</h2>
+          </div>
           <span v-if="user" class="summary-pill">{{ user.display_name }}</span>
         </div>
 
@@ -154,7 +138,7 @@ onMounted(async () => {
         <p v-if="error" class="error-text table-state">{{ error }}</p>
         <p v-if="success" class="success-text table-state">{{ success }}</p>
 
-        <div v-if="!loading && fleets.length === 0" class="empty-state">
+        <div v-if="!loading && !selectedFleet" class="empty-state">
           <h2>{{ t('fleets.manage.lockedTitle') }}</h2>
           <p>{{ t('fleets.manage.lockedText') }}</p>
         </div>
@@ -172,6 +156,10 @@ onMounted(async () => {
             <article class="summary-card compact-summary-card">
               <span>{{ t('fleets.manage.summary.leadership') }}</span>
               <strong>{{ leadershipMembers.length }}</strong>
+            </article>
+            <article class="summary-card compact-summary-card">
+              <span>{{ t('fleets.manage.summary.directory') }}</span>
+              <strong>{{ activeMembers.filter((member) => member.assignment || member.availability || member.preferred_ships).length }}</strong>
             </article>
           </div>
 
@@ -195,7 +183,7 @@ onMounted(async () => {
             <section class="form-section-card">
               <div class="form-section-heading">
                 <h2>{{ selectedFleet.name }}</h2>
-                <p>{{ t(`fleets.focus.${selectedFleet.focus}`) }}</p>
+                <p>{{ t('fleets.manage.singleFleetHint') }}</p>
               </div>
               <label class="input-panel embedded-field"><span>{{ t('fleets.description') }}</span><textarea v-model="form.description" rows="4" maxlength="2000" /></label>
               <label class="input-panel embedded-field"><span>{{ t('fleets.standingOrders') }}</span><textarea v-model="form.standing_orders" rows="5" maxlength="3000" /></label>
@@ -215,6 +203,12 @@ onMounted(async () => {
               <div class="admin-build-main">
                 <strong>{{ membership.user.display_name }}</strong>
                 <span>{{ membership.user.username }}</span>
+                <div class="member-directory-meta">
+                  <span v-if="membership.availability">{{ t('fleets.directory.availability') }}: {{ membership.availability }}</span>
+                  <span v-if="membership.preferred_ships">{{ t('fleets.directory.preferredShips') }}: {{ membership.preferred_ships }}</span>
+                  <span v-if="membership.timezone">{{ t('fleets.directory.timezone') }}: {{ membership.timezone }}</span>
+                  <span v-if="membership.discord_handle">{{ t('fleets.directory.discord') }}: {{ membership.discord_handle }}</span>
+                </div>
                 <p v-if="membership.note" class="muted member-note">{{ membership.note }}</p>
               </div>
               <div class="compact-actions">
@@ -227,8 +221,8 @@ onMounted(async () => {
           <section v-else class="fleet-member-directory">
             <div class="fleet-section-heading">
               <div>
-                <h2>{{ t('fleets.manage.memberDirectory') }}</h2>
-                <p>{{ t('fleets.manage.membersSubtitle') }}</p>
+                <h2>{{ activeTab === 'directory' ? t('fleets.manage.extendedDirectory') : t('fleets.manage.memberDirectory') }}</h2>
+                <p>{{ activeTab === 'directory' ? t('fleets.manage.directorySubtitle') : t('fleets.manage.membersSubtitle') }}</p>
               </div>
             </div>
 
@@ -253,24 +247,41 @@ onMounted(async () => {
               </label>
             </div>
 
-            <p v-if="filteredMembers.length === 0" class="muted table-state">{{ t('fleets.manage.noMembers') }}</p>
-            <article v-for="membership in filteredMembers" :key="membership.id" class="admin-build-row fleet-member-row fleet-directory-row">
+            <p v-if="(activeTab === 'directory' ? activeDirectoryMembers : filteredMembers).length === 0" class="muted table-state">{{ t('fleets.manage.noMembers') }}</p>
+            <article v-for="membership in (activeTab === 'directory' ? activeDirectoryMembers : filteredMembers)" :key="membership.id" class="admin-build-row fleet-member-row fleet-directory-row extended-member-row">
               <div class="admin-build-main">
                 <strong>{{ membership.user.display_name }}</strong>
                 <span>{{ membership.user.username }}</span>
                 <div class="member-pill-row">
                   <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
                   <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
+                  <span v-if="membership.assignment" class="summary-pill">{{ membership.assignment }}</span>
+                </div>
+                <div class="member-directory-meta">
+                  <span v-if="membership.availability">{{ t('fleets.directory.availability') }}: {{ membership.availability }}</span>
+                  <span v-if="membership.preferred_ships">{{ t('fleets.directory.preferredShips') }}: {{ membership.preferred_ships }}</span>
+                  <span v-if="membership.timezone">{{ t('fleets.directory.timezone') }}: {{ membership.timezone }}</span>
+                  <span v-if="membership.discord_handle">{{ t('fleets.directory.discord') }}: {{ membership.discord_handle }}</span>
                 </div>
                 <p v-if="membership.note" class="muted member-note">{{ membership.note }}</p>
+                <p v-if="membership.admin_note" class="muted member-note internal-note">{{ t('fleets.directory.adminNote') }}: {{ membership.admin_note }}</p>
               </div>
-              <div class="member-admin-controls">
+
+              <div class="member-admin-controls extended-directory-controls">
                 <label class="compact-select">
                   <span>{{ t('fleets.manage.role') }}</span>
                   <select :value="membership.role" @change="setMember(membership, { role: $event.target.value })">
                     <option v-for="role in FLEET_ROLES" :key="role" :value="role">{{ t(`fleets.roles.${role}`) }}</option>
                   </select>
                 </label>
+                <div class="directory-form-grid member-directory-edit-grid">
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.assignment') }}</span><input :value="membership.assignment || ''" maxlength="120" @change="setMember(membership, fieldPayload('assignment', $event))" /></label>
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.availability') }}</span><input :value="membership.availability || ''" maxlength="240" @change="setMember(membership, fieldPayload('availability', $event))" /></label>
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.preferredShips') }}</span><input :value="membership.preferred_ships || ''" maxlength="300" @change="setMember(membership, fieldPayload('preferred_ships', $event))" /></label>
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.timezone') }}</span><input :value="membership.timezone || ''" maxlength="80" @change="setMember(membership, fieldPayload('timezone', $event))" /></label>
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.discord') }}</span><input :value="membership.discord_handle || ''" maxlength="120" @change="setMember(membership, fieldPayload('discord_handle', $event))" /></label>
+                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.adminNote') }}</span><input :value="membership.admin_note || ''" maxlength="1200" @change="setMember(membership, fieldPayload('admin_note', $event))" /></label>
+                </div>
                 <div class="compact-actions">
                   <button v-if="membership.status !== 'active'" class="small-action" type="button" @click="setMember(membership, { status: 'active' })">{{ t('fleets.manage.activate') }}</button>
                   <button v-if="membership.status !== 'inactive'" class="danger-action" type="button" @click="setMember(membership, { status: 'inactive' })">{{ t('fleets.manage.deactivate') }}</button>

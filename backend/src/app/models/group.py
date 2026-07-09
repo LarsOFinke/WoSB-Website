@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -27,6 +27,12 @@ DEFAULT_GROUP_LIFETIME_HOURS = 24
 
 class Group(Base):
     __tablename__ = "groups"
+    __table_args__ = (
+        CheckConstraint("status in ('open', 'full', 'closed')", name="ck_groups_status"),
+        CheckConstraint("max_members >= 2 and max_members <= 50", name="ck_groups_max_members"),
+        CheckConstraint("min_ship_rate is null or (min_ship_rate >= 1 and min_ship_rate <= 7)", name="ck_groups_min_ship_rate"),
+        CheckConstraint("max_ship_rate is null or (max_ship_rate >= 1 and max_ship_rate <= 7)", name="ck_groups_max_ship_rate"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(140), nullable=False, index=True)
@@ -64,19 +70,22 @@ class Group(Base):
 
     @property
     def active_members_count(self) -> int:
-        return 0
+        return sum(1 for member in self.members if member.is_active)
 
     @property
     def spots_left(self) -> int:
-        return 0
+        return max(0, self.max_members - self.active_members_count)
 
     @property
     def is_joinable(self) -> bool:
-        return False
+        return self.status == GROUP_STATUS_OPEN and self.spots_left > 0 and self.expires_at > datetime.utcnow()
 
 
 class GroupMember(Base):
     __tablename__ = "group_members"
+    __table_args__ = (
+        CheckConstraint("ship_rate is null or (ship_rate >= 1 and ship_rate <= 7)", name="ck_group_members_ship_rate"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), nullable=False, index=True)

@@ -1,3 +1,4 @@
+from app.models.app_log import AppLog
 from app.models.auth_session import AuthSession
 from app.models.build import Build
 from app.models.build_option import BuildItemCategory, BuildItemEffect, BuildItemOption
@@ -8,11 +9,13 @@ from app.models.fleet_event import FleetEvent
 from app.models.forum import ForumPost, ForumPostAttachment, ForumThread
 from app.models.group import Group, GroupMember
 from app.models.guide import Guide, GuideAttachment, GuideBuildReference
+from app.models.registration_request import RegistrationRequest
 from app.models.ship import Ship
 from app.models.user import User
 from app.models.user_profile import UserProfile
 
 __all__ = [
+    "AppLog",
     "AuthSession",
     "Build",
     "BuildItemCategory",
@@ -30,6 +33,7 @@ __all__ = [
     "Guide",
     "GuideAttachment",
     "GuideBuildReference",
+    "RegistrationRequest",
     "Ship",
     "StoredFile",
     "User",

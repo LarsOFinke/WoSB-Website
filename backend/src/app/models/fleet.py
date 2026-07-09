@@ -1,20 +1,20 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.constants import FLEET_LEADERSHIP_ROLES, FleetRole, MembershipStatus
 from app.db.session import Base
 
-FLEET_ROLE_MEMBER = "member"
-FLEET_ROLE_LIEUTENANT = "fleet_lieutenant"
-FLEET_ROLE_ADMIRAL = "fleet_admiral"
-FLEET_LEADERSHIP_ROLES = {FLEET_ROLE_ADMIRAL, FLEET_ROLE_LIEUTENANT}
-FLEET_ROLES = {FLEET_ROLE_MEMBER, FLEET_ROLE_LIEUTENANT, FLEET_ROLE_ADMIRAL}
+FLEET_ROLE_MEMBER = FleetRole.MEMBER.value
+FLEET_ROLE_LIEUTENANT = FleetRole.LIEUTENANT.value
+FLEET_ROLE_ADMIRAL = FleetRole.ADMIRAL.value
+FLEET_ROLES = {role.value for role in FleetRole}
 
-FLEET_MEMBER_PENDING = "pending"
-FLEET_MEMBER_ACTIVE = "active"
-FLEET_MEMBER_INACTIVE = "inactive"
-FLEET_MEMBER_STATUSES = {FLEET_MEMBER_PENDING, FLEET_MEMBER_ACTIVE, FLEET_MEMBER_INACTIVE}
+FLEET_MEMBER_PENDING = MembershipStatus.PENDING.value
+FLEET_MEMBER_ACTIVE = MembershipStatus.ACTIVE.value
+FLEET_MEMBER_INACTIVE = MembershipStatus.INACTIVE.value
+FLEET_MEMBER_STATUSES = {status.value for status in MembershipStatus}
 
 
 class Fleet(Base):
@@ -36,7 +36,12 @@ class Fleet(Base):
 
 class FleetMembership(Base):
     __tablename__ = "fleet_memberships"
-    __table_args__ = (UniqueConstraint("fleet_id", "user_id", name="uq_fleet_membership_user"),)
+    __table_args__ = (
+        UniqueConstraint("fleet_id", "user_id", name="uq_fleet_membership_user"),
+        UniqueConstraint("user_id", name="uq_fleet_membership_single_user"),
+        CheckConstraint("role in ('member', 'fleet_lieutenant', 'fleet_admiral')", name="ck_fleet_memberships_role"),
+        CheckConstraint("status in ('pending', 'active', 'inactive')", name="ck_fleet_memberships_status"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     fleet_id: Mapped[int] = mapped_column(ForeignKey("fleets.id"), nullable=False, index=True)
@@ -44,6 +49,12 @@ class FleetMembership(Base):
     role: Mapped[str] = mapped_column(String(40), nullable=False, default=FLEET_ROLE_MEMBER, index=True)
     status: Mapped[str] = mapped_column(String(40), nullable=False, default=FLEET_MEMBER_PENDING, index=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    assignment: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    availability: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    preferred_ships: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    timezone: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    discord_handle: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

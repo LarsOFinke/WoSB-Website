@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -30,6 +30,12 @@ DEBUFF_KEYS = {
 
 class Build(Base):
     __tablename__ = "builds"
+    __table_args__ = (
+        CheckConstraint("sailors >= 0", name="ck_builds_sailors"),
+        CheckConstraint("soldiers >= 0", name="ck_builds_soldiers"),
+        CheckConstraint("musketeers >= 0", name="ck_builds_musketeers"),
+        CheckConstraint("mercenaries >= 0", name="ck_builds_mercenaries"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     build_name: Mapped[str] = mapped_column(String(140), nullable=False, index=True)

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -8,6 +8,13 @@ from app.db.session import Base
 
 class Ship(Base):
     __tablename__ = "ships"
+    __table_args__ = (
+        CheckConstraint("rate >= 1 and rate <= 7", name="ck_ships_rate"),
+        CheckConstraint("crew_capacity >= 0", name="ck_ships_crew_capacity"),
+        CheckConstraint("sailor_minimum >= 0", name="ck_ships_sailor_minimum"),
+        CheckConstraint("sail_slots >= 0", name="ck_ships_sail_slots"),
+        CheckConstraint("upgrade_slots >= 0", name="ck_ships_upgrade_slots"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)

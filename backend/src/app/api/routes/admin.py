@@ -1,18 +1,113 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin, require_staff
 from app.db.session import get_db
-from app.models import User
+from app.models import AppLog, User
 from app.models.user import ROLE_MODERATOR
-from app.schemas import BuildRead, ForumThreadSummary, GuideSummary, ModeratorCreate, ModeratorCreateResponse, UserRead
+from app.schemas import AppLogRead, AppLogSummary, BuildRead, ForumThreadSummary, GuideSummary, ModeratorCreate, ModeratorCreateResponse, RegistrationDecision, RegistrationRequestRead, UserRead
 from app.services.auth_service import AuthError, create_user
 from app.services.build_service import delete_build, list_builds
 from app.services.forum_service import delete_thread, list_threads
 from app.services.guide_service import delete_guide, list_guides
+from app.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+@router.get("/registration-requests", response_model=list[RegistrationRequestRead])
+def admin_list_registration_requests(
+    status_filter: str | None = Query(default="pending", alias="status", max_length=24),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[RegistrationRequestRead]:
+    try:
+        return [RegistrationRequestRead.model_validate(row) for row in list_registration_requests(db, status=status_filter)]
+    except RegistrationRequestError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/registration-requests/{request_id}/approve", response_model=RegistrationRequestRead)
+def admin_approve_registration_request(
+    request_id: int,
+    payload: RegistrationDecision,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> RegistrationRequestRead:
+    try:
+        request = approve_registration_request(db, request_id, current_user, payload)
+    except RegistrationRequestError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return RegistrationRequestRead.model_validate(request)
+
+
+@router.post("/registration-requests/{request_id}/reject", response_model=RegistrationRequestRead)
+def admin_reject_registration_request(
+    request_id: int,
+    payload: RegistrationDecision,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> RegistrationRequestRead:
+    try:
+        request = reject_registration_request(db, request_id, current_user, payload)
+    except RegistrationRequestError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return RegistrationRequestRead.model_validate(request)
+
+
+@router.get("/logs", response_model=list[AppLogRead])
+def admin_list_logs(
+    level: str | None = Query(default=None, max_length=20),
+    path: str | None = Query(default=None, max_length=120),
+    limit: int = Query(default=120, ge=1, le=500),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[AppLogRead]:
+    query = select(AppLog)
+    if level:
+        query = query.where(AppLog.level == level.upper())
+    if path:
+        query = query.where(AppLog.path.contains(path))
+    rows = db.scalars(query.order_by(AppLog.created_at.desc(), AppLog.id.desc()).limit(limit)).all()
+    return [AppLogRead.model_validate(row) for row in rows]
+
+
+@router.get("/logs/summary", response_model=AppLogSummary)
+def admin_log_summary(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> AppLogSummary:
+    total = int(db.scalar(select(func.count(AppLog.id))) or 0)
+    errors = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
+    warnings = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level == "WARNING")) or 0)
+    slow_requests = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.duration_ms >= 750)) or 0)
+    status_rows = db.execute(
+        select(
+            case(
+                (AppLog.status_code < 300, "2xx"),
+                (AppLog.status_code < 400, "3xx"),
+                (AppLog.status_code < 500, "4xx"),
+                else_="5xx",
+            ),
+            func.count(AppLog.id),
+        )
+        .where(AppLog.status_code.is_not(None))
+        .group_by(
+            case(
+                (AppLog.status_code < 300, "2xx"),
+                (AppLog.status_code < 400, "3xx"),
+                (AppLog.status_code < 500, "4xx"),
+                else_="5xx",
+            )
+        )
+    ).all()
+    return AppLogSummary(
+        total=total,
+        errors=errors,
+        warnings=warnings,
+        slow_requests=slow_requests,
+        recent_status={bucket: int(count) for bucket, count in status_rows},
+    )
 
 
 @router.get("/builds", response_model=list[BuildRead])
