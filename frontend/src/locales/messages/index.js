@@ -1,4 +1,5 @@
 import { cloneMessages, mergeMessages } from '../utils'
+import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
@@ -11,6 +12,7 @@ import { ironCrownFleetHubMessages } from './ironCrownFleetHub'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
+  appShellMessages,
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,

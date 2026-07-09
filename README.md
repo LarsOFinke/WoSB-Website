@@ -105,6 +105,14 @@ http://127.0.0.1:5173/admin
 
 ## Latest update
 
+- Major enterprise app-shell overhaul: the crowded single navbar was replaced with a focused topbar plus collapsible left sidebar for expandable module navigation.
+- Header responsibilities are now separated: brand/account/profile/fleet management/staff/language/session in the topbar; Home, Builds, Announcements, Forum, Calendar, Fleets and Guides in the sidebar.
+- Sidebar state persists on desktop, while tablet/mobile uses an off-canvas drawer with scrim and touch-safe navigation targets.
+- Responsive scaling was reworked again around shell grid behavior, topbar wrapping, mobile drawer behavior, stronger form surfaces and more consistent card/filter spacing.
+- Documentation added in `docs/APP_SHELL_UI.md`; locale coverage remains complete through `npm run check:locales`.
+
+## Previous update
+
 - Guides can now reference existing website Builds through a dedicated dropdown in the guide editor.
 - Selected Builds can either be linked as general guide references or inserted inline into the body with `[[build:id|layout]]` tokens.
 - Inline Build cards are server-validated against the guide's linked Build references, matching the existing file-embed validation model.
