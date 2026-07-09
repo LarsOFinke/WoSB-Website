@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -35,7 +35,6 @@ class BuildItemOption(Base):
     name: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
     source: Mapped[str | None] = mapped_column(String(120), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    stat_effects: Mapped[str | None] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
@@ -44,3 +43,28 @@ class BuildItemOption(Base):
     )
 
     category: Mapped[BuildItemCategory] = relationship(back_populates="options", lazy="joined")
+    effects: Mapped[list["BuildItemEffect"]] = relationship(
+        back_populates="option", cascade="all, delete-orphan", lazy="selectin", order_by="BuildItemEffect.effect_key"
+    )
+
+    @property
+    def stat_effects(self) -> dict[str, int | float]:
+        return {effect.effect_key: effect.normalized_value for effect in self.effects}
+
+
+class BuildItemEffect(Base):
+    __tablename__ = "build_item_effects"
+    __table_args__ = (UniqueConstraint("option_id", "effect_key", name="uq_build_item_effect_key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    option_id: Mapped[int] = mapped_column(ForeignKey("build_item_options.id", ondelete="CASCADE"), nullable=False, index=True)
+    effect_key: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    effect_value: Mapped[float] = mapped_column(Float, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    option: Mapped[BuildItemOption] = relationship(back_populates="effects")
+
+    @property
+    def normalized_value(self) -> int | float:
+        return int(self.effect_value) if self.effect_value.is_integer() else self.effect_value

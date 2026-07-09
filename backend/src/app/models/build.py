@@ -1,5 +1,4 @@
 from datetime import datetime
-import json
 from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
@@ -27,22 +26,6 @@ DEBUFF_KEYS = {
     "weapon_range_pct",
     "boarding_power_pct",
 }
-
-
-def _parse_effects(raw: str | None) -> dict[str, int | float]:
-    if not raw:
-        return {}
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
-        return {}
-    if not isinstance(payload, dict):
-        return {}
-    effects: dict[str, int | float] = {}
-    for key, value in payload.items():
-        if isinstance(key, str) and isinstance(value, (int, float)):
-            effects[key] = value
-    return effects
 
 
 class Build(Base):
@@ -174,7 +157,7 @@ class Build(Base):
             slot = self._upgrade_slot_at(index)
             if slot is None:
                 continue
-            for key, value in _parse_effects(slot.option.stat_effects).items():
+            for key, value in slot.option.stat_effects.items():
                 totals[key] = totals.get(key, 0) + value
         return totals
 

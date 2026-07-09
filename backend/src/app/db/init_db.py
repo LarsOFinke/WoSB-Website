@@ -15,17 +15,6 @@ def _ensure_sqlite_columns() -> None:
     table_names = set(inspector.get_table_names())
     statements = []
 
-    if "users" in table_names:
-        user_columns = {column["name"] for column in inspector.get_columns("users")}
-        if "fleet_name" not in user_columns:
-            statements.append("ALTER TABLE users ADD COLUMN fleet_name VARCHAR(120)")
-        if "fleet_id" not in user_columns:
-            statements.append("ALTER TABLE users ADD COLUMN fleet_id INTEGER")
-        if "preferred_focus" not in user_columns:
-            statements.append("ALTER TABLE users ADD COLUMN preferred_focus VARCHAR(80)")
-        if "note" not in user_columns:
-            statements.append("ALTER TABLE users ADD COLUMN note TEXT")
-
     if "groups" in table_names:
         group_columns = {column["name"] for column in inspector.get_columns("groups")}
         if "fleet_restriction" not in group_columns:
@@ -46,11 +35,6 @@ def _ensure_sqlite_columns() -> None:
         if "owner_id" not in build_columns:
             statements.append("ALTER TABLE builds ADD COLUMN owner_id INTEGER")
 
-    if "build_item_options" in table_names:
-        option_columns = {column["name"] for column in inspector.get_columns("build_item_options")}
-        if "stat_effects" not in option_columns:
-            statements.append("ALTER TABLE build_item_options ADD COLUMN stat_effects TEXT")
-
     if not statements:
         return
 
@@ -59,9 +43,40 @@ def _ensure_sqlite_columns() -> None:
             connection.execute(text(statement))
 
 
+
+def _migrate_user_profiles() -> None:
+    """Backfill the normalized user_profiles table from older prototype DBs.
+
+    Existing local SQLite databases may still have profile columns on users.
+    New databases use user_profiles from the start.
+    """
+    if not str(engine.url).startswith("sqlite"):
+        return
+
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    if "users" not in table_names or "user_profiles" not in table_names:
+        return
+
+    user_columns = {column["name"] for column in inspector.get_columns("users")}
+    display_expr = "COALESCE(NULLIF(display_name, ''), username)" if "display_name" in user_columns else "username"
+    fleet_expr = "fleet_name" if "fleet_name" in user_columns else "NULL"
+    focus_expr = "preferred_focus" if "preferred_focus" in user_columns else "NULL"
+    note_expr = "note" if "note" in user_columns else "NULL"
+
+    with engine.begin() as connection:
+        connection.execute(text(f"""
+            INSERT INTO user_profiles (user_id, display_name, external_fleet_name, preferred_focus, note, created_at, updated_at)
+            SELECT users.id, {display_expr}, {fleet_expr}, {focus_expr}, {note_expr}, users.created_at, users.updated_at
+            FROM users
+            LEFT JOIN user_profiles ON user_profiles.user_id = users.id
+            WHERE user_profiles.user_id IS NULL
+        """))
+
 def create_tables() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_sqlite_columns()
+    _migrate_user_profiles()
 
 
 def create_and_seed() -> None:

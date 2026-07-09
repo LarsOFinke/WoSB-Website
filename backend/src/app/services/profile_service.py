@@ -5,9 +5,10 @@ from app.schemas import ProfileUpdate
 
 
 def update_profile(db: Session, user: User, payload: ProfileUpdate) -> User:
+    """Update public profile fields without touching account or fleet membership tables."""
+
     user.display_name = payload.display_name
     user.fleet_name = payload.fleet_name
-    user.fleet_id = payload.fleet_id
     user.preferred_focus = payload.preferred_focus
     user.note = payload.note
     db.add(user)

@@ -26,3 +26,7 @@ Thumbs.db
 # Local uploads
 storage/uploads/
 backend/storage/uploads/
+!storage/uploads/demo/
+!storage/uploads/demo/*.svg
+!backend/storage/uploads/demo/
+!backend/storage/uploads/demo/*.svg

@@ -1,5 +1,3 @@
-import json
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,6 +7,7 @@ from app.db.seeds.consumables import CONSUMABLE_OPTIONS
 from app.db.seeds.demo_builds import DEMO_BUILD_DATA
 from app.db.seeds.demo_groups import DEMO_GROUP_DATA
 from app.db.seeds.demo_fleet_events import demo_fleet_event_data
+from app.db.seeds.demo_content import seed_demo_content
 from app.db.seeds.fleets import FLEET_SEED_DATA
 from app.db.seeds.hold_items import HOLD_OPTIONS
 from app.db.seeds.lanterns import LANTERN_OPTIONS
@@ -18,7 +17,7 @@ from app.db.seeds.special_crew import SPECIAL_CREW_OPTIONS
 from app.db.seeds.upgrades import UPGRADE_OPTIONS
 from app.db.seeds.users import seed_admin_user
 from app.db.seeds.weapons import WEAPON_OPTIONS
-from app.models import Build, BuildItemCategory, BuildItemOption, Fleet, FleetEvent, Group, Ship, User
+from app.models import Build, BuildItemCategory, BuildItemEffect, BuildItemOption, Fleet, FleetEvent, Group, Ship, User
 from app.schemas import BuildCreate
 from app.services.build_service import BuildValidationError, create_build
 from app.schemas.group import GroupCreate
@@ -52,6 +51,7 @@ class SeedManager:
         self.seed_demo_builds()
         self.seed_demo_groups()
         self.seed_demo_fleet_events()
+        self.seed_demo_content()
 
     def seed_users(self) -> None:
         seed_admin_user(self.db)
@@ -116,21 +116,23 @@ class SeedManager:
                     BuildItemOption.name == option_name,
                 )
                 existing = self.db.scalar(lookup)
-                stat_effects = option_data.get("stat_effects")
+                raw_effects = option_data.get("stat_effects")
                 payload = {
                     "category_id": category.id,
                     "name": option_name,
                     "source": option_data.get("source"),
                     "notes": option_data.get("notes"),
-                    "stat_effects": json.dumps(stat_effects) if isinstance(stat_effects, dict) else None,
                     "sort_order": sort_order * 10,
                     "is_active": option_data.get("is_active", True),
                 }
                 if existing is None:
-                    self.db.add(BuildItemOption(**payload))
-                    continue
-                for field_name, value in payload.items():
-                    setattr(existing, field_name, value)
+                    existing = BuildItemOption(**payload)
+                    self.db.add(existing)
+                    self.db.flush()
+                else:
+                    for field_name, value in payload.items():
+                        setattr(existing, field_name, value)
+                self._sync_option_effects(existing, raw_effects if isinstance(raw_effects, dict) else {})
 
         # Existing local DBs can contain old placeholder rows. Keep them for
         # historical builds, but hide them from dropdowns and validation.
@@ -140,6 +142,22 @@ class SeedManager:
                 option.is_active = False
 
         self.db.commit()
+
+
+    def _sync_option_effects(self, option: BuildItemOption, effects: dict[str, object]) -> None:
+        current = {effect.effect_key: effect for effect in option.effects}
+        active_keys: set[str] = set()
+        for key, value in sorted(effects.items()):
+            if not isinstance(key, str) or not isinstance(value, (int, float)):
+                continue
+            active_keys.add(key)
+            if key in current:
+                current[key].effect_value = float(value)
+            else:
+                option.effects.append(BuildItemEffect(effect_key=key, effect_value=float(value)))
+        for key, effect in list(current.items()):
+            if key not in active_keys:
+                option.effects.remove(effect)
 
     def seed_demo_builds(self) -> None:
         existing_build = self.db.scalar(select(Build.id).limit(1))
@@ -171,6 +189,10 @@ class SeedManager:
 
         for group_data in DEMO_GROUP_DATA:
             create_group(self.db, GroupCreate(**group_data), owner_id=demo_owner.id)
+
+
+    def seed_demo_content(self) -> None:
+        seed_demo_content(self.db)
 
 
     def seed_demo_fleet_events(self) -> None:

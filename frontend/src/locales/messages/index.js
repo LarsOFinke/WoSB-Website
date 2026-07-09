@@ -23,6 +23,9 @@ const messageLayers = [
 export const messages = cloneMessages(baseMessages)
 
 for (const localeCode of Object.keys(messages)) {
+  if (localeCode !== 'en') {
+    mergeMessages(messages[localeCode], baseMessages.en)
+  }
   for (const layer of messageLayers) {
     mergeMessages(messages[localeCode], layer.en)
     mergeMessages(messages[localeCode], layer[localeCode])

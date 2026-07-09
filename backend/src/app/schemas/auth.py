@@ -26,6 +26,7 @@ class RegisterRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
     fleet_id: int | None = None
+    fleet_application_note: str | None = Field(default=None, max_length=1000)
 
     @model_validator(mode="after")
     def normalize(self) -> "RegisterRequest":
@@ -33,6 +34,8 @@ class RegisterRequest(BaseModel):
         self.display_name = self.display_name.strip()
         if isinstance(self.fleet_name, str):
             self.fleet_name = self.fleet_name.strip() or None
+        if isinstance(self.fleet_application_note, str):
+            self.fleet_application_note = self.fleet_application_note.strip() or None
         return self
 
 

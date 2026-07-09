@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import create_session_token, hash_password, hash_session_token, verify_password
-from app.models import AuthSession, User
+from app.models import AuthSession, User, UserProfile
 from app.schemas.fleet import FleetJoinRequest
 from app.services.fleet_service import FleetValidationError, join_fleet
 from app.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
@@ -26,6 +26,7 @@ def create_user(
     role: str = ROLE_USER,
     fleet_name: str | None = None,
     fleet_id: int | None = None,
+    fleet_application_note: str | None = None,
 ) -> User:
     normalized_username = username.strip().lower()
     if not normalized_username:
@@ -39,17 +40,18 @@ def create_user(
 
     user = User(
         username=normalized_username,
-        display_name=display_name.strip() or normalized_username,
         password_hash=hash_password(password),
         role=role,
-        fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) else None,
-        fleet_id=fleet_id,
+        profile=UserProfile(
+            display_name=display_name.strip() or normalized_username,
+            external_fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) else None,
+        ),
     )
     db.add(user)
     db.flush()
     if fleet_id is not None:
         try:
-            join_fleet(db, user, FleetJoinRequest(fleet_id=fleet_id, note="Registration claim"))
+            join_fleet(db, user, FleetJoinRequest(fleet_id=fleet_id, note=fleet_application_note or "Registration claim"))
         except FleetValidationError as exc:
             db.rollback()
             raise AuthError(str(exc)) from exc

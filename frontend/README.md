@@ -40,6 +40,10 @@ Routes:
 ```
 
 
+## Registration UX
+
+`/register` now uses a two-step layout: account details and fleet connection. Inputs use stronger surfaces, persistent labels, helper text and visible focus states so fields are easier to distinguish from the dark background. Selecting a planned fleet shows a compact fleet preview and enables an optional application note for leadership.
+
 ## UI foundation
 
 The UI is organized around one shared stylesheet in `src/styles/main.css` with tokenized color, spacing, radius and elevation values. The current pass focuses on:
@@ -71,10 +75,20 @@ File URLs are normalized in `src/services/files.js`. Local development proxies b
 - `npm run dev:default` keeps Vite's default CLI behavior for ad-hoc overrides.
 - `npm run preview` serves the production preview on `0.0.0.0:4173`.
 
+## Locale validation
+
+Run this after adding or moving translation keys:
+
+```bash
+npm run check:locales
+```
+
+The script verifies that DE / EN / FR / ES / PT / RU / CN all expose the same translation key set after fallback merging.
+
 ## Structure notes
 
 - `src/locales/index.js` contains only the small runtime API (`useLocale`, `setLocale`, `translate`).
-- `src/locales/messages/` contains layered translation data by feature/domain. English is merged first as the fallback layer; locale-specific entries override it.
+- `src/locales/messages/` contains layered translation data by feature/domain. English is merged first as the fallback layer; locale-specific entries override it, so every supported language has complete key coverage even while individual translations continue to improve.
 - `src/locales/glossaries/` contains term replacement glossaries for catalog option names.
 - `src/services/query.js` centralizes URL query-string creation so API services stay small and consistent.
 
@@ -100,3 +114,7 @@ New frontend routes:
 - `/fleets/manage` — authenticated management workspace for fleet admirals, fleet lieutenants and admins.
 
 Registration loads `/api/fleets` and lets users indicate whether they belong to one of the planned fleets. The backend stores this as a pending membership claim. The public `/fleets` list also lets signed-in users apply to a fleet with an optional note. `/profile` shows current official applications/memberships, while `/fleets/manage` gives fleet admirals, fleet lieutenants and admins a tabbed workspace for profile text, pending applications and member administration.
+
+## Demo content
+
+Fresh backend seeds include two guides and two forum threads with SVG image attachments. They render through `AttachmentGallery.vue`, so local demo content uses the same upload embed path as real user uploads.

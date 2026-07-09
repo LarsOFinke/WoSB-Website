@@ -13,7 +13,7 @@ frontend/  Vue 3 + Vite
 - `/builds` as public Build Manager list with search and build-type filter
 - `/builds/{id}` as public build detail page
 - `/builds/new` as minimal build designer with six upgrade slots, upgrade-based stat calculation, weapons by arc and special crew
-- `/register` as public user registration
+- `/register` as public user registration with improved account/fleet application UX
 - `/login` as minimal session login
 - `/profile` as protected profile page with password change, personal fleet status and links into fleet management
 - `/profile/builds` as personal build management for own builds
@@ -35,7 +35,7 @@ frontend/  Vue 3 + Vite
 - Sessions use opaque HttpOnly cookies stored server-side in SQLite, no JWT
 - Ship catalog is seeded in the backend
 - Item/slot catalog is seeded in the backend and loaded by the frontend
-- Builds are stored in SQLite and normalized toward 3NF
+- Data is stored in SQLite with the main prototype schema normalized toward 3NF; see `docs/DATABASE_SCHEMA.md`
 - UI localization is prepared through `frontend/src/locales`: default EN, switcher for DE / EN / FR / ES / PT / RU / CN
 
 ## Backend
@@ -104,6 +104,14 @@ http://127.0.0.1:5173/admin
 ```
 
 ## Latest update
+
+- Registration UI refreshed with clearer two-step structure, stronger input contrast, persistent helper text and optional fleet application note.
+- Locale coverage completed for the registration/profile layer across DE / EN / FR / ES / PT / RU / CN, with English still merged as the canonical fallback for every feature module.
+- Fresh seeds now include two mock Guides and two mock Forum threads with local SVG ship/convoy images embedded through the real upload attachment pipeline.
+- Backend schema cleanup moved public profile data into `user_profiles` and build option modifiers into `build_item_effects`, removing the major prototype-era transitive/serialized fields from new databases.
+- Documentation added under `docs/` for architecture, UI/UX conventions and schema normalization.
+
+## Previous update
 
 - Fleet module connected end-to-end across registration, profile, public fleet overview and fleet leadership management.
 - `/api/fleets/memberships/me` exposes the signed-in user's official fleet applications and memberships for frontend status displays.

@@ -145,14 +145,10 @@ def join_fleet(db: Session, user: User, payload: FleetJoinRequest) -> FleetMembe
     if existing is not None:
         existing.status = FLEET_MEMBER_PENDING if existing.status == "inactive" else existing.status
         existing.note = payload.note
-        user.fleet_id = fleet.id
-        user.fleet_name = fleet.name
         db.commit()
         db.refresh(existing)
         return existing
     membership = FleetMembership(fleet_id=fleet.id, user_id=user.id, role=FLEET_ROLE_MEMBER, status=FLEET_MEMBER_PENDING, note=payload.note)
-    user.fleet_id = fleet.id
-    user.fleet_name = fleet.name
     db.add(membership)
     db.commit()
     db.refresh(membership)
@@ -172,9 +168,6 @@ def update_membership(db: Session, membership_id: int, payload: FleetMembershipU
         raise FleetValidationError("Invalid membership status.")
     for field, value in data.items():
         setattr(membership, field, value)
-    if status == FLEET_MEMBER_ACTIVE:
-        membership.user.fleet_id = membership.fleet_id
-        membership.user.fleet_name = membership.fleet.name
     db.commit()
     db.refresh(membership)
     return membership
@@ -194,8 +187,6 @@ def assign_fleet_role(db: Session, fleet_id: int, user_id: int, role: str = FLEE
     else:
         membership.role = role
         membership.status = FLEET_MEMBER_ACTIVE
-    user.fleet_id = fleet_id
-    user.fleet_name = fleet.name
     db.commit()
     db.refresh(membership)
     return membership

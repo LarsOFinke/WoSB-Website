@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-import json
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -79,15 +78,7 @@ def _require_option(
 
 
 def _option_effects(option: BuildItemOption) -> dict[str, int | float]:
-    if not option.stat_effects:
-        return {}
-    try:
-        payload = json.loads(option.stat_effects)
-    except json.JSONDecodeError:
-        return {}
-    if not isinstance(payload, dict):
-        return {}
-    return {str(key): value for key, value in payload.items() if isinstance(value, (int, float))}
+    return option.stat_effects
 
 
 def _selected_upgrade_options(

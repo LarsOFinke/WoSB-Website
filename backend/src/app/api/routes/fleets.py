@@ -35,7 +35,8 @@ def get_manageable_fleets(
     if current_user.is_admin:
         return list_fleets(db, include_inactive=True)
     memberships = user_leadership_memberships(db, current_user)
-    return [get_fleet(db, membership.fleet_id) for membership in memberships if get_fleet(db, membership.fleet_id) is not None]
+    fleets = [get_fleet(db, membership.fleet_id) for membership in memberships]
+    return [fleet for fleet in fleets if fleet is not None]
 
 
 @router.get("/memberships/me", response_model=list[FleetMembershipSelfRead])
