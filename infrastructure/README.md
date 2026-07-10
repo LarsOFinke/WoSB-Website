@@ -73,6 +73,7 @@ Direct commands are available below `infrastructure/scripts/`.
 - FastAPI is only exposed to the internal Docker network.
 - PostgreSQL is internal and additionally bound to `127.0.0.1:15432` for optional SSH tunnels.
 - Uptime Kuma is optional, remains bound to `127.0.0.1:3001` for SSH tunnels and is additionally published through a dedicated TLS reverse proxy on `https://<PI-IP>:8443`.
+- The monitoring gateway joins the public `frontend` ingress network and the private `backend` service network; this keeps Uptime Kuma private while making the TLS gateway reachable from the LAN.
 
 The setup removes the legacy `infrastructure/data/postgres/.gitkeep` marker before
 PostgreSQL starts. This keeps fresh installations compatible with `initdb` while preserving

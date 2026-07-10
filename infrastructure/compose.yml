@@ -139,6 +139,7 @@ services:
     depends_on:
       - uptime-kuma
     networks:
+      - frontend
       - backend
     security_opt:
       - no-new-privileges:true

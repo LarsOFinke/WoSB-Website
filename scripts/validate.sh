@@ -87,6 +87,7 @@ monitoring = data["services"]["monitoring-gateway"]
 assert monitoring["profiles"] == ["monitoring"]
 assert "${MONITORING_HTTPS_PORT:-8443}:443" in monitoring["ports"]
 assert "./nginx/monitoring.conf:/etc/nginx/conf.d/default.conf:ro" in monitoring["volumes"]
+assert monitoring["networks"] == ["frontend", "backend"], monitoring["networks"]
 controller = Path(sys.argv[2]).read_text()
 steps = [
     'bw_compose up -d postgres',
