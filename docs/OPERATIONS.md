@@ -6,6 +6,8 @@ Backend:
 
 ```bash
 cd backend
+cp .env.example .env
+# edit .env and set a strong SEED_ADMIN_PASSWORD
 python -m venv .venv
 . .venv/Scripts/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -e .[dev]
@@ -17,6 +19,7 @@ Frontend:
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
@@ -40,17 +43,11 @@ python -m compileall -q backend/src
 
 ## Logging
 
-Default local logs are plain text. For structured logs:
-
-```bash
-LOG_FORMAT=json LOG_LEVEL=INFO wosb-dev
-```
-
-Every response includes `X-Request-ID`. Preserve this value when reporting bugs.
+Routine request/application logs are stored in the database and surfaced in the Admin Dashboard. Console logging is controlled by `backend/config/app.toml` and is disabled by default. Every response includes `X-Request-ID`; preserve this value when reporting bugs.
 
 ## Database reset
 
-The prototype uses SQLite by default:
+The database URL comes from `backend/.env`. For the local SQLite setup:
 
 ```bash
 cd backend
@@ -61,7 +58,7 @@ For production, use PostgreSQL plus Alembic migrations before real user data.
 
 ## Uploads
 
-Uploads are stored under `backend/storage/uploads` by default and served through `/uploads`. Current safety checks include file type allow-listing, empty-file blocking and size limits by media type.
+The upload directory comes from `UPLOAD_DIR` in `backend/.env` and is served through `/uploads`. The repository keeps only one local demo upload tree at `backend/storage/uploads/demo`; do not create a second root-level `storage/uploads` tree. Current safety checks include file type allow-listing, empty-file blocking and size limits by media type from `backend/config/app.toml`.
 
 
 ## Admin Dashboard Update

@@ -20,19 +20,22 @@ The application is a fleet/community hub for World of Sea Battle. It currently c
 | Area | Main files | Responsibility |
 | --- | --- | --- |
 | App factory | `backend/src/app/__init__.py` | FastAPI construction, middleware, error handlers, static uploads, router registration |
-| Config | `backend/src/app/core/config.py` | Environment-backed settings |
-| Logging | `backend/src/app/core/logging.py`, `backend/src/app/core/middleware.py` | Central log config, request IDs, duration/status logging |
-| Auth/session | `core/security.py`, `services/auth_service.py`, `models/user.py`, `models/auth_session.py` | Password hashing, cookie sessions, roles |
-| Profiles | `models/user_profile.py`, `services/profile_service.py` | Public profile data and primary fleet pointer |
-| Fleets | `models/fleet.py`, `services/fleet_service.py`, `api/routes/fleets.py` | Fleet catalog, membership applications, fleet leadership |
-| Builds | `models/build*.py`, `services/build_service.py` | Build persistence and validation |
-| Build options | `models/build_option.py`, `services/build_option_service.py`, `db/seeds/*` | Normalized option catalog and stat effects |
-| Guides | `models/guide.py`, `services/guide_service.py` | Guide CRUD, attachments, build references |
-| Forum | `models/forum.py`, `services/forum_service.py` | Threads, posts, attachments |
-| Files | `models/file_asset.py`, `services/file_service.py` | Upload validation, storage metadata, deletion |
-| Calendar | `models/fleet_event.py`, `services/fleet_event_service.py` | Fleet events and staff CRUD |
-| Gruppensuche | `models/group.py`, `services/group_service.py` | Group search listings and ownership |
-| Seeds | `backend/src/app/db/seeds/*` | Deterministic demo/catalog data |
+| API composition | `backend/src/app/api/router.py`, `backend/src/app/api/health.py` | Shared API router assembly and infrastructure endpoints |
+| Config | `backend/src/app/core/config.py`, `backend/config/app.toml` | Strict env + CFG loading |
+| Logging | `backend/src/app/core/logging.py`, `backend/src/app/core/middleware.py` | Central log config, DB request logs, request IDs |
+| Auth/session/profile | `backend/src/app/modules/accounts/*` | Login, sessions, registration approval inputs, profiles |
+| Admin | `backend/src/app/modules/admin/*` | Access review, DB log views, admin moderation APIs |
+| Fleets | `backend/src/app/modules/fleet/*` | Single official fleet, membership applications, member directory |
+| Builds | `backend/src/app/modules/builds/*` | Build persistence, option catalog, stat calculation, weapon validation |
+| Ships | `backend/src/app/modules/ships/*` | Ship catalog APIs and schemas |
+| Guides | `backend/src/app/modules/guides/*` | Guide CRUD, attachments, build references |
+| Forum | `backend/src/app/modules/forum/*` | Threads, posts, attachments |
+| Files | `backend/src/app/modules/files/*` | Upload validation, storage metadata, deletion |
+| Calendar | `backend/src/app/modules/calendar/*` | Fleet events and staff CRUD |
+| Gruppensuche | `backend/src/app/modules/groups/*` | Group search listings, signups and ownership |
+| Shared content embeds | `backend/src/app/modules/content/*` | Inline file/build token parsing helpers |
+| Database lifecycle | `backend/src/app/db/*` | SQLAlchemy session, create/reset and SQLite compatibility migrations |
+| Seeds | `backend/src/app/seeds/*` | Deterministic demo/catalog data |
 
 ## Frontend inventory
 
@@ -57,7 +60,7 @@ The schema is centered around normalized entities:
 - `ships`, `build_item_categories`, `build_item_options`, `build_item_effects`, `builds` and `build_slots` separate catalog data from user-created builds.
 - `guides`, `guide_attachments` and `guide_build_references` separate content, file references and build references.
 - `forum_threads`, `forum_posts` and `forum_post_attachments` separate threads, post bodies and uploaded files.
-- `stored_files` stores file metadata while the binary file stays in `storage/uploads`.
+- `stored_files` stores file metadata while the binary file stays in the single upload tree configured by `UPLOAD_DIR`; repository demo files live under `backend/storage/uploads/demo`.
 
 ## Known intentional prototype constraints
 
@@ -70,3 +73,10 @@ The schema is centered around normalized entities:
 ## Single Fleet Refactor
 
 Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+
+## Structure cleanup notes
+
+- Backend feature code now lives under `backend/src/app/modules/<domain>`. Root aggregate `models`, `schemas` and `services` packages were removed to keep module ownership explicit.
+- Backend classes are one-class-per-file. Aggregation modules may only re-export related classes.
+- The only repository-local upload tree is `backend/storage/uploads`; root-level `storage/` was removed to avoid competing storage sources.
+- Seed data lives in top-level `backend/src/app/seeds`, separate from DB lifecycle code.

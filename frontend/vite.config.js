@@ -1,7 +1,15 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+
+function loadDevServerConfig() {
+  const configUrl = new URL('./config/dev-server.json', import.meta.url)
+  return JSON.parse(readFileSync(configUrl, 'utf8'))
+}
+
+const devServer = loadDevServerConfig()
 
 export default defineConfig({
   plugins: [vue()],
@@ -11,12 +19,12 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0',
-    port: 5173,
-    strictPort: true,
+    host: devServer.host,
+    port: devServer.port,
+    strictPort: Boolean(devServer.strictPort),
     proxy: {
-      '/api': 'http://127.0.0.1:8000',
-      '/uploads': 'http://127.0.0.1:8000',
+      '/api': devServer.proxyTarget,
+      '/uploads': devServer.proxyTarget,
     },
   },
 })

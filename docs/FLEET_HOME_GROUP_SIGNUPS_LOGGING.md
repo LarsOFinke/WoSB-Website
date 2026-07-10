@@ -33,12 +33,7 @@ When a build is linked, the backend derives the ship and ship rate from that bui
 
 ## Logging policy
 
-Application/request logs are persisted in `app_logs` and shown in the Admin Dashboard. Backend console request logging is disabled by default via:
-
-```env
-CONSOLE_LOGGING_ENABLED=false
-DB_LOGGING_ENABLED=true
-```
+Application/request logs are persisted in `app_logs` and shown in the Admin Dashboard. Backend console request logging is disabled by default in `backend/config/app.toml`; DB logging is enabled there as the routine operational source.
 
 Stored request metadata includes:
 

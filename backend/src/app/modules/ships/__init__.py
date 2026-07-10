@@ -1,0 +1,1 @@
+"""ships domain module."""

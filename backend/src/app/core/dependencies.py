@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import hash_session_token
 from app.db.session import get_db
-from app.models import AuthSession, User
+from app.modules.accounts.models.auth_session import AuthSession
+from app.modules.accounts.models.user import User
 
 logger = logging.getLogger(__name__)
 

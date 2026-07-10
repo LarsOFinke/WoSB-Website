@@ -31,7 +31,7 @@ ship base value + selected upgrade effects = effective build value
 The central stat definitions live in:
 
 ```text
-backend/src/app/services/build_stat_service.py
+backend/src/app/modules/builds/services/build_stat_service.py
 ```
 
 This keeps the calculation deterministic and shared by API responses and frontend
@@ -49,7 +49,7 @@ The prototype now supports six upgrade slots with these rules:
 
 ## Quality checks
 
-`backend/src/app/db/seeds/build_catalog_quality.py` validates the catalog before
+`backend/src/app/seeds/build_catalog_quality.py` validates the catalog before
 seeding. It checks for:
 
 - duplicate ship names

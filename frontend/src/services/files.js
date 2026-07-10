@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/config/runtime'
 import { get, postForm } from './api'
 import { withQuery } from './query'
 
@@ -54,7 +55,7 @@ export function uploadFile(file, usageContext = 'general') {
 }
 
 function assetOrigin() {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+  const apiBaseUrl = API_BASE_URL
 
   if (typeof window === 'undefined') return ''
 

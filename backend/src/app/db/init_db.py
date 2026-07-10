@@ -1,10 +1,9 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
-# Importing models registers all SQLAlchemy metadata before create_all/drop_all.
-from app import models  # noqa: F401
-from app.db.seeds import SeedManager
+from app.seeds import SeedManager
 from app.db.session import Base, engine
+from app.modules.registry import register_all_models
 
 
 def _ensure_sqlite_columns() -> None:
@@ -181,6 +180,7 @@ def _migrate_user_profiles() -> None:
             """))
 
 def create_tables() -> None:
+    register_all_models()
     Base.metadata.create_all(bind=engine)
     _ensure_sqlite_columns()
     _migrate_user_profiles()
@@ -193,5 +193,6 @@ def create_and_seed() -> None:
 
 
 def reset_database() -> None:
+    register_all_models()
     Base.metadata.drop_all(bind=engine)
     create_and_seed()

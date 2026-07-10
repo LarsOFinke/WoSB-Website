@@ -1,23 +1,49 @@
 # Iron Crown Fleet Hub
 
-Fullstack prototype foundation for the Iron Crown Fleet Hub: builds, guides, forum, group search, fleet calendar, fleet management and staff operations.
+Fullstack prototype foundation for the Iron Crown Fleet Hub: builds, guides, forum, group search, fleet calendar, fleet management and staff/admin operations.
 
 ```text
-backend/   FastAPI + SQLAlchemy + SQLite dev database + cookie sessions
-frontend/  Vue 3 + Vite + localized enterprise app shell
-/docs      architecture, operations and production-readiness notes
+backend/     FastAPI + SQLAlchemy + strict env/config loading
+frontend/    Vue 3 + Vite + localized enterprise app shell
+docs/        architecture, configuration and deployment notes
+deployment/  first Pi deployment templates
 ```
 
 ## Current modules
 
-- Build Manager with ship catalog, option catalog and user-owned builds.
+- Public fleet portal at `/` with registration/fleet application entry.
+- Build Manager with ship catalog, weapon validation, mortar slot and special crew effects.
 - Guides with inline uploads and inline build references.
 - Forum with upload placement in posts.
-- Gruppensuche for fleet activity listings.
+- Gruppensuche with optional time windows, signups, ship selection and optional saved-build linking.
 - Fleet calendar with staff-only event creation.
-- Fleet management with applications, fleet leadership roles and profile synchronization.
-- Staff panel for moderation and operational tasks.
+- Fleet management with applications, member directory and profile synchronization.
+- Admin dashboard with registration approval queue and DB-backed request/application logs.
 - Locales for EN, DE, FR, ES, PT, RU and CN with strict coverage checks.
+
+## Configuration is mandatory
+
+The project now fails fast when deployment config is missing.
+
+Backend:
+
+```bash
+cd backend
+cp .env.example .env
+# edit .env before first start
+```
+
+Frontend:
+
+```bash
+cd frontend
+cp .env.example .env
+# VITE_API_BASE_URL=/api is correct for same-domain reverse proxy deployments
+```
+
+Non-sensitive backend settings live in `backend/config/app.toml`; frontend dev-server settings live in `frontend/config/dev-server.json`.
+
+Read [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) before deploying.
 
 ## Local start
 
@@ -26,7 +52,8 @@ Backend:
 ```bash
 cd backend
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate   # Windows
+# or: . .venv/bin/activate
 pip install -e .[dev]
 wosb-seed --reset
 wosb-dev
@@ -40,31 +67,9 @@ npm install
 npm run dev
 ```
 
-Seeded development admin:
-
-```text
-admin / admin123
-```
-
-Change this before deployment through `backend/.env.example` settings.
+The old `admin / admin123` prototype default is gone. Set `SEED_ADMIN_PASSWORD` in `backend/.env` to a strong non-default password before seeding.
 
 ## Important URLs
-
-Backend:
-
-```text
-http://127.0.0.1:8000/api/health
-http://127.0.0.1:8000/api/auth/me
-http://127.0.0.1:8000/api/builds
-http://127.0.0.1:8000/api/guides
-http://127.0.0.1:8000/api/forum/threads
-http://127.0.0.1:8000/api/groups
-http://127.0.0.1:8000/api/calendar/events
-http://127.0.0.1:8000/api/fleets
-http://127.0.0.1:8000/api/admin/builds
-```
-
-Frontend:
 
 ```text
 http://127.0.0.1:5173/            # public fleet portal
@@ -78,20 +83,12 @@ http://127.0.0.1:5173/profile
 http://127.0.0.1:5173/admin
 ```
 
-## Production-foundation update
+## Raspberry Pi first deployment
 
-This pass focused on making the repository a cleaner base for production-grade iteration:
+Start with [`docs/PI_DEPLOYMENT.md`](docs/PI_DEPLOYMENT.md). Templates are in `deployment/pi/`:
 
-- documented the full current project inventory;
-- added a rebuild plan and production checklist;
-- added centralized backend logging and request IDs;
-- split the frontend app shell into topbar/sidebar/composable/navigation modules;
-- added enum/range database constraints for fresh schemas;
-- fixed group computed properties for active count, spots left and joinability;
-- consolidated docs around architecture, frontend, backend and operations;
-- kept existing features and locale checks intact.
-
-Start with [`docs/README.md`](docs/README.md) for the documentation index.
+- `iron-crown-api.service`
+- `nginx.conf.example`
 
 ## Validation
 
@@ -113,35 +110,14 @@ python -m compileall -q backend/src
 
 ## Production caveats
 
-This repository is now a much cleaner prototype foundation, but before real users it still needs Alembic migrations, PostgreSQL staging/production configuration, rate limiting, automated tests, CI gates, durable file storage and proper secrets/session configuration. See [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md).
+This is suitable as a first Pi deployment foundation. For real public production, still add Alembic migrations, PostgreSQL, CI tests, rate limiting, backups, durable upload storage and hardened HTTPS/cookie/session operations. See [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md) and [`docs/MODULE_STRUCTURE.md`](docs/MODULE_STRUCTURE.md).
 
 
-## Admin Dashboard Update
+## Structure cleanup
 
-- Registrations are now staged in `registration_requests` and must be approved by an admin before a user account is created.
-- Admins can approve/reject requests in the new access review view.
-- Application/request logs are persisted in `app_logs` and surfaced in the admin dashboard.
-- See `docs/ADMIN_DASHBOARD.md` for the flow and operational details.
+- Backend feature code is organized under `backend/src/app/modules/<domain>`; each concrete class stays one-class-per-file.
+- FastAPI app creation lives in `app/core/app_factory.py`; route implementations live in module-local `routes/router.py` files.
+- Global aggregate packages such as `app/models`, `app/schemas` and `app/services` are intentionally removed.
+- The repository has a single local upload tree at `backend/storage/uploads`; root-level `storage/` is intentionally removed. Runtime storage is configured through `UPLOAD_DIR`.
 
-
-## Single Fleet Refactor
-
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
-
-## Build Designer Accuracy
-
-The Build Designer now uses a complete ship-stat catalog, normalized upgrade effects and a visible base/modifier/effective stat breakdown. See `docs/BUILD_DESIGNER_ACCURACY.md`.
-
-## Build Designer Waffen/Special Crew
-
-- Special Crew ist Teil des Build-Katalogs und wirkt über normalisierte `build_item_effects` in die Stat-Vorschau.
-- Waffenoptionen besitzen Slot-Metadaten (`option_kind`, `allowed_slot_types`, `weapon_caliber_inches`).
-- Der Mörser-Slot ist separat validiert; Mortars können nur dort und nur bis zum Schiffskaliber-Limit gesetzt werden.
-- Details: `docs/BUILD_DESIGNER_WEAPONS_AND_CREW.md`.
-
-## Latest foundation update
-
-- `/` now opens the official fleet portal, `/home` redirects there, and `/fleets` is reserved for fleet management.
-- Group search supports optional time windows, member signup, ship selection and optional saved-build linking.
-- Request logs are stored in the database/Admin Dashboard; backend console logging is disabled by default while IP, forwarded IP, user-agent and query metadata are persisted.
-- See `docs/FLEET_HOME_GROUP_SIGNUPS_LOGGING.md` for details.
+See [`docs/MODULE_STRUCTURE.md`](docs/MODULE_STRUCTURE.md) and [`docs/SPRING_CLEANUP.md`](docs/SPRING_CLEANUP.md).

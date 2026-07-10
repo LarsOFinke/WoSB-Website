@@ -24,9 +24,9 @@ Thumbs.db
 .vscode/
 
 # Local uploads
-storage/uploads/
-backend/storage/uploads/
-!storage/uploads/demo/
-!storage/uploads/demo/*.svg
+# Single repository-local upload source: backend/storage/uploads.
+# Root-level storage/ is intentionally ignored to avoid a second source of truth.
+storage/
+backend/storage/uploads/*
 !backend/storage/uploads/demo/
 !backend/storage/uploads/demo/*.svg

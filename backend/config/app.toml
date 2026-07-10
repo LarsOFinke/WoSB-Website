@@ -1,0 +1,25 @@
+# Non-sensitive backend configuration committed with the repository.
+# Environment-specific values and secrets belong in backend/.env.
+
+[app]
+name = "Iron Crown Fleet Hub"
+version = "0.9.1"
+api_prefix = "/api"
+
+[logging]
+level = "INFO"
+format = "plain"          # plain or json
+sql_level = "WARNING"
+db_enabled = true
+db_level = "INFO"
+console_enabled = false
+
+[session]
+cookie_name = "wosb_session"
+cookie_samesite = "lax"   # lax, strict or none
+ttl_hours = 24
+
+[upload_limits]
+image_mb = 12
+document_mb = 20
+video_mb = 80

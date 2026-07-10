@@ -2,6 +2,22 @@
 
 Vue 3 + Vite frontend for Iron Crown Fleet Hub.
 
+## Mandatory environment
+
+The frontend refuses to run/build without `frontend/.env`.
+
+```bash
+cp .env.example .env
+```
+
+Required value:
+
+```env
+VITE_API_BASE_URL=/api
+```
+
+For same-domain reverse proxy deployment, `/api` is correct. For a separate backend origin, set the full origin + prefix.
+
 ## Start
 
 ```bash
@@ -9,7 +25,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` already binds to `0.0.0.0:5173`. Use `npm run dev:local` for `127.0.0.1:5173`.
+`npm run dev` uses the versioned dev-server settings from `config/dev-server.json` (`0.0.0.0:5173` by default for LAN testing).
 
 ## Routes
 
@@ -25,8 +41,6 @@ npm run dev
 /profile
 /admin
 ```
-
-Feature detail/create routes live under those module roots.
 
 ## Layout architecture
 
@@ -60,28 +74,3 @@ find src -name '*.js' -print0 | xargs -0 -n1 node --check
 ## Rich content
 
 Guides and Forum content can embed uploaded files with `[[file:id|size]]`. Guides can embed linked Builds with `[[build:id|layout]]`. UI panels insert these tokens for users; backend services validate them.
-
-See `../docs/FRONTEND_ARCHITECTURE.md` for frontend conventions.
-
-
-## Single Fleet Refactor
-
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
-
-## Build stat breakdown
-
-Build create/detail views show base ship stats, selected upgrade modifiers and effective build values using the stat definitions returned by `/api/builds/options`.
-
-## Build Designer Waffen/Special Crew
-
-- Special Crew ist Teil des Build-Katalogs und wirkt über normalisierte `build_item_effects` in die Stat-Vorschau.
-- Waffenoptionen besitzen Slot-Metadaten (`option_kind`, `allowed_slot_types`, `weapon_caliber_inches`).
-- Der Mörser-Slot ist separat validiert; Mortars können nur dort und nur bis zum Schiffskaliber-Limit gesetzt werden.
-- Details: `docs/BUILD_DESIGNER_WEAPONS_AND_CREW.md`.
-
-## Latest foundation update
-
-- `/` now opens the official fleet portal and `/home` redirects there.
-- Group search supports optional time windows, member signup, ship selection and optional saved-build linking.
-- Request logs are stored in the database/Admin Dashboard; backend console logging is disabled by default while IP, forwarded IP, user-agent and query metadata are persisted.
-- See `docs/FLEET_HOME_GROUP_SIGNUPS_LOGGING.md` for details.

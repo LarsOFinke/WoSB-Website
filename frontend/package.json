@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5173",
-    "dev:local": "vite --host 127.0.0.1 --port 5173",
+    "dev": "vite",
+    "dev:local": "vite --host 127.0.0.1",
     "dev:default": "vite",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4173",
-    "check:locales": "node scripts/check-locales.mjs"
+    "preview": "vite preview",
+    "check:locales": "node scripts/check-locales.mjs",
+    "predev": "node scripts/check-env.mjs",
+    "prebuild": "node scripts/check-env.mjs",
+    "prepreview": "node scripts/check-env.mjs"
   },
   "dependencies": {
     "vue": "^3.5.0",

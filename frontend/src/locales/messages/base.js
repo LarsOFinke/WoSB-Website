@@ -32,7 +32,7 @@ export const baseMessages = {
       logout: 'Logout',
       signingIn: 'Signing in ...',
       loginError: 'Login failed.',
-      seedHint: 'Seed admin: admin / admin123. Change this before production.',
+      seedHint: 'Initial admin credentials come from backend/.env and must be changed before seeding.',
     },
     admin: {
       eyebrow: 'Administration',
