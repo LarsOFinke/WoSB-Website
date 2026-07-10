@@ -17,6 +17,7 @@ from app.seeds.demo_content import seed_demo_content
 from app.seeds.fleets import FLEET_SEED_DATA, LEGACY_FLEET_SLUGS
 from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
+from app.seeds.newcomer_guide import seed_newcomer_guide
 from app.seeds.sails import SAIL_OPTIONS
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.special_crew import SPECIAL_CREW_OPTIONS
@@ -66,6 +67,7 @@ class SeedManager:
         self.seed_demo_groups()
         self.seed_demo_fleet_events()
         self.seed_demo_content()
+        self.seed_newcomer_guide()
 
     def seed_users(self) -> None:
         seed_admin_user(self.db)
@@ -216,6 +218,9 @@ class SeedManager:
 
     def seed_demo_content(self) -> None:
         seed_demo_content(self.db)
+
+    def seed_newcomer_guide(self) -> None:
+        seed_newcomer_guide(self.db)
 
 
     def seed_demo_fleet_events(self) -> None:

@@ -113,10 +113,15 @@ def _selected_upgrade_options(
     option_map: dict[tuple[str, str], BuildItemOption], build: BuildCreate
 ) -> dict[int, BuildItemOption]:
     selected: dict[int, BuildItemOption] = {}
+    selected_names: set[str] = set()
     for index in range(1, UPGRADE_SLOT_LIMIT + 1):
         name = _normalize_name(getattr(build, f"upgrade_{index}"))
         if not name:
             continue
+        normalized = name.casefold()
+        if normalized in selected_names:
+            raise BuildValidationError("Upgrades: each upgrade can only be selected once.")
+        selected_names.add(normalized)
         selected[index] = _require_option(option_map, name, "upgrade", f"Upgrade {index}")
     return selected
 

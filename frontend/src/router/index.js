@@ -11,12 +11,14 @@ import { fleetRoutes } from '@/modules/fleet/routes'
 import { forumRoutes } from '@/modules/forum/routes'
 import { groupRoutes } from '@/modules/groups/routes'
 import { guideRoutes } from '@/modules/guides/routes'
+import { onboardingRoutes } from '@/modules/onboarding/routes'
 
 const routes = [
   ...fleetRoutes,
   ...accountRoutes,
   ...buildRoutes,
   ...guideRoutes,
+  ...onboardingRoutes,
   ...groupRoutes,
   ...calendarRoutes,
   ...forumRoutes,

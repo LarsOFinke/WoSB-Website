@@ -9,6 +9,7 @@ import { fleetIdentityMessages } from './fleetIdentity'
 import { fleetManagementMessages } from './fleetManagement'
 import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup'
 import { localeCompletenessMessages } from './localeCompleteness'
+import { newcomerGuideMessages } from './newcomerGuide'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
 import { fillLocalizedMessages } from '../autoLocalization'
@@ -21,6 +22,7 @@ const messageLayers = [
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,
+  newcomerGuideMessages,
   royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,

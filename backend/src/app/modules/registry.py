@@ -26,6 +26,7 @@ _MODEL_MODULES = (
     "app.modules.guides.models.guide",
     "app.modules.guides.models.guide_attachment",
     "app.modules.guides.models.guide_build_reference",
+    "app.modules.onboarding.models.newcomer_guide",
     "app.modules.ships.models.ship",
 )
 

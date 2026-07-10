@@ -19,7 +19,7 @@ DEMO_BUILD_DATA = [
             {"item": "Basilisk", "quantity": 2},
         ],
         "rear_weapon_slots": [
-            {"item": "12-pdr Carronade", "quantity": 2},
+            {"item": "Twin 14-pdr", "quantity": 2},
         ],
         "port_weapon_slots": [
             {"item": "32-pdr Cannon", "quantity": 18},

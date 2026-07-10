@@ -7,6 +7,7 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
   if (!isAuthenticated) return publicLinks
 
   const memberLinks = [
+    { to: '/new-captain', label: t('common.newCaptainGuide'), icon: 'compass', section: 'member' },
     { to: '/guides', label: t('common.guides'), icon: 'guides', section: 'member' },
     { to: '/groups', label: t('common.groups'), icon: 'groups', section: 'member' },
     { to: '/calendar', label: t('common.calendar'), icon: 'calendar', section: 'member' },

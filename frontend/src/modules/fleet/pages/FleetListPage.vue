@@ -29,10 +29,11 @@ const leaderCount = computed(() => fleet.value?.leaders?.length || 0)
 const totalMembers = computed(() => (fleet.value?.active_members_count || 0) + (fleet.value?.pending_members_count || 0))
 
 const newcomerSteps = computed(() => [
-  { number: '01', icon: 'guides', title: t('home.newcomer.learnTitle'), text: t('home.newcomer.learnText'), meta: t('home.newcomer.learnMeta'), path: '/guides', public: false },
-  { number: '02', icon: 'builds', title: t('home.newcomer.prepareTitle'), text: t('home.newcomer.prepareText'), meta: t('home.newcomer.prepareMeta'), path: '/builds', public: true },
-  { number: '03', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), meta: t('home.newcomer.askMeta'), path: '/forum', public: false },
-  { number: '04', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar', public: false },
+  { number: '01', icon: 'compass', title: t('home.newcomer.guideTitle'), text: t('home.newcomer.guideText'), meta: t('home.newcomer.guideMeta'), path: '/new-captain', public: false },
+  { number: '02', icon: 'guides', title: t('home.newcomer.learnTitle'), text: t('home.newcomer.learnText'), meta: t('home.newcomer.learnMeta'), path: '/guides', public: false },
+  { number: '03', icon: 'builds', title: t('home.newcomer.prepareTitle'), text: t('home.newcomer.prepareText'), meta: t('home.newcomer.prepareMeta'), path: '/builds', public: true },
+  { number: '04', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), meta: t('home.newcomer.askMeta'), path: '/forum', public: false },
+  { number: '05', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar', public: false },
 ])
 
 const moduleCards = computed(() => [

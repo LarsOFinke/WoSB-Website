@@ -91,6 +91,7 @@ const form = reactive({
 })
 
 const selectedShip = computed(() => ships.value.find((ship) => ship.id === Number(form.ship_id)))
+const availableWeaponArcs = computed(() => weaponArcFields.filter((arc) => weaponCapacityForField(arc.fieldName) > 0))
 function optionMeta(categoryKey, name) {
   return (optionCatalog.value.options?.[categoryKey] || []).find((option) => option.name === name)
 }
@@ -283,6 +284,17 @@ function isOptionUsed(slots, option, currentIndex) {
   return slots.some((slot, index) => index !== currentIndex && slot.item === option)
 }
 
+function upgradeOptionsForSlot(index) {
+  const current = form[`upgrade_${index}`]
+  const selectedElsewhere = new Set(
+    Array.from({ length: equipmentUpgradeCount }, (_, offset) => offset + 1)
+      .filter((slotIndex) => slotIndex !== index)
+      .map((slotIndex) => form[`upgrade_${slotIndex}`])
+      .filter(Boolean),
+  )
+  return optionsFor('upgrade').filter((option) => option === current || !selectedElsewhere.has(option))
+}
+
 
 function weaponSlotTypeForField(fieldName) {
   return {
@@ -326,10 +338,19 @@ function isWeaponOptionAllowedForField(option, fieldName) {
   return true
 }
 
-function weaponOptionsForField(fieldName) {
+function weaponOptionsForField(fieldName, currentIndex) {
+  if (!selectedShip.value || weaponCapacityForField(fieldName) <= 0) return []
+  const current = form[fieldName]?.[currentIndex]?.item || ''
+  const selectedElsewhere = new Set(
+    (form[fieldName] || [])
+      .filter((_, index) => index !== currentIndex)
+      .map((slot) => slot.item)
+      .filter(Boolean),
+  )
   return (optionCatalog.value.options?.weapon || [])
     .filter((option) => isWeaponOptionAllowedForField(option, fieldName))
     .map((option) => option.name)
+    .filter((option) => option === current || !selectedElsewhere.has(option))
     .sort((left, right) => optionLabel(left).localeCompare(optionLabel(right), undefined, { sensitivity: 'base' }))
 }
 
@@ -571,7 +592,7 @@ onMounted(async () => {
                 :disabled="isUpgradeSlotDisabled(index)"
               >
                 <option value="">{{ upgradeSlotPlaceholder(index) }}</option>
-                <option v-for="option in optionsFor('upgrade')" :key="option" :value="option">{{ optionLabel(option) }}</option>
+                <option v-for="option in upgradeOptionsForSlot(index)" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
               <small v-if="form[`upgrade_${index}`]" class="slot-effect-text">{{ formatEffects(form[`upgrade_${index}`]) }}</small>
             </span>
@@ -597,7 +618,7 @@ onMounted(async () => {
         </div>
         <p class="section-helper-text">{{ t('builds.create.weapons.hint') }}</p>
         <div class="inventory-grid weapon-arc-grid five-columns">
-          <div v-for="arc in weaponArcFields" :key="arc.fieldName" class="inventory-panel weapon-arc-panel">
+          <div v-for="arc in availableWeaponArcs" :key="arc.fieldName" class="inventory-panel weapon-arc-panel">
             <div class="inventory-heading">
               <strong>{{ t(arc.labelKey) }}</strong>
               <span>{{ t('builds.create.weapons.capacity', { count: slotQuantityTotal(arc.fieldName), max: weaponCapacityForField(arc.fieldName) }) }}</span>
@@ -610,10 +631,9 @@ onMounted(async () => {
               <select v-model="slot.item" @change="onInventorySlotChange(arc.fieldName)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
-                  v-for="option in weaponOptionsForField(arc.fieldName)"
+                  v-for="option in weaponOptionsForField(arc.fieldName, index)"
                   :key="option"
                   :value="option"
-                  :disabled="isOptionUsed(form[arc.fieldName], option, index)"
                 >
                   {{ optionLabel(option) }}
                 </option>

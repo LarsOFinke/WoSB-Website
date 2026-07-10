@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 REQUIRED_SHIP_FIELDS = (
     "name",
     "rate",
@@ -39,6 +41,11 @@ def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
                 errors.append(f"{name}: {field} must be positive")
         if int(row.get("durability") or 0) == 0 or int(row.get("hold_capacity") or 0) == 0:
             errors.append(f"{name}: catalog still contains zero-value prototype stats")
+        layout = str(row.get("weapon_layout") or "").strip()
+        if not re.fullmatch(r"\d+\s*-\s*\d+\s*-\s*\d+(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?", layout, re.IGNORECASE):
+            errors.append(f"{name}: invalid weapon_layout format {layout!r}")
+        if not str(row.get("source") or "").startswith("WoSB wiki"):
+            errors.append(f"{name}: source must identify the audited WoSB wiki catalog")
     if errors:
         raise RuntimeError("Ship seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
 
@@ -98,10 +105,16 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
         unknown_slots = allowed - VALID_WEAPON_SLOT_TYPES
         if unknown_slots:
             errors.append(f"{name}: unknown slot type(s): {', '.join(sorted(unknown_slots))}")
-        if option_kind == "mortar" and "weapon_mortar" not in allowed:
-            errors.append(f"{name}: mortar weapons must allow weapon_mortar")
-        if option_kind != "mortar" and "weapon_mortar" in allowed:
-            errors.append(f"{name}: non-mortar weapons cannot use weapon_mortar")
+        expected_slots = {
+            "cannon": {"weapon_port", "weapon_starboard"},
+            "bow_stern": {"weapon_front", "weapon_rear"},
+            "mortar": {"weapon_mortar"},
+        }.get(option_kind)
+        if expected_slots is not None and allowed != expected_slots:
+            errors.append(
+                f"{name}: {option_kind} weapons must use exactly "
+                f"{', '.join(sorted(expected_slots))}"
+            )
     if errors:
         raise RuntimeError("Weapon seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
 

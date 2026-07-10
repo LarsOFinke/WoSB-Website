@@ -108,6 +108,14 @@ defineProps({
       <path d="m12 3 1.3 4.2L17.5 9l-4.2 1.3L12 15l-1.3-4.7L6.5 9l4.2-1.8z" />
       <path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z" />
     </template>
+    <template v-else-if="name === 'compass'">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z" />
+    </template>
+    <template v-else-if="name === 'edit'">
+      <path d="M4 20h4l11-11-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </template>
     <template v-else>
       <circle cx="12" cy="12" r="8" />
     </template>

@@ -6,7 +6,7 @@ catalog so the Build Designer can prevent invalid ship+slot combinations without
 hard-coding names in frontend code.
 """
 
-CANNON_SLOT_TYPES = "weapon_front,weapon_rear,weapon_port,weapon_starboard"
+CANNON_SLOT_TYPES = "weapon_port,weapon_starboard"
 BOW_STERN_SLOT_TYPES = "weapon_front,weapon_rear"
 MORTAR_SLOT_TYPES = "weapon_mortar"
 

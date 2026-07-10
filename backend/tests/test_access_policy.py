@@ -20,6 +20,7 @@ AUTHENTICATED_READ_PATHS = (
     "/api/forum/threads",
     "/api/calendar/events",
     "/api/fleets/manageable",
+    "/api/newcomer-guide",
 )
 
 

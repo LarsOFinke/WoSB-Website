@@ -87,7 +87,7 @@ Public routes:
 /builds/:id
 ```
 
-Profile, guides, groups, calendar, forum and fleet management require a login. The Staff Panel
+Profile, the New Captain Guide, guides, groups, calendar, forum and fleet management require a login. The Staff Panel
 requires staff privileges. Frontend guards and backend dependencies enforce the same boundary.
 
 ## Web access
@@ -136,3 +136,15 @@ The validator no longer fails solely because a checkout lost Unix executable
 bits. CI and internal delegation invoke entrypoints through `bash`; validation
 checks file presence, Bash shebangs and syntax instead. Operator entrypoints are
 still shipped with executable permissions in the canonical repository.
+
+
+## Release 0.14.0 — Build Designer audit and New Captain Guide
+
+This release audits every seeded ship weapon layout using an explicit bow–broadside–stern
+format, normalizes weapon options to their dedicated ship arcs and prevents duplicate upgrades
+server-side as well as in the editor. The Build Designer now hides zero-capacity weapon groups,
+weapons that do not belong to the selected arc and options already used in another slot.
+
+Authenticated members receive a dedicated `/new-captain` roadmap. Staff can curate text sections
+and ordered resource collections that link to guides, builds, internal modules or external sources.
+The roadmap is also the first step of the Fleet Portal's New Captain Path.
