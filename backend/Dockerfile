@@ -14,6 +14,7 @@ COPY pyproject.toml README.md alembic.ini ./
 COPY migrations ./migrations
 COPY config ./config
 COPY src ./src
+COPY storage ./storage
 RUN pip install --upgrade pip \
     && pip install ".[postgres]"
 

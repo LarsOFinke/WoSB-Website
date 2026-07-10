@@ -100,7 +100,7 @@ Reply with your usual play window, ship rate and whether you prefer scout, scree
 
 
 def _copy_demo_file(relative_path: str) -> int:
-    source = Path(__file__).resolve().parents[4] / "storage" / "uploads" / relative_path
+    source = Path(__file__).resolve().parents[3] / "storage" / "uploads" / relative_path
     target = Path(settings.upload_dir) / relative_path
     target.parent.mkdir(parents=True, exist_ok=True)
     if source.exists() and not target.exists():

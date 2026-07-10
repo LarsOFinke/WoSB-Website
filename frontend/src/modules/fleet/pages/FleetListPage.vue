@@ -34,6 +34,8 @@ const newcomerSteps = computed(() => [
   { number: '04', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar', public: false },
 ])
 
+const fleetIconSrc = '/branding/rbf-fleet-icon.png'
+
 const moduleCards = computed(() => [
   { icon: 'builds', title: t('home.showcase.builds.title'), text: t('home.showcase.builds.description'), path: '/builds', public: true },
   { icon: 'guides', title: t('home.showcase.guides.title'), text: t('home.showcase.guides.description'), path: '/guides', public: false },
@@ -155,14 +157,19 @@ onMounted(loadFleet)
         <div class="fleet-portal-layout">
           <main class="fleet-portal-main">
             <article class="wire-section fleet-briefing-panel fleet-identity-panel">
-              <div class="workspace-section-heading">
+              <div class="workspace-section-heading fleet-identity-heading">
                 <div>
                   <p class="eyebrow">{{ t('home.aboutEyebrow') }}</p>
                   <h2>{{ t('home.aboutTitle') }}</h2>
                   <p>{{ t('home.about') }}</p>
                   <p class="fleet-identity-extra">{{ t('home.aboutExtra') }}</p>
                 </div>
-                <span class="summary-pill">{{ t(`fleets.focus.${fleet.focus}`) }}</span>
+                <div class="fleet-identity-badge-group">
+                  <span class="summary-pill">{{ t(`fleets.focus.${fleet.focus}`) }}</span>
+                  <figure class="fleet-crest-card">
+                    <img :src="fleetIconSrc" :alt="`${fleet.name} emblem`" loading="eager" decoding="async" />
+                  </figure>
+                </div>
               </div>
 
               <section class="fleet-orders-block fleet-orders-briefing">

@@ -6,12 +6,13 @@ defineProps({
 })
 
 const { t } = useLocale()
+const brandIconSrc = '/branding/rbf-fleet-icon.png'
 </script>
 
 <template>
   <span class="brand-lockup" :class="{ 'is-compact': compact }">
     <span class="brand-mark" aria-hidden="true">
-      <span>RBF</span>
+      <img class="brand-mark-image" :src="brandIconSrc" alt="" loading="eager" decoding="async" />
     </span>
     <span class="brand-copy">
       <strong>

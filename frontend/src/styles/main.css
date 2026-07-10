@@ -5788,15 +5788,19 @@ body.sidebar-collapsed .sidebar-account-link::before {
 
 .brand-mark {
   position: relative;
-  width: 2.7rem;
-  height: 2.7rem;
-  border-radius: 0.9rem;
-  border-color: rgba(241, 184, 91, 0.66);
+  width: 2.9rem;
+  height: 2.9rem;
+  border-radius: 0.96rem;
+  border-color: rgba(241, 184, 91, 0.52);
   background:
-    linear-gradient(145deg, rgba(241, 184, 91, 0.26), rgba(241, 184, 91, 0.06)),
-    rgba(5, 14, 24, 0.95);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.22);
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 52%),
+    linear-gradient(145deg, rgba(241, 184, 91, 0.18), rgba(241, 184, 91, 0.03)),
+    rgba(5, 14, 24, 0.96);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.24);
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand-mark::before,
@@ -5807,27 +5811,24 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 .brand-mark::before {
-  inset: 0.3rem;
-  border: 1px solid rgba(241, 184, 91, 0.25);
-  border-radius: 0.62rem;
+  inset: 0.2rem;
+  border: 1px solid rgba(241, 184, 91, 0.22);
+  border-radius: 0.75rem;
 }
 
 .brand-mark::after {
-  width: 1.8rem;
+  inset: auto 0.34rem 0.34rem;
   height: 1px;
-  bottom: 0.46rem;
-  left: 50%;
-  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.7), transparent);
-  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.55), transparent);
 }
 
-.brand-mark > span {
+.brand-mark-image {
   position: relative;
   z-index: 1;
-  color: var(--accent-strong);
-  font-size: 0.7rem;
-  font-weight: 1000;
-  letter-spacing: 0.08em;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-copy {
@@ -6529,5 +6530,46 @@ body {
 
   .newcomer-step-card {
     min-height: 0;
+  }
+}
+
+
+.fleet-identity-heading {
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.fleet-identity-badge-group {
+  display: grid;
+  justify-items: end;
+  gap: 0.85rem;
+}
+
+.fleet-crest-card {
+  margin: 0;
+  width: clamp(8rem, 18vw, 11.5rem);
+  aspect-ratio: 1;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(241, 184, 91, 0.22);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 18px 40px rgba(0,0,0,0.22);
+}
+
+.fleet-crest-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 860px) {
+  .fleet-identity-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-identity-badge-group {
+    width: 100%;
+    justify-items: start;
   }
 }
