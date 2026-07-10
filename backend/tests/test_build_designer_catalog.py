@@ -8,6 +8,7 @@ from app.modules.builds.services.build_service import BuildValidationError, crea
 from app.modules.ships.models.ship import Ship
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.weapons import WEAPON_OPTIONS
+from app.seeds.weapon_mounts import parse_weapon_layout
 
 
 EXPECTED_WEAPON_LAYOUTS = {
@@ -76,10 +77,10 @@ def test_all_ship_weapon_layouts_match_audited_catalog() -> None:
     actual = {row["name"]: row["weapon_layout"] for row in SHIP_SEED_DATA}
     assert actual == EXPECTED_WEAPON_LAYOUTS
     zeven = next(row for row in SHIP_SEED_DATA if row["name"] == "De Zeven Provincien")
-    ship = Ship(**zeven)
-    assert ship.front_weapon_capacity == 4
-    assert ship.broadside_weapon_capacity == 42
-    assert ship.rear_weapon_capacity == 4
+    mounts = {row["slot_type"]: row for row in parse_weapon_layout(zeven["weapon_layout"], rate=zeven["rate"])}
+    assert mounts["weapon_front"]["capacity"] == 4
+    assert mounts["weapon_port"]["capacity"] == 42
+    assert mounts["weapon_rear"]["capacity"] == 4
 
 
 def test_duplicate_upgrades_are_rejected_server_side() -> None:
@@ -116,7 +117,6 @@ def test_duplicate_upgrades_are_rejected_server_side() -> None:
                 hold_capacity=100,
                 crew_capacity=20,
                 sailor_minimum=0,
-                weapon_layout="0-0-0",
                 displacement_tons=100,
                 source="test",
                 sail_slots=1,

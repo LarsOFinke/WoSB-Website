@@ -21,8 +21,8 @@ export function getBuild(id) {
   return get(`/builds/${id}`)
 }
 
-export function getBuildOptions() {
-  return get('/builds/options')
+export function getBuildOptions(shipId = null) {
+  return get(withQuery('/builds/options', { ship_id: shipId || '' }))
 }
 
 export function createBuild(payload) {

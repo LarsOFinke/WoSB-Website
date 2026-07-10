@@ -9,6 +9,7 @@ from app.modules.accounts.models.auth_session import AuthSession
 from app.modules.accounts.models.registration_request import RegistrationRequest
 from app.modules.accounts.models.user import User
 from app.modules.accounts.models.user_profile import UserProfile
+from app.modules.permissions.services.role_service import assign_site_role
 from app.modules.accounts.models.registration_request import REGISTRATION_PENDING
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
 
@@ -42,9 +43,9 @@ def create_user(
     user = User(
         username=normalized_username,
         password_hash=hash_password(password),
-        role=role,
         profile=UserProfile(display_name=display_name.strip() or normalized_username),
     )
+    assign_site_role(db, user, role)
     db.add(user)
     db.commit()
     db.refresh(user)

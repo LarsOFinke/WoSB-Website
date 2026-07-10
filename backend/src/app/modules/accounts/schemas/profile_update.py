@@ -9,7 +9,6 @@ from app.modules.accounts.schemas.constants import PREFERRED_FOCUS_VALUES
 class ProfileUpdate(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     fleet_name: str | None = Field(default=None, max_length=120)
-    fleet_id: int | None = None
     preferred_focus: str | None = Field(default=None, max_length=80)
     note: str | None = Field(default=None, max_length=1000)
 

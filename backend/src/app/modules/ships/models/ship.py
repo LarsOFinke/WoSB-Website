@@ -1,45 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
-import re
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-
-
-def _parse_weapon_layout(layout: str | None) -> dict[str, int | float | None]:
-    """Parse the compact ship weapon layout used by the seed catalog.
-
-    Regular ships use ``front-broadside-rear`` where broadside is treated as
-    the capacity for each side. Siege ships can additionally declare
-    ``mortar <caliber>in x<count>``. The parser is deliberately permissive so
-    old local seed strings continue to work.
-    """
-
-    result: dict[str, int | float | None] = {
-        "front": 0,
-        "broadside": 0,
-        "rear": 0,
-        "mortar": 0,
-        "max_mortar_caliber_inches": None,
-    }
-    text = (layout or "").strip().lower()
-    if not text:
-        return result
-
-    regular_match = re.search(r"(\d+)\s*-\s*(\d+)\s*-\s*(\d+)", text)
-    if regular_match:
-        result["front"] = int(regular_match.group(1))
-        result["broadside"] = int(regular_match.group(2))
-        result["rear"] = int(regular_match.group(3))
-
-    mortar_match = re.search(r"mortar\s+(\d+(?:\.\d+)?)\s*in\s*x\s*(\d+)", text)
-    if mortar_match:
-        caliber = float(mortar_match.group(1))
-        result["max_mortar_caliber_inches"] = int(caliber) if caliber.is_integer() else caliber
-        result["mortar"] = int(mortar_match.group(2))
-
-    return result
 
 
 class Ship(Base):
@@ -69,9 +35,8 @@ class Ship(Base):
     hold_capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     crew_capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     sailor_minimum: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    weapon_layout: Mapped[str | None] = mapped_column(String(40), nullable=True)
     displacement_tons: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(240), nullable=True)
     sail_slots: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     upgrade_slots: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     has_lantern: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -81,27 +46,48 @@ class Ship(Base):
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    @property
-    def weapon_layout_details(self) -> dict[str, int | float | None]:
-        return _parse_weapon_layout(self.weapon_layout)
+    weapon_mounts: Mapped[list["ShipWeaponMount"]] = relationship(
+        "ShipWeaponMount",
+        back_populates="ship",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    def _mount(self, code: str):
+        return next((mount for mount in self.weapon_mounts if mount.slot_type.code == code), None)
+
+    def weapon_capacity(self, code: str) -> int:
+        mount = self._mount(code)
+        return int(mount.capacity if mount is not None else 0)
 
     @property
     def front_weapon_capacity(self) -> int:
-        return int(self.weapon_layout_details["front"] or 0)
+        return self.weapon_capacity("weapon_front")
 
     @property
     def broadside_weapon_capacity(self) -> int:
-        return int(self.weapon_layout_details["broadside"] or 0)
+        return max(self.weapon_capacity("weapon_port"), self.weapon_capacity("weapon_starboard"))
 
     @property
     def rear_weapon_capacity(self) -> int:
-        return int(self.weapon_layout_details["rear"] or 0)
+        return self.weapon_capacity("weapon_rear")
 
     @property
     def mortar_weapon_capacity(self) -> int:
-        return int(self.weapon_layout_details["mortar"] or 0)
+        return self.weapon_capacity("weapon_mortar")
 
     @property
     def max_mortar_caliber_inches(self) -> int | float | None:
-        return self.weapon_layout_details["max_mortar_caliber_inches"]
+        mount = self._mount("weapon_mortar")
+        if mount is None or mount.max_caliber_inches is None:
+            return None
+        value = float(mount.max_caliber_inches)
+        return int(value) if value.is_integer() else value
 
+    @property
+    def weapon_layout(self) -> str:
+        regular = f"{self.front_weapon_capacity}-{self.broadside_weapon_capacity}-{self.rear_weapon_capacity}"
+        mortar = self._mount("weapon_mortar")
+        if mortar is not None and mortar.capacity > 0:
+            caliber = int(mortar.max_caliber_inches or 0)
+            return f"{regular}; mortar {caliber}in x{mortar.capacity}"
+        return regular

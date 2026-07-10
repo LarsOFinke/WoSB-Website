@@ -18,6 +18,8 @@ from app.modules.squads.models.squad_member import (
     SQUAD_ROLE_OFFICER,
     SquadMember,
 )
+from app.modules.permissions.models.role import SquadRoleDefinition
+from app.modules.permissions.services.role_service import assign_squad_role
 from app.modules.squads.schemas.squad import (
     SquadCreate,
     SquadDetailRead,
@@ -62,7 +64,9 @@ def _squad_query():
     return select(Squad).options(
         selectinload(Squad.members)
         .selectinload(SquadMember.fleet_membership)
-        .selectinload(FleetMembership.user)
+        .selectinload(FleetMembership.user),
+        selectinload(Squad.members).selectinload(SquadMember.squad_role),
+        selectinload(Squad.members).selectinload(SquadMember.fleet_membership).selectinload(FleetMembership.fleet_role),
     )
 
 
@@ -116,10 +120,11 @@ def user_managed_squad_ids(db: Session, user: User) -> list[int]:
             select(SquadMember.squad_id)
             .join(FleetMembership, SquadMember.fleet_membership_id == FleetMembership.id)
             .join(Squad, SquadMember.squad_id == Squad.id)
+            .join(SquadMember.squad_role)
             .where(
                 FleetMembership.user_id == user.id,
                 FleetMembership.status == FLEET_MEMBER_ACTIVE,
-                SquadMember.role.in_(SQUAD_MANAGEMENT_ROLES),
+                SquadRoleDefinition.code.in_(SQUAD_MANAGEMENT_ROLES),
                 Squad.is_active.is_(True),
             )
             .order_by(SquadMember.squad_id)
@@ -291,7 +296,9 @@ def create_squad(db: Session, payload: SquadCreate, user: User) -> SquadDetailRe
     )
     db.add(squad)
     db.flush()
-    db.add(SquadMember(squad_id=squad.id, fleet_membership_id=leader.id, role=SQUAD_ROLE_LEADER))
+    leader_member = SquadMember(squad_id=squad.id, fleet_membership_id=leader.id)
+    assign_squad_role(db, leader_member, SQUAD_ROLE_LEADER)
+    db.add(leader_member)
     db.commit()
     created = get_squad_model(db, squad.id)
     if created is None:
@@ -336,12 +343,12 @@ def archive_squad(db: Session, squad_id: int, user: User) -> bool:
     return True
 
 
-def _transfer_leadership(squad: Squad, new_leader_id: int) -> None:
+def _transfer_leadership(db: Session, squad: Squad, new_leader_id: int) -> None:
     for member in squad.members:
         if member.id == new_leader_id:
-            member.role = SQUAD_ROLE_LEADER
+            assign_squad_role(db, member, SQUAD_ROLE_LEADER)
         elif member.role == SQUAD_ROLE_LEADER:
-            member.role = SQUAD_ROLE_OFFICER
+            assign_squad_role(db, member, SQUAD_ROLE_OFFICER)
 
 
 def add_squad_member(
@@ -365,17 +372,17 @@ def add_squad_member(
         existing = SquadMember(
             squad_id=squad.id,
             fleet_membership_id=membership.id,
-            role=payload.role,
             note=payload.note,
         )
+        assign_squad_role(db, existing, payload.role)
         db.add(existing)
         db.flush()
         squad.members.append(existing)
     else:
-        existing.role = payload.role
+        assign_squad_role(db, existing, payload.role)
         existing.note = payload.note
     if payload.role == SQUAD_ROLE_LEADER:
-        _transfer_leadership(squad, existing.id)
+        _transfer_leadership(db, squad, existing.id)
     db.commit()
     updated = get_squad_model(db, squad.id)
     return _detail_read(db, updated, user) if updated is not None else None
@@ -401,10 +408,13 @@ def update_squad_member(
     if requested_role is not None and requested_role != member.role and not can_administer_squad(db, user, squad):
         raise SquadPermissionError("Only squad or fleet leadership can change command roles.")
     if data.get("role") == SQUAD_ROLE_LEADER:
-        _transfer_leadership(squad, member.id)
+        _transfer_leadership(db, squad, member.id)
         data.pop("role", None)
     elif member.role == SQUAD_ROLE_LEADER and data.get("role") in {SQUAD_ROLE_MEMBER, SQUAD_ROLE_OFFICER}:
         raise SquadValidationError("Transfer squad leadership before demoting the current leader.")
+    role = data.pop("role", None)
+    if role is not None:
+        assign_squad_role(db, member, role)
     for field, value in data.items():
         setattr(member, field, value)
     db.commit()

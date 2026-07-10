@@ -10,7 +10,7 @@ def update_profile(db: Session, user: User, payload: ProfileUpdate) -> User:
 
     Free-text fleet data remains available only for users who are not connected
     to the official fleet. Official fleet display is derived from the
-    single profile pointer to ``fleet_memberships``.
+    active normalized ``fleet_memberships`` relation.
     """
 
     user.display_name = payload.display_name

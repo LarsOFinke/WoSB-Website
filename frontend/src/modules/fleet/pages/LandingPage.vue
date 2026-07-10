@@ -1,14 +1,24 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import fleetIconUrl from '@/assets/rbf-fleet-icon.png'
 import AppIcon from '@/core/components/AppIcon.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
+import { getPublicOfficialFleet } from '@/modules/fleet/api/fleet'
 
 const { t } = useLocale()
 const { isAuthenticated } = useSession()
+const publicFleet = ref(null)
+
+onMounted(async () => {
+  try {
+    publicFleet.value = await getPublicOfficialFleet()
+  } catch {
+    publicFleet.value = null
+  }
+})
 
 const newcomerSteps = computed(() => [
   { number: '01', icon: 'compass', title: t('home.newcomer.guideTitle'), text: t('home.newcomer.guideText'), meta: t('home.newcomer.guideMeta'), path: '/new-captain' },
@@ -66,6 +76,21 @@ function memberRoute(path) {
               </figure>
             </div>
           </article>
+
+          <section v-if="publicFleet?.leaders?.length" class="wire-section fleet-leadership-block">
+            <div class="workspace-section-heading compact-heading">
+              <div>
+                <p class="eyebrow">{{ publicFleet.name }}</p>
+                <h2>{{ t('fleets.leadership') }}</h2>
+              </div>
+            </div>
+            <div class="fleet-leadership-grid">
+              <article v-for="leader in publicFleet.leaders" :key="`${leader.display_name}-${leader.role}`" class="fleet-leader-card">
+                <span class="fleet-module-icon"><AppIcon name="fleet" :size="19" /></span>
+                <div><strong>{{ leader.display_name }}</strong><small>{{ t(`fleets.roles.${leader.role}`) }}</small></div>
+              </article>
+            </div>
+          </section>
 
           <section class="wire-section newcomer-path-panel">
             <div class="workspace-section-heading">

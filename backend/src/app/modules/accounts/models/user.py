@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.constants import OFFICIAL_FLEET_PROFILE_STATUSES, STAFF_ROLES, SiteRole
+from app.core.constants import OFFICIAL_FLEET_PROFILE_STATUSES, SiteRole
 from app.db.base import Base
 
 ROLE_USER = SiteRole.USER.value
@@ -13,14 +15,11 @@ ROLE_ADMIN = SiteRole.ADMIN.value
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = (
-        CheckConstraint("role in ('user', 'moderator', 'admin')", name="ck_users_role"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(String(32), nullable=False, default=ROLE_USER, index=True)
+    site_role_id: Mapped[int] = mapped_column(ForeignKey("site_roles.id", ondelete="RESTRICT"), nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
@@ -28,12 +27,23 @@ class User(Base):
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
+    site_role: Mapped["SiteRoleDefinition"] = relationship(
+        "SiteRoleDefinition", back_populates="users", lazy="joined"
+    )
     profile: Mapped["UserProfile | None"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="selectin"
     )
     fleet_memberships: Mapped[list["FleetMembership"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", foreign_keys="FleetMembership.user_id"
     )
+
+    @property
+    def role(self) -> str:
+        return self.site_role.code if self.site_role is not None else ROLE_USER
+
+    @property
+    def role_rank(self) -> int:
+        return int(self.site_role.rank if self.site_role is not None else 0)
 
     @property
     def display_name(self) -> str:
@@ -45,12 +55,21 @@ class User(Base):
 
     @property
     def primary_fleet_membership(self) -> "FleetMembership | None":
-        if self.profile is None:
+        candidates = [
+            membership
+            for membership in self.fleet_memberships
+            if membership.status in OFFICIAL_FLEET_PROFILE_STATUSES
+        ]
+        if not candidates:
             return None
-        membership = self.profile.primary_fleet_membership
-        if membership is None or membership.user_id != self.id or membership.status not in OFFICIAL_FLEET_PROFILE_STATUSES:
-            return None
-        return membership
+        return sorted(
+            candidates,
+            key=lambda membership: (
+                membership.status != "active",
+                -membership.role_rank,
+                membership.id,
+            ),
+        )[0]
 
     @property
     def fleet_id(self) -> int | None:
@@ -109,7 +128,11 @@ class User(Base):
 
     @property
     def can_moderate(self) -> bool:
-        return self.role in STAFF_ROLES
+        return bool(self.site_role and self.site_role.is_staff)
+
+    @property
+    def can_manage_system(self) -> bool:
+        return bool(self.site_role and self.site_role.can_manage_system)
 
     def _ensure_profile(self) -> "UserProfile":
         from app.modules.accounts.models.user_profile import UserProfile

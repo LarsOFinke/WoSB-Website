@@ -16,6 +16,7 @@ REQUIRED_SHIP_FIELDS = (
     "crew_capacity",
     "sailor_minimum",
     "weapon_layout",
+    "max_weapon_class",
     "displacement_tons",
 )
 
@@ -44,6 +45,9 @@ def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
                 errors.append(f"{name}: {field} must be positive")
         if int(row.get("durability") or 0) == 0 or int(row.get("hold_capacity") or 0) == 0:
             errors.append(f"{name}: catalog still contains zero-value prototype stats")
+        weapon_class = str(row.get("max_weapon_class") or "").strip()
+        if weapon_class not in {"light", "medium", "heavy"}:
+            errors.append(f"{name}: max_weapon_class must be light, medium or heavy")
         layout = str(row.get("weapon_layout") or "").strip()
         if not re.fullmatch(r"\d+\s*-\s*\d+\s*-\s*\d+(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?", layout, re.IGNORECASE):
             errors.append(f"{name}: invalid weapon_layout format {layout!r}")
@@ -140,6 +144,14 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
                 f"{name}: {option_kind} weapons must use exactly "
                 f"{', '.join(sorted(expected_slots))}"
             )
+        weapon_class = row.get("weapon_class")
+        if option_kind == "mortar":
+            if weapon_class not in (None, ""):
+                errors.append(f"{name}: mortar weapons must not use a regular weapon class")
+            if row.get("weapon_caliber_inches") in (None, ""):
+                errors.append(f"{name}: mortar caliber is required")
+        elif weapon_class not in {"light", "medium", "heavy"}:
+            errors.append(f"{name}: regular weapons require light, medium or heavy weapon_class")
     if errors:
         raise RuntimeError("Weapon seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
 

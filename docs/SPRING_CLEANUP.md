@@ -1,40 +1,35 @@
-# Spring Cleanup Pass
+# Spring cleanup — Release 0.17.0
 
-This pass followed the larger backend module refactor and focused on removing transitional clutter while keeping the application behavior unchanged.
+The cleanup pass removes transitional data and code left by the prototype releases while preserving user-created content.
 
-## Backend cleanup
+## Removed from deployment seeds
 
-- Moved FastAPI app creation from `app/__init__.py` into `app/core/app_factory.py`.
-- Kept `app/__init__.py` as a tiny package-level export only.
-- Moved route implementations out of `routes/__init__.py` into `routes/router.py`.
-- Removed global compatibility aggregate packages:
-  - `app/models`
-  - `app/schemas`
-  - `app/services`
-- Removed empty placeholder subpackages from `modules/content`.
-- Removed old schema aggregator modules such as `schemas/auth.py`, `schemas/build.py`, `schemas/fleet.py` and similar re-export-only files.
-- Centralized duplicated schema constants into module-level `schemas/constants.py` files.
-- Kept each concrete backend class in exactly one file.
+- generic demo Builds;
+- fake forum discussions;
+- generated fleet events;
+- example group-search listings;
+- demo SVG uploads and attachment records.
 
-## Storage cleanup
+Fresh installations receive only required catalogs, the official fleet, the administrator account, curated progression templates/guides and the New Captain roadmap.
 
-- Root-level `storage/` remains removed.
-- The repository contains only `backend/storage/uploads/demo` for demo upload assets.
-- Runtime upload storage remains configured only through `UPLOAD_DIR`.
+Upgraded installations remove historic sample records only while their original seed marker still matches. Staff-edited guides or renamed/rewritten content are kept.
+
+## Authorization cleanup
+
+- role strings moved to normalized role catalogs;
+- authority checks use ranks/capabilities rather than scattered string comparisons;
+- moderators cannot deactivate, demote or otherwise modify administrators;
+- peer administrators cannot take over one another through the dashboard;
+- Fleet Admiral and Fleet Lieutenant leadership is derived from active normalized memberships.
+
+## Data cleanup
+
+- registration and fleet application data are separate;
+- the duplicate profile-to-primary-membership pointer is removed;
+- preferred ships are child rows rather than comma-separated storage;
+- ship weapon layouts and option slot lists are normalized;
+- obsolete derived weapon eligibility rows are not persisted.
 
 ## Validation
 
-Run the standard checks after structural changes:
-
-```bash
-cd frontend
-npm run check:locales
-npm run build
-npm audit --omit=dev
-find src -name '*.js' -print0 | xargs -0 -n1 node --check
-
-cd ..
-python -m compileall -q backend/src
-```
-
-For backend smoke tests, use a valid temporary `backend/.env` and reset a local demo DB before calling API routes.
+The release validator covers backend permissions, fresh and upgraded migrations, production seeding, weapon eligibility, frontend inventory behavior, locale completeness, Vite production build, Compose syntax and first-run simulation.

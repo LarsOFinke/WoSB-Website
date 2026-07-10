@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -45,6 +45,7 @@ class Build(Base):
     build_type: Mapped[str] = mapped_column(String(32), nullable=False, default="balanced", index=True)
     ship_id: Mapped[int] = mapped_column(ForeignKey("ships.id"), nullable=False, index=True)
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    is_official_template: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
 
     sailors: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     soldiers: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

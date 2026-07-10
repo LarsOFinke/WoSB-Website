@@ -4,7 +4,7 @@
 
 The public root route (`/`) now opens the official fleet portal instead of a generic marketing home page. The previous `/home` route redirects to `/`.
 
-The fleet portal remains public and contains the official fleet overview plus a direct application entry point. Visitors who are not signed in can start the application flow through registration with the official fleet application already selected.
+The fleet portal remains public and contains the official fleet overview. Registration creates only a portal-account request. After approval and login, a user can submit a separate fleet application from the fleet page.
 
 ## Group search signups
 

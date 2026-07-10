@@ -44,10 +44,11 @@ def post_build(
 
 @router.get("/options", response_model=BuildOptionsCatalog)
 def get_build_options(
+    ship_id: int | None = Query(default=None, ge=1),
     db: Session = Depends(get_db),
     _: User = Depends(require_user),
 ) -> BuildOptionsCatalog:
-    return list_build_options(db)
+    return list_build_options(db, ship_id=ship_id)
 
 
 @router.get("/mine", response_model=list[BuildRead])

@@ -179,6 +179,18 @@ onMounted(loadFleetDetail)
                 <h2>{{ selectedFleet.name }}</h2>
                 <p>{{ t('fleets.manage.singleFleetHint') }}</p>
               </div>
+              <section class="fleet-leadership-block">
+                <div class="fleet-section-heading"><div><h3>{{ t('fleets.leadership') }}</h3></div></div>
+                <p v-if="leadershipMembers.length === 0" class="muted">{{ t('fleets.noLeaders') }}</p>
+                <div v-else class="fleet-leadership-grid">
+                  <article v-for="leader in leadershipMembers" :key="leader.id" class="fleet-leader-card">
+                    <div>
+                      <strong>{{ leader.user.display_name }}</strong>
+                      <small>{{ t(`fleets.roles.${leader.role}`) }}</small>
+                    </div>
+                  </article>
+                </div>
+              </section>
               <label class="input-panel embedded-field"><span>{{ t('fleets.description') }}</span><textarea v-model="form.description" rows="4" maxlength="2000" /></label>
               <label class="input-panel embedded-field"><span>{{ t('fleets.standingOrders') }}</span><textarea v-model="form.standing_orders" rows="5" maxlength="3000" /></label>
               <button class="form-button primary-action" type="submit" :disabled="saving">{{ saving ? t('common.saving') : t('fleets.manage.save') }}</button>

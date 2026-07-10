@@ -18,6 +18,7 @@ from app.modules.accounts.models.registration_request import (
 )
 from app.modules.accounts.models.user import ROLE_USER
 from app.modules.accounts.schemas.register_request import RegisterRequest
+from app.modules.permissions.services.role_service import assign_site_role
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
 
 logger = logging.getLogger("app.registration")
@@ -54,16 +55,6 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
         username=username,
         password_hash=hash_password(payload.password),
         display_name=payload.display_name.strip() or username,
-        # Legacy fleet columns remain nullable for historical requests, but new
-        # registrations can no longer create or request a membership.
-        external_fleet_name=None,
-        fleet_id=None,
-        wants_fleet_membership=False,
-        fleet_application_note=None,
-        fleet_availability=None,
-        fleet_preferred_ships=None,
-        fleet_timezone=None,
-        fleet_discord_handle=None,
         status=REGISTRATION_PENDING,
     )
     db.add(request)
@@ -100,10 +91,10 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
     user = User(
         username=request.username,
         password_hash=request.password_hash,
-        role=ROLE_USER,
         is_active=True,
         profile=UserProfile(display_name=request.display_name),
     )
+    assign_site_role(db, user, ROLE_USER)
     db.add(user)
     db.flush()
 

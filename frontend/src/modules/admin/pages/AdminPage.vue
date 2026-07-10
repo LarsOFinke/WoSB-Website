@@ -22,6 +22,7 @@ import {
   listUsers,
   rejectRegistrationRequest,
   requestSystemUpdate,
+  updateUser,
 } from '@/modules/admin/api/admin'
 import { closeGroup, listGroups } from '@/modules/groups/api/groups'
 import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
@@ -367,6 +368,31 @@ async function submitModerator() {
   }
 }
 
+
+async function changeUserRole(row, event) {
+  userError.value = ''
+  try {
+    await updateUser(row.id, { role: event.target.value })
+    await loadUsers()
+  } catch (err) {
+    userError.value = err.message || t('admin.users.loadError')
+  }
+}
+
+async function toggleUserActive(row) {
+  userError.value = ''
+  try {
+    await updateUser(row.id, { is_active: !row.is_active })
+    await loadUsers()
+  } catch (err) {
+    userError.value = err.message || t('admin.users.loadError')
+  }
+}
+
+function canManageUser(row) {
+  return row.id !== user.value?.id && row.role !== 'admin'
+}
+
 watch(search, () => {
   window.clearTimeout(searchTimer)
   searchTimer = window.setTimeout(loadBuilds, 220)
@@ -626,7 +652,23 @@ onUnmounted(() => {
           <div class="admin-panel-heading"><div><h2>{{ t('admin.users.title') }}</h2><p>{{ t('admin.users.subtitle') }}</p></div><span class="summary-pill">{{ userCountLabel }}</span></div>
           <form class="moderator-form" @submit.prevent="submitModerator"><label class="input-panel embedded-field"><span>{{ t('auth.username') }}</span><input v-model="moderatorForm.username" required minlength="3" maxlength="80" /></label><label class="input-panel embedded-field"><span>{{ t('profile.displayName') }}</span><input v-model="moderatorForm.display_name" required maxlength="120" /></label><label class="input-panel embedded-field"><span>{{ t('auth.password') }}</span><input v-model="moderatorForm.password" type="password" required minlength="6" /></label><button class="form-button primary-action" type="submit">{{ t('admin.users.createModerator') }}</button></form>
           <p v-if="userLoading" class="muted table-state">{{ t('admin.users.loading') }}</p><p v-if="userError" class="error-text table-state">{{ userError }}</p><p v-if="moderatorSuccess" class="success-text table-state">{{ moderatorSuccess }}</p>
-          <div class="admin-user-list"><article v-for="row in users" :key="row.id" class="admin-user-row"><div><strong>{{ row.display_name }}</strong><span>{{ row.username }}</span></div><span class="summary-pill">{{ t(`roles.${row.role}`) }}</span></article></div>
+          <div class="admin-user-list">
+            <article v-for="row in users" :key="row.id" class="admin-user-row">
+              <div><strong>{{ row.display_name }}</strong><span>{{ row.username }}</span></div>
+              <span class="summary-pill">{{ t(`roles.${row.role}`) }}</span>
+              <span class="summary-pill">{{ row.is_active ? t('fleets.status.active') : t('fleets.status.inactive') }}</span>
+              <div v-if="canManageUser(row)" class="compact-actions">
+                <select :value="row.role" @change="changeUserRole(row, $event)">
+                  <option value="user">{{ t('roles.user') }}</option>
+                  <option value="moderator">{{ t('roles.moderator') }}</option>
+                </select>
+                <button class="small-action" type="button" @click="toggleUserActive(row)">
+                  {{ row.is_active ? t('fleets.status.inactive') : t('fleets.status.active') }}
+                </button>
+              </div>
+              <small v-else class="muted">{{ row.id === user?.id ? t('common.profile') : t(`roles.${row.role}`) }}</small>
+            </article>
+          </div>
         </section>
       </template>
     </div>

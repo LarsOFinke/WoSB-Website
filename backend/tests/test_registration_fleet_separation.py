@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.db.session import SessionLocal
 from app.modules.accounts.models.registration_request import RegistrationRequest
+from sqlalchemy import inspect
 from app.modules.accounts.models.user import ROLE_ADMIN, User
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.fleet.models.fleet import Fleet
@@ -79,9 +80,19 @@ def test_registration_and_fleet_application_are_separate_workflows() -> None:
         with SessionLocal() as db:
             request = db.get(RegistrationRequest, request_id)
             assert request is not None
-            assert request.fleet_id is None
-            assert request.wants_fleet_membership is False
-            assert request.fleet_application_note is None
+            registration_columns = {column["name"] for column in inspect(db.bind).get_columns("registration_requests")}
+            assert registration_columns.isdisjoint(
+                {
+                    "external_fleet_name",
+                    "fleet_id",
+                    "wants_fleet_membership",
+                    "fleet_application_note",
+                    "fleet_availability",
+                    "fleet_preferred_ships",
+                    "fleet_timezone",
+                    "fleet_discord_handle",
+                }
+            )
             assert db.query(FleetMembership).filter(FleetMembership.user_id == request.created_user_id).count() == 0
 
         _login(client, ADMIN_USERNAME, ADMIN_PASSWORD)

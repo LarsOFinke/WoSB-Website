@@ -7,11 +7,13 @@ _MODEL_MODULES = (
     "app.modules.accounts.models.registration_request",
     "app.modules.accounts.models.user",
     "app.modules.accounts.models.user_profile",
+    "app.modules.permissions.models.role",
     "app.modules.admin.models.app_log",
     "app.modules.builds.models.build",
     "app.modules.builds.models.build_item_category",
     "app.modules.builds.models.build_item_effect",
     "app.modules.builds.models.build_item_option",
+    "app.modules.builds.models.build_item_option_slot",
     "app.modules.builds.models.build_option",
     "app.modules.builds.models.build_slot",
     "app.modules.squads.models.squad",
@@ -30,6 +32,7 @@ _MODEL_MODULES = (
     "app.modules.guides.models.guide_build_reference",
     "app.modules.onboarding.models.newcomer_guide",
     "app.modules.ships.models.ship",
+    "app.modules.ships.models.weapon_mount",
 )
 
 

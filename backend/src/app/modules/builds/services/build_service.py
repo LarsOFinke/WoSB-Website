@@ -8,6 +8,7 @@ from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.services.weapon_compatibility import is_weapon_compatible
 from app.modules.builds.models.build import WEAPON_SLOT_TYPE_BY_ARC
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES, WEAPON_ARC_KEYS
@@ -232,6 +233,11 @@ def _validate_weapon_loadout(
             allowed_slots = option.allowed_slots
             if slot_type not in allowed_slots:
                 raise BuildValidationError(f"{label}: '{slot.item}' cannot be mounted in this slot type.")
+            mount = ship._mount(slot_type)
+            if mount is None or not is_weapon_compatible(option, mount):
+                raise BuildValidationError(
+                    f"{label}: '{slot.item}' is not compatible with this ship's mount profile."
+                )
             if slot_type == "weapon_mortar":
                 max_caliber = ship.max_mortar_caliber_inches
                 if option.option_kind != "mortar":

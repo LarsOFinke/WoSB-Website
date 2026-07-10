@@ -58,7 +58,7 @@ For production, use PostgreSQL plus Alembic migrations before real user data.
 
 ## Uploads
 
-The upload directory comes from `UPLOAD_DIR` in `backend/.env` and is served through `/uploads`. The repository keeps only one local demo upload tree at `backend/storage/uploads/demo`; do not create a second root-level `storage/uploads` tree. Current safety checks include file type allow-listing, empty-file blocking and size limits by media type from `backend/config/app.toml`.
+The upload directory comes from `UPLOAD_DIR` in `backend/.env` and is served through `/uploads`. Uploads are runtime data and are not tracked in Git. Current safety checks include file type allow-listing, empty-file blocking and size limits by media type from `backend/config/app.toml`.
 
 
 ## Admin Dashboard Update

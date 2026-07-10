@@ -220,3 +220,17 @@ officers can open squad management and create scoped calendar entries directly.
 The backend adds `GET /api/squads/mine` and exposes the current user's squad role in squad summaries.
 The endpoint remains session-protected and deliberately excludes inactive memberships and unrelated
 squads. No database migration or seed run is required for this release.
+
+## Release 0.17.0 — Permission hierarchy, 3NF catalog cleanup and production onboarding
+
+Site, fleet and squad roles now live in normalized definition tables with explicit authority ranks and
+capabilities. Moderators cannot deactivate or demote administrators, and active Fleet Admirals and
+Fleet Lieutenants are the single source for leadership displays on the landing page and in Fleet
+Management.
+
+The Build Designer now derives available weapons from normalized ship mounts, slot types and
+Light/Medium/Heavy weapon classes instead of serialized layouts or a persisted eligibility cache.
+Production seeding no longer creates fake Builds, groups, forum threads, calendar events or demo
+uploads. It creates only required catalogs plus curated progression Builds/guides for the New Captain
+path. Upgrade with `sudo ./update.sh --migrate --seed`; the PostgreSQL volume is retained and no
+reset is performed.

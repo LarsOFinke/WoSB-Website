@@ -1,157 +1,88 @@
-# Database Schema and Normalization
+# Database schema and 3NF review
 
-The schema is designed around 3NF for the current prototype scope: facts about users, profiles, fleets, memberships, build options, build effects, uploads, forum posts and guides are stored in their own tables instead of duplicating derived data across parent rows.
+Release 0.17.0 normalizes the authorization, fleet organization and Build Designer catalog relations that were still carrying duplicated codes or compound text values. The migration is additive/transitional where necessary and preserves existing primary keys and user-created content.
 
-## Tables
+## Authorization catalogs
+
+Site, fleet and squad roles are stored once in definition tables:
 
 ```text
-users
-user_profiles
-auth_sessions
-registration_requests
-app_logs
-ships
-builds
-build_item_categories
-build_item_options
-build_item_effects
-build_slots
+site_roles(id, code, label, rank, is_staff, can_manage_system)
+fleet_roles(id, code, label, rank, is_leadership, can_manage_fleet, can_manage_members)
+squad_roles(id, code, label, rank, can_manage_roster, can_manage_events)
+```
+
+Assignments reference those rows:
+
+```text
+users.site_role_id -> site_roles.id
+fleet_memberships.fleet_role_id -> fleet_roles.id
+squad_members.squad_role_id -> squad_roles.id
+```
+
+The role code, display label, authority rank and capabilities therefore have one source of truth. Compatibility properties still expose `user.role`, `membership.role` and `squad_member.role` to existing API schemas without persisting those values twice.
+
+## Account and fleet separation
+
+`users` stores authentication and account state only:
+
+```text
+users(id, username, password_hash, site_role_id, is_active, created_at, updated_at)
+```
+
+Public profile data remains in `user_profiles`. Official fleet membership is derived from `fleet_memberships`; the former `primary_fleet_membership_id` pointer has been removed. A registration request contains only account-approval data. Fleet application fields are no longer duplicated in `registration_requests`.
+
+The optional `user_profiles.external_fleet_name` field is free-text information for a user who is not connected to the official fleet. Once an official membership exists, the displayed fleet name, status and role are derived from the membership relation.
+
+## Fleet organization
+
+```text
 fleets
-fleet_memberships
-squads
-squad_members
-fleet_events
-groups
-group_members
-stored_files
-forum_threads
-forum_posts
-forum_post_attachments
-guides
-guide_attachments
-guide_build_references
+fleet_memberships(fleet_id, user_id, fleet_role_id, status, ...)
+fleet_membership_ship_preferences(fleet_membership_id, ship_name, sort_order)
+squads(fleet_id, ...)
+squad_members(squad_id, fleet_membership_id, squad_role_id, ...)
+fleet_events(squad_id nullable, ...)
 ```
 
-## 3NF-oriented changes in this pass
+Preferred ships are individual rows rather than a comma-separated column. Squad membership references an active fleet membership rather than repeating user and fleet facts.
 
-### User profile split
+## Build Designer catalog
 
-`users` now contains account/auth state only:
+The previous serialized ship layout and slot lists are normalized into:
 
 ```text
-id, username, password_hash, role, is_active, created_at, updated_at
+weapon_classes(id, code, label, rank)
+weapon_slot_types(id, code, label, sort_order)
+ship_weapon_mounts(ship_id, slot_type_id, capacity, max_weapon_class_id, max_caliber_inches)
+build_item_option_slot_types(option_id, slot_type_id)
+build_item_options(..., weapon_class_id, weapon_caliber_inches)
 ```
 
-Mutable public profile information moved to `user_profiles`:
+Weapon eligibility is calculated from the selected ship mount, allowed slot type and normalized Light/Medium/Heavy class. Mortars use their dedicated slot and caliber ceiling. A derived ship-to-option eligibility cache is intentionally not persisted, avoiding update anomalies when either a ship mount or weapon definition changes.
 
-```text
-user_id, display_name, external_fleet_name, primary_fleet_membership_id, preferred_focus, note
-```
+Build selections remain in `build_slots`, and option stat modifiers remain normalized in `build_item_effects`.
 
-Official fleet membership is not stored on `users`. It lives in `fleet_memberships`, which avoids redundant `fleet_id` / `fleet_name` pairs on the user account. The profile points to exactly one canonical membership through `primary_fleet_membership_id`; profile fleet name, role and status are derived from that row. Registration with a planned fleet creates the membership application and stores that pointer immediately. When fleet leadership accepts the application, the same membership row switches to `active`, so the profile changes automatically without a second free-text update.
+## Other normalized relationships
 
-### Fleet squad organization
+- Guide-to-Build links: `guide_build_references`
+- Guide/file links: `guide_attachments`
+- Forum/file links: `forum_post_attachments`
+- Squad calendar scope: nullable `fleet_events.squad_id`
+- New Captain Guide sections/resources: `newcomer_guide_blocks`, `newcomer_guide_resources`
 
-Permanent sub-units are normalized into two tables:
+## Integrity and migration policy
 
-```text
-squads(id, fleet_id, name, slug, description, focus, max_members, is_active, created_by_id, ...)
-squad_members(id, squad_id, fleet_membership_id, role, note, joined_at, ...)
-```
+Alembic revision `7e4c9b2a1f60` performs the 0.17.0 conversion. It backfills role definitions and foreign keys before removing legacy role-code columns, splits preferred ships into rows, converts ship weapon layouts into mount rows and removes obsolete registration fields.
 
-`squad_members` references the existing official `fleet_memberships` row rather than duplicating
-user, fleet or membership state. Its role is scoped to one squad (`member`, `officer`, `leader`) and
-does not alter the user's site role or fleet-wide role. A fleet event may reference an optional
-`squad_id`; `NULL` continues to mean a fleet-wide event, preserving all existing calendar rows.
-
-### Build effects split
-
-Build option modifiers are no longer stored as a JSON blob on `build_item_options`. They now live in `build_item_effects`:
-
-```text
-option_id, effect_key, effect_value
-```
-
-The API still returns `stat_effects` as a dictionary for frontend convenience, but the persisted data is normalized and queryable.
-
-### Guide Build references
-
-Guides link Builds through `guide_build_references` instead of copying Build names, ships or stats into the guide row:
-
-```text
-guide_build_references(guide_id, build_id, sort_order)
-```
-
-Inline markers such as `[[build:12|card]]` only control placement inside the guide body. The persisted source of truth is the join table, which keeps the schema normalized and lets Build data stay in the Build module.
-
-### File attachments
-
-Uploaded files are stored once in `stored_files`. Forum posts and guides reference them through join tables:
-
-```text
-forum_post_attachments(post_id, file_id, sort_order)
-guide_attachments(guide_id, file_id, sort_order)
-```
-
-This avoids duplicating file metadata in content tables.
-
-## Compatibility note
-
-SQLite development databases from older prototype versions may still contain unused legacy columns. `create_tables()` backfills `user_profiles` from old columns when present, but new databases created from the current metadata use the normalized table shape.
-
-For a clean schema during local development, run:
+The migration does **not** recreate PostgreSQL or its volume. Deployment uses:
 
 ```bash
-rbf-seed --reset
+sudo ./update.sh --migrate --seed
 ```
 
-## Integrity constraints added in the production-foundation pass
+`--migrate` applies the intended schema conversion. `--seed` synchronizes role/catalog definitions, official starter content and the New Captain progression path. It does not reset the database.
 
-Fresh schemas now include additional database-level checks for common application invariants:
+## Scope of the 3NF statement
 
-- `users.role` is constrained to `user`, `moderator` or `admin`.
-- `fleet_memberships.role` is constrained to member/admiral/lieutenant values.
-- `fleet_memberships.status` is constrained to pending/active/inactive values.
-- group status and ship rates are constrained to valid ranges.
-- fleet event `end_at` must not be before `start_at`.
-- squad member roles are constrained to member/officer/leader values and duplicate membership in
-  the same squad is prevented.
-- build crew counts, slot indexes and slot quantities are non-negative/positive where appropriate.
-
-These checks complement Pydantic/service validation. They are not a substitute for migrations; they make new clean schemas safer while the prototype still uses `create_all`.
-
-## 3NF review
-
-The current schema is 3NF-oriented for the prototype scope:
-
-- non-key facts about users are in `user_profiles`, not duplicated in `users`;
-- official fleet state is stored once in `fleet_memberships` and referenced by profile;
-- build option stat effects are individual rows, not serialized JSON;
-- Guide↔Build and content↔File relationships are join tables;
-- demo/catalog names are not copied into dependent content rows except where a historical snapshot is intentionally useful for user-generated text.
-
-The main remaining production task is adding a real migration layer so these constraints and future schema changes can be reviewed and applied safely.
-
-
-## Admin Dashboard Update
-
-- Registrations are now staged in `registration_requests` and must be approved by an admin before a user account is created.
-- Admins can approve/reject requests in the new access review view.
-- Application/request logs are persisted in `app_logs` and surfaced in the admin dashboard.
-- See `docs/ADMIN_DASHBOARD.md` for the flow and operational details.
-
-
-## Single Fleet Refactor
-
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
-
-
-## Group search scheduling and signups
-
-`groups` now stores an optional signup time window through `scheduled_start_at` and `scheduled_end_at`. The end time is optional, but when both values are present the database and API require `scheduled_end_at > scheduled_start_at`.
-
-`group_members` remains the signup table. A member row may reference either a ship directly or a saved build through `build_id`. When a build is linked, ship/rate values are derived from the build during signup validation. This keeps the signup workflow convenient without copying Build details into the group itself.
-
-## App logs
-
-`app_logs` stores request/application log rows for the Admin Dashboard. Request metadata includes direct client host, resolved client IP, forwarded IP, user-agent and query string. Console logging is disabled by default; the dashboard and database are the operational source for routine log inspection.
+The relations changed in this release satisfy the practical 3NF goals of the application: non-key facts depend on their table key, role/catalog facts are not copied into assignments, and multi-valued attributes use child/join tables. User-authored prose and deliberate historical snapshots remain text by design; they are not treated as relational catalog facts.

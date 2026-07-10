@@ -7,13 +7,12 @@ The backend is now organized around a modular feature structure instead of large
 ```text
 backend/
 ├── config/      non-secret repository configuration
-├── storage/     repository demo upload assets; runtime location comes from `UPLOAD_DIR`
 └── src/app/
     ├── api/     API router assembly and infrastructure endpoints
     ├── cli/     command-line entry points
     ├── core/    cross-cutting infrastructure
     ├── db/      SQLAlchemy engine/session and schema lifecycle
-    ├── seeds/   deterministic catalog/demo seed data
+    ├── seeds/   required catalogs and curated onboarding data
     └── modules/ feature modules
 ```
 
@@ -50,7 +49,7 @@ Current modules:
 | Module | Responsibility |
 | --- | --- |
 | `accounts` | Auth, registration approval flow, profiles and sessions |
-| `admin` | Admin dashboard, access review and log views |
+| `admin` | Admin dashboard, strict account hierarchy, access review and log views |
 | `builds` | Build designer, catalog options and stat calculation |
 | `calendar` | Fleet calendar events |
 | `content` | Shared inline embed parsing/rendering helpers |
@@ -59,14 +58,17 @@ Current modules:
 | `forum` | Threads, posts and forum attachments |
 | `groups` | Gruppensuche listings and signups |
 | `guides` | Guides, guide attachments and build references |
-| `ships` | Ship catalog endpoints and schemas |
+| `ships` | Ship catalog, normalized mount arcs and weapon compatibility |
+| `permissions` | Normalized site/fleet/squad role definitions and capabilities |
+| `squads` | Permanent fleet units, scoped roles and roster management |
+| `onboarding` | Editable New Captain roadmap |
 
 ## Authentication and access boundaries
 
 Route access is declared with shared dependencies from `app.core.dependencies`:
 
-- public: health/home, registration/login/session lookup, fleet portal reads, build catalog/details/options and ship catalog reads;
-- authenticated: profile, guides, groups, forum, fleet calendar reads, fleet applications/management, personal builds and build creation;
+- public: health, registration/login/session lookup and compact fleet portal reads;
+- authenticated: profile, ships, Builds, guides, groups, forum, calendar, squads, fleet applications and personal workspaces;
 - staff/admin: staff dashboard, registration approval, calendar mutation and privileged fleet operations.
 
 Frontend route metadata mirrors this policy, but FastAPI remains the security boundary. New private modules must use `require_user`, `require_staff` or `require_admin` before invoking their service layer.
@@ -120,7 +122,7 @@ Do not leak SQLAlchemy models directly to frontend code.
 Seed data now lives in top-level `app/seeds`, not inside `db`. This makes the responsibility clearer:
 
 - `db` owns engine/session/schema lifecycle.
-- `seeds` owns deterministic catalog and demo data.
+- `seeds` owns required catalogs, the official fleet and curated onboarding content. It does not create fake activity.
 
 ## Logging
 
@@ -164,6 +166,6 @@ Current prototype services commit internally for simplicity. Future production w
 
 ## Upload storage source of truth
 
-- Repository demo uploads live only under `backend/storage/uploads/demo`.
 - Runtime upload location is configured exclusively through `UPLOAD_DIR` in `backend/.env`.
-- Do not add a root-level `storage/` tree; `.gitignore` intentionally blocks it to avoid split upload sources.
+- Uploaded binaries are runtime data and are not committed to the repository.
+- Do not add repository storage trees; `.gitignore` intentionally blocks them to avoid split sources.

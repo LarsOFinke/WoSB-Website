@@ -1,85 +1,51 @@
-# Project Inventory
+# Project inventory — 0.17.0
 
-This document records the current state of the Royal Blackwater Fleet after the production-foundation pass. It is intended as the first stop for future maintainers before changing architecture.
+Royal Blackwater Fleet is a localized fleet/community hub for World of Sea Battle.
 
-## Product scope
+## Access boundary
 
-The application is a fleet/community hub for World of Sea Battle. It currently covers:
+Anonymous visitors can access only the landing page, compact public fleet page and authentication/registration routes. Builds, ships, guides, forum, calendar, groups, squads, the New Captain Guide, profiles and staff/fleet administration require a session.
 
-- Build Manager with ship/build option catalog, user-owned builds and guide references.
-- Guides with inline file embeds and inline build embeds.
-- Forum with inline file embeds.
-- Gruppensuche for temporary fleet activities.
-- Fleet calendar for staff-created events.
-- Fleet management with official membership applications, fleet-specific leadership roles and primary fleet profile synchronization.
-- Staff panel for moderation, content review, calendar management and operational shortcuts.
-- Public access limited to fleet portal, authentication/registration and build catalog/details; community workspaces require login.
-- Localized frontend for EN, DE, FR, ES, PT, RU and CN.
+## Product modules
 
-## Backend inventory
+- Build Designer with ship-specific weapon eligibility and official progression templates
+- Guides with file and Build references
+- Forum and persistent Q&A
+- Temporary group searches
+- Fleet and squad calendar
+- Official fleet membership and leadership management
+- Permanent squads with scoped roles and private appointments
+- Personal workspaces for Builds, groups and Squads
+- Editable New Captain progression roadmap
+- Staff dashboard, persistent logs and controlled server updates
 
-| Area | Main files | Responsibility |
+## Backend map
+
+| Area | Location | Responsibility |
 | --- | --- | --- |
-| App factory | `backend/src/app/__init__.py` | FastAPI construction, middleware, error handlers, static uploads, router registration |
-| API composition | `backend/src/app/api/router.py`, `backend/src/app/api/health.py` | Shared API router assembly and infrastructure endpoints |
-| Config | `backend/src/app/core/config.py`, `backend/config/app.toml` | Strict env + CFG loading |
-| Logging | `backend/src/app/core/logging.py`, `backend/src/app/core/middleware.py` | Central log config, DB request logs, request IDs |
-| Auth/session/profile | `backend/src/app/modules/accounts/*` | Login, sessions, registration approval inputs, profiles |
-| Admin | `backend/src/app/modules/admin/*` | Access review, DB log views, admin moderation APIs |
-| Fleets | `backend/src/app/modules/fleet/*` | Single official fleet, membership applications, member directory |
-| Builds | `backend/src/app/modules/builds/*` | Build persistence, option catalog, stat calculation, weapon validation |
-| Ships | `backend/src/app/modules/ships/*` | Ship catalog APIs and schemas |
-| Guides | `backend/src/app/modules/guides/*` | Guide CRUD, attachments, build references |
-| Forum | `backend/src/app/modules/forum/*` | Threads, posts, attachments |
-| Files | `backend/src/app/modules/files/*` | Upload validation, storage metadata, deletion |
-| Calendar | `backend/src/app/modules/calendar/*` | Fleet events and staff CRUD |
-| Gruppensuche | `backend/src/app/modules/groups/*` | Group search listings, signups and ownership |
-| Shared content embeds | `backend/src/app/modules/content/*` | Inline file/build token parsing helpers |
-| Database lifecycle | `backend/src/app/db/*` | SQLAlchemy session, create/reset and SQLite compatibility migrations |
-| Seeds | `backend/src/app/seeds/*` | Deterministic demo/catalog data |
+| App/runtime | `backend/src/app/core`, `backend/src/app/api` | FastAPI factory, middleware, health and router assembly |
+| Accounts | `backend/src/app/modules/accounts` | login, sessions, registration approval and profiles |
+| Permissions | `backend/src/app/modules/permissions` | normalized role catalogs, ranks and capability assignment |
+| Admin | `backend/src/app/modules/admin` | account hierarchy, review, logs and update control |
+| Fleet | `backend/src/app/modules/fleet` | official fleet, membership applications and leadership |
+| Squads | `backend/src/app/modules/squads` | permanent sub-units, scoped roster roles and workspace |
+| Calendar | `backend/src/app/modules/calendar` | fleet-wide and squad-scoped events |
+| Ships/Builds | `backend/src/app/modules/ships`, `backend/src/app/modules/builds` | catalog, mount compatibility, builds and stat calculation |
+| Content | `guides`, `forum`, `files`, `content` modules | authored content, references and uploads |
+| Groups | `backend/src/app/modules/groups` | temporary activity listings and signups |
+| Onboarding | `backend/src/app/modules/onboarding` | editable New Captain roadmap |
+| Migrations | `backend/migrations` | reviewed PostgreSQL/SQLite schema evolution |
+| Seeds | `backend/src/app/seeds` | required catalogs, official fleet and curated onboarding content |
 
-## Frontend inventory
+## Frontend map
 
-| Area | Main files | Responsibility |
-| --- | --- | --- |
-| App shell | `App.vue`, `core/components/AppNavbar.vue`, `AppTopbar.vue`, `AppSidebar.vue` | Topbar/sidebar layout and responsive navigation |
-| App shell state | `core/composables/useAppShell.js` | Sidebar collapse/open state and body classes |
-| Navigation model | `core/navigation/workspaceLinks.js` | Single source for left navigation ordering |
-| Localization | `locales/*`, `scripts/check-locales.mjs` | Runtime translations and strict coverage checks |
-| Feature modules | `modules/<domain>/{api,pages,routes.js}` | Domain-owned screens, lazy routes and thin HTTP adapters aligned with backend modules |
-| Shared API/content | `shared/api/*`, `shared/content/*` | Cross-domain HTTP, query and rich-content helpers |
-| Rendering | `core/components/RichTextRenderer.vue`, `AttachmentGallery.vue`, `LinkedBuildList.vue` | Inline media/build rendering |
-| Workspace UI | `core/components/PageHeader.vue`, `MetricCard.vue` | Shared professional page hierarchy for profile, fleet and staff areas |
-| Styles | `styles/main.css` | Current tokenized design system and responsive rules |
+- `frontend/src/core`: shell, auth state, navigation and shared UI
+- `frontend/src/modules`: feature pages and API clients
+- `frontend/src/locales`: EN, DE, FR, ES, PT, RU and CN dictionaries
+- `frontend/scripts`: environment, locale and Build Designer regression checks
 
-## Data model inventory
+The top navigation contains personal workspaces. The left sidebar contains application modules. Fleet Management is visible only to staff or active Fleet Admiral/Fleet Lieutenant memberships.
 
-The schema is centered around normalized entities:
+## Deployment data policy
 
-- `users` stores authentication and global role state only.
-- `user_profiles` stores mutable public profile data and the primary fleet membership pointer.
-- `fleets` and `fleet_memberships` hold official fleet membership state.
-- `ships`, `build_item_categories`, `build_item_options`, `build_item_effects`, `builds` and `build_slots` separate catalog data from user-created builds.
-- `guides`, `guide_attachments` and `guide_build_references` separate content, file references and build references.
-- `forum_threads`, `forum_posts` and `forum_post_attachments` separate threads, post bodies and uploaded files.
-- `stored_files` stores file metadata while the binary file stays in the single upload tree configured by `UPLOAD_DIR`; repository demo files live under `backend/storage/uploads/demo`.
-
-## Known intentional prototype constraints
-
-- SQLite is supported as the development/demo database. Production should use PostgreSQL and a migration tool before real users.
-- Sessions are database-backed cookie sessions. This is simple and adequate for the prototype, but production should review rotation, device management and rate limiting.
-- File storage is local disk. Production should move uploads to object storage or a shared volume.
-- Rich text embeds use token syntax (`[[file:id|size]]`, `[[build:id|layout]]`). This is deliberate KISS: it can later be replaced by a richer editor while keeping backend validation rules.
-
-
-## Single Fleet Refactor
-
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
-
-## Structure cleanup notes
-
-- Backend feature code now lives under `backend/src/app/modules/<domain>`. Root aggregate `models`, `schemas` and `services` packages were removed to keep module ownership explicit.
-- Frontend feature code mirrors those domains under `frontend/src/modules/<domain>`; the former global `pages` and `services` directories were removed.
-- Backend classes are one-class-per-file. Aggregation modules may only re-export related classes.
-- The only repository-local upload tree is `backend/storage/uploads`; root-level `storage/` was removed to avoid competing storage sources.
-- Seed data lives in top-level `backend/src/app/seeds`, separate from DB lifecycle code.
+Runtime state lives below `infrastructure/data/` and is never tracked by Git. Normal `./update.sh` runs rebuild API and gateway without touching PostgreSQL. Schema/catalog releases explicitly use migration/seed flags. No update command runs a database reset or removes the PostgreSQL volume.

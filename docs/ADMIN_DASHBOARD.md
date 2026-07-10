@@ -10,7 +10,7 @@ Public registration no longer creates an immediately usable `users` row. The flo
 2. The applicant cannot sign in yet because no user account exists.
 3. Admins review requests under **Admin → Access review**.
 4. Approval creates the real `users` and `user_profiles` rows.
-5. If fleet application was selected, a pending `fleet_memberships` row is created and linked through `user_profiles.primary_fleet_membership_id`.
+5. Fleet membership is requested separately after approval and login.
 6. Rejection marks the request as `rejected` and does not create a user.
 
 This keeps account state simple: an accepted registration is a user; a pending registration is not.
@@ -41,3 +41,8 @@ The dashboard exposes:
 - `GET /api/admin/logs`
 
 Logging persistence is configured in `backend/config/app.toml`. The DB handler is attached only to the app logger tree to avoid noisy dependency logs and SQL logging storms.
+
+
+## Account hierarchy
+
+Site roles are normalized in `site_roles`. Moderators cannot change, deactivate or demote administrators. Account mutation is rank-checked server-side; the frontend merely mirrors that policy.

@@ -471,11 +471,21 @@ async function saveBuild() {
   }
 }
 
+let optionRequestId = 0
 watch(
   () => form.ship_id,
-  () => {
+  async (shipId) => {
     setCrewToShipMinimum()
-    for (const arc of weaponArcFields) reconcileInventoryField(arc.fieldName)
+    if (!shipId) return
+    const requestId = ++optionRequestId
+    try {
+      const options = await getBuildOptions(Number(shipId))
+      if (requestId !== optionRequestId) return
+      optionCatalog.value = options
+      for (const arc of weaponArcFields) reconcileInventoryField(arc.fieldName)
+    } catch (err) {
+      if (requestId === optionRequestId) error.value = err.message || t('builds.create.loadError')
+    }
   },
 )
 
@@ -501,10 +511,10 @@ onMounted(async () => {
   loading.value = true
   error.value = ''
   try {
-    const [shipRows, options] = await Promise.all([listShips(), getBuildOptions()])
+    const shipRows = await listShips()
     ships.value = sortShipsForDropdown(shipRows)
-    optionCatalog.value = options
     form.ship_id = ships.value[0]?.id || ''
+    optionCatalog.value = await getBuildOptions(form.ship_id || null)
     resetSlots()
     setCrewToShipMinimum()
   } catch (err) {

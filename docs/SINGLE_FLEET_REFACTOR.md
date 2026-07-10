@@ -2,48 +2,20 @@
 
 ## Ziel
 
-Die Flottenlogik wurde von mehreren geplanten Flotten auf genau eine offizielle Flotte, die **Royal Blackwater Fleet**, umgestellt. Dadurch wird die Produktlogik einfacher: Nutzer bewerben sich nicht mehr bei einer von zehn Flotten, sondern für eine zentrale Flotte. Aufgaben wie Handel, Port-Battles, Training oder Logistik werden innerhalb dieser Flotte über Einteilungen, Rollen, Kalender und Gruppensuche organisiert.
+Die Anwendung verwaltet genau eine offizielle Flotte, die **Royal Blackwater Fleet**. Aktivitäten werden innerhalb dieser Flotte über Rollen, Squads, Kalender und Gruppensuche organisiert.
 
 ## Datenmodell
 
-Die Tabelle `fleets` bleibt erhalten, enthält im frischen Seed aber nur noch den Singleton `royal-blackwater-fleet`. Dadurch bleiben bestehende APIs und spätere Erweiterbarkeit erhalten, ohne im UI mehrere Flotten vorzutäuschen.
+`fleet_memberships` ist die zentrale Quelle für die offizielle Flottenzugehörigkeit. Pro Nutzer ist eine Membership vorgesehen. Das Profil speichert keinen zusätzlichen Membership-Zeiger; Status, Flottenname und Rolle werden aus der Membership abgeleitet.
 
-`fleet_memberships` ist die zentrale Quelle für offizielle Flottenzugehörigkeit. Pro Nutzer ist nur eine Membership vorgesehen. Das Profil verweist weiterhin über `user_profiles.primary_fleet_membership_id` auf diese Membership, sodass Status, Rolle, Flottenname und Verzeichnisdaten nicht kopiert werden.
+Flottenrollen stehen normalisiert in `fleet_roles`. `fleet_memberships.fleet_role_id` verweist darauf. Bevorzugte Schiffe werden als einzelne Zeilen in `fleet_membership_ship_preferences` gespeichert.
 
-Erweiterte Verzeichnisfelder auf `fleet_memberships`:
+## Registrierung und Bewerbung
 
-- `assignment`
-- `availability`
-- `preferred_ships`
-- `timezone`
-- `discord_handle`
-- `admin_note`
+Die Registrierung erzeugt ausschließlich einen prüfbaren Portal-Account-Antrag. Nach Admin-Freigabe und Login kann der Nutzer separat eine Flottenbewerbung absenden. Dadurch werden Accountfreigabe und Flottenaufnahme nicht vermischt.
 
-## Registrierung
+## Verwaltung und Leitung
 
-Die Registrierung erzeugt weiterhin zuerst eine Admin-Freigabe in `registration_requests`. Nutzer können dabei optional die Bewerbung zur offiziellen Flotte aktivieren. Nach Admin-Freigabe wird daraus automatisch:
+Administratoren, Moderatoren sowie aktive Fleet Admirals und Fleet Lieutenants können die Flotte verwalten. Die aktive Leitung wird aus den normalisierten Membership-Rollen abgeleitet und auf Landing-Page, öffentlicher Flottenseite und im Fleet Management einheitlich angezeigt.
 
-1. ein aktiver User,
-2. ein UserProfile,
-3. bei aktivierter Flottenbewerbung eine pending `fleet_membership`,
-4. die zentrale Profil-Verknüpfung auf diese Membership.
-
-## Verwaltung
-
-`/fleets` ist jetzt die Flottenverwaltung für die zentrale Flotte. `/fleets/manage` bleibt als Redirect aus älteren Builds erhalten. Die Ansicht enthält:
-
-- Flottenprofil / Leitlinien,
-- Bewerbungen,
-- Mitgliederverwaltung,
-- erweitertes Mitgliederverzeichnis.
-
-Admins können die Flotte immer verwalten. Flottenadmiräle und Flottenlieutenants können sie verwalten, wenn ihre Membership aktiv ist.
-
-## Lokaler Reset
-
-Für ein sauberes Schema nach diesem Refactor:
-
-```bash
-cd backend
-rbf-seed --reset
-```
+Squads referenzieren aktive Fleet Memberships und vergeben nur squadbezogene Rollen; sie verändern keine globale Flotten- oder Site-Rolle.

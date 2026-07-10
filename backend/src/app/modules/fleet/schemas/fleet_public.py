@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FleetPublicLeaderRead(BaseModel):
@@ -16,4 +16,4 @@ class FleetPublicRead(BaseModel):
     description: str | None = None
     standing_orders: str | None = None
     active_members_count: int = 0
-    leaders: list[FleetPublicLeaderRead] = []
+    leaders: list[FleetPublicLeaderRead] = Field(default_factory=list)

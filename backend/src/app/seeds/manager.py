@@ -12,34 +12,28 @@ from app.seeds.build_catalog_quality import (
 )
 from app.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.seeds.consumables import CONSUMABLE_OPTIONS
-from app.seeds.demo_builds import DEMO_BUILD_DATA
-from app.seeds.demo_groups import DEMO_GROUP_DATA
-from app.seeds.demo_fleet_events import demo_fleet_event_data
-from app.seeds.demo_content import seed_demo_content
 from app.seeds.fleets import FLEET_SEED_DATA, LEGACY_FLEET_SLUGS
 from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
+from app.seeds.legacy_demo_cleanup import cleanup_legacy_demo_content
 from app.seeds.newcomer_guide import seed_newcomer_guide
+from app.seeds.starter_content import seed_starter_content
+from app.seeds.weapon_mounts import WEAPON_CLASS_DATA, WEAPON_SLOT_TYPE_DATA, parse_weapon_layout
 from app.seeds.sails import SAIL_OPTIONS
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.special_crew import SPECIAL_CREW_OPTIONS
 from app.seeds.upgrades import LEGACY_UPGRADE_NAME_ALIASES, UPGRADE_OPTIONS
 from app.seeds.users import seed_admin_user
 from app.seeds.weapons import WEAPON_OPTIONS
-from app.modules.accounts.models.user import User
-from app.modules.builds.models.build import Build
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
 from app.modules.builds.models.build_slot import BuildSlot
-from app.modules.calendar.models.fleet_event import FleetEvent
 from app.modules.fleet.models.fleet import Fleet
-from app.modules.groups.models.group import Group
 from app.modules.ships.models.ship import Ship
-from app.modules.builds.schemas.build_create import BuildCreate
-from app.modules.builds.services.build_service import BuildValidationError, create_build
-from app.modules.groups.schemas.group_create import GroupCreate
-from app.modules.groups.services.group_service import create_group
+from app.modules.ships.models.weapon_mount import ShipWeaponMount, WeaponClassDefinition, WeaponSlotType
+from app.modules.permissions.services.role_service import ensure_role_catalog
 
 BUILD_OPTION_SEED_GROUPS = (
     SAIL_OPTIONS,
@@ -62,15 +56,19 @@ class SeedManager:
         self.db = db
 
     def run(self) -> None:
+        self.seed_role_catalog()
         self.seed_users()
         self.seed_fleets()
+        self.seed_weapon_slot_types()
         self.seed_ships()
         self.seed_build_options()
-        self.seed_demo_builds()
-        self.seed_demo_groups()
-        self.seed_demo_fleet_events()
-        self.seed_demo_content()
+        self.cleanup_legacy_demo_content()
+        self.seed_starter_content()
         self.seed_newcomer_guide()
+
+    def seed_role_catalog(self) -> None:
+        ensure_role_catalog(self.db)
+        self.db.commit()
 
     def seed_users(self) -> None:
         seed_admin_user(self.db)
@@ -93,18 +91,68 @@ class SeedManager:
                 fleet.is_active = False
         self.db.commit()
 
+    def seed_weapon_slot_types(self) -> None:
+        for row in WEAPON_CLASS_DATA:
+            existing = self.db.scalar(select(WeaponClassDefinition).where(WeaponClassDefinition.code == row["code"]))
+            if existing is None:
+                self.db.add(WeaponClassDefinition(**row))
+            else:
+                for field_name, value in row.items():
+                    setattr(existing, field_name, value)
+        for row in WEAPON_SLOT_TYPE_DATA:
+            existing = self.db.scalar(select(WeaponSlotType).where(WeaponSlotType.code == row["code"]))
+            if existing is None:
+                self.db.add(WeaponSlotType(**row))
+            else:
+                for field_name, value in row.items():
+                    setattr(existing, field_name, value)
+        self.db.commit()
+
     def seed_ships(self) -> None:
         validate_ship_seed_data(SHIP_SEED_DATA)
+        slot_types = {row.code: row for row in self.db.scalars(select(WeaponSlotType)).all()}
+        weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
         for ship_data in SHIP_SEED_DATA:
-            existing = self.db.scalar(select(Ship).where(Ship.name == ship_data["name"]))
+            payload = dict(ship_data)
+            layout = str(payload.pop("weapon_layout", ""))
+            max_weapon_class = payload.pop("max_weapon_class", None)
+            existing = self.db.scalar(select(Ship).where(Ship.name == payload["name"]))
             if existing is None:
-                self.db.add(Ship(**ship_data))
-                continue
-            for field_name, value in ship_data.items():
-                setattr(existing, field_name, value)
+                existing = Ship(**payload)
+                self.db.add(existing)
+                self.db.flush()
+            else:
+                for field_name, value in payload.items():
+                    setattr(existing, field_name, value)
+            mounts = {mount.slot_type.code: mount for mount in existing.weapon_mounts}
+            active_codes: set[str] = set()
+            for mount_data in parse_weapon_layout(
+                layout,
+                rate=int(payload["rate"]),
+                max_weapon_class=str(max_weapon_class) if max_weapon_class else None,
+            ):
+                code = str(mount_data.pop("slot_type"))
+                class_code = mount_data.pop("max_weapon_class", None)
+                active_codes.add(code)
+                mount = mounts.get(code)
+                values = {
+                    **mount_data,
+                    "slot_type_id": slot_types[code].id,
+                    "max_weapon_class_id": weapon_classes[str(class_code)].id if class_code else None,
+                }
+                if mount is None:
+                    existing.weapon_mounts.append(ShipWeaponMount(**values))
+                else:
+                    for field_name, value in values.items():
+                        setattr(mount, field_name, value)
+            for code, mount in mounts.items():
+                if code not in active_codes:
+                    existing.weapon_mounts.remove(mount)
         self.db.commit()
 
     def seed_build_options(self) -> None:
+        if not self.db.scalar(select(WeaponSlotType.id).limit(1)):
+            self.seed_weapon_slot_types()
         validate_build_option_catalog(BUILD_ITEM_CATEGORIES, BUILD_OPTION_SEED_GROUPS)
         validate_upgrade_seed_data(UPGRADE_OPTIONS)
         validate_lantern_seed_data(LANTERN_OPTIONS)
@@ -131,6 +179,7 @@ class SeedManager:
                 category.is_active = False
 
         self._migrate_legacy_upgrade_names(categories["upgrade"])
+        weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
 
         active_pairs: set[tuple[str, str]] = set()
         for option_group in BUILD_OPTION_SEED_GROUPS:
@@ -152,7 +201,11 @@ class SeedManager:
                     "source": option_data.get("source"),
                     "notes": option_data.get("notes"),
                     "option_kind": option_data.get("option_kind"),
-                    "allowed_slot_types": option_data.get("allowed_slot_types"),
+                    "weapon_class_id": (
+                        weapon_classes[str(option_data["weapon_class"])].id
+                        if option_data.get("weapon_class")
+                        else None
+                    ),
                     "weapon_caliber_inches": option_data.get("weapon_caliber_inches"),
                     "sort_order": sort_order * 10,
                     "is_active": option_data.get("is_active", True),
@@ -165,6 +218,7 @@ class SeedManager:
                     for field_name, value in payload.items():
                         setattr(existing, field_name, value)
                 self._sync_option_effects(existing, raw_effects if isinstance(raw_effects, dict) else {})
+                self._sync_option_slot_types(existing, str(option_data.get("allowed_slot_types") or ""))
 
         # Existing local DBs can contain old placeholder rows. Keep them for
         # historical builds, but hide them from dropdowns and validation.
@@ -175,6 +229,27 @@ class SeedManager:
 
         self.db.commit()
 
+
+    def _sync_option_slot_types(self, option: BuildItemOption, raw_codes: str) -> None:
+        codes = {code.strip() for code in raw_codes.split(",") if code.strip()}
+        slot_types = {row.code: row for row in self.db.scalars(select(WeaponSlotType)).all()}
+        unknown = codes.difference(slot_types)
+        if unknown:
+            raise ValueError(f"Unknown weapon slot types for {option.name}: {sorted(unknown)}")
+        current = {link.slot_type.code: link for link in option.slot_type_links}
+        for code in codes:
+            if code not in current:
+                option.slot_type_links.append(BuildItemOptionSlotType(slot_type_id=slot_types[code].id))
+        for code, link in list(current.items()):
+            if code not in codes:
+                option.slot_type_links.remove(link)
+
+
+    def cleanup_legacy_demo_content(self) -> None:
+        cleanup_legacy_demo_content(self.db)
+
+    def seed_starter_content(self) -> None:
+        seed_starter_content(self.db)
 
     def _migrate_legacy_upgrade_names(self, category: BuildItemCategory) -> None:
         """Preserve saved builds while moving renamed upgrade options forward."""
@@ -225,54 +300,5 @@ class SeedManager:
             if key not in active_keys:
                 option.effects.remove(effect)
 
-    def seed_demo_builds(self) -> None:
-        existing_build = self.db.scalar(select(Build.id).limit(1))
-        if existing_build is not None:
-            return
-
-        ships = {ship.name: ship for ship in self.db.scalars(select(Ship)).all()}
-        demo_owner = self.db.scalar(select(User).where(User.role == "admin").order_by(User.id))
-        owner_id = demo_owner.id if demo_owner else None
-        for raw_build_data in DEMO_BUILD_DATA:
-            build_data = dict(raw_build_data)
-            ship_name = build_data.pop("ship_name")
-            ship = ships.get(ship_name)
-            if ship is None:
-                continue
-            try:
-                create_build(self.db, BuildCreate(ship_id=ship.id, **build_data), owner_id=owner_id)
-            except BuildValidationError as exc:
-                raise RuntimeError(f"Demo build seed failed for {build_data['build_name']}: {exc}") from exc
-
-    def seed_demo_groups(self) -> None:
-        existing_group = self.db.scalar(select(Group.id).limit(1))
-        if existing_group is not None:
-            return
-
-        demo_owner = self.db.scalar(select(User).where(User.role == "admin").order_by(User.id))
-        if demo_owner is None:
-            return
-
-        for group_data in DEMO_GROUP_DATA:
-            create_group(self.db, GroupCreate(**group_data), owner_id=demo_owner.id)
-
-
-    def seed_demo_content(self) -> None:
-        seed_demo_content(self.db)
-
     def seed_newcomer_guide(self) -> None:
         seed_newcomer_guide(self.db)
-
-
-    def seed_demo_fleet_events(self) -> None:
-        existing_event = self.db.scalar(select(FleetEvent.id).limit(1))
-        if existing_event is not None:
-            return
-
-        demo_owner = self.db.scalar(select(User).where(User.role == "admin").order_by(User.id))
-        if demo_owner is None:
-            return
-
-        for event_data in demo_fleet_event_data():
-            self.db.add(FleetEvent(owner_id=demo_owner.id, **event_data))
-        self.db.commit()

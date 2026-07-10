@@ -15,6 +15,7 @@ from app.modules.admin.schemas.moderator_create_response import ModeratorCreateR
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
 from app.modules.admin.schemas.registration_request_read import RegistrationRequestRead
 from app.modules.admin.schemas.system_update import SystemUpdateRequestResult, SystemUpdateStatus
+from app.modules.admin.schemas.user_administration import UserAdministrationUpdate
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.guides.schemas.guide_summary import GuideSummary
@@ -24,6 +25,7 @@ from app.modules.forum.services.forum_service import delete_thread, list_threads
 from app.modules.guides.services.guide_service import delete_guide, list_guides
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
+from app.modules.admin.services.user_administration_service import UserAdministrationError, update_user_account
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -208,6 +210,20 @@ def admin_list_users(
 ) -> list[UserRead]:
     users = db.scalars(select(User).order_by(User.created_at.desc(), User.id.desc())).all()
     return [UserRead.model_validate(user) for user in users]
+
+
+@router.put("/users/{user_id}", response_model=UserRead)
+def admin_update_user(
+    user_id: int,
+    payload: UserAdministrationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+) -> UserRead:
+    try:
+        user = update_user_account(db, actor=current_user, target_id=user_id, payload=payload)
+    except UserAdministrationError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    return UserRead.model_validate(user)
 
 
 @router.post("/moderators", response_model=ModeratorCreateResponse, status_code=status.HTTP_201_CREATED)

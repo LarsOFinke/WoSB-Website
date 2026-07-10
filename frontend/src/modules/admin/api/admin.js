@@ -1,4 +1,4 @@
-import { deleteRequest, get, post } from '@/shared/api/client'
+import { deleteRequest, get, post, put } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
 
@@ -60,4 +60,8 @@ export function listUsers() {
 
 export function createModerator(payload) {
   return post('/admin/moderators', payload)
+}
+
+export function updateUser(id, payload) {
+  return put(`/admin/users/${id}`, payload)
 }

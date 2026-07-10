@@ -5,17 +5,17 @@ The backend is organized around explicit infrastructure layers plus domain modul
 ```text
 backend/
 ├── config/              non-secret repository configuration
-├── storage/             repository demo uploads; runtime path is configured by UPLOAD_DIR
 └── src/app/
     ├── api/             API router composition and infrastructure endpoints
     ├── cli/             command-line entry points
     ├── core/            config, security, logging, middleware, errors, constants
     ├── db/              SQLAlchemy engine/session and schema lifecycle
-    ├── seeds/           deterministic catalog/demo seed data
+    ├── seeds/           required catalogs and curated onboarding data
     └── modules/
         ├── registry.py  explicit SQLAlchemy model registry
         ├── accounts/    auth, registration approval, profiles, sessions
-        ├── admin/       admin dashboard, access review, DB log views
+        ├── admin/       account hierarchy, dashboard, access review, DB logs
+        ├── permissions/ normalized role definitions and capabilities
         ├── builds/      build designer, catalog options, stat calculation
         ├── calendar/    fleet calendar events
         ├── squads/      permanent fleet sub-units, roles and roster
@@ -51,7 +51,7 @@ modules/<domain>/
 5. Keep `db` free of domain logic. It owns engine/session setup and schema lifecycle only.
 6. Keep `seeds` deterministic and importable without HTTP dependencies.
 7. Put repeated enum-like schema constants in a module-level `schemas/constants.py` file rather than duplicating them per schema.
-8. Runtime uploads must be configured through `UPLOAD_DIR`. The repository-local storage tree is only `backend/storage/uploads/demo` for demo assets.
+8. Runtime uploads must be configured through `UPLOAD_DIR` and must not be committed to the repository.
 
 ## Import style
 

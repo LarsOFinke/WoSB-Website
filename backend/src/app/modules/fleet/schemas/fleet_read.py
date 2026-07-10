@@ -19,6 +19,6 @@ class FleetRead(BaseModel):
     is_active: bool
     active_members_count: int = 0
     pending_members_count: int = 0
-    leaders: list[FleetMembershipRead] = []
+    leaders: list[FleetMembershipRead] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
