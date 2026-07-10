@@ -242,4 +242,12 @@ printf '\n[7/7] Secret/artifact guard\n'
     exit 1
   }
 
+# Runtime data directories are created and owned by setup.sh/container UIDs.
+# Keeping tracked marker files inside them makes git pull/reset fail after setup.
+if git ls-files 'infrastructure/data/**' | grep -q .; then
+  echo "[error] Runtime files under infrastructure/data must not be tracked by Git." >&2
+  git ls-files 'infrastructure/data/**' >&2
+  exit 1
+fi
+
 printf '\nAll validation checks passed.\n'

@@ -76,3 +76,10 @@ betroffenen Alpha-Version muss ein noch unbenutzter, fehlgeschlagen
 initialisierter Cluster einmal entfernt und anschließend das Setup erneut
 ausgeführt werden. Produktivdaten dürfen dabei nicht ohne Backup gelöscht
 werden.
+
+## Git and runtime data permissions
+
+`infrastructure/data/` is intentionally not tracked. The setup creates all required
+subdirectories and assigns them to the container service UIDs. Do not add `.gitkeep`,
+`.gitattributes`, or other tracked files below this path; otherwise normal non-root
+`git pull` and `git reset` operations can fail after deployment.

@@ -1,13 +1,3 @@
 .env
-data/*
-!data/backups/
-!data/backups/.gitkeep
-!data/certs/
-!data/certs/.gitkeep
-!data/nginx/
-!data/nginx/.gitkeep
-!data/uploads/
-!data/uploads/.gitkeep
-!data/uptime-kuma/
-!data/uptime-kuma/.gitkeep
+data/
 first-run-credentials.txt
