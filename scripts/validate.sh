@@ -73,17 +73,25 @@ printf '\n[5/7] Shell and Compose syntax\n'
 bash -n "$ROOT_DIR/setup.sh"
 bash -n "$ROOT_DIR/update.sh"
 
-# Entrypoints should remain executable for operators, while internal callers use
-# bash explicitly so CI and copied test trees do not depend on mode propagation.
-for executable_script in \
+# Entrypoints are invoked through bash throughout CI and internal delegation.
+# Validate their shell contract instead of relying on filesystem mode bits,
+# which may be lost in ZIPs, Windows worktrees or copied CI fixtures.
+for entrypoint_script in \
   "$ROOT_DIR/setup.sh" \
   "$ROOT_DIR/update.sh" \
-  "$ROOT_DIR/scripts/validate.sh"; do
-  [[ -x "$executable_script" ]] || {
-    echo "[error] Missing executable bit: $executable_script" >&2
+  "$ROOT_DIR/scripts/validate.sh" \
+  "$ROOT_DIR/infrastructure/setup.sh"; do
+  [[ -f "$entrypoint_script" ]] || {
+    echo "[error] Missing shell entrypoint: $entrypoint_script" >&2
+    exit 1
+  }
+  head -n 1 "$entrypoint_script" | grep -Eq '^#!/usr/bin/env bash$|^#!/bin/bash$' || {
+    echo "[error] Invalid bash shebang: $entrypoint_script" >&2
     exit 1
   }
 done
+
+grep -q 'run: bash ./scripts/validate.sh' "$ROOT_DIR/.github/workflows/ci.yml"
 while IFS= read -r file; do bash -n "$file"; done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" -type f -name '*.sh' -print | sort)
 python - "$ROOT_DIR/infrastructure/compose.yml" "$ROOT_DIR/infrastructure/scripts/lib/docker.sh" <<'PY'
 from pathlib import Path

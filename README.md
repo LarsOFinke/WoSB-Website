@@ -129,8 +129,10 @@ Main activity is communicated as 12:00–02:00 CET, with Port Battle focus betwe
 23:00 CET. Discord voice is mandatory for Port Battles and other competitive operations; it is
 optional but encouraged for normal fleet activity.
 
-## Release 0.13.4 — CI shell portability
 
-CI and copied first-run simulations invoke delegated shell scripts explicitly
-through `bash`. This removes the dependency on Unix executable-bit propagation
-inside temporary work trees while retaining executable operator entrypoints.
+## Release 0.13.5 — CI mode portability
+
+The validator no longer fails solely because a checkout lost Unix executable
+bits. CI and internal delegation invoke entrypoints through `bash`; validation
+checks file presence, Bash shebangs and syntax instead. Operator entrypoints are
+still shipped with executable permissions in the canonical repository.

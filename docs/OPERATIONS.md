@@ -91,3 +91,11 @@ Operator entrypoints (`setup.sh`, `update.sh`, `scripts/validate.sh`, and
 systemd units call scripts through `/usr/bin/env bash`, so copied validation
 trees and filesystems that do not preserve Unix mode bits do not fail with exit
 code 126.
+
+
+## Executable bits and portable validation
+
+Git should track the operator entrypoints as executable for convenient `./setup.sh`
+and `./update.sh` usage. The CI contract does not depend on that metadata: it runs
+entrypoints explicitly through Bash and validates their shebang and syntax. This
+keeps ZIP, Windows and copied-fixture workflows portable.
