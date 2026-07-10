@@ -93,7 +93,7 @@ done
 
 grep -q 'run: bash ./scripts/validate.sh' "$ROOT_DIR/.github/workflows/ci.yml"
 while IFS= read -r file; do bash -n "$file"; done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" -type f -name '*.sh' -print | sort)
-python - "$ROOT_DIR/infrastructure/compose.yml" "$ROOT_DIR/infrastructure/scripts/lib/docker.sh" <<'PY'
+python - "$ROOT_DIR/infrastructure/compose.yml" "$ROOT_DIR/infrastructure/scripts/lib/docker.sh" "$ROOT_DIR/infrastructure/scripts/services/update.sh" <<'PY'
 from pathlib import Path
 import sys
 try:
@@ -139,7 +139,68 @@ steps = [
 ]
 positions = [controller.index(step) for step in steps]
 assert positions == sorted(positions), positions
+
+update_controller = Path(sys.argv[3]).read_text()
+assert 'RUN_MIGRATIONS=false' in update_controller
+assert 'RUN_SEED=false' in update_controller
+assert '--migrate)' in update_controller
+assert '--seed)' in update_controller
+assert '--no-auto-migrate)' in update_controller
+assert 'backend/migrations/versions' in update_controller
+assert 'backup-data.sh' in update_controller
+assert 'backup-all.sh' in update_controller
+assert 'deploy_stack' not in update_controller
+assert 'deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED"' in update_controller
+assert update_controller.index('ensure_monitoring_services') < update_controller.index('deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED"')
+
+application_update = controller[controller.index('deploy_application_update()'):controller.index('deploy_stack()')]
+assert 'bw_compose up -d --no-deps api' in application_update
+assert 'bw_compose up -d --no-deps gateway' in application_update
+assert 'ensure_monitoring_services' in application_update
+assert 'bw_compose up -d postgres' in application_update
+assert 'bw_compose run --rm migrate' in application_update
+assert 'bw_compose run --rm seed' in application_update
 PY
+
+# Exercise the code-only deployment function with fake Compose hooks. The
+# default path must not invoke PostgreSQL, migrations or seeding.
+DB_SAFE_CALL_LOG="$TMP_DIR/db-safe-update.log"
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/docker.sh"
+  ensure_env_file() { :; }
+  read_env() { [[ "$1" == ENABLE_MONITORING ]] && printf 'false\n' || printf '\n'; }
+  bw_compose() { printf '%s\n' "$*" >> "$DB_SAFE_CALL_LOG"; }
+  bw_compose_with_profiles() { printf 'profile %s\n' "$*" >> "$DB_SAFE_CALL_LOG"; }
+  wait_for_postgres() { printf 'wait-postgres\n' >> "$DB_SAFE_CALL_LOG"; }
+  wait_for_api() { printf 'wait-api\n' >> "$DB_SAFE_CALL_LOG"; }
+  deploy_application_update false false >/dev/null
+)
+grep -q '^up -d --no-deps api$' "$DB_SAFE_CALL_LOG"
+grep -q '^up -d --no-deps gateway$' "$DB_SAFE_CALL_LOG"
+! grep -Eq 'postgres|migrate|seed|wait-postgres' "$DB_SAFE_CALL_LOG"
+
+DB_WRITE_CALL_LOG="$TMP_DIR/db-write-update.log"
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/docker.sh"
+  ensure_env_file() { :; }
+  read_env() {
+    case "$1" in
+      ENABLE_MONITORING) printf 'false\n' ;;
+      POSTGRES_USER) printf 'rbf\n' ;;
+      POSTGRES_DB) printf 'rbf\n' ;;
+      *) printf '\n' ;;
+    esac
+  }
+  bw_compose() { printf '%s\n' "$*" >> "$DB_WRITE_CALL_LOG"; }
+  bw_compose_with_profiles() { printf 'profile %s\n' "$*" >> "$DB_WRITE_CALL_LOG"; }
+  wait_for_postgres() { printf 'wait-postgres\n' >> "$DB_WRITE_CALL_LOG"; }
+  wait_for_api() { printf 'wait-api\n' >> "$DB_WRITE_CALL_LOG"; }
+  deploy_application_update true true >/dev/null
+)
+grep -q '^up -d postgres$' "$DB_WRITE_CALL_LOG"
+grep -q '^run --rm migrate$' "$DB_WRITE_CALL_LOG"
+grep -q '^run --rm seed$' "$DB_WRITE_CALL_LOG"
+grep -q '^wait-postgres$' "$DB_WRITE_CALL_LOG"
 
 for unit in rbf-hub.service rbf-hub-backup.service rbf-hub-backup.timer rbf-hub-cert-renew.service rbf-hub-cert-renew.timer rbf-hub-update.service rbf-hub-update.path; do
   [[ -f "$ROOT_DIR/infrastructure/systemd/$unit" ]]

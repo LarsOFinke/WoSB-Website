@@ -15,12 +15,38 @@ LOCK_FILE="$CONTROL_DIR/update.lock"
 REQUESTED_BY="manual"
 SKIP_PULL=false
 CREATE_BACKUP=true
+RUN_MIGRATIONS=false
+RUN_SEED=false
+AUTO_MIGRATIONS=true
+
+usage() {
+  cat <<'USAGE'
+Usage: sudo ./update.sh [options]
+
+Default behavior updates only the API and frontend gateway. PostgreSQL is not
+started, recreated, migrated or seeded unless a database action is explicitly
+required.
+
+Options:
+  --migrate            Run Alembic migrations intentionally.
+  --seed               Run the idempotent seed intentionally.
+  --no-auto-migrate    Do not auto-run migrations when new migration files are pulled.
+  --requested-by NAME  Record the requesting operator.
+  --skip-pull          Deploy the current checkout without fetching Git.
+  --no-backup          Skip the pre-deployment file/database backup.
+  -h, --help           Show this help.
+USAGE
+}
 
 while (($#)); do
   case "$1" in
     --requested-by) REQUESTED_BY="${2:-manual}"; shift 2 ;;
     --skip-pull) SKIP_PULL=true; shift ;;
     --no-backup) CREATE_BACKUP=false; shift ;;
+    --migrate) RUN_MIGRATIONS=true; shift ;;
+    --seed) RUN_SEED=true; shift ;;
+    --no-auto-migrate) AUTO_MIGRATIONS=false; shift ;;
+    -h|--help) usage; exit 0 ;;
     *) die "Unbekannte Update-Option: $1" ;;
   esac
 done
@@ -40,7 +66,7 @@ key = sys.argv[2]
 if path.is_file():
     try:
         value = json.loads(path.read_text(encoding="utf-8")).get(key, "")
-        print(value or "")
+        print(value if value is not None else "")
     except Exception:
         pass
 PY
@@ -125,6 +151,24 @@ git_as_owner() {
   fi
 }
 
+migration_files_changed() {
+  [[ -n "$COMMIT_BEFORE" && -n "$COMMIT_AFTER" && "$COMMIT_BEFORE" != "$COMMIT_AFTER" ]] || return 1
+  [[ -n "$(git_as_owner diff --name-only "$COMMIT_BEFORE..$COMMIT_AFTER" -- backend/migrations/versions 2>/dev/null)" ]]
+}
+
+database_action_summary() {
+  local actions=()
+  [[ "$RUN_MIGRATIONS" == true ]] && actions+=("Migrationen")
+  [[ "$RUN_SEED" == true ]] && actions+=("Seed")
+  if ((${#actions[@]} == 0)); then
+    printf 'keine; PostgreSQL bleibt unverändert'
+  else
+    local joined
+    joined="$(IFS=', '; echo "${actions[*]}")"
+    printf '%s' "$joined"
+  fi
+}
+
 log "Server-Update angefordert von: $REQUESTED_BY"
 
 if [[ -d "$REPO_ROOT/.git" ]]; then
@@ -141,21 +185,42 @@ if [[ -d "$REPO_ROOT/.git" ]]; then
     log "Git-Pull wurde per --skip-pull übersprungen."
   fi
   COMMIT_AFTER="$(git_as_owner rev-parse --short HEAD)"
+
+  if [[ "$AUTO_MIGRATIONS" == true && "$RUN_MIGRATIONS" == false ]] && migration_files_changed; then
+    RUN_MIGRATIONS=true
+    log "Neue Alembic-Migrationsdateien erkannt; Migrationen werden beabsichtigt ausgeführt."
+  fi
 else
-  warn "Kein .git-Verzeichnis gefunden; Quellcode-Update wird übersprungen."
+  warn "Kein .git-Verzeichnis gefunden; Quellcode-Update und automatische Migrationserkennung werden übersprungen."
 fi
+
+log "Datenbankaktionen: $(database_action_summary)."
 
 if [[ "$CREATE_BACKUP" == true ]]; then
-  log "Erstelle Sicherheitsbackup vor Deployment."
-  /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-all.sh"
+  if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
+    log "Erstelle Sicherheitsbackup inklusive PostgreSQL vor beabsichtigten Datenbankarbeiten."
+    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-all.sh"
+  else
+    log "Erstelle Datei-Backup; PostgreSQL wird für dieses Code-Update nicht angesprochen."
+    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+  fi
 fi
 
-status_write running "Images werden gebaut und Datenbankmigrationen ausgeführt." "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
+# Monitoring is independent from the application deployment. Bring an existing
+# stack back first, then refresh its gateway again after the image build.
+ensure_monitoring_services
+
+status_write running "API und Frontend werden gebaut. Datenbankaktionen: $(database_action_summary)." "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 bw_compose build --pull api gateway
-deploy_stack
+
+# Ensure the monitoring gateway now uses the freshly built NGINX image before
+# any optional database action can fail the deployment.
+ensure_monitoring_services
+
+deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED"
 /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 
 FINISHED_AT="$(now_iso)"
-status_write succeeded "Server-Update erfolgreich abgeschlossen." "$STARTED_AT" "$FINISHED_AT" "$COMMIT_BEFORE" "$COMMIT_AFTER"
+status_write succeeded "Server-Update erfolgreich abgeschlossen. Datenbankaktionen: $(database_action_summary)." "$STARTED_AT" "$FINISHED_AT" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 UPDATE_COMPLETED=true
 success "Server-Update erfolgreich abgeschlossen (${COMMIT_BEFORE:-unbekannt} → ${COMMIT_AFTER:-unbekannt})."

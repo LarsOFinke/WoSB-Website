@@ -170,3 +170,14 @@ Fleet Management is now shown only to administrators, moderators, active Fleet A
 ## Release 0.15.2 — Seed compatibility hotfix
 
 Fixes the `Fortified Ports` / `Reinforced Ports` demo-build mismatch and migrates legacy option references during idempotent seeding.
+
+## Release 0.15.3 — Database-safe updates and monitoring recovery
+
+Normal server updates now rebuild and recreate only the API and frontend gateway.
+PostgreSQL is not started, recreated, migrated, seeded or dumped during a normal
+code-only update. Changed Alembic migration files are detected after Git updates;
+operators can also request `--migrate` explicitly. Seeds run only with `--seed`.
+
+Uptime Kuma and its HTTPS monitoring gateway are ensured independently before
+optional database work. A migration or seed failure can therefore no longer skip
+the monitoring start step and leave port 8443 unavailable.

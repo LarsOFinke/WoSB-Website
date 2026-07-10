@@ -71,6 +71,56 @@ wait_for_api() {
   die "API wurde nicht rechtzeitig bereit. Logs: infrastructure/scripts/services/logs.sh api"
 }
 
+ensure_monitoring_services() {
+  ensure_env_file
+  if ! is_true "$(read_env ENABLE_MONITORING)"; then
+    log "Monitoring ist deaktiviert; Uptime Kuma wird nicht gestartet."
+    return 0
+  fi
+
+  log "Stelle Uptime Kuma und das HTTPS-Monitoring-Gateway sicher."
+  bw_compose_with_profiles up -d --no-deps uptime-kuma monitoring-gateway
+}
+
+deploy_application_update() {
+  local run_migrations="${1:-false}"
+  local run_seed="${2:-false}"
+
+  ensure_env_file
+
+  if [[ "$run_migrations" == true || "$run_seed" == true ]]; then
+    log "Stelle PostgreSQL für beabsichtigte Datenbankarbeiten sicher."
+    bw_compose up -d postgres
+    wait_for_postgres
+  else
+    log "Keine Datenbankarbeiten vorgesehen; PostgreSQL wird weder gestartet noch neu erstellt."
+  fi
+
+  if [[ "$run_migrations" == true ]]; then
+    log "Führe beabsichtigte Alembic-Migrationen aus."
+    bw_compose run --rm migrate
+  else
+    log "Alembic-Migrationen werden übersprungen."
+  fi
+
+  if [[ "$run_seed" == true ]]; then
+    log "Führe beabsichtigtes idempotentes Seed aus."
+    bw_compose run --rm seed
+  else
+    log "Seed wird übersprungen."
+  fi
+
+  log "Aktualisiere FastAPI ohne PostgreSQL-Abhängigkeiten neu zu starten."
+  bw_compose up -d --no-deps api
+  wait_for_api
+
+  log "Aktualisiere das Frontend-Gateway."
+  bw_compose up -d --no-deps gateway
+
+  ensure_monitoring_services
+  success "API, Frontend und optionale Monitoring-Dienste wurden aktualisiert."
+}
+
 deploy_stack() {
   ensure_env_file
   log "Starte PostgreSQL."
