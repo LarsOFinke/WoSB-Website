@@ -102,7 +102,7 @@ x509_extensions=v3_req
 prompt=no
 [req_distinguished_name]
 CN=${hostname}
-O=Royal Blackwater Vanguards
+O=Royal Blackwater Fleet
 [v3_req]
 keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth

@@ -4,13 +4,13 @@ The old manual systemd/SQLite deployment has been replaced by the integrated con
 Production uses PostgreSQL and Alembic; SQLite remains the local development default.
 
 ```bash
-git clone <RBV_REPOSITORY_URL> ~/repositories/royal-blackwater-vanguards
-cd ~/repositories/royal-blackwater-vanguards
+git clone <RBF_REPOSITORY_URL> ~/repositories/royal-blackwater-fleet
+cd ~/repositories/royal-blackwater-fleet
 sudo ./setup.sh \
   --profile full \
-  --domain royal-blackwater-vanguards.eu \
+  --domain royal-blackwater-fleet.eu \
   --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-vanguards.eu
+  --letsencrypt-email admin@royal-blackwater-fleet.eu
 ```
 
 For a LAN-only test or while DNS is being prepared:

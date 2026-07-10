@@ -9,6 +9,6 @@ const { t } = useLocale()
   <footer class="wire-section footer">
     <BrandLockup compact />
     <span class="footer-text">{{ t('footer.tagline') }}</span>
-    <span class="footer-meta">RBV · {{ new Date().getFullYear() }}</span>
+    <span class="footer-meta">RBF · {{ new Date().getFullYear() }}</span>
   </footer>
 </template>

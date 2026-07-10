@@ -4791,7 +4791,7 @@ textarea:focus-visible {
   }
 }
 
-/* Royal Blackwater Vanguards workspace refactor */
+/* Royal Blackwater Fleet workspace refactor */
 .workspace-page-header {
   position: relative;
   isolation: isolate;
@@ -5719,16 +5719,16 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 /* ========================================================================== */
-/* RBV UI iteration 1 — scalable identity, clearer navigation, better access  */
+/* RBF UI iteration 1 — scalable identity, clearer navigation, better access  */
 /* ========================================================================== */
 
 :root {
-  --rbv-gold: #f1b85b;
-  --rbv-gold-soft: rgba(241, 184, 91, 0.14);
-  --rbv-blue: #9fc9df;
-  --rbv-panel: rgba(8, 18, 29, 0.9);
-  --rbv-panel-soft: rgba(12, 25, 39, 0.74);
-  --rbv-line: rgba(221, 231, 244, 0.14);
+  --rbf-gold: #f1b85b;
+  --rbf-gold-soft: rgba(241, 184, 91, 0.14);
+  --rbf-blue: #9fc9df;
+  --rbf-panel: rgba(8, 18, 29, 0.9);
+  --rbf-panel-soft: rgba(12, 25, 39, 0.74);
+  --rbf-line: rgba(221, 231, 244, 0.14);
 }
 
 .sr-only {
@@ -5749,10 +5749,10 @@ body.sidebar-collapsed .sidebar-account-link::before {
   left: 0.6rem;
   z-index: 200;
   padding: 0.7rem 0.95rem;
-  border: 1px solid var(--rbv-gold);
+  border: 1px solid var(--rbf-gold);
   border-radius: 0.75rem;
   color: #08111b;
-  background: var(--rbv-gold);
+  background: var(--rbf-gold);
   font-weight: 900;
   text-decoration: none;
   transform: translateY(-150%);
@@ -5769,7 +5769,7 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 .app-topbar {
-  grid-template-columns: minmax(17.5rem, 22rem) minmax(18rem, 1fr) auto;
+  grid-template-columns: minmax(14.5rem, 18.5rem) minmax(18rem, 1fr) auto;
   padding: 0.58rem;
 }
 
@@ -6005,7 +6005,7 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 
 @media (max-width: 1480px) {
   .app-topbar {
-    grid-template-columns: minmax(15.5rem, 19rem) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(13.5rem, 16.5rem) minmax(0, 1fr) auto;
   }
 
   .brand-copy small {
@@ -6019,7 +6019,7 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 
 @media (max-width: 1260px) and (min-width: 1041px) {
   .app-topbar {
-    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(13rem, 15.5rem) minmax(0, 1fr) auto;
   }
 
   .topbar-link span {
@@ -6111,7 +6111,7 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 }
 
 /* ========================================================================== */
-/* RBV UI iteration 2 — visual hierarchy, tactile states and responsive polish */
+/* RBF UI iteration 2 — visual hierarchy, tactile states and responsive polish */
 /* ========================================================================== */
 
 body {
@@ -6149,7 +6149,7 @@ body {
 }
 
 .workspace-page-header::before {
-  content: "RBV";
+  content: "RBF";
   position: absolute;
   z-index: -1;
   right: clamp(0.8rem, 3vw, 2.6rem);
@@ -6303,5 +6303,231 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================================================== */
+/* Royal Blackwater Fleet — newcomer-first portal and localized operations UI */
+/* ========================================================================== */
+
+.fleet-identity-panel .workspace-section-heading {
+  align-items: flex-start;
+}
+
+.fleet-identity-extra {
+  margin-top: 0.85rem;
+  max-width: 66rem;
+  color: var(--muted-soft);
+  font-size: 0.92rem;
+}
+
+.newcomer-path-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.newcomer-path-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent-strong), transparent 86%);
+}
+
+.newcomer-path-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.newcomer-step-card {
+  position: relative;
+  min-width: 0;
+  min-height: 15rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
+  align-items: start;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 1.05rem;
+  color: var(--text);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
+    rgba(5, 14, 24, 0.5);
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.newcomer-step-card:hover,
+.newcomer-step-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(241, 184, 91, 0.42);
+  background-color: rgba(241, 184, 91, 0.055);
+}
+
+.newcomer-step-card.is-locked {
+  border-style: dashed;
+}
+
+.newcomer-step-number {
+  grid-column: 1;
+  color: var(--accent-strong);
+  font-size: 0.68rem;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+}
+
+.newcomer-step-card .fleet-module-icon {
+  grid-column: 2;
+  justify-self: end;
+}
+
+.newcomer-step-card > strong {
+  grid-column: 1 / -1;
+  font-size: 1rem;
+}
+
+.newcomer-step-card > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.58;
+}
+
+.newcomer-step-card > small {
+  grid-column: 1 / 3;
+  align-self: end;
+  color: var(--muted-soft);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.newcomer-step-arrow {
+  grid-column: 3;
+  align-self: end;
+  color: var(--accent-strong);
+}
+
+.fleet-learning-module-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fleet-learning-module-grid .fleet-module-card:first-child {
+  grid-column: span 2;
+  min-height: 9rem;
+}
+
+.fleet-module-access {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.28rem 0.5rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 999px;
+  color: var(--muted-soft);
+  background: rgba(3, 10, 18, 0.58);
+  font-size: 0.61rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.fleet-module-card.is-public .fleet-module-access {
+  border-color: rgba(241, 184, 91, 0.3);
+  color: var(--accent-strong);
+}
+
+.fleet-module-card.is-locked {
+  opacity: 0.88;
+}
+
+.fleet-operations-panel {
+  display: grid;
+  gap: 1rem;
+  border-color: rgba(241, 184, 91, 0.22);
+  background:
+    radial-gradient(circle at 100% 0, rgba(241, 184, 91, 0.1), transparent 17rem),
+    rgba(5, 14, 24, 0.6);
+}
+
+.fleet-rhythm-list {
+  display: grid;
+  gap: 0.62rem;
+  margin: 0;
+}
+
+.fleet-rhythm-list > div {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid rgba(213, 228, 240, 0.1);
+  border-radius: 0.82rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.fleet-rhythm-list dt {
+  color: var(--muted-soft);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.fleet-rhythm-list dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.fleet-policy-list {
+  display: grid;
+  gap: 0.68rem;
+}
+
+.fleet-policy-list p {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.58rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.52;
+}
+
+.fleet-policy-list .app-icon {
+  margin-top: 0.12rem;
+  color: var(--accent-strong);
+}
+
+@media (max-width: 1260px) {
+  .newcomer-path-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .newcomer-step-card {
+    min-height: 13rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .newcomer-path-grid,
+  .fleet-learning-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-learning-module-grid .fleet-module-card:first-child {
+    grid-column: auto;
+  }
+
+  .newcomer-step-card {
+    min-height: 0;
   }
 }

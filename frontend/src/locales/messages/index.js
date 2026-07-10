@@ -5,13 +5,14 @@ import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
 import { fleetCalendarMessages } from './fleetCalendar'
+import { fleetIdentityMessages } from './fleetIdentity'
 import { fleetManagementMessages } from './fleetManagement'
 import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup'
 import { localeCompletenessMessages } from './localeCompleteness'
 import { staffPanelMessages } from './staffPanel'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
-import { royalBlackwaterVanguardsMessages } from './royalBlackwaterVanguards'
+import { royalBlackwaterFleetMessages } from './royalBlackwaterFleet'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
@@ -19,13 +20,14 @@ const messageLayers = [
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,
-  royalBlackwaterVanguardsMessages,
+  royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,
   fleetManagementMessages,
   staffPanelMessages,
   adminDashboardMessages,
   finalNavigationAndGroupSignupMessages,
+  fleetIdentityMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

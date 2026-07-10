@@ -19,18 +19,18 @@ REQUESTED_TLS_MODE=""
 REQUESTED_LETSENCRYPT_EMAIL=""
 REQUESTED_LETSENCRYPT_STAGING=""
 ADMIN_USERNAME=admin
-ADMIN_DISPLAY_NAME="RBV Command"
+ADMIN_DISPLAY_NAME="RBF Command"
 
 usage() {
   cat <<'USAGE'
-Royal Blackwater Vanguards - Raspberry Pi First-Run Setup
+Royal Blackwater Fleet - Raspberry Pi First-Run Setup
 
 Usage:
   sudo ./infrastructure/setup.sh [options]
 
 Options:
   --profile core|full       core: app stack, full: app stack + Uptime Kuma (default)
-  --domain NAME             Public domain (default: royal-blackwater-vanguards.eu)
+  --domain NAME             Public domain (default: royal-blackwater-fleet.eu)
   --hostname NAME           Compatibility alias for --domain
   --ip ADDRESS              LAN address for certificate and startup summary
   --admin-username NAME     Initial administrator username (default: admin)
@@ -84,18 +84,20 @@ if [[ "$SKIP_HOST" == false && "$EUID" -ne 0 ]]; then
   [[ "$REGENERATE_SECRETS" == true ]] && sudo_args+=(--regenerate-secrets)
   exec sudo --preserve-env=DEBUG bash "$0" "${sudo_args[@]}"
 fi
-log "RBV First-Run Setup wird vorbereitet."
+log "RBF First-Run Setup wird vorbereitet."
 log "Profil: $PROFILE | Host-Provisioning: $([[ "$SKIP_HOST" == true ]] && echo aus || echo an)"
 
 migrate_legacy_runtime_names() {
   [[ -f "$ENV_FILE" ]] || return 0
-  [[ "$(read_env COMPOSE_PROJECT_NAME)" == blackwater-hub ]] || return 0
+  local legacy_project
+  legacy_project="$(read_env COMPOSE_PROJECT_NAME)"
+  [[ "$legacy_project" == rbv-hub || "$legacy_project" == blackwater-hub ]] || return 0
 
-  log "Migriere den früheren Docker-Projektnamen blackwater-hub auf rbv-hub."
+  log "Migriere den früheren Docker-Projektnamen ${legacy_project} auf rbf-hub."
   if command -v docker >/dev/null 2>&1 && compose_binary >/dev/null 2>&1; then
     bw_compose_with_profiles down --remove-orphans || warn "Der alte Stack konnte nicht vollständig gestoppt werden; Setup setzt die Migration fort."
   fi
-  set_env_value COMPOSE_PROJECT_NAME rbv-hub
+  set_env_value COMPOSE_PROJECT_NAME rbf-hub
 }
 
 if [[ "$SKIP_HOST" == false ]]; then
@@ -151,7 +153,7 @@ app_hostname="$(read_env APP_HOSTNAME)"
 cat <<SUMMARY
 
 ============================================================
- Royal Blackwater Vanguards ist eingerichtet
+ Royal Blackwater Fleet ist eingerichtet
 ============================================================
  Fleet Hub:       https://${app_hostname}
  LAN fallback:    https://${app_ip}

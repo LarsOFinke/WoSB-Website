@@ -2,8 +2,8 @@ export const appShellMessages = {
   en: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Fleet Operations Hub',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Fleet Operations Hub',
       workspaceNavigation: 'Workspace navigation',
       workspace: 'Workspace',
       modules: 'Modules',
@@ -27,8 +27,8 @@ export const appShellMessages = {
   de: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Flotten-Operations-Hub',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Flotten-Operations-Hub',
       workspaceNavigation: 'Arbeitsbereich-Navigation',
       workspace: 'Arbeitsbereich',
       modules: 'Module',
@@ -52,8 +52,8 @@ export const appShellMessages = {
   fr: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Centre des opérations de flotte',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Centre des opérations de flotte',
       workspaceNavigation: 'Navigation de l’espace de travail',
       workspace: 'Espace de travail',
       modules: 'Modules',
@@ -77,8 +77,8 @@ export const appShellMessages = {
   es: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Centro de operaciones de flota',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Centro de operaciones de flota',
       workspaceNavigation: 'Navegación del espacio de trabajo',
       workspace: 'Espacio de trabajo',
       modules: 'Módulos',
@@ -102,8 +102,8 @@ export const appShellMessages = {
   pt: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Centro de operações da frota',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Centro de operações da frota',
       workspaceNavigation: 'Navegação do espaço de trabalho',
       workspace: 'Espaço de trabalho',
       modules: 'Módulos',
@@ -127,8 +127,8 @@ export const appShellMessages = {
   ru: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] Центр флотских операций',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] Центр флотских операций',
       workspaceNavigation: 'Навигация рабочего пространства',
       workspace: 'Рабочая область',
       modules: 'Модули',
@@ -152,8 +152,8 @@ export const appShellMessages = {
   cn: {
     common: {
       brandLineOne: 'Royal Blackwater',
-      brandLineTwo: 'Vanguards',
-      brandDescriptor: '[RBV] 舰队行动中心',
+      brandLineTwo: 'Fleet',
+      brandDescriptor: '[RBF] 舰队行动中心',
       workspaceNavigation: '工作区导航',
       workspace: '工作区',
       modules: '模块',

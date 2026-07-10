@@ -1,7 +1,7 @@
 const TEXT_PLACEHOLDER = '__WOSB_PLACEHOLDER_'
 
 const neutralValues = new Set([
-  'Royal Blackwater Vanguards', 'Royal Blackwater Vanguards MVP', 'Royal Blackwater', 'Vanguards', 'RBV', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
+  'Royal Blackwater Fleet', 'Royal Blackwater Fleet MVP', 'Royal Blackwater', 'Fleet', 'RBF', '12:00–02:00 CET', '18:00–23:00 CET', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
   'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
 ])
 

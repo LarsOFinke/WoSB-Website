@@ -1,6 +1,6 @@
 # Backend
 
-FastAPI backend for Royal Blackwater Vanguards.
+FastAPI backend for Royal Blackwater Fleet.
 
 ## Mandatory configuration
 
@@ -17,7 +17,7 @@ Required `.env` values:
 
 ```env
 APP_ENV=development
-DATABASE_URL=sqlite:///./storage/rbv-hub.db
+DATABASE_URL=sqlite:///./storage/rbf-hub.db
 DB_SCHEMA_MODE=create
 UPLOAD_DIR=storage/uploads  # when running commands from backend/
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
@@ -37,8 +37,8 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # or: . .venv/bin/activate
 pip install -e .[dev]
-rbv-seed --reset
-rbv-dev
+rbf-seed --reset
+rbf-dev
 ```
 
 The legacy `wosb-seed` and `wosb-dev` entry points remain available as compatibility aliases.
@@ -82,7 +82,7 @@ For the detailed module rules, see `../docs/MODULE_STRUCTURE.md`.
 
 ## Configuration split
 
-- `core/config.py` loads `backend/.env` or `RBV_ENV_FILE`.
+- `core/config.py` loads `backend/.env` or `RBF_ENV_FILE`.
 - `WOSB_ENV_FILE` remains a compatibility alias.
 - `config/app.toml` contains non-secret application config.
 - Process environment variables can override values from `.env`, but the env file still has to exist.

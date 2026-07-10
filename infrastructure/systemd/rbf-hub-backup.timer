@@ -1,11 +1,11 @@
 [Unit]
-Description=Daily Royal Blackwater Vanguards backup
+Description=Daily Royal Blackwater Fleet backup
 
 [Timer]
 OnCalendar=*-*-* 03:15:00
 RandomizedDelaySec=20m
 Persistent=true
-Unit=rbv-hub-backup.service
+Unit=rbf-hub-backup.service
 
 [Install]
 WantedBy=timers.target

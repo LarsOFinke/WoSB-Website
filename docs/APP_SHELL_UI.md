@@ -55,7 +55,7 @@ Below tablet width, the sidebar becomes a fixed off-canvas drawer with a scrim. 
 ## Implementation notes
 
 - Shell state is composed in `src/core/components/AppNavbar.vue` and managed by `src/core/composables/useAppShell.js`.
-- Sidebar collapse preference is stored in `localStorage` under `rbv-hub.sidebar.collapsed` (with automatic migration from the legacy key).
+- Sidebar collapse preference is stored in `localStorage` under `rbf-hub.sidebar.collapsed` (with automatic migration from the legacy key).
 - The body receives `sidebar-collapsed` and `mobile-sidebar-open` classes for layout state.
 - The visual shell, responsive rules and enterprise polish are centralized in `src/styles/main.css` under `Enterprise app shell overhaul`.
 

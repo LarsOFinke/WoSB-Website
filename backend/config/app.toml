@@ -2,8 +2,8 @@
 # Environment-specific values and secrets belong in backend/.env.
 
 [app]
-name = "Royal Blackwater Vanguards"
-version = "0.11.0"
+name = "Royal Blackwater Fleet"
+version = "0.12.0"
 api_prefix = "/api"
 
 [logging]
@@ -15,7 +15,7 @@ db_level = "INFO"
 console_enabled = false
 
 [session]
-cookie_name = "rbv_hub_session"
+cookie_name = "rbf_hub_session"
 cookie_samesite = "lax"   # lax, strict or none
 ttl_hours = 24
 

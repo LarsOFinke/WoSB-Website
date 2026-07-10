@@ -27,6 +27,26 @@ const hasMembership = computed(() => Boolean(membership.value && ['active', 'pen
 const leaderCount = computed(() => fleet.value?.leaders?.length || 0)
 const totalMembers = computed(() => (fleet.value?.active_members_count || 0) + (fleet.value?.pending_members_count || 0))
 
+const newcomerSteps = computed(() => [
+  { number: '01', icon: 'guides', title: t('home.newcomer.learnTitle'), text: t('home.newcomer.learnText'), meta: t('home.newcomer.learnMeta'), path: '/guides', public: false },
+  { number: '02', icon: 'builds', title: t('home.newcomer.prepareTitle'), text: t('home.newcomer.prepareText'), meta: t('home.newcomer.prepareMeta'), path: '/builds', public: true },
+  { number: '03', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), meta: t('home.newcomer.askMeta'), path: '/forum', public: false },
+  { number: '04', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar', public: false },
+])
+
+const moduleCards = computed(() => [
+  { icon: 'builds', title: t('home.showcase.builds.title'), text: t('home.showcase.builds.description'), path: '/builds', public: true },
+  { icon: 'guides', title: t('home.showcase.guides.title'), text: t('home.showcase.guides.description'), path: '/guides', public: false },
+  { icon: 'forum', title: t('home.showcase.forum.title'), text: t('home.showcase.forum.description'), path: '/forum', public: false },
+  { icon: 'calendar', title: t('home.showcase.calendar.title'), text: t('home.showcase.calendar.description'), path: '/calendar', public: false },
+  { icon: 'groups', title: t('home.showcase.groups.title'), text: t('home.showcase.groups.description'), path: '/groups', public: false },
+])
+
+function protectedRoute(path, isPublic = false) {
+  if (isPublic || isAuthenticated.value) return path
+  return { name: 'login', query: { redirect: path } }
+}
+
 function openApplication() {
   applicationError.value = ''
   applicationSuccess.value = ''
@@ -111,7 +131,7 @@ onMounted(loadFleet)
           <span v-if="membership" class="summary-pill fleet-status-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
         </template>
         <template #actions>
-          <RouterLink class="button-box" to="/builds">{{ t('common.builds') }}</RouterLink>
+          <RouterLink class="button-box" to="/builds">{{ t('home.showcase.builds.title') }}</RouterLink>
           <RouterLink v-if="isAuthenticated" class="button-box primary-action" :to="hasMembership ? '/profile' : '/fleets'">
             {{ hasMembership ? t('fleets.profileCta') : t('fleets.manageCta') }}
           </RouterLink>
@@ -134,12 +154,13 @@ onMounted(loadFleet)
 
         <div class="fleet-portal-layout">
           <main class="fleet-portal-main">
-            <article class="wire-section fleet-briefing-panel">
+            <article class="wire-section fleet-briefing-panel fleet-identity-panel">
               <div class="workspace-section-heading">
                 <div>
-                  <p class="eyebrow">{{ t('fleets.filterEyebrow') }}</p>
-                  <h2>{{ fleet.name }}</h2>
-                  <p>{{ fleet.description || t('fleets.noDescription') }}</p>
+                  <p class="eyebrow">{{ t('home.aboutEyebrow') }}</p>
+                  <h2>{{ t('home.aboutTitle') }}</h2>
+                  <p>{{ t('home.about') }}</p>
+                  <p class="fleet-identity-extra">{{ t('home.aboutExtra') }}</p>
                 </div>
                 <span class="summary-pill">{{ t(`fleets.focus.${fleet.focus}`) }}</span>
               </div>
@@ -148,7 +169,7 @@ onMounted(loadFleet)
                 <span class="fleet-section-index">01</span>
                 <div>
                   <strong>{{ t('fleets.standingOrders') }}</strong>
-                  <p>{{ fleet.standing_orders || t('fleets.noDescription') }}</p>
+                  <p>{{ t('home.operations.standingOrders') }}</p>
                 </div>
               </section>
 
@@ -166,39 +187,55 @@ onMounted(loadFleet)
               </section>
             </article>
 
+            <section class="wire-section newcomer-path-panel">
+              <div class="workspace-section-heading">
+                <div>
+                  <p class="eyebrow">{{ t('home.newcomer.eyebrow') }}</p>
+                  <h2>{{ t('home.newcomer.title') }}</h2>
+                  <p>{{ t('home.newcomer.subtitle') }}</p>
+                </div>
+              </div>
+              <div class="newcomer-path-grid">
+                <RouterLink
+                  v-for="step in newcomerSteps"
+                  :key="step.number"
+                  class="newcomer-step-card"
+                  :class="{ 'is-locked': !step.public && !isAuthenticated }"
+                  :to="protectedRoute(step.path, step.public)"
+                >
+                  <span class="newcomer-step-number">{{ step.number }}</span>
+                  <span class="fleet-module-icon"><AppIcon :name="step.icon" :size="20" /></span>
+                  <strong>{{ step.title }}</strong>
+                  <p>{{ step.text }}</p>
+                  <small>{{ step.meta }}</small>
+                  <AppIcon class="newcomer-step-arrow" name="arrow-right" :size="17" />
+                </RouterLink>
+              </div>
+            </section>
+
             <section class="wire-section fleet-public-modules">
               <div class="workspace-section-heading">
-                <div><p class="eyebrow">{{ t('common.workspace') }}</p><h2>{{ t('common.modules') }}</h2></div>
+                <div>
+                  <p class="eyebrow">{{ t('home.showcase.eyebrow') }}</p>
+                  <h2>{{ t('home.showcase.title') }}</h2>
+                  <p>{{ t('home.showcase.subtitle') }}</p>
+                </div>
               </div>
-              <div class="fleet-module-grid">
-                <RouterLink class="fleet-module-card is-public" to="/builds">
-                  <span class="fleet-module-icon"><AppIcon name="builds" :size="20" /></span>
-                  <strong>{{ t('common.builds') }}</strong>
-                  <small>{{ t('home.showcase.builds.description') }}</small>
-                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/calendar">
-                  <span class="fleet-module-icon"><AppIcon name="calendar" :size="20" /></span>
-                  <strong>{{ t('common.calendar') }}</strong>
-                  <small>{{ t('calendar.list.subtitle') }}</small>
-                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/groups">
-                  <span class="fleet-module-icon"><AppIcon name="groups" :size="20" /></span>
-                  <strong>{{ t('common.groups') }}</strong>
-                  <small>{{ t('groups.list.subtitle') }}</small>
-                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
-                </RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/forum">
-                  <span class="fleet-module-icon"><AppIcon name="forum" :size="20" /></span>
-                  <strong>{{ t('common.forum') }}</strong>
-                  <small>{{ t('forum.list.subtitle') }}</small>
-                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
-                </RouterLink>
-                <RouterLink v-else class="fleet-module-card is-locked" to="/login">
-                  <span class="fleet-module-icon"><AppIcon name="lock" :size="20" /></span>
-                  <strong>{{ t('auth.loginTitle') }}</strong>
-                  <small>{{ t('auth.loginSubtitle') }}</small>
+              <div class="fleet-module-grid fleet-learning-module-grid">
+                <RouterLink
+                  v-for="module in moduleCards"
+                  :key="module.path"
+                  class="fleet-module-card"
+                  :class="{ 'is-public': module.public, 'is-locked': !module.public && !isAuthenticated }"
+                  :to="protectedRoute(module.path, module.public)"
+                >
+                  <span class="fleet-module-icon"><AppIcon :name="module.icon" :size="20" /></span>
+                  <span class="fleet-module-access">
+                    <AppIcon v-if="!module.public && !isAuthenticated" name="lock" :size="13" />
+                    {{ module.public ? t('home.showcase.publicModule') : t('home.showcase.memberModule') }}
+                  </span>
+                  <strong>{{ module.title }}</strong>
+                  <small>{{ module.text }}</small>
                   <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
                 </RouterLink>
               </div>
@@ -206,13 +243,33 @@ onMounted(loadFleet)
           </main>
 
           <aside class="fleet-portal-side">
+            <section class="wire-section fleet-operations-panel">
+              <div class="workspace-section-heading compact-heading">
+                <div>
+                  <p class="eyebrow">{{ t('home.operations.eyebrow') }}</p>
+                  <h2>{{ t('home.operations.title') }}</h2>
+                  <p>{{ t('home.operations.subtitle') }}</p>
+                </div>
+              </div>
+              <dl class="fleet-rhythm-list">
+                <div><dt>{{ t('home.operations.activeHoursLabel') }}</dt><dd>{{ t('home.operations.activeHoursValue') }}</dd></div>
+                <div><dt>{{ t('home.operations.primeTimeLabel') }}</dt><dd>{{ t('home.operations.primeTimeValue') }}</dd></div>
+                <div><dt>{{ t('home.operations.voiceLabel') }}</dt><dd>{{ t('home.operations.voiceValue') }}</dd></div>
+              </dl>
+              <div class="fleet-policy-list">
+                <p><AppIcon name="calendar" :size="17" /><span>{{ t('home.operations.calendarRule') }}</span></p>
+                <p><AppIcon name="forum" :size="17" /><span>{{ t('home.operations.discordRule') }}</span></p>
+                <p><AppIcon name="shield" :size="17" /><span>{{ t('home.operations.voicePolicy') }}</span></p>
+              </div>
+            </section>
+
             <section class="wire-section fleet-join-panel polished-join-panel">
               <div class="workspace-section-heading compact-heading">
                 <div><p class="eyebrow">{{ t('fleets.application.myStatus') }}</p><h2>{{ t('fleets.application.title') }}</h2><p>{{ t('fleets.application.subtitle') }}</p></div>
               </div>
 
               <div v-if="membership" class="fleet-membership-summary">
-                <span class="profile-avatar" aria-hidden="true">{{ membership.user?.display_name?.slice(0, 2).toUpperCase() || 'RBV' }}</span>
+                <span class="profile-avatar" aria-hidden="true">{{ membership.user?.display_name?.slice(0, 2).toUpperCase() || 'RBF' }}</span>
                 <div><strong>{{ membership.user?.display_name || t('common.profile') }}</strong><small>{{ t(`fleets.roles.${membership.role}`) }}</small></div>
                 <span class="summary-pill fleet-status-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
               </div>
@@ -237,8 +294,8 @@ onMounted(loadFleet)
                 <div class="directory-form-grid">
                   <label class="input-panel embedded-field"><span>{{ t('fleets.directory.availability') }}</span><input v-model="applicationDetails.availability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" /></label>
                   <label class="input-panel embedded-field"><span>{{ t('fleets.directory.preferredShips') }}</span><input v-model="applicationDetails.preferred_ships" maxlength="300" :placeholder="t('fleets.directory.preferredShipsPlaceholder')" /></label>
-                  <label class="input-panel embedded-field"><span>{{ t('fleets.directory.timezone') }}</span><input v-model="applicationDetails.timezone" maxlength="80" placeholder="CET / UTC+1" /></label>
-                  <label class="input-panel embedded-field"><span>{{ t('fleets.directory.discord') }}</span><input v-model="applicationDetails.discord_handle" maxlength="120" placeholder="Captain#1234" /></label>
+                  <label class="input-panel embedded-field"><span>{{ t('fleets.directory.timezone') }}</span><input v-model="applicationDetails.timezone" maxlength="80" :placeholder="t('fleets.directory.timezonePlaceholder')" /></label>
+                  <label class="input-panel embedded-field"><span>{{ t('fleets.directory.discord') }}</span><input v-model="applicationDetails.discord_handle" maxlength="120" :placeholder="t('fleets.directory.discordPlaceholder')" /></label>
                 </div>
                 <div class="form-actions compact-actions">
                   <button class="form-button primary-action" type="submit" :disabled="applying">{{ applying ? t('common.saving') : t('fleets.application.submit') }}</button>

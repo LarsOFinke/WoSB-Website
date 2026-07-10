@@ -1,15 +1,15 @@
-export const royalBlackwaterVanguardsMessages = {
+export const royalBlackwaterFleetMessages = {
   en: {
     common: {
-      projectName: 'Royal Blackwater Vanguards',
+      projectName: 'Royal Blackwater Fleet',
       groups: 'Group Search',
     },
-    footer: { text: 'Royal Blackwater Vanguards' },
+    footer: { text: 'Royal Blackwater Fleet' },
     home: {
-      eyebrow: 'Royal Blackwater Vanguards',
-      title: 'Your starting point for Royal Blackwater Vanguards fleet tools.',
-      subtitle: 'Plan ship builds, run group searches and keep community preparation in one focused hub.',
-      about: 'Royal Blackwater Vanguards brings focused tools into one place so players can prepare builds and coordinate fleet activity without digging through scattered notes.',
+      eyebrow: 'Royal Blackwater Fleet',
+      title: 'Learn, prepare and join Royal Blackwater Fleet operations.',
+      subtitle: 'Use proven builds, practical guides and clear event planning to grow into coordinated fleet play.',
+      about: 'Royal Blackwater Fleet gives newcomers one structured place to learn, prepare ships, ask questions and join organized activity.',
       showcase: {
         groups: {
           eyebrow: 'Group Search board',
@@ -166,14 +166,14 @@ export const royalBlackwaterVanguardsMessages = {
   },
   de: {
     common: {
-      projectName: 'Royal Blackwater Vanguards',
+      projectName: 'Royal Blackwater Fleet',
       groups: 'Gruppensuche',
     },
-    footer: { text: 'Royal Blackwater Vanguards' },
+    footer: { text: 'Royal Blackwater Fleet' },
     home: {
-      eyebrow: 'Royal Blackwater Vanguards',
-      title: 'Dein Einstiegspunkt für Royal-Blackwater-Vanguards-Flotten-Tools.',
-      subtitle: 'Plane Schiffs-Builds, organisiere Gruppensuchen und bündle die Vorbereitung an einem Ort.',
+      eyebrow: 'Royal Blackwater Fleet',
+      title: 'Lerne, bereite dich vor und fahre bei der Royal Blackwater Fleet mit.',
+      subtitle: 'Nutze erprobte Builds, praxisnahe Guides und klare Eventplanung für deinen Weg ins koordinierte Flottenspiel.',
       showcase: {
         groups: {
           eyebrow: 'Gruppensuche-Board',

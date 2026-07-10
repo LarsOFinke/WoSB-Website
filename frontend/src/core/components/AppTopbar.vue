@@ -26,7 +26,7 @@ const { isAuthenticated, isStaff, loadSession, logout, sessionState, user } = us
 const profileLinkLabel = computed(() => user.value?.display_name || user.value?.username || t('common.profile'))
 const userInitials = computed(() => {
   const source = profileLinkLabel.value.trim().split(/\s+/).filter(Boolean)
-  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBV'
+  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBF'
 })
 const primaryLinks = computed(() => createWorkspaceLinks(t, {
   isAuthenticated: isAuthenticated.value,

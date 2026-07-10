@@ -27,7 +27,7 @@ services:
       - no-new-privileges:true
 
   migrate:
-    image: ${RBV_API_IMAGE:-rbv-hub-api:local}
+    image: ${RBF_API_IMAGE:-rbf-hub-api:local}
     logging: *default-logging
     build:
       context: ../backend
@@ -35,7 +35,7 @@ services:
     env_file:
       - .env
     environment:
-      RBV_ENV_FILE: /app/config/container.env
+      RBF_ENV_FILE: /app/config/container.env
     command: ["alembic", "upgrade", "head"]
     depends_on:
       - postgres
@@ -46,7 +46,7 @@ services:
       - no-new-privileges:true
 
   seed:
-    image: ${RBV_API_IMAGE:-rbv-hub-api:local}
+    image: ${RBF_API_IMAGE:-rbf-hub-api:local}
     logging: *default-logging
     build:
       context: ../backend
@@ -54,8 +54,8 @@ services:
     env_file:
       - .env
     environment:
-      RBV_ENV_FILE: /app/config/container.env
-    command: ["sh", "-c", "if [ \"$$AUTO_SEED\" = \"true\" ]; then rbv-seed; else echo \"Seeding disabled.\"; fi"]
+      RBF_ENV_FILE: /app/config/container.env
+    command: ["sh", "-c", "if [ \"$$AUTO_SEED\" = \"true\" ]; then rbf-seed; else echo \"Seeding disabled.\"; fi"]
     restart: "no"
     networks:
       - backend
@@ -63,7 +63,7 @@ services:
       - no-new-privileges:true
 
   api:
-    image: ${RBV_API_IMAGE:-rbv-hub-api:local}
+    image: ${RBF_API_IMAGE:-rbf-hub-api:local}
     logging: *default-logging
     build:
       context: ../backend
@@ -72,7 +72,7 @@ services:
     env_file:
       - .env
     environment:
-      RBV_ENV_FILE: /app/config/container.env
+      RBF_ENV_FILE: /app/config/container.env
     volumes:
       - ./data/uploads:/data/uploads
     depends_on:
@@ -88,7 +88,7 @@ services:
       - no-new-privileges:true
 
   gateway:
-    image: ${RBV_GATEWAY_IMAGE:-rbv-hub-gateway:local}
+    image: ${RBF_GATEWAY_IMAGE:-rbf-hub-gateway:local}
     logging: *default-logging
     build:
       context: ..
@@ -126,7 +126,7 @@ services:
       - no-new-privileges:true
 
   monitoring-gateway:
-    image: ${RBV_GATEWAY_IMAGE:-rbv-hub-gateway:local}
+    image: ${RBF_GATEWAY_IMAGE:-rbf-hub-gateway:local}
     logging: *default-logging
     restart: unless-stopped
     profiles: ["monitoring"]

@@ -6,20 +6,25 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 require_command systemctl
 
 units=(
-  rbv-hub.service
-  rbv-hub-backup.service
-  rbv-hub-backup.timer
-  rbv-hub-cert-renew.service
-  rbv-hub-cert-renew.timer
+  rbf-hub.service
+  rbf-hub-backup.service
+  rbf-hub-backup.timer
+  rbf-hub-cert-renew.service
+  rbf-hub-cert-renew.timer
 )
 
 for unit in "${units[@]}"; do
   sed "s|@INFRA_DIR@|$INFRA_DIR|g" "$INFRA_DIR/systemd/$unit" > "/etc/systemd/system/$unit"
 done
 
-# Clean migration from the pre-RBV alpha names. The old units call the same
+# Clean migration from the pre-RBF alpha names. The old units call the same
 # scripts, but leaving both timers/services enabled would duplicate work.
 legacy_units=(
+  rbv-hub.service
+  rbv-hub-backup.service
+  rbv-hub-backup.timer
+  rbv-hub-cert-renew.service
+  rbv-hub-cert-renew.timer
   blackwater-hub.service
   blackwater-hub-backup.service
   blackwater-hub-backup.timer
@@ -30,7 +35,7 @@ for unit in "${legacy_units[@]}"; do
 done
 
 systemctl daemon-reload
-systemctl enable rbv-hub.service
-systemctl enable --now rbv-hub-backup.timer
-systemctl enable --now rbv-hub-cert-renew.timer
-success "RBV systemd-Startdienst, Backup-Timer und TLS-Erneuerung wurden installiert."
+systemctl enable rbf-hub.service
+systemctl enable --now rbf-hub-backup.timer
+systemctl enable --now rbf-hub-cert-renew.timer
+success "RBF systemd-Startdienst, Backup-Timer und TLS-Erneuerung wurden installiert."

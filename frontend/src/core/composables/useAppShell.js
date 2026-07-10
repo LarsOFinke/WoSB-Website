@@ -1,8 +1,8 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-const SIDEBAR_STORAGE_KEY = 'rbv-hub.sidebar.collapsed'
-const LEGACY_SIDEBAR_STORAGE_KEY = 'blackwater-hub.sidebar.collapsed'
+const SIDEBAR_STORAGE_KEY = 'rbf-hub.sidebar.collapsed'
+const LEGACY_SIDEBAR_STORAGE_KEYS = ['rbv-hub.sidebar.collapsed', 'blackwater-hub.sidebar.collapsed']
 
 function syncShellClass(isSidebarCollapsed, isMobileMenuOpen) {
   if (typeof document === 'undefined') return
@@ -12,7 +12,7 @@ function syncShellClass(isSidebarCollapsed, isMobileMenuOpen) {
 
 function readSidebarPreference() {
   if (typeof localStorage === 'undefined') return false
-  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY) ?? localStorage.getItem(LEGACY_SIDEBAR_STORAGE_KEY)
+  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY) ?? LEGACY_SIDEBAR_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find((value) => value !== null)
   if (stored !== null && localStorage.getItem(SIDEBAR_STORAGE_KEY) === null) localStorage.setItem(SIDEBAR_STORAGE_KEY, stored)
   return stored === 'true'
 }

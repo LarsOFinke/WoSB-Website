@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 .PHONY: dev-backend dev-frontend test build setup-pi infra-up infra-down infra-status infra-logs infra-backup infra-update
 
 dev-backend:
-	cd backend && rbv-dev
+	cd backend && rbf-dev
 
 dev-frontend:
 	cd frontend && npm run dev

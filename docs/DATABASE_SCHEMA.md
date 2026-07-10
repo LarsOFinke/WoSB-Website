@@ -86,7 +86,7 @@ SQLite development databases from older prototype versions may still contain unu
 For a clean schema during local development, run:
 
 ```bash
-rbv-seed --reset
+rbf-seed --reset
 ```
 
 ## Integrity constraints added in the production-foundation pass
@@ -125,7 +125,7 @@ The main remaining production task is adding a real migration layer so these con
 
 ## Single Fleet Refactor
 
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Vanguards. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
 
 
 ## Group search scheduling and signups

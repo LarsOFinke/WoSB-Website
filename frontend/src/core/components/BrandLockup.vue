@@ -11,7 +11,7 @@ const { t } = useLocale()
 <template>
   <span class="brand-lockup" :class="{ 'is-compact': compact }">
     <span class="brand-mark" aria-hidden="true">
-      <span>RBV</span>
+      <span>RBF</span>
     </span>
     <span class="brand-copy">
       <strong>

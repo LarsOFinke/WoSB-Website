@@ -1,7 +1,7 @@
 [Unit]
-Description=Royal Blackwater Vanguards backup
+Description=Royal Blackwater Fleet backup
 Requires=docker.service
-After=docker.service rbv-hub.service
+After=docker.service rbf-hub.service
 
 [Service]
 Type=oneshot

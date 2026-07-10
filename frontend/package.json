@@ -1,6 +1,6 @@
 {
-  "name": "royal-blackwater-vanguards-frontend",
-  "version": "0.11.0",
+  "name": "royal-blackwater-fleet-frontend",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "scripts": {

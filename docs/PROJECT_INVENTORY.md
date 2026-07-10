@@ -1,6 +1,6 @@
 # Project Inventory
 
-This document records the current state of the Royal Blackwater Vanguards after the production-foundation pass. It is intended as the first stop for future maintainers before changing architecture.
+This document records the current state of the Royal Blackwater Fleet after the production-foundation pass. It is intended as the first stop for future maintainers before changing architecture.
 
 ## Product scope
 
@@ -74,7 +74,7 @@ The schema is centered around normalized entities:
 
 ## Single Fleet Refactor
 
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Vanguards. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Flotte, den Royal Blackwater Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
 
 ## Structure cleanup notes
 

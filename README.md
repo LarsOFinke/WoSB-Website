@@ -1,4 +1,4 @@
-# Royal Blackwater Vanguards [RBV]
+# Royal Blackwater Fleet [RBF]
 
 A full-stack fleet operations hub with a reproducible Raspberry Pi deployment.
 
@@ -14,7 +14,7 @@ docs/           architecture, database and operations documentation
 The production default is:
 
 ```text
-https://royal-blackwater-vanguards.eu
+https://royal-blackwater-fleet.eu
 ```
 
 Before requesting a public certificate, the domain's DNS record must resolve to the server's
@@ -25,12 +25,12 @@ public IP and TCP ports 80 and 443 must be forwarded to the Pi.
 After installing Raspberry Pi OS/Debian and cloning the repository:
 
 ```bash
-cd ~/repositories/royal-blackwater-vanguards
+cd ~/repositories/royal-blackwater-fleet
 sudo ./setup.sh \
   --profile full \
-  --domain royal-blackwater-vanguards.eu \
+  --domain royal-blackwater-fleet.eu \
   --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-vanguards.eu
+  --letsencrypt-email admin@royal-blackwater-fleet.eu
 ```
 
 The setup installs Docker and Compose, creates production secrets, starts PostgreSQL 16,
@@ -57,7 +57,7 @@ cp .env.example .env
 python -m venv .venv
 . .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -e .[dev]
-rbv-dev
+rbf-dev
 ```
 
 ```bash
@@ -93,8 +93,8 @@ requires staff privileges. Frontend guards and backend dependencies enforce the 
 ## Web access
 
 ```text
-https://royal-blackwater-vanguards.eu       RBV Fleet Hub
-https://royal-blackwater-vanguards.eu:8443  Uptime Kuma (full profile)
+https://royal-blackwater-fleet.eu       RBF Fleet Hub
+https://royal-blackwater-fleet.eu:8443  Uptime Kuma (full profile)
 ```
 
 Keep port 8443 restricted to LAN/VPN unless a public monitoring interface is explicitly desired.
@@ -118,8 +118,13 @@ GET /api/health        process metadata
 GET /api/health/ready  database readiness
 ```
 
-## Release 0.11 design pass
+## Release 0.12: newcomer-first fleet hub
 
-The RBV rebrand includes two UI iterations: first, a scalable brand lockup and clearer workspace
-navigation; second, improved hierarchy, interaction states, responsive layouts, keyboard behavior
-and reduced-motion support. The fleet, profile and staff workspaces share the same visual system.
+The Royal Blackwater Fleet release aligns the public portal with the fleet's real operating model:
+newcomer onboarding through guides and proven builds, persistent Q&A in the forum, transparent
+event planning through the calendar and clear Discord voice expectations for competitive content.
+All public portal standard copy is explicitly localized in all seven supported languages.
+
+Main activity is communicated as 12:00–02:00 CET, with Port Battle focus between 18:00 and
+23:00 CET. Discord voice is mandatory for Port Battles and other competitive operations; it is
+optional but encouraged for normal fleet activity.

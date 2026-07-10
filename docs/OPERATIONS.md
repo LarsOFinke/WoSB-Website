@@ -11,8 +11,8 @@ cp .env.example .env
 python -m venv .venv
 . .venv/Scripts/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -e .[dev]
-rbv-seed --reset
-rbv-dev
+rbf-seed --reset
+rbf-dev
 ```
 
 Frontend:
@@ -51,7 +51,7 @@ The database URL comes from `backend/.env`. For the local SQLite setup:
 
 ```bash
 cd backend
-rbv-seed --reset
+rbf-seed --reset
 ```
 
 For production, use PostgreSQL plus Alembic migrations before real user data.

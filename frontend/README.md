@@ -1,6 +1,6 @@
-# Royal Blackwater Vanguards Frontend
+# Royal Blackwater Fleet Frontend
 
-Vue 3 + Vite frontend for Royal Blackwater Vanguards.
+Vue 3 + Vite frontend for Royal Blackwater Fleet.
 
 ## Mandatory environment
 

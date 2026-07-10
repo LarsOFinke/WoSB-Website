@@ -1,5 +1,5 @@
 [Unit]
-Description=Royal Blackwater Vanguards container stack
+Description=Royal Blackwater Fleet container stack
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target

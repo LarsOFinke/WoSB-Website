@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_dir="$INFRA_DIR/data/backups/files"
-output="$backup_dir/rbv-files-${timestamp}.tar.gz"
+output="$backup_dir/rbf-files-${timestamp}.tar.gz"
 mkdir -p "$backup_dir"
 
 tar --exclude='backups' -czf "$output" -C "$INFRA_DIR/data" uploads certs uptime-kuma

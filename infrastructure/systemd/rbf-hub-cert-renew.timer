@@ -1,11 +1,11 @@
 [Unit]
-Description=Twice-daily Royal Blackwater Vanguards TLS renewal check
+Description=Twice-daily Royal Blackwater Fleet TLS renewal check
 
 [Timer]
 OnCalendar=*-*-* 00,12:22:00
 RandomizedDelaySec=45m
 Persistent=true
-Unit=rbv-hub-cert-renew.service
+Unit=rbf-hub-cert-renew.service
 
 [Install]
 WantedBy=timers.target

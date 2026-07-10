@@ -1,9 +1,9 @@
-# Royal Blackwater Vanguards Infrastructure
+# Royal Blackwater Fleet Infrastructure
 
-This directory turns the RBV application repository into a reproducible Raspberry Pi deployment.
+This directory turns the RBF application repository into a reproducible Raspberry Pi deployment.
 It adapts the modular principles of
 [`PI-Server-Infrastructure`](https://github.com/LarsOFinke/PI-Server-Infrastructure)
-to the Royal Blackwater Vanguards application lifecycle.
+to the Royal Blackwater Fleet application lifecycle.
 
 ## First run on a fresh Pi
 
@@ -11,13 +11,13 @@ Install Raspberry Pi OS Lite or Debian, enable SSH, assign a stable LAN address,
 repository:
 
 ```bash
-git clone <RBV_REPOSITORY_URL> ~/repositories/royal-blackwater-vanguards
-cd ~/repositories/royal-blackwater-vanguards
+git clone <RBF_REPOSITORY_URL> ~/repositories/royal-blackwater-fleet
+cd ~/repositories/royal-blackwater-fleet
 sudo ./setup.sh \
   --profile full \
-  --domain royal-blackwater-vanguards.eu \
+  --domain royal-blackwater-fleet.eu \
   --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-vanguards.eu
+  --letsencrypt-email admin@royal-blackwater-fleet.eu
 ```
 
 The script:
@@ -44,7 +44,7 @@ Move the credentials to a password manager and delete the first-run file.
 
 For `TLS_MODE=letsencrypt`:
 
-- `royal-blackwater-vanguards.eu` must resolve to the public IP of the server connection;
+- `royal-blackwater-fleet.eu` must resolve to the public IP of the server connection;
 - TCP port 80 must reach the Pi for the ACME HTTP-01 challenge;
 - TCP port 443 must reach the Pi for the application;
 - carrier-grade NAT or a blocked inbound port 80 prevents HTTP-01 validation.
@@ -61,11 +61,11 @@ sudo ./setup.sh --profile full  # core + Uptime Kuma
 
 ```bash
 sudo ./infrastructure/setup.sh \
-  --domain royal-blackwater-vanguards.eu \
+  --domain royal-blackwater-fleet.eu \
   --ip 192.168.178.50 \
   --admin-username commander \
   --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-vanguards.eu
+  --letsencrypt-email admin@royal-blackwater-fleet.eu
 
 ./infrastructure/setup.sh --skip-host --no-start
 ```
@@ -79,7 +79,7 @@ intentionally not browser-trusted.
 - FastAPI is only exposed to the internal Docker network.
 - PostgreSQL is internal and additionally bound to `127.0.0.1:15432` for SSH tunnels.
 - Uptime Kuma remains bound to `127.0.0.1:3001` and is exposed through a dedicated TLS gateway on
-  `https://royal-blackwater-vanguards.eu:8443` when the `full` profile is active.
+  `https://royal-blackwater-fleet.eu:8443` when the `full` profile is active.
 - The monitoring gateway joins the public ingress network and private service network; Kuma itself
   is never directly exposed to the LAN.
 
@@ -88,7 +88,7 @@ Keep monitoring restricted to LAN/VPN when possible. PostgreSQL deliberately has
 Example database tunnel:
 
 ```bash
-ssh -L 15432:127.0.0.1:15432 pi@royal-blackwater-vanguards.eu
+ssh -L 15432:127.0.0.1:15432 pi@royal-blackwater-fleet.eu
 ```
 
 ## TLS lifecycle
@@ -107,11 +107,11 @@ infrastructure/data/letsencrypt/
 ```
 
 Successful issuance or renewal copies the current lineage into the stable gateway paths and reloads
-NGINX. `rbv-hub-cert-renew.timer` checks twice daily. Manual commands:
+NGINX. `rbf-hub-cert-renew.timer` checks twice daily. Manual commands:
 
 ```bash
 sudo ./infrastructure/scripts/tls/renew-certificate.sh
-sudo systemctl status rbv-hub-cert-renew.timer
+sudo systemctl status rbf-hub-cert-renew.timer
 ```
 
 ## Service lifecycle

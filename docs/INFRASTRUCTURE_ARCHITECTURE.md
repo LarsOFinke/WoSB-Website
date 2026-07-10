@@ -46,10 +46,10 @@ infrastructure/data/backups/     local database/file backups
 
 1. Setup creates a self-signed bootstrap certificate so NGINX can start immediately.
 2. NGINX exposes `/.well-known/acme-challenge/` over HTTP.
-3. Certbot requests the certificate for `royal-blackwater-vanguards.eu` through the webroot.
+3. Certbot requests the certificate for `royal-blackwater-fleet.eu` through the webroot.
 4. The managed lineage is copied to the stable gateway certificate paths.
 5. NGINX and the monitoring gateway reload without resetting application data.
-6. `rbv-hub-cert-renew.timer` checks twice daily and repeats the sync after renewal.
+6. `rbf-hub-cert-renew.timer` checks twice daily and repeats the sync after renewal.
 
 `TLS_MODE=auto` preserves the bootstrap certificate when public validation is not yet possible;
 `TLS_MODE=letsencrypt` fails fast if a trusted certificate cannot be issued.

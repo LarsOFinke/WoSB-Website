@@ -41,8 +41,8 @@ detect_primary_ip() {
 
 detect_app_hostname() {
   local short
-  short="$(hostname -s 2>/dev/null || printf 'rbv')"
-  [[ -n "$short" ]] || short='rbv'
+  short="$(hostname -s 2>/dev/null || printf 'rbf')"
+  [[ -n "$short" ]] || short='rbf'
   printf '%s.local' "$short"
 }
 
@@ -69,8 +69,8 @@ initialize_env() {
 
   postgres_user="$(read_env POSTGRES_USER)"
   postgres_database="$(read_env POSTGRES_DB)"
-  [[ -n "$postgres_user" && "$postgres_user" != CHANGE_ME* ]] || postgres_user=rbv
-  [[ -n "$postgres_database" && "$postgres_database" != CHANGE_ME* ]] || postgres_database=rbv
+  [[ -n "$postgres_user" && "$postgres_user" != CHANGE_ME* ]] || postgres_user=rbf
+  [[ -n "$postgres_database" && "$postgres_database" != CHANGE_ME* ]] || postgres_database=rbf
 
   if [[ "$created" == true || "$regenerate" == true || "$(read_env POSTGRES_PASSWORD)" == CHANGE_ME* ]]; then
     postgres_password="$(random_hex 24)"
@@ -111,7 +111,7 @@ initialize_env() {
 
   if [[ "$created" == true || "$regenerate" == true || "$secrets_changed" == true || ! -f "$INFRA_DIR/first-run-credentials.txt" ]]; then
     cat > "$INFRA_DIR/first-run-credentials.txt" <<CREDS
-Royal Blackwater Vanguards - First Run
+Royal Blackwater Fleet - First Run
 Primary URL: https://${app_hostname}
 LAN fallback: https://${app_ip}
 Monitoring: https://${app_hostname}:$(read_env MONITORING_HTTPS_PORT)

@@ -1,6 +1,6 @@
 # Architecture Notes
 
-Royal Blackwater Vanguards uses matching feature boundaries in FastAPI and Vue. A domain owns its persistence/contracts/business logic on the backend and its routes/screens/API adapter on the frontend.
+Royal Blackwater Fleet uses matching feature boundaries in FastAPI and Vue. A domain owns its persistence/contracts/business logic on the backend and its routes/screens/API adapter on the frontend.
 
 ## Backend layering
 

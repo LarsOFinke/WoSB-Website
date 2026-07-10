@@ -7,8 +7,8 @@ import { formatMessage, getNestedValue } from './utils'
 
 export { DEFAULT_LOCALE, SUPPORTED_LOCALES }
 
-const LOCALE_STORAGE_KEY = 'rbv-hub.locale'
-const LEGACY_LOCALE_STORAGE_KEY = 'blackwater-hub.locale'
+const LOCALE_STORAGE_KEY = 'rbf-hub.locale'
+const LEGACY_LOCALE_STORAGE_KEYS = ['rbv-hub.locale', 'blackwater-hub.locale']
 
 function normalizeLocale(locale) {
   return SUPPORTED_LOCALES.some((entry) => entry.code === locale) ? locale : DEFAULT_LOCALE
@@ -20,7 +20,7 @@ function getHtmlLang(locale) {
 
 function readStoredLocale() {
   if (typeof localStorage === 'undefined') return DEFAULT_LOCALE
-  const stored = localStorage.getItem(LOCALE_STORAGE_KEY) || localStorage.getItem(LEGACY_LOCALE_STORAGE_KEY)
+  const stored = localStorage.getItem(LOCALE_STORAGE_KEY) || LEGACY_LOCALE_STORAGE_KEYS.map((key) => localStorage.getItem(key)).find(Boolean)
   if (stored && !localStorage.getItem(LOCALE_STORAGE_KEY)) localStorage.setItem(LOCALE_STORAGE_KEY, stored)
   return stored || DEFAULT_LOCALE
 }

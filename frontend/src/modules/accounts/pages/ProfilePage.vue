@@ -30,8 +30,8 @@ const primaryFleetMembership = computed(() => {
 })
 const hasOfficialFleetLink = computed(() => Boolean(form.fleet_id && form.fleet_membership_status))
 const displayInitials = computed(() => {
-  const source = (form.display_name || form.username || 'RBV').trim().split(/\s+/).filter(Boolean)
-  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBV'
+  const source = (form.display_name || form.username || 'RBF').trim().split(/\s+/).filter(Boolean)
+  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBF'
 })
 const preferredFocusLabel = computed(() => form.preferred_focus ? t(`focus.${form.preferred_focus}`) : t('profile.noPreferredFocus'))
 const fleetStatusLabel = computed(() => hasOfficialFleetLink.value ? t(`fleets.status.${form.fleet_membership_status}`) : t('profile.fleetMemberships.empty'))

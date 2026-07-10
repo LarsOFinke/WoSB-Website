@@ -13,13 +13,13 @@ Let's Encrypt certificate.
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone <RBV_REPOSITORY_URL> ~/repositories/royal-blackwater-vanguards
-cd ~/repositories/royal-blackwater-vanguards
+git clone <RBF_REPOSITORY_URL> ~/repositories/royal-blackwater-fleet
+cd ~/repositories/royal-blackwater-fleet
 sudo ./setup.sh \
   --profile full \
-  --domain royal-blackwater-vanguards.eu \
+  --domain royal-blackwater-fleet.eu \
   --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-vanguards.eu
+  --letsencrypt-email admin@royal-blackwater-fleet.eu
 ```
 
 No application `.env` files need to be created manually. The setup generates production
@@ -37,8 +37,8 @@ obtain and activate the trusted certificate without resetting PostgreSQL.
 ## 3. Open the services
 
 ```text
-https://royal-blackwater-vanguards.eu       Fleet Hub
-https://royal-blackwater-vanguards.eu:8443  Uptime Kuma
+https://royal-blackwater-fleet.eu       Fleet Hub
+https://royal-blackwater-fleet.eu:8443  Uptime Kuma
 ```
 
 The initial administrator credentials are written to:
@@ -53,9 +53,9 @@ Store them securely and delete that file.
 
 ```bash
 make infra-status
-curl --fail https://royal-blackwater-vanguards.eu/api/health/ready
-curl --fail --head https://royal-blackwater-vanguards.eu:8443/
-systemctl status rbv-hub-cert-renew.timer
+curl --fail https://royal-blackwater-fleet.eu/api/health/ready
+curl --fail --head https://royal-blackwater-fleet.eu:8443/
+systemctl status rbf-hub-cert-renew.timer
 ```
 
 Expected API response:

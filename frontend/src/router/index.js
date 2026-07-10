@@ -56,7 +56,7 @@ router.beforeEach(async (to) => {
 router.afterEach((to) => {
   if (typeof document === 'undefined') return
   const label = to.meta.titleKey ? translate(to.meta.titleKey) : translate('common.projectName')
-  document.title = label === translate('common.projectName') ? label : `${label} · RBV`
+  document.title = label === translate('common.projectName') ? label : `${label} · RBF`
 })
 
 export default router

@@ -16,7 +16,7 @@ else
   C_RESET=''; C_BLUE=''; C_GREEN=''; C_YELLOW=''; C_RED=''
 fi
 
-log() { printf '%b[rbv]%b %s\n' "$C_BLUE" "$C_RESET" "$*"; }
+log() { printf '%b[rbf]%b %s\n' "$C_BLUE" "$C_RESET" "$*"; }
 success() { printf '%b[ok]%b %s\n' "$C_GREEN" "$C_RESET" "$*"; }
 warn() { printf '%b[warn]%b %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
 die() { printf '%b[error]%b %s\n' "$C_RED" "$C_RESET" "$*" >&2; exit 1; }
