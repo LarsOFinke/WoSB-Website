@@ -65,9 +65,11 @@ def get_manageable_fleets(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> list[FleetRead]:
-    if current_user.is_admin:
+    if current_user.can_moderate:
         return list_fleets(db, include_inactive=True)
     memberships = user_leadership_memberships(db, current_user)
+    if not memberships:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Fleet leadership access required.")
     fleets = [get_fleet(db, membership.fleet_id) for membership in memberships]
     return [fleet for fleet in fleets if fleet is not None]
 

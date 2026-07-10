@@ -200,7 +200,7 @@ def user_leadership_memberships(db: Session, user: User) -> list[FleetMembership
 
 
 def can_manage_fleet(db: Session, user: User, fleet_id: int | None = None) -> bool:
-    if user.is_admin:
+    if user.can_moderate:
         return True
     primary = get_primary_fleet(db)
     if primary is None:

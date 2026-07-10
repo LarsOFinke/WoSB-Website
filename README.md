@@ -160,3 +160,8 @@ The Build Designer seed catalog now has cross-category completeness checks. Lant
 upgrades and Specialists received audited, idempotent catalogs with current B20 naming, traceable
 revision metadata and regression tests. Existing options that are no longer part of the active
 catalog remain attached to historical builds but disappear from new-build selectors.
+
+
+## Release 0.15.1 — Fleet-management access
+
+Fleet Management is now shown only to administrators, moderators, active Fleet Admirals, and active Fleet Lieutenants. The frontend route and backend endpoints enforce the same policy.

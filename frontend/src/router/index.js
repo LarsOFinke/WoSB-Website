@@ -37,7 +37,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const { isAuthenticated, isStaff, sessionState } = useSession()
+  const { canManageFleet, isAuthenticated, isStaff, sessionState } = useSession()
   if (!sessionState.isReady) await loadSession()
 
   if (to.meta.guestOnly && isAuthenticated.value) {
@@ -50,6 +50,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresUser && !isAuthenticated.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (to.meta.requiresFleetManagement && !canManageFleet.value) {
+    return { name: 'profile' }
   }
 
   return true
