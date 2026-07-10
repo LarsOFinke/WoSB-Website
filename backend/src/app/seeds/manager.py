@@ -14,7 +14,7 @@ from app.seeds.demo_builds import DEMO_BUILD_DATA
 from app.seeds.demo_groups import DEMO_GROUP_DATA
 from app.seeds.demo_fleet_events import demo_fleet_event_data
 from app.seeds.demo_content import seed_demo_content
-from app.seeds.fleets import FLEET_SEED_DATA
+from app.seeds.fleets import FLEET_SEED_DATA, LEGACY_FLEET_SLUGS
 from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
 from app.seeds.sails import SAIL_OPTIONS
@@ -75,6 +75,8 @@ class SeedManager:
         active_slugs = {row["slug"] for row in FLEET_SEED_DATA}
         for fleet_data in FLEET_SEED_DATA:
             existing = self.db.scalar(select(Fleet).where(Fleet.slug == fleet_data["slug"]))
+            if existing is None:
+                existing = self.db.scalar(select(Fleet).where(Fleet.slug.in_(LEGACY_FLEET_SLUGS)))
             payload = {**fleet_data, "is_active": fleet_data.get("is_active", True)}
             if existing is None:
                 self.db.add(Fleet(**payload))

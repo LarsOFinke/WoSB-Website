@@ -1,6 +1,6 @@
 {
-  "name": "blackwater-mercenaries-hub-frontend",
-  "version": "0.10.0",
+  "name": "royal-blackwater-vanguards-frontend",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {

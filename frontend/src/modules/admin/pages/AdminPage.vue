@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
+import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
@@ -370,35 +371,39 @@ onMounted(async () => {
       <template v-else>
         <section class="wire-section staff-command-center polished-command-center" :aria-label="t('admin.quickActions.label')">
           <RouterLink class="staff-command-card" to="/calendar/new">
-            <span>{{ t('admin.quickActions.scheduleLabel') }}</span>
+            <span class="staff-command-card-topline"><AppIcon name="calendar" :size="18" />{{ t('admin.quickActions.scheduleLabel') }}</span>
             <strong>{{ t('admin.quickActions.newEvent') }}</strong>
             <small>{{ t('admin.quickActions.scheduleText') }}</small>
+            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
           </RouterLink>
           <RouterLink class="staff-command-card" to="/forum/new">
-            <span>{{ t('admin.quickActions.forumLabel') }}</span>
+            <span class="staff-command-card-topline"><AppIcon name="forum" :size="18" />{{ t('admin.quickActions.forumLabel') }}</span>
             <strong>{{ t('admin.quickActions.newThread') }}</strong>
             <small>{{ t('admin.quickActions.forumText') }}</small>
+            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
           </RouterLink>
           <RouterLink class="staff-command-card" to="/guides/new">
-            <span>{{ t('admin.quickActions.guidesLabel') }}</span>
+            <span class="staff-command-card-topline"><AppIcon name="guides" :size="18" />{{ t('admin.quickActions.guidesLabel') }}</span>
             <strong>{{ t('admin.quickActions.newGuide') }}</strong>
             <small>{{ t('admin.quickActions.guidesText') }}</small>
+            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
           </RouterLink>
           <RouterLink class="staff-command-card" to="/fleets">
-            <span>{{ t('fleets.manage.eyebrow') }}</span>
+            <span class="staff-command-card-topline"><AppIcon name="fleet" :size="18" />{{ t('fleets.manage.eyebrow') }}</span>
             <strong>{{ t('common.fleetManagement') }}</strong>
             <small>{{ t('fleets.manage.subtitle') }}</small>
+            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
           </RouterLink>
         </section>
 
         <section class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'">{{ t('admin.tabs.status') }}</button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'">{{ t('admin.tabs.registrations') }}</button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'">{{ t('admin.tabs.logs') }}</button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'">{{ t('admin.tabs.calendar') }}</button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'">{{ t('admin.tabs.content') }}</button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'">{{ t('admin.tabs.builds') }}</button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'users' }" type="button" @click="activeTab = 'users'">{{ t('admin.tabs.users') }}</button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'users' }" type="button" @click="activeTab = 'users'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.users') }}</span></button>
         </section>
 
         <section v-if="activeTab === 'status'" class="wire-section admin-panel admin-status-panel">

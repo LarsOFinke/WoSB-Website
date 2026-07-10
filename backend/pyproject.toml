@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "blackwater-mercenaries-hub-backend"
-version = "0.10.0"
-description = "FastAPI backend for the Blackwater Mercenaries Hub."
+name = "royal-blackwater-vanguards-backend"
+version = "0.11.0"
+description = "FastAPI backend for the Royal Blackwater Vanguards."
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1.0",
@@ -26,6 +26,8 @@ dev = [
 ]
 
 [project.scripts]
+rbv-dev = "app.cli.dev:main"
+rbv-seed = "app.cli.seed:main"
 blackwater-dev = "app.cli.dev:main"
 blackwater-seed = "app.cli.seed:main"
 wosb-dev = "app.cli.dev:main"

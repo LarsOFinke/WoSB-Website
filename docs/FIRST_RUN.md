@@ -2,29 +2,44 @@
 
 ## 1. Prepare the device
 
-Install a current 64-bit Raspberry Pi OS Lite or Debian image, enable SSH and ensure the Pi has
-a stable LAN address or DHCP reservation.
+Install a current 64-bit Raspberry Pi OS Lite or Debian image, enable SSH and assign the Pi a stable
+LAN address or DHCP reservation.
+
+For the public domain, configure DNS and forward TCP ports 80 and 443 to the Pi before requesting a
+Let's Encrypt certificate.
 
 ## 2. Clone and start
 
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone <BLACKWATER_REPOSITORY_URL> ~/repositories/blackwater-hub
-cd ~/repositories/blackwater-hub
-sudo ./setup.sh --profile full
+git clone <RBV_REPOSITORY_URL> ~/repositories/royal-blackwater-vanguards
+cd ~/repositories/royal-blackwater-vanguards
+sudo ./setup.sh \
+  --profile full \
+  --domain royal-blackwater-vanguards.eu \
+  --tls-mode letsencrypt \
+  --letsencrypt-email admin@royal-blackwater-vanguards.eu
 ```
 
-No application `.env` files need to be created manually. The setup script generates the
-production configuration under `infrastructure/.env`.
+No application `.env` files need to be created manually. The setup generates production
+configuration under `infrastructure/.env`.
 
-The PostgreSQL bind mount is prepared automatically. Legacy repository marker files are
-removed before `initdb`, while an existing database cluster remains untouched.
+When DNS is not ready, start with:
 
-## 3. Open the hub
+```bash
+sudo ./setup.sh --profile full --tls-mode auto
+```
 
-The completion summary prints the detected URLs. The initial certificate is self-signed, so
-accept the browser warning on trusted LAN devices. With the `full` profile, Uptime Kuma is available at `https://<PI-IP>:8443`.
+The hub then uses a self-signed bootstrap certificate. Run the explicit domain command later to
+obtain and activate the trusted certificate without resetting PostgreSQL.
+
+## 3. Open the services
+
+```text
+https://royal-blackwater-vanguards.eu       Fleet Hub
+https://royal-blackwater-vanguards.eu:8443  Uptime Kuma
+```
 
 The initial administrator credentials are written to:
 
@@ -38,8 +53,9 @@ Store them securely and delete that file.
 
 ```bash
 make infra-status
-curl --insecure https://<PI-IP>/api/health/ready
-curl --insecure --head https://<PI-IP>:8443/
+curl --fail https://royal-blackwater-vanguards.eu/api/health/ready
+curl --fail --head https://royal-blackwater-vanguards.eu:8443/
+systemctl status rbv-hub-cert-renew.timer
 ```
 
 Expected API response:
@@ -48,21 +64,19 @@ Expected API response:
 {"status":"ready","database":"postgresql"}
 ```
 
-## 5. Back up before updates
+## 5. Update safely
 
 ```bash
 make infra-backup
 make infra-update
 ```
 
-The update command uses `git pull --ff-only`, rebuilds images, reruns migrations and verifies
-the final health endpoint.
+The update flow pulls fast-forward changes, rebuilds images, reruns migrations and verifies health.
+The fleet seed migrates the former Blackwater Mercenaries slug in place, preserving fleet IDs and
+memberships.
 
-## Schutz vor geerbten Datenbankvariablen
+## Database credential isolation
 
-Der Deployment-Controller entfernt `POSTGRES_USER`, `POSTGRES_PASSWORD`,
-`POSTGRES_DB` und `DATABASE_URL` aus der aufrufenden Shell, bevor Docker Compose
-gestartet wird. PostgreSQL, Migration, Seed und API lesen ihre Zugangsdaten
-anschließend aus derselben `infrastructure/.env`. Dadurch kann eine lokal oder
-systemweit exportierte Variable die Datenbank nicht mehr mit einem abweichenden
-Passwort initialisieren.
+The deployment controller removes inherited `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+and `DATABASE_URL` variables before Docker Compose starts. PostgreSQL, migration, seed and API then
+read the same `infrastructure/.env`, preventing host variables from creating a password mismatch.

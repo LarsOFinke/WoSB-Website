@@ -1,33 +1,37 @@
-# Production Checklist
+# Production checklist
 
-## Already improved in this pass
+## Implemented in release 0.11
 
-- Central app settings.
-- Central logging configuration.
-- Request logging middleware with request IDs.
-- Split frontend app shell components.
-- Central sidebar navigation model.
-- DB check constraints for important enum/range fields on fresh schemas.
-- Updated documentation and architecture inventory.
+- [x] Royal Blackwater Vanguards branding across frontend, backend, seeds and infrastructure.
+- [x] Responsive RBV brand lockup and two UI/UX refinement iterations.
+- [x] Public/member/staff route boundaries in frontend and backend.
+- [x] PostgreSQL production mode with Alembic migrations.
+- [x] SQLite development mode with lightweight schema creation.
+- [x] Docker Compose deployment with explicit health-controlled startup order.
+- [x] NGINX reverse proxy and static frontend delivery.
+- [x] Let's Encrypt HTTP-01/webroot certificate issuance and twice-daily renewal checks.
+- [x] Self-signed bootstrap/fallback TLS for LAN and incomplete DNS setups.
+- [x] Uptime Kuma through a dedicated TLS gateway.
+- [x] UFW, systemd startup, local backups and smoke tests.
+- [x] CI validation for backend tests, migrations, frontend locales/build and shell/Compose syntax.
 
-## Required before live users
+## Required for the public launch
 
-- [ ] Add Alembic migrations and migration review process.
-- [ ] Use PostgreSQL in staging/production.
-- [ ] Add CI pipeline for backend tests, frontend build, locale checks, audits and linting.
-- [ ] Add backend tests for auth, fleet membership, uploads, guide embeds and staff permissions.
-- [ ] Add rate limiting for login/register/upload endpoints.
-- [ ] Move uploads to object storage or durable shared storage.
-- [ ] Add backup/restore procedure.
-- [ ] Configure production CORS origins explicitly.
-- [ ] Set `SESSION_COOKIE_SECURE=true` behind HTTPS.
-- [ ] Replace demo admin password before deployment.
-- [ ] Add monitoring for error rates, request latency and storage growth.
+- [ ] Point `royal-blackwater-vanguards.eu` DNS A/AAAA records to the actual public endpoint.
+- [ ] Forward TCP 80 and 443 to the Pi; avoid publishing monitoring port 8443 to the internet unless required.
+- [ ] Run setup with `--tls-mode letsencrypt` and a monitored contact email.
+- [ ] Verify `rbv-hub-cert-renew.timer` and perform a dry renewal test.
+- [ ] Replace generated administrator credentials and delete `first-run-credentials.txt`.
+- [ ] Configure encrypted off-host backups and test restoration.
+- [ ] Add rate limiting for login, registration and upload endpoints.
+- [ ] Review SSH policy, disable password login where appropriate and restrict administrative access.
+- [ ] Add dependency/container vulnerability scanning to CI.
+- [ ] Define an uptime and incident notification channel in Uptime Kuma.
 
-## Nice-to-have hardening
+## Recommended hardening
 
-- [ ] Full audit trail for staff actions.
-- [ ] Soft-delete model for user-generated content.
-- [ ] Rich-text editor that serializes to the current embed token model.
-- [ ] Pagination on large lists.
-- [ ] Background cleanup task for orphaned uploads and expired sessions.
+- [ ] Put the Pi behind a VPN or managed reverse proxy if direct exposure is not required.
+- [ ] Add central log shipping and disk/storage alerts.
+- [ ] Add pagination and retention rules for large activity/log tables.
+- [ ] Add an orphaned-upload cleanup job.
+- [ ] Consider object storage when uploads outgrow a single-node deployment.

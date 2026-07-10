@@ -1,6 +1,6 @@
-# Blackwater Mercenaries Hub Frontend
+# Royal Blackwater Vanguards Frontend
 
-Vue 3 + Vite frontend for Blackwater Mercenaries Hub.
+Vue 3 + Vite frontend for Royal Blackwater Vanguards.
 
 ## Mandatory environment
 

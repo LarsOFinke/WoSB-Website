@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/env.sh"
 
 install_host_dependencies() {
   [[ "$EUID" -eq 0 ]] || die "Host-Provisioning benötigt root-Rechte."
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get install -y ca-certificates curl git openssl ufw
+  apt-get install -y ca-certificates certbot curl git openssl ufw
 
   if ! command -v docker >/dev/null 2>&1; then
     apt-get install -y docker.io
@@ -26,7 +26,7 @@ install_host_dependencies() {
 }
 
 prepare_data_directories() {
-  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma}
+  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
 
   # The first infrastructure alpha tracked data/postgres/.gitkeep. PostgreSQL
   # initdb requires a completely empty target directory. Remove only that
@@ -50,6 +50,8 @@ prepare_data_directories() {
     chown -R 1000:1000 "$INFRA_DIR/data/uptime-kuma"
   fi
   chmod 750 "$INFRA_DIR/data/postgres" "$INFRA_DIR/data/uploads" "$INFRA_DIR/data/backups"
+  chmod 755 "$INFRA_DIR/data/acme" "$INFRA_DIR/data/certs"
+  chmod 700 "$INFRA_DIR/data/letsencrypt" "$INFRA_DIR/data/letsencrypt/config" "$INFRA_DIR/data/letsencrypt/work" "$INFRA_DIR/data/letsencrypt/logs"
 }
 
 detect_ssh_port() {
@@ -89,7 +91,7 @@ generate_self_signed_certificate() {
   error_file="$(mktemp)"
 
   if [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]]; then
-    log "Vorhandenes TLS-Zertifikat wird weiterverwendet."
+    log "Vorhandenes TLS-Zertifikat wird als Bootstrap-Zertifikat weiterverwendet."
     return
   fi
 
@@ -100,7 +102,7 @@ x509_extensions=v3_req
 prompt=no
 [req_distinguished_name]
 CN=${hostname}
-O=Blackwater Mercenaries Hub
+O=Royal Blackwater Vanguards
 [v3_req]
 keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth
@@ -116,10 +118,83 @@ CERTCFG
       -config "$config_file" 2>"$error_file"; then
     cat "$error_file" >&2
     rm -f "$config_file" "$error_file"
-    die "TLS-Zertifikat konnte nicht erzeugt werden."
+    die "TLS-Bootstrap-Zertifikat konnte nicht erzeugt werden."
   fi
   rm -f "$config_file" "$error_file"
   chmod 600 "$cert_dir/privkey.pem"
   chmod 644 "$cert_dir/fullchain.pem"
-  success "Selbstsigniertes TLS-Zertifikat für ${hostname} / ${ip} erstellt."
+  set_env_value CERTIFICATE_PROVIDER self-signed
+  success "Selbstsigniertes Bootstrap-Zertifikat für ${hostname} / ${ip} erstellt."
+}
+
+is_public_certificate_hostname() {
+  local hostname="$1"
+  [[ -n "$hostname" && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ && "$hostname" == *.* ]]
+}
+
+request_letsencrypt_certificate() {
+  local hostname email cert_name staging_args=()
+  hostname="$(read_env APP_HOSTNAME)"
+  email="$(read_env LETSENCRYPT_EMAIL)"
+  cert_name="$(read_env LETSENCRYPT_CERT_NAME)"
+  [[ -n "$cert_name" ]] || cert_name="$hostname"
+
+  if ! command -v certbot >/dev/null 2>&1; then
+    warn "Let's Encrypt wurde übersprungen: certbot ist nicht installiert."
+    return 1
+  fi
+  is_public_certificate_hostname "$hostname" || {
+    warn "Let's Encrypt wurde übersprungen: ${hostname} ist keine öffentliche Domain."
+    return 1
+  }
+  [[ -n "$email" ]] || {
+    warn "Let's Encrypt wurde übersprungen: Kontakt-E-Mail fehlt."
+    return 1
+  }
+  if is_true "$(read_env LETSENCRYPT_STAGING)"; then
+    staging_args+=(--staging)
+    warn "Let's Encrypt Staging ist aktiv; das Zertifikat ist nicht öffentlich vertrauenswürdig."
+  fi
+
+  log "Fordere ein Let's-Encrypt-Zertifikat für ${hostname} an."
+  if ! certbot certonly \
+      --non-interactive \
+      --agree-tos \
+      --email "$email" \
+      --webroot \
+      --webroot-path "$ACME_WEBROOT" \
+      --config-dir "$CERTBOT_CONFIG_DIR" \
+      --work-dir "$CERTBOT_WORK_DIR" \
+      --logs-dir "$CERTBOT_LOGS_DIR" \
+      --cert-name "$cert_name" \
+      --keep-until-expiring \
+      "${staging_args[@]}" \
+      -d "$hostname"; then
+    warn "Let's Encrypt konnte das Zertifikat nicht ausstellen. Prüfe DNS sowie die Weiterleitung von TCP-Port 80 auf diesen Pi."
+    return 1
+  fi
+
+  RENEWED_LINEAGE="$CERTBOT_CONFIG_DIR/live/$cert_name" "$INFRA_DIR/scripts/tls/sync-certificate.sh"
+}
+
+configure_production_tls() {
+  local mode
+  mode="$(read_env TLS_MODE)"
+  case "$mode" in
+    self-signed)
+      set_env_value CERTIFICATE_PROVIDER self-signed
+      warn "TLS_MODE=self-signed: Browser zeigen eine Zertifikatswarnung."
+      ;;
+    letsencrypt)
+      request_letsencrypt_certificate || die "Let's-Encrypt-Einrichtung ist fehlgeschlagen."
+      ;;
+    auto)
+      if request_letsencrypt_certificate; then
+        success "Öffentlich vertrauenswürdiges TLS ist aktiv."
+      else
+        set_env_value CERTIFICATE_PROVIDER self-signed
+        warn "Automatischer TLS-Modus verwendet vorerst das selbstsignierte Zertifikat."
+      fi
+      ;;
+  esac
 }

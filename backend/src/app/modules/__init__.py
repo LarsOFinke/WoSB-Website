@@ -1,1 +1,1 @@
-"""Domain modules for the Blackwater Mercenaries Hub backend."""
+"""Domain modules for the Royal Blackwater Vanguards backend."""

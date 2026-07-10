@@ -13,7 +13,7 @@ const {
 </script>
 
 <template>
-  <AppTopbar :on-open-mobile-menu="openMobileMenu" />
+  <AppTopbar :is-mobile-menu-open="isMobileMenuOpen" :on-open-mobile-menu="openMobileMenu" />
   <AppSidebar
     :is-collapsed="isSidebarCollapsed"
     :is-open="isMobileMenuOpen"

@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { translate } from '@/locales'
+
 import { loadSession, useSession } from '@/modules/accounts/session'
 import { accountRoutes } from '@/modules/accounts/routes'
 import { adminRoutes } from '@/modules/admin/routes'
@@ -49,6 +51,12 @@ router.beforeEach(async (to) => {
   }
 
   return true
+})
+
+router.afterEach((to) => {
+  if (typeof document === 'undefined') return
+  const label = to.meta.titleKey ? translate(to.meta.titleKey) : translate('common.projectName')
+  document.title = label === translate('common.projectName') ? label : `${label} · RBV`
 })
 
 export default router

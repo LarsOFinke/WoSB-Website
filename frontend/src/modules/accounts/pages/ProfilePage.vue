@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 
+import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
@@ -29,11 +30,23 @@ const primaryFleetMembership = computed(() => {
 })
 const hasOfficialFleetLink = computed(() => Boolean(form.fleet_id && form.fleet_membership_status))
 const displayInitials = computed(() => {
-  const source = (form.display_name || form.username || 'BM').trim().split(/\s+/).filter(Boolean)
-  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'BM'
+  const source = (form.display_name || form.username || 'RBV').trim().split(/\s+/).filter(Boolean)
+  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBV'
 })
 const preferredFocusLabel = computed(() => form.preferred_focus ? t(`focus.${form.preferred_focus}`) : t('profile.noPreferredFocus'))
 const fleetStatusLabel = computed(() => hasOfficialFleetLink.value ? t(`fleets.status.${form.fleet_membership_status}`) : t('profile.fleetMemberships.empty'))
+const profileCompletion = computed(() => {
+  const checks = [
+    Boolean(form.display_name.trim()),
+    Boolean(form.preferred_focus),
+    Boolean(form.note.trim()),
+    hasOfficialFleetLink.value || Boolean(form.fleet_name.trim()),
+  ]
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
+})
+const profileCompletionHint = computed(() => profileCompletion.value === 100
+  ? t('profile.completion.complete')
+  : t('profile.completion.hint'))
 
 const focusOptions = [
   'pve_farming',
@@ -178,6 +191,7 @@ onMounted(loadProfile)
           <MetricCard :label="t('profile.account')" :value="t(`roles.${form.role}`)" :hint="form.username" />
           <MetricCard :label="t('profile.fleetMemberships.title')" :value="fleetStatusLabel" :hint="form.fleet_name || t('fleets.title')" tone="accent" />
           <MetricCard :label="t('profile.preferredFocus')" :value="preferredFocusLabel" />
+          <MetricCard :label="t('profile.completion.label')" :value="`${profileCompletion}%`" :hint="profileCompletionHint" />
         </section>
 
         <div class="profile-workspace-grid">
@@ -265,8 +279,8 @@ onMounted(loadProfile)
               <div class="workspace-section-heading compact-heading">
                 <div><p class="eyebrow">{{ t('common.personalArea') }}</p><h2>{{ t('common.modules') }}</h2></div>
               </div>
-              <RouterLink class="profile-tool-link" to="/profile/builds"><span>⚙</span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><b>→</b></RouterLink>
-              <RouterLink class="profile-tool-link" to="/profile/groups"><span>◈</span><span><strong>{{ t('myGroups.profileCardTitle') }}</strong><small>{{ t('myGroups.profileCardText') }}</small></span><b>→</b></RouterLink>
+              <RouterLink class="profile-tool-link" to="/profile/builds"><span><AppIcon name="builds" :size="18" /></span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><b>→</b></RouterLink>
+              <RouterLink class="profile-tool-link" to="/profile/groups"><span><AppIcon name="groups" :size="18" /></span><span><strong>{{ t('myGroups.profileCardTitle') }}</strong><small>{{ t('myGroups.profileCardText') }}</small></span><b>→</b></RouterLink>
             </section>
 
             <section class="wire-section profile-command-card password-panel">

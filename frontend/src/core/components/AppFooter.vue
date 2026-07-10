@@ -1,4 +1,5 @@
 <script setup>
+import BrandLockup from '@/core/components/BrandLockup.vue'
 import { useLocale } from '@/locales'
 
 const { t } = useLocale()
@@ -6,6 +7,8 @@ const { t } = useLocale()
 
 <template>
   <footer class="wire-section footer">
-    <span class="footer-text">{{ t('footer.text') }}</span>
+    <BrandLockup compact />
+    <span class="footer-text">{{ t('footer.tagline') }}</span>
+    <span class="footer-meta">RBV · {{ new Date().getFullYear() }}</span>
   </footer>
 </template>

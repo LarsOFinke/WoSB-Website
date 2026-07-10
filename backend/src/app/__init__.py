@@ -1,4 +1,4 @@
-"""Blackwater Mercenaries Hub backend package."""
+"""Royal Blackwater Vanguards backend package."""
 
 from typing import Any
 

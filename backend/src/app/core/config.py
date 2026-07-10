@@ -43,12 +43,12 @@ def _parse_env_file(path: Path) -> dict[str, str]:
 
 def _load_required_env_file() -> dict[str, str]:
     env_path = Path(
-        os.environ.get("BLACKWATER_ENV_FILE", os.environ.get("WOSB_ENV_FILE", DEFAULT_ENV_FILE))
+        os.environ.get("RBV_ENV_FILE", os.environ.get("BLACKWATER_ENV_FILE", os.environ.get("WOSB_ENV_FILE", DEFAULT_ENV_FILE)))
     ).expanduser()
     if not env_path.exists():
         raise ConfigError(
             f"Missing required env file: {env_path}. "
-            "Copy backend/.env.example to backend/.env or set BLACKWATER_ENV_FILE."
+            "Copy backend/.env.example to backend/.env or set RBV_ENV_FILE."
         )
     if not env_path.is_file():
         raise ConfigError(f"Env path is not a file: {env_path}")
@@ -57,12 +57,12 @@ def _load_required_env_file() -> dict[str, str]:
 
 def _load_required_cfg() -> dict[str, Any]:
     cfg_path = Path(
-        os.environ.get("BLACKWATER_CONFIG_FILE", os.environ.get("WOSB_CONFIG_FILE", DEFAULT_CFG_FILE))
+        os.environ.get("RBV_CONFIG_FILE", os.environ.get("BLACKWATER_CONFIG_FILE", os.environ.get("WOSB_CONFIG_FILE", DEFAULT_CFG_FILE)))
     ).expanduser()
     if not cfg_path.exists():
         raise ConfigError(
             f"Missing required config file: {cfg_path}. "
-            "Keep backend/config/app.toml in the deployment or set BLACKWATER_CONFIG_FILE."
+            "Keep backend/config/app.toml in the deployment or set RBV_CONFIG_FILE."
         )
     if not cfg_path.is_file():
         raise ConfigError(f"Config path is not a file: {cfg_path}")

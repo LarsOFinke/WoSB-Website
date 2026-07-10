@@ -26,10 +26,10 @@ ENV
 
 cat > "$TMP_DIR/postgres.env" <<'ENV'
 APP_ENV=production
-DATABASE_URL=postgresql+psycopg://blackwater:validation@postgres:5432/blackwater
+DATABASE_URL=postgresql+psycopg://rbv:validation@postgres:5432/rbv
 DB_SCHEMA_MODE=migrate
 UPLOAD_DIR=/data/uploads
-CORS_ORIGINS=https://blackwater.example
+CORS_ORIGINS=https://royal-blackwater-vanguards.eu
 SESSION_COOKIE_SECURE=true
 AUTO_SEED=false
 ENV
@@ -44,14 +44,14 @@ printf '\n[1/7] Backend tests\n'
 printf '\n[2/7] SQLite Alembic lifecycle\n'
 (
   cd "$ROOT_DIR/backend"
-  BLACKWATER_ENV_FILE="$TMP_DIR/sqlite.env" PYTHONPATH=src alembic upgrade head
-  BLACKWATER_ENV_FILE="$TMP_DIR/sqlite.env" PYTHONPATH=src alembic check
+  RBV_ENV_FILE="$TMP_DIR/sqlite.env" PYTHONPATH=src alembic upgrade head
+  RBV_ENV_FILE="$TMP_DIR/sqlite.env" PYTHONPATH=src alembic check
 )
 
 printf '\n[3/7] PostgreSQL offline migration rendering\n'
 (
   cd "$ROOT_DIR/backend"
-  BLACKWATER_ENV_FILE="$TMP_DIR/postgres.env" PYTHONPATH=src alembic upgrade head --sql > "$TMP_DIR/postgres-schema.sql"
+  RBV_ENV_FILE="$TMP_DIR/postgres.env" PYTHONPATH=src alembic upgrade head --sql > "$TMP_DIR/postgres-schema.sql"
   grep -q 'CREATE TABLE users' "$TMP_DIR/postgres-schema.sql"
   grep -q 'CREATE TABLE alembic_version' "$TMP_DIR/postgres-schema.sql"
 )
@@ -89,6 +89,10 @@ assert "$${POSTGRES_USER}" in postgres_healthcheck, postgres_healthcheck
 assert "$${POSTGRES_DB}" in postgres_healthcheck, postgres_healthcheck
 seed_command = data["services"]["seed"]["command"][2]
 assert "$$AUTO_SEED" in seed_command, seed_command
+gateway = data["services"]["gateway"]
+assert "./data/acme:/var/www/certbot:ro" in gateway["volumes"]
+assert data["services"]["api"]["image"].startswith("${RBV_API_IMAGE")
+assert gateway["image"].startswith("${RBV_GATEWAY_IMAGE")
 monitoring = data["services"]["monitoring-gateway"]
 assert monitoring["profiles"] == ["monitoring"]
 assert "${MONITORING_HTTPS_PORT:-8443}:443" in monitoring["ports"]
@@ -108,6 +112,14 @@ steps = [
 positions = [controller.index(step) for step in steps]
 assert positions == sorted(positions), positions
 PY
+
+for unit in rbv-hub.service rbv-hub-backup.service rbv-hub-backup.timer rbv-hub-cert-renew.service rbv-hub-cert-renew.timer; do
+  [[ -f "$ROOT_DIR/infrastructure/systemd/$unit" ]]
+done
+[[ ! -e "$ROOT_DIR/infrastructure/systemd/blackwater-hub.service" ]]
+grep -q '/.well-known/acme-challenge/' "$ROOT_DIR/infrastructure/nginx/default.conf"
+grep -q 'certbot renew' "$ROOT_DIR/infrastructure/scripts/tls/renew-certificate.sh"
+grep -q 'CERTIFICATE_PROVIDER letsencrypt' "$ROOT_DIR/infrastructure/scripts/tls/sync-certificate.sh"
 
 if docker compose version >/dev/null 2>&1; then
   if [[ ! -f "$ROOT_DIR/infrastructure/.env" ]]; then
@@ -153,7 +165,7 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \
   --profile full \
-  --hostname blackwater-validation.local \
+  --hostname rbv-validation.local \
   --ip 192.0.2.10 \
   --admin-username validation-admin \
   --admin-display-name 'Validation Commander' >/dev/null
@@ -165,16 +177,22 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
 grep -q '^APP_ENV=production$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DB_SCHEMA_MODE=migrate$' "$TMP_DIR/infrastructure/.env"
 grep -q '^MONITORING_HTTPS_PORT=8443$' "$TMP_DIR/infrastructure/.env"
+grep -q '^COMPOSE_PROJECT_NAME=rbv-hub$' "$TMP_DIR/infrastructure/.env"
+grep -q '^APP_HOSTNAME=rbv-validation.local$' "$TMP_DIR/infrastructure/.env"
+grep -q '^TLS_MODE=auto$' "$TMP_DIR/infrastructure/.env"
+grep -q '^CERTIFICATE_PROVIDER=self-signed$' "$TMP_DIR/infrastructure/.env"
+grep -q '^LETSENCRYPT_CERT_NAME=rbv-validation.local$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DATABASE_URL=postgresql+psycopg://' "$TMP_DIR/infrastructure/.env"
 grep -q '^Admin user: validation-admin$' "$TMP_DIR/infrastructure/first-run-credentials.txt"
 openssl x509 -in "$TMP_DIR/infrastructure/data/certs/fullchain.pem" -noout -ext subjectAltName \
-  | grep -q 'DNS:blackwater-validation.local, IP Address:192.0.2.10'
+  | grep -q 'DNS:rbv-validation.local, IP Address:192.0.2.10'
 
 # Simulate rerunning setup against the legacy/current root-level PostgreSQL
 # cluster layout. Existing database files must remain untouched.
 printf '16\n' > "$TMP_DIR/infrastructure/data/postgres/PG_VERSION"
 printf 'preserve-me\n' > "$TMP_DIR/infrastructure/data/postgres/EXISTING_DATA_SENTINEL"
 touch "$TMP_DIR/infrastructure/data/postgres/.gitkeep"
+sed -i 's/^COMPOSE_PROJECT_NAME=.*/COMPOSE_PROJECT_NAME=blackwater-hub/' "$TMP_DIR/infrastructure/.env"
 POSTGRES_USER=poisoned-user \
 POSTGRES_PASSWORD=poisoned-password \
 POSTGRES_DB=poisoned-database \
@@ -183,13 +201,14 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \
   --profile full \
-  --hostname blackwater-validation.local \
+  --hostname rbv-validation.local \
   --ip 192.0.2.10 \
   --admin-username validation-admin \
   --admin-display-name 'Validation Commander' >/dev/null
 [[ ! -e "$TMP_DIR/infrastructure/data/postgres/.gitkeep" ]]
 [[ "$(cat "$TMP_DIR/infrastructure/data/postgres/PG_VERSION")" == 16 ]]
 [[ "$(cat "$TMP_DIR/infrastructure/data/postgres/EXISTING_DATA_SENTINEL")" == preserve-me ]]
+grep -q '^COMPOSE_PROJECT_NAME=rbv-hub$' "$TMP_DIR/infrastructure/.env"
 
 if [[ "$FRONTEND_ENV_CREATED" == true ]]; then
   rm -f "$ROOT_DIR/frontend/.env"

@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
-        description="Blackwater Mercenaries Hub API for builds, guides, forum, fleet coordination and staff operations.",
+        description="Royal Blackwater Vanguards API for builds, guides, forum, fleet coordination and staff operations.",
         lifespan=lifespan,
     )
 

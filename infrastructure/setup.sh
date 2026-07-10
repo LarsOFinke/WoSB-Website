@@ -15,22 +15,29 @@ INSTALL_SYSTEMD=true
 REGENERATE_SECRETS=false
 REQUESTED_HOSTNAME=""
 REQUESTED_IP=""
+REQUESTED_TLS_MODE=""
+REQUESTED_LETSENCRYPT_EMAIL=""
+REQUESTED_LETSENCRYPT_STAGING=""
 ADMIN_USERNAME=admin
-ADMIN_DISPLAY_NAME="Blackwater Command"
+ADMIN_DISPLAY_NAME="RBV Command"
 
 usage() {
   cat <<'USAGE'
-Blackwater Mercenaries Hub - Raspberry Pi First-Run Setup
+Royal Blackwater Vanguards - Raspberry Pi First-Run Setup
 
 Usage:
   sudo ./infrastructure/setup.sh [options]
 
 Options:
   --profile core|full       core: app stack, full: app stack + Uptime Kuma (default)
-  --hostname NAME           Hostname/DNS name for the generated certificate
+  --domain NAME             Public domain (default: royal-blackwater-vanguards.eu)
+  --hostname NAME           Compatibility alias for --domain
   --ip ADDRESS              LAN address for certificate and startup summary
   --admin-username NAME     Initial administrator username (default: admin)
   --admin-display-name NAME Initial administrator display name
+  --tls-mode MODE           auto, letsencrypt or self-signed (default: auto)
+  --letsencrypt-email MAIL  Contact email required for public certificates
+  --letsencrypt-staging     Use the Let's Encrypt staging CA for testing
   --skip-host               Skip apt, Docker, firewall and systemd provisioning
   --no-firewall             Do not enable/configure UFW
   --no-systemd              Do not install the boot service
@@ -43,10 +50,13 @@ USAGE
 while (($#)); do
   case "$1" in
     --profile) PROFILE="${2:-}"; shift 2 ;;
-    --hostname) REQUESTED_HOSTNAME="${2:-}"; shift 2 ;;
+    --domain|--hostname) REQUESTED_HOSTNAME="${2:-}"; shift 2 ;;
     --ip) REQUESTED_IP="${2:-}"; shift 2 ;;
     --admin-username) ADMIN_USERNAME="${2:-}"; shift 2 ;;
     --admin-display-name) ADMIN_DISPLAY_NAME="${2:-}"; shift 2 ;;
+    --tls-mode) REQUESTED_TLS_MODE="${2:-}"; shift 2 ;;
+    --letsencrypt-email) REQUESTED_LETSENCRYPT_EMAIL="${2:-}"; shift 2 ;;
+    --letsencrypt-staging) REQUESTED_LETSENCRYPT_STAGING=true; shift ;;
     --skip-host) SKIP_HOST=true; shift ;;
     --no-firewall) CONFIGURE_FIREWALL=false; shift ;;
     --no-systemd) INSTALL_SYSTEMD=false; shift ;;
@@ -63,7 +73,10 @@ done
 if [[ "$SKIP_HOST" == false && "$EUID" -ne 0 ]]; then
   command -v sudo >/dev/null 2>&1 || die "Bitte als root starten oder --skip-host verwenden."
   sudo_args=(--profile "$PROFILE" --admin-username "$ADMIN_USERNAME" --admin-display-name "$ADMIN_DISPLAY_NAME")
-  [[ -n "$REQUESTED_HOSTNAME" ]] && sudo_args+=(--hostname "$REQUESTED_HOSTNAME")
+  [[ -n "$REQUESTED_HOSTNAME" ]] && sudo_args+=(--domain "$REQUESTED_HOSTNAME")
+  [[ -n "$REQUESTED_TLS_MODE" ]] && sudo_args+=(--tls-mode "$REQUESTED_TLS_MODE")
+  [[ -n "$REQUESTED_LETSENCRYPT_EMAIL" ]] && sudo_args+=(--letsencrypt-email "$REQUESTED_LETSENCRYPT_EMAIL")
+  [[ "$REQUESTED_LETSENCRYPT_STAGING" == true ]] && sudo_args+=(--letsencrypt-staging)
   [[ -n "$REQUESTED_IP" ]] && sudo_args+=(--ip "$REQUESTED_IP")
   [[ "$CONFIGURE_FIREWALL" == false ]] && sudo_args+=(--no-firewall)
   [[ "$INSTALL_SYSTEMD" == false ]] && sudo_args+=(--no-systemd)
@@ -71,8 +84,19 @@ if [[ "$SKIP_HOST" == false && "$EUID" -ne 0 ]]; then
   [[ "$REGENERATE_SECRETS" == true ]] && sudo_args+=(--regenerate-secrets)
   exec sudo --preserve-env=DEBUG bash "$0" "${sudo_args[@]}"
 fi
-log "Blackwater First-Run Setup wird vorbereitet."
+log "RBV First-Run Setup wird vorbereitet."
 log "Profil: $PROFILE | Host-Provisioning: $([[ "$SKIP_HOST" == true ]] && echo aus || echo an)"
+
+migrate_legacy_runtime_names() {
+  [[ -f "$ENV_FILE" ]] || return 0
+  [[ "$(read_env COMPOSE_PROJECT_NAME)" == blackwater-hub ]] || return 0
+
+  log "Migriere den früheren Docker-Projektnamen blackwater-hub auf rbv-hub."
+  if command -v docker >/dev/null 2>&1 && compose_binary >/dev/null 2>&1; then
+    bw_compose_with_profiles down --remove-orphans || warn "Der alte Stack konnte nicht vollständig gestoppt werden; Setup setzt die Migration fort."
+  fi
+  set_env_value COMPOSE_PROJECT_NAME rbv-hub
+}
 
 if [[ "$SKIP_HOST" == false ]]; then
   install_host_dependencies
@@ -82,7 +106,8 @@ else
   require_command openssl
 fi
 
-initialize_env "$REQUESTED_HOSTNAME" "$REQUESTED_IP" "$REGENERATE_SECRETS" "$ADMIN_USERNAME" "$ADMIN_DISPLAY_NAME"
+migrate_legacy_runtime_names
+initialize_env "$REQUESTED_HOSTNAME" "$REQUESTED_IP" "$REGENERATE_SECRETS" "$ADMIN_USERNAME" "$ADMIN_DISPLAY_NAME" "$REQUESTED_TLS_MODE" "$REQUESTED_LETSENCRYPT_EMAIL" "$REQUESTED_LETSENCRYPT_STAGING"
 if [[ "$PROFILE" == full ]]; then
   set_env_value ENABLE_MONITORING true
 else
@@ -114,6 +139,8 @@ if [[ "$NO_START" == false ]]; then
   fi
   bw_compose build api gateway
   deploy_stack
+  "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
+  configure_production_tls
   "$INFRA_DIR/scripts/checks/smoke-test.sh"
 else
   warn "Containerstart wurde mit --no-start übersprungen."
@@ -124,16 +151,17 @@ app_hostname="$(read_env APP_HOSTNAME)"
 cat <<SUMMARY
 
 ============================================================
- Blackwater Mercenaries Hub ist eingerichtet
+ Royal Blackwater Vanguards ist eingerichtet
 ============================================================
- Fleet Hub:       https://${app_ip}
- Hostname:        https://${app_hostname}
- API readiness:  https://${app_ip}/api/health/ready
+ Fleet Hub:       https://${app_hostname}
+ LAN fallback:    https://${app_ip}
+ API readiness:  https://${app_hostname}/api/health/ready
  PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (nur Loopback)
- Monitoring:      $([[ "$PROFILE" == full ]] && printf 'https://%s:%s' "${app_ip}" "$(read_env MONITORING_HTTPS_PORT)" || printf 'deaktiviert')
+ Monitoring:      $([[ "$PROFILE" == full ]] && printf 'https://%s:%s' "${app_hostname}" "$(read_env MONITORING_HTTPS_PORT)" || printf 'deaktiviert')
+ TLS provider:    $(read_env CERTIFICATE_PROVIDER)
  Credentials:     $INFRA_DIR/first-run-credentials.txt
 
- Das erste Zertifikat ist selbstsigniert. Der Browser zeigt daher
- eine Warnung, bis ein vertrauenswürdiges Zertifikat installiert wird.
+ Für Let's Encrypt müssen DNS sowie TCP-Port 80 und 443 auf diesen Pi zeigen.
+ Ohne erfolgreiche Domainvalidierung bleibt das Bootstrap-Zertifikat aktiv.
 ============================================================
 SUMMARY

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
@@ -170,11 +171,36 @@ onMounted(loadFleet)
                 <div><p class="eyebrow">{{ t('common.workspace') }}</p><h2>{{ t('common.modules') }}</h2></div>
               </div>
               <div class="fleet-module-grid">
-                <RouterLink class="fleet-module-card is-public" to="/builds"><span>⚙</span><strong>{{ t('common.builds') }}</strong><small>{{ t('home.showcase.builds.description') }}</small><b>→</b></RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/calendar"><span>□</span><strong>{{ t('common.calendar') }}</strong><small>{{ t('calendar.list.subtitle') }}</small><b>→</b></RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/groups"><span>◈</span><strong>{{ t('common.groups') }}</strong><small>{{ t('groups.list.subtitle') }}</small><b>→</b></RouterLink>
-                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/forum"><span>✦</span><strong>{{ t('common.forum') }}</strong><small>{{ t('forum.list.subtitle') }}</small><b>→</b></RouterLink>
-                <RouterLink v-else class="fleet-module-card is-locked" to="/login"><span>◆</span><strong>{{ t('auth.loginTitle') }}</strong><small>{{ t('auth.loginSubtitle') }}</small><b>→</b></RouterLink>
+                <RouterLink class="fleet-module-card is-public" to="/builds">
+                  <span class="fleet-module-icon"><AppIcon name="builds" :size="20" /></span>
+                  <strong>{{ t('common.builds') }}</strong>
+                  <small>{{ t('home.showcase.builds.description') }}</small>
+                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
+                </RouterLink>
+                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/calendar">
+                  <span class="fleet-module-icon"><AppIcon name="calendar" :size="20" /></span>
+                  <strong>{{ t('common.calendar') }}</strong>
+                  <small>{{ t('calendar.list.subtitle') }}</small>
+                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
+                </RouterLink>
+                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/groups">
+                  <span class="fleet-module-icon"><AppIcon name="groups" :size="20" /></span>
+                  <strong>{{ t('common.groups') }}</strong>
+                  <small>{{ t('groups.list.subtitle') }}</small>
+                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
+                </RouterLink>
+                <RouterLink v-if="isAuthenticated" class="fleet-module-card" to="/forum">
+                  <span class="fleet-module-icon"><AppIcon name="forum" :size="20" /></span>
+                  <strong>{{ t('common.forum') }}</strong>
+                  <small>{{ t('forum.list.subtitle') }}</small>
+                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
+                </RouterLink>
+                <RouterLink v-else class="fleet-module-card is-locked" to="/login">
+                  <span class="fleet-module-icon"><AppIcon name="lock" :size="20" /></span>
+                  <strong>{{ t('auth.loginTitle') }}</strong>
+                  <small>{{ t('auth.loginSubtitle') }}</small>
+                  <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
+                </RouterLink>
               </div>
             </section>
           </main>
@@ -186,7 +212,7 @@ onMounted(loadFleet)
               </div>
 
               <div v-if="membership" class="fleet-membership-summary">
-                <span class="profile-avatar" aria-hidden="true">{{ membership.user?.display_name?.slice(0, 2).toUpperCase() || 'BM' }}</span>
+                <span class="profile-avatar" aria-hidden="true">{{ membership.user?.display_name?.slice(0, 2).toUpperCase() || 'RBV' }}</span>
                 <div><strong>{{ membership.user?.display_name || t('common.profile') }}</strong><small>{{ t(`fleets.roles.${membership.role}`) }}</small></div>
                 <span class="summary-pill fleet-status-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
               </div>

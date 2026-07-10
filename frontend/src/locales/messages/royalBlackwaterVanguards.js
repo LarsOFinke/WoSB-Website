@@ -1,15 +1,15 @@
-export const blackwaterMercenariesHubMessages = {
+export const royalBlackwaterVanguardsMessages = {
   en: {
     common: {
-      projectName: 'Blackwater Mercenaries Hub',
+      projectName: 'Royal Blackwater Vanguards',
       groups: 'Group Search',
     },
-    footer: { text: 'Blackwater Mercenaries Hub' },
+    footer: { text: 'Royal Blackwater Vanguards' },
     home: {
-      eyebrow: 'Blackwater Mercenaries Hub',
-      title: 'Your starting point for Blackwater Mercenaries fleet tools.',
+      eyebrow: 'Royal Blackwater Vanguards',
+      title: 'Your starting point for Royal Blackwater Vanguards fleet tools.',
       subtitle: 'Plan ship builds, run group searches and keep community preparation in one focused hub.',
-      about: 'Blackwater Mercenaries Hub brings focused tools into one place so players can prepare builds and coordinate fleet activity without digging through scattered notes.',
+      about: 'Royal Blackwater Vanguards brings focused tools into one place so players can prepare builds and coordinate fleet activity without digging through scattered notes.',
       showcase: {
         groups: {
           eyebrow: 'Group Search board',
@@ -166,13 +166,13 @@ export const blackwaterMercenariesHubMessages = {
   },
   de: {
     common: {
-      projectName: 'Blackwater Mercenaries Hub',
+      projectName: 'Royal Blackwater Vanguards',
       groups: 'Gruppensuche',
     },
-    footer: { text: 'Blackwater Mercenaries Hub' },
+    footer: { text: 'Royal Blackwater Vanguards' },
     home: {
-      eyebrow: 'Blackwater Mercenaries Hub',
-      title: 'Dein Einstiegspunkt für Blackwater-Mercenaries-Flotten-Tools.',
+      eyebrow: 'Royal Blackwater Vanguards',
+      title: 'Dein Einstiegspunkt für Royal-Blackwater-Vanguards-Flotten-Tools.',
       subtitle: 'Plane Schiffs-Builds, organisiere Gruppensuchen und bündle die Vorbereitung an einem Ort.',
       showcase: {
         groups: {

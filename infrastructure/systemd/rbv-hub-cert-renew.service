@@ -1,0 +1,9 @@
+[Unit]
+Description=Royal Blackwater Vanguards TLS certificate renewal
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@INFRA_DIR@
+ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/tls/renew-certificate.sh

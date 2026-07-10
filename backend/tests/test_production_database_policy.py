@@ -24,7 +24,7 @@ def _run_config_import(tmp_path: Path, *, database_url: str, schema_mode: str) -
         encoding="utf-8",
     )
     env = os.environ.copy()
-    env["BLACKWATER_ENV_FILE"] = str(env_file)
+    env["RBV_ENV_FILE"] = str(env_file)
     env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1] / "src")
     return subprocess.run(
         [sys.executable, "-c", "from app.core.config import settings; print(settings.database_backend)"],

@@ -6,8 +6,8 @@ The project now separates **environment values** from **repository configuration
 
 Backend startup is intentionally fail-fast:
 
-- `backend/.env` must exist, or `BLACKWATER_ENV_FILE` must point to another env file.
-- `backend/config/app.toml` must exist, or `BLACKWATER_CONFIG_FILE` must point to another config file.
+- `backend/.env` must exist, or `RBV_ENV_FILE` must point to another env file.
+- `backend/config/app.toml` must exist, or `RBV_CONFIG_FILE` must point to another config file.
 
 `WOSB_ENV_FILE` and `WOSB_CONFIG_FILE` remain compatibility aliases for older deployments.
 - No unsafe runtime defaults are used for database, upload paths, CORS or seeded admin credentials.
@@ -20,15 +20,15 @@ Production example:
 
 ```env
 APP_ENV=production
-DATABASE_URL=postgresql+psycopg://blackwater:<secret>@postgres:5432/blackwater
+DATABASE_URL=postgresql+psycopg://rbv:<secret>@postgres:5432/rbv
 DB_SCHEMA_MODE=migrate
 UPLOAD_DIR=/data/uploads
-CORS_ORIGINS=https://your-domain.example
+CORS_ORIGINS=https://royal-blackwater-vanguards.eu
 SESSION_COOKIE_SECURE=true
 AUTO_SEED=true
 SEED_ADMIN_USERNAME=admin
 SEED_ADMIN_PASSWORD=<long-random-password>
-SEED_ADMIN_DISPLAY_NAME=Blackwater Command
+SEED_ADMIN_DISPLAY_NAME=RBV Command
 ```
 
 `SEED_ADMIN_PASSWORD` must be changed before startup. Known placeholder/default passwords are rejected.
@@ -36,7 +36,7 @@ SEED_ADMIN_DISPLAY_NAME=Blackwater Command
 
 ### Storage source of truth
 
-There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/blackwater-hub.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For container deployments, the upload volume is mounted at `/data/uploads`.
+There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/rbv-hub.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For container deployments, the upload volume is mounted at `/data/uploads`.
 
 Only `UPLOAD_DIR` decides the runtime upload location. The committed demo media remains under `backend/storage/uploads/demo`.
 

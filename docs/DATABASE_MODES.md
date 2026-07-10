@@ -1,12 +1,12 @@
 # Database modes
 
-Blackwater supports two explicit database lifecycles.
+Royal Blackwater Vanguards supports two explicit database lifecycles.
 
 ## Development: SQLite
 
 ```env
 APP_ENV=development
-DATABASE_URL=sqlite:///./storage/blackwater-hub.db
+DATABASE_URL=sqlite:///./storage/rbv-hub.db
 DB_SCHEMA_MODE=create
 ```
 
@@ -18,14 +18,14 @@ optimized for a quick local start and tests.
 cd backend
 cp .env.example .env
 pip install -e .[dev]
-blackwater-dev
+rbv-dev
 ```
 
 ## Production: PostgreSQL
 
 ```env
 APP_ENV=production
-DATABASE_URL=postgresql+psycopg://blackwater:<secret>@postgres:5432/blackwater
+DATABASE_URL=postgresql+psycopg://rbv:<secret>@postgres:5432/rbv
 DB_SCHEMA_MODE=migrate
 ```
 
@@ -45,7 +45,7 @@ alembic upgrade head
 alembic revision --autogenerate -m "describe change"
 ```
 
-Never use `blackwater-seed --reset` in production. The command is blocked when
+Never use `rbv-seed --reset` in production. The command is blocked when
 `APP_ENV=production`.
 
 ## Why the distinction matters

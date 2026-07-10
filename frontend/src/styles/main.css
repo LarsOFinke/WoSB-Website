@@ -4791,7 +4791,7 @@ textarea:focus-visible {
   }
 }
 
-/* Blackwater Mercenaries workspace refactor */
+/* Royal Blackwater Vanguards workspace refactor */
 .workspace-page-header {
   position: relative;
   isolation: isolate;
@@ -5715,5 +5715,593 @@ body.sidebar-collapsed .sidebar-account-link::before {
 
   .fleet-orders-briefing {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================================================== */
+/* RBV UI iteration 1 — scalable identity, clearer navigation, better access  */
+/* ========================================================================== */
+
+:root {
+  --rbv-gold: #f1b85b;
+  --rbv-gold-soft: rgba(241, 184, 91, 0.14);
+  --rbv-blue: #9fc9df;
+  --rbv-panel: rgba(8, 18, 29, 0.9);
+  --rbv-panel-soft: rgba(12, 25, 39, 0.74);
+  --rbv-line: rgba(221, 231, 244, 0.14);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 200;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid var(--rbv-gold);
+  border-radius: 0.75rem;
+  color: #08111b;
+  background: var(--rbv-gold);
+  font-weight: 900;
+  text-decoration: none;
+  transform: translateY(-150%);
+  transition: transform 160ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.app-icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.app-topbar {
+  grid-template-columns: minmax(17.5rem, 22rem) minmax(18rem, 1fr) auto;
+  padding: 0.58rem;
+}
+
+.topbar-brand {
+  width: 100%;
+  padding: 0.32rem 0.75rem 0.32rem 0.34rem;
+  border-radius: 1rem;
+}
+
+.brand-lockup {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+}
+
+.brand-mark {
+  position: relative;
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 0.9rem;
+  border-color: rgba(241, 184, 91, 0.66);
+  background:
+    linear-gradient(145deg, rgba(241, 184, 91, 0.26), rgba(241, 184, 91, 0.06)),
+    rgba(5, 14, 24, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.brand-mark::before,
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.brand-mark::before {
+  inset: 0.3rem;
+  border: 1px solid rgba(241, 184, 91, 0.25);
+  border-radius: 0.62rem;
+}
+
+.brand-mark::after {
+  width: 1.8rem;
+  height: 1px;
+  bottom: 0.46rem;
+  left: 50%;
+  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.7), transparent);
+  transform: translateX(-50%);
+}
+
+.brand-mark > span {
+  position: relative;
+  z-index: 1;
+  color: var(--accent-strong);
+  font-size: 0.7rem;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+}
+
+.brand-copy {
+  max-width: none;
+  line-height: 1;
+}
+
+.brand-copy strong {
+  display: grid;
+  gap: 0.05rem;
+  font-size: 0.9rem;
+  letter-spacing: -0.018em;
+  white-space: normal;
+}
+
+.brand-copy strong span:last-child {
+  color: var(--accent-strong);
+  font-size: 1.05em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brand-copy small {
+  margin-top: 0.25rem;
+  font-size: 0.59rem;
+  letter-spacing: 0.13em;
+}
+
+.brand-lockup.is-compact .brand-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.brand-lockup.is-compact .brand-copy strong {
+  grid-template-columns: auto auto;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.brand-lockup.is-compact .brand-copy strong span:last-child {
+  font-size: 1em;
+}
+
+.brand-lockup.is-compact .brand-copy small {
+  display: none;
+}
+
+.topbar-primary {
+  justify-content: center;
+}
+
+.topbar-link {
+  gap: 0.42rem;
+  padding-inline: 0.76rem;
+}
+
+.topbar-link .app-icon {
+  color: var(--muted-soft);
+}
+
+.topbar-link:hover .app-icon,
+.topbar-link.router-link-active .app-icon,
+.topbar-link.router-link-exact-active .app-icon {
+  color: var(--accent-strong);
+}
+
+.topbar-locale-select {
+  min-height: 2.48rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.45rem 0 0.65rem;
+  border: 1px solid rgba(221, 231, 244, 0.12);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.032);
+}
+
+.topbar-locale-select:focus-within,
+.topbar-locale-select:hover {
+  border-color: rgba(241, 184, 91, 0.38);
+  color: var(--text);
+  background: rgba(241, 184, 91, 0.08);
+}
+
+.topbar-locale-select select {
+  width: auto;
+  min-width: 3.2rem;
+  height: 2rem;
+  padding: 0 1.35rem 0 0.15rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.topbar-icon-action {
+  width: 2.48rem;
+  padding: 0;
+}
+
+.sidebar-nav {
+  align-content: start;
+  gap: 0.9rem;
+}
+
+.sidebar-link-group {
+  min-width: 0;
+  display: grid;
+  gap: 0.34rem;
+}
+
+.sidebar-link-group + .sidebar-link-group {
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(221, 231, 244, 0.09);
+}
+
+.sidebar-section-label {
+  padding: 0 0.55rem 0.25rem;
+}
+
+.sidebar-link-icon .app-icon {
+  color: inherit;
+}
+
+.sidebar-link.is-staff-link {
+  border-color: rgba(241, 184, 91, 0.14);
+  background: rgba(241, 184, 91, 0.035);
+}
+
+.sidebar-account-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+body.sidebar-collapsed .sidebar-link-group {
+  gap: 0.42rem;
+}
+
+body.sidebar-collapsed .sidebar-account-link::before {
+  content: none;
+}
+
+body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
+  display: block;
+}
+
+.footer {
+  min-height: 4.2rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+}
+
+.footer-text {
+  color: var(--muted);
+  text-align: center;
+}
+
+.footer-meta {
+  color: var(--muted-soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1480px) {
+  .app-topbar {
+    grid-template-columns: minmax(15.5rem, 19rem) minmax(0, 1fr) auto;
+  }
+
+  .brand-copy small {
+    display: none;
+  }
+
+  .topbar-account-summary .account-copy {
+    display: none;
+  }
+}
+
+@media (max-width: 1260px) and (min-width: 1041px) {
+  .app-topbar {
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr) auto;
+  }
+
+  .topbar-link span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .topbar-link {
+    width: 2.48rem;
+    padding: 0;
+  }
+}
+
+@media (max-width: 1040px) {
+  .app-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .topbar-brand-group {
+    grid-column: 1;
+  }
+
+  .topbar-actions {
+    grid-column: 2;
+    width: auto;
+  }
+
+  .topbar-primary {
+    grid-column: 1 / -1;
+  }
+
+  .topbar-brand {
+    width: auto;
+    flex: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-topbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar-brand-group,
+  .topbar-actions,
+  .topbar-primary {
+    grid-column: 1;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-locale-select {
+    flex: 0 0 auto;
+  }
+
+  .topbar-session {
+    margin-left: auto;
+  }
+
+  .footer {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-copy strong {
+    font-size: 0.76rem;
+  }
+
+  .brand-mark {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .topbar-primary .topbar-link {
+    flex: 1 0 auto;
+  }
+
+  .topbar-action span {
+    display: none;
+  }
+}
+
+/* ========================================================================== */
+/* RBV UI iteration 2 — visual hierarchy, tactile states and responsive polish */
+/* ========================================================================== */
+
+body {
+  background:
+    radial-gradient(circle at 12% 4%, rgba(44, 97, 126, 0.18), transparent 30rem),
+    radial-gradient(circle at 88% 2%, rgba(241, 184, 91, 0.1), transparent 34rem),
+    linear-gradient(180deg, #07111c 0%, #091725 48%, #07111c 100%);
+  background-attachment: fixed;
+}
+
+.app-topbar,
+.app-sidebar,
+.page-frame,
+.footer {
+  border-color: rgba(213, 228, 240, 0.15);
+}
+
+.app-topbar::after {
+  content: "";
+  position: absolute;
+  inset: auto 1.4rem 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.46), transparent);
+  pointer-events: none;
+}
+
+.workspace-page-header {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(120deg, rgba(241, 184, 91, 0.09), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,0.048), rgba(255,255,255,0.014)),
+    rgba(9, 20, 33, 0.82);
+}
+
+.workspace-page-header::before {
+  content: "RBV";
+  position: absolute;
+  z-index: -1;
+  right: clamp(0.8rem, 3vw, 2.6rem);
+  bottom: clamp(-1.1rem, -2vw, -0.25rem);
+  color: rgba(241, 184, 91, 0.035);
+  font-size: clamp(5rem, 12vw, 10rem);
+  font-weight: 1000;
+  letter-spacing: -0.08em;
+  line-height: 0.8;
+  pointer-events: none;
+}
+
+.workspace-page-header-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.workspace-page-header h1 {
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.workspace-page-description {
+  text-wrap: pretty;
+}
+
+.workspace-metric-card,
+.fleet-module-card,
+.staff-command-card,
+.profile-tool-link,
+.admin-panel,
+.wire-section {
+  transition: border-color 170ms ease, background-color 170ms ease, transform 170ms ease, box-shadow 170ms ease;
+}
+
+.workspace-metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace-metric-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(159, 201, 223, 0.42), transparent);
+}
+
+.workspace-metric-card.tone-accent::after {
+  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.72), transparent);
+}
+
+.workspace-metric-card:hover {
+  border-color: rgba(159, 201, 223, 0.3);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 18px 38px rgba(0,0,0,0.2);
+}
+
+.button-box,
+.form-button,
+.topbar-action,
+.topbar-link,
+.sidebar-account-link,
+.tab-button {
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.button-box:hover,
+.form-button:hover:not(:disabled),
+.sidebar-account-link:hover {
+  transform: translateY(-1px);
+}
+
+.primary-action {
+  box-shadow: 0 8px 22px rgba(241, 184, 91, 0.09);
+}
+
+.primary-action:hover:not(:disabled) {
+  box-shadow: 0 11px 28px rgba(241, 184, 91, 0.16);
+}
+
+.profile-editor-panel,
+.fleet-briefing-panel,
+.polished-join-panel,
+.admin-panel {
+  border-color: rgba(213, 228, 240, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 42px rgba(0,0,0,0.19);
+}
+
+.fleet-module-card,
+.polished-command-center .staff-command-card {
+  overflow: hidden;
+}
+
+.fleet-module-card::before,
+.polished-command-center .staff-command-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, rgba(159, 201, 223, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 170ms ease;
+}
+
+.fleet-module-card:hover::before,
+.polished-command-center .staff-command-card:hover::before {
+  opacity: 1;
+}
+
+.staff-tabs .tab-button {
+  position: relative;
+}
+
+.staff-tabs .tab-button.is-active::after {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(241, 184, 91, 0.11);
+}
+
+.input-panel,
+.elevated-input-panel {
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input-panel:hover,
+.elevated-input-panel:hover {
+  border-color: rgba(221, 231, 244, 0.34);
+}
+
+.table-state {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px dashed rgba(221, 231, 244, 0.16);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
