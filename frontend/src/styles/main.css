@@ -5787,48 +5787,33 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 .brand-mark {
-  position: relative;
-  width: 2.9rem;
-  height: 2.9rem;
-  border-radius: 0.96rem;
-  border-color: rgba(241, 184, 91, 0.52);
-  background:
-    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 52%),
-    linear-gradient(145deg, rgba(241, 184, 91, 0.18), rgba(241, 184, 91, 0.03)),
-    rgba(5, 14, 24, 0.96);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 10px 26px rgba(0, 0, 0, 0.24);
-  overflow: hidden;
+  width: clamp(2.55rem, 3.1vw, 3rem);
+  height: clamp(2.55rem, 3.1vw, 3rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0.9rem;
+  background: #05080c;
+  box-shadow:
+    0 0 0 1px rgba(241, 184, 91, 0.26),
+    0 10px 28px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
 .brand-mark::before,
 .brand-mark::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-}
-
-.brand-mark::before {
-  inset: 0.2rem;
-  border: 1px solid rgba(241, 184, 91, 0.22);
-  border-radius: 0.75rem;
-}
-
-.brand-mark::after {
-  inset: auto 0.34rem 0.34rem;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(241, 184, 91, 0.55), transparent);
+  content: none;
 }
 
 .brand-mark-image {
-  position: relative;
-  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  border-radius: inherit;
 }
 
 .brand-copy {
@@ -5858,8 +5843,8 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 .brand-lockup.is-compact .brand-mark {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.35rem;
+  height: 2.35rem;
 }
 
 .brand-lockup.is-compact .brand-copy strong {
@@ -6098,8 +6083,9 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
   }
 
   .brand-mark {
-    width: 2.45rem;
-    height: 2.45rem;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.76rem;
   }
 
   .topbar-primary .topbar-link {

@@ -63,6 +63,8 @@ if [[ ! -f "$ROOT_DIR/frontend/.env" ]]; then
 fi
 (
   cd "$ROOT_DIR/frontend"
+  [[ -s src/assets/rbf-fleet-icon.png ]]
+  grep -q "@/assets/rbf-fleet-icon.png" src/core/components/BrandLockup.vue
   npm run check:locales
   npm run build
 )

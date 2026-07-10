@@ -1,4 +1,5 @@
 <script setup>
+import fleetIconUrl from '@/assets/rbf-fleet-icon.png'
 import { useLocale } from '@/locales'
 
 defineProps({
@@ -6,13 +7,12 @@ defineProps({
 })
 
 const { t } = useLocale()
-const brandIconSrc = '/branding/rbf-fleet-icon.png'
 </script>
 
 <template>
   <span class="brand-lockup" :class="{ 'is-compact': compact }">
     <span class="brand-mark" aria-hidden="true">
-      <img class="brand-mark-image" :src="brandIconSrc" alt="" loading="eager" decoding="async" />
+      <img class="brand-mark-image" :src="fleetIconUrl" alt="" loading="eager" decoding="async" />
     </span>
     <span class="brand-copy">
       <strong>

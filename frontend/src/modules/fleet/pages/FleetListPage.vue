@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+import fleetIconUrl from '@/assets/rbf-fleet-icon.png'
 import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
@@ -33,8 +34,6 @@ const newcomerSteps = computed(() => [
   { number: '03', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), meta: t('home.newcomer.askMeta'), path: '/forum', public: false },
   { number: '04', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar', public: false },
 ])
-
-const fleetIconSrc = '/branding/rbf-fleet-icon.png'
 
 const moduleCards = computed(() => [
   { icon: 'builds', title: t('home.showcase.builds.title'), text: t('home.showcase.builds.description'), path: '/builds', public: true },
@@ -167,7 +166,7 @@ onMounted(loadFleet)
                 <div class="fleet-identity-badge-group">
                   <span class="summary-pill">{{ t(`fleets.focus.${fleet.focus}`) }}</span>
                   <figure class="fleet-crest-card">
-                    <img :src="fleetIconSrc" :alt="`${fleet.name} emblem`" loading="eager" decoding="async" />
+                    <img :src="fleetIconUrl" :alt="`${fleet.name} emblem`" loading="eager" decoding="async" />
                   </figure>
                 </div>
               </div>
