@@ -176,7 +176,7 @@ request_letsencrypt_certificate() {
     return 1
   fi
 
-  RENEWED_LINEAGE="$CERTBOT_CONFIG_DIR/live/$cert_name" "$INFRA_DIR/scripts/tls/sync-certificate.sh"
+  RENEWED_LINEAGE="$CERTBOT_CONFIG_DIR/live/$cert_name" /usr/bin/env bash "$INFRA_DIR/scripts/tls/sync-certificate.sh"
 }
 
 configure_production_tls() {

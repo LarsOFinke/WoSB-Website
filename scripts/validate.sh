@@ -72,6 +72,18 @@ fi
 printf '\n[5/7] Shell and Compose syntax\n'
 bash -n "$ROOT_DIR/setup.sh"
 bash -n "$ROOT_DIR/update.sh"
+
+# Entrypoints should remain executable for operators, while internal callers use
+# bash explicitly so CI and copied test trees do not depend on mode propagation.
+for executable_script in \
+  "$ROOT_DIR/setup.sh" \
+  "$ROOT_DIR/update.sh" \
+  "$ROOT_DIR/scripts/validate.sh"; do
+  [[ -x "$executable_script" ]] || {
+    echo "[error] Missing executable bit: $executable_script" >&2
+    exit 1
+  }
+done
 while IFS= read -r file; do bash -n "$file"; done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" -type f -name '*.sh' -print | sort)
 python - "$ROOT_DIR/infrastructure/compose.yml" "$ROOT_DIR/infrastructure/scripts/lib/docker.sh" <<'PY'
 from pathlib import Path
@@ -144,6 +156,9 @@ fi
 
 printf '\n[6/7] First-run bootstrap simulation\n'
 cp -a "$ROOT_DIR/infrastructure" "$TMP_DIR/infrastructure"
+# Reproduce CI/filesystem checkouts that do not preserve the executable bit.
+# The simulation must still work because setup is invoked through bash.
+chmod 0644 "$TMP_DIR/infrastructure/setup.sh"
 rm -f "$TMP_DIR/infrastructure/.env" \
       "$TMP_DIR/infrastructure/first-run-credentials.txt" \
       "$TMP_DIR/infrastructure/data/certs/fullchain.pem" \
@@ -174,7 +189,7 @@ POSTGRES_USER=poisoned-user \
 POSTGRES_PASSWORD=poisoned-password \
 POSTGRES_DB=poisoned-database \
 DATABASE_URL=postgresql+psycopg://poisoned \
-PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
+PATH="$TMP_DIR/fake-bin:$PATH" bash "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \
   --profile full \
@@ -211,7 +226,7 @@ POSTGRES_USER=poisoned-user \
 POSTGRES_PASSWORD=poisoned-password \
 POSTGRES_DB=poisoned-database \
 DATABASE_URL=postgresql+psycopg://poisoned \
-PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
+PATH="$TMP_DIR/fake-bin:$PATH" bash "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \
   --profile full \
@@ -244,10 +259,12 @@ printf '\n[7/7] Secret/artifact guard\n'
 
 # Runtime data directories are created and owned by setup.sh/container UIDs.
 # Keeping tracked marker files inside them makes git pull/reset fail after setup.
-if git ls-files 'infrastructure/data/**' | grep -q .; then
-  echo "[error] Runtime files under infrastructure/data must not be tracked by Git." >&2
-  git ls-files 'infrastructure/data/**' >&2
-  exit 1
+if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if git -C "$ROOT_DIR" ls-files 'infrastructure/data/**' | grep -q .; then
+    echo "[error] Runtime files under infrastructure/data must not be tracked by Git." >&2
+    git -C "$ROOT_DIR" ls-files 'infrastructure/data/**' >&2
+    exit 1
+  fi
 fi
 
 printf '\nAll validation checks passed.\n'

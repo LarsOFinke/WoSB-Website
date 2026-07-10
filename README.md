@@ -128,3 +128,9 @@ All public portal standard copy is explicitly localized in all seven supported l
 Main activity is communicated as 12:00–02:00 CET, with Port Battle focus between 18:00 and
 23:00 CET. Discord voice is mandatory for Port Battles and other competitive operations; it is
 optional but encouraged for normal fleet activity.
+
+## Release 0.13.4 — CI shell portability
+
+CI and copied first-run simulations invoke delegated shell scripts explicitly
+through `bash`. This removes the dependency on Unix executable-bit propagation
+inside temporary work trees while retaining executable operator entrypoints.

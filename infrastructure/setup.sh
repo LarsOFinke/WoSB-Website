@@ -128,7 +128,7 @@ if [[ "$SKIP_HOST" == false && "$CONFIGURE_FIREWALL" == true ]]; then
 fi
 
 if [[ "$SKIP_HOST" == false && "$INSTALL_SYSTEMD" == true ]]; then
-  "$INFRA_DIR/scripts/deployment/install-systemd.sh"
+  /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
 fi
 
 bw_compose_with_profiles config >/dev/null
@@ -141,9 +141,9 @@ if [[ "$NO_START" == false ]]; then
   fi
   bw_compose build api gateway
   deploy_stack
-  "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
+  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
   configure_production_tls
-  "$INFRA_DIR/scripts/checks/smoke-test.sh"
+  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 else
   warn "Containerstart wurde mit --no-start übersprungen."
 fi

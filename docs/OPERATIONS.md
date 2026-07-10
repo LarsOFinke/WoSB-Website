@@ -83,3 +83,11 @@ werden.
 subdirectories and assigns them to the container service UIDs. Do not add `.gitkeep`,
 `.gitattributes`, or other tracked files below this path; otherwise normal non-root
 `git pull` and `git reset` operations can fail after deployment.
+
+## Shell execution and CI portability
+
+Operator entrypoints (`setup.sh`, `update.sh`, `scripts/validate.sh`, and
+`infrastructure/setup.sh`) are tracked as executable. Internal invocations and
+systemd units call scripts through `/usr/bin/env bash`, so copied validation
+trees and filesystems that do not preserve Unix mode bits do not fail with exit
+code 126.

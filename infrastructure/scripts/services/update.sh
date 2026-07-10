@@ -147,13 +147,13 @@ fi
 
 if [[ "$CREATE_BACKUP" == true ]]; then
   log "Erstelle Sicherheitsbackup vor Deployment."
-  "$INFRA_DIR/scripts/backup/backup-all.sh"
+  /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-all.sh"
 fi
 
 status_write running "Images werden gebaut und Datenbankmigrationen ausgeführt." "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 bw_compose build --pull api gateway
 deploy_stack
-"$INFRA_DIR/scripts/checks/smoke-test.sh"
+/usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 
 FINISHED_AT="$(now_iso)"
 status_write succeeded "Server-Update erfolgreich abgeschlossen." "$STARTED_AT" "$FINISHED_AT" "$COMMIT_BEFORE" "$COMMIT_AFTER"

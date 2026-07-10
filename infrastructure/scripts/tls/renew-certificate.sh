@@ -11,4 +11,4 @@ certbot renew \
   --config-dir "$CERTBOT_CONFIG_DIR" \
   --work-dir "$CERTBOT_WORK_DIR" \
   --logs-dir "$CERTBOT_LOGS_DIR" \
-  --deploy-hook "$INFRA_DIR/scripts/tls/sync-certificate.sh"
+  --deploy-hook "/usr/bin/env bash $INFRA_DIR/scripts/tls/sync-certificate.sh"
