@@ -1,6 +1,6 @@
-# Iron Crown Fleet Hub
+# Blackwater Mercenaries Hub
 
-Fullstack prototype foundation for the Iron Crown Fleet Hub: builds, guides, forum, group search, fleet calendar, fleet management and staff/admin operations.
+Fullstack prototype foundation for the Blackwater Mercenaries Hub: builds, guides, forum, group search, fleet calendar, fleet management and staff/admin operations.
 
 ```text
 backend/     FastAPI + SQLAlchemy + strict env/config loading
@@ -55,8 +55,8 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # or: . .venv/bin/activate
 pip install -e .[dev]
-wosb-seed --reset
-wosb-dev
+blackwater-seed --reset
+blackwater-dev
 ```
 
 Frontend:
@@ -69,25 +69,34 @@ npm run dev
 
 The old `admin / admin123` prototype default is gone. Set `SEED_ADMIN_PASSWORD` in `backend/.env` to a strong non-default password before seeding.
 
-## Important URLs
+## Access model and important URLs
 
 ```text
-http://127.0.0.1:5173/            # public fleet portal
+Public
+http://127.0.0.1:5173/             # fleet portal/home
+http://127.0.0.1:5173/login
+http://127.0.0.1:5173/register
 http://127.0.0.1:5173/builds
+
+Login required
+http://127.0.0.1:5173/profile
 http://127.0.0.1:5173/guides
 http://127.0.0.1:5173/groups
 http://127.0.0.1:5173/calendar
 http://127.0.0.1:5173/forum
-http://127.0.0.1:5173/fleets     # fleet management
-http://127.0.0.1:5173/profile
+http://127.0.0.1:5173/fleets      # fleet management
+
+Staff required
 http://127.0.0.1:5173/admin
 ```
+
+Frontend route guards and backend dependencies enforce the same access matrix. Public build detail pages remain shareable; content creation and personal workspaces require a session.
 
 ## Raspberry Pi first deployment
 
 Start with [`docs/PI_DEPLOYMENT.md`](docs/PI_DEPLOYMENT.md). Templates are in `deployment/pi/`:
 
-- `iron-crown-api.service`
+- `blackwater-hub-api.service`
 - `nginx.conf.example`
 
 ## Validation

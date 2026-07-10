@@ -1,7 +1,7 @@
 import { createServer } from 'vite'
 
 const SAME_VALUE_ALLOWLIST = new Set([
-  'Iron Crown Fleet Hub', 'Iron Crown Fleet Hub MVP', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
+  'Blackwater Mercenaries Hub', 'Blackwater Mercenaries Hub MVP', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
   'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
   'Rate', 'Type', 'Crew', 'Upgrades', 'Status', 'Details', 'Thread', 'Threads', 'Video', 'Text', 'Image', 'Training', 'Operation',
   'Focus', 'Description', 'Contact', 'Combat', 'General', 'API online', 'Upgrade {index}', 'Crew {current}/{max}',

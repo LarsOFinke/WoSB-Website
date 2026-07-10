@@ -1,1 +1,1 @@
-"""Domain modules for the Iron Crown Fleet Hub backend."""
+"""Domain modules for the Blackwater Mercenaries Hub backend."""

@@ -7,7 +7,7 @@ import { formatMessage, getNestedValue } from './utils'
 
 export { DEFAULT_LOCALE, SUPPORTED_LOCALES }
 
-const LOCALE_STORAGE_KEY = 'wosb.locale'
+const LOCALE_STORAGE_KEY = 'blackwater-hub.locale'
 
 function normalizeLocale(locale) {
   return SUPPORTED_LOCALES.some((entry) => entry.code === locale) ? locale : DEFAULT_LOCALE

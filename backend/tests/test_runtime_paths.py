@@ -14,9 +14,9 @@ def test_relative_runtime_path_is_resolved_against_backend_root(tmp_path: Path) 
 
 
 def test_relative_sqlite_url_is_normalized_and_parent_is_created(tmp_path: Path) -> None:
-    result = normalize_database_url("sqlite:///./storage/wosb.db", base_dir=tmp_path)
+    result = normalize_database_url("sqlite:///./storage/blackwater-hub.db", base_dir=tmp_path)
 
-    expected_database = (tmp_path / "storage" / "wosb.db").resolve().as_posix()
+    expected_database = (tmp_path / "storage" / "blackwater-hub.db").resolve().as_posix()
     assert result == f"sqlite:///{expected_database}"
     assert (tmp_path / "storage").is_dir()
 

@@ -11,8 +11,8 @@ cp .env.example .env
 python -m venv .venv
 . .venv/Scripts/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -e .[dev]
-wosb-seed --reset
-wosb-dev
+blackwater-seed --reset
+blackwater-dev
 ```
 
 Frontend:
@@ -51,7 +51,7 @@ The database URL comes from `backend/.env`. For the local SQLite setup:
 
 ```bash
 cd backend
-wosb-seed --reset
+blackwater-seed --reset
 ```
 
 For production, use PostgreSQL plus Alembic migrations before real user data.

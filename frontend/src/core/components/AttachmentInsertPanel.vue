@@ -2,8 +2,8 @@
 import { reactive } from 'vue'
 
 import { useLocale } from '@/locales'
-import { fileKind, formatFileSize } from '@/services/files'
-import { embedSizes } from '@/services/richTextEmbeds'
+import { fileKind, formatFileSize } from '@/modules/files/api/files'
+import { embedSizes } from '@/shared/content/richTextEmbeds'
 
 const props = defineProps({
   attachments: {

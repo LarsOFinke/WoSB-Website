@@ -18,6 +18,7 @@ def get_guides(
     search: str | None = Query(default=None, max_length=120),
     category: str | None = Query(default=None, max_length=80),
     db: Session = Depends(get_db),
+    _: User = Depends(require_user),
 ) -> list[GuideSummary]:
     return list_guides(db, search=search, category=category)
 
@@ -35,7 +36,11 @@ def post_guide(
 
 
 @router.get("/{guide_id}", response_model=GuideRead)
-def get_guide_detail(guide_id: int, db: Session = Depends(get_db)) -> GuideRead:
+def get_guide_detail(
+    guide_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> GuideRead:
     guide = get_guide(db, guide_id)
     if guide is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")

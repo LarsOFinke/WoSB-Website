@@ -61,6 +61,16 @@ Current modules:
 | `guides` | Guides, guide attachments and build references |
 | `ships` | Ship catalog endpoints and schemas |
 
+## Authentication and access boundaries
+
+Route access is declared with shared dependencies from `app.core.dependencies`:
+
+- public: health/home, registration/login/session lookup, fleet portal reads, build catalog/details/options and ship catalog reads;
+- authenticated: profile, guides, groups, forum, fleet calendar reads, fleet applications/management, personal builds and build creation;
+- staff/admin: staff dashboard, registration approval, calendar mutation and privileged fleet operations.
+
+Frontend route metadata mirrors this policy, but FastAPI remains the security boundary. New private modules must use `require_user`, `require_staff` or `require_admin` before invoking their service layer.
+
 ## Services
 
 Services own business logic such as:

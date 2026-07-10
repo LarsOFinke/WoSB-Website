@@ -1,7 +1,7 @@
 const TEXT_PLACEHOLDER = '__WOSB_PLACEHOLDER_'
 
 const neutralValues = new Set([
-  'Iron Crown Fleet Hub', 'Iron Crown Fleet Hub MVP', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
+  'Blackwater Mercenaries Hub', 'Blackwater Mercenaries Hub MVP', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV',
   'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
 ])
 

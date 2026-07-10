@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { useLocale } from '@/locales'
-import { absoluteFileUrl, fileKind, formatFileSize, isEmbeddableFile } from '@/services/files'
+import { absoluteFileUrl, fileKind, formatFileSize, isEmbeddableFile } from '@/modules/files/api/files'
 
 const props = defineProps({
   attachments: {

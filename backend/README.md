@@ -1,6 +1,6 @@
 # Backend
 
-FastAPI backend for Iron Crown Fleet Hub.
+FastAPI backend for Blackwater Mercenaries Hub.
 
 ## Mandatory configuration
 
@@ -17,7 +17,7 @@ Required `.env` values:
 
 ```env
 APP_ENV=development
-DATABASE_URL=sqlite:///./storage/wosb.db
+DATABASE_URL=sqlite:///./storage/blackwater-hub.db
 UPLOAD_DIR=storage/uploads  # when running commands from backend/
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 SESSION_COOKIE_SECURE=false
@@ -36,15 +36,23 @@ python -m venv .venv
 .venv\Scripts\activate   # Windows
 # or: . .venv/bin/activate
 pip install -e .[dev]
-wosb-seed --reset
-wosb-dev
+blackwater-seed --reset
+blackwater-dev
 ```
+
+The legacy `wosb-seed` and `wosb-dev` entry points remain available as compatibility aliases.
 
 API health check:
 
 ```text
 http://127.0.0.1:8000/api/health
 ```
+
+## Access policy
+
+Public API reads are limited to the fleet portal, build catalog/details, ship/build option catalogs, authentication and health/home endpoints. Guides, groups, forum, calendar, profile and fleet-management operations require an authenticated user. Admin and staff mutations use the corresponding staff/admin dependency.
+
+The backend is the authorization source of truth; frontend route guards only improve navigation and redirect behavior.
 
 ## Layout
 

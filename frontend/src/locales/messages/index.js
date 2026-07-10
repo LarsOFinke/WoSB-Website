@@ -11,7 +11,7 @@ import { localeCompletenessMessages } from './localeCompleteness'
 import { staffPanelMessages } from './staffPanel'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
-import { ironCrownFleetHubMessages } from './ironCrownFleetHub'
+import { blackwaterMercenariesHubMessages } from './blackwaterMercenariesHub'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
@@ -19,7 +19,7 @@ const messageLayers = [
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,
-  ironCrownFleetHubMessages,
+  blackwaterMercenariesHubMessages,
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,
   fleetManagementMessages,

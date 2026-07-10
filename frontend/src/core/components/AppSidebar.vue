@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useLocale } from '@/locales'
 import { createWorkspaceLinks } from '@/core/navigation/workspaceLinks'
+import { useSession } from '@/modules/accounts/session'
 
 const props = defineProps({
   isCollapsed: {
@@ -24,7 +25,8 @@ const props = defineProps({
 })
 
 const { t } = useLocale()
-const workspaceLinks = computed(() => createWorkspaceLinks(t))
+const { isAuthenticated, isStaff } = useSession()
+const workspaceLinks = computed(() => createWorkspaceLinks(t, { isAuthenticated: isAuthenticated.value, isStaff: isStaff.value }))
 </script>
 
 <template>
@@ -66,5 +68,17 @@ const workspaceLinks = computed(() => createWorkspaceLinks(t))
         <span class="sidebar-link-label">{{ link.label }}</span>
       </RouterLink>
     </nav>
+
+    <div class="sidebar-access-card">
+      <template v-if="isAuthenticated">
+        <span>{{ t('common.personalArea') }}</span>
+        <RouterLink class="sidebar-account-link" to="/profile">{{ t('common.profile') }}</RouterLink>
+      </template>
+      <template v-else>
+        <span>{{ t('auth.loginEyebrow') }}</span>
+        <strong>{{ t('auth.loginTitle') }}</strong>
+        <RouterLink class="sidebar-account-link" to="/login">{{ t('auth.login') }}</RouterLink>
+      </template>
+    </div>
   </aside>
 </template>

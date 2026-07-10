@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 
 import { useLocale } from '@/locales'
-import { buildEmbedLayouts } from '@/services/richTextEmbeds'
+import { buildEmbedLayouts } from '@/shared/content/richTextEmbeds'
 
 const props = defineProps({
   builds: {

@@ -20,6 +20,7 @@ def get_threads(
     search: str | None = Query(default=None, max_length=120),
     category: str | None = Query(default=None, max_length=80),
     db: Session = Depends(get_db),
+    _: User = Depends(require_user),
 ) -> list[ForumThreadSummary]:
     return list_threads(db, search=search, category=category)
 
@@ -37,7 +38,11 @@ def post_thread(
 
 
 @router.get("/threads/{thread_id}", response_model=ForumThreadRead)
-def get_thread_detail(thread_id: int, db: Session = Depends(get_db)) -> ForumThreadRead:
+def get_thread_detail(
+    thread_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> ForumThreadRead:
     thread = get_thread(db, thread_id)
     if thread is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found.")

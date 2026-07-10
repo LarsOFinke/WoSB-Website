@@ -10,6 +10,18 @@ The frontend uses a single dark, enterprise-style design system in `frontend/src
 - Use the shared card, filter, tab and form classes before adding local one-off styles.
 - Keep list/detail surfaces calm: high contrast text, subtle borders and limited elevation.
 
+## Workspace surfaces
+
+Profile, fleet portal/fleet management and staff operations use one shared workspace language:
+
+- `PageHeader` establishes title, status metadata and primary actions.
+- `MetricCard` exposes high-value counts and states before detailed forms or lists.
+- Profile separates identity editing, official fleet state, personal tools and security.
+- The public fleet portal separates briefing, leadership, public/member modules and application state.
+- Fleet management and staff screens use persistent tab rails and command summaries without duplicating domain logic.
+
+Long forms remain in normal document flow; only compact sidebars and tab rails may become sticky.
+
 ## Registration
 
 The registration view is split into two task groups:

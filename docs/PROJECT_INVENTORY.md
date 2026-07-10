@@ -1,6 +1,6 @@
 # Project Inventory
 
-This document records the current state of the Iron Crown Fleet Hub after the production-foundation pass. It is intended as the first stop for future maintainers before changing architecture.
+This document records the current state of the Blackwater Mercenaries Hub after the production-foundation pass. It is intended as the first stop for future maintainers before changing architecture.
 
 ## Product scope
 
@@ -13,6 +13,7 @@ The application is a fleet/community hub for World of Sea Battle. It currently c
 - Fleet calendar for staff-created events.
 - Fleet management with official membership applications, fleet-specific leadership roles and primary fleet profile synchronization.
 - Staff panel for moderation, content review, calendar management and operational shortcuts.
+- Public access limited to fleet portal, authentication/registration and build catalog/details; community workspaces require login.
 - Localized frontend for EN, DE, FR, ES, PT, RU and CN.
 
 ## Backend inventory
@@ -45,9 +46,10 @@ The application is a fleet/community hub for World of Sea Battle. It currently c
 | App shell state | `core/composables/useAppShell.js` | Sidebar collapse/open state and body classes |
 | Navigation model | `core/navigation/workspaceLinks.js` | Single source for left navigation ordering |
 | Localization | `locales/*`, `scripts/check-locales.mjs` | Runtime translations and strict coverage checks |
-| API services | `services/*.js` | Thin HTTP adapters grouped by feature |
-| Rendering | `RichTextRenderer.vue`, `AttachmentGallery.vue`, `LinkedBuildList.vue` | Inline media/build rendering |
-| Feature pages | `pages/**/*Page.vue` | Route-level screens |
+| Feature modules | `modules/<domain>/{api,pages,routes.js}` | Domain-owned screens, lazy routes and thin HTTP adapters aligned with backend modules |
+| Shared API/content | `shared/api/*`, `shared/content/*` | Cross-domain HTTP, query and rich-content helpers |
+| Rendering | `core/components/RichTextRenderer.vue`, `AttachmentGallery.vue`, `LinkedBuildList.vue` | Inline media/build rendering |
+| Workspace UI | `core/components/PageHeader.vue`, `MetricCard.vue` | Shared professional page hierarchy for profile, fleet and staff areas |
 | Styles | `styles/main.css` | Current tokenized design system and responsive rules |
 
 ## Data model inventory
@@ -72,11 +74,12 @@ The schema is centered around normalized entities:
 
 ## Single Fleet Refactor
 
-Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Iron Crown Fleet. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
+Der Flottenbereich arbeitet jetzt mit genau einer offiziellen Blackwater Mercenaries. Registrierung, Profil und Flottenverwaltung referenzieren dieselbe zentrale Membership. Details stehen in `docs/SINGLE_FLEET_REFACTOR.md`.
 
 ## Structure cleanup notes
 
 - Backend feature code now lives under `backend/src/app/modules/<domain>`. Root aggregate `models`, `schemas` and `services` packages were removed to keep module ownership explicit.
+- Frontend feature code mirrors those domains under `frontend/src/modules/<domain>`; the former global `pages` and `services` directories were removed.
 - Backend classes are one-class-per-file. Aggregation modules may only re-export related classes.
 - The only repository-local upload tree is `backend/storage/uploads`; root-level `storage/` was removed to avoid competing storage sources.
 - Seed data lives in top-level `backend/src/app/seeds`, separate from DB lifecycle code.

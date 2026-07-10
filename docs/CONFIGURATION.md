@@ -8,6 +8,8 @@ Backend startup is intentionally fail-fast:
 
 - `backend/.env` must exist, or `WOSB_ENV_FILE` must point to another env file.
 - `backend/config/app.toml` must exist, or `WOSB_CONFIG_FILE` must point to another config file.
+
+`WOSB_ENV_FILE` and `WOSB_CONFIG_FILE` are retained as compatibility override names for existing deployments; new branding does not invalidate older service configurations.
 - No unsafe runtime defaults are used for database, upload paths, CORS or seeded admin credentials.
 
 ### Environment values
@@ -18,8 +20,8 @@ Production example:
 
 ```env
 APP_ENV=production
-DATABASE_URL=sqlite:////opt/iron-crown-fleet-hub/data/wosb.db
-UPLOAD_DIR=/opt/iron-crown-fleet-hub/uploads
+DATABASE_URL=sqlite:////opt/blackwater-mercenaries-hub/data/blackwater-hub.db
+UPLOAD_DIR=/opt/blackwater-mercenaries-hub/uploads
 CORS_ORIGINS=https://your-domain.example
 SESSION_COOKIE_SECURE=true
 AUTO_SEED=true
@@ -33,7 +35,7 @@ SEED_ADMIN_DISPLAY_NAME=Community Admin
 
 ### Storage source of truth
 
-There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/wosb.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For Pi/server deployments, prefer an absolute path such as `/opt/iron-crown-fleet-hub/uploads`.
+There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/blackwater-hub.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For Pi/server deployments, prefer an absolute path such as `/opt/blackwater-mercenaries-hub/uploads`.
 
 Only `UPLOAD_DIR` decides the runtime upload location. The committed demo media remains under `backend/storage/uploads/demo`.
 

@@ -2,11 +2,11 @@
 
 ## Ziel
 
-Die Flottenlogik wurde von mehreren geplanten Flotten auf genau eine offizielle **Iron Crown Fleet** umgestellt. Dadurch wird die Produktlogik einfacher: Nutzer bewerben sich nicht mehr bei einer von zehn Flotten, sondern für eine zentrale Flotte. Aufgaben wie Handel, Port-Battles, Training oder Logistik werden innerhalb dieser Flotte über Einteilungen, Rollen, Kalender und Gruppensuche organisiert.
+Die Flottenlogik wurde von mehreren geplanten Flotten auf genau eine offizielle **Blackwater Mercenaries** umgestellt. Dadurch wird die Produktlogik einfacher: Nutzer bewerben sich nicht mehr bei einer von zehn Flotten, sondern für eine zentrale Flotte. Aufgaben wie Handel, Port-Battles, Training oder Logistik werden innerhalb dieser Flotte über Einteilungen, Rollen, Kalender und Gruppensuche organisiert.
 
 ## Datenmodell
 
-Die Tabelle `fleets` bleibt erhalten, enthält im frischen Seed aber nur noch den Singleton `iron-crown-fleet`. Dadurch bleiben bestehende APIs und spätere Erweiterbarkeit erhalten, ohne im UI mehrere Flotten vorzutäuschen.
+Die Tabelle `fleets` bleibt erhalten, enthält im frischen Seed aber nur noch den Singleton `blackwater-mercenaries`. Dadurch bleiben bestehende APIs und spätere Erweiterbarkeit erhalten, ohne im UI mehrere Flotten vorzutäuschen.
 
 `fleet_memberships` ist die zentrale Quelle für offizielle Flottenzugehörigkeit. Pro Nutzer ist nur eine Membership vorgesehen. Das Profil verweist weiterhin über `user_profiles.primary_fleet_membership_id` auf diese Membership, sodass Status, Rolle, Flottenname und Verzeichnisdaten nicht kopiert werden.
 
@@ -45,5 +45,5 @@ Für ein sauberes Schema nach diesem Refactor:
 
 ```bash
 cd backend
-wosb-seed --reset
+blackwater-seed --reset
 ```

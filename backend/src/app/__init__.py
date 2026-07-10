@@ -1,4 +1,4 @@
-"""Iron Crown Fleet Hub backend package."""
+"""Blackwater Mercenaries Hub backend package."""
 
 from app.core.app_factory import create_app
 

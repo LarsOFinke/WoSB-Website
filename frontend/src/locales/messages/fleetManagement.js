@@ -15,7 +15,7 @@ export const fleetManagementMessages = {
     },
     fleets: {
       eyebrow: 'Central fleet',
-      title: 'Iron Crown Fleet',
+      title: 'Blackwater Mercenaries',
       subtitle: 'One official fleet with a stronger member directory, leadership workflow and shared operations for battles, trade, training and logistics.',
       singleBadge: 'Official fleet',
       manageCta: 'Open management',
@@ -138,7 +138,7 @@ export const fleetManagementMessages = {
     },
     fleets: {
       eyebrow: 'Zentrale Flotte',
-      title: 'Iron Crown Fleet',
+      title: 'Blackwater Mercenaries',
       subtitle: 'Eine offizielle Flotte mit stärkerem Mitgliederverzeichnis, Führungsworkflow und gemeinsamen Operationen für Gefechte, Handel, Training und Logistik.',
       singleBadge: 'Offizielle Flotte',
       manageCta: 'Verwaltung öffnen',

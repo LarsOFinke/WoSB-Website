@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user, require_user
+from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.groups.schemas.group_create import GroupCreate
@@ -27,6 +27,7 @@ def get_groups(
     min_ship_rate: int | None = Query(default=None, ge=1, le=7),
     max_ship_rate: int | None = Query(default=None, ge=1, le=7),
     db: Session = Depends(get_db),
+    _: User = Depends(require_user),
 ) -> list[GroupRead]:
     if min_ship_rate is not None and max_ship_rate is not None and max_ship_rate > min_ship_rate:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum rate must be numerically lower than or equal to minimum rate.")
@@ -52,7 +53,11 @@ def get_my_groups(
 
 
 @router.get("/{group_id}", response_model=GroupRead)
-def get_group_detail(group_id: int, db: Session = Depends(get_db)) -> GroupRead:
+def get_group_detail(
+    group_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> GroupRead:
     group = get_group(db, group_id)
     if group is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found.")
@@ -64,7 +69,7 @@ def post_group_join(
     group_id: int,
     payload: GroupJoinRequest,
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user),
+    current_user: User = Depends(require_user),
 ) -> GroupRead:
     try:
         return join_group(db, group_id, payload, current_user)

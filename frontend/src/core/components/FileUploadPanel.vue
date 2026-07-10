@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 import { useLocale } from '@/locales'
-import { ACCEPT_ATTRIBUTE, formatFileSize, maxBytesForFile, uploadFile, validateFileForUpload } from '@/services/files'
+import { ACCEPT_ATTRIBUTE, formatFileSize, maxBytesForFile, uploadFile, validateFileForUpload } from '@/modules/files/api/files'
 
 const props = defineProps({
   usageContext: {

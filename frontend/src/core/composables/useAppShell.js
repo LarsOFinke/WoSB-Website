@@ -1,7 +1,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-const SIDEBAR_STORAGE_KEY = 'wosb.sidebar.collapsed'
+const SIDEBAR_STORAGE_KEY = 'blackwater-hub.sidebar.collapsed'
 
 function syncShellClass(isSidebarCollapsed, isMobileMenuOpen) {
   if (typeof document === 'undefined') return

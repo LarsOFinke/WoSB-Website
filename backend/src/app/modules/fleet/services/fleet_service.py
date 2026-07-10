@@ -20,7 +20,7 @@ from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
 from app.modules.fleet.schemas.fleet_membership_update import FleetMembershipUpdate
 from app.modules.fleet.schemas.fleet_update import FleetUpdate
 
-PRIMARY_FLEET_SLUG = "iron-crown-fleet"
+PRIMARY_FLEET_SLUG = "blackwater-mercenaries"
 
 
 class FleetValidationError(ValueError):

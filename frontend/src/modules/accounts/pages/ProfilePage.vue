@@ -1,0 +1,293 @@
+<script setup>
+import { computed, onMounted, reactive, ref } from 'vue'
+
+import MetricCard from '@/core/components/MetricCard.vue'
+import PageHeader from '@/core/components/PageHeader.vue'
+import { useLocale } from '@/locales'
+import { changePassword } from '@/modules/accounts/api/auth'
+import { getProfile, updateProfile } from '@/modules/accounts/api/profile'
+import { useSession } from '@/modules/accounts/session'
+import { listMyFleetMemberships } from '@/modules/fleet/api/fleet'
+
+const { t } = useLocale()
+const { setSessionUser } = useSession()
+
+const loading = ref(false)
+const saving = ref(false)
+const changingPassword = ref(false)
+const error = ref('')
+const success = ref('')
+const passwordError = ref('')
+const passwordSuccess = ref('')
+const fleetMemberships = ref([])
+
+const activeFleetMemberships = computed(() => fleetMemberships.value.filter((membership) => ['active', 'pending'].includes(membership.status)))
+const leadershipMemberships = computed(() => fleetMemberships.value.filter((membership) => membership.status === 'active' && ['fleet_admiral', 'fleet_lieutenant'].includes(membership.role)))
+const primaryFleetMembership = computed(() => {
+  if (!form.fleet_membership_id) return null
+  return fleetMemberships.value.find((membership) => membership.id === form.fleet_membership_id) || null
+})
+const hasOfficialFleetLink = computed(() => Boolean(form.fleet_id && form.fleet_membership_status))
+const displayInitials = computed(() => {
+  const source = (form.display_name || form.username || 'BM').trim().split(/\s+/).filter(Boolean)
+  return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'BM'
+})
+const preferredFocusLabel = computed(() => form.preferred_focus ? t(`focus.${form.preferred_focus}`) : t('profile.noPreferredFocus'))
+const fleetStatusLabel = computed(() => hasOfficialFleetLink.value ? t(`fleets.status.${form.fleet_membership_status}`) : t('profile.fleetMemberships.empty'))
+
+const focusOptions = [
+  'pve_farming',
+  'pve_imp_hunting',
+  'pve_general',
+  'pvp_open_world',
+  'pvp_arena',
+  'pvp_general',
+  'trading',
+  'other',
+]
+
+const form = reactive({
+  username: '',
+  display_name: '',
+  fleet_name: '',
+  fleet_id: null,
+  fleet_membership_id: null,
+  fleet_membership_status: '',
+  fleet_membership_role: '',
+  preferred_focus: '',
+  note: '',
+  role: 'user',
+})
+
+const passwordForm = reactive({
+  current_password: '',
+  new_password: '',
+  repeat_password: '',
+})
+
+function fillForm(user) {
+  form.username = user.username || ''
+  form.display_name = user.display_name || ''
+  form.fleet_name = user.fleet_name || ''
+  form.fleet_id = user.fleet_id || null
+  form.fleet_membership_id = user.fleet_membership_id || null
+  form.fleet_membership_status = user.fleet_membership_status || ''
+  form.fleet_membership_role = user.fleet_membership_role || ''
+  form.preferred_focus = user.preferred_focus || ''
+  form.note = user.note || ''
+  form.role = user.role || 'user'
+}
+
+async function loadMemberships() {
+  try {
+    fleetMemberships.value = await listMyFleetMemberships()
+  } catch {
+    fleetMemberships.value = []
+  }
+}
+
+async function loadProfile() {
+  loading.value = true
+  error.value = ''
+  try {
+    fillForm(await getProfile())
+    await loadMemberships()
+  } catch (err) {
+    error.value = err.message || t('profile.loadError')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function saveProfile() {
+  saving.value = true
+  error.value = ''
+  success.value = ''
+  try {
+    const updated = await updateProfile({
+      display_name: form.display_name,
+      fleet_name: hasOfficialFleetLink.value ? null : form.fleet_name || null,
+      preferred_focus: form.preferred_focus || null,
+      note: form.note || null,
+    })
+    fillForm(updated)
+    await loadMemberships()
+    setSessionUser(updated)
+    success.value = t('profile.saved')
+  } catch (err) {
+    error.value = err.message || t('profile.saveError')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function submitPasswordChange() {
+  passwordError.value = ''
+  passwordSuccess.value = ''
+
+  if (passwordForm.new_password !== passwordForm.repeat_password) {
+    passwordError.value = t('profile.password.repeatMismatch')
+    return
+  }
+
+  changingPassword.value = true
+  try {
+    await changePassword({
+      current_password: passwordForm.current_password,
+      new_password: passwordForm.new_password,
+    })
+    passwordForm.current_password = ''
+    passwordForm.new_password = ''
+    passwordForm.repeat_password = ''
+    passwordSuccess.value = t('profile.password.changed')
+  } catch (err) {
+    passwordError.value = err.message || t('profile.password.changeError')
+  } finally {
+    changingPassword.value = false
+  }
+}
+
+onMounted(loadProfile)
+</script>
+
+<template>
+  <section class="profile-page" aria-labelledby="profile-title">
+    <div class="wire-frame page-frame profile-frame profile-workspace-frame">
+      <PageHeader
+        :eyebrow="t('profile.eyebrow')"
+        :title="t('profile.title')"
+        :description="t('profile.subtitle')"
+        title-id="profile-title"
+      >
+        <template #meta>
+          <div class="profile-identity-chip">
+            <span class="profile-avatar" aria-hidden="true">{{ displayInitials }}</span>
+            <span><strong>{{ form.display_name || form.username }}</strong><small>@{{ form.username }}</small></span>
+          </div>
+        </template>
+        <template #actions>
+          <RouterLink class="button-box" to="/profile/builds">{{ t('myBuilds.title') }}</RouterLink>
+          <RouterLink class="button-box primary-action" to="/profile/groups">{{ t('myGroups.title') }}</RouterLink>
+        </template>
+      </PageHeader>
+
+      <p v-if="loading" class="muted table-state">{{ t('profile.loading') }}</p>
+
+      <template v-else>
+        <section class="workspace-metric-grid profile-metric-grid" :aria-label="t('profile.title')">
+          <MetricCard :label="t('profile.account')" :value="t(`roles.${form.role}`)" :hint="form.username" />
+          <MetricCard :label="t('profile.fleetMemberships.title')" :value="fleetStatusLabel" :hint="form.fleet_name || t('fleets.title')" tone="accent" />
+          <MetricCard :label="t('profile.preferredFocus')" :value="preferredFocusLabel" />
+        </section>
+
+        <div class="profile-workspace-grid">
+          <form class="wire-section profile-editor-panel" @submit.prevent="saveProfile">
+            <div class="workspace-section-heading">
+              <div>
+                <p class="eyebrow">{{ t('profile.account') }}</p>
+                <h2>{{ t('profile.displayName') }}</h2>
+                <p>{{ t('profile.subtitle') }}</p>
+              </div>
+              <span class="summary-pill">{{ t(`roles.${form.role}`) }}</span>
+            </div>
+
+            <div class="profile-field-grid">
+              <label class="input-panel embedded-field">
+                <span>{{ t('profile.displayName') }}</span>
+                <input v-model="form.display_name" required maxlength="120" />
+              </label>
+
+              <label class="input-panel embedded-field">
+                <span>{{ t('profile.preferredFocus') }}</span>
+                <select v-model="form.preferred_focus">
+                  <option value="">{{ t('profile.noPreferredFocus') }}</option>
+                  <option v-for="focus in focusOptions" :key="focus" :value="focus">{{ t(`focus.${focus}`) }}</option>
+                </select>
+              </label>
+
+              <label v-if="!hasOfficialFleetLink" class="input-panel embedded-field profile-field-wide">
+                <span>{{ t('profile.externalFleetName') }}</span>
+                <input v-model="form.fleet_name" maxlength="120" :placeholder="t('profile.fleetPlaceholder')" />
+                <small>{{ t('profile.externalFleetHint') }}</small>
+              </label>
+
+              <label class="input-panel embedded-field profile-note-field profile-field-wide">
+                <span>{{ t('profile.note') }}</span>
+                <textarea v-model="form.note" maxlength="1000" rows="7" :placeholder="t('profile.notePlaceholder')"></textarea>
+              </label>
+            </div>
+
+            <p v-if="error" class="error-text profile-message">{{ error }}</p>
+            <p v-if="success" class="success-text profile-message">{{ success }}</p>
+
+            <div class="profile-save-bar">
+              <span class="muted">@{{ form.username }}</span>
+              <button class="form-button primary-action" type="submit" :disabled="saving">
+                {{ saving ? t('profile.saving') : t('profile.save') }}
+              </button>
+            </div>
+          </form>
+
+          <aside class="profile-side-stack profile-command-stack">
+            <section class="wire-section profile-command-card profile-fleet-card">
+              <div class="workspace-section-heading compact-heading">
+                <div>
+                  <p class="eyebrow">{{ t('profile.fleetMemberships.eyebrow') }}</p>
+                  <h2>{{ t('profile.fleetMemberships.title') }}</h2>
+                </div>
+                <span v-if="hasOfficialFleetLink" class="summary-pill fleet-status-pill">{{ t(`fleets.status.${form.fleet_membership_status}`) }}</span>
+              </div>
+
+              <article v-if="hasOfficialFleetLink" class="profile-primary-fleet-row polished-membership-card">
+                <div>
+                  <strong>{{ form.fleet_name }}</strong>
+                  <small v-if="primaryFleetMembership">{{ t(`fleets.focus.${primaryFleetMembership.fleet.focus}`) }}</small>
+                  <small v-else>{{ t('profile.fleetMemberships.syncedHint') }}</small>
+                </div>
+                <span class="summary-pill">{{ t(`fleets.roles.${form.fleet_membership_role || 'member'}`) }}</span>
+              </article>
+              <p v-else class="muted">{{ t('profile.fleetMemberships.empty') }}</p>
+
+              <div v-if="activeFleetMemberships.length > 1" class="profile-membership-list">
+                <article v-for="membership in activeFleetMemberships" :key="membership.id" class="profile-membership-row">
+                  <div><strong>{{ membership.fleet.name }}</strong><span>{{ t(`fleets.focus.${membership.fleet.focus}`) }}</span></div>
+                  <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
+                </article>
+              </div>
+
+              <div class="form-actions compact-actions">
+                <RouterLink class="button-box" to="/">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
+                <RouterLink v-if="leadershipMemberships.length" class="button-box primary-action" to="/fleets">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
+              </div>
+            </section>
+
+            <section class="wire-section profile-command-card profile-tools-card">
+              <div class="workspace-section-heading compact-heading">
+                <div><p class="eyebrow">{{ t('common.personalArea') }}</p><h2>{{ t('common.modules') }}</h2></div>
+              </div>
+              <RouterLink class="profile-tool-link" to="/profile/builds"><span>⚙</span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><b>→</b></RouterLink>
+              <RouterLink class="profile-tool-link" to="/profile/groups"><span>◈</span><span><strong>{{ t('myGroups.profileCardTitle') }}</strong><small>{{ t('myGroups.profileCardText') }}</small></span><b>→</b></RouterLink>
+            </section>
+
+            <section class="wire-section profile-command-card password-panel">
+              <div class="workspace-section-heading compact-heading">
+                <div><p class="eyebrow">{{ t('profile.password.eyebrow') }}</p><h2>{{ t('profile.password.title') }}</h2><p>{{ t('profile.password.subtitle') }}</p></div>
+              </div>
+
+              <form class="password-form" @submit.prevent="submitPasswordChange">
+                <label class="input-panel embedded-field"><span>{{ t('profile.password.current') }}</span><input v-model="passwordForm.current_password" type="password" autocomplete="current-password" required /></label>
+                <div class="password-field-grid">
+                  <label class="input-panel embedded-field"><span>{{ t('profile.password.new') }}</span><input v-model="passwordForm.new_password" type="password" autocomplete="new-password" required minlength="6" /></label>
+                  <label class="input-panel embedded-field"><span>{{ t('profile.password.repeat') }}</span><input v-model="passwordForm.repeat_password" type="password" autocomplete="new-password" required minlength="6" /></label>
+                </div>
+                <p v-if="passwordError" class="error-text profile-message">{{ passwordError }}</p>
+                <p v-if="passwordSuccess" class="success-text profile-message">{{ passwordSuccess }}</p>
+                <button class="form-button" type="submit" :disabled="changingPassword">{{ changingPassword ? t('profile.password.saving') : t('profile.password.save') }}</button>
+              </form>
+            </section>
+          </aside>
+        </div>
+      </template>
+    </div>
+  </section>
+</template>

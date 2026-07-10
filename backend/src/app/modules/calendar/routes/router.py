@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import require_staff
+from app.core.dependencies import require_staff, require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
@@ -27,6 +27,7 @@ def get_events(
     end: datetime | None = Query(default=None),
     category: str | None = Query(default=None, max_length=80),
     db: Session = Depends(get_db),
+    _: User = Depends(require_user),
 ) -> list[FleetEventRead]:
     return list_fleet_events(db, start=start, end=end, category=category)
 
@@ -44,7 +45,11 @@ def post_event(
 
 
 @router.get("/{event_id}", response_model=FleetEventRead)
-def get_event_detail(event_id: int, db: Session = Depends(get_db)) -> FleetEventRead:
+def get_event_detail(
+    event_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> FleetEventRead:
     event = get_fleet_event(db, event_id)
     if event is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
