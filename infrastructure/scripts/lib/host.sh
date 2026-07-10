@@ -27,6 +27,22 @@ install_host_dependencies() {
 
 prepare_data_directories() {
   mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma}
+
+  # The first infrastructure alpha tracked data/postgres/.gitkeep. PostgreSQL
+  # initdb requires a completely empty target directory. Remove only that
+  # harmless repository marker and preserve every real database file.
+  rm -f "$INFRA_DIR/data/postgres/.gitkeep"
+
+  # A valid existing cluster contains PG_VERSION. For a fresh installation the
+  # directory must otherwise be empty; fail early with a useful message instead
+  # of waiting for the PostgreSQL healthcheck to time out.
+  if [[ ! -f "$INFRA_DIR/data/postgres/PG_VERSION" ]]; then
+    local unexpected_entry=""
+    unexpected_entry="$(find "$INFRA_DIR/data/postgres" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)"
+    [[ -z "$unexpected_entry" ]] || die \
+      "PostgreSQL-Datenverzeichnis ist vor der Initialisierung nicht leer: $unexpected_entry"
+  fi
+
   if [[ "$EUID" -eq 0 ]]; then
     chown -R 70:70 "$INFRA_DIR/data/postgres"
     chown -R 10001:10001 "$INFRA_DIR/data/uploads"

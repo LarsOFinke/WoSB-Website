@@ -6,8 +6,6 @@ data/*
 !data/certs/.gitkeep
 !data/nginx/
 !data/nginx/.gitkeep
-!data/postgres/
-!data/postgres/.gitkeep
 !data/uploads/
 !data/uploads/.gitkeep
 !data/uptime-kuma/

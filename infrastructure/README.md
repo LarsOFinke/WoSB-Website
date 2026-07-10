@@ -74,6 +74,10 @@ Direct commands are available below `infrastructure/scripts/`.
 - PostgreSQL is internal and additionally bound to `127.0.0.1:15432` for optional SSH tunnels.
 - Uptime Kuma is optional and bound to `127.0.0.1:3001`.
 
+The setup removes the legacy `infrastructure/data/postgres/.gitkeep` marker before
+PostgreSQL starts. This keeps fresh installations compatible with `initdb` while preserving
+the existing cluster layout of already running alpha installations.
+
 Example database tunnel:
 
 ```bash

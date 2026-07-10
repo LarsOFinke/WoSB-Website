@@ -109,6 +109,10 @@ rm -f "$TMP_DIR/infrastructure/.env" \
       "$TMP_DIR/infrastructure/first-run-credentials.txt" \
       "$TMP_DIR/infrastructure/data/certs/fullchain.pem" \
       "$TMP_DIR/infrastructure/data/certs/privkey.pem"
+# Simulate an update from the affected alpha package. Setup must remove only
+# the legacy marker and leave the fresh PostgreSQL directory empty.
+mkdir -p "$TMP_DIR/infrastructure/data/postgres"
+touch "$TMP_DIR/infrastructure/data/postgres/.gitkeep"
 mkdir -p "$TMP_DIR/fake-bin"
 cat > "$TMP_DIR/fake-bin/docker" <<'FAKE_DOCKER'
 #!/usr/bin/env bash
@@ -133,12 +137,31 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
 [[ "$(stat -c '%a' "$TMP_DIR/infrastructure/.env")" == 600 ]]
 [[ "$(stat -c '%a' "$TMP_DIR/infrastructure/first-run-credentials.txt")" == 600 ]]
 [[ "$(stat -c '%a' "$TMP_DIR/infrastructure/data/certs/privkey.pem")" == 600 ]]
+[[ ! -e "$TMP_DIR/infrastructure/data/postgres/.gitkeep" ]]
+[[ -z "$(find "$TMP_DIR/infrastructure/data/postgres" -mindepth 1 -maxdepth 1 -print -quit)" ]]
 grep -q '^APP_ENV=production$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DB_SCHEMA_MODE=migrate$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DATABASE_URL=postgresql+psycopg://' "$TMP_DIR/infrastructure/.env"
 grep -q '^Admin user: validation-admin$' "$TMP_DIR/infrastructure/first-run-credentials.txt"
 openssl x509 -in "$TMP_DIR/infrastructure/data/certs/fullchain.pem" -noout -ext subjectAltName \
   | grep -q 'DNS:blackwater-validation.local, IP Address:192.0.2.10'
+
+# Simulate rerunning setup against the legacy/current root-level PostgreSQL
+# cluster layout. Existing database files must remain untouched.
+printf '16\n' > "$TMP_DIR/infrastructure/data/postgres/PG_VERSION"
+printf 'preserve-me\n' > "$TMP_DIR/infrastructure/data/postgres/EXISTING_DATA_SENTINEL"
+touch "$TMP_DIR/infrastructure/data/postgres/.gitkeep"
+PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
+  --skip-host \
+  --no-start \
+  --profile full \
+  --hostname blackwater-validation.local \
+  --ip 192.0.2.10 \
+  --admin-username validation-admin \
+  --admin-display-name 'Validation Commander' >/dev/null
+[[ ! -e "$TMP_DIR/infrastructure/data/postgres/.gitkeep" ]]
+[[ "$(cat "$TMP_DIR/infrastructure/data/postgres/PG_VERSION")" == 16 ]]
+[[ "$(cat "$TMP_DIR/infrastructure/data/postgres/EXISTING_DATA_SENTINEL")" == preserve-me ]]
 
 if [[ "$FRONTEND_ENV_CREATED" == true ]]; then
   rm -f "$ROOT_DIR/frontend/.env"

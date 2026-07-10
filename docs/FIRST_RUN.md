@@ -18,6 +18,9 @@ sudo ./setup.sh --profile full
 No application `.env` files need to be created manually. The setup script generates the
 production configuration under `infrastructure/.env`.
 
+The PostgreSQL bind mount is prepared automatically. Legacy repository marker files are
+removed before `initdb`, while an existing database cluster remains untouched.
+
 ## 3. Open the hub
 
 The completion summary prints the detected URLs. The initial certificate is self-signed, so
