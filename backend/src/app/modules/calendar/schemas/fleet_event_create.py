@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from app.modules.calendar.schemas.constants import FLEET_EVENT_CATEGORY_VALUES
 
-from app.modules.accounts.schemas.user_read import UserRead
 
 class FleetEventCreate(BaseModel):
     title: str = Field(min_length=1, max_length=160)
@@ -16,6 +15,7 @@ class FleetEventCreate(BaseModel):
     start_at: datetime
     end_at: datetime
     all_day: bool = False
+    squad_id: int | None = None
 
     @model_validator(mode="after")
     def normalize(self) -> "FleetEventCreate":

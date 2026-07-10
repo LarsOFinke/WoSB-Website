@@ -11,8 +11,14 @@ export const FLEET_EVENT_CATEGORIES = [
 ]
 
 export function listFleetEvents(filters = {}) {
-  const { start = '', end = '', category = '' } = filters
-  return get(withQuery('/calendar/events', { start, end, category }))
+  const { start = '', end = '', category = '', squadId = '', fleetOnly = false } = filters
+  return get(withQuery('/calendar/events', {
+    start,
+    end,
+    category,
+    squad_id: squadId,
+    fleet_only: fleetOnly || '',
+  }))
 }
 
 export function createFleetEvent(payload) {

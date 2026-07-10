@@ -15,6 +15,7 @@ frontend/src
 │   ├── admin/            staff workspace
 │   ├── builds/           build catalog, details and editor
 │   ├── calendar/         fleet calendar
+│   ├── squads/           permanent fleet squad organization
 │   ├── fleet/            public fleet portal and fleet management
 │   ├── forum/            forum screens and API adapter
 │   ├── groups/           group search screens and API adapter
@@ -53,7 +54,9 @@ Public routes:
 - `/login` and `/register`
 - `/builds` and `/builds/:id`
 
-Authenticated routes include profile, guides, groups, forum, calendar, fleet management, build creation and personal workspaces. Staff routes add `/admin` and `/calendar/new`.
+Authenticated routes include profile, guides, groups, squads, forum, calendar, fleet management,
+build creation and personal workspaces. Staff routes add `/admin`. Calendar creation is available
+to fleet leadership and to squad leaders/officers for their own managed scope.
 
 The frontend guard is a user-experience boundary, not the security boundary. Matching authorization is enforced by FastAPI dependencies on the backend.
 

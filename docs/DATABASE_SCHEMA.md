@@ -18,6 +18,8 @@ build_item_effects
 build_slots
 fleets
 fleet_memberships
+squads
+squad_members
 fleet_events
 groups
 group_members
@@ -47,6 +49,20 @@ user_id, display_name, external_fleet_name, primary_fleet_membership_id, preferr
 ```
 
 Official fleet membership is not stored on `users`. It lives in `fleet_memberships`, which avoids redundant `fleet_id` / `fleet_name` pairs on the user account. The profile points to exactly one canonical membership through `primary_fleet_membership_id`; profile fleet name, role and status are derived from that row. Registration with a planned fleet creates the membership application and stores that pointer immediately. When fleet leadership accepts the application, the same membership row switches to `active`, so the profile changes automatically without a second free-text update.
+
+### Fleet squad organization
+
+Permanent sub-units are normalized into two tables:
+
+```text
+squads(id, fleet_id, name, slug, description, focus, max_members, is_active, created_by_id, ...)
+squad_members(id, squad_id, fleet_membership_id, role, note, joined_at, ...)
+```
+
+`squad_members` references the existing official `fleet_memberships` row rather than duplicating
+user, fleet or membership state. Its role is scoped to one squad (`member`, `officer`, `leader`) and
+does not alter the user's site role or fleet-wide role. A fleet event may reference an optional
+`squad_id`; `NULL` continues to mean a fleet-wide event, preserving all existing calendar rows.
 
 ### Build effects split
 
@@ -98,6 +114,8 @@ Fresh schemas now include additional database-level checks for common applicatio
 - `fleet_memberships.status` is constrained to pending/active/inactive values.
 - group status and ship rates are constrained to valid ranges.
 - fleet event `end_at` must not be before `start_at`.
+- squad member roles are constrained to member/officer/leader values and duplicate membership in
+  the same squad is prevented.
 - build crew counts, slot indexes and slot quantities are non-negative/positive where appropriate.
 
 These checks complement Pydantic/service validation. They are not a substitute for migrations; they make new clean schemas safer while the prototype still uses `create_all`.

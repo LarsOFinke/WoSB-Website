@@ -1,0 +1,1 @@
+"""Fleet squad organization module."""

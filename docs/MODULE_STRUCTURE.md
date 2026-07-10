@@ -18,6 +18,7 @@ backend/
         ├── admin/       admin dashboard, access review, DB log views
         ├── builds/      build designer, catalog options, stat calculation
         ├── calendar/    fleet calendar events
+        ├── squads/      permanent fleet sub-units, roles and roster
         ├── content/     shared inline embed parsing/rendering helpers
         ├── files/       upload validation and stored file metadata
         ├── fleet/       single official fleet, memberships, directory

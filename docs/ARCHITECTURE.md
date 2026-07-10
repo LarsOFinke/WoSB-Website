@@ -38,7 +38,10 @@ Do not recreate global `pages/` or `services/` directories. New frontend code be
 
 ## Access model
 
-Public product surfaces are intentionally narrow: fleet portal/home, login, registration and build catalog/details. Profile, guides, groups, forum, calendar, fleet management, personal workspaces and content creation require login. Staff operations require moderator/admin permissions where appropriate.
+Public product surfaces are intentionally narrow: fleet portal/home, compact fleet overview, login
+and registration. Profile, builds, guides, temporary groups, permanent squads, forum, calendar,
+fleet management, personal workspaces and content creation require login. Staff operations require
+moderator/admin permissions where appropriate.
 
 Vue route guards provide redirects and navigation visibility. FastAPI dependencies remain the security source of truth.
 

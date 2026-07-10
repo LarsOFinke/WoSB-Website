@@ -21,8 +21,10 @@ class FleetEvent(Base):
     end_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     all_day: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    squad_id: Mapped[int | None] = mapped_column(ForeignKey("squads.id", ondelete="SET NULL"), nullable=True, index=True)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner: Mapped["User"] = relationship("User", lazy="joined")
+    squad: Mapped["Squad | None"] = relationship("Squad", lazy="joined")

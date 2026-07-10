@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel
 
 from app.modules.accounts.schemas.user_read import UserRead
 
-class FleetEventRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
 
+class CalendarSquadRead(BaseModel):
+    id: int
+    name: str
+    slug: str
+
+
+class FleetEventRead(BaseModel):
     id: int
     title: str
     category: str
@@ -19,6 +24,9 @@ class FleetEventRead(BaseModel):
     all_day: bool
     owner_id: int
     owner: UserRead
+    squad_id: int | None = None
+    squad: CalendarSquadRead | None = None
+    can_manage: bool = False
     is_cancelled: bool
     created_at: datetime
     updated_at: datetime

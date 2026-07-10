@@ -83,12 +83,12 @@ Public routes:
 /             Fleet Portal
 /login
 /register
-/builds
-/builds/:id
+/fleet
 ```
 
-Profile, the New Captain Guide, guides, groups, calendar, forum and fleet management require a login. The Staff Panel
-requires staff privileges. Frontend guards and backend dependencies enforce the same boundary.
+Profile, the New Captain Guide, builds, guides, temporary group searches, fleet squads, calendar,
+forum and fleet management require a login. The Staff Panel requires staff privileges. Frontend
+guards and backend dependencies enforce the same boundary.
 
 ## Web access
 
@@ -181,3 +181,16 @@ operators can also request `--migrate` explicitly. Seeds run only with `--seed`.
 Uptime Kuma and its HTTPS monitoring gateway are ensured independently before
 optional database work. A migration or seed failure can therefore no longer skip
 the monitoring start step and leave port 8443 unavailable.
+
+## Release 0.16.0 — Fleet squads and scoped calendar planning
+
+The fleet can now be divided into permanent squads without granting their leaders global fleet
+administration. Administrators, moderators, Fleet Admirals and Fleet Lieutenants create and
+archive squads and appoint the first Squad Leader. Squad Leaders can maintain the unit profile,
+roster, officers and private calendar entries; Squad Officers can support day-to-day roster and
+calendar work without being able to seize command.
+
+Fleet-wide calendar entries remain visible to every authenticated member. Squad entries are shown
+only to members of that squad and to fleet/staff leadership. The release adds the `squads` and
+`squad_members` tables plus a nullable squad scope on existing calendar events. No existing event
+or membership data is replaced.

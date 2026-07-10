@@ -14,6 +14,8 @@ _MODEL_MODULES = (
     "app.modules.builds.models.build_item_option",
     "app.modules.builds.models.build_option",
     "app.modules.builds.models.build_slot",
+    "app.modules.squads.models.squad",
+    "app.modules.squads.models.squad_member",
     "app.modules.calendar.models.fleet_event",
     "app.modules.files.models.file_asset",
     "app.modules.fleet.models.fleet",

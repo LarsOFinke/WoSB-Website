@@ -6856,3 +6856,298 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================================================== */
+/* RBF 0.16 — fleet squads and scoped calendar planning                       */
+/* ========================================================================== */
+
+.squad-frame,
+.squad-detail-frame,
+.squad-create-frame {
+  display: grid;
+  gap: 1rem;
+}
+
+.squad-intro-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(17rem, 0.6fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.squad-intro-panel h2,
+.squad-intro-panel p {
+  margin-top: 0;
+}
+
+.squad-archive-toggle {
+  margin: 0;
+}
+
+.squad-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.squad-card {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-height: 22rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0, rgba(241, 184, 91, 0.08), transparent 15rem),
+    rgba(5, 14, 24, 0.58);
+}
+
+.squad-card.is-member {
+  border-color: rgba(241, 184, 91, 0.32);
+}
+
+.squad-card.is-archived {
+  opacity: 0.72;
+}
+
+.squad-card-heading,
+.squad-command-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.squad-card-heading h2,
+.squad-command-card h2,
+.squad-card-heading p,
+.squad-command-card p {
+  margin: 0;
+}
+
+.squad-mark {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  border: 1px solid rgba(241, 184, 91, 0.3);
+  border-radius: 0.9rem;
+  color: var(--accent-strong);
+  background: rgba(241, 184, 91, 0.07);
+}
+
+.squad-card-description {
+  min-height: 4.8rem;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.squad-card-metrics {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.squad-card-metrics > div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(213, 228, 240, 0.09);
+}
+
+.squad-card-metrics dt,
+.squad-overview-card > span {
+  color: var(--muted-soft);
+  font-size: 0.67rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.squad-card-metrics dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.squad-card-flags,
+.squad-card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.squad-card-actions {
+  align-self: end;
+  margin-top: auto;
+}
+
+.squad-form-section,
+.squad-editor-panel,
+.squad-roster-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.squad-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.squad-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(12rem, 0.75fr));
+  gap: 1rem;
+}
+
+.squad-command-card,
+.squad-overview-card {
+  min-height: 9.5rem;
+}
+
+.squad-command-card > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.squad-overview-card {
+  display: grid;
+  align-content: center;
+  gap: 0.5rem;
+}
+
+.squad-overview-card > strong {
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+}
+
+.squad-edit-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.squad-add-member-form {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.2fr) minmax(10rem, 0.55fr) minmax(12rem, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 0.95rem;
+  background: rgba(3, 10, 18, 0.42);
+}
+
+.squad-member-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.squad-member-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 0.55fr) minmax(12rem, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(213, 228, 240, 0.1);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.squad-member-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  align-self: center;
+}
+
+.squad-member-identity > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.squad-member-identity span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.squad-member-avatar {
+  display: inline-grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  place-items: center;
+  border: 1px solid rgba(213, 228, 240, 0.14);
+  border-radius: 50%;
+  color: var(--accent-strong) !important;
+  background: rgba(241, 184, 91, 0.06);
+  font-size: 0.73rem !important;
+  font-weight: 900;
+}
+
+.squad-member-actions {
+  align-self: end;
+}
+
+.calendar-scope-badge {
+  display: inline-flex;
+  align-self: start;
+  width: fit-content;
+  padding: 0.28rem 0.48rem;
+  border: 1px solid rgba(213, 228, 240, 0.13);
+  border-radius: 999px;
+  color: var(--muted-soft);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-cancel-action {
+  justify-self: start;
+}
+
+@media (max-width: 1120px) {
+  .squad-overview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .squad-command-card {
+    grid-column: 1 / -1;
+  }
+
+  .squad-add-member-form,
+  .squad-member-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .squad-member-actions {
+    align-self: end;
+  }
+}
+
+@media (max-width: 760px) {
+  .squad-intro-panel,
+  .squad-form-grid,
+  .squad-overview-grid,
+  .squad-add-member-form,
+  .squad-member-row {
+    grid-template-columns: 1fr;
+  }
+
+  .squad-command-card {
+    grid-column: auto;
+  }
+
+  .squad-card {
+    min-height: 0;
+  }
+
+  .squad-card-metrics > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}

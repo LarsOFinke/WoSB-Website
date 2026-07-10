@@ -1,12 +1,15 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { useLocale } from '@/locales'
-import { FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
+import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
 import { useSession } from '@/modules/accounts/session'
+import { listSquads } from '@/modules/squads/api/squads'
 
+const route = useRoute()
 const { locale, t } = useLocale()
-const { isStaff } = useSession()
+const { canManageFleet } = useSession()
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -14,9 +17,12 @@ today.setHours(0, 0, 0, 0)
 const activeMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1))
 const selectedDate = ref(new Date(today))
 const category = ref('')
+const scope = ref(route.query.squad ? `squad:${route.query.squad}` : 'all')
 const events = ref([])
+const squads = ref([])
 const loading = ref(false)
 const error = ref('')
+const cancellingId = ref(null)
 
 const weekdayLabels = computed(() => {
   const monday = new Date(2024, 0, 1)
@@ -52,9 +58,19 @@ const calendarDays = computed(() => {
   return days
 })
 
+const visibleSquads = computed(() => squads.value.filter((squad) => squad.is_member || squad.can_manage))
+const managedSquads = computed(() => squads.value.filter((squad) => squad.can_manage && squad.is_active))
+const canCreateEvent = computed(() => canManageFleet.value || managedSquads.value.length > 0)
+
 const categoryOptions = computed(() => [
   { value: '', label: t('calendar.categories.all') },
   ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) })),
+])
+
+const scopeOptions = computed(() => [
+  { value: 'all', label: t('calendar.scopes.allVisible') },
+  { value: 'fleet', label: t('calendar.scopes.fleetWide') },
+  ...visibleSquads.value.map((squad) => ({ value: `squad:${squad.id}`, label: squad.name })),
 ])
 
 const eventCountLabel = computed(() =>
@@ -62,6 +78,12 @@ const eventCountLabel = computed(() =>
 )
 
 const selectedEvents = computed(() => eventsForDate(selectedDate.value))
+const newEventTarget = computed(() => {
+  if (scope.value.startsWith('squad:')) {
+    return { path: '/calendar/new', query: { squad: scope.value.split(':')[1] } }
+  }
+  return '/calendar/new'
+})
 
 function dateKey(date) {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
@@ -111,6 +133,10 @@ function formatEventTime(event) {
   return `${formatter.format(new Date(event.start_at))}–${formatter.format(new Date(event.end_at))}`
 }
 
+function eventScopeLabel(event) {
+  return event.squad?.name || t('calendar.scopes.fleetWide')
+}
+
 function selectDay(date) {
   selectedDate.value = new Date(date)
 }
@@ -124,14 +150,22 @@ function jumpToToday() {
   selectedDate.value = new Date(today)
 }
 
+function scopeFilters() {
+  if (scope.value === 'fleet') return { fleetOnly: true, squadId: '' }
+  if (scope.value.startsWith('squad:')) return { fleetOnly: false, squadId: scope.value.split(':')[1] }
+  return { fleetOnly: false, squadId: '' }
+}
+
 async function loadEvents() {
   loading.value = true
   error.value = ''
   try {
+    const filters = scopeFilters()
     events.value = await listFleetEvents({
       start: monthRange.value.gridStart.toISOString(),
       end: monthRange.value.gridEnd.toISOString(),
       category: category.value,
+      ...filters,
     })
   } catch (err) {
     error.value = err.message || t('calendar.list.loadError')
@@ -140,8 +174,36 @@ async function loadEvents() {
   }
 }
 
-watch([activeMonth, category], loadEvents)
-onMounted(loadEvents)
+async function loadSquadScopes() {
+  try {
+    squads.value = await listSquads()
+    const allowedValues = new Set(scopeOptions.value.map((option) => option.value))
+    if (!allowedValues.has(scope.value)) scope.value = 'all'
+  } catch {
+    squads.value = []
+    scope.value = 'all'
+  }
+}
+
+async function cancelEvent(event) {
+  if (!window.confirm(t('calendar.list.cancelConfirm', { title: event.title }))) return
+  cancellingId.value = event.id
+  error.value = ''
+  try {
+    await deleteFleetEvent(event.id)
+    await loadEvents()
+  } catch (err) {
+    error.value = err.message || t('calendar.list.cancelError')
+  } finally {
+    cancellingId.value = null
+  }
+}
+
+watch([activeMonth, category, scope], loadEvents)
+onMounted(async () => {
+  await loadSquadScopes()
+  await loadEvents()
+})
 </script>
 
 <template>
@@ -155,7 +217,7 @@ onMounted(loadEvents)
         </div>
         <div class="hero-actions">
           <span class="summary-pill">{{ eventCountLabel }}</span>
-          <RouterLink v-if="isStaff" class="button-box primary-action" to="/calendar/new">
+          <RouterLink v-if="canCreateEvent" class="button-box primary-action" :to="newEventTarget">
             {{ t('calendar.list.newEvent') }}
           </RouterLink>
         </div>
@@ -173,7 +235,12 @@ onMounted(loadEvents)
             <button class="button-box calendar-nav-button" type="button" @click="moveMonth(1)">›</button>
           </div>
           <label class="filter-box type-filter-box select-shell toolbar-select-shell calendar-category-filter">
-            <select v-model="category">
+            <select v-model="scope" :aria-label="t('calendar.fields.scope')">
+              <option v-for="option in scopeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </label>
+          <label class="filter-box type-filter-box select-shell toolbar-select-shell calendar-category-filter">
+            <select v-model="category" :aria-label="t('calendar.fields.category')">
               <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
@@ -213,7 +280,7 @@ onMounted(loadEvents)
                   class="calendar-event-chip"
                   :class="`event-${event.category}`"
                 >
-                  {{ formatEventTime(event) }} · {{ event.title }}
+                  {{ event.squad ? `${event.squad.name} · ` : '' }}{{ formatEventTime(event) }} · {{ event.title }}
                 </span>
                 <span v-if="eventsForDate(day).length > 3" class="calendar-more-chip">
                   {{ t('calendar.list.moreEvents', { count: eventsForDate(day).length - 3 }) }}
@@ -238,10 +305,20 @@ onMounted(loadEvents)
                 <span class="type-pill" :class="`event-${event.category}`">{{ t(`calendar.categories.${event.category}`) }}</span>
                 <span>{{ formatEventTime(event) }}</span>
               </div>
+              <span class="calendar-scope-badge">{{ eventScopeLabel(event) }}</span>
               <h3>{{ event.title }}</h3>
               <p v-if="event.location" class="muted">{{ event.location }}</p>
               <p v-if="event.description" class="preserve-lines">{{ event.description }}</p>
               <p class="muted">{{ t('calendar.list.createdBy', { name: event.owner.display_name }) }}</p>
+              <button
+                v-if="event.can_manage"
+                class="danger-action calendar-cancel-action"
+                type="button"
+                :disabled="cancellingId === event.id"
+                @click="cancelEvent(event)"
+              >
+                {{ cancellingId === event.id ? t('calendar.list.cancelling') : t('calendar.list.cancelEvent') }}
+              </button>
             </article>
           </div>
         </aside>

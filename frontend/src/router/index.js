@@ -12,6 +12,7 @@ import { forumRoutes } from '@/modules/forum/routes'
 import { groupRoutes } from '@/modules/groups/routes'
 import { guideRoutes } from '@/modules/guides/routes'
 import { onboardingRoutes } from '@/modules/onboarding/routes'
+import { squadRoutes } from '@/modules/squads/routes'
 
 const routes = [
   ...fleetRoutes,
@@ -20,6 +21,7 @@ const routes = [
   ...guideRoutes,
   ...onboardingRoutes,
   ...groupRoutes,
+  ...squadRoutes,
   ...calendarRoutes,
   ...forumRoutes,
   ...adminRoutes,

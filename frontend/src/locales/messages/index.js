@@ -12,6 +12,7 @@ import { localeCompletenessMessages } from './localeCompleteness'
 import { newcomerGuideMessages } from './newcomerGuide'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
+import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
 import { royalBlackwaterFleetMessages } from './royalBlackwaterFleet'
@@ -26,6 +27,7 @@ const messageLayers = [
   royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,
+  squadOrganizationMessages,
   fleetManagementMessages,
   staffPanelMessages,
   systemOperationsMessages,

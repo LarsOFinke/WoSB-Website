@@ -11,6 +11,7 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
     { to: '/builds', label: t('common.builds'), icon: 'builds', section: 'member' },
     { to: '/guides', label: t('common.guides'), icon: 'guides', section: 'member' },
     { to: '/groups', label: t('common.groups'), icon: 'groups', section: 'member' },
+    { to: '/squads', label: t('common.squads'), icon: 'users', section: 'member' },
     { to: '/calendar', label: t('common.calendar'), icon: 'calendar', section: 'member' },
     { to: '/forum', label: t('common.forum'), icon: 'forum', section: 'member' },
   ]
