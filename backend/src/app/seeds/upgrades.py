@@ -7,6 +7,10 @@ stay current. Effects can be replaced later without changing saved builds.
 
 UPGRADE_CATALOG_REVISION = "B20-fleet-audit-2026-07"
 
+LEGACY_UPGRADE_NAME_ALIASES = {
+    "Fortified Ports": "Reinforced Ports",
+}
+
 
 def _upgrade(name: str, effects: dict[str, int | float], notes: str) -> dict[str, object]:
     return {

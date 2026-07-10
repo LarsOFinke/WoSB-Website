@@ -7,6 +7,7 @@ from app.seeds.build_catalog_quality import (
 )
 from app.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.seeds.consumables import CONSUMABLE_OPTIONS
+from app.seeds.demo_builds import DEMO_BUILD_DATA
 from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
 from app.seeds.sails import SAIL_OPTIONS
@@ -55,3 +56,13 @@ def test_specialist_catalog_replaces_placeholder_special_crew_rows() -> None:
     assert {"Artillerist", "Boarding Master", "Carpenter", "Navigator", "Surgeon"} <= names
     assert all(row["option_kind"] == "crew_specialist" for row in SPECIAL_CREW_OPTIONS)
     assert all("prototype" not in str(row.get("notes", "")).casefold() for row in SPECIAL_CREW_OPTIONS)
+
+
+def test_demo_builds_only_reference_current_upgrade_names() -> None:
+    active_names = {str(row["name"]) for row in UPGRADE_OPTIONS}
+    for build in DEMO_BUILD_DATA:
+        for index in range(1, 7):
+            name = build.get(f"upgrade_{index}")
+            if name:
+                assert name in active_names, f"{build['build_name']}: unknown upgrade {name}"
+

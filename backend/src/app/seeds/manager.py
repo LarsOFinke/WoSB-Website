@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.seeds.ammunition import AMMUNITION_OPTIONS
@@ -23,7 +23,7 @@ from app.seeds.newcomer_guide import seed_newcomer_guide
 from app.seeds.sails import SAIL_OPTIONS
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.special_crew import SPECIAL_CREW_OPTIONS
-from app.seeds.upgrades import UPGRADE_OPTIONS
+from app.seeds.upgrades import LEGACY_UPGRADE_NAME_ALIASES, UPGRADE_OPTIONS
 from app.seeds.users import seed_admin_user
 from app.seeds.weapons import WEAPON_OPTIONS
 from app.modules.accounts.models.user import User
@@ -31,6 +31,7 @@ from app.modules.builds.models.build import Build
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.calendar.models.fleet_event import FleetEvent
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.groups.models.group import Group
@@ -129,6 +130,8 @@ class SeedManager:
             if category.key not in active_category_keys:
                 category.is_active = False
 
+        self._migrate_legacy_upgrade_names(categories["upgrade"])
+
         active_pairs: set[tuple[str, str]] = set()
         for option_group in BUILD_OPTION_SEED_GROUPS:
             for sort_order, option_data in enumerate(_alphabetical_options(list(option_group)), start=10):
@@ -171,6 +174,40 @@ class SeedManager:
                 option.is_active = False
 
         self.db.commit()
+
+
+    def _migrate_legacy_upgrade_names(self, category: BuildItemCategory) -> None:
+        """Preserve saved builds while moving renamed upgrade options forward."""
+
+        for legacy_name, current_name in LEGACY_UPGRADE_NAME_ALIASES.items():
+            legacy = self.db.scalar(
+                select(BuildItemOption).where(
+                    BuildItemOption.category_id == category.id,
+                    BuildItemOption.name == legacy_name,
+                )
+            )
+            if legacy is None:
+                continue
+
+            current = self.db.scalar(
+                select(BuildItemOption).where(
+                    BuildItemOption.category_id == category.id,
+                    BuildItemOption.name == current_name,
+                )
+            )
+            if current is None:
+                legacy.name = current_name
+                legacy.is_active = True
+                self.db.flush()
+                continue
+
+            self.db.execute(
+                update(BuildSlot)
+                .where(BuildSlot.option_id == legacy.id)
+                .values(option_id=current.id)
+            )
+            self.db.delete(legacy)
+            self.db.flush()
 
 
     def _sync_option_effects(self, option: BuildItemOption, effects: dict[str, object]) -> None:

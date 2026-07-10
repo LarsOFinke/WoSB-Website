@@ -165,3 +165,8 @@ catalog remain attached to historical builds but disappear from new-build select
 ## Release 0.15.1 — Fleet-management access
 
 Fleet Management is now shown only to administrators, moderators, active Fleet Admirals, and active Fleet Lieutenants. The frontend route and backend endpoints enforce the same policy.
+
+
+## Release 0.15.2 — Seed compatibility hotfix
+
+Fixes the `Fortified Ports` / `Reinforced Ports` demo-build mismatch and migrates legacy option references during idempotent seeding.
