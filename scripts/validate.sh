@@ -81,6 +81,12 @@ data = yaml.safe_load(Path(sys.argv[1]).read_text())
 required = {"postgres", "migrate", "seed", "api", "gateway", "uptime-kuma", "monitoring-gateway"}
 missing = required.difference(data["services"])
 assert not missing, missing
+postgres = data["services"]["postgres"]
+assert postgres.get("env_file") == [".env"], postgres.get("env_file")
+assert "environment" not in postgres, postgres.get("environment")
+postgres_healthcheck = postgres["healthcheck"]["test"][1]
+assert "$${POSTGRES_USER}" in postgres_healthcheck, postgres_healthcheck
+assert "$${POSTGRES_DB}" in postgres_healthcheck, postgres_healthcheck
 seed_command = data["services"]["seed"]["command"][2]
 assert "$$AUTO_SEED" in seed_command, seed_command
 monitoring = data["services"]["monitoring-gateway"]
@@ -89,6 +95,9 @@ assert "${MONITORING_HTTPS_PORT:-8443}:443" in monitoring["ports"]
 assert "./nginx/monitoring.conf:/etc/nginx/conf.d/default.conf:ro" in monitoring["volumes"]
 assert monitoring["networks"] == ["frontend", "backend"], monitoring["networks"]
 controller = Path(sys.argv[2]).read_text()
+assert '--env-file "$ENV_FILE"' in controller
+for variable in ("POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "DATABASE_URL"):
+    assert f"-u {variable}" in controller
 steps = [
     'bw_compose up -d postgres',
     'bw_compose run --rm migrate',
@@ -126,11 +135,20 @@ if [[ "${1:-}" == compose && "${2:-}" == version ]]; then
   exit 0
 fi
 if [[ "${1:-}" == compose ]]; then
+  [[ -z "${POSTGRES_USER:-}" ]] || exit 91
+  [[ -z "${POSTGRES_PASSWORD:-}" ]] || exit 92
+  [[ -z "${POSTGRES_DB:-}" ]] || exit 93
+  [[ -z "${DATABASE_URL:-}" ]] || exit 94
+  [[ " $* " == *" --env-file "* ]] || exit 95
   exit 0
 fi
 exit 0
 FAKE_DOCKER
 chmod +x "$TMP_DIR/fake-bin/docker"
+POSTGRES_USER=poisoned-user \
+POSTGRES_PASSWORD=poisoned-password \
+POSTGRES_DB=poisoned-database \
+DATABASE_URL=postgresql+psycopg://poisoned \
 PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \
@@ -157,6 +175,10 @@ openssl x509 -in "$TMP_DIR/infrastructure/data/certs/fullchain.pem" -noout -ext 
 printf '16\n' > "$TMP_DIR/infrastructure/data/postgres/PG_VERSION"
 printf 'preserve-me\n' > "$TMP_DIR/infrastructure/data/postgres/EXISTING_DATA_SENTINEL"
 touch "$TMP_DIR/infrastructure/data/postgres/.gitkeep"
+POSTGRES_USER=poisoned-user \
+POSTGRES_PASSWORD=poisoned-password \
+POSTGRES_DB=poisoned-database \
+DATABASE_URL=postgresql+psycopg://poisoned \
 PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
   --skip-host \
   --no-start \

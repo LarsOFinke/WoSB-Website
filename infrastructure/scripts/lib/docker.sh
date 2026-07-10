@@ -16,7 +16,18 @@ bw_compose() {
   ensure_env_file
   local compose
   compose="$(compose_binary)" || die "Docker Compose wurde nicht gefunden."
-  (cd "$INFRA_DIR" && $compose -f "$COMPOSE_FILE" "$@")
+  # Runtime credentials must always come from infrastructure/.env. Shell-level
+  # variables would otherwise take precedence during Compose interpolation and
+  # could initialize PostgreSQL with a different password than the API receives.
+  (
+    cd "$INFRA_DIR"
+    env \
+      -u POSTGRES_USER \
+      -u POSTGRES_PASSWORD \
+      -u POSTGRES_DB \
+      -u DATABASE_URL \
+      $compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
+  )
 }
 
 compose_profiles() {

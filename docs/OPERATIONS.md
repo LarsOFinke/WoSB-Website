@@ -67,3 +67,12 @@ The upload directory comes from `UPLOAD_DIR` in `backend/.env` and is served thr
 - Admins can approve/reject requests in the new access review view.
 - Application/request logs are persisted in `app_logs` and surfaced in the admin dashboard.
 - See `docs/ADMIN_DASHBOARD.md` for the flow and operational details.
+
+## PostgreSQL meldet `password authentication failed`
+
+Aktuelle Versionen starten Compose mit einer expliziten `--env-file`-Angabe und
+entfernen gleichnamige Variablen aus der Host-Shell. Bei einem Upgrade von einer
+betroffenen Alpha-Version muss ein noch unbenutzter, fehlgeschlagen
+initialisierter Cluster einmal entfernt und anschließend das Setup erneut
+ausgeführt werden. Produktivdaten dürfen dabei nicht ohne Backup gelöscht
+werden.

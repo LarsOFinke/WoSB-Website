@@ -57,3 +57,12 @@ make infra-update
 
 The update command uses `git pull --ff-only`, rebuilds images, reruns migrations and verifies
 the final health endpoint.
+
+## Schutz vor geerbten Datenbankvariablen
+
+Der Deployment-Controller entfernt `POSTGRES_USER`, `POSTGRES_PASSWORD`,
+`POSTGRES_DB` und `DATABASE_URL` aus der aufrufenden Shell, bevor Docker Compose
+gestartet wird. PostgreSQL, Migration, Seed und API lesen ihre Zugangsdaten
+anschließend aus derselben `infrastructure/.env`. Dadurch kann eine lokal oder
+systemweit exportierte Variable die Datenbank nicht mehr mit einem abweichenden
+Passwort initialisieren.

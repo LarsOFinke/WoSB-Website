@@ -105,5 +105,14 @@ validate_env() {
   ((${#missing[@]} == 0)) || die "Fehlende .env-Werte: ${missing[*]}"
   [[ "$(read_env DB_SCHEMA_MODE)" == migrate ]] || die "Production benötigt DB_SCHEMA_MODE=migrate."
   [[ "$(read_env DATABASE_URL)" == postgresql+psycopg://* ]] || die "Production benötigt PostgreSQL."
+
+  local postgres_user postgres_password postgres_database expected_database_url
+  postgres_user="$(read_env POSTGRES_USER)"
+  postgres_password="$(read_env POSTGRES_PASSWORD)"
+  postgres_database="$(read_env POSTGRES_DB)"
+  expected_database_url="postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"
+  [[ "$(read_env DATABASE_URL)" == "$expected_database_url" ]] || \
+    die "DATABASE_URL und POSTGRES_* Zugangsdaten sind nicht konsistent."
+
   [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
 }
