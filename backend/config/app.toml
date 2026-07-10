@@ -3,7 +3,7 @@
 
 [app]
 name = "Royal Blackwater Fleet"
-version = "0.16.1"
+version = "0.16.2"
 api_prefix = "/api"
 
 [logging]

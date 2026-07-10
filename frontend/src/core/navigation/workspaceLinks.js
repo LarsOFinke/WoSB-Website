@@ -27,5 +27,6 @@ export function createPersonalLinks(t, { isAuthenticated = false } = {}) {
   return [
     { to: '/profile/builds', label: t('common.myBuilds'), icon: 'builds' },
     { to: '/profile/groups', label: t('common.myGroupSearches'), icon: 'groups' },
+    { to: '/profile/squads', label: t('common.mySquads'), icon: 'users' },
   ]
 }

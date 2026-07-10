@@ -7,6 +7,10 @@ export function listSquads({ includeInactive = false } = {}) {
   return get(withQuery('/squads', { include_inactive: includeInactive || '' }))
 }
 
+export function listMySquads() {
+  return get('/squads/mine')
+}
+
 export function getSquad(id) {
   return get(`/squads/${id}`)
 }

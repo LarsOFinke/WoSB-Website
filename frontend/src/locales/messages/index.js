@@ -10,6 +10,7 @@ import { fleetManagementMessages } from './fleetManagement'
 import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup'
 import { localeCompletenessMessages } from './localeCompleteness'
 import { newcomerGuideMessages } from './newcomerGuide'
+import { mySquadsWorkspaceMessages } from './mySquadsWorkspace'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
 import { squadOrganizationMessages } from './squadOrganization'
@@ -29,6 +30,7 @@ const messageLayers = [
   contentModulesAndBuildStatsMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,
+  mySquadsWorkspaceMessages,
   fleetManagementMessages,
   staffPanelMessages,
   systemOperationsMessages,

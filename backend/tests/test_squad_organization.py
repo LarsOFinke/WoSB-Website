@@ -146,6 +146,16 @@ def test_squad_leadership_and_private_calendar_scope() -> None:
         )
         assert added_member.status_code == 201, added_member.text
 
+        reserve_squad = client.post(
+            "/api/squads",
+            json={
+                "name": "Reserve Squadron",
+                "description": "A second unit used to verify personal squad filtering.",
+                "leader_membership_id": memberships["outsider"].id,
+            },
+        )
+        assert reserve_squad.status_code == 201, reserve_squad.text
+
         fleet_event = client.post(
             "/api/calendar/events",
             json=_event_payload(squad_id=None, title="Fleet-wide briefing"),
@@ -154,6 +164,12 @@ def test_squad_leadership_and_private_calendar_scope() -> None:
         _logout(client)
 
         _login(client, users["leader"].username, passwords["leader"])
+        leader_mine = client.get("/api/squads/mine")
+        assert leader_mine.status_code == 200, leader_mine.text
+        assert [row["name"] for row in leader_mine.json()] == ["Black Tide Squadron"]
+        assert leader_mine.json()[0]["current_user_role"] == "leader"
+        assert leader_mine.json()[0]["can_manage"] is True
+
         updated = client.put(
             f"/api/squads/{squad_id}",
             json={"focus": "Port battles, screening and line command"},
@@ -196,6 +212,12 @@ def test_squad_leadership_and_private_calendar_scope() -> None:
         _logout(client)
 
         _login(client, users["member"].username, passwords["member"])
+        member_mine = client.get("/api/squads/mine")
+        assert member_mine.status_code == 200, member_mine.text
+        assert [row["name"] for row in member_mine.json()] == ["Black Tide Squadron"]
+        assert member_mine.json()[0]["current_user_role"] == "member"
+        assert member_mine.json()[0]["can_manage"] is False
+
         member_events = client.get("/api/calendar/events")
         assert member_events.status_code == 200
         member_titles = {row["title"] for row in member_events.json()}
@@ -204,6 +226,11 @@ def test_squad_leadership_and_private_calendar_scope() -> None:
         _logout(client)
 
         _login(client, users["outsider"].username, passwords["outsider"])
+        outsider_mine = client.get("/api/squads/mine")
+        assert outsider_mine.status_code == 200, outsider_mine.text
+        assert [row["name"] for row in outsider_mine.json()] == ["Reserve Squadron"]
+        assert outsider_mine.json()[0]["current_user_role"] == "leader"
+
         outsider_events = client.get("/api/calendar/events")
         assert outsider_events.status_code == 200
         outsider_titles = {row["title"] for row in outsider_events.json()}

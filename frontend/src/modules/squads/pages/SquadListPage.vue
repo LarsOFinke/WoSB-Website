@@ -50,6 +50,7 @@ onMounted(loadSquads)
           <span v-if="managedSquads.length" class="summary-pill">{{ t('squads.list.managedCount', { count: managedSquads.length }) }}</span>
         </template>
         <template #actions>
+          <RouterLink class="button-box" to="/profile/squads">{{ t('common.mySquads') }}</RouterLink>
           <RouterLink class="button-box" to="/calendar">{{ t('squads.list.openCalendar') }}</RouterLink>
           <RouterLink v-if="canManageFleet" class="button-box primary-action" to="/squads/new">
             {{ t('squads.list.newSquad') }}
@@ -112,7 +113,9 @@ onMounted(loadSquads)
           </dl>
 
           <div class="squad-card-flags">
-            <span v-if="squad.is_member" class="type-pill">{{ t('squads.list.memberBadge') }}</span>
+            <span v-if="squad.is_member" class="type-pill">
+              {{ squad.current_user_role ? t(`squads.roles.${squad.current_user_role}`) : t('squads.list.memberBadge') }}
+            </span>
             <span v-if="squad.can_manage" class="type-pill event-training">{{ t('squads.list.commandBadge') }}</span>
           </div>
 

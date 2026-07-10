@@ -180,7 +180,8 @@ onMounted(loadProfile)
         </template>
         <template #actions>
           <RouterLink class="button-box" to="/profile/builds">{{ t('myBuilds.title') }}</RouterLink>
-          <RouterLink class="button-box primary-action" to="/profile/groups">{{ t('myGroups.title') }}</RouterLink>
+          <RouterLink class="button-box" to="/profile/groups">{{ t('myGroups.title') }}</RouterLink>
+          <RouterLink class="button-box primary-action" to="/profile/squads">{{ t('mySquads.title') }}</RouterLink>
         </template>
       </PageHeader>
 
@@ -281,6 +282,7 @@ onMounted(loadProfile)
               </div>
               <RouterLink class="profile-tool-link" to="/profile/builds"><span><AppIcon name="builds" :size="18" /></span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><b>→</b></RouterLink>
               <RouterLink class="profile-tool-link" to="/profile/groups"><span><AppIcon name="groups" :size="18" /></span><span><strong>{{ t('myGroups.profileCardTitle') }}</strong><small>{{ t('myGroups.profileCardText') }}</small></span><b>→</b></RouterLink>
+              <RouterLink class="profile-tool-link" to="/profile/squads"><span><AppIcon name="users" :size="18" /></span><span><strong>{{ t('mySquads.profileCardTitle') }}</strong><small>{{ t('mySquads.profileCardText') }}</small></span><b>→</b></RouterLink>
             </section>
 
             <section class="wire-section profile-command-card password-panel">

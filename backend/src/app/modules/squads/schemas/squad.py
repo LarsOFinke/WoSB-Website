@@ -102,6 +102,7 @@ class SquadSummaryRead(BaseModel):
     leader: SquadMemberRead | None = None
     member_count: int
     is_member: bool
+    current_user_role: str | None = None
     can_manage: bool
     can_administer: bool
     created_at: datetime

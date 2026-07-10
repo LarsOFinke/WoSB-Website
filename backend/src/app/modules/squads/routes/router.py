@@ -20,6 +20,7 @@ from app.modules.squads.services.squad_service import (
     archive_squad,
     create_squad,
     get_squad,
+    list_my_squads,
     list_squad_roster,
     list_squads,
     remove_squad_member,
@@ -43,6 +44,14 @@ def get_squads(
     current_user: User = Depends(require_user),
 ) -> list[SquadSummaryRead]:
     return list_squads(db, current_user, include_inactive=include_inactive)
+
+
+@router.get("/mine", response_model=list[SquadSummaryRead])
+def get_my_squads(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> list[SquadSummaryRead]:
+    return list_my_squads(db, current_user)
 
 
 @router.get("/roster", response_model=list[SquadRosterMemberRead])

@@ -178,7 +178,10 @@ def _summary_read(db: Session, squad: Squad, user: User) -> SquadSummaryRead:
     members = [_member_read(member, include_note=may_manage) for member in squad.members]
     leader = next((member for member in members if member.squad_role == SQUAD_ROLE_LEADER), None)
     active_membership = _active_fleet_membership(db, user, squad.fleet_id)
-    member_ids = {member.fleet_membership_id for member in members}
+    current_member = next(
+        (member for member in members if active_membership is not None and member.fleet_membership_id == active_membership.id),
+        None,
+    )
     return SquadSummaryRead(
         id=squad.id,
         fleet_id=squad.fleet_id,
@@ -190,7 +193,8 @@ def _summary_read(db: Session, squad: Squad, user: User) -> SquadSummaryRead:
         is_active=squad.is_active,
         leader=leader,
         member_count=len(members),
-        is_member=active_membership is not None and active_membership.id in member_ids,
+        is_member=current_member is not None,
+        current_user_role=current_member.squad_role if current_member is not None else None,
         can_manage=may_manage,
         can_administer=can_administer_squad(db, user, squad),
         created_at=squad.created_at,
@@ -216,6 +220,28 @@ def list_squads(db: Session, user: User, *, include_inactive: bool = False) -> l
     if not include_inactive or not can_manage_fleet(db, user):
         statement = statement.where(Squad.is_active.is_(True))
     statement = statement.order_by(Squad.name.asc(), Squad.id.asc())
+    return [_summary_read(db, squad, user) for squad in db.scalars(statement).unique().all()]
+
+
+def list_my_squads(db: Session, user: User) -> list[SquadSummaryRead]:
+    """Return active squads the current user is assigned to.
+
+    Fleet or site administration rights do not implicitly create a squad
+    membership. The personal workspace therefore only contains explicit,
+    active assignments from the official fleet roster.
+    """
+
+    statement = (
+        _squad_query()
+        .join(SquadMember, SquadMember.squad_id == Squad.id)
+        .join(FleetMembership, SquadMember.fleet_membership_id == FleetMembership.id)
+        .where(
+            FleetMembership.user_id == user.id,
+            FleetMembership.status == FLEET_MEMBER_ACTIVE,
+            Squad.is_active.is_(True),
+        )
+        .order_by(Squad.name.asc(), Squad.id.asc())
+    )
     return [_summary_read(db, squad, user) for squad in db.scalars(statement).unique().all()]
 
 

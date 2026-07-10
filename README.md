@@ -207,3 +207,16 @@ weapons. Inventory selection now uses explicit immutable slot reconciliation, pr
 selected item, adds the next empty slot predictably and keeps weapon arc validation limited to
 actual weapon fields. A standalone frontend regression test covers item selection, quantities,
 capacity limits and invalid-option removal.
+
+## Release 0.16.2 — Personal squad workspace
+
+Authenticated users now have a dedicated `/profile/squads` workspace (with `/my-squads` as an
+alias) alongside My Builds and My Group Searches. It lists only explicit active squad assignments;
+site or fleet administration permissions never create an implicit squad membership. The workspace
+separates command responsibilities from ordinary memberships, shows each user's squad role,
+member capacity, the next appointment per unit and a combined upcoming squad agenda. Leaders and
+officers can open squad management and create scoped calendar entries directly.
+
+The backend adds `GET /api/squads/mine` and exposes the current user's squad role in squad summaries.
+The endpoint remains session-protected and deliberately excludes inactive memberships and unrelated
+squads. No database migration or seed run is required for this release.

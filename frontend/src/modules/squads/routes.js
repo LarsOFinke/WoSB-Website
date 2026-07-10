@@ -6,6 +6,13 @@ export const squadRoutes = [
     meta: { requiresUser: true, titleKey: 'common.squads' },
   },
   {
+    path: '/profile/squads',
+    alias: '/my-squads',
+    name: 'my-squads',
+    component: () => import('./pages/MySquadsPage.vue'),
+    meta: { requiresUser: true, titleKey: 'mySquads.title' },
+  },
+  {
     path: '/squads/new',
     name: 'squad-new',
     component: () => import('./pages/SquadCreatePage.vue'),
