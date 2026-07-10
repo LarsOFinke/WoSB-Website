@@ -101,6 +101,7 @@ initialize_env() {
   set_env_value LETSENCRYPT_CERT_NAME "$certificate_name"
   [[ -n "$(read_env CERTIFICATE_PROVIDER)" ]] || set_env_value CERTIFICATE_PROVIDER self-signed
   [[ -n "$(read_env MONITORING_HTTPS_PORT)" ]] || set_env_value MONITORING_HTTPS_PORT 8443
+  set_env_value CONTROL_DIR /run/rbf-control
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"
   set_env_value DATABASE_URL "postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"

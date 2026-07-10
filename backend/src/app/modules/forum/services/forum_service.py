@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -110,7 +112,14 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     for index, file in enumerate(files):
         post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
     db.add(post)
-    thread.updated_at = post.created_at
+    # ``post.created_at`` is populated only during flush. Assigning it before
+    # that point wrote NULL into the non-nullable thread timestamp and caused
+    # replies to fail with HTTP 500. Use one explicit activity timestamp for
+    # both records instead.
+    activity_at = datetime.utcnow()
+    post.created_at = activity_at
+    post.updated_at = activity_at
+    thread.updated_at = activity_at
     db.commit()
     db.refresh(post)
     return _post_to_read(post)

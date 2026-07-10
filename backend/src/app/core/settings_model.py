@@ -12,6 +12,7 @@ class Settings:
     database_url: str
     database_schema_mode: str
     upload_dir: str
+    control_dir: str
     auto_seed: bool
 
     log_level: str

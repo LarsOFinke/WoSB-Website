@@ -1,0 +1,13 @@
+[Unit]
+Description=Royal Blackwater Fleet Controlled Server Update
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=@INFRA_DIR@/scripts/services/update-from-admin.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+TimeoutStartSec=45min

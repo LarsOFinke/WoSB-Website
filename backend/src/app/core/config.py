@@ -204,6 +204,13 @@ def _build_settings() -> Settings:
                 setting_name="UPLOAD_DIR",
             )
         ),
+        control_dir=str(
+            resolve_runtime_path(
+                _env("CONTROL_DIR", required=False) or str(BACKEND_ROOT / "storage" / "control"),
+                base_dir=BACKEND_ROOT,
+                setting_name="CONTROL_DIR",
+            )
+        ),
         auto_seed=auto_seed,
         log_level=_upper_cfg("logging", "level"),
         log_format=log_format,

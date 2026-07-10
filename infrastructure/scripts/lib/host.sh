@@ -26,7 +26,7 @@ install_host_dependencies() {
 }
 
 prepare_data_directories() {
-  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
+  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,control,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
 
   # The first infrastructure alpha tracked data/postgres/.gitkeep. PostgreSQL
   # initdb requires a completely empty target directory. Remove only that
@@ -46,10 +46,12 @@ prepare_data_directories() {
   if [[ "$EUID" -eq 0 ]]; then
     chown -R 70:70 "$INFRA_DIR/data/postgres"
     chown -R 10001:10001 "$INFRA_DIR/data/uploads"
+    chown -R 10001:10001 "$INFRA_DIR/data/control"
     chown -R 101:101 "$INFRA_DIR/data/nginx"
     chown -R 1000:1000 "$INFRA_DIR/data/uptime-kuma"
   fi
   chmod 750 "$INFRA_DIR/data/postgres" "$INFRA_DIR/data/uploads" "$INFRA_DIR/data/backups"
+  chmod 770 "$INFRA_DIR/data/control"
   chmod 755 "$INFRA_DIR/data/acme" "$INFRA_DIR/data/certs"
   chmod 700 "$INFRA_DIR/data/letsencrypt" "$INFRA_DIR/data/letsencrypt/config" "$INFRA_DIR/data/letsencrypt/work" "$INFRA_DIR/data/letsencrypt/logs"
 }

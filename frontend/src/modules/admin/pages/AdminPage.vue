@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 
 import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
+import { MONITORING_HTTPS_PORT } from '@/config/runtime'
 import { useLocale } from '@/locales'
 import {
   approveRegistrationRequest,
@@ -12,6 +13,7 @@ import {
   deleteAdminForumThread,
   deleteAdminGuide,
   getAdminLogSummary,
+  getSystemUpdateStatus,
   listAdminBuilds,
   listAdminForumThreads,
   listAdminGuides,
@@ -19,6 +21,7 @@ import {
   listRegistrationRequests,
   listUsers,
   rejectRegistrationRequest,
+  requestSystemUpdate,
 } from '@/modules/admin/api/admin'
 import { closeGroup, listGroups } from '@/modules/groups/api/groups'
 import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
@@ -60,8 +63,13 @@ const pendingDelete = reactive({ type: '', id: null })
 const registrationDecisionNotes = reactive({})
 const apiStatus = ref(t('admin.status.loading'))
 const apiStatusDetail = ref(t('admin.status.loadingDetail'))
+const systemUpdate = ref({ state: 'idle', message: '', log_tail: [], request_available: false })
+const systemUpdateLoading = ref(false)
+const systemUpdateError = ref('')
+const systemUpdateSuccess = ref('')
 let searchTimer = null
 let contentTimer = null
+let updatePollTimer = null
 
 const moderatorForm = reactive({ username: '', display_name: '', password: '' })
 
@@ -73,6 +81,12 @@ const registrationCountLabel = computed(() => registrationRequests.value.length 
 const logsCountLabel = computed(() => t('admin.logs.summary', { count: logSummary.value.total || appLogs.value.length }))
 const upcomingEvents = computed(() => [...fleetEvents.value].sort((a, b) => new Date(a.start_at) - new Date(b.start_at)).slice(0, 12))
 const categoryOptions = computed(() => [{ value: '', label: t('calendar.categories.all') }, ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) }))])
+const monitoringUrl = computed(() => {
+  if (typeof window === 'undefined') return `https://royal-blackwater-fleet.eu:${MONITORING_HTTPS_PORT}`
+  return `https://${window.location.hostname}:${MONITORING_HTTPS_PORT}`
+})
+const updateInProgress = computed(() => ['queued', 'running'].includes(systemUpdate.value.state))
+const updateStateLabel = computed(() => t(`admin.system.states.${systemUpdate.value.state || 'idle'}`))
 
 function crewTotal(build) {
   return build.sailors + build.soldiers + build.musketeers + build.mercenaries
@@ -127,6 +141,49 @@ async function loadUsers() {
   }
 }
 
+async function loadSystemUpdate() {
+  if (!isStaff.value) return
+  systemUpdateLoading.value = true
+  systemUpdateError.value = ''
+  try {
+    systemUpdate.value = await getSystemUpdateStatus()
+  } catch (err) {
+    systemUpdateError.value = err.message || t('admin.system.loadError')
+  } finally {
+    systemUpdateLoading.value = false
+  }
+}
+
+function scheduleUpdatePoll() {
+  window.clearTimeout(updatePollTimer)
+  if (!updateInProgress.value) return
+  updatePollTimer = window.setTimeout(async () => {
+    await loadSystemUpdate()
+    scheduleUpdatePoll()
+  }, 3000)
+}
+
+async function triggerSystemUpdate() {
+  if (!isAdmin.value || updateInProgress.value) return
+  systemUpdateError.value = ''
+  systemUpdateSuccess.value = ''
+  systemUpdateLoading.value = true
+  try {
+    const response = await requestSystemUpdate()
+    systemUpdate.value = response.status
+    systemUpdateSuccess.value = t('admin.system.requestAccepted')
+    scheduleUpdatePoll()
+  } catch (err) {
+    systemUpdateError.value = err.message || t('admin.system.requestError')
+  } finally {
+    systemUpdateLoading.value = false
+  }
+}
+
+function formatOptionalDateTime(value) {
+  return value ? formatDateTime(value) : '—'
+}
+
 async function loadStatus() {
   if (!isStaff.value) return
   apiStatus.value = t('admin.status.loading')
@@ -141,6 +198,8 @@ async function loadStatus() {
     apiStatus.value = t('admin.status.offline')
     apiStatusDetail.value = t('admin.status.offlineDetail')
   }
+  await loadSystemUpdate()
+  scheduleUpdatePoll()
 }
 
 async function loadRegistrations() {
@@ -179,7 +238,7 @@ async function rejectRegistration(id) {
 }
 
 async function loadLogs() {
-  if (!isAdmin.value) return
+  if (!isStaff.value) return
   logsLoading.value = true
   logsError.value = ''
   try {
@@ -335,10 +394,14 @@ watch(activeTab, async (tab) => {
 
 onMounted(async () => {
   if (!sessionState.isReady) await loadSession()
-  await loadStatus()
-  if (isAdmin.value) {
-    await Promise.all([loadRegistrations(), loadLogs()])
-  }
+  await Promise.all([loadStatus(), loadLogs()])
+  if (isAdmin.value) await loadRegistrations()
+})
+
+onUnmounted(() => {
+  window.clearTimeout(searchTimer)
+  window.clearTimeout(contentTimer)
+  window.clearTimeout(updatePollTimer)
 })
 </script>
 
@@ -399,7 +462,7 @@ onMounted(async () => {
         <section class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
           <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
           <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
@@ -407,12 +470,52 @@ onMounted(async () => {
         </section>
 
         <section v-if="activeTab === 'status'" class="wire-section admin-panel admin-status-panel">
-          <div class="admin-panel-heading"><div><h2>{{ t('admin.status.title') }}</h2><p>{{ t('admin.status.subtitle') }}</p></div></div>
-          <aside class="home-status-card refined-status-card admin-status-card" aria-live="polite">
-            <span>{{ t('admin.status.cardLabel') }}</span><strong>{{ apiStatus }}</strong><p>{{ apiStatusDetail }}</p>
-          </aside>
-          <div v-if="isAdmin" class="workspace-metric-grid admin-dashboard-grid">
-            <MetricCard :label="t('admin.registrations.dashboardLabel')" :value="registrationRequests.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
+          <div class="admin-panel-heading">
+            <div><h2>{{ t('admin.status.title') }}</h2><p>{{ t('admin.status.subtitle') }}</p></div>
+            <button class="small-action" type="button" :disabled="systemUpdateLoading" @click="loadStatus">{{ t('admin.system.refresh') }}</button>
+          </div>
+
+          <div class="system-status-grid">
+            <aside class="home-status-card refined-status-card admin-status-card" aria-live="polite">
+              <span>{{ t('admin.status.cardLabel') }}</span><strong>{{ apiStatus }}</strong><p>{{ apiStatusDetail }}</p>
+            </aside>
+
+            <article class="home-status-card refined-status-card system-operation-card">
+              <span>{{ t('admin.system.monitoringTitle') }}</span>
+              <strong>HTTPS · {{ MONITORING_HTTPS_PORT }}</strong>
+              <p>{{ t('admin.system.monitoringText') }}</p>
+              <small>{{ t('admin.system.httpsHint') }}</small>
+              <a class="button-box" :href="monitoringUrl" target="_blank" rel="noopener">{{ t('admin.system.openMonitoring') }}</a>
+            </article>
+
+            <article class="home-status-card refined-status-card system-operation-card system-update-card" aria-live="polite">
+              <span>{{ t('admin.system.updateTitle') }}</span>
+              <strong>{{ updateStateLabel }}</strong>
+              <p>{{ systemUpdate.message || t('admin.system.updateText') }}</p>
+              <dl class="system-update-meta">
+                <div><dt>{{ t('admin.system.requestedBy') }}</dt><dd>{{ systemUpdate.requested_by || '—' }}</dd></div>
+                <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.started_at) }}</dd></div>
+                <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.finished_at) }}</dd></div>
+                <div><dt>{{ t('admin.system.commit') }}</dt><dd>{{ systemUpdate.commit_before || '—' }} → {{ systemUpdate.commit_after || '—' }}</dd></div>
+              </dl>
+              <button v-if="isAdmin" class="form-button primary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate">
+                {{ updateInProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
+              </button>
+              <small v-else>{{ t('admin.system.adminOnly') }}</small>
+            </article>
+          </div>
+
+          <p v-if="systemUpdateSuccess" class="success-text table-state">{{ systemUpdateSuccess }}</p>
+          <p v-if="systemUpdateError" class="error-text table-state">{{ systemUpdateError }}</p>
+
+          <section class="system-update-log">
+            <div class="admin-panel-heading compact-heading"><div><h3>{{ t('admin.system.logTitle') }}</h3></div></div>
+            <pre v-if="systemUpdate.log_tail?.length">{{ systemUpdate.log_tail.join('\n') }}</pre>
+            <p v-else class="muted">{{ t('admin.system.logEmpty') }}</p>
+          </section>
+
+          <div class="workspace-metric-grid admin-dashboard-grid">
+            <MetricCard v-if="isAdmin" :label="t('admin.registrations.dashboardLabel')" :value="registrationRequests.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
             <MetricCard :label="t('admin.logs.total')" :value="logSummary.total" :hint="t('admin.logs.dashboardHint')" />
             <MetricCard :label="t('admin.logs.errors')" :value="logSummary.errors" :hint="t('admin.logs.errorHint')" tone="danger" />
             <MetricCard :label="t('admin.logs.slowRequests')" :value="logSummary.slow_requests" :hint="t('admin.logs.slowHint')" />
@@ -454,8 +557,8 @@ onMounted(async () => {
           </div>
         </section>
 
-        <section v-if="activeTab === 'logs' && isAdmin" class="wire-section admin-panel staff-management-panel">
-          <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><span class="summary-pill">{{ logsCountLabel }}</span></div>
+        <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
+          <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
           <div class="admin-dashboard-grid log-summary-grid">
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong></article>
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 
 import AppIcon from '@/core/components/AppIcon.vue'
 import BrandLockup from '@/core/components/BrandLockup.vue'
-import { createWorkspaceLinks } from '@/core/navigation/workspaceLinks'
+import { createPersonalLinks } from '@/core/navigation/workspaceLinks'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 
@@ -21,17 +21,16 @@ const props = defineProps({
 
 const router = useRouter()
 const { locale, setLocale, supportedLocales, t } = useLocale()
-const { isAuthenticated, isStaff, loadSession, logout, sessionState, user } = useSession()
+const { isAuthenticated, loadSession, logout, sessionState, user } = useSession()
 
 const profileLinkLabel = computed(() => user.value?.display_name || user.value?.username || t('common.profile'))
 const userInitials = computed(() => {
   const source = profileLinkLabel.value.trim().split(/\s+/).filter(Boolean)
   return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBF'
 })
-const primaryLinks = computed(() => createWorkspaceLinks(t, {
+const primaryLinks = computed(() => createPersonalLinks(t, {
   isAuthenticated: isAuthenticated.value,
-  isStaff: isStaff.value,
-}).filter((link) => ['/', '/builds', '/guides', '/groups', '/admin'].includes(link.to)))
+}))
 
 async function handleLogout() {
   await logout()
@@ -66,7 +65,6 @@ onMounted(() => {
         v-for="link in primaryLinks"
         :key="link.to"
         class="topbar-link"
-        :class="{ 'topbar-link-strong': link.to === '/admin' }"
         :to="link.to"
         :title="link.label"
       >

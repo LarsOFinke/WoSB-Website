@@ -11,6 +11,8 @@ units=(
   rbf-hub-backup.timer
   rbf-hub-cert-renew.service
   rbf-hub-cert-renew.timer
+  rbf-hub-update.service
+  rbf-hub-update.path
 )
 
 for unit in "${units[@]}"; do
@@ -38,4 +40,5 @@ systemctl daemon-reload
 systemctl enable rbf-hub.service
 systemctl enable --now rbf-hub-backup.timer
 systemctl enable --now rbf-hub-cert-renew.timer
-success "RBF systemd-Startdienst, Backup-Timer und TLS-Erneuerung wurden installiert."
+systemctl enable --now rbf-hub-update.path
+success "RBF systemd-Startdienst, Backup-/TLS-Timer und Admin-Update-Runner wurden installiert."

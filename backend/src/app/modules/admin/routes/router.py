@@ -14,6 +14,7 @@ from app.modules.admin.schemas.moderator_create import ModeratorCreate
 from app.modules.admin.schemas.moderator_create_response import ModeratorCreateResponse
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
 from app.modules.admin.schemas.registration_request_read import RegistrationRequestRead
+from app.modules.admin.schemas.system_update import SystemUpdateRequestResult, SystemUpdateStatus
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.guides.schemas.guide_summary import GuideSummary
@@ -22,8 +23,27 @@ from app.modules.builds.services.build_service import delete_build, list_builds
 from app.modules.forum.services.forum_service import delete_thread, list_threads
 from app.modules.guides.services.guide_service import delete_guide, list_guides
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
+from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+@router.get("/system/update", response_model=SystemUpdateStatus)
+def admin_system_update_status(
+    _: User = Depends(require_staff),
+) -> SystemUpdateStatus:
+    return get_system_update_status()
+
+
+@router.post("/system/update", response_model=SystemUpdateRequestResult, status_code=status.HTTP_202_ACCEPTED)
+def admin_request_system_update(
+    current_user: User = Depends(require_admin),
+) -> SystemUpdateRequestResult:
+    try:
+        update_status = request_system_update(current_user)
+    except SystemUpdateError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return SystemUpdateRequestResult(accepted=True, status=update_status)
 
 @router.get("/registration-requests", response_model=list[RegistrationRequestRead])
 def admin_list_registration_requests(
@@ -71,7 +91,7 @@ def admin_list_logs(
     path: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=120, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_staff),
 ) -> list[AppLogRead]:
     query = select(AppLog)
     if level:
@@ -85,7 +105,7 @@ def admin_list_logs(
 @router.get("/logs/summary", response_model=AppLogSummary)
 def admin_log_summary(
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_staff),
 ) -> AppLogSummary:
     total = int(db.scalar(select(func.count(AppLog.id))) or 0)
     errors = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)

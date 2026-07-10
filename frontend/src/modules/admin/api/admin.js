@@ -1,6 +1,15 @@
 import { deleteRequest, get, post } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
+
+export function getSystemUpdateStatus() {
+  return get('/admin/system/update')
+}
+
+export function requestSystemUpdate() {
+  return post('/admin/system/update', {})
+}
+
 export function listRegistrationRequests(status = 'pending') {
   return get(withQuery('/admin/registration-requests', { status }))
 }

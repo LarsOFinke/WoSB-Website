@@ -24,7 +24,7 @@ logs:
 	./scripts/services/logs.sh
 
 update:
-	./scripts/services/update.sh
+	sudo ../update.sh
 
 backup: backup-db backup-files
 

@@ -34,4 +34,4 @@ infra-backup:
 	$(MAKE) -C infrastructure backup
 
 infra-update:
-	$(MAKE) -C infrastructure update
+	sudo ./update.sh

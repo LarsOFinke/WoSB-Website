@@ -17,3 +17,12 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
   if (isStaff) memberLinks.push({ to: '/admin', label: t('common.staffPanel'), icon: 'shield', section: 'staff' })
   return [...publicLinks, ...memberLinks]
 }
+
+
+export function createPersonalLinks(t, { isAuthenticated = false } = {}) {
+  if (!isAuthenticated) return []
+  return [
+    { to: '/profile/builds', label: t('common.myBuilds'), icon: 'builds' },
+    { to: '/profile/groups', label: t('common.myGroupSearches'), icon: 'groups' },
+  ]
+}

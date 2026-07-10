@@ -128,3 +128,16 @@ All public portal standard copy is explicitly localized in all seven supported l
 Main activity is communicated as 12:00–02:00 CET, with Port Battle focus between 18:00 and
 23:00 CET. Discord voice is mandatory for Port Battles and other competitive operations; it is
 optional but encouraged for normal fleet activity.
+
+## Updates
+
+Normal releases use the dedicated updater instead of repeating host provisioning:
+
+```bash
+sudo ./update.sh
+```
+
+Use `setup.sh` only for first installation or changes to domain, TLS, firewall,
+systemd or generated secrets. Administrators can also request the same
+controlled update runner from **Staff Panel → System status**. See
+[`docs/UPDATE_OPERATIONS.md`](docs/UPDATE_OPERATIONS.md).

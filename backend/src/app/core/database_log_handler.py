@@ -33,7 +33,7 @@ class DatabaseLogHandler(logging.Handler):
                     forwarded_for=getattr(record, "forwarded_for", None),
                     user_agent=getattr(record, "user_agent", None),
                     query_string=getattr(record, "query_string", None),
-                    exception=self.formatException(record.exc_info) if record.exc_info else None,
+                    exception=logging.Formatter().formatException(record.exc_info) if record.exc_info else None,
                 )
                 db.add(entry)
                 db.commit()

@@ -71,6 +71,7 @@ fi
 
 printf '\n[5/7] Shell and Compose syntax\n'
 bash -n "$ROOT_DIR/setup.sh"
+bash -n "$ROOT_DIR/update.sh"
 while IFS= read -r file; do bash -n "$file"; done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" -type f -name '*.sh' -print | sort)
 python - "$ROOT_DIR/infrastructure/compose.yml" "$ROOT_DIR/infrastructure/scripts/lib/docker.sh" <<'PY'
 from pathlib import Path
@@ -91,10 +92,15 @@ assert "$${POSTGRES_USER}" in postgres_healthcheck, postgres_healthcheck
 assert "$${POSTGRES_DB}" in postgres_healthcheck, postgres_healthcheck
 seed_command = data["services"]["seed"]["command"][2]
 assert "$$AUTO_SEED" in seed_command, seed_command
+assert "./data/uploads:/data/uploads" in data["services"]["seed"].get("volumes", [])
 gateway = data["services"]["gateway"]
 assert "./data/acme:/var/www/certbot:ro" in gateway["volumes"]
-assert data["services"]["api"]["image"].startswith("${RBF_API_IMAGE")
+api = data["services"]["api"]
+assert api["image"].startswith("${RBF_API_IMAGE")
+assert "./data/control:/run/rbf-control" in api.get("volumes", [])
+assert api.get("environment", {}).get("CONTROL_DIR") == "/run/rbf-control"
 assert gateway["image"].startswith("${RBF_GATEWAY_IMAGE")
+assert gateway.get("build", {}).get("args", {}).get("VITE_MONITORING_HTTPS_PORT") == "${MONITORING_HTTPS_PORT:-8443}"
 monitoring = data["services"]["monitoring-gateway"]
 assert monitoring["profiles"] == ["monitoring"]
 assert "${MONITORING_HTTPS_PORT:-8443}:443" in monitoring["ports"]
@@ -115,11 +121,15 @@ positions = [controller.index(step) for step in steps]
 assert positions == sorted(positions), positions
 PY
 
-for unit in rbf-hub.service rbf-hub-backup.service rbf-hub-backup.timer rbf-hub-cert-renew.service rbf-hub-cert-renew.timer; do
+for unit in rbf-hub.service rbf-hub-backup.service rbf-hub-backup.timer rbf-hub-cert-renew.service rbf-hub-cert-renew.timer rbf-hub-update.service rbf-hub-update.path; do
   [[ -f "$ROOT_DIR/infrastructure/systemd/$unit" ]]
 done
 [[ ! -e "$ROOT_DIR/infrastructure/systemd/rbv-hub.service" ]]
 [[ ! -e "$ROOT_DIR/infrastructure/systemd/blackwater-hub.service" ]]
+grep -q 'PathExists=@INFRA_DIR@/data/control/update.request' "$ROOT_DIR/infrastructure/systemd/rbf-hub-update.path"
+grep -q 'update-from-admin.sh' "$ROOT_DIR/infrastructure/systemd/rbf-hub-update.service"
+grep -q 'flock -n' "$ROOT_DIR/infrastructure/scripts/services/update.sh"
+! grep -R -q '/var/run/docker.sock' "$ROOT_DIR/backend" "$ROOT_DIR/infrastructure/compose.yml"
 grep -q '/.well-known/acme-challenge/' "$ROOT_DIR/infrastructure/nginx/default.conf"
 grep -q 'certbot renew' "$ROOT_DIR/infrastructure/scripts/tls/renew-certificate.sh"
 grep -q 'CERTIFICATE_PROVIDER letsencrypt' "$ROOT_DIR/infrastructure/scripts/tls/sync-certificate.sh"
@@ -180,6 +190,7 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
 grep -q '^APP_ENV=production$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DB_SCHEMA_MODE=migrate$' "$TMP_DIR/infrastructure/.env"
 grep -q '^MONITORING_HTTPS_PORT=8443$' "$TMP_DIR/infrastructure/.env"
+grep -q '^CONTROL_DIR=/run/rbf-control$' "$TMP_DIR/infrastructure/.env"
 grep -q '^COMPOSE_PROJECT_NAME=rbf-hub$' "$TMP_DIR/infrastructure/.env"
 grep -q '^APP_HOSTNAME=rbf-validation.local$' "$TMP_DIR/infrastructure/.env"
 grep -q '^TLS_MODE=auto$' "$TMP_DIR/infrastructure/.env"
