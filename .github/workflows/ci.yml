@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Validate source and migrations
-        run: ./scripts/validate.sh
+        run: bash ./scripts/validate.sh
 
       - name: Prepare Compose environment
         run: cp infrastructure/.env.example infrastructure/.env
