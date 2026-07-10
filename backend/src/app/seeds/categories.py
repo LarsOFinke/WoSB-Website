@@ -12,5 +12,5 @@ BUILD_ITEM_CATEGORIES = [
     {"key": "consumable", "label": "Consumables", "sort_order": 50},
     {"key": "hold", "label": "Hold / Cargo", "sort_order": 60},
     {"key": "weapon", "label": "Weapons", "sort_order": 70},
-    {"key": "special_crew", "label": "Special Crew", "sort_order": 80},
+    {"key": "special_crew", "label": "Specialists", "sort_order": 80},
 ]

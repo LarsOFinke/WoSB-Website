@@ -1,136 +1,57 @@
-"""Ship upgrade option seeds for the Build Designer.
+"""B20-compatible ship upgrade catalog for the Build Designer.
 
-Upgrade effects are normalized planning modifiers. Values that are explicitly
-listed in public planner/wiki/community snippets are marked as such; broader
-build-planning modifiers stay conservative and documented via notes so they can
-be swapped with official exports later without changing API code.
+The game continues to rebalance individual values. The seed stores normalized
+planning effects so builds remain comparable while names and known B20 behavior
+stay current. Effects can be replaced later without changing saved builds.
 """
 
+UPGRADE_CATALOG_REVISION = "B20-fleet-audit-2026-07"
+
+
+def _upgrade(name: str, effects: dict[str, int | float], notes: str) -> dict[str, object]:
+    return {
+        "category": "upgrade",
+        "name": name,
+        "source": UPGRADE_CATALOG_REVISION,
+        "notes": notes,
+        "option_kind": "ship_upgrade",
+        "stat_effects": effects,
+    }
+
+
 UPGRADE_OPTIONS = [
-    {
-        "category": "upgrade",
-        "name": "Ammunition Cradles",
-        "source": "public-planner/community",
-        "notes": "Public planner/community snippets list this as +12% reload speed.",
-        "stat_effects": {"reload_pct": 12, "hold_slots": -1},
-    },
-    {
-        "category": "upgrade",
-        "name": "Cellars",
-        "source": "guide/community",
-        "notes": "Hold-focused planning upgrade; app effect is a conservative slot modifier until official data is available.",
-        "stat_effects": {"hold_slots": 3},
-    },
-    {
-        "category": "upgrade",
-        "name": "Double Hold",
-        "source": "guide/community",
-        "notes": "Cargo-focused planning upgrade with cargo-loss mitigation.",
-        "stat_effects": {"hold_capacity": 6500, "hold_slots": 6, "cargo_loss_reduction_pct": 40, "turn_rate_pct": -3},
-    },
-    {
-        "category": "upgrade",
-        "name": "Emergency Powder Charge",
-        "source": "community",
-        "notes": "Community build discussions describe this as +25% damage while below 50% HP.",
-        "stat_effects": {"low_hp_damage_pct": 25, "fire_risk_pct": 4},
-    },
-    {
-        "category": "upgrade",
-        "name": "Extra Bunks",
-        "source": "public-planner/guide",
-        "notes": "Additional crew capacity for boarding/sustain builds.",
-        "stat_effects": {"crew_capacity": 12},
-    },
-    {
-        "category": "upgrade",
-        "name": "Fortified Ports",
-        "source": "community",
-        "notes": "Community snippets list this range-focused upgrade as +10% cannon range.",
-        "stat_effects": {"weapon_range_pct": 10},
-    },
-    {
-        "category": "upgrade",
-        "name": "Incendiary Mixture",
-        "source": "guide/community",
-        "notes": "Fire-oriented combat upgrade used in public build recommendations.",
-        "stat_effects": {"fire_damage_pct": 10},
-    },
-    {
-        "category": "upgrade",
-        "name": "Iron Ram",
-        "source": "guide/community",
-        "notes": "Ramming-focused build option.",
-        "stat_effects": {"ram_damage_pct": 15, "turn_rate_pct": -4},
-    },
-    {
-        "category": "upgrade",
-        "name": "Lightweight Hull",
-        "source": "guide/community",
-        "notes": "Speed-focused planning upgrade with a durability trade-off.",
-        "stat_effects": {"speed_pct": 6, "hull_hp_pct": -6},
-    },
-    {
-        "category": "upgrade",
-        "name": "Long-Range Mortars",
-        "source": "guide/community",
-        "notes": "Siege/mortar planning upgrade.",
-        "stat_effects": {"mortar_range_pct": 12, "reload_pct": -4},
-    },
-    {
-        "category": "upgrade",
-        "name": "Maneuverable Helm",
-        "source": "community",
-        "notes": "Community snippets list this as +8% mobility.",
-        "stat_effects": {"turn_rate_pct": 8},
-    },
-    {
-        "category": "upgrade",
-        "name": "Reinforced Masts",
-        "source": "guide/community",
-        "notes": "Sail durability planning upgrade.",
-        "stat_effects": {"sail_hp_pct": 12, "speed_pct": 2},
-    },
-    {
-        "category": "upgrade",
-        "name": "Repair Arsenal",
-        "source": "guide/community",
-        "notes": "Repair/sustain planning upgrade.",
-        "stat_effects": {"repair_efficiency_pct": 10, "hold_slots": -2},
-    },
-    {
-        "category": "upgrade",
-        "name": "Structural Expansion",
-        "source": "public-planner/community",
-        "notes": "Public planner/search snippets list this as +2 upgrade slots with a maneuverability trade-off.",
-        "stat_effects": {"extra_upgrade_slots": 2, "turn_rate_pct": -10},
-    },
-    {
-        "category": "upgrade",
-        "name": "Strong Beams",
-        "source": "public-planner/guide",
-        "notes": "Heavy/tank planning upgrade.",
-        "stat_effects": {"hull_hp_pct": 8, "speed_pct": -3},
-    },
-    {
-        "category": "upgrade",
-        "name": "Sturdy Frames",
-        "source": "guide/community",
-        "notes": "Defensive planning upgrade.",
-        "stat_effects": {"hull_hp_pct": 5, "crew_capacity": 4},
-    },
-    {
-        "category": "upgrade",
-        "name": "Swivel Mortars",
-        "source": "guide/community",
-        "notes": "Siege/boarding planning upgrade.",
-        "stat_effects": {"boarding_power_pct": 8, "mortar_range_pct": 4},
-    },
-    {
-        "category": "upgrade",
-        "name": "Teak Frames",
-        "source": "public-planner/guide",
-        "notes": "Heavy/tank planning upgrade.",
-        "stat_effects": {"hull_hp_pct": 10, "fire_resistance_pct": 6, "speed_pct": -2},
-    },
+    _upgrade("Additional Hammocks", {"crew_capacity": 10}, "Additional crew accommodation for boarding and sustain builds."),
+    _upgrade("Ammunition Cradles", {"reload_pct": 12, "hold_slots": -1}, "Reload-focused gun-deck upgrade with a cargo-slot trade-off."),
+    _upgrade("Armored Magazine", {"fire_resistance_pct": 8, "speed_pct": -1}, "Protects powder storage at a small mobility cost."),
+    _upgrade("Boarding Nets", {"boarding_power_pct": 8, "speed_pct": -1}, "Boarding-defense and close-action preparation."),
+    _upgrade("Braced Gun Carriages", {"cannon_damage_pct": 5, "turn_rate_pct": -2}, "Stabilized gun mounts for heavier broadsides."),
+    _upgrade("Cellars", {"hold_slots": 3}, "Adds organized cargo and ammunition storage."),
+    _upgrade("Copper Plating", {"speed_pct": 4, "turn_rate_pct": 2}, "Mobility-focused hull treatment."),
+    _upgrade("Double Hold", {"hold_capacity": 6500, "hold_slots": 6, "cargo_loss_reduction_pct": 40, "turn_rate_pct": -3}, "Large logistics conversion with a maneuverability trade-off."),
+    _upgrade("Emergency Powder Charge", {"low_hp_damage_pct": 25, "fire_risk_pct": 4}, "B20 behavior: bonus scales as durability falls and reaches +25% at 33% durability."),
+    _upgrade("Expanded Galley", {"crew_capacity": 8, "hold_slots": -1}, "Long-duration crew support at the cost of one hold slot."),
+    _upgrade("Extra Bunks", {"crew_capacity": 12}, "Additional crew capacity for boarding and sustain builds."),
+    _upgrade("Fireproof Compartments", {"fire_resistance_pct": 12, "hold_capacity": -500}, "Fire protection with reduced cargo volume."),
+    _upgrade("Gun Deck Reinforcement", {"cannon_damage_pct": 4, "hull_hp_pct": 4, "speed_pct": -2}, "Structural support for heavy gunnery builds."),
+    _upgrade("Improved Bilge Pumps", {"repair_efficiency_pct": 8, "crew_capacity": -2}, "Damage-control upgrade requiring dedicated crew."),
+    _upgrade("Improved Gun Carriages", {"reload_pct": 6, "weapon_range_pct": 3}, "General-purpose gunnery handling upgrade."),
+    _upgrade("Incendiary Mixture", {"fire_damage_pct": 10, "fire_risk_pct": 2}, "Fire-oriented combat upgrade with handling risk."),
+    _upgrade("Iron Ram", {"ram_damage_pct": 15, "turn_rate_pct": -4}, "Ramming-focused bow reinforcement."),
+    _upgrade("Light Rigging", {"speed_pct": 5, "sail_hp_pct": -7}, "Higher speed with reduced sail durability."),
+    _upgrade("Lightweight Hull", {"speed_pct": 6, "hull_hp_pct": -6}, "Speed-focused hull conversion with reduced durability."),
+    _upgrade("Long-Range Mortars", {"mortar_range_pct": 12, "reload_pct": -4}, "Siege range at the expense of reload tempo."),
+    _upgrade("Maneuverable Helm", {"turn_rate_pct": 8}, "Mobility-focused steering upgrade."),
+    _upgrade("Powder Magazine", {"reload_pct": 7, "fire_risk_pct": 3}, "Faster ammunition handling with increased fire risk."),
+    _upgrade("Reinforced Bulkheads", {"hull_hp_pct": 7, "hold_capacity": -700}, "Defensive internal reinforcement."),
+    _upgrade("Reinforced Masts", {"sail_hp_pct": 12, "speed_pct": 2}, "Improves sail durability while preserving speed."),
+    _upgrade("Reinforced Ports", {"weapon_range_pct": 10}, "Current B20 name; the range bonus also interacts correctly with White Double Powder."),
+    _upgrade("Reinforced Rudder", {"turn_rate_pct": 6, "hull_hp_pct": 2}, "Steering protection and maneuverability."),
+    _upgrade("Repair Arsenal", {"repair_efficiency_pct": 10, "hold_slots": -2}, "Carries dedicated repair stores in exchange for cargo slots."),
+    _upgrade("Sailmaker's Workshop", {"sail_hp_pct": 8, "repair_efficiency_pct": 4, "hold_slots": -1}, "Sail sustain for long operations."),
+    _upgrade("Spare Yards", {"sail_hp_pct": 6, "hold_capacity": -600}, "Replacement spars improve rigging endurance."),
+    _upgrade("Structural Expansion", {"extra_upgrade_slots": 2, "turn_rate_pct": -10}, "Adds two upgrade slots with a major maneuverability penalty."),
+    _upgrade("Strong Beams", {"hull_hp_pct": 8, "speed_pct": -3}, "Heavy defensive reinforcement."),
+    _upgrade("Sturdy Frames", {"hull_hp_pct": 5, "crew_capacity": 4}, "Balanced hull and crew-support reinforcement."),
+    _upgrade("Swivel Mortars", {"boarding_power_pct": 8, "mortar_range_pct": 4}, "Close-range siege and boarding support."),
+    _upgrade("Teak Frames", {"hull_hp_pct": 10, "fire_resistance_pct": 6, "speed_pct": -2}, "Premium defensive framing with a mobility cost."),
 ]

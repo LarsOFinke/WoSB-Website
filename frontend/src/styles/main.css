@@ -6818,3 +6818,41 @@ body {
     width: 100%;
   }
 }
+
+/* ========================================================================== */
+/* RBF 0.15 — public surface boundary                                         */
+/* ========================================================================== */
+
+.public-landing-frame,
+.fleet-public-frame {
+  isolation: isolate;
+}
+
+.public-landing-layout,
+.public-fleet-layout {
+  align-items: start;
+}
+
+.public-fleet-crest {
+  width: clamp(9rem, 20vw, 13rem);
+}
+
+.public-access-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.public-access-panel h2,
+.public-access-panel p {
+  margin: 0;
+}
+
+.public-fleet-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 860px) {
+  .public-fleet-metrics {
+    grid-template-columns: 1fr;
+  }
+}

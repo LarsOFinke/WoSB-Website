@@ -24,6 +24,10 @@ export function getFleetManagementDetail(id) {
   return get(`/fleets/${id}/manage`)
 }
 
+export function getPublicOfficialFleet() {
+  return get('/fleets/public/official')
+}
+
 export async function getOfficialFleet() {
   const fleets = await listFleets()
   return fleets[0] || null

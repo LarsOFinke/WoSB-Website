@@ -3,7 +3,7 @@ export const buildRoutes = [
     path: '/builds',
     name: 'builds',
     component: () => import('./pages/BuildListPage.vue'),
-    meta: { public: true, titleKey: 'common.builds' },
+    meta: { requiresUser: true, titleKey: 'common.builds' },
   },
   {
     path: '/builds/new',
@@ -16,7 +16,7 @@ export const buildRoutes = [
     name: 'builds-detail',
     component: () => import('./pages/BuildDetailPage.vue'),
     props: true,
-    meta: { public: true, titleKey: 'common.builds' },
+    meta: { requiresUser: true, titleKey: 'common.builds' },
   },
   {
     path: '/profile/builds',

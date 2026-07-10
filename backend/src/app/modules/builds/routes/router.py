@@ -25,6 +25,7 @@ def get_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
     db: Session = Depends(get_db),
+    _: User = Depends(require_user),
 ) -> list[BuildRead]:
     return list_builds(db, search=search, build_type=build_type)
 
@@ -42,7 +43,10 @@ def post_build(
 
 
 @router.get("/options", response_model=BuildOptionsCatalog)
-def get_build_options(db: Session = Depends(get_db)) -> BuildOptionsCatalog:
+def get_build_options(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> BuildOptionsCatalog:
     return list_build_options(db)
 
 
@@ -68,7 +72,11 @@ def delete_my_build(
 
 
 @router.get("/{build_id}", response_model=BuildRead)
-def get_build_detail(build_id: int, db: Session = Depends(get_db)) -> BuildRead:
+def get_build_detail(
+    build_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> BuildRead:
     build = get_build(db, build_id)
     if build is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")

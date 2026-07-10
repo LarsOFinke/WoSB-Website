@@ -11,6 +11,7 @@ from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
 from app.modules.fleet.schemas.fleet_membership_read import FleetMembershipRead
 from app.modules.fleet.schemas.fleet_membership_self_read import FleetMembershipSelfRead
 from app.modules.fleet.schemas.fleet_membership_update import FleetMembershipUpdate
+from app.modules.fleet.schemas.fleet_public import FleetPublicLeaderRead, FleetPublicRead
 from app.modules.fleet.schemas.fleet_read import FleetRead
 from app.modules.fleet.schemas.fleet_update import FleetUpdate
 from app.modules.fleet.services.fleet_service import (
@@ -30,8 +31,32 @@ from app.modules.fleet.services.fleet_service import (
 router = APIRouter(prefix="/fleets", tags=["fleets"])
 
 
+@router.get("/public/official", response_model=FleetPublicRead)
+def get_public_official_fleet(db: Session = Depends(get_db)) -> FleetPublicRead:
+    fleets = list_fleets(db)
+    if not fleets:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fleet not found.")
+    fleet = fleets[0]
+    return FleetPublicRead(
+        id=fleet.id,
+        name=fleet.name,
+        slug=fleet.slug,
+        focus=fleet.focus,
+        description=fleet.description,
+        standing_orders=fleet.standing_orders,
+        active_members_count=fleet.active_members_count,
+        leaders=[
+            FleetPublicLeaderRead(display_name=row.user.display_name, role=row.role)
+            for row in fleet.leaders
+        ],
+    )
+
+
 @router.get("", response_model=list[FleetRead])
-def get_fleets(db: Session = Depends(get_db)) -> list[FleetRead]:
+def get_fleets(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> list[FleetRead]:
     return list_fleets(db)
 
 
@@ -81,7 +106,11 @@ def post_fleet_join(
 
 
 @router.get("/{fleet_id}", response_model=FleetDetail)
-def get_fleet_detail(fleet_id: int, db: Session = Depends(get_db)) -> FleetDetail:
+def get_fleet_detail(
+    fleet_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> FleetDetail:
     fleet = get_fleet(db, fleet_id, include_members=False)
     if fleet is None or not fleet.is_active:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fleet not found.")

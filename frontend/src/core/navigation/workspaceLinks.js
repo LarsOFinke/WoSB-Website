@@ -1,13 +1,14 @@
 export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = false } = {}) {
   const publicLinks = [
     { to: '/', label: t('common.home'), icon: 'home', exact: true, section: 'public' },
-    { to: '/builds', label: t('common.builds'), icon: 'builds', section: 'public' },
+    { to: '/fleet', label: t('common.fleetOverview'), icon: 'fleet', section: 'public' },
   ]
 
   if (!isAuthenticated) return publicLinks
 
   const memberLinks = [
     { to: '/new-captain', label: t('common.newCaptainGuide'), icon: 'compass', section: 'member' },
+    { to: '/builds', label: t('common.builds'), icon: 'builds', section: 'member' },
     { to: '/guides', label: t('common.guides'), icon: 'guides', section: 'member' },
     { to: '/groups', label: t('common.groups'), icon: 'groups', section: 'member' },
     { to: '/calendar', label: t('common.calendar'), icon: 'calendar', section: 'member' },

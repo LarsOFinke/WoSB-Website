@@ -148,3 +148,15 @@ weapons that do not belong to the selected arc and options already used in anoth
 Authenticated members receive a dedicated `/new-captain` roadmap. Staff can curate text sections
 and ordered resource collections that link to guides, builds, internal modules or external sources.
 The roadmap is also the first step of the Fleet Portal's New Captain Path.
+
+## Release 0.15.0 — Public boundary and catalog completion
+
+Anonymous visitors now see only the localized landing page and a compact public fleet overview.
+Builds, ships, guides, forum, calendar, groups, the New Captain Guide and fleet management require
+an authenticated account in both the Vue router and the API. The public fleet endpoint exposes a
+small dedicated response model without pending applications, usernames or member-directory data.
+
+The Build Designer seed catalog now has cross-category completeness checks. Lanterns, ship
+upgrades and Specialists received audited, idempotent catalogs with current B20 naming, traceable
+revision metadata and regression tests. Existing options that are no longer part of the active
+catalog remain attached to historical builds but disappear from new-build selectors.

@@ -1,11 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from app.core.dependencies import require_user
+from app.modules.accounts.models.user import User
 
 router = APIRouter()
 
 
 @router.get("/home")
-def get_home() -> dict[str, object]:
-    """Return stable module metadata; user-facing copy is localized in the frontend."""
+def get_home(_: User = Depends(require_user)) -> dict[str, object]:
+    """Return member workspace metadata; user-facing copy is localized in the frontend."""
 
     return {
         "route": "/home",
@@ -21,7 +24,7 @@ def get_home() -> dict[str, object]:
             "general": "optional_encouraged",
         },
         "modules": [
-            {"key": "builds", "status": "available", "access": "public"},
+            {"key": "builds", "status": "available", "access": "member"},
             {"key": "guides", "status": "available", "access": "member"},
             {"key": "forum", "status": "available", "access": "member"},
             {"key": "calendar", "status": "available", "access": "member"},

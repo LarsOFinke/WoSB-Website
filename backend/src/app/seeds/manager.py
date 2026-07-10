@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.seeds.ammunition import AMMUNITION_OPTIONS
 from app.seeds.build_catalog_quality import (
+    validate_build_option_catalog,
+    validate_lantern_seed_data,
     validate_ship_seed_data,
     validate_special_crew_seed_data,
     validate_upgrade_seed_data,
@@ -102,7 +104,9 @@ class SeedManager:
         self.db.commit()
 
     def seed_build_options(self) -> None:
+        validate_build_option_catalog(BUILD_ITEM_CATEGORIES, BUILD_OPTION_SEED_GROUPS)
         validate_upgrade_seed_data(UPGRADE_OPTIONS)
+        validate_lantern_seed_data(LANTERN_OPTIONS)
         validate_weapon_seed_data(WEAPON_OPTIONS)
         validate_special_crew_seed_data(SPECIAL_CREW_OPTIONS)
         categories: dict[str, BuildItemCategory] = {}

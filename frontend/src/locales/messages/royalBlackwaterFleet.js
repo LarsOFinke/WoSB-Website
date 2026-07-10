@@ -3,12 +3,20 @@ export const royalBlackwaterFleetMessages = {
     common: {
       projectName: 'Royal Blackwater Fleet',
       groups: 'Group Search',
+      fleetOverview: 'The fleet',
     },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Royal Blackwater Fleet',
       title: 'Learn, prepare and join Royal Blackwater Fleet operations.',
       subtitle: 'Use proven builds, practical guides and clear event planning to grow into coordinated fleet play.',
+      publicAccessBadge: 'Public landing page',
+      joinCta: 'Join the fleet hub',
+      loginRequired: 'Login required',
+      memberGateText: 'Guides, builds, forum, calendar and the newcomer roadmap are reserved for signed-in members. The public area contains only this landing page and the fleet overview.',
+      publicAreaTitle: 'Public access',
+      publicAreaHeading: 'Two public pages. One secure member hub.',
+      publicAreaText: 'Visitors can learn who we are and how the fleet operates. Detailed knowledge, builds and coordination remain inside the authenticated workspace.',
       about: 'Royal Blackwater Fleet gives newcomers one structured place to learn, prepare ships, ask questions and join organized activity.',
       showcase: {
         groups: {
@@ -21,23 +29,35 @@ export const royalBlackwaterFleetMessages = {
         },
       },
     },
+    publicFleet: {
+      eyebrow: 'Public fleet overview',
+      subtitle: 'A compact view of our identity, activity times, leadership and entry path. Operational details remain inside the member hub.',
+      publicBadge: 'Public information',
+      metricsLabel: 'Public fleet summary',
+      activeMembers: 'Active members',
+      activityWindow: 'Main activity',
+      aboutEyebrow: 'Who we are',
+      joinEyebrow: 'Become a member',
+      joinTitle: 'Start with an account and a fleet application',
+      joinText: 'After registration you gain access to the newcomer roadmap, builds, guides, forum, calendar and internal coordination.',
+    },
     builds: {
       list: {
         inventorySummary: '{ammo} ammo · {consumables}/3 consumables · {hold} hold',
         weaponSummary: '{count} weapons',
-        specialCrewSummary: '{count} special crew',
+        specialCrewSummary: '{count} specialists',
         weaponPreview: 'Weapons: {items}',
-        specialCrewPreview: 'Special crew: {items}',
+        specialCrewPreview: 'Specialists: {items}',
       },
       create: {
         subtitle: 'Designer for ship, crew, weapons and loadout.',
         stats: {
           weapons: '{value} weapons',
-          specialCrew: '{value} special crew',
+          specialCrew: '{value} specialists',
         },
         sections: {
           weapons: 'Weapons',
-          specialCrew: 'Special crew',
+          specialCrew: 'Specialists',
           inventory: 'Ammunition, consumables, hold',
         },
         weapons: {
@@ -56,9 +76,9 @@ export const royalBlackwaterFleetMessages = {
           mortarAlt: 'Mortar slot {index}',
         },
         specialCrew: {
-          title: 'Crew specialists',
-          hint: 'Add special crew roles that shape the build without mixing them into the regular crew sliders.',
-          alt: 'Special crew slot {index}',
+          title: 'Specialists',
+          hint: 'Add specialists that shape the build without mixing them into the regular crew sliders.',
+          alt: 'Specialist slot {index}',
         },
       },
       detail: {
@@ -66,7 +86,7 @@ export const royalBlackwaterFleetMessages = {
         weaponTotal: '{count} weapons',
         weaponCapacity: '{count} ship weapon capacity',
         statsSummary: '{upgrades}/{max} upgrades · {free} free crew',
-        specialCrew: 'Special crew',
+        specialCrew: 'Specialists',
         weapons: {
           front: 'Front weapons',
           rear: 'Rear weapons',
@@ -168,12 +188,20 @@ export const royalBlackwaterFleetMessages = {
     common: {
       projectName: 'Royal Blackwater Fleet',
       groups: 'Gruppensuche',
+      fleetOverview: 'Die Flotte',
     },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Royal Blackwater Fleet',
       title: 'Lerne, bereite dich vor und fahre bei der Royal Blackwater Fleet mit.',
       subtitle: 'Nutze erprobte Builds, praxisnahe Guides und klare Eventplanung für deinen Weg ins koordinierte Flottenspiel.',
+      publicAccessBadge: 'Öffentliche Landing-Page',
+      joinCta: 'Dem Flotten-Hub beitreten',
+      loginRequired: 'Login erforderlich',
+      memberGateText: 'Guides, Builds, Forum, Kalender und der Einsteiger-Leitfaden sind angemeldeten Mitgliedern vorbehalten. Öffentlich bleiben nur diese Landing-Page und die kompakte Flottenübersicht.',
+      publicAreaTitle: 'Öffentlicher Zugang',
+      publicAreaHeading: 'Zwei öffentliche Seiten. Ein geschützter Mitglieder-Hub.',
+      publicAreaText: 'Besucher erfahren, wer wir sind und wie die Flotte arbeitet. Detailwissen, Builds und Koordination bleiben im angemeldeten Arbeitsbereich.',
       showcase: {
         groups: {
           eyebrow: 'Gruppensuche-Board',
@@ -185,22 +213,34 @@ export const royalBlackwaterFleetMessages = {
         },
       },
     },
+    publicFleet: {
+      eyebrow: 'Öffentliche Flottenübersicht',
+      subtitle: 'Kompakter Überblick über Identität, Aktivitätszeiten, Führung und Einstieg. Operative Details bleiben im Mitglieder-Hub.',
+      publicBadge: 'Öffentliche Informationen',
+      metricsLabel: 'Öffentliche Flottenzusammenfassung',
+      activeMembers: 'Aktive Mitglieder',
+      activityWindow: 'Hauptaktivität',
+      aboutEyebrow: 'Wer wir sind',
+      joinEyebrow: 'Mitglied werden',
+      joinTitle: 'Mit Account und Flottenbewerbung starten',
+      joinText: 'Nach der Registrierung erhältst du Zugriff auf Einsteiger-Leitfaden, Builds, Guides, Forum, Kalender und interne Koordination.',
+    },
     builds: {
       list: {
         weaponSummary: '{count} Waffen',
-        specialCrewSummary: '{count} Spezial-Crew',
+        specialCrewSummary: '{count} Spezialisten',
         weaponPreview: 'Bewaffnung: {items}',
-        specialCrewPreview: 'Spezial-Crew: {items}',
+        specialCrewPreview: 'Spezialisten: {items}',
       },
       create: {
         subtitle: 'Designer für Schiff, Crew, Bewaffnung und Loadout.',
         stats: {
           weapons: '{value} Waffen',
-          specialCrew: '{value} Spezial-Crew',
+          specialCrew: '{value} Spezialisten',
         },
         sections: {
           weapons: 'Bewaffnung',
-          specialCrew: 'Spezial-Crew',
+          specialCrew: 'Spezialisten',
           inventory: 'Munition, Verbrauchsgüter, Laderaum',
         },
         weapons: {
@@ -219,9 +259,9 @@ export const royalBlackwaterFleetMessages = {
           mortarAlt: 'Mörser-Slot {index}',
         },
         specialCrew: {
-          title: 'Crew-Spezialisten',
+          title: 'Spezialisten',
           hint: 'Ergänze Spezial-Crew, ohne sie mit den normalen Crew-Reglern zu vermischen.',
-          alt: 'Spezial-Crew-Slot {index}',
+          alt: 'Spezialisten-Slot {index}',
         },
       },
       detail: {
@@ -229,7 +269,7 @@ export const royalBlackwaterFleetMessages = {
         weaponTotal: '{count} Waffen',
         weaponCapacity: '{count} maximale Waffenplätze',
         statsSummary: '{upgrades}/{max} Upgrades · {free} freie Crew',
-        specialCrew: 'Spezial-Crew',
+        specialCrew: 'Spezialisten',
         weapons: {
           front: 'Front-Bewaffnung',
           rear: 'Heck-Bewaffnung',
