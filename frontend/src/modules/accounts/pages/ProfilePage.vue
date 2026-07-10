@@ -270,7 +270,7 @@ onMounted(loadProfile)
               </div>
 
               <div class="form-actions compact-actions">
-                <RouterLink class="button-box" to="/">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
+                <RouterLink class="button-box" to="/fleet">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
                 <RouterLink v-if="leadershipMemberships.length" class="button-box primary-action" to="/fleets">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
               </div>
             </section>

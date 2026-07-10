@@ -1,6 +1,6 @@
 {
   "name": "royal-blackwater-fleet-frontend",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:locales": "node scripts/check-locales.mjs",
+    "test:build-designer": "node scripts/test-build-designer-inventory.mjs",
     "predev": "node scripts/check-env.mjs",
     "prebuild": "node scripts/check-env.mjs",
     "prepreview": "node scripts/check-env.mjs"

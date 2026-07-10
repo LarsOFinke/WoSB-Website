@@ -194,3 +194,16 @@ Fleet-wide calendar entries remain visible to every authenticated member. Squad 
 only to members of that squad and to fleet/staff leadership. The release adds the `squads` and
 `squad_members` tables plus a nullable squad scope on existing calendar events. No existing event
 or membership data is replaced.
+
+## Release 0.16.1 — Account/fleet separation and Build Designer cleanup
+
+Registration now creates only a reviewable portal account. Fleet membership is requested later,
+after approval and login, from the public fleet page. Pending applications and ordinary accounts
+are intentionally excluded from Squad Leader, Officer and Member selection; only active members
+of the official fleet are eligible.
+
+The Build Designer no longer validates ammunition, consumables, hold cargo or Specialists as
+weapons. Inventory selection now uses explicit immutable slot reconciliation, preserves the
+selected item, adds the next empty slot predictably and keeps weapon arc validation limited to
+actual weapon fields. A standalone frontend regression test covers item selection, quantities,
+capacity limits and invalid-option removal.

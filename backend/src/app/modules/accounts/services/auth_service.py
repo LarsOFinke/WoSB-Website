@@ -9,8 +9,6 @@ from app.modules.accounts.models.auth_session import AuthSession
 from app.modules.accounts.models.registration_request import RegistrationRequest
 from app.modules.accounts.models.user import User
 from app.modules.accounts.models.user_profile import UserProfile
-from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
-from app.modules.fleet.services.fleet_service import FleetValidationError, join_fleet
 from app.modules.accounts.models.registration_request import REGISTRATION_PENDING
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
 
@@ -28,9 +26,6 @@ def create_user(
     password: str,
     display_name: str,
     role: str = ROLE_USER,
-    fleet_name: str | None = None,
-    fleet_id: int | None = None,
-    fleet_application_note: str | None = None,
 ) -> User:
     normalized_username = username.strip().lower()
     if not normalized_username:
@@ -48,19 +43,9 @@ def create_user(
         username=normalized_username,
         password_hash=hash_password(password),
         role=role,
-        profile=UserProfile(
-            display_name=display_name.strip() or normalized_username,
-            external_fleet_name=(fleet_name.strip() or None) if isinstance(fleet_name, str) and fleet_id is None else None,
-        ),
+        profile=UserProfile(display_name=display_name.strip() or normalized_username),
     )
     db.add(user)
-    db.flush()
-    if fleet_id is not None:
-        try:
-            join_fleet(db, user, FleetJoinRequest(fleet_id=fleet_id, note=fleet_application_note or "Registration claim"))
-        except FleetValidationError as exc:
-            db.rollback()
-            raise AuthError(str(exc)) from exc
     db.commit()
     db.refresh(user)
     return user

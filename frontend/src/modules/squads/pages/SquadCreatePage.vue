@@ -97,6 +97,7 @@ onMounted(loadRoster)
       <section class="wire-section form-section squad-form-section">
         <div class="section-title"><span>02</span><h2>{{ t('squads.create.commandTitle') }}</h2></div>
         <p class="section-helper-text">{{ t('squads.create.commandText') }}</p>
+        <p class="slot-hint">{{ t('squads.create.eligibleHint') }}</p>
         <label class="field-stack">
           <span class="field-label">{{ t('squads.fields.leader') }}</span>
           <span class="select-shell full-select-shell">

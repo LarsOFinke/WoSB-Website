@@ -4,6 +4,14 @@ import { useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
 import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
+import {
+  emptyInventorySlot,
+  isWeaponInventoryField,
+  normalizeInventorySlots,
+  reconcileInventorySlots,
+  selectInventoryItem,
+  setInventoryQuantity,
+} from '@/modules/builds/inventorySlots'
 import { listShips } from '@/modules/ships/api/ships'
 
 const router = useRouter()
@@ -58,10 +66,6 @@ function sortShipsForDropdown(shipRows) {
   })
 }
 
-function emptySlot() {
-  return { item: '', quantity: 1 }
-}
-
 const form = reactive({
   build_name: '',
   build_type: 'balanced',
@@ -78,15 +82,15 @@ const form = reactive({
   soldiers: 0,
   musketeers: 0,
   mercenaries: 0,
-  front_weapon_slots: [emptySlot()],
-  rear_weapon_slots: [emptySlot()],
-  port_weapon_slots: [emptySlot()],
-  starboard_weapon_slots: [emptySlot()],
-  mortar_weapon_slots: [emptySlot()],
-  special_crew_slots: [emptySlot()],
-  ammunition_slots: [emptySlot()],
-  consumable_slots: [emptySlot()],
-  hold_slots: [emptySlot()],
+  front_weapon_slots: [emptyInventorySlot()],
+  rear_weapon_slots: [emptyInventorySlot()],
+  port_weapon_slots: [emptyInventorySlot()],
+  starboard_weapon_slots: [emptyInventorySlot()],
+  mortar_weapon_slots: [emptyInventorySlot()],
+  special_crew_slots: [emptyInventorySlot()],
+  ammunition_slots: [emptyInventorySlot()],
+  consumable_slots: [emptyInventorySlot()],
+  hold_slots: [emptyInventorySlot()],
   details: '',
 })
 
@@ -259,15 +263,6 @@ const canSubmit = computed(
     && !saving.value,
 )
 
-function normalizeInventorySlots(slots) {
-  return slots
-    .map((slot) => ({
-      item: String(slot?.item || '').trim(),
-      quantity: Math.max(1, Number(slot?.quantity) || 1),
-    }))
-    .filter((slot) => slot.item)
-}
-
 function slotCount(fieldName) {
   return normalizeInventorySlots(form[fieldName]).length
 }
@@ -363,7 +358,7 @@ function weaponFieldOverCapacity(fieldName) {
 }
 
 function weaponSelectionInvalid(fieldName, optionName) {
-  if (!optionName) return false
+  if (!optionName || !isWeaponInventoryField(fieldName)) return false
   const option = optionMeta('weapon', optionName)
   return !option || !isWeaponOptionAllowedForField(option, fieldName)
 }
@@ -385,17 +380,47 @@ function upgradeSlotPlaceholder(index) {
   return t('common.empty')
 }
 
-function onInventorySlotChange(fieldName) {
-  const maxSlots = slotLimitForField(fieldName)
-  const filled = normalizeInventorySlots(form[fieldName])
-    .filter((slot) => !weaponSelectionInvalid(fieldName, slot.item))
-    .slice(0, maxSlots)
-
-  if (maxSlots > 0 && filled.length < maxSlots) {
-    filled.push(emptySlot())
+function inventoryReconcileOptions(fieldName) {
+  return {
+    isItemAllowed: (item) => !weaponSelectionInvalid(fieldName, item),
   }
+}
 
-  form[fieldName].splice(0, form[fieldName].length, ...filled)
+function replaceInventorySlots(fieldName, slots) {
+  form[fieldName].splice(0, form[fieldName].length, ...slots)
+}
+
+function reconcileInventoryField(fieldName) {
+  replaceInventorySlots(
+    fieldName,
+    reconcileInventorySlots(form[fieldName], slotLimitForField(fieldName), inventoryReconcileOptions(fieldName)),
+  )
+}
+
+function onInventoryItemChange(fieldName, index, event) {
+  replaceInventorySlots(
+    fieldName,
+    selectInventoryItem(
+      form[fieldName],
+      index,
+      event.target.value,
+      slotLimitForField(fieldName),
+      inventoryReconcileOptions(fieldName),
+    ),
+  )
+}
+
+function onInventoryQuantityChange(fieldName, index, event) {
+  replaceInventorySlots(
+    fieldName,
+    setInventoryQuantity(
+      form[fieldName],
+      index,
+      event.target.value,
+      slotLimitForField(fieldName),
+      inventoryReconcileOptions(fieldName),
+    ),
+  )
 }
 
 function setCrewToShipMinimum() {
@@ -407,7 +432,7 @@ function setCrewToShipMinimum() {
 
 function resetSlots() {
   for (const fieldName of Object.keys(slotLimits)) {
-    form[fieldName] = slotLimitForField(fieldName) > 0 ? [emptySlot()] : []
+    form[fieldName] = slotLimitForField(fieldName) > 0 ? [emptyInventorySlot()] : []
   }
 }
 
@@ -450,7 +475,7 @@ watch(
   () => form.ship_id,
   () => {
     setCrewToShipMinimum()
-    for (const arc of weaponArcFields) onInventorySlotChange(arc.fieldName)
+    for (const arc of weaponArcFields) reconcileInventoryField(arc.fieldName)
   },
 )
 
@@ -628,7 +653,7 @@ onMounted(async () => {
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t(arc.altKey, { index: index + 1 })" />
               </span>
-              <select v-model="slot.item" @change="onInventorySlotChange(arc.fieldName)">
+              <select :value="slot.item" @change="onInventoryItemChange(arc.fieldName, index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
                   v-for="option in weaponOptionsForField(arc.fieldName, index)"
@@ -639,12 +664,12 @@ onMounted(async () => {
                 </option>
               </select>
               <input
-                v-model.number="slot.quantity"
+                :value="slot.quantity"
                 type="number"
                 min="1"
                 :max="weaponCapacityForField(arc.fieldName) || 999999"
                 :aria-label="t('common.quantity')"
-                @change="onInventorySlotChange(arc.fieldName)"
+                @change="onInventoryQuantityChange(arc.fieldName, index, $event)"
               />
             </label>
           </div>
@@ -667,7 +692,7 @@ onMounted(async () => {
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
               </span>
-              <select v-model="slot.item" @change="onInventorySlotChange('special_crew_slots')">
+              <select :value="slot.item" @change="onInventoryItemChange('special_crew_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
                   v-for="option in optionsFor('special_crew')"
@@ -680,12 +705,12 @@ onMounted(async () => {
               </select>
               <small v-if="slot.item" class="slot-effect-text">{{ formatEffects(slot.item, 'special_crew') }}</small>
               <input
-                v-model.number="slot.quantity"
+                :value="slot.quantity"
                 type="number"
                 min="1"
                 max="999999"
                 :aria-label="t('common.quantity')"
-                @change="onInventorySlotChange('special_crew_slots')"
+                @change="onInventoryQuantityChange('special_crew_slots', index, $event)"
               />
             </label>
           </div>
@@ -744,7 +769,7 @@ onMounted(async () => {
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.ammunitionAlt', { index: index + 1 })" />
               </span>
-              <select v-model="slot.item" @change="onInventorySlotChange('ammunition_slots')">
+              <select :value="slot.item" @change="onInventoryItemChange('ammunition_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
                   v-for="option in optionsFor('ammunition')"
@@ -756,12 +781,12 @@ onMounted(async () => {
                 </option>
               </select>
               <input
-                v-model.number="slot.quantity"
+                :value="slot.quantity"
                 type="number"
                 min="1"
                 max="999999"
                 :aria-label="t('common.quantity')"
-                @change="onInventorySlotChange('ammunition_slots')"
+                @change="onInventoryQuantityChange('ammunition_slots', index, $event)"
               />
             </label>
           </div>
@@ -776,7 +801,7 @@ onMounted(async () => {
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.consumableAlt', { index: index + 1 })" />
               </span>
-              <select v-model="slot.item" @change="onInventorySlotChange('consumable_slots')">
+              <select :value="slot.item" @change="onInventoryItemChange('consumable_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
                   v-for="option in optionsFor('consumable')"
@@ -788,12 +813,12 @@ onMounted(async () => {
                 </option>
               </select>
               <input
-                v-model.number="slot.quantity"
+                :value="slot.quantity"
                 type="number"
                 min="1"
                 max="999999"
                 :aria-label="t('common.quantity')"
-                @change="onInventorySlotChange('consumable_slots')"
+                @change="onInventoryQuantityChange('consumable_slots', index, $event)"
               />
             </label>
           </div>
@@ -808,7 +833,7 @@ onMounted(async () => {
               <span class="slot-image-cell">
                 <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.holdAlt', { index: index + 1 })" />
               </span>
-              <select v-model="slot.item" @change="onInventorySlotChange('hold_slots')">
+              <select :value="slot.item" @change="onInventoryItemChange('hold_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
                   v-for="option in optionsFor('hold')"
@@ -820,12 +845,12 @@ onMounted(async () => {
                 </option>
               </select>
               <input
-                v-model.number="slot.quantity"
+                :value="slot.quantity"
                 type="number"
                 min="1"
                 max="999999"
                 :aria-label="t('common.quantity')"
-                @change="onInventorySlotChange('hold_slots')"
+                @change="onInventoryQuantityChange('hold_slots', index, $event)"
               />
             </label>
           </div>

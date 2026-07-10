@@ -16,6 +16,7 @@ import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
 import { royalBlackwaterFleetMessages } from './royalBlackwaterFleet'
+import { registrationAndInventoryCleanupMessages } from './registrationAndInventoryCleanup'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
@@ -34,6 +35,7 @@ const messageLayers = [
   adminDashboardMessages,
   finalNavigationAndGroupSignupMessages,
   fleetIdentityMessages,
+  registrationAndInventoryCleanupMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

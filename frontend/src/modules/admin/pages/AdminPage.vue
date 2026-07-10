@@ -538,15 +538,6 @@ onUnmounted(() => {
               <div class="admin-build-main">
                 <strong>{{ request.display_name }}</strong>
                 <span>{{ request.username }} · {{ formatDateTime(request.created_at) }} · {{ t(`admin.registrations.status.${request.status}`) }}</span>
-                <small v-if="request.fleet">{{ t('admin.registrations.fleetApplication') }}: {{ request.fleet.name }}</small>
-                <small v-else-if="request.external_fleet_name">{{ t('admin.registrations.externalFleet') }}: {{ request.external_fleet_name }}</small>
-                <div v-if="request.wants_fleet_membership" class="member-directory-meta">
-                  <span v-if="request.fleet_availability">{{ t('fleets.directory.availability') }}: {{ request.fleet_availability }}</span>
-                  <span v-if="request.fleet_preferred_ships">{{ t('fleets.directory.preferredShips') }}: {{ request.fleet_preferred_ships }}</span>
-                  <span v-if="request.fleet_timezone">{{ t('fleets.directory.timezone') }}: {{ request.fleet_timezone }}</span>
-                  <span v-if="request.fleet_discord_handle">{{ t('fleets.directory.discord') }}: {{ request.fleet_discord_handle }}</span>
-                </div>
-                <p v-if="request.fleet_application_note" class="muted">{{ request.fleet_application_note }}</p>
                 <p v-if="request.decision_note" class="muted">{{ t('admin.registrations.decisionNote') }}: {{ request.decision_note }}</p>
               </div>
               <div v-if="request.status === 'pending'" class="registration-actions">

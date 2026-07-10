@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import fleetIconUrl from '@/assets/rbf-fleet-icon.png'
 import AppIcon from '@/core/components/AppIcon.vue'
@@ -7,25 +7,68 @@ import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
-import { getPublicOfficialFleet } from '@/modules/fleet/api/fleet'
+import { getPublicOfficialFleet, joinFleet, listMyFleetMemberships } from '@/modules/fleet/api/fleet'
 
 const { t } = useLocale()
 const { isAuthenticated } = useSession()
 const fleet = ref(null)
 const loading = ref(false)
 const error = ref('')
+const membership = ref(null)
+const applying = ref(false)
+const applicationError = ref('')
+const applicationSuccess = ref('')
+const application = reactive({
+  note: '',
+  availability: '',
+  preferred_ships: '',
+  timezone: '',
+  discord_handle: '',
+})
 
 const leaderCount = computed(() => fleet.value?.leaders?.length || 0)
+const canApply = computed(() => isAuthenticated.value && (!membership.value || membership.value.status === 'inactive'))
+const hasMembership = computed(() => Boolean(membership.value && ['pending', 'active'].includes(membership.value.status)))
 
 async function loadFleet() {
   loading.value = true
   error.value = ''
   try {
     fleet.value = await getPublicOfficialFleet()
+    if (isAuthenticated.value) {
+      try {
+        const memberships = await listMyFleetMemberships()
+        membership.value = memberships.find((row) => row.fleet?.id === fleet.value.id) || memberships[0] || null
+      } catch (membershipError) {
+        applicationError.value = membershipError.message || t('fleets.application.statusError')
+      }
+    }
   } catch (err) {
     error.value = err.message || t('fleets.loadError')
   } finally {
     loading.value = false
+  }
+}
+
+async function submitFleetApplication() {
+  if (!fleet.value || !canApply.value) return
+  applying.value = true
+  applicationError.value = ''
+  applicationSuccess.value = ''
+  try {
+    membership.value = await joinFleet({
+      fleet_id: fleet.value.id,
+      note: application.note.trim() || null,
+      availability: application.availability.trim() || null,
+      preferred_ships: application.preferred_ships.trim() || null,
+      timezone: application.timezone.trim() || null,
+      discord_handle: application.discord_handle.trim() || null,
+    })
+    applicationSuccess.value = t('fleets.application.submitted')
+  } catch (err) {
+    applicationError.value = err.message || t('fleets.application.submitError')
+  } finally {
+    applying.value = false
   }
 }
 
@@ -46,8 +89,8 @@ onMounted(loadFleet)
         </template>
         <template #actions>
           <RouterLink class="button-box" to="/">{{ t('common.home') }}</RouterLink>
-          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/new-captain">{{ t('common.newCaptainGuide') }}</RouterLink>
-          <RouterLink v-else class="button-box primary-action" to="/register?fleet=apply">{{ t('fleets.application.applyWithoutLogin') }}</RouterLink>
+          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/profile">{{ t('common.profile') }}</RouterLink>
+          <RouterLink v-else class="button-box primary-action" to="/register">{{ t('fleets.application.createAccountFirst') }}</RouterLink>
         </template>
       </PageHeader>
 
@@ -122,9 +165,26 @@ onMounted(loadFleet)
               <div class="workspace-section-heading compact-heading">
                 <div><p class="eyebrow">{{ t('publicFleet.joinEyebrow') }}</p><h2>{{ t('publicFleet.joinTitle') }}</h2><p>{{ t('publicFleet.joinText') }}</p></div>
               </div>
-              <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/fleets">{{ t('fleets.manageCta') }}</RouterLink>
+              <form v-if="canApply" class="fleet-application-form" @submit.prevent="submitFleetApplication">
+                <label class="input-panel embedded-field textarea-input-panel">
+                  <span>{{ t('auth.fleetApplicationNote') }}</span>
+                  <textarea v-model="application.note" rows="4" maxlength="1000" :placeholder="t('auth.fleetApplicationNotePlaceholder')"></textarea>
+                </label>
+                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.availability') }}</span><input v-model="application.availability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" /></label>
+                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.preferredShips') }}</span><input v-model="application.preferred_ships" maxlength="300" :placeholder="t('fleets.directory.preferredShipsPlaceholder')" /></label>
+                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.timezone') }}</span><input v-model="application.timezone" maxlength="80" :placeholder="t('fleets.directory.timezonePlaceholder')" /></label>
+                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.discord') }}</span><input v-model="application.discord_handle" maxlength="120" :placeholder="t('fleets.directory.discordPlaceholder')" /></label>
+                <p v-if="applicationError" class="error-text">{{ applicationError }}</p>
+                <p v-if="applicationSuccess" class="success-text">{{ applicationSuccess }}</p>
+                <button class="button-box primary-action" type="submit" :disabled="applying">{{ applying ? t('fleets.application.submitting') : t('fleets.application.submit') }}</button>
+              </form>
+              <div v-else-if="hasMembership" class="fleet-membership-status-card">
+                <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
+                <p>{{ membership.status === 'pending' ? t('fleets.application.pendingText') : t('fleets.application.activeText') }}</p>
+                <RouterLink class="button-box" to="/profile">{{ t('common.profile') }}</RouterLink>
+              </div>
               <template v-else>
-                <RouterLink class="button-box primary-action" to="/register?fleet=apply">{{ t('fleets.application.applyWithoutLogin') }}</RouterLink>
+                <RouterLink class="button-box primary-action" to="/register">{{ t('fleets.application.createAccountFirst') }}</RouterLink>
                 <RouterLink class="button-box" to="/login">{{ t('auth.login') }}</RouterLink>
               </template>
             </section>

@@ -10,14 +10,15 @@ from app.core.security import hash_password
 from app.modules.accounts.models.registration_request import RegistrationRequest
 from app.modules.accounts.models.user import User
 from app.modules.accounts.models.user_profile import UserProfile
-from app.modules.fleet.models.fleet import Fleet
-from app.modules.fleet.models.fleet_membership import FleetMembership
-from app.modules.accounts.models.registration_request import REGISTRATION_APPROVED, REGISTRATION_PENDING, REGISTRATION_REJECTED, REGISTRATION_STATUSES
+from app.modules.accounts.models.registration_request import (
+    REGISTRATION_APPROVED,
+    REGISTRATION_PENDING,
+    REGISTRATION_REJECTED,
+    REGISTRATION_STATUSES,
+)
 from app.modules.accounts.models.user import ROLE_USER
 from app.modules.accounts.schemas.register_request import RegisterRequest
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
-from app.modules.fleet.models.fleet import FLEET_MEMBER_PENDING, FLEET_ROLE_MEMBER
-from app.modules.fleet.services.fleet_service import get_primary_fleet, sync_user_primary_fleet
 
 logger = logging.getLogger("app.registration")
 
@@ -49,27 +50,20 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
     if len(payload.password) < 6:
         raise RegistrationRequestError("Password must contain at least 6 characters.")
     _assert_username_available(db, username)
-    primary_fleet = get_primary_fleet(db)
-    selected_fleet_id = None
-    if payload.wants_fleet_membership or payload.fleet_id is not None:
-        if primary_fleet is None or not primary_fleet.is_active:
-            raise RegistrationRequestError("Official fleet not found.")
-        if payload.fleet_id is not None and payload.fleet_id != primary_fleet.id:
-            raise RegistrationRequestError("Only the official fleet can be selected.")
-        selected_fleet_id = primary_fleet.id
-
     request = RegistrationRequest(
         username=username,
         password_hash=hash_password(payload.password),
         display_name=payload.display_name.strip() or username,
-        external_fleet_name=(payload.fleet_name.strip() or None) if isinstance(payload.fleet_name, str) and selected_fleet_id is None else None,
-        fleet_id=selected_fleet_id,
-        wants_fleet_membership=selected_fleet_id is not None,
-        fleet_application_note=payload.fleet_application_note,
-        fleet_availability=payload.fleet_availability,
-        fleet_preferred_ships=payload.fleet_preferred_ships,
-        fleet_timezone=payload.fleet_timezone,
-        fleet_discord_handle=payload.fleet_discord_handle,
+        # Legacy fleet columns remain nullable for historical requests, but new
+        # registrations can no longer create or request a membership.
+        external_fleet_name=None,
+        fleet_id=None,
+        wants_fleet_membership=False,
+        fleet_application_note=None,
+        fleet_availability=None,
+        fleet_preferred_ships=None,
+        fleet_timezone=None,
+        fleet_discord_handle=None,
         status=REGISTRATION_PENDING,
     )
     db.add(request)
@@ -81,7 +75,6 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
 
 def list_registration_requests(db: Session, *, status: str | None = REGISTRATION_PENDING) -> list[RegistrationRequest]:
     query = select(RegistrationRequest).options(
-        selectinload(RegistrationRequest.fleet),
         selectinload(RegistrationRequest.reviewed_by),
         selectinload(RegistrationRequest.created_user),
     )
@@ -93,11 +86,7 @@ def list_registration_requests(db: Session, *, status: str | None = REGISTRATION
 
 
 def get_registration_request(db: Session, request_id: int) -> RegistrationRequest | None:
-    return db.scalar(
-        select(RegistrationRequest)
-        .where(RegistrationRequest.id == request_id)
-        .options(selectinload(RegistrationRequest.fleet))
-    )
+    return db.scalar(select(RegistrationRequest).where(RegistrationRequest.id == request_id))
 
 
 def approve_registration_request(db: Session, request_id: int, reviewer: User, payload: RegistrationDecision) -> RegistrationRequest:
@@ -113,33 +102,10 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
         password_hash=request.password_hash,
         role=ROLE_USER,
         is_active=True,
-        profile=UserProfile(
-            display_name=request.display_name,
-            external_fleet_name=request.external_fleet_name,
-        ),
+        profile=UserProfile(display_name=request.display_name),
     )
     db.add(user)
     db.flush()
-
-    if request.wants_fleet_membership or request.fleet_id is not None:
-        fleet = get_primary_fleet(db)
-        if fleet is None or not fleet.is_active or (request.fleet_id is not None and request.fleet_id != fleet.id):
-            db.rollback()
-            raise RegistrationRequestError("Official fleet not found.")
-        membership = FleetMembership(
-            fleet_id=fleet.id,
-            user_id=user.id,
-            role=FLEET_ROLE_MEMBER,
-            status=FLEET_MEMBER_PENDING,
-            note=request.fleet_application_note or "Registration approval",
-            availability=request.fleet_availability,
-            preferred_ships=request.fleet_preferred_ships,
-            timezone=request.fleet_timezone,
-            discord_handle=request.fleet_discord_handle,
-        )
-        db.add(membership)
-        db.flush()
-        sync_user_primary_fleet(db, user, preferred_membership=membership, force_preferred=True)
 
     request.status = REGISTRATION_APPROVED
     request.decision_note = payload.note

@@ -65,6 +65,7 @@ fi
   cd "$ROOT_DIR/frontend"
   [[ -s src/assets/rbf-fleet-icon.png ]]
   grep -q "@/assets/rbf-fleet-icon.png" src/core/components/BrandLockup.vue
+  npm run test:build-designer
   npm run check:locales
   npm run build
 )

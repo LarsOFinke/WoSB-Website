@@ -7151,3 +7151,27 @@ body {
     gap: 0.2rem;
   }
 }
+
+/* 0.16.1 registration separation and fleet application cleanup */
+.registration-separation-note {
+  align-content: start;
+  gap: 1rem;
+}
+
+.fleet-application-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fleet-application-form .button-box {
+  justify-self: start;
+}
+
+.fleet-membership-status-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.025);
+}
