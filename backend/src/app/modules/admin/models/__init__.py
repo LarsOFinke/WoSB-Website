@@ -1,2 +1,4 @@
-"""Models for the admin module."""
-from app.modules.admin.models.app_log import *  # noqa: F403
+"""Models for the admin module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

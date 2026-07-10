@@ -1,4 +1,4 @@
-"""Models for the forum module."""
-from app.modules.forum.models.forum import *  # noqa: F403
-from app.modules.forum.models.forum_post import *  # noqa: F403
-from app.modules.forum.models.forum_post_attachment import *  # noqa: F403
+"""Models for the forum module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

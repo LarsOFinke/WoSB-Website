@@ -1,2 +1,4 @@
-"""Services for the ships module."""
-from app.modules.ships.services.ship_service import *  # noqa: F403
+"""Services for the ships module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

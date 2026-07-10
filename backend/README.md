@@ -11,13 +11,14 @@ cp .env.example .env
 nano .env
 ```
 
-Runtime/deployment values are in `.env`. Safe repository settings are in `config/app.toml`. For a Pi/Linux production deployment, start from `.env.production.example` instead.
+Runtime/deployment values are in `.env`. Safe repository settings are in `config/app.toml`. For a manual PostgreSQL deployment, install `.[postgres]` and start from `.env.production.example`. The integrated Pi stack handles both automatically.
 
 Required `.env` values:
 
 ```env
 APP_ENV=development
 DATABASE_URL=sqlite:///./storage/blackwater-hub.db
+DB_SCHEMA_MODE=create
 UPLOAD_DIR=storage/uploads  # when running commands from backend/
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 SESSION_COOKIE_SECURE=false
@@ -81,7 +82,8 @@ For the detailed module rules, see `../docs/MODULE_STRUCTURE.md`.
 
 ## Configuration split
 
-- `core/config.py` loads `backend/.env` or `WOSB_ENV_FILE`.
+- `core/config.py` loads `backend/.env` or `BLACKWATER_ENV_FILE`.
+- `WOSB_ENV_FILE` remains a compatibility alias.
 - `config/app.toml` contains non-secret application config.
 - Process environment variables can override values from `.env`, but the env file still has to exist.
 
@@ -104,7 +106,7 @@ The schema is normalized around users/profiles/fleet memberships, builds/build s
 
 ## Pi deployment
 
-Use `../docs/PI_DEPLOYMENT.md` and the templates in `../deployment/pi/`.
+Use `../docs/FIRST_RUN.md` and `../infrastructure/README.md`. Production runs PostgreSQL through Alembic; local development remains SQLite-based.
 
 
 ## Structure cleanup

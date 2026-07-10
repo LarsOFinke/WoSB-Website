@@ -1,2 +1,4 @@
-"""Models for the ships module."""
-from app.modules.ships.models.ship import *  # noqa: F403
+"""Models for the ships module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

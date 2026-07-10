@@ -1,2 +1,4 @@
-"""Services for the guides module."""
-from app.modules.guides.services.guide_service import *  # noqa: F403
+"""Services for the guides module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

@@ -1,0 +1,16 @@
+[Unit]
+Description=Blackwater Mercenaries Hub container stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=@INFRA_DIR@
+ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/services/boot.sh
+ExecStop=/usr/bin/env bash @INFRA_DIR@/scripts/services/stop.sh
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

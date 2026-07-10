@@ -6,7 +6,7 @@ from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import FLEET_LEADERSHIP_ROLES, FleetRole, MembershipStatus
-from app.db.session import Base
+from app.db.base import Base
 
 FLEET_ROLE_MEMBER = FleetRole.MEMBER.value
 FLEET_ROLE_LIEUTENANT = FleetRole.LIEUTENANT.value

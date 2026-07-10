@@ -1,2 +1,4 @@
-"""Models for the calendar module."""
-from app.modules.calendar.models.fleet_event import *  # noqa: F403
+"""Models for the calendar module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

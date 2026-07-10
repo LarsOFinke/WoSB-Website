@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Blackwater Mercenaries Hub backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=blackwater-hub-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,5 +1,4 @@
-"""Models for the accounts module."""
-from app.modules.accounts.models.auth_session import *  # noqa: F403
-from app.modules.accounts.models.registration_request import *  # noqa: F403
-from app.modules.accounts.models.user import *  # noqa: F403
-from app.modules.accounts.models.user_profile import *  # noqa: F403
+"""Models for the accounts module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

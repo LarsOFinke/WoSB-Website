@@ -4,7 +4,7 @@ import uvicorn
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Start the WoSB FastAPI backend in dev mode.")
+    parser = argparse.ArgumentParser(description="Start the Blackwater Mercenaries Hub backend in development mode.")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--no-reload", action="store_true")

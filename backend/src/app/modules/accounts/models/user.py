@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, CheckConstraint, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import OFFICIAL_FLEET_PROFILE_STATUSES, STAFF_ROLES, SiteRole
-from app.db.session import Base
+from app.db.base import Base
 
 ROLE_USER = SiteRole.USER.value
 ROLE_MODERATOR = SiteRole.MODERATOR.value

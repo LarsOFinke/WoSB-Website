@@ -4,7 +4,7 @@ import re
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.session import Base
+from app.db.base import Base
 
 
 def _parse_weapon_layout(layout: str | None) -> dict[str, int | float | None]:

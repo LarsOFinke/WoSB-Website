@@ -6,10 +6,10 @@ The project now separates **environment values** from **repository configuration
 
 Backend startup is intentionally fail-fast:
 
-- `backend/.env` must exist, or `WOSB_ENV_FILE` must point to another env file.
-- `backend/config/app.toml` must exist, or `WOSB_CONFIG_FILE` must point to another config file.
+- `backend/.env` must exist, or `BLACKWATER_ENV_FILE` must point to another env file.
+- `backend/config/app.toml` must exist, or `BLACKWATER_CONFIG_FILE` must point to another config file.
 
-`WOSB_ENV_FILE` and `WOSB_CONFIG_FILE` are retained as compatibility override names for existing deployments; new branding does not invalidate older service configurations.
+`WOSB_ENV_FILE` and `WOSB_CONFIG_FILE` remain compatibility aliases for older deployments.
 - No unsafe runtime defaults are used for database, upload paths, CORS or seeded admin credentials.
 
 ### Environment values
@@ -20,14 +20,15 @@ Production example:
 
 ```env
 APP_ENV=production
-DATABASE_URL=sqlite:////opt/blackwater-mercenaries-hub/data/blackwater-hub.db
-UPLOAD_DIR=/opt/blackwater-mercenaries-hub/uploads
+DATABASE_URL=postgresql+psycopg://blackwater:<secret>@postgres:5432/blackwater
+DB_SCHEMA_MODE=migrate
+UPLOAD_DIR=/data/uploads
 CORS_ORIGINS=https://your-domain.example
 SESSION_COOKIE_SECURE=true
 AUTO_SEED=true
 SEED_ADMIN_USERNAME=admin
 SEED_ADMIN_PASSWORD=<long-random-password>
-SEED_ADMIN_DISPLAY_NAME=Community Admin
+SEED_ADMIN_DISPLAY_NAME=Blackwater Command
 ```
 
 `SEED_ADMIN_PASSWORD` must be changed before startup. Known placeholder/default passwords are rejected.
@@ -35,7 +36,7 @@ SEED_ADMIN_DISPLAY_NAME=Community Admin
 
 ### Storage source of truth
 
-There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/blackwater-hub.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For Pi/server deployments, prefer an absolute path such as `/opt/blackwater-mercenaries-hub/uploads`.
+There is no repository root `storage/` directory anymore. For local backend runs, use `DATABASE_URL=sqlite:///./storage/blackwater-hub.db` and `UPLOAD_DIR=storage/uploads`; relative runtime paths are resolved against `backend/`, independent of the shell working directory. For container deployments, the upload volume is mounted at `/data/uploads`.
 
 Only `UPLOAD_DIR` decides the runtime upload location. The committed demo media remains under `backend/storage/uploads/demo`.
 
@@ -63,3 +64,6 @@ The Vite dev-server settings live in `frontend/config/dev-server.json`. This kee
 - Secrets and deployment paths stay out of Git.
 - Stable product configuration remains reviewable in Git.
 - Missing config fails at startup/build time instead of silently using prototype defaults.
+
+
+Database lifecycle details are documented in [DATABASE_MODES.md](DATABASE_MODES.md).

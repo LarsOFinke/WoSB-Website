@@ -10,6 +10,7 @@ class Settings:
     environment: str
     api_prefix: str
     database_url: str
+    database_schema_mode: str
     upload_dir: str
     auto_seed: bool
 
@@ -37,3 +38,11 @@ class Settings:
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def database_backend(self) -> str:
+        return self.database_url.split(":", 1)[0].split("+", 1)[0]
+
+    @property
+    def manages_schema_at_startup(self) -> bool:
+        return self.database_schema_mode == "create"

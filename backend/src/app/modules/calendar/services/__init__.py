@@ -1,2 +1,4 @@
-"""Services for the calendar module."""
-from app.modules.calendar.services.fleet_event_service import *  # noqa: F403
+"""Services for the calendar module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

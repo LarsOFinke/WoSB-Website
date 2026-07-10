@@ -1,0 +1,9 @@
+[Unit]
+Description=Blackwater Mercenaries Hub backup
+Requires=docker.service
+After=docker.service blackwater-hub.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@INFRA_DIR@
+ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/backup/backup-all.sh

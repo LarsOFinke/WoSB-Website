@@ -1,2 +1,4 @@
-"""Services for the groups module."""
-from app.modules.groups.services.group_service import *  # noqa: F403
+"""Services for the groups module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

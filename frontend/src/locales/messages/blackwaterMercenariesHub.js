@@ -4,7 +4,7 @@ export const blackwaterMercenariesHubMessages = {
       projectName: 'Blackwater Mercenaries Hub',
       groups: 'Group Search',
     },
-    footer: { text: 'Blackwater Mercenaries Hub MVP' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Blackwater Mercenaries Hub',
       title: 'Your starting point for Blackwater Mercenaries fleet tools.',
@@ -169,7 +169,7 @@ export const blackwaterMercenariesHubMessages = {
       projectName: 'Blackwater Mercenaries Hub',
       groups: 'Gruppensuche',
     },
-    footer: { text: 'Blackwater Mercenaries Hub MVP' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Blackwater Mercenaries Hub',
       title: 'Dein Einstiegspunkt für Blackwater-Mercenaries-Flotten-Tools.',

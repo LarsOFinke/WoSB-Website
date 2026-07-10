@@ -11,7 +11,11 @@ Start here when onboarding, deploying to the Pi server or planning the next prod
 - [Spring Cleanup](SPRING_CLEANUP.md)
 - [Frontend Architecture](FRONTEND_ARCHITECTURE.md)
 - [Configuration](CONFIGURATION.md)
-- [Raspberry Pi Deployment](PI_DEPLOYMENT.md)
+- [Raspberry Pi First Run](FIRST_RUN.md)
+- [Infrastructure Architecture](INFRASTRUCTURE_ARCHITECTURE.md)
+- [Alpha Infrastructure Status](ALPHA_INFRASTRUCTURE_STATUS.md)
+- [Database Modes](DATABASE_MODES.md)
+- [Raspberry Pi Deployment (compatibility pointer)](PI_DEPLOYMENT.md)
 - [Operations](OPERATIONS.md)
 - [Production Checklist](PRODUCTION_CHECKLIST.md)
 

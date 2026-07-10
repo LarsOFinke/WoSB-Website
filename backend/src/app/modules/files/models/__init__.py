@@ -1,2 +1,4 @@
-"""Models for the files module."""
-from app.modules.files.models.file_asset import *  # noqa: F403
+"""Models for the files module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

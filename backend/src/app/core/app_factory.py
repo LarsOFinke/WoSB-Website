@@ -11,15 +11,20 @@ from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, http_error_handler
 from app.core.logging import configure_logging
 from app.core.middleware import RequestLoggingMiddleware
-from app.db.init_db import create_and_seed, create_tables
+from app.db.init_db import create_and_seed, create_tables, verify_database_ready
+from app.modules.registry import register_all_models
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    if settings.auto_seed:
-        create_and_seed()
+    register_all_models()
+    if settings.manages_schema_at_startup:
+        if settings.auto_seed:
+            create_and_seed()
+        else:
+            create_tables()
     else:
-        create_tables()
+        verify_database_ready()
     yield
 
 

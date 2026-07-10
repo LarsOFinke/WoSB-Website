@@ -15,6 +15,7 @@ TEST_ENV_FILE.write_text(
         [
             "APP_ENV=development",
             f"DATABASE_URL=sqlite:///{TEST_DATABASE.as_posix()}",
+            "DB_SCHEMA_MODE=create",
             f"UPLOAD_DIR={TEST_ROOT / 'uploads'}",
             "CORS_ORIGINS=http://localhost:5173",
             "SESSION_COOKIE_SECURE=false",
@@ -24,4 +25,4 @@ TEST_ENV_FILE.write_text(
     ),
     encoding="utf-8",
 )
-os.environ.setdefault("WOSB_ENV_FILE", str(TEST_ENV_FILE))
+os.environ.setdefault("BLACKWATER_ENV_FILE", str(TEST_ENV_FILE))

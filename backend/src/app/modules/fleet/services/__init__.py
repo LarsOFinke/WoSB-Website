@@ -1,2 +1,4 @@
-"""Services for the fleet module."""
-from app.modules.fleet.services.fleet_service import *  # noqa: F403
+"""Services for the fleet module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

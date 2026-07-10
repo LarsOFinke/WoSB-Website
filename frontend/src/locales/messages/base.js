@@ -21,7 +21,7 @@ export const baseMessages = {
       accountNavigation: 'Account navigation',
       admin: 'Admin',
     },
-    footer: { text: 'Blackwater Mercenaries Hub MVP' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     auth: {
       eyebrow: 'Admin access',
       title: 'Sign in',
@@ -208,7 +208,7 @@ export const baseMessages = {
     common: {
       home: 'Start', builds: 'Builds', back: 'Zurück', cancel: 'Abbrechen', empty: 'Leer', language: 'Sprache', rate: 'Rate', type: 'Typ', crew: 'Crew', free: 'Frei', upgrades: 'Upgrades', sailorMinimum: 'Matrosenminimum', quantity: 'Anzahl', slots: 'Slots', mainNavigation: 'Hauptnavigation', primaryNavigation: 'Primäre Navigation', accountNavigation: 'Account-Navigation',
     },
-    footer: { text: 'Blackwater Mercenaries Hub MVP' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',
@@ -248,7 +248,7 @@ export const baseMessages = {
   },
   fr: {
     common: { home: 'Accueil', builds: 'Builds', back: 'Retour', cancel: 'Annuler', empty: 'Vide', language: 'Langue', rate: 'Rang', type: 'Type', crew: 'Équipage', free: 'Libre', upgrades: 'Améliorations', sailorMinimum: 'Minimum de marins', quantity: 'Quantité', slots: 'emplacements', mainNavigation: 'Navigation principale' },
-    footer: { text: 'Base MVP WoSB' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',
@@ -288,7 +288,7 @@ export const baseMessages = {
   },
   es: {
     common: { home: 'Inicio', builds: 'Builds', back: 'Volver', cancel: 'Cancelar', empty: 'Vacío', language: 'Idioma', rate: 'Clase', type: 'Tipo', crew: 'Tripulación', free: 'Libre', upgrades: 'Mejoras', sailorMinimum: 'Mínimo de marineros', quantity: 'Cantidad', slots: 'ranuras', mainNavigation: 'Navegación principal' },
-    footer: { text: 'Base MVP WoSB' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',
@@ -328,7 +328,7 @@ export const baseMessages = {
   },
   pt: {
     common: { home: 'Início', builds: 'Builds', back: 'Voltar', cancel: 'Cancelar', empty: 'Vazio', language: 'Idioma', rate: 'Classe', type: 'Tipo', crew: 'Tripulação', free: 'Livre', upgrades: 'Upgrades', sailorMinimum: 'Mínimo de marinheiros', quantity: 'Quantidade', slots: 'slots', mainNavigation: 'Navegação principal' },
-    footer: { text: 'Base MVP WoSB' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',
@@ -368,7 +368,7 @@ export const baseMessages = {
   },
   ru: {
     common: { home: 'Главная', builds: 'Билды', back: 'Назад', cancel: 'Отмена', empty: 'Пусто', language: 'Язык', rate: 'Ранг', type: 'Тип', crew: 'Команда', free: 'Свободно', upgrades: 'Улучшения', sailorMinimum: 'Минимум матросов', quantity: 'Количество', slots: 'слоты', mainNavigation: 'Главная навигация' },
-    footer: { text: 'База MVP WoSB' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',
@@ -408,7 +408,7 @@ export const baseMessages = {
   },
   cn: {
     common: { home: '首页', builds: '配置', back: '返回', cancel: '取消', empty: '空', language: '语言', rate: '等级', type: '类型', crew: '船员', free: '空余', upgrades: '升级', sailorMinimum: '水手最低值', quantity: '数量', slots: '槽位', mainNavigation: '主导航' },
-    footer: { text: 'WoSB MVP 基础' },
+    footer: { text: 'Blackwater Mercenaries Hub' },
     home: {
       eyebrow: 'Community Hub',
       title: 'Blackwater Mercenaries Hub',

@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.session import Base
+from app.db.base import Base
 from app.modules.ships.models.ship import Ship
 from app.modules.builds.services.build_stat_service import build_base_stats, build_stat_rows, effective_stats_from_rows
 

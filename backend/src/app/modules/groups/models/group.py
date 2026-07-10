@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.session import Base
+from app.db.base import Base
 from app.modules.accounts.models.user import User
 
 GROUP_STATUS_OPEN = "open"

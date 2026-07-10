@@ -1,2 +1,4 @@
-"""Services for the content module."""
-from app.modules.content.services.content_embed_service import *  # noqa: F403
+"""Services for the content module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""

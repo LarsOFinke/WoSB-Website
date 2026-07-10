@@ -6,6 +6,7 @@ import tomllib
 from typing import Any
 
 from app.core.config_error import ConfigError
+from app.core.database_mode import DatabaseSchemaMode
 from app.core.runtime_paths import normalize_database_url, resolve_runtime_path
 from app.core.settings_model import Settings
 
@@ -41,11 +42,13 @@ def _parse_env_file(path: Path) -> dict[str, str]:
 
 
 def _load_required_env_file() -> dict[str, str]:
-    env_path = Path(os.environ.get("WOSB_ENV_FILE", DEFAULT_ENV_FILE)).expanduser()
+    env_path = Path(
+        os.environ.get("BLACKWATER_ENV_FILE", os.environ.get("WOSB_ENV_FILE", DEFAULT_ENV_FILE))
+    ).expanduser()
     if not env_path.exists():
         raise ConfigError(
             f"Missing required env file: {env_path}. "
-            "Copy backend/.env.example to backend/.env or set WOSB_ENV_FILE."
+            "Copy backend/.env.example to backend/.env or set BLACKWATER_ENV_FILE."
         )
     if not env_path.is_file():
         raise ConfigError(f"Env path is not a file: {env_path}")
@@ -53,11 +56,13 @@ def _load_required_env_file() -> dict[str, str]:
 
 
 def _load_required_cfg() -> dict[str, Any]:
-    cfg_path = Path(os.environ.get("WOSB_CONFIG_FILE", DEFAULT_CFG_FILE)).expanduser()
+    cfg_path = Path(
+        os.environ.get("BLACKWATER_CONFIG_FILE", os.environ.get("WOSB_CONFIG_FILE", DEFAULT_CFG_FILE))
+    ).expanduser()
     if not cfg_path.exists():
         raise ConfigError(
             f"Missing required config file: {cfg_path}. "
-            "Keep backend/config/app.toml in the deployment or set WOSB_CONFIG_FILE."
+            "Keep backend/config/app.toml in the deployment or set BLACKWATER_CONFIG_FILE."
         )
     if not cfg_path.is_file():
         raise ConfigError(f"Config path is not a file: {cfg_path}")
@@ -153,6 +158,25 @@ def _build_settings() -> Settings:
     if cookie_samesite not in {"lax", "strict", "none"}:
         raise ConfigError("[session].cookie_samesite must be lax, strict or none.")
 
+    database_schema_mode = _env("DB_SCHEMA_MODE").lower()
+    valid_schema_modes = {mode.value for mode in DatabaseSchemaMode}
+    if database_schema_mode not in valid_schema_modes:
+        raise ConfigError(
+            f"DB_SCHEMA_MODE must be one of: {', '.join(sorted(valid_schema_modes))}."
+        )
+    if environment == "production" and database_schema_mode != DatabaseSchemaMode.MIGRATE:
+        raise ConfigError(
+            "APP_ENV=production requires DB_SCHEMA_MODE=migrate so Alembic owns the schema."
+        )
+
+    database_url = normalize_database_url(_env("DATABASE_URL"), base_dir=BACKEND_ROOT)
+    database_backend = database_url.split(":", 1)[0].split("+", 1)[0]
+    if environment == "production" and database_backend != "postgresql":
+        raise ConfigError(
+            "APP_ENV=production requires a PostgreSQL DATABASE_URL. "
+            "Use SQLite only for development or tests."
+        )
+
     auto_seed = _bool_env("AUTO_SEED")
     seed_username = _env("SEED_ADMIN_USERNAME", required=auto_seed)
     seed_password = _env("SEED_ADMIN_PASSWORD", required=auto_seed)
@@ -171,7 +195,8 @@ def _build_settings() -> Settings:
         app_version=str(_cfg("app", "version")),
         environment=environment,
         api_prefix=str(_cfg("app", "api_prefix")),
-        database_url=normalize_database_url(_env("DATABASE_URL"), base_dir=BACKEND_ROOT),
+        database_url=database_url,
+        database_schema_mode=database_schema_mode,
         upload_dir=str(
             resolve_runtime_path(
                 _env("UPLOAD_DIR"),

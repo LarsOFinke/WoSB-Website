@@ -1,2 +1,4 @@
-"""Services for the files module."""
-from app.modules.files.services.file_service import *  # noqa: F403
+"""Services for the files module.
+
+Concrete modules are imported explicitly to avoid package-level side effects.
+"""
