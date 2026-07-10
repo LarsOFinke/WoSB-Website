@@ -25,3 +25,15 @@ def test_seed_service_mounts_persistent_upload_volume() -> None:
     text = compose.read_text(encoding="utf-8")
     seed_block = text.split("  seed:\n", 1)[1].split("  api:\n", 1)[0]
     assert "./data/uploads:/data/uploads" in seed_block
+
+
+def test_demo_assets_live_inside_versioned_source_tree() -> None:
+    seed_dir = Path(__file__).resolve().parents[1] / "src" / "app" / "seeds"
+    for filename in ("line-battle.svg", "trade-convoy.svg"):
+        asset = seed_dir / "assets" / "demo" / filename
+        assert asset.is_file(), f"Missing versioned demo asset: {asset}"
+        assert asset.stat().st_size > 0
+
+    dockerfile = (Path(__file__).resolve().parents[1] / "Dockerfile").read_text(encoding="utf-8")
+    assert "COPY storage ./storage" not in dockerfile
+    assert "COPY src ./src" in dockerfile

@@ -24,3 +24,12 @@ This release focuses on production reliability and day-to-day operations.
 - Log access and manual refresh for staff roles.
 - Regression tests for forum replies, persisted exception logs, upload serving
   and update permissions.
+
+
+## 0.13.1 build-context hardening
+
+Demo upload assets now live under `backend/src/app/seeds/assets/demo/`. They are versioned with the Python source and included through the existing `COPY src ./src` Docker layer. The backend image no longer depends on an optional or ignored `backend/storage` directory.
+
+### Deployment note
+
+After updating to 0.13.1, run `sudo ./setup.sh --profile full` once. The corrected seed then restores missing demo SVGs into the persistent upload directory. Future ordinary releases can use `sudo ./update.sh`.

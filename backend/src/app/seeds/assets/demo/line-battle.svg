@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Line battle formation</title>
+  <desc id="desc">A stylized in-game inspired sailing ship in a dark naval battle scene.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#12243a"/><stop offset="1" stop-color="#09111b"/></linearGradient>
+    <linearGradient id="sea" x1="0" x2="1"><stop offset="0" stop-color="#15324a"/><stop offset="1" stop-color="#0a1a27"/></linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)"/>
+  <circle cx="790" cy="88" r="54" fill="#f1b85b" opacity=".82"/>
+  <rect y="330" width="960" height="210" fill="url(#sea)"/>
+  <path d="M0 370 C120 340 210 382 330 358 C480 328 620 388 760 356 C845 336 905 348 960 334 L960 540 L0 540Z" fill="#102d45" opacity=".85"/>
+  <g transform="translate(205 90)">
+    <path d="M120 258 L610 258 L548 318 L170 318 Z" fill="#5a3729"/>
+    <path d="M158 245 H575 L610 258 H120 Z" fill="#8b5a3c"/>
+    <rect x="270" y="40" width="10" height="220" fill="#a37a55"/>
+    <rect x="430" y="80" width="10" height="180" fill="#a37a55"/>
+    <path d="M285 54 C380 84 390 172 285 211 Z" fill="#d8c3a1" opacity=".94"/>
+    <path d="M443 92 C514 116 522 178 443 219 Z" fill="#cdb68e" opacity=".94"/>
+    <path d="M270 72 L178 252" stroke="#d6b983" stroke-width="4" opacity=".55"/>
+    <path d="M440 98 L548 252" stroke="#d6b983" stroke-width="4" opacity=".55"/>
+    <g fill="#111827"><circle cx="220" cy="280" r="8"/><circle cx="285" cy="280" r="8"/><circle cx="350" cy="280" r="8"/><circle cx="415" cy="280" r="8"/><circle cx="480" cy="280" r="8"/></g>
+  </g>
+  <path d="M92 440 C230 414 350 454 480 431 C635 404 760 452 905 422" fill="none" stroke="#d7e3f0" stroke-opacity=".22" stroke-width="8"/>
+</svg>

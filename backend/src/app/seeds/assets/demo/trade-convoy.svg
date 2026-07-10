@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Trade convoy</title>
+  <desc id="desc">A stylized convoy of sailing ships at golden hour.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#20394d"/><stop offset="1" stop-color="#08111b"/></linearGradient>
+    <linearGradient id="water" x1="0" x2="1"><stop offset="0" stop-color="#183650"/><stop offset="1" stop-color="#0d1c2b"/></linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <circle cx="160" cy="126" r="72" fill="#ffd27a" opacity=".78"/>
+  <rect y="310" width="960" height="230" fill="url(#water)"/>
+  <g transform="translate(140 130)">
+    <path d="M90 220 H395 L350 270 H130 Z" fill="#6b432e"/><rect x="190" y="62" width="8" height="162" fill="#b4855d"/><path d="M200 72 C275 102 282 165 200 206 Z" fill="#ead2a7"/>
+  </g>
+  <g transform="translate(485 165) scale(.82)">
+    <path d="M90 220 H395 L350 270 H130 Z" fill="#5c3929"/><rect x="190" y="62" width="8" height="162" fill="#b4855d"/><path d="M200 72 C270 104 278 158 200 204 Z" fill="#d8c3a1"/>
+  </g>
+  <g transform="translate(670 210) scale(.58)">
+    <path d="M90 220 H395 L350 270 H130 Z" fill="#4f3227"/><rect x="190" y="62" width="8" height="162" fill="#b4855d"/><path d="M200 72 C260 102 266 152 200 204 Z" fill="#cab48e"/>
+  </g>
+  <path d="M20 405 C155 377 285 423 430 398 C610 366 755 424 940 388" fill="none" stroke="#e6edf7" stroke-width="7" stroke-opacity=".2"/>
+  <path d="M0 455 C125 430 285 470 442 447 C620 420 770 470 960 438" fill="none" stroke="#e6edf7" stroke-width="5" stroke-opacity=".16"/>
+</svg>
