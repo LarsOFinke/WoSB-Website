@@ -78,11 +78,15 @@ try:
 except ImportError:
     raise SystemExit(0)
 data = yaml.safe_load(Path(sys.argv[1]).read_text())
-required = {"postgres", "migrate", "seed", "api", "gateway"}
+required = {"postgres", "migrate", "seed", "api", "gateway", "uptime-kuma", "monitoring-gateway"}
 missing = required.difference(data["services"])
 assert not missing, missing
 seed_command = data["services"]["seed"]["command"][2]
 assert "$$AUTO_SEED" in seed_command, seed_command
+monitoring = data["services"]["monitoring-gateway"]
+assert monitoring["profiles"] == ["monitoring"]
+assert "${MONITORING_HTTPS_PORT:-8443}:443" in monitoring["ports"]
+assert "./nginx/monitoring.conf:/etc/nginx/conf.d/default.conf:ro" in monitoring["volumes"]
 controller = Path(sys.argv[2]).read_text()
 steps = [
     'bw_compose up -d postgres',
@@ -141,6 +145,7 @@ PATH="$TMP_DIR/fake-bin:$PATH" "$TMP_DIR/infrastructure/setup.sh" \
 [[ -z "$(find "$TMP_DIR/infrastructure/data/postgres" -mindepth 1 -maxdepth 1 -print -quit)" ]]
 grep -q '^APP_ENV=production$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DB_SCHEMA_MODE=migrate$' "$TMP_DIR/infrastructure/.env"
+grep -q '^MONITORING_HTTPS_PORT=8443$' "$TMP_DIR/infrastructure/.env"
 grep -q '^DATABASE_URL=postgresql+psycopg://' "$TMP_DIR/infrastructure/.env"
 grep -q '^Admin user: validation-admin$' "$TMP_DIR/infrastructure/first-run-credentials.txt"
 openssl x509 -in "$TMP_DIR/infrastructure/data/certs/fullchain.pem" -noout -ext subjectAltName \

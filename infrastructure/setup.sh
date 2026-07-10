@@ -130,7 +130,7 @@ cat <<SUMMARY
  Hostname:        https://${app_hostname}
  API readiness:  https://${app_ip}/api/health/ready
  PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (nur Loopback)
- Monitoring:      $([[ "$PROFILE" == full ]] && printf 'SSH-Tunnel auf localhost:%s' "$(read_env UPTIME_KUMA_LOCAL_PORT)" || printf 'deaktiviert')
+ Monitoring:      $([[ "$PROFILE" == full ]] && printf 'https://%s:%s' "${app_ip}" "$(read_env MONITORING_HTTPS_PORT)" || printf 'deaktiviert')
  Credentials:     $INFRA_DIR/first-run-credentials.txt
 
  Das erste Zertifikat ist selbstsigniert. Der Browser zeigt daher

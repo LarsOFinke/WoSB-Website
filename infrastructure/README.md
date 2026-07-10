@@ -72,11 +72,21 @@ Direct commands are available below `infrastructure/scripts/`.
 - NGINX publishes ports 80 and 443.
 - FastAPI is only exposed to the internal Docker network.
 - PostgreSQL is internal and additionally bound to `127.0.0.1:15432` for optional SSH tunnels.
-- Uptime Kuma is optional and bound to `127.0.0.1:3001`.
+- Uptime Kuma is optional, remains bound to `127.0.0.1:3001` for SSH tunnels and is additionally published through a dedicated TLS reverse proxy on `https://<PI-IP>:8443`.
 
 The setup removes the legacy `infrastructure/data/postgres/.gitkeep` marker before
 PostgreSQL starts. This keeps fresh installations compatible with `initdb` while preserving
 the existing cluster layout of already running alpha installations.
+
+With the `full` profile, the browser-accessible operational endpoints are:
+
+```text
+https://<PI-IP>:8443  Uptime Kuma
+```
+
+Uptime Kuma requires WebSocket proxying and therefore uses its own origin/port rather than a `/monitoring` subpath. On first login, complete Uptime Kuma's own administrator setup and enable **Settings → Reverse Proxy → Trust Proxy**.
+
+PostgreSQL and NGINX do not provide native administration web interfaces. PostgreSQL deliberately remains reachable only through localhost/SSH tunneling.
 
 Example database tunnel:
 
@@ -98,7 +108,7 @@ infrastructure/data/certs/privkey.pem
 Then restart the gateway:
 
 ```bash
-./infrastructure/scripts/services/restart.sh gateway
+./infrastructure/scripts/services/restart.sh gateway monitoring-gateway
 ```
 
 ## Backups

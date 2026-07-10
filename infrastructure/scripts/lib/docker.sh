@@ -78,7 +78,7 @@ deploy_stack() {
 
   local edge_services=(gateway)
   if is_true "$(read_env ENABLE_MONITORING)"; then
-    edge_services+=(uptime-kuma)
+    edge_services+=(uptime-kuma monitoring-gateway)
   fi
   log "Starte Gateway und optionale Betriebsdienste."
   bw_compose_with_profiles up -d --remove-orphans "${edge_services[@]}"

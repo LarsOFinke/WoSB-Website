@@ -20,7 +20,7 @@ sudo ./setup.sh --profile full
 
 This installs and configures Docker, PostgreSQL 16, Alembic migrations, the FastAPI backend,
 the built Vue frontend behind NGINX, self-signed HTTPS, UFW, systemd startup, backups and
-optional Uptime Kuma monitoring.
+optional Uptime Kuma monitoring. With the `full` profile, the monitoring UI is published through NGINX at `https://<PI-IP>:8443`.
 
 Read [`docs/FIRST_RUN.md`](docs/FIRST_RUN.md) and
 [`infrastructure/README.md`](infrastructure/README.md).

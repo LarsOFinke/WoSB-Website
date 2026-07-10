@@ -71,6 +71,7 @@ initialize_env() {
 
   set_env_value APP_HOSTNAME "$app_hostname"
   set_env_value APP_IP "$app_ip"
+  [[ -n "$(read_env MONITORING_HTTPS_PORT)" ]] || set_env_value MONITORING_HTTPS_PORT 8443
   set_env_value POSTGRES_USER blackwater
   set_env_value POSTGRES_DB blackwater
   set_env_value DATABASE_URL "postgresql+psycopg://blackwater:${postgres_password}@postgres:5432/blackwater"
@@ -104,4 +105,5 @@ validate_env() {
   ((${#missing[@]} == 0)) || die "Fehlende .env-Werte: ${missing[*]}"
   [[ "$(read_env DB_SCHEMA_MODE)" == migrate ]] || die "Production benötigt DB_SCHEMA_MODE=migrate."
   [[ "$(read_env DATABASE_URL)" == postgresql+psycopg://* ]] || die "Production benötigt PostgreSQL."
+  [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
 }

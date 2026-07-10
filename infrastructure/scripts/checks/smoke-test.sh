@@ -16,6 +16,21 @@ for attempt in $(seq 1 60); do
     printf '\n'
     rm -f /tmp/blackwater-health.json
     success "Gateway, API und Datenbank sind bereit."
+    if is_true "$(read_env ENABLE_MONITORING)"; then
+      monitoring_port="$(read_env MONITORING_HTTPS_PORT)"
+      [[ "$monitoring_port" =~ ^[0-9]+$ ]] || monitoring_port=8443
+      log "Warte auf Uptime Kuma unter https://${ip}:${monitoring_port}"
+      for _ in $(seq 1 60); do
+        if curl --silent --show-error --fail --insecure --connect-timeout 3 --max-time 5 \
+            --resolve "${hostname}:${monitoring_port}:${ip}" \
+            "https://${hostname}:${monitoring_port}/" >/dev/null 2>&1; then
+          success "Uptime Kuma ist über das Monitoring-Gateway erreichbar."
+          exit 0
+        fi
+        sleep 2
+      done
+      die "Monitoring-Healthcheck ist fehlgeschlagen. Logs: infrastructure/scripts/services/logs.sh uptime-kuma monitoring-gateway"
+    fi
     exit 0
   fi
   sleep 2

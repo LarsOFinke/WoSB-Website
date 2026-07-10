@@ -24,7 +24,7 @@ removed before `initdb`, while an existing database cluster remains untouched.
 ## 3. Open the hub
 
 The completion summary prints the detected URLs. The initial certificate is self-signed, so
-accept the browser warning on trusted LAN devices.
+accept the browser warning on trusted LAN devices. With the `full` profile, Uptime Kuma is available at `https://<PI-IP>:8443`.
 
 The initial administrator credentials are written to:
 
@@ -39,6 +39,7 @@ Store them securely and delete that file.
 ```bash
 make infra-status
 curl --insecure https://<PI-IP>/api/health/ready
+curl --insecure --head https://<PI-IP>:8443/
 ```
 
 Expected API response:
