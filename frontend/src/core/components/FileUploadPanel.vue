@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { ACCEPT_ATTRIBUTE, formatFileSize, maxBytesForFile, uploadFile, validateFileForUpload } from '@/modules/files/api/files'
@@ -9,12 +9,21 @@ const props = defineProps({
     type: String,
     default: 'general',
   },
+  acceptedTypes: {
+    type: Array,
+    default: null,
+  },
+  multiple: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const emit = defineEmits(['uploaded'])
 const { t } = useLocale()
 const uploading = ref(false)
 const error = ref('')
+const acceptAttribute = computed(() => (props.acceptedTypes?.length ? props.acceptedTypes.join(',') : ACCEPT_ATTRIBUTE))
 
 function validationMessage(file, result) {
   if (result.reason === 'type') return t('files.validation.unsupportedType', { name: file.name })
@@ -30,7 +39,9 @@ async function handleFiles(event) {
   error.value = ''
   try {
     for (const file of files) {
-      const validation = validateFileForUpload(file)
+      const validation = props.acceptedTypes?.length && !props.acceptedTypes.includes(String(file.type || '').toLowerCase())
+        ? { valid: false, reason: 'type' }
+        : validateFileForUpload(file)
       if (!validation.valid) {
         error.value = validationMessage(file, validation)
         continue
@@ -54,8 +65,8 @@ async function handleFiles(event) {
       <small>{{ t('files.allowed') }}</small>
       <input
         type="file"
-        multiple
-        :accept="ACCEPT_ATTRIBUTE"
+        :multiple="multiple"
+        :accept="acceptAttribute"
         :disabled="uploading"
         @change="handleFiles"
       />

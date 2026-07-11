@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import { useLocale } from '@/locales'
+import { absoluteFileUrl } from '@/modules/files/api/files'
 
 const props = defineProps({
   ship: { type: Object, required: true },
@@ -64,6 +65,7 @@ const activeEffects = computed(() => props.effectRows.filter((row) => Number(row
 const buffRows = computed(() => activeEffects.value.filter((row) => !rowIsDebuff(row)))
 const debuffRows = computed(() => activeEffects.value.filter((row) => rowIsDebuff(row)))
 const filledUpgradeSlots = computed(() => props.upgradeSlots.filter((slot) => slot?.name).length)
+const shipImageUrl = computed(() => absoluteFileUrl(props.ship?.image_url))
 const shipInitials = computed(() => String(props.ship?.name || 'RBF')
   .split(/\s+/)
   .filter(Boolean)
@@ -93,7 +95,8 @@ const crewUsagePercent = computed(() => {
     <div class="command-deck-overview">
       <article class="command-deck-panel ship-identity-panel">
         <div class="ship-visual" aria-hidden="true">
-          <svg viewBox="0 0 320 180" role="img">
+          <img v-if="shipImageUrl" class="ship-catalog-image" :src="shipImageUrl" alt="" />
+          <svg v-else viewBox="0 0 320 180" role="img">
             <path class="ship-line sail-back" d="M160 25 L112 95 L160 95 Z" />
             <path class="ship-line sail-front" d="M170 38 L211 95 L170 95 Z" />
             <path class="ship-line mast" d="M164 22 L164 118" />

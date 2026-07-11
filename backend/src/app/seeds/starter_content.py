@@ -212,6 +212,24 @@ def _payload(row: dict[str, object], ship_id: int) -> BuildCreate:
     return BuildCreate(**values)
 
 
+def _sync_build_references(guide: Guide, build_names: tuple[str, ...], builds: dict[str, Build]) -> None:
+    current = {reference.build_id: reference for reference in guide.build_references}
+    active_build_ids: set[int] = set()
+    for index, name in enumerate(build_names, start=1):
+        build = builds[name]
+        active_build_ids.add(build.id)
+        reference = current.get(build.id)
+        if reference is None:
+            guide.build_references.append(
+                GuideBuildReference(build_id=build.id, sort_order=index * 10)
+            )
+        else:
+            reference.sort_order = index * 10
+    for reference in list(guide.build_references):
+        if reference.build_id not in active_build_ids:
+            guide.build_references.remove(reference)
+
+
 def seed_starter_content(db: Session) -> None:
     admin = _admin_user(db)
     if admin is None:
@@ -247,8 +265,5 @@ def seed_starter_content(db: Session) -> None:
         guide.body = str(row["body"])
         guide.owner_id = admin.id
         guide.is_published = True
-        guide.build_references[:] = [
-            GuideBuildReference(build_id=builds[name].id, sort_order=index * 10)
-            for index, name in enumerate(row["build_names"], start=1)
-        ]
+        _sync_build_references(guide, tuple(row["build_names"]), builds)
     db.commit()

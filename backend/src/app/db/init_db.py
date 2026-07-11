@@ -67,20 +67,57 @@ def _ensure_sqlite_columns() -> None:
             "hold_capacity": "INTEGER NOT NULL DEFAULT 0",
             "displacement_tons": "INTEGER NOT NULL DEFAULT 0",
             "source": "VARCHAR(120)",
+            "image_url": "VARCHAR(500)",
+            "seed_key": "VARCHAR(220)",
+            "seed_revision": "VARCHAR(80)",
+            "seed_checksum": "VARCHAR(64)",
+            "is_seed_overridden": "BOOLEAN NOT NULL DEFAULT 0",
         }
         for column_name, ddl in ship_column_defaults.items():
             if column_name not in ship_columns:
                 statements.append(f"ALTER TABLE ships ADD COLUMN {column_name} {ddl}")
+        ship_indexes = {index['name'] for index in inspector.get_indexes('ships')}
+        if 'ix_ships_seed_key' not in ship_indexes:
+            statements.append('CREATE UNIQUE INDEX IF NOT EXISTS ix_ships_seed_key ON ships (seed_key)')
 
     if "build_item_options" in table_names:
         option_columns = {column["name"] for column in inspector.get_columns("build_item_options")}
         option_column_defaults = {
             "option_kind": "VARCHAR(40)",
             "weapon_caliber_inches": "FLOAT",
+            "image_url": "VARCHAR(500)",
+            "seed_key": "VARCHAR(220)",
+            "seed_revision": "VARCHAR(80)",
+            "seed_checksum": "VARCHAR(64)",
+            "is_seed_overridden": "BOOLEAN NOT NULL DEFAULT 0",
         }
         for column_name, ddl in option_column_defaults.items():
             if column_name not in option_columns:
                 statements.append(f"ALTER TABLE build_item_options ADD COLUMN {column_name} {ddl}")
+        option_indexes = {index['name'] for index in inspector.get_indexes('build_item_options')}
+        if 'ix_build_item_options_seed_key' not in option_indexes:
+            statements.append(
+                'CREATE UNIQUE INDEX IF NOT EXISTS ix_build_item_options_seed_key '
+                'ON build_item_options (seed_key)'
+            )
+
+    if "build_item_categories" in table_names:
+        category_columns = {column["name"] for column in inspector.get_columns("build_item_categories")}
+        category_column_defaults = {
+            "seed_key": "VARCHAR(220)",
+            "seed_revision": "VARCHAR(80)",
+            "seed_checksum": "VARCHAR(64)",
+            "is_seed_overridden": "BOOLEAN NOT NULL DEFAULT 0",
+        }
+        for column_name, ddl in category_column_defaults.items():
+            if column_name not in category_columns:
+                statements.append(f"ALTER TABLE build_item_categories ADD COLUMN {column_name} {ddl}")
+        category_indexes = {index['name'] for index in inspector.get_indexes('build_item_categories')}
+        if 'ix_build_item_categories_seed_key' not in category_indexes:
+            statements.append(
+                'CREATE UNIQUE INDEX IF NOT EXISTS ix_build_item_categories_seed_key '
+                'ON build_item_categories (seed_key)'
+            )
 
     if "fleet_memberships" in table_names:
         membership_columns = {column["name"] for column in inspector.get_columns("fleet_memberships")}

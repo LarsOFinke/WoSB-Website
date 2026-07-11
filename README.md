@@ -244,3 +244,11 @@ separate buff/debuff intelligence view. Specialist effects scale with quantity c
 live preview and backend. Crew sliders now use dynamic remaining-capacity maxima and automatically
 normalize allocations when effective ship capacity decreases. This is a code-only release with no
 migration or seed run.
+
+
+## Master data administration
+
+Build Designer categories/options and ship catalog values now use seed ownership metadata instead
+of unconditional overwrites. Administrators can maintain values, weapon mounts and image references
+at `/admin/master-data`; intentional overrides survive later seed runs and can be restored to the
+current shipped default. See [`docs/MASTER_DATA_ADMIN.md`](docs/MASTER_DATA_ADMIN.md).

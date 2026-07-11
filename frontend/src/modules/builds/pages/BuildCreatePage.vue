@@ -18,6 +18,7 @@ import {
   selectInventoryItem,
   setInventoryQuantity,
 } from '@/modules/builds/inventorySlots'
+import { absoluteFileUrl } from '@/modules/files/api/files'
 import { listShips } from '@/modules/ships/api/ships'
 
 const router = useRouter()
@@ -108,6 +109,23 @@ function optionMeta(categoryKey, name) {
 
 function optionEffects(categoryKey, name) {
   return optionMeta(categoryKey, name)?.stat_effects || {}
+}
+
+function optionImage(categoryKey, name) {
+  return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url) || slotPlaceholderSrc
+}
+
+function inventoryCategory(fieldName) {
+  if (fieldName.includes('weapon')) return 'weapon'
+  if (fieldName === 'special_crew_slots') return 'special_crew'
+  if (fieldName === 'ammunition_slots') return 'ammunition'
+  if (fieldName === 'consumable_slots') return 'consumable'
+  if (fieldName === 'hold_slots') return 'hold'
+  return ''
+}
+
+function inventoryImage(fieldName, item) {
+  return optionImage(inventoryCategory(fieldName), item)
 }
 
 function upgradeEffects(name) {
@@ -634,7 +652,7 @@ onMounted(async () => {
         </div>
         <div class="equipment-unified-grid">
           <label class="square-slot equipment-slot equipment-slot-sail">
-            <span class="slot-visual"><img :src="slotPlaceholderSrc" alt="" /></span>
+            <span class="slot-visual"><img :src="optionImage('sail', form.sails)" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.sail') }}</span>
             <span class="select-shell">
               <select v-model="form.sails" :aria-label="t('builds.create.equipment.sail')">
@@ -645,7 +663,7 @@ onMounted(async () => {
           </label>
 
           <label v-for="index in equipmentUpgradeCount" :key="index" class="square-slot equipment-slot equipment-slot-upgrade">
-            <span class="slot-visual"><img :src="slotPlaceholderSrc" alt="" /></span>
+            <span class="slot-visual"><img :src="optionImage('upgrade', form[`upgrade_${index}`])" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.upgrade', { index }) }}</span>
             <span class="select-shell">
               <select
@@ -661,7 +679,7 @@ onMounted(async () => {
           </label>
 
           <label class="square-slot equipment-slot equipment-slot-lantern">
-            <span class="slot-visual"><img :src="slotPlaceholderSrc" alt="" /></span>
+            <span class="slot-visual"><img :src="optionImage('lantern', form.lantern)" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.lantern') }}</span>
             <span class="select-shell">
               <select v-model="form.lantern" :aria-label="t('builds.create.equipment.lantern')">
@@ -688,7 +706,7 @@ onMounted(async () => {
             <p v-if="isWeaponFieldUnavailable(arc.fieldName)" class="slot-hint">{{ t('builds.create.weapons.unavailable') }}</p>
             <label v-for="(slot, index) in form[arc.fieldName]" :key="`${arc.fieldName}-${index}`" class="inventory-slot-select with-quantity" :class="{ 'is-invalid': weaponSelectionInvalid(arc.fieldName, slot.item) || weaponFieldOverCapacity(arc.fieldName) }">
               <span class="slot-image-cell">
-                <img :src="slotPlaceholderSrc" :alt="t(arc.altKey, { index: index + 1 })" />
+                <img :src="inventoryImage(arc.fieldName, slot.item)" :alt="t(arc.altKey, { index: index + 1 })" />
               </span>
               <select :value="slot.item" @change="onInventoryItemChange(arc.fieldName, index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
@@ -727,7 +745,7 @@ onMounted(async () => {
             </div>
             <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select with-quantity">
               <span class="slot-image-cell">
-                <img :src="slotPlaceholderSrc" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
+                <img :src="inventoryImage('special_crew_slots', slot.item)" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
               </span>
               <select :value="slot.item" @change="onInventoryItemChange('special_crew_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
@@ -825,7 +843,7 @@ onMounted(async () => {
             <p class="slot-hint">{{ t('builds.create.inventory.ammunitionHint') }}</p>
             <label v-for="(slot, index) in form.ammunition_slots" :key="`ammo-${index}`" class="inventory-slot-select with-quantity">
               <span class="slot-image-cell">
-                <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.ammunitionAlt', { index: index + 1 })" />
+                <img :src="inventoryImage('ammunition_slots', slot.item)" :alt="t('builds.create.inventory.ammunitionAlt', { index: index + 1 })" />
               </span>
               <select :value="slot.item" @change="onInventoryItemChange('ammunition_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
@@ -857,7 +875,7 @@ onMounted(async () => {
             <p class="slot-hint">{{ t('builds.create.inventory.consumablesHint') }}</p>
             <label v-for="(slot, index) in form.consumable_slots" :key="`consumable-${index}`" class="inventory-slot-select with-quantity">
               <span class="slot-image-cell">
-                <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.consumableAlt', { index: index + 1 })" />
+                <img :src="inventoryImage('consumable_slots', slot.item)" :alt="t('builds.create.inventory.consumableAlt', { index: index + 1 })" />
               </span>
               <select :value="slot.item" @change="onInventoryItemChange('consumable_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
@@ -889,7 +907,7 @@ onMounted(async () => {
             <p class="slot-hint">{{ t('builds.create.inventory.holdHint') }}</p>
             <label v-for="(slot, index) in form.hold_slots" :key="`hold-${index}`" class="inventory-slot-select with-quantity">
               <span class="slot-image-cell">
-                <img :src="slotPlaceholderSrc" :alt="t('builds.create.inventory.holdAlt', { index: index + 1 })" />
+                <img :src="inventoryImage('hold_slots', slot.item)" :alt="t('builds.create.inventory.holdAlt', { index: index + 1 })" />
               </span>
               <select :value="slot.item" @change="onInventoryItemChange('hold_slots', index, $event)">
                 <option value="">{{ t('common.empty') }}</option>

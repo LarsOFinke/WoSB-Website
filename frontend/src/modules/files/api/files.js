@@ -5,12 +5,16 @@ import { withQuery } from '@/shared/api/query'
 const EMBEDDABLE_MIME_PREFIXES = ['image/', 'video/']
 const EMBEDDABLE_DOCUMENT_MIME_TYPES = new Set(['application/pdf', 'text/plain'])
 
-export const ACCEPTED_FILE_TYPES = [
+export const IMAGE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/gif',
   'image/webp',
   'image/svg+xml',
+]
+
+export const ACCEPTED_FILE_TYPES = [
+  ...IMAGE_MIME_TYPES,
   'video/mp4',
   'video/webm',
   'video/quicktime',

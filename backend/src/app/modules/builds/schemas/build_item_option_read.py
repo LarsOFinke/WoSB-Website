@@ -13,6 +13,7 @@ class BuildItemOptionRead(BaseModel):
     name: str
     source: str | None = None
     notes: str | None = None
+    image_url: str | None = None
     option_kind: str | None = None
     allowed_slot_types: list[str] = Field(default_factory=list)
     weapon_class: str | None = None

@@ -11,6 +11,7 @@ import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroup
 import { localeCompletenessMessages } from './localeCompleteness'
 import { newcomerGuideMessages } from './newcomerGuide'
 import { mySquadsWorkspaceMessages } from './mySquadsWorkspace'
+import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
 import { squadOrganizationMessages } from './squadOrganization'
@@ -35,6 +36,7 @@ const messageLayers = [
   staffPanelMessages,
   systemOperationsMessages,
   adminDashboardMessages,
+  masterDataMessages,
   finalNavigationAndGroupSignupMessages,
   fleetIdentityMessages,
   registrationAndInventoryCleanupMessages,

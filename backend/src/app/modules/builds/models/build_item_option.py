@@ -21,6 +21,7 @@ class BuildItemOption(Base):
     name: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
     source: Mapped[str | None] = mapped_column(String(240), nullable=True)
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     option_kind: Mapped[str | None] = mapped_column(String(40), nullable=True, index=True)
     weapon_class_id: Mapped[int | None] = mapped_column(
         ForeignKey("weapon_classes.id", ondelete="RESTRICT"), nullable=True, index=True
@@ -28,6 +29,10 @@ class BuildItemOption(Base):
     weapon_caliber_inches: Mapped[float | None] = mapped_column(Float, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    seed_key: Mapped[str | None] = mapped_column(String(220), nullable=True, unique=True, index=True)
+    seed_revision: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    seed_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_seed_overridden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow

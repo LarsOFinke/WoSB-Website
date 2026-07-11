@@ -2,6 +2,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.seeds.ammunition import AMMUNITION_OPTIONS
+from app.seeds.catalog_sync import mark_seed_applied, seed_key, should_apply_seed
 from app.seeds.build_catalog_quality import (
     validate_build_option_catalog,
     validate_lantern_seed_data,
@@ -112,31 +113,58 @@ class SeedManager:
         validate_ship_seed_data(SHIP_SEED_DATA)
         slot_types = {row.code: row for row in self.db.scalars(select(WeaponSlotType)).all()}
         weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
+        active_seed_keys: set[str] = set()
+
         for ship_data in SHIP_SEED_DATA:
-            payload = dict(ship_data)
-            layout = str(payload.pop("weapon_layout", ""))
-            max_weapon_class = payload.pop("max_weapon_class", None)
-            existing = self.db.scalar(select(Ship).where(Ship.name == payload["name"]))
+            raw_payload = dict(ship_data)
+            stable_id = raw_payload.pop("seed_id", raw_payload["name"])
+            layout = str(raw_payload.pop("weapon_layout", ""))
+            max_weapon_class = raw_payload.pop("max_weapon_class", None)
+            raw_payload.setdefault("image_url", None)
+            key = seed_key("ship", stable_id)
+            active_seed_keys.add(key)
+            normalized_mounts = [
+                dict(mount_data)
+                for mount_data in parse_weapon_layout(
+                    layout,
+                    rate=int(raw_payload["rate"]),
+                    max_weapon_class=str(max_weapon_class) if max_weapon_class else None,
+                )
+            ]
+            canonical_payload = {**raw_payload, "weapon_mounts": normalized_mounts}
+
+            existing = self.db.scalar(select(Ship).where(Ship.seed_key == key))
             if existing is None:
-                existing = Ship(**payload)
+                candidate = self.db.scalar(select(Ship).where(Ship.name == raw_payload["name"]))
+                if candidate is not None and candidate.seed_revision == "custom":
+                    raise ValueError(
+                        f"Custom ship {candidate.name!r} conflicts with seed key {key!r}. "
+                        "Rename the custom record or assign a different seed_id."
+                    )
+                existing = candidate
+            if existing is None:
+                existing = Ship(**raw_payload)
                 self.db.add(existing)
                 self.db.flush()
-            else:
-                for field_name, value in payload.items():
-                    setattr(existing, field_name, value)
+            elif existing.seed_key is None:
+                existing.seed_key = key
+
+            if not should_apply_seed(existing, payload=canonical_payload):
+                continue
+
+            for field_name, value in raw_payload.items():
+                setattr(existing, field_name, value)
+
             mounts = {mount.slot_type.code: mount for mount in existing.weapon_mounts}
             active_codes: set[str] = set()
-            for mount_data in parse_weapon_layout(
-                layout,
-                rate=int(payload["rate"]),
-                max_weapon_class=str(max_weapon_class) if max_weapon_class else None,
-            ):
-                code = str(mount_data.pop("slot_type"))
-                class_code = mount_data.pop("max_weapon_class", None)
+            for mount_data in normalized_mounts:
+                mount_payload = dict(mount_data)
+                code = str(mount_payload.pop("slot_type"))
+                class_code = mount_payload.pop("max_weapon_class", None)
                 active_codes.add(code)
                 mount = mounts.get(code)
                 values = {
-                    **mount_data,
+                    **mount_payload,
                     "slot_type_id": slot_types[code].id,
                     "max_weapon_class_id": weapon_classes[str(class_code)].id if class_code else None,
                 }
@@ -148,6 +176,18 @@ class SeedManager:
             for code, mount in mounts.items():
                 if code not in active_codes:
                     existing.weapon_mounts.remove(mount)
+
+            mark_seed_applied(
+                existing,
+                key=key,
+                payload=canonical_payload,
+            )
+
+        for ship in self.db.scalars(select(Ship).where(Ship.seed_key.is_not(None))).all():
+            if ship.seed_key not in active_seed_keys and not ship.is_seed_overridden:
+                ship.is_active = False
+                ship.seed_revision = None
+                ship.seed_checksum = None
         self.db.commit()
 
     def seed_build_options(self) -> None:
@@ -159,47 +199,78 @@ class SeedManager:
         validate_weapon_seed_data(WEAPON_OPTIONS)
         validate_special_crew_seed_data(SPECIAL_CREW_OPTIONS)
         categories: dict[str, BuildItemCategory] = {}
-        active_category_keys = {category["key"] for category in BUILD_ITEM_CATEGORIES}
+        active_category_seed_keys: set[str] = set()
 
         for category_data in BUILD_ITEM_CATEGORIES:
-            existing = self.db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == category_data["key"]))
+            key = seed_key("build-category", category_data["key"])
+            active_category_seed_keys.add(key)
+            existing = self.db.scalar(select(BuildItemCategory).where(BuildItemCategory.seed_key == key))
+            if existing is None:
+                candidate = self.db.scalar(
+                    select(BuildItemCategory).where(BuildItemCategory.key == category_data["key"])
+                )
+                if candidate is not None and candidate.seed_revision == "custom":
+                    raise ValueError(
+                        f"Custom category {candidate.key!r} conflicts with seed key {key!r}."
+                    )
+                existing = candidate
             payload = {**category_data, "is_active": category_data.get("is_active", True)}
             if existing is None:
                 existing = BuildItemCategory(**payload)
                 self.db.add(existing)
                 self.db.flush()
-            else:
+            elif existing.seed_key is None:
+                existing.seed_key = key
+            if should_apply_seed(existing, payload=payload):
                 for field_name, value in payload.items():
                     setattr(existing, field_name, value)
-            categories[existing.key] = existing
+                mark_seed_applied(existing, key=key, payload=payload)
+            categories[str(category_data["key"])] = existing
 
-        # Deactivate categories that used to exist in the DB but are no longer managed.
-        for category in self.db.scalars(select(BuildItemCategory)).all():
-            if category.key not in active_category_keys:
+        for category in self.db.scalars(
+            select(BuildItemCategory).where(BuildItemCategory.seed_key.is_not(None))
+        ).all():
+            if category.seed_key not in active_category_seed_keys and not category.is_seed_overridden:
                 category.is_active = False
+                category.seed_revision = None
+                category.seed_checksum = None
 
         self._migrate_legacy_upgrade_names(categories["upgrade"])
         weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
 
-        active_pairs: set[tuple[str, str]] = set()
+        active_option_seed_keys: set[str] = set()
         for option_group in BUILD_OPTION_SEED_GROUPS:
             for sort_order, option_data in enumerate(_alphabetical_options(list(option_group)), start=10):
                 category_key = str(option_data["category"])
                 category = categories[category_key]
                 option_name = str(option_data["name"]).strip()
-                active_pairs.add((category_key, option_name.casefold()))
+                stable_id = option_data.get("seed_id", option_name)
+                key = seed_key("build-option", category_key, stable_id)
+                active_option_seed_keys.add(key)
 
-                lookup = select(BuildItemOption).where(
-                    BuildItemOption.category_id == category.id,
-                    BuildItemOption.name == option_name,
-                )
-                existing = self.db.scalar(lookup)
+                existing = self.db.scalar(select(BuildItemOption).where(BuildItemOption.seed_key == key))
+                if existing is None:
+                    candidate = self.db.scalar(
+                        select(BuildItemOption).where(
+                            BuildItemOption.category_id == category.id,
+                            BuildItemOption.name == option_name,
+                        )
+                    )
+                    if candidate is not None and candidate.seed_revision == "custom":
+                        raise ValueError(
+                            f"Custom option {category_key}/{candidate.name!r} conflicts with "
+                            f"seed key {key!r}. Rename it or assign a different seed_id."
+                        )
+                    existing = candidate
                 raw_effects = option_data.get("stat_effects")
+                effects = raw_effects if isinstance(raw_effects, dict) else {}
+                allowed_slot_types = str(option_data.get("allowed_slot_types") or "")
                 payload = {
                     "category_id": category.id,
                     "name": option_name,
                     "source": option_data.get("source"),
                     "notes": option_data.get("notes"),
+                    "image_url": option_data.get("image_url"),
                     "option_kind": option_data.get("option_kind"),
                     "weapon_class_id": (
                         weapon_classes[str(option_data["weapon_class"])].id
@@ -210,22 +281,47 @@ class SeedManager:
                     "sort_order": sort_order * 10,
                     "is_active": option_data.get("is_active", True),
                 }
+                canonical_payload = {
+                    "category": category_key,
+                    "name": option_name,
+                    "source": option_data.get("source"),
+                    "notes": option_data.get("notes"),
+                    "image_url": option_data.get("image_url"),
+                    "option_kind": option_data.get("option_kind"),
+                    "weapon_class": option_data.get("weapon_class"),
+                    "weapon_caliber_inches": option_data.get("weapon_caliber_inches"),
+                    "sort_order": sort_order * 10,
+                    "is_active": option_data.get("is_active", True),
+                    "stat_effects": effects,
+                    "allowed_slot_types": sorted(
+                        code.strip() for code in allowed_slot_types.split(",") if code.strip()
+                    ),
+                }
                 if existing is None:
                     existing = BuildItemOption(**payload)
                     self.db.add(existing)
                     self.db.flush()
-                else:
-                    for field_name, value in payload.items():
-                        setattr(existing, field_name, value)
-                self._sync_option_effects(existing, raw_effects if isinstance(raw_effects, dict) else {})
-                self._sync_option_slot_types(existing, str(option_data.get("allowed_slot_types") or ""))
+                elif existing.seed_key is None:
+                    existing.seed_key = key
+                if not should_apply_seed(existing, payload=canonical_payload):
+                    continue
+                for field_name, value in payload.items():
+                    setattr(existing, field_name, value)
+                self._sync_option_effects(existing, effects)
+                self._sync_option_slot_types(existing, allowed_slot_types)
+                mark_seed_applied(
+                    existing,
+                    key=key,
+                    payload=canonical_payload,
+                )
 
-        # Existing local DBs can contain old placeholder rows. Keep them for
-        # historical builds, but hide them from dropdowns and validation.
-        for option in self.db.scalars(select(BuildItemOption).join(BuildItemOption.category)).unique().all():
-            pair = (option.category.key, option.name.casefold())
-            if option.category.key in active_category_keys and pair not in active_pairs:
+        for option in self.db.scalars(
+            select(BuildItemOption).where(BuildItemOption.seed_key.is_not(None))
+        ).all():
+            if option.seed_key not in active_option_seed_keys and not option.is_seed_overridden:
                 option.is_active = False
+                option.seed_revision = None
+                option.seed_checksum = None
 
         self.db.commit()
 
@@ -261,7 +357,7 @@ class SeedManager:
                     BuildItemOption.name == legacy_name,
                 )
             )
-            if legacy is None:
+            if legacy is None or legacy.is_seed_overridden:
                 continue
 
             current = self.db.scalar(

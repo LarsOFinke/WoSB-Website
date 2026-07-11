@@ -37,10 +37,15 @@ class Ship(Base):
     sailor_minimum: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     displacement_tons: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     source: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sail_slots: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     upgrade_slots: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     has_lantern: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    seed_key: Mapped[str | None] = mapped_column(String(220), nullable=True, unique=True, index=True)
+    seed_revision: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    seed_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_seed_overridden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow

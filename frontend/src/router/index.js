@@ -39,11 +39,15 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const { canManageFleet, isAuthenticated, isStaff, sessionState } = useSession()
+  const { canManageFleet, isAdmin, isAuthenticated, isStaff, sessionState } = useSession()
   if (!sessionState.isReady) await loadSession()
 
   if (to.meta.guestOnly && isAuthenticated.value) {
     return typeof to.query.redirect === 'string' ? to.query.redirect : '/profile'
+  }
+
+  if (to.meta.requiresAdmin && !isAdmin.value) {
+    return { name: 'profile' }
   }
 
   if (to.meta.requiresStaff && !isStaff.value) {

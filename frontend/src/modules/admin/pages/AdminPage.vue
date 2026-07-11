@@ -477,6 +477,12 @@ onUnmounted(() => {
             <small>{{ t('admin.quickActions.guidesText') }}</small>
             <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
           </RouterLink>
+          <RouterLink v-if="isAdmin" class="staff-command-card" to="/admin/master-data">
+            <span class="staff-command-card-topline"><AppIcon name="builds" :size="18" />{{ t('masterData.eyebrow') }}</span>
+            <strong>{{ t('masterData.title') }}</strong>
+            <small>{{ t('masterData.subtitle') }}</small>
+            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
+          </RouterLink>
           <RouterLink class="staff-command-card" to="/fleets">
             <span class="staff-command-card-topline"><AppIcon name="fleet" :size="18" />{{ t('fleets.manage.eyebrow') }}</span>
             <strong>{{ t('common.fleetManagement') }}</strong>

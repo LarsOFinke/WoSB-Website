@@ -23,6 +23,7 @@ class ShipRead(BaseModel):
     max_mortar_caliber_inches: int | float | None = None
     displacement_tons: int
     source: str | None = None
+    image_url: str | None = None
     sail_slots: int
     upgrade_slots: int
     has_lantern: bool

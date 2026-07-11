@@ -65,6 +65,7 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
                 name=option.name,
                 source=option.source,
                 notes=option.notes,
+                image_url=option.image_url,
                 option_kind=option.option_kind,
                 allowed_slot_types=allowed_slot_types,
                 weapon_class=option.weapon_class_code,

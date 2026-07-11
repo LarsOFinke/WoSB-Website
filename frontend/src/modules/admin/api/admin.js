@@ -65,3 +65,71 @@ export function createModerator(payload) {
 export function updateUser(id, payload) {
   return put(`/admin/users/${id}`, payload)
 }
+
+export function getMasterDataOverview() {
+  return get('/admin/master-data/overview')
+}
+
+export function getMasterDataTaxonomy() {
+  return get('/admin/master-data/taxonomy')
+}
+
+export function listMasterDataCategories() {
+  return get('/admin/master-data/categories')
+}
+
+export function createMasterDataCategory(payload) {
+  return post('/admin/master-data/categories', payload)
+}
+
+export function updateMasterDataCategory(id, payload) {
+  return put(`/admin/master-data/categories/${id}`, payload)
+}
+
+export function deactivateMasterDataCategory(id) {
+  return deleteRequest(`/admin/master-data/categories/${id}`)
+}
+
+export function restoreMasterDataCategory(id) {
+  return post(`/admin/master-data/categories/${id}/restore-seed`, {})
+}
+
+export function listMasterDataOptions({ category = '', search = '' } = {}) {
+  return get(withQuery('/admin/master-data/options', { category, search }))
+}
+
+export function createMasterDataOption(payload) {
+  return post('/admin/master-data/options', payload)
+}
+
+export function updateMasterDataOption(id, payload) {
+  return put(`/admin/master-data/options/${id}`, payload)
+}
+
+export function deactivateMasterDataOption(id) {
+  return deleteRequest(`/admin/master-data/options/${id}`)
+}
+
+export function restoreMasterDataOption(id) {
+  return post(`/admin/master-data/options/${id}/restore-seed`, {})
+}
+
+export function listMasterDataShips(search = '') {
+  return get(withQuery('/admin/master-data/ships', { search }))
+}
+
+export function createMasterDataShip(payload) {
+  return post('/admin/master-data/ships', payload)
+}
+
+export function updateMasterDataShip(id, payload) {
+  return put(`/admin/master-data/ships/${id}`, payload)
+}
+
+export function deactivateMasterDataShip(id) {
+  return deleteRequest(`/admin/master-data/ships/${id}`)
+}
+
+export function restoreMasterDataShip(id) {
+  return post(`/admin/master-data/ships/${id}/restore-seed`, {})
+}

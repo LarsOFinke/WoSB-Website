@@ -26,6 +26,7 @@ from app.modules.guides.services.guide_service import delete_guide, list_guides
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
 from app.modules.admin.services.user_administration_service import UserAdministrationError, update_user_account
+from app.modules.admin.routes.master_data import router as master_data_router
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -243,3 +244,6 @@ def admin_create_moderator(
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return ModeratorCreateResponse(user=UserRead.model_validate(user))
+
+
+router.include_router(master_data_router)

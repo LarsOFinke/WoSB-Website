@@ -26,6 +26,7 @@ Start here when onboarding, deploying to the Pi server or planning the next prod
 - [Single Fleet Refactor](SINGLE_FLEET_REFACTOR.md)
 - [Fleet Home, Group Signups and Logging](FLEET_HOME_GROUP_SIGNUPS_LOGGING.md)
 - [Build Designer Accuracy](BUILD_DESIGNER_ACCURACY.md)
+- [Master Data Administration](MASTER_DATA_ADMIN.md)
 - [Build Designer: Waffenvalidierung & Special Crew](BUILD_DESIGNER_WEAPONS_AND_CREW.md)
 - [Localization](LOCALIZATION.md)
 - [Inline Media Embeds](INLINE_MEDIA_EMBEDS.md)
