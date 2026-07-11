@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -35,6 +37,6 @@ class CookieConsentDecision(Base):
     preferences: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     analytics: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     external_media: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, index=True)
 
     user: Mapped["User | None"] = relationship(lazy="joined")

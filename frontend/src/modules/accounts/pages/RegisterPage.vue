@@ -78,7 +78,7 @@ async function submitRegister() {
 
             <label class="input-panel elevated-input-panel">
               <span>{{ t('auth.password') }}</span>
-              <input v-model="password" type="password" autocomplete="new-password" required minlength="6" :placeholder="t('auth.passwordPlaceholder')" />
+              <input v-model="password" type="password" autocomplete="new-password" required minlength="12" :placeholder="t('auth.passwordPlaceholder')" />
               <small>{{ t('auth.passwordHint') }}</small>
             </label>
           </section>

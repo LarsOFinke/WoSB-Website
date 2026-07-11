@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
@@ -30,8 +32,8 @@ class Fleet(Base):
     standing_orders: Mapped[str | None] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     memberships: Mapped[list["FleetMembership"]] = relationship(
         "FleetMembership", back_populates="fleet", cascade="all, delete-orphan"

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
@@ -15,9 +17,9 @@ class NewcomerGuidePage(Base):
     title: Mapped[str] = mapped_column(String(180), nullable=False)
     intro: Mapped[str] = mapped_column(Text, nullable=False, default="")
     updated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now
     )
 
     updated_by: Mapped["User | None"] = relationship("User", lazy="joined")

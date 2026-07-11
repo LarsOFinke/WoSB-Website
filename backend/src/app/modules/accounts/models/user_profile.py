@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
@@ -47,8 +49,8 @@ class UserProfile(Base):
     timezone: Mapped[str | None] = mapped_column(String(80), nullable=True)
     discord_handle: Mapped[str | None] = mapped_column(String(120), nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     user: Mapped["User"] = relationship(back_populates="profile")
     ship_preferences: Mapped[list[UserProfileShipPreference]] = relationship(

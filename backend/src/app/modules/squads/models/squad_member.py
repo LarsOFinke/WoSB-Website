@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Text, UniqueConstraint
@@ -27,8 +29,8 @@ class SquadMember(Base):
     )
     squad_role_id: Mapped[int] = mapped_column(ForeignKey("squad_roles.id", ondelete="RESTRICT"), nullable=False, index=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     squad: Mapped["Squad"] = relationship("Squad", back_populates="members")
     fleet_membership: Mapped["FleetMembership"] = relationship("FleetMembership", lazy="joined")

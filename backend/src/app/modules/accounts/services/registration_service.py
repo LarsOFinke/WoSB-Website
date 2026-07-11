@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 import logging
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.password_policy import PasswordPolicyError, validate_password
 from app.core.security import hash_password
 from app.modules.accounts.models.registration_request import RegistrationRequest
 from app.modules.accounts.models.user import User
@@ -48,8 +50,10 @@ def _assert_username_available(db: Session, username: str, *, excluding_request_
 
 def submit_registration_request(db: Session, payload: RegisterRequest) -> RegistrationRequest:
     username = _normalize_username(payload.username)
-    if len(payload.password) < 6:
-        raise RegistrationRequestError("Password must contain at least 6 characters.")
+    try:
+        validate_password(payload.password)
+    except PasswordPolicyError as exc:
+        raise RegistrationRequestError(str(exc)) from exc
     _assert_username_available(db, username)
     request = RegistrationRequest(
         username=username,
@@ -101,7 +105,7 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
     request.status = REGISTRATION_APPROVED
     request.decision_note = payload.note
     request.reviewed_by_id = reviewer.id
-    request.reviewed_at = datetime.utcnow()
+    request.reviewed_at = utc_now()
     request.created_user_id = user.id
     db.add(request)
     db.commit()
@@ -119,7 +123,7 @@ def reject_registration_request(db: Session, request_id: int, reviewer: User, pa
     request.status = REGISTRATION_REJECTED
     request.decision_note = payload.note
     request.reviewed_by_id = reviewer.id
-    request.reviewed_at = datetime.utcnow()
+    request.reviewed_at = utc_now()
     db.add(request)
     db.commit()
     db.refresh(request)

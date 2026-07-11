@@ -1,9 +1,11 @@
-from datetime import datetime, timedelta
+from app.core.time import utc_now
+from datetime import timedelta
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.password_policy import PasswordPolicyError, validate_password
 from app.core.security import create_session_token, hash_password, hash_session_token, verify_password
 from app.modules.accounts.models.auth_session import AuthSession
 from app.modules.accounts.models.registration_request import RegistrationRequest
@@ -33,8 +35,10 @@ def create_user(
         raise AuthError("Username is required.")
     if role not in VALID_ROLES:
         raise AuthError("Invalid role.")
-    if len(password) < 6:
-        raise AuthError("Password must contain at least 6 characters.")
+    try:
+        validate_password(password)
+    except PasswordPolicyError as exc:
+        raise AuthError(str(exc)) from exc
     if db.scalar(select(User).where(User.username == normalized_username)) is not None:
         raise AuthError("Username already exists.")
     if db.scalar(select(RegistrationRequest.id).where(RegistrationRequest.username == normalized_username, RegistrationRequest.status == REGISTRATION_PENDING)) is not None:
@@ -65,7 +69,7 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
 def create_user_session(db: Session, user: User) -> str:
     token = create_session_token()
     token_hash = hash_session_token(token)
-    expires_at = datetime.utcnow() + timedelta(hours=settings.session_ttl_hours)
+    expires_at = utc_now() + timedelta(hours=settings.session_ttl_hours)
     db.add(AuthSession(token_hash=token_hash, user_id=user.id, expires_at=expires_at))
     db.commit()
     return token
@@ -79,14 +83,16 @@ def delete_session_by_token(db: Session, token: str | None) -> None:
 
 
 def delete_expired_sessions(db: Session) -> None:
-    db.execute(delete(AuthSession).where(AuthSession.expires_at <= datetime.utcnow()))
+    db.execute(delete(AuthSession).where(AuthSession.expires_at <= utc_now()))
     db.commit()
 
 def change_user_password(db: Session, user: User, current_password: str, new_password: str) -> None:
     if not verify_password(current_password, user.password_hash):
         raise AuthError("Current password is incorrect.")
-    if len(new_password) < 6:
-        raise AuthError("Password must contain at least 6 characters.")
+    try:
+        validate_password(new_password)
+    except PasswordPolicyError as exc:
+        raise AuthError(str(exc)) from exc
     user.password_hash = hash_password(new_password)
     db.commit()
 

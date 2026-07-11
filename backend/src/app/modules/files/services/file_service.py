@@ -1,7 +1,6 @@
-from datetime import datetime
+from app.core.time import utc_now
 import mimetypes
 from pathlib import Path
-import shutil
 from uuid import uuid4
 
 from fastapi import UploadFile
@@ -93,7 +92,7 @@ def upload_file(db: Session, upload: UploadFile, owner: User, usage_context: str
 
     max_size = _max_size_for_mime_type(mime_type)
 
-    now = datetime.utcnow()
+    now = utc_now()
     folder = Path(settings.upload_dir) / f"{now:%Y}" / f"{now:%m}"
     folder.mkdir(parents=True, exist_ok=True)
     stored_name = f"{uuid4().hex}{extension}"

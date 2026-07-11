@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files smoke config
+.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files smoke doctor config
 
 setup:
 	./setup.sh --profile full
@@ -36,6 +36,9 @@ backup-files:
 
 smoke:
 	./scripts/checks/smoke-test.sh
+
+doctor:
+	./scripts/checks/doctor.sh
 
 config:
 	@source scripts/lib/docker.sh && bw_compose_with_profiles config

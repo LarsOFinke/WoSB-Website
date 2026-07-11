@@ -3,8 +3,8 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 
 import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
+import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
-import { MONITORING_HTTPS_PORT } from '@/config/runtime'
 import { useLocale } from '@/locales'
 import {
   approveRegistrationRequest,
@@ -13,7 +13,6 @@ import {
   deleteAdminForumThread,
   deleteAdminGuide,
   getAdminLogSummary,
-  getSystemUpdateStatus,
   listAdminBuilds,
   listAdminForumThreads,
   listAdminGuides,
@@ -21,7 +20,6 @@ import {
   listRegistrationRequests,
   listUsers,
   rejectRegistrationRequest,
-  requestSystemUpdate,
   updateUser,
 } from '@/modules/admin/api/admin'
 import { closeGroup, listGroups } from '@/modules/groups/api/groups'
@@ -64,13 +62,8 @@ const pendingDelete = reactive({ type: '', id: null })
 const registrationDecisionNotes = reactive({})
 const apiStatus = ref(t('admin.status.loading'))
 const apiStatusDetail = ref(t('admin.status.loadingDetail'))
-const systemUpdate = ref({ state: 'idle', message: '', log_tail: [], request_available: false })
-const systemUpdateLoading = ref(false)
-const systemUpdateError = ref('')
-const systemUpdateSuccess = ref('')
 let searchTimer = null
 let contentTimer = null
-let updatePollTimer = null
 
 const moderatorForm = reactive({ username: '', display_name: '', password: '' })
 
@@ -82,14 +75,6 @@ const registrationCountLabel = computed(() => registrationRequests.value.length 
 const logsCountLabel = computed(() => t('admin.logs.summary', { count: logSummary.value.total || appLogs.value.length }))
 const upcomingEvents = computed(() => [...fleetEvents.value].sort((a, b) => new Date(a.start_at) - new Date(b.start_at)).slice(0, 12))
 const categoryOptions = computed(() => [{ value: '', label: t('calendar.categories.all') }, ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) }))])
-const monitoringUrl = computed(() => {
-  if (typeof window === 'undefined') return `https://royal-blackwater-fleet.eu:${MONITORING_HTTPS_PORT}`
-  return `https://${window.location.hostname}:${MONITORING_HTTPS_PORT}`
-})
-const updateInProgress = computed(() => ['queued', 'running'].includes(systemUpdate.value.state))
-const updateStateLabel = computed(() => t(`admin.system.states.${systemUpdate.value.state || 'idle'}`))
-const updateOperationLabel = computed(() => t(`admin.system.operations.${systemUpdate.value.operation || 'update'}`))
-
 function crewTotal(build) {
   return build.sailors + build.soldiers + build.musketeers + build.mercenaries
 }
@@ -143,55 +128,6 @@ async function loadUsers() {
   }
 }
 
-async function loadSystemUpdate() {
-  if (!isStaff.value) return
-  systemUpdateLoading.value = true
-  systemUpdateError.value = ''
-  try {
-    systemUpdate.value = await getSystemUpdateStatus()
-  } catch (err) {
-    systemUpdateError.value = err.message || t('admin.system.loadError')
-  } finally {
-    systemUpdateLoading.value = false
-  }
-}
-
-function scheduleUpdatePoll() {
-  window.clearTimeout(updatePollTimer)
-  if (!updateInProgress.value) return
-  updatePollTimer = window.setTimeout(async () => {
-    await loadSystemUpdate()
-    scheduleUpdatePoll()
-  }, 3000)
-}
-
-async function triggerSystemUpdate(operation = 'update') {
-  if (!isAdmin.value || updateInProgress.value) return
-  if (operation === 'update_migrate_seed' && !window.confirm(t('admin.system.migrateSeedConfirm'))) return
-
-  systemUpdateError.value = ''
-  systemUpdateSuccess.value = ''
-  systemUpdateLoading.value = true
-  try {
-    const response = await requestSystemUpdate(operation)
-    systemUpdate.value = response.status
-    systemUpdateSuccess.value = t(
-      operation === 'update_migrate_seed'
-        ? 'admin.system.migrateSeedRequestAccepted'
-        : 'admin.system.requestAccepted',
-    )
-    scheduleUpdatePoll()
-  } catch (err) {
-    systemUpdateError.value = err.message || t('admin.system.requestError')
-  } finally {
-    systemUpdateLoading.value = false
-  }
-}
-
-function formatOptionalDateTime(value) {
-  return value ? formatDateTime(value) : '—'
-}
-
 async function loadStatus() {
   if (!isStaff.value) return
   apiStatus.value = t('admin.status.loading')
@@ -206,8 +142,6 @@ async function loadStatus() {
     apiStatus.value = t('admin.status.offline')
     apiStatusDetail.value = t('admin.status.offlineDetail')
   }
-  await loadSystemUpdate()
-  scheduleUpdatePoll()
 }
 
 async function loadRegistrations() {
@@ -434,7 +368,6 @@ onMounted(async () => {
 onUnmounted(() => {
   window.clearTimeout(searchTimer)
   window.clearTimeout(contentTimer)
-  window.clearTimeout(updatePollTimer)
 })
 </script>
 
@@ -509,55 +442,7 @@ onUnmounted(() => {
         </section>
 
         <section v-if="activeTab === 'status'" class="wire-section admin-panel admin-status-panel">
-          <div class="admin-panel-heading">
-            <div><h2>{{ t('admin.status.title') }}</h2><p>{{ t('admin.status.subtitle') }}</p></div>
-            <button class="small-action" type="button" :disabled="systemUpdateLoading" @click="loadStatus">{{ t('admin.system.refresh') }}</button>
-          </div>
-
-          <div class="system-status-grid">
-            <aside class="home-status-card refined-status-card admin-status-card" aria-live="polite">
-              <span>{{ t('admin.status.cardLabel') }}</span><strong>{{ apiStatus }}</strong><p>{{ apiStatusDetail }}</p>
-            </aside>
-
-            <article class="home-status-card refined-status-card system-operation-card">
-              <span>{{ t('admin.system.monitoringTitle') }}</span>
-              <strong>HTTPS · {{ MONITORING_HTTPS_PORT }}</strong>
-              <p>{{ t('admin.system.monitoringText') }}</p>
-              <small>{{ t('admin.system.httpsHint') }}</small>
-              <a class="button-box" :href="monitoringUrl" target="_blank" rel="noopener">{{ t('admin.system.openMonitoring') }}</a>
-            </article>
-
-            <article class="home-status-card refined-status-card system-operation-card system-update-card" aria-live="polite">
-              <span>{{ t('admin.system.updateTitle') }}</span>
-              <strong>{{ updateStateLabel }}</strong>
-              <p>{{ systemUpdate.message || t('admin.system.updateText') }}</p>
-              <dl class="system-update-meta">
-                <div><dt>{{ t('admin.system.operation') }}</dt><dd>{{ updateOperationLabel }}</dd></div>
-                <div><dt>{{ t('admin.system.requestedBy') }}</dt><dd>{{ systemUpdate.requested_by || '—' }}</dd></div>
-                <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.started_at) }}</dd></div>
-                <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.finished_at) }}</dd></div>
-                <div><dt>{{ t('admin.system.commit') }}</dt><dd>{{ systemUpdate.commit_before || '—' }} → {{ systemUpdate.commit_after || '—' }}</dd></div>
-              </dl>
-              <div v-if="isAdmin" class="system-update-actions">
-                <button class="form-button primary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate('update')">
-                  {{ updateInProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
-                </button>
-                <button class="form-button secondary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate('update_migrate_seed')">
-                  {{ t('admin.system.migrateSeedButton') }}
-                </button>
-              </div>
-              <small v-else>{{ t('admin.system.adminOnly') }}</small>
-            </article>
-          </div>
-
-          <p v-if="systemUpdateSuccess" class="success-text table-state">{{ systemUpdateSuccess }}</p>
-          <p v-if="systemUpdateError" class="error-text table-state">{{ systemUpdateError }}</p>
-
-          <section class="system-update-log">
-            <div class="admin-panel-heading compact-heading"><div><h3>{{ t('admin.system.logTitle') }}</h3></div></div>
-            <pre v-if="systemUpdate.log_tail?.length">{{ systemUpdate.log_tail.join('\n') }}</pre>
-            <p v-else class="muted">{{ t('admin.system.logEmpty') }}</p>
-          </section>
+          <SystemOperationsPanel :api-status="apiStatus" :api-status-detail="apiStatusDetail" :is-admin="isAdmin" @refresh-api="loadStatus" />
 
           <div class="workspace-metric-grid admin-dashboard-grid">
             <MetricCard v-if="isAdmin" :label="t('admin.registrations.dashboardLabel')" :value="registrationRequests.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
@@ -669,7 +554,7 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'users' && isAdmin" class="wire-section admin-panel admin-users-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.users.title') }}</h2><p>{{ t('admin.users.subtitle') }}</p></div><span class="summary-pill">{{ userCountLabel }}</span></div>
-          <form class="moderator-form" @submit.prevent="submitModerator"><label class="input-panel embedded-field"><span>{{ t('auth.username') }}</span><input v-model="moderatorForm.username" required minlength="3" maxlength="80" /></label><label class="input-panel embedded-field"><span>{{ t('profile.displayName') }}</span><input v-model="moderatorForm.display_name" required maxlength="120" /></label><label class="input-panel embedded-field"><span>{{ t('auth.password') }}</span><input v-model="moderatorForm.password" type="password" required minlength="6" /></label><button class="form-button primary-action" type="submit">{{ t('admin.users.createModerator') }}</button></form>
+          <form class="moderator-form" @submit.prevent="submitModerator"><label class="input-panel embedded-field"><span>{{ t('auth.username') }}</span><input v-model="moderatorForm.username" required minlength="3" maxlength="80" /></label><label class="input-panel embedded-field"><span>{{ t('profile.displayName') }}</span><input v-model="moderatorForm.display_name" required maxlength="120" /></label><label class="input-panel embedded-field"><span>{{ t('auth.password') }}</span><input v-model="moderatorForm.password" type="password" required minlength="12" /></label><button class="form-button primary-action" type="submit">{{ t('admin.users.createModerator') }}</button></form>
           <p v-if="userLoading" class="muted table-state">{{ t('admin.users.loading') }}</p><p v-if="userError" class="error-text table-state">{{ userError }}</p><p v-if="moderatorSuccess" class="success-text table-state">{{ moderatorSuccess }}</p>
           <div class="admin-user-list">
             <article v-for="row in users" :key="row.id" class="admin-user-row">

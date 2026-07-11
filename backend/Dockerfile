@@ -10,12 +10,13 @@ WORKDIR /app
 RUN addgroup --system --gid 10001 blackwater \
     && adduser --system --uid 10001 --ingroup blackwater --home /app blackwater
 
-COPY pyproject.toml README.md alembic.ini ./
+COPY pyproject.toml requirements.lock README.md alembic.ini ./
 COPY migrations ./migrations
 COPY config ./config
 COPY src ./src
 RUN pip install --upgrade pip \
-    && pip install ".[postgres]"
+    && pip install --requirement requirements.lock \
+    && pip install --no-deps .
 
 RUN mkdir -p /data/uploads \
     && chown -R blackwater:blackwater /app /data/uploads

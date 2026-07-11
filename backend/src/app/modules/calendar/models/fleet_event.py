@@ -1,3 +1,4 @@
+from app.core.time import utc_now
 from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
@@ -23,8 +24,8 @@ class FleetEvent(Base):
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     squad_id: Mapped[int | None] = mapped_column(ForeignKey("squads.id", ondelete="SET NULL"), nullable=True, index=True)
     is_cancelled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     owner: Mapped["User"] = relationship("User", lazy="joined")
     squad: Mapped["Squad | None"] = relationship("Squad", lazy="joined")

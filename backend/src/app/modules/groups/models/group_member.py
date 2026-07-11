@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
@@ -28,7 +30,7 @@ class GroupMember(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
 
-    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     left_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User | None"] = relationship("User", lazy="joined")

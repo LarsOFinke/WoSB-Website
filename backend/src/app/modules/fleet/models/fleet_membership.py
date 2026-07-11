@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint
@@ -25,8 +27,8 @@ class FleetMembership(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     assignment: Mapped[str | None] = mapped_column(String(120), nullable=True)
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     fleet: Mapped["Fleet"] = relationship("Fleet", back_populates="memberships")
     user: Mapped["User"] = relationship("User", back_populates="fleet_memberships")

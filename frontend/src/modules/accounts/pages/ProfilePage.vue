@@ -348,8 +348,8 @@ onMounted(loadProfile)
               <form class="password-form" @submit.prevent="submitPasswordChange">
                 <label class="input-panel embedded-field"><span>{{ t('profile.password.current') }}</span><input v-model="passwordForm.current_password" type="password" autocomplete="current-password" required /></label>
                 <div class="password-field-grid">
-                  <label class="input-panel embedded-field"><span>{{ t('profile.password.new') }}</span><input v-model="passwordForm.new_password" type="password" autocomplete="new-password" required minlength="6" /></label>
-                  <label class="input-panel embedded-field"><span>{{ t('profile.password.repeat') }}</span><input v-model="passwordForm.repeat_password" type="password" autocomplete="new-password" required minlength="6" /></label>
+                  <label class="input-panel embedded-field"><span>{{ t('profile.password.new') }}</span><input v-model="passwordForm.new_password" type="password" autocomplete="new-password" required minlength="12" /></label>
+                  <label class="input-panel embedded-field"><span>{{ t('profile.password.repeat') }}</span><input v-model="passwordForm.repeat_password" type="password" autocomplete="new-password" required minlength="12" /></label>
                 </div>
                 <p v-if="passwordError" class="error-text profile-message">{{ passwordError }}</p>
                 <p v-if="passwordSuccess" class="success-text profile-message">{{ passwordSuccess }}</p>

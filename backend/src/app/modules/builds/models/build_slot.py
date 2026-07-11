@@ -1,3 +1,4 @@
+from app.core.time import utc_now
 from datetime import datetime
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, UniqueConstraint
@@ -24,9 +25,9 @@ class BuildSlot(Base):
         ForeignKey("build_item_options.id"), nullable=False, index=True
     )
     quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now
     )
 
     option: Mapped["BuildItemOption"] = relationship(lazy="joined")

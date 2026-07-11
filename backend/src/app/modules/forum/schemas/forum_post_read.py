@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.constants import normalize_forum_category
 
 from app.modules.accounts.schemas.user_read import UserRead
 from app.modules.files.schemas.file_asset import FileRead

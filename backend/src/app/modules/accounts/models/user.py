@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import OFFICIAL_FLEET_PROFILE_STATUSES, SiteRole
@@ -22,9 +24,9 @@ class User(Base):
     site_role_id: Mapped[int] = mapped_column(ForeignKey("site_roles.id", ondelete="RESTRICT"), nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now
     )
 
     site_role: Mapped["SiteRoleDefinition"] = relationship(

@@ -20,9 +20,10 @@ from app.modules.admin.services.master_data_service import (
     update_option,
     update_ship,
 )
+from app.modules.builds.models.build import Build
 from app.modules.builds.models.build_item_option import BuildItemOption
-from app.modules.guides.models.guide_build_reference import GuideBuildReference
 from app.modules.registry import register_all_models
+from app.modules.guides.models.guide import Guide
 from app.modules.ships.models.ship import Ship
 from app.seeds.catalog_sync import CUSTOM_MASTER_DATA_REVISION
 from app.seeds.manager import SeedManager
@@ -145,17 +146,20 @@ def test_custom_master_data_is_not_adopted_or_overwritten_by_seeding() -> None:
         assert preserved.seed_revision == CUSTOM_MASTER_DATA_REVISION
 
 
-def test_full_seed_is_idempotent_for_starter_guide_build_links() -> None:
+def test_full_seed_is_idempotent_and_never_creates_user_content() -> None:
     with _seeded_db() as db:
-        before = int(db.scalar(select(func.count(GuideBuildReference.id))) or 0)
+        before = (
+            int(db.scalar(select(func.count(Ship.id))) or 0),
+            int(db.scalar(select(func.count(BuildItemOption.id))) or 0),
+        )
         SeedManager(db).run()
-        after = int(db.scalar(select(func.count(GuideBuildReference.id))) or 0)
-        pairs = db.execute(
-            select(GuideBuildReference.guide_id, GuideBuildReference.build_id)
-        ).all()
-        assert before == 6
+        after = (
+            int(db.scalar(select(func.count(Ship.id))) or 0),
+            int(db.scalar(select(func.count(BuildItemOption.id))) or 0),
+        )
         assert after == before
-        assert len(pairs) == len(set(pairs))
+        assert int(db.scalar(select(func.count(Build.id))) or 0) == 0
+        assert int(db.scalar(select(func.count(Guide.id))) or 0) == 0
 
 
 def test_master_data_routes_require_admin() -> None:

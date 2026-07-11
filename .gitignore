@@ -30,3 +30,8 @@ storage/
 backend/storage/uploads/*
 !backend/storage/uploads/demo/
 !backend/storage/uploads/demo/*.svg
+
+# Release artifacts
+release/
+*.zip
+*.zip.sha256

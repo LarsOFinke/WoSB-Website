@@ -8,7 +8,6 @@ from app.seeds.build_catalog_quality import (
 )
 from app.seeds.categories import BUILD_ITEM_CATEGORIES
 from app.seeds.consumables import CONSUMABLE_OPTIONS
-from app.seeds.starter_content import STARTER_BUILD_DATA
 from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
 from app.seeds.sails import SAIL_OPTIONS
@@ -115,20 +114,3 @@ def test_specialist_catalog_matches_verified_screenshot_roster() -> None:
 
 def test_hold_catalog_contains_tackles() -> None:
     assert "Tackles" in {str(row["name"]) for row in HOLD_OPTIONS}
-
-
-def test_official_starter_templates_only_reference_current_upgrade_names() -> None:
-    active_names = {str(row["name"]) for row in UPGRADE_OPTIONS}
-    for build in STARTER_BUILD_DATA:
-        for index in range(1, 7):
-            name = build.get(f"upgrade_{index}")
-            if name:
-                assert name in active_names, f"{build['build_name']}: unknown upgrade {name}"
-
-
-def test_official_starter_templates_reference_active_equipment_catalog() -> None:
-    active_sails = {str(row["name"]) for row in SAIL_OPTIONS}
-    active_lanterns = {str(row["name"]) for row in LANTERN_OPTIONS}
-    for build in STARTER_BUILD_DATA:
-        assert build.get("sails") in active_sails
-        assert build.get("lantern") in active_lanterns

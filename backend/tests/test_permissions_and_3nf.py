@@ -39,7 +39,8 @@ def test_role_hierarchy_protects_administrators_and_allows_lower_account_managem
 def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> None:
     with _db() as db:
         inspector = inspect(db.bind)
-        columns = lambda table: {column["name"] for column in inspector.get_columns(table)}
+        def columns(table: str) -> set[str]:
+            return {column["name"] for column in inspector.get_columns(table)}
         assert "role" not in columns("users")
         assert "role" not in columns("fleet_memberships")
         assert "preferred_ships" not in columns("fleet_memberships")

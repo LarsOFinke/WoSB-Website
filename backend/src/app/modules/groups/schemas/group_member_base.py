@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from app.modules.groups.models.group import GROUP_FOCUS_VALUES
-from app.modules.ships.schemas.ship import ShipRead
-from app.modules.accounts.schemas.user_read import UserRead
-from app.modules.builds.schemas.build_read import BuildRead
 
 class GroupMemberBase(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime, timedelta
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
@@ -54,14 +56,14 @@ class Group(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default=GROUP_STATUS_OPEN, index=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=lambda: datetime.utcnow() + timedelta(hours=DEFAULT_GROUP_LIFETIME_HOURS),
+        default=lambda: utc_now() + timedelta(hours=DEFAULT_GROUP_LIFETIME_HOURS),
         index=True,
     )
     closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -84,7 +86,7 @@ class Group(Base):
 
     @property
     def is_joinable(self) -> bool:
-        return self.status == GROUP_STATUS_OPEN and self.spots_left > 0 and self.expires_at > datetime.utcnow()
+        return self.status == GROUP_STATUS_OPEN and self.spots_left > 0 and self.expires_at > utc_now()
 
 
 # Compatibility export: historically imported from app.modules.groups.models.group.

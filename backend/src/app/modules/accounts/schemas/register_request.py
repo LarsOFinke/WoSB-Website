@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.core.password_policy import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -14,7 +15,7 @@ class RegisterRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     username: str = Field(min_length=3, max_length=80)
-    password: str = Field(min_length=6, max_length=200)
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     display_name: str = Field(min_length=1, max_length=120)
 
     @model_validator(mode="after")

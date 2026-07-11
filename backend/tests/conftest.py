@@ -5,7 +5,10 @@ from pathlib import Path
 import tempfile
 
 
-TEST_ROOT = Path(tempfile.gettempdir()) / "royal-blackwater-fleet-pytest"
+TEST_ROOT = Path(
+    os.environ.get("RBF_TEST_ROOT")
+    or tempfile.mkdtemp(prefix="royal-blackwater-fleet-pytest-")
+).resolve()
 TEST_ROOT.mkdir(parents=True, exist_ok=True)
 TEST_DATABASE = TEST_ROOT / "test.db"
 TEST_DATABASE.unlink(missing_ok=True)
@@ -26,4 +29,4 @@ TEST_ENV_FILE.write_text(
     ),
     encoding="utf-8",
 )
-os.environ.setdefault("RBF_ENV_FILE", str(TEST_ENV_FILE))
+os.environ["RBF_ENV_FILE"] = str(TEST_ENV_FILE)

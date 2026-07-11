@@ -7,7 +7,6 @@ from app.modules.accounts.models.user import User
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.fleet.models.fleet_membership import FleetMembership
 from app.modules.fleet.models.fleet import (
-    FLEET_LEADERSHIP_ROLES,
     FLEET_MEMBER_ACTIVE,
     FLEET_MEMBER_PENDING,
     FLEET_MEMBER_STATUSES,

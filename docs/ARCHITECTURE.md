@@ -1,74 +1,45 @@
-# Architecture Notes
+# Architektur
 
-Royal Blackwater Fleet uses matching feature boundaries in FastAPI and Vue. A domain owns its persistence/contracts/business logic on the backend and its routes/screens/API adapter on the frontend.
-
-## Backend layering
+## Laufzeit
 
 ```text
-src/app/
-├── api/                  router composition and infrastructure endpoints
-├── core/                 config, auth dependencies, logging and errors
-├── db/                   SQLAlchemy engine/session and schema lifecycle
-├── seeds/                deterministic seed data
-└── modules/<domain>/
-    ├── models/            SQLAlchemy persistence classes
-    ├── schemas/           Pydantic contracts
-    ├── services/          business rules and persistence workflows
-    └── routes/            HTTP handlers and dependency boundaries
+Browser → NGINX Gateway → FastAPI → SQLAlchemy → PostgreSQL
+                         ↘ Upload-Verzeichnis
+Uptime Kuma → internes Gateway/Health-Endpunkte
 ```
 
-Keep route handlers thin. A route declares access, parses HTTP input and translates service errors; business rules stay in services.
+NGINX liefert das Vue-Frontend und leitet `/api` an FastAPI weiter. PostgreSQL bleibt im internen
+Compose-Netz; der Loopback-Port dient nur der Host-Wartung.
 
-## Frontend layering
+## Backend
 
-```text
-src/
-├── core/                 app shell, navigation and reusable workspace UI
-├── shared/               cross-domain API/query/content utilities
-├── modules/<domain>/
-│   ├── api/              thin endpoint adapters
-│   ├── pages/            route-level screens
-│   └── routes.js         lazy routes and access metadata
-├── router/               route composition and global session guards
-├── locales/              runtime i18n and message layers
-└── styles/               shared design tokens and workspace sections
-```
+Fachmodule unter `backend/src/app/modules/<domain>` besitzen nach Bedarf `models`, `schemas`,
+`routes` und `services`. Routes übersetzen HTTP, Services enthalten Anwendungslogik, Models bilden
+Persistenz ab. Querschnittsthemen liegen in `core` und `db`.
 
-Do not recreate global `pages/` or `services/` directories. New frontend code belongs to the module that owns the backend domain. Reuse the shared workspace header, metric cards, panels, forms and buttons before adding local CSS.
+Der Build-Designer trennt deklarative Stat-Metadaten von deterministischer Berechnung. Die
+Seed-Orchestrierung ist klein; System-, Schiff- und Build-Option-Katalog werden in getrennten
+Modulen synchronisiert. Produktions-Seeds enthalten keine Nutzerinhalte.
 
-## Access model
+## Frontend
 
-Public product surfaces are intentionally narrow: fleet portal/home, compact fleet overview, login
-and registration. Profile, builds, guides, temporary groups, permanent squads, forum, calendar,
-fleet management, personal workspaces and content creation require login. Staff operations require
-moderator/admin permissions where appropriate.
+`frontend/src/modules/<domain>` kapselt API, Seiten und Komponenten. `core` enthält Shell und
+Navigation, `shared` wiederverwendbare Technik. Build-Berechnung, Crew-Zuordnung,
+Inventar-Reconciliation, Formular-Defaults, Präferenztransfer und Datumskonvertierung sind reine,
+separat testbare JavaScript-Module.
 
-Vue route guards provide redirects and navigation visibility. FastAPI dependencies remain the security source of truth.
+## KISS/SOLID-Leitplanken
 
-## Roles and permissions
+- eine fachliche Wahrheit pro Regel; Frontend zeigt, Backend validiert
+- keine Abstraktion ohne realen zweiten Anwendungsfall
+- UI/Route hängt von Service/Composable ab, nie umgekehrt
+- Katalogdaten, Berechnung, Persistenz und Rendering bleiben getrennt
+- Soft-Delete für historisch referenzierte Stammdaten
+- große Dateien werden nach Verantwortung geteilt; Datenkataloge und Übersetzungen zählen nicht als
+  Anwendungslogik
+- Repository-Checks begrenzen Wachstum von Python-Services und Vue-Seiten
 
-Global website roles:
+## Runtime-Grenzen
 
-- `user`
-- `moderator`
-- `admin`
-
-Fleet roles are scoped per fleet membership, not global account state:
-
-- `member`
-- `fleet_lieutenant`
-- `fleet_admiral`
-
-Staff features check the global role; fleet management checks active fleet leadership membership or admin status.
-
-## Locales
-
-English remains the canonical fallback layer. Every supported locale receives the English base first and then locale-specific overrides.
-
-```text
-de, en, fr, es, pt, ru, cn
-```
-
-## Demo content
-
-Fresh seeds include guides and forum threads with local demo media. They use the same stored-file and attachment model as real uploads, while their routes remain protected by the normal authenticated access policy.
+Laufzeitdaten gehören ausschließlich nach `infrastructure/data`. `.env`, Zugangsdaten, Uploads,
+Backups, Caches, Abhängigkeiten und Build-Ausgaben sind nie Teil eines Release-Archivs.

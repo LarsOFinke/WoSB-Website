@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
@@ -16,8 +18,8 @@ class BuildItemEffect(Base):
     option_id: Mapped[int] = mapped_column(ForeignKey("build_item_options.id", ondelete="CASCADE"), nullable=False, index=True)
     effect_key: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     effect_value: Mapped[float] = mapped_column(Float, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     option: Mapped["BuildItemOption"] = relationship("BuildItemOption", back_populates="effects")
 

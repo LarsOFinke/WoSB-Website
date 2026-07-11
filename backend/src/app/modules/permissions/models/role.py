@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String
@@ -18,7 +20,7 @@ class SiteRoleDefinition(Base):
     rank: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     can_manage_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
 
     users: Mapped[list["User"]] = relationship("User", back_populates="site_role")
 
@@ -34,7 +36,7 @@ class FleetRoleDefinition(Base):
     is_leadership: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     can_manage_fleet: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     can_manage_members: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
 
     memberships: Mapped[list["FleetMembership"]] = relationship("FleetMembership", back_populates="fleet_role")
 
@@ -49,6 +51,6 @@ class SquadRoleDefinition(Base):
     rank: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
     can_manage_roster: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     can_manage_events: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
 
     members: Mapped[list["SquadMember"]] = relationship("SquadMember", back_populates="squad_role")

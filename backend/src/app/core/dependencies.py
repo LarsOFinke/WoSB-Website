@@ -1,4 +1,4 @@
-from datetime import datetime
+from app.core.time import utc_now
 import logging
 
 from fastapi import Cookie, Depends, HTTPException, status
@@ -26,7 +26,7 @@ def get_current_user(
     if auth_session is None:
         return None
 
-    if auth_session.expires_at <= datetime.utcnow():
+    if auth_session.expires_at <= utc_now():
         db.execute(delete(AuthSession).where(AuthSession.id == auth_session.id))
         db.commit()
         logger.info("expired session removed", extra={"user_id": auth_session.user_id})

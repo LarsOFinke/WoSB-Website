@@ -1,4 +1,4 @@
-from datetime import datetime
+from app.core.time import utc_now
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -118,7 +118,7 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     # that point wrote NULL into the non-nullable thread timestamp and caused
     # replies to fail with HTTP 500. Use one explicit activity timestamp for
     # both records instead.
-    activity_at = datetime.utcnow()
+    activity_at = utc_now()
     post.created_at = activity_at
     post.updated_at = activity_at
     thread.updated_at = activity_at
@@ -148,7 +148,7 @@ def update_thread(
     files = get_files_for_owner(db, payload.file_ids, user)
     _validate_post_embeds(payload.body, files)
     opening_post = thread.posts[0]
-    activity_at = datetime.utcnow()
+    activity_at = utc_now()
 
     thread.title = payload.title
     thread.category = normalize_forum_category(payload.category)
@@ -182,7 +182,7 @@ def update_post(
 
     files = get_files_for_owner(db, payload.file_ids, user)
     _validate_post_embeds(payload.body, files)
-    activity_at = datetime.utcnow()
+    activity_at = utc_now()
     post.body = payload.body
     post.updated_at = activity_at
     post.attachments.clear()

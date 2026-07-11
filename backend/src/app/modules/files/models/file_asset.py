@@ -1,3 +1,4 @@
+from app.core.time import utc_now
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
@@ -17,7 +18,7 @@ class StoredFile(Base):
     mime_type: Mapped[str] = mapped_column(String(120), nullable=False)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     usage_context: Mapped[str] = mapped_column(String(40), nullable=False, default="general", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
 
     owner: Mapped["User | None"] = relationship("User", lazy="joined")
 

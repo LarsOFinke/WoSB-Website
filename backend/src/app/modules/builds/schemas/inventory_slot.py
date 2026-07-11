@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
-from app.modules.ships.schemas.ship import ShipRead
 
 class InventorySlot(BaseModel):
     item: str = Field(min_length=1, max_length=160)

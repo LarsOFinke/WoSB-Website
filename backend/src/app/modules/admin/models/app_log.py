@@ -1,3 +1,4 @@
+from app.core.time import utc_now
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, Integer, String, Text
@@ -12,7 +13,7 @@ class AppLog(Base):
     __tablename__ = "app_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, index=True)
     level: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     logger: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)

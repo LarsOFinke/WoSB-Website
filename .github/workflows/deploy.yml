@@ -1,0 +1,49 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      migrate_and_seed:
+        description: Run Alembic migrations and idempotent seed after updating
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Raspberry Pi production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.RBF_DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.RBF_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/rbf_deploy
+          chmod 600 ~/.ssh/rbf_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Update production
+        env:
+          HOST: ${{ secrets.RBF_DEPLOY_HOST }}
+          PORT: ${{ secrets.RBF_DEPLOY_PORT }}
+          USER: ${{ secrets.RBF_DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.RBF_DEPLOY_PATH }}
+          MIGRATE_AND_SEED: ${{ inputs.migrate_and_seed }}
+        run: |
+          port="${PORT:-22}"
+          flags=""
+          [[ "$MIGRATE_AND_SEED" == true ]] && flags="--migrate --seed"
+          printf -v remote 'cd %q && sudo ./update.sh %s' "$DEPLOY_PATH" "$flags"
+          ssh -i ~/.ssh/rbf_deploy -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "$USER@$HOST" "$remote"

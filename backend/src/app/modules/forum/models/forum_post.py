@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.time import utc_now
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Text
@@ -15,8 +17,8 @@ class ForumPost(Base):
     thread_id: Mapped[int] = mapped_column(ForeignKey("forum_threads.id", ondelete="CASCADE"), nullable=False, index=True)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     body: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     thread: Mapped["ForumThread"] = relationship("ForumThread", back_populates="posts")
     author: Mapped["User"] = relationship("User", lazy="joined")

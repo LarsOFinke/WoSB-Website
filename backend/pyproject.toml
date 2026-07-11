@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "royal-blackwater-fleet-backend"
-version = "0.18.0"
+version = "1.0.0"
 description = "FastAPI backend for the Royal Blackwater Fleet."
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.14"
 dependencies = [
   "fastapi>=0.115,<1.0",
   "uvicorn[standard]>=0.30,<1.0",
@@ -28,12 +28,6 @@ dev = [
 [project.scripts]
 rbf-dev = "app.cli.dev:main"
 rbf-seed = "app.cli.seed:main"
-rbv-dev = "app.cli.dev:main"
-rbv-seed = "app.cli.seed:main"
-blackwater-dev = "app.cli.dev:main"
-blackwater-seed = "app.cli.seed:main"
-wosb-dev = "app.cli.dev:main"
-wosb-seed = "app.cli.seed:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -44,3 +38,18 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 src = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+  "error::DeprecationWarning:app\\.",
+  "error::PendingDeprecationWarning:app\\.",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/app/modules/*/models/*.py" = ["F821"]
+"src/app/modules/squads/services/__init__.py" = ["F403"]

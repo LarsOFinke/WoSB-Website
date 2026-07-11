@@ -42,7 +42,7 @@ Options:
   --no-firewall             Do not enable/configure UFW
   --no-systemd              Do not install the boot service
   --no-start                Configure everything but do not start containers
-  --regenerate-secrets      Replace PostgreSQL/admin secrets and TLS certificate
+  --regenerate-secrets      Regenerate bootstrap secrets on an uninitialized installation
   -h, --help                Show this help
 USAGE
 }
@@ -85,7 +85,12 @@ if [[ "$SKIP_HOST" == false && "$EUID" -ne 0 ]]; then
   exec sudo --preserve-env=DEBUG bash "$0" "${sudo_args[@]}"
 fi
 log "RBF First-Run Setup wird vorbereitet."
+"$INFRA_DIR/scripts/checks/preflight.sh" setup
 log "Profil: $PROFILE | Host-Provisioning: $([[ "$SKIP_HOST" == true ]] && echo aus || echo an)"
+
+if [[ "$REGENERATE_SECRETS" == true && -f "$INFRA_DIR/data/postgres/PG_VERSION" ]]; then
+  die "--regenerate-secrets ist nur vor der ersten PostgreSQL-Initialisierung erlaubt. Nutze für bestehende Installationen die dokumentierte Secret-Rotation."
+fi
 
 migrate_legacy_runtime_names() {
   [[ -f "$ENV_FILE" ]] || return 0

@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from app.core.time import utc_now
+from datetime import timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -108,7 +109,7 @@ def create_group(db: Session, payload: GroupCreate, owner_id: int) -> Group:
         allow_guests=payload.allow_guests,
         fleet_restriction=payload.fleet_restriction,
         owner_id=owner_id,
-        expires_at=datetime.utcnow() + timedelta(hours=DEFAULT_GROUP_LIFETIME_HOURS),
+        expires_at=utc_now() + timedelta(hours=DEFAULT_GROUP_LIFETIME_HOURS),
     )
     db.add(group)
     db.commit()
@@ -124,7 +125,7 @@ def close_group(db: Session, group_id: int, current_user: User) -> bool:
         raise GroupValidationError("You can only close your own groups.")
     if group.status != GROUP_STATUS_CLOSED:
         group.status = GROUP_STATUS_CLOSED
-        group.closed_at = datetime.utcnow()
+        group.closed_at = utc_now()
         db.commit()
     return True
 

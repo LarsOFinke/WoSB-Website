@@ -55,7 +55,7 @@ services:
       - .env
     environment:
       RBF_ENV_FILE: /app/config/container.env
-    command: ["sh", "-c", "if [ \"$$AUTO_SEED\" = \"true\" ]; then rbf-seed; else echo \"Seeding disabled.\"; fi"]
+    command: ["sh", "-c", "AUTO_SEED=true rbf-seed"]
     volumes:
       - ./data/uploads:/data/uploads
     restart: "no"

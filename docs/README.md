@@ -1,42 +1,12 @@
-# Documentation Index
+# v1.0-Dokumentation
 
-Start here when onboarding, deploying to the Pi server or planning the next production-grade iteration.
-
-## Foundation documents
-
-- [Project Inventory](PROJECT_INVENTORY.md)
-- [Rebuild Plan](REBUILD_PLAN.md)
-- [Backend Architecture](BACKEND_ARCHITECTURE.md)
-- [Backend Module Structure](MODULE_STRUCTURE.md)
-- [Spring Cleanup](SPRING_CLEANUP.md)
-- [Frontend Architecture](FRONTEND_ARCHITECTURE.md)
-- [Configuration](CONFIGURATION.md)
-- [Raspberry Pi First Run](FIRST_RUN.md)
-- [Infrastructure Architecture](INFRASTRUCTURE_ARCHITECTURE.md)
-- [Alpha Infrastructure Status](ALPHA_INFRASTRUCTURE_STATUS.md)
-- [Database Modes](DATABASE_MODES.md)
-- [Raspberry Pi Deployment (compatibility pointer)](PI_DEPLOYMENT.md)
-- [Operations](OPERATIONS.md)
-- [Production Checklist](PRODUCTION_CHECKLIST.md)
-
-## Feature documents
-
-- [Database Schema](DATABASE_SCHEMA.md)
-- [Admin Dashboard](ADMIN_DASHBOARD.md)
-- [Single Fleet Refactor](SINGLE_FLEET_REFACTOR.md)
-- [Fleet Home, Group Signups and Logging](FLEET_HOME_GROUP_SIGNUPS_LOGGING.md)
-- [Build Designer Accuracy](BUILD_DESIGNER_ACCURACY.md)
-- [Master Data Administration](MASTER_DATA_ADMIN.md)
-- [Build Designer: Waffenvalidierung & Special Crew](BUILD_DESIGNER_WEAPONS_AND_CREW.md)
-- [Build Designer: Ausrüstungsregeln](BUILD_DESIGNER_EQUIPMENT_RULES.md)
-- [Katalog, Cookie-Einwilligung und Asset-Fixes](BUILD_DESIGNER_CATALOG_COOKIE_CONSOLE_FIXES.md)
-- [Localization](LOCALIZATION.md)
-- [Inline Media Embeds](INLINE_MEDIA_EMBEDS.md)
-- [Guide Build Embeds](GUIDE_BUILD_EMBEDS.md)
-- [App Shell UI](APP_SHELL_UI.md)
-- [UI/UX Notes](UI_UX_NOTES.md)
-- [Architecture](ARCHITECTURE.md)
-
-Feature documents are kept because they describe working prototype behavior. The foundation documents above are the current source for deployment and production-readiness decisions.
-
-- [Markdown content and editing](MARKDOWN_CONTENT_AND_EDITING.md)
+| Dokument | Zweck |
+|---|---|
+| [GO_LIVE.md](GO_LIVE.md) | konkrete Abnahme für den Produktionsstart |
+| [INSTALLATION.md](INSTALLATION.md) | neuer Raspberry Pi bis erste Anmeldung |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Systemgrenzen und Modulregeln |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | lokale Entwicklung und Konfiguration |
+| [DATABASE.md](DATABASE.md) | 3NF, Alembic, Seeds und Backups |
+| [TESTING.md](TESTING.md) | minimale Testbasis und Release-Gates |
+| [OPERATIONS.md](OPERATIONS.md) | Updates, Diagnose, Backup und Restore |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | GitHub CI, Release und optionales CD |
