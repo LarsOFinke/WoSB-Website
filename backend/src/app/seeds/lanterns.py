@@ -1,19 +1,15 @@
 """Lantern catalog used by the Build Designer.
 
-Functional lantern families expose normalized stat effects. Cosmetic/event
-families remain selectable without inventing combat modifiers. Every value can
-be reviewed and overridden in the master-data admin.
+The previous numeric effects were planning assumptions, not audited game
+values. They are removed rather than silently feeding incorrect values into the
+live calculator. The records remain fully editable through master data admin,
+so reviewed tooltip values can be added without a schema change.
 """
 
-LANTERN_CATALOG_REVISION = "B20-build-designer-lanterns-2026-07"
+LANTERN_CATALOG_REVISION = "B20-lantern-tooltip-audit-2026-07"
 
 
-def _lantern(
-    seed_id: str,
-    name: str,
-    notes: str,
-    stat_effects: dict[str, int | float] | None = None,
-) -> dict[str, object]:
+def _lantern(seed_id: str, name: str, notes: str) -> dict[str, object]:
     return {
         "category": "lantern",
         "seed_id": seed_id,
@@ -21,21 +17,26 @@ def _lantern(
         "source": LANTERN_CATALOG_REVISION,
         "notes": notes,
         "option_kind": "lantern",
-        "stat_effects": stat_effects or {},
+        "stat_effects": {},
     }
 
 
+_UNVERIFIED = (
+    "Selectable lantern catalog entry. The old planning modifier was removed; "
+    "add the exact current tooltip values in Admin → Master data after verification."
+)
+
 LANTERN_OPTIONS = [
-    _lantern("black", "Black Lantern", "Dark cosmetic lantern family."),
-    _lantern("blue", "Blue Lantern", "Blue cosmetic lantern family."),
-    _lantern("festival", "Festival Lantern", "Seasonal festival lantern family."),
-    _lantern("golden", "Golden Lantern", "Adds 1,000 units of cargo hold capacity.", {"hold_capacity": 1000}),
-    _lantern("green", "Green Lantern", "Green cosmetic lantern family."),
-    _lantern("ice", "Ice Lantern", "Increases broadside armor by 2%.", {"armor_pct": 2}),
-    _lantern("imperial", "Imperial Lantern", "Imperial cosmetic reward lantern family."),
-    _lantern("jack-o-lantern", "Jack-o'-Lantern", "Halloween event lantern family."),
-    _lantern("pirate", "Pirate Lantern", "Pirate-themed cosmetic lantern family."),
-    _lantern("red", "Red Lantern", "Increases reload speed by 3%.", {"reload_pct": 3}),
-    _lantern("storm", "Storm Lantern", "Increases ship speed by 3%.", {"speed_pct": 3}),
-    _lantern("white", "White Lantern", "White cosmetic lantern family."),
+    _lantern("black", "Black Lantern", _UNVERIFIED),
+    _lantern("blue", "Blue Lantern", _UNVERIFIED),
+    _lantern("festival", "Festival Lantern", _UNVERIFIED),
+    _lantern("golden", "Golden Lantern", _UNVERIFIED),
+    _lantern("green", "Green Lantern", _UNVERIFIED),
+    _lantern("ice", "Ice Lantern", _UNVERIFIED),
+    _lantern("imperial", "Imperial Lantern", _UNVERIFIED),
+    _lantern("jack-o-lantern", "Jack-o'-Lantern", _UNVERIFIED),
+    _lantern("pirate", "Pirate Lantern", _UNVERIFIED),
+    _lantern("red", "Red Lantern", _UNVERIFIED),
+    _lantern("storm", "Storm Lantern", _UNVERIFIED),
+    _lantern("white", "White Lantern", _UNVERIFIED),
 ]

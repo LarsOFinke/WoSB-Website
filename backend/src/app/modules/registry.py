@@ -8,6 +8,7 @@ _MODEL_MODULES = (
     "app.modules.accounts.models.user",
     "app.modules.accounts.models.user_profile",
     "app.modules.permissions.models.role",
+    "app.modules.privacy.models.cookie_consent",
     "app.modules.admin.models.app_log",
     "app.modules.builds.models.build",
     "app.modules.builds.models.build_item_category",

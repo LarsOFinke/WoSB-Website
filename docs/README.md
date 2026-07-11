@@ -28,6 +28,8 @@ Start here when onboarding, deploying to the Pi server or planning the next prod
 - [Build Designer Accuracy](BUILD_DESIGNER_ACCURACY.md)
 - [Master Data Administration](MASTER_DATA_ADMIN.md)
 - [Build Designer: Waffenvalidierung & Special Crew](BUILD_DESIGNER_WEAPONS_AND_CREW.md)
+- [Build Designer: Ausrüstungsregeln](BUILD_DESIGNER_EQUIPMENT_RULES.md)
+- [Katalog, Cookie-Einwilligung und Asset-Fixes](BUILD_DESIGNER_CATALOG_COOKIE_CONSOLE_FIXES.md)
 - [Localization](LOCALIZATION.md)
 - [Inline Media Embeds](INLINE_MEDIA_EMBEDS.md)
 - [Guide Build Embeds](GUIDE_BUILD_EMBEDS.md)

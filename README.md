@@ -252,3 +252,8 @@ Build Designer categories/options and ship catalog values now use seed ownership
 of unconditional overwrites. Administrators can maintain values, weapon mounts and image references
 at `/admin/master-data`; intentional overrides survive later seed runs and can be restored to the
 current shipped default. See [`docs/MASTER_DATA_ADMIN.md`](docs/MASTER_DATA_ADMIN.md).
+
+
+## Build Designer catalog and privacy consent
+
+The current production update corrects flat sail-speed calculations, applies the research-slot penalties consistently, stabilizes the 24-entry project Specialist catalog, and removes unverifiable planning values from sails and lanterns. It also adds an append-only cookie-consent history and fixes public asset paths used by the favicon and Build Designer slot placeholder. See [`docs/BUILD_DESIGNER_CATALOG_COOKIE_CONSOLE_FIXES.md`](docs/BUILD_DESIGNER_CATALOG_COOKIE_CONSOLE_FIXES.md).

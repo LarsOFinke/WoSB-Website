@@ -12,6 +12,7 @@ class BuildStatDefinitionRead(BaseModel):
     unit: str | None = None
     pct_effect: str | None = None
     flat_effect: str | None = None
+    calculation_flat_effect: str | None = None
     precision: int = 0
     positive_is_good: bool = True
     source: str | None = None

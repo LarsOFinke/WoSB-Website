@@ -5828,7 +5828,7 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 .footer {
   min-height: 4.2rem;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 1rem;
   padding: 0.8rem 1rem;
@@ -5839,6 +5839,23 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
   text-align: center;
 }
 
+
+.footer-cookie-settings {
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted-soft);
+  font: inherit;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+  cursor: pointer;
+}
+
+.footer-cookie-settings:hover,
+.footer-cookie-settings:focus-visible {
+  color: var(--text);
+}
 .footer-meta {
   color: var(--muted-soft);
   font-size: 0.72rem;

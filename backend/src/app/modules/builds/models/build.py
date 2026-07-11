@@ -8,6 +8,7 @@ from app.db.base import Base
 from app.modules.ships.models.ship import Ship
 from app.modules.builds.services.build_stat_service import build_base_stats, build_stat_rows, effective_stats_from_rows
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
+from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 
 if TYPE_CHECKING:
     from app.modules.accounts.models.user import User
@@ -211,11 +212,20 @@ class Build(Base):
         lantern_effects = self._slot_effect_totals({"lantern"})
         upgrade_effects = self._upgrade_effect_totals()
         special_crew_effects = self._special_crew_effect_totals()
-        effects = self._combine_effects(sail_effects, lantern_effects, upgrade_effects, special_crew_effects)
+        research_effects = research_upgrade_slot_effects(self.research_upgrade_slot_unlocked)
+        effects = self._combine_effects(
+            sail_effects, lantern_effects, upgrade_effects, special_crew_effects, research_effects
+        )
         unlock_effects = self._upgrade_effect_totals(max_index=BASE_UPGRADE_SLOT_LIMIT)
         crew_total = self.sailors + self.soldiers + self.musketeers + self.mercenaries
         base_crew_capacity = self.ship.crew_capacity
-        effective_crew_capacity = max(0, base_crew_capacity + int(effects.get("crew_capacity", 0)))
+        effective_crew_capacity = max(
+            0,
+            round(
+                base_crew_capacity * (1 + float(effects.get("crew_capacity_pct", 0) or 0) / 100)
+                + float(effects.get("crew_capacity", 0) or 0)
+            ),
+        )
         base_sailor_minimum = self.ship.sailor_minimum
         effective_sailor_minimum = max(0, base_sailor_minimum + int(effects.get("sailor_minimum", 0)))
         weapon_slots = {
@@ -287,6 +297,7 @@ class Build(Base):
             "lantern_effects": lantern_effects,
             "upgrade_effects": upgrade_effects,
             "special_crew_effects": special_crew_effects,
+            "research_upgrade_slot_effects": research_effects,
             "upgrade_buffs": buffs,
             "upgrade_debuffs": debuffs,
             "base_stats": base_stats,

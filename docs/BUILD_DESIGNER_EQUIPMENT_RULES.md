@@ -1,70 +1,71 @@
 # Build-Designer: Ausrüstungsregeln und Stat-Berechnung
 
-## Ziel
+## Grundsatz
 
-Der Build-Designer behandelt Ausrüstung nicht mehr nur als Anzeige- oder Inventarwert. Segel, Laternen, Upgrades und Spezialisten liefern ihre Effekte über dieselbe normalisierte Effektstruktur. Frontend-Vorschau und Backend-Berechnung nutzen dieselben Effekt-Schlüssel und validieren Slots serverseitig.
+Der Build-Designer berechnet Segel, Laternen, Upgrades, Spezialisten und die Forschungsbelohnung über dieselben normalisierten Effekt-Schlüssel. Frontend-Vorschau und Backend verwenden dieselbe Struktur; das Backend validiert Kapazitäten und Slots erneut.
 
-## Stat-Effekte
+Effekte werden in `build_item_effects` gespeichert. Seed-Daten liefern überarbeitbare Defaults. Änderungen unter **Admin → Stammdaten** werden als Override geschützt.
 
-Effekte bleiben Stammdaten und werden in `equipment_option_effects` gespeichert. Der Seed liefert nur überarbeitbare Defaults. Änderungen über **Admin → Stammdaten** werden als Admin-Override geschützt und bei späteren Seed-Läufen nicht überschrieben.
+## Überprüfte Segel- und Laternenwerte
 
-Aktuelle Projekt-Defaults:
+Frühere Prozentwerte für Segel und frei angenommene Laternenboni wurden entfernt. Sie waren keine belastbar geprüften Spielwerte.
+
+Aktuell als exakter Tooltip-Wert hinterlegt:
 
 | Ausrüstung | Effekt |
 | --- | --- |
-| Tarpaulin Sails | Geschwindigkeit +2 % |
-| Raiding Sails | Geschwindigkeit +4 % |
-| Imported Sails | Geschwindigkeit +6 % |
-| Elite Sails | Geschwindigkeit +8 % |
-| Golden Lantern | Laderaum +1.000 |
-| Ice Lantern | Panzerung +2 % |
-| Red Lantern | Nachladegeschwindigkeit +3 % |
-| Storm Lantern | Geschwindigkeit +3 % |
+| Raiding Sails / Überfallsegel | `+4,1 kn` Geschwindigkeit und `-20 %` Reisegeschwindigkeits-Zuwachs |
 
-Die übrigen Laternen bleiben derzeit kosmetisch und besitzen bewusst keinen Stat-Effekt. Die Zahlen sind wartbare Projektwerte, keine als offiziell verifizierten Spielwerte. Sie können ohne Codeänderung über die Stammdatenverwaltung angepasst werden.
+Für Tarpaulin, Imported und Elite Sails sowie die zwölf Laternen bleiben die Effektobjekte leer, solange kein aktueller Tooltip-Nachweis vorliegt. Die Einträge bleiben auswählbar und über die Stammdatenverwaltung editierbar. So zeigt der Live-Rechner keine erfundenen Werte an.
 
-## Waffen-Slots
+Die Stat-Engine unterstützt dabei sowohl absolute Geschwindigkeitswerte (`speed_knots`) als auch Prozentwerte (`speed_pct`) und separate Werte wie `cruising_speed_gain_pct`.
 
-Die Slot-Kompatibilität wird über `ship_weapon_mounts` und `equipment_option_slot_types` abgebildet. Schiffsnamen werden nicht im Build-Service hart codiert.
+## Laternenwechsel
 
-- Normale Front-, Heck-, Backbord- und Steuerbord-Slots akzeptieren normale Waffen.
-- Der Mörser-Slot akzeptiert `mortar` und `mortar_launcher`.
-- Der Spezialwaffen-Slot akzeptiert ausschließlich `special_weapon`.
-- `Barrel Launcher` ist `mortar_launcher` und ausschließlich dem Mörser-Slot zugeordnet.
-- `Alchemical Fire` und `Imperial Bombard` sind Spezialwaffen und werden nur auf Schiffen mit einem `weapon_special`-Mount angeboten.
-- Huracan besitzt im Seed zwei Spezialwaffenplätze; Deadfish besitzt einen.
-
-Die API prüft diese Regeln erneut. Manipulierte Frontend-Payloads können daher keine unzulässige Waffe speichern.
+Segel- und Laternen-Dropdowns zeigen keine redundante Stat-Zeile mehr. Die Auswahl bleibt ein normales `v-model`-Select und kann beliebig ersetzt oder geleert werden. Auswirkungen erscheinen ausschließlich im Live-Rechner.
 
 ## Zusätzlicher Upgrade-Slot
 
-Ein Build besitzt das persistierte Flag `research_upgrade_slot_unlocked`. Der Nutzer aktiviert es im Designer, wenn die accountweite Forschungsbelohnung freigeschaltet ist.
+Ein Build besitzt das persistierte Flag `research_upgrade_slot_unlocked`. Wird die accountweite Forschungsbelohnung aktiviert, gelten neben dem zusätzlichen Slot automatisch folgende normalisierte Mali:
 
-Die Slotberechnung unterscheidet unabhängige Freischaltungen:
+- Haltbarkeit `-10 %`
+- Geschwindigkeit `-10 %`
+- Manövrierbarkeit `-10 %`
+- Panzerung `-10 %`
+- Laderaum `-10 %`
+- Crewkapazität `-10 %`
 
-1. Basis-Slots des Schiffs
-2. Forschungsbelohnung
-3. `extra_upgrade_slots` aus ausgewählten Upgrades
+Die Mali wirken in der Live-Vorschau, in gespeicherten Build-Stats und in der serverseitigen Crewkapazitätsprüfung.
 
-Damit kann Slot 5 durch eine der Freischaltungen geöffnet werden. Slot 6 ist verfügbar, wenn das Schiff ihn bereits besitzt oder zwei unabhängige zusätzliche Freischaltungen zusammenkommen. Dieselbe Berechnung wird im Frontend und Backend verwendet; das Backend bleibt maßgeblich.
+## Spezialisten
+
+Der Projektkatalog enthält 24 aktive Spezialisten mit stabilen `seed_id`-Werten. Dadurch können Bezeichnungen später geändert werden, ohne gespeicherte Builds oder Admin-Overrides zu verlieren.
+
+Die öffentlich verfügbaren B20-Hinweise bestätigen das Specialist-System, enthalten aber keine vollständige maschinenlesbare Liste mit aktuellen Namen und Effekten. Der Katalog ist deshalb ausdrücklich als projektgepflegter Stand markiert. Exakte Änderungen aus dem Spiel können über **Admin → Stammdaten** eingepflegt und anschließend mit derselben stabilen Seed-ID in den Seed übernommen werden.
+
+## Waffen-Slots
+
+Die Slot-Kompatibilität wird über `ship_weapon_mounts` und `build_item_option_slot_types` abgebildet.
+
+- Barrel Launcher: ausschließlich Mörser-Slot
+- Alchemical Fire und Imperial Bombard: ausschließlich Spezialwaffen-Mounts
+- normale Front-, Heck- und Breitseiten-Slots: nur kompatible normale Waffen
 
 ## Migration und Rollout
 
-Migration:
+Die Cookie-Erweiterung ergänzt die aktuelle Alembic-Kette bis:
 
 ```text
-c3d4e5f6a7b8_build_designer_equipment_rules.py
+d4e5f6a7b8c9_cookie_consent.py
 ```
 
-Sie ergänzt `builds.research_upgrade_slot_unlocked` mit einem sicheren Standardwert `false`. Für bestehende Builds ändert sich dadurch nichts.
-
-Deployment aus einem Git-Checkout:
+Deployment aus Git:
 
 ```bash
 sudo ./update.sh --migrate --seed
 ```
 
-Deployment aus einem entpackten ZIP ohne Git-Pull:
+Deployment aus einem ZIP ohne Git-Pull:
 
 ```bash
 sudo ./update.sh --skip-pull --migrate --seed

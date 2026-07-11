@@ -13,6 +13,7 @@ from app.modules.forum.routes import router as forum_router
 from app.modules.groups.routes import router as groups_router
 from app.modules.guides.routes import router as guides_router
 from app.modules.onboarding.routes import router as newcomer_guide_router
+from app.modules.privacy.routes import router as privacy_router
 from app.modules.ships.routes import router as ships_router
 from app.modules.squads.routes import router as squads_router
 
@@ -26,6 +27,7 @@ router.include_router(squads_router)
 router.include_router(forum_router)
 router.include_router(guides_router)
 router.include_router(newcomer_guide_router)
+router.include_router(privacy_router)
 router.include_router(auth_router)
 router.include_router(admin_router)
 router.include_router(home_router, tags=["home"])

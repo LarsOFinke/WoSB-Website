@@ -21,6 +21,7 @@ class StatDefinition:
     unit: str | None = None
     pct_effect: str | None = None
     flat_effect: str | None = None
+    calculation_flat_effect: str | None = None
     precision: int = 0
     positive_is_good: bool = True
     source: str = "ship_catalog"
@@ -28,11 +29,15 @@ class StatDefinition:
 
 STAT_DEFINITIONS: tuple[StatDefinition, ...] = (
     StatDefinition("durability", "Durability", "survivability", "durability", pct_effect="hull_hp_pct", precision=0),
-    StatDefinition("speed_knots", "Speed", "mobility", "speed_knots", unit="kn", pct_effect="speed_pct", precision=1),
+    StatDefinition("speed_knots", "Speed", "mobility", "speed_knots", unit="kn", pct_effect="speed_pct", calculation_flat_effect="speed_knots", precision=1),
+    StatDefinition("speed_bonus_knots", "Speed bonus", "mobility", unit="kn", flat_effect="speed_knots", precision=1, source="equipment_modifiers"),
+    StatDefinition("cruising_speed_gain_pct", "Cruising speed gain", "mobility", unit="%", flat_effect="cruising_speed_gain_pct", precision=0, source="equipment_modifiers"),
     StatDefinition("maneuverability", "Maneuverability", "mobility", "maneuverability", pct_effect="turn_rate_pct", precision=0),
     StatDefinition("armor", "Broadside armor", "survivability", "armor", unit="%", pct_effect="armor_pct", precision=1),
-    StatDefinition("hold_capacity", "Cargo hold", "logistics", "hold_capacity", unit="t", flat_effect="hold_capacity", precision=0),
-    StatDefinition("crew_capacity", "Crew capacity", "crew", "crew_capacity", flat_effect="crew_capacity", precision=0),
+    StatDefinition("hold_capacity", "Cargo hold", "logistics", "hold_capacity", unit="t", pct_effect="hold_capacity_pct", calculation_flat_effect="hold_capacity", precision=0),
+    StatDefinition("hold_capacity_bonus", "Cargo hold bonus", "logistics", unit="t", flat_effect="hold_capacity", precision=0, source="upgrade_modifiers"),
+    StatDefinition("crew_capacity", "Crew capacity", "crew", "crew_capacity", pct_effect="crew_capacity_pct", calculation_flat_effect="crew_capacity", precision=0),
+    StatDefinition("crew_capacity_bonus", "Crew capacity bonus", "crew", flat_effect="crew_capacity", precision=0, source="upgrade_modifiers"),
     StatDefinition("sailor_minimum", "Sailor minimum", "crew", "sailor_minimum", flat_effect="sailor_minimum", precision=0, positive_is_good=False),
     StatDefinition("displacement_tons", "Displacement", "ship", "displacement_tons", unit="t", precision=0),
     StatDefinition("reload_pct", "Reload speed", "combat", unit="%", flat_effect="reload_pct", precision=0, source="upgrade_modifiers"),
@@ -71,6 +76,7 @@ def stat_definitions_for_api() -> list[dict[str, Any]]:
             "unit": definition.unit,
             "pct_effect": definition.pct_effect,
             "flat_effect": definition.flat_effect,
+            "calculation_flat_effect": definition.calculation_flat_effect,
             "precision": definition.precision,
             "positive_is_good": definition.positive_is_good,
             "source": definition.source,
@@ -132,8 +138,9 @@ def build_stat_rows(ship: object, effects: Mapping[str, int | float]) -> list[di
         effective_value: float | None = base_value
         if base_value is not None and definition.pct_effect:
             effective_value = base_value * (1 + float(effects.get(definition.pct_effect, 0) or 0) / 100)
-        if effective_value is not None and definition.flat_effect:
-            effective_value += float(effects.get(definition.flat_effect, 0) or 0)
+        calculation_flat_effect = definition.calculation_flat_effect or definition.flat_effect
+        if effective_value is not None and calculation_flat_effect:
+            effective_value += float(effects.get(calculation_flat_effect, 0) or 0)
         if effective_value is None and definition.flat_effect:
             effective_value = modifier
 

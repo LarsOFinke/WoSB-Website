@@ -1,6 +1,7 @@
 <script setup>
 import AppFooter from '@/core/components/AppFooter.vue'
 import AppNavbar from '@/core/components/AppNavbar.vue'
+import CookieConsentBanner from '@/modules/privacy/components/CookieConsentBanner.vue'
 import { useLocale } from '@/locales'
 
 const { t } = useLocale()
@@ -14,5 +15,6 @@ const { t } = useLocale()
       <RouterView />
     </main>
     <AppFooter />
+    <CookieConsentBanner />
   </div>
 </template>

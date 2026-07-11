@@ -13,6 +13,7 @@ from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
 from app.modules.builds.schemas.inventory_slot import InventorySlot
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
+from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 
 
 class BuildValidationError(ValueError):
@@ -386,8 +387,16 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
         total_effects[key] = total_effects.get(key, 0) + value
     for key, value in special_crew_effects.items():
         total_effects[key] = total_effects.get(key, 0) + value
+    for key, value in research_upgrade_slot_effects(build.research_upgrade_slot_unlocked).items():
+        total_effects[key] = total_effects.get(key, 0) + value
 
-    effective_crew_capacity = max(0, ship.crew_capacity + int(total_effects.get("crew_capacity", 0)))
+    effective_crew_capacity = max(
+        0,
+        round(
+            ship.crew_capacity * (1 + float(total_effects.get("crew_capacity_pct", 0) or 0) / 100)
+            + float(total_effects.get("crew_capacity", 0) or 0)
+        ),
+    )
     effective_sailor_minimum = max(0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0)))
     crew_total = _crew_total(build)
     if build.sailors < effective_sailor_minimum:

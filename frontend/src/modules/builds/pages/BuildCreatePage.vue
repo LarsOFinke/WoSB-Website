@@ -2,6 +2,8 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
+import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
+
 import { useLocale } from '@/locales'
 import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
@@ -26,12 +28,11 @@ const router = useRouter()
 const { optionLabel, t } = useLocale()
 
 const ships = ref([])
-const optionCatalog = ref({ categories: [], options: {} })
+const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {} })
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
 
-const slotPlaceholderSrc = '/icons/slot-placeholder.svg'
 const equipmentUpgradeCount = 6
 const weaponArcFields = [
   { fieldName: 'front_weapon_slots', labelKey: 'builds.create.weapons.front', altKey: 'builds.create.weapons.frontAlt' },
@@ -202,10 +203,16 @@ const equipmentEffectTotals = computed(() => sumEffects(
   optionEffects('sail', form.sails),
   optionEffects('lantern', form.lantern),
 ))
+const researchUpgradeEffectTotals = computed(() => (
+  form.research_upgrade_slot_unlocked
+    ? optionCatalog.value.research_upgrade_slot_effects || {}
+    : {}
+))
 const buildEffectTotals = computed(() => sumEffects(
   equipmentEffectTotals.value,
   upgradeEffectTotals.value,
   specialCrewEffectTotals.value,
+  researchUpgradeEffectTotals.value,
 ))
 const upgradeAccess = computed(() => calculateUpgradeSlotAccess({
   shipUpgradeSlots: selectedShip.value?.upgrade_slots || 0,
@@ -216,7 +223,10 @@ const upgradeAccess = computed(() => calculateUpgradeSlotAccess({
 const upgradeSlot5Unlocked = computed(() => upgradeAccess.value.slot5Unlocked)
 const upgradeSlot6Available = computed(() => upgradeAccess.value.slot6Available)
 const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
-const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(buildEffectTotals.value.crew_capacity) || 0)))
+const crewCapacity = computed(() => Math.max(0, Math.round(
+  baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
+  + (Number(buildEffectTotals.value.crew_capacity) || 0),
+)))
 const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
 
 const crewTotal = computed(
@@ -248,7 +258,9 @@ const buildStatRows = computed(() => statDefinitions.value
 
     let effective = base
     if (effective !== null && definition.pct_effect) effective *= (1 + pctModifier / 100)
-    if (effective !== null && definition.flat_effect) effective += flatModifier
+    const calculationFlatModifier = Number(buildEffectTotals.value[definition.calculation_flat_effect] || 0)
+    if (effective !== null && definition.calculation_flat_effect) effective += calculationFlatModifier
+    else if (effective !== null && definition.flat_effect) effective += flatModifier
     if (effective === null && definition.flat_effect) effective = flatModifier
 
     return {
@@ -664,7 +676,6 @@ onMounted(async () => {
                 <option value="">{{ t('common.empty') }}</option>
                 <option v-for="option in optionsFor('sail')" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
-              <small v-if="form.sails" class="slot-effect-text">{{ formatEffects(form.sails, 'sail') }}</small>
             </span>
           </label>
 
@@ -692,7 +703,6 @@ onMounted(async () => {
                 <option value="">{{ t('common.empty') }}</option>
                 <option v-for="option in optionsFor('lantern')" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
-              <small v-if="form.lantern" class="slot-effect-text">{{ formatEffects(form.lantern, 'lantern') }}</small>
             </span>
           </label>
         </div>

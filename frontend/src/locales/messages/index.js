@@ -12,6 +12,7 @@ import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroup
 import { localeCompletenessMessages } from './localeCompleteness'
 import { newcomerGuideMessages } from './newcomerGuide'
 import { mySquadsWorkspaceMessages } from './mySquadsWorkspace'
+import { privacyMessages } from './privacy'
 import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
@@ -24,6 +25,7 @@ import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
   appShellMessages,
+  privacyMessages,
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,

@@ -1,4 +1,10 @@
 import assert from 'node:assert/strict'
+import { existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const scriptDir = dirname(fileURLToPath(import.meta.url))
+const frontendRoot = resolve(scriptDir, '..')
 
 import {
   emptyInventorySlot,
@@ -96,5 +102,26 @@ const stackedAccess = calculateUpgradeSlotAccess({
 assert.equal(stackedAccess.slot5Unlocked, true)
 assert.equal(stackedAccess.slot6Available, true)
 assert.equal(stackedAccess.availableSlots, 6)
+
+
+const buildCreateSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/pages/BuildCreatePage.vue'), 'utf8')
+const indexSource = readFileSync(resolve(frontendRoot, 'index.html'), 'utf8')
+
+assert.match(buildCreateSource, /import slotPlaceholderSrc from '@\/assets\/slot-placeholder\.svg'/)
+assert.doesNotMatch(buildCreateSource, /\/icons\/slot-placeholder\.svg/)
+assert.match(buildCreateSource, /<select v-model="form\.lantern"/)
+assert.match(buildCreateSource, /optionsFor\('lantern'\)/)
+
+const sailBlock = buildCreateSource.match(/equipment-slot-sail[\s\S]*?<\/label>/)?.[0] || ''
+const lanternBlock = buildCreateSource.match(/equipment-slot-lantern[\s\S]*?<\/label>/)?.[0] || ''
+assert.doesNotMatch(sailBlock, /slot-effect-text|formatEffects/)
+assert.doesNotMatch(lanternBlock, /slot-effect-text|formatEffects/)
+assert.match(buildCreateSource, /researchUpgradeEffectTotals/)
+assert.match(buildCreateSource, /researchUpgradeEffectTotals\.value/)
+
+assert.doesNotMatch(indexSource, /\/branding\/rbf-fleet-icon\.png/)
+assert.match(indexSource, /\/rbf-fleet-icon\.png/)
+assert.equal(existsSync(resolve(frontendRoot, 'public/rbf-fleet-icon.png')), true)
+assert.equal(existsSync(resolve(frontendRoot, 'src/assets/slot-placeholder.svg')), true)
 
 console.log('Build designer regression checks passed.')

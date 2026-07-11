@@ -7,6 +7,7 @@ from app.modules.builds.schemas.build_item_category_read import BuildItemCategor
 from app.modules.builds.schemas.build_item_option_read import BuildItemOptionRead
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
 from app.modules.builds.services.build_stat_service import stat_definitions_for_api
+from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.weapon_mount import ShipWeaponMount
 from app.modules.ships.services.weapon_compatibility import is_weapon_compatible
@@ -81,4 +82,5 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
         categories=[BuildItemCategoryRead.model_validate(category) for category in categories],
         options=grouped,
         stat_definitions=stat_definitions_for_api(),
+        research_upgrade_slot_effects=dict(RESEARCH_UPGRADE_SLOT_EFFECTS),
     )

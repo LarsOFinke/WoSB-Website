@@ -23,7 +23,7 @@ REQUIRED_SHIP_FIELDS = (
 REQUIRED_UPGRADE_FIELDS = ("category", "name", "source", "notes", "option_kind", "stat_effects")
 MIN_LANTERN_OPTIONS = 12
 MIN_UPGRADE_OPTIONS = 30
-MIN_SPECIALIST_OPTIONS = 20
+MIN_SPECIALIST_OPTIONS = 24
 
 
 def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
@@ -97,6 +97,8 @@ def validate_lantern_seed_data(rows: list[dict[str, object]]) -> None:
             errors.append(f"{name}: option_kind must be lantern")
         if not str(row.get("source") or "").strip():
             errors.append(f"{name}: source is required")
+        if not str(row.get("seed_id") or "").strip():
+            errors.append(f"{name}: stable seed_id is required")
         if not str(row.get("notes") or "").strip():
             errors.append(f"{name}: notes are required")
         effects = row.get("stat_effects", {})
@@ -180,6 +182,8 @@ def validate_special_crew_seed_data(rows: list[dict[str, object]]) -> None:
             errors.append(f"{name}: option_kind must be crew_specialist")
         if not str(row.get("source") or "").strip():
             errors.append(f"{name}: source is required")
+        if not str(row.get("seed_id") or "").strip():
+            errors.append(f"{name}: stable seed_id is required")
         if not str(row.get("notes") or "").strip():
             errors.append(f"{name}: notes are required")
         effects = row.get("stat_effects")

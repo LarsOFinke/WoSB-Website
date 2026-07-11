@@ -52,9 +52,10 @@ def test_upgrade_catalog_uses_current_names_and_effect_metadata() -> None:
 def test_specialist_catalog_replaces_placeholder_special_crew_rows() -> None:
     validate_special_crew_seed_data(SPECIAL_CREW_OPTIONS)
     names = {row["name"] for row in SPECIAL_CREW_OPTIONS}
-    assert len(SPECIAL_CREW_OPTIONS) >= 20
+    assert len(SPECIAL_CREW_OPTIONS) == 24
     assert {"Artillerist", "Boarding Master", "Carpenter", "Navigator", "Surgeon"} <= names
     assert all(row["option_kind"] == "crew_specialist" for row in SPECIAL_CREW_OPTIONS)
+    assert len({row["seed_id"] for row in SPECIAL_CREW_OPTIONS}) == 24
     assert all("prototype" not in str(row.get("notes", "")).casefold() for row in SPECIAL_CREW_OPTIONS)
 
 
