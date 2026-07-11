@@ -15,13 +15,18 @@ def is_weapon_compatible(option: BuildItemOption, mount: ShipWeaponMount) -> boo
         return False
 
     if mount.slot_type.code == "weapon_mortar":
-        if option.option_kind != "mortar":
+        if option.option_kind not in {"mortar", "mortar_launcher"}:
             return False
+        if option.option_kind == "mortar_launcher":
+            return True
         if mount.max_caliber_inches is None:
             return False
         return option.weapon_caliber_inches is None or option.weapon_caliber_inches <= mount.max_caliber_inches
 
-    if option.option_kind == "mortar":
+    if mount.slot_type.code == "weapon_special":
+        return option.option_kind == "special_weapon"
+
+    if option.option_kind in {"mortar", "mortar_launcher", "special_weapon"}:
         return False
     if option.weapon_class is None or mount.max_weapon_class is None:
         return False

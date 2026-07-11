@@ -120,6 +120,7 @@ class SeedManager:
             stable_id = raw_payload.pop("seed_id", raw_payload["name"])
             layout = str(raw_payload.pop("weapon_layout", ""))
             max_weapon_class = raw_payload.pop("max_weapon_class", None)
+            special_weapon_capacity = int(raw_payload.pop("special_weapon_capacity", 0) or 0)
             raw_payload.setdefault("image_url", None)
             key = seed_key("ship", stable_id)
             active_seed_keys.add(key)
@@ -129,6 +130,7 @@ class SeedManager:
                     layout,
                     rate=int(raw_payload["rate"]),
                     max_weapon_class=str(max_weapon_class) if max_weapon_class else None,
+                    special_weapon_capacity=special_weapon_capacity,
                 )
             ]
             canonical_payload = {**raw_payload, "weapon_mounts": normalized_mounts}

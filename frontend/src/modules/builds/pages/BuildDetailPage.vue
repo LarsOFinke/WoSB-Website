@@ -24,6 +24,7 @@ const weaponArcRows = computed(() => [
   { key: 'port', label: t('builds.detail.weapons.port'), slots: build.value?.port_weapon_slots || [] },
   { key: 'starboard', label: t('builds.detail.weapons.starboard'), slots: build.value?.starboard_weapon_slots || [] },
   { key: 'mortar', label: t('builds.detail.weapons.mortar'), slots: build.value?.mortar_weapon_slots || [] },
+  { key: 'special', label: t('builds.detail.weapons.special'), slots: build.value?.special_weapon_slots || [] },
 ])
 
 const crewTotal = computed(() => build.value?.ship_stats?.crew_total || 0)
@@ -154,6 +155,10 @@ onMounted(loadBuild)
             <article class="detail-card">
               <span>{{ t('builds.detail.lantern') }}</span>
               <strong>{{ optionLabel(build.lantern) || '—' }}</strong>
+            </article>
+            <article class="detail-card">
+              <span>{{ t('builds.detail.researchUpgradeSlot') }}</span>
+              <strong>{{ build.research_upgrade_slot_unlocked ? t('builds.detail.researchUpgradeSlotActive') : t('builds.detail.researchUpgradeSlotInactive') }}</strong>
             </article>
             <article class="detail-card">
               <span>{{ t('builds.detail.shipStats') }}</span>

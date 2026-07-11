@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
-from app.modules.ships.schemas.ship import ShipRead
+from pydantic import BaseModel, Field
 
 from app.modules.builds.schemas.build_stat_row import BuildStatRow
 
@@ -18,6 +14,7 @@ class ShipStats(BaseModel):
     upgrade_slots_available: int
     base_upgrade_slots_available: int | None = None
     extra_upgrade_slots: int = 0
+    research_upgrade_slots: int = 0
     ship_extra_upgrade_slots: int = 0
     upgrade_slot_5_unlocked: bool = False
     upgrade_slot_6_available: bool = False
@@ -27,6 +24,8 @@ class ShipStats(BaseModel):
     base_sailor_minimum: int | None = None
     effective_sailor_minimum: int | None = None
     item_effects: dict[str, int | float] = Field(default_factory=dict)
+    sail_effects: dict[str, int | float] = Field(default_factory=dict)
+    lantern_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_effects: dict[str, int | float] = Field(default_factory=dict)
     special_crew_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_buffs: dict[str, int | float] = Field(default_factory=dict)

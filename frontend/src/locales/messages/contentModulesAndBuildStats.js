@@ -133,8 +133,8 @@ export const contentModulesAndBuildStatsMessages = {
         },
         equipment: {
           lockedUpgrade: 'Locked: needs unlock upgrade',
-          lockedUpgrade5: 'Locked: unlock slot 5 with Structural Expansion in slots 1-4',
-          lockedUpgrade6: 'Locked: requires a ship extra slot or +2 expansion effect',
+          lockedUpgrade5: 'Locked: enable the research reward or use an expansion upgrade in slots 1-4',
+          lockedUpgrade6: 'Locked: requires a ship extra slot or two independent slot unlocks',
         },
       },
       stats: {
@@ -437,8 +437,8 @@ export const contentModulesAndBuildStatsMessages = {
         },
         equipment: {
           lockedUpgrade: 'Gesperrt: benötigt Freischalt-Upgrade',
-          lockedUpgrade5: 'Gesperrt: Slot 5 mit Strukturerweiterung in Slot 1-4 öffnen',
-          lockedUpgrade6: 'Gesperrt: benötigt Schiff-Extra-Slot oder +2 Erweiterungseffekt',
+          lockedUpgrade5: 'Gesperrt: Forschungsbelohnung aktivieren oder Erweiterungs-Upgrade in Slot 1-4 nutzen',
+          lockedUpgrade6: 'Gesperrt: benötigt Schiff-Extra-Slot oder zwei unabhängige Slot-Freischaltungen',
         },
       },
       stats: {

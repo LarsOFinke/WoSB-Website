@@ -9,10 +9,10 @@ from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.services.weapon_compatibility import is_weapon_compatible
-from app.modules.builds.models.build import WEAPON_SLOT_TYPE_BY_ARC
 from app.modules.builds.schemas.build_create import BuildCreate
-from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES, WEAPON_ARC_KEYS
+from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
 from app.modules.builds.schemas.inventory_slot import InventorySlot
+from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 
 
 class BuildValidationError(ValueError):
@@ -32,8 +32,6 @@ INVENTORY_SLOT_MAP = {
 
 UPGRADE_SLOT_LIMIT = 6
 BASE_UPGRADE_SLOT_LIMIT = 4
-UNLOCKABLE_UPGRADE_SLOT = 5
-SHIP_EXTRA_UPGRADE_SLOT = 6
 CONSUMABLE_SLOT_LIMIT = 3
 SPECIAL_CREW_SLOT_LIMIT = 8
 WEAPON_ARC_SLOT_LIMIT = 12
@@ -44,6 +42,7 @@ WEAPON_SLOT_TYPE_BY_FIELD = {
     "port_weapon_slots": "weapon_port",
     "starboard_weapon_slots": "weapon_starboard",
     "mortar_weapon_slots": "weapon_mortar",
+    "special_weapon_slots": "weapon_special",
 }
 WEAPON_FIELD_LABELS = {
     "front_weapon_slots": "Front weapons",
@@ -51,6 +50,7 @@ WEAPON_FIELD_LABELS = {
     "port_weapon_slots": "Port weapons",
     "starboard_weapon_slots": "Starboard weapons",
     "mortar_weapon_slots": "Mortars",
+    "special_weapon_slots": "Special weapons",
 }
 
 
@@ -150,34 +150,30 @@ def _sum_weighted_effects(
     return totals
 
 
-def _upgrade_access(ship: Ship, selected_upgrades: dict[int, BuildItemOption]) -> dict[str, int | bool]:
-    """Return slot access flags for the six-slot Build Manager.
-
-    Slots 1-4 are normal ship upgrade slots. Slot 5 is unlocked by an
-    expansion upgrade selected in one of those normal slots. Slot 6 is not
-    unlocked by upgrades; it is a ship-specific extra slot represented by
-    ``Ship.upgrade_slots >= 6`` in the catalog.
-    """
-
-    base_slots = min(max(int(ship.upgrade_slots or 0), 0), BASE_UPGRADE_SLOT_LIMIT)
-    unlock_effect_slots = 0
-    for index, option in selected_upgrades.items():
-        if index > BASE_UPGRADE_SLOT_LIMIT:
-            continue
-        unlock_effect_slots += int(_option_effects(option).get("extra_upgrade_slots", 0))
-
-    unlocked_by_upgrades = min(max(unlock_effect_slots, 0), UPGRADE_SLOT_LIMIT - base_slots)
-    slot_5_unlocked = unlocked_by_upgrades >= 1
-    ship_extra_slots = 1 if int(ship.upgrade_slots or 0) >= SHIP_EXTRA_UPGRADE_SLOT else 0
-    slot_6_available = ship_extra_slots > 0 or unlocked_by_upgrades >= 2
-
+def _upgrade_access(
+    ship: Ship,
+    selected_upgrades: dict[int, BuildItemOption],
+    *,
+    research_upgrade_slot_unlocked: bool,
+) -> dict[str, int | bool]:
+    unlock_effect_slots = sum(
+        int(_option_effects(option).get("extra_upgrade_slots", 0))
+        for index, option in selected_upgrades.items()
+        if index <= BASE_UPGRADE_SLOT_LIMIT
+    )
+    access = calculate_upgrade_slot_access(
+        ship_upgrade_slots=int(ship.upgrade_slots or 0),
+        unlock_effect_slots=unlock_effect_slots,
+        research_upgrade_slot_unlocked=research_upgrade_slot_unlocked,
+    )
     return {
-        "base_slots": base_slots,
-        "slot_5_unlocked": slot_5_unlocked,
-        "slot_6_available": slot_6_available,
-        "unlock_effect_slots": unlocked_by_upgrades,
-        "ship_extra_slots": ship_extra_slots,
-        "available_slots": min(UPGRADE_SLOT_LIMIT, base_slots + max(unlocked_by_upgrades, ship_extra_slots)),
+        "base_slots": access.base_slots,
+        "slot_5_unlocked": access.slot_5_unlocked,
+        "slot_6_available": access.slot_6_available,
+        "unlock_effect_slots": access.unlock_effect_slots,
+        "research_slots": access.research_slots,
+        "ship_extra_slots": access.ship_extra_slots,
+        "available_slots": access.available_slots,
     }
 
 
@@ -216,6 +212,7 @@ def _weapon_capacity_by_field(ship: Ship) -> dict[str, int]:
         "port_weapon_slots": int(ship.broadside_weapon_capacity or 0),
         "starboard_weapon_slots": int(ship.broadside_weapon_capacity or 0),
         "mortar_weapon_slots": int(ship.mortar_weapon_capacity or 0),
+        "special_weapon_slots": int(ship.special_weapon_capacity or 0),
     }
 
 
@@ -229,7 +226,7 @@ def _validate_weapon_loadout(
         slots = getattr(build, field_name)
         label = WEAPON_FIELD_LABELS[field_name]
         _validate_unique_slots(slots, label)
-        field_limit = MORTAR_SLOT_LIMIT if field_name == "mortar_weapon_slots" else WEAPON_ARC_SLOT_LIMIT
+        field_limit = MORTAR_SLOT_LIMIT if field_name in {"mortar_weapon_slots", "special_weapon_slots"} else WEAPON_ARC_SLOT_LIMIT
         if len(slots) > field_limit:
             raise BuildValidationError(f"{label} are limited to {field_limit} item rows.")
 
@@ -254,14 +251,17 @@ def _validate_weapon_loadout(
                 )
             if slot_type == "weapon_mortar":
                 max_caliber = ship.max_mortar_caliber_inches
-                if option.option_kind != "mortar":
-                    raise BuildValidationError(f"{label}: '{slot.item}' is not a mortar weapon.")
+                if option.option_kind not in {"mortar", "mortar_launcher"}:
+                    raise BuildValidationError(f"{label}: '{slot.item}' is not a mortar-slot weapon.")
                 if max_caliber is not None and option.weapon_caliber_inches is not None and option.weapon_caliber_inches > float(max_caliber):
                     raise BuildValidationError(
                         f"{label}: '{slot.item}' exceeds this ship's mortar caliber limit ({max_caliber} in)."
                     )
-            elif option.option_kind == "mortar":
-                raise BuildValidationError(f"{label}: mortars must be placed in the dedicated mortar slot.")
+            elif slot_type == "weapon_special":
+                if option.option_kind != "special_weapon":
+                    raise BuildValidationError(f"{label}: '{slot.item}' is not a special weapon.")
+            elif option.option_kind in {"mortar", "mortar_launcher", "special_weapon"}:
+                raise BuildValidationError(f"{label}: '{slot.item}' must be placed in its dedicated slot.")
 
 
 def _build_slots(db: Session, build: BuildCreate) -> list[BuildSlot]:
@@ -358,20 +358,32 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
     option_map = _load_option_map(db, _selected_item_names(build))
     selected_upgrades = _selected_upgrade_options(option_map, build)
     selected_special_crew = _selected_special_crew_options(option_map, build)
-    upgrade_access = _upgrade_access(ship, selected_upgrades)
+    upgrade_access = _upgrade_access(
+        ship,
+        selected_upgrades,
+        research_upgrade_slot_unlocked=build.research_upgrade_slot_unlocked,
+    )
 
     if _normalize_name(build.upgrade_5) and not bool(upgrade_access["slot_5_unlocked"]):
         raise BuildValidationError(
-            "Upgrade slot 5 is locked. Select an unlock upgrade in slots 1-4 first."
+            "Upgrade slot 5 is locked. Enable the ship-line research reward or select an expansion upgrade in slots 1-4."
         )
     if _normalize_name(build.upgrade_6) and not bool(upgrade_access["slot_6_available"]):
         raise BuildValidationError(
-            "Upgrade slot 6 requires a ship extra slot or a +2 expansion effect in slots 1-4."
+            "Upgrade slot 6 requires a ship extra slot or two independent slot unlocks (research reward and/or expansion effects)."
         )
 
+    selected_equipment = []
+    if build.sails:
+        selected_equipment.append(_require_option(option_map, build.sails, "sail", "Sail"))
+    if build.lantern:
+        selected_equipment.append(_require_option(option_map, build.lantern, "lantern", "Lantern"))
+    equipment_effects = _sum_effects(selected_equipment)
     upgrade_effects = _sum_effects(selected_upgrades.values())
     special_crew_effects = _sum_weighted_effects(selected_special_crew)
-    total_effects = dict(upgrade_effects)
+    total_effects = dict(equipment_effects)
+    for key, value in upgrade_effects.items():
+        total_effects[key] = total_effects.get(key, 0) + value
     for key, value in special_crew_effects.items():
         total_effects[key] = total_effects.get(key, 0) + value
 
@@ -400,6 +412,7 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
         build_type=build.build_type,
         ship_id=build.ship_id,
         owner_id=owner_id,
+        research_upgrade_slot_unlocked=build.research_upgrade_slot_unlocked,
         sailors=build.sailors,
         soldiers=build.soldiers,
         musketeers=build.musketeers,

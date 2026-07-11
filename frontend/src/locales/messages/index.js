@@ -3,6 +3,7 @@ import { adminDashboardMessages } from './adminDashboard'
 import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
+import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
 import { fleetCalendarMessages } from './fleetCalendar'
 import { fleetIdentityMessages } from './fleetIdentity'
@@ -29,6 +30,7 @@ const messageLayers = [
   newcomerGuideMessages,
   royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
+  buildDesignerEquipmentRulesMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,
   mySquadsWorkspaceMessages,

@@ -20,6 +20,7 @@ class ShipRead(BaseModel):
     broadside_weapon_capacity: int = 0
     rear_weapon_capacity: int = 0
     mortar_weapon_capacity: int = 0
+    special_weapon_capacity: int = 0
     max_mortar_caliber_inches: int | float | None = None
     displacement_tons: int
     source: str | None = None

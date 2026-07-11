@@ -14,6 +14,7 @@ WEAPON_SLOT_TYPE_DATA = (
     {"code": "weapon_port", "label": "Port broadside", "sort_order": 30},
     {"code": "weapon_starboard", "label": "Starboard broadside", "sort_order": 40},
     {"code": "weapon_mortar", "label": "Mortars", "sort_order": 50},
+    {"code": "weapon_special", "label": "Special weapons", "sort_order": 60},
 )
 
 # The Build Designer uses the game's Light/Medium/Heavy weapon taxonomy.
@@ -35,6 +36,7 @@ def parse_weapon_layout(
     *,
     rate: int,
     max_weapon_class: str | None = None,
+    special_weapon_capacity: int = 0,
 ) -> list[dict[str, object]]:
     text = (layout or "").strip().lower().replace(";", " + ")
     regular_match = re.search(r"(\d+)\s*-\s*(\d+)\s*-\s*(\d+)", text)
@@ -68,4 +70,12 @@ def parse_weapon_layout(
                 "max_caliber_inches": None,
             }
         )
+    rows.append(
+        {
+            "slot_type": "weapon_special",
+            "capacity": max(0, int(special_weapon_capacity or 0)),
+            "max_weapon_class": None,
+            "max_caliber_inches": None,
+        }
+    )
     return rows

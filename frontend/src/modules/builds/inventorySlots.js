@@ -4,6 +4,7 @@ const WEAPON_INVENTORY_FIELDS = new Set([
   'port_weapon_slots',
   'starboard_weapon_slots',
   'mortar_weapon_slots',
+  'special_weapon_slots',
 ])
 
 export function isWeaponInventoryField(fieldName) {

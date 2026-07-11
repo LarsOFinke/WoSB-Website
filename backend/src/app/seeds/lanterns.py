@@ -1,35 +1,41 @@
 """Lantern catalog used by the Build Designer.
 
-Lantern bonuses are deliberately not simulated until a stable machine-readable
-export exists. The catalog is nevertheless complete for fleet presets: every
-known visual/event family can be selected and older local rows are deactivated
-by the idempotent seed manager when they disappear from this list.
+Functional lantern families expose normalized stat effects. Cosmetic/event
+families remain selectable without inventing combat modifiers. Every value can
+be reviewed and overridden in the master-data admin.
 """
 
-LANTERN_CATALOG_REVISION = "B20-fleet-audit-2026-07"
+LANTERN_CATALOG_REVISION = "B20-build-designer-lanterns-2026-07"
 
 
-def _lantern(name: str, notes: str) -> dict[str, object]:
+def _lantern(
+    seed_id: str,
+    name: str,
+    notes: str,
+    stat_effects: dict[str, int | float] | None = None,
+) -> dict[str, object]:
     return {
         "category": "lantern",
+        "seed_id": seed_id,
         "name": name,
         "source": LANTERN_CATALOG_REVISION,
         "notes": notes,
         "option_kind": "lantern",
+        "stat_effects": stat_effects or {},
     }
 
 
 LANTERN_OPTIONS = [
-    _lantern("Black Lantern", "Dark cosmetic lantern family; bonus is intentionally not simulated."),
-    _lantern("Blue Lantern", "Blue cosmetic lantern family; bonus is intentionally not simulated."),
-    _lantern("Festival Lantern", "Seasonal festival lantern family; bonus is intentionally not simulated."),
-    _lantern("Golden Lantern", "Golden lantern family retained for existing presets."),
-    _lantern("Green Lantern", "Green cosmetic lantern family; bonus is intentionally not simulated."),
-    _lantern("Ice Lantern", "Winter event lantern family retained for existing presets."),
-    _lantern("Imperial Lantern", "Imperial reward lantern family; bonus is intentionally not simulated."),
-    _lantern("Jack-o'-Lantern", "Halloween event lantern family; bonus is intentionally not simulated."),
-    _lantern("Pirate Lantern", "Pirate-themed lantern family; bonus is intentionally not simulated."),
-    _lantern("Red Lantern", "Red lantern family retained for existing presets."),
-    _lantern("Storm Lantern", "Storm event lantern family retained for existing presets."),
-    _lantern("White Lantern", "White cosmetic lantern family; bonus is intentionally not simulated."),
+    _lantern("black", "Black Lantern", "Dark cosmetic lantern family."),
+    _lantern("blue", "Blue Lantern", "Blue cosmetic lantern family."),
+    _lantern("festival", "Festival Lantern", "Seasonal festival lantern family."),
+    _lantern("golden", "Golden Lantern", "Adds 1,000 units of cargo hold capacity.", {"hold_capacity": 1000}),
+    _lantern("green", "Green Lantern", "Green cosmetic lantern family."),
+    _lantern("ice", "Ice Lantern", "Increases broadside armor by 2%.", {"armor_pct": 2}),
+    _lantern("imperial", "Imperial Lantern", "Imperial cosmetic reward lantern family."),
+    _lantern("jack-o-lantern", "Jack-o'-Lantern", "Halloween event lantern family."),
+    _lantern("pirate", "Pirate Lantern", "Pirate-themed cosmetic lantern family."),
+    _lantern("red", "Red Lantern", "Increases reload speed by 3%.", {"reload_pct": 3}),
+    _lantern("storm", "Storm Lantern", "Increases ship speed by 3%.", {"speed_pct": 3}),
+    _lantern("white", "White Lantern", "White cosmetic lantern family."),
 ]

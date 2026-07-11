@@ -99,6 +99,11 @@ def validate_lantern_seed_data(rows: list[dict[str, object]]) -> None:
             errors.append(f"{name}: source is required")
         if not str(row.get("notes") or "").strip():
             errors.append(f"{name}: notes are required")
+        effects = row.get("stat_effects", {})
+        if not isinstance(effects, dict):
+            errors.append(f"{name}: stat_effects must be an object")
+        elif any(not isinstance(key, str) or not isinstance(value, (int, float)) for key, value in effects.items()):
+            errors.append(f"{name}: stat_effects contains an invalid value")
     if errors:
         raise RuntimeError("Lantern seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
 
@@ -109,6 +114,7 @@ VALID_WEAPON_SLOT_TYPES = {
     "weapon_port",
     "weapon_starboard",
     "weapon_mortar",
+    "weapon_special",
 }
 
 
@@ -125,7 +131,7 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
         if row.get("category") != "weapon":
             errors.append(f"{name}: category must be weapon")
         option_kind = row.get("option_kind")
-        if option_kind not in {"cannon", "bow_stern", "mortar"}:
+        if option_kind not in {"cannon", "bow_stern", "mortar", "mortar_launcher", "special_weapon"}:
             errors.append(f"{name}: invalid weapon kind {option_kind!r}")
         allowed_raw = row.get("allowed_slot_types")
         allowed = {slot.strip() for slot in str(allowed_raw or "").split(",") if slot.strip()}
@@ -138,6 +144,8 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
             "cannon": {"weapon_port", "weapon_starboard"},
             "bow_stern": {"weapon_front", "weapon_rear"},
             "mortar": {"weapon_mortar"},
+            "mortar_launcher": {"weapon_mortar"},
+            "special_weapon": {"weapon_special"},
         }.get(option_kind)
         if expected_slots is not None and allowed != expected_slots:
             errors.append(
@@ -145,10 +153,10 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
                 f"{', '.join(sorted(expected_slots))}"
             )
         weapon_class = row.get("weapon_class")
-        if option_kind == "mortar":
+        if option_kind in {"mortar", "mortar_launcher", "special_weapon"}:
             if weapon_class not in (None, ""):
-                errors.append(f"{name}: mortar weapons must not use a regular weapon class")
-            if row.get("weapon_caliber_inches") in (None, ""):
+                errors.append(f"{name}: dedicated-slot weapons must not use a regular weapon class")
+            if option_kind == "mortar" and row.get("weapon_caliber_inches") in (None, ""):
                 errors.append(f"{name}: mortar caliber is required")
         elif weapon_class not in {"light", "medium", "heavy"}:
             errors.append(f"{name}: regular weapons require light, medium or heavy weapon_class")

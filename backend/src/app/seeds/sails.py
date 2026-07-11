@@ -1,13 +1,28 @@
-"""Sail option seeds.
+"""Sail options and their Build Designer speed modifiers.
 
-Sail-slot data is less centralized publicly than item and weapon data. These
-names are kept conservative and isolated so the catalog can be replaced by an
-official/admin-maintained export later.
+The values are isolated seed defaults and remain editable through the master
+-data admin. Stable seed ids allow labels to change later without creating
+new records.
 """
 
+SAIL_CATALOG_REVISION = "B20-build-designer-sails-2026-07"
+
+
+def _sail(seed_id: str, name: str, speed_pct: int, notes: str) -> dict[str, object]:
+    return {
+        "category": "sail",
+        "seed_id": seed_id,
+        "name": name,
+        "source": SAIL_CATALOG_REVISION,
+        "notes": notes,
+        "option_kind": "sail",
+        "stat_effects": {"speed_pct": speed_pct},
+    }
+
+
 SAIL_OPTIONS = [
-    {"category": "sail", "name": "Elite Sails", "source": "community"},
-    {"category": "sail", "name": "Imported Sails", "source": "community"},
-    {"category": "sail", "name": "Raiding Sails", "source": "community"},
-    {"category": "sail", "name": "Tarpaulin Sails", "source": "guide"},
+    _sail("tarpaulin", "Tarpaulin Sails", 2, "Entry sail set; increases ship speed by 2%."),
+    _sail("raiding", "Raiding Sails", 4, "Raiding sail set; increases ship speed by 4%."),
+    _sail("imported", "Imported Sails", 6, "Imported sail set; increases ship speed by 6%."),
+    _sail("elite", "Elite Sails", 8, "Elite sail set; increases ship speed by 8%."),
 ]

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { useLocale } from '@/locales'
 import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
+import { calculateUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
 import {
   crewSliderMax,
   normalizeCrewAllocation,
@@ -38,6 +39,7 @@ const weaponArcFields = [
   { fieldName: 'port_weapon_slots', labelKey: 'builds.create.weapons.port', altKey: 'builds.create.weapons.portAlt' },
   { fieldName: 'starboard_weapon_slots', labelKey: 'builds.create.weapons.starboard', altKey: 'builds.create.weapons.starboardAlt' },
   { fieldName: 'mortar_weapon_slots', labelKey: 'builds.create.weapons.mortar', altKey: 'builds.create.weapons.mortarAlt' },
+  { fieldName: 'special_weapon_slots', labelKey: 'builds.create.weapons.special', altKey: 'builds.create.weapons.specialAlt' },
 ]
 
 const buildTypeOptions = computed(() => [
@@ -53,6 +55,7 @@ const slotLimits = {
   port_weapon_slots: 12,
   starboard_weapon_slots: 12,
   mortar_weapon_slots: 8,
+  special_weapon_slots: 8,
   special_crew_slots: 8,
   ammunition_slots: 12,
   consumable_slots: 3,
@@ -85,6 +88,7 @@ const form = reactive({
   upgrade_5: '',
   upgrade_6: '',
   lantern: '',
+  research_upgrade_slot_unlocked: false,
   sailors: 0,
   soldiers: 0,
   musketeers: 0,
@@ -94,6 +98,7 @@ const form = reactive({
   port_weapon_slots: [emptyInventorySlot()],
   starboard_weapon_slots: [emptyInventorySlot()],
   mortar_weapon_slots: [emptyInventorySlot()],
+  special_weapon_slots: [emptyInventorySlot()],
   special_crew_slots: [emptyInventorySlot()],
   ammunition_slots: [emptyInventorySlot()],
   consumable_slots: [emptyInventorySlot()],
@@ -175,47 +180,42 @@ function roundByPrecision(value, precision = 0) {
 
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
 const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
-const firstFourUpgradeEffects = computed(() => {
-  const totals = {}
-  for (const name of [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4].filter(Boolean)) {
-    for (const [key, value] of Object.entries(upgradeEffects(name))) {
-      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
-    }
-  }
-  return totals
-})
-const upgradeEffectTotals = computed(() => {
-  const totals = {}
-  for (const name of [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean)) {
-    for (const [key, value] of Object.entries(upgradeEffects(name))) {
-      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
-    }
-  }
-  return totals
-})
-const specialCrewEffectTotals = computed(() => {
-  const totals = {}
-  for (const slot of normalizeInventorySlots(form.special_crew_slots)) {
+const firstFourUpgradeEffects = computed(() => sumEffects(
+  ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4]
+    .filter(Boolean)
+    .map((name) => upgradeEffects(name)),
+))
+const upgradeEffectTotals = computed(() => sumEffects(
+  ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6]
+    .filter(Boolean)
+    .map((name) => upgradeEffects(name)),
+))
+const specialCrewEffectTotals = computed(() => sumEffects(
+  ...normalizeInventorySlots(form.special_crew_slots).map((slot) => {
     const quantity = Math.max(1, Number(slot.quantity) || 1)
-    for (const [key, value] of Object.entries(specialCrewEffects(slot.item))) {
-      totals[key] = (Number(totals[key]) || 0) + ((Number(value) || 0) * quantity)
-    }
-  }
-  return totals
-})
-const buildEffectTotals = computed(() => {
-  const totals = { ...upgradeEffectTotals.value }
-  for (const [key, value] of Object.entries(specialCrewEffectTotals.value)) {
-    totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
-  }
-  return totals
-})
-const baseUpgradeSlots = computed(() => Math.min(Math.max(Number(selectedShip.value?.upgrade_slots || 5), 0), 4))
-const unlockedByUpgrades = computed(() => Math.min(Math.max(0, Number(firstFourUpgradeEffects.value.extra_upgrade_slots) || 0), equipmentUpgradeCount - baseUpgradeSlots.value))
-const shipExtraUpgradeSlots = computed(() => Number(selectedShip.value?.upgrade_slots || 5) >= 6 ? 1 : 0)
-const upgradeSlot5Unlocked = computed(() => unlockedByUpgrades.value >= 1)
-const upgradeSlot6Available = computed(() => shipExtraUpgradeSlots.value > 0 || unlockedByUpgrades.value >= 2)
-const availableUpgradeSlots = computed(() => Math.min(equipmentUpgradeCount, baseUpgradeSlots.value + Math.max(unlockedByUpgrades.value, shipExtraUpgradeSlots.value)))
+    return Object.fromEntries(
+      Object.entries(specialCrewEffects(slot.item)).map(([key, value]) => [key, (Number(value) || 0) * quantity]),
+    )
+  }),
+))
+const equipmentEffectTotals = computed(() => sumEffects(
+  optionEffects('sail', form.sails),
+  optionEffects('lantern', form.lantern),
+))
+const buildEffectTotals = computed(() => sumEffects(
+  equipmentEffectTotals.value,
+  upgradeEffectTotals.value,
+  specialCrewEffectTotals.value,
+))
+const upgradeAccess = computed(() => calculateUpgradeSlotAccess({
+  shipUpgradeSlots: selectedShip.value?.upgrade_slots || 0,
+  unlockEffectSlots: firstFourUpgradeEffects.value.extra_upgrade_slots || 0,
+  researchUpgradeSlotUnlocked: form.research_upgrade_slot_unlocked,
+  slotLimit: equipmentUpgradeCount,
+}))
+const upgradeSlot5Unlocked = computed(() => upgradeAccess.value.slot5Unlocked)
+const upgradeSlot6Available = computed(() => upgradeAccess.value.slot6Available)
+const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
 const crewCapacity = computed(() => Math.max(0, baseCrewCapacity.value + (Number(buildEffectTotals.value.crew_capacity) || 0)))
 const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
 
@@ -323,6 +323,7 @@ function weaponSlotTypeForField(fieldName) {
     port_weapon_slots: 'weapon_port',
     starboard_weapon_slots: 'weapon_starboard',
     mortar_weapon_slots: 'weapon_mortar',
+    special_weapon_slots: 'weapon_special',
   }[fieldName]
 }
 
@@ -334,6 +335,7 @@ function weaponCapacityForField(fieldName) {
     port_weapon_slots: selectedShip.value.broadside_weapon_capacity,
     starboard_weapon_slots: selectedShip.value.broadside_weapon_capacity,
     mortar_weapon_slots: selectedShip.value.mortar_weapon_capacity,
+    special_weapon_slots: selectedShip.value.special_weapon_capacity,
   }
   return Math.max(0, Number(capacityMap[fieldName]) || 0)
 }
@@ -354,8 +356,10 @@ function isWeaponOptionAllowedForField(option, fieldName) {
     const maxCaliber = Number(selectedShip.value?.max_mortar_caliber_inches)
     const optionCaliber = Number(option.weapon_caliber_inches)
     if (Number.isFinite(maxCaliber) && Number.isFinite(optionCaliber) && optionCaliber > maxCaliber) return false
+    return ['mortar', 'mortar_launcher'].includes(option.option_kind)
   }
-  return true
+  if (slotType === 'weapon_special') return option.option_kind === 'special_weapon'
+  return !['mortar', 'mortar_launcher', 'special_weapon'].includes(option.option_kind)
 }
 
 function weaponOptionsForField(fieldName, currentIndex) {
@@ -507,6 +511,7 @@ function buildPayload() {
     port_weapon_slots: normalizeInventorySlots(form.port_weapon_slots),
     starboard_weapon_slots: normalizeInventorySlots(form.starboard_weapon_slots),
     mortar_weapon_slots: normalizeInventorySlots(form.mortar_weapon_slots),
+    special_weapon_slots: normalizeInventorySlots(form.special_weapon_slots),
     special_crew_slots: normalizeInventorySlots(form.special_crew_slots),
     ammunition_slots: normalizeInventorySlots(form.ammunition_slots),
     consumable_slots: normalizeInventorySlots(form.consumable_slots),
@@ -659,6 +664,7 @@ onMounted(async () => {
                 <option value="">{{ t('common.empty') }}</option>
                 <option v-for="option in optionsFor('sail')" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
+              <small v-if="form.sails" class="slot-effect-text">{{ formatEffects(form.sails, 'sail') }}</small>
             </span>
           </label>
 
@@ -686,9 +692,21 @@ onMounted(async () => {
                 <option value="">{{ t('common.empty') }}</option>
                 <option v-for="option in optionsFor('lantern')" :key="option" :value="option">{{ optionLabel(option) }}</option>
               </select>
+              <small v-if="form.lantern" class="slot-effect-text">{{ formatEffects(form.lantern, 'lantern') }}</small>
             </span>
           </label>
         </div>
+        <button
+          type="button"
+          class="research-slot-toggle"
+          :class="{ 'is-active': form.research_upgrade_slot_unlocked }"
+          :aria-pressed="form.research_upgrade_slot_unlocked"
+          @click="form.research_upgrade_slot_unlocked = !form.research_upgrade_slot_unlocked"
+        >
+          <span>{{ form.research_upgrade_slot_unlocked ? '✓' : '+' }}</span>
+          <strong>{{ t('builds.create.equipment.researchUpgradeSlot') }}</strong>
+          <small>{{ t('builds.create.equipment.researchUpgradeSlotHint') }}</small>
+        </button>
       </section>
 
       <section class="wire-section form-section weapons-section" :aria-label="t('builds.create.sections.weapons')">
@@ -697,7 +715,7 @@ onMounted(async () => {
           <h2>{{ t('builds.create.sections.weapons') }}</h2>
         </div>
         <p class="section-helper-text">{{ t('builds.create.weapons.hint') }}</p>
-        <div class="inventory-grid weapon-arc-grid five-columns">
+        <div class="inventory-grid weapon-arc-grid weapon-arc-grid--adaptive">
           <div v-for="arc in availableWeaponArcs" :key="arc.fieldName" class="inventory-panel weapon-arc-panel">
             <div class="inventory-heading">
               <strong>{{ t(arc.labelKey) }}</strong>

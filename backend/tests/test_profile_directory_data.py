@@ -10,6 +10,7 @@ from app.modules.fleet.services.fleet_service import join_fleet
 from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
 from app.modules.permissions.models.role import FleetRoleDefinition
 from app.modules.ships.models.ship import Ship
+from app.seeds.manager import SeedManager
 from main import app
 
 
@@ -23,6 +24,11 @@ def test_profile_is_single_source_for_fleet_directory_details() -> None:
                 user = create_user(db, username=username, password=password, display_name="Directory Source", role="user")
             fleet = db.query(Fleet).order_by(Fleet.id).first()
             ship = db.query(Ship).filter(Ship.is_active.is_(True)).order_by(Ship.id).first()
+            if ship is None:
+                seed_manager = SeedManager(db)
+                seed_manager.seed_weapon_slot_types()
+                seed_manager.seed_ships()
+                ship = db.query(Ship).filter(Ship.is_active.is_(True)).order_by(Ship.id).first()
             role = db.query(FleetRoleDefinition).order_by(FleetRoleDefinition.rank).first()
             assert fleet and ship and role
             membership = join_fleet(db, user, FleetJoinRequest(fleet_id=fleet.id, note="Profile-backed application"))

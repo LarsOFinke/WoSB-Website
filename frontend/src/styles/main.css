@@ -7963,3 +7963,47 @@ body {
   gap: 0.55rem;
   min-width: 0;
 }
+
+/* Build Designer: account-wide research reward and variable weapon positions. */
+.research-slot-toggle {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.15rem 0.7rem;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(221, 231, 244, 0.18);
+  border-radius: var(--radius-sm);
+  background: rgba(5, 12, 20, 0.32);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.research-slot-toggle > span {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(221, 231, 244, 0.22);
+  border-radius: 999px;
+  font-size: 1.15rem;
+}
+
+.research-slot-toggle small {
+  color: var(--muted-soft);
+  line-height: 1.35;
+}
+
+.research-slot-toggle:hover,
+.research-slot-toggle:focus-visible,
+.research-slot-toggle.is-active {
+  border-color: rgba(221, 231, 244, 0.42);
+  background: rgba(221, 231, 244, 0.08);
+}
+
+.weapon-arc-grid--adaptive {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}

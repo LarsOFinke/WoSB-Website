@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
-from app.modules.ships.schemas.ship import ShipRead
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
 from app.modules.builds.schemas.inventory_slot import InventorySlot
@@ -22,6 +18,7 @@ class BuildBase(BaseModel):
     upgrade_5: str | None = Field(default=None, max_length=140)
     upgrade_6: str | None = Field(default=None, max_length=140)
     lantern: str | None = Field(default=None, max_length=140)
+    research_upgrade_slot_unlocked: bool = False
 
     sailors: int = Field(default=0, ge=0)
     soldiers: int = Field(default=0, ge=0)
@@ -33,6 +30,7 @@ class BuildBase(BaseModel):
     port_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
     starboard_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
     mortar_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
+    special_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     special_crew_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     ammunition_slots: list[InventorySlot] = Field(default_factory=list, max_length=16)
     consumable_slots: list[InventorySlot] = Field(default_factory=list, max_length=3)
@@ -53,6 +51,7 @@ class BuildBase(BaseModel):
         "port_weapon_slots",
         "starboard_weapon_slots",
         "mortar_weapon_slots",
+        "special_weapon_slots",
         "special_crew_slots",
         "ammunition_slots",
         "consumable_slots",

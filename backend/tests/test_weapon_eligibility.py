@@ -78,5 +78,42 @@ def test_every_active_regular_weapon_has_a_normalized_size_class() -> None:
             if option.option_kind == "mortar":
                 assert option.weapon_class is None
                 assert option.weapon_caliber_inches is not None
+            elif option.option_kind in {"mortar_launcher", "special_weapon"}:
+                assert option.weapon_class is None
+                assert option.weapon_caliber_inches is None
             else:
                 assert option.weapon_class_code in {"light", "medium", "heavy"}
+
+
+def test_special_and_launcher_weapons_use_only_dedicated_mounts() -> None:
+    register_all_models()
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        manager = SeedManager(db)
+        manager.seed_weapon_slot_types()
+        manager.seed_ships()
+        manager.seed_build_options()
+
+        huracan = db.scalar(select(Ship).where(Ship.name == "Huracan"))
+        deadfish = db.scalar(select(Ship).where(Ship.name == "Deadfish"))
+        victory = db.scalar(select(Ship).where(Ship.name == "Victory"))
+        sovereign = db.scalar(select(Ship).where(Ship.name == "Sovereign"))
+        assert huracan and deadfish and victory and sovereign
+
+        for special_ship, capacity in ((huracan, 2), (deadfish, 1)):
+            catalog = _catalog(db, special_ship)
+            assert special_ship.special_weapon_capacity == capacity
+            assert {"Alchemical Fire", "Imperial Bombard"} <= catalog["weapon_special"]
+            assert "Alchemical Fire" not in catalog.get("weapon_front", set())
+            assert "Imperial Bombard" not in catalog.get("weapon_rear", set())
+
+        regular_catalog = _catalog(db, victory)
+        assert "Alchemical Fire" not in regular_catalog.get("weapon_front", set())
+        assert "Imperial Bombard" not in regular_catalog.get("weapon_front", set())
+        assert "weapon_special" not in regular_catalog
+
+        mortar_catalog = _catalog(db, sovereign)
+        assert "Barrel Launcher" in mortar_catalog["weapon_mortar"]
+        assert "Barrel Launcher" not in mortar_catalog.get("weapon_front", set())
+        assert "Barrel Launcher" not in mortar_catalog.get("weapon_rear", set())

@@ -3,6 +3,7 @@
 CANNON_SLOT_TYPES = "weapon_port,weapon_starboard"
 BOW_STERN_SLOT_TYPES = "weapon_front,weapon_rear"
 MORTAR_SLOT_TYPES = "weapon_mortar"
+SPECIAL_WEAPON_SLOT_TYPES = "weapon_special"
 SOURCE = "WoSB wiki Basic Weapons audit 2026-07"
 
 
@@ -45,6 +46,30 @@ def mortar(
     }
 
 
+def special_weapon(name: str, *, source: str = SOURCE) -> dict[str, object]:
+    return {
+        "category": "weapon",
+        "name": name,
+        "source": source,
+        "option_kind": "special_weapon",
+        "allowed_slot_types": SPECIAL_WEAPON_SLOT_TYPES,
+        "weapon_class": None,
+        "weapon_caliber_inches": None,
+    }
+
+
+def mortar_launcher(name: str, *, source: str = SOURCE) -> dict[str, object]:
+    return {
+        "category": "weapon",
+        "name": name,
+        "source": source,
+        "option_kind": "mortar_launcher",
+        "allowed_slot_types": MORTAR_SLOT_TYPES,
+        "weapon_class": None,
+        "weapon_caliber_inches": None,
+    }
+
+
 WEAPON_OPTIONS = [
     # Light broadside weapons
     cannon("6-pdr Culverin", "light"),
@@ -71,13 +96,13 @@ WEAPON_OPTIONS = [
     cannon("42-pdr Carronade", "heavy"),
     cannon("48-pdr Colossus", "heavy"),
     # Light bow/stern launchers
-    bow_stern("Alchemical Fire", "light"),
-    bow_stern("Barrel Launcher", "light"),
+    special_weapon("Alchemical Fire"),
+    mortar_launcher("Barrel Launcher"),
     bow_stern("Twin 6-pdr", "light"),
     bow_stern("Triple 10-pdr", "light"),
     # Medium bow/stern bombards
     bow_stern("Basilisk", "medium"),
-    bow_stern("Imperial Bombard", "medium"),
+    special_weapon("Imperial Bombard"),
     bow_stern("Onager", "medium"),
     bow_stern("Twin 14-pdr", "medium"),
     bow_stern("Triple 16-pdr", "medium"),

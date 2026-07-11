@@ -1,16 +1,31 @@
-from sqlalchemy import select
+from contextlib import contextmanager
 
-from app.db.session import SessionLocal
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+
+from app.db.base import Base
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_service import BuildValidationError, create_build
+from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.squads.models.squad import Squad  # noqa: F401
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.weapons import WEAPON_OPTIONS
 from app.seeds.weapon_mounts import parse_weapon_layout
+
+
+
+
+@contextmanager
+def isolated_session():
+    register_all_models()
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine, expire_on_commit=False) as db:
+        yield db
 
 
 EXPECTED_WEAPON_LAYOUTS = {
@@ -86,7 +101,7 @@ def test_all_ship_weapon_layouts_match_audited_catalog() -> None:
 
 
 def test_duplicate_upgrades_are_rejected_server_side() -> None:
-    with SessionLocal() as db:
+    with isolated_session() as db:
         category = db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == "upgrade"))
         if category is None:
             category = BuildItemCategory(key="upgrade", label="Upgrades", sort_order=10, is_active=True)
@@ -148,6 +163,8 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
         "cannon": {"weapon_port", "weapon_starboard"},
         "bow_stern": {"weapon_front", "weapon_rear"},
         "mortar": {"weapon_mortar"},
+        "mortar_launcher": {"weapon_mortar"},
+        "special_weapon": {"weapon_special"},
     }
     assert WEAPON_OPTIONS
     for row in WEAPON_OPTIONS:
@@ -156,7 +173,7 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
 
 
 def test_specialist_effects_scale_with_selected_quantity() -> None:
-    with SessionLocal() as db:
+    with isolated_session() as db:
         category = db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == "special_crew"))
         if category is None:
             category = BuildItemCategory(

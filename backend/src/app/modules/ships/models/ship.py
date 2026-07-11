@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.modules.ships.models.weapon_mount import ShipWeaponMount
 
 
 class Ship(Base):
@@ -81,6 +85,10 @@ class Ship(Base):
         return self.weapon_capacity("weapon_mortar")
 
     @property
+    def special_weapon_capacity(self) -> int:
+        return self.weapon_capacity("weapon_special")
+
+    @property
     def max_mortar_caliber_inches(self) -> int | float | None:
         mount = self._mount("weapon_mortar")
         if mount is None or mount.max_caliber_inches is None:
@@ -91,8 +99,12 @@ class Ship(Base):
     @property
     def weapon_layout(self) -> str:
         regular = f"{self.front_weapon_capacity}-{self.broadside_weapon_capacity}-{self.rear_weapon_capacity}"
+        suffixes: list[str] = []
         mortar = self._mount("weapon_mortar")
         if mortar is not None and mortar.capacity > 0:
             caliber = int(mortar.max_caliber_inches or 0)
-            return f"{regular}; mortar {caliber}in x{mortar.capacity}"
-        return regular
+            suffixes.append(f"mortar {caliber}in x{mortar.capacity}")
+        special = self._mount("weapon_special")
+        if special is not None and special.capacity > 0:
+            suffixes.append(f"special x{special.capacity}")
+        return f"{regular}; {'; '.join(suffixes)}" if suffixes else regular

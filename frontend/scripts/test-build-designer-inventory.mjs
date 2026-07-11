@@ -43,7 +43,6 @@ assert.deepEqual(
   [{ item: '', quantity: 1 }],
 )
 
-console.log('Build designer inventory slot regression checks passed.')
 
 import {
   crewSliderMax,
@@ -73,3 +72,29 @@ const reducedCapacity = normalizeCrewAllocation(
 )
 assert.deepEqual(reducedCapacity, { sailors: 75, musketeers: 0, soldiers: 0, mercenaries: 0 })
 assert.equal(crewTotal(reducedCapacity), 75)
+
+import { calculateUpgradeSlotAccess, sumEffects } from '../src/modules/builds/buildCalculations.js'
+
+assert.deepEqual(sumEffects({ speed_pct: 4 }, { speed_pct: 3, reload_pct: 2 }), {
+  speed_pct: 7,
+  reload_pct: 2,
+})
+
+const researchAccess = calculateUpgradeSlotAccess({
+  shipUpgradeSlots: 5,
+  researchUpgradeSlotUnlocked: true,
+})
+assert.equal(researchAccess.slot5Unlocked, true)
+assert.equal(researchAccess.slot6Available, false)
+assert.equal(researchAccess.availableSlots, 5)
+
+const stackedAccess = calculateUpgradeSlotAccess({
+  shipUpgradeSlots: 5,
+  researchUpgradeSlotUnlocked: true,
+  unlockEffectSlots: 1,
+})
+assert.equal(stackedAccess.slot5Unlocked, true)
+assert.equal(stackedAccess.slot6Available, true)
+assert.equal(stackedAccess.availableSlots, 6)
+
+console.log('Build designer regression checks passed.')
