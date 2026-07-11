@@ -3,6 +3,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
+import LocalDateTimeFields from '@/shared/components/LocalDateTimeFields.vue'
+import { dateInputValue, localDateFromInputs, timeInputValue } from '@/shared/datetime/localDateTime'
 import { createFleetEvent, FLEET_EVENT_CATEGORIES } from '@/modules/calendar/api/calendar'
 import { useSession } from '@/modules/accounts/session'
 import { listSquads } from '@/modules/squads/api/squads'
@@ -26,10 +28,10 @@ const form = reactive({
   category: 'training',
   scope: route.query.squad ? `squad:${route.query.squad}` : '',
   location: '',
-  startDate: toDateInput(now),
-  startTime: toTimeInput(now),
-  endDate: toDateInput(later),
-  endTime: toTimeInput(later),
+  startDate: dateInputValue(now),
+  startTime: timeInputValue(now),
+  endDate: dateInputValue(later),
+  endTime: timeInputValue(later),
   allDay: false,
   description: '',
 })
@@ -47,28 +49,13 @@ const categoryOptions = computed(() =>
   FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) })),
 )
 
-const startAt = computed(() => buildDateTime(form.startDate, form.allDay ? '00:00' : form.startTime))
+const startAt = computed(() => localDateFromInputs(form.startDate, form.allDay ? '00:00' : form.startTime))
 const endAt = computed(() => {
-  if (!form.allDay) return buildDateTime(form.endDate, form.endTime)
-  const date = buildDateTime(form.endDate, '00:00')
-  date.setDate(date.getDate() + 1)
+  const date = localDateFromInputs(form.endDate, form.allDay ? '00:00' : form.endTime)
+  if (date && form.allDay) date.setDate(date.getDate() + 1)
   return date
 })
-const dateRangeInvalid = computed(() => endAt.value <= startAt.value)
-
-function toDateInput(date) {
-  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
-}
-
-function toTimeInput(date) {
-  return [String(date.getHours()).padStart(2, '0'), String(date.getMinutes()).padStart(2, '0')].join(':')
-}
-
-function buildDateTime(date, time) {
-  const [year, month, day] = date.split('-').map(Number)
-  const [hour, minute] = time.split(':').map(Number)
-  return new Date(year, month - 1, day, hour, minute, 0, 0)
-}
+const dateRangeInvalid = computed(() => !startAt.value || !endAt.value || endAt.value <= startAt.value)
 
 async function loadScopes() {
   loadingScopes.value = true
@@ -197,22 +184,24 @@ onMounted(loadScopes)
               <input v-model="form.allDay" type="checkbox" />
             </label>
 
-            <label class="field-stack">
-              <span class="field-label">{{ t('calendar.fields.startDate') }}</span>
-              <span class="input-panel embedded-field"><input v-model="form.startDate" required type="date" /></span>
-            </label>
-            <label v-if="!form.allDay" class="field-stack">
-              <span class="field-label">{{ t('calendar.fields.startTime') }}</span>
-              <span class="input-panel embedded-field"><input v-model="form.startTime" required type="time" /></span>
-            </label>
-            <label class="field-stack">
-              <span class="field-label">{{ t('calendar.fields.endDate') }}</span>
-              <span class="input-panel embedded-field"><input v-model="form.endDate" required type="date" /></span>
-            </label>
-            <label v-if="!form.allDay" class="field-stack">
-              <span class="field-label">{{ t('calendar.fields.endTime') }}</span>
-              <span class="input-panel embedded-field"><input v-model="form.endTime" required type="time" /></span>
-            </label>
+            <LocalDateTimeFields
+              v-model:date="form.startDate"
+              v-model:time="form.startTime"
+              :date-label="t('calendar.fields.startDate')"
+              :time-label="t('calendar.fields.startTime')"
+              date-required
+              :time-required="!form.allDay"
+              :show-time="!form.allDay"
+            />
+            <LocalDateTimeFields
+              v-model:date="form.endDate"
+              v-model:time="form.endTime"
+              :date-label="t('calendar.fields.endDate')"
+              :time-label="t('calendar.fields.endTime')"
+              date-required
+              :time-required="!form.allDay"
+              :show-time="!form.allDay"
+            />
           </div>
         </section>
 

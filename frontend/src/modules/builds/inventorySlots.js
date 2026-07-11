@@ -25,15 +25,49 @@ export function normalizeInventorySlots(slots) {
     .filter((slot) => slot.item)
 }
 
-export function reconcileInventorySlots(slots, maxSlots, { isItemAllowed = () => true } = {}) {
+export function inventoryQuantityTotal(slots, excludeIndex = null) {
+  if (!Array.isArray(slots)) return 0
+  return slots.reduce((total, slot, index) => {
+    if (index === excludeIndex || !String(slot?.item || '').trim()) return total
+    return total + Math.max(1, Number(slot?.quantity) || 1)
+  }, 0)
+}
+
+export function remainingInventoryQuantity(slots, index, maxTotalQuantity) {
+  const capacity = Math.max(0, Number(maxTotalQuantity) || 0)
+  if (!capacity) return 0
+  return Math.max(0, capacity - inventoryQuantityTotal(slots, index))
+}
+
+export function reconcileInventorySlots(
+  slots,
+  maxSlots,
+  { isItemAllowed = () => true, maxTotalQuantity = null } = {},
+) {
   const limit = Math.max(0, Number(maxSlots) || 0)
   if (limit === 0) return []
 
-  const filled = normalizeInventorySlots(slots)
-    .filter((slot) => isItemAllowed(slot.item))
-    .slice(0, limit)
+  const quantityLimit = maxTotalQuantity !== null
+    && maxTotalQuantity !== undefined
+    && Number.isFinite(Number(maxTotalQuantity))
+    ? Math.max(0, Number(maxTotalQuantity))
+    : null
+  let remainingQuantity = quantityLimit
+  const filled = []
 
-  if (filled.length < limit) filled.push(emptyInventorySlot())
+  for (const slot of normalizeInventorySlots(slots)) {
+    if (filled.length >= limit || !isItemAllowed(slot.item)) continue
+    if (remainingQuantity !== null && remainingQuantity <= 0) break
+
+    const quantity = remainingQuantity === null
+      ? slot.quantity
+      : Math.min(slot.quantity, remainingQuantity)
+    filled.push({ ...slot, quantity })
+    if (remainingQuantity !== null) remainingQuantity -= quantity
+  }
+
+  const hasQuantityCapacity = remainingQuantity === null || remainingQuantity > 0
+  if (filled.length < limit && hasQuantityCapacity) filled.push(emptyInventorySlot())
   return filled
 }
 
@@ -47,6 +81,12 @@ export function selectInventoryItem(slots, index, item, maxSlots, options = {}) 
 export function setInventoryQuantity(slots, index, quantity, maxSlots, options = {}) {
   const next = Array.isArray(slots) ? slots.map((slot) => ({ ...slot })) : []
   while (next.length <= index) next.push(emptyInventorySlot())
-  next[index].quantity = Math.max(1, Number(quantity) || 1)
+  const remaining = options.maxTotalQuantity !== null
+    && options.maxTotalQuantity !== undefined
+    && Number.isFinite(Number(options.maxTotalQuantity))
+    ? remainingInventoryQuantity(next, index, options.maxTotalQuantity)
+    : null
+  const normalizedQuantity = Math.max(1, Number(quantity) || 1)
+  next[index].quantity = remaining === null ? normalizedQuantity : Math.min(normalizedQuantity, Math.max(1, remaining))
   return reconcileInventorySlots(next, maxSlots, options)
 }

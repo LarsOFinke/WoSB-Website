@@ -8,9 +8,11 @@ const frontendRoot = resolve(scriptDir, '..')
 
 import {
   emptyInventorySlot,
+  inventoryQuantityTotal,
   isWeaponInventoryField,
   normalizeInventorySlots,
   reconcileInventorySlots,
+  remainingInventoryQuantity,
   selectInventoryItem,
   setInventoryQuantity,
 } from '../src/modules/builds/inventorySlots.js'
@@ -49,41 +51,121 @@ assert.deepEqual(
   [{ item: '', quantity: 1 }],
 )
 
+const quantityCapped = reconcileInventorySlots(
+  [{ item: 'Doctor', quantity: 6 }, { item: 'Sail Handler', quantity: 6 }],
+  8,
+  { maxTotalQuantity: 8 },
+)
+assert.deepEqual(quantityCapped, [
+  { item: 'Doctor', quantity: 6 },
+  { item: 'Sail Handler', quantity: 2 },
+])
+assert.equal(inventoryQuantityTotal(quantityCapped), 8)
+assert.equal(remainingInventoryQuantity(quantityCapped, 1, 8), 2)
+const quantityStillCapped = setInventoryQuantity(quantityCapped, 1, 999999, 8, { maxTotalQuantity: 8 })
+assert.equal(quantityStillCapped[1].quantity, 2)
+assert.equal(inventoryQuantityTotal(quantityStillCapped), 8)
+
 
 import {
   crewSliderMax,
   crewTotal,
   normalizeCrewAllocation,
+  sailingEfficiencyPercent,
   setCrewAllocationValue,
 } from '../src/modules/builds/crewAllocation.js'
 
 const crew = normalizeCrewAllocation(
   { sailors: 80, musketeers: 20, soldiers: 15, mercenaries: 10 },
   100,
-  60,
+  80,
 )
 assert.deepEqual(crew, { sailors: 80, musketeers: 20, soldiers: 0, mercenaries: 0 })
 assert.equal(crewTotal(crew), 100)
-assert.equal(crewSliderMax(crew, 'soldiers', 100, 60), 0)
-assert.equal(crewSliderMax(crew, 'sailors', 100, 60), 80)
+assert.equal(crewSliderMax(crew, 'soldiers', 100, 80), 0)
+assert.equal(crewSliderMax(crew, 'sailors', 100, 80), 80)
+assert.equal(sailingEfficiencyPercent(40, 80), 50)
+assert.equal(sailingEfficiencyPercent(80, 80), 100)
 
-const reassigned = setCrewAllocationValue(crew, 'musketeers', 5, 100, 60)
+const reassigned = setCrewAllocationValue(crew, 'musketeers', 5, 100, 80)
 assert.deepEqual(reassigned, { sailors: 80, musketeers: 5, soldiers: 0, mercenaries: 0 })
-assert.equal(crewSliderMax(reassigned, 'soldiers', 100, 60), 15)
+assert.equal(crewSliderMax(reassigned, 'soldiers', 100, 80), 15)
 
-const reducedCapacity = normalizeCrewAllocation(
-  { sailors: 90, musketeers: 20, soldiers: 15, mercenaries: 10 },
-  75,
-  65,
+const partialSailors = normalizeCrewAllocation(
+  { sailors: 40, musketeers: 20, soldiers: 40, mercenaries: 10 },
+  100,
+  80,
 )
-assert.deepEqual(reducedCapacity, { sailors: 75, musketeers: 0, soldiers: 0, mercenaries: 0 })
-assert.equal(crewTotal(reducedCapacity), 75)
+assert.deepEqual(partialSailors, { sailors: 40, musketeers: 20, soldiers: 40, mercenaries: 0 })
+assert.equal(crewTotal(partialSailors), 100)
+
+const sailorCap = setCrewAllocationValue(
+  { sailors: 0, musketeers: 0, soldiers: 0, mercenaries: 0 },
+  'sailors',
+  999,
+  160,
+  80,
+)
+assert.equal(sailorCap.sailors, 80)
+
+
+import { addPreferenceId, removePreferenceId, splitPreferenceOptions } from '../src/modules/accounts/preferenceTransfer.js'
+
+const preferenceOptions = [{ id: 1, label: 'Anson' }, { id: 2, label: 'Huracan' }]
+assert.deepEqual(addPreferenceId([], '1'), [1])
+assert.deepEqual(addPreferenceId([1], 1), [1])
+assert.deepEqual(removePreferenceId([1, 2], '1'), [2])
+const movedPreferences = splitPreferenceOptions(preferenceOptions, ['2'])
+assert.deepEqual(movedPreferences.availableOptions.map((option) => option.id), [1])
+assert.deepEqual(movedPreferences.selectedOptions.map((option) => option.id), [2])
+
+import { isValidDateInput, localDateFromInputs, splitLocalDateTime } from '../src/shared/datetime/localDateTime.js'
+assert.equal(isValidDateInput('2026-07-12'), true)
+assert.equal(isValidDateInput('12.07.202612'), false)
+assert.equal(isValidDateInput('2026-13-12'), false)
+assert.equal(localDateFromInputs('2026-07-12', '23:23')?.getFullYear(), 2026)
+assert.deepEqual(splitLocalDateTime('2026-07-12T23:23'), { date: '2026-07-12', time: '23:23' })
+
+import { upcomingEventsForSquads } from '../src/modules/squads/mySquadsEvents.js'
+
+const squadEvents = upcomingEventsForSquads([
+  { id: 3, squad_id: 1, start_at: '2026-07-12T20:00:00', end_at: '2026-07-12T21:00:00', is_cancelled: false },
+  { id: 1, squad_id: 1, start_at: '2026-07-12T18:00:00', end_at: '2026-07-12T19:00:00', is_cancelled: false },
+  { id: 2, squad_id: 2, start_at: '2026-07-12T19:00:00', end_at: '2026-07-12T20:00:00', is_cancelled: false },
+  { id: 4, squad_id: 1, start_at: '2026-07-11T10:00:00', end_at: '2026-07-11T11:00:00', is_cancelled: false },
+  { id: 5, squad_id: 1, start_at: '2026-07-12T22:00:00', end_at: '2026-07-12T23:00:00', is_cancelled: true },
+], [{ id: 1 }], new Date('2026-07-12T12:00:00'))
+assert.deepEqual(squadEvents.map((event) => event.id), [1, 3])
 
 import { calculateBuildStatRows, calculateUpgradeSlotAccess, sumEffects } from '../src/modules/builds/buildCalculations.js'
+import { calculateSpecialistEffectTotals } from '../src/modules/builds/specialistEffects.js'
 
 assert.deepEqual(sumEffects({ speed_pct: 4 }, { speed_pct: 3, reload_pct: 2 }), {
   speed_pct: 7,
   reload_pct: 2,
+})
+
+const specialistCatalog = {
+  'First Mate': { speed_per_sailor_pct: 0.2 },
+  Doctor: { boarding_company_shelling_survivability_pct: 40 },
+  Skipper: { boarding_cargo_weight_per_boarder_pct: 0.5 },
+  'Sailing Master': { steady_course_enabled: 1 },
+}
+const specialistTotals = calculateSpecialistEffectTotals({
+  slots: [
+    { item: 'First Mate', quantity: 1 },
+    { item: 'Doctor', quantity: 1 },
+    { item: 'Skipper', quantity: 1 },
+    { item: 'Sailing Master', quantity: 3 },
+  ],
+  effectForItem: (name) => specialistCatalog[name],
+  crew: { sailors: 80, soldiers: 40, musketeers: 20, mercenaries: 10 },
+})
+assert.deepEqual(specialistTotals, {
+  speed_pct: 16,
+  boarding_company_shelling_survivability_pct: 40,
+  boarding_cargo_weight_pct: 35,
+  steady_course_enabled: 1,
 })
 
 const equipmentStatDefinitions = [
@@ -210,8 +292,19 @@ assert.equal(stackedAccess.availableSlots, 6)
 
 const buildCreateSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/pages/BuildCreatePage.vue'), 'utf8')
 const indexSource = readFileSync(resolve(frontendRoot, 'index.html'), 'utf8')
+const buildRoutesSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/routes.js'), 'utf8')
+const profilePageSource = readFileSync(resolve(frontendRoot, 'src/modules/accounts/pages/ProfilePage.vue'), 'utf8')
+const preferenceTransferSource = readFileSync(resolve(frontendRoot, 'src/modules/accounts/components/PreferenceTransferList.vue'), 'utf8')
+const mySquadsSource = readFileSync(resolve(frontendRoot, 'src/modules/squads/pages/MySquadsPage.vue'), 'utf8')
 
 assert.match(buildCreateSource, /import slotPlaceholderSrc from '@\/assets\/slot-placeholder\.svg'/)
+assert.match(buildRoutesSource, /path: '\/builds\/:id\/edit'/)
+assert.match(buildCreateSource, /updateMyBuild\(props\.id, buildPayload\(\)\)/)
+assert.match(profilePageSource, /PreferenceTransferList/)
+assert.match(preferenceTransferSource, /update:modelValue/)
+assert.match(mySquadsSource, /route\.query\.view === 'events'/)
+assert.match(mySquadsSource, /upcomingSquadEvents/)
+assert.match(mySquadsSource, /v-for="event in upcomingSquadEvents"/)
 assert.doesNotMatch(buildCreateSource, /\/icons\/slot-placeholder\.svg/)
 assert.match(buildCreateSource, /<select v-model="form\.lantern"/)
 assert.match(buildCreateSource, /optionsFor\('lantern'\)/)

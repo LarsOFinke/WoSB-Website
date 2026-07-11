@@ -10,6 +10,10 @@ class ShipStats(BaseModel):
     crew_remaining: int
     sailor_minimum: int
     sailors_required_met: bool
+    sailor_target: int | None = None
+    base_sailor_target: int | None = None
+    effective_sailor_target: int | None = None
+    sailing_efficiency_pct: int = 100
     upgrade_slots_used: int
     upgrade_slots_available: int
     base_upgrade_slots_available: int | None = None

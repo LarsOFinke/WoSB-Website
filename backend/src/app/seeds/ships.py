@@ -263,7 +263,9 @@ SHIP_SEED_DATA = [{'armor': 4.2,
   'name': 'Anson',
   'rate': 3,
   'sail_slots': 1,
-  'sailor_minimum': 64,
+  # In-game crew screen: Sailor 0 / 80. This is the target for 100%
+  # working speed, retained in the legacy sailor_minimum column for DB compatibility.
+  'sailor_minimum': 80,
   'ship_type': 'Ship of the Line',
   'source': 'WoSB wiki ship page audit 2026-07',
   'speed_knots': 8.2,

@@ -5,30 +5,42 @@ import { useRouter } from 'vue-router'
 import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
 
 import { useLocale } from '@/locales'
-import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
+import { createBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { calculateBuildStatRows, calculateUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
+import { calculateSpecialistEffectTotals } from '@/modules/builds/specialistEffects'
 import {
   crewSliderMax,
   normalizeCrewAllocation,
   setCrewAllocationValue,
+  sailingEfficiencyPercent,
 } from '@/modules/builds/crewAllocation'
 import {
   emptyInventorySlot,
+  inventoryQuantityTotal,
   isWeaponInventoryField,
   normalizeInventorySlots,
   reconcileInventorySlots,
+  remainingInventoryQuantity,
   selectInventoryItem,
   setInventoryQuantity,
 } from '@/modules/builds/inventorySlots'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 import { listShips } from '@/modules/ships/api/ships'
+import { useSession } from '@/modules/accounts/session'
+
+const props = defineProps({
+  id: { type: String, default: '' },
+})
 
 const router = useRouter()
 const { optionLabel, t } = useLocale()
+const { user } = useSession()
+const isEditing = computed(() => Boolean(props.id))
+const suppressShipChange = ref(false)
 
 const ships = ref([])
-const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {} })
+const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {}, limits: {} })
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -156,19 +168,24 @@ function statDefinitionForEffect(key) {
 
 function statLabel(key) {
   const definition = statDefinitionForEffect(key)
-  return t(`builds.statLabels.${definition?.key || key}`)
+  const path = `builds.statLabels.${definition?.key || key}`
+  const translated = t(path)
+  return translated === path ? (definition?.label || String(key).replaceAll('_', ' ')) : translated
 }
 
 function formatEffects(name, categoryKey = 'upgrade') {
   const effects = optionEffects(categoryKey, name)
   const entries = Object.entries(effects).filter(([, value]) => Number(value) !== 0)
   if (!entries.length) return ''
-  return entries.map(([key, value]) => `${statLabel(key)} ${effectValue(value)}${key.endsWith('_pct') ? '%' : ''}`).join(' · ')
+  return entries.map(([key, value]) => {
+    if (key.endsWith('_enabled')) return statLabel(key)
+    return `${statLabel(key)} ${effectValue(value)}${key.endsWith('_pct') ? '%' : ''}`
+  }).join(' · ')
 }
 
 
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
-const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
+const baseSailorTarget = computed(() => selectedShip.value?.sailor_minimum || 0)
 const firstFourUpgradeEffects = computed(() => sumEffects(
   ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4]
     .filter(Boolean)
@@ -179,14 +196,16 @@ const upgradeEffectTotals = computed(() => sumEffects(
     .filter(Boolean)
     .map((name) => upgradeEffects(name)),
 ))
-const specialCrewEffectTotals = computed(() => sumEffects(
-  ...normalizeInventorySlots(form.special_crew_slots).map((slot) => {
-    const quantity = Math.max(1, Number(slot.quantity) || 1)
-    return Object.fromEntries(
-      Object.entries(specialCrewEffects(slot.item)).map(([key, value]) => [key, (Number(value) || 0) * quantity]),
-    )
-  }),
-))
+const specialCrewEffectTotals = computed(() => calculateSpecialistEffectTotals({
+  slots: normalizeInventorySlots(form.special_crew_slots),
+  effectForItem: specialCrewEffects,
+  crew: {
+    sailors: form.sailors,
+    soldiers: form.soldiers,
+    musketeers: form.musketeers,
+    mercenaries: form.mercenaries,
+  },
+}))
 const equipmentEffectTotals = computed(() => sumEffects(
   optionEffects('sail', form.sails),
   optionEffects('lantern', form.lantern),
@@ -215,15 +234,17 @@ const crewCapacity = computed(() => Math.max(0, Math.round(
   baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
   + (Number(buildEffectTotals.value.crew_capacity) || 0),
 )))
-const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
+const sailorTarget = computed(() => Math.max(0, baseSailorTarget.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
+const sailingEfficiency = computed(() => sailingEfficiencyPercent(form.sailors, sailorTarget.value))
 
 const crewTotal = computed(
   () => Number(form.sailors) + Number(form.soldiers) + Number(form.musketeers) + Number(form.mercenaries),
 )
 const crewRemaining = computed(() => Math.max(0, crewCapacity.value - crewTotal.value))
 const crewOverLimit = computed(() => crewCapacity.value > 0 && crewTotal.value > crewCapacity.value)
-const sailorsBelowMinimum = computed(() => Number(form.sailors) < sailorMinimum.value)
-const crewInvalid = computed(() => crewOverLimit.value || sailorsBelowMinimum.value)
+const crewInvalid = computed(() => crewOverLimit.value)
+const specialCrewLimit = computed(() => Math.max(1, Number(optionCatalog.value.limits?.special_crew_total) || 8))
+const specialCrewOverCapacity = computed(() => slotQuantityTotal('special_crew_slots') > specialCrewLimit.value)
 
 const upgradeSlotsUsed = computed(() =>
   [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean).length,
@@ -240,10 +261,14 @@ const buildStatRows = computed(() => calculateBuildStatRows({
   ship: selectedShip.value,
   definitions: statDefinitions.value,
   effects: buildEffectTotals.value,
-}).map((row) => ({
-  ...row,
-  label: t(`builds.statLabels.${row.key}`),
-})))
+}).map((row) => {
+  const path = `builds.statLabels.${row.key}`
+  const translated = t(path)
+  return {
+    ...row,
+    label: translated === path ? (row.label || String(row.key).replaceAll('_', ' ')) : translated,
+  }
+}))
 
 const selectedUpgradeCards = computed(() => Array.from({ length: equipmentUpgradeCount }, (_, offset) => {
   const index = offset + 1
@@ -266,6 +291,7 @@ const canSubmit = computed(
     && (!form.upgrade_5 || upgradeSlot5Unlocked.value)
     && (!form.upgrade_6 || upgradeSlot6Available.value)
     && allWeaponsValid.value
+    && !specialCrewOverCapacity.value
     && !saving.value,
 )
 
@@ -274,7 +300,7 @@ function slotCount(fieldName) {
 }
 
 function slotQuantityTotal(fieldName) {
-  return normalizeInventorySlots(form[fieldName]).reduce((total, slot) => total + (Number(slot.quantity) || 1), 0)
+  return inventoryQuantityTotal(form[fieldName])
 }
 
 function allWeaponQuantityTotal() {
@@ -390,9 +416,22 @@ function upgradeSlotPlaceholder(index) {
   return t('common.empty')
 }
 
+function quantityCapacityForField(fieldName) {
+  if (isWeaponInventoryField(fieldName)) return weaponCapacityForField(fieldName)
+  if (fieldName === 'special_crew_slots') return specialCrewLimit.value
+  return null
+}
+
+function quantityMaxForField(fieldName, index) {
+  const capacity = quantityCapacityForField(fieldName)
+  if (capacity === null) return 999999
+  return Math.max(1, remainingInventoryQuantity(form[fieldName], index, capacity))
+}
+
 function inventoryReconcileOptions(fieldName) {
   return {
     isItemAllowed: (item) => !weaponSelectionInvalid(fieldName, item),
+    maxTotalQuantity: quantityCapacityForField(fieldName),
   }
 }
 
@@ -450,7 +489,7 @@ function applyCrewAllocation(allocation) {
 }
 
 function crewMaxFor(fieldName) {
-  return crewSliderMax(currentCrewAllocation(), fieldName, crewCapacity.value, sailorMinimum.value)
+  return crewSliderMax(currentCrewAllocation(), fieldName, crewCapacity.value, sailorTarget.value)
 }
 
 function onCrewSliderInput(fieldName, event) {
@@ -460,22 +499,36 @@ function onCrewSliderInput(fieldName, event) {
       fieldName,
       event.target.value,
       crewCapacity.value,
-      sailorMinimum.value,
+      sailorTarget.value,
     ),
   )
 }
 
 function normalizeCurrentCrew() {
-  applyCrewAllocation(normalizeCrewAllocation(currentCrewAllocation(), crewCapacity.value, sailorMinimum.value))
+  applyCrewAllocation(normalizeCrewAllocation(currentCrewAllocation(), crewCapacity.value, sailorTarget.value))
 }
 
-function setCrewToShipMinimum() {
-  applyCrewAllocation(normalizeCrewAllocation({ sailors: sailorMinimum.value }, crewCapacity.value, sailorMinimum.value))
+function resetCrewAllocation() {
+  applyCrewAllocation(normalizeCrewAllocation({ sailors: 0 }, crewCapacity.value, sailorTarget.value))
 }
 
 function resetSlots() {
   for (const fieldName of Object.keys(slotLimits)) {
     form[fieldName] = slotLimitForField(fieldName) > 0 ? [emptyInventorySlot()] : []
+  }
+}
+
+function hydrateBuild(build) {
+  for (const fieldName of [
+    'build_name', 'build_type', 'ship_id', 'sails', 'upgrade_1', 'upgrade_2', 'upgrade_3',
+    'upgrade_4', 'upgrade_5', 'upgrade_6', 'lantern', 'research_upgrade_slot_unlocked',
+    'sailors', 'soldiers', 'musketeers', 'mercenaries', 'details',
+  ]) {
+    form[fieldName] = build[fieldName] ?? form[fieldName]
+  }
+  for (const fieldName of Object.keys(slotLimits)) {
+    const slots = Array.isArray(build[fieldName]) ? build[fieldName].map((slot) => ({ ...slot })) : []
+    form[fieldName] = slots.length ? slots : (slotLimitForField(fieldName) > 0 ? [emptyInventorySlot()] : [])
   }
 }
 
@@ -506,10 +559,12 @@ async function saveBuild() {
 
   saving.value = true
   try {
-    const created = await createBuild(buildPayload())
-    await router.push(`/builds/${created.id}`)
+    const saved = isEditing.value
+      ? await updateMyBuild(props.id, buildPayload())
+      : await createBuild(buildPayload())
+    await router.push(`/builds/${saved.id}`)
   } catch (err) {
-    error.value = err.message || t('builds.create.saveError')
+    error.value = err.message || t(isEditing.value ? 'builds.edit.saveError' : 'builds.create.saveError')
   } finally {
     saving.value = false
   }
@@ -519,7 +574,8 @@ let optionRequestId = 0
 watch(
   () => form.ship_id,
   async (shipId) => {
-    setCrewToShipMinimum()
+    if (suppressShipChange.value) return
+    resetCrewAllocation()
     if (!shipId) return
     const requestId = ++optionRequestId
     try {
@@ -533,7 +589,7 @@ watch(
   },
 )
 
-watch([crewCapacity, sailorMinimum], () => {
+watch([crewCapacity, sailorTarget], () => {
   normalizeCurrentCrew()
 })
 
@@ -555,12 +611,27 @@ onMounted(async () => {
   try {
     const shipRows = await listShips()
     ships.value = sortShipsForDropdown(shipRows)
-    form.ship_id = ships.value[0]?.id || ''
-    optionCatalog.value = await getBuildOptions(form.ship_id || null)
-    resetSlots()
-    setCrewToShipMinimum()
+
+    if (isEditing.value) {
+      const existing = await getBuild(props.id)
+      if (Number(existing.owner_id) !== Number(user.value?.id) || existing.is_official_template) {
+        throw new Error(t('builds.edit.notAllowed'))
+      }
+      suppressShipChange.value = true
+      form.ship_id = existing.ship_id
+      optionCatalog.value = await getBuildOptions(existing.ship_id)
+      hydrateBuild(existing)
+      for (const fieldName of Object.keys(slotLimits)) reconcileInventoryField(fieldName)
+      suppressShipChange.value = false
+    } else {
+      form.ship_id = ships.value[0]?.id || ''
+      optionCatalog.value = await getBuildOptions(form.ship_id || null)
+      resetSlots()
+      resetCrewAllocation()
+    }
   } catch (err) {
-    error.value = err.message || t('builds.create.loadError')
+    suppressShipChange.value = false
+    error.value = err.message || t(isEditing.value ? 'builds.edit.loadError' : 'builds.create.loadError')
   } finally {
     loading.value = false
   }
@@ -572,10 +643,10 @@ onMounted(async () => {
     <form class="wire-frame page-frame create-frame create-frame-clean" @submit.prevent="saveBuild">
       <div class="create-topline">
         <div>
-          <h1 id="build-create-title">{{ t('builds.create.title') }}</h1>
-          <p>{{ t('builds.create.subtitle') }}</p>
+          <h1 id="build-create-title">{{ t(isEditing ? 'builds.edit.title' : 'builds.create.title') }}</h1>
+          <p>{{ t(isEditing ? 'builds.edit.subtitle' : 'builds.create.subtitle') }}</p>
         </div>
-        <RouterLink class="small-action" to="/builds">{{ t('common.back') }}</RouterLink>
+        <RouterLink class="small-action" :to="isEditing ? `/builds/${props.id}` : '/builds'">{{ t('common.back') }}</RouterLink>
       </div>
 
       <section class="wire-section form-section identity-section" :aria-label="t('builds.create.sections.identity')">
@@ -719,9 +790,9 @@ onMounted(async () => {
                 :value="slot.quantity"
                 type="number"
                 min="1"
-                :max="weaponCapacityForField(arc.fieldName) || 999999"
+                :max="quantityMaxForField(arc.fieldName, index)"
                 :aria-label="t('common.quantity')"
-                @change="onInventoryQuantityChange(arc.fieldName, index, $event)"
+                @input="onInventoryQuantityChange(arc.fieldName, index, $event)"
               />
             </label>
           </div>
@@ -738,7 +809,7 @@ onMounted(async () => {
           <div class="inventory-panel special-crew-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.specialCrew.title') }}</strong>
-              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotCount('special_crew_slots'), max: 8 }) }}</span>
+              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotQuantityTotal('special_crew_slots'), max: specialCrewLimit }) }}</span>
             </div>
             <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select with-quantity">
               <span class="slot-image-cell">
@@ -760,9 +831,9 @@ onMounted(async () => {
                 :value="slot.quantity"
                 type="number"
                 min="1"
-                max="999999"
+                :max="quantityMaxForField('special_crew_slots', index)"
                 :aria-label="t('common.quantity')"
-                @change="onInventoryQuantityChange('special_crew_slots', index, $event)"
+                @input="onInventoryQuantityChange('special_crew_slots', index, $event)"
               />
             </label>
           </div>
@@ -792,17 +863,17 @@ onMounted(async () => {
             <span class="crew-meter-mercenaries" :style="{ width: `${crewCapacity ? (Number(form.mercenaries) / crewCapacity) * 100 : 0}%` }"></span>
           </div>
           <div class="crew-allocation-legend">
-            <span>{{ t('builds.create.crew.sailorMinimum', { value: sailorMinimum }) }}</span>
+            <span>{{ t('builds.create.crew.sailorTarget', { value: sailorTarget }) }}</span>
             <span>{{ t('builds.crewConsole.dynamicLimit') }}</span>
-            <span v-if="sailorsBelowMinimum" class="crew-warning">{{ t('builds.create.crew.tooFewSailors') }}</span>
-            <span v-else-if="crewOverLimit" class="crew-warning">{{ t('builds.create.crew.tooManyCrew') }}</span>
+            <span>{{ t('builds.create.crew.workingSpeed', { value: sailingEfficiency }) }}</span>
+            <span v-if="crewOverLimit" class="crew-warning">{{ t('builds.create.crew.tooManyCrew') }}</span>
           </div>
 
           <div class="crew-grid section-fields">
             <label class="crew-slider-card crew-sailors">
               <span><small>{{ t('builds.create.crew.sailors') }}</small><strong>{{ form.sailors }}</strong></span>
-              <input :value="form.sailors" type="range" :min="sailorMinimum" :max="crewMaxFor('sailors')" @input="onCrewSliderInput('sailors', $event)" />
-              <small>{{ sailorMinimum }}–{{ crewMaxFor('sailors') }}</small>
+              <input :value="form.sailors" type="range" min="0" :max="crewMaxFor('sailors')" @input="onCrewSliderInput('sailors', $event)" />
+              <small>0–{{ crewMaxFor('sailors') }}</small>
             </label>
 
             <label class="crew-slider-card crew-musketeers">
@@ -943,9 +1014,9 @@ onMounted(async () => {
       <p v-if="error" class="error-text">{{ error }}</p>
 
       <div class="form-actions">
-        <RouterLink class="wire-section form-button" to="/builds">{{ t('common.cancel') }}</RouterLink>
+        <RouterLink class="wire-section form-button" :to="isEditing ? `/builds/${props.id}` : '/builds'">{{ t('common.cancel') }}</RouterLink>
         <button class="wire-section form-button primary" type="submit" :disabled="!canSubmit">
-          {{ saving ? t('builds.create.saving') : t('builds.create.save') }}
+          {{ saving ? t(isEditing ? 'builds.edit.saving' : 'builds.create.saving') : t(isEditing ? 'builds.edit.save' : 'builds.create.save') }}
         </button>
       </div>
     </form>

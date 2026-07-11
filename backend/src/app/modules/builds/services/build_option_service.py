@@ -6,6 +6,7 @@ from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_item_category_read import BuildItemCategoryRead
 from app.modules.builds.schemas.build_item_option_read import BuildItemOptionRead
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
+from app.modules.builds.services.build_limits import build_limits_for_api
 from app.modules.builds.services.build_stat_service import stat_definitions_for_api
 from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
 from app.modules.ships.models.ship import Ship
@@ -83,4 +84,5 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
         options=grouped,
         stat_definitions=stat_definitions_for_api(),
         research_upgrade_slot_effects=dict(RESEARCH_UPGRADE_SLOT_EFFECTS),
+        limits=build_limits_for_api(),
     )

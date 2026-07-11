@@ -47,6 +47,7 @@ function formatStatValue(value, unit, precision = 0) {
 function formatModifier(row) {
   const value = Number(row.modifier || 0)
   if (!Number.isFinite(value) || value === 0) return '—'
+  if (String(row.effect_key || row.key || '').endsWith('_enabled')) return '✓'
   const sign = value > 0 ? '+' : ''
   const suffix = row.modifier_kind === 'percent'
     || row.unit === '%'

@@ -3,6 +3,8 @@ import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
+import LocalDateTimeFields from '@/shared/components/LocalDateTimeFields.vue'
+import { localDateTimeValue, localDateFromInputs } from '@/shared/datetime/localDateTime'
 import { createGroup } from '@/modules/groups/api/groups'
 
 const router = useRouter()
@@ -30,8 +32,10 @@ const form = reactive({
   expectations: '',
   activity_plan: '',
   contact_note: '',
-  scheduled_start_at: '',
-  scheduled_end_at: '',
+  scheduled_start_date: '',
+  scheduled_start_time: '',
+  scheduled_end_date: '',
+  scheduled_end_time: '',
   max_members: 5,
   allow_guests: false,
   min_ship_rate: '',
@@ -43,14 +47,32 @@ const rateRangeInvalid = computed(() =>
   form.min_ship_rate && form.max_ship_rate && Number(form.max_ship_rate) > Number(form.min_ship_rate),
 )
 
-const timeRangeInvalid = computed(() =>
-  form.scheduled_start_at && form.scheduled_end_at && new Date(form.scheduled_end_at) <= new Date(form.scheduled_start_at),
-)
+const scheduledStartAt = computed(() => localDateTimeValue(form.scheduled_start_date, form.scheduled_start_time))
+const scheduledEndAt = computed(() => localDateTimeValue(form.scheduled_end_date, form.scheduled_end_time))
+const scheduleHasAnyValue = computed(() => Boolean(
+  form.scheduled_start_date
+  || form.scheduled_start_time
+  || form.scheduled_end_date
+  || form.scheduled_end_time,
+))
+const scheduleIncomplete = computed(() => scheduleHasAnyValue.value && !(
+  scheduledStartAt.value && scheduledEndAt.value
+))
+const timeRangeInvalid = computed(() => {
+  if (!scheduledStartAt.value || !scheduledEndAt.value) return false
+  const start = localDateFromInputs(form.scheduled_start_date, form.scheduled_start_time)
+  const end = localDateFromInputs(form.scheduled_end_date, form.scheduled_end_time)
+  return !start || !end || end <= start
+})
 
 async function submitGroup() {
   error.value = ''
   if (rateRangeInvalid.value) {
     error.value = t('groups.create.rateRangeInvalid')
+    return
+  }
+  if (scheduleIncomplete.value) {
+    error.value = t('groups.create.scheduleIncomplete')
     return
   }
   if (timeRangeInvalid.value) {
@@ -67,8 +89,8 @@ async function submitGroup() {
       expectations: form.expectations || null,
       activity_plan: form.activity_plan || null,
       contact_note: form.contact_note || null,
-      scheduled_start_at: form.scheduled_start_at || null,
-      scheduled_end_at: form.scheduled_end_at || null,
+      scheduled_start_at: scheduledStartAt.value || null,
+      scheduled_end_at: scheduledEndAt.value || null,
       max_members: Number(form.max_members) || 5,
       min_ship_rate: form.min_ship_rate ? Number(form.min_ship_rate) : null,
       max_ship_rate: form.max_ship_rate ? Number(form.max_ship_rate) : null,
@@ -182,18 +204,18 @@ async function submitGroup() {
         <p class="section-helper-text">{{ t('groups.create.sections.scheduleText') }}</p>
 
         <div class="section-fields group-time-grid">
-          <label class="field-stack">
-            <span class="field-label">{{ t('groups.fields.startTime') }}</span>
-            <span class="input-panel embedded-field">
-              <input v-model="form.scheduled_start_at" type="datetime-local" />
-            </span>
-          </label>
-          <label class="field-stack">
-            <span class="field-label">{{ t('groups.fields.endTime') }}</span>
-            <span class="input-panel embedded-field">
-              <input v-model="form.scheduled_end_at" type="datetime-local" />
-            </span>
-          </label>
+          <LocalDateTimeFields
+            v-model:date="form.scheduled_start_date"
+            v-model:time="form.scheduled_start_time"
+            :date-label="t('calendar.fields.startDate')"
+            :time-label="t('groups.fields.startTime')"
+          />
+          <LocalDateTimeFields
+            v-model:date="form.scheduled_end_date"
+            v-model:time="form.scheduled_end_time"
+            :date-label="t('calendar.fields.endDate')"
+            :time-label="t('groups.fields.endTime')"
+          />
         </div>
       </section>
 
@@ -236,10 +258,11 @@ async function submitGroup() {
       </section>
 
       <p v-if="rateRangeInvalid" class="error-text form-message">{{ t('groups.create.rateRangeInvalid') }}</p>
+      <p v-if="scheduleIncomplete" class="error-text form-message">{{ t('groups.create.scheduleIncomplete') }}</p>
       <p v-if="timeRangeInvalid" class="error-text form-message">{{ t('groups.create.timeRangeInvalid') }}</p>
       <p v-if="error" class="error-text form-message">{{ error }}</p>
       <div class="form-actions group-create-actions">
-        <button class="wire-section form-button primary" type="submit" :disabled="saving || rateRangeInvalid || timeRangeInvalid">
+        <button class="wire-section form-button primary" type="submit" :disabled="saving || rateRangeInvalid || scheduleIncomplete || timeRangeInvalid">
           {{ saving ? t('groups.create.saving') : t('groups.create.save') }}
         </button>
       </div>

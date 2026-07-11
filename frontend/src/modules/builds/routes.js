@@ -12,6 +12,13 @@ export const buildRoutes = [
     meta: { requiresUser: true, titleKey: 'common.builds' },
   },
   {
+    path: '/builds/:id/edit',
+    name: 'builds-edit',
+    component: () => import('./pages/BuildCreatePage.vue'),
+    props: true,
+    meta: { requiresUser: true, titleKey: 'builds.edit.title' },
+  },
+  {
     path: '/builds/:id',
     name: 'builds-detail',
     component: () => import('./pages/BuildDetailPage.vue'),

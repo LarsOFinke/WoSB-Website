@@ -1,4 +1,4 @@
-import { deleteRequest, get, post } from '@/shared/api/client'
+import { deleteRequest, get, post, put } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
 function buildFilters(search = '', buildType = '') {
@@ -27,4 +27,8 @@ export function getBuildOptions(shipId = null) {
 
 export function createBuild(payload) {
   return post('/builds', payload)
+}
+
+export function updateMyBuild(id, payload) {
+  return put(`/builds/mine/${id}`, payload)
 }

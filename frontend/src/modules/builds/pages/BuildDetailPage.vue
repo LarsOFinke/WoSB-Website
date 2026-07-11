@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useLocale } from '@/locales'
 import { getBuild } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
+import { useSession } from '@/modules/accounts/session'
 
 const props = defineProps({
   id: {
@@ -13,6 +14,7 @@ const props = defineProps({
 })
 
 const { optionLabel, t } = useLocale()
+const { user } = useSession()
 
 const build = ref(null)
 const loading = ref(false)
@@ -28,6 +30,8 @@ const weaponArcRows = computed(() => [
 ])
 
 const crewTotal = computed(() => build.value?.ship_stats?.crew_total || 0)
+
+const canEdit = computed(() => Number(build.value?.owner_id) === Number(user.value?.id) && !build.value?.is_official_template)
 
 const upgrades = computed(() => {
   if (!build.value) return []
@@ -83,10 +87,14 @@ function formatModifier(row) {
   return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
 }
 
-const statRows = computed(() => (build.value?.ship_stats?.stat_rows || []).map((row) => ({
-  ...row,
-  label: t(`builds.statLabels.${row.key}`),
-})))
+const statRows = computed(() => (build.value?.ship_stats?.stat_rows || []).map((row) => {
+  const path = `builds.statLabels.${row.key}`
+  const translated = t(path)
+  return {
+    ...row,
+    label: translated === path ? (row.label || String(row.key).replaceAll('_', ' ')) : translated,
+  }
+}))
 
 const activeEffectRows = computed(() => statRows.value
   .filter((row) => Number(row.modifier || 0) !== 0)
@@ -126,7 +134,12 @@ onMounted(loadBuild)
                 {{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ build.ship.ship_type }} · {{ buildTypeLabel(build.build_type) }}
               </p>
             </div>
-            <RouterLink class="small-action" to="/builds">{{ t('common.back') }}</RouterLink>
+            <div class="detail-header-actions">
+              <RouterLink v-if="canEdit" class="small-action primary-action" :to="`/builds/${build.id}/edit`">
+                {{ t('builds.edit.action') }}
+              </RouterLink>
+              <RouterLink class="small-action" to="/builds">{{ t('common.back') }}</RouterLink>
+            </div>
           </div>
 
           <BuildStatCommandDeck

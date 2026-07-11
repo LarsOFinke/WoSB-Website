@@ -9,6 +9,7 @@ import { changePassword } from '@/modules/accounts/api/auth'
 import { getProfile, getProfilePreferenceOptions, updateProfile } from '@/modules/accounts/api/profile'
 import { useSession } from '@/modules/accounts/session'
 import { listMyFleetMemberships } from '@/modules/fleet/api/fleet'
+import PreferenceTransferList from '@/modules/accounts/components/PreferenceTransferList.vue'
 
 const { t } = useLocale()
 const { setSessionUser } = useSession()
@@ -35,6 +36,14 @@ const displayInitials = computed(() => {
   return source.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RBF'
 })
 const preferredFocusLabel = computed(() => form.preferred_focus ? t(`focus.${form.preferred_focus}`) : t('profile.noPreferredFocus'))
+const preferredShipOptions = computed(() => preferenceOptions.ships.map((ship) => ({
+  id: ship.id,
+  label: `${ship.name} · Rate ${ship.rate}`,
+})))
+const preferredRoleOptions = computed(() => preferenceOptions.roles.map((role) => ({
+  id: role.id,
+  label: role.label,
+})))
 const fleetStatusLabel = computed(() => hasOfficialFleetLink.value ? t(`fleets.status.${form.fleet_membership_status}`) : t('profile.fleetMemberships.empty'))
 const profileCompletion = computed(() => {
   const checks = [
@@ -264,22 +273,12 @@ onMounted(loadProfile)
 
               <fieldset class="input-panel embedded-field profile-field-wide">
                 <legend>{{ t('fleets.directory.preferredShips') }}</legend>
-                <div class="profile-preference-grid">
-                  <label v-for="ship in preferenceOptions.ships" :key="ship.id" class="checkbox-row">
-                    <input v-model="form.preferred_ship_ids" type="checkbox" :value="ship.id" />
-                    <span>{{ ship.name }} · Rate {{ ship.rate }}</span>
-                  </label>
-                </div>
+                <PreferenceTransferList v-model="form.preferred_ship_ids" :options="preferredShipOptions" />
               </fieldset>
 
               <fieldset class="input-panel embedded-field profile-field-wide">
                 <legend>{{ t('fleets.directory.preferredRoles') }}</legend>
-                <div class="profile-preference-grid">
-                  <label v-for="roleOption in preferenceOptions.roles" :key="roleOption.id" class="checkbox-row">
-                    <input v-model="form.preferred_role_ids" type="checkbox" :value="roleOption.id" />
-                    <span>{{ roleOption.label }}</span>
-                  </label>
-                </div>
+                <PreferenceTransferList v-model="form.preferred_role_ids" :options="preferredRoleOptions" />
               </fieldset>
 
               <label class="input-panel embedded-field profile-note-field profile-field-wide">

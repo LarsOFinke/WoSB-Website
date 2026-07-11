@@ -36,6 +36,7 @@ HOLD_OPTIONS = [
     {"category": "hold", "name": "Salt", "source": "wiki"},
     {"category": "hold", "name": "Silk", "source": "wiki"},
     {"category": "hold", "name": "Sugar", "source": "wiki"},
+    {"category": "hold", "name": "Tackles", "source": "user-verified"},
     {"category": "hold", "name": "Supplies", "source": "wiki"},
     {"category": "hold", "name": "Tobacco", "source": "wiki"},
     {"category": "hold", "name": "Vanilla", "source": "wiki"},

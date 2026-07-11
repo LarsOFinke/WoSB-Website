@@ -19,16 +19,17 @@ def test_profile_is_single_source_for_fleet_directory_details() -> None:
     password = "ProfileDirectory123!"
     with TestClient(app) as client:
         with SessionLocal() as db:
+            seed_manager = SeedManager(db)
+            seed_manager.seed_role_catalog()
+            seed_manager.seed_fleets()
+            seed_manager.seed_weapon_slot_types()
+            seed_manager.seed_ships()
+
             user = db.query(User).filter(User.username == username).one_or_none()
             if user is None:
                 user = create_user(db, username=username, password=password, display_name="Directory Source", role="user")
             fleet = db.query(Fleet).order_by(Fleet.id).first()
             ship = db.query(Ship).filter(Ship.is_active.is_(True)).order_by(Ship.id).first()
-            if ship is None:
-                seed_manager = SeedManager(db)
-                seed_manager.seed_weapon_slot_types()
-                seed_manager.seed_ships()
-                ship = db.query(Ship).filter(Ship.is_active.is_(True)).order_by(Ship.id).first()
             role = db.query(FleetRoleDefinition).order_by(FleetRoleDefinition.rank).first()
             assert fleet and ship and role
             membership = join_fleet(db, user, FleetJoinRequest(fleet_id=fleet.id, note="Profile-backed application"))
@@ -52,6 +53,23 @@ def test_profile_is_single_source_for_fleet_directory_details() -> None:
         body = response.json()
         assert body["availability"] == "Weekday evenings"
         assert body["preferred_ship_ids"] == [ship_id]
+
+        # Editing only the free-form profile note must reuse the existing
+        # normalized preference rows instead of violating their unique keys.
+        note_update = client.put("/api/profile", json={
+            "display_name": "Directory Source",
+            "preferred_focus": "pvp_general",
+            "availability": "Weekday evenings",
+            "timezone": "Europe/Berlin",
+            "discord_handle": "captain.blackwater",
+            "preferred_ship_ids": [ship_id],
+            "preferred_role_ids": [role_id],
+            "note": "Updated public profile note",
+        })
+        assert note_update.status_code == 200, note_update.text
+        assert note_update.json()["note"] == "Updated public profile note"
+        assert note_update.json()["preferred_ship_ids"] == [ship_id]
+        assert note_update.json()["preferred_role_ids"] == [role_id]
 
         with SessionLocal() as db:
             columns = {column["name"] for column in inspect(db.bind).get_columns("fleet_memberships")}

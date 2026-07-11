@@ -24,7 +24,7 @@ REQUIRED_UPGRADE_FIELDS = ("category", "name", "source", "notes", "option_kind",
 MIN_SAIL_OPTIONS = 9
 MIN_LANTERN_OPTIONS = 8
 MIN_UPGRADE_OPTIONS = 30
-MIN_SPECIALIST_OPTIONS = 24
+MIN_SPECIALIST_OPTIONS = 42
 
 
 def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
@@ -293,30 +293,46 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
 
 
 def validate_special_crew_seed_data(rows: list[dict[str, object]]) -> None:
-    if len(rows) < MIN_SPECIALIST_OPTIONS:
+    from app.seeds.special_crew import SPECIALIST_EFFECTS_BY_SEED_ID
+
+    if len(rows) != MIN_SPECIALIST_OPTIONS:
         raise RuntimeError(
-            f"Specialist seed catalog is incomplete: expected at least {MIN_SPECIALIST_OPTIONS}, got {len(rows)}."
+            f"Specialist seed catalog is incomplete: expected {MIN_SPECIALIST_OPTIONS}, got {len(rows)}."
         )
     names: set[str] = set()
+    seed_ids: set[str] = set()
     errors: list[str] = []
     for index, row in enumerate(rows, start=1):
         name = str(row.get("name") or f"row #{index}")
+        seed_id = str(row.get("seed_id") or "").strip()
         if name.casefold() in names:
             errors.append(f"Duplicate special crew name: {name}")
         names.add(name.casefold())
+        if not seed_id:
+            errors.append(f"{name}: stable seed_id is required")
+        elif seed_id.casefold() in seed_ids:
+            errors.append(f"Duplicate specialist seed_id: {seed_id}")
+        seed_ids.add(seed_id.casefold())
         if row.get("category") != "special_crew":
             errors.append(f"{name}: category must be special_crew")
         if row.get("option_kind") != "crew_specialist":
             errors.append(f"{name}: option_kind must be crew_specialist")
         if not str(row.get("source") or "").strip():
             errors.append(f"{name}: source is required")
-        if not str(row.get("seed_id") or "").strip():
-            errors.append(f"{name}: stable seed_id is required")
-        if not str(row.get("notes") or "").strip():
+        notes = str(row.get("notes") or "").strip()
+        if not notes:
             errors.append(f"{name}: notes are required")
-        effects = row.get("stat_effects")
-        if not isinstance(effects, dict) or not effects:
-            errors.append(f"{name}: stat_effects must be a non-empty object")
+        elif "Group:" not in notes:
+            errors.append(f"{name}: notes must identify the Specialist group")
+        effects = _validate_numeric_effects(name, row.get("stat_effects"), errors, allow_empty=False)
+        expected = SPECIALIST_EFFECTS_BY_SEED_ID.get(seed_id)
+        if expected is None:
+            errors.append(f"{name}: unknown verified specialist seed_id {seed_id!r}")
+        elif effects != expected:
+            errors.append(f"{name}: effects differ from the verified screenshot catalog")
+    missing = set(SPECIALIST_EFFECTS_BY_SEED_ID) - seed_ids
+    if missing:
+        errors.append(f"Missing verified specialist seed_id(s): {', '.join(sorted(missing))}")
     if errors:
         raise RuntimeError(
             "Special crew seed catalog failed quality checks:\n"

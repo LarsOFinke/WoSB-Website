@@ -7,6 +7,7 @@ from app.modules.accounts.models.user import User
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
 from app.modules.builds.schemas.build_read import BuildRead
+from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
 from app.modules.builds.services.build_service import (
     BuildValidationError,
@@ -15,6 +16,7 @@ from app.modules.builds.services.build_service import (
     get_build,
     list_builds,
     list_user_builds,
+    update_user_build,
 )
 
 router = APIRouter(prefix="/builds", tags=["builds"])
@@ -59,6 +61,22 @@ def get_my_builds(
     current_user: User = Depends(require_user),
 ) -> list[BuildRead]:
     return list_user_builds(db, current_user.id, search=search, build_type=build_type)
+
+
+@router.put("/mine/{build_id}", response_model=BuildRead)
+def put_my_build(
+    build_id: int,
+    build: BuildUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> BuildRead:
+    try:
+        updated = update_user_build(db, build_id, current_user.id, build)
+    except BuildValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if updated is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    return updated
 
 
 @router.delete("/mine/{build_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -12,8 +12,17 @@ from app.modules.ships.services.weapon_compatibility import is_weapon_compatible
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
 from app.modules.builds.schemas.inventory_slot import InventorySlot
+from app.modules.builds.services.build_limits import (
+    BASE_UPGRADE_SLOT_LIMIT,
+    CONSUMABLE_SLOT_LIMIT,
+    DEDICATED_WEAPON_ROW_LIMIT,
+    SPECIAL_CREW_TOTAL_LIMIT,
+    UPGRADE_SLOT_LIMIT,
+    WEAPON_ARC_ROW_LIMIT,
+)
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
+from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
 
 
 class BuildValidationError(ValueError):
@@ -31,12 +40,6 @@ INVENTORY_SLOT_MAP = {
     "hold": "hold",
 }
 
-UPGRADE_SLOT_LIMIT = 6
-BASE_UPGRADE_SLOT_LIMIT = 4
-CONSUMABLE_SLOT_LIMIT = 3
-SPECIAL_CREW_SLOT_LIMIT = 8
-WEAPON_ARC_SLOT_LIMIT = 12
-MORTAR_SLOT_LIMIT = 8
 WEAPON_SLOT_TYPE_BY_FIELD = {
     "front_weapon_slots": "weapon_front",
     "rear_weapon_slots": "weapon_rear",
@@ -140,16 +143,6 @@ def _selected_special_crew_options(
     ]
 
 
-def _sum_weighted_effects(
-    weighted_options: Iterable[tuple[BuildItemOption, int]],
-) -> dict[str, int | float]:
-    totals: dict[str, int | float] = {}
-    for option, quantity in weighted_options:
-        multiplier = max(1, int(quantity or 1))
-        for key, value in _option_effects(option).items():
-            totals[key] = totals.get(key, 0) + (value * multiplier)
-    return totals
-
 
 def _upgrade_access(
     ship: Ship,
@@ -227,7 +220,11 @@ def _validate_weapon_loadout(
         slots = getattr(build, field_name)
         label = WEAPON_FIELD_LABELS[field_name]
         _validate_unique_slots(slots, label)
-        field_limit = MORTAR_SLOT_LIMIT if field_name in {"mortar_weapon_slots", "special_weapon_slots"} else WEAPON_ARC_SLOT_LIMIT
+        field_limit = (
+            DEDICATED_WEAPON_ROW_LIMIT
+            if field_name in {"mortar_weapon_slots", "special_weapon_slots"}
+            else WEAPON_ARC_ROW_LIMIT
+        )
         if len(slots) > field_limit:
             raise BuildValidationError(f"{label} are limited to {field_limit} item rows.")
 
@@ -265,8 +262,12 @@ def _validate_weapon_loadout(
                 raise BuildValidationError(f"{label}: '{slot.item}' must be placed in its dedicated slot.")
 
 
-def _build_slots(db: Session, build: BuildCreate) -> list[BuildSlot]:
-    option_map = _load_option_map(db, _selected_item_names(build))
+def _build_slots(
+    db: Session,
+    build: BuildCreate,
+    option_map: dict[tuple[str, str], BuildItemOption] | None = None,
+) -> list[BuildSlot]:
+    option_map = option_map or _load_option_map(db, _selected_item_names(build))
     slots: list[BuildSlot] = []
 
     if build.sails:
@@ -351,7 +352,13 @@ def get_build(db: Session, build_id: int) -> Build | None:
     return db.scalar(_build_query().where(Build.id == build_id))
 
 
-def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -> Build:
+def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, list[BuildSlot]]:
+    """Validate a complete build payload and materialize its normalized slots.
+
+    Create and update use this exact boundary so interactive editing cannot drift
+    from initial build creation.
+    """
+
     ship = db.get(Ship, build.ship_id)
     if ship is None or not ship.is_active:
         raise BuildValidationError("The selected ship does not exist.")
@@ -374,21 +381,25 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
             "Upgrade slot 6 requires a ship extra slot or two independent slot unlocks (research reward and/or expansion effects)."
         )
 
-    selected_equipment = []
+    selected_equipment: list[BuildItemOption] = []
     if build.sails:
         selected_equipment.append(_require_option(option_map, build.sails, "sail", "Sail"))
     if build.lantern:
         selected_equipment.append(_require_option(option_map, build.lantern, "lantern", "Lantern"))
-    equipment_effects = _sum_effects(selected_equipment)
-    upgrade_effects = _sum_effects(selected_upgrades.values())
-    special_crew_effects = _sum_weighted_effects(selected_special_crew)
-    total_effects = dict(equipment_effects)
-    for key, value in upgrade_effects.items():
-        total_effects[key] = total_effects.get(key, 0) + value
-    for key, value in special_crew_effects.items():
-        total_effects[key] = total_effects.get(key, 0) + value
-    for key, value in research_upgrade_slot_effects(build.research_upgrade_slot_unlocked).items():
-        total_effects[key] = total_effects.get(key, 0) + value
+    total_effects = _sum_effects(selected_equipment)
+    for effect_set in (
+        _sum_effects(selected_upgrades.values()),
+        resolve_specialist_effects(
+            ((_option_effects(option), quantity) for option, quantity in selected_special_crew),
+            sailors=build.sailors,
+            soldiers=build.soldiers,
+            musketeers=build.musketeers,
+            mercenaries=build.mercenaries,
+        ),
+        research_upgrade_slot_effects(build.research_upgrade_slot_unlocked),
+    ):
+        for key, value in effect_set.items():
+            total_effects[key] = total_effects.get(key, 0) + value
 
     effective_crew_capacity = max(
         0,
@@ -397,10 +408,7 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
             + float(total_effects.get("crew_capacity", 0) or 0)
         ),
     )
-    effective_sailor_minimum = max(0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0)))
     crew_total = _crew_total(build)
-    if build.sailors < effective_sailor_minimum:
-        raise BuildValidationError(f"This ship requires at least {effective_sailor_minimum} sailors after item modifiers.")
     if crew_total > effective_crew_capacity:
         raise BuildValidationError(
             f"The crew distribution ({crew_total}) exceeds the effective ship capacity ({effective_crew_capacity})."
@@ -411,24 +419,50 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
     _validate_unique_slots(build.ammunition_slots, "Ammunition")
     _validate_unique_slots(build.consumable_slots, "Consumables")
     _validate_unique_slots(build.hold_slots, "Hold")
-    if len(build.special_crew_slots) > SPECIAL_CREW_SLOT_LIMIT:
-        raise BuildValidationError(f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} slots.")
+    special_crew_total = sum(int(slot.quantity or 1) for slot in build.special_crew_slots)
+    if special_crew_total > SPECIAL_CREW_TOTAL_LIMIT:
+        raise BuildValidationError(
+            f"Special crew is limited to {SPECIAL_CREW_TOTAL_LIMIT} specialists in total."
+        )
     if len(build.consumable_slots) > CONSUMABLE_SLOT_LIMIT:
         raise BuildValidationError(f"Consumables are limited to {CONSUMABLE_SLOT_LIMIT} slots.")
 
-    db_build = Build(
-        build_name=build.build_name,
-        build_type=build.build_type,
-        ship_id=build.ship_id,
-        owner_id=owner_id,
-        research_upgrade_slot_unlocked=build.research_upgrade_slot_unlocked,
-        sailors=build.sailors,
-        soldiers=build.soldiers,
-        musketeers=build.musketeers,
-        mercenaries=build.mercenaries,
-        details=build.details,
-    )
-    db_build.slots = _build_slots(db, build)
+    return ship, _build_slots(db, build, option_map)
+
+
+def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildSlot]) -> None:
+    db_build.build_name = build.build_name
+    db_build.build_type = build.build_type
+    db_build.ship_id = build.ship_id
+    db_build.research_upgrade_slot_unlocked = build.research_upgrade_slot_unlocked
+    db_build.sailors = build.sailors
+    db_build.soldiers = build.soldiers
+    db_build.musketeers = build.musketeers
+    db_build.mercenaries = build.mercenaries
+    db_build.details = build.details
+    db_build.slots = slots
+
+
+def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -> Build:
+    _, slots = _validate_and_prepare_build(db, build)
+    db_build = Build(owner_id=owner_id)
+    _apply_build_payload(db_build, build, slots)
+    db.add(db_build)
+    db.commit()
+    return get_build(db, db_build.id) or db_build
+
+
+def update_user_build(
+    db: Session, build_id: int, user_id: int, build: BuildCreate
+) -> Build | None:
+    db_build = get_build(db, build_id)
+    if db_build is None or db_build.owner_id != user_id or db_build.is_official_template:
+        return None
+
+    _, slots = _validate_and_prepare_build(db, build)
+    db_build.slots.clear()
+    db.flush()
+    _apply_build_payload(db_build, build, slots)
     db.add(db_build)
     db.commit()
     return get_build(db, db_build.id) or db_build

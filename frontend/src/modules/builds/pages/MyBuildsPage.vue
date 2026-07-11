@@ -124,7 +124,7 @@ onMounted(loadMyBuilds)
               <span>
                 {{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} ·
                 {{ t(`builds.types.${build.build_type}`) }} ·
-                {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}
+                {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship_stats?.crew_capacity || build.ship.crew_capacity }) }}
               </span>
               <small>
                 {{ t('builds.list.ammunitionPreview', { items: previewItems(build.ammunition_slots) }) }} ·
@@ -132,19 +132,25 @@ onMounted(loadMyBuilds)
               </small>
             </RouterLink>
 
-            <div v-if="pendingDeleteId === build.id" class="delete-confirmation my-build-delete-confirmation">
-              <span>{{ t('myBuilds.confirmDelete') }}</span>
-              <button class="danger-action" type="button" @click="confirmDelete(build.id)">
-                {{ t('myBuilds.deleteNow') }}
-              </button>
-              <button class="small-action" type="button" @click="pendingDeleteId = null">
-                {{ t('common.cancel') }}
+            <div class="my-build-row-actions">
+              <RouterLink class="small-action" :to="`/builds/${build.id}/edit`">
+                {{ t('builds.edit.action') }}
+              </RouterLink>
+
+              <div v-if="pendingDeleteId === build.id" class="delete-confirmation my-build-delete-confirmation">
+                <span>{{ t('myBuilds.confirmDelete') }}</span>
+                <button class="danger-action" type="button" @click="confirmDelete(build.id)">
+                  {{ t('myBuilds.deleteNow') }}
+                </button>
+                <button class="small-action" type="button" @click="pendingDeleteId = null">
+                  {{ t('common.cancel') }}
+                </button>
+              </div>
+
+              <button v-else class="danger-action" type="button" @click="pendingDeleteId = build.id">
+                {{ t('myBuilds.delete') }}
               </button>
             </div>
-
-            <button v-else class="danger-action" type="button" @click="pendingDeleteId = build.id">
-              {{ t('myBuilds.delete') }}
-            </button>
           </article>
         </div>
       </section>

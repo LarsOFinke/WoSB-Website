@@ -93,16 +93,28 @@ def test_upgrade_catalog_uses_current_names_and_effect_metadata() -> None:
     assert all(row["option_kind"] == "ship_upgrade" for row in UPGRADE_OPTIONS)
 
 
-def test_specialist_catalog_replaces_placeholder_special_crew_rows() -> None:
+def test_specialist_catalog_matches_verified_screenshot_roster() -> None:
     validate_special_crew_seed_data(SPECIAL_CREW_OPTIONS)
-    names = {row["name"] for row in SPECIAL_CREW_OPTIONS}
-    assert len(SPECIAL_CREW_OPTIONS) == 24
-    assert {"Artillerist", "Boarding Master", "Carpenter", "Navigator", "Surgeon"} <= names
+    names = {str(row["name"]) for row in SPECIAL_CREW_OPTIONS}
+    effects = {str(row["name"]): row["stat_effects"] for row in SPECIAL_CREW_OPTIONS}
+
+    assert len(SPECIAL_CREW_OPTIONS) == 42
+    assert {
+        "Doctor", "Surgeon", "Sail Handler", "First Mate", "Master Gunner",
+        "Ship's Carpenter", "Skipper", "Ginger", "Old Hand", "Artillerist",
+    } <= names
+    assert effects["Doctor"] == {"boarding_company_shelling_survivability_pct": 40}
+    assert effects["Sail Handler"] == {"speed_pct": 4}
+    assert effects["First Mate"] == {"speed_per_sailor_pct": 0.2}
+    assert effects["Gunner"] == {"reload_pct": 4}
+    assert effects["Artillerist"] == {"mortar_aiming_pct": 25}
     assert all(row["option_kind"] == "crew_specialist" for row in SPECIAL_CREW_OPTIONS)
-    assert len({row["seed_id"] for row in SPECIAL_CREW_OPTIONS}) == 24
-    assert all(
-        "prototype" not in str(row.get("notes", "")).casefold() for row in SPECIAL_CREW_OPTIONS
-    )
+    assert len({row["seed_id"] for row in SPECIAL_CREW_OPTIONS}) == 42
+    assert all("Group:" in str(row.get("notes", "")) for row in SPECIAL_CREW_OPTIONS)
+
+
+def test_hold_catalog_contains_tackles() -> None:
+    assert "Tackles" in {str(row["name"]) for row in HOLD_OPTIONS}
 
 
 def test_official_starter_templates_only_reference_current_upgrade_names() -> None:

@@ -4,7 +4,9 @@ import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules'
+import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
+import { dateFieldFixMessages } from './dateFieldFixes'
 import { fleetCalendarMessages } from './fleetCalendar'
 import { fleetIdentityMessages } from './fleetIdentity'
 import { fleetManagementMessages } from './fleetManagement'
@@ -32,7 +34,9 @@ const messageLayers = [
   newcomerGuideMessages,
   royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
+  dateFieldFixMessages,
   buildDesignerEquipmentRulesMessages,
+  buildEditingAndPreferencesMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,
   mySquadsWorkspaceMessages,
