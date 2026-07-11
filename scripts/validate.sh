@@ -209,6 +209,11 @@ done
 [[ ! -e "$ROOT_DIR/infrastructure/systemd/rbv-hub.service" ]]
 [[ ! -e "$ROOT_DIR/infrastructure/systemd/blackwater-hub.service" ]]
 grep -q 'PathExists=@INFRA_DIR@/data/control/update.request' "$ROOT_DIR/infrastructure/systemd/rbf-hub-update.path"
+grep -q 'update_migrate_seed)' "$ROOT_DIR/infrastructure/scripts/services/update.sh"
+grep -q 'RUN_MIGRATIONS=true' "$ROOT_DIR/infrastructure/scripts/services/update.sh"
+grep -q 'RUN_SEED=true' "$ROOT_DIR/infrastructure/scripts/services/update.sh"
+grep -q "requestSystemUpdate(operation = 'update')" "$ROOT_DIR/frontend/src/modules/admin/api/admin.js"
+grep -q "triggerSystemUpdate('update_migrate_seed')" "$ROOT_DIR/frontend/src/modules/admin/pages/AdminPage.vue"
 grep -q 'update-from-admin.sh' "$ROOT_DIR/infrastructure/systemd/rbf-hub-update.service"
 grep -q 'flock -n' "$ROOT_DIR/infrastructure/scripts/services/update.sh"
 ! grep -R -q '/var/run/docker.sock' "$ROOT_DIR/backend" "$ROOT_DIR/infrastructure/compose.yml"

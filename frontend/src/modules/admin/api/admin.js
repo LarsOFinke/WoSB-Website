@@ -6,8 +6,8 @@ export function getSystemUpdateStatus() {
   return get('/admin/system/update')
 }
 
-export function requestSystemUpdate() {
-  return post('/admin/system/update', {})
+export function requestSystemUpdate(operation = 'update') {
+  return post('/admin/system/update', { operation })
 }
 
 export function listRegistrationRequests(status = 'pending') {

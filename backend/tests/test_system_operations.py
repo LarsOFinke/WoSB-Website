@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import shutil
 
@@ -47,12 +48,33 @@ def test_staff_can_read_update_status_but_only_admin_can_queue() -> None:
         assert client.post('/api/auth/logout').status_code == 204
 
         _login(client, 'system-admin', 'BlackwaterSystemAdmin123!')
-        queued = client.post('/api/admin/system/update', json={})
+        queued = client.post('/api/admin/system/update')
         assert queued.status_code == 202, queued.text
         payload = queued.json()
         assert payload['accepted'] is True
         assert payload['status']['state'] == 'queued'
-        assert (control_dir / 'update.request').is_file()
+        assert payload['status']['operation'] == 'update'
+        request_file = control_dir / 'update.request'
+        assert request_file.is_file()
+        assert json.loads(request_file.read_text(encoding='utf-8'))['operation'] == 'update'
         assert client.post('/api/admin/system/update', json={}).status_code == 409
+
+        shutil.rmtree(control_dir, ignore_errors=True)
+        control_dir.mkdir(parents=True, exist_ok=True)
+
+        migration_update = client.post(
+            '/api/admin/system/update',
+            json={'operation': 'update_migrate_seed'},
+        )
+        assert migration_update.status_code == 202, migration_update.text
+        migration_payload = migration_update.json()
+        assert migration_payload['status']['operation'] == 'update_migrate_seed'
+        request_payload = json.loads(request_file.read_text(encoding='utf-8'))
+        assert request_payload['operation'] == 'update_migrate_seed'
+
+        shutil.rmtree(control_dir, ignore_errors=True)
+        control_dir.mkdir(parents=True, exist_ok=True)
+        invalid = client.post('/api/admin/system/update', json={'operation': 'shell_command'})
+        assert invalid.status_code == 422
 
     shutil.rmtree(control_dir, ignore_errors=True)

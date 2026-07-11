@@ -14,7 +14,11 @@ from app.modules.admin.schemas.moderator_create import ModeratorCreate
 from app.modules.admin.schemas.moderator_create_response import ModeratorCreateResponse
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
 from app.modules.admin.schemas.registration_request_read import RegistrationRequestRead
-from app.modules.admin.schemas.system_update import SystemUpdateRequestResult, SystemUpdateStatus
+from app.modules.admin.schemas.system_update import (
+    SystemUpdateRequest,
+    SystemUpdateRequestResult,
+    SystemUpdateStatus,
+)
 from app.modules.admin.schemas.user_administration import UserAdministrationUpdate
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
@@ -41,9 +45,11 @@ def admin_system_update_status(
 @router.post("/system/update", response_model=SystemUpdateRequestResult, status_code=status.HTTP_202_ACCEPTED)
 def admin_request_system_update(
     current_user: User = Depends(require_admin),
+    payload: SystemUpdateRequest | None = None,
 ) -> SystemUpdateRequestResult:
+    operation = payload.operation if payload is not None else "update"
     try:
-        update_status = request_system_update(current_user)
+        update_status = request_system_update(current_user, operation)
     except SystemUpdateError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return SystemUpdateRequestResult(accepted=True, status=update_status)

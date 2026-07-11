@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.modules.accounts.models.user import User
-from app.modules.admin.schemas.system_update import SystemUpdateStatus
+from app.modules.admin.schemas.system_update import SystemUpdateOperation, SystemUpdateStatus
 
 
 ACTIVE_STATES = {"queued", "running"}
@@ -53,6 +53,7 @@ def get_system_update_status() -> SystemUpdateStatus:
     message = str(payload.get("message") or "No update has been requested yet.")
     return SystemUpdateStatus(
         state=state,
+        operation=str(payload.get("operation") or "update"),
         message=message,
         requested_by=payload.get("requested_by"),
         requested_at=payload.get("requested_at"),
@@ -65,7 +66,9 @@ def get_system_update_status() -> SystemUpdateStatus:
     )
 
 
-def request_system_update(user: User) -> SystemUpdateStatus:
+def request_system_update(
+    user: User, operation: SystemUpdateOperation = "update"
+) -> SystemUpdateStatus:
     directory = _control_dir()
     request_path = directory / REQUEST_FILE
     current = get_system_update_status()
@@ -76,9 +79,11 @@ def request_system_update(user: User) -> SystemUpdateStatus:
     request_payload = {
         "requested_by": user.username,
         "requested_at": now,
+        "operation": operation,
     }
     queued_status = {
         "state": "queued",
+        "operation": operation,
         "message": "Update request accepted and waiting for the host runner.",
         "requested_by": user.username,
         "requested_at": now,

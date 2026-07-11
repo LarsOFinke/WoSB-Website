@@ -88,6 +88,7 @@ const monitoringUrl = computed(() => {
 })
 const updateInProgress = computed(() => ['queued', 'running'].includes(systemUpdate.value.state))
 const updateStateLabel = computed(() => t(`admin.system.states.${systemUpdate.value.state || 'idle'}`))
+const updateOperationLabel = computed(() => t(`admin.system.operations.${systemUpdate.value.operation || 'update'}`))
 
 function crewTotal(build) {
   return build.sailors + build.soldiers + build.musketeers + build.mercenaries
@@ -164,15 +165,21 @@ function scheduleUpdatePoll() {
   }, 3000)
 }
 
-async function triggerSystemUpdate() {
+async function triggerSystemUpdate(operation = 'update') {
   if (!isAdmin.value || updateInProgress.value) return
+  if (operation === 'update_migrate_seed' && !window.confirm(t('admin.system.migrateSeedConfirm'))) return
+
   systemUpdateError.value = ''
   systemUpdateSuccess.value = ''
   systemUpdateLoading.value = true
   try {
-    const response = await requestSystemUpdate()
+    const response = await requestSystemUpdate(operation)
     systemUpdate.value = response.status
-    systemUpdateSuccess.value = t('admin.system.requestAccepted')
+    systemUpdateSuccess.value = t(
+      operation === 'update_migrate_seed'
+        ? 'admin.system.migrateSeedRequestAccepted'
+        : 'admin.system.requestAccepted',
+    )
     scheduleUpdatePoll()
   } catch (err) {
     systemUpdateError.value = err.message || t('admin.system.requestError')
@@ -525,14 +532,20 @@ onUnmounted(() => {
               <strong>{{ updateStateLabel }}</strong>
               <p>{{ systemUpdate.message || t('admin.system.updateText') }}</p>
               <dl class="system-update-meta">
+                <div><dt>{{ t('admin.system.operation') }}</dt><dd>{{ updateOperationLabel }}</dd></div>
                 <div><dt>{{ t('admin.system.requestedBy') }}</dt><dd>{{ systemUpdate.requested_by || '—' }}</dd></div>
                 <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.started_at) }}</dd></div>
                 <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatOptionalDateTime(systemUpdate.finished_at) }}</dd></div>
                 <div><dt>{{ t('admin.system.commit') }}</dt><dd>{{ systemUpdate.commit_before || '—' }} → {{ systemUpdate.commit_after || '—' }}</dd></div>
               </dl>
-              <button v-if="isAdmin" class="form-button primary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate">
-                {{ updateInProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
-              </button>
+              <div v-if="isAdmin" class="system-update-actions">
+                <button class="form-button primary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate('update')">
+                  {{ updateInProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
+                </button>
+                <button class="form-button secondary-action" type="button" :disabled="systemUpdateLoading || updateInProgress || !systemUpdate.request_available" @click="triggerSystemUpdate('update_migrate_seed')">
+                  {{ t('admin.system.migrateSeedButton') }}
+                </button>
+              </div>
               <small v-else>{{ t('admin.system.adminOnly') }}</small>
             </article>
           </div>

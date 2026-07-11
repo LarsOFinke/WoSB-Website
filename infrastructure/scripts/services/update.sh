@@ -18,6 +18,8 @@ CREATE_BACKUP=true
 RUN_MIGRATIONS=false
 RUN_SEED=false
 AUTO_MIGRATIONS=true
+OPERATION="update"
+INVALID_REQUEST_OPERATION=""
 
 usage() {
   cat <<'USAGE'
@@ -51,6 +53,10 @@ while (($#)); do
   esac
 done
 
+if [[ "$RUN_MIGRATIONS" == true && "$RUN_SEED" == true ]]; then
+  OPERATION="update_migrate_seed"
+fi
+
 mkdir -p "$CONTROL_DIR"
 chmod 770 "$CONTROL_DIR"
 touch "$LOG_FILE"
@@ -74,13 +80,31 @@ PY
 
 if [[ -f "$REQUEST_FILE" ]]; then
   requested_from_file="$(read_request_value requested_by)"
+  requested_operation="$(read_request_value operation)"
   [[ -z "$requested_from_file" ]] || REQUESTED_BY="$requested_from_file"
+
+  case "$requested_operation" in
+    ""|update)
+      OPERATION="update"
+      RUN_MIGRATIONS=false
+      RUN_SEED=false
+      ;;
+    update_migrate_seed)
+      OPERATION="update_migrate_seed"
+      RUN_MIGRATIONS=true
+      RUN_SEED=true
+      ;;
+    *)
+      INVALID_REQUEST_OPERATION="$requested_operation"
+      OPERATION="update"
+      ;;
+  esac
 fi
 rm -f "$REQUEST_FILE"
 
 status_write() {
   local state="$1" message="$2" started_at="${3:-}" finished_at="${4:-}" before="${5:-}" after="${6:-}"
-  STATE="$state" MESSAGE="$message" REQUESTED_BY="$REQUESTED_BY" STARTED_AT="$started_at" FINISHED_AT="$finished_at" COMMIT_BEFORE="$before" COMMIT_AFTER="$after" STATUS_FILE="$STATUS_FILE" python3 <<'PY'
+  STATE="$state" OPERATION="$OPERATION" MESSAGE="$message" REQUESTED_BY="$REQUESTED_BY" STARTED_AT="$started_at" FINISHED_AT="$finished_at" COMMIT_BEFORE="$before" COMMIT_AFTER="$after" STATUS_FILE="$STATUS_FILE" python3 <<'PY'
 import json, os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -93,6 +117,7 @@ except Exception:
 requested_at = old.get("requested_at") or datetime.now(timezone.utc).isoformat()
 payload = {
     "state": os.environ["STATE"],
+    "operation": os.environ.get("OPERATION") or old.get("operation") or "update",
     "message": os.environ["MESSAGE"],
     "requested_by": os.environ.get("REQUESTED_BY") or old.get("requested_by"),
     "requested_at": requested_at,
@@ -109,6 +134,11 @@ PY
 }
 
 now_iso() { date --iso-8601=seconds; }
+
+if [[ -n "$INVALID_REQUEST_OPERATION" ]]; then
+  status_write failed "Ungültiger Update-Modus in der Admin-Anforderung." "" "$(now_iso)"
+  die "Ungültiger Update-Modus in der Admin-Anforderung: $INVALID_REQUEST_OPERATION"
+fi
 
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then

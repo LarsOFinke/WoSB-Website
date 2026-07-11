@@ -71,12 +71,20 @@ When a database action is intended, the updater creates a PostgreSQL dump first.
 A code-only update creates only the regular file backup and does not call
 `pg_dump`.
 
-The same code-first runner can be requested from **Staff Panel → System status →
-Update server**. The web API never receives the Docker socket or a root shell. It
-can only create a constrained request file in `infrastructure/data/control/`.
-`rbf-hub-update.path` notices that file and starts the root-owned one-shot
-`rbf-hub-update.service`. The Staff Panel action never requests a seed. Changed
-Alembic migration files are detected by the host runner.
+The same runner can be requested from **Staff Panel → System status** using two
+separate actions:
+
+- **Update server** performs the normal code-first update. Changed Alembic
+  migration files can still be detected automatically by the host runner.
+- **Update + migration + seed** performs the equivalent of
+  `sudo ./update.sh --migrate --seed`. It creates a database backup before the
+  migration and idempotent seed are executed.
+
+The web API never receives the Docker socket or a root shell. It can only create
+a constrained request file in `infrastructure/data/control/` with one of the two
+whitelisted operation identifiers. `rbf-hub-update.path` notices that file and
+starts the root-owned one-shot `rbf-hub-update.service`. Arbitrary command-line
+arguments or shell commands cannot be submitted through the API.
 
 Only users with the `admin` role may start an update. Staff members may view the
 status, update transcript and persisted application/request logs.

@@ -8024,3 +8024,25 @@ body {
 .weapon-arc-grid--adaptive {
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
+
+.system-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-self: end;
+  gap: 0.65rem;
+}
+
+.system-update-actions .form-button {
+  justify-self: auto;
+}
+
+.system-update-actions .secondary-action {
+  border-color: rgba(221, 231, 244, 0.2);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+}
+
+.system-update-actions .secondary-action:hover:not(:disabled) {
+  border-color: rgba(159, 201, 223, 0.45);
+  background: rgba(159, 201, 223, 0.09);
+}
