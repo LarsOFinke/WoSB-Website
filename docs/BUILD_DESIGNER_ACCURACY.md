@@ -1,6 +1,6 @@
 # Build Designer catalog and weapon eligibility
 
-Release 0.17.0 replaces the old rate/pound heuristics and serialized slot metadata with normalized, ship-specific mount rules.
+Release 0.17.0 replaced the old rate/pound heuristics and serialized slot metadata with normalized, ship-specific mount rules.
 
 ## Source-of-truth model
 
@@ -41,3 +41,11 @@ Every active regular weapon is required to have a normalized class and every see
 ## Accuracy policy
 
 The repository catalog is a maintained planning dataset, not an official game API export. Source metadata and regression tests make corrections reviewable. A later catalog correction should update the seed rows and tests; the schema and compatibility algorithm do not need to be redesigned.
+
+
+## 0.18.0 live-stat and crew consistency
+
+The command deck uses the backend stat-definition contract for its labels, units, precision and
+modifier semantics. Specialist quantities multiply their effects in both the editor and persisted
+Build calculation. Crew range inputs cannot allocate more than the effective capacity remaining
+after all other crew groups, and server-side validation remains authoritative.

@@ -234,3 +234,13 @@ Production seeding no longer creates fake Builds, groups, forum threads, calenda
 uploads. It creates only required catalogs plus curated progression Builds/guides for the New Captain
 path. Upgrade with `sudo ./update.sh --migrate --seed`; the PostgreSQL volume is retained and no
 reset is performed.
+
+
+## Release 0.18.0 — Build Designer command deck
+
+The Build Designer now uses a shared responsive command deck on the editor and saved-build detail
+page. It combines a tactical ship panel, effective core stats, the six-slot upgrade rack and a
+separate buff/debuff intelligence view. Specialist effects scale with quantity consistently in the
+live preview and backend. Crew sliders now use dynamic remaining-capacity maxima and automatically
+normalize allocations when effective ship capacity decreases. This is a code-only release with no
+migration or seed run.

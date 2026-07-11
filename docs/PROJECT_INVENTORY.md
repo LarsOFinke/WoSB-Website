@@ -1,4 +1,4 @@
-# Project inventory — 0.17.0
+# Project inventory — 0.18.0
 
 Royal Blackwater Fleet is a localized fleet/community hub for World of Sea Battle.
 
@@ -8,7 +8,7 @@ Anonymous visitors can access only the landing page, compact public fleet page a
 
 ## Product modules
 
-- Build Designer with ship-specific weapon eligibility and official progression templates
+- Build Designer with ship-specific weapon eligibility, capacity-aware crew controls, an enterprise command deck and official progression templates
 - Guides with file and Build references
 - Forum and persistent Q&A
 - Temporary group searches

@@ -2,10 +2,12 @@ from sqlalchemy import select
 
 from app.db.session import SessionLocal
 from app.modules.builds.models.build_item_category import BuildItemCategory
+from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_service import BuildValidationError, create_build
 from app.modules.ships.models.ship import Ship
+from app.modules.squads.models.squad import Squad  # noqa: F401
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.weapons import WEAPON_OPTIONS
 from app.seeds.weapon_mounts import parse_weapon_layout
@@ -151,3 +153,64 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
     for row in WEAPON_OPTIONS:
         slots = {slot.strip() for slot in str(row["allowed_slot_types"]).split(",") if slot.strip()}
         assert slots == expected[row["option_kind"]], row["name"]
+
+
+def test_specialist_effects_scale_with_selected_quantity() -> None:
+    with SessionLocal() as db:
+        category = db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == "special_crew"))
+        if category is None:
+            category = BuildItemCategory(
+                key="special_crew", label="Specialists", sort_order=20, is_active=True
+            )
+            db.add(category)
+            db.flush()
+        option = db.scalar(
+            select(BuildItemOption).where(
+                BuildItemOption.category_id == category.id,
+                BuildItemOption.name == "Capacity Test Specialist",
+            )
+        )
+        if option is None:
+            option = BuildItemOption(
+                category_id=category.id,
+                name="Capacity Test Specialist",
+                sort_order=10,
+                is_active=True,
+            )
+            option.effects = [BuildItemEffect(effect_key="crew_capacity", effect_value=3)]
+            db.add(option)
+        ship = db.scalar(select(Ship).where(Ship.name == "Specialist Quantity Test Ship"))
+        if ship is None:
+            ship = Ship(
+                name="Specialist Quantity Test Ship",
+                rate=5,
+                ship_type="Test",
+                durability=100,
+                speed_knots=8,
+                maneuverability=80,
+                armor=1,
+                hold_capacity=100,
+                crew_capacity=20,
+                sailor_minimum=10,
+                displacement_tons=100,
+                source="test",
+                sail_slots=1,
+                upgrade_slots=4,
+                has_lantern=True,
+            )
+            db.add(ship)
+        db.commit()
+
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="Weighted specialists",
+                ship_id=ship.id,
+                sailors=20,
+                soldiers=6,
+                special_crew_slots=[{"item": "Capacity Test Specialist", "quantity": 2}],
+            ),
+        )
+        assert build.ship_stats["crew_capacity"] == 26
+        assert build.ship_stats["special_crew_effects"]["crew_capacity"] == 6
+        assert build.ship_stats["crew_remaining"] == 0

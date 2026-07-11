@@ -180,8 +180,9 @@ class Build(Base):
         for slot in self.slots:
             if slot.slot_type != "special_crew":
                 continue
+            quantity = max(1, int(slot.quantity or 1))
             for key, value in slot.option.stat_effects.items():
-                totals[key] = totals.get(key, 0) + value
+                totals[key] = totals.get(key, 0) + (value * quantity)
         return totals
 
     @staticmethod

@@ -4,6 +4,12 @@ import { useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
 import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
+import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
+import {
+  crewSliderMax,
+  normalizeCrewAllocation,
+  setCrewAllocationValue,
+} from '@/modules/builds/crewAllocation'
 import {
   emptyInventorySlot,
   isWeaponInventoryField,
@@ -149,20 +155,6 @@ function roundByPrecision(value, precision = 0) {
   return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
 }
 
-function formatStatValue(value, unit, precision = 0) {
-  const number = roundByPrecision(value, precision)
-  if (number === null) return '—'
-  return `${number}${unit ? ` ${unit}` : ''}`
-}
-
-function formatModifier(row) {
-  const value = Number(row.modifier || 0)
-  if (!Number.isFinite(value) || value === 0) return '—'
-  const sign = value > 0 ? '+' : ''
-  const suffix = row.modifier_kind === 'percent' || row.unit === '%' || String(row.effect_key || '').endsWith('_pct') ? '%' : (row.unit ? ` ${row.unit}` : '')
-  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
-}
-
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
 const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
 const firstFourUpgradeEffects = computed(() => {
@@ -186,8 +178,9 @@ const upgradeEffectTotals = computed(() => {
 const specialCrewEffectTotals = computed(() => {
   const totals = {}
   for (const slot of normalizeInventorySlots(form.special_crew_slots)) {
+    const quantity = Math.max(1, Number(slot.quantity) || 1)
     for (const [key, value] of Object.entries(specialCrewEffects(slot.item))) {
-      totals[key] = (Number(totals[key]) || 0) + (Number(value) || 0)
+      totals[key] = (Number(totals[key]) || 0) + ((Number(value) || 0) * quantity)
     }
   }
   return totals
@@ -252,6 +245,20 @@ const buildStatRows = computed(() => statDefinitions.value
     }
   })
   .filter(Boolean))
+
+const selectedUpgradeCards = computed(() => Array.from({ length: equipmentUpgradeCount }, (_, offset) => {
+  const index = offset + 1
+  const name = form[`upgrade_${index}`]
+  return {
+    index,
+    name,
+    label: name ? optionLabel(name) : '',
+    effects: name ? formatEffects(name) : '',
+    locked: isUpgradeSlotDisabled(index),
+  }
+}))
+
+const activeEffectRows = computed(() => buildStatRows.value.filter((row) => Number(row.modifier || 0) !== 0))
 
 const canSubmit = computed(
   () => form.build_name.trim()
@@ -423,11 +430,44 @@ function onInventoryQuantityChange(fieldName, index, event) {
   )
 }
 
+function currentCrewAllocation() {
+  return {
+    sailors: form.sailors,
+    musketeers: form.musketeers,
+    soldiers: form.soldiers,
+    mercenaries: form.mercenaries,
+  }
+}
+
+function applyCrewAllocation(allocation) {
+  form.sailors = allocation.sailors
+  form.musketeers = allocation.musketeers
+  form.soldiers = allocation.soldiers
+  form.mercenaries = allocation.mercenaries
+}
+
+function crewMaxFor(fieldName) {
+  return crewSliderMax(currentCrewAllocation(), fieldName, crewCapacity.value, sailorMinimum.value)
+}
+
+function onCrewSliderInput(fieldName, event) {
+  applyCrewAllocation(
+    setCrewAllocationValue(
+      currentCrewAllocation(),
+      fieldName,
+      event.target.value,
+      crewCapacity.value,
+      sailorMinimum.value,
+    ),
+  )
+}
+
+function normalizeCurrentCrew() {
+  applyCrewAllocation(normalizeCrewAllocation(currentCrewAllocation(), crewCapacity.value, sailorMinimum.value))
+}
+
 function setCrewToShipMinimum() {
-  form.sailors = sailorMinimum.value
-  form.soldiers = 0
-  form.musketeers = 0
-  form.mercenaries = 0
+  applyCrewAllocation(normalizeCrewAllocation({ sailors: sailorMinimum.value }, crewCapacity.value, sailorMinimum.value))
 }
 
 function resetSlots() {
@@ -489,10 +529,8 @@ watch(
   },
 )
 
-watch(sailorMinimum, (minimum) => {
-  if (Number(form.sailors) < minimum) {
-    form.sailors = minimum
-  }
+watch([crewCapacity, sailorMinimum], () => {
+  normalizeCurrentCrew()
 })
 
 watch(upgradeSlot5Unlocked, (isUnlocked) => {
@@ -574,30 +612,19 @@ onMounted(async () => {
             </option>
           </select>
         </label>
-        <div v-if="selectedShip" class="ship-stat-row" :aria-label="t('builds.create.sections.ship')">
-          <span>{{ t('builds.create.stats.rate', { value: selectedShip.rate }) }}</span>
-          <span>{{ t('builds.create.stats.type', { value: selectedShip.ship_type }) }}</span>
-          <span>{{ t('builds.create.stats.durability', { value: selectedShip.durability }) }}</span>
-          <span>{{ t('builds.create.stats.speed', { value: selectedShip.speed_knots }) }}</span>
-          <span>{{ t('builds.create.stats.crew', { value: selectedShip.crew_capacity }) }}</span>
-          <span>{{ t('builds.create.stats.sailorMinimum', { value: selectedShip.sailor_minimum }) }}</span>
-          <span>{{ t('builds.create.stats.upgrades', { count: availableUpgradeSlots }) }}</span>
-          <span>{{ t('builds.create.stats.weapons', { value: shipStatsPreview.weaponTotal }) }}</span>
-          <span>{{ t('builds.create.stats.specialCrew', { value: shipStatsPreview.specialCrew }) }}</span>
-        </div>
-        <div v-if="selectedShip" class="build-stat-breakdown compact">
-          <div class="stat-breakdown-heading">
-            <strong>{{ t('builds.stats.breakdownTitle') }}</strong>
-            <span>{{ t('builds.stats.breakdownHint') }}</span>
-          </div>
-          <div class="stat-breakdown-grid">
-            <article v-for="row in buildStatRows" :key="row.key" class="stat-breakdown-row" :class="{ 'is-debuff': row.isDebuff, 'has-modifier': Number(row.modifier) !== 0 }">
-              <span>{{ row.label }}</span>
-              <strong>{{ formatStatValue(row.effective, row.unit, row.precision) }}</strong>
-              <small>{{ t('builds.stats.baseAndModifier', { base: formatStatValue(row.base, row.unit, row.precision), modifier: formatModifier(row) }) }}</small>
-            </article>
-          </div>
-        </div>
+        <BuildStatCommandDeck
+          v-if="selectedShip"
+          :ship="selectedShip"
+          :stat-rows="buildStatRows"
+          :upgrade-slots="selectedUpgradeCards"
+          :effect-rows="activeEffectRows"
+          :crew-total="crewTotal"
+          :crew-capacity="crewCapacity"
+          :crew-remaining="crewRemaining"
+          :weapon-total="shipStatsPreview.weaponTotal"
+          :upgrade-slots-available="availableUpgradeSlots"
+          :special-crew-total="shipStatsPreview.specialCrew"
+        />
       </section>
 
       <section class="wire-section form-section equipment-section" :aria-label="t('builds.create.sections.equipment')">
@@ -732,34 +759,55 @@ onMounted(async () => {
           <span>06</span>
           <h2>{{ t('builds.create.sections.crew') }}</h2>
         </div>
-        <div class="crew-status" :class="{ 'is-invalid': crewInvalid }">
-          <span>{{ t('builds.create.crew.total', { current: crewTotal, max: crewCapacity || '—' }) }}</span>
-          <span>{{ t('builds.create.crew.free', { value: crewRemaining }) }}</span>
-          <span>{{ t('builds.create.crew.sailorMinimum', { value: sailorMinimum }) }}</span>
-          <span v-if="sailorsBelowMinimum">· {{ t('builds.create.crew.tooFewSailors') }}</span>
-          <span v-else-if="crewOverLimit">· {{ t('builds.create.crew.tooManyCrew') }}</span>
-        </div>
+        <div class="crew-allocation-console" :class="{ 'is-invalid': crewInvalid }">
+          <div class="crew-allocation-header">
+            <div>
+              <span>{{ t('builds.crewConsole.eyebrow') }}</span>
+              <strong>{{ t('builds.crewConsole.title') }}</strong>
+            </div>
+            <div class="crew-allocation-total">
+              <strong>{{ crewTotal }}/{{ crewCapacity || '—' }}</strong>
+              <span>{{ t('builds.create.crew.free', { value: crewRemaining }) }}</span>
+            </div>
+          </div>
+          <div class="crew-allocation-meter" :aria-label="t('builds.create.crew.total', { current: crewTotal, max: crewCapacity || '—' })">
+            <span class="crew-meter-sailors" :style="{ width: `${crewCapacity ? (Number(form.sailors) / crewCapacity) * 100 : 0}%` }"></span>
+            <span class="crew-meter-musketeers" :style="{ width: `${crewCapacity ? (Number(form.musketeers) / crewCapacity) * 100 : 0}%` }"></span>
+            <span class="crew-meter-soldiers" :style="{ width: `${crewCapacity ? (Number(form.soldiers) / crewCapacity) * 100 : 0}%` }"></span>
+            <span class="crew-meter-mercenaries" :style="{ width: `${crewCapacity ? (Number(form.mercenaries) / crewCapacity) * 100 : 0}%` }"></span>
+          </div>
+          <div class="crew-allocation-legend">
+            <span>{{ t('builds.create.crew.sailorMinimum', { value: sailorMinimum }) }}</span>
+            <span>{{ t('builds.crewConsole.dynamicLimit') }}</span>
+            <span v-if="sailorsBelowMinimum" class="crew-warning">{{ t('builds.create.crew.tooFewSailors') }}</span>
+            <span v-else-if="crewOverLimit" class="crew-warning">{{ t('builds.create.crew.tooManyCrew') }}</span>
+          </div>
 
-        <div class="crew-grid section-fields">
-          <label class="wire-section slider-panel">
-            <span>{{ t('builds.create.crew.sailors') }} <strong>{{ form.sailors }}</strong></span>
-            <input v-model.number="form.sailors" type="range" :min="sailorMinimum" :max="crewCapacity" />
-          </label>
+          <div class="crew-grid section-fields">
+            <label class="crew-slider-card crew-sailors">
+              <span><small>{{ t('builds.create.crew.sailors') }}</small><strong>{{ form.sailors }}</strong></span>
+              <input :value="form.sailors" type="range" :min="sailorMinimum" :max="crewMaxFor('sailors')" @input="onCrewSliderInput('sailors', $event)" />
+              <small>{{ sailorMinimum }}–{{ crewMaxFor('sailors') }}</small>
+            </label>
 
-          <label class="wire-section slider-panel">
-            <span>{{ t('builds.create.crew.musketeers') }} <strong>{{ form.musketeers }}</strong></span>
-            <input v-model.number="form.musketeers" type="range" min="0" :max="crewCapacity" />
-          </label>
+            <label class="crew-slider-card crew-musketeers">
+              <span><small>{{ t('builds.create.crew.musketeers') }}</small><strong>{{ form.musketeers }}</strong></span>
+              <input :value="form.musketeers" type="range" min="0" :max="crewMaxFor('musketeers')" @input="onCrewSliderInput('musketeers', $event)" />
+              <small>0–{{ crewMaxFor('musketeers') }}</small>
+            </label>
 
-          <label class="wire-section slider-panel">
-            <span>{{ t('builds.create.crew.soldiers') }} <strong>{{ form.soldiers }}</strong></span>
-            <input v-model.number="form.soldiers" type="range" min="0" :max="crewCapacity" />
-          </label>
+            <label class="crew-slider-card crew-soldiers">
+              <span><small>{{ t('builds.create.crew.soldiers') }}</small><strong>{{ form.soldiers }}</strong></span>
+              <input :value="form.soldiers" type="range" min="0" :max="crewMaxFor('soldiers')" @input="onCrewSliderInput('soldiers', $event)" />
+              <small>0–{{ crewMaxFor('soldiers') }}</small>
+            </label>
 
-          <label class="wire-section slider-panel">
-            <span>{{ t('builds.create.crew.mercenaries') }} <strong>{{ form.mercenaries }}</strong></span>
-            <input v-model.number="form.mercenaries" type="range" min="0" :max="crewCapacity" />
-          </label>
+            <label class="crew-slider-card crew-mercenaries">
+              <span><small>{{ t('builds.create.crew.mercenaries') }}</small><strong>{{ form.mercenaries }}</strong></span>
+              <input :value="form.mercenaries" type="range" min="0" :max="crewMaxFor('mercenaries')" @input="onCrewSliderInput('mercenaries', $event)" />
+              <small>0–{{ crewMaxFor('mercenaries') }}</small>
+            </label>
+          </div>
         </div>
       </section>
 

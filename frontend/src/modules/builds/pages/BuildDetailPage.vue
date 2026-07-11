@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { getBuild } from '@/modules/builds/api/builds'
+import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 
 const props = defineProps({
   id: {
@@ -39,6 +40,18 @@ const upgrades = computed(() => {
   ].filter(Boolean)
 })
 
+const commandDeckUpgradeSlots = computed(() => Array.from({ length: 6 }, (_, offset) => {
+  const index = offset + 1
+  const name = build.value?.[`upgrade_${index}`] || ''
+  return {
+    index,
+    name,
+    label: name ? optionLabel(name) : '',
+    effects: '',
+    locked: index > Number(build.value?.ship_stats?.upgrade_slots_available || 0),
+  }
+}))
+
 const specialCrewSlots = computed(() => build.value?.special_crew_slots || [])
 const ammunitionSlots = computed(() => build.value?.ammunition_slots || [])
 const consumableSlots = computed(() => build.value?.consumable_slots || [])
@@ -61,12 +74,6 @@ function roundByPrecision(value, precision = 0) {
   return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
 }
 
-function formatStatValue(value, unit, precision = 0) {
-  const number = roundByPrecision(value, precision)
-  if (number === null) return '—'
-  return `${number}${unit ? ` ${unit}` : ''}`
-}
-
 function formatModifier(row) {
   const value = Number(row.modifier || 0)
   if (!Number.isFinite(value) || value === 0) return '—'
@@ -80,11 +87,10 @@ const statRows = computed(() => (build.value?.ship_stats?.stat_rows || []).map((
   label: t(`builds.statLabels.${row.key}`),
 })))
 
-const upgradeEffectRows = computed(() => statRows.value
+const activeEffectRows = computed(() => statRows.value
   .filter((row) => Number(row.modifier || 0) !== 0)
   .map((row) => ({
-    key: row.key,
-    label: row.label,
+    ...row,
     value: formatModifier(row),
     isDebuff: row.is_debuff,
   })))
@@ -122,15 +128,21 @@ onMounted(loadBuild)
             <RouterLink class="small-action" to="/builds">{{ t('common.back') }}</RouterLink>
           </div>
 
-          <div class="detail-grid">
-            <article class="detail-card">
-              <span>{{ t('builds.detail.ship') }}</span>
-              <strong>{{ build.ship.name }}</strong>
-              <small>
-                {{ t('builds.list.crew', { current: crewTotal, max: (build.ship_stats?.crew_capacity || build.ship.crew_capacity) }) }} ·
-                {{ t('builds.list.sailorMin', { value: (build.ship_stats?.sailor_minimum || build.ship.sailor_minimum) }) }}
-              </small>
-            </article>
+          <BuildStatCommandDeck
+            :ship="build.ship"
+            :stat-rows="statRows"
+            :upgrade-slots="commandDeckUpgradeSlots"
+            :effect-rows="activeEffectRows"
+            :crew-total="crewTotal"
+            :crew-capacity="build.ship_stats?.crew_capacity || build.ship.crew_capacity"
+            :crew-remaining="build.ship_stats?.crew_remaining || 0"
+            :weapon-total="build.ship_stats?.weapon_total || 0"
+            :upgrade-slots-available="build.ship_stats?.upgrade_slots_available || 0"
+            :special-crew-total="build.ship_stats?.special_crew_total || 0"
+            detail-mode
+          />
+
+          <div class="detail-grid command-deck-meta-grid">
             <article class="detail-card">
               <span>{{ t('builds.detail.buildType') }}</span>
               <strong>{{ buildTypeLabel(build.build_type) }}</strong>
@@ -147,7 +159,6 @@ onMounted(loadBuild)
               <span>{{ t('builds.detail.shipStats') }}</span>
               <strong>{{ t('builds.detail.weaponTotal', { count: build.ship_stats.weapon_total }) }}</strong>
               <small>{{ t('builds.detail.weaponCapacity', { count: build.ship_stats.weapon_capacity_total || 0 }) }}</small>
-              <small>{{ t('builds.detail.statsSummary', { upgrades: build.ship_stats.upgrade_slots_used, max: build.ship_stats.upgrade_slots_available, free: build.ship_stats.crew_remaining }) }}</small>
             </article>
           </div>
 
@@ -157,27 +168,6 @@ onMounted(loadBuild)
               <li v-for="warning in build.ship_stats.stat_warnings" :key="warning">{{ warning }}</li>
             </ul>
           </div>
-
-          <section class="wire-section build-stat-breakdown detail">
-            <div class="stat-breakdown-heading">
-              <strong>{{ t('builds.stats.breakdownTitle') }}</strong>
-              <span>{{ t('builds.stats.breakdownDetailHint') }}</span>
-            </div>
-            <div class="stat-comparison-table" role="table" :aria-label="t('builds.stats.breakdownTitle')">
-              <div class="stat-table-row stat-table-head" role="row">
-                <span role="columnheader">{{ t('builds.stats.columns.stat') }}</span>
-                <span role="columnheader">{{ t('builds.stats.columns.base') }}</span>
-                <span role="columnheader">{{ t('builds.stats.columns.modifier') }}</span>
-                <span role="columnheader">{{ t('builds.stats.columns.effective') }}</span>
-              </div>
-              <div v-for="row in statRows" :key="row.key" class="stat-table-row" :class="{ 'is-debuff': row.is_debuff, 'has-modifier': Number(row.modifier) !== 0 }" role="row">
-                <span role="cell">{{ row.label }}</span>
-                <span role="cell">{{ formatStatValue(row.base, row.unit, row.precision) }}</span>
-                <span role="cell">{{ formatModifier(row) }}</span>
-                <strong role="cell">{{ formatStatValue(row.effective, row.unit, row.precision) }}</strong>
-              </div>
-            </div>
-          </section>
 
           <div class="detail-grid two-cols">
             <article class="detail-card">
@@ -196,8 +186,8 @@ onMounted(loadBuild)
                 <li v-for="upgrade in upgrades" :key="upgrade">{{ optionLabel(upgrade) }}</li>
               </ul>
               <strong v-else>—</strong>
-              <div v-if="upgradeEffectRows.length" class="effect-pill-row">
-                <span v-for="effect in upgradeEffectRows" :key="effect.key" class="effect-pill" :class="{ 'is-debuff': effect.isDebuff }">
+              <div v-if="activeEffectRows.length" class="effect-pill-row">
+                <span v-for="effect in activeEffectRows" :key="effect.key" class="effect-pill" :class="{ 'is-debuff': effect.isDebuff }">
                   {{ effect.label }} {{ effect.value }}
                 </span>
               </div>

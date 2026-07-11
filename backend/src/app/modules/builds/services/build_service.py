@@ -129,11 +129,25 @@ def _selected_upgrade_options(
 
 def _selected_special_crew_options(
     option_map: dict[tuple[str, str], BuildItemOption], build: BuildCreate
-) -> list[BuildItemOption]:
+) -> list[tuple[BuildItemOption, int]]:
     return [
-        _require_option(option_map, slot.item, "special_crew", "Special crew")
+        (
+            _require_option(option_map, slot.item, "special_crew", "Special crew"),
+            max(1, int(slot.quantity or 1)),
+        )
         for slot in build.special_crew_slots
     ]
+
+
+def _sum_weighted_effects(
+    weighted_options: Iterable[tuple[BuildItemOption, int]],
+) -> dict[str, int | float]:
+    totals: dict[str, int | float] = {}
+    for option, quantity in weighted_options:
+        multiplier = max(1, int(quantity or 1))
+        for key, value in _option_effects(option).items():
+            totals[key] = totals.get(key, 0) + (value * multiplier)
+    return totals
 
 
 def _upgrade_access(ship: Ship, selected_upgrades: dict[int, BuildItemOption]) -> dict[str, int | bool]:
@@ -356,8 +370,10 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
         )
 
     upgrade_effects = _sum_effects(selected_upgrades.values())
-    special_crew_effects = _sum_effects(selected_special_crew)
-    total_effects = _sum_effects([*selected_upgrades.values(), *selected_special_crew])
+    special_crew_effects = _sum_weighted_effects(selected_special_crew)
+    total_effects = dict(upgrade_effects)
+    for key, value in special_crew_effects.items():
+        total_effects[key] = total_effects.get(key, 0) + value
 
     effective_crew_capacity = max(0, ship.crew_capacity + int(total_effects.get("crew_capacity", 0)))
     effective_sailor_minimum = max(0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0)))

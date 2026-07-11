@@ -1163,27 +1163,6 @@ input[type='range'] {
   padding-left: 0.55rem;
 }
 
-.slider-panel {
-  display: grid;
-  gap: 0.55rem;
-  min-height: 3.4rem;
-  padding: 0.8rem;
-  border: 1px solid rgba(221, 231, 244, 0.14);
-  border-radius: var(--radius-sm);
-  background: rgba(5, 12, 20, 0.28);
-}
-
-.slider-panel > span {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--muted);
-}
-
-.crew-status.is-invalid {
-  color: var(--danger);
-}
-
 /* Detail pages */
 .detail-grid,
 .group-overview-grid,
@@ -4605,127 +4584,6 @@ textarea:focus-visible {
   }
 }
 
-/* Build Designer stat accuracy pass */
-.build-stat-breakdown {
-  margin-top: var(--space-4, 1rem);
-  border: 1px solid var(--border-soft, rgba(255, 255, 255, .12));
-  border-radius: var(--radius-xl, 22px);
-  background: linear-gradient(145deg, rgba(12, 22, 38, .82), rgba(20, 32, 50, .64));
-  box-shadow: var(--shadow-sm, 0 14px 40px rgba(0, 0, 0, .18));
-  overflow: hidden;
-}
-
-.build-stat-breakdown.detail {
-  margin: var(--space-5, 1.35rem) 0;
-  padding: 0;
-}
-
-.stat-breakdown-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3, .75rem);
-  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-  border-bottom: 1px solid var(--border-soft, rgba(255, 255, 255, .1));
-}
-
-.stat-breakdown-heading strong {
-  color: var(--text-strong, #f5f7fb);
-  letter-spacing: .01em;
-}
-
-.stat-breakdown-heading span {
-  color: var(--text-muted, #9fb0c8);
-  font-size: .9rem;
-}
-
-.stat-breakdown-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: .75rem;
-  padding: var(--space-4, 1rem);
-}
-
-.stat-breakdown-row {
-  display: grid;
-  gap: .28rem;
-  min-height: 5.35rem;
-  padding: .8rem .9rem;
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: var(--radius-md, 14px);
-  background: rgba(255, 255, 255, .045);
-}
-
-.stat-breakdown-row span,
-.stat-table-row span:first-child {
-  color: var(--text-muted, #9fb0c8);
-  font-size: .84rem;
-}
-
-.stat-breakdown-row strong,
-.stat-table-row strong {
-  color: var(--text-strong, #f5f7fb);
-  font-size: 1.04rem;
-}
-
-.stat-breakdown-row small {
-  color: var(--text-soft, #b8c5d9);
-  font-size: .76rem;
-}
-
-.stat-breakdown-row.has-modifier,
-.stat-table-row.has-modifier {
-  border-color: rgba(214, 167, 87, .36);
-  background: rgba(214, 167, 87, .08);
-}
-
-.stat-breakdown-row.is-debuff,
-.stat-table-row.is-debuff {
-  border-color: rgba(255, 125, 125, .28);
-  background: rgba(255, 125, 125, .06);
-}
-
-.stat-comparison-table {
-  display: grid;
-  padding: var(--space-4, 1rem);
-  gap: .45rem;
-}
-
-.stat-table-row {
-  display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(92px, .7fr));
-  gap: var(--space-3, .75rem);
-  align-items: center;
-  padding: .72rem .85rem;
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: var(--radius-md, 14px);
-  background: rgba(255, 255, 255, .035);
-}
-
-.stat-table-head {
-  border-color: rgba(255, 255, 255, .12);
-  background: rgba(255, 255, 255, .07);
-  color: var(--text-muted, #9fb0c8);
-  font-size: .82rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-
-@media (max-width: 720px) {
-  .stat-breakdown-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .stat-table-row {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .stat-table-head {
-    display: none;
-  }
-}
-
 /* Final group-signup and log-dashboard polish */
 .group-time-grid {
   display: grid;
@@ -7352,5 +7210,532 @@ body {
   .my-squad-facts > div {
     grid-template-columns: 1fr;
     gap: 0.2rem;
+  }
+}
+
+/* Build Designer command deck — enterprise layout */
+.build-command-deck {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(213, 226, 244, 0.18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(214, 167, 87, 0.14), transparent 32%),
+    linear-gradient(145deg, rgba(8, 16, 28, 0.97), rgba(13, 24, 39, 0.92));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28), inset 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.build-command-deck.is-detail {
+  margin: 1rem 0 1.25rem;
+}
+
+.command-deck-header,
+.command-panel-title,
+.crew-allocation-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.command-deck-header {
+  padding: 0.35rem 0.25rem 0.1rem;
+}
+
+.command-deck-header h3 {
+  margin: 0.18rem 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+}
+
+.command-deck-eyebrow,
+.command-panel-title span,
+.crew-allocation-header > div:first-child > span {
+  color: var(--accent, #d6a757);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.command-deck-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid rgba(109, 222, 159, 0.24);
+  border-radius: 999px;
+  background: rgba(109, 222, 159, 0.08);
+  color: #a9e7c2;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.command-deck-live i {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0.25rem rgba(109, 222, 159, 0.1);
+}
+
+.command-deck-overview {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.78fr) minmax(0, 2fr);
+  gap: 1rem;
+}
+
+.command-deck-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(213, 226, 244, 0.13);
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.ship-identity-panel {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+}
+
+.ship-visual {
+  position: relative;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(213, 226, 244, 0.13);
+  border-radius: 14px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    rgba(2, 9, 17, 0.38);
+  background-size: 22px 22px;
+  overflow: hidden;
+}
+
+.ship-visual::after {
+  content: '';
+  position: absolute;
+  inset: auto 8% 11% 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(214, 167, 87, 0.48), transparent);
+}
+
+.ship-visual svg {
+  width: min(95%, 290px);
+  color: rgba(228, 237, 249, 0.7);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.42));
+}
+
+.ship-line {
+  fill: rgba(255, 255, 255, 0.025);
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ship-line.water {
+  fill: none;
+  stroke: rgba(214, 167, 87, 0.55);
+}
+
+.ship-visual > span {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.65rem;
+  color: rgba(214, 167, 87, 0.7);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.ship-identity-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ship-identity-copy > span,
+.ship-identity-copy small,
+.crew-capacity-caption,
+.command-panel-title small,
+.effective-stat-cell small,
+.upgrade-rack-slot small,
+.modifier-intelligence-empty span,
+.crew-allocation-legend {
+  color: var(--muted);
+}
+
+.ship-identity-copy strong {
+  font-size: 1.25rem;
+}
+
+.ship-operational-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.ship-operational-summary span {
+  padding: 0.5rem 0.58rem;
+  border: 1px solid rgba(213, 226, 244, 0.09);
+  border-radius: 9px;
+  background: rgba(2, 9, 17, 0.28);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.crew-capacity-meter,
+.crew-allocation-meter {
+  height: 0.52rem;
+  display: flex;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.crew-capacity-meter > span {
+  background: linear-gradient(90deg, rgba(214, 167, 87, 0.72), rgba(238, 197, 117, 0.95));
+  transition: width 180ms ease;
+}
+
+.command-panel-title > div {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.command-panel-title strong,
+.crew-allocation-header strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.command-panel-title small {
+  max-width: 34ch;
+  text-align: right;
+  line-height: 1.45;
+}
+
+.effective-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.effective-stat-cell {
+  display: grid;
+  gap: 0.18rem;
+  min-height: 5.2rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(213, 226, 244, 0.09);
+  border-radius: 11px;
+  background: rgba(2, 9, 17, 0.3);
+}
+
+.effective-stat-cell > span {
+  color: var(--muted);
+  font-size: 0.73rem;
+}
+
+.effective-stat-cell strong {
+  align-self: end;
+  font-size: 1.08rem;
+}
+
+.effective-stat-cell.has-modifier {
+  border-color: rgba(214, 167, 87, 0.36);
+  background: rgba(214, 167, 87, 0.075);
+}
+
+.effective-stat-cell.is-debuff {
+  border-color: rgba(244, 125, 125, 0.3);
+  background: rgba(244, 125, 125, 0.06);
+}
+
+.upgrade-rack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.upgrade-rack-slot {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  min-height: 4.65rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(214, 167, 87, 0.28);
+  border-radius: 11px;
+  background: rgba(214, 167, 87, 0.065);
+}
+
+.upgrade-rack-slot > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.upgrade-rack-slot strong,
+.upgrade-rack-slot small {
+  overflow-wrap: anywhere;
+}
+
+.upgrade-rack-index {
+  display: grid;
+  place-items: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 8px;
+  background: rgba(214, 167, 87, 0.14);
+  color: var(--accent, #d6a757);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.upgrade-rack-slot.is-empty {
+  border-color: rgba(213, 226, 244, 0.09);
+  background: rgba(2, 9, 17, 0.24);
+}
+
+.upgrade-rack-slot.is-locked {
+  opacity: 0.58;
+}
+
+.modifier-intelligence-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.modifier-column {
+  min-width: 0;
+  padding: 0.72rem;
+  border: 1px solid rgba(109, 222, 159, 0.18);
+  border-radius: 11px;
+  background: rgba(109, 222, 159, 0.045);
+}
+
+.modifier-column.negative-modifiers {
+  border-color: rgba(244, 125, 125, 0.2);
+  background: rgba(244, 125, 125, 0.035);
+}
+
+.modifier-column header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.modifier-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.modifier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.58rem;
+  border: 1px solid rgba(109, 222, 159, 0.18);
+  border-radius: 8px;
+  background: rgba(109, 222, 159, 0.07);
+}
+
+.modifier-chip.is-debuff {
+  border-color: rgba(244, 125, 125, 0.2);
+  background: rgba(244, 125, 125, 0.065);
+}
+
+.modifier-chip small {
+  color: var(--muted);
+}
+
+.modifier-chip strong {
+  font-size: 0.82rem;
+}
+
+.modifier-empty,
+.modifier-intelligence-empty {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.modifier-intelligence-empty {
+  min-height: 5.2rem;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.25rem;
+  margin-top: 0.85rem;
+  border: 1px dashed rgba(213, 226, 244, 0.12);
+  border-radius: 11px;
+  text-align: center;
+}
+
+.command-deck-meta-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Capacity-aware crew console */
+.crew-allocation-console {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgba(213, 226, 244, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(7, 16, 28, 0.72), rgba(12, 24, 38, 0.62));
+}
+
+.crew-allocation-total {
+  display: grid;
+  justify-items: end;
+  gap: 0.08rem;
+}
+
+.crew-allocation-total strong {
+  font-size: 1.15rem;
+}
+
+.crew-allocation-total span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.crew-allocation-meter {
+  height: 0.72rem;
+}
+
+.crew-allocation-meter > span {
+  height: 100%;
+  transition: width 160ms ease;
+}
+
+.crew-meter-sailors { background: rgba(214, 167, 87, 0.92); }
+.crew-meter-musketeers { background: rgba(117, 177, 232, 0.9); }
+.crew-meter-soldiers { background: rgba(109, 222, 159, 0.86); }
+.crew-meter-mercenaries { background: rgba(190, 131, 231, 0.84); }
+
+.crew-allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  font-size: 0.78rem;
+}
+
+.crew-warning {
+  color: var(--danger);
+}
+
+.crew-slider-card {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 6rem;
+  padding: 0.82rem;
+  border: 1px solid rgba(213, 226, 244, 0.1);
+  border-radius: 12px;
+  background: rgba(2, 9, 17, 0.28);
+}
+
+.crew-slider-card > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.crew-slider-card > span small,
+.crew-slider-card > small {
+  color: var(--muted);
+}
+
+.crew-slider-card > span strong {
+  font-size: 1.18rem;
+}
+
+.crew-slider-card input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent, #d6a757);
+}
+
+.crew-allocation-console.is-invalid {
+  border-color: rgba(244, 125, 125, 0.42);
+}
+
+@media (max-width: 1120px) {
+  .command-deck-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .ship-identity-panel {
+    grid-template-columns: minmax(210px, 0.7fr) minmax(0, 1fr);
+  }
+
+  .ship-visual {
+    grid-row: span 4;
+  }
+
+  .effective-stat-grid {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .effective-stat-grid,
+  .upgrade-rack-grid,
+  .command-deck-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modifier-intelligence-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .build-command-deck {
+    padding: 0.72rem;
+    border-radius: 18px;
+  }
+
+  .command-deck-header,
+  .command-panel-title,
+  .crew-allocation-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .command-panel-title small {
+    text-align: left;
+  }
+
+  .ship-identity-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .ship-visual {
+    grid-row: auto;
+  }
+
+  .effective-stat-grid,
+  .upgrade-rack-grid,
+  .command-deck-meta-grid,
+  .ship-operational-summary {
+    grid-template-columns: 1fr;
   }
 }

@@ -44,3 +44,32 @@ assert.deepEqual(
 )
 
 console.log('Build designer inventory slot regression checks passed.')
+
+import {
+  crewSliderMax,
+  crewTotal,
+  normalizeCrewAllocation,
+  setCrewAllocationValue,
+} from '../src/modules/builds/crewAllocation.js'
+
+const crew = normalizeCrewAllocation(
+  { sailors: 80, musketeers: 20, soldiers: 15, mercenaries: 10 },
+  100,
+  60,
+)
+assert.deepEqual(crew, { sailors: 80, musketeers: 20, soldiers: 0, mercenaries: 0 })
+assert.equal(crewTotal(crew), 100)
+assert.equal(crewSliderMax(crew, 'soldiers', 100, 60), 0)
+assert.equal(crewSliderMax(crew, 'sailors', 100, 60), 80)
+
+const reassigned = setCrewAllocationValue(crew, 'musketeers', 5, 100, 60)
+assert.deepEqual(reassigned, { sailors: 80, musketeers: 5, soldiers: 0, mercenaries: 0 })
+assert.equal(crewSliderMax(reassigned, 'soldiers', 100, 60), 15)
+
+const reducedCapacity = normalizeCrewAllocation(
+  { sailors: 90, musketeers: 20, soldiers: 15, mercenaries: 10 },
+  75,
+  65,
+)
+assert.deepEqual(reducedCapacity, { sailors: 75, musketeers: 0, soldiers: 0, mercenaries: 0 })
+assert.equal(crewTotal(reducedCapacity), 75)
