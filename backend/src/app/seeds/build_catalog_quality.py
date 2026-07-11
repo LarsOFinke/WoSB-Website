@@ -21,7 +21,8 @@ REQUIRED_SHIP_FIELDS = (
 )
 
 REQUIRED_UPGRADE_FIELDS = ("category", "name", "source", "notes", "option_kind", "stat_effects")
-MIN_LANTERN_OPTIONS = 12
+MIN_SAIL_OPTIONS = 9
+MIN_LANTERN_OPTIONS = 8
 MIN_UPGRADE_OPTIONS = 30
 MIN_SPECIALIST_OPTIONS = 24
 
@@ -49,17 +50,26 @@ def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
         if weapon_class not in {"light", "medium", "heavy"}:
             errors.append(f"{name}: max_weapon_class must be light, medium or heavy")
         layout = str(row.get("weapon_layout") or "").strip()
-        if not re.fullmatch(r"\d+\s*-\s*\d+\s*-\s*\d+(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?", layout, re.IGNORECASE):
+        if not re.fullmatch(
+            r"\d+\s*-\s*\d+\s*-\s*\d+(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?",
+            layout,
+            re.IGNORECASE,
+        ):
             errors.append(f"{name}: invalid weapon_layout format {layout!r}")
         if not str(row.get("source") or "").startswith("WoSB wiki"):
             errors.append(f"{name}: source must identify the audited WoSB wiki catalog")
     if errors:
-        raise RuntimeError("Ship seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Ship seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
 def validate_upgrade_seed_data(rows: list[dict[str, object]]) -> None:
     if len(rows) < MIN_UPGRADE_OPTIONS:
-        raise RuntimeError(f"Upgrade seed catalog is incomplete: expected at least {MIN_UPGRADE_OPTIONS}, got {len(rows)}.")
+        raise RuntimeError(
+            f"Upgrade seed catalog is incomplete: expected at least {MIN_UPGRADE_OPTIONS}, got {len(rows)}."
+        )
     names: set[str] = set()
     errors: list[str] = []
     for index, row in enumerate(rows, start=1):
@@ -78,36 +88,143 @@ def validate_upgrade_seed_data(rows: list[dict[str, object]]) -> None:
             if not isinstance(key, str) or not isinstance(value, (int, float)):
                 errors.append(f"{name}: invalid effect {key!r}={value!r}")
     if errors:
-        raise RuntimeError("Upgrade seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Upgrade seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
-def validate_lantern_seed_data(rows: list[dict[str, object]]) -> None:
-    if len(rows) < MIN_LANTERN_OPTIONS:
-        raise RuntimeError(f"Lantern seed catalog is incomplete: expected at least {MIN_LANTERN_OPTIONS}, got {len(rows)}.")
+def _validate_numeric_effects(
+    name: str, effects: object, errors: list[str], *, allow_empty: bool
+) -> dict[str, int | float]:
+    if not isinstance(effects, dict):
+        errors.append(f"{name}: stat_effects must be an object")
+        return {}
+    if not allow_empty and not effects:
+        errors.append(f"{name}: stat_effects must be a non-empty object")
+        return {}
+    for key, value in effects.items():
+        if not isinstance(key, str) or not isinstance(value, (int, float)):
+            errors.append(f"{name}: invalid effect {key!r}={value!r}")
+    return effects
+
+
+def validate_sail_seed_data(rows: list[dict[str, object]]) -> None:
+    from app.seeds.sails import SAIL_EFFECTS_BY_SEED_ID
+
+    if len(rows) != MIN_SAIL_OPTIONS:
+        raise RuntimeError(
+            f"Sail seed catalog is incomplete: expected {MIN_SAIL_OPTIONS}, got {len(rows)}."
+        )
+    allowed_effects = {
+        effect_key
+        for effects in SAIL_EFFECTS_BY_SEED_ID.values()
+        for effect_key in effects
+    }
     names: set[str] = set()
+    seed_ids: set[str] = set()
     errors: list[str] = []
     for index, row in enumerate(rows, start=1):
         name = str(row.get("name") or f"row #{index}")
+        seed_id = str(row.get("seed_id") or "").strip()
+        if name.casefold() in names:
+            errors.append(f"Duplicate sail name: {name}")
+        names.add(name.casefold())
+        if not seed_id:
+            errors.append(f"{name}: stable seed_id is required")
+        elif seed_id.casefold() in seed_ids:
+            errors.append(f"Duplicate sail seed_id: {seed_id}")
+        seed_ids.add(seed_id.casefold())
+        if row.get("category") != "sail":
+            errors.append(f"{name}: category must be sail")
+        if row.get("option_kind") != "sail":
+            errors.append(f"{name}: option_kind must be sail")
+        if not str(row.get("source") or "").strip():
+            errors.append(f"{name}: source is required")
+        if not str(row.get("notes") or "").strip():
+            errors.append(f"{name}: notes are required")
+        effects = _validate_numeric_effects(
+            name, row.get("stat_effects"), errors, allow_empty=False
+        )
+        unknown_effects = set(effects) - allowed_effects
+        if unknown_effects:
+            errors.append(
+                f"{name}: unsupported sail effect(s): {', '.join(sorted(unknown_effects))}"
+            )
+        expected = SAIL_EFFECTS_BY_SEED_ID.get(seed_id)
+        if expected is None:
+            errors.append(f"{name}: unknown verified sail seed_id {seed_id!r}")
+        elif effects != expected:
+            errors.append(f"{name}: effects differ from the verified tooltip catalog")
+        if effects and not any(float(value) != 0 for value in effects.values()):
+            errors.append(f"{name}: sail effects must change at least one calculator stat")
+    missing = set(SAIL_EFFECTS_BY_SEED_ID) - seed_ids
+    if missing:
+        errors.append(f"Missing verified sail seed_id(s): {', '.join(sorted(missing))}")
+    if errors:
+        raise RuntimeError(
+            "Sail seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
+
+
+def validate_lantern_seed_data(rows: list[dict[str, object]]) -> None:
+    from app.seeds.lanterns import LANTERN_EFFECTS_BY_SEED_ID
+
+    if len(rows) != MIN_LANTERN_OPTIONS:
+        raise RuntimeError(
+            f"Lantern seed catalog is incomplete: expected {MIN_LANTERN_OPTIONS}, got {len(rows)}."
+        )
+    allowed_effects = {
+        effect_key
+        for effects in LANTERN_EFFECTS_BY_SEED_ID.values()
+        for effect_key in effects
+    }
+    names: set[str] = set()
+    seed_ids: set[str] = set()
+    errors: list[str] = []
+    for index, row in enumerate(rows, start=1):
+        name = str(row.get("name") or f"row #{index}")
+        seed_id = str(row.get("seed_id") or "").strip()
         if name.casefold() in names:
             errors.append(f"Duplicate lantern name: {name}")
         names.add(name.casefold())
+        if not seed_id:
+            errors.append(f"{name}: stable seed_id is required")
+        elif seed_id.casefold() in seed_ids:
+            errors.append(f"Duplicate lantern seed_id: {seed_id}")
+        seed_ids.add(seed_id.casefold())
         if row.get("category") != "lantern":
             errors.append(f"{name}: category must be lantern")
         if row.get("option_kind") != "lantern":
             errors.append(f"{name}: option_kind must be lantern")
         if not str(row.get("source") or "").strip():
             errors.append(f"{name}: source is required")
-        if not str(row.get("seed_id") or "").strip():
-            errors.append(f"{name}: stable seed_id is required")
         if not str(row.get("notes") or "").strip():
             errors.append(f"{name}: notes are required")
-        effects = row.get("stat_effects", {})
-        if not isinstance(effects, dict):
-            errors.append(f"{name}: stat_effects must be an object")
-        elif any(not isinstance(key, str) or not isinstance(value, (int, float)) for key, value in effects.items()):
-            errors.append(f"{name}: stat_effects contains an invalid value")
+        effects = _validate_numeric_effects(
+            name, row.get("stat_effects"), errors, allow_empty=False
+        )
+        unknown_effects = set(effects) - allowed_effects
+        if unknown_effects:
+            errors.append(
+                f"{name}: unsupported lantern effect(s): {', '.join(sorted(unknown_effects))}"
+            )
+        expected = LANTERN_EFFECTS_BY_SEED_ID.get(seed_id)
+        if expected is None:
+            errors.append(f"{name}: unknown verified lantern seed_id {seed_id!r}")
+        elif effects != expected:
+            errors.append(f"{name}: effects differ from the verified tooltip catalog")
+        if effects and not any(float(value) != 0 for value in effects.values()):
+            errors.append(f"{name}: lantern effects must change at least one calculator stat")
+    missing = set(LANTERN_EFFECTS_BY_SEED_ID) - seed_ids
+    if missing:
+        errors.append(f"Missing verified lantern seed_id(s): {', '.join(sorted(missing))}")
     if errors:
-        raise RuntimeError("Lantern seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Lantern seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
 VALID_WEAPON_SLOT_TYPES = {
@@ -133,7 +250,13 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
         if row.get("category") != "weapon":
             errors.append(f"{name}: category must be weapon")
         option_kind = row.get("option_kind")
-        if option_kind not in {"cannon", "bow_stern", "mortar", "mortar_launcher", "special_weapon"}:
+        if option_kind not in {
+            "cannon",
+            "bow_stern",
+            "mortar",
+            "mortar_launcher",
+            "special_weapon",
+        }:
             errors.append(f"{name}: invalid weapon kind {option_kind!r}")
         allowed_raw = row.get("allowed_slot_types")
         allowed = {slot.strip() for slot in str(allowed_raw or "").split(",") if slot.strip()}
@@ -163,12 +286,17 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
         elif weapon_class not in {"light", "medium", "heavy"}:
             errors.append(f"{name}: regular weapons require light, medium or heavy weapon_class")
     if errors:
-        raise RuntimeError("Weapon seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Weapon seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
 def validate_special_crew_seed_data(rows: list[dict[str, object]]) -> None:
     if len(rows) < MIN_SPECIALIST_OPTIONS:
-        raise RuntimeError(f"Specialist seed catalog is incomplete: expected at least {MIN_SPECIALIST_OPTIONS}, got {len(rows)}.")
+        raise RuntimeError(
+            f"Specialist seed catalog is incomplete: expected at least {MIN_SPECIALIST_OPTIONS}, got {len(rows)}."
+        )
     names: set[str] = set()
     errors: list[str] = []
     for index, row in enumerate(rows, start=1):
@@ -190,7 +318,10 @@ def validate_special_crew_seed_data(rows: list[dict[str, object]]) -> None:
         if not isinstance(effects, dict) or not effects:
             errors.append(f"{name}: stat_effects must be a non-empty object")
     if errors:
-        raise RuntimeError("Special crew seed catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Special crew seed catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )
 
 
 def validate_build_option_catalog(
@@ -205,9 +336,7 @@ def validate_build_option_catalog(
     """
 
     active_categories = {
-        str(row.get("key") or "").strip()
-        for row in categories
-        if row.get("is_active", True)
+        str(row.get("key") or "").strip() for row in categories if row.get("is_active", True)
     }
     rows = [row for group in option_groups for row in group]
     represented: set[str] = set()
@@ -239,4 +368,7 @@ def validate_build_option_catalog(
         errors.append(f"Categories without options: {', '.join(sorted(missing))}")
 
     if errors:
-        raise RuntimeError("Build option catalog failed quality checks:\n" + "\n".join(f"- {error}" for error in errors))
+        raise RuntimeError(
+            "Build option catalog failed quality checks:\n"
+            + "\n".join(f"- {error}" for error in errors)
+        )

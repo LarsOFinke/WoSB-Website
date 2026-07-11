@@ -8,13 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.modules.builds.models.build_item_category import BuildItemCategory
-from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_service import BuildValidationError, create_build
 from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
+from app.seeds.catalog_sync import seed_key
 from app.seeds.manager import SeedManager
 
 
@@ -37,7 +37,50 @@ def _ship(db: Session, name: str = "Russia") -> Ship:
     return ship
 
 
-def test_raiding_sails_apply_flat_speed_and_cruising_gain_debuff() -> None:
+SAIL_EFFECTS = {
+    "Cheap Sails": {"speed_knots": 2},
+    "Stitched Sails": {"speed_knots": 2.4},
+    "Ultra-light Sails": {
+        "speed_knots": 2.4,
+        "cruising_maneuverability_pct": 15,
+        "cruising_turn_speed_penalty_pct": -30,
+    },
+    "Storm Sails": {
+        "speed_knots": 2.7,
+        "strong_wind_cruising_speed_bonus_knots": 2.5,
+    },
+    "Elite Sails": {"speed_knots": 2.8},
+    "Tacking Sails": {
+        "speed_knots": 2.8,
+        "turning_cruising_speed_bonus_knots": 2,
+        "cruising_maneuverability_pct": -20,
+    },
+    "Reefed Sails": {
+        "speed_knots": 2.9,
+        "running_before_wind_speed_penalty_pct": -100,
+        "broad_reach_cruising_speed_bonus_pct": -50,
+    },
+    "Tarpaulin Sails": {"speed_knots": 3.1, "maneuverability": -2},
+    "Raiding Sails": {
+        "speed_knots": 4.1,
+        "cruising_maneuverability_pct": -20,
+        "cruising_speed_gain_pct": -20,
+    },
+}
+
+LANTERN_EFFECTS = {
+    "Blue Lantern": {"speed_pct": 6},
+    "Bright Lantern": {"hold_capacity_pct": 12},
+    "Golden Lantern": {"speed_pct": 5, "armor_pct": 5, "damage_pct": 5},
+    "Green Lantern": {"hull_hp_pct": 7},
+    "Lilac Lantern": {"turn_rate_pct": 7},
+    "Red Lantern": {"turn_rate_pct": 5, "damage_pct": 5, "exp_loot_pct": 7},
+    "White Lantern": {"exp_loot_pct": 10},
+    "Yellow Lantern": {"damage_pct": 7},
+}
+
+
+def test_raiding_sails_apply_every_verified_tooltip_effect() -> None:
     with seeded_session() as db:
         ship = _ship(db)
         build = create_build(
@@ -50,56 +93,101 @@ def test_raiding_sails_apply_flat_speed_and_cruising_gain_debuff() -> None:
             ),
         )
 
-        assert build.ship_stats["sail_effects"] == {
-            "cruising_speed_gain_pct": -20,
-            "speed_knots": 4.1,
-        }
+        assert build.ship_stats["sail_effects"] == SAIL_EFFECTS["Raiding Sails"]
         assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(
             ship.speed_knots + 4.1
         )
+        assert build.ship_stats["effective_stats"]["cruising_maneuverability_pct"] == -20
         assert build.ship_stats["effective_stats"]["cruising_speed_gain_pct"] == -20
+        assert build.ship_stats["upgrade_debuffs"]["cruising_maneuverability_pct"] == -20
         assert build.ship_stats["upgrade_debuffs"]["cruising_speed_gain_pct"] == -20
 
 
-def test_lantern_can_be_replaced_and_custom_effect_is_applied_server_side() -> None:
+@pytest.mark.parametrize(("sail_name", "expected_effects"), SAIL_EFFECTS.items())
+def test_every_verified_sail_is_forwarded_and_applied_server_side(
+    sail_name: str,
+    expected_effects: dict[str, int | float],
+) -> None:
     with seeded_session() as db:
         ship = _ship(db)
-        category = db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == "lantern"))
-        assert category is not None
-        golden = db.scalar(
-            select(BuildItemOption).where(
-                BuildItemOption.category_id == category.id,
-                BuildItemOption.name == "Golden Lantern",
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name=f"{sail_name} calculation",
+                ship_id=ship.id,
+                sails=sail_name,
+                sailors=ship.sailor_minimum,
+            ),
+        )
+
+        stats = build.ship_stats
+        assert stats["sail_effects"] == expected_effects
+        assert stats["effective_stats"]["speed_knots"] == pytest.approx(
+            round(ship.speed_knots + float(expected_effects["speed_knots"]), 1)
+        )
+        if "maneuverability" in expected_effects:
+            assert stats["effective_stats"]["maneuverability"] == (
+                ship.maneuverability + expected_effects["maneuverability"]
             )
-        )
-        assert golden is not None
-        golden.effects.append(BuildItemEffect(effect_key="hold_capacity", effect_value=1000))
-        db.commit()
+        for key, value in expected_effects.items():
+            if key not in {"speed_knots", "maneuverability"}:
+                assert stats["effective_stats"][key] == value
 
-        golden_build = create_build(
+
+@pytest.mark.parametrize(("lantern_name", "expected_effects"), LANTERN_EFFECTS.items())
+def test_every_verified_lantern_is_forwarded_and_applied_server_side(
+    lantern_name: str,
+    expected_effects: dict[str, int | float],
+) -> None:
+    with seeded_session() as db:
+        ship = _ship(db)
+        build = create_build(
             db,
             BuildCreate(
-                build_name="Golden lantern",
+                build_name=f"{lantern_name} calculation",
                 ship_id=ship.id,
-                lantern="Golden Lantern",
-                sailors=ship.sailor_minimum,
-            ),
-        )
-        storm_build = create_build(
-            db,
-            BuildCreate(
-                build_name="Storm lantern replacement",
-                ship_id=ship.id,
-                lantern="Storm Lantern",
+                lantern=lantern_name,
                 sailors=ship.sailor_minimum,
             ),
         )
 
-        assert golden_build.lantern == "Golden Lantern"
-        assert golden_build.ship_stats["lantern_effects"] == {"hold_capacity": 1000}
-        assert golden_build.ship_stats["effective_stats"]["hold_capacity"] == ship.hold_capacity + 1000
-        assert storm_build.lantern == "Storm Lantern"
-        assert storm_build.ship_stats["lantern_effects"] == {}
+        stats = build.ship_stats
+        assert stats["lantern_effects"] == expected_effects
+        if "speed_pct" in expected_effects:
+            assert stats["effective_stats"]["speed_knots"] == pytest.approx(
+                round(ship.speed_knots * (1 + expected_effects["speed_pct"] / 100), 1)
+            )
+        if "hold_capacity_pct" in expected_effects:
+            assert stats["effective_stats"]["hold_capacity"] == round(
+                ship.hold_capacity * (1 + expected_effects["hold_capacity_pct"] / 100)
+            )
+        if "armor_pct" in expected_effects:
+            assert stats["effective_stats"]["armor"] == pytest.approx(
+                round(ship.armor * (1 + expected_effects["armor_pct"] / 100), 1)
+            )
+        if "hull_hp_pct" in expected_effects:
+            assert stats["effective_stats"]["durability"] == round(
+                ship.durability * (1 + expected_effects["hull_hp_pct"] / 100)
+            )
+        if "turn_rate_pct" in expected_effects:
+            assert stats["effective_stats"]["maneuverability"] == round(
+                ship.maneuverability * (1 + expected_effects["turn_rate_pct"] / 100)
+            )
+        for key in ("damage_pct", "exp_loot_pct"):
+            if key in expected_effects:
+                assert stats["effective_stats"][key] == expected_effects[key]
+
+
+def test_build_catalog_api_forwards_verified_sail_and_lantern_effects() -> None:
+    from app.modules.builds.services.build_option_service import list_build_options
+
+    with seeded_session() as db:
+        catalog = list_build_options(db)
+        sails = {option.name: option.stat_effects for option in catalog.options["sail"]}
+        lanterns = {option.name: option.stat_effects for option in catalog.options["lantern"]}
+
+        assert sails == SAIL_EFFECTS
+        assert lanterns == LANTERN_EFFECTS
 
 
 def test_research_reward_unlocks_and_persists_fifth_upgrade_slot() -> None:
@@ -226,3 +314,88 @@ def test_research_reward_debuffs_are_applied_to_live_and_saved_stats() -> None:
                     sailors=19,
                 ),
             )
+
+
+def test_reseeding_repairs_incomplete_non_overridden_equipment_effects() -> None:
+    with seeded_session() as db:
+        category_ids = {
+            row.key: row.id
+            for row in db.scalars(
+                select(BuildItemCategory).where(BuildItemCategory.key.in_(["sail", "lantern"]))
+            ).all()
+        }
+        stitched = db.scalar(
+            select(BuildItemOption).where(
+                BuildItemOption.category_id == category_ids["sail"],
+                BuildItemOption.name == "Stitched Sails",
+            )
+        )
+        golden = db.scalar(
+            select(BuildItemOption).where(
+                BuildItemOption.category_id == category_ids["lantern"],
+                BuildItemOption.name == "Golden Lantern",
+            )
+        )
+        assert stitched is not None and golden is not None
+
+        stitched.effects.clear()
+        stitched.seed_checksum = "incomplete-sail-catalog"
+        golden.effects.clear()
+        golden.seed_checksum = "incomplete-lantern-catalog"
+        db.commit()
+
+        SeedManager(db).seed_build_options()
+        db.refresh(stitched)
+        db.refresh(golden)
+
+        assert stitched.stat_effects == {"speed_knots": 2.4}
+        assert golden.stat_effects == {"speed_pct": 5, "armor_pct": 5, "damage_pct": 5}
+        assert stitched.is_seed_overridden is False
+        assert golden.is_seed_overridden is False
+
+
+def test_reseed_deactivates_superseded_sail_and_lantern_catalog_entries() -> None:
+    with seeded_session() as db:
+        categories = {
+            row.key: row
+            for row in db.scalars(
+                select(BuildItemCategory).where(BuildItemCategory.key.in_(["sail", "lantern"]))
+            ).all()
+        }
+        legacy_sail = BuildItemOption(
+            category_id=categories["sail"].id,
+            name="Imported Sails",
+            source="legacy catalog",
+            notes="Retained for historical builds.",
+            option_kind="sail",
+            seed_key=seed_key("build-option", "sail", "imported"),
+            seed_revision="legacy",
+            seed_checksum="legacy",
+            is_active=True,
+        )
+        legacy_lantern = BuildItemOption(
+            category_id=categories["lantern"].id,
+            name="Storm Lantern",
+            source="legacy catalog",
+            notes="Retained for historical builds.",
+            option_kind="lantern",
+            seed_key=seed_key("build-option", "lantern", "storm"),
+            seed_revision="legacy",
+            seed_checksum="legacy",
+            is_active=True,
+        )
+        db.add_all([legacy_sail, legacy_lantern])
+        db.commit()
+        sail_id = legacy_sail.id
+        lantern_id = legacy_lantern.id
+
+        SeedManager(db).seed_build_options()
+        db.refresh(legacy_sail)
+        db.refresh(legacy_lantern)
+
+        assert legacy_sail.id == sail_id
+        assert legacy_lantern.id == lantern_id
+        assert legacy_sail.is_active is False
+        assert legacy_lantern.is_active is False
+        assert legacy_sail.seed_revision is None
+        assert legacy_lantern.seed_revision is None

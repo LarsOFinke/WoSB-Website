@@ -7,7 +7,7 @@ import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
 import { useLocale } from '@/locales'
 import { createBuild, getBuildOptions } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
-import { calculateUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
+import { calculateBuildStatRows, calculateUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
 import {
   crewSliderMax,
   normalizeCrewAllocation,
@@ -166,18 +166,6 @@ function formatEffects(name, categoryKey = 'upgrade') {
   return entries.map(([key, value]) => `${statLabel(key)} ${effectValue(value)}${key.endsWith('_pct') ? '%' : ''}`).join(' · ')
 }
 
-function getBaseStat(definition) {
-  if (!definition?.base_field || !selectedShip.value) return null
-  const value = selectedShip.value[definition.base_field]
-  return Number.isFinite(Number(value)) ? Number(value) : null
-}
-
-function roundByPrecision(value, precision = 0) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
-  const factor = 10 ** Number(precision || 0)
-  const rounded = Math.round(Number(value) * factor) / factor
-  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
-}
 
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
 const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
@@ -248,33 +236,14 @@ const shipStatsPreview = computed(() => ({
 }))
 
 const statDefinitions = computed(() => optionCatalog.value.stat_definitions || [])
-const buildStatRows = computed(() => statDefinitions.value
-  .map((definition) => {
-    const base = getBaseStat(definition)
-    const pctModifier = Number(buildEffectTotals.value[definition.pct_effect] || 0)
-    const flatModifier = Number(buildEffectTotals.value[definition.flat_effect] || 0)
-    const modifier = pctModifier + flatModifier
-    if (base === null && modifier === 0) return null
-
-    let effective = base
-    if (effective !== null && definition.pct_effect) effective *= (1 + pctModifier / 100)
-    const calculationFlatModifier = Number(buildEffectTotals.value[definition.calculation_flat_effect] || 0)
-    if (effective !== null && definition.calculation_flat_effect) effective += calculationFlatModifier
-    else if (effective !== null && definition.flat_effect) effective += flatModifier
-    if (effective === null && definition.flat_effect) effective = flatModifier
-
-    return {
-      ...definition,
-      label: t(`builds.statLabels.${definition.key}`),
-      base: roundByPrecision(base, definition.precision),
-      modifier: roundByPrecision(modifier, definition.precision),
-      effective: roundByPrecision(effective, definition.precision),
-      modifier_kind: definition.pct_effect && definition.base_field ? 'percent' : 'flat',
-      effect_key: definition.pct_effect || definition.flat_effect,
-      isDebuff: modifier !== 0 && (definition.positive_is_good === false ? modifier > 0 : modifier < 0),
-    }
-  })
-  .filter(Boolean))
+const buildStatRows = computed(() => calculateBuildStatRows({
+  ship: selectedShip.value,
+  definitions: statDefinitions.value,
+  effects: buildEffectTotals.value,
+}).map((row) => ({
+  ...row,
+  label: t(`builds.statLabels.${row.key}`),
+})))
 
 const selectedUpgradeCards = computed(() => Array.from({ length: equipmentUpgradeCount }, (_, offset) => {
   const index = offset + 1

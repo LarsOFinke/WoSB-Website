@@ -33,3 +33,60 @@ export function calculateUpgradeSlotAccess({
     availableSlots: Math.min(slotLimit, baseSlots + Number(slot5Unlocked) + Number(slot6Available)),
   }
 }
+
+function numberOrNull(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
+  return Number(value)
+}
+
+function roundByPrecision(value, precision = 0) {
+  const number = numberOrNull(value)
+  if (number === null) return null
+  const factor = 10 ** Number(precision || 0)
+  const rounded = Math.round(number * factor) / factor
+  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
+}
+
+/**
+ * Calculate the live Build Designer stat rows from the exact same catalog
+ * contract used by the backend: a ship base field plus percentage and/or flat
+ * effect keys supplied by the selected catalog options.
+ */
+export function calculateBuildStatRows({ ship, definitions = [], effects = {} }) {
+  if (!ship) return []
+
+  return definitions
+    .map((definition) => {
+      const base = definition?.base_field ? numberOrNull(ship[definition.base_field]) : null
+      const pctModifier = Number(effects[definition?.pct_effect] || 0)
+      const flatModifier = Number(effects[definition?.flat_effect] || 0)
+      const modifier = pctModifier + flatModifier
+      if (base === null && modifier === 0) return null
+
+      let effective = base
+      if (effective !== null && definition.pct_effect) {
+        effective *= (1 + pctModifier / 100)
+      }
+      const calculationFlatModifier = Number(effects[definition.calculation_flat_effect] || 0)
+      if (effective !== null && definition.calculation_flat_effect) {
+        effective += calculationFlatModifier
+      } else if (effective !== null && definition.flat_effect) {
+        effective += flatModifier
+      }
+      if (effective === null && definition.flat_effect) {
+        effective = flatModifier
+      }
+
+      return {
+        ...definition,
+        base: roundByPrecision(base, definition.precision),
+        modifier: roundByPrecision(modifier, definition.precision),
+        effective: roundByPrecision(effective, definition.precision),
+        modifier_kind: definition.pct_effect && definition.base_field ? 'percent' : 'flat',
+        effect_key: definition.pct_effect || definition.flat_effect,
+        isDebuff: modifier !== 0
+          && (definition.positive_is_good === false ? modifier > 0 : modifier < 0),
+      }
+    })
+    .filter(Boolean)
+}

@@ -6,19 +6,18 @@ Der Build-Designer berechnet Segel, Laternen, Upgrades, Spezialisten und die For
 
 Effekte werden in `build_item_effects` gespeichert. Seed-Daten liefern überarbeitbare Defaults. Änderungen unter **Admin → Stammdaten** werden als Override geschützt.
 
-## Überprüfte Segel- und Laternenwerte
+## Segel- und Laternenkatalog
 
-Frühere Prozentwerte für Segel und frei angenommene Laternenboni wurden entfernt. Sie waren keine belastbar geprüften Spielwerte.
+Der vollständige, anhand der bereitgestellten In-Game-Tooltips gepflegte Katalog ist in
+`docs/BUILD_DESIGNER_SAIL_LANTERN_DATAFLOW.md` dokumentiert.
 
-Aktuell als exakter Tooltip-Wert hinterlegt:
+Wesentliche Rechenregeln:
 
-| Ausrüstung | Effekt |
-| --- | --- |
-| Raiding Sails / Überfallsegel | `+4,1 kn` Geschwindigkeit und `-20 %` Reisegeschwindigkeits-Zuwachs |
-
-Für Tarpaulin, Imported und Elite Sails sowie die zwölf Laternen bleiben die Effektobjekte leer, solange kein aktueller Tooltip-Nachweis vorliegt. Die Einträge bleiben auswählbar und über die Stammdatenverwaltung editierbar. So zeigt der Live-Rechner keine erfundenen Werte an.
-
-Die Stat-Engine unterstützt dabei sowohl absolute Geschwindigkeitswerte (`speed_knots`) als auch Prozentwerte (`speed_pct`) und separate Werte wie `cruising_speed_gain_pct`.
+- Segelgeschwindigkeit wird als absoluter Knotenbonus gerechnet.
+- Laternenboni werden prozentual auf Geschwindigkeit, Haltbarkeit, Wendigkeit, Panzerung oder Laderaum angewendet.
+- Schaden und Erfahrung/Beute werden als eigenständige Prozentwerte angezeigt.
+- Bedingte Segeleffekte werden separat ausgewiesen und nicht fälschlich dauerhaft auf die Basisgeschwindigkeit gerechnet.
+- Nicht mehr gültige Seed-Einträge werden deaktiviert statt gelöscht, damit bestehende Builds lesbar bleiben.
 
 ## Laternenwechsel
 

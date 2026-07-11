@@ -6,6 +6,7 @@ from app.seeds.catalog_sync import mark_seed_applied, seed_key, should_apply_see
 from app.seeds.build_catalog_quality import (
     validate_build_option_catalog,
     validate_lantern_seed_data,
+    validate_sail_seed_data,
     validate_ship_seed_data,
     validate_special_crew_seed_data,
     validate_upgrade_seed_data,
@@ -33,7 +34,11 @@ from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlot
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.ships.models.ship import Ship
-from app.modules.ships.models.weapon_mount import ShipWeaponMount, WeaponClassDefinition, WeaponSlotType
+from app.modules.ships.models.weapon_mount import (
+    ShipWeaponMount,
+    WeaponClassDefinition,
+    WeaponSlotType,
+)
 from app.modules.permissions.services.role_service import ensure_role_catalog
 
 BUILD_OPTION_SEED_GROUPS = (
@@ -74,7 +79,6 @@ class SeedManager:
     def seed_users(self) -> None:
         seed_admin_user(self.db)
 
-
     def seed_fleets(self) -> None:
         active_slugs = {row["slug"] for row in FLEET_SEED_DATA}
         for fleet_data in FLEET_SEED_DATA:
@@ -94,14 +98,18 @@ class SeedManager:
 
     def seed_weapon_slot_types(self) -> None:
         for row in WEAPON_CLASS_DATA:
-            existing = self.db.scalar(select(WeaponClassDefinition).where(WeaponClassDefinition.code == row["code"]))
+            existing = self.db.scalar(
+                select(WeaponClassDefinition).where(WeaponClassDefinition.code == row["code"])
+            )
             if existing is None:
                 self.db.add(WeaponClassDefinition(**row))
             else:
                 for field_name, value in row.items():
                     setattr(existing, field_name, value)
         for row in WEAPON_SLOT_TYPE_DATA:
-            existing = self.db.scalar(select(WeaponSlotType).where(WeaponSlotType.code == row["code"]))
+            existing = self.db.scalar(
+                select(WeaponSlotType).where(WeaponSlotType.code == row["code"])
+            )
             if existing is None:
                 self.db.add(WeaponSlotType(**row))
             else:
@@ -112,7 +120,9 @@ class SeedManager:
     def seed_ships(self) -> None:
         validate_ship_seed_data(SHIP_SEED_DATA)
         slot_types = {row.code: row for row in self.db.scalars(select(WeaponSlotType)).all()}
-        weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
+        weapon_classes = {
+            row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()
+        }
         active_seed_keys: set[str] = set()
 
         for ship_data in SHIP_SEED_DATA:
@@ -168,7 +178,9 @@ class SeedManager:
                 values = {
                     **mount_payload,
                     "slot_type_id": slot_types[code].id,
-                    "max_weapon_class_id": weapon_classes[str(class_code)].id if class_code else None,
+                    "max_weapon_class_id": weapon_classes[str(class_code)].id
+                    if class_code
+                    else None,
                 }
                 if mount is None:
                     existing.weapon_mounts.append(ShipWeaponMount(**values))
@@ -196,6 +208,7 @@ class SeedManager:
         if not self.db.scalar(select(WeaponSlotType.id).limit(1)):
             self.seed_weapon_slot_types()
         validate_build_option_catalog(BUILD_ITEM_CATEGORIES, BUILD_OPTION_SEED_GROUPS)
+        validate_sail_seed_data(SAIL_OPTIONS)
         validate_upgrade_seed_data(UPGRADE_OPTIONS)
         validate_lantern_seed_data(LANTERN_OPTIONS)
         validate_weapon_seed_data(WEAPON_OPTIONS)
@@ -206,7 +219,9 @@ class SeedManager:
         for category_data in BUILD_ITEM_CATEGORIES:
             key = seed_key("build-category", category_data["key"])
             active_category_seed_keys.add(key)
-            existing = self.db.scalar(select(BuildItemCategory).where(BuildItemCategory.seed_key == key))
+            existing = self.db.scalar(
+                select(BuildItemCategory).where(BuildItemCategory.seed_key == key)
+            )
             if existing is None:
                 candidate = self.db.scalar(
                     select(BuildItemCategory).where(BuildItemCategory.key == category_data["key"])
@@ -232,17 +247,24 @@ class SeedManager:
         for category in self.db.scalars(
             select(BuildItemCategory).where(BuildItemCategory.seed_key.is_not(None))
         ).all():
-            if category.seed_key not in active_category_seed_keys and not category.is_seed_overridden:
+            if (
+                category.seed_key not in active_category_seed_keys
+                and not category.is_seed_overridden
+            ):
                 category.is_active = False
                 category.seed_revision = None
                 category.seed_checksum = None
 
         self._migrate_legacy_upgrade_names(categories["upgrade"])
-        weapon_classes = {row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()}
+        weapon_classes = {
+            row.code: row for row in self.db.scalars(select(WeaponClassDefinition)).all()
+        }
 
         active_option_seed_keys: set[str] = set()
         for option_group in BUILD_OPTION_SEED_GROUPS:
-            for sort_order, option_data in enumerate(_alphabetical_options(list(option_group)), start=10):
+            for sort_order, option_data in enumerate(
+                _alphabetical_options(list(option_group)), start=10
+            ):
                 category_key = str(option_data["category"])
                 category = categories[category_key]
                 option_name = str(option_data["name"]).strip()
@@ -250,7 +272,9 @@ class SeedManager:
                 key = seed_key("build-option", category_key, stable_id)
                 active_option_seed_keys.add(key)
 
-                existing = self.db.scalar(select(BuildItemOption).where(BuildItemOption.seed_key == key))
+                existing = self.db.scalar(
+                    select(BuildItemOption).where(BuildItemOption.seed_key == key)
+                )
                 if existing is None:
                     candidate = self.db.scalar(
                         select(BuildItemOption).where(
@@ -327,7 +351,6 @@ class SeedManager:
 
         self.db.commit()
 
-
     def _sync_option_slot_types(self, option: BuildItemOption, raw_codes: str) -> None:
         codes = {code.strip() for code in raw_codes.split(",") if code.strip()}
         slot_types = {row.code: row for row in self.db.scalars(select(WeaponSlotType)).all()}
@@ -337,11 +360,12 @@ class SeedManager:
         current = {link.slot_type.code: link for link in option.slot_type_links}
         for code in codes:
             if code not in current:
-                option.slot_type_links.append(BuildItemOptionSlotType(slot_type_id=slot_types[code].id))
+                option.slot_type_links.append(
+                    BuildItemOptionSlotType(slot_type_id=slot_types[code].id)
+                )
         for code, link in list(current.items()):
             if code not in codes:
                 option.slot_type_links.remove(link)
-
 
     def cleanup_legacy_demo_content(self) -> None:
         cleanup_legacy_demo_content(self.db)
@@ -381,7 +405,6 @@ class SeedManager:
             )
             self.db.delete(legacy)
             self.db.flush()
-
 
     def _sync_option_effects(self, option: BuildItemOption, effects: dict[str, object]) -> None:
         current = {effect.effect_key: effect for effect in option.effects}
