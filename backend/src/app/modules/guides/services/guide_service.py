@@ -11,6 +11,7 @@ from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.files.schemas.file_asset import FileRead
 from app.modules.guides.schemas.guide_create import GuideCreate
 from app.modules.guides.schemas.guide_read import GuideRead
+from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.content.services.content_embed_service import ContentEmbedValidationError, validate_build_embeds, validate_content_embeds
 from app.modules.files.services.file_service import get_files_for_owner
@@ -120,6 +121,33 @@ def create_guide(db: Session, payload: GuideCreate, author: User) -> GuideRead:
     if created is None:
         raise GuideValidationError("Guide could not be loaded after creation.")
     return created
+
+
+def update_guide(db: Session, guide_id: int, payload: GuideUpdate, user: User) -> GuideRead | None:
+    guide = db.scalar(select(Guide).options(*_guide_options()).where(Guide.id == guide_id, Guide.is_published.is_(True)))
+    if guide is None or (guide.owner_id != user.id and not user.can_moderate):
+        return None
+
+    files = get_files_for_owner(db, payload.file_ids, user)
+    builds = _load_linked_builds(db, payload.build_ids)
+    _validate_guide_embeds(payload.body, files, builds)
+
+    guide.title = payload.title
+    guide.category = payload.category
+    guide.summary = payload.summary
+    guide.body = payload.body
+    guide.attachments.clear()
+    guide.build_references.clear()
+    for index, file in enumerate(files):
+        guide.attachments.append(GuideAttachment(file_id=file.id, sort_order=index))
+    for index, build in enumerate(builds):
+        guide.build_references.append(GuideBuildReference(build_id=build.id, sort_order=index))
+
+    db.commit()
+    updated = get_guide(db, guide.id)
+    if updated is None:
+        raise GuideValidationError("Guide could not be loaded after update.")
+    return updated
 
 
 def delete_guide(db: Session, guide_id: int, user: User) -> bool:

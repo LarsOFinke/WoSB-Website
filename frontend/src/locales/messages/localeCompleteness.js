@@ -9,6 +9,7 @@ export const localeCompletenessMessages = {
     },
   },
   de: {
+    markdown: { toolbar: { link: 'Verknüpfung' } },
     common: { modules: 'Module', groups: 'Gruppensuche', myGroupSearches: 'Meine Gruppensuchen' },
     logs: { clientIp: 'Client-IP', queryString: 'Query-String' },
     forum: { categories: { training: 'Training', logistics: 'Logistik', loistics: 'Logistik' } },
@@ -31,9 +32,15 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Einteilung', availability: 'Verfügbarkeit', timezone: 'Zeitzone', adminNote: 'Interne Notiz' } },
   },
   fr: {
+    markdown: {
+      toolbar: { hint: 'Source Markdown', bold: 'Gras', italic: 'Italique', bulletList: 'Liste à puces', numberedList: 'Liste numérotée', quote: 'Citation', codeBlock: 'Bloc de code' },
+      placeholders: { text: 'texte', code: 'extrait de code' },
+    },
+    forum: { detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
+    guides: { edit: { title: 'Modifier le guide' }, detail: { edit: 'Modifier le guide' } },
     common: { modules: 'Sections', groups: 'Recherche de groupe', myGroupSearches: 'Mes recherches de groupe' },
     logs: { clientIp: 'IP client', queryString: 'Chaîne de requête' },
-    forum: { categories: { training: 'Entraînement', logistics: 'Logistique', loistics: 'Logistique' } },
+    forum: { categories: { training: 'Entraînement', logistics: 'Logistique', loistics: 'Logistique' }, detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
     groups: {
       fields: { schedule: 'Créneau' },
       list: { title: 'Recherche de groupe', newGroup: 'Nouvelle recherche', announcementMode: 'Recherche de groupe' },
@@ -55,9 +62,15 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Affectation', availability: 'Disponibilité', timezone: 'Fuseau horaire', adminNote: 'Note interne' } },
   },
   es: {
+    markdown: {
+      toolbar: { hint: 'Fuente Markdown', bold: 'Negrita', italic: 'Cursiva', bulletList: 'Lista con viñetas', numberedList: 'Lista numerada', quote: 'Cita', codeBlock: 'Bloque de código' },
+      placeholders: { text: 'texto', code: 'fragmento de código' },
+    },
+    forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
+    guides: { edit: { title: 'Editar guía' }, detail: { edit: 'Editar guía' } },
     common: { modules: 'Módulos', groups: 'Búsqueda de grupo', myGroupSearches: 'Mis búsquedas de grupo' },
     logs: { clientIp: 'IP del cliente', queryString: 'Consulta' },
-    forum: { categories: { training: 'Entrenamiento', logistics: 'Logística', loistics: 'Logística' } },
+    forum: { categories: { training: 'Entrenamiento', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
     groups: {
       fields: { schedule: 'Horario' },
       list: { title: 'Búsqueda de grupo', newGroup: 'Nueva búsqueda', announcementMode: 'Búsqueda de grupo' },
@@ -79,9 +92,15 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Asignación', availability: 'Disponibilidad', timezone: 'Zona horaria', adminNote: 'Nota interna' } },
   },
   pt: {
+    markdown: {
+      toolbar: { hint: 'Fonte Markdown', bold: 'Negrito', italic: 'Itálico', bulletList: 'Lista com marcadores', numberedList: 'Lista numerada', quote: 'Citação', codeBlock: 'Bloco de código' },
+      placeholders: { text: 'texto', code: 'trecho de código' },
+    },
+    forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
+    guides: { edit: { title: 'Editar guia' }, detail: { edit: 'Editar guia' } },
     common: { modules: 'Módulos', groups: 'Procura de grupo', myGroupSearches: 'As minhas procuras de grupo' },
     logs: { clientIp: 'IP do cliente', queryString: 'Consulta' },
-    forum: { categories: { training: 'Treino', logistics: 'Logística', loistics: 'Logística' } },
+    forum: { categories: { training: 'Treino', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
     groups: {
       fields: { schedule: 'Horário' },
       list: { title: 'Procura de grupo', newGroup: 'Nova procura', announcementMode: 'Procura de grupo' },
@@ -103,9 +122,15 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Atribuição', availability: 'Disponibilidade', timezone: 'Fuso horário', adminNote: 'Nota interna' } },
   },
   ru: {
+    markdown: {
+      toolbar: { hint: 'Исходный Markdown', bold: 'Жирный', italic: 'Курсив', bulletList: 'Маркированный список', numberedList: 'Нумерованный список', quote: 'Цитата', codeBlock: 'Блок кода' },
+      placeholders: { text: 'текст', code: 'фрагмент кода' },
+    },
+    forum: { detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
+    guides: { edit: { title: 'Редактировать гайд' }, detail: { edit: 'Редактировать гайд' } },
     common: { modules: 'Модули', groups: 'Поиск группы', myGroupSearches: 'Мои поиски группы' },
     logs: { clientIp: 'IP клиента', queryString: 'Строка запроса' },
-    forum: { categories: { training: 'Тренировка', logistics: 'Логистика', loistics: 'Логистика' } },
+    forum: { categories: { training: 'Тренировка', logistics: 'Логистика', loistics: 'Логистика' }, detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
     groups: {
       fields: { schedule: 'Время' },
       list: { title: 'Поиск группы', newGroup: 'Новый поиск', announcementMode: 'Поиск группы' },
@@ -127,9 +152,15 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Назначение', availability: 'Доступность', timezone: 'Часовой пояс', adminNote: 'Внутренняя заметка' } },
   },
   cn: {
+    markdown: {
+      toolbar: { hint: 'Markdown 源文本', bold: '粗体', italic: '斜体', bulletList: '项目符号列表', numberedList: '编号列表', quote: '引用', codeBlock: '代码块' },
+      placeholders: { text: '文本', code: '代码片段' },
+    },
+    forum: { detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },
+    guides: { edit: { title: '编辑指南' }, detail: { edit: '编辑指南' } },
     common: { modules: '模块', groups: '组队搜索', myGroupSearches: '我的组队搜索' },
     logs: { clientIp: '客户端 IP', queryString: '查询字符串' },
-    forum: { categories: { training: '训练', logistics: '后勤', loistics: '后勤' } },
+    forum: { categories: { training: '训练', logistics: '后勤', loistics: '后勤' }, detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },
     groups: {
       fields: { schedule: '时间段' },
       list: { title: '组队搜索', newGroup: '新的组队搜索', announcementMode: '组队搜索' },

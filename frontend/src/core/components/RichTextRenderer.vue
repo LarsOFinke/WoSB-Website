@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { useLocale } from '@/locales'
 import { absoluteFileUrl, fileKind, formatFileSize, isEmbeddableFile } from '@/modules/files/api/files'
+import { renderMarkdown } from '@/shared/content/markdown'
 import { parseRichTextEmbeds } from '@/shared/content/richTextEmbeds'
 
 const props = defineProps({
@@ -21,7 +22,9 @@ const props = defineProps({
 })
 
 const { optionLabel, t } = useLocale()
-const parts = computed(() => parseRichTextEmbeds(props.body))
+const parts = computed(() => parseRichTextEmbeds(props.body).map((part) => (
+  part.type === 'text' ? { ...part, html: renderMarkdown(part.text) } : part
+)))
 const fileMap = computed(() => {
   const map = new Map()
   for (const file of props.attachments || []) {
@@ -90,7 +93,7 @@ function primaryWeapons(build) {
 <template>
   <div class="rich-text-content">
     <template v-for="(part, index) in parts" :key="`${part.type}-${index}-${part.fileId || part.buildId || index}`">
-      <span v-if="part.type === 'text'" class="rich-text-copy preserve-lines">{{ part.text }}</span>
+      <div v-if="part.type === 'text'" class="rich-text-copy markdown-content" v-html="part.html"></div>
 
       <figure
         v-else-if="part.type === 'fileEmbed' && fileFor(part)"

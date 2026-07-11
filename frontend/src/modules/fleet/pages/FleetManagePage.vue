@@ -282,10 +282,6 @@ onMounted(loadFleetDetail)
                 </label>
                 <div class="directory-form-grid member-directory-edit-grid">
                   <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.assignment') }}</span><input :value="membership.assignment || ''" maxlength="120" @change="setMember(membership, fieldPayload('assignment', $event))" /></label>
-                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.availability') }}</span><input :value="membership.availability || ''" maxlength="240" @change="setMember(membership, fieldPayload('availability', $event))" /></label>
-                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.preferredShips') }}</span><input :value="membership.preferred_ships || ''" maxlength="300" @change="setMember(membership, fieldPayload('preferred_ships', $event))" /></label>
-                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.timezone') }}</span><input :value="membership.timezone || ''" maxlength="80" @change="setMember(membership, fieldPayload('timezone', $event))" /></label>
-                  <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.discord') }}</span><input :value="membership.discord_handle || ''" maxlength="120" @change="setMember(membership, fieldPayload('discord_handle', $event))" /></label>
                   <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.adminNote') }}</span><input :value="membership.admin_note || ''" maxlength="1200" @change="setMember(membership, fieldPayload('admin_note', $event))" /></label>
                 </div>
                 <div class="compact-actions">

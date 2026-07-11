@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 
 import AppIcon from '@/core/components/AppIcon.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
+import MarkdownEditor from '@/core/components/MarkdownEditor.vue'
+import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import { listBuilds } from '@/modules/builds/api/builds'
@@ -240,10 +242,16 @@ onMounted(loadPage)
               <input v-model="block.title" maxlength="180" required />
             </label>
           </div>
-          <label class="input-panel embedded-field">
-            <span>{{ block.block_type === 'text' ? t('newcomerGuide.editor.text') : t('newcomerGuide.editor.optionalIntro') }}</span>
-            <textarea v-model="block.body" rows="5" maxlength="20000" :required="block.block_type === 'text'" />
-          </label>
+          <div class="newcomer-markdown-field">
+            <span class="field-label">{{ block.block_type === 'text' ? t('newcomerGuide.editor.text') : t('newcomerGuide.editor.optionalIntro') }}</span>
+            <p class="section-helper-text">{{ t('markdown.editorHint') }}</p>
+            <MarkdownEditor
+              v-model="block.body"
+              :rows="5"
+              :maxlength="20000"
+              :required="block.block_type === 'text'"
+            />
+          </div>
 
           <div v-if="block.block_type === 'resources'" class="newcomer-resource-editor-list">
             <article v-for="(resource, resourceIndex) in block.resources" :key="`resource-${resourceIndex}`" class="newcomer-resource-editor-row">
@@ -316,7 +324,7 @@ onMounted(loadPage)
             <div>
               <p class="eyebrow">{{ block.block_type === 'text' ? t('newcomerGuide.textSection') : t('newcomerGuide.resourceSection') }}</p>
               <h2>{{ block.title }}</h2>
-              <p v-if="block.body" class="preserve-lines">{{ block.body }}</p>
+              <RichTextRenderer v-if="block.body" :body="block.body" />
             </div>
           </div>
           <div v-if="block.block_type === 'resources'" class="newcomer-resource-grid">

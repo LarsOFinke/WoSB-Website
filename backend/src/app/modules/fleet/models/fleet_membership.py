@@ -2,28 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.modules.fleet.models.fleet import FLEET_MEMBER_PENDING, FLEET_ROLE_MEMBER
-
-
-class FleetMembershipShipPreference(Base):
-    __tablename__ = "fleet_membership_ship_preferences"
-    __table_args__ = (
-        UniqueConstraint("fleet_membership_id", "ship_name", name="uq_fleet_membership_ship_preference"),
-        CheckConstraint("sort_order >= 0", name="ck_fleet_membership_ship_preferences_sort_order"),
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    fleet_membership_id: Mapped[int] = mapped_column(
-        ForeignKey("fleet_memberships.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    ship_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-
-    membership: Mapped["FleetMembership"] = relationship("FleetMembership", back_populates="ship_preferences")
 
 
 class FleetMembership(Base):
@@ -41,9 +24,6 @@ class FleetMembership(Base):
     status: Mapped[str] = mapped_column(String(40), nullable=False, default=FLEET_MEMBER_PENDING, index=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     assignment: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    availability: Mapped[str | None] = mapped_column(String(240), nullable=True)
-    timezone: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    discord_handle: Mapped[str | None] = mapped_column(String(120), nullable=True)
     admin_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -52,13 +32,6 @@ class FleetMembership(Base):
     user: Mapped["User"] = relationship("User", back_populates="fleet_memberships")
     fleet_role: Mapped["FleetRoleDefinition"] = relationship(
         "FleetRoleDefinition", back_populates="memberships", lazy="joined"
-    )
-    ship_preferences: Mapped[list[FleetMembershipShipPreference]] = relationship(
-        FleetMembershipShipPreference,
-        back_populates="membership",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-        order_by=FleetMembershipShipPreference.sort_order,
     )
 
     @property
@@ -70,21 +43,27 @@ class FleetMembership(Base):
         return int(self.fleet_role.rank if self.fleet_role is not None else 0)
 
     @property
+    def availability(self) -> str | None:
+        return self.user.profile.availability if self.user and self.user.profile else None
+
+    @property
+    def timezone(self) -> str | None:
+        return self.user.profile.timezone if self.user and self.user.profile else None
+
+    @property
+    def discord_handle(self) -> str | None:
+        return self.user.profile.discord_handle if self.user and self.user.profile else None
+
+    @property
     def preferred_ships(self) -> str | None:
-        names = [row.ship_name for row in self.ship_preferences]
+        if not self.user or not self.user.profile:
+            return None
+        names = [row.ship.name for row in self.user.profile.ship_preferences if row.ship]
         return ", ".join(names) if names else None
 
-    def set_preferred_ships(self, value: str | None) -> None:
-        seen: set[str] = set()
-        names: list[str] = []
-        for raw in (value or "").replace(";", ",").split(","):
-            name = raw.strip()
-            key = name.casefold()
-            if not name or key in seen:
-                continue
-            seen.add(key)
-            names.append(name)
-        self.ship_preferences[:] = [
-            FleetMembershipShipPreference(ship_name=name, sort_order=index * 10)
-            for index, name in enumerate(names, start=1)
-        ]
+    @property
+    def preferred_roles(self) -> str | None:
+        if not self.user or not self.user.profile:
+            return None
+        names = [row.fleet_role.label for row in self.user.profile.role_preferences if row.fleet_role]
+        return ", ".join(names) if names else None

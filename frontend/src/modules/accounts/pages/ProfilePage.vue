@@ -6,7 +6,7 @@ import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import { changePassword } from '@/modules/accounts/api/auth'
-import { getProfile, updateProfile } from '@/modules/accounts/api/profile'
+import { getProfile, getProfilePreferenceOptions, updateProfile } from '@/modules/accounts/api/profile'
 import { useSession } from '@/modules/accounts/session'
 import { listMyFleetMemberships } from '@/modules/fleet/api/fleet'
 
@@ -21,6 +21,7 @@ const success = ref('')
 const passwordError = ref('')
 const passwordSuccess = ref('')
 const fleetMemberships = ref([])
+const preferenceOptions = reactive({ ships: [], roles: [] })
 
 const activeFleetMemberships = computed(() => fleetMemberships.value.filter((membership) => ['active', 'pending'].includes(membership.status)))
 const leadershipMemberships = computed(() => fleetMemberships.value.filter((membership) => membership.status === 'active' && ['fleet_admiral', 'fleet_lieutenant'].includes(membership.role)))
@@ -40,6 +41,8 @@ const profileCompletion = computed(() => {
     Boolean(form.display_name.trim()),
     Boolean(form.preferred_focus),
     Boolean(form.note.trim()),
+    Boolean(form.timezone.trim() || form.availability.trim()),
+    Boolean(form.preferred_ship_ids.length || form.preferred_role_ids.length),
     hasOfficialFleetLink.value || Boolean(form.fleet_name.trim()),
   ]
   return Math.round((checks.filter(Boolean).length / checks.length) * 100)
@@ -68,6 +71,11 @@ const form = reactive({
   fleet_membership_status: '',
   fleet_membership_role: '',
   preferred_focus: '',
+  availability: '',
+  timezone: '',
+  discord_handle: '',
+  preferred_ship_ids: [],
+  preferred_role_ids: [],
   note: '',
   role: 'user',
 })
@@ -87,6 +95,11 @@ function fillForm(user) {
   form.fleet_membership_status = user.fleet_membership_status || ''
   form.fleet_membership_role = user.fleet_membership_role || ''
   form.preferred_focus = user.preferred_focus || ''
+  form.availability = user.availability || ''
+  form.timezone = user.timezone || ''
+  form.discord_handle = user.discord_handle || ''
+  form.preferred_ship_ids = [...(user.preferred_ship_ids || [])]
+  form.preferred_role_ids = [...(user.preferred_role_ids || [])]
   form.note = user.note || ''
   form.role = user.role || 'user'
 }
@@ -103,7 +116,10 @@ async function loadProfile() {
   loading.value = true
   error.value = ''
   try {
-    fillForm(await getProfile())
+    const [profile, options] = await Promise.all([getProfile(), getProfilePreferenceOptions()])
+    fillForm(profile)
+    preferenceOptions.ships = options.ships || []
+    preferenceOptions.roles = options.roles || []
     await loadMemberships()
   } catch (err) {
     error.value = err.message || t('profile.loadError')
@@ -121,6 +137,11 @@ async function saveProfile() {
       display_name: form.display_name,
       fleet_name: hasOfficialFleetLink.value ? null : form.fleet_name || null,
       preferred_focus: form.preferred_focus || null,
+      availability: form.availability || null,
+      timezone: form.timezone || null,
+      discord_handle: form.discord_handle || null,
+      preferred_ship_ids: form.preferred_ship_ids,
+      preferred_role_ids: form.preferred_role_ids,
       note: form.note || null,
     })
     fillForm(updated)
@@ -225,6 +246,41 @@ onMounted(loadProfile)
                 <input v-model="form.fleet_name" maxlength="120" :placeholder="t('profile.fleetPlaceholder')" />
                 <small>{{ t('profile.externalFleetHint') }}</small>
               </label>
+
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.availability') }}</span>
+                <input v-model="form.availability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" />
+              </label>
+
+              <label class="input-panel embedded-field">
+                <span>{{ t('fleets.directory.timezone') }}</span>
+                <input v-model="form.timezone" maxlength="80" :placeholder="t('fleets.directory.timezonePlaceholder')" />
+              </label>
+
+              <label class="input-panel embedded-field profile-field-wide">
+                <span>{{ t('fleets.directory.discord') }}</span>
+                <input v-model="form.discord_handle" maxlength="120" :placeholder="t('fleets.directory.discordPlaceholder')" />
+              </label>
+
+              <fieldset class="input-panel embedded-field profile-field-wide">
+                <legend>{{ t('fleets.directory.preferredShips') }}</legend>
+                <div class="profile-preference-grid">
+                  <label v-for="ship in preferenceOptions.ships" :key="ship.id" class="checkbox-row">
+                    <input v-model="form.preferred_ship_ids" type="checkbox" :value="ship.id" />
+                    <span>{{ ship.name }} · Rate {{ ship.rate }}</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <fieldset class="input-panel embedded-field profile-field-wide">
+                <legend>{{ t('fleets.directory.preferredRoles') }}</legend>
+                <div class="profile-preference-grid">
+                  <label v-for="roleOption in preferenceOptions.roles" :key="roleOption.id" class="checkbox-row">
+                    <input v-model="form.preferred_role_ids" type="checkbox" :value="roleOption.id" />
+                    <span>{{ roleOption.label }}</span>
+                  </label>
+                </div>
+              </fieldset>
 
               <label class="input-panel embedded-field profile-note-field profile-field-wide">
                 <span>{{ t('profile.note') }}</span>

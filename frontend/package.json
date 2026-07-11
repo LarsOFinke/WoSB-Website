@@ -16,6 +16,8 @@
     "prepreview": "node scripts/check-env.mjs"
   },
   "dependencies": {
+    "dompurify": "^3.4.12",
+    "markdown-it": "^14.3.0",
     "vue": "^3.5.0",
     "vue-router": "^4.4.0"
   },

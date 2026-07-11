@@ -18,5 +18,10 @@ class UserRead(BaseModel):
     fleet_membership_status: str | None = None
     fleet_membership_role: str | None = None
     preferred_focus: str | None = None
+    availability: str | None = None
+    timezone: str | None = None
+    discord_handle: str | None = None
+    preferred_ship_ids: list[int] = []
+    preferred_role_ids: list[int] = []
     note: str | None = None
     created_at: datetime

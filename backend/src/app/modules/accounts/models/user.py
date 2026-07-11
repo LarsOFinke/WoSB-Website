@@ -110,6 +110,27 @@ class User(Base):
     def preferred_focus(self, value: str | None) -> None:
         self._ensure_profile().preferred_focus = value.strip() or None if isinstance(value, str) else None
 
+
+    @property
+    def availability(self) -> str | None:
+        return self.profile.availability if self.profile else None
+
+    @property
+    def timezone(self) -> str | None:
+        return self.profile.timezone if self.profile else None
+
+    @property
+    def discord_handle(self) -> str | None:
+        return self.profile.discord_handle if self.profile else None
+
+    @property
+    def preferred_ship_ids(self) -> list[int]:
+        return [row.ship_id for row in self.profile.ship_preferences] if self.profile else []
+
+    @property
+    def preferred_role_ids(self) -> list[int]:
+        return [row.fleet_role_id for row in self.profile.role_preferences] if self.profile else []
+
     @property
     def note(self) -> str | None:
         return self.profile.note if self.profile else None

@@ -12,6 +12,12 @@ export const forumRoutes = [
     meta: { requiresUser: true, titleKey: 'common.forum' },
   },
   {
+    path: '/forum/:id/edit',
+    name: 'forum-edit',
+    component: () => import('./pages/ForumCreatePage.vue'),
+    meta: { requiresUser: true, titleKey: 'common.forum' },
+  },
+  {
     path: '/forum/:id',
     name: 'forum-detail',
     component: () => import('./pages/ForumDetailPage.vue'),

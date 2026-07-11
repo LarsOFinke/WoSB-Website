@@ -36,3 +36,5 @@ Start here when onboarding, deploying to the Pi server or planning the next prod
 - [Architecture](ARCHITECTURE.md)
 
 Feature documents are kept because they describe working prototype behavior. The foundation documents above are the current source for deployment and production-readiness decisions.
+
+- [Markdown content and editing](MARKDOWN_CONTENT_AND_EDITING.md)

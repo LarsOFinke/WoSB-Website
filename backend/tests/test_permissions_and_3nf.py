@@ -43,6 +43,8 @@ def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> 
         assert "role" not in columns("users")
         assert "role" not in columns("fleet_memberships")
         assert "preferred_ships" not in columns("fleet_memberships")
+        assert {"availability", "timezone", "discord_handle"}.isdisjoint(columns("fleet_memberships"))
+        assert {"availability", "timezone", "discord_handle"}.issubset(columns("user_profiles"))
         assert "role" not in columns("squad_members")
         assert "primary_fleet_membership_id" not in columns("user_profiles")
         assert "weapon_layout" not in columns("ships")
@@ -63,7 +65,8 @@ def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> 
             "site_roles",
             "fleet_roles",
             "squad_roles",
-            "fleet_membership_ship_preferences",
+            "user_profile_ship_preferences",
+            "user_profile_role_preferences",
             "weapon_classes",
             "weapon_slot_types",
             "ship_weapon_mounts",

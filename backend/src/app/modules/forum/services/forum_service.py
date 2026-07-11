@@ -11,9 +11,11 @@ from app.modules.forum.models.forum_post_attachment import ForumPostAttachment
 from app.modules.files.schemas.file_asset import FileRead
 from app.modules.forum.schemas.forum_post_create import ForumPostCreate
 from app.modules.forum.schemas.forum_post_read import ForumPostRead
+from app.modules.forum.schemas.forum_post_update import ForumPostUpdate
 from app.modules.forum.schemas.forum_thread_create import ForumThreadCreate
 from app.modules.forum.schemas.forum_thread_read import ForumThreadRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
+from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.content.services.content_embed_service import ContentEmbedValidationError, validate_content_embeds
 from app.modules.files.services.file_service import get_files_for_owner
 
@@ -123,6 +125,86 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     db.commit()
     db.refresh(post)
     return _post_to_read(post)
+
+
+def update_thread(
+    db: Session, thread_id: int, payload: ForumThreadUpdate, user: User
+) -> ForumThreadRead | None:
+    thread = db.scalar(
+        select(ForumThread)
+        .options(
+            selectinload(ForumThread.posts).selectinload(ForumPost.author),
+            selectinload(ForumThread.posts)
+            .selectinload(ForumPost.attachments)
+            .selectinload(ForumPostAttachment.file),
+        )
+        .where(ForumThread.id == thread_id)
+    )
+    if thread is None or (thread.owner_id != user.id and not user.can_moderate):
+        return None
+    if not thread.posts:
+        raise ForumValidationError("Thread has no opening post.")
+
+    files = get_files_for_owner(db, payload.file_ids, user)
+    _validate_post_embeds(payload.body, files)
+    opening_post = thread.posts[0]
+    activity_at = datetime.utcnow()
+
+    thread.title = payload.title
+    thread.category = normalize_forum_category(payload.category)
+    thread.updated_at = activity_at
+    opening_post.body = payload.body
+    opening_post.updated_at = activity_at
+    opening_post.attachments.clear()
+    for index, file in enumerate(files):
+        opening_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
+
+    db.commit()
+    updated = get_thread(db, thread.id)
+    if updated is None:
+        raise ForumValidationError("Thread could not be loaded after update.")
+    return updated
+
+
+def update_post(
+    db: Session, post_id: int, payload: ForumPostUpdate, user: User
+) -> ForumPostRead | None:
+    post = db.scalar(
+        select(ForumPost)
+        .options(
+            selectinload(ForumPost.author),
+            selectinload(ForumPost.attachments).selectinload(ForumPostAttachment.file),
+        )
+        .where(ForumPost.id == post_id)
+    )
+    if post is None or (post.author_id != user.id and not user.can_moderate):
+        return None
+
+    files = get_files_for_owner(db, payload.file_ids, user)
+    _validate_post_embeds(payload.body, files)
+    activity_at = datetime.utcnow()
+    post.body = payload.body
+    post.updated_at = activity_at
+    post.attachments.clear()
+    for index, file in enumerate(files):
+        post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
+
+    thread = db.get(ForumThread, post.thread_id)
+    if thread is not None:
+        thread.updated_at = activity_at
+    db.commit()
+
+    updated = db.scalar(
+        select(ForumPost)
+        .options(
+            selectinload(ForumPost.author),
+            selectinload(ForumPost.attachments).selectinload(ForumPostAttachment.file),
+        )
+        .where(ForumPost.id == post.id)
+    )
+    if updated is None:
+        raise ForumValidationError("Post could not be loaded after update.")
+    return _post_to_read(updated)
 
 
 def delete_thread(db: Session, thread_id: int, user: User) -> bool:

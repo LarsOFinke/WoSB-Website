@@ -6,9 +6,17 @@ from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.guides.schemas.guide_create import GuideCreate
 from app.modules.guides.schemas.guide_read import GuideRead
+from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.files.services.file_service import FileValidationError
-from app.modules.guides.services.guide_service import GuideValidationError, create_guide, delete_guide, get_guide, list_guides
+from app.modules.guides.services.guide_service import (
+    GuideValidationError,
+    create_guide,
+    delete_guide,
+    get_guide,
+    list_guides,
+    update_guide,
+)
 
 router = APIRouter(prefix="/guides", tags=["guides"])
 
@@ -42,6 +50,22 @@ def get_guide_detail(
     _: User = Depends(require_user),
 ) -> GuideRead:
     guide = get_guide(db, guide_id)
+    if guide is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")
+    return guide
+
+
+@router.put("/{guide_id}", response_model=GuideRead)
+def put_guide(
+    guide_id: int,
+    payload: GuideUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> GuideRead:
+    try:
+        guide = update_guide(db, guide_id, payload, current_user)
+    except (FileValidationError, GuideValidationError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if guide is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")
     return guide

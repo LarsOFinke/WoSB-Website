@@ -18,6 +18,7 @@ class FleetMembershipRead(BaseModel):
     assignment: str | None = None
     availability: str | None = None
     preferred_ships: str | None = None
+    preferred_roles: str | None = None
     timezone: str | None = None
     discord_handle: str | None = None
     admin_note: str | None = None

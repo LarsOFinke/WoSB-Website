@@ -48,7 +48,6 @@ def get_primary_fleet(db: Session, *, include_members: bool = False) -> Fleet | 
         query = query.options(
             selectinload(Fleet.memberships).selectinload(FleetMembership.user),
             selectinload(Fleet.memberships).selectinload(FleetMembership.fleet_role),
-            selectinload(Fleet.memberships).selectinload(FleetMembership.ship_preferences),
         )
     fleet = db.scalar(query)
     if fleet is None:
@@ -57,8 +56,7 @@ def get_primary_fleet(db: Session, *, include_members: bool = False) -> Fleet | 
             fallback = fallback.options(
                 selectinload(Fleet.memberships).selectinload(FleetMembership.user),
                 selectinload(Fleet.memberships).selectinload(FleetMembership.fleet_role),
-                selectinload(Fleet.memberships).selectinload(FleetMembership.ship_preferences),
-            )
+                )
         fleet = db.scalar(fallback)
     if fleet is None:
         return None
@@ -146,7 +144,6 @@ def list_user_memberships(db: Session, user: User) -> list[FleetMembership]:
                 selectinload(FleetMembership.user),
                 selectinload(FleetMembership.fleet),
                 selectinload(FleetMembership.fleet_role),
-                selectinload(FleetMembership.ship_preferences),
             )
             .order_by(FleetMembership.status, FleetMembership.joined_at.desc())
         ).all()
@@ -226,9 +223,6 @@ def join_fleet(db: Session, user: User, payload: FleetJoinRequest) -> FleetMembe
             user_id=user.id,
             status=FLEET_MEMBER_PENDING,
             note=payload.note,
-            availability=payload.availability,
-            timezone=payload.timezone,
-            discord_handle=payload.discord_handle,
         )
         assign_fleet_role_definition(db, existing, FLEET_ROLE_MEMBER)
         db.add(existing)
@@ -236,11 +230,6 @@ def join_fleet(db: Session, user: User, payload: FleetJoinRequest) -> FleetMembe
         existing.fleet_id = fleet.id
         existing.status = FLEET_MEMBER_PENDING if existing.status == "inactive" else existing.status
         existing.note = payload.note
-        existing.availability = payload.availability or existing.availability
-        existing.timezone = payload.timezone or existing.timezone
-        existing.discord_handle = payload.discord_handle or existing.discord_handle
-    if payload.preferred_ships is not None:
-        existing.set_preferred_ships(payload.preferred_ships)
     db.commit()
     db.refresh(existing)
     return existing
@@ -252,7 +241,6 @@ def update_membership(db: Session, membership_id: int, payload: FleetMembershipU
         return None
     data = payload.model_dump(exclude_unset=True)
     role = data.pop("role", None)
-    preferred_ships = data.pop("preferred_ships", None) if "preferred_ships" in data else None
     if role and role not in FLEET_ROLES:
         raise FleetValidationError("Invalid fleet role.")
     status = data.get("status")
@@ -260,8 +248,6 @@ def update_membership(db: Session, membership_id: int, payload: FleetMembershipU
         raise FleetValidationError("Invalid membership status.")
     if role:
         assign_fleet_role_definition(db, membership, role)
-    if preferred_ships is not None:
-        membership.set_preferred_ships(preferred_ships)
     for field, value in data.items():
         setattr(membership, field, value)
     db.commit()

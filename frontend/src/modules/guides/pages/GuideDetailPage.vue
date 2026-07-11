@@ -79,9 +79,12 @@ onMounted(loadGuide)
 
         <section v-if="canManage" class="wire-section guide-management-panel">
           <p class="eyebrow">{{ t('guides.detail.manageEyebrow') }}</p>
-          <button class="danger-action" type="button" :disabled="deleting" @click="submitDelete">
+          <div class="content-management-actions">
+            <RouterLink class="small-action" :to="`/guides/${guide.id}/edit`">{{ t('guides.detail.edit') }}</RouterLink>
+            <button class="danger-action" type="button" :disabled="deleting" @click="submitDelete">
             {{ deleting ? t('guides.detail.deleting') : t('guides.detail.delete') }}
-          </button>
+            </button>
+          </div>
         </section>
       </template>
     </div>

@@ -20,10 +20,6 @@ const applicationError = ref('')
 const applicationSuccess = ref('')
 const application = reactive({
   note: '',
-  availability: '',
-  preferred_ships: '',
-  timezone: '',
-  discord_handle: '',
 })
 
 const leaderCount = computed(() => fleet.value?.leaders?.length || 0)
@@ -59,10 +55,6 @@ async function submitFleetApplication() {
     membership.value = await joinFleet({
       fleet_id: fleet.value.id,
       note: application.note.trim() || null,
-      availability: application.availability.trim() || null,
-      preferred_ships: application.preferred_ships.trim() || null,
-      timezone: application.timezone.trim() || null,
-      discord_handle: application.discord_handle.trim() || null,
     })
     applicationSuccess.value = t('fleets.application.submitted')
   } catch (err) {
@@ -170,10 +162,7 @@ onMounted(loadFleet)
                   <span>{{ t('auth.fleetApplicationNote') }}</span>
                   <textarea v-model="application.note" rows="4" maxlength="1000" :placeholder="t('auth.fleetApplicationNotePlaceholder')"></textarea>
                 </label>
-                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.availability') }}</span><input v-model="application.availability" maxlength="240" :placeholder="t('fleets.directory.availabilityPlaceholder')" /></label>
-                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.preferredShips') }}</span><input v-model="application.preferred_ships" maxlength="300" :placeholder="t('fleets.directory.preferredShipsPlaceholder')" /></label>
-                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.timezone') }}</span><input v-model="application.timezone" maxlength="80" :placeholder="t('fleets.directory.timezonePlaceholder')" /></label>
-                <label class="input-panel embedded-field"><span>{{ t('fleets.directory.discord') }}</span><input v-model="application.discord_handle" maxlength="120" :placeholder="t('fleets.directory.discordPlaceholder')" /></label>
+                <p class="muted">{{ t('fleets.application.profileDataHint') }}</p>
                 <p v-if="applicationError" class="error-text">{{ applicationError }}</p>
                 <p v-if="applicationSuccess" class="success-text">{{ applicationSuccess }}</p>
                 <button class="button-box primary-action" type="submit" :disabled="applying">{{ applying ? t('fleets.application.submitting') : t('fleets.application.submit') }}</button>

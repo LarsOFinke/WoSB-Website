@@ -123,12 +123,6 @@ def _ensure_sqlite_columns() -> None:
         membership_columns = {column["name"] for column in inspector.get_columns("fleet_memberships")}
         if "assignment" not in membership_columns:
             statements.append("ALTER TABLE fleet_memberships ADD COLUMN assignment VARCHAR(120)")
-        if "availability" not in membership_columns:
-            statements.append("ALTER TABLE fleet_memberships ADD COLUMN availability VARCHAR(240)")
-        if "timezone" not in membership_columns:
-            statements.append("ALTER TABLE fleet_memberships ADD COLUMN timezone VARCHAR(80)")
-        if "discord_handle" not in membership_columns:
-            statements.append("ALTER TABLE fleet_memberships ADD COLUMN discord_handle VARCHAR(120)")
         if "admin_note" not in membership_columns:
             statements.append("ALTER TABLE fleet_memberships ADD COLUMN admin_note TEXT")
 

@@ -114,10 +114,6 @@ def test_registration_and_fleet_application_are_separate_workflows() -> None:
             json={
                 "fleet_id": fleet_id,
                 "note": "Ready to apply after account approval.",
-                "availability": "Evenings",
-                "preferred_ships": "Line ships",
-                "timezone": "CET",
-                "discord_handle": "separation-test",
             },
         )
         assert application.status_code == 201, application.text

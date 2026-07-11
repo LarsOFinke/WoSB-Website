@@ -77,6 +77,12 @@ export function unembeddedBuilds(builds = [], text = '') {
   return (builds || []).filter((build) => !usedIds.has(Number(build.id)))
 }
 
+export function removeFileEmbedTokens(text = '', fileId) {
+  const id = Number(fileId)
+  if (!id) return text
+  return String(text || '').replace(new RegExp(`\\n?\\n?\\[\\[file:${id}(?:\\|[a-z0-9_-]+)?\\]\\]\\n?\\n?`, 'gi'), '\n\n').trim()
+}
+
 export function removeBuildEmbedTokens(text = '', buildId) {
   const id = Number(buildId)
   if (!id) return text
