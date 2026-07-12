@@ -25,6 +25,8 @@ The ship catalog contains **67 active seed records**. All **67** are now backed 
 
 - name, rate and ship type
 - durability, speed, maneuverability and broadside armor
+  - the shipyard panel speed is a raw metres-per-second value; the seed factory converts it to knots (`m/s × 1.943844`, rounded to one decimal) before persistence
+  - the complete 67-ship conversion table is documented in `SHIP_SPEED_CONVERSION_AUDIT.md`
 - hold and crew capacity
 - editable planning sailor minimum
 - displacement

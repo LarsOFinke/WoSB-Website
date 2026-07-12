@@ -12,6 +12,7 @@ from app.modules.builds.services.build_service import BuildValidationError, crea
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.squads.models.squad import Squad  # noqa: F401
+from app.seeds.ship_data.common import raw_speed_to_knots
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.weapons import WEAPON_OPTIONS
 from app.seeds.weapon_mounts import parse_weapon_layout
@@ -211,6 +212,12 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
  'Leopard': (3, 'Ship of the Line', 5, 0)}
 
 
+def test_shipyard_raw_speed_is_converted_to_knots() -> None:
+    assert raw_speed_to_knots(6.2) == 12.1
+    assert raw_speed_to_knots(9.2) == 17.9
+    assert raw_speed_to_knots(21.0) == 40.8
+
+
 def test_in_game_screenshot_ship_stats_match_catalog() -> None:
     rows = {row["name"]: row for row in SHIP_SEED_DATA}
     assert set(rows) == set(SCREENSHOT_AUDITED_SHIPS)
@@ -227,7 +234,12 @@ def test_in_game_screenshot_ship_stats_match_catalog() -> None:
             row["max_weapon_class"],
             row["weapon_layout"],
         )
-        assert actual == expected, name
+        expected_with_knots = (
+            expected[0],
+            raw_speed_to_knots(expected[1]),
+            *expected[2:],
+        )
+        assert actual == expected_with_knots, name
         assert row["source"].startswith("WoSB in-game")
 
 

@@ -14,6 +14,18 @@ SHIP_WIKI_SOURCE = "WoSB wiki ship page audit 2026-07"
 SHIP_SCREENSHOT_SOURCE = "WoSB in-game shipyard screenshot audit 2026-07"
 SHIP_EVENT_SOURCE = "WoSB in-game current-event tooltip screenshot audit 2026-07"
 
+# The shipyard panel exposes the internal speed value in metres per second,
+# while flat equipment bonuses are expressed in knots. Store one canonical
+# unit throughout the Build Designer so base values and equipment effects can
+# be combined without mixing units.
+KNOTS_PER_METER_PER_SECOND = 1.9438444924406
+
+
+def raw_speed_to_knots(speed_raw: float) -> float:
+    """Convert the screenshot speed value from m/s to knots, rounded for UI use."""
+
+    return round(float(speed_raw) * KNOTS_PER_METER_PER_SECOND, 1)
+
 
 def planning_sailor_minimum(crew_capacity: int) -> int:
     """Return the current planning target when no official minimum is known.
@@ -33,7 +45,7 @@ def ship(
     rate: int,
     ship_type: str,
     durability: int,
-    speed_knots: float,
+    speed_raw: float,
     maneuverability: float,
     armor: float,
     hold_capacity: int,
@@ -50,14 +62,19 @@ def ship(
     seed_id: str | None = None,
     image_url: str | None = None,
 ) -> ShipSeed:
-    """Create one canonical seed payload with explicit Build Designer fields."""
+    """Create one canonical seed payload with explicit Build Designer fields.
+
+    ``speed_raw`` is the unlabelled shipyard-panel value in metres per second.
+    The persisted ``speed_knots`` value is converted here so every consumer uses
+    the same unit as sail and upgrade tooltips.
+    """
 
     row: ShipSeed = {
         "name": name,
         "rate": rate,
         "ship_type": ship_type,
         "durability": durability,
-        "speed_knots": speed_knots,
+        "speed_knots": raw_speed_to_knots(speed_raw),
         "maneuverability": maneuverability,
         "armor": armor,
         "hold_capacity": hold_capacity,

@@ -8,6 +8,8 @@ Date: 2026-07-12
 
 The data basis is solid for the current Build Designer scope. All 67 ship records in the supplied catalog are now backed by in-game screenshots or current-event tooltips. An absolute claim that no additional game ship exists still requires an official export or a complete in-game catalog comparison.
 
+Shipyard-panel speed values are normalized from the raw metres-per-second display to knots before they enter the master-data catalog. This keeps base ship speed in the same unit as flat sail and upgrade bonuses.
+
 ## Catalog state
 
 | Area | State |
@@ -89,7 +91,7 @@ Leopard and Ice Lantern remain active calculation records because acquired event
 Before production promotion:
 
 1. run migrations and the production seed twice; the second run must be idempotent;
-2. create a Leopard build with Ice Lantern and verify speed `10.1`, hold `17325`, durability `2142`;
+2. create a Leopard build with Ice Lantern and verify speed `19.6 kn`, hold `17325`, durability `2142`;
 3. edit a seeded ship's minimum crew, run the seed again and confirm the admin override remains;
 4. restore the seed default and verify the calculated planning value returns;
 5. create, save, reopen and edit a normal build on desktop and mobile-width layouts.

@@ -2,6 +2,10 @@
 
 ## 1.0.0 — Produktionsbaseline
 
+### Fixed
+
+- Converted screenshot-derived ship speed values from raw metres per second to knots before seeding, keeping base ship speed consistent with knot-based sail and upgrade bonuses.
+
 - Build-Designer auf bis zu acht Upgrade-Slots erweitert: 4 Standard + 1 Forschungsbelohnung + 2 durch Structural Expansion + 1 schiffsspezifischer Extra-Slot
 - Upgrade-Katalog auf 32 aktuelle Ingame-Upgrades aus den Bereichen Geschwindigkeit, Expedition, Schutz, Kampf, Ungewöhnlich und Mörser re-auditiert
 - globale Upgrade-Werte als Standard beibehalten; schiffsspezifische Sparse-Overrides bleiben für jeden einzelnen Schiffsstammdatensatz editierbar

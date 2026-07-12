@@ -421,7 +421,7 @@ def test_current_event_leopard_and_ice_lantern_are_calculated_together() -> None
             "hold_capacity_pct": 5,
             "hull_hp_pct": 5,
         }
-        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(10.1)
+        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(19.6)
         assert build.ship_stats["effective_stats"]["hold_capacity"] == 17325
         assert build.ship_stats["effective_stats"]["durability"] == 2142
 
