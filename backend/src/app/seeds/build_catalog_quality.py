@@ -16,13 +16,12 @@ REQUIRED_SHIP_FIELDS = (
     "crew_capacity",
     "sailor_minimum",
     "weapon_layout",
-    "max_weapon_class",
     "displacement_tons",
 )
 
 REQUIRED_UPGRADE_FIELDS = ("category", "name", "source", "notes", "option_kind", "stat_effects")
 MIN_SAIL_OPTIONS = 9
-MIN_LANTERN_OPTIONS = 8
+MIN_LANTERN_OPTIONS = 9
 MIN_UPGRADE_OPTIONS = 30
 MIN_SPECIALIST_OPTIONS = 42
 
@@ -30,34 +29,81 @@ MIN_SPECIALIST_OPTIONS = 42
 def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
     if not rows:
         raise RuntimeError("Ship seed catalog is empty.")
+
     names: set[str] = set()
     errors: list[str] = []
+    valid_weapon_classes = {"light", "medium", "heavy"}
+
     for index, row in enumerate(rows, start=1):
         name = str(row.get("name") or f"row #{index}")
-        if name.casefold() in names:
+        normalized_name = name.casefold()
+        if normalized_name in names:
             errors.append(f"Duplicate ship name: {name}")
-        names.add(name.casefold())
+        names.add(normalized_name)
+
         for field in REQUIRED_SHIP_FIELDS:
             value = row.get(field)
             if value in (None, ""):
                 errors.append(f"{name}: missing {field}")
-        for field in ("durability", "hold_capacity", "crew_capacity", "displacement_tons"):
+
+        rate = int(row.get("rate") or 0)
+        if rate < 1 or rate > 7:
+            errors.append(f"{name}: rate must be between 1 and 7")
+
+        for field in ("durability", "hold_capacity", "crew_capacity"):
             if int(row.get(field) or 0) <= 0:
                 errors.append(f"{name}: {field} must be positive")
-        if int(row.get("durability") or 0) == 0 or int(row.get("hold_capacity") or 0) == 0:
-            errors.append(f"{name}: catalog still contains zero-value prototype stats")
-        weapon_class = str(row.get("max_weapon_class") or "").strip()
-        if weapon_class not in {"light", "medium", "heavy"}:
-            errors.append(f"{name}: max_weapon_class must be light, medium or heavy")
+
+        for field in ("speed_knots", "maneuverability", "armor"):
+            if float(row.get(field) or 0) < 0:
+                errors.append(f"{name}: {field} must not be negative")
+
+        crew_capacity = int(row.get("crew_capacity") or 0)
+        sailor_minimum = int(row.get("sailor_minimum") or 0)
+        if sailor_minimum < 0 or sailor_minimum > crew_capacity:
+            errors.append(f"{name}: sailor_minimum must be within crew capacity")
+
+        displacement = int(row.get("displacement_tons") or 0)
+        if displacement <= 0 and str(row.get("ship_type") or "") != "Montgolfiere":
+            errors.append(f"{name}: displacement_tons must be positive")
+
+        sail_slots = int(row.get("sail_slots", 1) or 0)
+        upgrade_slots = int(row.get("upgrade_slots", 5) or 0)
+        if sail_slots < 0:
+            errors.append(f"{name}: sail_slots must not be negative")
+        if upgrade_slots < 0 or upgrade_slots > 6:
+            errors.append(f"{name}: upgrade_slots must be between 0 and 6")
+        if not isinstance(row.get("has_lantern", True), bool):
+            errors.append(f"{name}: has_lantern must be boolean")
+
+        special_weapon_capacity = int(row.get("special_weapon_capacity", 0) or 0)
+        if special_weapon_capacity < 0:
+            errors.append(f"{name}: special_weapon_capacity must not be negative")
+
         layout = str(row.get("weapon_layout") or "").strip()
-        if not re.fullmatch(
-            r"\d+\s*-\s*\d+\s*-\s*\d+(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?",
+        layout_match = re.fullmatch(
+            r"(\d+)\s*-\s*(\d+)\s*-\s*(\d+)(?:\s*\+\s*mortar\s+\d+(?:\.\d+)?in\s+x\d+)?",
             layout,
             re.IGNORECASE,
-        ):
+        )
+        if layout_match is None:
             errors.append(f"{name}: invalid weapon_layout format {layout!r}")
-        if not str(row.get("source") or "").startswith("WoSB wiki"):
-            errors.append(f"{name}: source must identify the audited WoSB wiki catalog")
+
+        regular_weapon_capacity = (
+            sum(int(layout_match.group(position)) for position in (1, 2, 3))
+            if layout_match is not None
+            else 0
+        )
+        weapon_class = str(row.get("max_weapon_class") or "").strip()
+        if regular_weapon_capacity > 0 and weapon_class not in valid_weapon_classes:
+            errors.append(f"{name}: armed ships require a valid max_weapon_class")
+        elif weapon_class and weapon_class not in valid_weapon_classes:
+            errors.append(f"{name}: invalid max_weapon_class {weapon_class!r}")
+
+        source = str(row.get("source") or "")
+        if not source.startswith(("WoSB wiki", "WoSB in-game")):
+            errors.append(f"{name}: source must identify an audited WoSB catalog")
+
     if errors:
         raise RuntimeError(
             "Ship seed catalog failed quality checks:\n"

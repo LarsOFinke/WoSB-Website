@@ -27,7 +27,10 @@ class Ship(Base):
         CheckConstraint("sailor_minimum >= 0", name="ck_ships_sailor_minimum"),
         CheckConstraint("displacement_tons >= 0", name="ck_ships_displacement_tons"),
         CheckConstraint("sail_slots >= 0", name="ck_ships_sail_slots"),
-        CheckConstraint("upgrade_slots >= 0", name="ck_ships_upgrade_slots"),
+        CheckConstraint(
+            "upgrade_slots >= 0 and upgrade_slots <= 6",
+            name="ck_ships_upgrade_slots",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

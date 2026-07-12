@@ -56,3 +56,18 @@ test('research reward unlocks one optional slot and reports its availability', (
     },
   )
 })
+
+
+test('Ice Lantern applies all three current-event bonuses to Leopard', () => {
+  const rows = calculateBuildStatRows({
+    ship: { speed_knots: 9.6, hold_capacity: 16500, durability: 2040 },
+    definitions: [
+      { key: 'speed', base_field: 'speed_knots', pct_effect: 'speed_pct', precision: 1 },
+      { key: 'hold', base_field: 'hold_capacity', pct_effect: 'hold_capacity_pct', precision: 0 },
+      { key: 'durability', base_field: 'durability', pct_effect: 'hull_hp_pct', precision: 0 },
+    ],
+    effects: { speed_pct: 5, hold_capacity_pct: 5, hull_hp_pct: 5 },
+  })
+
+  assert.deepEqual(rows.map((row) => row.effective), [10.1, 17325, 2142])
+})

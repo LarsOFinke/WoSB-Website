@@ -8,7 +8,7 @@ All records remain editable through the master-data admin. Deliberate admin
 overrides are protected from later seed runs.
 """
 
-LANTERN_CATALOG_REVISION = "tooltip-lantern-catalog-2026-07-v3"
+LANTERN_CATALOG_REVISION = "tooltip-lantern-catalog-2026-07-v4"
 
 
 def _lantern(
@@ -52,6 +52,12 @@ LANTERN_OPTIONS = [
         "Green Lantern",
         "Verified in-game tooltip: +7% durability.",
         {"hull_hp_pct": 7},
+    ),
+    _lantern(
+        "ice",
+        "Ice Lantern",
+        "Verified current-event tooltip: +5% speed, cargo hold and durability.",
+        {"speed_pct": 5, "hold_capacity_pct": 5, "hull_hp_pct": 5},
     ),
     _lantern(
         "lilac",

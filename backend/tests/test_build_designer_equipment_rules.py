@@ -73,6 +73,7 @@ LANTERN_EFFECTS = {
     "Bright Lantern": {"hold_capacity_pct": 12},
     "Golden Lantern": {"speed_pct": 5, "armor_pct": 5, "damage_pct": 5},
     "Green Lantern": {"hull_hp_pct": 7},
+    "Ice Lantern": {"speed_pct": 5, "hold_capacity_pct": 5, "hull_hp_pct": 5},
     "Lilac Lantern": {"turn_rate_pct": 7},
     "Red Lantern": {"turn_rate_pct": 5, "damage_pct": 5, "exp_loot_pct": 7},
     "White Lantern": {"exp_loot_pct": 10},
@@ -399,3 +400,26 @@ def test_reseed_deactivates_superseded_sail_and_lantern_catalog_entries() -> Non
         assert legacy_lantern.is_active is False
         assert legacy_sail.seed_revision is None
         assert legacy_lantern.seed_revision is None
+
+
+def test_current_event_leopard_and_ice_lantern_are_calculated_together() -> None:
+    with seeded_session() as db:
+        ship = _ship(db, "Leopard")
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="Leopard with Ice Lantern",
+                ship_id=ship.id,
+                lantern="Ice Lantern",
+                sailors=ship.sailor_minimum,
+            ),
+        )
+
+        assert build.ship_stats["lantern_effects"] == {
+            "speed_pct": 5,
+            "hold_capacity_pct": 5,
+            "hull_hp_pct": 5,
+        }
+        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(10.1)
+        assert build.ship_stats["effective_stats"]["hold_capacity"] == 17325
+        assert build.ship_stats["effective_stats"]["durability"] == 2142

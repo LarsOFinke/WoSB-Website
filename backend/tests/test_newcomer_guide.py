@@ -3,6 +3,9 @@ from fastapi.testclient import TestClient
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR, ROLE_USER
 from app.modules.accounts.services.auth_service import create_user
+from app.modules.builds.models.build import Build
+from app.modules.guides.models.guide import Guide
+from app.modules.ships.models.ship import Ship
 from app.modules.onboarding.schemas.newcomer_guide import NewcomerGuideUpdate
 from app.modules.onboarding.services.newcomer_guide_service import update_newcomer_guide
 from main import app
@@ -96,3 +99,73 @@ def test_newcomer_guide_requires_login_and_staff_can_edit() -> None:
         assert updated.status_code == 200, updated.text
         assert updated.json()["title"] == "Moderator roadmap"
         assert updated.json()["updated_by"] == "Newcomer Moderator"
+
+
+def test_newcomer_guide_can_link_published_guides_and_builds() -> None:
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            admin = create_user(
+                db,
+                username="newcomer-link-admin",
+                password="BlackwaterNewcomerLinks123!",
+                display_name="Link Admin",
+                role=ROLE_ADMIN,
+            )
+            ship = Ship(
+                name="Guide Link Test Ship",
+                rate=5,
+                ship_type="Test Ship",
+                durability=1000,
+                speed_knots=10,
+                maneuverability=5,
+                armor=2,
+                hold_capacity=100,
+                crew_capacity=50,
+            )
+            db.add(ship)
+            db.flush()
+            guide = Guide(
+                title="Linked Captain Guide",
+                category="general",
+                summary="A published linked guide.",
+                body="Guide body",
+                owner_id=admin.id,
+                is_published=True,
+            )
+            build = Build(
+                build_name="Linked Captain Build",
+                build_type="balanced",
+                ship_id=ship.id,
+                owner_id=admin.id,
+            )
+            db.add_all([guide, build])
+            db.commit()
+            guide_id = guide.id
+            build_id = build.id
+
+        _login(client, "newcomer-link-admin", "BlackwaterNewcomerLinks123!")
+        response = client.put(
+            "/api/newcomer-guide",
+            json={
+                "title": "Linked roadmap",
+                "intro": "Use these resources.",
+                "blocks": [
+                    {
+                        "block_type": "resources",
+                        "title": "Recommended guides and builds",
+                        "body": "Open the resources below.",
+                        "resources": [
+                            {"resource_type": "guide", "resource_id": guide_id},
+                            {"resource_type": "build", "resource_id": build_id},
+                        ],
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 200, response.text
+        resources = response.json()["blocks"][0]["resources"]
+        assert resources[0]["label"] == "Linked Captain Guide"
+        assert resources[0]["href"] == f"/guides/{guide_id}"
+        assert resources[1]["label"] == "Linked Captain Build"
+        assert resources[1]["href"] == f"/builds/{build_id}"
+        assert all(resource["available"] for resource in resources)

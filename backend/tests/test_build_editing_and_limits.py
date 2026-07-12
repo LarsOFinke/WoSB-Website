@@ -169,11 +169,11 @@ def test_specialist_and_weapon_quantities_are_rejected_above_capacity() -> None:
             "build_name": "Too many bow weapons",
             "ship_id": ship_id,
             "sailors": 64,
-            "front_weapon_slots": [{"item": "Twin 20-pdr", "quantity": 3}],
+            "front_weapon_slots": [{"item": "Twin 14-pdr", "quantity": 5}],
         }
         weapon_response = client.post("/api/builds", json=weapon_payload)
         assert weapon_response.status_code == 400
-        assert "exceeds this ship's capacity (2)" in weapon_response.json()["detail"]
+        assert "exceeds this ship's capacity (4)" in weapon_response.json()["detail"]
 
 
 def test_anson_sailors_are_a_working_speed_target_not_a_required_minimum() -> None:

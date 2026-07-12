@@ -48,6 +48,7 @@ Eigenständig erstellte Beiträge, Builds, Guides, Gruppen und Termine bleiben e
 - Anmeldung, Passwortwechsel und Rollenrechte
 - Profil einschließlich Preferred Ships/Roles und Profilnotiz
 - Build erstellen, bearbeiten und erneut öffnen
+- Event-Smoke-Test: Leopard + Ice Lantern ergibt 10,1 Geschwindigkeit, 17.325 Laderaum und 2.142 Haltbarkeit
 - Segel-, Laternen-, Crew-, Waffen- und Upgrade-Berechnung
 - Guide/Forum-Beitrag erstellen und bearbeiten
 - Squad-Events unter „My Squads → Upcoming Events“

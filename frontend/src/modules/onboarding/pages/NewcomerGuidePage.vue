@@ -10,6 +10,7 @@ import { useSession } from '@/modules/accounts/session'
 import { listBuilds } from '@/modules/builds/api/builds'
 import { listGuides } from '@/modules/guides/api/guides'
 import { getNewcomerGuide, updateNewcomerGuide } from '@/modules/onboarding/api/newcomerGuide'
+import { appendLinkedResource } from '@/modules/onboarding/services/newcomerGuideResources'
 
 const { t } = useLocale()
 const { isStaff } = useSession()
@@ -22,6 +23,9 @@ const saving = ref(false)
 const editing = ref(false)
 const error = ref('')
 const success = ref('')
+const resourceOptionsLoading = ref(false)
+const resourceOptionsLoaded = ref(false)
+const resourceOptionsError = ref('')
 
 const resourceTypeOptions = computed(() => [
   { value: 'guide', label: t('newcomerGuide.editor.types.guide') },
@@ -92,10 +96,27 @@ function resourceTarget(resource) {
     : { to: resource.href }
 }
 
-function startEditing() {
+async function loadResourceOptions() {
+  if (resourceOptionsLoaded.value || resourceOptionsLoading.value) return
+  resourceOptionsLoading.value = true
+  resourceOptionsError.value = ''
+  try {
+    const [guideRows, buildRows] = await Promise.all([listGuides(), listBuilds()])
+    guides.value = guideRows
+    builds.value = buildRows
+    resourceOptionsLoaded.value = true
+  } catch (err) {
+    resourceOptionsError.value = err.message || t('newcomerGuide.editor.resourceLoadError')
+  } finally {
+    resourceOptionsLoading.value = false
+  }
+}
+
+async function startEditing() {
   draft.value = toDraft(page.value)
   editing.value = true
   success.value = ''
+  await loadResourceOptions()
 }
 
 function cancelEditing() {
@@ -123,6 +144,15 @@ function addResource(block) {
   block.resources.push(emptyResource())
 }
 
+function addLinkedResource(resourceType) {
+  const block = appendLinkedResource(draft.value.blocks, resourceType)
+  if (block) {
+    if (!block.title) block.title = t('newcomerGuide.resourceSection')
+    const row = block.resources.at(-1)
+    row.resource_id = null
+  }
+}
+
 function removeResource(block, index) {
   block.resources.splice(index, 1)
 }
@@ -144,11 +174,6 @@ async function loadPage() {
   error.value = ''
   try {
     page.value = await getNewcomerGuide()
-    if (isStaff.value) {
-      const [guideRows, buildRows] = await Promise.all([listGuides(), listBuilds()])
-      guides.value = guideRows
-      builds.value = buildRows
-    }
   } catch (err) {
     error.value = err.message || t('newcomerGuide.loadError')
   } finally {
@@ -254,6 +279,8 @@ onMounted(loadPage)
           </div>
 
           <div v-if="block.block_type === 'resources'" class="newcomer-resource-editor-list">
+            <p v-if="resourceOptionsLoading" class="muted section-helper-text">{{ t('newcomerGuide.editor.loadingResources') }}</p>
+            <p v-else-if="resourceOptionsError" class="error-text section-helper-text">{{ resourceOptionsError }}</p>
             <article v-for="(resource, resourceIndex) in block.resources" :key="`resource-${resourceIndex}`" class="newcomer-resource-editor-row">
               <div class="newcomer-resource-editor-head">
                 <strong>{{ t('newcomerGuide.editor.resource', { index: resourceIndex + 1 }) }}</strong>
@@ -272,15 +299,15 @@ onMounted(loadPage)
                 </label>
                 <label v-if="resource.resource_type === 'guide'" class="input-panel embedded-field">
                   <span>{{ t('common.guides') }}</span>
-                  <select v-model="resource.resource_id" required>
-                    <option :value="null">{{ t('common.empty') }}</option>
+                  <select v-model="resource.resource_id" required :disabled="resourceOptionsLoading">
+                    <option :value="null">{{ guides.length ? t('common.empty') : t('newcomerGuide.editor.noGuides') }}</option>
                     <option v-for="guide in guides" :key="guide.id" :value="guide.id">{{ guide.title }}</option>
                   </select>
                 </label>
                 <label v-else-if="resource.resource_type === 'build'" class="input-panel embedded-field">
                   <span>{{ t('common.builds') }}</span>
-                  <select v-model="resource.resource_id" required>
-                    <option :value="null">{{ t('common.empty') }}</option>
+                  <select v-model="resource.resource_id" required :disabled="resourceOptionsLoading">
+                    <option :value="null">{{ builds.length ? t('common.empty') : t('newcomerGuide.editor.noBuilds') }}</option>
                     <option v-for="build in builds" :key="build.id" :value="build.id">{{ build.build_name }}</option>
                   </select>
                 </label>
@@ -305,6 +332,8 @@ onMounted(loadPage)
         <div class="newcomer-editor-add-row">
           <button class="form-button secondary-action" type="button" @click="addBlock('text')">{{ t('newcomerGuide.editor.addTextBlock') }}</button>
           <button class="form-button secondary-action" type="button" @click="addBlock('resources')">{{ t('newcomerGuide.editor.addResourceBlock') }}</button>
+          <button class="form-button secondary-action" type="button" @click="addLinkedResource('guide')">{{ t('newcomerGuide.editor.linkGuide') }}</button>
+          <button class="form-button secondary-action" type="button" @click="addLinkedResource('build')">{{ t('newcomerGuide.editor.linkBuild') }}</button>
         </div>
         <div class="form-actions">
           <button class="form-button primary-action" type="submit" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button>

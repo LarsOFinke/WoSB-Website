@@ -33,34 +33,39 @@ def test_weapon_dropdown_is_scoped_to_ship_slot_and_weapon_class() -> None:
         essex = db.scalar(select(Ship).where(Ship.name == "Essex"))
         poltava = db.scalar(select(Ship).where(Ship.name == "Poltava"))
         victory = db.scalar(select(Ship).where(Ship.name == "Victory"))
+        cannon_8 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "8-pdr Cannon"))
         cannon_16 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "16-pdr Cannon"))
         cannon_32 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "32-pdr Cannon"))
+        twin_6 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 6-pdr"))
         twin_14 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 14-pdr"))
-        assert russia and essex and poltava and victory and cannon_16 and cannon_32 and twin_14
+        assert all((russia, essex, poltava, victory, cannon_8, cannon_16, cannon_32, twin_6, twin_14))
 
-        # Fifth- and fourth-rate ships use Medium mounts: medium weapons fit,
-        # Heavy weapons do not. Third-rate and larger ships accept Heavy.
-        for medium_ship in (russia, essex):
+        # The mount ceiling is audited per ship rather than inferred from rate.
+        # Russia uses Light mounts, Essex and Poltava use Medium, Victory accepts Heavy.
+        russia_catalog = _catalog(db, russia)
+        assert "8-pdr Cannon" in russia_catalog["weapon_port"]
+        assert "16-pdr Cannon" not in russia_catalog["weapon_port"]
+
+        for medium_ship in (essex, poltava):
             catalog = _catalog(db, medium_ship)
             assert "16-pdr Cannon" in catalog["weapon_port"]
             assert "32-pdr Cannon" not in catalog["weapon_port"]
 
-        for heavy_ship in (poltava, victory):
-            catalog = _catalog(db, heavy_ship)
-            assert "32-pdr Cannon" in catalog["weapon_port"]
+        victory_catalog = _catalog(db, victory)
+        assert "32-pdr Cannon" in victory_catalog["weapon_port"]
 
         # Bow/stern weapons never leak into broadside choices.
-        victory_catalog = _catalog(db, victory)
         assert "Twin 14-pdr" not in victory_catalog["weapon_port"]
         assert "Twin 14-pdr" in victory_catalog["weapon_front"]
 
         russia_port = russia._mount("weapon_port")
-        russia_rear = russia._mount("weapon_rear")
-        assert russia_port and russia_rear
-        assert is_weapon_compatible(cannon_16, russia_port)
-        assert not is_weapon_compatible(cannon_32, russia_port)
-        assert is_weapon_compatible(twin_14, russia_rear)
-        assert not is_weapon_compatible(twin_14, russia_port)
+        russia_front = russia._mount("weapon_front")
+        assert russia_port and russia_front
+        assert is_weapon_compatible(cannon_8, russia_port)
+        assert not is_weapon_compatible(cannon_16, russia_port)
+        assert is_weapon_compatible(twin_6, russia_front)
+        assert not is_weapon_compatible(twin_14, russia_front)
+        assert not is_weapon_compatible(twin_6, russia_port)
 
 
 def test_every_active_regular_weapon_has_a_normalized_size_class() -> None:

@@ -75,6 +75,7 @@ def test_lantern_catalog_matches_verified_tooltip_values() -> None:
         "Bright Lantern": {"hold_capacity_pct": 12},
         "Golden Lantern": {"speed_pct": 5, "armor_pct": 5, "damage_pct": 5},
         "Green Lantern": {"hull_hp_pct": 7},
+        "Ice Lantern": {"speed_pct": 5, "hold_capacity_pct": 5, "hull_hp_pct": 5},
         "Lilac Lantern": {"turn_rate_pct": 7},
         "Red Lantern": {"turn_rate_pct": 5, "damage_pct": 5, "exp_loot_pct": 7},
         "White Lantern": {"exp_loot_pct": 10},

@@ -44,7 +44,9 @@ def parse_weapon_layout(
     if regular_match:
         front, broadside, rear = (int(regular_match.group(index)) for index in (1, 2, 3))
 
-    weapon_class = max_weapon_class or MAX_WEAPON_CLASS_BY_RATE[int(rate)]
+    weapon_class = max_weapon_class or (
+        MAX_WEAPON_CLASS_BY_RATE[int(rate)] if any((front, broadside, rear)) else None
+    )
     rows: list[dict[str, object]] = [
         {"slot_type": "weapon_front", "capacity": front, "max_weapon_class": weapon_class},
         {"slot_type": "weapon_rear", "capacity": rear, "max_weapon_class": weapon_class},

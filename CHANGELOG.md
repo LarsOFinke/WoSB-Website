@@ -2,6 +2,15 @@
 
 ## 1.0.0 — Produktionsbaseline
 
+- Build-Designer-Schiffskatalog auf 67 Datensätze aktualisiert, inklusive Event-Schiff Leopard
+- Ice Lantern mit +5% Geschwindigkeit, Laderaum und Haltbarkeit ergänzt
+- De Zeven Provincien und Sovereign gegen aktuelle Ingame-Panels re-auditiert
+- alle 67 Schiffsstammdaten durch Ingame-Screenshots beziehungsweise Event-Tooltips verifiziert
+- La Creole, Black Wind, Russia, San Martin und Le Requin final korrigiert
+- Vite-Hauptchunk durch Rolldown-Code-Splitting unter die Warnschwelle aufgeteilt
+- Schiff-Seeds nach Rate modularisiert und durch gemeinsame Factory/Qualitätsregeln abgesichert
+- Stammdatenverwaltung optisch und responsiv zu einem Katalog-Arbeitsbereich überarbeitet
+- Upgrade-Slot-Grenze in API, Datenbank und Build-Designer auf maximal sechs vereinheitlicht
 - stabile FastAPI-/Vue-Modulstruktur und PostgreSQL/Alembic-Produktionspfad
 - produktive Seeds von Beispiel-Builds, Guides, Forenbeiträgen, Gruppen, Events und Demo-Dateien befreit
 - v1-Datenmigration entfernt bekannte unveränderte 0.x-Mockdaten und bewahrt eigene Inhalte
@@ -22,3 +31,7 @@
 Frühere 0.x-Stände waren interne Entwicklungsstände und werden ab v1.0 nicht mehr separat
 dokumentiert. Datenbankmigrationen bleiben vollständig erhalten, damit bestehende Installationen
 verlustfrei auf v1.0 aktualisiert werden können.
+
+## 1.0.0
+
+- New Captain Guide supports linked guides and builds.

@@ -51,3 +51,8 @@ Backups liegen unter `infrastructure/data/backups` und werden nach
 
 systemd-Timer übernehmen Erneuerung und Backups. Änderungen an `.env` mit `chmod 600` schützen und
 nie in Git aufnehmen.
+
+
+## Curating the New Captain Guide
+
+Staff members can edit the New Captain Guide and add text sections, resource collections, direct guide links, and direct build links. Published guides and available builds are loaded when the editor opens, preventing stale session state from leaving the selectors empty. Linked resources remain database references, so renamed guides and builds automatically display their current titles.
