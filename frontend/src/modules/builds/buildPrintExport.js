@@ -305,7 +305,7 @@ function makeSummaryCards(build, t) {
     { label: t('builds.detail.buildType'), value: buildTypeLabel(build?.build_type, t), detail: `${t('common.rate')} ${build?.ship?.rate || '—'}` },
     { label: t('builds.detail.shipStats'), value: `${stats.weapon_total || 0}`, detail: t('builds.detail.weaponCapacity', { count: stats.weapon_capacity_total || 0 }) },
     { label: t('builds.detail.crewDistribution'), value: `${crewTotal}/${crewCapacity}`, detail: t('builds.commandDeck.crewRemaining', { value: stats.crew_remaining || 0 }) },
-    { label: t('builds.detail.upgrades'), value: `${stats.upgrades_selected || [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7].filter(Boolean).length || 0}`, detail: t('builds.list.upgradeSummary', { used: [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7].filter(Boolean).length, max: stats.upgrade_slots_available || 0 }) },
+    { label: t('builds.detail.upgrades'), value: `${stats.upgrades_selected || [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean).length || 0}`, detail: t('builds.list.upgradeSummary', { used: [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean).length, max: stats.upgrade_slots_available || 0 }) },
   ]
 }
 
@@ -327,7 +327,8 @@ function createBuildPrintModel(build, helpers = {}) {
     build?.upgrade_5,
     build?.upgrade_6,
     build?.upgrade_7,
-  ].filter(Boolean).map(optionLabel), 7)
+    build?.upgrade_8,
+  ].filter(Boolean).map(optionLabel), 8)
   const weaponGroups = [
     { label: t('builds.detail.weapons.front'), slots: build?.front_weapon_slots || [] },
     { label: t('builds.detail.weapons.port'), slots: build?.port_weapon_slots || [] },

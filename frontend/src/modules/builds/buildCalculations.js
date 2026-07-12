@@ -12,7 +12,7 @@ export function calculateUpgradeSlotAccess({
   shipUpgradeSlots,
   unlockEffectSlots = 0,
   researchUpgradeSlotUnlocked = false,
-  slotLimit = 7,
+  slotLimit = 8,
   baseSlotLimit = 4,
   standardShipSlots = 5,
 }) {
@@ -37,6 +37,7 @@ export function calculateUpgradeSlotAccess({
     slot5Unlocked: availableSlots >= 5,
     slot6Available: availableSlots >= 6,
     slot7Available: availableSlots >= 7,
+    slot8Available: availableSlots >= 8,
     availableSlots,
   }
 }
@@ -45,7 +46,7 @@ export function calculateBuildUpgradeSlotAccess({
   form,
   shipUpgradeSlots,
   effectForUpgrade,
-  slotLimit = 7,
+  slotLimit = 8,
 }) {
   const selectedUpgradeNames = Array.from(
     { length: slotLimit },
@@ -62,7 +63,7 @@ export function calculateBuildUpgradeSlotAccess({
     .filter(Boolean)
     .reduce((total, name) => {
       const grossSlots = Math.max(0, Number(effectForUpgrade?.(name)?.extra_upgrade_slots) || 0)
-      return total + (grossSlots > 0 ? Math.max(grossSlots - 1, 0) : 0)
+      return total + grossSlots
     }, 0)
   return {
     ...calculateUpgradeSlotAccess({

@@ -2,6 +2,7 @@
 
 ## 1.0.0 — Produktionsbaseline
 
+- Build-Designer auf bis zu acht Upgrade-Slots erweitert: 4 Standard + 1 Forschungsbelohnung + 2 durch Structural Expansion + 1 schiffsspezifischer Extra-Slot
 - Upgrade-Katalog auf 32 aktuelle Ingame-Upgrades aus den Bereichen Geschwindigkeit, Expedition, Schutz, Kampf, Ungewöhnlich und Mörser re-auditiert
 - globale Upgrade-Werte als Standard beibehalten; schiffsspezifische Sparse-Overrides bleiben für jeden einzelnen Schiffsstammdatensatz editierbar
 - Upgrade-Auswahl im Build-Designer nach den Ingame-Bereichen gruppiert
@@ -21,7 +22,7 @@
 - Vite-Hauptchunk durch Rolldown-Code-Splitting unter die Warnschwelle aufgeteilt
 - Schiff-Seeds nach Rate modularisiert und durch gemeinsame Factory/Qualitätsregeln abgesichert
 - Stammdatenverwaltung optisch und responsiv zu einem Katalog-Arbeitsbereich überarbeitet
-- Upgrade-Slot-Grenze in API, Datenbank und Build-Designer auf maximal sechs vereinheitlicht
+- Upgrade-Slot-Grenze in API, Datenbank und Build-Designer auf maximal acht vereinheitlicht
 - stabile FastAPI-/Vue-Modulstruktur und PostgreSQL/Alembic-Produktionspfad
 - produktive Seeds von Beispiel-Builds, Guides, Forenbeiträgen, Gruppen, Events und Demo-Dateien befreit
 - v1-Datenmigration entfernt bekannte unveränderte 0.x-Mockdaten und bewahrt eigene Inhalte

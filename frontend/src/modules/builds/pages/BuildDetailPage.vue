@@ -50,10 +50,11 @@ const upgrades = computed(() => {
     build.value.upgrade_5,
     build.value.upgrade_6,
     build.value.upgrade_7,
+    build.value.upgrade_8,
   ].filter(Boolean)
 })
 
-const commandDeckUpgradeSlots = computed(() => Array.from({ length: 7 }, (_, offset) => {
+const commandDeckUpgradeSlots = computed(() => Array.from({ length: 8 }, (_, offset) => {
   const index = offset + 1
   const name = build.value?.[`upgrade_${index}`] || ''
   return {

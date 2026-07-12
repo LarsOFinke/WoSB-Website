@@ -167,6 +167,7 @@ const buildEffectTotals = computed(() => sumEffects(
 const upgradeSlot5Unlocked = computed(() => upgradeAccess.value.slot5Unlocked)
 const upgradeSlot6Available = computed(() => upgradeAccess.value.slot6Available)
 const upgradeSlot7Available = computed(() => upgradeAccess.value.slot7Available)
+const upgradeSlot8Available = computed(() => upgradeAccess.value.slot8Available)
 const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
 const crewCapacity = computed(() => Math.max(0, Math.round(
   baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
@@ -229,6 +230,7 @@ const submitBlockers = computed(() => {
   if (form.upgrade_5 && !upgradeSlot5Unlocked.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade5'))
   if (form.upgrade_6 && !upgradeSlot6Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade6'))
   if (form.upgrade_7 && !upgradeSlot7Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade7'))
+  if (form.upgrade_8 && !upgradeSlot8Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade8'))
   if (!allWeaponsValid.value) blockers.push(t('builds.create.saveReadiness.reasons.weapons'))
   if (specialCrewOverCapacity.value) blockers.push(t('builds.create.saveReadiness.reasons.specialists', { maximum: specialCrewLimit.value }))
   return blockers
@@ -372,6 +374,7 @@ function isUpgradeSlotDisabled(index) {
   if (index === 5) return !upgradeSlot5Unlocked.value
   if (index === 6) return !upgradeSlot6Available.value
   if (index === 7) return !upgradeSlot7Available.value
+  if (index === 8) return !upgradeSlot8Available.value
   return false
 }
 
@@ -379,6 +382,7 @@ function upgradeSlotPlaceholder(index) {
   if (index === 5 && !upgradeSlot5Unlocked.value) return t('builds.create.equipment.lockedUpgrade5')
   if (index === 6 && !upgradeSlot6Available.value) return t('builds.create.equipment.lockedUpgrade6')
   if (index === 7 && !upgradeSlot7Available.value) return t('builds.create.equipment.lockedUpgrade7')
+  if (index === 8 && !upgradeSlot8Available.value) return t('builds.create.equipment.lockedUpgrade8')
   return t('common.empty')
 }
 
@@ -486,7 +490,7 @@ function resetSlots() {
 function hydrateBuild(build) {
   for (const fieldName of [
     'build_name', 'build_type', 'ship_id', 'sails', 'upgrade_1', 'upgrade_2', 'upgrade_3',
-    'upgrade_4', 'upgrade_5', 'upgrade_6', 'upgrade_7', 'lantern', 'research_upgrade_slot_unlocked',
+    'upgrade_4', 'upgrade_5', 'upgrade_6', 'upgrade_7', 'upgrade_8', 'lantern', 'research_upgrade_slot_unlocked',
     'sailors', 'soldiers', 'musketeers', 'mercenaries', 'details',
   ]) {
     form[fieldName] = build[fieldName] ?? form[fieldName]
@@ -558,23 +562,14 @@ watch([crewCapacity, sailorMinimum], () => {
   normalizeCurrentCrew()
 })
 
-watch(upgradeSlot5Unlocked, (isUnlocked) => {
-  if (!isUnlocked) {
-    form.upgrade_5 = ''
-  }
-})
-
-watch(upgradeSlot6Available, (isAvailable) => {
-  if (!isAvailable) {
-    form.upgrade_6 = ''
-  }
-})
-
-watch(upgradeSlot7Available, (isAvailable) => {
-  if (!isAvailable) {
-    form.upgrade_7 = ''
-  }
-})
+for (const [access, fieldName] of [
+  [upgradeSlot5Unlocked, 'upgrade_5'],
+  [upgradeSlot6Available, 'upgrade_6'],
+  [upgradeSlot7Available, 'upgrade_7'],
+  [upgradeSlot8Available, 'upgrade_8'],
+]) {
+  watch(access, (isAvailable) => { if (!isAvailable) form[fieldName] = '' })
+}
 
 onMounted(async () => {
   loading.value = true

@@ -25,6 +25,7 @@ class ShipStats(BaseModel):
     upgrade_slot_6_available: bool = False
     upgrade_slot_6_unlocked: bool = False
     upgrade_slot_7_available: bool = False
+    upgrade_slot_8_available: bool = False
     base_crew_capacity: int | None = None
     effective_crew_capacity: int | None = None
     base_sailor_minimum: int | None = None

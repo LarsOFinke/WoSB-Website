@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 BASE_UPGRADE_SLOT_LIMIT = 4
-UPGRADE_SLOT_LIMIT = 7
+UPGRADE_SLOT_LIMIT = 8
 STANDARD_SHIP_UPGRADE_SLOTS = 5
 
 
@@ -13,6 +13,7 @@ class UpgradeSlotAccess:
     slot_5_unlocked: bool
     slot_6_available: bool
     slot_7_available: bool
+    slot_8_available: bool
     unlock_effect_slots: int
     research_slots: int
     ship_extra_slots: int
@@ -25,21 +26,23 @@ def calculate_upgrade_slot_access(
     unlock_effect_slots: int = 0,
     research_upgrade_slot_unlocked: bool = False,
 ) -> UpgradeSlotAccess:
-    """Calculate the seven-slot Build Designer access model.
+    """Calculate the eight-slot Build Designer access model.
 
-    Slots 1-4 are always the regular ship slots. Three independent sources can
-    extend that rack by one usable slot each:
+    Slots 1-4 are the regular rack. The remaining capacity comes from the
+    actual in-game slot sources:
 
-    * the ship-line research reward,
-    * the net slot unlocked by an expansion upgrade such as Structural
-      Expansion, and
-    * a ship-specific extra slot (for example La Couronne).
+    * the ship-line research reward grants one slot,
+    * expansion upgrades grant their full ``extra_upgrade_slots`` value, and
+    * exceptional ships can provide built-in slots (for example La Couronne).
+
+    Structural Expansion therefore contributes two rack positions. It still
+    consumes one selected position like every other upgrade; that occupancy is
+    represented by the build itself and must not be subtracted from capacity.
 
     ``ship_upgrade_slots`` keeps the existing seed/admin contract: five denotes
     a normal ship and six denotes one built-in ship extra. Values above six are
-    accepted for future exceptional ships. ``unlock_effect_slots`` is already
-    the *net* number of usable slots produced by installed expansion upgrades;
-    the upgrade that creates those slots occupies one slot itself.
+    accepted for future exceptional ships. ``unlock_effect_slots`` is the gross
+    number of positions granted by installed expansion upgrades.
     """
 
     configured_slots = max(int(ship_upgrade_slots or 0), 0)
@@ -65,6 +68,7 @@ def calculate_upgrade_slot_access(
         slot_5_unlocked=available_slots >= 5,
         slot_6_available=available_slots >= 6,
         slot_7_available=available_slots >= 7,
+        slot_8_available=available_slots >= 8,
         unlock_effect_slots=effect_slots,
         research_slots=research_slots,
         ship_extra_slots=ship_extra_slots,

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   calculateBuildStatRows,
+  calculateBuildUpgradeSlotAccess,
   calculateUpgradeSlotAccess,
   sumEffects,
 } from '../src/modules/builds/buildCalculations.js'
@@ -53,11 +54,29 @@ test('research reward unlocks one optional slot and reports its availability', (
       slot5Unlocked: true,
       slot6Available: false,
       slot7Available: false,
+      slot8Available: false,
       availableSlots: 5,
     },
   )
 })
 
+
+
+test('Structural Expansion grants both tooltip slots while occupying its selected position', () => {
+  const access = calculateBuildUpgradeSlotAccess({
+    form: {
+      research_upgrade_slot_unlocked: true,
+      upgrade_5: 'Structural Expansion',
+    },
+    shipUpgradeSlots: 5,
+    effectForUpgrade: (name) => name === 'Structural Expansion' ? { extra_upgrade_slots: 2 } : {},
+  })
+
+  assert.equal(access.expansionUnlockSlots, 2)
+  assert.equal(access.availableSlots, 7)
+  assert.equal(access.slot7Available, true)
+  assert.equal(access.slot8Available, false)
+})
 
 test('Ice Lantern applies all three current-event bonuses to Leopard', () => {
   const rows = calculateBuildStatRows({
@@ -99,22 +118,23 @@ test('flat durability and armor upgrade values are applied after percentages', (
 })
 
 
-test('research, Structural Expansion and a ship extra stack to seven slots', () => {
+test('research, Structural Expansion and a ship extra stack to eight slots', () => {
   assert.deepEqual(
     calculateUpgradeSlotAccess({
       shipUpgradeSlots: 6,
       researchUpgradeSlotUnlocked: true,
-      unlockEffectSlots: 1,
+      unlockEffectSlots: 2,
     }),
     {
       baseSlots: 4,
-      effectSlots: 1,
+      effectSlots: 2,
       researchSlots: 1,
       shipExtraSlots: 1,
       slot5Unlocked: true,
       slot6Available: true,
       slot7Available: true,
-      availableSlots: 7,
+      slot8Available: true,
+      availableSlots: 8,
     },
   )
 })

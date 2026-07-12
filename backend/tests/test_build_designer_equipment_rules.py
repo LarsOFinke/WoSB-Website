@@ -426,7 +426,7 @@ def test_current_event_leopard_and_ice_lantern_are_calculated_together() -> None
         assert build.ship_stats["effective_stats"]["durability"] == 2142
 
 
-def test_structural_expansion_and_special_ship_stack_to_seventh_upgrade_slot() -> None:
+def test_structural_expansion_and_special_ship_stack_to_eighth_upgrade_slot() -> None:
     with seeded_session() as db:
         structural = db.scalar(
             select(BuildItemOption).where(BuildItemOption.name == "Structural Expansion")
@@ -438,7 +438,7 @@ def test_structural_expansion_and_special_ship_stack_to_seventh_upgrade_slot() -
         assert structural.stat_effects["extra_upgrade_slots"] == 2
 
         special_ship = Ship(
-            name="Seven Slot Test Ship",
+            name="Eight Slot Test Ship",
             rate=5,
             ship_type="Test",
             durability=100,
@@ -457,7 +457,7 @@ def test_structural_expansion_and_special_ship_stack_to_seventh_upgrade_slot() -
             is_active=True,
         )
         normal_ship = Ship(
-            name="Six Slot Control Ship",
+            name="Seven Slot Control Ship",
             rate=5,
             ship_type="Test",
             durability=100,
@@ -477,40 +477,55 @@ def test_structural_expansion_and_special_ship_stack_to_seventh_upgrade_slot() -
         db.add_all([special_ship, normal_ship])
         db.commit()
 
-        with pytest.raises(BuildValidationError, match="all three slot sources"):
+        normal_build = create_build(
+            db,
+            BuildCreate(
+                build_name="Normal ship reaches slot seven",
+                ship_id=normal_ship.id,
+                research_upgrade_slot_unlocked=True,
+                upgrade_5=structural.name,
+                upgrade_7=helm.name,
+            ),
+        )
+        assert normal_build.ship_stats["upgrade_slots_available"] == 7
+        assert normal_build.ship_stats["upgrade_slot_7_available"] is True
+        assert normal_build.ship_stats["upgrade_slot_8_available"] is False
+
+        with pytest.raises(BuildValidationError, match="Upgrade slot 8 requires"):
             create_build(
                 db,
                 BuildCreate(
-                    build_name="Normal ship cannot use slot seven",
+                    build_name="Normal ship cannot use slot eight",
                     ship_id=normal_ship.id,
                     research_upgrade_slot_unlocked=True,
                     upgrade_5=structural.name,
-                    upgrade_7=helm.name,
+                    upgrade_8=helm.name,
                 ),
             )
 
         build = create_build(
             db,
             BuildCreate(
-                build_name="Full seven slot stack",
+                build_name="Full eight slot stack",
                 ship_id=special_ship.id,
                 research_upgrade_slot_unlocked=True,
                 # Slot 5 already exists through research + the ship extra, so
                 # Structural Expansion may be installed there without circular
-                # self-unlocking.
+                # self-unlocking. Its full +2 tooltip value unlocks slots 7-8.
                 upgrade_5=structural.name,
-                upgrade_7=helm.name,
+                upgrade_8=helm.name,
             ),
         )
 
         stats = build.ship_stats
-        assert build.upgrade_7 == helm.name
+        assert build.upgrade_8 == helm.name
         assert stats["extra_upgrade_slots"] == 2
-        assert stats["expansion_upgrade_slots"] == 1
+        assert stats["expansion_upgrade_slots"] == 2
         assert stats["research_upgrade_slots"] == 1
         assert stats["ship_extra_upgrade_slots"] == 1
         assert stats["upgrade_slot_7_available"] is True
-        assert stats["upgrade_slots_available"] == 7
+        assert stats["upgrade_slot_8_available"] is True
+        assert stats["upgrade_slots_available"] == 8
 
 
 def test_ship_specific_structural_expansion_value_controls_slot_unlock() -> None:
@@ -547,21 +562,33 @@ def test_ship_specific_structural_expansion_value_controls_slot_unlock() -> None
             ShipUpgradeEffectOverride(
                 option_id=structural.id,
                 effect_key="extra_upgrade_slots",
-                # One gross space is consumed by Structural Expansion itself,
-                # leaving no net additional slot on this specific ship.
+                # This ship-specific override grants only one rack position.
                 effect_value=1,
             )
         )
         db.commit()
 
-        with pytest.raises(BuildValidationError, match="all three slot sources"):
+        allowed = create_build(
+            db,
+            BuildCreate(
+                build_name="Override still permits slot seven",
+                ship_id=ship.id,
+                research_upgrade_slot_unlocked=True,
+                upgrade_5=structural.name,
+                upgrade_7=helm.name,
+            ),
+        )
+        assert allowed.ship_stats["expansion_upgrade_slots"] == 1
+        assert allowed.ship_stats["upgrade_slots_available"] == 7
+
+        with pytest.raises(BuildValidationError, match="Upgrade slot 8 requires"):
             create_build(
                 db,
                 BuildCreate(
-                    build_name="Override blocks seventh slot",
+                    build_name="Override blocks eighth slot",
                     ship_id=ship.id,
                     research_upgrade_slot_unlocked=True,
                     upgrade_5=structural.name,
-                    upgrade_7=helm.name,
+                    upgrade_8=helm.name,
                 ),
             )

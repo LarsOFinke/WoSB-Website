@@ -649,7 +649,7 @@ onMounted(reloadAll)
             <div class="form-grid three-columns compact-fields">
               <label><span>{{ t('common.rate') }}</span><input v-model.number="shipForm.rate" type="number" min="1" max="7" /></label>
               <label><span>{{ t('masterData.fields.sailSlots') }}</span><input v-model.number="shipForm.sail_slots" type="number" min="0" /></label>
-              <label><span>{{ t('masterData.fields.upgradeSlots') }}</span><input v-model.number="shipForm.upgrade_slots" type="number" min="0" max="7" /></label>
+              <label><span>{{ t('masterData.fields.upgradeSlots') }}</span><input v-model.number="shipForm.upgrade_slots" type="number" min="0" max="8" /></label>
             </div>
           </fieldset>
 

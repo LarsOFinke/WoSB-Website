@@ -4,8 +4,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Locked: enable the research reward or use an expansion upgrade in slots 1-4',
-          lockedUpgrade6: 'Locked: requires any two independent slot sources',
-          lockedUpgrade7: 'Locked: requires research reward + Structural Expansion + ship extra slot',
+          lockedUpgrade6: 'Locked: requires Structural Expansion or two one-slot sources',
+          lockedUpgrade7: 'Locked: requires Structural Expansion plus the research reward or a ship extra slot',
+          lockedUpgrade8: 'Locked: requires Structural Expansion + research reward + ship extra slot',
           researchUpgradeSlot: 'Unlock additional upgrade slot',
           researchUpgradeSlotHint: 'Enable when the account-wide reward for researching all ship lines has been unlocked. The associated -10% penalties to the ship\'s principal values are applied automatically.',
         },
@@ -43,8 +44,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Gesperrt: Forschungsbelohnung aktivieren oder Erweiterungs-Upgrade in Slot 1-4 nutzen',
-          lockedUpgrade6: 'Gesperrt: benötigt zwei unabhängige Slot-Quellen',
-          lockedUpgrade7: 'Gesperrt: benötigt Forschungsbelohnung + Structural Expansion + Schiff-Extra-Slot',
+          lockedUpgrade6: 'Gesperrt: benötigt Structural Expansion oder zwei einzelne Slot-Quellen',
+          lockedUpgrade7: 'Gesperrt: benötigt Structural Expansion plus Forschungsbelohnung oder Schiff-Extra-Slot',
+          lockedUpgrade8: 'Gesperrt: benötigt Structural Expansion + Forschungsbelohnung + Schiff-Extra-Slot',
           researchUpgradeSlot: 'Zusätzlichen Upgrade-Slot freischalten',
           researchUpgradeSlotHint: 'Aktivieren, wenn die accountweite Belohnung für alle erforschten Schiffsreihen freigeschaltet wurde. Die zugehörigen -10-%-Mali auf die wichtigsten Schiffswerte werden automatisch angewendet.',
         },
@@ -82,8 +84,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Verrouillé : activez la récompense de recherche ou une amélioration d’extension dans les emplacements 1 à 4',
-          lockedUpgrade6: 'Verrouillé : nécessite deux sources d’emplacement indépendantes',
-          lockedUpgrade7: 'Verrouillé : nécessite récompense de recherche + Structural Expansion + emplacement supplémentaire du navire',
+          lockedUpgrade6: 'Verrouillé : nécessite Structural Expansion ou deux sources d’un emplacement',
+          lockedUpgrade7: 'Verrouillé : nécessite Structural Expansion plus la récompense de recherche ou un emplacement supplémentaire du navire',
+          lockedUpgrade8: 'Verrouillé : nécessite Structural Expansion + récompense de recherche + emplacement supplémentaire du navire',
           researchUpgradeSlot: 'Déverrouiller l’emplacement d’amélioration supplémentaire',
           researchUpgradeSlotHint: 'À activer lorsque la récompense de compte pour toutes les lignées de navires recherchées est débloquée. Les pénalités associées de -10 % sur les valeurs principales du navire sont appliquées automatiquement.',
         },
@@ -121,8 +124,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Bloqueado: activa la recompensa de investigación o usa una mejora de expansión en los espacios 1-4',
-          lockedUpgrade6: 'Bloqueado: requiere dos fuentes de espacio independientes',
-          lockedUpgrade7: 'Bloqueado: requiere recompensa de investigación + Structural Expansion + espacio extra del barco',
+          lockedUpgrade6: 'Bloqueado: requiere Structural Expansion o dos fuentes de un espacio',
+          lockedUpgrade7: 'Bloqueado: requiere Structural Expansion más la recompensa de investigación o un espacio extra del barco',
+          lockedUpgrade8: 'Bloqueado: requiere Structural Expansion + recompensa de investigación + espacio extra del barco',
           researchUpgradeSlot: 'Desbloquear espacio de mejora adicional',
           researchUpgradeSlotHint: 'Actívalo cuando se haya desbloqueado la recompensa de cuenta por investigar todas las líneas de barcos. Las penalizaciones asociadas del -10 % a los valores principales se aplican automáticamente.',
         },
@@ -160,8 +164,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Bloqueado: ativa a recompensa de pesquisa ou usa uma melhoria de expansão nos espaços 1-4',
-          lockedUpgrade6: 'Bloqueado: requer duas fontes de espaço independentes',
-          lockedUpgrade7: 'Bloqueado: requer recompensa de investigação + Structural Expansion + espaço extra do navio',
+          lockedUpgrade6: 'Bloqueado: requer Structural Expansion ou duas fontes de um espaço',
+          lockedUpgrade7: 'Bloqueado: requer Structural Expansion mais a recompensa de investigação ou um espaço extra do navio',
+          lockedUpgrade8: 'Bloqueado: requer Structural Expansion + recompensa de investigação + espaço extra do navio',
           researchUpgradeSlot: 'Desbloquear espaço de melhoria adicional',
           researchUpgradeSlotHint: 'Ativa quando a recompensa de conta por pesquisar todas as linhas de navios estiver desbloqueada. As penalizações associadas de -10% nos valores principais são aplicadas automaticamente.',
         },
@@ -199,8 +204,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: 'Заблокировано: включите награду за исследование или используйте расширение в слотах 1–4',
-          lockedUpgrade6: 'Заблокировано: нужны два независимых источника слотов',
-          lockedUpgrade7: 'Заблокировано: нужны награда исследования + Structural Expansion + дополнительный слот корабля',
+          lockedUpgrade6: 'Заблокировано: нужна Structural Expansion или два источника по одному слоту',
+          lockedUpgrade7: 'Заблокировано: нужна Structural Expansion и награда исследования либо дополнительный слот корабля',
+          lockedUpgrade8: 'Заблокировано: нужны Structural Expansion + награда исследования + дополнительный слот корабля',
           researchUpgradeSlot: 'Разблокировать дополнительный слот улучшения',
           researchUpgradeSlotHint: 'Включите, если получена общая награда аккаунта за исследование всех веток кораблей. Связанные штрафы -10% к основным параметрам корабля применяются автоматически.',
         },
@@ -238,8 +244,9 @@ export const buildDesignerEquipmentRulesMessages = {
       create: {
         equipment: {
           lockedUpgrade5: '已锁定：启用研究奖励，或在 1-4 号槽使用扩展升级',
-          lockedUpgrade6: '已锁定：需要两个独立槽位来源',
-          lockedUpgrade7: '已锁定：需要研究奖励 + Structural Expansion + 舰船额外槽位',
+          lockedUpgrade6: '已锁定：需要 Structural Expansion，或两个单槽位来源',
+          lockedUpgrade7: '已锁定：需要 Structural Expansion，加上研究奖励或舰船额外槽位',
+          lockedUpgrade8: '已锁定：需要 Structural Expansion + 研究奖励 + 舰船额外槽位',
           researchUpgradeSlot: '解锁额外升级槽',
           researchUpgradeSlotHint: '在账号已解锁研究全部舰船线的奖励时启用。相关的主要舰船属性 -10% 减益会自动应用。',
         },

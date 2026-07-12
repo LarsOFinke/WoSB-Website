@@ -157,7 +157,7 @@ class MasterDataShipBase(BaseModel):
     source: str | None = Field(default=None, max_length=240)
     image_url: str | None = Field(default=None, max_length=500)
     sail_slots: int = Field(default=1, ge=0, le=20)
-    upgrade_slots: int = Field(default=5, ge=0, le=7)
+    upgrade_slots: int = Field(default=5, ge=0, le=8)
     has_lantern: bool = True
     is_active: bool = True
     weapon_mounts: list[MasterDataShipMount] = Field(default_factory=list)

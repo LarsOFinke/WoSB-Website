@@ -153,9 +153,9 @@ def _upgrade_access(
     research_upgrade_slot_unlocked: bool,
 ) -> dict[str, int | bool]:
     # Expansion upgrades may only unlock slots when they are installed in a
-    # position already available without their own effect. This prevents slot 7
-    # from unlocking itself while still allowing Structural Expansion in the
-    # research or ship-extra slot.
+    # position already available without their own effect. This prevents a
+    # locked expansion position from unlocking itself while still allowing
+    # Structural Expansion in a research or ship-extra position.
     pre_expansion_access = calculate_upgrade_slot_access(
         ship_upgrade_slots=int(ship.upgrade_slots or 0),
         unlock_effect_slots=0,
@@ -170,8 +170,9 @@ def _upgrade_access(
             int(_option_effects(option, ship).get("extra_upgrade_slots", 0) or 0),
         )
         if gross_slots > 0:
-            # The upgrade consumes one of the spaces shown in its tooltip.
-            unlock_effect_slots += max(gross_slots - 1, 0)
+            # Use the full tooltip value. The upgrade's own occupied position
+            # is already represented by the selected build slot.
+            unlock_effect_slots += gross_slots
 
     access = calculate_upgrade_slot_access(
         ship_upgrade_slots=int(ship.upgrade_slots or 0),
@@ -183,6 +184,7 @@ def _upgrade_access(
         "slot_5_unlocked": access.slot_5_unlocked,
         "slot_6_available": access.slot_6_available,
         "slot_7_available": access.slot_7_available,
+        "slot_8_available": access.slot_8_available,
         "unlock_effect_slots": access.unlock_effect_slots,
         "research_slots": access.research_slots,
         "ship_extra_slots": access.ship_extra_slots,
@@ -202,6 +204,7 @@ def _selected_item_names(build: BuildCreate) -> list[str]:
         build.upgrade_5,
         build.upgrade_6,
         build.upgrade_7,
+        build.upgrade_8,
     ):
         normalized = _normalize_name(value)
         if normalized:
@@ -398,11 +401,15 @@ def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, 
         )
     if _normalize_name(build.upgrade_6) and not bool(upgrade_access["slot_6_available"]):
         raise BuildValidationError(
-            "Upgrade slot 6 requires two independent slot sources (research reward, Structural Expansion, or a ship extra slot)."
+            "Upgrade slot 6 requires Structural Expansion or two one-slot sources."
         )
     if _normalize_name(build.upgrade_7) and not bool(upgrade_access["slot_7_available"]):
         raise BuildValidationError(
-            "Upgrade slot 7 requires all three slot sources: research reward, Structural Expansion, and a ship extra slot."
+            "Upgrade slot 7 requires Structural Expansion plus either the research reward or a ship-specific extra slot."
+        )
+    if _normalize_name(build.upgrade_8) and not bool(upgrade_access["slot_8_available"]):
+        raise BuildValidationError(
+            "Upgrade slot 8 requires Structural Expansion, the research reward, and a ship-specific extra slot."
         )
 
     selected_equipment: list[BuildItemOption] = []
