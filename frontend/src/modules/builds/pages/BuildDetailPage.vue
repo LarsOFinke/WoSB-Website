@@ -1,9 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { getBuild } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
+import { downloadBuildPrintPng, downloadBuildPrintSvg, createBuildPrintPreviewUrl, openBuildPrintWindow } from '@/modules/builds/buildPrintExport'
 import { copyBuildShareLink } from '@/modules/builds/shareBuild'
 import { useSession } from '@/modules/accounts/session'
 
@@ -21,6 +22,10 @@ const build = ref(null)
 const loading = ref(false)
 const error = ref('')
 const shareStatus = ref('')
+const printStatus = ref('')
+const printPreviewUrl = ref('')
+const printPreviewOpen = ref(false)
+const printBusy = ref(false)
 
 const weaponArcRows = computed(() => [
   { key: 'front', label: t('builds.detail.weapons.front'), slots: build.value?.front_weapon_slots || [] },
@@ -84,6 +89,74 @@ async function shareBuild() {
   }
 }
 
+function revokePrintPreview() {
+  if (printPreviewUrl.value) URL.revokeObjectURL(printPreviewUrl.value)
+  printPreviewUrl.value = ''
+}
+
+function ensurePrintPreview() {
+  revokePrintPreview()
+  printPreviewUrl.value = createBuildPrintPreviewUrl(build.value, { t, optionLabel })
+  printPreviewOpen.value = true
+}
+
+async function prepareBuildImage() {
+  if (!build.value) return
+  printStatus.value = ''
+  printBusy.value = true
+  try {
+    ensurePrintPreview()
+    printStatus.value = t('builds.print.previewReady')
+  } catch {
+    printStatus.value = t('builds.print.error')
+  } finally {
+    printBusy.value = false
+  }
+}
+
+async function downloadBuildImagePng() {
+  if (!build.value) return
+  printStatus.value = ''
+  printBusy.value = true
+  try {
+    if (!printPreviewUrl.value) ensurePrintPreview()
+    await downloadBuildPrintPng(build.value, { t, optionLabel })
+    printStatus.value = t('builds.print.downloadedPng')
+  } catch {
+    printStatus.value = t('builds.print.error')
+  } finally {
+    printBusy.value = false
+  }
+}
+
+function downloadBuildImageSvg() {
+  if (!build.value) return
+  printStatus.value = ''
+  try {
+    if (!printPreviewUrl.value) ensurePrintPreview()
+    downloadBuildPrintSvg(build.value, { t, optionLabel })
+    printStatus.value = t('builds.print.downloadedSvg')
+  } catch {
+    printStatus.value = t('builds.print.error')
+  }
+}
+
+function printBuildSheet() {
+  if (!build.value) return
+  printStatus.value = ''
+  try {
+    openBuildPrintWindow(build.value, { t, optionLabel })
+    printStatus.value = t('builds.print.windowOpened')
+  } catch {
+    printStatus.value = t('builds.print.error')
+  }
+}
+
+function closePrintPreview() {
+  printPreviewOpen.value = false
+  revokePrintPreview()
+}
+
 function buildTypeLabel(value) {
   return t(`builds.types.${value || 'balanced'}`)
 }
@@ -133,6 +206,7 @@ async function loadBuild() {
 }
 
 onMounted(loadBuild)
+onBeforeUnmount(revokePrintPreview)
 </script>
 
 <template>
@@ -152,6 +226,9 @@ onMounted(loadBuild)
             </div>
             <div class="detail-header-actions">
               <button class="small-action" type="button" @click="shareBuild">{{ t('builds.share.action') }}</button>
+              <button class="small-action" type="button" :disabled="printBusy" @click="prepareBuildImage">
+                {{ printBusy ? t('builds.print.preparing') : t('builds.print.action') }}
+              </button>
               <RouterLink v-if="canEdit" class="small-action primary-action" :to="`/builds/${build.id}/edit`">
                 {{ t('builds.edit.action') }}
               </RouterLink>
@@ -160,6 +237,26 @@ onMounted(loadBuild)
           </div>
 
           <p v-if="shareStatus" class="share-status" role="status">{{ shareStatus }}</p>
+          <p v-if="printStatus" class="share-status" role="status">{{ printStatus }}</p>
+
+          <section v-if="printPreviewOpen" class="wire-section build-print-export-panel">
+            <div class="build-print-export-header">
+              <div>
+                <span class="command-deck-eyebrow">{{ t('builds.print.eyebrow') }}</span>
+                <h2>{{ t('builds.print.previewTitle') }}</h2>
+                <p class="muted">{{ t('builds.print.previewHint') }}</p>
+              </div>
+              <div class="build-print-export-actions">
+                <button class="small-action" type="button" @click="downloadBuildImagePng">{{ t('builds.print.downloadPng') }}</button>
+                <button class="small-action" type="button" @click="downloadBuildImageSvg">{{ t('builds.print.downloadSvg') }}</button>
+                <button class="small-action primary-action" type="button" @click="printBuildSheet">{{ t('builds.print.printAction') }}</button>
+                <button class="small-action" type="button" @click="closePrintPreview">{{ t('common.close') }}</button>
+              </div>
+            </div>
+            <div class="build-print-export-preview">
+              <img :src="printPreviewUrl" :alt="t('builds.print.previewTitle')" />
+            </div>
+          </section>
 
           <BuildStatCommandDeck
             :ship="build.ship"
