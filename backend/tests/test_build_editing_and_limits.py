@@ -144,8 +144,12 @@ def test_first_mate_scales_speed_with_assigned_sailors() -> None:
         assert response.status_code == 201, response.text
         body = response.json()
         assert body["ship_stats"]["special_crew_effects"]["speed_pct"] == 16
-        base_speed = float(body["ship_stats"]["base_stats"]["speed_knots"])
-        assert body["ship_stats"]["effective_stats"]["speed_knots"] == round(base_speed * 1.16, 1)
+        base_speed = float(body["ship_stats"]["base_stats"]["speed_min_knots"])
+        base_cruise_max = float(body["ship_stats"]["base_stats"]["speed_knots"])
+        assert body["ship_stats"]["effective_stats"]["speed_knots"] == round(
+            base_cruise_max + base_speed * 0.16,
+            1,
+        )
 
 
 def test_specialist_quantity_is_normalized_and_weapon_capacity_is_enforced() -> None:

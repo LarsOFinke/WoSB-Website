@@ -6,6 +6,7 @@ by the small functions in this module. Stat metadata lives in ``stat_catalog``.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any, Mapping
 
 from app.modules.builds.services.stat_catalog import (
@@ -27,10 +28,49 @@ def stat_definitions_for_api() -> list[dict[str, Any]]:
             "precision": definition.precision,
             "positive_is_good": definition.positive_is_good,
             "source": definition.source,
+            "pct_base_field": definition.pct_base_field,
         }
         for definition in STAT_DEFINITIONS
     ]
 
+
+
+def percentage_multiplier(
+    effect_sets: Iterable[Mapping[str, int | float]] | None,
+    effect_key: str,
+    *,
+    fallback_total: float = 0,
+) -> float:
+    """Combine percentage modifiers in the same order as the game.
+
+    Separate installed items stack multiplicatively. ``fallback_total`` keeps
+    backward compatibility for callers that only have an aggregated effect map.
+    """
+
+    values: list[float] = []
+    if effect_sets is not None:
+        for effect_set in effect_sets:
+            value = float(effect_set.get(effect_key, 0) or 0)
+            if value:
+                values.append(value)
+    if not values:
+        return 1 + float(fallback_total or 0) / 100
+    multiplier = 1.0
+    for value in values:
+        multiplier *= 1 + value / 100
+    return multiplier
+
+
+def apply_percentage_effects(
+    base_value: float,
+    effect_key: str,
+    effect_sets: Iterable[Mapping[str, int | float]] | None,
+    *,
+    fallback_total: float = 0,
+) -> float:
+    return float(base_value) * percentage_multiplier(
+        effect_sets, effect_key, fallback_total=fallback_total
+    )
 
 def _get_number(source: object, field_name: str | None) -> float | None:
     if not field_name:
@@ -67,7 +107,12 @@ def _is_debuff(definition: StatDefinition, modifier: float) -> bool:
     return modifier < 0 if definition.positive_is_good else modifier > 0
 
 
-def build_stat_rows(ship: object, effects: Mapping[str, int | float]) -> list[dict[str, Any]]:
+def build_stat_rows(
+    ship: object,
+    effects: Mapping[str, int | float],
+    *,
+    effect_sets: Iterable[Mapping[str, int | float]] | None = None,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     consumed_effects: set[str] = set()
 
@@ -84,7 +129,19 @@ def build_stat_rows(ship: object, effects: Mapping[str, int | float]) -> list[di
 
         effective_value: float | None = base_value
         if base_value is not None and definition.pct_effect:
-            effective_value = base_value * (1 + float(effects.get(definition.pct_effect, 0) or 0) / 100)
+            pct_base_value = (
+                _get_number(ship, definition.pct_base_field)
+                if definition.pct_base_field
+                else base_value
+            )
+            if pct_base_value is None or (pct_base_value <= 0 < base_value):
+                pct_base_value = base_value
+            pct_delta = percentage_multiplier(
+                effect_sets,
+                definition.pct_effect,
+                fallback_total=float(effects.get(definition.pct_effect, 0) or 0),
+            ) - 1
+            effective_value = base_value + (pct_base_value * pct_delta)
         calculation_flat_effect = definition.calculation_flat_effect or definition.flat_effect
         if effective_value is not None and calculation_flat_effect:
             effective_value += float(effects.get(calculation_flat_effect, 0) or 0)
@@ -105,6 +162,7 @@ def build_stat_rows(ship: object, effects: Mapping[str, int | float]) -> list[di
                 "effect_key": definition.pct_effect or definition.flat_effect,
                 "is_debuff": _is_debuff(definition, modifier),
                 "source": definition.source,
+            "pct_base_field": definition.pct_base_field,
             }
         )
 
@@ -140,6 +198,7 @@ def build_stat_rows(ship: object, effects: Mapping[str, int | float]) -> list[di
 def build_base_stats(ship: object) -> dict[str, int | float | str | None]:
     return {
         "durability": getattr(ship, "durability", 0),
+        "speed_min_knots": getattr(ship, "speed_min_knots", getattr(ship, "speed_knots", 0)),
         "speed_knots": getattr(ship, "speed_knots", 0),
         "maneuverability": getattr(ship, "maneuverability", 0),
         "armor": getattr(ship, "armor", 0),

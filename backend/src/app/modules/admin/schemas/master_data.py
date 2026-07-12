@@ -147,6 +147,7 @@ class MasterDataShipBase(BaseModel):
     rate: int = Field(ge=1, le=7)
     ship_type: str = Field(min_length=1, max_length=80)
     durability: int = Field(default=0, ge=0)
+    speed_min_knots: float = Field(default=0, ge=0)
     speed_knots: float = Field(default=0, ge=0)
     maneuverability: float = Field(default=0, ge=0)
     armor: float = Field(default=0, ge=0)
@@ -180,6 +181,8 @@ class MasterDataShipBase(BaseModel):
     def validate_ship(self) -> "MasterDataShipBase":
         if self.sailor_minimum > self.crew_capacity:
             raise ValueError("Sailor minimum cannot exceed crew capacity.")
+        if self.speed_knots < self.speed_min_knots:
+            raise ValueError("Cruise maximum speed cannot be lower than base speed.")
         option_ids = [row.option_id for row in self.upgrade_effect_overrides]
         if len(option_ids) != len(set(option_ids)):
             raise ValueError("Each upgrade can only be overridden once per ship.")

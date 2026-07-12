@@ -7,7 +7,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.modules.ships.models.ship import Ship
-from app.modules.builds.services.build_stat_service import build_base_stats, build_stat_rows, effective_stats_from_rows
+from app.modules.builds.services.build_stat_service import (
+    apply_percentage_effects,
+    build_base_stats,
+    build_stat_rows,
+    effective_stats_from_rows,
+)
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
@@ -184,27 +189,29 @@ class Build(Base):
     def hold_slots(self) -> list[dict[str, Any]]:
         return self._inventory_slots("hold")
 
-    def _slot_effect_totals(self, slot_types: set[str]) -> dict[str, int | float]:
-        totals: dict[str, int | float] = {}
-        for slot in self.slots:
-            if slot.slot_type not in slot_types:
-                continue
-            quantity = 1
-            for key, value in slot.option.stat_effects.items():
-                totals[key] = totals.get(key, 0) + (value * quantity)
-        return totals
+    def _slot_effect_sets(self, slot_types: set[str]) -> list[dict[str, int | float]]:
+        return [
+            dict(slot.option.stat_effects)
+            for slot in self.slots
+            if slot.slot_type in slot_types
+        ]
 
-    def _upgrade_effect_totals(self, max_index: int | None = None) -> dict[str, int | float]:
-        totals: dict[str, int | float] = {}
+    def _slot_effect_totals(self, slot_types: set[str]) -> dict[str, int | float]:
+        return self._combine_effects(*self._slot_effect_sets(slot_types))
+
+    def _upgrade_effect_sets(self, max_index: int | None = None) -> list[dict[str, int | float]]:
+        rows: list[dict[str, int | float]] = []
         for index in UPGRADE_SLOT_NUMBERS:
             if max_index is not None and index > max_index:
                 continue
             slot = self._upgrade_slot_at(index)
             if slot is None:
                 continue
-            for key, value in effective_upgrade_effects(slot.option, self.ship).items():
-                totals[key] = totals.get(key, 0) + value
-        return totals
+            rows.append(effective_upgrade_effects(slot.option, self.ship))
+        return rows
+
+    def _upgrade_effect_totals(self, max_index: int | None = None) -> dict[str, int | float]:
+        return self._combine_effects(*self._upgrade_effect_sets(max_index))
 
     def _upgrade_unlock_slot_total(self, max_index: int) -> int:
         """Return gross rack positions granted by installed expansion upgrades.
@@ -228,19 +235,21 @@ class Build(Base):
             )
         return total
 
-    def _special_crew_effect_totals(self) -> dict[str, int | float]:
-        weighted_effects = [
-            (slot.option.stat_effects, 1)
+    def _special_crew_effect_sets(self) -> list[dict[str, int | float]]:
+        return [
+            resolve_specialist_effects(
+                [(slot.option.stat_effects, 1)],
+                sailors=self.sailors,
+                soldiers=self.soldiers,
+                musketeers=self.musketeers,
+                mercenaries=self.mercenaries,
+            )
             for slot in self.slots
             if slot.slot_type == "special_crew"
         ]
-        return resolve_specialist_effects(
-            weighted_effects,
-            sailors=self.sailors,
-            soldiers=self.soldiers,
-            musketeers=self.musketeers,
-            mercenaries=self.mercenaries,
-        )
+
+    def _special_crew_effect_totals(self) -> dict[str, int | float]:
+        return self._combine_effects(*self._special_crew_effect_sets())
 
     @staticmethod
     def _combine_effects(*effect_sets: dict[str, int | float]) -> dict[str, int | float]:
@@ -252,20 +261,34 @@ class Build(Base):
 
     @property
     def ship_stats(self) -> dict[str, Any]:
-        sail_effects = self._slot_effect_totals({"sail"})
-        lantern_effects = self._slot_effect_totals({"lantern"})
-        upgrade_effects = self._upgrade_effect_totals()
-        special_crew_effects = self._special_crew_effect_totals()
+        sail_effect_sets = self._slot_effect_sets({"sail"})
+        lantern_effect_sets = self._slot_effect_sets({"lantern"})
+        upgrade_effect_sets = self._upgrade_effect_sets()
+        sail_effects = self._combine_effects(*sail_effect_sets)
+        lantern_effects = self._combine_effects(*lantern_effect_sets)
+        upgrade_effects = self._combine_effects(*upgrade_effect_sets)
+        special_crew_effect_sets = self._special_crew_effect_sets()
+        special_crew_effects = self._combine_effects(*special_crew_effect_sets)
         research_effects = research_upgrade_slot_effects(self.research_upgrade_slot_unlocked)
-        effects = self._combine_effects(
-            sail_effects, lantern_effects, upgrade_effects, special_crew_effects, research_effects
-        )
+        effect_sets = [
+            *sail_effect_sets,
+            *lantern_effect_sets,
+            *upgrade_effect_sets,
+            *special_crew_effect_sets,
+            *([research_effects] if research_effects else []),
+        ]
+        effects = self._combine_effects(*effect_sets)
         crew_total = self.sailors + self.soldiers + self.musketeers + self.mercenaries
         base_crew_capacity = self.ship.crew_capacity
         effective_crew_capacity = max(
             0,
             round(
-                base_crew_capacity * (1 + float(effects.get("crew_capacity_pct", 0) or 0) / 100)
+                apply_percentage_effects(
+                    base_crew_capacity,
+                    "crew_capacity_pct",
+                    effect_sets,
+                    fallback_total=float(effects.get("crew_capacity_pct", 0) or 0),
+                )
                 + float(effects.get("crew_capacity", 0) or 0)
             ),
         )
@@ -316,7 +339,7 @@ class Build(Base):
         upgrade_slots_available = upgrade_access.available_slots
         # Backward-compatible alias retained for existing frontend/API consumers.
         upgrade_slot_6_unlocked = upgrade_slot_6_available
-        stat_rows = build_stat_rows(self.ship, effects)
+        stat_rows = build_stat_rows(self.ship, effects, effect_sets=effect_sets)
         base_stats = build_base_stats(self.ship)
         effective_stats = effective_stats_from_rows(stat_rows)
         debuffs = {key: value for key, value in effects.items() if value < 0 or key.startswith("debuff_") or key in DEBUFF_KEYS and value < 0}

@@ -70,6 +70,9 @@ def _ensure_sqlite_columns() -> None:
 
     if "ships" in table_names:
         ship_columns = {column["name"] for column in inspector.get_columns("ships")}
+        if "speed_min_knots" not in ship_columns:
+            statements.append("ALTER TABLE ships ADD COLUMN speed_min_knots FLOAT NOT NULL DEFAULT 0")
+            statements.append("UPDATE ships SET speed_min_knots = speed_knots")
         ship_column_defaults = {
             "durability": "INTEGER NOT NULL DEFAULT 0",
             "speed_knots": "FLOAT NOT NULL DEFAULT 0",

@@ -106,7 +106,7 @@ def test_admin_overrides_survive_seed_and_can_be_restored() -> None:
         assert preserved_ship.seed_status == "overridden"
 
         restored_ship = restore_ship_seed(db, ship.id)
-        assert restored_ship.speed_knots == 16.9
+        assert restored_ship.speed_knots == 8.7
         assert restored_ship.image_url is None
         assert restored_ship.seed_status == "seeded"
 

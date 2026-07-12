@@ -122,6 +122,7 @@ def _ship_read(row: Ship) -> MasterDataShipRead:
         rate=row.rate,
         ship_type=row.ship_type,
         durability=row.durability,
+        speed_min_knots=row.speed_min_knots,
         speed_knots=row.speed_knots,
         maneuverability=row.maneuverability,
         armor=row.armor,

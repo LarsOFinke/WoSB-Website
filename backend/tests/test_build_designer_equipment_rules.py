@@ -157,7 +157,11 @@ def test_every_verified_lantern_is_forwarded_and_applied_server_side(
         assert stats["lantern_effects"] == expected_effects
         if "speed_pct" in expected_effects:
             assert stats["effective_stats"]["speed_knots"] == pytest.approx(
-                round(ship.speed_knots * (1 + expected_effects["speed_pct"] / 100), 1)
+                round(
+                    ship.speed_knots
+                    + ship.speed_min_knots * expected_effects["speed_pct"] / 100,
+                    1,
+                )
             )
         if "hold_capacity_pct" in expected_effects:
             assert stats["effective_stats"]["hold_capacity"] == round(
@@ -421,9 +425,42 @@ def test_current_event_leopard_and_ice_lantern_are_calculated_together() -> None
             "hold_capacity_pct": 5,
             "hull_hp_pct": 5,
         }
-        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(19.6)
+        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(10.1)
         assert build.ship_stats["effective_stats"]["hold_capacity"] == 17325
         assert build.ship_stats["effective_stats"]["durability"] == 2142
+
+
+def test_la_couronne_speed_range_matches_verified_upgrade_screenshots() -> None:
+    with seeded_session() as db:
+        ship = _ship(db, "La Couronne")
+        hull_only = create_build(
+            db,
+            BuildCreate(
+                build_name="Couronne hull speed check",
+                ship_id=ship.id,
+                lantern="Golden Lantern",
+                upgrade_1="Lightweight Hull",
+                sailors=ship.sailor_minimum,
+            ),
+        )
+        assert hull_only.ship_stats["effective_stats"]["speed_min_knots"] == pytest.approx(8.3)
+        assert hull_only.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(11.0)
+        assert hull_only.ship_stats["effective_stats"]["armor"] == pytest.approx(4.9)
+        assert hull_only.ship_stats["effective_stats"]["maneuverability"] == 76
+
+        with_sails = create_build(
+            db,
+            BuildCreate(
+                build_name="Couronne raiding speed check",
+                ship_id=ship.id,
+                sails="Raiding Sails",
+                lantern="Golden Lantern",
+                upgrade_1="Lightweight Hull",
+                sailors=ship.sailor_minimum,
+            ),
+        )
+        assert with_sails.ship_stats["effective_stats"]["speed_min_knots"] == pytest.approx(8.3)
+        assert with_sails.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(15.1)
 
 
 def test_structural_expansion_and_special_ship_stack_to_eighth_upgrade_slot() -> None:

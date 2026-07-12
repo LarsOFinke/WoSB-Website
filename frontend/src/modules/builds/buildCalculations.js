@@ -77,6 +77,18 @@ export function calculateBuildUpgradeSlotAccess({
   }
 }
 
+export function percentageMultiplier(effectSets, effectKey, fallbackTotal = 0) {
+  const values = (effectSets || [])
+    .map((effects) => Number(effects?.[effectKey] || 0))
+    .filter((value) => Number.isFinite(value) && value !== 0)
+  if (!values.length) return 1 + Number(fallbackTotal || 0) / 100
+  return values.reduce((multiplier, value) => multiplier * (1 + value / 100), 1)
+}
+
+export function applyPercentageEffects(baseValue, effectKey, effectSets, fallbackTotal = 0) {
+  return Number(baseValue || 0) * percentageMultiplier(effectSets, effectKey, fallbackTotal)
+}
+
 function numberOrNull(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
   return Number(value)
@@ -95,7 +107,7 @@ function roundByPrecision(value, precision = 0) {
  * contract used by the backend: a ship base field plus percentage and/or flat
  * effect keys supplied by the selected catalog options.
  */
-export function calculateBuildStatRows({ ship, definitions = [], effects = {} }) {
+export function calculateBuildStatRows({ ship, definitions = [], effects = {}, effectSets = [] }) {
   if (!ship) return []
 
   return definitions
@@ -108,7 +120,14 @@ export function calculateBuildStatRows({ ship, definitions = [], effects = {} })
 
       let effective = base
       if (effective !== null && definition.pct_effect) {
-        effective *= (1 + pctModifier / 100)
+        const configuredPctBase = definition.pct_base_field
+          ? numberOrNull(ship[definition.pct_base_field])
+          : base
+        const pctBase = configuredPctBase === null || (configuredPctBase <= 0 && base > 0)
+          ? base
+          : configuredPctBase
+        const pctDelta = percentageMultiplier(effectSets, definition.pct_effect, pctModifier) - 1
+        effective += pctBase * pctDelta
       }
       const calculationFlatModifier = Number(effects[definition.calculation_flat_effect] || 0)
       if (effective !== null && definition.calculation_flat_effect) {

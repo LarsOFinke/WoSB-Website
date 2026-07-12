@@ -9,6 +9,7 @@ class ShipRead(BaseModel):
     rate: int
     ship_type: str
     durability: int
+    speed_min_knots: float
     speed_knots: float
     maneuverability: float
     armor: float

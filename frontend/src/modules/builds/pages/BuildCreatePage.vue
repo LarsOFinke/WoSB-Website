@@ -8,8 +8,8 @@ import { useLocale } from '@/locales'
 import { createBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
 import { createBuildForm, equipmentUpgradeCount, slotLimits, sortShipsForDropdown, weaponArcFields } from '@/modules/builds/buildForm'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
-import { calculateBuildStatRows, calculateBuildUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
-import { calculateSpecialistEffectTotals } from '@/modules/builds/specialistEffects'
+import { applyPercentageEffects, calculateBuildStatRows, calculateBuildUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
+import { calculateSpecialistEffectSets } from '@/modules/builds/specialistEffects'
 import {
   crewSliderMax,
   normalizeCrewAllocation,
@@ -139,7 +139,7 @@ const upgradeEffectTotals = computed(() => sumEffects(
     .filter(Boolean)
     .map((name) => upgradeEffects(name)),
 ))
-const specialCrewEffectTotals = computed(() => calculateSpecialistEffectTotals({
+const specialCrewEffectSets = computed(() => calculateSpecialistEffectSets({
   slots: normalizeInventorySlots(form.special_crew_slots),
   effectForItem: specialCrewEffects,
   crew: {
@@ -149,6 +149,7 @@ const specialCrewEffectTotals = computed(() => calculateSpecialistEffectTotals({
     mercenaries: form.mercenaries,
   },
 }))
+const specialCrewEffectTotals = computed(() => sumEffects(...specialCrewEffectSets.value))
 const equipmentEffectTotals = computed(() => sumEffects(
   optionEffects('sail', form.sails),
   optionEffects('lantern', form.lantern),
@@ -164,14 +165,25 @@ const buildEffectTotals = computed(() => sumEffects(
   specialCrewEffectTotals.value,
   researchUpgradeEffectTotals.value,
 ))
+const buildEffectSets = computed(() => [
+  optionEffects('sail', form.sails),
+  optionEffects('lantern', form.lantern),
+  ...selectedUpgradeNames.value.filter(Boolean).map((name) => upgradeEffects(name)),
+  ...specialCrewEffectSets.value,
+  researchUpgradeEffectTotals.value,
+].filter((effects) => Object.keys(effects || {}).length > 0))
 const upgradeSlot5Unlocked = computed(() => upgradeAccess.value.slot5Unlocked)
 const upgradeSlot6Available = computed(() => upgradeAccess.value.slot6Available)
 const upgradeSlot7Available = computed(() => upgradeAccess.value.slot7Available)
 const upgradeSlot8Available = computed(() => upgradeAccess.value.slot8Available)
 const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
 const crewCapacity = computed(() => Math.max(0, Math.round(
-  baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
-  + (Number(buildEffectTotals.value.crew_capacity) || 0),
+  applyPercentageEffects(
+    baseCrewCapacity.value,
+    'crew_capacity_pct',
+    buildEffectSets.value,
+    Number(buildEffectTotals.value.crew_capacity_pct) || 0,
+  ) + (Number(buildEffectTotals.value.crew_capacity) || 0),
 )))
 const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
 const sailingEfficiency = computed(() => sailingEfficiencyPercent(form.sailors, sailorMinimum.value))
@@ -198,6 +210,7 @@ const buildStatRows = computed(() => calculateBuildStatRows({
   ship: selectedShip.value,
   definitions: statDefinitions.value,
   effects: buildEffectTotals.value,
+  effectSets: buildEffectSets.value,
 }).map((row) => {
   const path = `builds.statLabels.${row.key}`
   const translated = t(path)

@@ -69,6 +69,7 @@ const shipForm = reactive({
   rate: 7,
   ship_type: 'Ship',
   durability: 0,
+  speed_min_knots: 0,
   speed_knots: 0,
   maneuverability: 0,
   armor: 0,
@@ -171,6 +172,7 @@ function resetShip(row = null) {
   shipForm.rate = row?.rate ?? 7
   shipForm.ship_type = row?.ship_type || 'Ship'
   shipForm.durability = row?.durability ?? 0
+  shipForm.speed_min_knots = row?.speed_min_knots ?? row?.speed_knots ?? 0
   shipForm.speed_knots = row?.speed_knots ?? 0
   shipForm.maneuverability = row?.maneuverability ?? 0
   shipForm.armor = row?.armor ?? 0
@@ -334,6 +336,7 @@ async function saveShip() {
       ...shipForm,
       rate: Number(shipForm.rate),
       durability: Number(shipForm.durability),
+      speed_min_knots: Number(shipForm.speed_min_knots),
       speed_knots: Number(shipForm.speed_knots),
       maneuverability: Number(shipForm.maneuverability),
       armor: Number(shipForm.armor),
@@ -637,7 +640,7 @@ onMounted(reloadAll)
           <header class="editor-header editor-header-with-preview ship-editor-header">
             <div class="editor-preview ship-editor-preview"><img v-if="shipForm.image_url" :src="imagePreview(shipForm.image_url)" alt="" /><span v-else>⚓</span></div>
             <div><span class="panel-kicker">{{ selectedShip ? seedStatusLabel(selectedShip) : t('masterData.customRecord') }}</span><h2>{{ shipForm.name || (shipEditingId ? t('masterData.ships.edit') : t('masterData.ships.create')) }}</h2><p>{{ t('common.rate') }} {{ shipForm.rate }} · {{ shipForm.ship_type || '—' }}</p></div>
-            <div class="ship-quick-stats"><span><small>{{ t('masterData.fields.durability') }}</small><strong>{{ shipForm.durability }}</strong></span><span><small>{{ t('masterData.fields.speed') }}</small><strong>{{ shipForm.speed_knots }}</strong></span><span><small>{{ t('masterData.fields.crewCapacity') }}</small><strong>{{ shipForm.crew_capacity }}</strong></span></div>
+            <div class="ship-quick-stats"><span><small>{{ t('masterData.fields.durability') }}</small><strong>{{ shipForm.durability }}</strong></span><span><small>{{ t('masterData.fields.cruiseMaxSpeed') }}</small><strong>{{ shipForm.speed_knots }}</strong></span><span><small>{{ t('masterData.fields.crewCapacity') }}</small><strong>{{ shipForm.crew_capacity }}</strong></span></div>
           </header>
           <div v-if="selectedShip" class="seed-note"><strong>{{ seedStatusLabel(selectedShip) }}</strong><span>{{ selectedShip.seed_status === 'custom' ? t('masterData.customRecord') : selectedShip.seed_revision }}</span></div>
 
@@ -656,7 +659,8 @@ onMounted(reloadAll)
           <fieldset class="editor-section"><legend>{{ t('masterData.fields.durability') }}</legend>
             <div class="form-grid three-columns">
               <label><span>{{ t('masterData.fields.durability') }}</span><input v-model.number="shipForm.durability" type="number" min="0" /></label>
-              <label><span>{{ t('masterData.fields.speed') }}</span><input v-model.number="shipForm.speed_knots" type="number" min="0" step="0.1" /></label>
+              <label><span>{{ t('masterData.fields.baseSpeed') }}</span><input v-model.number="shipForm.speed_min_knots" type="number" min="0" step="0.1" /></label>
+              <label><span>{{ t('masterData.fields.cruiseMaxSpeed') }}</span><input v-model.number="shipForm.speed_knots" type="number" :min="shipForm.speed_min_knots" step="0.01" /></label>
               <label><span>{{ t('masterData.fields.maneuverability') }}</span><input v-model.number="shipForm.maneuverability" type="number" min="0" step="0.1" /></label>
               <label><span>{{ t('masterData.fields.armor') }}</span><input v-model.number="shipForm.armor" type="number" min="0" step="0.1" /></label>
               <label><span>{{ t('masterData.fields.holdCapacity') }}</span><input v-model.number="shipForm.hold_capacity" type="number" min="0" /></label>

@@ -24,6 +24,7 @@ from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_s
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
 from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
+from app.modules.builds.services.build_stat_service import apply_percentage_effects
 
 
 class BuildValidationError(ValueError):
@@ -417,25 +418,41 @@ def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, 
         selected_equipment.append(_require_option(option_map, build.sails, "sail", "Sail"))
     if build.lantern:
         selected_equipment.append(_require_option(option_map, build.lantern, "lantern", "Lantern"))
-    total_effects = _sum_effects(selected_equipment, ship)
-    for effect_set in (
-        _sum_effects(selected_upgrades.values(), ship),
+    equipment_effect_sets = [_option_effects(option, ship) for option in selected_equipment]
+    upgrade_effect_sets = [
+        _option_effects(option, ship) for option in selected_upgrades.values()
+    ]
+    specialist_effect_sets = [
         resolve_specialist_effects(
-            ((_option_effects(option, ship), quantity) for option, quantity in selected_special_crew),
+            [(_option_effects(option, ship), quantity)],
             sailors=build.sailors,
             soldiers=build.soldiers,
             musketeers=build.musketeers,
             mercenaries=build.mercenaries,
-        ),
-        research_upgrade_slot_effects(build.research_upgrade_slot_unlocked),
-    ):
+        )
+        for option, quantity in selected_special_crew
+    ]
+    research_effects = research_upgrade_slot_effects(build.research_upgrade_slot_unlocked)
+    effect_sets = [
+        *equipment_effect_sets,
+        *upgrade_effect_sets,
+        *specialist_effect_sets,
+        *([research_effects] if research_effects else []),
+    ]
+    total_effects: dict[str, int | float] = {}
+    for effect_set in effect_sets:
         for key, value in effect_set.items():
             total_effects[key] = total_effects.get(key, 0) + value
 
     effective_crew_capacity = max(
         0,
         round(
-            ship.crew_capacity * (1 + float(total_effects.get("crew_capacity_pct", 0) or 0) / 100)
+            apply_percentage_effects(
+                ship.crew_capacity,
+                "crew_capacity_pct",
+                effect_sets,
+                fallback_total=float(total_effects.get("crew_capacity_pct", 0) or 0),
+            )
             + float(total_effects.get("crew_capacity", 0) or 0)
         ),
     )

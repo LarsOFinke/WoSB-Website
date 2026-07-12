@@ -14,17 +14,11 @@ SHIP_WIKI_SOURCE = "WoSB wiki ship page audit 2026-07"
 SHIP_SCREENSHOT_SOURCE = "WoSB in-game shipyard screenshot audit 2026-07"
 SHIP_EVENT_SOURCE = "WoSB in-game current-event tooltip screenshot audit 2026-07"
 
-# The shipyard panel exposes the internal speed value in metres per second,
-# while flat equipment bonuses are expressed in knots. Store one canonical
-# unit throughout the Build Designer so base values and equipment effects can
-# be combined without mixing units.
-KNOTS_PER_METER_PER_SECOND = 1.9438444924406
-
-
-def raw_speed_to_knots(speed_raw: float) -> float:
-    """Convert the screenshot speed value from m/s to knots, rounded for UI use."""
-
-    return round(float(speed_raw) * KNOTS_PER_METER_PER_SECOND, 1)
+# The shipyard panel exposes a speed range. The left endpoint is the ship's
+# base/cruising speed; the right endpoint is its cruise maximum. Percentage
+# speed effects modify the base speed and shift the cruise maximum by the same
+# absolute delta. Flat sail bonuses labelled "Cruise max. speed" apply only to
+# the maximum endpoint.
 
 
 def planning_sailor_minimum(crew_capacity: int) -> int:
@@ -46,6 +40,7 @@ def ship(
     ship_type: str,
     durability: int,
     speed_raw: float,
+    cruise_max_speed_knots: float | None = None,
     maneuverability: float,
     armor: float,
     hold_capacity: int,
@@ -64,9 +59,10 @@ def ship(
 ) -> ShipSeed:
     """Create one canonical seed payload with explicit Build Designer fields.
 
-    ``speed_raw`` is the unlabelled shipyard-panel value in metres per second.
-    The persisted ``speed_knots`` value is converted here so every consumer uses
-    the same unit as sail and upgrade tooltips.
+    ``speed_raw`` is the left endpoint shown by the shipyard speed range.
+    ``cruise_max_speed_knots`` is the right endpoint. When no audited maximum is
+    available yet, the maximum safely falls back to the base speed instead of
+    inventing a conversion factor.
     """
 
     row: ShipSeed = {
@@ -74,7 +70,12 @@ def ship(
         "rate": rate,
         "ship_type": ship_type,
         "durability": durability,
-        "speed_knots": raw_speed_to_knots(speed_raw),
+        "speed_min_knots": float(speed_raw),
+        "speed_knots": float(
+            cruise_max_speed_knots
+            if cruise_max_speed_knots is not None
+            else speed_raw
+        ),
         "maneuverability": maneuverability,
         "armor": armor,
         "hold_capacity": hold_capacity,

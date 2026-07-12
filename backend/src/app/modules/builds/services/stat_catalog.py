@@ -22,12 +22,14 @@ class StatDefinition:
     precision: int = 0
     positive_is_good: bool = True
     source: str = "ship_catalog"
+    pct_base_field: str | None = None
 
 
 STAT_DEFINITIONS: tuple[StatDefinition, ...] = (
     StatDefinition("durability", "Durability", "survivability", "durability", pct_effect="hull_hp_pct", calculation_flat_effect="durability", precision=0),
     StatDefinition("durability_bonus", "Durability bonus", "survivability", flat_effect="durability", precision=0, source="upgrade_modifiers"),
-    StatDefinition("speed_knots", "Speed", "mobility", "speed_knots", unit="kn", pct_effect="speed_pct", calculation_flat_effect="speed_knots", precision=1),
+    StatDefinition("speed_min_knots", "Base speed", "mobility", "speed_min_knots", unit="kn", pct_effect="speed_pct", precision=1),
+    StatDefinition("speed_knots", "Cruise max. speed", "mobility", "speed_knots", unit="kn", pct_effect="speed_pct", calculation_flat_effect="speed_knots", precision=1, pct_base_field="speed_min_knots"),
     StatDefinition("speed_bonus_knots", "Speed bonus", "mobility", unit="kn", flat_effect="speed_knots", precision=1, source="equipment_modifiers"),
     StatDefinition("cruising_speed_gain_pct", "Cruising speed gain", "mobility", unit="%", flat_effect="cruising_speed_gain_pct", precision=0, source="equipment_modifiers"),
     StatDefinition("cruising_maneuverability_pct", "Cruising maneuverability", "mobility", unit="%", flat_effect="cruising_maneuverability_pct", precision=0, source="equipment_modifiers"),

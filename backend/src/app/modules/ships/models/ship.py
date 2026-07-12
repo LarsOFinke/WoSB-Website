@@ -20,7 +20,8 @@ class Ship(Base):
     __table_args__ = (
         CheckConstraint("rate >= 1 and rate <= 7", name="ck_ships_rate"),
         CheckConstraint("durability >= 0", name="ck_ships_durability"),
-        CheckConstraint("speed_knots >= 0", name="ck_ships_speed_knots"),
+        CheckConstraint("speed_min_knots >= 0", name="ck_ships_speed_min_knots"),
+        CheckConstraint("speed_knots >= speed_min_knots", name="ck_ships_speed_range"),
         CheckConstraint("maneuverability >= 0", name="ck_ships_maneuverability"),
         CheckConstraint("armor >= 0", name="ck_ships_armor"),
         CheckConstraint("hold_capacity >= 0", name="ck_ships_hold_capacity"),
@@ -39,6 +40,7 @@ class Ship(Base):
     rate: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     ship_type: Mapped[str] = mapped_column(String(80), nullable=False, default="Ship")
     durability: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    speed_min_knots: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     speed_knots: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     maneuverability: Mapped[float] = mapped_column(Float, nullable=False, default=0)
     armor: Mapped[float] = mapped_column(Float, nullable=False, default=0)

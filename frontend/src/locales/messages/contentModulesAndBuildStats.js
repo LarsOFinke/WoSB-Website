@@ -155,7 +155,8 @@ export const contentModulesAndBuildStatsMessages = {
       },
       statLabels: {
         durability: 'Durability',
-        speed_knots: 'Speed',
+        speed_min_knots: 'Base speed',
+        speed_knots: 'Cruise max. speed',
         maneuverability: 'Maneuverability',
         armor: 'Broadside armor',
         hold_capacity: 'Cargo hold',
@@ -491,7 +492,8 @@ export const contentModulesAndBuildStatsMessages = {
       },
       statLabels: {
         durability: 'Haltbarkeit',
-        speed_knots: 'Geschwindigkeit',
+        speed_min_knots: 'Basisgeschwindigkeit',
+        speed_knots: 'Maximale Reisegeschwindigkeit',
         maneuverability: 'Wendigkeit',
         armor: 'Breitseitenpanzerung',
         hold_capacity: 'Laderaum',

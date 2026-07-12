@@ -9,6 +9,7 @@ REQUIRED_SHIP_FIELDS = (
     "rate",
     "ship_type",
     "durability",
+    "speed_min_knots",
     "speed_knots",
     "maneuverability",
     "armor",
@@ -54,9 +55,11 @@ def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
             if int(row.get(field) or 0) <= 0:
                 errors.append(f"{name}: {field} must be positive")
 
-        for field in ("speed_knots", "maneuverability", "armor"):
+        for field in ("speed_min_knots", "speed_knots", "maneuverability", "armor"):
             if float(row.get(field) or 0) < 0:
                 errors.append(f"{name}: {field} must not be negative")
+        if float(row.get("speed_knots") or 0) < float(row.get("speed_min_knots") or 0):
+            errors.append(f"{name}: speed_knots must not be below speed_min_knots")
 
         crew_capacity = int(row.get("crew_capacity") or 0)
         sailor_minimum = int(row.get("sailor_minimum") or 0)

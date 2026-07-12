@@ -12,7 +12,6 @@ from app.modules.builds.services.build_service import BuildValidationError, crea
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.squads.models.squad import Squad  # noqa: F401
-from app.seeds.ship_data.common import raw_speed_to_knots
 from app.seeds.ships import SHIP_SEED_DATA
 from app.seeds.weapons import WEAPON_OPTIONS
 from app.seeds.weapon_mounts import parse_weapon_layout
@@ -212,10 +211,23 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
  'Leopard': (3, 'Ship of the Line', 5, 0)}
 
 
-def test_shipyard_raw_speed_is_converted_to_knots() -> None:
-    assert raw_speed_to_knots(6.2) == 12.1
-    assert raw_speed_to_knots(9.2) == 17.9
-    assert raw_speed_to_knots(21.0) == 40.8
+AUDITED_CRUISE_MAX_SPEEDS = {
+    "La Couronne": 10.3,
+    "La Creole": 12.75,
+    "Russia": 12.0,
+    "San Martin": 11.2,
+    "De Zeven Provincien": 10.6,
+    "Bellona": 10.5,
+    "Poltava": 11.82,
+}
+
+
+def test_shipyard_speed_ranges_keep_the_raw_base_endpoint() -> None:
+    rows = {row["name"]: row for row in SHIP_SEED_DATA}
+    assert rows["La Couronne"]["speed_min_knots"] == 7.6
+    assert rows["La Couronne"]["speed_knots"] == 10.3
+    assert rows["La Creole"]["speed_min_knots"] == 11.0
+    assert rows["La Creole"]["speed_knots"] == 12.75
 
 
 def test_in_game_screenshot_ship_stats_match_catalog() -> None:
@@ -225,7 +237,7 @@ def test_in_game_screenshot_ship_stats_match_catalog() -> None:
         row = rows[name]
         actual = (
             row["durability"],
-            row["speed_knots"],
+            row["speed_min_knots"],
             row["maneuverability"],
             row["armor"],
             row["hold_capacity"],
@@ -234,12 +246,8 @@ def test_in_game_screenshot_ship_stats_match_catalog() -> None:
             row["max_weapon_class"],
             row["weapon_layout"],
         )
-        expected_with_knots = (
-            expected[0],
-            raw_speed_to_knots(expected[1]),
-            *expected[2:],
-        )
-        assert actual == expected_with_knots, name
+        assert actual == expected, name
+        assert row["speed_knots"] == AUDITED_CRUISE_MAX_SPEEDS.get(name, expected[1])
         assert row["source"].startswith("WoSB in-game")
 
 

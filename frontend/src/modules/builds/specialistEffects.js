@@ -53,3 +53,14 @@ export function calculateSpecialistEffectTotals({ slots = [], effectForItem, cre
     return [key, Number.isInteger(rounded) ? Math.trunc(rounded) : rounded]
   }))
 }
+
+export function calculateSpecialistEffectSets({ slots = [], effectForItem, crew = {} }) {
+  return (slots || [])
+    .filter((slot) => slot?.item)
+    .map((slot) => calculateSpecialistEffectTotals({
+      slots: [slot],
+      effectForItem,
+      crew,
+    }))
+    .filter((effects) => Object.keys(effects).length > 0)
+}

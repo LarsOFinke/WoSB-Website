@@ -24,6 +24,7 @@ const COLORS = {
 
 const CORE_STAT_KEYS = new Set([
   'durability',
+  'speed_min_knots',
   'speed_knots',
   'maneuverability',
   'armor',
