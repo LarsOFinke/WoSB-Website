@@ -278,6 +278,7 @@ const researchAccess = calculateUpgradeSlotAccess({
 })
 assert.equal(researchAccess.slot5Unlocked, true)
 assert.equal(researchAccess.slot6Available, false)
+assert.equal(researchAccess.slot7Available, false)
 assert.equal(researchAccess.availableSlots, 5)
 
 const stackedAccess = calculateUpgradeSlotAccess({
@@ -287,7 +288,16 @@ const stackedAccess = calculateUpgradeSlotAccess({
 })
 assert.equal(stackedAccess.slot5Unlocked, true)
 assert.equal(stackedAccess.slot6Available, true)
+assert.equal(stackedAccess.slot7Available, false)
 assert.equal(stackedAccess.availableSlots, 6)
+
+const sevenSlotAccess = calculateUpgradeSlotAccess({
+  shipUpgradeSlots: 6,
+  researchUpgradeSlotUnlocked: true,
+  unlockEffectSlots: 1,
+})
+assert.equal(sevenSlotAccess.slot7Available, true)
+assert.equal(sevenSlotAccess.availableSlots, 7)
 
 
 const buildCreateSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/pages/BuildCreatePage.vue'), 'utf8')
@@ -307,6 +317,8 @@ assert.match(mySquadsSource, /upcomingSquadEvents/)
 assert.match(mySquadsSource, /v-for="event in upcomingSquadEvents"/)
 assert.doesNotMatch(buildCreateSource, /\/icons\/slot-placeholder\.svg/)
 assert.match(buildCreateSource, /<select v-model="form\.lantern"/)
+assert.match(buildCreateSource, /form\.upgrade_7/)
+assert.match(buildCreateSource, /lockedUpgrade7/)
 assert.match(buildCreateSource, /optionsFor\('lantern'\)/)
 
 const sailBlock = buildCreateSource.match(/equipment-slot-sail[\s\S]*?<\/label>/)?.[0] || ''

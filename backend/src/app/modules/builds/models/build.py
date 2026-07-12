@@ -25,7 +25,7 @@ WEAPON_SLOT_TYPE_BY_ARC = {
     "mortar": "weapon_mortar",
     "special": "weapon_special",
 }
-UPGRADE_SLOT_NUMBERS = (1, 2, 3, 4, 5, 6)
+UPGRADE_SLOT_NUMBERS = (1, 2, 3, 4, 5, 6, 7)
 UPGRADE_SLOT_LIMIT = len(UPGRADE_SLOT_NUMBERS)
 BASE_UPGRADE_SLOT_LIMIT = 4
 DEBUFF_KEYS = {
@@ -137,6 +137,10 @@ class Build(Base):
         return self._option_name_at("upgrade", 6)
 
     @property
+    def upgrade_7(self) -> str | None:
+        return self._option_name_at("upgrade", 7)
+
+    @property
     def front_weapon_slots(self) -> list[dict[str, Any]]:
         return self._inventory_slots(WEAPON_SLOT_TYPE_BY_ARC["front"])
 
@@ -198,6 +202,31 @@ class Build(Base):
                 totals[key] = totals.get(key, 0) + value
         return totals
 
+    def _upgrade_unlock_slot_total(self, max_index: int) -> int:
+        """Return net usable slots created by installed expansion upgrades.
+
+        The in-game Structural Expansion tooltip grants two spaces, but the
+        upgrade itself occupies one of them. Capacity therefore grows by one
+        usable slot. Ship-specific overrides remain authoritative: a gross
+        value of three would produce two net slots, while zero disables the
+        unlock for that ship.
+        """
+
+        total = 0
+        for index in UPGRADE_SLOT_NUMBERS:
+            if index > max_index:
+                continue
+            slot = self._upgrade_slot_at(index)
+            if slot is None:
+                continue
+            gross_slots = max(
+                0,
+                int(effective_upgrade_effects(slot.option, self.ship).get("extra_upgrade_slots", 0) or 0),
+            )
+            if gross_slots > 0:
+                total += max(gross_slots - 1, 0)
+        return total
+
     def _special_crew_effect_totals(self) -> dict[str, int | float]:
         weighted_effects = [
             (slot.option.stat_effects, 1)
@@ -230,7 +259,6 @@ class Build(Base):
         effects = self._combine_effects(
             sail_effects, lantern_effects, upgrade_effects, special_crew_effects, research_effects
         )
-        unlock_effects = self._upgrade_effect_totals(max_index=BASE_UPGRADE_SLOT_LIMIT)
         crew_total = self.sailors + self.soldiers + self.musketeers + self.mercenaries
         base_crew_capacity = self.ship.crew_capacity
         effective_crew_capacity = max(
@@ -264,19 +292,28 @@ class Build(Base):
         hold_count = len(self.hold_slots)
         upgrade_names = [getattr(self, f"upgrade_{index}") for index in UPGRADE_SLOT_NUMBERS]
         upgrade_slots_used = sum(1 for name in upgrade_names if name)
-        extra_upgrade_slots = max(0, int(unlock_effects.get("extra_upgrade_slots", 0)))
+        extra_upgrade_slots = max(0, int(upgrade_effects.get("extra_upgrade_slots", 0) or 0))
+        pre_expansion_access = calculate_upgrade_slot_access(
+            ship_upgrade_slots=int(self.ship.upgrade_slots or 0),
+            unlock_effect_slots=0,
+            research_upgrade_slot_unlocked=self.research_upgrade_slot_unlocked,
+        )
+        expansion_upgrade_slots = self._upgrade_unlock_slot_total(
+            max_index=pre_expansion_access.available_slots
+        )
         upgrade_access = calculate_upgrade_slot_access(
             ship_upgrade_slots=int(self.ship.upgrade_slots or 0),
-            unlock_effect_slots=extra_upgrade_slots,
+            unlock_effect_slots=expansion_upgrade_slots,
             research_upgrade_slot_unlocked=self.research_upgrade_slot_unlocked,
         )
         base_upgrade_slots_available = upgrade_access.base_slots
         upgrade_slot_5_unlocked = upgrade_access.slot_5_unlocked
         ship_extra_upgrade_slots = upgrade_access.ship_extra_slots
         upgrade_slot_6_available = upgrade_access.slot_6_available
+        upgrade_slot_7_available = upgrade_access.slot_7_available
         upgrade_slots_available = upgrade_access.available_slots
-        # Backward-compatible name for existing frontend/API consumers.
-        upgrade_slot_6_unlocked = upgrade_slot_6_available and upgrade_access.unlock_effect_slots >= 2
+        # Backward-compatible alias retained for existing frontend/API consumers.
+        upgrade_slot_6_unlocked = upgrade_slot_6_available
         stat_rows = build_stat_rows(self.ship, effects)
         base_stats = build_base_stats(self.ship)
         effective_stats = effective_stats_from_rows(stat_rows)
@@ -291,6 +328,8 @@ class Build(Base):
             warnings.append("Upgrade slot 5 is selected but neither the research reward nor an expansion effect unlocks it.")
         if self.upgrade_6 and not upgrade_slot_6_available:
             warnings.append("Upgrade slot 6 is selected without enough independent slot unlocks.")
+        if self.upgrade_7 and not upgrade_slot_7_available:
+            warnings.append("Upgrade slot 7 is selected without all three independent slot unlocks.")
 
         return {
             "crew_total": crew_total,
@@ -311,11 +350,13 @@ class Build(Base):
             "upgrade_slots_available": upgrade_slots_available,
             "base_upgrade_slots_available": base_upgrade_slots_available,
             "extra_upgrade_slots": extra_upgrade_slots,
+            "expansion_upgrade_slots": expansion_upgrade_slots,
             "research_upgrade_slots": upgrade_access.research_slots,
             "ship_extra_upgrade_slots": ship_extra_upgrade_slots,
             "upgrade_slot_5_unlocked": upgrade_slot_5_unlocked,
             "upgrade_slot_6_available": upgrade_slot_6_available,
             "upgrade_slot_6_unlocked": upgrade_slot_6_unlocked,
+            "upgrade_slot_7_available": upgrade_slot_7_available,
             "item_effects": effects,
             "sail_effects": sail_effects,
             "lantern_effects": lantern_effects,

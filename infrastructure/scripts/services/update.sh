@@ -55,6 +55,8 @@ done
 
 if [[ "$RUN_MIGRATIONS" == true && "$RUN_SEED" == true ]]; then
   OPERATION="update_migrate_seed"
+elif [[ "$RUN_MIGRATIONS" == true ]]; then
+  OPERATION="update_migrate"
 fi
 
 mkdir -p "$CONTROL_DIR"
@@ -87,6 +89,11 @@ if [[ -f "$REQUEST_FILE" ]]; then
     ""|update)
       OPERATION="update"
       RUN_MIGRATIONS=false
+      RUN_SEED=false
+      ;;
+    update_migrate)
+      OPERATION="update_migrate"
+      RUN_MIGRATIONS=true
       RUN_SEED=false
       ;;
     update_migrate_seed)
@@ -218,6 +225,7 @@ if [[ -d "$REPO_ROOT/.git" ]]; then
 
   if [[ "$AUTO_MIGRATIONS" == true && "$RUN_MIGRATIONS" == false ]] && migration_files_changed; then
     RUN_MIGRATIONS=true
+    [[ "$OPERATION" == "update" ]] && OPERATION="update_migrate"
     log "Neue Alembic-Migrationsdateien erkannt; Migrationen werden beabsichtigt ausgeführt."
   fi
 else

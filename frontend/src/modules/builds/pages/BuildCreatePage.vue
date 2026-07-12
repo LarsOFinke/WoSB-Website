@@ -8,7 +8,7 @@ import { useLocale } from '@/locales'
 import { createBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
 import { createBuildForm, equipmentUpgradeCount, slotLimits, sortShipsForDropdown, weaponArcFields } from '@/modules/builds/buildForm'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
-import { calculateBuildStatRows, calculateUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
+import { calculateBuildStatRows, calculateBuildUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
 import { calculateSpecialistEffectTotals } from '@/modules/builds/specialistEffects'
 import {
   crewSliderMax,
@@ -125,16 +125,17 @@ function formatEffects(name, categoryKey = 'upgrade') {
   }).join(' · ')
 }
 
-
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
 const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
-const firstFourUpgradeEffects = computed(() => sumEffects(
-  ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4]
-    .filter(Boolean)
-    .map((name) => upgradeEffects(name)),
-))
+const upgradeAccess = computed(() => calculateBuildUpgradeSlotAccess({
+  form,
+  shipUpgradeSlots: selectedShip.value?.upgrade_slots || 0,
+  effectForUpgrade: upgradeEffects,
+  slotLimit: equipmentUpgradeCount,
+}))
+const selectedUpgradeNames = computed(() => upgradeAccess.value.selectedUpgradeNames)
 const upgradeEffectTotals = computed(() => sumEffects(
-  ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6]
+  ...selectedUpgradeNames.value
     .filter(Boolean)
     .map((name) => upgradeEffects(name)),
 ))
@@ -163,14 +164,9 @@ const buildEffectTotals = computed(() => sumEffects(
   specialCrewEffectTotals.value,
   researchUpgradeEffectTotals.value,
 ))
-const upgradeAccess = computed(() => calculateUpgradeSlotAccess({
-  shipUpgradeSlots: selectedShip.value?.upgrade_slots || 0,
-  unlockEffectSlots: firstFourUpgradeEffects.value.extra_upgrade_slots || 0,
-  researchUpgradeSlotUnlocked: form.research_upgrade_slot_unlocked,
-  slotLimit: equipmentUpgradeCount,
-}))
 const upgradeSlot5Unlocked = computed(() => upgradeAccess.value.slot5Unlocked)
 const upgradeSlot6Available = computed(() => upgradeAccess.value.slot6Available)
+const upgradeSlot7Available = computed(() => upgradeAccess.value.slot7Available)
 const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
 const crewCapacity = computed(() => Math.max(0, Math.round(
   baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
@@ -189,16 +185,13 @@ const crewInvalid = computed(() => crewOverLimit.value || sailorsBelowMinimum.va
 const specialCrewLimit = computed(() => Math.max(1, Number(optionCatalog.value.limits?.special_crew_rows || optionCatalog.value.limits?.special_crew_total) || 8))
 const specialCrewOverCapacity = computed(() => slotCount('special_crew_slots') > specialCrewLimit.value)
 
-const upgradeSlotsUsed = computed(() =>
-  [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean).length,
-)
+const upgradeSlotsUsed = computed(() => selectedUpgradeNames.value.filter(Boolean).length)
 const shipStatsPreview = computed(() => ({
   weaponTotal: allWeaponQuantityTotal(),
   specialCrew: slotCount('special_crew_slots'),
   inventorySlots: slotCount('ammunition_slots') + slotCount('consumable_slots') + slotCount('hold_slots'),
   upgrades: upgradeSlotsUsed.value,
 }))
-
 const statDefinitions = computed(() => optionCatalog.value.stat_definitions || [])
 const buildStatRows = computed(() => calculateBuildStatRows({
   ship: selectedShip.value,
@@ -235,6 +228,7 @@ const submitBlockers = computed(() => {
   if (crewOverLimit.value) blockers.push(t('builds.create.saveReadiness.reasons.crew', { current: crewTotal.value, maximum: crewCapacity.value }))
   if (form.upgrade_5 && !upgradeSlot5Unlocked.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade5'))
   if (form.upgrade_6 && !upgradeSlot6Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade6'))
+  if (form.upgrade_7 && !upgradeSlot7Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade7'))
   if (!allWeaponsValid.value) blockers.push(t('builds.create.saveReadiness.reasons.weapons'))
   if (specialCrewOverCapacity.value) blockers.push(t('builds.create.saveReadiness.reasons.specialists', { maximum: specialCrewLimit.value }))
   return blockers
@@ -377,12 +371,14 @@ const allWeaponsValid = computed(() => weaponArcFields.every((arc) => {
 function isUpgradeSlotDisabled(index) {
   if (index === 5) return !upgradeSlot5Unlocked.value
   if (index === 6) return !upgradeSlot6Available.value
+  if (index === 7) return !upgradeSlot7Available.value
   return false
 }
 
 function upgradeSlotPlaceholder(index) {
   if (index === 5 && !upgradeSlot5Unlocked.value) return t('builds.create.equipment.lockedUpgrade5')
   if (index === 6 && !upgradeSlot6Available.value) return t('builds.create.equipment.lockedUpgrade6')
+  if (index === 7 && !upgradeSlot7Available.value) return t('builds.create.equipment.lockedUpgrade7')
   return t('common.empty')
 }
 
@@ -490,7 +486,7 @@ function resetSlots() {
 function hydrateBuild(build) {
   for (const fieldName of [
     'build_name', 'build_type', 'ship_id', 'sails', 'upgrade_1', 'upgrade_2', 'upgrade_3',
-    'upgrade_4', 'upgrade_5', 'upgrade_6', 'lantern', 'research_upgrade_slot_unlocked',
+    'upgrade_4', 'upgrade_5', 'upgrade_6', 'upgrade_7', 'lantern', 'research_upgrade_slot_unlocked',
     'sailors', 'soldiers', 'musketeers', 'mercenaries', 'details',
   ]) {
     form[fieldName] = build[fieldName] ?? form[fieldName]
@@ -571,6 +567,12 @@ watch(upgradeSlot5Unlocked, (isUnlocked) => {
 watch(upgradeSlot6Available, (isAvailable) => {
   if (!isAvailable) {
     form.upgrade_6 = ''
+  }
+})
+
+watch(upgradeSlot7Available, (isAvailable) => {
+  if (!isAvailable) {
+    form.upgrade_7 = ''
   }
 })
 

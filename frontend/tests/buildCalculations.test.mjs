@@ -52,6 +52,7 @@ test('research reward unlocks one optional slot and reports its availability', (
       shipExtraSlots: 0,
       slot5Unlocked: true,
       slot6Available: false,
+      slot7Available: false,
       availableSlots: 5,
     },
   )
@@ -95,4 +96,25 @@ test('flat durability and armor upgrade values are applied after percentages', (
   })
 
   assert.deepEqual(rows.map((row) => row.effective), [1250, 18.6])
+})
+
+
+test('research, Structural Expansion and a ship extra stack to seven slots', () => {
+  assert.deepEqual(
+    calculateUpgradeSlotAccess({
+      shipUpgradeSlots: 6,
+      researchUpgradeSlotUnlocked: true,
+      unlockEffectSlots: 1,
+    }),
+    {
+      baseSlots: 4,
+      effectSlots: 1,
+      researchSlots: 1,
+      shipExtraSlots: 1,
+      slot5Unlocked: true,
+      slot6Available: true,
+      slot7Available: true,
+      availableSlots: 7,
+    },
+  )
 })

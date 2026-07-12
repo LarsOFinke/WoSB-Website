@@ -14,6 +14,7 @@ from app.modules.builds.services.build_service import BuildValidationError, crea
 from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.seeds.catalog_sync import seed_key
 from app.seeds.manager import SeedManager
 
@@ -423,3 +424,144 @@ def test_current_event_leopard_and_ice_lantern_are_calculated_together() -> None
         assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(10.1)
         assert build.ship_stats["effective_stats"]["hold_capacity"] == 17325
         assert build.ship_stats["effective_stats"]["durability"] == 2142
+
+
+def test_structural_expansion_and_special_ship_stack_to_seventh_upgrade_slot() -> None:
+    with seeded_session() as db:
+        structural = db.scalar(
+            select(BuildItemOption).where(BuildItemOption.name == "Structural Expansion")
+        )
+        helm = db.scalar(
+            select(BuildItemOption).where(BuildItemOption.name == "Maneuverable Helm")
+        )
+        assert structural is not None and helm is not None
+        assert structural.stat_effects["extra_upgrade_slots"] == 2
+
+        special_ship = Ship(
+            name="Seven Slot Test Ship",
+            rate=5,
+            ship_type="Test",
+            durability=100,
+            speed_knots=8,
+            maneuverability=80,
+            armor=1,
+            hold_capacity=100,
+            crew_capacity=20,
+            sailor_minimum=0,
+            displacement_tons=100,
+            source="test",
+            sail_slots=1,
+            # Normal ships use 5; 6 denotes the ship-specific extra slot.
+            upgrade_slots=6,
+            has_lantern=True,
+            is_active=True,
+        )
+        normal_ship = Ship(
+            name="Six Slot Control Ship",
+            rate=5,
+            ship_type="Test",
+            durability=100,
+            speed_knots=8,
+            maneuverability=80,
+            armor=1,
+            hold_capacity=100,
+            crew_capacity=20,
+            sailor_minimum=0,
+            displacement_tons=100,
+            source="test",
+            sail_slots=1,
+            upgrade_slots=5,
+            has_lantern=True,
+            is_active=True,
+        )
+        db.add_all([special_ship, normal_ship])
+        db.commit()
+
+        with pytest.raises(BuildValidationError, match="all three slot sources"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Normal ship cannot use slot seven",
+                    ship_id=normal_ship.id,
+                    research_upgrade_slot_unlocked=True,
+                    upgrade_5=structural.name,
+                    upgrade_7=helm.name,
+                ),
+            )
+
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="Full seven slot stack",
+                ship_id=special_ship.id,
+                research_upgrade_slot_unlocked=True,
+                # Slot 5 already exists through research + the ship extra, so
+                # Structural Expansion may be installed there without circular
+                # self-unlocking.
+                upgrade_5=structural.name,
+                upgrade_7=helm.name,
+            ),
+        )
+
+        stats = build.ship_stats
+        assert build.upgrade_7 == helm.name
+        assert stats["extra_upgrade_slots"] == 2
+        assert stats["expansion_upgrade_slots"] == 1
+        assert stats["research_upgrade_slots"] == 1
+        assert stats["ship_extra_upgrade_slots"] == 1
+        assert stats["upgrade_slot_7_available"] is True
+        assert stats["upgrade_slots_available"] == 7
+
+
+def test_ship_specific_structural_expansion_value_controls_slot_unlock() -> None:
+    with seeded_session() as db:
+        structural = db.scalar(
+            select(BuildItemOption).where(BuildItemOption.name == "Structural Expansion")
+        )
+        helm = db.scalar(
+            select(BuildItemOption).where(BuildItemOption.name == "Maneuverable Helm")
+        )
+        assert structural is not None and helm is not None
+
+        ship = Ship(
+            name="Structural Override Test Ship",
+            rate=5,
+            ship_type="Test",
+            durability=100,
+            speed_knots=8,
+            maneuverability=80,
+            armor=1,
+            hold_capacity=100,
+            crew_capacity=20,
+            sailor_minimum=0,
+            displacement_tons=100,
+            source="test",
+            sail_slots=1,
+            upgrade_slots=6,
+            has_lantern=True,
+            is_active=True,
+        )
+        db.add(ship)
+        db.flush()
+        ship.upgrade_effect_overrides.append(
+            ShipUpgradeEffectOverride(
+                option_id=structural.id,
+                effect_key="extra_upgrade_slots",
+                # One gross space is consumed by Structural Expansion itself,
+                # leaving no net additional slot on this specific ship.
+                effect_value=1,
+            )
+        )
+        db.commit()
+
+        with pytest.raises(BuildValidationError, match="all three slot sources"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Override blocks seventh slot",
+                    ship_id=ship.id,
+                    research_upgrade_slot_unlocked=True,
+                    upgrade_5=structural.name,
+                    upgrade_7=helm.name,
+                ),
+            )

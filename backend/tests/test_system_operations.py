@@ -62,6 +62,19 @@ def test_staff_can_read_update_status_but_only_admin_can_queue() -> None:
         shutil.rmtree(control_dir, ignore_errors=True)
         control_dir.mkdir(parents=True, exist_ok=True)
 
+        migration_only_update = client.post(
+            '/api/admin/system/update',
+            json={'operation': 'update_migrate'},
+        )
+        assert migration_only_update.status_code == 202, migration_only_update.text
+        migration_only_payload = migration_only_update.json()
+        assert migration_only_payload['status']['operation'] == 'update_migrate'
+        request_payload = json.loads(request_file.read_text(encoding='utf-8'))
+        assert request_payload['operation'] == 'update_migrate'
+
+        shutil.rmtree(control_dir, ignore_errors=True)
+        control_dir.mkdir(parents=True, exist_ok=True)
+
         migration_update = client.post(
             '/api/admin/system/update',
             json={'operation': 'update_migrate_seed'},

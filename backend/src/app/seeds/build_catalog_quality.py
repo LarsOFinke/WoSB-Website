@@ -71,8 +71,8 @@ def validate_ship_seed_data(rows: list[dict[str, object]]) -> None:
         upgrade_slots = int(row.get("upgrade_slots", 5) or 0)
         if sail_slots < 0:
             errors.append(f"{name}: sail_slots must not be negative")
-        if upgrade_slots < 0 or upgrade_slots > 6:
-            errors.append(f"{name}: upgrade_slots must be between 0 and 6")
+        if upgrade_slots < 0 or upgrade_slots > 7:
+            errors.append(f"{name}: upgrade_slots must be between 0 and 7")
         if not isinstance(row.get("has_lantern", True), bool):
             errors.append(f"{name}: has_lantern must be boolean")
 

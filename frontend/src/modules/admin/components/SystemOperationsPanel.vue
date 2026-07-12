@@ -61,7 +61,11 @@ async function refresh() {
 
 async function trigger(operation) {
   if (!props.isAdmin || inProgress.value) return
-  if (operation === 'update_migrate_seed' && !window.confirm(t('admin.system.migrateSeedConfirm'))) return
+  const confirmKey = {
+    update_migrate: 'admin.system.migrateConfirm',
+    update_migrate_seed: 'admin.system.migrateSeedConfirm',
+  }[operation]
+  if (confirmKey && !window.confirm(t(confirmKey))) return
 
   loading.value = true
   error.value = ''
@@ -69,9 +73,12 @@ async function trigger(operation) {
   try {
     const response = await requestSystemUpdate(operation)
     update.value = response.status
-    success.value = t(operation === 'update_migrate_seed'
-      ? 'admin.system.migrateSeedRequestAccepted'
-      : 'admin.system.requestAccepted')
+    const successKey = {
+      update: 'admin.system.requestAccepted',
+      update_migrate: 'admin.system.migrateRequestAccepted',
+      update_migrate_seed: 'admin.system.migrateSeedRequestAccepted',
+    }[operation] || 'admin.system.requestAccepted'
+    success.value = t(successKey)
     schedulePoll()
   } catch (err) {
     error.value = err.message || t('admin.system.requestError')
@@ -118,7 +125,10 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <button class="form-button primary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update')">
           {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
         </button>
-        <button class="form-button secondary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update_migrate_seed')">
+        <button class="form-button secondary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update_migrate')">
+          {{ t('admin.system.migrateButton') }}
+        </button>
+        <button class="form-button secondary-action seed-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update_migrate_seed')">
           {{ t('admin.system.migrateSeedButton') }}
         </button>
       </div>

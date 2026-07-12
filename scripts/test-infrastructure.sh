@@ -11,6 +11,7 @@ for file in "${affected[@]}"; do bash -n "$file"; done
 [[ ! -e "$ROOT_DIR/frontend/.env" ]]
 [[ ! -e "$INFRA_DIR/.env" ]]
 ! grep -R -q '/var/run/docker.sock' "$ROOT_DIR/backend" "$INFRA_DIR/compose.yml"
+grep -q 'update_migrate)' "$INFRA_DIR/scripts/services/update.sh"
 grep -q 'update_migrate_seed)' "$INFRA_DIR/scripts/services/update.sh"
 grep -q 'flock -n' "$INFRA_DIR/scripts/services/update.sh"
 grep -q 'data/postgres/PG_VERSION' "$INFRA_DIR/setup.sh"

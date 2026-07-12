@@ -18,11 +18,13 @@ class ShipStats(BaseModel):
     upgrade_slots_available: int
     base_upgrade_slots_available: int | None = None
     extra_upgrade_slots: int = 0
+    expansion_upgrade_slots: int = 0
     research_upgrade_slots: int = 0
     ship_extra_upgrade_slots: int = 0
     upgrade_slot_5_unlocked: bool = False
     upgrade_slot_6_available: bool = False
     upgrade_slot_6_unlocked: bool = False
+    upgrade_slot_7_available: bool = False
     base_crew_capacity: int | None = None
     effective_crew_capacity: int | None = None
     base_sailor_minimum: int | None = None

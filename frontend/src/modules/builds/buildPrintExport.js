@@ -174,7 +174,7 @@ function createBuildPrintDocument(build, helpers = {}) {
   const upgradeLines = model.upgrades.length ? model.upgrades : ['—']
   const upgradeContent = upgradeLines.map((line, index) => `
     <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${line === '—' ? COLORS.muted : COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
-  const upgradePanelHeight = 276
+  const upgradePanelHeight = Math.max(276, 116 + (upgradeLines.length * 32) + 28)
   const upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
   leftY += upgradePanelHeight
 
@@ -305,7 +305,7 @@ function makeSummaryCards(build, t) {
     { label: t('builds.detail.buildType'), value: buildTypeLabel(build?.build_type, t), detail: `${t('common.rate')} ${build?.ship?.rate || '—'}` },
     { label: t('builds.detail.shipStats'), value: `${stats.weapon_total || 0}`, detail: t('builds.detail.weaponCapacity', { count: stats.weapon_capacity_total || 0 }) },
     { label: t('builds.detail.crewDistribution'), value: `${crewTotal}/${crewCapacity}`, detail: t('builds.commandDeck.crewRemaining', { value: stats.crew_remaining || 0 }) },
-    { label: t('builds.detail.upgrades'), value: `${stats.upgrades_selected || [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6].filter(Boolean).length || 0}`, detail: t('builds.list.upgradeSummary', { used: [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6].filter(Boolean).length, max: stats.upgrade_slots_available || 0 }) },
+    { label: t('builds.detail.upgrades'), value: `${stats.upgrades_selected || [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7].filter(Boolean).length || 0}`, detail: t('builds.list.upgradeSummary', { used: [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7].filter(Boolean).length, max: stats.upgrade_slots_available || 0 }) },
   ]
 }
 
@@ -326,7 +326,8 @@ function createBuildPrintModel(build, helpers = {}) {
     build?.upgrade_4,
     build?.upgrade_5,
     build?.upgrade_6,
-  ].filter(Boolean).map(optionLabel), 6)
+    build?.upgrade_7,
+  ].filter(Boolean).map(optionLabel), 7)
   const weaponGroups = [
     { label: t('builds.detail.weapons.front'), slots: build?.front_weapon_slots || [] },
     { label: t('builds.detail.weapons.port'), slots: build?.port_weapon_slots || [] },

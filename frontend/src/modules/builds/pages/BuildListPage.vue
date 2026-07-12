@@ -40,7 +40,7 @@ function crewTotal(build) {
 
 function slotSummary(build) {
   const stats = build.ship_stats || {}
-  const used = stats.upgrade_slots_used ?? [build.upgrade_1, build.upgrade_2, build.upgrade_3, build.upgrade_4, build.upgrade_5, build.upgrade_6].filter(Boolean).length
+  const used = stats.upgrade_slots_used ?? [build.upgrade_1, build.upgrade_2, build.upgrade_3, build.upgrade_4, build.upgrade_5, build.upgrade_6, build.upgrade_7].filter(Boolean).length
   const max = stats.upgrade_slots_available || 5
   return t('builds.list.upgradeSummary', { used, max })
 }

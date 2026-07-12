@@ -1,6 +1,6 @@
 import { emptyInventorySlot } from '@/modules/builds/inventorySlots'
 
-export const equipmentUpgradeCount = 6
+export const equipmentUpgradeCount = 7
 
 export const weaponArcFields = Object.freeze([
   { fieldName: 'front_weapon_slots', labelKey: 'builds.create.weapons.front', altKey: 'builds.create.weapons.frontAlt' },
@@ -36,6 +36,7 @@ export function createBuildForm() {
     upgrade_4: '',
     upgrade_5: '',
     upgrade_6: '',
+    upgrade_7: '',
     lantern: '',
     research_upgrade_slot_unlocked: false,
     sailors: 0,

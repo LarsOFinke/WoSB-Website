@@ -17,6 +17,7 @@ class BuildBase(BaseModel):
     upgrade_4: str | None = Field(default=None, max_length=140)
     upgrade_5: str | None = Field(default=None, max_length=140)
     upgrade_6: str | None = Field(default=None, max_length=140)
+    upgrade_7: str | None = Field(default=None, max_length=140)
     lantern: str | None = Field(default=None, max_length=140)
     research_upgrade_slot_unlocked: bool = False
 
@@ -102,6 +103,7 @@ class BuildBase(BaseModel):
             "upgrade_4",
             "upgrade_5",
             "upgrade_6",
+            "upgrade_7",
             "lantern",
             "details",
         ):
