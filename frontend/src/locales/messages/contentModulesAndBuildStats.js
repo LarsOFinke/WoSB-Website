@@ -88,6 +88,15 @@ export const contentModulesAndBuildStatsMessages = {
       },
     },
     builds: {
+      upgradeGroups: {
+        speed: 'Speed',
+        expeditionary: 'Expeditionary',
+        protection: 'Protection',
+        combat: 'Combat',
+        unusual: 'Unusual',
+        mortar: 'Mortar',
+        other: 'Other',
+      },
       commandDeck: {
         eyebrow: 'Live build intelligence',
         title: 'Build command deck',
@@ -414,6 +423,15 @@ export const contentModulesAndBuildStatsMessages = {
       },
     },
     builds: {
+      upgradeGroups: {
+        speed: 'Geschwindigkeit',
+        expeditionary: 'Expedition',
+        protection: 'Schutz',
+        combat: 'Kampf',
+        unusual: 'Ungewöhnlich',
+        mortar: 'Mörser',
+        other: 'Weitere',
+      },
       commandDeck: {
         eyebrow: 'Live-Build-Analyse',
         title: 'Build-Kommandozentrale',

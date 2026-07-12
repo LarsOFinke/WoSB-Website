@@ -8,7 +8,7 @@ from app.modules.registry import register_all_models
 from app.seeds.manager import SeedManager
 
 
-def test_legacy_fortified_ports_is_migrated_to_reinforced_ports() -> None:
+def test_legacy_reinforced_ports_is_migrated_to_fortified_ports() -> None:
     register_all_models()
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
@@ -21,14 +21,14 @@ def test_legacy_fortified_ports_is_migrated_to_reinforced_ports() -> None:
         legacy = db.scalar(
             select(BuildItemOption).where(
                 BuildItemOption.category_id == category.id,
-                BuildItemOption.name == "Fortified Ports",
+                BuildItemOption.name == "Reinforced Ports",
             )
         )
         if legacy is None:
             db.add(
                 BuildItemOption(
                     category_id=category.id,
-                    name="Fortified Ports",
+                    name="Reinforced Ports",
                     sort_order=999,
                     is_active=True,
                 )
@@ -42,15 +42,16 @@ def test_legacy_fortified_ports_is_migrated_to_reinforced_ports() -> None:
         legacy = db.scalar(
             select(BuildItemOption).where(
                 BuildItemOption.category_id == category.id,
-                BuildItemOption.name == "Fortified Ports",
+                BuildItemOption.name == "Reinforced Ports",
             )
         )
         current = db.scalar(
             select(BuildItemOption).where(
                 BuildItemOption.category_id == category.id,
-                BuildItemOption.name == "Reinforced Ports",
+                BuildItemOption.name == "Fortified Ports",
             )
         )
         assert legacy is None
         assert current is not None
         assert current.is_active is True
+        assert current.stat_effects == {"weapon_range": 10}

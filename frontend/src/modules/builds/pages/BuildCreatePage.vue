@@ -269,6 +269,29 @@ function upgradeOptionsForSlot(index) {
   return optionsFor('upgrade').filter((option) => option === current || !selectedElsewhere.has(option))
 }
 
+const UPGRADE_GROUP_ORDER = ['speed', 'expeditionary', 'protection', 'combat', 'unusual', 'mortar', 'other']
+
+function upgradeGroupForOption(name) {
+  const kind = String(optionMeta('upgrade', name)?.option_kind || '')
+  return kind.startsWith('ship_upgrade_') ? kind.slice('ship_upgrade_'.length) : 'other'
+}
+
+function upgradeGroupsForSlot(index) {
+  const grouped = new Map()
+  for (const option of upgradeOptionsForSlot(index)) {
+    const group = upgradeGroupForOption(option)
+    if (!grouped.has(group)) grouped.set(group, [])
+    grouped.get(group).push(option)
+  }
+  return UPGRADE_GROUP_ORDER
+    .filter((group) => grouped.has(group))
+    .map((group) => ({
+      key: group,
+      label: t(`builds.upgradeGroups.${group}`),
+      options: grouped.get(group),
+    }))
+}
+
 
 function weaponSlotTypeForField(fieldName) {
   return {
@@ -675,7 +698,9 @@ onMounted(async () => {
                 :disabled="isUpgradeSlotDisabled(index)"
               >
                 <option value="">{{ upgradeSlotPlaceholder(index) }}</option>
-                <option v-for="option in upgradeOptionsForSlot(index)" :key="option" :value="option">{{ optionLabel(option) }}</option>
+                <optgroup v-for="group in upgradeGroupsForSlot(index)" :key="group.key" :label="group.label">
+                  <option v-for="option in group.options" :key="option" :value="option">{{ optionLabel(option) }}</option>
+                </optgroup>
               </select>
               <small v-if="form[`upgrade_${index}`]" class="slot-effect-text">{{ formatEffects(form[`upgrade_${index}`]) }}</small>
             </span>

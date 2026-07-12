@@ -126,6 +126,19 @@ def validate_upgrade_seed_data(rows: list[dict[str, object]]) -> None:
         for field in REQUIRED_UPGRADE_FIELDS:
             if row.get(field) in (None, ""):
                 errors.append(f"{name}: missing {field}")
+        source = str(row.get("source") or "")
+        if not source.startswith("WoSB in-game"):
+            errors.append(f"{name}: source must identify the verified in-game upgrade panels")
+        option_kind = str(row.get("option_kind") or "")
+        if option_kind not in {
+            "ship_upgrade_speed",
+            "ship_upgrade_expeditionary",
+            "ship_upgrade_protection",
+            "ship_upgrade_combat",
+            "ship_upgrade_unusual",
+            "ship_upgrade_mortar",
+        }:
+            errors.append(f"{name}: invalid upgrade group {option_kind!r}")
         effects = row.get("stat_effects")
         if not isinstance(effects, dict) or not effects:
             errors.append(f"{name}: stat_effects must be a non-empty object")

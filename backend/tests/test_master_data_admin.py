@@ -62,7 +62,7 @@ def test_admin_overrides_survive_seed_and_can_be_restored() -> None:
                 option_kind=option.option_kind,
                 weapon_class=option.weapon_class_code,
                 weapon_caliber_inches=option.weapon_caliber_inches,
-                stat_effects={"speed_pct": 99},
+                stat_effects={"water_fire_protection_pct": 99},
                 allowed_slot_types=option.allowed_slots,
                 sort_order=option.sort_order,
                 is_active=True,
@@ -70,12 +70,15 @@ def test_admin_overrides_survive_seed_and_can_be_restored() -> None:
         )
         SeedManager(db).seed_build_options()
         preserved = next(row for row in list_options(db, search="Copper Plating") if row.id == option.id)
-        assert preserved.stat_effects == {"speed_pct": 99.0}
+        assert preserved.stat_effects == {"water_fire_protection_pct": 99.0}
         assert preserved.image_url == "/uploads/copper-plating.webp"
         assert preserved.seed_status == "overridden"
 
         restored = restore_option_seed(db, option.id)
-        assert restored.stat_effects["speed_pct"] == 4.0
+        assert restored.stat_effects == {
+            "water_fire_protection_pct": 25.0,
+            "explosive_fire_ship_protection_pct": 30.0,
+        }
         assert restored.image_url is None
         assert restored.seed_status == "seeded"
 
@@ -206,7 +209,7 @@ def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly
 
     with _seeded_db() as db:
         ship = db.scalar(select(Ship).where(Ship.name == "Firestorm"))
-        option = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Copper Plating"))
+        option = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Lightweight Hull"))
         assert ship is not None and option is not None
         current = next(row for row in list_ships(db, search="Firestorm") if row.id == ship.id)
         payload = current.model_dump(exclude={
@@ -222,18 +225,18 @@ def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly
         assert option.stat_effects["speed_pct"] == 4
 
         catalog = list_build_options(db, ship.id)
-        copper = next(row for row in catalog.options["upgrade"] if row.name == "Copper Plating")
-        assert copper.stat_effects["speed_pct"] == 12
-        assert copper.base_stat_effects["speed_pct"] == 4
-        assert copper.is_ship_specific is True
+        lightweight = next(row for row in catalog.options["upgrade"] if row.name == "Lightweight Hull")
+        assert lightweight.stat_effects["speed_pct"] == 12
+        assert lightweight.base_stat_effects["speed_pct"] == 4
+        assert lightweight.is_ship_specific is True
 
         build = create_build(
             db,
             BuildCreate(
-                build_name="Ship-specific copper",
+                build_name="Ship-specific lightweight hull",
                 ship_id=ship.id,
                 sailors=ship.sailor_minimum,
-                upgrade_1="Copper Plating",
+                upgrade_1="Lightweight Hull",
             ),
         )
         assert build.ship_stats["upgrade_effects"]["speed_pct"] == 12
@@ -241,6 +244,6 @@ def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly
         restored = restore_ship_seed(db, ship.id)
         assert restored.upgrade_effect_overrides == []
         catalog = list_build_options(db, ship.id)
-        copper = next(row for row in catalog.options["upgrade"] if row.name == "Copper Plating")
-        assert copper.stat_effects["speed_pct"] == 4
-        assert copper.is_ship_specific is False
+        lightweight = next(row for row in catalog.options["upgrade"] if row.name == "Lightweight Hull")
+        assert lightweight.stat_effects["speed_pct"] == 4
+        assert lightweight.is_ship_specific is False

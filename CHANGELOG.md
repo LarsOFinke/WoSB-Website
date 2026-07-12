@@ -2,6 +2,11 @@
 
 ## 1.0.0 — Produktionsbaseline
 
+- Upgrade-Katalog auf 32 aktuelle Ingame-Upgrades aus den Bereichen Geschwindigkeit, Expedition, Schutz, Kampf, Ungewöhnlich und Mörser re-auditiert
+- globale Upgrade-Werte als Standard beibehalten; schiffsspezifische Sparse-Overrides bleiben für jeden einzelnen Schiffsstammdatensatz editierbar
+- Upgrade-Auswahl im Build-Designer nach den Ingame-Bereichen gruppiert
+- erfolgreiche `/api/health`- und `/api/health/ready`-Probes aus System- und NGINX-Zugriffslogs ausgeblendet; fehlgeschlagene Checks bleiben sichtbar
+- Systemlog-Ansicht um einen serverseitigen IP-Filter einschließlich gefilterter Kennzahlen erweitert
 - schiffsspezifische Upgrade-Effektwerte als wartbare Sparse-Overrides in API, Datenmodell und Stammdatenverwaltung ergänzt
 - Build-Designer und serverseitige Build-Berechnung verwenden automatisch die Upgrade-Werte des gewählten Schiffs
 - Spezialisten auf genau einen Eintrag je Art vereinheitlicht; Mengen-Counter und stapelbare Effekte entfernt

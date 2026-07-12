@@ -12,7 +12,7 @@ from app.seeds.hold_items import HOLD_OPTIONS
 from app.seeds.lanterns import LANTERN_OPTIONS
 from app.seeds.sails import SAIL_OPTIONS
 from app.seeds.special_crew import SPECIAL_CREW_OPTIONS
-from app.seeds.upgrades import UPGRADE_OPTIONS
+from app.seeds.upgrades import UPGRADE_EFFECTS_BY_NAME, UPGRADE_OPTIONS
 from app.seeds.weapons import WEAPON_OPTIONS
 
 
@@ -84,13 +84,39 @@ def test_lantern_catalog_matches_verified_tooltip_values() -> None:
     assert all(row["option_kind"] == "lantern" for row in LANTERN_OPTIONS)
 
 
-def test_upgrade_catalog_uses_current_names_and_effect_metadata() -> None:
+def test_upgrade_catalog_matches_verified_in_game_panels() -> None:
     validate_upgrade_seed_data(UPGRADE_OPTIONS)
     names = {row["name"] for row in UPGRADE_OPTIONS}
-    assert len(UPGRADE_OPTIONS) >= 30
-    assert {"Reinforced Ports", "Emergency Powder Charge", "Structural Expansion"} <= names
-    assert "Fortified Ports" not in names
-    assert all(row["option_kind"] == "ship_upgrade" for row in UPGRADE_OPTIONS)
+    assert len(UPGRADE_OPTIONS) == 32
+    assert {
+        "Maneuverable Helm",
+        "Small Hooks",
+        "Repair Arsenal",
+        "Fortified Ports",
+        "Structural Expansion",
+        "Reinforced Centre-Line",
+        "Swivel Mortars",
+    } <= names
+    assert "Reinforced Ports" not in names
+    assert all(str(row["option_kind"]).startswith("ship_upgrade_") for row in UPGRADE_OPTIONS)
+    assert UPGRADE_EFFECTS_BY_NAME["Maneuverable Helm"] == {
+        "turn_rate_pct": 8,
+        "cruising_turn_speed_penalty_pct": -15,
+    }
+    assert UPGRADE_EFFECTS_BY_NAME["Double Hold"] == {
+        "hold_capacity": 4500,
+        "item_loss_pct": -40,
+        "hull_hp_pct": -5,
+    }
+    assert UPGRADE_EFFECTS_BY_NAME["Repair Arsenal"] == {
+        "durability": 150,
+        "repair_item_efficiency_pct": 20,
+    }
+    assert UPGRADE_EFFECTS_BY_NAME["Lightweight Construction"] == {
+        "mortar_reload_pct": 40,
+        "hold_capacity_pct": 25,
+        "mortar_damage_pct": -25,
+    }
 
 
 def test_specialist_catalog_matches_verified_screenshot_roster() -> None:

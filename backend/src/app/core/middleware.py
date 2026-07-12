@@ -10,6 +10,14 @@ from starlette.responses import Response
 
 logger = logging.getLogger("app.request")
 
+ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
+
+
+def should_log_request(path: str, status_code: int, failure: Exception | None = None) -> bool:
+    """Keep actionable failures while suppressing successful routine probes."""
+
+    return failure is not None or status_code >= 400 or path not in ROUTINE_HEALTH_PATHS
+
 
 def _client_ip(request: Request) -> str | None:
     forwarded_for = request.headers.get("x-forwarded-for")
@@ -62,5 +70,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     extra=context,
                     exc_info=(type(failure), failure, failure.__traceback__),
                 )
-            else:
+            elif should_log_request(request.url.path, status_code):
+                # Readiness/liveness probes are intentionally excluded from the
+                # persisted system log. Failed checks remain visible.
                 logger.info("request completed", extra=context)

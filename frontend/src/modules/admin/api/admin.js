@@ -22,12 +22,12 @@ export function rejectRegistrationRequest(id, note = '') {
   return post(`/admin/registration-requests/${id}/reject`, { note: note || null })
 }
 
-export function listAdminLogs({ level = '', path = '', limit = 120 } = {}) {
-  return get(withQuery('/admin/logs', { level, path, limit }))
+export function listAdminLogs({ level = '', path = '', clientIp = '', limit = 120 } = {}) {
+  return get(withQuery('/admin/logs', { level, path, client_ip: clientIp, limit }))
 }
 
-export function getAdminLogSummary() {
-  return get('/admin/logs/summary')
+export function getAdminLogSummary({ level = '', path = '', clientIp = '' } = {}) {
+  return get(withQuery('/admin/logs/summary', { level, path, client_ip: clientIp }))
 }
 
 export function listAdminBuilds(search = '', buildType = '') {

@@ -35,6 +35,22 @@ from app.modules.admin.routes.master_data import router as master_data_router
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+def _app_log_filters(
+    *,
+    level: str | None = None,
+    path: str | None = None,
+    client_ip: str | None = None,
+):
+    filters = []
+    if level:
+        filters.append(AppLog.level == level.upper())
+    if path:
+        filters.append(AppLog.path.contains(path.strip()))
+    if client_ip:
+        filters.append(AppLog.client_ip.contains(client_ip.strip()))
+    return filters
+
+
 @router.get("/system/update", response_model=SystemUpdateStatus)
 def admin_system_update_status(
     _: User = Depends(require_staff),
@@ -98,28 +114,29 @@ def admin_reject_registration_request(
 def admin_list_logs(
     level: str | None = Query(default=None, max_length=20),
     path: str | None = Query(default=None, max_length=120),
+    client_ip: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=120, ge=1, le=500),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> list[AppLogRead]:
-    query = select(AppLog)
-    if level:
-        query = query.where(AppLog.level == level.upper())
-    if path:
-        query = query.where(AppLog.path.contains(path))
+    query = select(AppLog).where(*_app_log_filters(level=level, path=path, client_ip=client_ip))
     rows = db.scalars(query.order_by(AppLog.created_at.desc(), AppLog.id.desc()).limit(limit)).all()
     return [AppLogRead.model_validate(row) for row in rows]
 
 
 @router.get("/logs/summary", response_model=AppLogSummary)
 def admin_log_summary(
+    level: str | None = Query(default=None, max_length=20),
+    path: str | None = Query(default=None, max_length=120),
+    client_ip: str | None = Query(default=None, max_length=120),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> AppLogSummary:
-    total = int(db.scalar(select(func.count(AppLog.id))) or 0)
-    errors = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
-    warnings = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level == "WARNING")) or 0)
-    slow_requests = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.duration_ms >= 750)) or 0)
+    filters = _app_log_filters(level=level, path=path, client_ip=client_ip)
+    total = int(db.scalar(select(func.count(AppLog.id)).where(*filters)) or 0)
+    errors = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
+    warnings = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level == "WARNING")) or 0)
+    slow_requests = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.duration_ms >= 750)) or 0)
     status_ranges = {
         "2xx": (200, 300),
         "3xx": (300, 400),
@@ -130,7 +147,7 @@ def admin_log_summary(
         bucket: int(
             db.scalar(
                 select(func.count(AppLog.id)).where(
-                    AppLog.status_code >= lower, AppLog.status_code < upper
+                    *filters, AppLog.status_code >= lower, AppLog.status_code < upper
                 )
             )
             or 0

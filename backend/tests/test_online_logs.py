@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.core.middleware import should_log_request
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
@@ -28,19 +29,30 @@ def test_staff_can_read_persisted_exception_logs() -> None:
         )
         assert login.status_code == 200
 
-        failed = client.get('/api/__tests__/explode')
+        failed = client.get('/api/__tests__/explode', headers={'X-Forwarded-For': '203.0.113.42'})
         assert failed.status_code == 500
 
-        logs = client.get('/api/admin/logs', params={'level': 'ERROR', 'path': '/api/__tests__/explode'})
+        logs = client.get('/api/admin/logs', params={'level': 'ERROR', 'path': '/api/__tests__/explode', 'client_ip': '203.0.113.42'})
         assert logs.status_code == 200, logs.text
         rows = logs.json()
         assert rows
         assert rows[0]['status_code'] == 500
         assert 'online log regression marker' in (rows[0]['exception'] or '')
 
-        summary = client.get('/api/admin/logs/summary')
+        unmatched = client.get('/api/admin/logs', params={'client_ip': '198.51.100.9'})
+        assert unmatched.status_code == 200
+        assert unmatched.json() == []
+
+        summary = client.get('/api/admin/logs/summary', params={'client_ip': '203.0.113.42'})
         assert summary.status_code == 200, summary.text
         body = summary.json()
         assert body['total'] >= 1
         assert body['errors'] >= 1
         assert body['recent_status']['5xx'] >= 1
+
+
+def test_successful_health_probes_are_not_actionable_request_logs() -> None:
+    assert should_log_request('/api/health', 200) is False
+    assert should_log_request('/api/health/ready', 200) is False
+    assert should_log_request('/api/health/ready', 503) is True
+    assert should_log_request('/api/builds', 200) is True

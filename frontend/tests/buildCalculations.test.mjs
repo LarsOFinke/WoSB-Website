@@ -71,3 +71,28 @@ test('Ice Lantern applies all three current-event bonuses to Leopard', () => {
 
   assert.deepEqual(rows.map((row) => row.effective), [10.1, 17325, 2142])
 })
+
+test('flat durability and armor upgrade values are applied after percentages', () => {
+  const rows = calculateBuildStatRows({
+    ship: { durability: 1000, armor: 4 },
+    definitions: [
+      {
+        key: 'durability',
+        base_field: 'durability',
+        pct_effect: 'hull_hp_pct',
+        calculation_flat_effect: 'durability',
+        precision: 0,
+      },
+      {
+        key: 'armor',
+        base_field: 'armor',
+        pct_effect: 'armor_pct',
+        calculation_flat_effect: 'armor',
+        precision: 1,
+      },
+    ],
+    effects: { hull_hp_pct: 10, durability: 150, armor_pct: -10, armor: 15 },
+  })
+
+  assert.deepEqual(rows.map((row) => row.effective), [1250, 18.6])
+})

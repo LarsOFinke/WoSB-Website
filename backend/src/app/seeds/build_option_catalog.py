@@ -8,6 +8,7 @@ from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
 from app.modules.builds.models.build_slot import BuildSlot
+from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import WeaponClassDefinition, WeaponSlotType
 from app.seeds.ammunition import AMMUNITION_OPTIONS
 from app.seeds.build_catalog_quality import (
@@ -255,9 +256,33 @@ def _migrate_legacy_upgrade_names(db: Session, category: BuildItemCategory) -> N
         if current is None:
             legacy.name = current_name
             legacy.is_active = True
+            # The canonical seed key is derived from the current name. Clearing
+            # the old key lets the regular seed sync adopt the renamed row.
+            legacy.seed_key = None
+            legacy.seed_revision = None
+            legacy.seed_checksum = None
             db.flush()
             continue
 
         db.execute(update(BuildSlot).where(BuildSlot.option_id == legacy.id).values(option_id=current.id))
+        legacy_overrides = list(
+            db.scalars(
+                select(ShipUpgradeEffectOverride).where(
+                    ShipUpgradeEffectOverride.option_id == legacy.id
+                )
+            ).all()
+        )
+        for override in legacy_overrides:
+            duplicate = db.scalar(
+                select(ShipUpgradeEffectOverride).where(
+                    ShipUpgradeEffectOverride.ship_id == override.ship_id,
+                    ShipUpgradeEffectOverride.option_id == current.id,
+                    ShipUpgradeEffectOverride.effect_key == override.effect_key,
+                )
+            )
+            if duplicate is None:
+                override.option_id = current.id
+            else:
+                db.delete(override)
         db.delete(legacy)
         db.flush()

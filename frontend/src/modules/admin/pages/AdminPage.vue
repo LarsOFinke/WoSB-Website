@@ -45,6 +45,7 @@ const calendarCategory = ref('')
 const registrationStatus = ref('pending')
 const logLevel = ref('')
 const logPath = ref('')
+const logIp = ref('')
 const loading = ref(false)
 const userLoading = ref(false)
 const calendarLoading = ref(false)
@@ -185,8 +186,8 @@ async function loadLogs() {
   logsError.value = ''
   try {
     const [summary, rows] = await Promise.all([
-      getAdminLogSummary(),
-      listAdminLogs({ level: logLevel.value, path: logPath.value, limit: 140 }),
+      getAdminLogSummary({ level: logLevel.value, path: logPath.value, clientIp: logIp.value }),
+      listAdminLogs({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, limit: 140 }),
     ])
     logSummary.value = summary
     appLogs.value = rows
@@ -346,7 +347,7 @@ watch(contentSearch, () => {
 
 watch(calendarCategory, loadCalendar)
 watch(registrationStatus, loadRegistrations)
-watch([logLevel, logPath], loadLogs)
+watch([logLevel, logPath, logIp], loadLogs)
 
 watch(activeTab, async (tab) => {
   clearConfirmation()
@@ -490,6 +491,7 @@ onUnmounted(() => {
           <div class="staff-filter-row">
             <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
             <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
+            <label class="filter-box admin-search"><input v-model="logIp" type="search" inputmode="decimal" autocomplete="off" :placeholder="t('admin.logs.ipPlaceholder')" /></label>
           </div>
           <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>
           <p v-else-if="logsError" class="error-text table-state">{{ logsError }}</p>
