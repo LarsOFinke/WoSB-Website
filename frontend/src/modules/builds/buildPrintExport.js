@@ -1,7 +1,8 @@
 import { buildShareUrl } from './shareBuild.js'
 
 const PAGE_WIDTH = 1240
-const BASE_PAGE_HEIGHT = 1754
+const BASE_PAGE_HEIGHT = 1480
+const FOOTER_HEIGHT = 72
 const PANEL_GAP = 24
 const PAGE_PADDING = 52
 const CONTENT_WIDTH = PAGE_WIDTH - PAGE_PADDING * 2
@@ -233,9 +234,11 @@ function createBuildPrintDocument(build, helpers = {}) {
   const hasNotes = model.notes.length > 0
   const footerLines = hasNotes ? model.notes : []
   const notesTextHeight = Math.max(1, footerLines.length) * 16 * 1.45
-  const notesPanelY = hasNotes ? (Math.max(leftY, rightY) + PANEL_GAP) : 0
+  const contentBottomY = Math.max(leftY, rightY)
+  const notesPanelY = hasNotes ? (contentBottomY + PANEL_GAP) : 0
   const notesPanelHeight = hasNotes ? Math.max(230, Math.ceil(132 + notesTextHeight)) : 0
-  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil((hasNotes ? (notesPanelY + notesPanelHeight) : Math.max(leftY, rightY)) + PAGE_PADDING + 16))
+  const footerY = hasNotes ? (notesPanelY + notesPanelHeight + PANEL_GAP) : (contentBottomY + PANEL_GAP)
+  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(footerY + FOOTER_HEIGHT + PAGE_PADDING))
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}">
@@ -272,10 +275,12 @@ function createBuildPrintDocument(build, helpers = {}) {
       <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
       <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
       ${renderMultilineText(footerLines, PAGE_PADDING + 28, notesPanelY + 104, { fontSize: 16, fill: COLORS.text, lineHeight: 1.45 })}
-      <line x1="${PAGE_PADDING + 28}" y1="${notesPanelY + notesPanelHeight - 40}" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="${notesPanelY + notesPanelHeight - 40}" stroke="${COLORS.border}" />
-      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + notesPanelHeight - 12}" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
-      <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="${notesPanelY + notesPanelHeight - 12}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
     </g>` : ''}
+    <g>
+      <line x1="${PAGE_PADDING + 28}" y1="${footerY + 16}" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="${footerY + 16}" stroke="${COLORS.border}" />
+      <text x="${PAGE_PADDING + 28}" y="${footerY + 48}" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
+      <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="${footerY + 48}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
+    </g>
   </svg>`
 
   return { svg, width: PAGE_WIDTH, height: pageHeight, model }
