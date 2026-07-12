@@ -126,6 +126,22 @@ class MasterDataShipMount(BaseModel):
         return value or None
 
 
+class MasterDataShipUpgradeOverride(BaseModel):
+    option_id: int = Field(ge=1)
+    stat_effects: dict[str, float] = Field(default_factory=dict)
+
+    @field_validator("stat_effects")
+    @classmethod
+    def validate_override_effects(cls, value: dict[str, float]) -> dict[str, float]:
+        return MasterDataOptionBase.validate_effects(value)
+
+
+class MasterDataShipUpgradeOverrideRead(MasterDataShipUpgradeOverride):
+    option_name: str
+    base_stat_effects: dict[str, float] = Field(default_factory=dict)
+    effective_stat_effects: dict[str, float] = Field(default_factory=dict)
+
+
 class MasterDataShipBase(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     rate: int = Field(ge=1, le=7)
@@ -145,6 +161,7 @@ class MasterDataShipBase(BaseModel):
     has_lantern: bool = True
     is_active: bool = True
     weapon_mounts: list[MasterDataShipMount] = Field(default_factory=list)
+    upgrade_effect_overrides: list[MasterDataShipUpgradeOverride] = Field(default_factory=list)
 
     @field_validator("name", "ship_type")
     @classmethod
@@ -163,6 +180,9 @@ class MasterDataShipBase(BaseModel):
     def validate_ship(self) -> "MasterDataShipBase":
         if self.sailor_minimum > self.crew_capacity:
             raise ValueError("Sailor minimum cannot exceed crew capacity.")
+        option_ids = [row.option_id for row in self.upgrade_effect_overrides]
+        if len(option_ids) != len(set(option_ids)):
+            raise ValueError("Each upgrade can only be overridden once per ship.")
         slot_types = [row.slot_type for row in self.weapon_mounts]
         if len(slot_types) != len(set(slot_types)):
             raise ValueError("Each weapon slot type can only occur once per ship.")
@@ -179,6 +199,7 @@ class MasterDataShipUpdate(MasterDataShipBase):
 
 class MasterDataShipRead(MasterDataShipBase, SeedMetadataRead):
     id: int
+    upgrade_effect_overrides: list[MasterDataShipUpgradeOverrideRead] = Field(default_factory=list)
     weapon_layout: str
     created_at: datetime
     updated_at: datetime

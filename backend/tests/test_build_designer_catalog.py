@@ -335,7 +335,7 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
         assert slots == expected[row["option_kind"]], row["name"]
 
 
-def test_specialist_effects_scale_with_selected_quantity() -> None:
+def test_specialist_effects_apply_once_even_when_quantity_is_submitted() -> None:
     with isolated_session() as db:
         category = db.scalar(select(BuildItemCategory).where(BuildItemCategory.key == "special_crew"))
         if category is None:
@@ -387,10 +387,11 @@ def test_specialist_effects_scale_with_selected_quantity() -> None:
                 build_name="Weighted specialists",
                 ship_id=ship.id,
                 sailors=20,
-                soldiers=6,
+                soldiers=3,
                 special_crew_slots=[{"item": "Capacity Test Specialist", "quantity": 2}],
             ),
         )
-        assert build.ship_stats["crew_capacity"] == 26
-        assert build.ship_stats["special_crew_effects"]["crew_capacity"] == 6
+        assert build.ship_stats["crew_capacity"] == 23
+        assert build.ship_stats["special_crew_effects"]["crew_capacity"] == 3
+        assert build.special_crew_slots == [{"item": "Capacity Test Specialist", "quantity": 1}]
         assert build.ship_stats["crew_remaining"] == 0

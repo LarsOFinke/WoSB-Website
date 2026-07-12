@@ -48,10 +48,21 @@ def _ensure_sqlite_columns() -> None:
     if "app_logs" in table_names:
         app_log_columns = {column["name"] for column in inspector.get_columns("app_logs")}
         app_log_column_defaults = {
+            "created_at": "DATETIME",
+            "level": "VARCHAR(20)",
+            "logger": "VARCHAR(120)",
+            "message": "TEXT",
+            "request_id": "VARCHAR(64)",
+            "method": "VARCHAR(12)",
+            "path": "VARCHAR(300)",
+            "status_code": "INTEGER",
+            "duration_ms": "FLOAT",
+            "client": "VARCHAR(120)",
             "client_ip": "VARCHAR(120)",
             "forwarded_for": "VARCHAR(300)",
             "user_agent": "VARCHAR(300)",
             "query_string": "VARCHAR(500)",
+            "exception": "TEXT",
         }
         for column_name, ddl in app_log_column_defaults.items():
             if column_name not in app_log_columns:

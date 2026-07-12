@@ -110,4 +110,14 @@ class BuildBase(BaseModel):
                 stripped = value.strip()
                 setattr(self, field_name, stripped or None)
         self.build_name = self.build_name.strip()
+        # Specialists are unique assignments, never stackable inventory items.
+        seen: set[str] = set()
+        normalized_specialists: list[InventorySlot] = []
+        for slot in self.special_crew_slots:
+            key = slot.item.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized_specialists.append(InventorySlot(item=slot.item, quantity=1))
+        self.special_crew_slots = normalized_specialists
         return self

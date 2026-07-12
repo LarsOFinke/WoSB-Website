@@ -76,6 +76,12 @@ function previewItems(items) {
   return labels.slice(0, 2).join(', ') + (labels.length > 2 ? ' …' : '')
 }
 
+function specialistPreview(items) {
+  const labels = (items || []).map((slot) => optionLabel(typeof slot === 'string' ? slot : slot?.item)).filter(Boolean)
+  if (!labels.length) return t('builds.list.noSlots')
+  return labels.slice(0, 2).join(', ') + (labels.length > 2 ? ' …' : '')
+}
+
 async function loadBuilds() {
   loading.value = true
   error.value = ''
@@ -164,7 +170,7 @@ onMounted(loadBuilds)
 
             <div class="build-card-preview refined-preview">
               <span>{{ t('builds.list.weaponPreview', { items: previewItems([...(build.front_weapon_slots || []), ...(build.port_weapon_slots || []), ...(build.starboard_weapon_slots || []), ...(build.rear_weapon_slots || []), ...(build.mortar_weapon_slots || []), ...(build.special_weapon_slots || [])]) }) }}</span>
-              <span>{{ t('builds.list.specialCrewPreview', { items: previewItems(build.special_crew_slots) }) }}</span>
+              <span>{{ t('builds.list.specialCrewPreview', { items: specialistPreview(build.special_crew_slots) }) }}</span>
               <span>{{ t('builds.list.ammunitionPreview', { items: previewItems(build.ammunition_slots) }) }}</span>
             </div>
           </RouterLink>

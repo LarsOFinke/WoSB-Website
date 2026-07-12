@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin, require_staff
@@ -120,32 +120,29 @@ def admin_log_summary(
     errors = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
     warnings = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.level == "WARNING")) or 0)
     slow_requests = int(db.scalar(select(func.count(AppLog.id)).where(AppLog.duration_ms >= 750)) or 0)
-    status_rows = db.execute(
-        select(
-            case(
-                (AppLog.status_code < 300, "2xx"),
-                (AppLog.status_code < 400, "3xx"),
-                (AppLog.status_code < 500, "4xx"),
-                else_="5xx",
-            ),
-            func.count(AppLog.id),
-        )
-        .where(AppLog.status_code.is_not(None))
-        .group_by(
-            case(
-                (AppLog.status_code < 300, "2xx"),
-                (AppLog.status_code < 400, "3xx"),
-                (AppLog.status_code < 500, "4xx"),
-                else_="5xx",
+    status_ranges = {
+        "2xx": (200, 300),
+        "3xx": (300, 400),
+        "4xx": (400, 500),
+        "5xx": (500, 600),
+    }
+    recent_status = {
+        bucket: int(
+            db.scalar(
+                select(func.count(AppLog.id)).where(
+                    AppLog.status_code >= lower, AppLog.status_code < upper
+                )
             )
+            or 0
         )
-    ).all()
+        for bucket, (lower, upper) in status_ranges.items()
+    }
     return AppLogSummary(
         total=total,
         errors=errors,
         warnings=warnings,
         slow_requests=slow_requests,
-        recent_status={bucket: int(count) for bucket, count in status_rows},
+        recent_status=recent_status,
     )
 
 

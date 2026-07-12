@@ -33,6 +33,7 @@ _MODEL_MODULES = (
     "app.modules.guides.models.guide_build_reference",
     "app.modules.onboarding.models.newcomer_guide",
     "app.modules.ships.models.ship",
+    "app.modules.ships.models.ship_upgrade_effect",
     "app.modules.ships.models.weapon_mount",
 )
 

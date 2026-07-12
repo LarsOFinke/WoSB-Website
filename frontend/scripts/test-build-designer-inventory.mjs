@@ -106,7 +106,7 @@ const sailorCap = setCrewAllocationValue(
   160,
   80,
 )
-assert.equal(sailorCap.sailors, 80)
+assert.equal(sailorCap.sailors, 160)
 
 
 import { addPreferenceId, removePreferenceId, splitPreferenceOptions } from '../src/modules/accounts/preferenceTransfer.js'

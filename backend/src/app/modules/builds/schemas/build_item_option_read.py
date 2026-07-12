@@ -19,6 +19,8 @@ class BuildItemOptionRead(BaseModel):
     weapon_class: str | None = None
     weapon_caliber_inches: float | None = None
     stat_effects: dict[str, int | float] = Field(default_factory=dict)
+    base_stat_effects: dict[str, int | float] = Field(default_factory=dict)
+    is_ship_specific: bool = False
     sort_order: int
     created_at: datetime
     updated_at: datetime

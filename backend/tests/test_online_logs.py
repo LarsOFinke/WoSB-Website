@@ -37,3 +37,10 @@ def test_staff_can_read_persisted_exception_logs() -> None:
         assert rows
         assert rows[0]['status_code'] == 500
         assert 'online log regression marker' in (rows[0]['exception'] or '')
+
+        summary = client.get('/api/admin/logs/summary')
+        assert summary.status_code == 200, summary.text
+        body = summary.json()
+        assert body['total'] >= 1
+        assert body['errors'] >= 1
+        assert body['recent_status']['5xx'] >= 1

@@ -44,9 +44,9 @@ def resolve_specialist_effects(
 ) -> dict[str, int | float]:
     """Return effective Specialist modifiers for one build.
 
-    ``weighted_effects`` contains the literal catalog effect object and the
-    selected quantity for each Specialist. Boolean ``*_enabled`` effects are
-    idempotent; selecting more than one copy keeps the capability enabled once.
+    ``weighted_effects`` keeps the historical tuple shape for API compatibility.
+    Every Specialist type is unique and therefore contributes exactly once.
+    Boolean ``*_enabled`` effects are idempotent.
     """
 
     counts = _crew_counts(
@@ -57,8 +57,8 @@ def resolve_specialist_effects(
     )
     totals: dict[str, int | float] = {}
 
-    for effects, raw_quantity in weighted_effects:
-        quantity = max(1, int(raw_quantity or 1))
+    for effects, _raw_quantity in weighted_effects:
+        quantity = 1
         for key, raw_value in effects.items():
             value = float(raw_value or 0)
             if value == 0:

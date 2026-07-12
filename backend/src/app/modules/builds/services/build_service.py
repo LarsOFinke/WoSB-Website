@@ -16,13 +16,14 @@ from app.modules.builds.services.build_limits import (
     BASE_UPGRADE_SLOT_LIMIT,
     CONSUMABLE_SLOT_LIMIT,
     DEDICATED_WEAPON_ROW_LIMIT,
-    SPECIAL_CREW_TOTAL_LIMIT,
+    SPECIAL_CREW_SLOT_LIMIT,
     UPGRADE_SLOT_LIMIT,
     WEAPON_ARC_ROW_LIMIT,
 )
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
+from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 
 
 class BuildValidationError(ValueError):
@@ -83,6 +84,7 @@ def _load_option_map(db: Session, names: Iterable[str]) -> dict[tuple[str, str],
         return {}
     options = db.scalars(
         select(BuildItemOption)
+        .options(selectinload(BuildItemOption.effects))
         .join(BuildItemOption.category)
         .where(
             BuildItemOption.name.in_(cleaned_names),
@@ -102,14 +104,14 @@ def _require_option(
     return option
 
 
-def _option_effects(option: BuildItemOption) -> dict[str, int | float]:
-    return option.stat_effects
+def _option_effects(option: BuildItemOption, ship: Ship | None = None) -> dict[str, int | float]:
+    return effective_upgrade_effects(option, ship)
 
 
-def _sum_effects(options: Iterable[BuildItemOption]) -> dict[str, int | float]:
+def _sum_effects(options: Iterable[BuildItemOption], ship: Ship | None = None) -> dict[str, int | float]:
     totals: dict[str, int | float] = {}
     for option in options:
-        for key, value in _option_effects(option).items():
+        for key, value in _option_effects(option, ship).items():
             totals[key] = totals.get(key, 0) + value
     return totals
 
@@ -137,7 +139,7 @@ def _selected_special_crew_options(
     return [
         (
             _require_option(option_map, slot.item, "special_crew", "Special crew"),
-            max(1, int(slot.quantity or 1)),
+            1,
         )
         for slot in build.special_crew_slots
     ]
@@ -151,7 +153,7 @@ def _upgrade_access(
     research_upgrade_slot_unlocked: bool,
 ) -> dict[str, int | bool]:
     unlock_effect_slots = sum(
-        int(_option_effects(option).get("extra_upgrade_slots", 0))
+        int(_option_effects(option, ship).get("extra_upgrade_slots", 0))
         for index, option in selected_upgrades.items()
         if index <= BASE_UPGRADE_SLOT_LIMIT
     )
@@ -301,7 +303,7 @@ def _build_slots(
                 slot_type="special_crew",
                 slot_index=index,
                 option_id=option.id,
-                quantity=slot.quantity,
+                quantity=1,
             )
         )
 
@@ -386,11 +388,11 @@ def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, 
         selected_equipment.append(_require_option(option_map, build.sails, "sail", "Sail"))
     if build.lantern:
         selected_equipment.append(_require_option(option_map, build.lantern, "lantern", "Lantern"))
-    total_effects = _sum_effects(selected_equipment)
+    total_effects = _sum_effects(selected_equipment, ship)
     for effect_set in (
-        _sum_effects(selected_upgrades.values()),
+        _sum_effects(selected_upgrades.values(), ship),
         resolve_specialist_effects(
-            ((_option_effects(option), quantity) for option, quantity in selected_special_crew),
+            ((_option_effects(option, ship), quantity) for option, quantity in selected_special_crew),
             sailors=build.sailors,
             soldiers=build.soldiers,
             musketeers=build.musketeers,
@@ -408,6 +410,14 @@ def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, 
             + float(total_effects.get("crew_capacity", 0) or 0)
         ),
     )
+    effective_sailor_minimum = max(
+        0, ship.sailor_minimum + int(total_effects.get("sailor_minimum", 0) or 0)
+    )
+    if build.sailors < effective_sailor_minimum:
+        raise BuildValidationError(
+            f"Sailors ({build.sailors}) are below this build's required minimum ({effective_sailor_minimum})."
+        )
+
     crew_total = _crew_total(build)
     if crew_total > effective_crew_capacity:
         raise BuildValidationError(
@@ -419,10 +429,9 @@ def _validate_and_prepare_build(db: Session, build: BuildCreate) -> tuple[Ship, 
     _validate_unique_slots(build.ammunition_slots, "Ammunition")
     _validate_unique_slots(build.consumable_slots, "Consumables")
     _validate_unique_slots(build.hold_slots, "Hold")
-    special_crew_total = sum(int(slot.quantity or 1) for slot in build.special_crew_slots)
-    if special_crew_total > SPECIAL_CREW_TOTAL_LIMIT:
+    if len(build.special_crew_slots) > SPECIAL_CREW_SLOT_LIMIT:
         raise BuildValidationError(
-            f"Special crew is limited to {SPECIAL_CREW_TOTAL_LIMIT} specialists in total."
+            f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} distinct specialists."
         )
     if len(build.consumable_slots) > CONSUMABLE_SLOT_LIMIT:
         raise BuildValidationError(f"Consumables are limited to {CONSUMABLE_SLOT_LIMIT} slots.")

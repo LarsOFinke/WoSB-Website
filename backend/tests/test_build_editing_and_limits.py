@@ -60,8 +60,8 @@ def _anson_payload(ship_id: int, *, name: str = "Editable Anson") -> dict[str, o
         "build_name": name,
         "build_type": "balanced",
         "ship_id": ship_id,
-        "sailors": 64,
-        "soldiers": 96,
+        "sailors": 80,
+        "soldiers": 80,
         "special_crew_slots": [{"item": "Doctor", "quantity": 1}],
         "hold_slots": [{"item": "Tackles", "quantity": 1}],
     }
@@ -82,7 +82,7 @@ def test_doctor_keeps_anson_at_160_crew_and_owner_can_edit_build() -> None:
         assert body["ship"]["crew_capacity"] == 160
         assert body["ship"]["sailor_minimum"] == 80
         assert body["ship_stats"]["sailor_target"] == 80
-        assert body["ship_stats"]["sailing_efficiency_pct"] == 80
+        assert body["ship_stats"]["sailing_efficiency_pct"] == 100
         assert body["ship_stats"]["crew_capacity"] == 160
         assert body["ship_stats"]["crew_total"] == 160
         assert body["ship_stats"]["special_crew_effects"] == {
@@ -116,8 +116,8 @@ def test_doctor_does_not_create_six_extra_crew_places() -> None:
             json={
                 "build_name": "Doctor is not crew capacity",
                 "ship_id": ship_id,
-                "sailors": 64,
-                "soldiers": 102,
+                "sailors": 80,
+                "soldiers": 86,
                 "special_crew_slots": [{"item": "Doctor", "quantity": 1}],
             },
         )
@@ -148,7 +148,7 @@ def test_first_mate_scales_speed_with_assigned_sailors() -> None:
         assert body["ship_stats"]["effective_stats"]["speed_knots"] == round(base_speed * 1.16, 1)
 
 
-def test_specialist_and_weapon_quantities_are_rejected_above_capacity() -> None:
+def test_specialist_quantity_is_normalized_and_weapon_capacity_is_enforced() -> None:
     ship_id = _prepare_catalog()
     _ensure_user(OWNER_USERNAME, OWNER_PASSWORD, "Build Edit Owner")
 
@@ -156,19 +156,19 @@ def test_specialist_and_weapon_quantities_are_rejected_above_capacity() -> None:
         _login(client, OWNER_USERNAME, OWNER_PASSWORD)
 
         specialist_payload = {
-            "build_name": "Too many specialists",
+            "build_name": "Specialist quantity is ignored",
             "ship_id": ship_id,
-            "sailors": 64,
+            "sailors": 80,
             "special_crew_slots": [{"item": "Doctor", "quantity": 9}],
         }
         specialist_response = client.post("/api/builds", json=specialist_payload)
-        assert specialist_response.status_code == 400
-        assert "8 specialists" in specialist_response.json()["detail"]
+        assert specialist_response.status_code == 201, specialist_response.text
+        assert specialist_response.json()["special_crew_slots"] == [{"item": "Doctor", "quantity": 1}]
 
         weapon_payload = {
             "build_name": "Too many bow weapons",
             "ship_id": ship_id,
-            "sailors": 64,
+            "sailors": 80,
             "front_weapon_slots": [{"item": "Twin 14-pdr", "quantity": 5}],
         }
         weapon_response = client.post("/api/builds", json=weapon_payload)
@@ -176,30 +176,31 @@ def test_specialist_and_weapon_quantities_are_rejected_above_capacity() -> None:
         assert "exceeds this ship's capacity (4)" in weapon_response.json()["detail"]
 
 
-def test_anson_sailors_are_a_working_speed_target_not_a_required_minimum() -> None:
+def test_anson_sailor_minimum_blocks_too_few_but_not_additional_sailors() -> None:
     ship_id = _prepare_catalog()
     _ensure_user(OWNER_USERNAME, OWNER_PASSWORD, "Build Edit Owner")
 
     with TestClient(app) as client:
         _login(client, OWNER_USERNAME, OWNER_PASSWORD)
-        partial_sailing_crew = {
-            "build_name": "Anson partial sailing crew",
+        below_minimum = {
+            "build_name": "Anson below sailor minimum",
             "ship_id": ship_id,
             "sailors": 40,
             "soldiers": 120,
         }
-        response = client.post("/api/builds", json=partial_sailing_crew)
-        assert response.status_code == 201, response.text
-        assert response.json()["ship_stats"]["sailor_target"] == 80
-        assert response.json()["ship_stats"]["sailing_efficiency_pct"] == 50
-        assert response.json()["ship_stats"]["crew_total"] == 160
+        response = client.post("/api/builds", json=below_minimum)
+        assert response.status_code == 400
+        assert "required minimum (80)" in response.json()["detail"]
 
-        above_target_sailors = {
-            "build_name": "Anson above sailing target",
+        above_minimum = {
+            "build_name": "Anson above sailor minimum",
             "ship_id": ship_id,
-            "sailors": 81,
+            "sailors": 100,
+            "soldiers": 60,
         }
-        accepted = client.post("/api/builds", json=above_target_sailors)
+        accepted = client.post("/api/builds", json=above_minimum)
         assert accepted.status_code == 201, accepted.text
-        assert accepted.json()["ship_stats"]["sailor_target"] == 80
+        assert accepted.json()["ship_stats"]["sailor_minimum"] == 80
         assert accepted.json()["ship_stats"]["sailing_efficiency_pct"] == 100
+        assert accepted.json()["ship_stats"]["crew_total"] == 160
+

@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import { useLocale } from '@/locales'
 import { deleteMyBuild, listMyBuilds } from '@/modules/builds/api/builds'
+import { copyBuildShareLink } from '@/modules/builds/shareBuild'
 
 const { optionLabel, t } = useLocale()
 
@@ -12,6 +13,8 @@ const buildType = ref('')
 const loading = ref(false)
 const error = ref('')
 const pendingDeleteId = ref(null)
+const sharedBuildId = ref(null)
+const shareError = ref('')
 let searchTimer = null
 
 const buildTypeOptions = computed(() => [
@@ -51,6 +54,17 @@ async function loadMyBuilds() {
     error.value = err.message || t('myBuilds.loadError')
   } finally {
     loading.value = false
+  }
+}
+
+async function shareBuild(buildId) {
+  shareError.value = ''
+  try {
+    await copyBuildShareLink(buildId)
+    sharedBuildId.value = buildId
+    window.setTimeout(() => { if (sharedBuildId.value === buildId) sharedBuildId.value = null }, 2200)
+  } catch {
+    shareError.value = t('builds.share.error')
   }
 }
 
@@ -117,6 +131,7 @@ onMounted(loadMyBuilds)
           <RouterLink class="button-box primary-action" to="/builds/new">{{ t('myBuilds.createFirst') }}</RouterLink>
         </div>
 
+        <p v-if="shareError" class="error-text table-state">{{ shareError }}</p>
         <div v-else class="my-build-list">
           <article v-for="build in builds" :key="build.id" class="my-build-row">
             <RouterLink class="my-build-row-main" :to="`/builds/${build.id}`">
@@ -133,6 +148,7 @@ onMounted(loadMyBuilds)
             </RouterLink>
 
             <div class="my-build-row-actions">
+              <button class="small-action" type="button" @click="shareBuild(build.id)">{{ sharedBuildId === build.id ? t('builds.share.copied') : t('builds.share.action') }}</button>
               <RouterLink class="small-action" :to="`/builds/${build.id}/edit`">
                 {{ t('builds.edit.action') }}
               </RouterLink>

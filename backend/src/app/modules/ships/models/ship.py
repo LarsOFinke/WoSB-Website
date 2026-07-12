@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
     from app.modules.ships.models.weapon_mount import ShipWeaponMount
 
 
@@ -66,6 +67,14 @@ class Ship(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    upgrade_effect_overrides: Mapped[list["ShipUpgradeEffectOverride"]] = relationship(
+        "ShipUpgradeEffectOverride",
+        back_populates="ship",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        order_by="ShipUpgradeEffectOverride.option_id, ShipUpgradeEffectOverride.effect_key",
+    )
+
     def _mount(self, code: str):
         return next((mount for mount in self.weapon_mounts if mount.slot_type.code == code), None)
 

@@ -197,3 +197,50 @@ def test_master_data_routes_require_admin() -> None:
         assert set(response.json()) == {
             "category_count", "option_count", "ship_count", "overridden_count", "inactive_count"
         }
+
+
+def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly() -> None:
+    from app.modules.builds.schemas.build_create import BuildCreate
+    from app.modules.builds.services.build_option_service import list_build_options
+    from app.modules.builds.services.build_service import create_build
+
+    with _seeded_db() as db:
+        ship = db.scalar(select(Ship).where(Ship.name == "Firestorm"))
+        option = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Copper Plating"))
+        assert ship is not None and option is not None
+        current = next(row for row in list_ships(db, search="Firestorm") if row.id == ship.id)
+        payload = current.model_dump(exclude={
+            "id", "weapon_layout", "seed_key", "seed_revision", "is_seed_overridden",
+            "seed_status", "created_at", "updated_at",
+        })
+        payload["upgrade_effect_overrides"] = [
+            {"option_id": option.id, "stat_effects": {"speed_pct": 12}}
+        ]
+        updated = update_ship(db, ship.id, MasterDataShipUpdate(**payload))
+        assert updated.upgrade_effect_overrides[0].base_stat_effects["speed_pct"] == 4
+        assert updated.upgrade_effect_overrides[0].effective_stat_effects["speed_pct"] == 12
+        assert option.stat_effects["speed_pct"] == 4
+
+        catalog = list_build_options(db, ship.id)
+        copper = next(row for row in catalog.options["upgrade"] if row.name == "Copper Plating")
+        assert copper.stat_effects["speed_pct"] == 12
+        assert copper.base_stat_effects["speed_pct"] == 4
+        assert copper.is_ship_specific is True
+
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="Ship-specific copper",
+                ship_id=ship.id,
+                sailors=ship.sailor_minimum,
+                upgrade_1="Copper Plating",
+            ),
+        )
+        assert build.ship_stats["upgrade_effects"]["speed_pct"] == 12
+
+        restored = restore_ship_seed(db, ship.id)
+        assert restored.upgrade_effect_overrides == []
+        catalog = list_build_options(db, ship.id)
+        copper = next(row for row in catalog.options["upgrade"] if row.name == "Copper Plating")
+        assert copper.stat_effects["speed_pct"] == 4
+        assert copper.is_ship_specific is False

@@ -11,6 +11,7 @@ from app.modules.builds.services.build_stat_service import build_base_stats, bui
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
+from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 
 if TYPE_CHECKING:
     from app.modules.accounts.models.user import User
@@ -180,7 +181,7 @@ class Build(Base):
         for slot in self.slots:
             if slot.slot_type not in slot_types:
                 continue
-            quantity = max(1, int(slot.quantity or 1)) if slot.slot_type == "special_crew" else 1
+            quantity = 1
             for key, value in slot.option.stat_effects.items():
                 totals[key] = totals.get(key, 0) + (value * quantity)
         return totals
@@ -193,13 +194,13 @@ class Build(Base):
             slot = self._upgrade_slot_at(index)
             if slot is None:
                 continue
-            for key, value in slot.option.stat_effects.items():
+            for key, value in effective_upgrade_effects(slot.option, self.ship).items():
                 totals[key] = totals.get(key, 0) + value
         return totals
 
     def _special_crew_effect_totals(self) -> dict[str, int | float]:
         weighted_effects = [
-            (slot.option.stat_effects, max(1, int(slot.quantity or 1)))
+            (slot.option.stat_effects, 1)
             for slot in self.slots
             if slot.slot_type == "special_crew"
         ]
@@ -239,12 +240,12 @@ class Build(Base):
                 + float(effects.get("crew_capacity", 0) or 0)
             ),
         )
-        base_sailor_target = self.ship.sailor_minimum
-        effective_sailor_target = max(0, base_sailor_target + int(effects.get("sailor_minimum", 0)))
+        base_sailor_minimum = self.ship.sailor_minimum
+        effective_sailor_minimum = max(0, base_sailor_minimum + int(effects.get("sailor_minimum", 0)))
         sailing_efficiency_pct = (
             100
-            if effective_sailor_target <= 0
-            else min(100, max(0, round((self.sailors / effective_sailor_target) * 100)))
+            if effective_sailor_minimum <= 0
+            else min(100, max(0, round((self.sailors / effective_sailor_minimum) * 100)))
         )
         weapon_slots = {
             arc: self._slot_quantity_total(slot_type)
@@ -284,10 +285,8 @@ class Build(Base):
         warnings: list[str] = []
         if crew_total > effective_crew_capacity:
             warnings.append("Crew exceeds effective capacity after upgrade modifiers.")
-        if self.sailors < effective_sailor_target:
-            warnings.append("Sailing crew is below the target for 100% working speed.")
-        if effective_sailor_target > 0 and self.sailors > effective_sailor_target:
-            warnings.append("Sailor count exceeds the ship sailing-crew target.")
+        if self.sailors < effective_sailor_minimum:
+            warnings.append("Sailor count is below the required minimum.")
         if self.upgrade_5 and not upgrade_slot_5_unlocked:
             warnings.append("Upgrade slot 5 is selected but neither the research reward nor an expansion effect unlocks it.")
         if self.upgrade_6 and not upgrade_slot_6_available:
@@ -299,16 +298,15 @@ class Build(Base):
             "base_crew_capacity": base_crew_capacity,
             "effective_crew_capacity": effective_crew_capacity,
             "crew_remaining": max(effective_crew_capacity - crew_total, 0),
-            # Backward-compatible field names; semantically these values are
-            # the sailing-crew target shown by the game as 0 / N, not a hard minimum.
-            "sailor_minimum": effective_sailor_target,
-            "base_sailor_minimum": base_sailor_target,
-            "effective_sailor_minimum": effective_sailor_target,
-            "sailor_target": effective_sailor_target,
-            "base_sailor_target": base_sailor_target,
-            "effective_sailor_target": effective_sailor_target,
+            "sailor_minimum": effective_sailor_minimum,
+            "base_sailor_minimum": base_sailor_minimum,
+            "effective_sailor_minimum": effective_sailor_minimum,
+            # Backward-compatible aliases for existing clients.
+            "sailor_target": effective_sailor_minimum,
+            "base_sailor_target": base_sailor_minimum,
+            "effective_sailor_target": effective_sailor_minimum,
             "sailing_efficiency_pct": sailing_efficiency_pct,
-            "sailors_required_met": self.sailors >= effective_sailor_target,
+            "sailors_required_met": self.sailors >= effective_sailor_minimum,
             "upgrade_slots_used": upgrade_slots_used,
             "upgrade_slots_available": upgrade_slots_available,
             "base_upgrade_slots_available": base_upgrade_slots_available,
@@ -334,7 +332,7 @@ class Build(Base):
             "weapon_capacity": weapon_capacity,
             "weapon_total": sum(weapon_slots.values()),
             "weapon_capacity_total": sum(weapon_capacity.values()),
-            "special_crew_total": self._slot_quantity_total("special_crew"),
+            "special_crew_total": len(self.special_crew_slots),
             "inventory_slots_used": ammunition_count + consumable_count + hold_count,
             "ammunition_slots_used": ammunition_count,
             "consumable_slots_used": consumable_count,

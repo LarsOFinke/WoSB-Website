@@ -37,6 +37,7 @@ const overview = ref({ category_count: 0, option_count: 0, ship_count: 0, overri
 const taxonomy = ref({ weapon_classes: [], weapon_slot_types: [] })
 const categories = ref([])
 const options = ref([])
+const upgradeOptions = ref([])
 const ships = ref([])
 const optionCategory = ref('')
 const optionSearch = ref('')
@@ -82,6 +83,7 @@ const shipForm = reactive({
   has_lantern: true,
   is_active: true,
   weapon_mounts: [],
+  upgrade_effect_overrides: [],
 })
 
 const selectedOption = computed(() => options.value.find((row) => row.id === optionEditingId.value))
@@ -183,6 +185,10 @@ function resetShip(row = null) {
   shipForm.has_lantern = row?.has_lantern ?? true
   shipForm.is_active = row?.is_active ?? true
   shipForm.weapon_mounts = blankMounts(row?.weapon_mounts || [])
+  shipForm.upgrade_effect_overrides = (row?.upgrade_effect_overrides || []).map((override) => ({
+    option_id: override.option_id,
+    effects_text: JSON.stringify(override.stat_effects || {}, null, 2),
+  }))
   clearMessages()
 }
 
@@ -197,6 +203,10 @@ async function loadCategories() {
 
 async function loadOptions() {
   options.value = await listMasterDataOptions({ category: optionCategory.value, search: optionSearch.value })
+}
+
+async function loadUpgradeOptions() {
+  upgradeOptions.value = await listMasterDataOptions({ category: 'upgrade' })
 }
 
 async function loadShips() {
@@ -215,7 +225,7 @@ async function reloadAll() {
     overview.value = overviewRows
     taxonomy.value = taxonomyRows
     categories.value = categoryRows
-    await Promise.all([loadOptions(), loadShips()])
+    await Promise.all([loadOptions(), loadUpgradeOptions(), loadShips()])
     if (!shipForm.weapon_mounts.length) shipForm.weapon_mounts = blankMounts()
   } catch (err) {
     error.value = err.message || t('masterData.loadError')
@@ -287,6 +297,35 @@ async function saveOption() {
   }
 }
 
+function upgradeOptionById(optionId) {
+  return upgradeOptions.value.find((row) => row.id === Number(optionId))
+}
+
+function upgradeChoicesForOverride(index) {
+  const current = Number(shipForm.upgrade_effect_overrides[index]?.option_id || 0)
+  const selected = new Set(shipForm.upgrade_effect_overrides.map((row) => Number(row.option_id)).filter(Boolean))
+  return upgradeOptions.value.filter((row) => row.id === current || !selected.has(row.id))
+}
+
+function addUpgradeOverride() {
+  const selected = new Set(shipForm.upgrade_effect_overrides.map((row) => Number(row.option_id)).filter(Boolean))
+  const option = upgradeOptions.value.find((row) => !selected.has(row.id))
+  if (!option) return
+  shipForm.upgrade_effect_overrides.push({ option_id: option.id, effects_text: '{}' })
+}
+
+function removeUpgradeOverride(index) {
+  shipForm.upgrade_effect_overrides.splice(index, 1)
+}
+
+function parseShipUpgradeOverrides() {
+  return shipForm.upgrade_effect_overrides.map((row) => {
+    const parsed = JSON.parse(row.effects_text || '{}')
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error(t('masterData.effectsError'))
+    return { option_id: Number(row.option_id), stat_effects: parsed }
+  })
+}
+
 async function saveShip() {
   clearMessages()
   saving.value = true
@@ -306,6 +345,7 @@ async function saveShip() {
       upgrade_slots: Number(shipForm.upgrade_slots),
       source: shipForm.source || null,
       image_url: shipForm.image_url || null,
+      upgrade_effect_overrides: parseShipUpgradeOverrides(),
       weapon_mounts: shipForm.weapon_mounts.map((mount) => ({
         slot_type: mount.slot_type,
         capacity: Number(mount.capacity || 0),
@@ -535,6 +575,24 @@ onMounted(reloadAll)
             <label><textarea v-model="effectsText" rows="8" spellcheck="false"></textarea><small>{{ t('masterData.effectsHint') }}</small></label>
           </fieldset>
 
+          <fieldset class="editor-section upgrade-override-section"><legend>{{ t('masterData.shipUpgradeOverrides.title') }}</legend>
+            <p class="section-description">{{ t('masterData.shipUpgradeOverrides.hint') }}</p>
+            <div v-if="shipForm.upgrade_effect_overrides.length" class="upgrade-override-list">
+              <article v-for="(override, index) in shipForm.upgrade_effect_overrides" :key="`upgrade-override-${index}`" class="upgrade-override-card">
+                <div class="override-card-header">
+                  <label><span>{{ t('masterData.shipUpgradeOverrides.upgrade') }}</span><select v-model.number="override.option_id"><option v-for="row in upgradeChoicesForOverride(index)" :key="row.id" :value="row.id">{{ row.name }}</option></select></label>
+                  <button class="danger-action" type="button" @click="removeUpgradeOverride(index)">{{ t('masterData.shipUpgradeOverrides.remove') }}</button>
+                </div>
+                <div class="override-effect-grid">
+                  <div><span>{{ t('masterData.shipUpgradeOverrides.defaultEffects') }}</span><pre>{{ JSON.stringify(upgradeOptionById(override.option_id)?.stat_effects || {}, null, 2) }}</pre></div>
+                  <label><span>{{ t('masterData.shipUpgradeOverrides.overrideEffects') }}</span><textarea v-model="override.effects_text" rows="5" spellcheck="false"></textarea></label>
+                </div>
+              </article>
+            </div>
+            <p v-else class="empty-state-inline">{{ t('masterData.shipUpgradeOverrides.empty') }}</p>
+            <button class="small-action add-override-button" type="button" :disabled="shipForm.upgrade_effect_overrides.length >= upgradeOptions.length" @click="addUpgradeOverride">{{ t('masterData.shipUpgradeOverrides.add') }}</button>
+          </fieldset>
+
           <fieldset class="editor-section"><legend>{{ t('masterData.fields.source') }}</legend>
             <div class="form-grid">
               <label><span>{{ t('masterData.fields.source') }}</span><input v-model="optionForm.source" maxlength="240" /></label>
@@ -712,6 +770,17 @@ onMounted(reloadAll)
 .editor-actions { position: sticky; bottom: 0; z-index: 2; margin-top: 1rem; border-top: 1px solid var(--line); background: rgba(11,21,32,.94); backdrop-filter: blur(14px); }
 .editor-toggles { display: flex; gap: .55rem; flex-wrap: wrap; }
 .editor-actions .primary-action { min-width: 9rem; }
+.section-description { margin: 0; color: var(--muted); line-height: 1.55; }
+.upgrade-override-list { display: grid; gap: .75rem; }
+.upgrade-override-card { display: grid; gap: .7rem; padding: .8rem; border: 1px solid rgba(241,184,91,.2); border-radius: var(--radius-md); background: rgba(241,184,91,.035); }
+.override-card-header { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .75rem; align-items: end; }
+.override-effect-grid { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); gap: .75rem; }
+.override-effect-grid > div { min-width: 0; display: grid; gap: .35rem; }
+.override-effect-grid > div > span { color: var(--muted); font-size: .78rem; font-weight: 750; }
+.override-effect-grid pre { min-height: 7.6rem; max-height: 14rem; margin: 0; padding: .75rem; overflow: auto; border: 1px solid rgba(221,231,244,.12); border-radius: var(--radius-sm); color: var(--muted); background: rgba(5,12,19,.42); font-size: .75rem; white-space: pre-wrap; }
+.empty-state-inline { margin: 0; padding: .8rem; border: 1px dashed rgba(221,231,244,.16); border-radius: var(--radius-sm); color: var(--muted-soft); text-align: center; }
+.add-override-button { justify-self: start; }
+
 @media (max-width: 1180px) { .master-data-workspace { grid-template-columns: minmax(300px,.8fr) minmax(460px,1.2fr); } .mount-grid { grid-template-columns: 1fr; } .mount-card { grid-template-columns: minmax(110px,.8fr) repeat(3,minmax(80px,1fr)); } .ship-quick-stats { grid-template-columns: 1fr; } }
 @media (max-width: 920px) { .master-data-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .master-data-workspace { grid-template-columns: 1fr; } .catalog-panel { position: static; max-height: none; } .catalog-scroll { max-height: 34rem; } .ship-quick-stats { grid-template-columns: repeat(3,minmax(70px,1fr)); } }
 @media (max-width: 640px) { .master-data-tabs { grid-template-columns: 1fr; } .catalog-toolbar, .form-grid.two-columns, .two-columns, .form-grid.three-columns, .choice-grid { grid-template-columns: 1fr; } .catalog-record { grid-template-columns: 1fr; } .record-meta { justify-content: flex-start; padding-left: 3.3rem; } .editor-header-with-preview { align-items: flex-start; flex-wrap: wrap; } .ship-quick-stats { width: 100%; margin-left: 0; } .mount-card { grid-template-columns: 1fr; } .editor-actions { align-items: stretch; flex-direction: column; } .editor-actions .primary-action { width: 100%; } }

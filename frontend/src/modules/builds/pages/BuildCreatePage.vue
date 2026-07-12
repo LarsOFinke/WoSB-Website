@@ -127,7 +127,7 @@ function formatEffects(name, categoryKey = 'upgrade') {
 
 
 const baseCrewCapacity = computed(() => selectedShip.value?.crew_capacity || 0)
-const baseSailorTarget = computed(() => selectedShip.value?.sailor_minimum || 0)
+const baseSailorMinimum = computed(() => selectedShip.value?.sailor_minimum || 0)
 const firstFourUpgradeEffects = computed(() => sumEffects(
   ...[form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4]
     .filter(Boolean)
@@ -176,24 +176,25 @@ const crewCapacity = computed(() => Math.max(0, Math.round(
   baseCrewCapacity.value * (1 + (Number(buildEffectTotals.value.crew_capacity_pct) || 0) / 100)
   + (Number(buildEffectTotals.value.crew_capacity) || 0),
 )))
-const sailorTarget = computed(() => Math.max(0, baseSailorTarget.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
-const sailingEfficiency = computed(() => sailingEfficiencyPercent(form.sailors, sailorTarget.value))
+const sailorMinimum = computed(() => Math.max(0, baseSailorMinimum.value + (Number(buildEffectTotals.value.sailor_minimum) || 0)))
+const sailingEfficiency = computed(() => sailingEfficiencyPercent(form.sailors, sailorMinimum.value))
 
 const crewTotal = computed(
   () => Number(form.sailors) + Number(form.soldiers) + Number(form.musketeers) + Number(form.mercenaries),
 )
 const crewRemaining = computed(() => Math.max(0, crewCapacity.value - crewTotal.value))
 const crewOverLimit = computed(() => crewCapacity.value > 0 && crewTotal.value > crewCapacity.value)
-const crewInvalid = computed(() => crewOverLimit.value)
-const specialCrewLimit = computed(() => Math.max(1, Number(optionCatalog.value.limits?.special_crew_total) || 8))
-const specialCrewOverCapacity = computed(() => slotQuantityTotal('special_crew_slots') > specialCrewLimit.value)
+const sailorsBelowMinimum = computed(() => Boolean(selectedShip.value) && Number(form.sailors) < sailorMinimum.value)
+const crewInvalid = computed(() => crewOverLimit.value || sailorsBelowMinimum.value)
+const specialCrewLimit = computed(() => Math.max(1, Number(optionCatalog.value.limits?.special_crew_rows || optionCatalog.value.limits?.special_crew_total) || 8))
+const specialCrewOverCapacity = computed(() => slotCount('special_crew_slots') > specialCrewLimit.value)
 
 const upgradeSlotsUsed = computed(() =>
   [form.upgrade_1, form.upgrade_2, form.upgrade_3, form.upgrade_4, form.upgrade_5, form.upgrade_6].filter(Boolean).length,
 )
 const shipStatsPreview = computed(() => ({
   weaponTotal: allWeaponQuantityTotal(),
-  specialCrew: slotQuantityTotal('special_crew_slots'),
+  specialCrew: slotCount('special_crew_slots'),
   inventorySlots: slotCount('ammunition_slots') + slotCount('consumable_slots') + slotCount('hold_slots'),
   upgrades: upgradeSlotsUsed.value,
 }))
@@ -226,16 +227,20 @@ const selectedUpgradeCards = computed(() => Array.from({ length: equipmentUpgrad
 
 const activeEffectRows = computed(() => buildStatRows.value.filter((row) => Number(row.modifier || 0) !== 0))
 
-const canSubmit = computed(
-  () => form.build_name.trim()
-    && form.ship_id
-    && !crewInvalid.value
-    && (!form.upgrade_5 || upgradeSlot5Unlocked.value)
-    && (!form.upgrade_6 || upgradeSlot6Available.value)
-    && allWeaponsValid.value
-    && !specialCrewOverCapacity.value
-    && !saving.value,
-)
+const submitBlockers = computed(() => {
+  const blockers = []
+  if (!form.build_name.trim()) blockers.push(t('builds.create.saveReadiness.reasons.name'))
+  if (!form.ship_id) blockers.push(t('builds.create.saveReadiness.reasons.ship'))
+  if (sailorsBelowMinimum.value) blockers.push(t('builds.create.saveReadiness.reasons.sailors', { current: form.sailors, minimum: sailorMinimum.value }))
+  if (crewOverLimit.value) blockers.push(t('builds.create.saveReadiness.reasons.crew', { current: crewTotal.value, maximum: crewCapacity.value }))
+  if (form.upgrade_5 && !upgradeSlot5Unlocked.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade5'))
+  if (form.upgrade_6 && !upgradeSlot6Available.value) blockers.push(t('builds.create.saveReadiness.reasons.upgrade6'))
+  if (!allWeaponsValid.value) blockers.push(t('builds.create.saveReadiness.reasons.weapons'))
+  if (specialCrewOverCapacity.value) blockers.push(t('builds.create.saveReadiness.reasons.specialists', { maximum: specialCrewLimit.value }))
+  return blockers
+})
+
+const canSubmit = computed(() => submitBlockers.value.length === 0 && !saving.value)
 
 function slotCount(fieldName) {
   return normalizeInventorySlots(form[fieldName]).length
@@ -360,7 +365,6 @@ function upgradeSlotPlaceholder(index) {
 
 function quantityCapacityForField(fieldName) {
   if (isWeaponInventoryField(fieldName)) return weaponCapacityForField(fieldName)
-  if (fieldName === 'special_crew_slots') return specialCrewLimit.value
   return null
 }
 
@@ -431,7 +435,7 @@ function applyCrewAllocation(allocation) {
 }
 
 function crewMaxFor(fieldName) {
-  return crewSliderMax(currentCrewAllocation(), fieldName, crewCapacity.value, sailorTarget.value)
+  return crewSliderMax(currentCrewAllocation(), fieldName, crewCapacity.value, sailorMinimum.value)
 }
 
 function onCrewSliderInput(fieldName, event) {
@@ -441,17 +445,17 @@ function onCrewSliderInput(fieldName, event) {
       fieldName,
       event.target.value,
       crewCapacity.value,
-      sailorTarget.value,
+      sailorMinimum.value,
     ),
   )
 }
 
 function normalizeCurrentCrew() {
-  applyCrewAllocation(normalizeCrewAllocation(currentCrewAllocation(), crewCapacity.value, sailorTarget.value))
+  applyCrewAllocation(normalizeCrewAllocation(currentCrewAllocation(), crewCapacity.value, sailorMinimum.value))
 }
 
 function resetCrewAllocation() {
-  applyCrewAllocation(normalizeCrewAllocation({ sailors: 0 }, crewCapacity.value, sailorTarget.value))
+  applyCrewAllocation(normalizeCrewAllocation({ sailors: 0 }, crewCapacity.value, sailorMinimum.value))
 }
 
 function resetSlots() {
@@ -488,7 +492,7 @@ function buildPayload() {
     starboard_weapon_slots: normalizeInventorySlots(form.starboard_weapon_slots),
     mortar_weapon_slots: normalizeInventorySlots(form.mortar_weapon_slots),
     special_weapon_slots: normalizeInventorySlots(form.special_weapon_slots),
-    special_crew_slots: normalizeInventorySlots(form.special_crew_slots),
+    special_crew_slots: normalizeInventorySlots(form.special_crew_slots).map((slot) => ({ ...slot, quantity: 1 })),
     ammunition_slots: normalizeInventorySlots(form.ammunition_slots),
     consumable_slots: normalizeInventorySlots(form.consumable_slots),
     hold_slots: normalizeInventorySlots(form.hold_slots),
@@ -531,7 +535,7 @@ watch(
   },
 )
 
-watch([crewCapacity, sailorTarget], () => {
+watch([crewCapacity, sailorMinimum], () => {
   normalizeCurrentCrew()
 })
 
@@ -751,9 +755,9 @@ onMounted(async () => {
           <div class="inventory-panel special-crew-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.specialCrew.title') }}</strong>
-              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotQuantityTotal('special_crew_slots'), max: specialCrewLimit }) }}</span>
+              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotCount('special_crew_slots'), max: specialCrewLimit }) }}</span>
             </div>
-            <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select with-quantity">
+            <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select specialist-slot-select">
               <span class="slot-image-cell">
                 <img :src="inventoryImage('special_crew_slots', slot.item)" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
               </span>
@@ -769,14 +773,6 @@ onMounted(async () => {
                 </option>
               </select>
               <small v-if="slot.item" class="slot-effect-text">{{ formatEffects(slot.item, 'special_crew') }}</small>
-              <input
-                :value="slot.quantity"
-                type="number"
-                min="1"
-                :max="quantityMaxForField('special_crew_slots', index)"
-                :aria-label="t('common.quantity')"
-                @input="onInventoryQuantityChange('special_crew_slots', index, $event)"
-              />
             </label>
           </div>
         </div>
@@ -805,9 +801,10 @@ onMounted(async () => {
             <span class="crew-meter-mercenaries" :style="{ width: `${crewCapacity ? (Number(form.mercenaries) / crewCapacity) * 100 : 0}%` }"></span>
           </div>
           <div class="crew-allocation-legend">
-            <span>{{ t('builds.create.crew.sailorTarget', { value: sailorTarget }) }}</span>
+            <span>{{ t('builds.create.crew.sailorMinimum', { value: sailorMinimum }) }}</span>
             <span>{{ t('builds.crewConsole.dynamicLimit') }}</span>
             <span>{{ t('builds.create.crew.workingSpeed', { value: sailingEfficiency }) }}</span>
+            <span v-if="sailorsBelowMinimum" class="crew-warning">{{ t('builds.create.crew.tooFewSailors', { current: form.sailors, minimum: sailorMinimum }) }}</span>
             <span v-if="crewOverLimit" class="crew-warning">{{ t('builds.create.crew.tooManyCrew') }}</span>
           </div>
 
@@ -951,6 +948,16 @@ onMounted(async () => {
         <label class="input-panel embedded-field details-field">
           <textarea v-model="form.details" rows="4" maxlength="3000" :placeholder="t('builds.create.detailsPlaceholder')"></textarea>
         </label>
+      </section>
+
+      <section class="wire-section save-readiness" :class="{ 'is-ready': submitBlockers.length === 0 }" aria-live="polite">
+        <div>
+          <strong>{{ t(submitBlockers.length ? 'builds.create.saveReadiness.blockedTitle' : 'builds.create.saveReadiness.readyTitle') }}</strong>
+          <p>{{ t(submitBlockers.length ? 'builds.create.saveReadiness.blockedHint' : 'builds.create.saveReadiness.readyHint') }}</p>
+        </div>
+        <ul v-if="submitBlockers.length">
+          <li v-for="blocker in submitBlockers" :key="blocker">{{ blocker }}</li>
+        </ul>
       </section>
 
       <p v-if="error" class="error-text">{{ error }}</p>

@@ -29,7 +29,7 @@ export function calculateSpecialistEffectTotals({ slots = [], effectForItem, cre
   const totals = {}
   for (const slot of slots || []) {
     if (!slot?.item) continue
-    const quantity = Math.max(1, nonNegativeInteger(slot.quantity) || 1)
+    const quantity = 1
     const effects = effectForItem?.(slot.item) || {}
 
     for (const [key, rawValue] of Object.entries(effects)) {

@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useLocale } from '@/locales'
 import { getBuild } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
+import { copyBuildShareLink } from '@/modules/builds/shareBuild'
 import { useSession } from '@/modules/accounts/session'
 
 const props = defineProps({
@@ -19,6 +20,7 @@ const { user } = useSession()
 const build = ref(null)
 const loading = ref(false)
 const error = ref('')
+const shareStatus = ref('')
 
 const weaponArcRows = computed(() => [
   { key: 'front', label: t('builds.detail.weapons.front'), slots: build.value?.front_weapon_slots || [] },
@@ -66,6 +68,20 @@ function slotLabel(slot) {
   if (typeof slot === 'string') return optionLabel(slot)
   if (!slot?.item) return ''
   return `${optionLabel(slot.item)} ×${slot.quantity || 1}`
+}
+
+function specialistLabel(slot) {
+  return optionLabel(typeof slot === 'string' ? slot : slot?.item)
+}
+
+async function shareBuild() {
+  shareStatus.value = ''
+  try {
+    await copyBuildShareLink(build.value.id)
+    shareStatus.value = t('builds.share.copied')
+  } catch {
+    shareStatus.value = t('builds.share.error')
+  }
 }
 
 function buildTypeLabel(value) {
@@ -135,12 +151,15 @@ onMounted(loadBuild)
               </p>
             </div>
             <div class="detail-header-actions">
+              <button class="small-action" type="button" @click="shareBuild">{{ t('builds.share.action') }}</button>
               <RouterLink v-if="canEdit" class="small-action primary-action" :to="`/builds/${build.id}/edit`">
                 {{ t('builds.edit.action') }}
               </RouterLink>
               <RouterLink class="small-action" to="/builds">{{ t('common.back') }}</RouterLink>
             </div>
           </div>
+
+          <p v-if="shareStatus" class="share-status" role="status">{{ shareStatus }}</p>
 
           <BuildStatCommandDeck
             :ship="build.ship"
@@ -226,7 +245,7 @@ onMounted(loadBuild)
             <article class="detail-card">
               <span>{{ t('builds.detail.specialCrew') }}</span>
               <ul v-if="specialCrewSlots.length" class="simple-list">
-                <li v-for="slot in specialCrewSlots" :key="slotLabel(slot)">{{ slotLabel(slot) }}</li>
+                <li v-for="slot in specialCrewSlots" :key="specialistLabel(slot)">{{ specialistLabel(slot) }}</li>
               </ul>
               <strong v-else>—</strong>
             </article>

@@ -15,6 +15,7 @@ from app.modules.admin.schemas.master_data import (
     MasterDataShipCreate,
     MasterDataShipMount,
     MasterDataShipRead,
+    MasterDataShipUpgradeOverrideRead,
     MasterDataShipUpdate,
     MasterDataTaxonomyRead,
     WeaponClassRead,
@@ -24,7 +25,9 @@ from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
+from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import (
     ShipWeaponMount,
     WeaponClassDefinition,
@@ -98,6 +101,21 @@ def _ship_read(row: Ship) -> MasterDataShipRead:
         )
         for mount in sorted(row.weapon_mounts, key=lambda item: item.slot_type.sort_order)
     ]
+    override_option_ids = sorted({item.option_id for item in row.upgrade_effect_overrides})
+    overrides = []
+    for option_id in override_option_ids:
+        rows = [item for item in row.upgrade_effect_overrides if item.option_id == option_id]
+        option = rows[0].option
+        sparse = {item.effect_key: item.normalized_value for item in rows}
+        overrides.append(
+            MasterDataShipUpgradeOverrideRead(
+                option_id=option.id,
+                option_name=option.name,
+                stat_effects=sparse,
+                base_stat_effects=option.stat_effects,
+                effective_stat_effects=effective_upgrade_effects(option, row),
+            )
+        )
     return MasterDataShipRead(
         id=row.id,
         name=row.name,
@@ -118,6 +136,7 @@ def _ship_read(row: Ship) -> MasterDataShipRead:
         has_lantern=row.has_lantern,
         is_active=row.is_active,
         weapon_mounts=mounts,
+        upgrade_effect_overrides=overrides,
         weapon_layout=row.weapon_layout,
         seed_key=row.seed_key,
         seed_revision=row.seed_revision,
@@ -336,6 +355,12 @@ def _ship_query():
     return select(Ship).options(
         selectinload(Ship.weapon_mounts).selectinload(ShipWeaponMount.slot_type),
         selectinload(Ship.weapon_mounts).selectinload(ShipWeaponMount.max_weapon_class),
+        selectinload(Ship.upgrade_effect_overrides)
+        .selectinload(ShipUpgradeEffectOverride.option)
+        .selectinload(BuildItemOption.effects),
+        selectinload(Ship.upgrade_effect_overrides)
+        .selectinload(ShipUpgradeEffectOverride.option)
+        .selectinload(BuildItemOption.category),
     )
 
 
@@ -351,7 +376,7 @@ def _apply_ship_payload(
     db: Session, row: Ship, payload: MasterDataShipCreate | MasterDataShipUpdate
 ) -> None:
     weapon_classes, slot_types = _taxonomy_maps(db)
-    values = payload.model_dump(exclude={"weapon_mounts"})
+    values = payload.model_dump(exclude={"weapon_mounts", "upgrade_effect_overrides"})
     for field, value in values.items():
         setattr(row, field, value)
 
@@ -382,6 +407,34 @@ def _apply_ship_payload(
     for code, mount in current.items():
         if code not in active:
             row.weapon_mounts.remove(mount)
+
+    option_ids = [item.option_id for item in payload.upgrade_effect_overrides]
+    options = {
+        option.id: option
+        for option in db.scalars(
+            select(BuildItemOption)
+            .options(selectinload(BuildItemOption.effects))
+            .join(BuildItemOption.category)
+            .where(BuildItemOption.id.in_(option_ids))
+        ).unique().all()
+    } if option_ids else {}
+    for item in payload.upgrade_effect_overrides:
+        option = options.get(item.option_id)
+        if option is None:
+            raise MasterDataError(f"Upgrade option {item.option_id} not found.")
+        if option.category.key != "upgrade":
+            raise MasterDataError(f"Option {item.option_id} is not an upgrade.")
+
+    row.upgrade_effect_overrides.clear()
+    for item in payload.upgrade_effect_overrides:
+        for effect_key, effect_value in item.stat_effects.items():
+            row.upgrade_effect_overrides.append(
+                ShipUpgradeEffectOverride(
+                    option_id=item.option_id,
+                    effect_key=effect_key,
+                    effect_value=float(effect_value),
+                )
+            )
 
 
 def create_ship(db: Session, payload: MasterDataShipCreate) -> MasterDataShipRead:
@@ -430,6 +483,7 @@ def restore_ship_seed(db: Session, ship_id: int) -> MasterDataShipRead:
     row.is_seed_overridden = False
     row.seed_revision = None
     row.seed_checksum = None
+    row.upgrade_effect_overrides.clear()
     db.commit()
     SeedManager(db).seed_ships()
     restored = db.scalar(_ship_query().where(Ship.seed_key == seed_key_value))

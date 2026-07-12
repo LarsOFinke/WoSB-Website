@@ -2,6 +2,12 @@
 
 ## 1.0.0 — Produktionsbaseline
 
+- schiffsspezifische Upgrade-Effektwerte als wartbare Sparse-Overrides in API, Datenmodell und Stammdatenverwaltung ergänzt
+- Build-Designer und serverseitige Build-Berechnung verwenden automatisch die Upgrade-Werte des gewählten Schiffs
+- Spezialisten auf genau einen Eintrag je Art vereinheitlicht; Mengen-Counter und stapelbare Effekte entfernt
+- Matrosenwert als zu erfüllendes Minimum statt als Obergrenze umgesetzt und Speichersperren transparent aufgelistet
+- „Share Build“-Aktion zum Kopieren öffentlicher Build-Links ergänzt
+- HTTP-500-Fehler der Staff-API-Logs durch Schema-Reparaturmigration und robuste Summenabfragen behoben
 - Build-Designer-Schiffskatalog auf 67 Datensätze aktualisiert, inklusive Event-Schiff Leopard
 - Ice Lantern mit +5% Geschwindigkeit, Laderaum und Haltbarkeit ergänzt
 - De Zeven Provincien und Sovereign gegen aktuelle Ingame-Panels re-auditiert

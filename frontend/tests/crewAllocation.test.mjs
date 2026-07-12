@@ -23,12 +23,12 @@ test('Anson allocation stays within 160 crew and preserves the sailor target', (
 })
 
 
-test('crew input is capped by remaining capacity and the sailor target', () => {
-  const allocation = { sailors: 40, musketeers: 20, soldiers: 60, mercenaries: 0 }
+test('crew input is capped only by remaining capacity, not the sailor minimum', () => {
+  const allocation = { sailors: 40, musketeers: 20, soldiers: 20, mercenaries: 0 }
   assert.equal(crewSliderMax(allocation, 'soldiers', 160, 80), 100)
-  assert.equal(crewSliderMax(allocation, 'sailors', 160, 80), 80)
+  assert.equal(crewSliderMax(allocation, 'sailors', 160, 80), 120)
   assert.deepEqual(
-    setCrewAllocationValue(allocation, 'soldiers', 999, 160, 80),
-    { sailors: 40, musketeers: 20, soldiers: 100, mercenaries: 0 },
+    setCrewAllocationValue(allocation, 'sailors', 110, 160, 80),
+    { sailors: 110, musketeers: 20, soldiers: 20, mercenaries: 0 },
   )
 })
