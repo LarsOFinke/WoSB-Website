@@ -1,7 +1,7 @@
 import { buildShareUrl } from './shareBuild.js'
 
 const PAGE_WIDTH = 1240
-const PAGE_HEIGHT = 1754
+const BASE_PAGE_HEIGHT = 1754
 const PANEL_GAP = 24
 const PAGE_PADDING = 52
 const CONTENT_WIDTH = PAGE_WIDTH - PAGE_PADDING * 2
@@ -123,6 +123,153 @@ function renderPanel({ x, y, width, height, eyebrow, title, content }) {
     </g>`
 }
 
+
+function lineBlockHeight(lineCount, { fontSize = 15, lineHeight = 1.22, titleGap = 20, paddingBottom = 12 } = {}) {
+  const safeCount = Math.max(1, Number(lineCount || 0))
+  return titleGap + (safeCount * fontSize * lineHeight) + paddingBottom
+}
+
+function createBuildPrintDocument(build, helpers = {}) {
+  const model = createBuildPrintModel(build, helpers)
+  const xLeft = PAGE_PADDING
+  const xRight = PAGE_PADDING + COLUMN_WIDTH + PANEL_GAP
+  let leftY = 340
+  let rightY = 340
+
+  const summaryCardWidth = (CONTENT_WIDTH - (PANEL_GAP * 3)) / 4
+  const summaryCardsSvg = model.summaryCards.map((card, index) => {
+    const x = PAGE_PADDING + ((summaryCardWidth + PANEL_GAP) * index)
+    return `
+      <g>
+        <rect x="${x}" y="212" width="${summaryCardWidth}" height="104" rx="22" fill="${COLORS.panelSoft}" stroke="${COLORS.border}" />
+        <text x="${x + 24}" y="244" fill="${COLORS.muted}" font-size="14" font-weight="600">${escapeXml(card.label)}</text>
+        <text x="${x + 24}" y="278" fill="${COLORS.text}" font-size="30" font-weight="700">${escapeXml(card.value)}</text>
+        <text x="${x + 24}" y="298" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(card.detail)}</text>
+      </g>`
+  }).join('')
+
+  const statContent = model.statRows.map((row, index) => {
+    const y = leftY + 110 + index * 38
+    return `
+      <line x1="${xLeft + 28}" y1="${y - 18}" x2="${xLeft + COLUMN_WIDTH - 28}" y2="${y - 18}" stroke="${index === 0 ? 'transparent' : COLORS.border}" />
+      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
+      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="18" font-weight="700">${escapeXml(formatStatValue(row.effective, row.unit, row.precision))}</text>
+      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y + 18}" text-anchor="end" fill="${Number(row.modifier) ? COLORS.accentStrong : COLORS.muted}" font-size="13">${escapeXml(`${formatStatValue(row.base, row.unit, row.precision)} · ${formatModifier(row)}`)}</text>`
+  }).join('')
+  const statPanelHeight = 420
+  const statPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: statPanelHeight, eyebrow: model.t('builds.commandDeck.performanceEyebrow'), title: model.t('builds.commandDeck.performanceTitle'), content: statContent })
+  leftY += statPanelHeight + PANEL_GAP
+
+  const crewContent = model.crewRows.map((row, index) => {
+    const y = leftY + 112 + index * 54
+    return `
+      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
+      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>
+      ${row.hint ? `<text x="${xLeft + 28}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
+  }).join('')
+  const crewPanelHeight = 288
+  const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: crewPanelHeight, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent })
+  leftY += crewPanelHeight + PANEL_GAP
+
+  const upgradeLines = model.upgrades.length ? model.upgrades : ['—']
+  const upgradeContent = upgradeLines.map((line, index) => `
+    <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${line === '—' ? COLORS.muted : COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
+  const upgradePanelHeight = 276
+  const upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
+  leftY += upgradePanelHeight
+
+  const equipmentContent = model.equipmentRows.map((row, index) => {
+    const y = rightY + 112 + index * 56
+    return `
+      <text x="${xRight + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
+      <text x="${xRight + 28}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
+  }).join('') + renderMultilineText([
+    model.t('builds.detail.specialCrew'),
+    ...(model.specialists.length ? model.specialists : ['—']),
+  ], xRight + 28, rightY + 284, { fontSize: 16, fill: COLORS.text })
+  const equipmentPanelHeight = 356
+  const equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent })
+  rightY += equipmentPanelHeight + PANEL_GAP
+
+  const weaponContent = model.weapons.map((group, index) => {
+    const baseY = rightY + 108 + index * 78
+    const lines = group.lines.length ? group.lines : ['—']
+    return `
+      <text x="${xRight + 28}" y="${baseY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.label)}</text>
+      ${renderMultilineText(lines, xRight + 28, baseY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.25 })}`
+  }).join('')
+  const weaponPanelHeight = 520
+  const weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent })
+  rightY += weaponPanelHeight + PANEL_GAP
+
+  const inventoryGroups = [
+    { title: model.t('builds.detail.ammunition'), lines: model.ammunition },
+    { title: model.t('builds.detail.consumables'), lines: model.consumables },
+    { title: model.t('builds.detail.hold'), lines: model.hold },
+  ]
+  let inventoryCursorY = rightY + 108
+  const inventoryContent = inventoryGroups.map((group, index) => {
+    const sectionY = inventoryCursorY
+    const lines = group.lines.length ? group.lines : ['—']
+    inventoryCursorY += lineBlockHeight(lines.length, { fontSize: 15, lineHeight: 1.24, titleGap: 22, paddingBottom: index === inventoryGroups.length - 1 ? 0 : 24 })
+    return `
+      <text x="${xRight + 28}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
+      ${renderMultilineText(lines, xRight + 28, sectionY + 22, { fontSize: 15, fill: COLORS.text, lineHeight: 1.24 })}`
+  }).join('')
+  const inventoryPanelHeight = Math.max(344, Math.ceil(inventoryCursorY - rightY + 40))
+  const inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent })
+  rightY += inventoryPanelHeight
+
+  const footerLines = model.notes.length ? model.notes : ['—']
+  const notesTextHeight = Math.max(1, footerLines.length) * 16 * 1.45
+  const notesPanelY = Math.max(leftY, rightY) + PANEL_GAP
+  const notesPanelHeight = Math.max(230, Math.ceil(132 + notesTextHeight))
+  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(notesPanelY + notesPanelHeight + PAGE_PADDING + 16))
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}">
+    <defs>
+      <linearGradient id="pageGlow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${COLORS.pageGlow}" stop-opacity="0.78" />
+        <stop offset="100%" stop-color="${COLORS.page}" stop-opacity="1" />
+      </linearGradient>
+      <linearGradient id="accentGlow" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="${COLORS.accent}" stop-opacity="0.92" />
+        <stop offset="100%" stop-color="${COLORS.accentStrong}" stop-opacity="0.35" />
+      </linearGradient>
+    </defs>
+    <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${COLORS.page}" />
+    <circle cx="180" cy="140" r="260" fill="${COLORS.accent}" fill-opacity="0.09" />
+    <circle cx="1080" cy="120" r="220" fill="#5888bb" fill-opacity="0.11" />
+    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" rx="38" fill="url(#pageGlow)" stroke="${COLORS.border}" />
+    <rect x="${PAGE_PADDING}" y="${PAGE_PADDING}" width="${CONTENT_WIDTH}" height="132" rx="30" fill="${COLORS.panel}" stroke="${COLORS.borderStrong}" />
+    <rect x="${PAGE_PADDING + 24}" y="${PAGE_PADDING + 24}" width="6" height="84" rx="3" fill="url(#accentGlow)" />
+    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 38}" fill="${COLORS.accent}" font-size="15" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
+    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 82}" fill="${COLORS.text}" font-size="40" font-weight="800">${escapeXml(model.buildName)}</text>
+    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 112}" fill="${COLORS.muted}" font-size="20">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
+    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 38}" text-anchor="end" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
+    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 62}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.shareUrl)}</text>
+    ${summaryCardsSvg}
+    ${statPanel}
+    ${crewPanel}
+    ${upgradePanel}
+    ${equipmentPanel}
+    ${weaponPanel}
+    ${inventoryPanel}
+    <g>
+      <rect x="${PAGE_PADDING}" y="${notesPanelY}" width="${CONTENT_WIDTH}" height="${notesPanelHeight}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
+      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
+      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
+      ${renderMultilineText(footerLines, PAGE_PADDING + 28, notesPanelY + 104, { fontSize: 16, fill: COLORS.text, lineHeight: 1.45 })}
+      <line x1="${PAGE_PADDING + 28}" y1="${notesPanelY + notesPanelHeight - 40}" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="${notesPanelY + notesPanelHeight - 40}" stroke="${COLORS.border}" />
+      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + notesPanelHeight - 12}" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
+      <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="${notesPanelY + notesPanelHeight - 12}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
+    </g>
+  </svg>`
+
+  return { svg, width: PAGE_WIDTH, height: pageHeight, model }
+}
+
 function statRowsForBuild(build, t) {
   return (build?.ship_stats?.stat_rows || [])
     .filter((row) => CORE_STAT_KEYS.has(row.key))
@@ -228,128 +375,7 @@ function createBuildPrintModel(build, helpers = {}) {
 }
 
 export function createBuildPrintSvg(build, helpers = {}) {
-  const model = createBuildPrintModel(build, helpers)
-  const xLeft = PAGE_PADDING
-  const xRight = PAGE_PADDING + COLUMN_WIDTH + PANEL_GAP
-  let leftY = 340
-  let rightY = 340
-
-  const summaryCardWidth = (CONTENT_WIDTH - (PANEL_GAP * 3)) / 4
-  const summaryCardsSvg = model.summaryCards.map((card, index) => {
-    const x = PAGE_PADDING + ((summaryCardWidth + PANEL_GAP) * index)
-    return `
-      <g>
-        <rect x="${x}" y="212" width="${summaryCardWidth}" height="104" rx="22" fill="${COLORS.panelSoft}" stroke="${COLORS.border}" />
-        <text x="${x + 24}" y="244" fill="${COLORS.muted}" font-size="14" font-weight="600">${escapeXml(card.label)}</text>
-        <text x="${x + 24}" y="278" fill="${COLORS.text}" font-size="30" font-weight="700">${escapeXml(card.value)}</text>
-        <text x="${x + 24}" y="298" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(card.detail)}</text>
-      </g>`
-  }).join('')
-
-  const statContent = model.statRows.map((row, index) => {
-    const y = leftY + 110 + index * 38
-    return `
-      <line x1="${xLeft + 28}" y1="${y - 18}" x2="${xLeft + COLUMN_WIDTH - 28}" y2="${y - 18}" stroke="${index === 0 ? 'transparent' : COLORS.border}" />
-      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="18" font-weight="700">${escapeXml(formatStatValue(row.effective, row.unit, row.precision))}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y + 18}" text-anchor="end" fill="${Number(row.modifier) ? COLORS.accentStrong : COLORS.muted}" font-size="13">${escapeXml(`${formatStatValue(row.base, row.unit, row.precision)} · ${formatModifier(row)}`)}</text>`
-  }).join('')
-  const statPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: 420, eyebrow: model.t('builds.commandDeck.performanceEyebrow'), title: model.t('builds.commandDeck.performanceTitle'), content: statContent })
-  leftY += 420 + PANEL_GAP
-
-  const crewContent = model.crewRows.map((row, index) => {
-    const y = leftY + 112 + index * 54
-    return `
-      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>
-      ${row.hint ? `<text x="${xLeft + 28}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
-  }).join('')
-  const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: 288, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent })
-  leftY += 288 + PANEL_GAP
-
-  const upgradeLines = model.upgrades.length ? model.upgrades : ['—']
-  const upgradeContent = upgradeLines.map((line, index) => `
-    <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${line === '—' ? COLORS.muted : COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
-  const upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: 276, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
-
-  const equipmentContent = model.equipmentRows.map((row, index) => {
-    const y = rightY + 112 + index * 56
-    return `
-      <text x="${xRight + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xRight + 28}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
-  }).join('') + renderMultilineText([
-    model.t('builds.detail.specialCrew'),
-    ...(model.specialists.length ? model.specialists : ['—']),
-  ], xRight + 28, rightY + 284, { fontSize: 16, fill: COLORS.text })
-  const equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: 356, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent })
-  rightY += 356 + PANEL_GAP
-
-  const weaponContent = model.weapons.map((group, index) => {
-    const baseY = rightY + 108 + index * 78
-    const lines = group.lines.length ? group.lines : ['—']
-    return `
-      <text x="${xRight + 28}" y="${baseY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.label)}</text>
-      ${renderMultilineText(lines, xRight + 28, baseY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.25 })}`
-  }).join('')
-  const weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: 520, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent })
-  rightY += 520 + PANEL_GAP
-
-  const inventoryGroups = [
-    { title: model.t('builds.detail.ammunition'), lines: model.ammunition },
-    { title: model.t('builds.detail.consumables'), lines: model.consumables },
-    { title: model.t('builds.detail.hold'), lines: model.hold },
-  ]
-  const inventoryContent = inventoryGroups.map((group, index) => {
-    const sectionY = rightY + 108 + index * 98
-    const lines = group.lines.length ? group.lines : ['—']
-    return `
-      <text x="${xRight + 28}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
-      ${renderMultilineText(lines, xRight + 28, sectionY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.22 })}`
-  }).join('')
-  const inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: 344, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent })
-
-  const footerLines = model.notes.length ? model.notes : ['—']
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${PAGE_HEIGHT}" viewBox="0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}">
-    <defs>
-      <linearGradient id="pageGlow" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${COLORS.pageGlow}" stop-opacity="0.78" />
-        <stop offset="100%" stop-color="${COLORS.page}" stop-opacity="1" />
-      </linearGradient>
-      <linearGradient id="accentGlow" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="${COLORS.accent}" stop-opacity="0.92" />
-        <stop offset="100%" stop-color="${COLORS.accentStrong}" stop-opacity="0.35" />
-      </linearGradient>
-    </defs>
-    <rect width="${PAGE_WIDTH}" height="${PAGE_HEIGHT}" fill="${COLORS.page}" />
-    <circle cx="180" cy="140" r="260" fill="${COLORS.accent}" fill-opacity="0.09" />
-    <circle cx="1080" cy="120" r="220" fill="#5888bb" fill-opacity="0.11" />
-    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${PAGE_HEIGHT - 28}" rx="38" fill="url(#pageGlow)" stroke="${COLORS.border}" />
-    <rect x="${PAGE_PADDING}" y="${PAGE_PADDING}" width="${CONTENT_WIDTH}" height="132" rx="30" fill="${COLORS.panel}" stroke="${COLORS.borderStrong}" />
-    <rect x="${PAGE_PADDING + 24}" y="${PAGE_PADDING + 24}" width="6" height="84" rx="3" fill="url(#accentGlow)" />
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 38}" fill="${COLORS.accent}" font-size="15" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 82}" fill="${COLORS.text}" font-size="40" font-weight="800">${escapeXml(model.buildName)}</text>
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 112}" fill="${COLORS.muted}" font-size="20">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
-    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 38}" text-anchor="end" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
-    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 62}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.shareUrl)}</text>
-    ${summaryCardsSvg}
-    ${statPanel}
-    ${crewPanel}
-    ${upgradePanel}
-    ${equipmentPanel}
-    ${weaponPanel}
-    ${inventoryPanel}
-    <g>
-      <rect x="${PAGE_PADDING}" y="1456" width="${CONTENT_WIDTH}" height="230" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      <text x="${PAGE_PADDING + 28}" y="1490" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
-      <text x="${PAGE_PADDING + 28}" y="1522" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
-      ${renderMultilineText(footerLines, PAGE_PADDING + 28, 1560, { fontSize: 16, fill: COLORS.text, lineHeight: 1.45 })}
-      <line x1="${PAGE_PADDING + 28}" y1="1646" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="1646" stroke="${COLORS.border}" />
-      <text x="${PAGE_PADDING + 28}" y="1678" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
-      <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="1678" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
-    </g>
-  </svg>`
+  return createBuildPrintDocument(build, helpers).svg
 }
 
 export function buildPrintFileName(build, extension = 'png') {
@@ -369,19 +395,19 @@ function triggerDownload(blob, fileName) {
 }
 
 export function createBuildPrintPreviewUrl(build, helpers = {}) {
-  const svg = createBuildPrintSvg(build, helpers)
+  const { svg } = createBuildPrintDocument(build, helpers)
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   return URL.createObjectURL(blob)
 }
 
 export function downloadBuildPrintSvg(build, helpers = {}) {
-  const svg = createBuildPrintSvg(build, helpers)
+  const { svg } = createBuildPrintDocument(build, helpers)
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   triggerDownload(blob, buildPrintFileName(build, 'svg'))
 }
 
 export async function downloadBuildPrintPng(build, helpers = {}) {
-  const svg = createBuildPrintSvg(build, helpers)
+  const { svg, width, height } = createBuildPrintDocument(build, helpers)
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   try {
@@ -392,11 +418,11 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
       img.src = url
     })
     const canvas = document.createElement('canvas')
-    canvas.width = PAGE_WIDTH
-    canvas.height = PAGE_HEIGHT
+    canvas.width = width
+    canvas.height = height
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Canvas context is unavailable.')
-    context.drawImage(image, 0, 0, PAGE_WIDTH, PAGE_HEIGHT)
+    context.drawImage(image, 0, 0, width, height)
     const pngBlob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => {
         if (result) resolve(result)
@@ -410,7 +436,7 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
 }
 
 export function openBuildPrintWindow(build, helpers = {}) {
-  const svg = createBuildPrintSvg(build, helpers)
+  const { svg } = createBuildPrintDocument(build, helpers)
   const popup = window.open('', '_blank', 'noopener,noreferrer,width=1040,height=1440')
   if (!popup) throw new Error('Print preview could not be opened.')
   popup.document.write(`<!doctype html><html><head><title>${escapeXml(build?.build_name || 'Build')}</title><style>html,body{margin:0;background:#08111b;color:#f4f7fb;font-family:Inter,system-ui,sans-serif}body{display:grid;place-items:center;padding:24px}img{max-width:min(100%,1000px);height:auto;box-shadow:0 20px 60px rgba(0,0,0,.35);border-radius:20px}button{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:999px;border:1px solid rgba(241,184,91,.35);background:#101d2b;color:#f4f7fb;cursor:pointer}</style></head><body><button onclick="window.print()">Print</button><img alt="Build sheet" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" /></body></html>`)
@@ -418,4 +444,4 @@ export function openBuildPrintWindow(build, helpers = {}) {
   return popup
 }
 
-export { createBuildPrintModel }
+export { createBuildPrintModel, createBuildPrintDocument }
