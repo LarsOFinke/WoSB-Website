@@ -115,6 +115,7 @@ test('build print model exposes export-ready sections', () => {
   assert.equal(model.shareUrl, 'https://fleet.example/builds/42')
   assert.deepEqual(model.upgrades, ['Copper Sheathing', 'Trim'])
   assert.equal(model.weapons[1].lines[0], 'Long 18-pdr ×12')
+  assert.equal(model.inventoryGroups[0].title, 'Ammunition')
 })
 
 test('build print svg contains the key build identifiers', () => {
@@ -127,4 +128,44 @@ test('build print svg contains the key build identifiers', () => {
 
 test('build print file names are sanitized for downloads', () => {
   assert.equal(buildPrintFileName({ build_name: 'Santisima Trinidad #1' }, 'png'), 'santisima-trinidad-1-build-sheet.png')
+})
+
+
+test('build print omits unselected optional sections and values', () => {
+  const sparseBuild = {
+    ...build,
+    sails: null,
+    lantern: null,
+    research_upgrade_slot_unlocked: false,
+    upgrade_1: null,
+    upgrade_2: null,
+    special_crew_slots: [],
+    ammunition_slots: [],
+    consumable_slots: [],
+    hold_slots: [],
+    front_weapon_slots: [],
+    rear_weapon_slots: [],
+    port_weapon_slots: [],
+    starboard_weapon_slots: [],
+    mortar_weapon_slots: [],
+    special_weapon_slots: [],
+    musketeers: 0,
+    soldiers: 0,
+    mercenaries: 0,
+    details: '',
+  }
+  const model = createBuildPrintModel(sparseBuild, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+  assert.deepEqual(model.equipmentRows, [])
+  assert.deepEqual(model.upgrades, [])
+  assert.deepEqual(model.weapons, [])
+  assert.deepEqual(model.inventoryGroups, [])
+  assert.deepEqual(model.notes, [])
+  assert.equal(model.crewRows.length, 1)
+
+  const svg = createBuildPrintSvg(sparseBuild, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+  assert.doesNotMatch(svg, /Configuration snapshot/)
+  assert.doesNotMatch(svg, /Weapon loadout/)
+  assert.doesNotMatch(svg, /Ammunition and hold/)
+  assert.doesNotMatch(svg, /Captain notes/)
+  assert.doesNotMatch(svg, /Research slot/)
 })

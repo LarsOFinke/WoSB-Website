@@ -167,64 +167,74 @@ function createBuildPrintDocument(build, helpers = {}) {
       <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>
       ${row.hint ? `<text x="${xLeft + 28}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
   }).join('')
-  const crewPanelHeight = 288
+  const crewPanelHeight = Math.max(236, 120 + (model.crewRows.length * 54))
   const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: crewPanelHeight, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent })
   leftY += crewPanelHeight + PANEL_GAP
 
-  const upgradeLines = model.upgrades.length ? model.upgrades : ['—']
-  const upgradeContent = upgradeLines.map((line, index) => `
-    <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${line === '—' ? COLORS.muted : COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
-  const upgradePanelHeight = Math.max(276, 116 + (upgradeLines.length * 32) + 28)
-  const upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
-  leftY += upgradePanelHeight
+  let upgradePanel = ''
+  if (model.upgrades.length) {
+    const upgradeLines = model.upgrades
+    const upgradeContent = upgradeLines.map((line, index) => `
+      <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
+    const upgradePanelHeight = Math.max(276, 116 + (upgradeLines.length * 32) + 28)
+    upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
+    leftY += upgradePanelHeight
+  }
 
-  const equipmentContent = model.equipmentRows.map((row, index) => {
+  let equipmentPanel = ''
+  if (model.equipmentRows.length || model.specialists.length) {
+    const equipmentContent = model.equipmentRows.map((row, index) => {
     const y = rightY + 112 + index * 56
     return `
       <text x="${xRight + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
       <text x="${xRight + 28}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
-  }).join('') + renderMultilineText([
-    model.t('builds.detail.specialCrew'),
-    ...(model.specialists.length ? model.specialists : ['—']),
-  ], xRight + 28, rightY + 284, { fontSize: 16, fill: COLORS.text })
-  const equipmentPanelHeight = 356
-  const equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent })
-  rightY += equipmentPanelHeight + PANEL_GAP
+  }).join('') + (model.specialists.length
+    ? renderMultilineText([
+        model.t('builds.detail.specialCrew'),
+        ...model.specialists,
+      ], xRight + 28, rightY + (model.equipmentRows.length * 56) + 136, { fontSize: 16, fill: COLORS.text })
+    : '')
+    const equipmentPanelHeight = Math.max(228, 136 + (model.equipmentRows.length * 56) + (model.specialists.length ? 26 + (model.specialists.length * 16 * 1.4) : 0))
+    equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent })
+    rightY += equipmentPanelHeight + PANEL_GAP
+  }
 
-  const weaponContent = model.weapons.map((group, index) => {
+  let weaponPanel = ''
+  if (model.weapons.length) {
+    const weaponContent = model.weapons.map((group, index) => {
     const baseY = rightY + 108 + index * 78
     const lines = group.lines.length ? group.lines : ['—']
     return `
       <text x="${xRight + 28}" y="${baseY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.label)}</text>
       ${renderMultilineText(lines, xRight + 28, baseY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.25 })}`
   }).join('')
-  const weaponPanelHeight = 520
-  const weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent })
-  rightY += weaponPanelHeight + PANEL_GAP
+    const weaponPanelHeight = Math.max(248, 112 + (model.weapons.length * 78))
+    weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent })
+    rightY += weaponPanelHeight + PANEL_GAP
+  }
 
-  const inventoryGroups = [
-    { title: model.t('builds.detail.ammunition'), lines: model.ammunition },
-    { title: model.t('builds.detail.consumables'), lines: model.consumables },
-    { title: model.t('builds.detail.hold'), lines: model.hold },
-  ]
-  let inventoryCursorY = rightY + 108
-  const inventoryContent = inventoryGroups.map((group, index) => {
+  let inventoryPanel = ''
+  if (model.inventoryGroups.length) {
+    let inventoryCursorY = rightY + 108
+    const inventoryContent = model.inventoryGroups.map((group, index) => {
     const sectionY = inventoryCursorY
     const lines = group.lines.length ? group.lines : ['—']
-    inventoryCursorY += lineBlockHeight(lines.length, { fontSize: 15, lineHeight: 1.24, titleGap: 22, paddingBottom: index === inventoryGroups.length - 1 ? 0 : 24 })
+    inventoryCursorY += lineBlockHeight(lines.length, { fontSize: 15, lineHeight: 1.24, titleGap: 22, paddingBottom: index === model.inventoryGroups.length - 1 ? 0 : 24 })
     return `
       <text x="${xRight + 28}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
       ${renderMultilineText(lines, xRight + 28, sectionY + 22, { fontSize: 15, fill: COLORS.text, lineHeight: 1.24 })}`
   }).join('')
-  const inventoryPanelHeight = Math.max(344, Math.ceil(inventoryCursorY - rightY + 40))
-  const inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent })
-  rightY += inventoryPanelHeight
+    const inventoryPanelHeight = Math.max(212, Math.ceil(inventoryCursorY - rightY + 40))
+    inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent })
+    rightY += inventoryPanelHeight
+  }
 
-  const footerLines = model.notes.length ? model.notes : ['—']
+  const hasNotes = model.notes.length > 0
+  const footerLines = hasNotes ? model.notes : []
   const notesTextHeight = Math.max(1, footerLines.length) * 16 * 1.45
-  const notesPanelY = Math.max(leftY, rightY) + PANEL_GAP
-  const notesPanelHeight = Math.max(230, Math.ceil(132 + notesTextHeight))
-  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(notesPanelY + notesPanelHeight + PAGE_PADDING + 16))
+  const notesPanelY = hasNotes ? (Math.max(leftY, rightY) + PANEL_GAP) : 0
+  const notesPanelHeight = hasNotes ? Math.max(230, Math.ceil(132 + notesTextHeight)) : 0
+  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil((hasNotes ? (notesPanelY + notesPanelHeight) : Math.max(leftY, rightY)) + PAGE_PADDING + 16))
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}">
@@ -256,7 +266,7 @@ function createBuildPrintDocument(build, helpers = {}) {
     ${equipmentPanel}
     ${weaponPanel}
     ${inventoryPanel}
-    <g>
+    ${hasNotes ? `<g>
       <rect x="${PAGE_PADDING}" y="${notesPanelY}" width="${CONTENT_WIDTH}" height="${notesPanelHeight}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
       <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
       <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
@@ -264,7 +274,7 @@ function createBuildPrintDocument(build, helpers = {}) {
       <line x1="${PAGE_PADDING + 28}" y1="${notesPanelY + notesPanelHeight - 40}" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="${notesPanelY + notesPanelHeight - 40}" stroke="${COLORS.border}" />
       <text x="${PAGE_PADDING + 28}" y="${notesPanelY + notesPanelHeight - 12}" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
       <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="${notesPanelY + notesPanelHeight - 12}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
-    </g>
+    </g>` : ''}
   </svg>`
 
   return { svg, width: PAGE_WIDTH, height: pageHeight, model }
@@ -339,9 +349,21 @@ function createBuildPrintModel(build, helpers = {}) {
   ].map((group) => ({
     ...group,
     lines: cleanLines(group.slots.map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 3),
-  }))
+  })).filter((group) => group.lines.length > 0)
 
-  const noteLines = wrapText(build?.details || t('builds.detail.noDetails'), 70, 5)
+  const specialists = cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4)
+  const equipmentRows = [
+      build?.sails ? { label: t('builds.detail.sail'), value: optionLabel(build?.sails) } : null,
+      build?.lantern ? { label: t('builds.detail.lantern'), value: optionLabel(build?.lantern) } : null,
+      build?.research_upgrade_slot_unlocked ? { label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
+    ].filter(Boolean)
+  const inventoryGroups = [
+    { title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+    { title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+    { title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+  ].filter((group) => group.lines.length > 0)
+
+  const noteLines = build?.details ? wrapText(build.details, 70, 5) : []
 
   return {
     t,
@@ -357,21 +379,15 @@ function createBuildPrintModel(build, helpers = {}) {
     statRows,
     crewRows: [
       { label: t('builds.create.crew.sailors'), value: `${build?.sailors ?? 0}`, hint: t('builds.list.sailorMin', { value: build?.ship_stats?.sailor_minimum || build?.ship?.sailor_minimum || 0 }) },
-      { label: t('builds.create.crew.musketeers'), value: `${build?.musketeers ?? 0}`, hint: '' },
-      { label: t('builds.create.crew.soldiers'), value: `${build?.soldiers ?? 0}`, hint: '' },
-      { label: t('builds.create.crew.mercenaries'), value: `${build?.mercenaries ?? 0}`, hint: '' },
+      ...(build?.musketeers ? [{ label: t('builds.create.crew.musketeers'), value: `${build.musketeers}`, hint: '' }] : []),
+      ...(build?.soldiers ? [{ label: t('builds.create.crew.soldiers'), value: `${build.soldiers}`, hint: '' }] : []),
+      ...(build?.mercenaries ? [{ label: t('builds.create.crew.mercenaries'), value: `${build.mercenaries}`, hint: '' }] : []),
     ],
-    equipmentRows: [
-      { label: t('builds.detail.sail'), value: optionOrDash(optionLabel, build?.sails) },
-      { label: t('builds.detail.lantern'), value: optionOrDash(optionLabel, build?.lantern) },
-      { label: t('builds.detail.researchUpgradeSlot'), value: build?.research_upgrade_slot_unlocked ? t('builds.detail.researchUpgradeSlotActive') : t('builds.detail.researchUpgradeSlotInactive') },
-    ],
+    equipmentRows,
     upgrades,
-    specialists: cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
+    specialists,
     weapons: weaponGroups,
-    ammunition: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
-    consumables: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
-    hold: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
+    inventoryGroups,
     notes: noteLines,
   }
 }
