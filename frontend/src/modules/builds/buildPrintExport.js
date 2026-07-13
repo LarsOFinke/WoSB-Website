@@ -1,3 +1,4 @@
+import { buildCrewVisualUrl, buildVisualUrl } from './buildVisuals.js'
 import { buildShareUrl } from './shareBuild.js'
 
 const PAGE_WIDTH = 1240
@@ -34,6 +35,29 @@ const CORE_STAT_KEYS = new Set([
   'sailor_minimum',
   'displacement_tons',
 ])
+
+const PRINT_VISUALS = {
+  ship: buildVisualUrl('ship'),
+  stats: buildVisualUrl('ship'),
+  crewPanel: buildCrewVisualUrl('sailors'),
+  upgrade: buildVisualUrl('upgrade'),
+  configuration: buildVisualUrl('sail'),
+  weapon: buildVisualUrl('weapon'),
+  inventory: buildVisualUrl('hold'),
+  sail: buildVisualUrl('sail'),
+  lantern: buildVisualUrl('lantern'),
+  specialist: buildVisualUrl('specialist'),
+  ammunition: buildVisualUrl('ammunition'),
+  consumable: buildVisualUrl('consumable'),
+  hold: buildVisualUrl('hold'),
+  notes: buildVisualUrl('specialist'),
+  crew: {
+    sailors: buildCrewVisualUrl('sailors'),
+    musketeers: buildCrewVisualUrl('musketeers'),
+    soldiers: buildCrewVisualUrl('soldiers'),
+    mercenaries: buildCrewVisualUrl('mercenaries'),
+  },
+}
 
 function escapeXml(value) {
   return String(value ?? '')
@@ -127,12 +151,23 @@ function renderMultilineText(lines, x, y, { fontSize = 18, fill = COLORS.text, f
     <text x="${x}" y="${y + (index * fontSize * lineHeight)}" fill="${fill}" font-size="${fontSize}" font-weight="${fontWeight}">${escapeXml(line)}</text>`).join('')
 }
 
-function renderPanel({ x, y, width, height, eyebrow, title, content }) {
+function renderIconBadge(href, x, y, size = 42) {
+  if (!href) return ''
+  return `
+    <g>
+      <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="14" fill="rgba(241, 184, 91, 0.1)" stroke="${COLORS.borderStrong}" />
+      <image href="${href}" x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" preserveAspectRatio="xMidYMid slice" />
+    </g>`
+}
+
+function renderPanel({ x, y, width, height, eyebrow, title, content, iconHref = '' }) {
+  const headerOffset = iconHref ? 84 : 28
   return `
     <g>
       <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      <text x="${x + 28}" y="${y + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(eyebrow.toUpperCase())}</text>
-      <text x="${x + 28}" y="${y + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(title)}</text>
+      ${iconHref ? renderIconBadge(iconHref, x + 28, y + 18, 42) : ''}
+      <text x="${x + headerOffset}" y="${y + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(eyebrow.toUpperCase())}</text>
+      <text x="${x + headerOffset}" y="${y + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(title)}</text>
       ${content}
     </g>`
 }
@@ -171,27 +206,30 @@ function createBuildPrintDocument(build, helpers = {}) {
       <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y + 18}" text-anchor="end" fill="${Number(row.modifier) ? COLORS.accentStrong : COLORS.muted}" font-size="13">${escapeXml(`${formatStatValue(row.base, row.unit, row.precision)} · ${formatModifier(row)}`)}</text>`
   }).join('')
   const statPanelHeight = 420
-  const statPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: statPanelHeight, eyebrow: model.t('builds.commandDeck.performanceEyebrow'), title: model.t('builds.commandDeck.performanceTitle'), content: statContent })
+  const statPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: statPanelHeight, eyebrow: model.t('builds.commandDeck.performanceEyebrow'), title: model.t('builds.commandDeck.performanceTitle'), content: statContent, iconHref: PRINT_VISUALS.stats })
   leftY += statPanelHeight + PANEL_GAP
 
   const crewContent = model.crewRows.map((row, index) => {
     const y = leftY + 112 + index * 54
+    const iconHref = PRINT_VISUALS.crew[row.key] || PRINT_VISUALS.crewPanel
     return `
-      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
+      ${renderIconBadge(iconHref, xLeft + 28, y - 24, 32)}
+      <text x="${xLeft + 72}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
       <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>
-      ${row.hint ? `<text x="${xLeft + 28}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
+      ${row.hint ? `<text x="${xLeft + 72}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
   }).join('')
   const crewPanelHeight = Math.max(236, 120 + (model.crewRows.length * 54))
-  const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: crewPanelHeight, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent })
+  const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: crewPanelHeight, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent, iconHref: PRINT_VISUALS.crewPanel })
   leftY += crewPanelHeight + PANEL_GAP
 
   let upgradePanel = ''
   if (model.upgrades.length) {
     const upgradeLines = model.upgrades
     const upgradeContent = upgradeLines.map((line, index) => `
-      <text x="${xLeft + 28}" y="${leftY + 116 + index * 32}" fill="${COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
+      ${renderIconBadge(PRINT_VISUALS.upgrade, xLeft + 28, leftY + 91 + index * 32, 22)}
+      <text x="${xLeft + 60}" y="${leftY + 116 + index * 32}" fill="${COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
     const upgradePanelHeight = Math.max(276, 116 + (upgradeLines.length * 32) + 28)
-    upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent })
+    upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent, iconHref: PRINT_VISUALS.upgrade })
     leftY += upgradePanelHeight
   }
 
@@ -199,17 +237,19 @@ function createBuildPrintDocument(build, helpers = {}) {
   if (model.equipmentRows.length || model.specialists.length) {
     const equipmentContent = model.equipmentRows.map((row, index) => {
     const y = rightY + 112 + index * 56
+    const iconHref = PRINT_VISUALS[row.key] || PRINT_VISUALS.configuration
     return `
-      <text x="${xRight + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xRight + 28}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
+      ${renderIconBadge(iconHref, xRight + 28, y - 26, 34)}
+      <text x="${xRight + 72}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
+      <text x="${xRight + 72}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
   }).join('') + (model.specialists.length
     ? renderMultilineText([
         model.t('builds.detail.specialCrew'),
         ...model.specialists,
-      ], xRight + 28, rightY + (model.equipmentRows.length * 56) + 136, { fontSize: 16, fill: COLORS.text })
+      ], xRight + 72, rightY + (model.equipmentRows.length * 56) + 136, { fontSize: 16, fill: COLORS.text }) + renderIconBadge(PRINT_VISUALS.specialist, xRight + 28, rightY + (model.equipmentRows.length * 56) + 110, 34)
     : '')
     const equipmentPanelHeight = Math.max(228, 136 + (model.equipmentRows.length * 56) + (model.specialists.length ? 26 + (model.specialists.length * 16 * 1.4) : 0))
-    equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent })
+    equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent, iconHref: PRINT_VISUALS.configuration })
     rightY += equipmentPanelHeight + PANEL_GAP
   }
 
@@ -223,7 +263,7 @@ function createBuildPrintDocument(build, helpers = {}) {
       ${renderMultilineText(lines, xRight + 28, baseY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.25 })}`
   }).join('')
     const weaponPanelHeight = Math.max(248, 112 + (model.weapons.length * 78))
-    weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent })
+    weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent, iconHref: PRINT_VISUALS.weapon })
     rightY += weaponPanelHeight + PANEL_GAP
   }
 
@@ -235,11 +275,12 @@ function createBuildPrintDocument(build, helpers = {}) {
     const lines = group.lines.length ? group.lines : ['—']
     inventoryCursorY += lineBlockHeight(lines.length, { fontSize: 15, lineHeight: 1.24, titleGap: 22, paddingBottom: index === model.inventoryGroups.length - 1 ? 0 : 24 })
     return `
-      <text x="${xRight + 28}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
-      ${renderMultilineText(lines, xRight + 28, sectionY + 22, { fontSize: 15, fill: COLORS.text, lineHeight: 1.24 })}`
+      ${renderIconBadge(PRINT_VISUALS[group.iconKey] || PRINT_VISUALS.inventory, xRight + 28, sectionY - 24, 30)}
+      <text x="${xRight + 66}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
+      ${renderMultilineText(lines, xRight + 66, sectionY + 22, { fontSize: 15, fill: COLORS.text, lineHeight: 1.24 })}`
   }).join('')
     const inventoryPanelHeight = Math.max(212, Math.ceil(inventoryCursorY - rightY + 40))
-    inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent })
+    inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent, iconHref: PRINT_VISUALS.inventory })
     rightY += inventoryPanelHeight
   }
 
@@ -270,9 +311,10 @@ function createBuildPrintDocument(build, helpers = {}) {
     <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" rx="38" fill="url(#pageGlow)" stroke="${COLORS.border}" />
     <rect x="${PAGE_PADDING}" y="${PAGE_PADDING}" width="${CONTENT_WIDTH}" height="132" rx="30" fill="${COLORS.panel}" stroke="${COLORS.borderStrong}" />
     <rect x="${PAGE_PADDING + 24}" y="${PAGE_PADDING + 24}" width="6" height="84" rx="3" fill="url(#accentGlow)" />
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 38}" fill="${COLORS.accent}" font-size="15" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 82}" fill="${COLORS.text}" font-size="40" font-weight="800">${escapeXml(model.buildName)}</text>
-    <text x="${PAGE_PADDING + 48}" y="${PAGE_PADDING + 112}" fill="${COLORS.muted}" font-size="20">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
+    ${renderIconBadge(PRINT_VISUALS.ship, PAGE_PADDING + 44, PAGE_PADDING + 24, 76)}
+    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 38}" fill="${COLORS.accent}" font-size="15" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
+    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 82}" fill="${COLORS.text}" font-size="40" font-weight="800">${escapeXml(model.buildName)}</text>
+    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 112}" fill="${COLORS.muted}" font-size="20">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
     <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 38}" text-anchor="end" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
     <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 62}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.shareUrl)}</text>
     ${summaryCardsSvg}
@@ -284,8 +326,9 @@ function createBuildPrintDocument(build, helpers = {}) {
     ${inventoryPanel}
     ${hasNotes ? `<g>
       <rect x="${PAGE_PADDING}" y="${notesPanelY}" width="${CONTENT_WIDTH}" height="${notesPanelHeight}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
-      <text x="${PAGE_PADDING + 28}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
+      ${renderIconBadge(PRINT_VISUALS.notes, PAGE_PADDING + 28, notesPanelY + 18, 42)}
+      <text x="${PAGE_PADDING + 84}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
+      <text x="${PAGE_PADDING + 84}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
       ${renderMultilineText(footerLines, PAGE_PADDING + 28, notesPanelY + 104, { fontSize: 16, fill: COLORS.text, lineHeight: 1.45 })}
     </g>` : ''}
     <g>
@@ -371,14 +414,14 @@ function createBuildPrintModel(build, helpers = {}) {
 
   const specialists = cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4)
   const equipmentRows = [
-      build?.sails ? { label: t('builds.detail.sail'), value: optionLabel(build?.sails) } : null,
-      build?.lantern ? { label: t('builds.detail.lantern'), value: optionLabel(build?.lantern) } : null,
-      build?.research_upgrade_slot_unlocked ? { label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
+      build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build?.sails) } : null,
+      build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build?.lantern) } : null,
+      build?.research_upgrade_slot_unlocked ? { key: 'upgrade', label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
     ].filter(Boolean)
   const inventoryGroups = [
-    { title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
-    { title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
-    { title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+    { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
+    { iconKey: 'hold', title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
   ].filter((group) => group.lines.length > 0)
 
   const noteLines = build?.details ? wrapText(build.details, 70) : []
@@ -396,10 +439,10 @@ function createBuildPrintModel(build, helpers = {}) {
     summaryCards,
     statRows,
     crewRows: [
-      { label: t('builds.create.crew.sailors'), value: `${build?.sailors ?? 0}`, hint: t('builds.list.sailorMin', { value: build?.ship_stats?.sailor_minimum || build?.ship?.sailor_minimum || 0 }) },
-      ...(build?.musketeers ? [{ label: t('builds.create.crew.musketeers'), value: `${build.musketeers}`, hint: '' }] : []),
-      ...(build?.soldiers ? [{ label: t('builds.create.crew.soldiers'), value: `${build.soldiers}`, hint: '' }] : []),
-      ...(build?.mercenaries ? [{ label: t('builds.create.crew.mercenaries'), value: `${build.mercenaries}`, hint: '' }] : []),
+      { key: 'sailors', label: t('builds.create.crew.sailors'), value: `${build?.sailors ?? 0}`, hint: t('builds.list.sailorMin', { value: build?.ship_stats?.sailor_minimum || build?.ship?.sailor_minimum || 0 }) },
+      ...(build?.musketeers ? [{ key: 'musketeers', label: t('builds.create.crew.musketeers'), value: `${build.musketeers}`, hint: '' }] : []),
+      ...(build?.soldiers ? [{ key: 'soldiers', label: t('builds.create.crew.soldiers'), value: `${build.soldiers}`, hint: '' }] : []),
+      ...(build?.mercenaries ? [{ key: 'mercenaries', label: t('builds.create.crew.mercenaries'), value: `${build.mercenaries}`, hint: '' }] : []),
     ],
     equipmentRows,
     upgrades,

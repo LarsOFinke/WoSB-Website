@@ -4,7 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
 import { getSecurityDashboard } from '@/modules/admin/api/admin'
 
-const emit = defineEmits(['select-ip'])
+const emit = defineEmits(['select-ip', 'ip-options'])
 const { locale, t } = useLocale()
 
 const today = new Date()
@@ -15,6 +15,7 @@ const isoDate = (value) => value.toISOString().slice(0, 10)
 const fromDate = ref(isoDate(weekAgo))
 const toDate = ref(isoDate(today))
 const sort = ref('threat')
+const selectedIp = ref('')
 const loading = ref(false)
 const error = ref('')
 const dashboard = ref({
@@ -30,6 +31,8 @@ const dashboard = ref({
 })
 
 const threatLabel = computed(() => t(`admin.security.levels.${dashboard.value.threat_level || 'low'}`))
+const ipOptions = computed(() => dashboard.value.ips || [])
+const focusedIpRow = computed(() => ipOptions.value.find((row) => row.client_ip === selectedIp.value) || ipOptions.value[0] || null)
 
 function formatDate(value) {
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(`${value}T00:00:00`))
@@ -49,14 +52,21 @@ async function load() {
       sort: sort.value,
       limit: 100,
     })
+    const ips = dashboard.value.ips || []
+    emit('ip-options', ips)
+    if (selectedIp.value && !ips.some((row) => row.client_ip === selectedIp.value)) {
+      selectedIp.value = ''
+    }
   } catch (err) {
     error.value = err.message || t('admin.security.loadError')
+    emit('ip-options', [])
   } finally {
     loading.value = false
   }
 }
 
 watch(sort, load)
+watch(selectedIp, (value) => emit('select-ip', value))
 onMounted(load)
 </script>
 
@@ -99,15 +109,46 @@ onMounted(load)
         </section>
 
         <section class="security-table-card security-ip-card">
-          <h4>{{ t('admin.security.byIp') }}</h4>
-          <p v-if="dashboard.ips.length === 0" class="muted table-state">{{ t('admin.security.noIps') }}</p>
-          <div v-else class="security-ip-list">
-            <button v-for="row in dashboard.ips" :key="row.client_ip" type="button" class="security-ip-row" @click="emit('select-ip', row.client_ip)">
-              <span class="threat-badge" :class="`threat-${row.threat_level}`">{{ row.threat_score }}</span>
-              <span class="security-ip-main"><strong>{{ row.client_ip }}</strong><small>{{ t(`admin.security.levels.${row.threat_level}`) }} · {{ row.request_count }} {{ t('admin.security.requests').toLowerCase() }} · {{ row.distinct_paths }} {{ t('admin.security.paths') }}</small><small>{{ row.top_paths.join(' · ') }}</small></span>
-              <span class="security-ip-meta"><strong>{{ row.suspicious_hits }} / {{ row.status_4xx }} / {{ row.status_5xx }}</strong><small>{{ t('admin.security.lastSeen') }} {{ formatDateTime(row.last_seen) }}</small></span>
-            </button>
+          <div class="security-ip-card-header">
+            <h4>{{ t('admin.security.byIp') }}</h4>
+            <label class="security-ip-picker"><span>{{ t('admin.security.selectedIp') }}</span><select v-model="selectedIp"><option value="">{{ t('admin.security.allIps') }}</option><option v-for="row in ipOptions" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }} · {{ row.request_count }} {{ t('admin.security.requests').toLowerCase() }}</option></select></label>
           </div>
+          <p v-if="dashboard.ips.length === 0" class="muted table-state">{{ t('admin.security.noIps') }}</p>
+          <template v-else>
+            <div v-if="focusedIpRow" class="security-ip-focus-card">
+              <div class="security-ip-focus-head">
+                <span class="threat-badge" :class="`threat-${focusedIpRow.threat_level}`">{{ focusedIpRow.threat_score }}</span>
+                <div class="security-ip-focus-copy">
+                  <strong>{{ focusedIpRow.client_ip }}</strong>
+                  <small>{{ t(`admin.security.levels.${focusedIpRow.threat_level}`) }} · {{ t('admin.security.lastSeen') }} {{ formatDateTime(focusedIpRow.last_seen) }}</small>
+                </div>
+              </div>
+              <div class="responsive-table-shell">
+                <table class="security-table compact-security-table">
+                  <thead><tr><th>{{ t('admin.security.requests') }}</th><th>{{ t('admin.security.paths') }}</th><th>{{ t('admin.security.suspicious') }}</th><th>4xx</th><th>5xx</th></tr></thead>
+                  <tbody><tr><td>{{ focusedIpRow.request_count }}</td><td>{{ focusedIpRow.distinct_paths }}</td><td>{{ focusedIpRow.suspicious_hits }}</td><td>{{ focusedIpRow.status_4xx }}</td><td>{{ focusedIpRow.status_5xx }}</td></tr></tbody>
+                </table>
+              </div>
+              <div class="security-path-pill-row">
+                <span v-for="path in focusedIpRow.top_paths" :key="path" class="security-path-pill">{{ path }}</span>
+              </div>
+            </div>
+
+            <div class="responsive-table-shell security-ip-overview-shell">
+              <table class="security-table compact-security-table">
+                <thead><tr><th>{{ t('admin.security.sortIp') }}</th><th>{{ t('admin.security.currentThreat') }}</th><th>{{ t('admin.security.requests') }}</th><th>{{ t('admin.security.suspicious') }}</th><th>{{ t('admin.security.lastSeen') }}</th></tr></thead>
+                <tbody>
+                  <tr v-for="row in ipOptions" :key="row.client_ip" :class="{ 'is-active': row.client_ip === (selectedIp || focusedIpRow?.client_ip) }" @click="selectedIp = row.client_ip">
+                    <td>{{ row.client_ip }}</td>
+                    <td>{{ t(`admin.security.levels.${row.threat_level}`) }} ({{ row.threat_score }})</td>
+                    <td>{{ row.request_count }}</td>
+                    <td>{{ row.suspicious_hits }}</td>
+                    <td>{{ formatDateTime(row.last_seen) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
         </section>
       </div>
     </template>

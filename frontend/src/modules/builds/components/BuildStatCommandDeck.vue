@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import { useLocale } from '@/locales'
+import { buildVisualUrl } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 
 const props = defineProps({
@@ -67,7 +68,7 @@ const activeEffects = computed(() => props.effectRows.filter((row) => Number(row
 const buffRows = computed(() => activeEffects.value.filter((row) => !rowIsDebuff(row)))
 const debuffRows = computed(() => activeEffects.value.filter((row) => rowIsDebuff(row)))
 const filledUpgradeSlots = computed(() => props.upgradeSlots.filter((slot) => slot?.name).length)
-const shipImageUrl = computed(() => absoluteFileUrl(props.ship?.image_url))
+const shipImageUrl = computed(() => absoluteFileUrl(props.ship?.image_url) || buildVisualUrl('ship'))
 const shipInitials = computed(() => String(props.ship?.name || 'RBF')
   .split(/\s+/)
   .filter(Boolean)

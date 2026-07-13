@@ -48,6 +48,7 @@ const registrationStatus = ref('pending')
 const logLevel = ref('')
 const logPath = ref('')
 const logIp = ref('')
+const availableLogIps = ref([])
 const logFromDate = ref('')
 const logToDate = ref('')
 const logSort = ref('created_at')
@@ -488,7 +489,7 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
-          <SecurityLogDashboard @select-ip="logIp = $event" />
+          <SecurityLogDashboard @select-ip="logIp = $event" @ip-options="availableLogIps = $event" />
           <div class="admin-dashboard-grid log-summary-grid">
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong></article>
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
@@ -499,7 +500,7 @@ onUnmounted(() => {
           <div class="staff-filter-row log-filter-row">
             <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
             <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
-            <label class="filter-box admin-search"><input v-model="logIp" type="search" inputmode="decimal" autocomplete="off" :placeholder="t('admin.logs.ipPlaceholder')" /></label>
+            <label class="filter-box select-shell"><select v-model="logIp"><option value="">{{ t('admin.security.allIps') }}</option><option v-for="row in availableLogIps" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }}</option></select></label>
             <label class="filter-box"><input v-model="logFromDate" type="date" :aria-label="t('admin.security.from')" /></label>
             <label class="filter-box"><input v-model="logToDate" type="date" :aria-label="t('admin.security.to')" /></label>
             <label class="filter-box select-shell"><select v-model="logSort"><option value="created_at">{{ t('admin.logs.sortDate') }}</option><option value="ip">{{ t('admin.logs.sortIp') }}</option><option value="status">{{ t('admin.logs.sortStatus') }}</option><option value="duration">{{ t('admin.logs.sortDuration') }}</option><option value="level">{{ t('admin.logs.sortLevel') }}</option></select></label>
