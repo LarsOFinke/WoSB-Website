@@ -5,6 +5,7 @@ from app.core.dependencies import require_staff, require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.onboarding.schemas.newcomer_guide import NewcomerGuideRead, NewcomerGuideUpdate
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.onboarding.services.newcomer_guide_service import (
     NewcomerGuideValidationError,
     get_newcomer_guide,
@@ -32,6 +33,12 @@ def replace_newcomer_guide(
     current_user: User = Depends(require_staff),
 ) -> NewcomerGuideRead:
     try:
-        return update_newcomer_guide(db, payload, current_user)
+        guide = update_newcomer_guide(db, payload, current_user)
     except NewcomerGuideValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db, actor=current_user, entity_type="newcomer_guide", entity_id=guide.id, action="update",
+        summary="Starter guide updated.",
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
+    return guide

@@ -53,7 +53,7 @@ EXPECTED_WEAPON_LAYOUTS = {'Firestorm': '12-28-1',
  'La Salamandre': '2-10-0',
  'Shunsen': '0-10-0',
  'Horizont': '2-8-0',
- 'La Couronne': '0-28-8',
+ 'La Couronne': '8-28-0',
  'La Sirene': '4-32-0',
  'Mordaunt': '4-26-0',
  'Prins Willem': '6-26-4',
@@ -125,7 +125,7 @@ SCREENSHOT_AUDITED_SHIPS = {'Pickle': (700, 9.2, 94, 1.6, 6000, 66, 900, 'light'
  'Adventure': (2660, 8.2, 92, 5.2, 21000, 140, 2925, 'heavy', '4-19-0 + mortar 10in x2'),
  'Octopus': (2760, 8.3, 75, 6.8, 23000, 176, 3375, 'heavy', '8-37-0'),
  'Victory': (3740, 7.1, 66, 8.0, 25000, 204, 4050, 'heavy', '4-49-4'),
- 'La Couronne': (3500, 7.6, 72, 5.5, 50000, 188, 4500, 'heavy', '0-28-8'),
+ 'La Couronne': (3500, 7.6, 72, 5.5, 50000, 188, 4500, 'heavy', '8-28-0'),
  '12 Apostolov': (4400, 6.2, 49, 10.0, 36000, 220, 4500, 'heavy', '0-59-0'),
  'La Royale': (2900, 7.4, 83, 6.5, 24000, 156, 3870, 'heavy', '0-18-6 + mortar 11in x3'),
  'Huracan': (8000, 5.5, 42, 11.5, 54000, 288, 5625, 'heavy', '0-85-2'),
@@ -415,3 +415,12 @@ def test_specialist_effects_apply_once_even_when_quantity_is_submitted() -> None
         assert build.ship_stats["special_crew_effects"]["crew_capacity"] == 3
         assert build.special_crew_slots == [{"item": "Capacity Test Specialist", "quantity": 1}]
         assert build.ship_stats["crew_remaining"] == 0
+
+
+def test_weapon_layout_uses_stern_broadside_bow_game_order() -> None:
+    mounts = {row["slot_type"]: row for row in parse_weapon_layout("8-28-0", rate=1)}
+    assert mounts["weapon_rear"]["capacity"] == 8
+    assert mounts["weapon_front"]["capacity"] == 0
+    mounts = {row["slot_type"]: row for row in parse_weapon_layout("0-23-4", rate=3)}
+    assert mounts["weapon_rear"]["capacity"] == 0
+    assert mounts["weapon_front"]["capacity"] == 4

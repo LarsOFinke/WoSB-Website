@@ -4,7 +4,12 @@
 
 ### Fixed
 
-- Converted screenshot-derived ship speed values from raw metres per second to knots before seeding, keeping base ship speed consistent with knot-based sail and upgrade bonuses.
+- Staff-Systemlogs um Tagesfilter, sortierbare IP-Übersicht und ein heuristisches Threat-Level-Dashboard erweitert.
+- Audit-Historie für Builds, Forum-Threads/-Beiträge, Leitfäden und den Starter-Leitfaden ergänzt.
+- Ingame-Waffenlayout-Konvention als Heck–Breitseite–Bug vereinheitlicht und dadurch vertauschte Bug-/Heck-Kapazitäten katalogweit korrigiert.
+- Lange Build-Notizen werden im Offline-Build-Bild vollständig und mit dynamischer Seitenhöhe ausgegeben.
+- Build-Manager um Schiffsvorschau, Crew-Rollenbilder und kategoriespezifische Bildplatzhalter erweitert; Stammdaten-Bilder bleiben hochladbar.
+- Schiffsgeschwindigkeiten als getrennte Basis- und Cruise-Maximalwerte modelliert; Prozent- und Flachboni verwenden die verifizierte Ingame-Formel.
 
 - Build-Designer auf bis zu acht Upgrade-Slots erweitert: 4 Standard + 1 Forschungsbelohnung + 2 durch Structural Expansion + 1 schiffsspezifischer Extra-Slot
 - Upgrade-Katalog auf 32 aktuelle Ingame-Upgrades aus den Bereichen Geschwindigkeit, Expedition, Schutz, Kampf, Ungewöhnlich und Mörser re-auditiert

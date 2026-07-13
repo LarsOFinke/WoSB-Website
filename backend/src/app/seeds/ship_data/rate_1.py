@@ -67,7 +67,7 @@ RATE_1_SHIPS = [
         crew_capacity=188,
         displacement_tons=4500,
         max_weapon_class='heavy',
-        weapon_layout='0-28-8',
+        weapon_layout='8-28-0',
         source=SHIP_SCREENSHOT_SOURCE,
         upgrade_slots=6,
     ),

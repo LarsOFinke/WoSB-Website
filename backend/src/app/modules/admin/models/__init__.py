@@ -1,4 +1,4 @@
-"""Models for the admin module.
+from app.modules.admin.models.app_log import AppLog
+from app.modules.admin.models.audit_log import AuditLog
 
-Concrete modules are imported explicitly to avoid package-level side effects.
-"""
+__all__ = ["AppLog", "AuditLog"]

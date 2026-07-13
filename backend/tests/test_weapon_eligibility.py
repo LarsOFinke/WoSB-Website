@@ -59,12 +59,12 @@ def test_weapon_dropdown_is_scoped_to_ship_slot_and_weapon_class() -> None:
         assert "Twin 14-pdr" in victory_catalog["weapon_front"]
 
         russia_port = russia._mount("weapon_port")
-        russia_front = russia._mount("weapon_front")
-        assert russia_port and russia_front
+        russia_rear = russia._mount("weapon_rear")
+        assert russia_port and russia_rear
         assert is_weapon_compatible(cannon_8, russia_port)
         assert not is_weapon_compatible(cannon_16, russia_port)
-        assert is_weapon_compatible(twin_6, russia_front)
-        assert not is_weapon_compatible(twin_14, russia_front)
+        assert is_weapon_compatible(twin_6, russia_rear)
+        assert not is_weapon_compatible(twin_14, russia_rear)
         assert not is_weapon_compatible(twin_6, russia_port)
 
 

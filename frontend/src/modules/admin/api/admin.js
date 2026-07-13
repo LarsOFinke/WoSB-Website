@@ -22,12 +22,12 @@ export function rejectRegistrationRequest(id, note = '') {
   return post(`/admin/registration-requests/${id}/reject`, { note: note || null })
 }
 
-export function listAdminLogs({ level = '', path = '', clientIp = '', limit = 120 } = {}) {
-  return get(withQuery('/admin/logs', { level, path, client_ip: clientIp, limit }))
+export function listAdminLogs({ level = '', path = '', clientIp = '', fromDate = '', toDate = '', sort = 'created_at', order = 'desc', limit = 120 } = {}) {
+  return get(withQuery('/admin/logs', { level, path, client_ip: clientIp, from_date: fromDate, to_date: toDate, sort, order, limit }))
 }
 
-export function getAdminLogSummary({ level = '', path = '', clientIp = '' } = {}) {
-  return get(withQuery('/admin/logs/summary', { level, path, client_ip: clientIp }))
+export function getAdminLogSummary({ level = '', path = '', clientIp = '', fromDate = '', toDate = '' } = {}) {
+  return get(withQuery('/admin/logs/summary', { level, path, client_ip: clientIp, from_date: fromDate, to_date: toDate }))
 }
 
 export function listAdminBuilds(search = '', buildType = '') {
@@ -132,4 +132,24 @@ export function deactivateMasterDataShip(id) {
 
 export function restoreMasterDataShip(id) {
   return post(`/admin/master-data/ships/${id}/restore-seed`, {})
+}
+
+export function getSecurityDashboard({ fromDate = '', toDate = '', sort = 'threat', limit = 100 } = {}) {
+  return get(withQuery('/admin/logs/security-dashboard', {
+    from_date: fromDate,
+    to_date: toDate,
+    sort,
+    limit,
+  }))
+}
+
+export function listAuditLogs({ entityType = '', action = '', actor = '', fromDate = '', toDate = '', limit = 200 } = {}) {
+  return get(withQuery('/admin/audit-logs', {
+    entity_type: entityType,
+    action,
+    actor,
+    from_date: fromDate,
+    to_date: toDate,
+    limit,
+  }))
 }

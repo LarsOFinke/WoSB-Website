@@ -40,9 +40,12 @@ def parse_weapon_layout(
 ) -> list[dict[str, object]]:
     text = (layout or "").strip().lower().replace(";", " + ")
     regular_match = re.search(r"(\d+)\s*-\s*(\d+)\s*-\s*(\d+)", text)
-    front, broadside, rear = (0, 0, 0)
+    # The in-game ship panel lists regular mounts as stern-broadside-bow.
+    # Keep the seed strings identical to the screenshots and translate that
+    # display order into the Build Designer's explicit front/rear slot types.
+    rear, broadside, front = (0, 0, 0)
     if regular_match:
-        front, broadside, rear = (int(regular_match.group(index)) for index in (1, 2, 3))
+        rear, broadside, front = (int(regular_match.group(index)) for index in (1, 2, 3))
 
     weapon_class = max_weapon_class or (
         MAX_WEAPON_CLASS_BY_RATE[int(rate)] if any((front, broadside, rear)) else None

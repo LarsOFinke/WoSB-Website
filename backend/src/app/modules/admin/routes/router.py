@@ -1,3 +1,4 @@
+from datetime import date, datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -10,6 +11,8 @@ from app.modules.accounts.models.user import ROLE_MODERATOR
 from app.modules.accounts.schemas.user_read import UserRead
 from app.modules.admin.schemas.app_log_read import AppLogRead
 from app.modules.admin.schemas.app_log_summary import AppLogSummary
+from app.modules.admin.schemas.audit_log import AuditLogRead
+from app.modules.admin.schemas.security_dashboard import SecurityDashboard
 from app.modules.admin.schemas.moderator_create import ModeratorCreate
 from app.modules.admin.schemas.moderator_create_response import ModeratorCreateResponse
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
@@ -24,11 +27,13 @@ from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.accounts.services.auth_service import AuthError, create_user
-from app.modules.builds.services.build_service import delete_build, list_builds
-from app.modules.forum.services.forum_service import delete_thread, list_threads
-from app.modules.guides.services.guide_service import delete_guide, list_guides
+from app.modules.builds.services.build_service import delete_build, get_build, list_builds
+from app.modules.forum.services.forum_service import delete_thread, get_thread, list_threads
+from app.modules.guides.services.guide_service import delete_guide, get_guide, list_guides
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
+from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit_safely
+from app.modules.admin.services.security_dashboard_service import build_security_dashboard
 from app.modules.admin.services.user_administration_service import UserAdministrationError, update_user_account
 from app.modules.admin.routes.master_data import router as master_data_router
 
@@ -40,6 +45,8 @@ def _app_log_filters(
     level: str | None = None,
     path: str | None = None,
     client_ip: str | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
 ):
     filters = []
     if level:
@@ -48,6 +55,10 @@ def _app_log_filters(
         filters.append(AppLog.path.contains(path.strip()))
     if client_ip:
         filters.append(AppLog.client_ip.contains(client_ip.strip()))
+    if from_date:
+        filters.append(AppLog.created_at >= datetime.combine(from_date, time.min))
+    if to_date:
+        filters.append(AppLog.created_at < datetime.combine(to_date + timedelta(days=1), time.min))
     return filters
 
 
@@ -115,12 +126,26 @@ def admin_list_logs(
     level: str | None = Query(default=None, max_length=20),
     path: str | None = Query(default=None, max_length=120),
     client_ip: str | None = Query(default=None, max_length=120),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    sort: str = Query(default="created_at", pattern="^(created_at|level|status|duration|ip)$"),
+    order: str = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=120, ge=1, le=500),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> list[AppLogRead]:
-    query = select(AppLog).where(*_app_log_filters(level=level, path=path, client_ip=client_ip))
-    rows = db.scalars(query.order_by(AppLog.created_at.desc(), AppLog.id.desc()).limit(limit)).all()
+    query = select(AppLog).where(*_app_log_filters(
+        level=level, path=path, client_ip=client_ip, from_date=from_date, to_date=to_date
+    ))
+    sort_column = {
+        "created_at": AppLog.created_at,
+        "level": AppLog.level,
+        "status": AppLog.status_code,
+        "duration": AppLog.duration_ms,
+        "ip": AppLog.client_ip,
+    }[sort]
+    direction = sort_column.asc() if order == "asc" else sort_column.desc()
+    rows = db.scalars(query.order_by(direction, AppLog.id.desc()).limit(limit)).all()
     return [AppLogRead.model_validate(row) for row in rows]
 
 
@@ -129,10 +154,12 @@ def admin_log_summary(
     level: str | None = Query(default=None, max_length=20),
     path: str | None = Query(default=None, max_length=120),
     client_ip: str | None = Query(default=None, max_length=120),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> AppLogSummary:
-    filters = _app_log_filters(level=level, path=path, client_ip=client_ip)
+    filters = _app_log_filters(level=level, path=path, client_ip=client_ip, from_date=from_date, to_date=to_date)
     total = int(db.scalar(select(func.count(AppLog.id)).where(*filters)) or 0)
     errors = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
     warnings = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level == "WARNING")) or 0)
@@ -163,6 +190,37 @@ def admin_log_summary(
     )
 
 
+@router.get("/logs/security-dashboard", response_model=SecurityDashboard)
+def admin_security_dashboard(
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    sort: str = Query(default="threat", pattern="^(threat|requests|last_seen|ip)$"),
+    limit: int = Query(default=100, ge=1, le=250),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+) -> SecurityDashboard:
+    return build_security_dashboard(
+        db, from_date=from_date, to_date=to_date, sort=sort, limit=limit
+    )
+
+
+@router.get("/audit-logs", response_model=list[AuditLogRead])
+def admin_audit_logs(
+    entity_type: str | None = Query(default=None, max_length=40),
+    action: str | None = Query(default=None, max_length=24),
+    actor: str | None = Query(default=None, max_length=80),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=500),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+) -> list[AuditLogRead]:
+    return list_audit_logs(
+        db, entity_type=entity_type, action=action, actor=actor,
+        from_date=from_date, to_date=to_date, limit=limit,
+    )
+
+
 @router.get("/builds", response_model=list[BuildRead])
 def admin_list_builds(
     search: str | None = Query(default=None, max_length=120),
@@ -177,11 +235,16 @@ def admin_list_builds(
 def admin_delete_build(
     build_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    current_user: User = Depends(require_staff),
 ) -> None:
+    existing = get_build(db, build_id)
     deleted = delete_build(db, build_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="build", entity_id=build_id, action="delete",
+        summary=f'Build “{getattr(existing, "build_name", build_id)}” removed by staff.',
+    )
 
 
 @router.get("/forum/threads", response_model=list[ForumThreadSummary])
@@ -200,8 +263,13 @@ def admin_delete_forum_thread(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> None:
+    existing = get_thread(db, thread_id)
     if not delete_thread(db, thread_id, current_user):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Forum thread not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_thread", entity_id=thread_id, action="delete",
+        summary=f'Forum thread “{getattr(existing, "title", thread_id)}” removed by staff.',
+    )
 
 
 @router.get("/guides", response_model=list[GuideSummary])
@@ -220,8 +288,13 @@ def admin_delete_guide(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> None:
+    existing = get_guide(db, guide_id)
     if not delete_guide(db, guide_id, current_user):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="guide", entity_id=guide_id, action="delete",
+        summary=f'Guide “{getattr(existing, "title", guide_id)}” removed by staff.',
+    )
 
 
 @router.get("/users", response_model=list[UserRead])

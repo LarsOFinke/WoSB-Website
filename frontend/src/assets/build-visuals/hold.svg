@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="hold">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#17283a"/><stop offset="1" stop-color="#0b1521"/></linearGradient></defs>
+  <rect width="160" height="120" rx="18" fill="url(#g)"/>
+  <path d="M16 88 C42 69 61 98 84 78 C104 60 124 77 144 58" fill="none" stroke="#31506d" stroke-width="4" opacity=".7"/>
+  <circle cx="80" cy="53" r="30" fill="#f1b85b" opacity=".12"/>
+  <text x="80" y="65" text-anchor="middle" font-size="42" font-family="Georgia,serif" fill="#f1b85b">▣</text>
+  <text x="80" y="106" text-anchor="middle" font-size="10" letter-spacing="2" font-family="Arial,sans-serif" fill="#b8c4d2">HOLD</text>
+</svg>

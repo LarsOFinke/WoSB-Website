@@ -9,6 +9,7 @@ from app.modules.guides.schemas.guide_read import GuideRead
 from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.files.services.file_service import FileValidationError
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.guides.services.guide_service import (
     GuideValidationError,
     create_guide,
@@ -38,9 +39,15 @@ def post_guide(
     current_user: User = Depends(require_user),
 ) -> GuideRead:
     try:
-        return create_guide(db, payload, current_user)
+        guide = create_guide(db, payload, current_user)
     except (FileValidationError, GuideValidationError) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db, actor=current_user, entity_type="guide", entity_id=guide.id, action="create",
+        summary=f'Guide “{guide.title}” created.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
+    return guide
 
 
 @router.get("/{guide_id}", response_model=GuideRead)
@@ -68,6 +75,11 @@ def put_guide(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if guide is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="guide", entity_id=guide_id, action="update",
+        summary=f'Guide “{guide.title}” updated.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
     return guide
 
 
@@ -77,5 +89,10 @@ def delete_own_guide(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> None:
+    existing = get_guide(db, guide_id)
     if not delete_guide(db, guide_id, current_user):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Guide not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="guide", entity_id=guide_id, action="delete",
+        summary=f'Guide “{getattr(existing, "title", guide_id)}” deleted.',
+    )

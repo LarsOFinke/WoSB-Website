@@ -77,28 +77,40 @@ function cleanLines(items, limit = Infinity) {
   return [...lines.slice(0, Math.max(0, limit - 1)), `+${lines.length - (limit - 1)} more`]
 }
 
-function wrapText(text, maxChars = 44, maxLines = 3) {
-  const normalized = String(text || '').replace(/\s+/g, ' ').trim()
-  if (!normalized) return []
-  const words = normalized.split(' ')
+function wrapText(text, maxChars = 44, maxLines = Infinity) {
+  const paragraphs = String(text || '').replace(/\r/g, '').split('\n')
   const lines = []
-  let current = ''
-  for (const word of words) {
-    const next = current ? `${current} ${word}` : word
-    if (next.length <= maxChars) {
-      current = next
+  for (const paragraph of paragraphs) {
+    const normalized = paragraph.replace(/\s+/g, ' ').trim()
+    if (!normalized) {
+      if (lines.length && lines[lines.length - 1] !== '') lines.push('')
       continue
     }
+    let current = ''
+    for (const rawWord of normalized.split(' ')) {
+      const chunks = []
+      let word = rawWord
+      while (word.length > maxChars) {
+        chunks.push(word.slice(0, maxChars - 1) + '…')
+        word = word.slice(maxChars - 1)
+      }
+      if (word) chunks.push(word)
+      for (const chunk of chunks) {
+        const next = current ? `${current} ${chunk}` : chunk
+        if (next.length <= maxChars) {
+          current = next
+        } else {
+          if (current) lines.push(current)
+          current = chunk
+        }
+        if (lines.length >= maxLines) return lines.slice(0, maxLines)
+      }
+    }
     if (current) lines.push(current)
-    current = word
-    if (lines.length >= maxLines - 1) break
+    if (lines.length >= maxLines) return lines.slice(0, maxLines)
   }
-  if (lines.length < maxLines && current) lines.push(current)
-  if (words.join(' ').length > lines.join(' ').length) {
-    const last = lines[maxLines - 1] || ''
-    lines[maxLines - 1] = last.length > maxChars - 2 ? `${last.slice(0, Math.max(0, maxChars - 1))}…` : `${last}…`
-  }
-  return lines.slice(0, maxLines)
+  while (lines.length && lines[lines.length - 1] === '') lines.pop()
+  return lines
 }
 
 function sanitizeFileName(value) {
@@ -369,7 +381,7 @@ function createBuildPrintModel(build, helpers = {}) {
     { title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
   ].filter((group) => group.lines.length > 0)
 
-  const noteLines = build?.details ? wrapText(build.details, 70, 5) : []
+  const noteLines = build?.details ? wrapText(build.details, 70) : []
 
   return {
     t,

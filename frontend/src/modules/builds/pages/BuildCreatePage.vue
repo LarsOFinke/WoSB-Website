@@ -3,6 +3,19 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
+import shipPlaceholderSrc from '@/assets/build-visuals/ship.svg'
+import sailPlaceholderSrc from '@/assets/build-visuals/sail.svg'
+import upgradePlaceholderSrc from '@/assets/build-visuals/upgrade.svg'
+import lanternPlaceholderSrc from '@/assets/build-visuals/lantern.svg'
+import weaponPlaceholderSrc from '@/assets/build-visuals/weapon.svg'
+import specialistPlaceholderSrc from '@/assets/build-visuals/specialist.svg'
+import ammunitionPlaceholderSrc from '@/assets/build-visuals/ammunition.svg'
+import consumablePlaceholderSrc from '@/assets/build-visuals/consumable.svg'
+import holdPlaceholderSrc from '@/assets/build-visuals/hold.svg'
+import crewSailorsSrc from '@/assets/build-visuals/crew-sailors.svg'
+import crewMusketeersSrc from '@/assets/build-visuals/crew-musketeers.svg'
+import crewSoldiersSrc from '@/assets/build-visuals/crew-soldiers.svg'
+import crewMercenariesSrc from '@/assets/build-visuals/crew-mercenaries.svg'
 
 import { useLocale } from '@/locales'
 import { createBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
@@ -71,9 +84,22 @@ function optionEffects(categoryKey, name) {
   return optionMeta(categoryKey, name)?.stat_effects || {}
 }
 
-function optionImage(categoryKey, name) {
-  return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url) || slotPlaceholderSrc
+const categoryFallbackImages = {
+  sail: sailPlaceholderSrc,
+  upgrade: upgradePlaceholderSrc,
+  lantern: lanternPlaceholderSrc,
+  weapon: weaponPlaceholderSrc,
+  special_crew: specialistPlaceholderSrc,
+  ammunition: ammunitionPlaceholderSrc,
+  consumable: consumablePlaceholderSrc,
+  hold: holdPlaceholderSrc,
 }
+
+function optionImage(categoryKey, name) {
+  return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url) || categoryFallbackImages[categoryKey] || slotPlaceholderSrc
+}
+
+const selectedShipImage = computed(() => absoluteFileUrl(selectedShip.value?.image_url) || shipPlaceholderSrc)
 
 function inventoryCategory(fieldName) {
   if (fieldName.includes('weapon')) return 'weapon'
@@ -666,6 +692,10 @@ onMounted(async () => {
             </option>
           </select>
         </label>
+        <div v-if="selectedShip" class="ship-visual-summary">
+          <img :src="selectedShipImage" :alt="selectedShip.name" />
+          <div><span>{{ t('builds.visuals.selectedShip') }}</span><strong>{{ selectedShip.name }}</strong><small>{{ t('common.rate') }} {{ selectedShip.rate }} · {{ selectedShip.ship_type }}</small></div>
+        </div>
         <BuildStatCommandDeck
           v-if="selectedShip"
           :ship="selectedShip"
@@ -845,24 +875,28 @@ onMounted(async () => {
 
           <div class="crew-grid section-fields">
             <label class="crew-slider-card crew-sailors">
+              <img class="crew-role-image" :src="crewSailorsSrc" alt="" />
               <span><small>{{ t('builds.create.crew.sailors') }}</small><strong>{{ form.sailors }}</strong></span>
               <input :value="form.sailors" type="range" min="0" :max="crewMaxFor('sailors')" @input="onCrewSliderInput('sailors', $event)" />
               <small>0–{{ crewMaxFor('sailors') }}</small>
             </label>
 
             <label class="crew-slider-card crew-musketeers">
+              <img class="crew-role-image" :src="crewMusketeersSrc" alt="" />
               <span><small>{{ t('builds.create.crew.musketeers') }}</small><strong>{{ form.musketeers }}</strong></span>
               <input :value="form.musketeers" type="range" min="0" :max="crewMaxFor('musketeers')" @input="onCrewSliderInput('musketeers', $event)" />
               <small>0–{{ crewMaxFor('musketeers') }}</small>
             </label>
 
             <label class="crew-slider-card crew-soldiers">
+              <img class="crew-role-image" :src="crewSoldiersSrc" alt="" />
               <span><small>{{ t('builds.create.crew.soldiers') }}</small><strong>{{ form.soldiers }}</strong></span>
               <input :value="form.soldiers" type="range" min="0" :max="crewMaxFor('soldiers')" @input="onCrewSliderInput('soldiers', $event)" />
               <small>0–{{ crewMaxFor('soldiers') }}</small>
             </label>
 
             <label class="crew-slider-card crew-mercenaries">
+              <img class="crew-role-image" :src="crewMercenariesSrc" alt="" />
               <span><small>{{ t('builds.create.crew.mercenaries') }}</small><strong>{{ form.mercenaries }}</strong></span>
               <input :value="form.mercenaries" type="range" min="0" :max="crewMaxFor('mercenaries')" @input="onCrewSliderInput('mercenaries', $event)" />
               <small>0–{{ crewMaxFor('mercenaries') }}</small>

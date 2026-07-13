@@ -4,6 +4,8 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
+import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboard.vue'
+import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import {
@@ -46,6 +48,10 @@ const registrationStatus = ref('pending')
 const logLevel = ref('')
 const logPath = ref('')
 const logIp = ref('')
+const logFromDate = ref('')
+const logToDate = ref('')
+const logSort = ref('created_at')
+const logOrder = ref('desc')
 const loading = ref(false)
 const userLoading = ref(false)
 const calendarLoading = ref(false)
@@ -186,8 +192,8 @@ async function loadLogs() {
   logsError.value = ''
   try {
     const [summary, rows] = await Promise.all([
-      getAdminLogSummary({ level: logLevel.value, path: logPath.value, clientIp: logIp.value }),
-      listAdminLogs({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, limit: 140 }),
+      getAdminLogSummary({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, fromDate: logFromDate.value, toDate: logToDate.value }),
+      listAdminLogs({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, fromDate: logFromDate.value, toDate: logToDate.value, sort: logSort.value, order: logOrder.value, limit: 140 }),
     ])
     logSummary.value = summary
     appLogs.value = rows
@@ -347,7 +353,7 @@ watch(contentSearch, () => {
 
 watch(calendarCategory, loadCalendar)
 watch(registrationStatus, loadRegistrations)
-watch([logLevel, logPath, logIp], loadLogs)
+watch([logLevel, logPath, logIp, logFromDate, logToDate, logSort, logOrder], loadLogs)
 
 watch(activeTab, async (tab) => {
   clearConfirmation()
@@ -436,6 +442,7 @@ onUnmounted(() => {
           <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
           <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
@@ -481,6 +488,7 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
+          <SecurityLogDashboard @select-ip="logIp = $event" />
           <div class="admin-dashboard-grid log-summary-grid">
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong></article>
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
@@ -488,10 +496,14 @@ onUnmounted(() => {
             <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
           </div>
           <p class="muted log-storage-note">{{ t('logs.dbOnly') }}</p>
-          <div class="staff-filter-row">
+          <div class="staff-filter-row log-filter-row">
             <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
             <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
             <label class="filter-box admin-search"><input v-model="logIp" type="search" inputmode="decimal" autocomplete="off" :placeholder="t('admin.logs.ipPlaceholder')" /></label>
+            <label class="filter-box"><input v-model="logFromDate" type="date" :aria-label="t('admin.security.from')" /></label>
+            <label class="filter-box"><input v-model="logToDate" type="date" :aria-label="t('admin.security.to')" /></label>
+            <label class="filter-box select-shell"><select v-model="logSort"><option value="created_at">{{ t('admin.logs.sortDate') }}</option><option value="ip">{{ t('admin.logs.sortIp') }}</option><option value="status">{{ t('admin.logs.sortStatus') }}</option><option value="duration">{{ t('admin.logs.sortDuration') }}</option><option value="level">{{ t('admin.logs.sortLevel') }}</option></select></label>
+            <label class="filter-box select-shell"><select v-model="logOrder"><option value="desc">{{ t('admin.logs.desc') }}</option><option value="asc">{{ t('admin.logs.asc') }}</option></select></label>
           </div>
           <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>
           <p v-else-if="logsError" class="error-text table-state">{{ logsError }}</p>
@@ -509,6 +521,10 @@ onUnmounted(() => {
               </div>
             </article>
           </div>
+        </section>
+
+        <section v-if="activeTab === 'audit'" class="wire-section admin-panel staff-management-panel">
+          <AuditLogPanel />
         </section>
 
         <section v-if="activeTab === 'calendar'" class="wire-section admin-panel staff-management-panel">

@@ -12,6 +12,7 @@ from app.modules.forum.schemas.forum_thread_read import ForumThreadRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.files.services.file_service import FileValidationError
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.forum.services.forum_service import (
     ForumValidationError,
     add_post,
@@ -42,9 +43,15 @@ def post_thread(
     current_user: User = Depends(require_user),
 ) -> ForumThreadRead:
     try:
-        return create_thread(db, payload, current_user)
+        thread = create_thread(db, payload, current_user)
     except (FileValidationError, ForumValidationError) as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_thread", entity_id=thread.id, action="create",
+        summary=f'Forum thread “{thread.title}” created.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
+    return thread
 
 
 @router.get("/threads/{thread_id}", response_model=ForumThreadRead)
@@ -72,6 +79,11 @@ def put_thread(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if thread is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_thread", entity_id=thread_id, action="update",
+        summary=f'Forum thread “{thread.title}” updated.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
     return thread
 
 
@@ -88,6 +100,11 @@ def post_reply(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_post", entity_id=post.id, action="create",
+        summary=f'Forum reply added to thread #{thread_id}.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
     return post
 
 
@@ -104,4 +121,9 @@ def put_post(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_post", entity_id=post_id, action="update",
+        summary=f'Forum post #{post_id} updated.',
+        changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
+    )
     return post

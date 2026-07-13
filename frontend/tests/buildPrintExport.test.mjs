@@ -169,3 +169,11 @@ test('build print omits unselected optional sections and values', () => {
   assert.doesNotMatch(svg, /Captain notes/)
   assert.doesNotMatch(svg, /Research slot/)
 })
+
+
+test('build print renders the complete long captain note without truncation', () => {
+  const finalToken = 'FINAL-AUDIT-NOTE-TOKEN'
+  const longDetails = `${'A detailed captain note with operational context. '.repeat(55)}${finalToken}`
+  const svg = createBuildPrintSvg({ ...build, details: longDetails }, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+  assert.match(svg, new RegExp(finalToken))
+})

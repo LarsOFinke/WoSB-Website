@@ -18,6 +18,7 @@ import { privacyMessages } from './privacy'
 import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
+import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -43,6 +44,7 @@ const messageLayers = [
   fleetManagementMessages,
   staffPanelMessages,
   systemOperationsMessages,
+  securityAuditDashboardMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

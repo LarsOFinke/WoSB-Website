@@ -114,7 +114,7 @@ class Ship(Base):
 
     @property
     def weapon_layout(self) -> str:
-        regular = f"{self.front_weapon_capacity}-{self.broadside_weapon_capacity}-{self.rear_weapon_capacity}"
+        regular = f"{self.rear_weapon_capacity}-{self.broadside_weapon_capacity}-{self.front_weapon_capacity}"
         suffixes: list[str] = []
         mortar = self._mount("weapon_mortar")
         if mortar is not None and mortar.capacity > 0:

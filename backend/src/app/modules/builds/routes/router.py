@@ -9,6 +9,7 @@ from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.builds.services.build_service import (
     BuildValidationError,
     create_build,
@@ -39,9 +40,15 @@ def post_build(
     current_user: User = Depends(require_user),
 ) -> BuildRead:
     try:
-        return create_build(db, build, owner_id=current_user.id)
+        created = create_build(db, build, owner_id=current_user.id)
     except BuildValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db, actor=current_user, entity_type="build", entity_id=created.id, action="create",
+        summary=f'Build “{created.build_name}” created.',
+        changed_fields=list(build.model_dump(exclude_unset=True).keys()),
+    )
+    return created
 
 
 @router.get("/options", response_model=BuildOptionsCatalog)
@@ -76,6 +83,11 @@ def put_my_build(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="build", entity_id=build_id, action="update",
+        summary=f'Build “{updated.build_name}” updated.',
+        changed_fields=list(build.model_dump(exclude_unset=True).keys()),
+    )
     return updated
 
 
@@ -85,9 +97,14 @@ def delete_my_build(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> None:
+    existing = get_build(db, build_id)
     deleted = delete_user_build(db, build_id, current_user.id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="build", entity_id=build_id, action="delete",
+        summary=f'Build “{getattr(existing, "build_name", build_id)}” deleted.',
+    )
 
 
 @router.get("/{build_id}", response_model=BuildRead)
