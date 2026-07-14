@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import require_admin, require_staff
+from app.core.dependencies import require_admin
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.outbound_webhook import (
@@ -37,7 +37,7 @@ def _bad_request(exc: OutboundWebhookError) -> HTTPException:
 
 @router.get("/events", response_model=list[OutboundWebhookEventCatalogItem])
 def admin_webhook_event_catalog(
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[OutboundWebhookEventCatalogItem]:
     return event_catalog()
 
@@ -45,7 +45,7 @@ def admin_webhook_event_catalog(
 @router.get("/summary", response_model=OutboundWebhookSummary)
 def admin_webhook_summary(
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> OutboundWebhookSummary:
     return webhook_summary(db)
 
@@ -53,7 +53,7 @@ def admin_webhook_summary(
 @router.get("", response_model=list[OutboundWebhookRead])
 def admin_list_webhooks(
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[OutboundWebhookRead]:
     return list_webhooks(db)
 
@@ -145,7 +145,7 @@ def admin_list_webhook_deliveries(
     delivery_status: str | None = Query(default=None, alias="status", pattern="^(queued|success|failed)$"),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[OutboundWebhookDeliveryRead]:
     return list_deliveries(db, webhook_id=webhook_id, status=delivery_status, limit=limit)
 

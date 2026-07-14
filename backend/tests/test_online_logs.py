@@ -4,7 +4,7 @@ from app.core.middleware import should_log_request
 from app.core.time import utc_now
 from app.modules.admin.models.app_log import AppLog
 from app.db.session import SessionLocal
-from app.modules.accounts.models.user import ROLE_MODERATOR
+from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
 from main import app
 
@@ -14,20 +14,20 @@ def explode_for_log_test() -> None:
     raise RuntimeError('online log regression marker')
 
 
-def test_staff_can_read_persisted_exception_logs() -> None:
+def test_admin_can_read_persisted_exception_logs() -> None:
     with TestClient(app, raise_server_exceptions=False) as client:
         with SessionLocal() as db:
             create_user(
                 db,
-                username='log-moderator',
+                username='log-admin',
                 password='BlackwaterLogs123!',
-                display_name='Log Moderator',
-                role=ROLE_MODERATOR,
+                display_name='Log Admin',
+                role=ROLE_ADMIN,
             )
 
         login = client.post(
             '/api/auth/login',
-            json={'username': 'log-moderator', 'password': 'BlackwaterLogs123!'},
+            json={'username': 'log-admin', 'password': 'BlackwaterLogs123!'},
         )
         assert login.status_code == 200
 
@@ -60,15 +60,15 @@ def test_successful_health_probes_are_not_actionable_request_logs() -> None:
     assert should_log_request('/api/builds', 200) is True
 
 
-def test_staff_can_combine_threat_date_and_ip_log_filters() -> None:
+def test_admin_can_combine_threat_date_and_ip_log_filters() -> None:
     with TestClient(app) as client:
         with SessionLocal() as db:
             create_user(
                 db,
-                username='security-filter-moderator',
+                username='security-filter-admin',
                 password='BlackwaterSecurity123!',
-                display_name='Security Filter Moderator',
-                role=ROLE_MODERATOR,
+                display_name='Security Filter Admin',
+                role=ROLE_ADMIN,
             )
             now = utc_now()
             db.add_all([
@@ -79,7 +79,7 @@ def test_staff_can_combine_threat_date_and_ip_log_filters() -> None:
             db.commit()
 
         login = client.post('/api/auth/login', json={
-            'username': 'security-filter-moderator',
+            'username': 'security-filter-admin',
             'password': 'BlackwaterSecurity123!',
         })
         assert login.status_code == 200
@@ -106,3 +106,22 @@ def test_staff_can_combine_threat_date_and_ip_log_filters() -> None:
         assert body['total_requests'] == 2
         assert body['unique_ips'] == 1
         assert body['ips'][0]['client_ip'] == '198.51.100.88'
+
+
+def test_moderator_cannot_read_privacy_sensitive_logs() -> None:
+    username = 'privacy-log-moderator'
+    password = 'BlackwaterPrivacyLogs123!'
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name='Privacy Log Moderator',
+                role=ROLE_MODERATOR,
+            )
+        login = client.post('/api/auth/login', json={'username': username, 'password': password})
+        assert login.status_code == 200
+        assert client.get('/api/admin/logs').status_code == 403
+        assert client.get('/api/admin/logs/summary').status_code == 403
+        assert client.get('/api/admin/logs/security-dashboard').status_code == 403

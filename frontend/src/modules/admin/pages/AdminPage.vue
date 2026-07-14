@@ -39,6 +39,7 @@ sevenDaysAgo.setDate(today.getDate() - 6)
 const isoDate = (value) => value.toISOString().slice(0, 10)
 
 const activeTab = ref('status')
+const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'integrations', 'users'])
 const builds = ref([])
 const users = ref([])
 const fleetEvents = ref([])
@@ -146,7 +147,7 @@ async function loadUsers() {
 }
 
 async function loadStatus() {
-  if (!isStaff.value) return
+  if (!isAdmin.value) return
   apiStatus.value = t('admin.status.loading')
   apiStatusDetail.value = t('admin.status.loadingDetail')
   try {
@@ -162,7 +163,7 @@ async function loadStatus() {
 }
 
 async function loadRegistrations() {
-  if (!isAdmin.value) return
+  if (!isStaff.value) return
   registrationLoading.value = true
   registrationError.value = ''
   try {
@@ -197,7 +198,7 @@ async function rejectRegistration(id) {
 }
 
 async function loadLogs() {
-  if (!isStaff.value) return
+  if (!isAdmin.value) return
   logsLoading.value = true
   logsError.value = ''
   try {
@@ -220,11 +221,13 @@ function formatDuration(value) {
 }
 
 function openIpBlockManager(ipAddress) {
+  if (!isAdmin.value) return
   ipBlockPrefill.value = ipAddress || ''
   activeTab.value = 'ip-blocks'
 }
 
 function openLogsForIp(ipAddress) {
+  if (!isAdmin.value) return
   logIp.value = ipAddress || ''
   activeTab.value = 'logs'
 }
@@ -379,8 +382,18 @@ watch(logPath, () => {
   logFilterTimer = window.setTimeout(loadLogs, 260)
 })
 
+function canAccessTab(tab) {
+  if (!isStaff.value) return false
+  if (ADMIN_ONLY_TABS.has(tab)) return isAdmin.value
+  return true
+}
+
 watch(activeTab, async (tab) => {
   clearConfirmation()
+  if (!canAccessTab(tab)) {
+    activeTab.value = isAdmin.value ? 'status' : 'registrations'
+    return
+  }
   if (tab === 'builds') await loadBuilds()
   if (tab === 'status') await loadStatus()
   if (tab === 'users') await loadUsers()
@@ -392,8 +405,10 @@ watch(activeTab, async (tab) => {
 
 onMounted(async () => {
   if (!sessionState.isReady) await loadSession()
-  await Promise.all([loadStatus(), loadLogs()])
-  if (isAdmin.value) await loadRegistrations()
+  activeTab.value = isAdmin.value ? 'status' : 'registrations'
+  if (isAdmin.value) {
+    await Promise.all([loadStatus(), loadLogs(), loadRegistrations()])
+  }
 })
 
 onUnmounted(() => {
@@ -415,7 +430,7 @@ onUnmounted(() => {
         <template #meta>
           <span v-if="user" class="summary-pill">{{ user.display_name }}</span>
           <span v-if="user" class="summary-pill">{{ t(`roles.${user.role}`) }}</span>
-          <span class="summary-pill" :class="{ 'fleet-status-pill': apiStatus === t('admin.status.online') }">{{ apiStatus }}</span>
+          <span v-if="isAdmin" class="summary-pill" :class="{ 'fleet-status-pill': apiStatus === t('admin.status.online') }">{{ apiStatus }}</span>
         </template>
         <template #actions>
           <RouterLink class="button-box" to="/calendar">{{ t('common.calendar') }}</RouterLink>
@@ -464,19 +479,19 @@ onUnmounted(() => {
         </section>
 
         <section class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'ip-blocks' }" type="button" @click="activeTab = 'ip-blocks'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.ipBlocks') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'integrations' }" type="button" @click="activeTab = 'integrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.integrations') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'ip-blocks' }" type="button" @click="activeTab = 'ip-blocks'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.ipBlocks') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
+          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'integrations' }" type="button" @click="activeTab = 'integrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.integrations') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
           <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'users' }" type="button" @click="activeTab = 'users'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.users') }}</span></button>
         </section>
 
-        <section v-if="activeTab === 'status'" class="wire-section admin-panel admin-status-panel">
+        <section v-if="activeTab === 'status' && isAdmin" class="wire-section admin-panel admin-status-panel">
           <SystemOperationsPanel :api-status="apiStatus" :api-status-detail="apiStatusDetail" :is-admin="isAdmin" @refresh-api="loadStatus" />
 
           <div class="workspace-metric-grid admin-dashboard-grid">
@@ -487,7 +502,7 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <section v-if="activeTab === 'registrations' && isAdmin" class="wire-section admin-panel staff-management-panel">
+        <section v-if="activeTab === 'registrations' && isStaff" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading">
             <div><h2>{{ t('admin.registrations.title') }}</h2><p>{{ t('admin.registrations.subtitle') }}</p></div>
             <span class="summary-pill">{{ registrationCountLabel }}</span>
@@ -513,7 +528,7 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
+        <section v-if="activeTab === 'logs' && isAdmin" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
           <div class="staff-log-workspace">
             <SecurityLogDashboard
@@ -618,7 +633,7 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <section v-if="activeTab === 'ip-blocks'" class="wire-section admin-panel staff-management-panel ip-block-admin-panel">
+        <section v-if="activeTab === 'ip-blocks' && isAdmin" class="wire-section admin-panel staff-management-panel ip-block-admin-panel">
           <IpBlockManagementPanel
             :initial-ip="ipBlockPrefill"
             :can-manage="isAdmin"
@@ -627,12 +642,12 @@ onUnmounted(() => {
           />
         </section>
 
-        <section v-if="activeTab === 'audit'" class="wire-section admin-panel staff-management-panel">
+        <section v-if="activeTab === 'audit' && isAdmin" class="wire-section admin-panel staff-management-panel">
           <AuditLogPanel />
         </section>
 
-        <section v-if="activeTab === 'integrations'" class="wire-section admin-panel staff-management-panel">
-          <OutboundWebhookManagementPanel :can-manage="isAdmin" />
+        <section v-if="activeTab === 'integrations' && isAdmin" class="wire-section admin-panel staff-management-panel">
+          <OutboundWebhookManagementPanel :can-manage="true" />
         </section>
 
         <section v-if="activeTab === 'calendar'" class="wire-section admin-panel staff-management-panel">

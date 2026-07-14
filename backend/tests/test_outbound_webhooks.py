@@ -119,7 +119,7 @@ def test_admin_can_manage_webhooks_and_secret_is_only_revealed_on_create_or_rota
         assert deleted.status_code == 204
 
 
-def test_moderator_can_view_but_not_manage_outbound_webhooks() -> None:
+def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
     username = "webhook-readonly-moderator"
     password = "BlackwaterWebhookReadonly123!"
     with TestClient(app) as client:
@@ -133,7 +133,10 @@ def test_moderator_can_view_but_not_manage_outbound_webhooks() -> None:
             )
         login = client.post("/api/auth/login", json={"username": username, "password": password})
         assert login.status_code == 200
-        assert client.get("/api/admin/integrations/webhooks").status_code == 200
+        assert client.get("/api/admin/integrations/webhooks").status_code == 403
+        assert client.get("/api/admin/integrations/webhooks/events").status_code == 403
+        assert client.get("/api/admin/integrations/webhooks/summary").status_code == 403
+        assert client.get("/api/admin/integrations/webhooks/deliveries/history").status_code == 403
         denied = client.post(
             "/api/admin/integrations/webhooks",
             json={

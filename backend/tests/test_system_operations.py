@@ -16,7 +16,7 @@ def _login(client: TestClient, username: str, password: str) -> None:
     assert response.status_code == 200, response.text
 
 
-def test_staff_can_read_update_status_but_only_admin_can_queue() -> None:
+def test_only_admin_can_read_or_queue_system_updates() -> None:
     control_dir = Path(settings.control_dir)
     shutil.rmtree(control_dir, ignore_errors=True)
     control_dir.mkdir(parents=True, exist_ok=True)
@@ -42,8 +42,7 @@ def test_staff_can_read_update_status_but_only_admin_can_queue() -> None:
 
         _login(client, 'system-moderator', 'BlackwaterSystemMod123!')
         status_response = client.get('/api/admin/system/update')
-        assert status_response.status_code == 200
-        assert status_response.json()['state'] == 'idle'
+        assert status_response.status_code == 403
         assert client.post('/api/admin/system/update', json={}).status_code == 403
         assert client.post('/api/auth/logout').status_code == 204
 

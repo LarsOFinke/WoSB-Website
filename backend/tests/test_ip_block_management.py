@@ -143,7 +143,7 @@ def test_staff_can_block_and_unblock_ip_through_middleware() -> None:
         assert allowed_again.status_code != 403
 
 
-def test_moderator_can_view_but_cannot_mutate_ip_blocks() -> None:
+def test_moderator_cannot_view_or_mutate_ip_blocks() -> None:
     username = "ip-block-readonly-moderator"
     password = "BlackwaterIpReadonly123!"
     with TestClient(app) as client:
@@ -158,7 +158,8 @@ def test_moderator_can_view_but_cannot_mutate_ip_blocks() -> None:
         login = client.post("/api/auth/login", json={"username": username, "password": password})
         assert login.status_code == 200
         listing = client.get("/api/admin/ip-blocks")
-        assert listing.status_code == 200
+        assert listing.status_code == 403
+        assert client.get("/api/admin/ip-blocks/summary").status_code == 403
         denied = client.post(
             "/api/admin/ip-blocks",
             json={"ip_address": "203.0.113.199", "reason": "Moderator mutation check"},

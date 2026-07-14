@@ -90,7 +90,7 @@ def _app_log_filters(
 
 @router.get("/system/update", response_model=SystemUpdateStatus)
 def admin_system_update_status(
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> SystemUpdateStatus:
     return get_system_update_status()
 
@@ -111,7 +111,7 @@ def admin_request_system_update(
 def admin_list_registration_requests(
     status_filter: str | None = Query(default="pending", alias="status", max_length=24),
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_staff),
 ) -> list[RegistrationRequestRead]:
     try:
         return [RegistrationRequestRead.model_validate(row) for row in list_registration_requests(db, status=status_filter)]
@@ -124,7 +124,7 @@ def admin_approve_registration_request(
     request_id: int,
     payload: RegistrationDecision,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_staff),
 ) -> RegistrationRequestRead:
     try:
         request = approve_registration_request(db, request_id, current_user, payload)
@@ -138,7 +138,7 @@ def admin_reject_registration_request(
     request_id: int,
     payload: RegistrationDecision,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_staff),
 ) -> RegistrationRequestRead:
     try:
         request = reject_registration_request(db, request_id, current_user, payload)
@@ -159,7 +159,7 @@ def admin_list_logs(
     order: str = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=120, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[AppLogRead]:
     query = select(AppLog).where(*_app_log_filters(
         level=level,
@@ -191,7 +191,7 @@ def admin_log_summary(
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> AppLogSummary:
     filters = _app_log_filters(
         level=level,
@@ -241,7 +241,7 @@ def admin_security_dashboard(
     sort: str = Query(default="threat", pattern="^(threat|requests|last_seen|ip)$"),
     limit: int = Query(default=100, ge=1, le=250),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> SecurityDashboard:
     return build_security_dashboard(
         db,
@@ -260,7 +260,7 @@ def admin_list_ip_blocks(
     search: str | None = Query(default=None, max_length=120),
     limit: int = Query(default=200, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[IpBlockRead]:
     try:
         return list_ip_blocks(db, status=status_filter, search=search, limit=limit)
@@ -271,7 +271,7 @@ def admin_list_ip_blocks(
 @router.get("/ip-blocks/summary", response_model=IpBlockSummary)
 def admin_ip_block_summary(
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> IpBlockSummary:
     return ip_block_summary(db)
 
@@ -341,7 +341,7 @@ def admin_audit_logs(
     to_date: date | None = Query(default=None),
     limit: int = Query(default=200, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    _: User = Depends(require_admin),
 ) -> list[AuditLogRead]:
     return list_audit_logs(
         db, entity_type=entity_type, action=action, actor=actor,
