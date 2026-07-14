@@ -7,7 +7,12 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.modules.accounts.models.user import User
-from app.modules.admin.schemas.discord_bot import DiscordBotOperation, DiscordBotStatus
+from app.modules.admin.schemas.discord_bot import (
+    DiscordBotConfigurationStatus,
+    DiscordBotConfigurationUpdate,
+    DiscordBotOperation,
+    DiscordBotStatus,
+)
 
 
 ACTIVE_STATES = {"queued", "running"}
@@ -45,10 +50,21 @@ def _log_tail(path: Path, limit: int = 100) -> list[str]:
         return []
 
 
+def _write_json_atomic(path: Path, payload: dict, mode: int) -> None:
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.chmod(mode)
+    os.replace(temporary, path)
+    path.chmod(mode)
+
+
 def get_discord_bot_status() -> DiscordBotStatus:
     directory = _control_dir()
     payload = _read_json(directory / STATUS_FILE)
     state = str(payload.get("state") or "idle")
+    configuration_payload = payload.get("configuration")
+    if not isinstance(configuration_payload, dict):
+        configuration_payload = {}
     return DiscordBotStatus(
         state=state,
         operation=str(payload.get("operation") or "status"),
@@ -64,21 +80,24 @@ def get_discord_bot_status() -> DiscordBotStatus:
         finished_at=payload.get("finished_at"),
         log_tail=_log_tail(directory / LOG_FILE),
         request_available=not (directory / REQUEST_FILE).exists() and state not in ACTIVE_STATES,
+        configuration=DiscordBotConfigurationStatus.model_validate(configuration_payload),
     )
 
 
-def request_discord_bot_operation(user: User, operation: DiscordBotOperation) -> DiscordBotStatus:
+def _queue_request(user: User, *, operation: str, request_payload: dict) -> DiscordBotStatus:
     directory = _control_dir()
     request_path = directory / REQUEST_FILE
     current = get_discord_bot_status()
     if request_path.exists() or current.state in ACTIVE_STATES:
         raise DiscordBotManagerError("A Discord bot operation is already queued or running.")
 
-    if operation not in {"install", "refresh"} and not current.installed:
-        raise DiscordBotManagerError("The Discord bot must be installed before this operation can run.")
-
     now = datetime.now(timezone.utc).isoformat()
-    request_payload = {"requested_by": user.username, "requested_at": now, "operation": operation}
+    payload = {
+        "requested_by": user.username,
+        "requested_at": now,
+        "operation": operation,
+        **request_payload,
+    }
     queued_status = {
         **current.model_dump(exclude={"log_tail", "request_available"}),
         "state": "queued",
@@ -90,10 +109,33 @@ def request_discord_bot_operation(user: User, operation: DiscordBotOperation) ->
         "finished_at": None,
     }
 
-    status_tmp = directory / f".{STATUS_FILE}.tmp"
-    request_tmp = directory / f".{REQUEST_FILE}.tmp"
-    status_tmp.write_text(json.dumps(queued_status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    request_tmp.write_text(json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(status_tmp, directory / STATUS_FILE)
-    os.replace(request_tmp, request_path)
+    _write_json_atomic(directory / STATUS_FILE, queued_status, 0o664)
+    _write_json_atomic(request_path, payload, 0o600)
     return get_discord_bot_status()
+
+
+def request_discord_bot_operation(user: User, operation: DiscordBotOperation) -> DiscordBotStatus:
+    current = get_discord_bot_status()
+    if operation not in {"install", "refresh"} and not current.installed:
+        raise DiscordBotManagerError("The Discord bot must be installed before this operation can run.")
+    return _queue_request(user, operation=operation, request_payload={})
+
+
+def request_discord_bot_configuration(
+    user: User,
+    configuration: DiscordBotConfigurationUpdate,
+) -> DiscordBotStatus:
+    current = get_discord_bot_status()
+    if not current.installed:
+        raise DiscordBotManagerError("The Discord bot must be installed before it can be configured.")
+    if not configuration.discord_bot_token and not current.configuration.discord_token_configured:
+        raise DiscordBotManagerError("A Discord bot token is required for the initial configuration.")
+    if not configuration.webhook_secret and not current.configuration.webhook_secret_configured:
+        raise DiscordBotManagerError("A website webhook signing secret is required for the initial configuration.")
+    return _queue_request(
+        user,
+        operation="configure",
+        request_payload={
+            "configuration": configuration.model_dump(exclude_none=True),
+        },
+    )

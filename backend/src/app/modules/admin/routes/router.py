@@ -24,7 +24,12 @@ from app.modules.admin.schemas.system_update import (
     SystemUpdateRequestResult,
     SystemUpdateStatus,
 )
-from app.modules.admin.schemas.discord_bot import DiscordBotRequest, DiscordBotRequestResult, DiscordBotStatus
+from app.modules.admin.schemas.discord_bot import (
+    DiscordBotConfigurationUpdate,
+    DiscordBotRequest,
+    DiscordBotRequestResult,
+    DiscordBotStatus,
+)
 from app.modules.admin.schemas.user_administration import UserAdministrationUpdate
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
@@ -38,6 +43,7 @@ from app.modules.admin.services.system_update_service import SystemUpdateError, 
 from app.modules.admin.services.discord_bot_manager_service import (
     DiscordBotManagerError,
     get_discord_bot_status,
+    request_discord_bot_configuration,
     request_discord_bot_operation,
 )
 from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit_safely
@@ -130,6 +136,36 @@ def admin_request_discord_bot_operation(
         bot_status = request_discord_bot_operation(current_user, payload.operation)
     except DiscordBotManagerError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return DiscordBotRequestResult(accepted=True, status=bot_status)
+
+
+@router.put(
+    "/system/discord-bot/configuration",
+    response_model=DiscordBotRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_configure_discord_bot(
+    payload: DiscordBotConfigurationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> DiscordBotRequestResult:
+    try:
+        bot_status = request_discord_bot_configuration(current_user, payload)
+    except DiscordBotManagerError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="discord_bot_configuration",
+        entity_id="runtime",
+        action="update",
+        summary="Discord bot runtime configuration queued for host application.",
+        changed_fields=(
+            ["website_base_url", "channels", "suppress_notifications"]
+            + (["discord_bot_token"] if payload.discord_bot_token else [])
+            + (["webhook_secret"] if payload.webhook_secret else [])
+        ),
+    )
     return DiscordBotRequestResult(accepted=True, status=bot_status)
 
 @router.get("/registration-requests", response_model=list[RegistrationRequestRead])

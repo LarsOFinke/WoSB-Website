@@ -10827,3 +10827,182 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Discord bot guided installation and protected runtime configuration */
+.discord-bot-setup-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.discord-bot-setup-step {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.85rem;
+  border: 1px solid rgba(221, 231, 244, 0.1);
+  border-radius: 0.95rem;
+  background: rgba(5, 12, 20, 0.3);
+}
+
+.discord-bot-setup-step > span {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid rgba(241, 184, 91, 0.28);
+  border-radius: 0.72rem;
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.discord-bot-setup-step.is-ready {
+  border-color: rgba(109, 222, 159, 0.24);
+  background: rgba(109, 222, 159, 0.045);
+}
+
+.discord-bot-setup-step.is-ready > span {
+  border-color: rgba(109, 222, 159, 0.38);
+  color: #a9e7c2;
+}
+
+.discord-bot-setup-step div {
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.discord-bot-setup-step strong,
+.discord-bot-setup-step p {
+  margin: 0;
+}
+
+.discord-bot-setup-step p,
+.discord-bot-setup-step code {
+  color: var(--text-muted, #b8c4d2);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.discord-bot-configuration-surface {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(241, 184, 91, 0.16);
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(circle at top right, rgba(241, 184, 91, 0.07), transparent 36%),
+    rgba(5, 12, 20, 0.32);
+}
+
+.discord-bot-configuration-surface h3,
+.discord-bot-configuration-surface p {
+  margin: 0.18rem 0 0;
+}
+
+.discord-bot-secret-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.discord-bot-secret-status-grid article {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(221, 231, 244, 0.09);
+  border-radius: 0.85rem;
+  background: rgba(16, 29, 43, 0.56);
+}
+
+.discord-bot-secret-status-grid span,
+.discord-bot-config-grid small,
+.discord-bot-config-actions p {
+  color: var(--text-muted, #b8c4d2);
+}
+
+.discord-bot-config-grid .input-panel,
+.discord-bot-channel-grid .input-panel {
+  align-content: start;
+}
+
+.discord-bot-wide-field {
+  grid-column: 1 / -1;
+}
+
+.discord-bot-config-grid code {
+  overflow-wrap: anywhere;
+}
+
+.discord-bot-channel-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 0.65rem;
+}
+
+.discord-bot-advanced-config {
+  border: 1px solid rgba(221, 231, 244, 0.09);
+  border-radius: 0.9rem;
+  background: rgba(5, 12, 20, 0.24);
+  overflow: hidden;
+}
+
+.discord-bot-advanced-config summary {
+  padding: 0.75rem 0.9rem;
+  color: var(--text-muted, #b8c4d2);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.discord-bot-advanced-config > div {
+  padding: 0 0.9rem 0.9rem;
+}
+
+.discord-bot-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.discord-bot-config-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.discord-bot-config-actions p {
+  max-width: 68ch;
+}
+
+@media (max-width: 1180px) {
+  .discord-bot-channel-grid {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .discord-bot-setup-flow,
+  .discord-bot-secret-status-grid,
+  .discord-bot-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discord-bot-channel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .discord-bot-config-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 620px) {
+  .discord-bot-channel-grid {
+    grid-template-columns: 1fr;
+  }
+}

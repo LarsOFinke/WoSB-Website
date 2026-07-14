@@ -110,3 +110,34 @@ def test_moderator_cannot_access_admin_privacy_and_integration_endpoints() -> No
         for endpoint in admin_only_gets:
             response = client.get(endpoint)
             assert response.status_code == 403, f'{endpoint}: {response.status_code} {response.text}'
+
+
+def test_moderator_cannot_configure_discord_bot_runtime() -> None:
+    username = 'discord-config-boundary-moderator'
+    password = 'BlackwaterDiscordConfigBoundary123!'
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name='Discord Config Boundary Moderator',
+                role=ROLE_MODERATOR,
+            )
+        _login(client, username, password)
+        response = client.put(
+            '/api/admin/system/discord-bot/configuration',
+            json={
+                'discord_bot_token': 'discord-token-value-that-is-long-enough',
+                'webhook_secret': 'webhook-signing-secret-that-is-long-enough-123456',
+                'website_base_url': 'https://fleet.example',
+                'channels': {
+                    'events': '100000000000000001',
+                    'guides': '100000000000000002',
+                    'builds': '100000000000000003',
+                    'forum': '100000000000000004',
+                    'default': '100000000000000005',
+                },
+            },
+        )
+        assert response.status_code == 403

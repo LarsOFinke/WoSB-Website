@@ -18,6 +18,10 @@ export function requestDiscordBotOperation(operation) {
   return post('/admin/system/discord-bot', { operation })
 }
 
+export function configureDiscordBot(configuration) {
+  return put('/admin/system/discord-bot/configuration', configuration)
+}
+
 export function listRegistrationRequests({ status = 'pending', search = '', fromDate = '', toDate = '' } = {}) {
   return get(withQuery('/admin/registration-requests', {
     status,
