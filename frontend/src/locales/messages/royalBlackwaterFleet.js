@@ -263,6 +263,11 @@ export const royalBlackwaterFleetMessages = {
           hint: 'Ergänze Spezial-Crew, ohne sie mit den normalen Crew-Reglern zu vermischen.',
           alt: 'Spezialisten-Slot {index}',
         },
+        inventory: {
+          ammunitionHint: 'Munition und Nutzlasten. Gleiche Einträge werden über ihre Menge gestapelt.',
+          consumablesHint: 'Aktive Hilfsmittel wie Reparatursets, Zusatzsegel, Rauch oder Rationen.',
+          holdHint: 'Laderaumgüter und Handelswaren wie Holz, Eisen, Stoff oder Frischfleisch.',
+        },
       },
       detail: {
         shipStats: 'Schiff-Stats',

@@ -448,7 +448,7 @@ export const contentModulesAndBuildStatsMessages = {
         performanceHint: 'Basiswerte des Katalogs mit allen ausgewählten Modifikatoren.',
         configurationEyebrow: 'Konfiguration',
         configurationTitle: 'Upgrade-Rack',
-        configurationHint: 'Übersicht aller sieben Slots mit Live-Effektzusammenfassung.',
+        configurationHint: 'Übersicht aller acht Slots mit Live-Effektzusammenfassung.',
         emptyUpgrade: 'Leerer Upgrade-Slot',
         lockedUpgrade: 'Slot durch Schiffskonfiguration gesperrt',
         availableUpgrade: 'Für Konfiguration verfügbar',
