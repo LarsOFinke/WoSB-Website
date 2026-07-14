@@ -18,6 +18,18 @@ grep -q 'data/postgres/PG_VERSION' "$INFRA_DIR/setup.sh"
 grep -q 'AUTO_SEED=true rbf-seed' "$INFRA_DIR/compose.yml"
 grep -q '^AUTO_SEED=false$' "$INFRA_DIR/.env.example"
 
+python3 - "$INFRA_DIR/compose.yml" <<'PY_COMPOSE'
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+api_section = text.split("  api:\n", 1)[1].split("\n  gateway:\n", 1)[0]
+networks_section = text.split("\nnetworks:\n", 1)[1]
+assert "      - backend\n      - outbound\n" in api_section, "API must retain database isolation and outbound egress"
+assert "  backend:\n    driver: bridge\n    internal: true\n" in networks_section, "backend network must remain internal"
+assert "  outbound:\n    driver: bridge\n" in networks_section, "outbound network must be defined"
+PY_COMPOSE
+
 if docker compose version >/dev/null 2>&1; then
   cp "$INFRA_DIR/.env.example" "$INFRA_DIR/.env"
   trap 'rm -f "$INFRA_DIR/.env"' EXIT

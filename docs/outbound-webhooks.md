@@ -95,3 +95,37 @@ The initial event catalog contains:
 - Production endpoints must use HTTPS.
 
 The signing secret is stored server-side because it is required to generate HMAC signatures. Database backups and database access therefore need to be treated as sensitive.
+
+## Container networking and DNS
+
+Outbound deliveries are created by the Compose service named `api`, not by a service named `backend`. The API remains connected to the internal database network and also has a dedicated `outbound` bridge network for DNS and HTTPS egress. PostgreSQL stays isolated on the internal network and no additional host ports are published.
+
+Check the running service names first:
+
+```bash
+docker compose -f infrastructure/compose.yml ps
+```
+
+Test DNS from the actual delivery process:
+
+```bash
+docker compose -f infrastructure/compose.yml exec -T api \
+  python - <<'PY'
+import socket
+print(socket.getaddrinfo("royal-blackwater-fleet.eu", 443))
+PY
+```
+
+`service "backend" is not running` does not indicate that the application backend is down; it means the Compose file has no service with that name. The service is called `api`.
+
+An error such as `Temporary failure in name resolution` means the request never reached the webhook receiver and the signing secret was not checked. Recreate the API container after a networking change:
+
+```bash
+./update.sh
+```
+
+or, for a targeted host-side check:
+
+```bash
+docker compose -f infrastructure/compose.yml up -d --force-recreate api
+```

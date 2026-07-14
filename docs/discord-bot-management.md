@@ -85,3 +85,17 @@ https://royal-blackwater-fleet.eu/integrations/discord/webhooks/rbf
 10. Send a test delivery.
 
 The public reverse proxy exposes only the signed webhook receiver. The bot management endpoint is not proxied.
+
+## Testing webhook DNS from the website API
+
+The outbound webhook sender runs in the Compose service `api`. Use that service name for diagnostics:
+
+```bash
+sudo docker compose -f infrastructure/compose.yml exec -T api \
+  python - <<'PY'
+import socket
+print(socket.getaddrinfo("royal-blackwater-fleet.eu", 443))
+PY
+```
+
+A Compose error mentioning `service "backend" is not running` means the wrong service name was used; there is no `backend` service in this repository. A DNS resolution error from `api` occurs before HMAC validation and is unrelated to the configured website signing secret.

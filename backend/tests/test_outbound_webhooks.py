@@ -1,4 +1,6 @@
 import json
+import socket
+from urllib.error import URLError
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -10,7 +12,11 @@ from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import OutboundWebhookCreate
-from app.modules.admin.services.outbound_webhook_service import create_webhook, queue_webhook_event
+from app.modules.admin.services.outbound_webhook_service import (
+    _delivery_transport_error,
+    create_webhook,
+    queue_webhook_event,
+)
 from app.modules.registry import register_all_models
 from main import app
 
@@ -146,3 +152,14 @@ def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
             },
         )
         assert denied.status_code == 403
+
+
+def test_webhook_dns_errors_are_reported_with_actionable_context() -> None:
+    message = _delivery_transport_error(
+        "https://royal-blackwater-fleet.eu/integrations/discord/webhooks/rbf",
+        URLError(socket.gaierror(-3, "Temporary failure in name resolution")),
+    )
+
+    assert "DNS resolution failed" in message
+    assert "royal-blackwater-fleet.eu" in message
+    assert "API container outbound network" in message

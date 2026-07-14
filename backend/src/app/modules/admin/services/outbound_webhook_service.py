@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import secrets
+import socket
 import time
 from datetime import datetime
 from typing import Any
@@ -357,6 +358,19 @@ def _delivery_headers(row: OutboundWebhookDelivery, secret: str, timestamp: str)
     }
 
 
+def _delivery_transport_error(endpoint_url: str, exc: Exception) -> str:
+    host = urlparse(endpoint_url).hostname or "configured endpoint"
+    reason = exc.reason if isinstance(exc, URLError) else exc
+    if isinstance(reason, socket.gaierror):
+        return (
+            f"DNS resolution failed for webhook host '{host}'. "
+            "Verify the API container outbound network and DNS configuration."
+        )
+    if isinstance(exc, TimeoutError):
+        return f"Connection to webhook host '{host}' timed out."
+    return str(exc)[:2000]
+
+
 def attempt_webhook_delivery(delivery_id: int) -> None:
     db = SessionLocal()
     try:
@@ -404,7 +418,7 @@ def attempt_webhook_delivery(delivery_id: int) -> None:
             webhook.last_failure_at = utc_now()
         except (URLError, TimeoutError, OSError) as exc:
             row.status = "failed"
-            row.error_message = str(exc)[:2000]
+            row.error_message = _delivery_transport_error(webhook.endpoint_url, exc)
             webhook.last_failure_at = utc_now()
         db.commit()
     finally:

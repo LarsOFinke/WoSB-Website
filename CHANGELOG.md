@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- API-Container um einen dedizierten ausgehenden Netzwerkpfad für signierte Webhooks und Discord-Bot-Zustellungen ergänzt; Datenbanknetz bleibt intern isoliert.
+- DNS-/Transportfehler ausgehender Webhooks liefern nun eine konkrete Diagnose für den tatsächlichen Compose-Service `api`.
 - Staff-Systemlogs um Tagesfilter, sortierbare IP-Übersicht und ein heuristisches Threat-Level-Dashboard erweitert.
 - Audit-Historie für Builds, Forum-Threads/-Beiträge, Leitfäden und den Starter-Leitfaden ergänzt.
 - Ingame-Waffenlayout-Konvention als Heck–Breitseite–Bug vereinheitlicht und dadurch vertauschte Bug-/Heck-Kapazitäten katalogweit korrigiert.
