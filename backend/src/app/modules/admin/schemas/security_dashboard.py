@@ -40,5 +40,6 @@ class SecurityDashboard(BaseModel):
     suspicious_hits: int
     status_4xx: int
     status_5xx: int
+    threat_counts: dict[str, int] = Field(default_factory=dict)
     days: list[SecurityDayBucket] = Field(default_factory=list)
     ips: list[SecurityIpRow] = Field(default_factory=list)

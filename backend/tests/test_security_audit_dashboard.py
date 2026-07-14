@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from types import SimpleNamespace
 
 from sqlalchemy import create_engine
@@ -8,7 +8,7 @@ from app.db.base import Base
 from app.core.time import utc_now
 from app.modules.admin.models.app_log import AppLog
 from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit
-from app.modules.admin.services.security_dashboard_service import build_security_dashboard
+from app.modules.admin.services.security_dashboard_service import build_security_dashboard, security_ip_addresses_for_level
 from app.modules.registry import register_all_models
 
 
@@ -21,7 +21,7 @@ def isolated_session():
 
 def test_security_dashboard_scores_suspicious_probe_ip_above_normal_traffic() -> None:
     with isolated_session() as db:
-        now = utc_now()
+        now = datetime.combine(utc_now().date(), time(hour=12))
         db.add_all([
             AppLog(created_at=now - timedelta(hours=2), level="INFO", logger="request", message="ok", path="/api/builds", status_code=200, client_ip="10.0.0.1"),
             AppLog(created_at=now - timedelta(hours=1), level="INFO", logger="request", message="probe", path="/api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php", status_code=404, client_ip="198.51.100.44"),
@@ -37,6 +37,43 @@ def test_security_dashboard_scores_suspicious_probe_ip_above_normal_traffic() ->
         assert dashboard.ips[0].client_ip == "198.51.100.44"
         assert dashboard.ips[0].threat_score > dashboard.ips[1].threat_score
         assert dashboard.ips[0].threat_level in {"elevated", "critical"}
+        assert dashboard.threat_counts[dashboard.ips[0].threat_level] == 1
+        assert dashboard.threat_counts["low"] == 1
+
+
+def test_security_dashboard_combines_date_threat_and_ip_filters() -> None:
+    with isolated_session() as db:
+        now = datetime.combine(utc_now().date(), time(hour=12))
+        yesterday = now - timedelta(days=1)
+        db.add_all([
+            AppLog(created_at=yesterday, level="INFO", logger="request", message="ok", path="/api/builds", status_code=200, client_ip="10.0.0.1"),
+            AppLog(created_at=now - timedelta(hours=2), level="INFO", logger="request", message="probe", path="/.git/config", status_code=404, client_ip="198.51.100.44"),
+            AppLog(created_at=now - timedelta(hours=1), level="ERROR", logger="request", message="probe", path="/.env", status_code=500, client_ip="198.51.100.44"),
+            AppLog(created_at=now, level="INFO", logger="request", message="other", path="/api/forum", status_code=200, client_ip="203.0.113.7"),
+        ])
+        db.commit()
+
+        matching_ips = security_ip_addresses_for_level(
+            db,
+            from_date=yesterday.date(),
+            to_date=now.date(),
+            threat_level="elevated",
+        )
+        assert matching_ips == {"198.51.100.44"}
+
+        dashboard = build_security_dashboard(
+            db,
+            from_date=yesterday.date(),
+            to_date=now.date(),
+            threat_level="elevated",
+            client_ip="198.51.100.44",
+        )
+        assert dashboard.unique_ips == 1
+        assert dashboard.total_requests == 2
+        assert dashboard.suspicious_hits == 2
+        assert [row.client_ip for row in dashboard.ips] == ["198.51.100.44"]
+        assert dashboard.days[0].total == 0
+        assert dashboard.days[1].total == 2
 
 
 def test_audit_log_records_actor_action_and_changed_field_names() -> None:

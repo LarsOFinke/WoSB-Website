@@ -31,6 +31,11 @@ import { useSession } from '@/modules/accounts/session'
 const { locale, t } = useLocale()
 const { isAdmin, isStaff, loadSession, sessionState, user } = useSession()
 
+const today = new Date()
+const sevenDaysAgo = new Date(today)
+sevenDaysAgo.setDate(today.getDate() - 6)
+const isoDate = (value) => value.toISOString().slice(0, 10)
+
 const activeTab = ref('status')
 const builds = ref([])
 const users = ref([])
@@ -48,9 +53,9 @@ const registrationStatus = ref('pending')
 const logLevel = ref('')
 const logPath = ref('')
 const logIp = ref('')
-const availableLogIps = ref([])
-const logFromDate = ref('')
-const logToDate = ref('')
+const logThreat = ref('')
+const logFromDate = ref(isoDate(sevenDaysAgo))
+const logToDate = ref(isoDate(today))
 const logSort = ref('created_at')
 const logOrder = ref('desc')
 const loading = ref(false)
@@ -72,6 +77,7 @@ const apiStatus = ref(t('admin.status.loading'))
 const apiStatusDetail = ref(t('admin.status.loadingDetail'))
 let searchTimer = null
 let contentTimer = null
+let logFilterTimer = null
 
 const moderatorForm = reactive({ username: '', display_name: '', password: '' })
 
@@ -193,8 +199,8 @@ async function loadLogs() {
   logsError.value = ''
   try {
     const [summary, rows] = await Promise.all([
-      getAdminLogSummary({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, fromDate: logFromDate.value, toDate: logToDate.value }),
-      listAdminLogs({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, fromDate: logFromDate.value, toDate: logToDate.value, sort: logSort.value, order: logOrder.value, limit: 140 }),
+      getAdminLogSummary({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, threatLevel: logThreat.value, fromDate: logFromDate.value, toDate: logToDate.value }),
+      listAdminLogs({ level: logLevel.value, path: logPath.value, clientIp: logIp.value, threatLevel: logThreat.value, fromDate: logFromDate.value, toDate: logToDate.value, sort: logSort.value, order: logOrder.value, limit: 140 }),
     ])
     logSummary.value = summary
     appLogs.value = rows
@@ -354,7 +360,11 @@ watch(contentSearch, () => {
 
 watch(calendarCategory, loadCalendar)
 watch(registrationStatus, loadRegistrations)
-watch([logLevel, logPath, logIp, logFromDate, logToDate, logSort, logOrder], loadLogs)
+watch([logLevel, logIp, logThreat, logFromDate, logToDate, logSort, logOrder], loadLogs)
+watch(logPath, () => {
+  window.clearTimeout(logFilterTimer)
+  logFilterTimer = window.setTimeout(loadLogs, 260)
+})
 
 watch(activeTab, async (tab) => {
   clearConfirmation()
@@ -376,6 +386,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.clearTimeout(searchTimer)
   window.clearTimeout(contentTimer)
+  window.clearTimeout(logFilterTimer)
 })
 </script>
 
@@ -490,13 +501,18 @@ onUnmounted(() => {
         <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
           <div class="staff-log-workspace">
-            <SecurityLogDashboard @select-ip="logIp = $event" @ip-options="availableLogIps = $event" />
+            <SecurityLogDashboard
+              v-model:from-date="logFromDate"
+              v-model:to-date="logToDate"
+              v-model:threat-level="logThreat"
+              v-model:selected-ip="logIp"
+            />
 
             <article class="staff-log-surface log-filter-surface">
               <div class="staff-log-surface-head">
                 <div>
-                  <h3>Filter</h3>
-                  <p>Refine the persisted request log by level, path, IP, date and sorting.</p>
+                  <h3>{{ t('admin.logs.requestFilters') }}</h3>
+                  <p>{{ t('admin.logs.requestFiltersHint') }}</p>
                 </div>
                 <span class="summary-pill">{{ t('admin.logs.total') }} · {{ logSummary.total }}</span>
               </div>
@@ -504,9 +520,6 @@ onUnmounted(() => {
               <div class="staff-filter-row log-filter-row refined-log-filter-row">
                 <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
                 <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
-                <label class="filter-box select-shell"><select v-model="logIp"><option value="">{{ t('admin.security.allIps') }}</option><option v-for="row in availableLogIps" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }}</option></select></label>
-                <label class="filter-box"><input v-model="logFromDate" type="date" :aria-label="t('admin.security.from')" /></label>
-                <label class="filter-box"><input v-model="logToDate" type="date" :aria-label="t('admin.security.to')" /></label>
                 <label class="filter-box select-shell"><select v-model="logSort"><option value="created_at">{{ t('admin.logs.sortDate') }}</option><option value="ip">{{ t('admin.logs.sortIp') }}</option><option value="status">{{ t('admin.logs.sortStatus') }}</option><option value="duration">{{ t('admin.logs.sortDuration') }}</option><option value="level">{{ t('admin.logs.sortLevel') }}</option></select></label>
                 <label class="filter-box select-shell"><select v-model="logOrder"><option value="desc">{{ t('admin.logs.desc') }}</option><option value="asc">{{ t('admin.logs.asc') }}</option></select></label>
               </div>
@@ -515,14 +528,23 @@ onUnmounted(() => {
             <article class="staff-log-surface log-table-surface">
               <div class="staff-log-surface-head">
                 <div>
-                  <h3>Logs</h3>
-                  <p>Complete request history for monitoring and troubleshooting.</p>
+                  <h3>{{ t('admin.logs.resultsTitle') }}</h3>
+                  <p>{{ t('admin.logs.resultsHint') }}</p>
                 </div>
                 <div class="admin-dashboard-grid log-summary-grid compact-log-summary-grid">
                   <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
                   <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong></article>
                   <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
                 </div>
+              </div>
+
+              <div class="staff-log-active-scope" aria-live="polite">
+                <span>{{ t('admin.logs.activeScope') }}</span>
+                <strong>{{ logFromDate }} – {{ logToDate }}</strong>
+                <strong>{{ logThreat ? t(`admin.security.levels.${logThreat}`) : t('admin.security.allThreats') }}</strong>
+                <strong>{{ logIp || t('admin.security.allIps') }}</strong>
+                <strong v-if="logLevel">{{ logLevel }}</strong>
+                <strong v-if="logPath">{{ logPath }}</strong>
               </div>
 
               <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>

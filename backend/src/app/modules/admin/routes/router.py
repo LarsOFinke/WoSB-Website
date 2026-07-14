@@ -1,6 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import false, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin, require_staff
@@ -33,7 +33,7 @@ from app.modules.guides.services.guide_service import delete_guide, get_guide, l
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
 from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit_safely
-from app.modules.admin.services.security_dashboard_service import build_security_dashboard
+from app.modules.admin.services.security_dashboard_service import build_security_dashboard, security_ip_addresses_for_level
 from app.modules.admin.services.user_administration_service import UserAdministrationError, update_user_account
 from app.modules.admin.routes.master_data import router as master_data_router
 
@@ -47,6 +47,8 @@ def _app_log_filters(
     client_ip: str | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
+    threat_level: str | None = None,
+    db: Session | None = None,
 ):
     filters = []
     if level:
@@ -59,6 +61,19 @@ def _app_log_filters(
         filters.append(AppLog.created_at >= datetime.combine(from_date, time.min))
     if to_date:
         filters.append(AppLog.created_at < datetime.combine(to_date + timedelta(days=1), time.min))
+    if threat_level:
+        if db is None:
+            raise RuntimeError("A database session is required for threat-level filtering.")
+        matching_ips = security_ip_addresses_for_level(
+            db,
+            from_date=from_date,
+            to_date=to_date,
+            threat_level=threat_level,
+        )
+        if matching_ips:
+            filters.append(or_(AppLog.client_ip.in_(matching_ips), AppLog.client.in_(matching_ips)))
+        else:
+            filters.append(false())
     return filters
 
 
@@ -126,6 +141,7 @@ def admin_list_logs(
     level: str | None = Query(default=None, max_length=20),
     path: str | None = Query(default=None, max_length=120),
     client_ip: str | None = Query(default=None, max_length=120),
+    threat_level: str | None = Query(default=None, pattern="^(low|guarded|elevated|critical)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     sort: str = Query(default="created_at", pattern="^(created_at|level|status|duration|ip)$"),
@@ -135,7 +151,13 @@ def admin_list_logs(
     _: User = Depends(require_staff),
 ) -> list[AppLogRead]:
     query = select(AppLog).where(*_app_log_filters(
-        level=level, path=path, client_ip=client_ip, from_date=from_date, to_date=to_date
+        level=level,
+        path=path,
+        client_ip=client_ip,
+        from_date=from_date,
+        to_date=to_date,
+        threat_level=threat_level,
+        db=db,
     ))
     sort_column = {
         "created_at": AppLog.created_at,
@@ -154,12 +176,21 @@ def admin_log_summary(
     level: str | None = Query(default=None, max_length=20),
     path: str | None = Query(default=None, max_length=120),
     client_ip: str | None = Query(default=None, max_length=120),
+    threat_level: str | None = Query(default=None, pattern="^(low|guarded|elevated|critical)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> AppLogSummary:
-    filters = _app_log_filters(level=level, path=path, client_ip=client_ip, from_date=from_date, to_date=to_date)
+    filters = _app_log_filters(
+        level=level,
+        path=path,
+        client_ip=client_ip,
+        from_date=from_date,
+        to_date=to_date,
+        threat_level=threat_level,
+        db=db,
+    )
     total = int(db.scalar(select(func.count(AppLog.id)).where(*filters)) or 0)
     errors = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level.in_(["ERROR", "CRITICAL"]))) or 0)
     warnings = int(db.scalar(select(func.count(AppLog.id)).where(*filters, AppLog.level == "WARNING")) or 0)
@@ -194,13 +225,21 @@ def admin_log_summary(
 def admin_security_dashboard(
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
+    threat_level: str | None = Query(default=None, pattern="^(low|guarded|elevated|critical)$"),
+    client_ip: str | None = Query(default=None, max_length=120),
     sort: str = Query(default="threat", pattern="^(threat|requests|last_seen|ip)$"),
     limit: int = Query(default=100, ge=1, le=250),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> SecurityDashboard:
     return build_security_dashboard(
-        db, from_date=from_date, to_date=to_date, sort=sort, limit=limit
+        db,
+        from_date=from_date,
+        to_date=to_date,
+        sort=sort,
+        limit=limit,
+        threat_level=threat_level,
+        client_ip=client_ip,
     )
 
 

@@ -22,12 +22,12 @@ export function rejectRegistrationRequest(id, note = '') {
   return post(`/admin/registration-requests/${id}/reject`, { note: note || null })
 }
 
-export function listAdminLogs({ level = '', path = '', clientIp = '', fromDate = '', toDate = '', sort = 'created_at', order = 'desc', limit = 120 } = {}) {
-  return get(withQuery('/admin/logs', { level, path, client_ip: clientIp, from_date: fromDate, to_date: toDate, sort, order, limit }))
+export function listAdminLogs({ level = '', path = '', clientIp = '', threatLevel = '', fromDate = '', toDate = '', sort = 'created_at', order = 'desc', limit = 120 } = {}) {
+  return get(withQuery('/admin/logs', { level, path, client_ip: clientIp, threat_level: threatLevel, from_date: fromDate, to_date: toDate, sort, order, limit }))
 }
 
-export function getAdminLogSummary({ level = '', path = '', clientIp = '', fromDate = '', toDate = '' } = {}) {
-  return get(withQuery('/admin/logs/summary', { level, path, client_ip: clientIp, from_date: fromDate, to_date: toDate }))
+export function getAdminLogSummary({ level = '', path = '', clientIp = '', threatLevel = '', fromDate = '', toDate = '' } = {}) {
+  return get(withQuery('/admin/logs/summary', { level, path, client_ip: clientIp, threat_level: threatLevel, from_date: fromDate, to_date: toDate }))
 }
 
 export function listAdminBuilds(search = '', buildType = '') {
@@ -134,10 +134,12 @@ export function restoreMasterDataShip(id) {
   return post(`/admin/master-data/ships/${id}/restore-seed`, {})
 }
 
-export function getSecurityDashboard({ fromDate = '', toDate = '', sort = 'threat', limit = 100 } = {}) {
+export function getSecurityDashboard({ fromDate = '', toDate = '', threatLevel = '', clientIp = '', sort = 'threat', limit = 100 } = {}) {
   return get(withQuery('/admin/logs/security-dashboard', {
     from_date: fromDate,
     to_date: toDate,
+    threat_level: threatLevel,
+    client_ip: clientIp,
     sort,
     limit,
   }))
