@@ -6,6 +6,7 @@ import MetricCard from '@/core/components/MetricCard.vue'
 import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
 import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboard.vue'
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
+import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import {
@@ -45,6 +46,7 @@ const guides = ref([])
 const groups = ref([])
 const registrationRequests = ref([])
 const appLogs = ref([])
+const ipBlockPrefill = ref('')
 const logSummary = ref({ total: 0, errors: 0, warnings: 0, slow_requests: 0, recent_status: {} })
 const search = ref('')
 const contentSearch = ref('')
@@ -214,6 +216,16 @@ async function loadLogs() {
 function formatDuration(value) {
   if (value === null || value === undefined) return '—'
   return `${Math.round(value)} ms`
+}
+
+function openIpBlockManager(ipAddress) {
+  ipBlockPrefill.value = ipAddress || ''
+  activeTab.value = 'ip-blocks'
+}
+
+function openLogsForIp(ipAddress) {
+  logIp.value = ipAddress || ''
+  activeTab.value = 'logs'
 }
 
 async function loadCalendar() {
@@ -454,6 +466,7 @@ onUnmounted(() => {
           <button class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
           <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'ip-blocks' }" type="button" @click="activeTab = 'ip-blocks'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.ipBlocks') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
@@ -506,6 +519,8 @@ onUnmounted(() => {
               v-model:to-date="logToDate"
               v-model:threat-level="logThreat"
               v-model:selected-ip="logIp"
+              :can-block="isAdmin"
+              @block-ip="openIpBlockManager"
             />
 
             <article class="staff-log-surface log-filter-surface">
@@ -599,6 +614,15 @@ onUnmounted(() => {
               </div>
             </article>
           </div>
+        </section>
+
+        <section v-if="activeTab === 'ip-blocks'" class="wire-section admin-panel staff-management-panel ip-block-admin-panel">
+          <IpBlockManagementPanel
+            :initial-ip="ipBlockPrefill"
+            :can-manage="isAdmin"
+            @consumed-initial-ip="ipBlockPrefill = ''"
+            @view-logs="openLogsForIp"
+          />
         </section>
 
         <section v-if="activeTab === 'audit'" class="wire-section admin-panel staff-management-panel">

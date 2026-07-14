@@ -11,6 +11,7 @@ _MODEL_MODULES = (
     "app.modules.privacy.models.cookie_consent",
     "app.modules.admin.models.app_log",
     "app.modules.admin.models.audit_log",
+    "app.modules.admin.models.ip_block",
     "app.modules.builds.models.build",
     "app.modules.builds.models.build_item_category",
     "app.modules.builds.models.build_item_effect",

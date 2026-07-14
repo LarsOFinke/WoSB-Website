@@ -19,6 +19,7 @@ import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
+import { ipBlockManagementMessages } from './ipBlockManagement'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -45,6 +46,7 @@ const messageLayers = [
   staffPanelMessages,
   systemOperationsMessages,
   securityAuditDashboardMessages,
+  ipBlockManagementMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

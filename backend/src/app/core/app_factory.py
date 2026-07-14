@@ -10,7 +10,7 @@ from app.api.router import router as api_router
 from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, http_error_handler
 from app.core.logging import configure_logging
-from app.core.middleware import RequestLoggingMiddleware
+from app.core.middleware import IpBlockMiddleware, RequestLoggingMiddleware
 from app.db.init_db import create_and_seed, create_tables, verify_database_ready
 from app.modules.registry import register_all_models
 
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
 
     app.add_exception_handler(AppError, app_error_handler)
     app.add_exception_handler(HTTPException, http_error_handler)
+    app.add_middleware(IpBlockMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,

@@ -155,3 +155,19 @@ export function listAuditLogs({ entityType = '', action = '', actor = '', fromDa
     limit,
   }))
 }
+
+export function listIpBlocks({ status = 'active', search = '', limit = 200 } = {}) {
+  return get(withQuery('/admin/ip-blocks', { status, search, limit }))
+}
+
+export function getIpBlockSummary() {
+  return get('/admin/ip-blocks/summary')
+}
+
+export function createIpBlock(payload) {
+  return post('/admin/ip-blocks', payload)
+}
+
+export function unblockIpBlock(id, reason = '') {
+  return post(`/admin/ip-blocks/${id}/unblock`, { reason: reason || null })
+}

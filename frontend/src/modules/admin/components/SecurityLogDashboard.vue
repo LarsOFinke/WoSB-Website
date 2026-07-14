@@ -9,6 +9,7 @@ const props = defineProps({
   toDate: { type: String, default: '' },
   threatLevel: { type: String, default: '' },
   selectedIp: { type: String, default: '' },
+  canBlock: { type: Boolean, default: false },
 })
 
 const emit = defineEmits([
@@ -17,6 +18,7 @@ const emit = defineEmits([
   'update:threatLevel',
   'update:selectedIp',
   'ip-options',
+  'block-ip',
 ])
 
 const { locale, t } = useLocale()
@@ -270,6 +272,7 @@ watch(
                 <strong>{{ focusedIpRow.client_ip }}</strong>
                 <small>{{ t(`admin.security.levels.${focusedIpRow.threat_level}`) }} · {{ t('admin.security.lastSeen') }} {{ formatDateTime(focusedIpRow.last_seen) }}</small>
               </div>
+              <button v-if="canBlock" class="small-action security-block-ip-action" type="button" @click="emit('block-ip', focusedIpRow.client_ip)">{{ t('admin.security.blockSelectedIp') }}</button>
             </div>
             <div class="security-ip-metrics">
               <div><span>{{ t('admin.security.requests') }}</span><strong>{{ focusedIpRow.request_count }}</strong></div>
