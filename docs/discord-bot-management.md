@@ -16,11 +16,33 @@ This file contains only:
 RBF_DISCORD_BOT_REPO_URL=git@github.com:your-org/royal-blackwater-discord-bot.git
 RBF_DISCORD_BOT_BRANCH=main
 RBF_DISCORD_BOT_INSTALL_DIR=/opt/rbf-discord-bot
+RBF_DISCORD_BOT_GIT_SSH_KEY_FILE=/root/.ssh/rbf_discord_bot
+RBF_DISCORD_BOT_GIT_KNOWN_HOSTS_FILE=/root/.ssh/rbf-discord-known_hosts
+RBF_DISCORD_BOT_GIT_SSH_PORT=22
 ```
 
-These are not bot runtime variables. They tell the root-owned website host runner where it may clone and update the standalone repository. Browser requests cannot change the repository URL, branch or install path.
+These are not bot runtime variables. They tell the root-owned website host runner where it may clone and update the standalone repository. Browser requests cannot change the repository URL, branch, SSH identity or install path.
+
+The explicit SSH settings are recommended for private repositories. The manager is a root-owned, non-interactive systemd service and therefore does not inherit the login user's `HOME`, `ssh-agent` or SSH configuration. A clone that works in an interactive user shell can otherwise still fail in the Staff Panel. The configured private key should be an unencrypted, read-only deploy key dedicated to the bot repository.
+
+The manager performs `git clone` directly during installation and lets `git fetch`/`git pull` run during updates. It deliberately does not require a separate `git ls-remote` preflight. With the same URL, identity and user context, clone and ls-remote use the same Git transport; different results normally indicate a different URL or SSH context.
 
 The runner reads this file on every operation. Editing it does not require restarting the website. A systemd daemon reload is needed only when unit definitions themselves change; the normal website installation/update workflow handles that.
+
+For GitHub, prepare the dedicated host-key file and verify the exact key non-interactively:
+
+```bash
+sudo install -d -m 0700 /root/.ssh
+sudo ssh-keyscan -H github.com | sudo tee /root/.ssh/rbf-discord-known_hosts >/dev/null
+sudo chmod 0600 /root/.ssh/rbf_discord_bot /root/.ssh/rbf-discord-known_hosts
+
+sudo -H env GIT_SSH_COMMAND='/usr/bin/ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/root/.ssh/rbf-discord-known_hosts -i /root/.ssh/rbf_discord_bot' \
+  git clone --depth 1 --branch main --single-branch \
+  git@github.com:your-org/royal-blackwater-discord-bot.git /tmp/rbf-discord-bot-clone-test
+sudo rm -rf /tmp/rbf-discord-bot-clone-test
+```
+
+This clone test mirrors the Staff Panel runner more closely than a test performed as the interactive deployment user.
 
 ### Bot runtime configuration
 

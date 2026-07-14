@@ -24,11 +24,52 @@ STATUS_ONLY=false
 REPO_URL="${RBF_DISCORD_BOT_REPO_URL:-}"
 BRANCH="${RBF_DISCORD_BOT_BRANCH:-main}"
 INSTALL_DIR="${RBF_DISCORD_BOT_INSTALL_DIR:-/opt/rbf-discord-bot}"
+GIT_SSH_KEY_FILE="${RBF_DISCORD_BOT_GIT_SSH_KEY_FILE:-}"
+GIT_KNOWN_HOSTS_FILE="${RBF_DISCORD_BOT_GIT_KNOWN_HOSTS_FILE:-}"
+GIT_SSH_PORT="${RBF_DISCORD_BOT_GIT_SSH_PORT:-22}"
 SERVICE_NAME="rbf-discord-bot.service"
 
 mkdir -p "$CONTROL_DIR"
 touch "$LOG_FILE"
 chmod 664 "$LOG_FILE"
+
+is_ssh_repository_url() {
+  [[ "$REPO_URL" =~ ^ssh:// ]] || [[ "$REPO_URL" =~ ^[^/@[:space:]]+@[^/:[:space:]]+:.+ ]]
+}
+
+validate_automation_path() {
+  local value="$1" label="$2"
+  [[ "$value" == /* ]] || die "$label muss ein absoluter Pfad sein."
+  [[ "$value" =~ ^/[A-Za-z0-9._/@+-]+$ ]] || die "$label enthält für den nicht-interaktiven Runner nicht unterstützte Zeichen."
+}
+
+configure_git_transport() {
+  export GIT_TERMINAL_PROMPT=0
+
+  if ! is_ssh_repository_url; then
+    [[ -z "$GIT_SSH_KEY_FILE" && -z "$GIT_KNOWN_HOSTS_FILE" ]] || log "SSH-Schlüsselkonfiguration wird ignoriert, da die Repository-URL kein SSH-Format verwendet."
+    return
+  fi
+
+  if [[ -z "$GIT_SSH_KEY_FILE" ]]; then
+    log "SSH-Repository ohne expliziten Manager-Schlüssel: Git verwendet den root-eigenen Standard-SSH-Kontext."
+    log "Für reproduzierbare Installationen RBF_DISCORD_BOT_GIT_SSH_KEY_FILE und RBF_DISCORD_BOT_GIT_KNOWN_HOSTS_FILE konfigurieren."
+    return
+  fi
+
+  validate_automation_path "$GIT_SSH_KEY_FILE" "RBF_DISCORD_BOT_GIT_SSH_KEY_FILE"
+  [[ -f "$GIT_SSH_KEY_FILE" && -r "$GIT_SSH_KEY_FILE" ]] || die "Konfigurierter Git-SSH-Private-Key ist nicht lesbar: $GIT_SSH_KEY_FILE"
+  [[ "$GIT_SSH_PORT" =~ ^[0-9]+$ ]] && (( GIT_SSH_PORT >= 1 && GIT_SSH_PORT <= 65535 )) || die "RBF_DISCORD_BOT_GIT_SSH_PORT ist ungültig."
+
+  if [[ -z "$GIT_KNOWN_HOSTS_FILE" ]]; then
+    GIT_KNOWN_HOSTS_FILE="/root/.ssh/known_hosts"
+  fi
+  validate_automation_path "$GIT_KNOWN_HOSTS_FILE" "RBF_DISCORD_BOT_GIT_KNOWN_HOSTS_FILE"
+  [[ -f "$GIT_KNOWN_HOSTS_FILE" && -r "$GIT_KNOWN_HOSTS_FILE" ]] || die "Konfigurierte known_hosts-Datei ist nicht lesbar: $GIT_KNOWN_HOSTS_FILE"
+
+  export GIT_SSH_COMMAND="/usr/bin/ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$GIT_KNOWN_HOSTS_FILE -o ConnectTimeout=20 -p $GIT_SSH_PORT -i $GIT_SSH_KEY_FILE"
+  log "Git-SSH für den Bot-Manager verwendet einen expliziten Schlüssel und eine explizite known_hosts-Datei."
+}
 
 read_request_value() {
   local key="$1"
@@ -274,10 +315,14 @@ case "$OPERATION" in
   install)
     [[ -n "$REPO_URL" ]] || die "RBF_DISCORD_BOT_REPO_URL ist nicht in $MANAGER_ENV konfiguriert."
     require_command git
+    configure_git_transport
     if [[ ! -d "$INSTALL_DIR/.git" ]]; then
       [[ ! -e "$INSTALL_DIR" || -z "$(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 2>/dev/null)" ]] || die "Installationsverzeichnis ist nicht leer: $INSTALL_DIR"
       rm -rf "$INSTALL_DIR"
-      git clone --branch "$BRANCH" --single-branch "$REPO_URL" "$INSTALL_DIR"
+      log "Bot-Repository wird direkt geklont; es wird kein separater git-ls-remote-Preflight verwendet."
+      git clone --branch "$BRANCH" --single-branch -- "$REPO_URL" "$INSTALL_DIR"
+    else
+      log "Vorhandener Git-Checkout wird für die Installation verwendet: $INSTALL_DIR"
     fi
     /usr/bin/env bash "$INSTALL_DIR/scripts/install.sh"
     ;;
@@ -289,6 +334,8 @@ case "$OPERATION" in
     ;;
   update)
     [[ -x "$INSTALL_DIR/scripts/update.sh" ]] || die "Bot-Update-Skript fehlt."
+    require_command git
+    configure_git_transport
     /usr/bin/env bash "$INSTALL_DIR/scripts/update.sh"
     ;;
   start|stop|restart)

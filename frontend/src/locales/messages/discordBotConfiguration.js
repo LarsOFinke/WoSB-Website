@@ -1,7 +1,7 @@
 export const discordBotConfigurationMessages = {
   en: { admin: { system: { discordBot: {
     setup: {
-      repositoryTitle: 'Configure source repository', repositoryText: 'The repository URL, branch and install path remain host-only settings for the root-owned runner.',
+      repositoryTitle: 'Configure source repository', repositoryText: 'Set the repository, branch, install path and an explicit deploy-key identity for the root-owned, non-interactive runner.',
       installTitle: 'Install standalone service', installText: 'The host runner clones the private repository and installs the dedicated systemd service.',
       configurationTitle: 'Configure runtime', configurationText: 'After installation, secrets, channels and delivery behavior can be managed here.',
     },
@@ -22,7 +22,7 @@ export const discordBotConfigurationMessages = {
   } } } },
   de: { admin: { system: { discordBot: {
     setup: {
-      repositoryTitle: 'Quell-Repository konfigurieren', repositoryText: 'Repository-URL, Branch und Installationspfad bleiben reine Host-Einstellungen für den root-eigenen Runner.',
+      repositoryTitle: 'Quell-Repository konfigurieren', repositoryText: 'Repository, Branch, Installationspfad und ein expliziter Deploy-Key werden für den root-eigenen, nicht-interaktiven Runner hinterlegt.',
       installTitle: 'Eigenständigen Dienst installieren', installText: 'Der Host-Runner klont das private Repository und installiert den eigenen systemd-Dienst.',
       configurationTitle: 'Laufzeit konfigurieren', configurationText: 'Nach der Installation können Secrets, Channels und Zustellverhalten hier verwaltet werden.',
     },
