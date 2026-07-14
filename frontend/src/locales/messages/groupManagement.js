@@ -8,7 +8,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "Group Management",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -73,7 +73,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "New group",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",
@@ -230,7 +230,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "Neue Gruppe",
-        "subtitle": "Erstelle einen kompakten Gruppenaufruf. Details können im MVP knapp bleiben.",
+        "subtitle": "Erstelle einen kompakten Gruppenaufruf mit allen wichtigen Angaben für deine Crew.",
         "titlePlaceholder": "z. B. Farmingrunde am Abend",
         "fleetPlaceholder": "Optionaler Flottenhinweis",
         "descriptionPlaceholder": "Ziel, Voice, Schiffserwartung, Route ...",
@@ -322,7 +322,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "Gestion des groupes",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -387,7 +387,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "Nouveau groupe",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",
@@ -479,7 +479,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "Gestión de grupos",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -544,7 +544,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "Nuevo grupo",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",
@@ -636,7 +636,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "Gerenciamento de grupos",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -701,7 +701,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "Novo grupo",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",
@@ -793,7 +793,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "Управление группами",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -858,7 +858,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "Новая группа",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",
@@ -950,7 +950,7 @@ export const groupManagementMessages = {
         "groups": {
           "eyebrow": "New module",
           "title": "小队管理",
-          "description": "Find open crews, create simple group calls and join with a ship from the seeded catalog.",
+          "description": "Find open crews, create group calls and join with a ship from the available catalog.",
           "metaPublic": "Public list",
           "metaJoin": "Guest join",
           "metaManage": "Own groups"
@@ -1015,7 +1015,7 @@ export const groupManagementMessages = {
       },
       "create": {
         "title": "新建小队",
-        "subtitle": "Create a compact group call. Details can stay light for the MVP.",
+        "subtitle": "Create a compact group call with the details your crew needs.",
         "titlePlaceholder": "e.g. Evening farming run",
         "fleetPlaceholder": "Optional fleet note or restriction",
         "descriptionPlaceholder": "Goal, voice chat, ship expectations, route ...",

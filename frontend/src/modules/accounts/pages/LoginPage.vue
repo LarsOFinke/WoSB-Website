@@ -68,7 +68,6 @@ async function submitLogin() {
               {{ t('auth.noAccount') }}
               <RouterLink to="/register">{{ t('auth.register') }}</RouterLink>
             </p>
-            <small class="muted">{{ t('auth.sessionHint') }}</small>
           </div>
         </form>
       </section>

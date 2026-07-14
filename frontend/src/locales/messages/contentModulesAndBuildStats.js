@@ -80,7 +80,7 @@ export const contentModulesAndBuildStatsMessages = {
         guides: {
           eyebrow: 'Knowledge base',
           title: 'Guides',
-          description: 'Create player guides with images, GIFs and videos stored through the backend file service.',
+          description: 'Create player guides with images, GIFs and videos in one shared knowledge area.',
           metaCreate: 'User guides',
           metaMedia: 'File embeds',
           metaBrowse: 'Categories',
@@ -217,7 +217,7 @@ export const contentModulesAndBuildStatsMessages = {
       },
       list: {
         title: 'Forum',
-        subtitle: 'Minimal discussion board with media attachments from the backend file module.',
+        subtitle: 'Community discussion board with support for images, documents and other media attachments.',
         summaryOne: '1 thread',
         summaryMany: '{count} threads',
         newThread: 'New thread',
@@ -408,7 +408,7 @@ export const contentModulesAndBuildStatsMessages = {
         forum: {
           eyebrow: 'Community-Board',
           title: 'Forum',
-          description: 'Leichte Diskussionen mit Medien-Anhängen aus dem gemeinsamen Backend-Dateimodul.',
+          description: 'Community-Diskussionen mit Bildern, Dokumenten und weiteren Medien-Anhängen.',
           metaThreads: 'Threads',
           metaFiles: 'Medien-Einbettung',
           metaReplies: 'Antworten',
@@ -416,7 +416,7 @@ export const contentModulesAndBuildStatsMessages = {
         guides: {
           eyebrow: 'Wissensbereich',
           title: 'Guides',
-          description: 'Erstelle Spieler-Guides mit Bildern, GIFs und Videos über den Backend-Dateiservice.',
+          description: 'Erstelle Spieler-Guides mit Bildern, GIFs und Videos in einem gemeinsamen Wissensbereich.',
           metaCreate: 'User-Guides',
           metaMedia: 'Datei-Einbettung',
           metaBrowse: 'Kategorien',
@@ -554,7 +554,7 @@ export const contentModulesAndBuildStatsMessages = {
       },
       list: {
         title: 'Forum',
-        subtitle: 'Minimales Diskussionsboard mit Medien-Anhängen aus dem Backend-Dateimodul.',
+        subtitle: 'Community-Forum mit Bildern, Dokumenten und weiteren Medien-Anhängen.',
         summaryOne: '1 Thread',
         summaryMany: '{count} Threads',
         newThread: 'Neuer Thread',

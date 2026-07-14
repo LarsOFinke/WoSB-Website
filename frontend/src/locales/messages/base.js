@@ -25,14 +25,14 @@ export const baseMessages = {
     auth: {
       eyebrow: 'Admin access',
       title: 'Sign in',
-      subtitle: 'Minimal session login for the first protected hub area.',
+      subtitle: 'Sign in to access your personal hub area.',
       username: 'Username',
       password: 'Password',
       login: 'Login',
       logout: 'Logout',
       signingIn: 'Signing in ...',
       loginError: 'Login failed.',
-      seedHint: 'Initial admin credentials come from backend/.env and must be changed before seeding.',
+      seedHint: 'Use an authorized account to continue.',
     },
     admin: {
       eyebrow: 'Administration',
@@ -56,7 +56,7 @@ export const baseMessages = {
       },
       builds: {
         title: 'Build management',
-        subtitle: 'Review and remove saved builds while the Build Manager is still in prototype mode.',
+        subtitle: 'Review and manage saved builds.',
         summaryOne: '1 build',
         summaryMany: '{count} builds',
         searchPlaceholder: 'Search by build name, ship or type ...',
@@ -89,8 +89,8 @@ export const baseMessages = {
         builds: {
           eyebrow: 'Available now',
           title: 'Build Manager',
-          description: 'Create, browse and compare ship builds with seeded ships, equipment slots, crew sliders and inventory-style cargo rows.',
-          metaShips: 'Seeded ships',
+          description: 'Create, browse and compare ship builds with the available ship catalog, equipment slots, crew controls and cargo rows.',
+          metaShips: 'Ship catalog',
           metaDesigner: 'Build designer',
           metaInventory: 'Inventory slots',
         },

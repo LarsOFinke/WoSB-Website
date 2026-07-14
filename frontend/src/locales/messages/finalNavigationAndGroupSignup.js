@@ -59,7 +59,7 @@ export const finalNavigationAndGroupSignupMessages = {
       profileCardText: 'Manage your scheduled group searches, signups and closed calls.',
     },
     logs: {
-      dbOnly: 'Logs are stored in the database and shown here; backend console logging is disabled by default.',
+      dbOnly: 'Persisted logs are available here for authorized administrative review.',
       clientIp: 'Client IP',
       userAgent: 'User agent',
       queryString: 'Query',
@@ -125,7 +125,7 @@ export const finalNavigationAndGroupSignupMessages = {
       profileCardText: 'Verwalte deine geplanten Gruppensuchen, Anmeldungen und geschlossenen Aufrufe.',
     },
     logs: {
-      dbOnly: 'Logs werden in der Datenbank gespeichert und hier angezeigt; Backend-Konsolenlogging ist standardmäßig deaktiviert.',
+      dbOnly: 'Persistierte Logs stehen hier für die autorisierte administrative Prüfung bereit.',
       clientIp: 'Client-IP',
       userAgent: 'User-Agent',
       queryString: 'Query',
