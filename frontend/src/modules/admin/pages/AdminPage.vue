@@ -489,36 +489,91 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'logs'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.logs.title') }}</h2><p>{{ t('admin.logs.subtitle') }}</p></div><div class="hero-actions"><span class="summary-pill">{{ logsCountLabel }}</span><button class="small-action" type="button" :disabled="logsLoading" @click="loadLogs">{{ t('admin.logs.refresh') }}</button></div></div>
-          <SecurityLogDashboard @select-ip="logIp = $event" @ip-options="availableLogIps = $event" />
-          <div class="admin-dashboard-grid log-summary-grid">
-            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.total') }}</span><strong>{{ logSummary.total }}</strong></article>
-            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
-            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong></article>
-            <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
-          </div>
-          <p class="muted log-storage-note">{{ t('logs.dbOnly') }}</p>
-          <div class="staff-filter-row log-filter-row">
-            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
-            <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
-            <label class="filter-box select-shell"><select v-model="logIp"><option value="">{{ t('admin.security.allIps') }}</option><option v-for="row in availableLogIps" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }}</option></select></label>
-            <label class="filter-box"><input v-model="logFromDate" type="date" :aria-label="t('admin.security.from')" /></label>
-            <label class="filter-box"><input v-model="logToDate" type="date" :aria-label="t('admin.security.to')" /></label>
-            <label class="filter-box select-shell"><select v-model="logSort"><option value="created_at">{{ t('admin.logs.sortDate') }}</option><option value="ip">{{ t('admin.logs.sortIp') }}</option><option value="status">{{ t('admin.logs.sortStatus') }}</option><option value="duration">{{ t('admin.logs.sortDuration') }}</option><option value="level">{{ t('admin.logs.sortLevel') }}</option></select></label>
-            <label class="filter-box select-shell"><select v-model="logOrder"><option value="desc">{{ t('admin.logs.desc') }}</option><option value="asc">{{ t('admin.logs.asc') }}</option></select></label>
-          </div>
-          <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>
-          <p v-else-if="logsError" class="error-text table-state">{{ logsError }}</p>
-          <p v-else-if="appLogs.length === 0" class="muted table-state">{{ t('admin.logs.empty') }}</p>
-          <div v-else class="admin-build-list admin-log-list">
-            <article v-for="entry in appLogs" :key="entry.id" class="admin-build-row admin-log-row">
-              <div class="admin-build-main">
-                <strong>{{ entry.level }} · {{ entry.method || entry.logger }}</strong>
-                <span>{{ formatDateTime(entry.created_at) }} · {{ entry.path || entry.message }} · {{ entry.status_code || '—' }} · {{ formatDuration(entry.duration_ms) }}</span>
-                <small v-if="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
-                <small v-if="entry.client_ip">{{ t('logs.clientIp') }}: {{ entry.client_ip }}</small>
-                <small v-if="entry.query_string">{{ t('logs.queryString') }}: {{ entry.query_string }}</small>
-                <small v-if="entry.user_agent">{{ t('logs.userAgent') }}: {{ entry.user_agent }}</small>
-                <p v-if="entry.exception" class="error-text">{{ entry.exception }}</p>
+          <div class="staff-log-workspace">
+            <SecurityLogDashboard @select-ip="logIp = $event" @ip-options="availableLogIps = $event" />
+
+            <article class="staff-log-surface log-filter-surface">
+              <div class="staff-log-surface-head">
+                <div>
+                  <h3>Filter</h3>
+                  <p>Refine the persisted request log by level, path, IP, date and sorting.</p>
+                </div>
+                <span class="summary-pill">{{ t('admin.logs.total') }} · {{ logSummary.total }}</span>
+              </div>
+              <p class="muted log-storage-note">{{ t('logs.dbOnly') }}</p>
+              <div class="staff-filter-row log-filter-row refined-log-filter-row">
+                <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="logLevel"><option value="">{{ t('admin.logs.levelAll') }}</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
+                <label class="filter-box admin-search"><input v-model="logPath" type="search" :placeholder="t('admin.logs.pathPlaceholder')" /></label>
+                <label class="filter-box select-shell"><select v-model="logIp"><option value="">{{ t('admin.security.allIps') }}</option><option v-for="row in availableLogIps" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }}</option></select></label>
+                <label class="filter-box"><input v-model="logFromDate" type="date" :aria-label="t('admin.security.from')" /></label>
+                <label class="filter-box"><input v-model="logToDate" type="date" :aria-label="t('admin.security.to')" /></label>
+                <label class="filter-box select-shell"><select v-model="logSort"><option value="created_at">{{ t('admin.logs.sortDate') }}</option><option value="ip">{{ t('admin.logs.sortIp') }}</option><option value="status">{{ t('admin.logs.sortStatus') }}</option><option value="duration">{{ t('admin.logs.sortDuration') }}</option><option value="level">{{ t('admin.logs.sortLevel') }}</option></select></label>
+                <label class="filter-box select-shell"><select v-model="logOrder"><option value="desc">{{ t('admin.logs.desc') }}</option><option value="asc">{{ t('admin.logs.asc') }}</option></select></label>
+              </div>
+            </article>
+
+            <article class="staff-log-surface log-table-surface">
+              <div class="staff-log-surface-head">
+                <div>
+                  <h3>Logs</h3>
+                  <p>Complete request history for monitoring and troubleshooting.</p>
+                </div>
+                <div class="admin-dashboard-grid log-summary-grid compact-log-summary-grid">
+                  <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.warnings') }}</span><strong>{{ logSummary.warnings }}</strong></article>
+                  <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.errors') }}</span><strong>{{ logSummary.errors }}</strong></article>
+                  <article class="home-status-card refined-status-card"><span>{{ t('admin.logs.slowRequests') }}</span><strong>{{ logSummary.slow_requests }}</strong></article>
+                </div>
+              </div>
+
+              <p v-if="logsLoading" class="muted table-state">{{ t('admin.logs.loading') }}</p>
+              <p v-else-if="logsError" class="error-text table-state">{{ logsError }}</p>
+              <p v-else-if="appLogs.length === 0" class="muted table-state">{{ t('admin.logs.empty') }}</p>
+              <div v-else class="responsive-table-shell staff-log-table-shell">
+                <table class="security-table staff-log-table">
+                  <thead>
+                    <tr>
+                      <th>{{ t('admin.logs.sortDate') }}</th>
+                      <th>{{ t('admin.logs.sortLevel') }}</th>
+                      <th>Request</th>
+                      <th>{{ t('logs.clientIp') }}</th>
+                      <th>{{ t('admin.logs.sortStatus') }}</th>
+                      <th>{{ t('admin.logs.sortDuration') }}</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="entry in appLogs" :key="entry.id">
+                      <td>
+                        <div class="staff-log-primary-cell">
+                          <strong>{{ formatDateTime(entry.created_at) }}</strong>
+                          <small v-if="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
+                        </div>
+                      </td>
+                      <td><span class="staff-log-level-badge" :class="`level-${(entry.level || '').toLowerCase()}`">{{ entry.level }}</span></td>
+                      <td>
+                        <div class="staff-log-primary-cell">
+                          <strong>{{ entry.method || entry.logger }}</strong>
+                          <small>{{ entry.path || entry.message }}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="staff-log-primary-cell">
+                          <strong>{{ entry.client_ip || '—' }}</strong>
+                          <small v-if="entry.user_agent">{{ entry.user_agent }}</small>
+                        </div>
+                      </td>
+                      <td>{{ entry.status_code || '—' }}</td>
+                      <td>{{ formatDuration(entry.duration_ms) }}</td>
+                      <td>
+                        <div class="staff-log-primary-cell">
+                          <small v-if="entry.query_string">{{ t('logs.queryString') }}: {{ entry.query_string }}</small>
+                          <small v-if="entry.exception" class="error-text">{{ entry.exception }}</small>
+                          <small v-if="!entry.query_string && !entry.exception">—</small>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </article>
           </div>

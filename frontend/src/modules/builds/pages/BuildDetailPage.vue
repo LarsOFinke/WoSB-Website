@@ -1,8 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
+import { buildCategoryVisuals, buildCrewVisuals, buildVisualUrl } from '@/modules/builds/buildVisuals'
+import { absoluteFileUrl } from '@/modules/files/api/files'
+
 import { useLocale } from '@/locales'
-import { getBuild } from '@/modules/builds/api/builds'
+import { getBuild, getBuildOptions } from '@/modules/builds/api/builds'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { downloadBuildPrintPng, downloadBuildPrintSvg, createBuildPrintPreviewUrl, openBuildPrintWindow } from '@/modules/builds/buildPrintExport'
 import { copyBuildShareLink } from '@/modules/builds/shareBuild'
@@ -19,6 +23,7 @@ const { optionLabel, t } = useLocale()
 const { user } = useSession()
 
 const build = ref(null)
+const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {}, limits: {} })
 const loading = ref(false)
 const error = ref('')
 const shareStatus = ref('')
@@ -27,13 +32,16 @@ const printPreviewUrl = ref('')
 const printPreviewOpen = ref(false)
 const printBusy = ref(false)
 
+const categoryFallbackImages = buildCategoryVisuals
+const crewFallbackImages = buildCrewVisuals
+
 const weaponArcRows = computed(() => [
-  { key: 'front', label: t('builds.detail.weapons.front'), slots: build.value?.front_weapon_slots || [] },
-  { key: 'rear', label: t('builds.detail.weapons.rear'), slots: build.value?.rear_weapon_slots || [] },
-  { key: 'port', label: t('builds.detail.weapons.port'), slots: build.value?.port_weapon_slots || [] },
-  { key: 'starboard', label: t('builds.detail.weapons.starboard'), slots: build.value?.starboard_weapon_slots || [] },
-  { key: 'mortar', label: t('builds.detail.weapons.mortar'), slots: build.value?.mortar_weapon_slots || [] },
-  { key: 'special', label: t('builds.detail.weapons.special'), slots: build.value?.special_weapon_slots || [] },
+  { key: 'front', label: t('builds.detail.weapons.front'), fieldName: 'front_weapon_slots', slots: build.value?.front_weapon_slots || [] },
+  { key: 'rear', label: t('builds.detail.weapons.rear'), fieldName: 'rear_weapon_slots', slots: build.value?.rear_weapon_slots || [] },
+  { key: 'port', label: t('builds.detail.weapons.port'), fieldName: 'port_weapon_slots', slots: build.value?.port_weapon_slots || [] },
+  { key: 'starboard', label: t('builds.detail.weapons.starboard'), fieldName: 'starboard_weapon_slots', slots: build.value?.starboard_weapon_slots || [] },
+  { key: 'mortar', label: t('builds.detail.weapons.mortar'), fieldName: 'mortar_weapon_slots', slots: build.value?.mortar_weapon_slots || [] },
+  { key: 'special', label: t('builds.detail.weapons.special'), fieldName: 'special_weapon_slots', slots: build.value?.special_weapon_slots || [] },
 ])
 
 const crewTotal = computed(() => build.value?.ship_stats?.crew_total || 0)
@@ -71,14 +79,59 @@ const ammunitionSlots = computed(() => build.value?.ammunition_slots || [])
 const consumableSlots = computed(() => build.value?.consumable_slots || [])
 const holdSlots = computed(() => build.value?.hold_slots || [])
 
+const crewDistributionRows = computed(() => [
+  { key: 'sailors', label: t('builds.create.crew.sailors'), count: build.value?.sailors || 0, image: crewFallbackImages.sailors || slotPlaceholderSrc },
+  { key: 'musketeers', label: t('builds.create.crew.musketeers'), count: build.value?.musketeers || 0, image: crewFallbackImages.musketeers || slotPlaceholderSrc },
+  { key: 'soldiers', label: t('builds.create.crew.soldiers'), count: build.value?.soldiers || 0, image: crewFallbackImages.soldiers || slotPlaceholderSrc },
+  { key: 'mercenaries', label: t('builds.create.crew.mercenaries'), count: build.value?.mercenaries || 0, image: crewFallbackImages.mercenaries || slotPlaceholderSrc },
+])
+
+function optionMeta(categoryKey, name) {
+  return (optionCatalog.value.options?.[categoryKey] || []).find((option) => option.name === name)
+}
+
+function optionImage(categoryKey, name) {
+  if (!name) return categoryFallbackImages[categoryKey] || slotPlaceholderSrc
+  return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url)
+    || categoryFallbackImages[categoryKey]
+    || slotPlaceholderSrc
+}
+
+function inventoryCategory(fieldName) {
+  if (fieldName.includes('weapon')) return 'weapon'
+  if (fieldName === 'special_crew_slots') return 'special_crew'
+  if (fieldName === 'ammunition_slots') return 'ammunition'
+  if (fieldName === 'consumable_slots') return 'consumable'
+  if (fieldName === 'hold_slots') return 'hold'
+  return ''
+}
+
+function slotItem(slot) {
+  if (typeof slot === 'string') return slot
+  return slot?.item || ''
+}
+
 function slotLabel(slot) {
   if (typeof slot === 'string') return optionLabel(slot)
   if (!slot?.item) return ''
   return `${optionLabel(slot.item)} ×${slot.quantity || 1}`
 }
 
+function slotQuantity(slot) {
+  if (typeof slot === 'string') return null
+  return Number(slot?.quantity || 0) > 1 ? Number(slot.quantity) : null
+}
+
+function inventoryImage(fieldName, slot) {
+  return optionImage(inventoryCategory(fieldName), slotItem(slot))
+}
+
 function specialistLabel(slot) {
   return optionLabel(typeof slot === 'string' ? slot : slot?.item)
+}
+
+function shareLinkMeta(slot) {
+  return typeof slot === 'string' ? '' : (slot?.notes || '')
 }
 
 async function shareBuild() {
@@ -200,6 +253,7 @@ async function loadBuild() {
   error.value = ''
   try {
     build.value = await getBuild(props.id)
+    optionCatalog.value = await getBuildOptions(build.value?.ship?.id || build.value?.ship_id || null)
   } catch (err) {
     error.value = err.message || t('builds.detail.loadError')
   } finally {
@@ -274,24 +328,30 @@ onBeforeUnmount(revokePrintPreview)
             detail-mode
           />
 
-          <div class="detail-grid command-deck-meta-grid">
-            <article class="detail-card">
+          <div class="detail-grid command-deck-meta-grid build-detail-visual-grid">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.buildType') }}</span>
               <strong>{{ buildTypeLabel(build.build_type) }}</strong>
             </article>
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.sail') }}</span>
-              <strong>{{ optionLabel(build.sails) || '—' }}</strong>
+              <div class="detail-visual-inline">
+                <span class="slot-image-cell detail-icon-cell"><img :src="optionImage('sail', build.sails)" alt="" /></span>
+                <strong>{{ optionLabel(build.sails) || '—' }}</strong>
+              </div>
             </article>
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.lantern') }}</span>
-              <strong>{{ optionLabel(build.lantern) || '—' }}</strong>
+              <div class="detail-visual-inline">
+                <span class="slot-image-cell detail-icon-cell"><img :src="optionImage('lantern', build.lantern)" alt="" /></span>
+                <strong>{{ optionLabel(build.lantern) || '—' }}</strong>
+              </div>
             </article>
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.researchUpgradeSlot') }}</span>
               <strong>{{ build.research_upgrade_slot_unlocked ? t('builds.detail.researchUpgradeSlotActive') : t('builds.detail.researchUpgradeSlotInactive') }}</strong>
             </article>
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.shipStats') }}</span>
               <strong>{{ t('builds.detail.weaponTotal', { count: build.ship_stats.weapon_total }) }}</strong>
               <small>{{ t('builds.detail.weaponCapacity', { count: build.ship_stats.weapon_capacity_total || 0 }) }}</small>
@@ -305,21 +365,31 @@ onBeforeUnmount(revokePrintPreview)
             </ul>
           </div>
 
-          <div class="detail-grid two-cols">
-            <article class="detail-card">
+          <div class="detail-grid two-cols build-detail-section-grid">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.crewDistribution') }}</span>
-              <div class="crew-bars readonly-bars">
-                <p>{{ t('builds.create.crew.sailors') }}: <strong>{{ build.sailors }}</strong> <small>({{ t('builds.list.sailorMin', { value: (build.ship_stats?.sailor_minimum || build.ship.sailor_minimum) }) }})</small></p>
-                <p>{{ t('builds.create.crew.musketeers') }}: <strong>{{ build.musketeers }}</strong></p>
-                <p>{{ t('builds.create.crew.soldiers') }}: <strong>{{ build.soldiers }}</strong></p>
-                <p>{{ t('builds.create.crew.mercenaries') }}: <strong>{{ build.mercenaries }}</strong></p>
+              <div class="detail-crew-grid">
+                <div v-for="row in crewDistributionRows" :key="row.key" class="detail-crew-row">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="row.image" alt="" /></span>
+                  <div>
+                    <strong>{{ row.count }}</strong>
+                    <small>{{ row.label }}</small>
+                  </div>
+                </div>
               </div>
+              <small>{{ t('builds.list.sailorMin', { value: (build.ship_stats?.sailor_minimum || build.ship.sailor_minimum) }) }}</small>
             </article>
 
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.upgrades') }}</span>
-              <ul v-if="upgrades.length" class="simple-list">
-                <li v-for="upgrade in upgrades" :key="upgrade">{{ optionLabel(upgrade) }}</li>
+              <ul v-if="upgrades.length" class="build-visual-list">
+                <li v-for="(upgrade, index) in upgrades" :key="`${upgrade}-${index}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="optionImage('upgrade', upgrade)" alt="" /></span>
+                  <div>
+                    <strong>{{ optionLabel(upgrade) }}</strong>
+                    <small>{{ shareLinkMeta(optionMeta('upgrade', upgrade)) || t('builds.commandDeck.availableUpgrade') }}</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
               <div v-if="activeEffectRows.length" class="effect-pill-row">
@@ -330,55 +400,106 @@ onBeforeUnmount(revokePrintPreview)
             </article>
           </div>
 
-          <div class="detail-grid weapon-detail-grid">
-            <article v-for="arc in weaponArcRows" :key="arc.key" class="detail-card">
+          <div class="detail-grid weapon-detail-grid build-detail-section-grid">
+            <article v-for="arc in weaponArcRows" :key="arc.key" class="detail-card detail-visual-card">
               <span>{{ arc.label }}</span>
-              <ul v-if="arc.slots.length" class="simple-list">
-                <li v-for="slot in arc.slots" :key="slotLabel(slot)">{{ slotLabel(slot) }}</li>
+              <ul v-if="arc.slots.length" class="build-visual-list">
+                <li v-for="(slot, index) in arc.slots" :key="`${arc.key}-${index}-${slotLabel(slot)}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="inventoryImage(arc.fieldName, slot)" alt="" /></span>
+                  <div>
+                    <strong>{{ slotLabel(slot) }}</strong>
+                    <small v-if="slotQuantity(slot)">×{{ slotQuantity(slot) }}</small>
+                    <small v-else>{{ t('builds.detail.shipStats') }}</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
             </article>
           </div>
 
-          <div class="detail-grid two-cols">
-            <article class="detail-card">
+          <div class="detail-grid two-cols build-detail-section-grid">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.specialCrew') }}</span>
-              <ul v-if="specialCrewSlots.length" class="simple-list">
-                <li v-for="slot in specialCrewSlots" :key="specialistLabel(slot)">{{ specialistLabel(slot) }}</li>
+              <ul v-if="specialCrewSlots.length" class="build-visual-list">
+                <li v-for="(slot, index) in specialCrewSlots" :key="`special-${index}-${specialistLabel(slot)}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="inventoryImage('special_crew_slots', slot)" alt="" /></span>
+                  <div>
+                    <strong>{{ specialistLabel(slot) }}</strong>
+                    <small>{{ shareLinkMeta(slot) || t('builds.commandDeck.specialistMetric', { value: 1 }) }}</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
             </article>
 
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.inventory') }}</span>
-              <strong>{{ build.ship_stats.inventory_slots_used }} {{ t('common.slots') }}</strong>
+              <div class="detail-inventory-overview">
+                <div>
+                  <strong>{{ build.ship_stats.inventory_slots_used }}</strong>
+                  <small>{{ t('common.slots') }}</small>
+                </div>
+                <div>
+                  <strong>{{ ammunitionSlots.length }}</strong>
+                  <small>{{ t('builds.detail.ammunition') }}</small>
+                </div>
+                <div>
+                  <strong>{{ consumableSlots.length }}</strong>
+                  <small>{{ t('builds.detail.consumables') }}</small>
+                </div>
+                <div>
+                  <strong>{{ holdSlots.length }}</strong>
+                  <small>{{ t('builds.detail.hold') }}</small>
+                </div>
+              </div>
               <small>{{ t('builds.detail.inventorySummary', { ammo: ammunitionSlots.length, consumables: consumableSlots.length, hold: holdSlots.length }) }}</small>
             </article>
           </div>
 
-          <div class="detail-grid two-cols">
-            <article class="detail-card">
+          <div class="detail-grid two-cols build-detail-section-grid">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.ammunition') }}</span>
-              <ul v-if="ammunitionSlots.length" class="simple-list">
-                <li v-for="slot in ammunitionSlots" :key="slotLabel(slot)">{{ slotLabel(slot) }}</li>
+              <ul v-if="ammunitionSlots.length" class="build-visual-list">
+                <li v-for="(slot, index) in ammunitionSlots" :key="`ammo-${index}-${slotLabel(slot)}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="inventoryImage('ammunition_slots', slot)" alt="" /></span>
+                  <div>
+                    <strong>{{ slotLabel(slot) }}</strong>
+                    <small v-if="slotQuantity(slot)">×{{ slotQuantity(slot) }}</small>
+                    <small v-else>—</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
             </article>
 
-            <article class="detail-card">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.consumables') }}</span>
-              <ul v-if="consumableSlots.length" class="simple-list">
-                <li v-for="slot in consumableSlots" :key="slotLabel(slot)">{{ slotLabel(slot) }}</li>
+              <ul v-if="consumableSlots.length" class="build-visual-list">
+                <li v-for="(slot, index) in consumableSlots" :key="`consumable-${index}-${slotLabel(slot)}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="inventoryImage('consumable_slots', slot)" alt="" /></span>
+                  <div>
+                    <strong>{{ slotLabel(slot) }}</strong>
+                    <small v-if="slotQuantity(slot)">×{{ slotQuantity(slot) }}</small>
+                    <small v-else>—</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
             </article>
           </div>
 
-          <div class="detail-grid two-cols">
-            <article class="detail-card">
+          <div class="detail-grid two-cols build-detail-section-grid">
+            <article class="detail-card detail-visual-card">
               <span>{{ t('builds.detail.hold') }}</span>
-              <ul v-if="holdSlots.length" class="simple-list">
-                <li v-for="slot in holdSlots" :key="slotLabel(slot)">{{ slotLabel(slot) }}</li>
+              <ul v-if="holdSlots.length" class="build-visual-list">
+                <li v-for="(slot, index) in holdSlots" :key="`hold-${index}-${slotLabel(slot)}`">
+                  <span class="slot-image-cell detail-icon-cell"><img :src="inventoryImage('hold_slots', slot)" alt="" /></span>
+                  <div>
+                    <strong>{{ slotLabel(slot) }}</strong>
+                    <small v-if="slotQuantity(slot)">×{{ slotQuantity(slot) }}</small>
+                    <small v-else>—</small>
+                  </div>
+                </li>
               </ul>
               <strong v-else>—</strong>
             </article>
@@ -386,7 +507,7 @@ onBeforeUnmount(revokePrintPreview)
 
           <article class="detail-card notes-card">
             <span>{{ t('builds.detail.details') }}</span>
-            <p>{{ build.details || t('builds.detail.noDetails') }}</p>
+            <p class="preserve-lines">{{ build.details || t('builds.detail.noDetails') }}</p>
           </article>
         </template>
       </section>
