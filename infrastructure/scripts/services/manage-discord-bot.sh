@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 
 [[ "$EUID" -eq 0 ]] || die "Discord-Bot-Verwaltung benötigt root-Rechte."
 require_command python3
@@ -27,6 +27,10 @@ INSTALL_DIR="${RBF_DISCORD_BOT_INSTALL_DIR:-/opt/rbf-discord-bot}"
 GIT_SSH_KEY_FILE="${RBF_DISCORD_BOT_GIT_SSH_KEY_FILE:-}"
 GIT_KNOWN_HOSTS_FILE="${RBF_DISCORD_BOT_GIT_KNOWN_HOSTS_FILE:-}"
 GIT_SSH_PORT="${RBF_DISCORD_BOT_GIT_SSH_PORT:-22}"
+BIND_HOST="${RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0}"
+BOT_PORT=8765
+FIREWALL_MODE="${RBF_DISCORD_BOT_FIREWALL_MODE:-auto}"
+GATEWAY_ACCESS_SCRIPT="$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
 SERVICE_NAME="rbf-discord-bot.service"
 
 mkdir -p "$CONTROL_DIR"
@@ -142,7 +146,8 @@ apply_configuration() {
   local service_group="root"
   getent group rbf-discord >/dev/null 2>&1 && service_group="rbf-discord"
   install -d -m 0750 -o root -g "$service_group" "$CONFIG_DIR" || return 1
-  "$INSTALL_DIR/.venv/bin/python" - "$REQUEST_FILE" "$INSTALL_DIR" "$BOT_ENV_FILE" "$BOT_CONFIG_FILE" "$CONFIG_SUMMARY_FILE" <<'PY'
+  RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+    "$INSTALL_DIR/.venv/bin/python" - "$REQUEST_FILE" "$INSTALL_DIR" "$BOT_ENV_FILE" "$BOT_CONFIG_FILE" "$CONFIG_SUMMARY_FILE" <<'PY'
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -231,7 +236,7 @@ example_path = install_dir / 'config' / 'bot.yaml.example'
 source_path = config_path if config_path.is_file() else example_path
 raw_config = yaml.safe_load(source_path.read_text(encoding='utf-8')) or {}
 raw_config.setdefault('server', {})
-raw_config['server']['host'] = '127.0.0.1'
+raw_config['server']['host'] = os.environ['RBF_DISCORD_BOT_BIND_HOST']
 raw_config['server']['port'] = 8765
 raw_config['server']['public_webhook_path'] = '/webhooks/rbf'
 raw_config.setdefault('security', {})
@@ -273,6 +278,10 @@ summary = {
     'timestamp_tolerance_seconds': validated.security.timestamp_tolerance_seconds,
     'request_timeout_seconds': validated.discord.request_timeout_seconds,
     'max_attempts': validated.discord.max_attempts,
+    'bind_host': validated.server.host,
+    'listen_port': validated.server.port,
+    'firewall_mode': os.environ['RBF_DISCORD_BOT_FIREWALL_MODE'],
+    'public_webhook_path': validated.server.public_webhook_path,
     'updated_at': datetime.now(timezone.utc).isoformat(),
     'valid': True,
     'message': 'Configuration validated and written by the host runner.',
@@ -311,6 +320,10 @@ trap on_exit EXIT
 case "$OPERATION" in
   refresh)
     log "Discord-Bot-Hoststatus wird aktualisiert."
+    if installed && [[ "$(service_state)" == active ]]; then
+      RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+        /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT"
+    fi
     ;;
   install)
     [[ -n "$REPO_URL" ]] || die "RBF_DISCORD_BOT_REPO_URL ist nicht in $MANAGER_ENV konfiguriert."
@@ -325,21 +338,38 @@ case "$OPERATION" in
       log "Vorhandener Git-Checkout wird für die Installation verwendet: $INSTALL_DIR"
     fi
     /usr/bin/env bash "$INSTALL_DIR/scripts/install.sh"
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --configure-only
     ;;
   configure)
     RESTART_AFTER_CONFIGURATION="$(apply_configuration)"
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --configure-only
     if [[ "$RESTART_AFTER_CONFIGURATION" == "true" ]]; then
       systemctl restart "$SERVICE_NAME"
+      RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+        /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --check-only
     fi
     ;;
   update)
     [[ -x "$INSTALL_DIR/scripts/update.sh" ]] || die "Bot-Update-Skript fehlt."
     require_command git
     configure_git_transport
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --configure-only
     /usr/bin/env bash "$INSTALL_DIR/scripts/update.sh"
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --check-only
     ;;
-  start|stop|restart)
+  start|restart)
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --configure-only
     systemctl "$OPERATION" "$SERVICE_NAME"
+    RBF_DISCORD_BOT_BIND_HOST="$BIND_HOST" RBF_DISCORD_BOT_FIREWALL_MODE="$FIREWALL_MODE" \
+      /usr/bin/env bash "$GATEWAY_ACCESS_SCRIPT" --check-only
+    ;;
+  stop)
+    systemctl stop "$SERVICE_NAME"
     ;;
 esac
 

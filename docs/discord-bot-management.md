@@ -99,3 +99,45 @@ PY
 ```
 
 A Compose error mentioning `service "backend" is not running` means the wrong service name was used; there is no `backend` service in this repository. A DNS resolution error from `api` occurs before HMAC validation and is unrelated to the configured website signing secret.
+
+## Docker gateway network and firewall
+
+The public Nginx gateway runs in Docker and forwards only the signed receiver path to:
+
+```text
+http://host.docker.internal:8765/webhooks/rbf
+```
+
+The bot therefore must listen on an address reachable from Docker. The host runner writes `0.0.0.0:8765` by default; `127.0.0.1` is intentionally rejected for this integration because it would cause an upstream timeout and HTTP 504.
+
+Add these host-runner values to `/etc/rbf-hub/discord-bot-manager.env`:
+
+```bash
+RBF_DISCORD_BOT_BIND_HOST=0.0.0.0
+RBF_DISCORD_BOT_FIREWALL_MODE=auto
+```
+
+In `auto` mode the root-owned runner:
+
+- discovers the running website gateway container,
+- reads its private Docker networks and `host.docker.internal` address,
+- adds idempotent UFW rules from those private subnets to the bot port,
+- never adds a public `8765/tcp` allow rule,
+- checks `/health` from inside the gateway after configure, start, restart and update operations.
+
+If the host firewall is managed outside UFW, set:
+
+```bash
+RBF_DISCORD_BOT_FIREWALL_MODE=external
+```
+
+The external firewall must then permit only the website gateway Docker subnets to the Docker host gateway on the fixed bot port 8765. Do not expose port 8765 to the public Internet.
+
+A successful network check looks like:
+
+```bash
+sudo docker compose -f infrastructure/compose.yml exec -T gateway \
+  sh -lc 'wget -S -O- -T 5 http://host.docker.internal:8765/health'
+```
+
+The response must be HTTP 200 with a JSON body containing `"status":"ok"`. HTTP 504 on the public webhook route means the gateway could not receive a timely response from this internal endpoint.

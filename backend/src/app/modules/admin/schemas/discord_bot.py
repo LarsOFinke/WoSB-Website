@@ -29,6 +29,10 @@ class DiscordBotConfigurationStatus(BaseModel):
     timestamp_tolerance_seconds: int = 300
     request_timeout_seconds: float = 15
     max_attempts: int = 3
+    bind_host: str = "0.0.0.0"
+    listen_port: int = 8765
+    firewall_mode: str = "auto"
+    public_webhook_path: str = "/webhooks/rbf"
     updated_at: str | None = None
     valid: bool = False
     message: str | None = None

@@ -41,6 +41,15 @@ done
 install -d -m 0750 /etc/rbf-hub
 if [[ ! -f /etc/rbf-hub/discord-bot-manager.env ]]; then
   install -m 0600 "$INFRA_DIR/config/discord-bot-manager.env.example" /etc/rbf-hub/discord-bot-manager.env
+else
+  ensure_manager_default() {
+    local key="$1" value="$2"
+    grep -qE "^${key}=" /etc/rbf-hub/discord-bot-manager.env \
+      || printf '\n%s=%s\n' "$key" "$value" >> /etc/rbf-hub/discord-bot-manager.env
+  }
+  ensure_manager_default RBF_DISCORD_BOT_BIND_HOST 0.0.0.0
+  ensure_manager_default RBF_DISCORD_BOT_FIREWALL_MODE auto
+  chmod 0600 /etc/rbf-hub/discord-bot-manager.env
 fi
 
 systemctl daemon-reload

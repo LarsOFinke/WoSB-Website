@@ -32,3 +32,9 @@ test('Discord bot secrets are write-only in the staff panel', () => {
   assert.ok(!botPanel.includes(':value="config.discord_bot_token"'))
   assert.ok(!botPanel.includes(':value="config.webhook_secret"'))
 })
+
+test('Discord bot panel surfaces the gateway binding and firewall mode without exposing secrets', () => {
+  assert.ok(botPanel.includes('config.bind_host'))
+  assert.ok(botPanel.includes('config.listen_port'))
+  assert.ok(botPanel.includes('config.firewall_mode'))
+})

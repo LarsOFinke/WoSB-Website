@@ -40,3 +40,10 @@ echo "Infrastructure checks OK."
 
 grep -q "limit_req_zone.*auth_login" "$ROOT_DIR/infrastructure/nginx/default.conf"
 grep -q "Content-Security-Policy" "$ROOT_DIR/infrastructure/nginx/default.conf"
+
+grep -q 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' "$INFRA_DIR/scripts/services/manage-discord-bot.sh"
+grep -q 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+grep -q 'ufw allow from "$subnet" to "$HOST_GATEWAY_IP" port "$BOT_PORT"' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+grep -q 'http://host.docker.internal:${BOT_PORT}/health' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+! grep -q 'ufw allow 8765/tcp' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+grep -q 'proxy_pass http://host.docker.internal:8765/webhooks/rbf;' "$INFRA_DIR/nginx/default.conf"

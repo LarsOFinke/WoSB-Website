@@ -224,6 +224,8 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <span>{{ t('admin.system.discordBot.runtime') }}</span>
         <dl class="system-update-meta">
           <div><dt>{{ t('admin.system.discordBot.version') }}</dt><dd>{{ bot.version || '—' }}</dd></div>
+          <div><dt>{{ t('admin.system.discordBot.gatewayBinding') }}</dt><dd><code>{{ config.bind_host || '0.0.0.0' }}:{{ config.listen_port || 8765 }}</code></dd></div>
+          <div><dt>{{ t('admin.system.discordBot.firewallMode') }}</dt><dd>{{ config.firewall_mode || 'auto' }}</dd></div>
           <div><dt>{{ t('admin.system.commit') }}</dt><dd>{{ bot.commit || '—' }}</dd></div>
           <div><dt>{{ t('admin.system.requestedBy') }}</dt><dd>{{ bot.requested_by || '—' }}</dd></div>
           <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatDateTime(bot.started_at) }}</dd></div>
