@@ -9167,3 +9167,86 @@ body {
     height: 12rem;
   }
 }
+
+
+/* Build image crop + system log readability refinement */
+.ship-catalog-image,
+.ship-visual-summary img {
+  object-position: center 58%;
+}
+
+.ship-catalog-image {
+  transform: scale(1.085);
+}
+
+.ship-visual-summary img {
+  transform: scale(1.085);
+}
+
+.slot-visual img,
+.slot-image-cell img,
+.detail-icon-cell img,
+.build-visual-list img,
+.crew-role-image {
+  object-position: center 56%;
+}
+
+.slot-visual img,
+.slot-image-cell img,
+.detail-icon-cell img,
+.build-visual-list img {
+  transform: scale(1.045);
+}
+
+.staff-log-table {
+  min-width: 1160px;
+}
+
+.staff-log-table th:nth-child(1),
+.staff-log-table td:nth-child(1) {
+  min-width: 11.5rem;
+}
+
+.staff-log-table th:nth-child(3),
+.staff-log-table td:nth-child(3) {
+  min-width: 12rem;
+}
+
+.staff-log-table th:nth-child(4),
+.staff-log-table td:nth-child(4) {
+  min-width: 16rem;
+}
+
+.staff-log-table th:nth-child(7),
+.staff-log-table td:nth-child(7) {
+  min-width: 14rem;
+}
+
+.staff-log-primary-cell strong,
+.staff-log-primary-cell small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.staff-log-ip,
+.staff-log-request-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.staff-log-ip {
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+}
+
+.staff-log-request-id,
+.staff-log-path,
+.staff-log-detail,
+.staff-log-user-agent {
+  line-height: 1.35;
+}
+
+.staff-log-user-agent {
+  font-size: 0.72rem;
+}

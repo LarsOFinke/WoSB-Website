@@ -43,10 +43,10 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Gesperrt: Forschungsbelohnung aktivieren oder Erweiterungs-Upgrade in Slot 1-4 nutzen',
-          lockedUpgrade6: 'Gesperrt: benötigt Structural Expansion oder zwei einzelne Slot-Quellen',
-          lockedUpgrade7: 'Gesperrt: benötigt Structural Expansion plus Forschungsbelohnung oder Schiff-Extra-Slot',
-          lockedUpgrade8: 'Gesperrt: benötigt Structural Expansion + Forschungsbelohnung + Schiff-Extra-Slot',
+          lockedUpgrade5: 'Gesperrt: Forschung oder Ausbau nötig',
+          lockedUpgrade6: 'Gesperrt: Ausbau oder 2 Slot-Quellen',
+          lockedUpgrade7: 'Gesperrt: Ausbau + Forschung / Extra-Slot',
+          lockedUpgrade8: 'Gesperrt: Ausbau + Forschung + Extra-Slot',
           researchUpgradeSlot: 'Zusätzlichen Upgrade-Slot freischalten',
           researchUpgradeSlotHint: 'Aktivieren, wenn die accountweite Belohnung für alle erforschten Schiffsreihen freigeschaltet wurde. Die zugehörigen -10-%-Mali auf die wichtigsten Schiffswerte werden automatisch angewendet.',
         },

@@ -545,29 +545,29 @@ onUnmounted(() => {
                     <tr v-for="entry in appLogs" :key="entry.id">
                       <td>
                         <div class="staff-log-primary-cell">
-                          <strong>{{ formatDateTime(entry.created_at) }}</strong>
-                          <small v-if="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
+                          <strong class="staff-log-timestamp">{{ formatDateTime(entry.created_at) }}</strong>
+                          <small v-if="entry.request_id" class="staff-log-request-id" :title="entry.request_id">{{ t('admin.logs.requestId') }}: {{ entry.request_id }}</small>
                         </div>
                       </td>
                       <td><span class="staff-log-level-badge" :class="`level-${(entry.level || '').toLowerCase()}`">{{ entry.level }}</span></td>
                       <td>
                         <div class="staff-log-primary-cell">
                           <strong>{{ entry.method || entry.logger }}</strong>
-                          <small>{{ entry.path || entry.message }}</small>
+                          <small class="staff-log-path" :title="entry.path || entry.message">{{ entry.path || entry.message }}</small>
                         </div>
                       </td>
                       <td>
                         <div class="staff-log-primary-cell">
-                          <strong>{{ entry.client_ip || '—' }}</strong>
-                          <small v-if="entry.user_agent">{{ entry.user_agent }}</small>
+                          <strong class="staff-log-ip" :title="entry.client_ip || '—'">{{ entry.client_ip || '—' }}</strong>
+                          <small v-if="entry.user_agent" class="staff-log-user-agent" :title="entry.user_agent">{{ entry.user_agent }}</small>
                         </div>
                       </td>
                       <td>{{ entry.status_code || '—' }}</td>
                       <td>{{ formatDuration(entry.duration_ms) }}</td>
                       <td>
                         <div class="staff-log-primary-cell">
-                          <small v-if="entry.query_string">{{ t('logs.queryString') }}: {{ entry.query_string }}</small>
-                          <small v-if="entry.exception" class="error-text">{{ entry.exception }}</small>
+                          <small v-if="entry.query_string" class="staff-log-detail" :title="entry.query_string">{{ t('logs.queryString') }}: {{ entry.query_string }}</small>
+                          <small v-if="entry.exception" class="error-text staff-log-detail" :title="entry.exception">{{ entry.exception }}</small>
                           <small v-if="!entry.query_string && !entry.exception">—</small>
                         </div>
                       </td>
