@@ -30,8 +30,13 @@ const error = ref('')
 const success = ref('')
 const revealedSecret = ref('')
 const revealedSecretName = ref('')
+const webhookSearch = ref('')
+const webhookState = ref('')
 const deliveryWebhook = ref('')
 const deliveryStatus = ref('')
+const deliveryEvent = ref('')
+const deliveryFromDate = ref('')
+const deliveryToDate = ref('')
 
 const form = reactive({
   id: null,
@@ -42,6 +47,26 @@ const form = reactive({
   is_active: true,
   event_types: [],
 })
+
+const filteredWebhooks = computed(() => {
+  const term = webhookSearch.value.trim().toLowerCase()
+  return webhooks.value.filter((row) => {
+    const failing = Boolean(row.last_failure_at && (!row.last_success_at || new Date(row.last_failure_at) > new Date(row.last_success_at)))
+    if (term && !`${row.name} ${row.endpoint_url} ${row.channel_key || ''} ${row.event_types.join(' ')}`.toLowerCase().includes(term)) return false
+    if (webhookState.value === 'active' && !row.is_active) return false
+    if (webhookState.value === 'inactive' && row.is_active) return false
+    if (webhookState.value === 'failing' && !failing) return false
+    return true
+  })
+})
+
+const filteredDeliveries = computed(() => deliveries.value.filter((row) => {
+  if (deliveryEvent.value && row.event_type !== deliveryEvent.value) return false
+  const created = new Date(row.created_at)
+  if (deliveryFromDate.value && created < new Date(`${deliveryFromDate.value}T00:00:00`)) return false
+  if (deliveryToDate.value && created > new Date(`${deliveryToDate.value}T23:59:59`)) return false
+  return true
+}))
 
 const groupedEvents = computed(() => {
   const groups = new Map()
@@ -280,11 +305,17 @@ onMounted(load)
       </article>
 
       <section class="webhook-list-panel">
-        <div class="webhook-section-head"><div><span class="command-deck-eyebrow">{{ t('admin.webhooks.list.eyebrow') }}</span><h3>{{ t('admin.webhooks.list.title') }}</h3></div><span class="summary-pill">{{ webhooks.length }}</span></div>
+        <div class="webhook-section-head"><div><span class="command-deck-eyebrow">{{ t('admin.webhooks.list.eyebrow') }}</span><h3>{{ t('admin.webhooks.list.title') }}</h3></div><span class="summary-pill">{{ filteredWebhooks.length }}</span></div>
+        <div class="staff-filter-surface webhook-compact-filter">
+          <div class="staff-filter-row">
+            <label class="filter-box admin-search"><input v-model="webhookSearch" type="search" :placeholder="t('admin.workspace.filters.webhookSearch')" /></label>
+            <label class="filter-box select-shell"><select v-model="webhookState"><option value="">{{ t('admin.workspace.filters.allWebhookStates') }}</option><option value="active">{{ t('admin.webhooks.status.active') }}</option><option value="inactive">{{ t('admin.webhooks.status.inactive') }}</option><option value="failing">{{ t('admin.workspace.filters.failingWebhooks') }}</option></select></label>
+          </div>
+        </div>
         <p v-if="loading" class="muted table-state">{{ t('admin.webhooks.loading') }}</p>
-        <p v-else-if="webhooks.length === 0" class="muted table-state">{{ t('admin.webhooks.empty') }}</p>
+        <p v-else-if="filteredWebhooks.length === 0" class="muted table-state">{{ t('admin.webhooks.empty') }}</p>
         <div v-else class="webhook-card-list">
-          <article v-for="row in webhooks" :key="row.id" class="webhook-card" :class="{ 'is-inactive': !row.is_active }">
+          <article v-for="row in filteredWebhooks" :key="row.id" class="webhook-card" :class="{ 'is-inactive': !row.is_active }">
             <div class="webhook-card-main">
               <div class="webhook-card-title"><strong>{{ row.name }}</strong><span class="webhook-status-pill" :class="{ 'is-active': row.is_active }">{{ row.is_active ? t('admin.webhooks.status.active') : t('admin.webhooks.status.inactive') }}</span></div>
               <code>{{ row.endpoint_url }}</code>
@@ -309,16 +340,19 @@ onMounted(load)
     <section class="webhook-delivery-panel">
       <div class="webhook-section-head">
         <div><span class="command-deck-eyebrow">{{ t('admin.webhooks.deliveries.eyebrow') }}</span><h3>{{ t('admin.webhooks.deliveries.title') }}</h3></div>
-        <div class="webhook-delivery-filters">
+        <div class="webhook-delivery-filters webhook-delivery-filters--expanded">
           <select v-model="deliveryWebhook"><option value="">{{ t('admin.webhooks.deliveries.allWebhooks') }}</option><option v-for="row in webhooks" :key="row.id" :value="row.id">{{ row.name }}</option></select>
           <select v-model="deliveryStatus"><option value="">{{ t('admin.webhooks.deliveries.allStatuses') }}</option><option value="success">{{ t('admin.webhooks.status.success') }}</option><option value="failed">{{ t('admin.webhooks.status.failed') }}</option><option value="queued">{{ t('admin.webhooks.status.queued') }}</option></select>
+          <select v-model="deliveryEvent"><option value="">{{ t('admin.workspace.filters.allWebhookEvents') }}</option><option v-for="event in events" :key="event.key" :value="event.key">{{ event.key }}</option></select>
+          <input v-model="deliveryFromDate" type="date" :aria-label="t('admin.security.from')" />
+          <input v-model="deliveryToDate" type="date" :aria-label="t('admin.security.to')" />
         </div>
       </div>
-      <p v-if="deliveries.length === 0" class="muted table-state">{{ t('admin.webhooks.deliveries.empty') }}</p>
+      <p v-if="filteredDeliveries.length === 0" class="muted table-state">{{ t('admin.webhooks.deliveries.empty') }}</p>
       <div v-else class="responsive-table-shell webhook-delivery-table-shell">
         <table class="security-table webhook-delivery-table">
           <thead><tr><th>{{ t('admin.webhooks.deliveries.created') }}</th><th>{{ t('admin.webhooks.deliveries.webhook') }}</th><th>{{ t('admin.webhooks.deliveries.event') }}</th><th>{{ t('admin.webhooks.deliveries.resource') }}</th><th>{{ t('admin.webhooks.deliveries.status') }}</th><th>HTTP</th><th>{{ t('admin.webhooks.deliveries.attempts') }}</th><th>{{ t('admin.webhooks.deliveries.details') }}</th><th></th></tr></thead>
-          <tbody><tr v-for="row in deliveries" :key="row.id"><td>{{ formatDateTime(row.created_at) }}</td><td>{{ row.webhook_name }}</td><td><code>{{ row.event_type }}</code></td><td>{{ row.resource_type }} #{{ row.resource_id }}</td><td><span class="webhook-delivery-status" :class="`is-${row.status}`">{{ t(`admin.webhooks.status.${row.status}`) }}</span></td><td>{{ row.response_status || '—' }}</td><td>{{ row.attempts }}</td><td>{{ row.error_message || row.response_body || '—' }}</td><td><button v-if="canManage && row.status === 'failed'" class="small-action" type="button" @click="retryDelivery(row)">{{ t('admin.webhooks.actions.retry') }}</button></td></tr></tbody>
+          <tbody><tr v-for="row in filteredDeliveries" :key="row.id"><td>{{ formatDateTime(row.created_at) }}</td><td>{{ row.webhook_name }}</td><td><code>{{ row.event_type }}</code></td><td>{{ row.resource_type }} #{{ row.resource_id }}</td><td><span class="webhook-delivery-status" :class="`is-${row.status}`">{{ t(`admin.webhooks.status.${row.status}`) }}</span></td><td>{{ row.response_status || '—' }}</td><td>{{ row.attempts }}</td><td>{{ row.error_message || row.response_body || '—' }}</td><td><button v-if="canManage && row.status === 'failed'" class="small-action" type="button" @click="retryDelivery(row)">{{ t('admin.webhooks.actions.retry') }}</button></td></tr></tbody>
         </table>
       </div>
     </section>

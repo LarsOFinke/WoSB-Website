@@ -234,6 +234,9 @@ fi
 
 log "Datenbankaktionen: $(database_action_summary)."
 
+log "Aktualisiere systemd-Units und Host-Runner."
+/usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
+
 if [[ "$CREATE_BACKUP" == true ]]; then
   if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
     log "Erstelle Sicherheitsbackup inklusive PostgreSQL vor beabsichtigten Datenbankarbeiten."

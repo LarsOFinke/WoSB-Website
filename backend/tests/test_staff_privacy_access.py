@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
+
 from fastapi.testclient import TestClient
 
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_MODERATOR, User
 from app.modules.accounts.services.auth_service import create_user
+from app.modules.admin.models.audit_log import AuditLog
 from main import app
 
 
@@ -42,6 +45,20 @@ def test_moderator_can_review_and_approve_account_registration() -> None:
         assert listing.status_code == 200, listing.text
         assert request_id in {row['id'] for row in listing.json()}
 
+        filtered = client.get('/api/admin/registration-requests', params={
+            'status': 'pending',
+            'search': 'Access Review Applicant',
+        })
+        assert filtered.status_code == 200, filtered.text
+        assert [row['id'] for row in filtered.json()] == [request_id]
+
+        no_match = client.get('/api/admin/registration-requests', params={
+            'status': 'pending',
+            'search': 'definitely-not-this-applicant',
+        })
+        assert no_match.status_code == 200, no_match.text
+        assert no_match.json() == []
+
         approval = client.post(
             f'/api/admin/registration-requests/{request_id}/approve',
             json={'note': 'Approved by moderator access review.'},
@@ -53,6 +70,13 @@ def test_moderator_can_review_and_approve_account_registration() -> None:
             created_user = db.query(User).filter(User.username == applicant_username).one_or_none()
             assert created_user is not None
             assert created_user.is_active is True
+            audit_entry = db.query(AuditLog).filter(
+                AuditLog.entity_type == 'registration_request',
+                AuditLog.entity_id == str(request_id),
+                AuditLog.action == 'update',
+            ).one_or_none()
+            assert audit_entry is not None
+            assert 'status' in json.loads(audit_entry.changed_fields_json or '[]')
 
 
 def test_moderator_cannot_access_admin_privacy_and_integration_endpoints() -> None:
@@ -71,6 +95,7 @@ def test_moderator_cannot_access_admin_privacy_and_integration_endpoints() -> No
 
         admin_only_gets = [
             '/api/admin/system/update',
+            '/api/admin/system/discord-bot',
             '/api/admin/logs',
             '/api/admin/logs/summary',
             '/api/admin/logs/security-dashboard',

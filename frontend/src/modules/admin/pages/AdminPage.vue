@@ -8,6 +8,7 @@ import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboar
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
 import OutboundWebhookManagementPanel from '@/modules/admin/components/OutboundWebhookManagementPanel.vue'
+import StaffOverviewPanel from '@/modules/admin/components/StaffOverviewPanel.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import {
@@ -17,6 +18,8 @@ import {
   deleteAdminForumThread,
   deleteAdminGuide,
   getAdminLogSummary,
+  getIpBlockSummary,
+  getOutboundWebhookSummary,
   listAdminBuilds,
   listAdminForumThreads,
   listAdminGuides,
@@ -36,9 +39,11 @@ const { isAdmin, isStaff, loadSession, sessionState, user } = useSession()
 const today = new Date()
 const sevenDaysAgo = new Date(today)
 sevenDaysAgo.setDate(today.getDate() - 6)
+const ninetyDaysFromNow = new Date(today)
+ninetyDaysFromNow.setDate(today.getDate() + 90)
 const isoDate = (value) => value.toISOString().slice(0, 10)
 
-const activeTab = ref('status')
+const activeTab = ref('overview')
 const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'integrations', 'users'])
 const builds = ref([])
 const users = ref([])
@@ -50,10 +55,27 @@ const registrationRequests = ref([])
 const appLogs = ref([])
 const ipBlockPrefill = ref('')
 const logSummary = ref({ total: 0, errors: 0, warnings: 0, slow_requests: 0, recent_status: {} })
+const ipBlockOverview = ref({ total: 0, active: 0, permanent: 0, temporary: 0, expired: 0, unblocked: 0 })
+const webhookOverview = ref({ total: 0, active: 0, failing: 0, successful_deliveries: 0, failed_deliveries: 0 })
+const overviewLoading = ref(false)
 const search = ref('')
 const contentSearch = ref('')
 const calendarCategory = ref('')
 const registrationStatus = ref('pending')
+const registrationSearch = ref('')
+const registrationFromDate = ref('')
+const registrationToDate = ref('')
+const calendarSearch = ref('')
+const calendarFromDate = ref(isoDate(today))
+const calendarToDate = ref(isoDate(ninetyDaysFromNow))
+const contentScope = ref('all')
+const contentOwner = ref('')
+const buildType = ref('')
+const buildRate = ref('')
+const buildVisibility = ref('')
+const userSearch = ref('')
+const userRole = ref('')
+const userStatus = ref('')
 const logLevel = ref('')
 const logPath = ref('')
 const logIp = ref('')
@@ -80,18 +102,94 @@ const registrationDecisionNotes = reactive({})
 const apiStatus = ref(t('admin.status.loading'))
 const apiStatusDetail = ref(t('admin.status.loadingDetail'))
 let searchTimer = null
+let registrationSearchTimer = null
 let contentTimer = null
 let logFilterTimer = null
 
 const moderatorForm = reactive({ username: '', display_name: '', password: '' })
 
-const buildCountLabel = computed(() => builds.value.length === 1 ? t('admin.builds.summaryOne') : t('admin.builds.summaryMany', { count: builds.value.length }))
-const userCountLabel = computed(() => users.value.length === 1 ? t('admin.users.summaryOne') : t('admin.users.summaryMany', { count: users.value.length }))
-const eventCountLabel = computed(() => fleetEvents.value.length === 1 ? t('admin.calendar.summaryOne') : t('admin.calendar.summaryMany', { count: fleetEvents.value.length }))
-const contentCountLabel = computed(() => t('admin.content.summary', { count: forumThreads.value.length + guides.value.length + groups.value.length }))
+const tabGroups = computed(() => [
+  {
+    key: 'workspace',
+    label: t('admin.workspace.navigation.workspace'),
+    tabs: [
+      { key: 'overview', icon: 'compass', label: t('admin.tabs.overview') },
+      { key: 'registrations', icon: 'inbox', label: t('admin.tabs.registrations') },
+      { key: 'calendar', icon: 'calendar', label: t('admin.tabs.calendar') },
+      { key: 'content', icon: 'forum', label: t('admin.tabs.content') },
+      { key: 'builds', icon: 'builds', label: t('admin.tabs.builds') },
+    ],
+  },
+  {
+    key: 'operations',
+    label: t('admin.workspace.navigation.operations'),
+    tabs: [
+      { key: 'status', icon: 'activity', label: t('admin.tabs.status'), adminOnly: true },
+      { key: 'logs', icon: 'activity', label: t('admin.tabs.logs'), adminOnly: true },
+      { key: 'ip-blocks', icon: 'lock', label: t('admin.tabs.ipBlocks'), adminOnly: true },
+      { key: 'audit', icon: 'inbox', label: t('admin.tabs.audit'), adminOnly: true },
+    ],
+  },
+  {
+    key: 'administration',
+    label: t('admin.workspace.navigation.administration'),
+    tabs: [
+      { key: 'integrations', icon: 'spark', label: t('admin.tabs.integrations'), adminOnly: true },
+      { key: 'users', icon: 'users', label: t('admin.tabs.users'), adminOnly: true },
+    ],
+  },
+].map((group) => ({
+  ...group,
+  tabs: group.tabs.filter((tab) => !tab.adminOnly || isAdmin.value),
+})).filter((group) => group.tabs.length))
+
+const filteredBuilds = computed(() => builds.value.filter((build) => {
+  if (buildRate.value && String(build.ship?.rate || '') !== String(buildRate.value)) return false
+  if (buildVisibility.value === 'official' && !build.is_official_template) return false
+  if (buildVisibility.value === 'community' && build.is_official_template) return false
+  return true
+}))
+const filteredUsers = computed(() => {
+  const term = userSearch.value.trim().toLowerCase()
+  return users.value.filter((row) => {
+    if (term && !`${row.username} ${row.display_name}`.toLowerCase().includes(term)) return false
+    if (userRole.value && row.role !== userRole.value) return false
+    if (userStatus.value === 'active' && !row.is_active) return false
+    if (userStatus.value === 'inactive' && row.is_active) return false
+    return true
+  })
+})
+const filteredEvents = computed(() => {
+  const term = calendarSearch.value.trim().toLowerCase()
+  return [...fleetEvents.value]
+    .filter((event) => !term || `${event.title} ${event.location || ''} ${event.description || ''}`.toLowerCase().includes(term))
+    .sort((a, b) => new Date(a.start_at) - new Date(b.start_at))
+})
+const upcomingEvents = computed(() => filteredEvents.value.slice(0, 40))
+const contentOwnerTerm = computed(() => contentOwner.value.trim().toLowerCase())
+function ownerMatches(row) {
+  if (!contentOwnerTerm.value) return true
+  return `${row.owner?.display_name || ''} ${row.owner?.username || ''}`.toLowerCase().includes(contentOwnerTerm.value)
+}
+const visibleForumThreads = computed(() => forumThreads.value.filter(ownerMatches))
+const visibleGuides = computed(() => guides.value.filter(ownerMatches))
+const visibleGroups = computed(() => groups.value.filter(ownerMatches))
+const visibleContentCount = computed(() => {
+  if (contentScope.value === 'forum') return visibleForumThreads.value.length
+  if (contentScope.value === 'guides') return visibleGuides.value.length
+  if (contentScope.value === 'groups') return visibleGroups.value.length
+  return visibleForumThreads.value.length + visibleGuides.value.length + visibleGroups.value.length
+})
+const pendingRegistrationRows = computed(() => registrationRequests.value.filter((row) => row.status === 'pending'))
+const oldestPendingRequest = computed(() => [...pendingRegistrationRows.value].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0] || null)
+const nextOverviewEvent = computed(() => filteredEvents.value.find((event) => new Date(event.end_at || event.start_at) >= new Date()) || null)
+const buildRates = computed(() => [...new Set(builds.value.map((build) => build.ship?.rate).filter((rate) => rate !== null && rate !== undefined))].sort((a, b) => Number(a) - Number(b)))
+const buildCountLabel = computed(() => filteredBuilds.value.length === 1 ? t('admin.builds.summaryOne') : t('admin.builds.summaryMany', { count: filteredBuilds.value.length }))
+const userCountLabel = computed(() => filteredUsers.value.length === 1 ? t('admin.users.summaryOne') : t('admin.users.summaryMany', { count: filteredUsers.value.length }))
+const eventCountLabel = computed(() => upcomingEvents.value.length === 1 ? t('admin.calendar.summaryOne') : t('admin.calendar.summaryMany', { count: upcomingEvents.value.length }))
+const contentCountLabel = computed(() => t('admin.content.summary', { count: visibleContentCount.value }))
 const registrationCountLabel = computed(() => registrationRequests.value.length === 1 ? t('admin.registrations.summaryOne') : t('admin.registrations.summaryMany', { count: registrationRequests.value.length }))
 const logsCountLabel = computed(() => t('admin.logs.summary', { count: logSummary.value.total || appLogs.value.length }))
-const upcomingEvents = computed(() => [...fleetEvents.value].sort((a, b) => new Date(a.start_at) - new Date(b.start_at)).slice(0, 12))
 const categoryOptions = computed(() => [{ value: '', label: t('calendar.categories.all') }, ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) }))])
 function crewTotal(build) {
   return build.sailors + build.soldiers + build.musketeers + build.mercenaries
@@ -125,7 +223,7 @@ async function loadBuilds() {
   loading.value = true
   error.value = ''
   try {
-    builds.value = await listAdminBuilds(search.value)
+    builds.value = await listAdminBuilds(search.value, buildType.value)
   } catch (err) {
     error.value = err.message || t('admin.builds.loadError')
   } finally {
@@ -162,12 +260,42 @@ async function loadStatus() {
   }
 }
 
+async function loadAdminOverviewMetrics() {
+  if (!isAdmin.value) return
+  try {
+    const [logs, blocks, webhooks] = await Promise.all([
+      getAdminLogSummary({ fromDate: logFromDate.value, toDate: logToDate.value }),
+      getIpBlockSummary(),
+      getOutboundWebhookSummary(),
+    ])
+    logSummary.value = logs
+    ipBlockOverview.value = blocks
+    webhookOverview.value = webhooks
+  } catch (err) {
+    logsError.value = err.message || t('admin.workspace.overviewLoadError')
+  }
+}
+
+async function loadOverview() {
+  if (!isStaff.value) return
+  overviewLoading.value = true
+  const tasks = [loadRegistrations(), loadCalendar(), loadContent(), loadBuilds()]
+  if (isAdmin.value) tasks.push(loadStatus(), loadUsers(), loadAdminOverviewMetrics())
+  await Promise.allSettled(tasks)
+  overviewLoading.value = false
+}
+
 async function loadRegistrations() {
   if (!isStaff.value) return
   registrationLoading.value = true
   registrationError.value = ''
   try {
-    registrationRequests.value = await listRegistrationRequests(registrationStatus.value)
+    registrationRequests.value = await listRegistrationRequests({
+      status: registrationStatus.value,
+      search: registrationSearch.value,
+      fromDate: registrationFromDate.value,
+      toDate: registrationToDate.value,
+    })
   } catch (err) {
     registrationError.value = err.message || t('admin.registrations.loadError')
   } finally {
@@ -236,10 +364,10 @@ async function loadCalendar() {
   if (!isStaff.value) return
   calendarLoading.value = true
   calendarError.value = ''
-  const start = new Date()
+  const start = calendarFromDate.value ? new Date(`${calendarFromDate.value}T00:00:00`) : new Date()
   start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 90)
+  const end = calendarToDate.value ? new Date(`${calendarToDate.value}T23:59:59`) : new Date(start)
+  if (!calendarToDate.value) end.setDate(end.getDate() + 90)
   try {
     fleetEvents.value = await listFleetEvents({ start: start.toISOString(), end: end.toISOString(), category: calendarCategory.value })
   } catch (err) {
@@ -364,9 +492,51 @@ function canManageUser(row) {
   return row.id !== user.value?.id && row.role !== 'admin'
 }
 
-watch(search, () => {
+function navigateToTab(tab) {
+  if (canAccessTab(tab)) activeTab.value = tab
+}
+
+function resetRegistrationFilters() {
+  registrationStatus.value = 'pending'
+  registrationSearch.value = ''
+  registrationFromDate.value = ''
+  registrationToDate.value = ''
+}
+
+function resetCalendarFilters() {
+  calendarCategory.value = ''
+  calendarSearch.value = ''
+  calendarFromDate.value = isoDate(today)
+  calendarToDate.value = isoDate(ninetyDaysFromNow)
+}
+
+function resetContentFilters() {
+  contentSearch.value = ''
+  contentScope.value = 'all'
+  contentOwner.value = ''
+}
+
+function resetBuildFilters() {
+  search.value = ''
+  buildType.value = ''
+  buildRate.value = ''
+  buildVisibility.value = ''
+}
+
+function resetUserFilters() {
+  userSearch.value = ''
+  userRole.value = ''
+  userStatus.value = ''
+}
+
+watch([search, buildType], () => {
   window.clearTimeout(searchTimer)
   searchTimer = window.setTimeout(loadBuilds, 220)
+})
+
+watch(registrationSearch, () => {
+  window.clearTimeout(registrationSearchTimer)
+  registrationSearchTimer = window.setTimeout(loadRegistrations, 240)
 })
 
 watch(contentSearch, () => {
@@ -374,8 +544,8 @@ watch(contentSearch, () => {
   contentTimer = window.setTimeout(loadContent, 220)
 })
 
-watch(calendarCategory, loadCalendar)
-watch(registrationStatus, loadRegistrations)
+watch([calendarCategory, calendarFromDate, calendarToDate], loadCalendar)
+watch([registrationStatus, registrationFromDate, registrationToDate], loadRegistrations)
 watch([logLevel, logIp, logThreat, logFromDate, logToDate, logSort, logOrder], loadLogs)
 watch(logPath, () => {
   window.clearTimeout(logFilterTimer)
@@ -391,11 +561,12 @@ function canAccessTab(tab) {
 watch(activeTab, async (tab) => {
   clearConfirmation()
   if (!canAccessTab(tab)) {
-    activeTab.value = isAdmin.value ? 'status' : 'registrations'
+    activeTab.value = 'overview'
     return
   }
+  if (tab === 'overview') await loadOverview()
   if (tab === 'builds') await loadBuilds()
-  if (tab === 'status') await loadStatus()
+  if (tab === 'status') await Promise.all([loadStatus(), loadAdminOverviewMetrics()])
   if (tab === 'users') await loadUsers()
   if (tab === 'registrations') await loadRegistrations()
   if (tab === 'logs') await loadLogs()
@@ -405,14 +576,13 @@ watch(activeTab, async (tab) => {
 
 onMounted(async () => {
   if (!sessionState.isReady) await loadSession()
-  activeTab.value = isAdmin.value ? 'status' : 'registrations'
-  if (isAdmin.value) {
-    await Promise.all([loadStatus(), loadLogs(), loadRegistrations()])
-  }
+  activeTab.value = 'overview'
+  await loadOverview()
 })
 
 onUnmounted(() => {
   window.clearTimeout(searchTimer)
+  window.clearTimeout(registrationSearchTimer)
   window.clearTimeout(contentTimer)
   window.clearTimeout(logFilterTimer)
 })
@@ -478,27 +648,53 @@ onUnmounted(() => {
           </RouterLink>
         </section>
 
-        <section class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'status' }" type="button" @click="activeTab = 'status'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.status') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'registrations' }" type="button" @click="activeTab = 'registrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.registrations') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'ip-blocks' }" type="button" @click="activeTab = 'ip-blocks'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.ipBlocks') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'integrations' }" type="button" @click="activeTab = 'integrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.integrations') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
-          <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
-          <button v-if="isAdmin" class="tab-button" :class="{ 'is-active': activeTab === 'users' }" type="button" @click="activeTab = 'users'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.users') }}</span></button>
+        <nav class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
+          <section v-for="group in tabGroups" :key="group.key" class="staff-tab-group">
+            <span class="staff-tab-group-label">{{ group.label }}</span>
+            <button
+              v-for="tab in group.tabs"
+              :key="tab.key"
+              class="tab-button"
+              :class="{ 'is-active': activeTab === tab.key }"
+              type="button"
+              :aria-current="activeTab === tab.key ? 'page' : undefined"
+              @click="navigateToTab(tab.key)"
+            >
+              <span><AppIcon :name="tab.icon" :size="17" />{{ tab.label }}</span>
+              <AppIcon name="chevron-right" :size="15" />
+            </button>
+          </section>
+        </nav>
+
+        <section v-if="activeTab === 'overview'" class="wire-section admin-panel staff-overview-shell">
+          <StaffOverviewPanel
+            :is-admin="isAdmin"
+            :loading="overviewLoading"
+            :pending-registrations="pendingRegistrationRows.length"
+            :upcoming-events="filteredEvents.length"
+            :content-items="forumThreads.length + guides.length + groups.length"
+            :builds="builds.length"
+            :users="users.length"
+            :log-summary="logSummary"
+            :ip-block-summary="ipBlockOverview"
+            :webhook-summary="webhookOverview"
+            :next-event="nextOverviewEvent"
+            :oldest-pending-request="oldestPendingRequest"
+            @navigate="navigateToTab"
+            @refresh="loadOverview"
+          />
         </section>
 
         <section v-if="activeTab === 'status' && isAdmin" class="wire-section admin-panel admin-status-panel">
           <SystemOperationsPanel :api-status="apiStatus" :api-status-detail="apiStatusDetail" :is-admin="isAdmin" @refresh-api="loadStatus" />
 
           <div class="workspace-metric-grid admin-dashboard-grid">
-            <MetricCard v-if="isAdmin" :label="t('admin.registrations.dashboardLabel')" :value="registrationRequests.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
+            <MetricCard :label="t('admin.registrations.dashboardLabel')" :value="pendingRegistrationRows.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
             <MetricCard :label="t('admin.logs.total')" :value="logSummary.total" :hint="t('admin.logs.dashboardHint')" />
             <MetricCard :label="t('admin.logs.errors')" :value="logSummary.errors" :hint="t('admin.logs.errorHint')" tone="danger" />
             <MetricCard :label="t('admin.logs.slowRequests')" :value="logSummary.slow_requests" :hint="t('admin.logs.slowHint')" />
+            <MetricCard :label="t('admin.workspace.cards.ipBlocks')" :value="ipBlockOverview.active" :hint="t('admin.workspace.cards.ipBlocksHint')" />
+            <MetricCard :label="t('admin.workspace.cards.integrations')" :value="webhookOverview.active" :hint="t('admin.workspace.cards.integrationsHint', { failing: webhookOverview.failing })" :tone="webhookOverview.failing ? 'danger' : ''" />
           </div>
         </section>
 
@@ -507,8 +703,17 @@ onUnmounted(() => {
             <div><h2>{{ t('admin.registrations.title') }}</h2><p>{{ t('admin.registrations.subtitle') }}</p></div>
             <span class="summary-pill">{{ registrationCountLabel }}</span>
           </div>
-          <div class="staff-filter-row">
-            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="registrationStatus"><option value="pending">{{ t('admin.registrations.status.pending') }}</option><option value="approved">{{ t('admin.registrations.status.approved') }}</option><option value="rejected">{{ t('admin.registrations.status.rejected') }}</option><option value="">{{ t('admin.registrations.status.all') }}</option></select></label>
+          <div class="staff-filter-surface">
+            <div class="staff-filter-surface-head">
+              <div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.registrationHint') }}</small></div>
+              <button class="small-action" type="button" @click="resetRegistrationFilters">{{ t('admin.workspace.filters.reset') }}</button>
+            </div>
+            <div class="staff-filter-row staff-filter-row--wide">
+              <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="registrationStatus"><option value="pending">{{ t('admin.registrations.status.pending') }}</option><option value="approved">{{ t('admin.registrations.status.approved') }}</option><option value="rejected">{{ t('admin.registrations.status.rejected') }}</option><option value="">{{ t('admin.registrations.status.all') }}</option></select></label>
+              <label class="filter-box admin-search"><input v-model="registrationSearch" type="search" :placeholder="t('admin.workspace.filters.registrationSearch')" /></label>
+              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.from') }}</span><input v-model="registrationFromDate" type="date" /></label>
+              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.to') }}</span><input v-model="registrationToDate" type="date" /></label>
+            </div>
           </div>
           <p v-if="registrationLoading" class="muted table-state">{{ t('admin.registrations.loading') }}</p>
           <p v-else-if="registrationError" class="error-text table-state">{{ registrationError }}</p>
@@ -518,6 +723,7 @@ onUnmounted(() => {
               <div class="admin-build-main">
                 <strong>{{ request.display_name }}</strong>
                 <span>{{ request.username }} · {{ formatDateTime(request.created_at) }} · {{ t(`admin.registrations.status.${request.status}`) }}</span>
+                <small v-if="request.reviewed_at" class="muted">{{ t('admin.workspace.reviewedBy', { user: request.reviewed_by?.display_name || request.reviewed_by?.username || '—', date: formatDateTime(request.reviewed_at) }) }}</small>
                 <p v-if="request.decision_note" class="muted">{{ t('admin.registrations.decisionNote') }}: {{ request.decision_note }}</p>
               </div>
               <div v-if="request.status === 'pending'" class="registration-actions">
@@ -647,6 +853,25 @@ onUnmounted(() => {
         </section>
 
         <section v-if="activeTab === 'integrations' && isAdmin" class="wire-section admin-panel staff-management-panel">
+          <div class="integration-context-grid">
+            <article>
+              <span class="command-deck-eyebrow">{{ t('admin.webhooks.eyebrow') }}</span>
+              <strong>{{ webhookOverview.active }} / {{ webhookOverview.total }}</strong>
+              <p>{{ t('admin.webhooks.subtitle') }}</p>
+              <small v-if="webhookOverview.failing" class="error-text">{{ t('admin.workspace.cards.integrationsHint', { failing: webhookOverview.failing }) }}</small>
+            </article>
+            <article>
+              <span class="command-deck-eyebrow">{{ t('admin.system.discordBot.eyebrow') }}</span>
+              <strong>{{ t('admin.system.discordBot.title') }}</strong>
+              <p>{{ t('admin.system.discordBot.subtitle') }}</p>
+              <button class="small-action" type="button" @click="navigateToTab('status')">{{ t('admin.tabs.status') }}</button>
+            </article>
+            <article class="is-private">
+              <span class="command-deck-eyebrow">{{ t('admin.workspace.adminGroup') }}</span>
+              <strong>{{ t('admin.workspace.adminScopeTitle') }}</strong>
+              <p>{{ t('admin.workspace.adminScopeText') }}</p>
+            </article>
+          </div>
           <OutboundWebhookManagementPanel :can-manage="true" />
         </section>
 
@@ -655,9 +880,17 @@ onUnmounted(() => {
             <div><h2>{{ t('admin.calendar.title') }}</h2><p>{{ t('admin.calendar.subtitle') }}</p></div>
             <div class="hero-actions"><span class="summary-pill">{{ eventCountLabel }}</span><RouterLink class="button-box primary-action" to="/calendar/new">{{ t('calendar.list.newEvent') }}</RouterLink></div>
           </div>
-          <div class="staff-filter-row">
-            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="calendarCategory"><option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
-            <RouterLink class="small-action" to="/calendar">{{ t('admin.calendar.openCalendar') }}</RouterLink>
+          <div class="staff-filter-surface">
+            <div class="staff-filter-surface-head">
+              <div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.calendarHint') }}</small></div>
+              <div class="hero-actions"><RouterLink class="small-action" to="/calendar">{{ t('admin.calendar.openCalendar') }}</RouterLink><button class="small-action" type="button" @click="resetCalendarFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
+            </div>
+            <div class="staff-filter-row staff-filter-row--wide">
+              <label class="filter-box admin-search"><input v-model="calendarSearch" type="search" :placeholder="t('admin.workspace.filters.calendarSearch')" /></label>
+              <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="calendarCategory"><option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.from') }}</span><input v-model="calendarFromDate" type="date" /></label>
+              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.to') }}</span><input v-model="calendarToDate" type="date" /></label>
+            </div>
           </div>
           <p v-if="calendarLoading" class="muted table-state">{{ t('admin.calendar.loading') }}</p>
           <p v-else-if="calendarError" class="error-text table-state">{{ calendarError }}</p>
@@ -676,29 +909,53 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'content'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.content.title') }}</h2><p>{{ t('admin.content.subtitle') }}</p></div><span class="summary-pill">{{ contentCountLabel }}</span></div>
-          <label class="filter-box admin-search"><input v-model="contentSearch" type="search" :placeholder="t('admin.content.searchPlaceholder')" /></label>
+          <div class="staff-filter-surface">
+            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.contentHint') }}</small></div><button class="small-action" type="button" @click="resetContentFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
+            <div class="staff-filter-row staff-filter-row--wide">
+              <label class="filter-box admin-search"><input v-model="contentSearch" type="search" :placeholder="t('admin.content.searchPlaceholder')" /></label>
+              <label class="filter-box select-shell"><select v-model="contentScope"><option value="all">{{ t('admin.workspace.filters.allContent') }}</option><option value="forum">{{ t('admin.content.forum') }}</option><option value="guides">{{ t('admin.content.guides') }}</option><option value="groups">{{ t('admin.content.announcements') }}</option></select></label>
+              <label class="filter-box admin-search"><input v-model="contentOwner" type="search" :placeholder="t('admin.workspace.filters.ownerSearch')" /></label>
+            </div>
+          </div>
           <p v-if="contentLoading" class="muted table-state">{{ t('admin.content.loading') }}</p>
           <p v-else-if="contentError" class="error-text table-state">{{ contentError }}</p>
-          <div class="staff-content-grid">
-            <section class="staff-content-column"><h3>{{ t('admin.content.forum') }}</h3><p v-if="forumThreads.length === 0" class="muted table-state">{{ t('admin.content.emptyForum') }}</p><article v-for="thread in forumThreads" :key="thread.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ thread.title }}</strong><span>{{ thread.category }} · {{ thread.owner.display_name }} · {{ t('admin.content.replies', { count: thread.reply_count }) }}</span></div><div v-if="isPending('thread', thread.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteThread(thread.id)">{{ t('admin.content.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('thread', thread.id)">{{ t('admin.content.delete') }}</button></article></section>
-            <section class="staff-content-column"><h3>{{ t('admin.content.guides') }}</h3><p v-if="guides.length === 0" class="muted table-state">{{ t('admin.content.emptyGuides') }}</p><article v-for="guide in guides" :key="guide.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ guide.title }}</strong><span>{{ guide.category }} · {{ guide.owner.display_name }} · {{ t('admin.content.attachments', { count: guide.attachment_count }) }}</span></div><div v-if="isPending('guide', guide.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteGuide(guide.id)">{{ t('admin.content.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('guide', guide.id)">{{ t('admin.content.delete') }}</button></article></section>
-            <section class="staff-content-column"><h3>{{ t('admin.content.announcements') }}</h3><p v-if="groups.length === 0" class="muted table-state">{{ t('admin.content.emptyGroups') }}</p><article v-for="group in groups" :key="group.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ group.title }}</strong><span>{{ t(`focus.${group.focus}`) }} · {{ group.owner.display_name }} · {{ t('admin.content.members', { count: group.active_members_count }) }}</span></div><div v-if="isPending('group', group.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmClose') }}</span><button class="danger-action" type="button" @click="confirmCloseGroup(group.id)">{{ t('admin.content.closeNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('group', group.id)">{{ t('admin.content.close') }}</button></article></section>
+          <div class="staff-content-grid" :class="{ 'is-single-scope': contentScope !== 'all' }">
+            <section v-if="contentScope === 'all' || contentScope === 'forum'" class="staff-content-column"><h3>{{ t('admin.content.forum') }}</h3><p v-if="visibleForumThreads.length === 0" class="muted table-state">{{ t('admin.content.emptyForum') }}</p><article v-for="thread in visibleForumThreads" :key="thread.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ thread.title }}</strong><span>{{ thread.category }} · {{ thread.owner.display_name }} · {{ t('admin.content.replies', { count: thread.reply_count }) }}</span></div><div v-if="isPending('thread', thread.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteThread(thread.id)">{{ t('admin.content.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('thread', thread.id)">{{ t('admin.content.delete') }}</button></article></section>
+            <section v-if="contentScope === 'all' || contentScope === 'guides'" class="staff-content-column"><h3>{{ t('admin.content.guides') }}</h3><p v-if="visibleGuides.length === 0" class="muted table-state">{{ t('admin.content.emptyGuides') }}</p><article v-for="guide in visibleGuides" :key="guide.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ guide.title }}</strong><span>{{ guide.category }} · {{ guide.owner.display_name }} · {{ t('admin.content.attachments', { count: guide.attachment_count }) }}</span></div><div v-if="isPending('guide', guide.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteGuide(guide.id)">{{ t('admin.content.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('guide', guide.id)">{{ t('admin.content.delete') }}</button></article></section>
+            <section v-if="contentScope === 'all' || contentScope === 'groups'" class="staff-content-column"><h3>{{ t('admin.content.announcements') }}</h3><p v-if="visibleGroups.length === 0" class="muted table-state">{{ t('admin.content.emptyGroups') }}</p><article v-for="group in visibleGroups" :key="group.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ group.title }}</strong><span>{{ t(`focus.${group.focus}`) }} · {{ group.owner.display_name }} · {{ t('admin.content.members', { count: group.active_members_count }) }}</span></div><div v-if="isPending('group', group.id)" class="delete-confirmation"><span>{{ t('admin.content.confirmClose') }}</span><button class="danger-action" type="button" @click="confirmCloseGroup(group.id)">{{ t('admin.content.closeNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('group', group.id)">{{ t('admin.content.close') }}</button></article></section>
           </div>
         </section>
 
         <section v-if="activeTab === 'builds'" class="wire-section admin-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.builds.title') }}</h2><p>{{ t('admin.builds.subtitle') }}</p></div><span class="summary-pill">{{ buildCountLabel }}</span></div>
-          <label class="filter-box admin-search"><input v-model="search" type="search" :placeholder="t('admin.builds.searchPlaceholder')" /></label>
-          <p v-if="loading" class="muted table-state">{{ t('admin.builds.loading') }}</p><p v-else-if="error" class="error-text table-state">{{ error }}</p><p v-else-if="builds.length === 0" class="muted table-state">{{ t('admin.builds.empty') }}</p>
-          <div v-else class="admin-build-list"><article v-for="build in builds" :key="build.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ build.build_name }}</strong><span>{{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ t(`builds.types.${build.build_type}`) }} · {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span></div><div v-if="isPending('build', build.id)" class="delete-confirmation"><span>{{ t('admin.builds.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteBuild(build.id)">{{ t('admin.builds.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('build', build.id)">{{ t('admin.builds.delete') }}</button></article></div>
+          <div class="staff-filter-surface">
+            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.buildHint') }}</small></div><button class="small-action" type="button" @click="resetBuildFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
+            <div class="staff-filter-row staff-filter-row--wide">
+              <label class="filter-box admin-search"><input v-model="search" type="search" :placeholder="t('admin.builds.searchPlaceholder')" /></label>
+              <label class="filter-box select-shell"><select v-model="buildType"><option value="">{{ t('admin.workspace.filters.allBuildTypes') }}</option><option value="balanced">{{ t('builds.types.balanced') }}</option><option value="gunnery">{{ t('builds.types.gunnery') }}</option><option value="boarding">{{ t('builds.types.boarding') }}</option><option value="defensive">{{ t('builds.types.defensive') }}</option></select></label>
+              <label class="filter-box select-shell"><select v-model="buildRate"><option value="">{{ t('admin.workspace.filters.allRates') }}</option><option v-for="rate in buildRates" :key="rate" :value="String(rate)">{{ t('common.rate') }} {{ rate }}</option></select></label>
+              <label class="filter-box select-shell"><select v-model="buildVisibility"><option value="">{{ t('admin.workspace.filters.allSources') }}</option><option value="official">{{ t('admin.workspace.filters.officialBuilds') }}</option><option value="community">{{ t('admin.workspace.filters.communityBuilds') }}</option></select></label>
+            </div>
+          </div>
+          <p v-if="loading" class="muted table-state">{{ t('admin.builds.loading') }}</p><p v-else-if="error" class="error-text table-state">{{ error }}</p><p v-else-if="filteredBuilds.length === 0" class="muted table-state">{{ t('admin.builds.empty') }}</p>
+          <div v-else class="admin-build-list"><article v-for="build in filteredBuilds" :key="build.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ build.build_name }}</strong><span>{{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ t(`builds.types.${build.build_type}`) }} · {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span><small v-if="build.is_official_template" class="summary-pill staff-inline-pill">{{ t('admin.workspace.filters.officialBuilds') }}</small></div><div v-if="isPending('build', build.id)" class="delete-confirmation"><span>{{ t('admin.builds.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteBuild(build.id)">{{ t('admin.builds.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('build', build.id)">{{ t('admin.builds.delete') }}</button></article></div>
         </section>
 
         <section v-if="activeTab === 'users' && isAdmin" class="wire-section admin-panel admin-users-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.users.title') }}</h2><p>{{ t('admin.users.subtitle') }}</p></div><span class="summary-pill">{{ userCountLabel }}</span></div>
           <form class="moderator-form" @submit.prevent="submitModerator"><label class="input-panel embedded-field"><span>{{ t('auth.username') }}</span><input v-model="moderatorForm.username" required minlength="3" maxlength="80" /></label><label class="input-panel embedded-field"><span>{{ t('profile.displayName') }}</span><input v-model="moderatorForm.display_name" required maxlength="120" /></label><label class="input-panel embedded-field"><span>{{ t('auth.password') }}</span><input v-model="moderatorForm.password" type="password" required minlength="12" /></label><button class="form-button primary-action" type="submit">{{ t('admin.users.createModerator') }}</button></form>
+          <div class="staff-filter-surface">
+            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.userHint') }}</small></div><button class="small-action" type="button" @click="resetUserFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
+            <div class="staff-filter-row staff-filter-row--wide">
+              <label class="filter-box admin-search"><input v-model="userSearch" type="search" :placeholder="t('admin.workspace.filters.userSearch')" /></label>
+              <label class="filter-box select-shell"><select v-model="userRole"><option value="">{{ t('admin.workspace.filters.allRoles') }}</option><option value="admin">{{ t('roles.admin') }}</option><option value="moderator">{{ t('roles.moderator') }}</option><option value="user">{{ t('roles.user') }}</option></select></label>
+              <label class="filter-box select-shell"><select v-model="userStatus"><option value="">{{ t('admin.workspace.filters.allStatuses') }}</option><option value="active">{{ t('fleets.status.active') }}</option><option value="inactive">{{ t('fleets.status.inactive') }}</option></select></label>
+            </div>
+          </div>
           <p v-if="userLoading" class="muted table-state">{{ t('admin.users.loading') }}</p><p v-if="userError" class="error-text table-state">{{ userError }}</p><p v-if="moderatorSuccess" class="success-text table-state">{{ moderatorSuccess }}</p>
-          <div class="admin-user-list">
-            <article v-for="row in users" :key="row.id" class="admin-user-row">
+          <p v-if="!userLoading && filteredUsers.length === 0" class="muted table-state">{{ t('admin.workspace.filters.noResults') }}</p>
+          <div v-else class="admin-user-list">
+            <article v-for="row in filteredUsers" :key="row.id" class="admin-user-row">
               <div><strong>{{ row.display_name }}</strong><span>{{ row.username }}</span></div>
               <span class="summary-pill">{{ t(`roles.${row.role}`) }}</span>
               <span class="summary-pill">{{ row.is_active ? t('fleets.status.active') : t('fleets.status.inactive') }}</span>

@@ -10,8 +10,21 @@ export function requestSystemUpdate(operation = 'update') {
   return post('/admin/system/update', { operation })
 }
 
-export function listRegistrationRequests(status = 'pending') {
-  return get(withQuery('/admin/registration-requests', { status }))
+export function getDiscordBotStatus() {
+  return get('/admin/system/discord-bot')
+}
+
+export function requestDiscordBotOperation(operation) {
+  return post('/admin/system/discord-bot', { operation })
+}
+
+export function listRegistrationRequests({ status = 'pending', search = '', fromDate = '', toDate = '' } = {}) {
+  return get(withQuery('/admin/registration-requests', {
+    status,
+    search,
+    from_date: fromDate,
+    to_date: toDate,
+  }))
 }
 
 export function approveRegistrationRequest(id, note = '') {

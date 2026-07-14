@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { MONITORING_HTTPS_PORT } from '@/config/runtime'
 import { useLocale } from '@/locales'
 import { getSystemUpdateStatus, requestSystemUpdate } from '@/modules/admin/api/admin'
+import DiscordBotOperationsPanel from '@/modules/admin/components/DiscordBotOperationsPanel.vue'
 
 const props = defineProps({
   apiStatus: { type: String, required: true },
@@ -144,4 +145,6 @@ onUnmounted(() => window.clearTimeout(pollTimer))
     <pre v-if="update.log_tail?.length">{{ update.log_tail.join('\n') }}</pre>
     <p v-else class="muted">{{ t('admin.system.logEmpty') }}</p>
   </section>
+
+  <DiscordBotOperationsPanel v-if="isAdmin" />
 </template>

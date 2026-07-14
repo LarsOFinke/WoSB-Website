@@ -17,10 +17,12 @@ import { mySquadsWorkspaceMessages } from './mySquadsWorkspace'
 import { privacyMessages } from './privacy'
 import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
+import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul'
 import { systemOperationsMessages } from './systemOperations'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
+import { discordBotOperationsMessages } from './discordBotOperations'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -45,10 +47,12 @@ const messageLayers = [
   mySquadsWorkspaceMessages,
   fleetManagementMessages,
   staffPanelMessages,
+  staffWorkspaceOverhaulMessages,
   systemOperationsMessages,
   securityAuditDashboardMessages,
   ipBlockManagementMessages,
   outboundWebhookManagementMessages,
+  discordBotOperationsMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

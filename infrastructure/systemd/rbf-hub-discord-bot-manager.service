@@ -1,0 +1,10 @@
+[Unit]
+Description=Royal Blackwater Fleet Discord Bot Manager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/services/manage-discord-bot.sh
+Nice=10
+TimeoutStartSec=30min

@@ -24,6 +24,7 @@ from app.modules.admin.schemas.system_update import (
     SystemUpdateRequestResult,
     SystemUpdateStatus,
 )
+from app.modules.admin.schemas.discord_bot import DiscordBotRequest, DiscordBotRequestResult, DiscordBotStatus
 from app.modules.admin.schemas.user_administration import UserAdministrationUpdate
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
@@ -34,6 +35,11 @@ from app.modules.forum.services.forum_service import delete_thread, get_thread, 
 from app.modules.guides.services.guide_service import delete_guide, get_guide, list_guides
 from app.modules.accounts.services.registration_service import RegistrationRequestError, approve_registration_request, list_registration_requests, reject_registration_request
 from app.modules.admin.services.system_update_service import SystemUpdateError, get_system_update_status, request_system_update
+from app.modules.admin.services.discord_bot_manager_service import (
+    DiscordBotManagerError,
+    get_discord_bot_status,
+    request_discord_bot_operation,
+)
 from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit_safely
 from app.modules.admin.services.security_dashboard_service import build_security_dashboard, security_ip_addresses_for_level
 from app.modules.admin.services.ip_block_service import (
@@ -107,14 +113,45 @@ def admin_request_system_update(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return SystemUpdateRequestResult(accepted=True, status=update_status)
 
+
+@router.get("/system/discord-bot", response_model=DiscordBotStatus)
+def admin_discord_bot_status(
+    _: User = Depends(require_admin),
+) -> DiscordBotStatus:
+    return get_discord_bot_status()
+
+
+@router.post("/system/discord-bot", response_model=DiscordBotRequestResult, status_code=status.HTTP_202_ACCEPTED)
+def admin_request_discord_bot_operation(
+    payload: DiscordBotRequest,
+    current_user: User = Depends(require_admin),
+) -> DiscordBotRequestResult:
+    try:
+        bot_status = request_discord_bot_operation(current_user, payload.operation)
+    except DiscordBotManagerError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return DiscordBotRequestResult(accepted=True, status=bot_status)
+
 @router.get("/registration-requests", response_model=list[RegistrationRequestRead])
 def admin_list_registration_requests(
     status_filter: str | None = Query(default="pending", alias="status", max_length=24),
+    search: str | None = Query(default=None, max_length=120),
+    from_date: date | None = Query(default=None),
+    to_date: date | None = Query(default=None),
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ) -> list[RegistrationRequestRead]:
     try:
-        return [RegistrationRequestRead.model_validate(row) for row in list_registration_requests(db, status=status_filter)]
+        return [
+            RegistrationRequestRead.model_validate(row)
+            for row in list_registration_requests(
+                db,
+                status=status_filter,
+                search=search,
+                from_date=from_date,
+                to_date=to_date,
+            )
+        ]
     except RegistrationRequestError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -130,6 +167,15 @@ def admin_approve_registration_request(
         request = approve_registration_request(db, request_id, current_user, payload)
     except RegistrationRequestError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="registration_request",
+        entity_id=request.id,
+        action="update",
+        summary=f'Access request for “{request.username}” approved.',
+        changed_fields=["status", "decision_note", "reviewed_by_id", "reviewed_at", "created_user_id"],
+    )
     return RegistrationRequestRead.model_validate(request)
 
 
@@ -144,6 +190,15 @@ def admin_reject_registration_request(
         request = reject_registration_request(db, request_id, current_user, payload)
     except RegistrationRequestError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="registration_request",
+        entity_id=request.id,
+        action="update",
+        summary=f'Access request for “{request.username}” rejected.',
+        changed_fields=["status", "decision_note", "reviewed_by_id", "reviewed_at"],
+    )
     return RegistrationRequestRead.model_validate(request)
 
 
@@ -441,10 +496,27 @@ def admin_update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> UserRead:
+    existing = db.get(User, user_id)
+    previous_role = existing.role if existing is not None else None
+    previous_active = existing.is_active if existing is not None else None
     try:
         user = update_user_account(db, actor=current_user, target_id=user_id, payload=payload)
     except UserAdministrationError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    changed_fields = []
+    if previous_role != user.role:
+        changed_fields.append("role")
+    if previous_active != user.is_active:
+        changed_fields.append("is_active")
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="user_account",
+        entity_id=user.id,
+        action="update",
+        summary=f'Account “{user.username}” updated.',
+        changed_fields=changed_fields,
+    )
     return UserRead.model_validate(user)
 
 
@@ -452,7 +524,7 @@ def admin_update_user(
 def admin_create_moderator(
     payload: ModeratorCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> ModeratorCreateResponse:
     try:
         user = create_user(
@@ -464,6 +536,15 @@ def admin_create_moderator(
         )
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="user_account",
+        entity_id=user.id,
+        action="create",
+        summary=f'Moderator account “{user.username}” created.',
+        changed_fields=["username", "display_name", "role", "is_active"],
+    )
     return ModeratorCreateResponse(user=UserRead.model_validate(user))
 
 

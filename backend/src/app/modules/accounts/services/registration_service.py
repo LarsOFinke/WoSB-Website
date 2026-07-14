@@ -1,27 +1,27 @@
 from __future__ import annotations
 
-from app.core.time import utc_now
-
+from datetime import date, datetime, time, timedelta
 import logging
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.password_policy import PasswordPolicyError, validate_password
 from app.core.security import hash_password
-from app.modules.accounts.models.registration_request import RegistrationRequest
-from app.modules.accounts.models.user import User
-from app.modules.accounts.models.user_profile import UserProfile
+from app.core.time import utc_now
 from app.modules.accounts.models.registration_request import (
     REGISTRATION_APPROVED,
     REGISTRATION_PENDING,
     REGISTRATION_REJECTED,
     REGISTRATION_STATUSES,
+    RegistrationRequest,
 )
-from app.modules.accounts.models.user import ROLE_USER
+from app.modules.accounts.models.user import ROLE_USER, User
+from app.modules.accounts.models.user_profile import UserProfile
 from app.modules.accounts.schemas.register_request import RegisterRequest
-from app.modules.permissions.services.role_service import assign_site_role
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
+from app.modules.permissions.services.role_service import assign_site_role
+
 
 logger = logging.getLogger("app.registration")
 
@@ -68,7 +68,14 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
     return request
 
 
-def list_registration_requests(db: Session, *, status: str | None = REGISTRATION_PENDING) -> list[RegistrationRequest]:
+def list_registration_requests(
+    db: Session,
+    *,
+    status: str | None = REGISTRATION_PENDING,
+    search: str | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
+) -> list[RegistrationRequest]:
     query = select(RegistrationRequest).options(
         selectinload(RegistrationRequest.reviewed_by),
         selectinload(RegistrationRequest.created_user),
@@ -77,6 +84,17 @@ def list_registration_requests(db: Session, *, status: str | None = REGISTRATION
         if status not in REGISTRATION_STATUSES:
             raise RegistrationRequestError("Invalid registration status.")
         query = query.where(RegistrationRequest.status == status)
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.where(or_(
+            RegistrationRequest.username.ilike(term),
+            RegistrationRequest.display_name.ilike(term),
+            RegistrationRequest.decision_note.ilike(term),
+        ))
+    if from_date:
+        query = query.where(RegistrationRequest.created_at >= datetime.combine(from_date, time.min))
+    if to_date:
+        query = query.where(RegistrationRequest.created_at < datetime.combine(to_date + timedelta(days=1), time.min))
     return list(db.scalars(query.order_by(RegistrationRequest.created_at.desc(), RegistrationRequest.id.desc())).all())
 
 
