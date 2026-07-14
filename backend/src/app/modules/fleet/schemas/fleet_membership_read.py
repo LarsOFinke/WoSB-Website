@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.modules.fleet.schemas.fleet_member_user_read import FleetMemberUserRead
+from app.modules.fleet.schemas.fleet_membership_management import FleetMembershipManagementRead
 
 class FleetMembershipRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -25,3 +26,4 @@ class FleetMembershipRead(BaseModel):
     joined_at: datetime
     updated_at: datetime
     user: FleetMemberUserRead
+    management: FleetMembershipManagementRead = Field(default_factory=FleetMembershipManagementRead)

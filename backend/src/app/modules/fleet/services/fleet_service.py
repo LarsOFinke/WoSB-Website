@@ -18,6 +18,7 @@ from app.modules.fleet.schemas.fleet_create import FleetCreate
 from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
 from app.modules.fleet.schemas.fleet_membership_update import FleetMembershipUpdate
 from app.modules.fleet.schemas.fleet_update import FleetUpdate
+from app.modules.fleet.services.fleet_management_policy import validate_membership_update
 from app.modules.permissions.models.role import FleetRoleDefinition
 from app.modules.permissions.services.role_service import assign_fleet_role_definition
 
@@ -234,17 +235,33 @@ def join_fleet(db: Session, user: User, payload: FleetJoinRequest) -> FleetMembe
     return existing
 
 
-def update_membership(db: Session, membership_id: int, payload: FleetMembershipUpdate) -> FleetMembership | None:
+def update_membership(
+    db: Session,
+    membership_id: int,
+    payload: FleetMembershipUpdate,
+    *,
+    actor: User,
+) -> FleetMembership | None:
     membership = db.get(FleetMembership, membership_id)
     if membership is None:
         return None
     data = payload.model_dump(exclude_unset=True)
+    changed_fields = set(data)
     role = data.pop("role", None)
     if role and role not in FLEET_ROLES:
         raise FleetValidationError("Invalid fleet role.")
     status = data.get("status")
     if status and status not in FLEET_MEMBER_STATUSES:
         raise FleetValidationError("Invalid membership status.")
+
+    validate_membership_update(
+        db,
+        actor=actor,
+        target=membership,
+        changed_fields=changed_fields,
+        requested_role=role,
+    )
+
     if role:
         assign_fleet_role_definition(db, membership, role)
     for field, value in data.items():

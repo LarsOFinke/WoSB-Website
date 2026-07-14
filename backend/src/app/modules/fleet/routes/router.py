@@ -4,16 +4,24 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_admin, require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.fleet.models.fleet_membership import FleetMembership
 from app.modules.fleet.schemas.fleet_create import FleetCreate
 from app.modules.fleet.schemas.fleet_detail import FleetDetail
 from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
+from app.modules.fleet.schemas.fleet_membership_management import FleetMembershipManagementRead
 from app.modules.fleet.schemas.fleet_membership_read import FleetMembershipRead
 from app.modules.fleet.schemas.fleet_membership_self_read import FleetMembershipSelfRead
 from app.modules.fleet.schemas.fleet_membership_update import FleetMembershipUpdate
 from app.modules.fleet.schemas.fleet_public import FleetPublicLeaderRead, FleetPublicRead
 from app.modules.fleet.schemas.fleet_read import FleetRead
 from app.modules.fleet.schemas.fleet_update import FleetUpdate
+from app.modules.fleet.services.fleet_management_policy import (
+    FleetManagementContext,
+    FleetMembershipPermissionError,
+    build_management_context,
+    membership_permissions,
+)
 from app.modules.fleet.services.fleet_service import (
     FleetValidationError,
     assign_fleet_role,
@@ -29,6 +37,35 @@ from app.modules.fleet.services.fleet_service import (
 )
 
 router = APIRouter(prefix="/fleets", tags=["fleets"])
+
+
+def _membership_read(
+    membership: FleetMembership,
+    context: FleetManagementContext | None = None,
+) -> FleetMembershipRead:
+    result = FleetMembershipRead.model_validate(membership)
+    if context is not None:
+        permissions = membership_permissions(context, membership)
+        result.management = FleetMembershipManagementRead(
+            can_edit_directory=permissions.can_edit_directory,
+            can_change_role=permissions.can_change_role,
+            can_change_status=permissions.can_change_status,
+            assignable_roles=list(permissions.assignable_roles),
+            protected=permissions.protected,
+            reason=permissions.reason,
+        )
+    return result
+
+
+def _fleet_detail_for_actor(
+    db: Session,
+    fleet,
+    actor: User,
+) -> FleetDetail:
+    result = FleetDetail.model_validate(fleet)
+    context = build_management_context(db, actor, fleet.id)
+    result.memberships = [_membership_read(row, context) for row in fleet.memberships]
+    return result
 
 
 @router.get("/public/official", response_model=FleetPublicRead)
@@ -130,7 +167,7 @@ def get_fleet_management_detail(
     fleet = get_fleet(db, fleet_id, include_members=True)
     if fleet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fleet not found.")
-    return FleetDetail.model_validate(fleet)
+    return _fleet_detail_for_actor(db, fleet, current_user)
 
 
 @router.put("/{fleet_id}", response_model=FleetRead)
@@ -165,12 +202,24 @@ def put_membership(
     if membership is None or membership.fleet_id != fleet_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found.")
     try:
-        updated = update_membership(db, membership_id, payload)
+        updated = update_membership(db, membership_id, payload, actor=current_user)
+    except FleetMembershipPermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except FleetValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found.")
-    return FleetMembershipRead.model_validate(updated)
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="fleet_membership",
+        entity_id=updated.id,
+        action="update",
+        summary=f"Updated fleet membership for {updated.user.display_name}.",
+        changed_fields=payload.model_fields_set,
+    )
+    context = build_management_context(db, current_user, fleet_id)
+    return _membership_read(updated, context)
 
 
 @router.post("/{fleet_id}/leaders/{user_id}", response_model=FleetMembershipRead)

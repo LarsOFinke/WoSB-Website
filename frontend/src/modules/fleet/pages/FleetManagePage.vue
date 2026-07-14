@@ -42,6 +42,7 @@ const filteredMembers = computed(() => {
     const haystack = [
       membership.user.display_name,
       membership.user.username,
+      membership.user.role,
       membership.note,
       membership.assignment,
       membership.availability,
@@ -55,6 +56,32 @@ const filteredMembers = computed(() => {
 })
 
 const activeDirectoryMembers = computed(() => filteredMembers.value.filter((membership) => membership.status === 'active'))
+const protectedMembers = computed(() => memberships.value.filter((membership) => managementFor(membership).protected))
+
+function managementFor(membership) {
+  return membership?.management || {
+    can_edit_directory: false,
+    can_change_role: false,
+    can_change_status: false,
+    assignable_roles: [],
+    protected: true,
+    reason: 'insufficient',
+  }
+}
+
+function roleOptionsFor(membership) {
+  return managementFor(membership).assignable_roles || []
+}
+
+function protectionLabel(membership) {
+  const reason = managementFor(membership).reason
+  return reason ? t(`fleets.manage.protectionReasons.${reason}`) : ''
+}
+
+function hasAnyMemberPermission(membership) {
+  const management = managementFor(membership)
+  return management.can_edit_directory || management.can_change_role || management.can_change_status
+}
 
 function syncForm() {
   form.description = selectedFleet.value?.description || ''
@@ -157,6 +184,22 @@ onMounted(loadFleetDetail)
             <MetricCard :label="t('fleets.manage.summary.directory')" :value="activeMembers.filter((member) => member.assignment || member.availability || member.preferred_ships).length" />
           </div>
 
+          <section class="fleet-hierarchy-policy" aria-labelledby="fleet-hierarchy-title">
+            <div class="fleet-hierarchy-policy-head">
+              <div>
+                <p class="eyebrow">{{ t('fleets.manage.hierarchy.eyebrow') }}</p>
+                <h2 id="fleet-hierarchy-title">{{ t('fleets.manage.hierarchy.title') }}</h2>
+                <p>{{ t('fleets.manage.hierarchy.hint') }}</p>
+              </div>
+              <span class="summary-pill fleet-protection-summary">{{ t('fleets.manage.hierarchy.protectedCount', { count: protectedMembers.length }) }}</span>
+            </div>
+            <div class="fleet-hierarchy-levels">
+              <article><span>01</span><strong>{{ t('fleets.manage.hierarchy.adminTitle') }}</strong><small>{{ t('fleets.manage.hierarchy.adminHint') }}</small></article>
+              <article><span>02</span><strong>{{ t('fleets.manage.hierarchy.commandTitle') }}</strong><small>{{ t('fleets.manage.hierarchy.commandHint') }}</small></article>
+              <article><span>03</span><strong>{{ t('fleets.manage.hierarchy.lieutenantTitle') }}</strong><small>{{ t('fleets.manage.hierarchy.lieutenantHint') }}</small></article>
+            </div>
+          </section>
+
           <div class="fleet-management-tabs workspace-tab-rail" role="tablist" :aria-label="t('fleets.manage.tabs.label')">
             <button
               v-for="tab in tabs"
@@ -209,6 +252,11 @@ onMounted(loadFleetDetail)
               <div class="admin-build-main">
                 <strong>{{ membership.user.display_name }}</strong>
                 <span>{{ membership.user.username }}</span>
+                <div class="member-pill-row">
+                  <span class="summary-pill">{{ t(`roles.${membership.user.role}`) }}</span>
+                  <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
+                  <span v-if="managementFor(membership).protected" class="summary-pill fleet-protected-pill">{{ t('fleets.manage.protectedRole') }}</span>
+                </div>
                 <div class="member-directory-meta">
                   <span v-if="membership.availability">{{ t('fleets.directory.availability') }}: {{ membership.availability }}</span>
                   <span v-if="membership.preferred_ships">{{ t('fleets.directory.preferredShips') }}: {{ membership.preferred_ships }}</span>
@@ -217,9 +265,15 @@ onMounted(loadFleetDetail)
                 </div>
                 <p v-if="membership.note" class="muted member-note">{{ membership.note }}</p>
               </div>
-              <div class="compact-actions">
-                <button class="small-action" type="button" @click="setMember(membership, { status: 'active' })">{{ t('fleets.manage.approve') }}</button>
-                <button class="danger-action" type="button" @click="setMember(membership, { status: 'inactive' })">{{ t('fleets.manage.reject') }}</button>
+              <div class="fleet-request-actions">
+                <div v-if="managementFor(membership).reason" class="fleet-protection-notice">
+                  <strong>{{ t('fleets.manage.protectedRole') }}</strong>
+                  <small>{{ protectionLabel(membership) }}</small>
+                </div>
+                <div v-if="managementFor(membership).can_change_status" class="compact-actions">
+                  <button class="small-action" type="button" @click="setMember(membership, { status: 'active' })">{{ t('fleets.manage.approve') }}</button>
+                  <button class="danger-action" type="button" @click="setMember(membership, { status: 'inactive' })">{{ t('fleets.manage.reject') }}</button>
+                </div>
               </div>
             </article>
           </section>
@@ -261,6 +315,8 @@ onMounted(loadFleetDetail)
                 <div class="member-pill-row">
                   <span class="summary-pill">{{ t(`fleets.status.${membership.status}`) }}</span>
                   <span class="summary-pill">{{ t(`fleets.roles.${membership.role}`) }}</span>
+                  <span v-if="membership.user.role !== 'user'" class="summary-pill fleet-site-role-pill">{{ t(`roles.${membership.user.role}`) }}</span>
+                  <span v-if="managementFor(membership).protected" class="summary-pill fleet-protected-pill">{{ t('fleets.manage.protectedRole') }}</span>
                   <span v-if="membership.assignment" class="summary-pill">{{ membership.assignment }}</span>
                 </div>
                 <div class="member-directory-meta">
@@ -273,18 +329,22 @@ onMounted(loadFleetDetail)
                 <p v-if="membership.admin_note" class="muted member-note internal-note">{{ t('fleets.directory.adminNote') }}: {{ membership.admin_note }}</p>
               </div>
 
-              <div class="member-admin-controls extended-directory-controls">
-                <label class="compact-select">
+              <div class="member-admin-controls extended-directory-controls" :class="{ 'is-read-only': !hasAnyMemberPermission(membership) }">
+                <div v-if="managementFor(membership).reason" class="fleet-protection-notice">
+                  <strong>{{ t('fleets.manage.protectedRole') }}</strong>
+                  <small>{{ protectionLabel(membership) }}</small>
+                </div>
+                <label v-if="managementFor(membership).can_change_role" class="compact-select">
                   <span>{{ t('fleets.manage.role') }}</span>
                   <select :value="membership.role" @change="setMember(membership, { role: $event.target.value })">
-                    <option v-for="role in FLEET_ROLES" :key="role" :value="role">{{ t(`fleets.roles.${role}`) }}</option>
+                    <option v-for="role in roleOptionsFor(membership)" :key="role" :value="role">{{ t(`fleets.roles.${role}`) }}</option>
                   </select>
                 </label>
-                <div class="directory-form-grid member-directory-edit-grid">
+                <div v-if="managementFor(membership).can_edit_directory" class="directory-form-grid member-directory-edit-grid">
                   <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.assignment') }}</span><input :value="membership.assignment || ''" maxlength="120" @change="setMember(membership, fieldPayload('assignment', $event))" /></label>
                   <label class="input-panel embedded-field compact-directory-field"><span>{{ t('fleets.directory.adminNote') }}</span><input :value="membership.admin_note || ''" maxlength="1200" @change="setMember(membership, fieldPayload('admin_note', $event))" /></label>
                 </div>
-                <div class="compact-actions">
+                <div v-if="managementFor(membership).can_change_status" class="compact-actions">
                   <button v-if="membership.status !== 'active'" class="small-action" type="button" @click="setMember(membership, { status: 'active' })">{{ t('fleets.manage.activate') }}</button>
                   <button v-if="membership.status !== 'inactive'" class="danger-action" type="button" @click="setMember(membership, { status: 'inactive' })">{{ t('fleets.manage.deactivate') }}</button>
                 </div>
