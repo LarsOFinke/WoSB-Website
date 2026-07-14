@@ -20,6 +20,7 @@ import { staffPanelMessages } from './staffPanel'
 import { systemOperationsMessages } from './systemOperations'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
+import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -47,6 +48,7 @@ const messageLayers = [
   systemOperationsMessages,
   securityAuditDashboardMessages,
   ipBlockManagementMessages,
+  outboundWebhookManagementMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

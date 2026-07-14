@@ -171,3 +171,47 @@ export function createIpBlock(payload) {
 export function unblockIpBlock(id, reason = '') {
   return post(`/admin/ip-blocks/${id}/unblock`, { reason: reason || null })
 }
+
+export function listOutboundWebhookEvents() {
+  return get('/admin/integrations/webhooks/events')
+}
+
+export function getOutboundWebhookSummary() {
+  return get('/admin/integrations/webhooks/summary')
+}
+
+export function listOutboundWebhooks() {
+  return get('/admin/integrations/webhooks')
+}
+
+export function createOutboundWebhook(payload) {
+  return post('/admin/integrations/webhooks', payload)
+}
+
+export function updateOutboundWebhook(id, payload) {
+  return put(`/admin/integrations/webhooks/${id}`, payload)
+}
+
+export function rotateOutboundWebhookSecret(id) {
+  return post(`/admin/integrations/webhooks/${id}/rotate-secret`, {})
+}
+
+export function testOutboundWebhook(id, eventType = 'integration.test') {
+  return post(`/admin/integrations/webhooks/${id}/test`, { event_type: eventType })
+}
+
+export function deleteOutboundWebhook(id) {
+  return deleteRequest(`/admin/integrations/webhooks/${id}`)
+}
+
+export function listOutboundWebhookDeliveries({ webhookId = '', status = '', limit = 100 } = {}) {
+  return get(withQuery('/admin/integrations/webhooks/deliveries/history', {
+    webhook_id: webhookId,
+    status,
+    limit,
+  }))
+}
+
+export function retryOutboundWebhookDelivery(id) {
+  return post(`/admin/integrations/webhooks/deliveries/${id}/retry`, {})
+}

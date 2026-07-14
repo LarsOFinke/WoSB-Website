@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_user
@@ -13,6 +13,7 @@ from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.forum.services.forum_service import (
     ForumValidationError,
     add_post,
@@ -39,6 +40,7 @@ def get_threads(
 @router.post("/threads", response_model=ForumThreadRead, status_code=status.HTTP_201_CREATED)
 def post_thread(
     payload: ForumThreadCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> ForumThreadRead:
@@ -51,6 +53,10 @@ def post_thread(
         summary=f'Forum thread “{thread.title}” created.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.thread.created", resource_type="forum_thread", resource_id=thread.id,
+        resource_url=f"/forum/{thread.id}", actor=current_user, data=thread,
+    ))
     return thread
 
 
@@ -70,6 +76,7 @@ def get_thread_detail(
 def put_thread(
     thread_id: int,
     payload: ForumThreadUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> ForumThreadRead:
@@ -84,6 +91,10 @@ def put_thread(
         summary=f'Forum thread “{thread.title}” updated.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.thread.updated", resource_type="forum_thread", resource_id=thread_id,
+        resource_url=f"/forum/{thread_id}", actor=current_user, data=thread,
+    ))
     return thread
 
 

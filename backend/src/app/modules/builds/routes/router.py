@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_user
@@ -10,6 +10,7 @@ from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.builds.services.build_service import (
     BuildValidationError,
     create_build,
@@ -36,6 +37,7 @@ def get_builds(
 @router.post("", response_model=BuildRead, status_code=status.HTTP_201_CREATED)
 def post_build(
     build: BuildCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> BuildRead:
@@ -48,6 +50,10 @@ def post_build(
         summary=f'Build “{created.build_name}” created.',
         changed_fields=list(build.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="build.created", resource_type="build", resource_id=created.id,
+        resource_url=f"/builds/{created.id}", actor=current_user, data=created,
+    ))
     return created
 
 
@@ -74,6 +80,7 @@ def get_my_builds(
 def put_my_build(
     build_id: int,
     build: BuildUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> BuildRead:
@@ -88,12 +95,17 @@ def put_my_build(
         summary=f'Build “{updated.build_name}” updated.',
         changed_fields=list(build.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="build.updated", resource_type="build", resource_id=build_id,
+        resource_url=f"/builds/{build_id}", actor=current_user, data=updated,
+    ))
     return updated
 
 
 @router.delete("/mine/{build_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_my_build(
     build_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> None:
@@ -105,6 +117,11 @@ def delete_my_build(
         db, actor=current_user, entity_type="build", entity_id=build_id, action="delete",
         summary=f'Build “{getattr(existing, "build_name", build_id)}” deleted.',
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="build.removed", resource_type="build", resource_id=build_id,
+        resource_url=f"/builds/{build_id}", actor=current_user,
+        data={"id": build_id, "build_name": getattr(existing, "build_name", str(build_id))},
+    ))
 
 
 @router.get("/{build_id}", response_model=BuildRead)

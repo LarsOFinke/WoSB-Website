@@ -46,6 +46,7 @@ from app.modules.admin.services.ip_block_service import (
 )
 from app.modules.admin.services.user_administration_service import UserAdministrationError, update_user_account
 from app.modules.admin.routes.master_data import router as master_data_router
+from app.modules.admin.routes.outbound_webhooks import router as outbound_webhooks_router
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -467,3 +468,4 @@ def admin_create_moderator(
 
 
 router.include_router(master_data_router)
+router.include_router(outbound_webhooks_router)

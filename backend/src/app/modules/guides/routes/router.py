@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_user
@@ -10,6 +10,7 @@ from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.guides.services.guide_service import (
     GuideValidationError,
     create_guide,
@@ -35,6 +36,7 @@ def get_guides(
 @router.post("", response_model=GuideRead, status_code=status.HTTP_201_CREATED)
 def post_guide(
     payload: GuideCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> GuideRead:
@@ -47,6 +49,10 @@ def post_guide(
         summary=f'Guide “{guide.title}” created.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="guide.created", resource_type="guide", resource_id=guide.id,
+        resource_url=f"/guides/{guide.id}", actor=current_user, data=guide,
+    ))
     return guide
 
 
@@ -66,6 +72,7 @@ def get_guide_detail(
 def put_guide(
     guide_id: int,
     payload: GuideUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> GuideRead:
@@ -80,12 +87,17 @@ def put_guide(
         summary=f'Guide “{guide.title}” updated.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="guide.updated", resource_type="guide", resource_id=guide_id,
+        resource_url=f"/guides/{guide_id}", actor=current_user, data=guide,
+    ))
     return guide
 
 
 @router.delete("/{guide_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_own_guide(
     guide_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> None:
@@ -96,3 +108,8 @@ def delete_own_guide(
         db, actor=current_user, entity_type="guide", entity_id=guide_id, action="delete",
         summary=f'Guide “{getattr(existing, "title", guide_id)}” deleted.',
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="guide.removed", resource_type="guide", resource_id=guide_id,
+        resource_url=f"/guides/{guide_id}", actor=current_user,
+        data={"id": guide_id, "title": getattr(existing, "title", str(guide_id))},
+    ))

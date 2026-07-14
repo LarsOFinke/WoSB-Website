@@ -7,6 +7,7 @@ import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPa
 import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboard.vue'
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
+import OutboundWebhookManagementPanel from '@/modules/admin/components/OutboundWebhookManagementPanel.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import {
@@ -468,6 +469,7 @@ onUnmounted(() => {
           <button class="tab-button" :class="{ 'is-active': activeTab === 'logs' }" type="button" @click="activeTab = 'logs'"><span><AppIcon name="activity" :size="17" />{{ t('admin.tabs.logs') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'ip-blocks' }" type="button" @click="activeTab = 'ip-blocks'"><span><AppIcon name="users" :size="17" />{{ t('admin.tabs.ipBlocks') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'audit' }" type="button" @click="activeTab = 'audit'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.audit') }}</span></button>
+          <button class="tab-button" :class="{ 'is-active': activeTab === 'integrations' }" type="button" @click="activeTab = 'integrations'"><span><AppIcon name="inbox" :size="17" />{{ t('admin.tabs.integrations') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'calendar' }" type="button" @click="activeTab = 'calendar'"><span><AppIcon name="calendar" :size="17" />{{ t('admin.tabs.calendar') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'content' }" type="button" @click="activeTab = 'content'"><span><AppIcon name="forum" :size="17" />{{ t('admin.tabs.content') }}</span></button>
           <button class="tab-button" :class="{ 'is-active': activeTab === 'builds' }" type="button" @click="activeTab = 'builds'"><span><AppIcon name="builds" :size="17" />{{ t('admin.tabs.builds') }}</span></button>
@@ -627,6 +629,10 @@ onUnmounted(() => {
 
         <section v-if="activeTab === 'audit'" class="wire-section admin-panel staff-management-panel">
           <AuditLogPanel />
+        </section>
+
+        <section v-if="activeTab === 'integrations'" class="wire-section admin-panel staff-management-panel">
+          <OutboundWebhookManagementPanel :can-manage="isAdmin" />
         </section>
 
         <section v-if="activeTab === 'calendar'" class="wire-section admin-panel staff-management-panel">
