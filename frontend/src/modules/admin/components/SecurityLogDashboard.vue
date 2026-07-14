@@ -32,7 +32,10 @@ const dashboard = ref({
 
 const threatLabel = computed(() => t(`admin.security.levels.${dashboard.value.threat_level || 'low'}`))
 const ipOptions = computed(() => dashboard.value.ips || [])
-const focusedIpRow = computed(() => ipOptions.value.find((row) => row.client_ip === selectedIp.value) || ipOptions.value[0] || null)
+const focusedIpRow = computed(() => {
+  if (!selectedIp.value) return null
+  return ipOptions.value.find((row) => row.client_ip === selectedIp.value) || null
+})
 
 function formatDate(value) {
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(`${value}T00:00:00`))
@@ -65,7 +68,6 @@ async function load() {
   }
 }
 
-watch(sort, load)
 watch(selectedIp, (value) => emit('select-ip', value))
 onMounted(load)
 </script>
@@ -117,131 +119,82 @@ onMounted(load)
         </article>
       </div>
 
-      <div class="security-inline-grid">
-        <section class="security-table-card security-day-card">
-          <div class="security-card-head">
-            <div>
-              <h4>{{ t('admin.security.byDay') }}</h4>
-              <p class="muted">{{ t('admin.security.from') }} {{ fromDate }} · {{ t('admin.security.to') }} {{ toDate }}</p>
-            </div>
+      <section class="security-table-card security-day-card security-full-width-card">
+        <div class="security-card-head security-card-head-with-controls">
+          <div>
+            <h4>{{ t('admin.security.byDay') }}</h4>
+            <p class="muted">{{ t('admin.security.subtitle') }}</p>
           </div>
-          <div class="responsive-table-shell">
-            <table class="security-table compact-security-table">
-              <thead>
-                <tr>
-                  <th>{{ t('admin.security.day') }}</th>
-                  <th>{{ t('admin.security.requests') }}</th>
-                  <th>IPs</th>
-                  <th>4xx</th>
-                  <th>5xx</th>
-                  <th>{{ t('admin.security.suspicious') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="day in dashboard.days" :key="day.day">
-                  <td>{{ formatDate(day.day) }}</td>
-                  <td>{{ day.total }}</td>
-                  <td>{{ day.unique_ips }}</td>
-                  <td>{{ day.status_4xx }}</td>
-                  <td>{{ day.status_5xx }}</td>
-                  <td>{{ day.suspicious }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="security-date-controls">
+            <label><span>{{ t('admin.security.from') }}</span><input v-model="fromDate" type="date" /></label>
+            <label><span>{{ t('admin.security.to') }}</span><input v-model="toDate" type="date" /></label>
+            <button class="small-action" type="button" :disabled="loading" @click="load">{{ t('admin.logs.refresh') }}</button>
           </div>
-        </section>
-
-        <section class="security-table-card security-ip-card">
-          <div class="security-ip-card-header">
-            <div>
-              <h4>{{ t('admin.security.selectedIp') }}</h4>
-              <p class="muted">Choose a client IP to focus the detailed system log view.</p>
-            </div>
-            <label class="security-ip-picker">
-              <span>{{ t('admin.security.selectedIp') }}</span>
-              <select v-model="selectedIp">
-                <option value="">{{ t('admin.security.allIps') }}</option>
-                <option v-for="row in ipOptions" :key="row.client_ip" :value="row.client_ip">{{ row.client_ip }} · {{ row.request_count }} {{ t('admin.security.requests').toLowerCase() }}</option>
-              </select>
-            </label>
-          </div>
-
-          <p v-if="dashboard.ips.length === 0" class="muted table-state">{{ t('admin.security.noIps') }}</p>
-          <template v-else>
-            <div v-if="focusedIpRow" class="security-ip-focus-card">
-              <div class="security-ip-focus-head">
-                <span class="threat-badge" :class="`threat-${focusedIpRow.threat_level}`">{{ focusedIpRow.threat_score }}</span>
-                <div class="security-ip-focus-copy">
-                  <strong>{{ focusedIpRow.client_ip }}</strong>
-                  <small>{{ t(`admin.security.levels.${focusedIpRow.threat_level}`) }} · {{ t('admin.security.lastSeen') }} {{ formatDateTime(focusedIpRow.last_seen) }}</small>
-                </div>
-              </div>
-              <div class="security-ip-metrics">
-                <div><span>{{ t('admin.security.requests') }}</span><strong>{{ focusedIpRow.request_count }}</strong></div>
-                <div><span>{{ t('admin.security.paths') }}</span><strong>{{ focusedIpRow.distinct_paths }}</strong></div>
-                <div><span>{{ t('admin.security.suspicious') }}</span><strong>{{ focusedIpRow.suspicious_hits }}</strong></div>
-                <div><span>4xx / 5xx</span><strong>{{ focusedIpRow.status_4xx }} / {{ focusedIpRow.status_5xx }}</strong></div>
-              </div>
-              <div class="security-path-pill-row">
-                <span v-for="path in focusedIpRow.top_paths" :key="path" class="security-path-pill">{{ path }}</span>
-              </div>
-            </div>
-          </template>
-        </section>
-      </div>
-    </article>
-
-    <article class="security-surface security-ip-overview-surface">
-      <div class="security-surface-head">
-        <div>
-          <h3>{{ t('admin.security.byIp') }}</h3>
-          <p>IP list sorted by threat score, activity and recent visibility.</p>
         </div>
-        <label class="security-toolbar-field">
-          <span>{{ t('admin.security.sort') }}</span>
-          <select v-model="sort">
-            <option value="threat">{{ t('admin.security.sortThreat') }}</option>
-            <option value="requests">{{ t('admin.security.sortRequests') }}</option>
-            <option value="last_seen">{{ t('admin.security.sortRecent') }}</option>
-            <option value="ip">{{ t('admin.security.sortIp') }}</option>
-          </select>
-        </label>
-      </div>
+        <div class="responsive-table-shell">
+          <table class="security-table compact-security-table">
+            <thead>
+              <tr>
+                <th>{{ t('admin.security.day') }}</th>
+                <th>{{ t('admin.security.requests') }}</th>
+                <th>IPs</th>
+                <th>4xx</th>
+                <th>5xx</th>
+                <th>{{ t('admin.security.suspicious') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="day in dashboard.days" :key="day.day">
+                <td>{{ formatDate(day.day) }}</td>
+                <td>{{ day.total }}</td>
+                <td>{{ day.unique_ips }}</td>
+                <td>{{ day.status_4xx }}</td>
+                <td>{{ day.status_5xx }}</td>
+                <td>{{ day.suspicious }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <p v-if="dashboard.ips.length === 0" class="muted table-state">{{ t('admin.security.noIps') }}</p>
-      <div v-else class="responsive-table-shell security-ip-overview-shell">
-        <table class="security-table compact-security-table">
-          <thead>
-            <tr>
-              <th>{{ t('admin.security.sortIp') }}</th>
-              <th>{{ t('admin.security.currentThreat') }}</th>
-              <th>{{ t('admin.security.requests') }}</th>
-              <th>{{ t('admin.security.suspicious') }}</th>
-              <th>4xx</th>
-              <th>5xx</th>
-              <th>{{ t('admin.security.lastSeen') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in ipOptions"
-              :key="row.client_ip"
-              :class="{ 'is-active': row.client_ip === (selectedIp || focusedIpRow?.client_ip) }"
-              @click="selectedIp = row.client_ip"
-            >
-              <td>{{ row.client_ip }}</td>
-              <td>{{ t(`admin.security.levels.${row.threat_level}`) }} ({{ row.threat_score }})</td>
-              <td>{{ row.request_count }}</td>
-              <td>{{ row.suspicious_hits }}</td>
-              <td>{{ row.status_4xx }}</td>
-              <td>{{ row.status_5xx }}</td>
-              <td>{{ formatDateTime(row.last_seen) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section class="security-table-card security-ip-card security-full-width-card">
+        <div class="security-ip-card-header">
+          <div>
+            <h4>{{ t('admin.security.byIp') }}</h4>
+            <p class="muted">{{ t('admin.security.methodNote') }}</p>
+          </div>
+          <label class="security-ip-picker">
+            <span>{{ t('admin.security.byIp') }}</span>
+            <select v-model="selectedIp">
+              <option value="">{{ t('admin.security.allIps') }}</option>
+              <option v-for="row in ipOptions" :key="row.client_ip" :value="row.client_ip">
+                {{ row.client_ip }} · {{ t(`admin.security.levels.${row.threat_level}`) }} {{ row.threat_score }}/100 · {{ row.request_count }} {{ t('admin.security.requests').toLowerCase() }}
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <p v-if="dashboard.ips.length === 0" class="muted table-state">{{ t('admin.security.noIps') }}</p>
+        <div v-else-if="focusedIpRow" class="security-ip-focus-card security-ip-focus-card-compact">
+          <div class="security-ip-focus-head">
+            <span class="threat-badge" :class="`threat-${focusedIpRow.threat_level}`">{{ focusedIpRow.threat_score }}</span>
+            <div class="security-ip-focus-copy">
+              <strong>{{ focusedIpRow.client_ip }}</strong>
+              <small>{{ t(`admin.security.levels.${focusedIpRow.threat_level}`) }} · {{ t('admin.security.lastSeen') }} {{ formatDateTime(focusedIpRow.last_seen) }}</small>
+            </div>
+          </div>
+          <div class="security-ip-metrics">
+            <div><span>{{ t('admin.security.requests') }}</span><strong>{{ focusedIpRow.request_count }}</strong></div>
+            <div><span>{{ t('admin.security.paths') }}</span><strong>{{ focusedIpRow.distinct_paths }}</strong></div>
+            <div><span>{{ t('admin.security.suspicious') }}</span><strong>{{ focusedIpRow.suspicious_hits }}</strong></div>
+            <div><span>4xx / 5xx</span><strong>{{ focusedIpRow.status_4xx }} / {{ focusedIpRow.status_5xx }}</strong></div>
+          </div>
+          <div class="security-path-pill-row">
+            <span v-for="path in focusedIpRow.top_paths" :key="path" class="security-path-pill">{{ path }}</span>
+          </div>
+        </div>
+        <p v-else class="muted security-ip-empty-focus">{{ t('admin.security.allIps') }} · {{ dashboard.unique_ips }} {{ t('admin.security.uniqueIps').toLowerCase() }}</p>
+      </section>
     </article>
-
-    <p class="muted security-method-note">{{ t('admin.security.methodNote') }}</p>
   </section>
 </template>

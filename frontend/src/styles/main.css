@@ -1243,9 +1243,9 @@ input[type='range'] {
 }
 
 .detail-icon-cell img {
-  opacity: 0.92;
-  object-fit: contain;
-  padding: 0.24rem;
+  opacity: 0.96;
+  object-fit: cover;
+  padding: 0;
 }
 
 .build-visual-list {
@@ -1320,8 +1320,13 @@ input[type='range'] {
 }
 
 .build-command-deck.is-detail .ship-catalog-image {
-  object-fit: contain;
-  padding: 0.85rem;
+  width: 108%;
+  height: 108%;
+  min-height: 0;
+  object-fit: cover;
+  object-position: center 62%;
+  padding: 0;
+  transform: scale(1.04);
 }
 
 .guide-summary {
@@ -8554,12 +8559,45 @@ body {
   min-height: 2.8rem;
 }
 
-.security-inline-grid,
 .security-dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   align-items: start;
+}
+
+.security-overview-surface {
+  gap: 0.85rem;
+}
+
+.security-full-width-card {
+  width: 100%;
+}
+
+.security-card-head-with-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.security-date-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.security-date-controls label {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 9.5rem;
+  color: var(--text-muted, #b8c4d2);
+  font-size: 0.76rem;
+}
+
+.security-date-controls input {
+  min-height: 2.65rem;
 }
 
 .security-filter-row,
@@ -8587,9 +8625,9 @@ body {
 
 .security-metric-grid > article {
   display: grid;
-  gap: 0.25rem;
-  min-height: 6.6rem;
-  padding: 1rem;
+  gap: 0.22rem;
+  min-height: 5.6rem;
+  padding: 0.82rem 0.9rem;
   border: 1px solid rgba(221, 231, 244, 0.12);
   border-radius: 1rem;
   background: rgba(18, 33, 49, 0.72);
@@ -8651,6 +8689,23 @@ body {
   border: 1px solid rgba(221, 231, 244, 0.1);
   border-radius: 1rem;
   background: rgba(8, 17, 27, 0.55);
+}
+
+.security-ip-focus-card-compact {
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.3fr);
+  align-items: center;
+  padding: 0.8rem;
+}
+
+.security-ip-focus-card-compact .security-path-pill-row {
+  grid-column: 1 / -1;
+}
+
+.security-ip-empty-focus {
+  padding: 0.75rem 0.85rem;
+  border: 1px dashed rgba(221, 231, 244, 0.12);
+  border-radius: 0.9rem;
+  background: rgba(8, 17, 27, 0.35);
 }
 
 .security-ip-focus-head {
@@ -8872,9 +8927,16 @@ body {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .security-inline-grid,
   .security-dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .security-ip-focus-card-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .security-ip-focus-card-compact .security-path-pill-row {
+    grid-column: auto;
   }
 
   .security-ip-metrics {
@@ -8895,7 +8957,8 @@ body {
   .staff-log-surface-head,
   .security-surface-head,
   .security-dashboard-heading,
-  .security-ip-card-header {
+  .security-ip-card-header,
+  .security-card-head-with-controls {
     flex-direction: column;
     align-items: stretch;
   }
