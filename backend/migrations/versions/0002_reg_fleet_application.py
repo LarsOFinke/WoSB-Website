@@ -1,6 +1,6 @@
 """restore optional fleet application during registration
 
-Revision ID: 0002_registration_fleet_application
+Revision ID: 0002_reg_fleet_application
 Revises: 0001_baseline
 Create Date: 2026-07-15
 """
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision: str = "0002_registration_fleet_application"
+revision: str = "0002_reg_fleet_application"
 down_revision: Union[str, Sequence[str], None] = "0001_baseline"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

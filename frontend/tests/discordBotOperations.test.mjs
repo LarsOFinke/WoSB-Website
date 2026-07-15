@@ -25,7 +25,9 @@ test('Discord bot runtime configuration is sent through a dedicated administrato
   assert.ok(botPanel.includes('@submit.prevent="saveConfiguration"'))
   assert.ok(botPanel.includes('configurationForm.discord_bot_token'))
   assert.ok(botPanel.includes('configurationForm.webhook_secret'))
-  assert.ok(botPanel.includes('configurationForm.events_channel_id'))
+  assert.ok(!botPanel.includes('channel_id'))
+  assert.ok(botSetupPage.includes("activeArea === 'bot'"))
+  assert.ok(botSetupPage.includes("activeArea === 'webhooks'"))
   assert.ok(botPanel.includes('configurationForm.restart_after_save'))
 })
 

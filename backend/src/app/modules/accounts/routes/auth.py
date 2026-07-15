@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -20,6 +20,10 @@ from app.modules.accounts.services.auth_service import (
     delete_session_by_token,
 )
 from app.modules.accounts.services.registration_service import RegistrationRequestError, submit_registration_request
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -41,11 +45,32 @@ def _clear_session_cookie(response: Response) -> None:
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_202_ACCEPTED)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> RegisterResponse:
+def register(
+    payload: RegisterRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> RegisterResponse:
     try:
         request = submit_registration_request(db, payload)
     except RegistrationRequestError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    delivery_ids = queue_webhook_event_safely(
+        db,
+        event_type="registration.request.created",
+        resource_type="registration_request",
+        resource_id=request.id,
+        resource_url="/admin?tab=registrations",
+        actor=None,
+        data={
+            "id": request.id,
+            "username": request.username,
+            "display_name": request.display_name,
+            "wants_fleet_membership": request.wants_fleet_membership,
+            "fleet_id": request.fleet_id,
+            "fleet_application_note": request.fleet_application_note,
+        },
+    )
+    schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegisterResponse(request=request)
 
 

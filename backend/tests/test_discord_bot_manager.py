@@ -84,13 +84,6 @@ def test_admin_can_queue_protected_discord_bot_runtime_configuration() -> None:
                 'discord_bot_token': 'discord-token-value-that-is-long-enough',
                 'webhook_secret': 'webhook-signing-secret-that-is-long-enough-123456',
                 'website_base_url': 'https://fleet.example',
-                'channels': {
-                    'events': '100000000000000001',
-                    'guides': '100000000000000002',
-                    'builds': '100000000000000003',
-                    'forum': '100000000000000004',
-                    'default': '100000000000000005',
-                },
                 'suppress_notifications': True,
                 'restart_after_save': True,
             },
@@ -100,7 +93,7 @@ def test_admin_can_queue_protected_discord_bot_runtime_configuration() -> None:
         request_payload = json.loads(request_file.read_text(encoding='utf-8'))
         assert request_payload['operation'] == 'configure'
         assert request_payload['configuration']['discord_bot_token'].startswith('discord-token')
-        assert request_payload['configuration']['channels']['events'] == '100000000000000001'
+        assert 'channels' not in request_payload['configuration']
         assert request_file.stat().st_mode & 0o777 == 0o600
         status_payload = json.loads((control_dir / 'discord-bot-status.json').read_text(encoding='utf-8'))
         assert 'discord-token-value' not in json.dumps(status_payload)
@@ -108,7 +101,7 @@ def test_admin_can_queue_protected_discord_bot_runtime_configuration() -> None:
     _cleanup()
 
 
-def test_discord_bot_configuration_rejects_invalid_channel_ids() -> None:
+def test_discord_bot_configuration_rejects_legacy_channel_mappings() -> None:
     control_dir = _cleanup()
     (control_dir / 'discord-bot-status.json').write_text(
         json.dumps({'state': 'idle', 'configured': True, 'installed': True, 'configuration': {}}),

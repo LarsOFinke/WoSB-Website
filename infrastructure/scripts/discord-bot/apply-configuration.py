@@ -79,33 +79,6 @@ def validate_website_base_url(configuration: dict[str, object]) -> str:
     return website_base_url
 
 
-def validate_channels(configuration: dict[str, object]) -> dict[str, str]:
-    channels = configuration.get("channels")
-    if not isinstance(channels, dict):
-        raise SystemExit("Channel mappings are required.")
-
-    clean_channels: dict[str, str] = {}
-    for raw_key, raw_channel_id in channels.items():
-        key = str(raw_key).strip().lower()
-        channel_id = str(raw_channel_id).strip()
-        valid_key = (
-            bool(key)
-            and key[0].isalpha()
-            and all(character in "abcdefghijklmnopqrstuvwxyz0123456789_-" for character in key)
-        )
-        if not valid_key:
-            raise SystemExit(f"Invalid channel key: {key!r}")
-        if not channel_id.isdigit() or not 15 <= len(channel_id) <= 22:
-            raise SystemExit(f"Invalid Discord channel ID for {key!r}.")
-        clean_channels[key] = channel_id
-
-    required_channels = {"events", "guides", "builds", "forum", "default"}
-    missing_channels = sorted(required_channels - set(clean_channels))
-    if missing_channels:
-        raise SystemExit("Missing channel mappings: " + ", ".join(missing_channels))
-    return clean_channels
-
-
 def resolve_secrets(
     configuration: dict[str, object], existing_env: dict[str, str]
 ) -> tuple[str, str, str]:
@@ -130,7 +103,6 @@ def build_bot_config(
     configuration: dict[str, object],
     source_path: Path,
     website_base_url: str,
-    channels: dict[str, str],
 ) -> BotConfig:
     raw_config = yaml.safe_load(source_path.read_text(encoding="utf-8")) or {}
     raw_config.setdefault("server", {})
@@ -143,7 +115,6 @@ def build_bot_config(
     )
     raw_config["security"]["management_token_header"] = "X-RBF-Bot-Token"
     raw_config["website"] = {"base_url": website_base_url}
-    raw_config["channels"] = channels
     raw_config.setdefault("discord", {})
     raw_config["discord"]["api_base_url"] = "https://discord.com/api/v10"
     raw_config["discord"]["request_timeout_seconds"] = float(
@@ -167,11 +138,9 @@ def main() -> None:
     existing_env = parse_env(env_path)
     discord_token, webhook_secret, management_token = resolve_secrets(configuration, existing_env)
     website_base_url = validate_website_base_url(configuration)
-    channels = validate_channels(configuration)
-
     example_path = install_dir / "config" / "bot.yaml.example"
     source_path = config_path if config_path.is_file() else example_path
-    validated = build_bot_config(configuration, source_path, website_base_url, channels)
+    validated = build_bot_config(configuration, source_path, website_base_url)
 
     config_content = yaml.safe_dump(
         validated.model_dump(mode="json"), sort_keys=False, allow_unicode=True
@@ -199,7 +168,6 @@ def main() -> None:
         "webhook_secret_configured": True,
         "management_token_configured": True,
         "website_base_url": website_base_url,
-        "channels": channels,
         "suppress_notifications": validated.discord.suppress_notifications,
         "timestamp_tolerance_seconds": validated.security.timestamp_tolerance_seconds,
         "request_timeout_seconds": validated.discord.request_timeout_seconds,

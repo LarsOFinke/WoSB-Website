@@ -96,7 +96,7 @@ def admin_configure_discord_bot(
         action="update",
         summary="Discord bot runtime configuration queued for host application.",
         changed_fields=(
-            ["website_base_url", "channels", "suppress_notifications"]
+            ["website_base_url", "suppress_notifications"]
             + (["discord_bot_token"] if payload.discord_bot_token else [])
             + (["webhook_secret"] if payload.webhook_secret else [])
         ),

@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_staff
@@ -15,6 +15,10 @@ from app.modules.accounts.services.registration_service import (
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
 from app.modules.admin.schemas.registration_request_read import RegistrationRequestRead
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
 
 router = APIRouter(prefix="/registration-requests", tags=["admin-registrations"])
 
@@ -47,6 +51,7 @@ def admin_list_registration_requests(
 def admin_approve_registration_request(
     request_id: int,
     payload: RegistrationDecision,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> RegistrationRequestRead:
@@ -70,6 +75,22 @@ def admin_approve_registration_request(
             "fleet_membership",
         ],
     )
+    delivery_ids = queue_webhook_event_safely(
+        db,
+        event_type="registration.request.approved",
+        resource_type="registration_request",
+        resource_id=request.id,
+        resource_url="/admin?tab=registrations",
+        actor=current_user,
+        data={
+            "id": request.id,
+            "username": request.username,
+            "display_name": request.display_name,
+            "wants_fleet_membership": request.wants_fleet_membership,
+            "decision_note": request.decision_note,
+        },
+    )
+    schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegistrationRequestRead.model_validate(request)
 
 
@@ -77,6 +98,7 @@ def admin_approve_registration_request(
 def admin_reject_registration_request(
     request_id: int,
     payload: RegistrationDecision,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> RegistrationRequestRead:
@@ -93,4 +115,19 @@ def admin_reject_registration_request(
         summary=f'Access request for “{request.username}” rejected.',
         changed_fields=["status", "decision_note", "reviewed_by_id", "reviewed_at"],
     )
+    delivery_ids = queue_webhook_event_safely(
+        db,
+        event_type="registration.request.rejected",
+        resource_type="registration_request",
+        resource_id=request.id,
+        resource_url="/admin?tab=registrations",
+        actor=current_user,
+        data={
+            "id": request.id,
+            "username": request.username,
+            "display_name": request.display_name,
+            "decision_note": request.decision_note,
+        },
+    )
+    schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegistrationRequestRead.model_validate(request)

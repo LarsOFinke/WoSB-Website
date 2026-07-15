@@ -3,26 +3,39 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 WebhookDeliveryStatus = Literal["queued", "success", "failed"]
+WebhookDeliveryMode = Literal["signed_json", "discord"]
+WebhookScopeType = Literal["global", "fleet", "squad"]
 
 
-class OutboundWebhookCreate(BaseModel):
+class OutboundWebhookInput(BaseModel):
     name: str = Field(min_length=3, max_length=120)
-    endpoint_url: str = Field(min_length=8, max_length=1000)
-    event_types: list[str] = Field(min_length=1, max_length=32)
+    endpoint_url: str | None = Field(default=None, min_length=8, max_length=1000)
+    event_types: list[str] = Field(min_length=1, max_length=64)
+    delivery_mode: WebhookDeliveryMode = "signed_json"
+    scope_type: WebhookScopeType = "global"
+    scope_id: int | None = Field(default=None, ge=1)
     channel_key: str | None = Field(default=None, max_length=120)
     message_template: str | None = Field(default=None, max_length=4000)
+    discord_username: str | None = Field(default=None, max_length=80)
+    discord_avatar_url: str | None = Field(default=None, max_length=1000)
     is_active: bool = True
 
-    @field_validator("name", "endpoint_url")
+    @field_validator("name")
     @classmethod
     def strip_required(cls, value: str) -> str:
         return value.strip()
 
-    @field_validator("channel_key", "message_template")
+    @field_validator("endpoint_url")
+    @classmethod
+    def strip_endpoint(cls, value: str | None) -> str | None:
+        return value.strip() if isinstance(value, str) else None
+
+    @field_validator(
+        "channel_key", "message_template", "discord_username", "discord_avatar_url"
+    )
     @classmethod
     def strip_optional(cls, value: str | None) -> str | None:
         if value is None:
@@ -35,32 +48,24 @@ class OutboundWebhookCreate(BaseModel):
     def normalize_events(cls, value: list[str]) -> list[str]:
         return sorted({item.strip() for item in value if item.strip()})
 
+    @model_validator(mode="after")
+    def validate_scope(self) -> "OutboundWebhookInput":
+        if self.scope_type == "global":
+            self.scope_id = None
+        elif self.scope_id is None:
+            raise ValueError("A fleet or squad scope requires a scope ID.")
+        if self.delivery_mode != "discord":
+            self.discord_username = None
+            self.discord_avatar_url = None
+        return self
 
-class OutboundWebhookUpdate(BaseModel):
-    name: str = Field(min_length=3, max_length=120)
+
+class OutboundWebhookCreate(OutboundWebhookInput):
     endpoint_url: str = Field(min_length=8, max_length=1000)
-    event_types: list[str] = Field(min_length=1, max_length=32)
-    channel_key: str | None = Field(default=None, max_length=120)
-    message_template: str | None = Field(default=None, max_length=4000)
-    is_active: bool = True
 
-    @field_validator("name", "endpoint_url")
-    @classmethod
-    def strip_required(cls, value: str) -> str:
-        return value.strip()
 
-    @field_validator("channel_key", "message_template")
-    @classmethod
-    def strip_optional(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        stripped = value.strip()
-        return stripped or None
-
-    @field_validator("event_types")
-    @classmethod
-    def normalize_events(cls, value: list[str]) -> list[str]:
-        return sorted({item.strip() for item in value if item.strip()})
+class OutboundWebhookUpdate(OutboundWebhookInput):
+    pass
 
 
 class OutboundWebhookRead(BaseModel):
@@ -70,8 +75,13 @@ class OutboundWebhookRead(BaseModel):
     name: str
     endpoint_url: str
     event_types: list[str]
+    delivery_mode: WebhookDeliveryMode
+    scope_type: WebhookScopeType
+    scope_id: int | None = None
     channel_key: str | None = None
     message_template: str | None = None
+    discord_username: str | None = None
+    discord_avatar_url: str | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -88,6 +98,7 @@ class OutboundWebhookDeliveryRead(BaseModel):
     id: int
     webhook_id: int
     webhook_name: str
+    delivery_mode: WebhookDeliveryMode = "signed_json"
     delivery_id: str
     event_type: str
     resource_type: str
@@ -110,11 +121,14 @@ class OutboundWebhookEventCatalogItem(BaseModel):
     key: str
     group: str
     description: str
+    default_template: str
 
 
 class OutboundWebhookSummary(BaseModel):
     total: int = 0
     active: int = 0
     failing: int = 0
+    discord: int = 0
+    signed_json: int = 0
     successful_deliveries: int = 0
     failed_deliveries: int = 0

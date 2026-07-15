@@ -26,6 +26,10 @@ class WebhookEnvelopeFactory:
         data: Any,
         actor: User | None,
         resource_url: str | None,
+        scope_type: str = "global",
+        scope_id: int | None = None,
+        fleet_id: int | None = None,
+        squad_id: int | None = None,
     ) -> tuple[str, dict[str, Any]]:
         delivery_id = uuid4().hex
         return delivery_id, {
@@ -34,8 +38,17 @@ class WebhookEnvelopeFactory:
             "occurred_at": utc_now().isoformat(),
             "source": self.SOURCE,
             "destination": {
+                "mode": subscription.delivery_mode,
                 "channel_key": subscription.channel_key,
                 "message_template": subscription.message_template,
+                "scope_type": subscription.scope_type,
+                "scope_id": subscription.scope_id,
+            },
+            "scope": {
+                "type": scope_type,
+                "id": scope_id,
+                "fleet_id": fleet_id,
+                "squad_id": squad_id,
             },
             "actor": self._actor(actor),
             "resource": {

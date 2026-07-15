@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.modules.fleet.schemas.constants import FLEET_ROLE_VALUES, FLEET_STATUS_VALUES
+from app.modules.fleet.schemas.constants import FLEET_STATUS_VALUES
 
 class FleetMembershipUpdate(BaseModel):
     role: str | None = Field(default=None, max_length=40)
@@ -15,8 +15,8 @@ class FleetMembershipUpdate(BaseModel):
     @model_validator(mode="after")
     def normalize(self) -> "FleetMembershipUpdate":
         if isinstance(self.role, str):
-            self.role = self.role.strip()
-            if self.role not in FLEET_ROLE_VALUES:
+            self.role = self.role.strip().lower()
+            if not self.role:
                 raise ValueError("Invalid fleet role.")
         if isinstance(self.status, str):
             self.status = self.status.strip()

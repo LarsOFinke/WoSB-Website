@@ -29,11 +29,6 @@ const configurationForm = reactive({
   discord_bot_token: '',
   webhook_secret: '',
   website_base_url: '',
-  events_channel_id: '',
-  guides_channel_id: '',
-  builds_channel_id: '',
-  forum_channel_id: '',
-  default_channel_id: '',
   suppress_notifications: false,
   timestamp_tolerance_seconds: 300,
   request_timeout_seconds: 15,
@@ -52,14 +47,6 @@ const webhookEndpoint = computed(() => {
 const canSaveConfiguration = computed(() => {
   if (!bot.value.installed || inProgress.value || configurationSaving.value || !bot.value.request_available) return false
   if (!configurationForm.website_base_url.trim()) return false
-  const channels = [
-    configurationForm.events_channel_id,
-    configurationForm.guides_channel_id,
-    configurationForm.builds_channel_id,
-    configurationForm.forum_channel_id,
-    configurationForm.default_channel_id,
-  ]
-  if (channels.some((value) => !/^\d{15,22}$/.test(String(value || '').trim()))) return false
   if (!config.value.discord_token_configured && configurationForm.discord_bot_token.trim().length < 20) return false
   if (!config.value.webhook_secret_configured && configurationForm.webhook_secret.trim().length < 32) return false
   return true
@@ -73,13 +60,7 @@ function formatDateTime(value) {
 function applyConfigurationStatus() {
   if (configurationInitialized.value) return
   const current = bot.value.configuration || {}
-  const channels = current.channels || {}
   configurationForm.website_base_url = current.website_base_url || (typeof window !== 'undefined' ? window.location.origin : '')
-  configurationForm.events_channel_id = channels.events || ''
-  configurationForm.guides_channel_id = channels.guides || ''
-  configurationForm.builds_channel_id = channels.builds || ''
-  configurationForm.forum_channel_id = channels.forum || ''
-  configurationForm.default_channel_id = channels.default || ''
   configurationForm.suppress_notifications = Boolean(current.suppress_notifications)
   configurationForm.timestamp_tolerance_seconds = Number(current.timestamp_tolerance_seconds || 300)
   configurationForm.request_timeout_seconds = Number(current.request_timeout_seconds || 15)
@@ -136,13 +117,6 @@ async function saveConfiguration() {
   try {
     const payload = {
       website_base_url: configurationForm.website_base_url.trim().replace(/\/$/, ''),
-      channels: {
-        events: configurationForm.events_channel_id.trim(),
-        guides: configurationForm.guides_channel_id.trim(),
-        builds: configurationForm.builds_channel_id.trim(),
-        forum: configurationForm.forum_channel_id.trim(),
-        default: configurationForm.default_channel_id.trim(),
-      },
       suppress_notifications: configurationForm.suppress_notifications,
       timestamp_tolerance_seconds: Number(configurationForm.timestamp_tolerance_seconds),
       request_timeout_seconds: Number(configurationForm.request_timeout_seconds),
@@ -276,14 +250,6 @@ onUnmounted(() => window.clearTimeout(pollTimer))
           <input v-model="configurationForm.website_base_url" type="url" required />
           <small>{{ t('admin.system.discordBot.configuration.endpointPreview') }}: <code>{{ webhookEndpoint }}</code></small>
         </label>
-      </div>
-
-      <div class="discord-bot-channel-grid">
-        <label class="input-panel embedded-field"><span>{{ t('admin.system.discordBot.configuration.channels.events') }}</span><input v-model="configurationForm.events_channel_id" inputmode="numeric" required pattern="[0-9]{15,22}" /></label>
-        <label class="input-panel embedded-field"><span>{{ t('admin.system.discordBot.configuration.channels.guides') }}</span><input v-model="configurationForm.guides_channel_id" inputmode="numeric" required pattern="[0-9]{15,22}" /></label>
-        <label class="input-panel embedded-field"><span>{{ t('admin.system.discordBot.configuration.channels.builds') }}</span><input v-model="configurationForm.builds_channel_id" inputmode="numeric" required pattern="[0-9]{15,22}" /></label>
-        <label class="input-panel embedded-field"><span>{{ t('admin.system.discordBot.configuration.channels.forum') }}</span><input v-model="configurationForm.forum_channel_id" inputmode="numeric" required pattern="[0-9]{15,22}" /></label>
-        <label class="input-panel embedded-field"><span>{{ t('admin.system.discordBot.configuration.channels.default') }}</span><input v-model="configurationForm.default_channel_id" inputmode="numeric" required pattern="[0-9]{15,22}" /></label>
       </div>
 
       <details class="discord-bot-advanced-config">

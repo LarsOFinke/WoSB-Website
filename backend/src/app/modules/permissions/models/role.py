@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from app.core.time import utc_now
-
 from datetime import datetime
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.time import utc_now
 from app.db.base import Base
 
 
@@ -36,9 +35,16 @@ class FleetRoleDefinition(Base):
     is_leadership: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     can_manage_fleet: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     can_manage_members: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_system: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now
+    )
 
-    memberships: Mapped[list["FleetMembership"]] = relationship("FleetMembership", back_populates="fleet_role")
+    memberships: Mapped[list["FleetMembership"]] = relationship(
+        "FleetMembership", back_populates="fleet_role"
+    )
 
 
 class SquadRoleDefinition(Base):

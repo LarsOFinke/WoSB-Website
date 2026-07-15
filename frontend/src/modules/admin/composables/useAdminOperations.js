@@ -1,11 +1,10 @@
 import { ref } from 'vue'
 
-import { getAdminLogSummary, getIpBlockSummary, getOutboundWebhookSummary } from '@/modules/admin/api/admin'
+import { getAdminLogSummary, getIpBlockSummary } from '@/modules/admin/api/admin'
 
 export function useAdminOperations({ isAdmin, activeTab, t, logs }) {
   const ipBlockPrefill = ref('')
   const ipBlockOverview = ref({ total: 0, active: 0, permanent: 0, temporary: 0, expired: 0, unblocked: 0 })
-  const webhookOverview = ref({ total: 0, active: 0, failing: 0, successful_deliveries: 0, failed_deliveries: 0 })
   const apiStatus = ref(t('admin.status.loading'))
   const apiStatusDetail = ref(t('admin.status.loadingDetail'))
 
@@ -30,14 +29,12 @@ export function useAdminOperations({ isAdmin, activeTab, t, logs }) {
   async function loadAdminOverviewMetrics() {
     if (!isAdmin.value) return
     try {
-      const [logRows, blocks, webhooks] = await Promise.all([
+      const [logRows, blocks] = await Promise.all([
         getAdminLogSummary({ fromDate: logs.logFromDate.value, toDate: logs.logToDate.value }),
         getIpBlockSummary(),
-        getOutboundWebhookSummary(),
       ])
       logs.logSummary.value = logRows
       ipBlockOverview.value = blocks
-      webhookOverview.value = webhooks
     } catch (err) {
       logs.logsError.value = err.message || t('admin.workspace.overviewLoadError')
     }
@@ -50,7 +47,7 @@ export function useAdminOperations({ isAdmin, activeTab, t, logs }) {
   }
 
   return {
-    ipBlockPrefill, ipBlockOverview, webhookOverview, apiStatus, apiStatusDetail,
+    ipBlockPrefill, ipBlockOverview, apiStatus, apiStatusDetail,
     loadStatus, loadAdminOverviewMetrics, openIpBlockManager,
   }
 }

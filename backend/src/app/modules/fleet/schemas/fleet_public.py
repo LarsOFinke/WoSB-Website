@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class FleetPublicLeaderRead(BaseModel):
     display_name: str
     role: str
+    role_label: str
 
 
 class FleetPublicRead(BaseModel):

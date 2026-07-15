@@ -170,6 +170,8 @@ def test_bot_event_catalog_has_stable_route_family_for_every_domain_event() -> N
 
     route_families = {
         "integration.test": ("default", "test"),
+        "registration.request.": ("registrations", "registration_request"),
+        "squad.": ("squads", "squad"),
         "calendar.": ("events", "calendar_event"),
         "guide.": ("guides", "guide"),
         "newcomer_guide.": ("guides", "guide"),
@@ -178,3 +180,73 @@ def test_bot_event_catalog_has_stable_route_family_for_every_domain_event() -> N
     }
     for event_type, _, _ in EVENT_CATALOG:
         assert any(event_type == prefix or event_type.startswith(prefix) for prefix in route_families), event_type
+
+
+def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook
+    from app.modules.admin.services.outbound_webhook_delivery_service.service import WebhookDeliveryService
+
+    class CaptureTransport:
+        def __init__(self) -> None:
+            self.request = None
+
+        def send(self, request):
+            self.request = request
+            return 204, ""
+
+        @staticmethod
+        def error_message(endpoint_url, exc):
+            return str(exc)
+
+    with isolated_session() as db:
+        actor = create_user(
+            db,
+            username="discord-chat-admin",
+            password="BlackwaterDiscordChat123!",
+            display_name="Discord Chat Admin",
+            role=ROLE_ADMIN,
+        )
+        token = "discord-webhook-token-secret"
+        created = create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="Registration chat",
+                endpoint_url=f"https://discord.com/api/webhooks/123456789012345678/{token}",
+                event_types=["registration.request.created"],
+                delivery_mode="discord",
+                message_template="Neue Registrierung: {data.display_name}",
+                discord_username="RBF Hub",
+            ),
+            actor,
+        )
+        assert token not in created.endpoint_url
+        assert created.signing_secret is None
+        delivery_ids = queue_webhook_event(
+            db,
+            event_type="registration.request.created",
+            resource_type="registration_request",
+            resource_id=77,
+            actor=actor,
+            data={"display_name": "Test Captain", "username": "captain"},
+        )
+        delivery = db.get(OutboundWebhookDelivery, delivery_ids[0])
+        webhook = db.get(OutboundWebhook, delivery.webhook_id)
+        transport = CaptureTransport()
+        WebhookDeliveryService(transport=transport)._deliver(delivery, webhook)
+        payload = json.loads(transport.request.data.decode("utf-8"))
+        assert payload["content"] == "Neue Registrierung: Test Captain"
+        assert payload["username"] == "RBF Hub"
+        assert "X-rbf-signature" not in {key.lower() for key, _ in transport.request.header_items()}
+        assert delivery.status == "success"
+
+
+def test_webhook_scope_matching_supports_fleet_and_squad_destinations() -> None:
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook
+    from app.modules.admin.services.outbound_webhook_delivery_service.service import WebhookDeliveryService
+
+    fleet_hook = OutboundWebhook(scope_type="fleet", scope_id=12)
+    squad_hook = OutboundWebhook(scope_type="squad", scope_id=34)
+    assert WebhookDeliveryService._matches_scope(fleet_hook, {"fleet_id": 12})
+    assert not WebhookDeliveryService._matches_scope(fleet_hook, {"fleet_id": 13})
+    assert WebhookDeliveryService._matches_scope(squad_hook, {"squad_id": 34, "fleet_id": 12})
+    assert not WebhookDeliveryService._matches_scope(squad_hook, {"squad_id": 35})

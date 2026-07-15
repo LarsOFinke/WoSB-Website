@@ -4,7 +4,6 @@ import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
-import OutboundWebhookManagementPanel from '@/modules/admin/components/OutboundWebhookManagementPanel.vue'
 import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboard.vue'
 import StaffOverviewPanel from '@/modules/admin/components/StaffOverviewPanel.vue'
 import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
@@ -13,7 +12,7 @@ import { useAdminWorkspace } from '@/modules/admin/composables/useAdminWorkspace
 const {
   locale, t, isAdmin, isStaff, sessionState, user, activeTab, tabGroups,
   builds, users, fleetEvents, forumThreads, guides, groups, registrationRequests, appLogs,
-  ipBlockPrefill, logSummary, ipBlockOverview, webhookOverview, overviewLoading,
+  ipBlockPrefill, logSummary, ipBlockOverview, overviewLoading,
   search, contentSearch, calendarCategory, registrationStatus, registrationSearch,
   registrationFromDate, registrationToDate, calendarSearch, calendarFromDate, calendarToDate,
   contentScope, contentOwner, buildType, buildRate, buildVisibility, userSearch, userRole,
@@ -123,7 +122,6 @@ const {
             :users="users.length"
             :log-summary="logSummary"
             :ip-block-summary="ipBlockOverview"
-            :webhook-summary="webhookOverview"
             :next-event="nextOverviewEvent"
             :oldest-pending-request="oldestPendingRequest"
             @navigate="navigateToTab"
@@ -140,7 +138,6 @@ const {
             <MetricCard :label="t('admin.logs.errors')" :value="logSummary.errors" :hint="t('admin.logs.errorHint')" tone="danger" />
             <MetricCard :label="t('admin.logs.slowRequests')" :value="logSummary.slow_requests" :hint="t('admin.logs.slowHint')" />
             <MetricCard :label="t('admin.workspace.cards.ipBlocks')" :value="ipBlockOverview.active" :hint="t('admin.workspace.cards.ipBlocksHint')" />
-            <MetricCard :label="t('admin.workspace.cards.integrations')" :value="webhookOverview.active" :hint="t('admin.workspace.cards.integrationsHint', { failing: webhookOverview.failing })" :tone="webhookOverview.failing ? 'danger' : ''" />
           </div>
         </section>
 
@@ -300,29 +297,6 @@ const {
 
         <section v-if="activeTab === 'audit' && isAdmin" class="wire-section admin-panel staff-management-panel">
           <AuditLogPanel />
-        </section>
-
-        <section v-if="activeTab === 'integrations' && isAdmin" class="wire-section admin-panel staff-management-panel">
-          <div class="integration-context-grid">
-            <article>
-              <span class="command-deck-eyebrow">{{ t('admin.webhooks.eyebrow') }}</span>
-              <strong>{{ webhookOverview.active }} / {{ webhookOverview.total }}</strong>
-              <p>{{ t('admin.webhooks.subtitle') }}</p>
-              <small v-if="webhookOverview.failing" class="error-text">{{ t('admin.workspace.cards.integrationsHint', { failing: webhookOverview.failing }) }}</small>
-            </article>
-            <article>
-              <span class="command-deck-eyebrow">{{ t('admin.system.discordBot.eyebrow') }}</span>
-              <strong>{{ t('admin.system.discordBot.title') }}</strong>
-              <p>{{ t('admin.system.discordBot.subtitle') }}</p>
-              <button class="small-action" type="button" @click="navigateToTab('status')">{{ t('admin.tabs.status') }}</button>
-            </article>
-            <article class="is-private">
-              <span class="command-deck-eyebrow">{{ t('admin.workspace.adminGroup') }}</span>
-              <strong>{{ t('admin.workspace.adminScopeTitle') }}</strong>
-              <p>{{ t('admin.workspace.adminScopeText') }}</p>
-            </article>
-          </div>
-          <OutboundWebhookManagementPanel :can-manage="true" />
         </section>
 
         <section v-if="activeTab === 'calendar'" class="wire-section admin-panel staff-management-panel">

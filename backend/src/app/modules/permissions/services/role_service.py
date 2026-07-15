@@ -13,9 +13,36 @@ SITE_ROLE_CATALOG = (
     {"code": SiteRole.ADMIN.value, "label": "Administrator", "rank": 100, "is_staff": True, "can_manage_system": True},
 )
 FLEET_ROLE_CATALOG = (
-    {"code": FleetRole.MEMBER.value, "label": "Fleet Member", "rank": 10, "is_leadership": False, "can_manage_fleet": False, "can_manage_members": False},
-    {"code": FleetRole.LIEUTENANT.value, "label": "Fleet Lieutenant", "rank": 60, "is_leadership": True, "can_manage_fleet": True, "can_manage_members": True},
-    {"code": FleetRole.ADMIRAL.value, "label": "Fleet Admiral", "rank": 80, "is_leadership": True, "can_manage_fleet": True, "can_manage_members": True},
+    {
+        "code": FleetRole.MEMBER.value,
+        "label": "Fleet Member",
+        "rank": 10,
+        "is_leadership": False,
+        "can_manage_fleet": False,
+        "can_manage_members": False,
+        "is_system": True,
+        "is_active": True,
+    },
+    {
+        "code": FleetRole.LIEUTENANT.value,
+        "label": "Fleet Lieutenant",
+        "rank": 60,
+        "is_leadership": True,
+        "can_manage_fleet": True,
+        "can_manage_members": True,
+        "is_system": True,
+        "is_active": True,
+    },
+    {
+        "code": FleetRole.ADMIRAL.value,
+        "label": "Fleet Admiral",
+        "rank": 80,
+        "is_leadership": True,
+        "can_manage_fleet": True,
+        "can_manage_members": True,
+        "is_system": True,
+        "is_active": True,
+    },
 )
 SQUAD_ROLE_CATALOG = (
     {"code": "member", "label": "Squad Member", "rank": 10, "can_manage_roster": False, "can_manage_events": False},
@@ -53,8 +80,6 @@ def _get_or_create_role(db: Session, model, catalog: tuple[dict[str, object], ..
         raise ValueError(f"Unknown role: {code}")
     row = model(**payload)
     db.add(row)
-    # Flush only the lookup row. Pending memberships/users may still be
-    # waiting for this foreign key and must not be flushed prematurely.
     db.flush([row])
     return row
 
@@ -63,7 +88,12 @@ def get_site_role(db: Session, code: str) -> SiteRoleDefinition:
     return _get_or_create_role(db, SiteRoleDefinition, SITE_ROLE_CATALOG, code)
 
 
-def get_fleet_role(db: Session, code: str) -> FleetRoleDefinition:
+def get_fleet_role(db: Session, code: str, *, include_inactive: bool = False) -> FleetRoleDefinition:
+    row = db.scalar(select(FleetRoleDefinition).where(FleetRoleDefinition.code == code))
+    if row is not None:
+        if not row.is_active and not include_inactive:
+            raise ValueError(f"Inactive fleet role: {code}")
+        return row
     return _get_or_create_role(db, FleetRoleDefinition, FLEET_ROLE_CATALOG, code)
 
 

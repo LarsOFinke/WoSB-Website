@@ -29,3 +29,14 @@ TLS-Zugangsdaten.
 `setup.sh --regenerate-secrets` ist nur für eine noch nicht initialisierte Installation vorgesehen.
 Bei einer bestehenden PostgreSQL-Instanz werden Datenbankrolle, `.env` und abhängige Dienste in
 einem geplanten Wartungsfenster gemeinsam rotiert; ein bloßes Überschreiben der `.env` ist verboten.
+
+## Ausgehende Integrationen
+
+- Direkte Discord-Ziele akzeptieren ausschließlich offizielle HTTPS-Webhook-URLs von Discord.
+- Gespeicherte Discord-Webhook-Tokens werden in API-Antworten maskiert und nicht erneut offengelegt.
+- Allgemeine Webhooks blockieren lokale, private und reservierte Zieladressen; produktive Ziele
+  müssen HTTPS verwenden.
+- Signierte JSON-Webhooks verwenden pro Ziel ein eigenes Secret. Secrets nach einer möglichen
+  Offenlegung im Staff-Panel rotieren.
+- Flotten- und Squad-Scopes werden serverseitig ausgewertet; Clientangaben allein entscheiden nicht
+  über die Zustellung.

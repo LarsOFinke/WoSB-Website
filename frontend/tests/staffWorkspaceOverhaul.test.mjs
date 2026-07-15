@@ -25,7 +25,7 @@ test('audit history includes newly introduced administrative entity types', () =
 })
 
 test('integration management filters endpoints and delivery history', () => {
-  for (const binding of ['webhookSearch', 'webhookState', 'deliveryWebhook', 'deliveryStatus', 'deliveryEvent', 'deliveryFromDate', 'deliveryToDate']) {
+  for (const binding of ['webhookSearch', 'webhookState', 'deliveryWebhook', 'deliveryStatus', 'deliveryEvent', 'form.delivery_mode', 'form.scope_type']) {
     assert.ok(webhookSource.includes(`v-model="${binding}"`), binding)
   }
 })

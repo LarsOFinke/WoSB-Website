@@ -9,12 +9,13 @@ const logsSource = await readFile(new URL('../src/modules/admin/composables/useA
 const operationsSource = await readFile(new URL('../src/modules/admin/composables/useAdminOperations.js', import.meta.url), 'utf8')
 
 test('privacy-sensitive staff tabs are admin-only in navigation and content', () => {
-  assert.ok(workspaceSource.includes("const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'integrations', 'users'])"))
-  for (const tab of ['status', 'logs', 'ip-blocks', 'audit', 'integrations', 'users']) {
+  assert.ok(workspaceSource.includes("const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'users'])"))
+  for (const tab of ['status', 'logs', 'ip-blocks', 'audit', 'users']) {
     assert.match(workspaceSource, new RegExp(`key: '${tab}'.+adminOnly: true`))
     assert.ok(pageSource.includes(`activeTab === '${tab}' && isAdmin`))
   }
   assert.ok(workspaceSource.includes('tabs: group.tabs.filter((tab) => !tab.adminOnly || isAdmin.value)'))
+  assert.ok(!pageSource.includes("activeTab === 'integrations'"))
 })
 
 test('access review and shared work areas remain available to moderators', () => {

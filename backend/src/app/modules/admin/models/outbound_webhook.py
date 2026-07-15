@@ -19,11 +19,23 @@ class OutboundWebhook(Base):
     endpoint_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     signing_secret: Mapped[str] = mapped_column(String(160), nullable=False)
     event_types_json: Mapped[str] = mapped_column(Text, nullable=False)
+    delivery_mode: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="signed_json", index=True
+    )
+    scope_type: Mapped[str] = mapped_column(
+        String(24), nullable=False, default="global", index=True
+    )
+    scope_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # Legacy receiver hint kept for compatibility with existing signed consumers.
     channel_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     message_template: Mapped[str | None] = mapped_column(Text, nullable=True)
+    discord_username: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    discord_avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, index=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, onupdate=utc_now, index=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=utc_now, onupdate=utc_now, index=True
+    )
     created_by_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -63,4 +75,6 @@ class OutboundWebhookDelivery(Base):
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
 
-    webhook: Mapped[OutboundWebhook] = relationship("OutboundWebhook", back_populates="deliveries", lazy="joined")
+    webhook: Mapped[OutboundWebhook] = relationship(
+        "OutboundWebhook", back_populates="deliveries", lazy="joined"
+    )

@@ -11,7 +11,7 @@ import { useAdminRegistrations } from '@/modules/admin/composables/useAdminRegis
 import { useAdminUsers } from '@/modules/admin/composables/useAdminUsers'
 import { crewTotal } from '@/modules/admin/domain/adminWorkspace'
 
-const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'integrations', 'users'])
+const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'users'])
 
 export function useAdminWorkspace() {
   const { locale, t } = useLocale()
@@ -77,7 +77,6 @@ export function useAdminWorkspace() {
       key: 'administration',
       label: t('admin.workspace.navigation.administration'),
       tabs: [
-        { key: 'integrations', icon: 'spark', label: t('admin.tabs.integrations'), adminOnly: true },
         { key: 'users', icon: 'users', label: t('admin.tabs.users'), adminOnly: true },
       ],
     },

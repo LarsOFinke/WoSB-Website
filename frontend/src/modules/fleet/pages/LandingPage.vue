@@ -87,7 +87,7 @@ function memberRoute(path) {
             <div class="fleet-leadership-grid">
               <article v-for="leader in publicFleet.leaders" :key="`${leader.display_name}-${leader.role}`" class="fleet-leader-card">
                 <span class="fleet-module-icon"><AppIcon name="fleet" :size="19" /></span>
-                <div><strong>{{ leader.display_name }}</strong><small>{{ t(`fleets.roles.${leader.role}`) }}</small></div>
+                <div><strong>{{ leader.display_name }}</strong><small>{{ leader.role_label || t(`fleets.roles.${leader.role}`) }}</small></div>
               </article>
             </div>
           </section>

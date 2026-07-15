@@ -14,7 +14,6 @@ const props = defineProps({
   users: { type: Number, default: 0 },
   logSummary: { type: Object, default: () => ({ total: 0, errors: 0, warnings: 0 }) },
   ipBlockSummary: { type: Object, default: () => ({ active: 0 }) },
-  webhookSummary: { type: Object, default: () => ({ active: 0, failing: 0 }) },
   nextEvent: { type: Object, default: null },
   oldestPendingRequest: { type: Object, default: null },
 })
@@ -69,14 +68,6 @@ const adminCards = computed(() => [
     label: t('admin.workspace.cards.ipBlocks'),
     value: props.ipBlockSummary.active || 0,
     hint: t('admin.workspace.cards.ipBlocksHint'),
-  },
-  {
-    tab: 'integrations',
-    icon: 'spark',
-    label: t('admin.workspace.cards.integrations'),
-    value: props.webhookSummary.active || 0,
-    hint: t('admin.workspace.cards.integrationsHint', { failing: props.webhookSummary.failing || 0 }),
-    tone: props.webhookSummary.failing > 0 ? 'danger' : '',
   },
   {
     tab: 'users',

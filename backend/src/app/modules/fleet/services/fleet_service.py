@@ -12,7 +12,6 @@ from app.modules.fleet.models.fleet import (
     FLEET_MEMBER_STATUSES,
     FLEET_ROLE_ADMIRAL,
     FLEET_ROLE_MEMBER,
-    FLEET_ROLES,
 )
 from app.modules.fleet.schemas.fleet_create import FleetCreate
 from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
@@ -20,7 +19,7 @@ from app.modules.fleet.schemas.fleet_membership_update import FleetMembershipUpd
 from app.modules.fleet.schemas.fleet_update import FleetUpdate
 from app.modules.fleet.services.fleet_management_policy import validate_membership_update
 from app.modules.permissions.models.role import FleetRoleDefinition
-from app.modules.permissions.services.role_service import assign_fleet_role_definition
+from app.modules.permissions.services.role_service import assign_fleet_role_definition, get_fleet_role
 
 PRIMARY_FLEET_SLUG = "royal-blackwater-fleet"
 
@@ -248,8 +247,11 @@ def update_membership(
     data = payload.model_dump(exclude_unset=True)
     changed_fields = set(data)
     role = data.pop("role", None)
-    if role and role not in FLEET_ROLES:
-        raise FleetValidationError("Invalid fleet role.")
+    if role:
+        try:
+            get_fleet_role(db, role)
+        except ValueError as exc:
+            raise FleetValidationError("Invalid or inactive fleet role.") from exc
     status = data.get("status")
     if status and status not in FLEET_MEMBER_STATUSES:
         raise FleetValidationError("Invalid membership status.")
@@ -272,8 +274,10 @@ def update_membership(
 
 
 def assign_fleet_role(db: Session, fleet_id: int | None, user_id: int, role: str = FLEET_ROLE_ADMIRAL) -> FleetMembership:
-    if role not in FLEET_ROLES:
-        raise FleetValidationError("Invalid fleet role.")
+    try:
+        role_definition = get_fleet_role(db, role)
+    except ValueError as exc:
+        raise FleetValidationError("Invalid or inactive fleet role.") from exc
     fleet = get_primary_fleet(db)
     user = db.get(User, user_id)
     if fleet is None or user is None:
@@ -287,7 +291,7 @@ def assign_fleet_role(db: Session, fleet_id: int | None, user_id: int, role: str
     else:
         membership.fleet_id = fleet.id
         membership.status = FLEET_MEMBER_ACTIVE
-    assign_fleet_role_definition(db, membership, role)
+    membership.fleet_role = role_definition
     db.commit()
     db.refresh(membership)
     return membership

@@ -83,7 +83,11 @@ def get_public_official_fleet(db: Session = Depends(get_db)) -> FleetPublicRead:
         standing_orders=fleet.standing_orders,
         active_members_count=fleet.active_members_count,
         leaders=[
-            FleetPublicLeaderRead(display_name=row.user.display_name, role=row.role)
+            FleetPublicLeaderRead(
+                display_name=row.user.display_name,
+                role=row.role,
+                role_label=row.fleet_role.label if row.fleet_role else row.role,
+            )
             for row in fleet.leaders
         ],
     )

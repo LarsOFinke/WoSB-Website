@@ -1,4 +1,5 @@
-import { get, post, put } from '@/shared/api/client'
+import { deleteRequest, get, post, put } from '@/shared/api/client'
+import { withQuery } from '@/shared/api/query'
 
 export const FLEET_FOCUS_VALUES = [
   'trade',
@@ -62,4 +63,20 @@ export function joinFleet(payload = {}) {
 
 export function updateFleetMembership(fleetId, membershipId, payload) {
   return put(`/fleets/${fleetId}/memberships/${membershipId}`, payload)
+}
+
+export function listFleetRoles(fleetId, includeInactive = false) {
+  return get(withQuery(`/fleets/${fleetId}/roles`, { include_inactive: includeInactive || '' }))
+}
+
+export function createFleetRole(fleetId, payload) {
+  return post(`/fleets/${fleetId}/roles`, payload)
+}
+
+export function updateFleetRole(fleetId, roleId, payload) {
+  return put(`/fleets/${fleetId}/roles/${roleId}`, payload)
+}
+
+export function deleteFleetRole(fleetId, roleId) {
+  return deleteRequest(`/fleets/${fleetId}/roles/${roleId}`)
 }

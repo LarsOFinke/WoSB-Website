@@ -22,6 +22,7 @@ import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul'
 import { systemOperationsMessages } from './systemOperations'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
+import { integrationArchitectureMessages } from './integrationArchitecture'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
 import { discordBotOperationsMessages } from './discordBotOperations'
 import { discordBotConfigurationMessages } from './discordBotConfiguration'
@@ -54,6 +55,7 @@ const messageLayers = [
   systemOperationsMessages,
   securityAuditDashboardMessages,
   ipBlockManagementMessages,
+  integrationArchitectureMessages,
   outboundWebhookManagementMessages,
   discordBotOperationsMessages,
   discordBotConfigurationMessages,

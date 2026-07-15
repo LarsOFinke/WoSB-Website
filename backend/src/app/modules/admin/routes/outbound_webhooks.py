@@ -77,7 +77,7 @@ def admin_create_webhook(
         entity_id=row.id,
         action="create",
         summary=f'Outbound webhook “{row.name}” created.',
-        changed_fields=["endpoint_url", "event_types", "channel_key", "message_template", "is_active"],
+        changed_fields=["endpoint_url", "event_types", "delivery_mode", "scope_type", "scope_id", "message_template", "is_active"],
     )
     return row
 
@@ -102,7 +102,7 @@ def admin_update_webhook(
         entity_id=row.id,
         action="update",
         summary=f'Outbound webhook “{row.name}” updated.',
-        changed_fields=["endpoint_url", "event_types", "channel_key", "message_template", "is_active"],
+        changed_fields=["endpoint_url", "event_types", "delivery_mode", "scope_type", "scope_id", "message_template", "is_active"],
     )
     return row
 
@@ -113,7 +113,10 @@ def admin_rotate_webhook_secret(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ) -> OutboundWebhookRead:
-    row = rotate_webhook_secret(db, webhook_id)
+    try:
+        row = rotate_webhook_secret(db, webhook_id)
+    except OutboundWebhookError as exc:
+        raise _bad_request(exc) from exc
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found.")
     record_audit_safely(

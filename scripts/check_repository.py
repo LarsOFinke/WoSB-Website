@@ -150,6 +150,10 @@ for index, migration_file in enumerate(migration_files):
     require(revision_match is not None, f"migration has no revision: {migration_file.name}")
     revision = revision_match.group(1)
     require(revision not in seen_revisions, f"duplicate migration revision: {revision}")
+    require(
+        len(revision) <= 32,
+        f"migration revision exceeds Alembic version column limit (32): {revision}",
+    )
     seen_revisions.add(revision)
 
     if index == 0:

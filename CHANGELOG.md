@@ -4,15 +4,13 @@
 
 ### Fixed
 
-- Optional direkte Flottenbewerbung wieder in die Registrierung integriert; nach der Accountfreigabe wird eine offene Mitgliedschaft zur Prüfung durch die Flottenleitung angelegt, auch zur Zuordnung bereits bestehender Mitglieder.
-- Administratoren können im Flottenmanagement nun auch den eigenen und andere Administrator-Einträge vollständig verwalten; der letzte aktive Flottenadmiral bleibt gegen Deaktivierung und Herabstufung geschützt.
-- Proxy-Vertrauensgrenze und NGINX-Security-Header gehärtet, einschließlich unverfälschter Client-IP-Ermittlung und konsistenter Header auf SPA-, Asset- und Upload-Antworten.
-- Datei-Uploads durch Signaturprüfung, SVG-Ausschluss, atomare Ablage, Benutzer-/Gesamtquoten und freie Speicherreserve abgesichert.
-- Passwort- und Rollenänderungen widerrufen bestehende Sitzungen; neue Passwort-Hashes verwenden einen erhöhten Arbeitsfaktor und ältere Hashes werden beim Login automatisch aktualisiert.
-- Outbound-Webhooks gegen private, lokale und nach Redirect/DNS-Auflösung interne Ziele abgesichert.
-- API-schreibbare Host-Control-Anfragen von root-eigenen Status-/Arbeitsdateien getrennt und Runner gegen Symlinks, falsche Eigentümer und unzulässige Dateitypen gehärtet.
-- Readiness prüft den aktuellen Alembic-Head; Backup-/Restore-Abläufe, Retention und PostgreSQL-Migrationsprüfung erweitert.
-
+- Alembic-Revisionskette auf PostgreSQL-kompatible IDs begrenzt: `0002_reg_fleet_application` und `0003_webhooks_fleet_roles`.
+- Optionalen Flottenantrag bei der Registrierung wiederhergestellt und Registrierungsereignisse für Webhook-Abonnements ergänzt.
+- Webhook-System um direkte Discord-Chat-Zustellung, signierte JSON-Integrationen sowie globale, Flotten- und Squad-Scopes erweitert.
+- Discord-Konfiguration in reine Bot-Einrichtung und backendseitige Chat-Webhooks getrennt; Channel-Routing aus der Bot-Konfiguration entfernt.
+- Flottenadmiräle können benutzerdefinierte Rollen mit Rang und Verwaltungsrechten pflegen; Systemrollen und der letzte aktive Admiral bleiben geschützt.
+- Administratoren können im Flottenmanagement auch den eigenen Eintrag und andere Administratoren verwalten.
+- Alembic-Revisions-ID der Registrierungs-Flottenbewerbung auf PostgreSQL-kompatible 26 Zeichen gekürzt und eine 32-Zeichen-Repository-Invariante ergänzt.
 - Repository- und Infrastrukturprüfungen an die modularen Setup-/Update-Runner sowie die `.cfg`-Konfiguration angepasst.
 - Frontend-Backend-Contract-Test ergänzt, der API-Pfade und gemeinsam verwendete Fachwerte gegen OpenAPI und Backend-Regeln prüft.
 - Veralteten internen Registry-Verweis aus dem Frontend-Lockfile entfernt und Fleet-Fokuswerte zwischen Frontend und Backend synchronisiert.

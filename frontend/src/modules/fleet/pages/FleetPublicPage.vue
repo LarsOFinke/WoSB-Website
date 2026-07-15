@@ -130,7 +130,7 @@ onMounted(loadFleet)
                 <div v-else class="fleet-leadership-grid">
                   <article v-for="leader in fleet.leaders" :key="`${leader.display_name}-${leader.role}`" class="fleet-leader-card">
                     <span class="profile-avatar" aria-hidden="true">{{ leader.display_name.slice(0, 2).toUpperCase() }}</span>
-                    <div><strong>{{ leader.display_name }}</strong><small>{{ t(`fleets.roles.${leader.role}`) }}</small></div>
+                    <div><strong>{{ leader.display_name }}</strong><small>{{ leader.role_label || t(`fleets.roles.${leader.role}`) }}</small></div>
                   </article>
                 </div>
               </section>

@@ -15,18 +15,16 @@ from sqlalchemy.orm import Session
 from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import User
-from app.modules.admin.models.outbound_webhook import (
-    OutboundWebhook,
-    OutboundWebhookDelivery,
-)
+from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import OutboundWebhookDeliveryRead
 from app.modules.admin.services.outbound_webhook_service import (
-    EVENT_TYPES,
     OutboundWebhookError,
     _load_events,
     serialize_delivery,
 )
+from app.modules.admin.services.webhook_events import EVENT_TYPES
 
+from .discord import discord_payload
 from .envelope import WebhookEnvelopeFactory
 from .transport import WebhookSigner, WebhookTransport
 
@@ -60,6 +58,7 @@ class WebhookDeliveryService:
             self._build_event_row(subscription, event)
             for subscription in subscriptions
             if event_type in _load_events(subscription.event_types_json)
+            and self._matches_scope(subscription, event)
         ]
         if not rows:
             return []
@@ -70,7 +69,7 @@ class WebhookDeliveryService:
     def queue_event_safely(self, db: Session, **event: Any) -> list[int]:
         try:
             return self.queue_event(db, **event)
-        except Exception:  # pragma: no cover - integration must not break primary content
+        except Exception:  # pragma: no cover - integrations must not break primary actions
             db.rollback()
             logger.exception(
                 "outbound webhook event queue failed",
@@ -142,6 +141,20 @@ class WebhookDeliveryService:
         refreshed = db.get(OutboundWebhookDelivery, delivery_id)
         return serialize_delivery(refreshed) if refreshed is not None else None
 
+    @staticmethod
+    def _matches_scope(subscription: OutboundWebhook, event: dict[str, Any]) -> bool:
+        if subscription.scope_type == "global":
+            return True
+        if subscription.scope_type == "fleet":
+            return subscription.scope_id == event.get("fleet_id") or (
+                event.get("scope_type") == "fleet" and subscription.scope_id == event.get("scope_id")
+            )
+        if subscription.scope_type == "squad":
+            return subscription.scope_id == event.get("squad_id") or (
+                event.get("scope_type") == "squad" and subscription.scope_id == event.get("scope_id")
+            )
+        return False
+
     def _build_event_row(
         self, subscription: OutboundWebhook, event: dict[str, Any]
     ) -> OutboundWebhookDelivery:
@@ -153,6 +166,10 @@ class WebhookDeliveryService:
             data=event["data"],
             actor=event.get("actor"),
             resource_url=event.get("resource_url"),
+            scope_type=event.get("scope_type", "global"),
+            scope_id=event.get("scope_id"),
+            fleet_id=event.get("fleet_id"),
+            squad_id=event.get("squad_id"),
         )
         return self._new_row(
             subscription,
@@ -163,19 +180,29 @@ class WebhookDeliveryService:
             envelope=envelope,
         )
 
-    def _deliver(
-        self, row: OutboundWebhookDelivery, webhook: OutboundWebhook
-    ) -> None:
+    def _deliver(self, row: OutboundWebhookDelivery, webhook: OutboundWebhook) -> None:
         timestamp = str(int(time.time()))
+        body = row.payload_json
+        if webhook.delivery_mode == "discord":
+            envelope = json.loads(row.payload_json)
+            body = json.dumps(
+                discord_payload(webhook, envelope), ensure_ascii=False, separators=(",", ":")
+            )
+            headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": "RoyalBlackwaterFleet-DiscordWebhook/1.0",
+            }
+        else:
+            headers = self._signer.headers(row, webhook.signing_secret, timestamp)
         request = Request(
             webhook.endpoint_url,
-            data=row.payload_json.encode("utf-8"),
-            headers=self._signer.headers(row, webhook.signing_secret, timestamp),
+            data=body.encode("utf-8"),
+            headers=headers,
             method="POST",
         )
         try:
-            status_code, body = self._transport.send(request)
-            self._record_response(row, webhook, status_code, body)
+            status_code, response_body = self._transport.send(request)
+            self._record_response(row, webhook, status_code, response_body)
         except HTTPError as exc:
             row.status = "failed"
             row.response_status = int(exc.code)
