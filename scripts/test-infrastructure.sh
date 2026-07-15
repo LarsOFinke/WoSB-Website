@@ -199,5 +199,25 @@ require_pattern 'ufw allow from "$subnet" to "$HOST_GATEWAY_IP" port "$BOT_PORT"
 require_pattern 'http://host.docker.internal:${BOT_PORT}/health' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
 reject_pattern 'ufw allow 8765/tcp' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
 require_pattern 'proxy_pass http://host.docker.internal:8765/webhooks/rbf;' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'read_database_schema_state' "$INFRA_DIR/scripts/update/workflow.sh"
+reject_pattern 'migration_files_changed' "$INFRA_DIR/scripts/update/repository.sh"
+require_pattern 'update_capture_running_images' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'heartbeat_at' "$INFRA_DIR/scripts/update/status.sh"
+require_pattern 'bw_compose stop api gateway' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
+require_pattern 'backup-postgres.sh' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
+require_pattern "-mindepth 2" "$INFRA_DIR/scripts/checks/doctor.sh"
+require_pattern 'start_new_session=True' "$ROOT_DIR/scripts/run_backend_tests.py"
+require_pattern 'timeout=timeout_seconds' "$ROOT_DIR/scripts/run_backend_tests.py"
 
+python3 - "$INFRA_DIR/scripts/update/workflow.sh" <<'PY_UPDATE_ORDER'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text(encoding='utf-8')
+run = text.split('update_run() {', 1)[1]
+assert run.index('update_acquire_lock') < run.index('update_claim_admin_request'), (
+    'update lock must be acquired before claiming an admin request'
+)
+PY_UPDATE_ORDER
+
+bash "$ROOT_DIR/scripts/test-update-management.sh"
 echo 'Infrastructure checks OK.'

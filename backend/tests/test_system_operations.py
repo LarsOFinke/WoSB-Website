@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import shutil
@@ -88,5 +89,31 @@ def test_only_admin_can_read_or_queue_system_updates() -> None:
         control_dir.mkdir(parents=True, exist_ok=True)
         invalid = client.post('/api/admin/system/update', json={'operation': 'shell_command'})
         assert invalid.status_code == 422
+
+        stale_time = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+        (control_dir / 'update-status.json').write_text(
+            json.dumps(
+                {
+                    'state': 'running',
+                    'operation': 'update',
+                    'message': 'still running',
+                    'requested_by': 'system-admin',
+                    'requested_at': stale_time,
+                    'started_at': stale_time,
+                    'heartbeat_at': stale_time,
+                }
+            ),
+            encoding='utf-8',
+        )
+        recovered = client.get('/api/admin/system/update')
+        assert recovered.status_code == 200, recovered.text
+        recovered_payload = recovered.json()
+        assert recovered_payload['state'] == 'failed'
+        assert recovered_payload['request_available'] is True
+        assert 'heartbeat' in recovered_payload['message'].lower()
+
+        replacement = client.post('/api/admin/system/update', json={'operation': 'update'})
+        assert replacement.status_code == 202, replacement.text
+        assert replacement.json()['status']['state'] == 'queued'
 
     shutil.rmtree(control_dir, ignore_errors=True)

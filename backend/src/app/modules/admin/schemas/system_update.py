@@ -19,6 +19,7 @@ class SystemUpdateStatus(BaseModel):
     requested_by: str | None = None
     requested_at: str | None = None
     started_at: str | None = None
+    heartbeat_at: str | None = None
     finished_at: str | None = None
     commit_before: str | None = None
     commit_after: str | None = None

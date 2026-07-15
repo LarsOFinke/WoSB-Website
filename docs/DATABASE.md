@@ -48,15 +48,19 @@ Der Schiffskatalog ist nach Rate in `backend/src/app/seeds/ship_data/` geglieder
 sudo ./update.sh --seed
 ```
 
-Der API-Container seedet beim normalen Start nicht automatisch. Setup und Updater starten dafür den
-eigenen, kurzlebigen Seed-Container ausdrücklich.
+`--seed` führt immer zuerst `alembic upgrade head` aus. Der API-Container seedet beim normalen Start
+nicht automatisch. Setup und Updater starten dafür den eigenen, kurzlebigen Seed-Container
+ausdrücklich.
 
 ## Backup und Restore
 
 ```bash
 make infra-backup
-./infrastructure/scripts/backup/restore-postgres.sh <dump-file>
+sudo ./infrastructure/scripts/backup/restore-postgres.sh <dump-file>
 ```
 
-Vor Migration oder Seed erstellt der Updater automatisch ein Sicherheitsbackup. Ein Restore wird
-zuerst auf einer separaten Instanz geprüft.
+Vor Migration oder Seed erstellt der Updater automatisch ein Sicherheitsbackup. Der
+Produktions-Restore erstellt zusätzlich ein Pre-Restore-Backup, sperrt parallele Updates, stoppt API
+und Gateway, beendet aktive Datenbankverbindungen, spielt den Dump ein, migriert auf den aktuellen
+Alembic-Head und startet die Anwendung erst nach erfolgreicher Readiness-Prüfung wieder. Ein Restore
+wird trotzdem zuerst auf einer separaten Instanz geprüft.

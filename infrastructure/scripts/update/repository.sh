@@ -15,14 +15,9 @@ git_as_owner() {
   fi
 }
 
-migration_files_changed() {
-  [[ -n "$COMMIT_BEFORE" && -n "$COMMIT_AFTER" && "$COMMIT_BEFORE" != "$COMMIT_AFTER" ]] || return 1
-  [[ -n "$(git_as_owner diff --name-only "$COMMIT_BEFORE..$COMMIT_AFTER" -- backend/migrations/versions 2>/dev/null)" ]]
-}
-
 update_repository() {
   if [[ ! -d "$REPO_ROOT/.git" ]]; then
-    warn "Kein .git-Verzeichnis gefunden; Quellcode-Update und automatische Migrationserkennung werden übersprungen."
+    warn "Kein .git-Verzeichnis gefunden; Quellcode-Update wird übersprungen. Die Datenbankrevision wird trotzdem gegen das gebaute Image geprüft."
     return 0
   fi
 
@@ -41,10 +36,4 @@ update_repository() {
     log "Git-Pull wurde per --skip-pull übersprungen."
   fi
   COMMIT_AFTER="$(git_as_owner rev-parse --short HEAD)"
-
-  if [[ "$AUTO_MIGRATIONS" == true && "$RUN_MIGRATIONS" == false ]] && migration_files_changed; then
-    RUN_MIGRATIONS=true
-    update_refresh_operation
-    log "Neue Alembic-Migrationsdateien erkannt; Migrationen werden beabsichtigt ausgeführt."
-  fi
 }

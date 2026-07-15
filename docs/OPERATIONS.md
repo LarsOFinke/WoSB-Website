@@ -17,21 +17,31 @@ GET /api/health/ready
 
 ## Updates
 
-Code ohne Schema-/Seed-Arbeit:
+Standardupdate mit automatischer Schemaerkennung:
 
 ```bash
 sudo ./update.sh
 ```
 
-Release mit Migration und Stammdaten:
+Der Standardlauf baut zuerst das neue API-Image und vergleicht dessen Alembic-Head mit der
+laufenden PostgreSQL-Datenbank. Ausstehende Migrationen werden automatisch erkannt, vorab durch ein
+Datenbankbackup abgesichert und anschließend ausgeführt. Damit werden auch Migrationen nach einem
+zuvor fehlgeschlagenen Deployment erneut erkannt, selbst wenn beim zweiten Lauf kein neuer Git-Diff
+mehr entsteht.
+
+Expliziter Migrations- und Seed-Lauf:
 
 ```bash
 sudo ./update.sh --migrate --seed
 ```
 
-Der Updater sperrt parallele Läufe, verweigert lokale Git-Änderungen, nutzt Fast-Forward, sichert vor
-Datenbankarbeiten, baut Images, migriert/seedet nur explizit und führt anschließend einen Smoke-Test
-aus. Die zwei Admin-Buttons rufen exakt diese festen Betriebsmodi auf.
+`--seed` impliziert immer `--migrate`. Mit `--no-auto-migrate` wird ein Deployment bei einer
+abweichenden Datenbankrevision abgebrochen; ein inkompatibles API-Image wird nicht gestartet.
+
+Der Updater übernimmt Admin-Anforderungen erst nach dem exklusiven Lock, verweigert lokale
+Git-Änderungen, nutzt Fast-Forward, schreibt während des Laufs einen Heartbeat, sichert vor
+Datenbankarbeiten, hält die vorherigen Container-Images als Rollback-Punkt fest und führt nach
+Migration und Deployment einen Schema-, Readiness- und HTTPS-Smoke-Test aus.
 
 ## Backup
 

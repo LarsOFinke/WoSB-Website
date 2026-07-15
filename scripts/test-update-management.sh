@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+UPDATE_DIR="$ROOT_DIR/infrastructure/scripts/update"
+
+fail() {
+  printf '[update-test] %s\n' "$*" >&2
+  exit 1
+}
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/options.sh"
+  update_options_reset
+  update_parse_options --seed
+  [[ "$RUN_MIGRATIONS" == true ]] || fail "--seed must imply migrations"
+  [[ "$RUN_SEED" == true ]] || fail "--seed must enable seed"
+  [[ "$OPERATION" == update_migrate_seed ]] || fail "--seed operation must expose migrate+seed"
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/workflow.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  LOCK_FILE="$tmp/update.lock"
+  INBOX_REQUEST_FILE="$tmp/update.request"
+  printf '{}\n' > "$INBOX_REQUEST_FILE"
+  warn() { :; }
+  die() { return 1; }
+
+  (
+    exec 7>"$LOCK_FILE"
+    flock 7
+    sleep 3
+  ) &
+  holder=$!
+  sleep 0.2
+  LOCK_ACQUIRED=false
+  UPDATE_LOCK_WAIT_SECONDS=1
+  if update_acquire_lock; then
+    fail "concurrent update unexpectedly acquired the lock"
+  fi
+  [[ -f "$INBOX_REQUEST_FILE" ]] || fail "busy updater consumed the pending request"
+  [[ "$LOCK_ACQUIRED" == false ]] || fail "busy updater marked lock as acquired"
+  wait "$holder"
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/workflow.sh"
+  RUN_MIGRATIONS=false
+  RUN_SEED=false
+  AUTO_MIGRATIONS=true
+  OPERATION=update
+  SCHEMA_CURRENT_HEADS=0001_baseline
+  SCHEMA_EXPECTED_HEADS=0003_webhooks_fleet_roles
+  SCHEMA_MATCHES=false
+  ensure_postgres_service() { :; }
+  read_database_schema_state() { :; }
+  update_refresh_operation() {
+    if [[ "$RUN_MIGRATIONS" == true ]]; then OPERATION=update_migrate; fi
+  }
+  log() { :; }
+  die() { return 1; }
+
+  update_resolve_database_actions
+  [[ "$RUN_MIGRATIONS" == true ]] || fail "pending database revisions were not detected"
+  [[ "$OPERATION" == update_migrate ]] || fail "auto migration did not refresh operation"
+
+  RUN_MIGRATIONS=false
+  AUTO_MIGRATIONS=false
+  OPERATION=update
+  if update_resolve_database_actions; then
+    fail "--no-auto-migrate allowed an incompatible deployment"
+  fi
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/status.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  STATUS_FILE="$tmp/update-status.json"
+  STATUS_LOCK_FILE="$tmp/update-status.lock"
+  OPERATION=update
+  REQUESTED_BY=tester
+  REQUESTED_AT=""
+  HEARTBEAT_PID=""
+  update_status_write running "test" "$(now_iso)"
+  python3 - "$STATUS_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload["state"] == "running"
+assert payload["heartbeat_at"]
+PY
+  update_status_write succeeded "done" "$(now_iso)" "$(now_iso)"
+  python3 - "$STATUS_FILE" <<'PY'
+import json
+import sys
+from pathlib import Path
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert payload["state"] == "succeeded"
+assert payload["heartbeat_at"] is None
+PY
+)
+
+printf 'Update-management checks OK.\n'

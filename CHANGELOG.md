@@ -4,12 +4,14 @@
 
 ### Fixed
 
-- Alembic-Revisionskette auf PostgreSQL-kompatible IDs begrenzt: `0002_reg_fleet_application` und `0003_webhooks_fleet_roles`.
-- Optionalen Flottenantrag bei der Registrierung wiederhergestellt und Registrierungsereignisse für Webhook-Abonnements ergänzt.
-- Webhook-System um direkte Discord-Chat-Zustellung, signierte JSON-Integrationen sowie globale, Flotten- und Squad-Scopes erweitert.
-- Discord-Konfiguration in reine Bot-Einrichtung und backendseitige Chat-Webhooks getrennt; Channel-Routing aus der Bot-Konfiguration entfernt.
-- Flottenadmiräle können benutzerdefinierte Rollen mit Rang und Verwaltungsrechten pflegen; Systemrollen und der letzte aktive Admiral bleiben geschützt.
-- Administratoren können im Flottenmanagement auch den eigenen Eintrag und andere Administratoren verwalten.
+- Update-Erkennung von Git-Diffs auf einen Laufzeitvergleich zwischen Alembic-Head des neu gebauten API-Images und der tatsächlichen PostgreSQL-Revision umgestellt; fehlgeschlagene Migrationen werden im Folgelauf sicher erneut erkannt.
+- Admin-Updateanforderungen werden erst nach Erwerb des exklusiven Locks übernommen; parallele Runner verlieren keine Requests und überschreiben keinen laufenden Status mehr.
+- Update-Heartbeat und Recovery für verwaiste `queued`-/`running`-Zustände ergänzt; abgebrochene Host-Läufe blockieren keine neuen Anforderungen dauerhaft.
+- `--seed` impliziert jetzt immer `--migrate`; `--no-auto-migrate` bricht bei abweichendem Schema vor dem API-Deployment ab.
+- Laufende API- und Gateway-Image-IDs werden als exakter Rollback-Punkt erfasst und gegenüber einem nicht reproduzierbaren Rebuild bevorzugt.
+- PostgreSQL-Restore um exklusiven Lock, Pre-Restore-Backup, Wartungsmodus, Verbindungsabbruch, Alembic-Upgrade und Readiness-/Smoke-Prüfung erweitert.
+- Backup-Zähler im Doctor-Skript auf die tatsächlichen Unterverzeichnisse korrigiert und Backend-Testmodule mit Prozessgruppen-Timeout abgesichert.
+
 - Alembic-Revisions-ID der Registrierungs-Flottenbewerbung auf PostgreSQL-kompatible 26 Zeichen gekürzt und eine 32-Zeichen-Repository-Invariante ergänzt.
 - Repository- und Infrastrukturprüfungen an die modularen Setup-/Update-Runner sowie die `.cfg`-Konfiguration angepasst.
 - Frontend-Backend-Contract-Test ergänzt, der API-Pfade und gemeinsam verwendete Fachwerte gegen OpenAPI und Backend-Regeln prüft.

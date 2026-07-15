@@ -82,6 +82,37 @@ ensure_monitoring_services() {
   bw_compose_with_profiles up -d --no-deps uptime-kuma monitoring-gateway
 }
 
+ensure_postgres_service() {
+  log "Stelle PostgreSQL sicher."
+  bw_compose up -d postgres
+  wait_for_postgres
+}
+
+read_database_schema_state() {
+  ensure_env_file
+  local output marker
+  output="$(bw_compose run --rm --no-deps -T migrate python -c '
+from app.db.schema_health import current_alembic_heads, expected_alembic_heads
+from app.db.session import engine
+with engine.connect() as connection:
+    current = ",".join(sorted(current_alembic_heads(connection)))
+expected = ",".join(sorted(expected_alembic_heads()))
+print(f"RBF_SCHEMA_STATUS|{current}|{expected}|{str(current == expected).lower()}")
+')"
+  marker="$(printf '%s\n' "$output" | grep '^RBF_SCHEMA_STATUS|' | tail -n 1 || true)"
+  [[ -n "$marker" ]] || die "Datenbankrevision konnte nicht aus dem API-Image ermittelt werden."
+  IFS='|' read -r _ SCHEMA_CURRENT_HEADS SCHEMA_EXPECTED_HEADS SCHEMA_MATCHES <<<"$marker"
+  [[ -n "$SCHEMA_EXPECTED_HEADS" ]] || die "Das API-Image enthält keinen Alembic-Head."
+}
+
+verify_database_schema_head() {
+  read_database_schema_state
+  if [[ "$SCHEMA_MATCHES" != true ]]; then
+    die "Datenbankschema stimmt nicht mit dem API-Image überein (aktuell: ${SCHEMA_CURRENT_HEADS:-keine Revision}; erwartet: $SCHEMA_EXPECTED_HEADS)."
+  fi
+  success "Datenbankschema entspricht Alembic-Head $SCHEMA_EXPECTED_HEADS."
+}
+
 deploy_application_update() {
   local run_migrations="${1:-false}"
   local run_seed="${2:-false}"
@@ -90,10 +121,9 @@ deploy_application_update() {
 
   if [[ "$run_migrations" == true || "$run_seed" == true ]]; then
     log "Stelle PostgreSQL für beabsichtigte Datenbankarbeiten sicher."
-    bw_compose up -d postgres
-    wait_for_postgres
+    ensure_postgres_service
   else
-    log "Keine Datenbankarbeiten vorgesehen; PostgreSQL wird weder gestartet noch neu erstellt."
+    log "Keine Datenbankarbeiten vorgesehen; PostgreSQL wurde bereits für die Revisionsprüfung validiert."
   fi
 
   if [[ "$run_migrations" == true ]]; then
@@ -109,6 +139,8 @@ deploy_application_update() {
   else
     log "Seed wird übersprungen."
   fi
+
+  verify_database_schema_head
 
   log "Aktualisiere FastAPI ohne PostgreSQL-Abhängigkeiten neu zu starten."
   bw_compose up -d --no-deps api

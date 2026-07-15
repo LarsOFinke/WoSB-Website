@@ -22,12 +22,22 @@ REQUEST_FILE="$RUN_DIR/update.request.$$"
 STATUS_FILE="$STATUS_DIR/update-status.json"
 LOG_FILE="$STATUS_DIR/update.log"
 LOCK_FILE="$RUN_DIR/update.lock"
+STATUS_LOCK_FILE="$RUN_DIR/update-status.lock"
 
 STARTED_AT=""
 FINISHED_AT=""
 COMMIT_BEFORE=""
 COMMIT_AFTER=""
 UPDATE_COMPLETED=false
+LOCK_ACQUIRED=false
+HEARTBEAT_PID=""
+API_IMAGE_BEFORE=""
+API_IMAGE_TAG_BEFORE=""
+GATEWAY_IMAGE_BEFORE=""
+GATEWAY_IMAGE_TAG_BEFORE=""
+SCHEMA_CURRENT_HEADS=""
+SCHEMA_EXPECTED_HEADS=""
+SCHEMA_MATCHES=false
 
 update_main() {
   update_options_reset
@@ -37,6 +47,7 @@ update_main() {
   require_command flock
   require_command git
   require_command python3
+  require_command docker
 
   update_run
 }

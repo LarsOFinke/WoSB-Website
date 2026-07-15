@@ -52,36 +52,20 @@ make doctor        # Produktionsdiagnose auf dem Pi
 make infra-backup  # Datenbank und Uploads sichern
 ```
 
-Normales Update:
+Normales Update mit automatischem Vergleich zwischen Datenbankrevision und neuem API-Image:
 
 ```bash
 sudo ./update.sh
 ```
 
-Update mit Schema und Stammdaten:
+Ausstehende Alembic-Migrationen werden dabei automatisch gesichert und ausgeführt. Update mit
+expliziter Migration und Stammdaten:
 
 ```bash
 sudo ./update.sh --migrate --seed
 ```
 
-Im Admin-Panel stehen beide Update-Modi ebenfalls bereit.
-
-## Flottenrollen und Discord-Integrationen
-
-Flottenadmiräle verwalten im Flottenmanagement zusätzliche Rollen mit frei wählbarem Anzeigenamen,
-Rang und getrennten Rechten für Flottenprofil und Mitgliederverwaltung. Die Systemrollen
-`member`, `fleet_lieutenant` und `fleet_admiral` bleiben geschützt.
-
-Der Discord-Arbeitsbereich trennt zwei Betriebsarten:
-
-- **Bot** verwaltet ausschließlich Installation, Zugangsdaten und Laufzeit des externen Bots.
-- **Chat-Webhooks** senden Website-Ereignisse direkt aus dem Backend an kanalgebundene
-  Discord-Webhook-URLs. Alternativ stehen signierte JSON-Webhooks für eigene Integrationen bereit.
-
-Abonnements können global oder auf eine Flotte beziehungsweise einen Squad begrenzt werden. Zum
-Event-Katalog gehören unter anderem neue Registrierungen, Freigaben, Flottenbewerbungen und
-Squad-Änderungen. Discord-Webhook-Tokens werden nach dem Speichern nicht mehr an das Frontend
-zurückgegeben.
+Im Admin-Panel stehen Standardupdate, explizite Migration und Migration mit Seed ebenfalls bereit.
 
 ## Projektstruktur
 

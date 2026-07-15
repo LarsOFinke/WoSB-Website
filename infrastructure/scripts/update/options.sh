@@ -20,14 +20,14 @@ Usage: sudo ./update.sh [options]
 Der Repository-Einstiegspunkt update.sh bleibt öffentlich und delegiert an
 den Infrastruktur-Runner. Dieser Kommandozeilenvertrag bleibt stabil.
 
-Default behavior updates only the API and frontend gateway. PostgreSQL is not
-started, recreated, migrated or seeded unless a database action is explicitly
-required.
+Default behavior updates API and frontend, compares the database revision with
+the Alembic head in the newly built API image and automatically applies pending
+migrations. PostgreSQL is never seeded unless explicitly requested.
 
 Options:
   --migrate            Run Alembic migrations intentionally.
-  --seed               Run the idempotent seed intentionally.
-  --no-auto-migrate    Do not auto-run migrations when new migration files are pulled.
+  --seed               Run migrations and then the idempotent seed intentionally.
+  --no-auto-migrate    Refuse deployment when the database is behind instead of migrating.
   --requested-by NAME  Record the requesting operator.
   --skip-pull          Deploy the current checkout without fetching Git.
   --no-backup          Skip the pre-deployment file/database backup.
@@ -47,7 +47,7 @@ update_parse_options() {
       --skip-pull) SKIP_PULL=true; shift ;;
       --no-backup) CREATE_BACKUP=false; shift ;;
       --migrate) RUN_MIGRATIONS=true; shift ;;
-      --seed) RUN_SEED=true; shift ;;
+      --seed) RUN_MIGRATIONS=true; RUN_SEED=true; shift ;;
       --no-auto-migrate) AUTO_MIGRATIONS=false; shift ;;
       -h|--help) update_usage; exit 0 ;;
       *) die "Unbekannte Update-Option: $1" ;;
