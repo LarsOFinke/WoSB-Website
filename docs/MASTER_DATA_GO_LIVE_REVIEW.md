@@ -65,7 +65,7 @@ In the verified production build, the largest JavaScript chunk is the locale chu
 - all seven locale catalogs passed with 1,414 keys each and no fallbacks;
 - the Vite production build completed without a chunk-size warning;
 - Alembic upgraded an empty database to head and reported no pending model operations;
-- the pre-v1 to v1 cleanup migration passed;
+- the squashed `0001_baseline` completed upgrade, check, downgrade and rebuild;
 - infrastructure syntax/security checks and repository invariants passed.
 
 ## Remaining known gaps

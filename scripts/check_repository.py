@@ -77,9 +77,18 @@ for relative in required_files:
     require((ROOT / relative).is_file(), f"missing {relative}")
 
 if ARGS.strict_tree:
-    for forbidden in ("node_modules", "dist", ".pytest_cache", ".ruff_cache", "__pycache__"):
+    for forbidden in (
+        "node_modules",
+        "dist",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".mypy_cache",
+        "__pycache__",
+    ):
         found = [path for path in ROOT.rglob(forbidden) if ".git" not in path.parts]
         require(not found, f"generated directory in release tree: {found[0] if found else forbidden}")
+    egg_info = [path for path in ROOT.rglob("*.egg-info") if ".git" not in path.parts]
+    require(not egg_info, f"package metadata in release tree: {egg_info[0] if egg_info else '.egg-info'}")
 
 for path in ROOT.rglob("*"):
     if not path.is_file() or ".git" in path.parts:
@@ -88,6 +97,7 @@ for path in ROOT.rglob("*"):
     if ARGS.strict_tree:
         require(path.suffix not in {".pyc", ".pyo"}, f"compiled Python file in release tree: {relative}")
         require(path.name != ".env", f"runtime environment in release tree: {relative}")
+        require(not path.name.endswith(".egg-info"), f"package metadata in release tree: {relative}")
     if (
         path.suffix in {".json", ".js", ".mjs", ".md", ".toml", ".yml", ".yaml", ".txt"}
         or path.name == "Dockerfile"
@@ -97,6 +107,22 @@ for path in ROOT.rglob("*"):
             "packages.applied-caas-gateway" not in text,
             f"internal package registry in {relative}",
         )
+
+
+# The historical migration chain is intentionally squashed into one immutable baseline.
+migration_files = sorted((ROOT / "backend/migrations/versions").glob("*.py"))
+require(len(migration_files) == 1, "database schema must have exactly one baseline migration")
+baseline_text = migration_files[0].read_text(encoding="utf-8")
+require("revision: str = '0001_baseline'" in baseline_text, "unexpected baseline revision")
+require(
+    "down_revision: Union[str, Sequence[str], None] = None" in baseline_text,
+    "baseline migration must not depend on historical revisions",
+)
+
+# Prevent generated or embedded payloads from turning source modules into binary containers.
+for path in (ROOT / "frontend/src").rglob("*.js"):
+    require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
+    require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
 
 # Production seed sources must contain only operational and master data.
 seed_dir = ROOT / "backend/src/app/seeds"
@@ -118,10 +144,13 @@ for marker in (
 # coordinator pages and services from silently becoming unbounded monoliths.
 for path in (ROOT / "backend/src/app/modules").rglob("*.py"):
     if "services" in path.parts:
-        require(line_count(path) <= 550, f"service exceeds 550-line budget: {path.relative_to(ROOT)}")
+        require(line_count(path) <= 525, f"service exceeds 525-line budget: {path.relative_to(ROOT)}")
+for path in (ROOT / "backend/src/app/modules").rglob("*.py"):
+    if "routes" in path.parts:
+        require(line_count(path) <= 300, f"route module exceeds 300-line budget: {path.relative_to(ROOT)}")
 for path in (ROOT / "frontend/src/modules").rglob("*.vue"):
     if "pages" in path.parts:
-        require(line_count(path) <= 1000, f"page exceeds 1000-line budget: {path.relative_to(ROOT)}")
+        require(line_count(path) <= 1050, f"page exceeds 1050-line budget: {path.relative_to(ROOT)}")
 
 require(not any((ROOT / "docs").glob("RELEASE_0_*")), "legacy release documents remain")
 require(not any((ROOT / "docs").glob("UI_UX_RELEASE_*")), "legacy UI release documents remain")

@@ -13,7 +13,7 @@ from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.forum.services.forum_service import (
     ForumValidationError,
     add_post,

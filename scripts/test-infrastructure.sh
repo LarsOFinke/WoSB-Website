@@ -4,7 +4,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INFRA_DIR="$ROOT_DIR/infrastructure"
 
 affected=("$ROOT_DIR/setup.sh" "$ROOT_DIR/update.sh")
-while IFS= read -r file; do affected+=("$file"); done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" -type f -name '*.sh' -print | sort)
+while IFS= read -r file; do affected+=("$file"); done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" "$ROOT_DIR/backend/scripts" -type f -name '*.sh' -print | sort)
 for file in "${affected[@]}"; do bash -n "$file"; done
 
 [[ ! -e "$ROOT_DIR/backend/.env" ]]

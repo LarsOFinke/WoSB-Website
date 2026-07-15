@@ -44,13 +44,9 @@ sudo ./infrastructure/scripts/checks/doctor.sh
 Mit den Daten aus `infrastructure/first-run-credentials.txt` anmelden, das Admin-Passwort ändern und
 die Datei nach sicherer Ablage löschen.
 
-## Upgrade von 0.x auf v1.0
+## Wechsel von einer historischen Datenbank
 
-```bash
-cd ~/royal-blackwater-fleet
-sudo ./infrastructure/scripts/backup/backup-all.sh
-sudo ./update.sh --migrate --seed
-```
-
-`infrastructure/data` und PostgreSQL niemals löschen. Die v1-Migration entfernt nur bekannte
-Entwicklungs-/Beispielinhalte; der v1-Seed legt keine neuen Mock-Inhalte an.
+Die aktuelle Version startet mit einer aufgelösten Schema-Baseline. Historische Datenbanken werden
+nicht direkt über Alembic weitergeführt. Vor der Umstellung müssen PostgreSQL und Uploads vollständig
+gesichert und die fachlichen Daten in eine frisch initialisierte Datenbank importiert werden. Die
+alte Datenbank darf erst nach erfolgreichem Doctor-, Smoke- und Fachtest außer Betrieb gehen.

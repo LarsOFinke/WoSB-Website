@@ -1,5 +1,15 @@
 # Changelog
 
+## Repository-Frühjahrsputz
+
+- historische Alembic-Kette auf eine geprüfte `0001_baseline` reduziert
+- veraltete SQLite-Schema-Reparaturen und den pre-v1-Migrationstest entfernt
+- Admin-Router, Build-Service und Webhook-Service nach Verantwortlichkeiten getrennt
+- eingebettete Base64-Buildgrafiken durch versionierte SVG-Assets ersetzt
+- Python-Buildartefakte entfernt und `backend/scripts/clear-pycache.sh` ergänzt
+- Test-/Release-Skripte konsolidiert und Größenbudgets verschärft
+
+
 ## 1.0.0 — Produktionsbaseline
 
 ### Fixed

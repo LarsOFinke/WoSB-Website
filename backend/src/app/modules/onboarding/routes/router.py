@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.onboarding.schemas.newcomer_guide import NewcomerGuideRead, NewcomerGuideUpdate
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.onboarding.services.newcomer_guide_service import (
     NewcomerGuideValidationError,
     get_newcomer_guide,

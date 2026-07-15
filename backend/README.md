@@ -15,4 +15,7 @@ Die vollständige Testbasis wird vom Repository-Root über `make test` ausgefüh
 Runner verhindert, dass globale App-/SQLAlchemy-Zustände zwischen Modulen lecken. Produktion nutzt
 ausschließlich PostgreSQL, Alembic und explizite System-/Stammdaten-Seeds.
 
+Python-Caches lassen sich vom Repository-Root mit `make clear-pycache` oder direkt mit
+`./scripts/clear-pycache.sh` entfernen.
+
 Siehe `../docs/ARCHITECTURE.md`, `../docs/DATABASE.md` und `../docs/TESTING.md`.

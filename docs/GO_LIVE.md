@@ -31,17 +31,18 @@ sudo ./infrastructure/scripts/checks/smoke-test.sh
 Das erste Admin-Passwort sicher ablegen, sofort ändern und
 `infrastructure/first-run-credentials.txt` löschen.
 
-## Upgrade einer bestehenden 0.x-Installation
+## Wechsel von einer historischen Installation
 
-```bash
-cd ~/royal-blackwater-fleet
-sudo ./infrastructure/scripts/backup/backup-all.sh
-sudo ./update.sh --migrate --seed
-sudo ./infrastructure/scripts/checks/doctor.sh
-```
+Die aufgelöste Schema-Baseline unterstützt keinen direkten Alembic-Upgradepfad aus der alten
+Migrationskette. Für bestehende Installationen gilt daher:
 
-Die v1-Migration entfernt ausschließlich bekannte, unveränderte Entwicklungs-/Beispielinhalte.
-Eigenständig erstellte Beiträge, Builds, Guides, Gruppen und Termine bleiben erhalten.
+1. vollständiges PostgreSQL- und Upload-Backup erstellen;
+2. Datenexport in einer Kopie prüfen;
+3. eine neue Datenbank mit `0001_baseline` aufbauen;
+4. fachliche Daten kontrolliert importieren;
+5. Seed und Doctor/Smoke-Test ausführen.
+
+Die alte Datenbank bleibt bis zur vollständigen Abnahme unverändert als Rollback-Quelle erhalten.
 
 ## Funktionale Abnahme
 

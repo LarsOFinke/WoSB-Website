@@ -12,11 +12,11 @@ from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import OutboundWebhookCreate
-from app.modules.admin.services.outbound_webhook_service import (
+from app.modules.admin.services.outbound_webhook_delivery_service import (
     _delivery_transport_error,
-    create_webhook,
     queue_webhook_event,
 )
+from app.modules.admin.services.outbound_webhook_service import create_webhook
 from app.modules.registry import register_all_models
 from main import app
 

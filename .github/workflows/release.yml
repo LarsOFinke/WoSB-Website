@@ -41,7 +41,7 @@ jobs:
           python -m pip install --no-deps -e backend
           cd frontend && npm ci
       - name: Validate
-        run: bash scripts/validate.sh
+        run: bash scripts/test.sh full
       - name: Resolve version
         id: version
         env:

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
-from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.schemas.fleet_event_read import FleetEventRead
 from app.modules.calendar.schemas.fleet_event_update import FleetEventUpdate

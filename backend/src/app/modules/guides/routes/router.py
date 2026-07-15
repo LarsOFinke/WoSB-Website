@@ -10,7 +10,7 @@ from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.guides.services.guide_service import (
     GuideValidationError,
     create_guide,

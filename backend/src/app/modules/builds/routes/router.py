@@ -10,7 +10,7 @@ from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
 from app.modules.builds.services.build_service import (
     BuildValidationError,
     create_build,

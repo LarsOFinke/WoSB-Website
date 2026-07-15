@@ -32,7 +32,8 @@ Registry-URLs enthalten.
 ```bash
 make test       # Ruff, Backendtests, Build-Designer- und Locale-Checks
 make test-full  # zusätzlich Migration, Produktionsbuild und Infrastruktur
-make validate   # Release-Invarianten plus vollständige Tests
+make validate      # Release-Invarianten plus vollständige Tests
+make clear-pycache # lokale Python-Caches entfernen
 ```
 
 Neue API-Funktionen benötigen Berechtigungs-, Erfolgs- und Fehlerfall. Komplexe reine Berechnungen

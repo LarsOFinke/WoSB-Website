@@ -52,8 +52,6 @@ jobs:
           ENV
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic upgrade head
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic check
-          cd ..
-          python scripts/test_v1_data_migration.py
 
   frontend:
     name: Frontend

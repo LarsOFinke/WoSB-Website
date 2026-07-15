@@ -18,9 +18,14 @@ alembic upgrade head
 alembic check
 ```
 
-Jede Migration muss sowohl auf einer leeren Datenbank als auch als Upgrade des vorherigen Heads
-funktionieren. Die v1-Migration `e5f6a7b8c9d0` entfernt bekannte, unveränderte 0.x-Beispieldaten,
-ohne selbst erstellte Inhalte neu zu klassifizieren oder zu überschreiben.
+Die historische Migrationskette wurde in `0001_baseline` aufgelöst. Diese Baseline bildet das
+aktuelle SQLAlchemy-Modell vollständig ab und ist der einzige Startpunkt für neue Datenbanken.
+Neue Schemaänderungen werden ab jetzt wieder als kleine, fachlich fokussierte Migrationen ergänzt.
+
+**Wichtig:** Die Baseline ist bewusst kein In-Place-Upgradepfad für ältere Installationen. Vor dem
+Wechsel von einer historischen Datenbank muss ein vollständiges Backup und ein geprüfter
+Datenexport/-import in eine frisch mit `0001_baseline` erzeugte Datenbank erfolgen. Ein bloßes
+`alembic stamp` ersetzt diese Prüfung nicht.
 
 ## Produktions-Seeds
 

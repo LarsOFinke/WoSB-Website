@@ -17,8 +17,10 @@ Fachmodule unter `backend/src/app/modules/<domain>` besitzen nach Bedarf `models
 `routes` und `services`. Routes übersetzen HTTP, Services enthalten Anwendungslogik, Models bilden
 Persistenz ab. Querschnittsthemen liegen in `core` und `db`.
 
-Der Build-Designer trennt deklarative Stat-Metadaten von deterministischer Berechnung. Die
-Seed-Orchestrierung ist klein; System-, Schiff- und Build-Option-Katalog werden in getrennten
+Der Admin-Bereich trennt Systembetrieb, Registrierungen, Security, Inhaltsmoderation und
+Benutzerverwaltung in eigene Route-Module. Der Build-Designer hält CRUD und vollständige
+Payload-Validierung getrennt; Webhook-Konfiguration und externer Transport sind unabhängige
+Services. Die Seed-Orchestrierung ist klein; System-, Schiff- und Build-Option-Katalog werden in getrennten
 Modulen synchronisiert. Produktions-Seeds enthalten keine Nutzerinhalte.
 
 ## Frontend

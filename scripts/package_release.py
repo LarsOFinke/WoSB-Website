@@ -20,7 +20,7 @@ EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3", ".zip"}
 
 def included(path: Path) -> bool:
     relative = path.relative_to(ROOT)
-    if any(part in EXCLUDED_PARTS for part in relative.parts):
+    if any(part in EXCLUDED_PARTS or part.endswith(".egg-info") for part in relative.parts):
         return False
     if path.name in EXCLUDED_NAMES or path.suffix in EXCLUDED_SUFFIXES:
         return False
