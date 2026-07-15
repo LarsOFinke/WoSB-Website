@@ -3,14 +3,27 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 const botSetupPage = await readFile(new URL('../src/modules/admin/pages/BotSetupPage.vue', import.meta.url), 'utf8')
+const webhookPage = await readFile(new URL('../src/modules/admin/pages/DiscordWebhooksPage.vue', import.meta.url), 'utf8')
 const adminRoutes = await readFile(new URL('../src/modules/admin/routes.js', import.meta.url), 'utf8')
+const workspaceLinks = await readFile(new URL('../src/core/navigation/workspaceLinks.js', import.meta.url), 'utf8')
 const botPanel = await readFile(new URL('../src/modules/admin/components/DiscordBotOperationsPanel.vue', import.meta.url), 'utf8')
 const api = await readFile(new URL('../src/modules/admin/api/admin.js', import.meta.url), 'utf8')
 
-test('Discord bot manager has a dedicated administrator setup route', () => {
+test('Discord bot and Discord webhooks have independent administrator routes', () => {
   assert.ok(adminRoutes.includes("path: '/admin/bot-setup'"))
+  assert.ok(adminRoutes.includes("path: '/admin/discord-webhooks'"))
   assert.ok(botSetupPage.includes('<DiscordBotOperationsPanel />'))
-  assert.ok(botSetupPage.includes('<OutboundWebhookManagementPanel'))
+  assert.ok(!botSetupPage.includes('OutboundWebhookManagementPanel'))
+  assert.ok(!botSetupPage.includes('activeArea'))
+  assert.ok(webhookPage.includes('<OutboundWebhookManagementPanel'))
+  assert.ok(!webhookPage.includes('DiscordBotOperationsPanel'))
+})
+
+test('staff navigation exposes separate bot and webhook entries', () => {
+  assert.ok(workspaceLinks.includes("to: '/admin/bot-setup'"))
+  assert.ok(workspaceLinks.includes("to: '/admin/discord-webhooks'"))
+  assert.ok(workspaceLinks.includes("t('botSetup.navigation')"))
+  assert.ok(workspaceLinks.includes("t('webhookSetup.navigation')"))
 })
 
 test('Discord bot manager exposes only allow-listed operations', () => {
@@ -26,8 +39,6 @@ test('Discord bot runtime configuration is sent through a dedicated administrato
   assert.ok(botPanel.includes('configurationForm.discord_bot_token'))
   assert.ok(botPanel.includes('configurationForm.webhook_secret'))
   assert.ok(!botPanel.includes('channel_id'))
-  assert.ok(botSetupPage.includes("activeArea === 'bot'"))
-  assert.ok(botSetupPage.includes("activeArea === 'webhooks'"))
   assert.ok(botPanel.includes('configurationForm.restart_after_save'))
 })
 

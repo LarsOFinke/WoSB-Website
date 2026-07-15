@@ -1,0 +1,32 @@
+{
+  "id": "unique-delivery-id",
+  "event": "registration.request.created",
+  "occurred_at": "2026-07-15T12:00:00+00:00",
+  "source": "royal-blackwater-fleet",
+  "destination": {
+    "mode": "signed_json",
+    "channel_key": "registrations",
+    "message_template": "🆕 **Neue Registrierungsanfrage**\nName: **{data.display_name}**",
+    "scope_type": "global",
+    "scope_id": null
+  },
+  "scope": {
+    "type": "global",
+    "id": null,
+    "fleet_id": null,
+    "squad_id": null
+  },
+  "actor": null,
+  "resource": {
+    "type": "registration_request",
+    "id": "42",
+    "url": "/admin?tab=registrations"
+  },
+  "data": {
+    "id": 42,
+    "username": "captain",
+    "display_name": "Captain",
+    "wants_fleet_membership": true,
+    "fleet_id": 1
+  }
+}

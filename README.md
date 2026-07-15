@@ -89,6 +89,8 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 - [Tests](docs/TESTING.md)
 - [Betrieb](docs/OPERATIONS.md)
 - [GitHub CI/CD](docs/DEPLOYMENT.md)
+- [Webhook-Betrieb](docs/outbound-webhooks.md)
+- [Webhook-Nachrichten-Templates](docs/webhook-templates/README.md)
 - [Sicherheit](SECURITY.md)
 - [Änderungsverlauf](CHANGELOG.md)
 

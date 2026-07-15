@@ -108,6 +108,12 @@ defineProps({
       <path d="m12 3 1.3 4.2L17.5 9l-4.2 1.3L12 15l-1.3-4.7L6.5 9l4.2-1.8z" />
       <path d="m18.5 14 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z" />
     </template>
+    <template v-else-if="name === 'webhook'">
+      <path d="M7.5 8.5a4 4 0 1 1 3.8-5.2" />
+      <path d="M16.5 15.5a4 4 0 1 1-3.8 5.2" />
+      <path d="M8.5 16.5a4 4 0 1 1-5.2-3.8" />
+      <path d="m9.5 7.5 5 9M7 16h10M14.5 7.5l-5 9" />
+    </template>
     <template v-else-if="name === 'compass'">
       <circle cx="12" cy="12" r="9" />
       <path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z" />

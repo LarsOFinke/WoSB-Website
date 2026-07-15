@@ -1,0 +1,5 @@
+📘 **Neuer Guide veröffentlicht**
+Titel: **{data.title}**
+Kategorie: `{data.category}`
+Autor: **{data.owner.display_name}**
+Zusammenfassung: {data.summary}

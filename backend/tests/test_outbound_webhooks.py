@@ -250,3 +250,18 @@ def test_webhook_scope_matching_supports_fleet_and_squad_destinations() -> None:
     assert not WebhookDeliveryService._matches_scope(fleet_hook, {"fleet_id": 13})
     assert WebhookDeliveryService._matches_scope(squad_hook, {"squad_id": 34, "fleet_id": 12})
     assert not WebhookDeliveryService._matches_scope(squad_hook, {"squad_id": 35})
+
+
+def test_default_build_messages_use_the_actual_build_name_field() -> None:
+    from app.modules.admin.services.outbound_webhook_delivery_service.discord import render_message
+    from app.modules.admin.services.webhook_events import DEFAULT_MESSAGES
+
+    envelope = {
+        "event": "build.created",
+        "destination": {"name": "Build channel"},
+        "data": {"build_name": "Heavy Broadside", "name": "wrong-field"},
+    }
+
+    assert render_message(DEFAULT_MESSAGES["build.created"], envelope) == "Neuer Build: **Heavy Broadside**."
+    assert "data.name" not in DEFAULT_MESSAGES["build.updated"]
+    assert "data.build_name" in DEFAULT_MESSAGES["build.removed"]

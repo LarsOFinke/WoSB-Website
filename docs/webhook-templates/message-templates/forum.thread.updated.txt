@@ -1,0 +1,5 @@
+✏️ **Forenbeitrag aktualisiert**
+Titel: **{data.title}**
+Kategorie: `{data.category}`
+Geändert von: **{actor.display_name}**
+Antworten: `{data.reply_count}`

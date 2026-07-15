@@ -1,0 +1,4 @@
+🧪 **RBF-Webhook-Test**
+Ziel: **{destination.name}**
+Nachricht: {data.message}
+Event: `{event}`

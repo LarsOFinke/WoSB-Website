@@ -1,0 +1,5 @@
+🛡️ **Neues Squad erstellt**
+Name: **{data.name}**
+Slug: `{data.slug}`
+Mitglieder: `{data.member_count}`
+Erstellt von: **{actor.display_name}**

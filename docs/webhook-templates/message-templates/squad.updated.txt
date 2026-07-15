@@ -1,0 +1,4 @@
+🛠️ **Squad aktualisiert**
+Name: **{data.name}**
+Mitglieder: `{data.member_count}`
+Geändert von: **{actor.display_name}**

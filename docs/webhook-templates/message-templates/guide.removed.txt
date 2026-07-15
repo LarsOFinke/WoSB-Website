@@ -1,0 +1,4 @@
+🗑️ **Guide entfernt**
+Titel: **{data.title}**
+Guide-ID: `{data.id}`
+Entfernt von: **{actor.display_name}**

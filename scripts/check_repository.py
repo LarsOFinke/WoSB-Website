@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 from configparser import ConfigParser
 import json
 import re
@@ -170,6 +171,47 @@ for index, migration_file in enumerate(migration_files):
             f"migration chain is not linear at {migration_file.name}",
         )
     previous_revision = revision
+
+# Every published webhook event must ship with a copy-ready text template.
+webhook_event_source = (
+    ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
+).read_text(encoding="utf-8")
+webhook_module = ast.parse(webhook_event_source)
+event_catalog_node = next(
+    (
+        node.value
+        for node in webhook_module.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "EVENT_CATALOG" for target in node.targets)
+    ),
+    None,
+)
+require(event_catalog_node is not None, "webhook EVENT_CATALOG is missing")
+event_catalog = ast.literal_eval(event_catalog_node)
+webhook_event_types = {row[0] for row in event_catalog}
+template_dir = ROOT / "docs/webhook-templates/message-templates"
+require(template_dir.is_dir(), "missing copy-ready webhook template directory")
+template_files = {path.stem: path for path in template_dir.glob("*.txt")}
+require(
+    set(template_files) == webhook_event_types,
+    "webhook template files must match EVENT_CATALOG exactly",
+)
+valid_template_roots = {
+    "event", "occurred_at", "destination", "actor", "resource", "scope", "data", "source", "id"
+}
+for event_type, template_path in template_files.items():
+    template_text = template_path.read_text(encoding="utf-8").strip()
+    require(template_text, f"empty webhook template: {event_type}")
+    require(len(template_text) <= 1800, f"webhook template too long for Discord: {event_type}")
+    for token in re.findall(r"\{\{?\s*([a-zA-Z0-9_.-]+)\s*\}?\}", template_text):
+        require(
+            token.split(".", 1)[0] in valid_template_roots,
+            f"unsupported webhook template token in {event_type}: {token}",
+        )
+require(
+    (ROOT / "docs/webhook-templates/README.md").is_file(),
+    "missing webhook template usage guide",
+)
 
 # Prevent generated or embedded payloads from turning source modules into binary containers.
 for path in (ROOT / "frontend/src").rglob("*.js"):

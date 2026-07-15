@@ -1,0 +1,4 @@
+💬 **Neuer Forenbeitrag**
+Titel: **{data.title}**
+Kategorie: `{data.category}`
+Autor: **{data.owner.display_name}**

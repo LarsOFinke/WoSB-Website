@@ -1,0 +1,5 @@
+📝 **Guide aktualisiert**
+Titel: **{data.title}**
+Kategorie: `{data.category}`
+Geändert von: **{actor.display_name}**
+Zusammenfassung: {data.summary}

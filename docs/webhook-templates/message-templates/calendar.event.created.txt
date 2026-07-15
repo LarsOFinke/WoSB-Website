@@ -1,0 +1,7 @@
+📅 **Neuer Termin**
+Titel: **{data.title}**
+Kategorie: `{data.category}`
+Beginn: `{data.start_at}`
+Ende: `{data.end_at}`
+Ort: {data.location}
+Erstellt von: **{actor.display_name}**

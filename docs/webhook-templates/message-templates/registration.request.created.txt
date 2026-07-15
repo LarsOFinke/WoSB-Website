@@ -1,0 +1,5 @@
+🆕 **Neue Registrierungsanfrage**
+Name: **{data.display_name}**
+Benutzername: `{data.username}`
+Flottenbewerbung: `{data.wants_fleet_membership}`
+Flotten-ID: `{data.fleet_id}`

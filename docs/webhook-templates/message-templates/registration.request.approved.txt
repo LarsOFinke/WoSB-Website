@@ -1,0 +1,5 @@
+✅ **Registrierung freigegeben**
+Name: **{data.display_name}**
+Benutzername: `{data.username}`
+Freigegeben von: **{actor.display_name}**
+Entscheidungsnotiz: {data.decision_note}

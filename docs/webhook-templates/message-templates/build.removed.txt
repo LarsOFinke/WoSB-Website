@@ -1,0 +1,4 @@
+🗑️ **Build entfernt**
+Build: **{data.build_name}**
+Build-ID: `{data.id}`
+Entfernt von: **{actor.display_name}**

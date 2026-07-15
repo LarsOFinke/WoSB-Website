@@ -1,0 +1,4 @@
+📦 **Squad archiviert**
+Name: **{data.name}**
+Letzter Mitgliederstand: `{data.member_count}`
+Archiviert von: **{actor.display_name}**

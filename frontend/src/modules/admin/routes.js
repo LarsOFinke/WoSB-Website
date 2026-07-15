@@ -6,6 +6,12 @@ export const adminRoutes = [
     meta: { requiresAdmin: true, titleKey: 'botSetup.title' },
   },
   {
+    path: '/admin/discord-webhooks',
+    name: 'admin-discord-webhooks',
+    component: () => import('./pages/DiscordWebhooksPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'webhookSetup.title' },
+  },
+  {
     path: '/admin/master-data',
     name: 'admin-master-data',
     component: () => import('./pages/MasterDataPage.vue'),

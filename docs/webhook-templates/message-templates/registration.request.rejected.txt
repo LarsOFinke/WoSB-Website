@@ -1,0 +1,5 @@
+⛔ **Registrierung abgelehnt**
+Name: **{data.display_name}**
+Benutzername: `{data.username}`
+Abgelehnt von: **{actor.display_name}**
+Entscheidungsnotiz: {data.decision_note}

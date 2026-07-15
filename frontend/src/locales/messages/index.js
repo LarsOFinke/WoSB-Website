@@ -26,6 +26,7 @@ import { integrationArchitectureMessages } from './integrationArchitecture'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
 import { discordBotOperationsMessages } from './discordBotOperations'
 import { discordBotConfigurationMessages } from './discordBotConfiguration'
+import { discordIntegrationSeparationMessages } from './discordIntegrationSeparation'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -59,6 +60,7 @@ const messageLayers = [
   outboundWebhookManagementMessages,
   discordBotOperationsMessages,
   discordBotConfigurationMessages,
+  discordIntegrationSeparationMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

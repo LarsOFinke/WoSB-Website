@@ -1,0 +1,3 @@
+🧭 **Einsteiger-Guide aktualisiert**
+Titel: **{data.title}**
+Aktualisiert von: **{actor.display_name}**

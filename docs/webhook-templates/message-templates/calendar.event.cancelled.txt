@@ -1,0 +1,4 @@
+❌ **Termin abgesagt**
+Titel: **{data.title}**
+Beginn: `{data.start_at}`
+Abgesagt von: **{actor.display_name}**

@@ -44,9 +44,9 @@ DEFAULT_MESSAGES = {
     "guide.updated": "Guide aktualisiert: **{data.title}**.",
     "guide.removed": "Guide entfernt: **{resource.id}**.",
     "newcomer_guide.updated": "Der Einsteiger-Guide wurde aktualisiert.",
-    "build.created": "Neuer Build: **{data.name}**.",
-    "build.updated": "Build aktualisiert: **{data.name}**.",
-    "build.removed": "Build entfernt: **{resource.id}**.",
+    "build.created": "Neuer Build: **{data.build_name}**.",
+    "build.updated": "Build aktualisiert: **{data.build_name}**.",
+    "build.removed": "Build entfernt: **{data.build_name}**.",
     "forum.thread.created": "Neuer Forenbeitrag: **{data.title}**.",
     "forum.thread.updated": "Forenbeitrag aktualisiert: **{data.title}**.",
 }

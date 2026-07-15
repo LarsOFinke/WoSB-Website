@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Discord-Bot und Discord-Webhooks im Staff-Panel in eigenständige Admin-Seiten und Navigationseinträge getrennt; Bot-Laufzeit und Event-Zustellung funktionieren sichtbar unabhängig voneinander.
+- Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/webhook-templates/message-templates/` ergänzt.
+- Standardnachrichten für Build-Webhooks auf das tatsächliche Feld `data.build_name` korrigiert.
 - Update-Erkennung von Git-Diffs auf einen Laufzeitvergleich zwischen Alembic-Head des neu gebauten API-Images und der tatsächlichen PostgreSQL-Revision umgestellt; fehlgeschlagene Migrationen werden im Folgelauf sicher erneut erkannt.
 - Admin-Updateanforderungen werden erst nach Erwerb des exklusiven Locks übernommen; parallele Runner verlieren keine Requests und überschreiben keinen laufenden Status mehr.
 - Update-Heartbeat und Recovery für verwaiste `queued`-/`running`-Zustände ergänzt; abgebrochene Host-Läufe blockieren keine neuen Anforderungen dauerhaft.

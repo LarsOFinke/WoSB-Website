@@ -1,0 +1,5 @@
+➕ **Squad-Mitglied hinzugefügt**
+Squad: **{data.squad_name}**
+Mitglied: **{data.member_display_name}**
+Rolle: `{data.member_role}`
+Ausgeführt von: **{actor.display_name}**

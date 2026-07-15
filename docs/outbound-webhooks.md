@@ -1,20 +1,34 @@
-# Outbound Webhooks
+# Discord-Webhooks und signierte Integrationen
 
-The Staff Panel section **Integrations → Outbound webhooks** publishes signed application events to an external bot or integration service. It is designed for a separate Discord bot that decides which Discord channel to use and how to render the final message.
+Die Webhook-Verwaltung ist im Staff-Panel unter **Discord-Webhooks** erreichbar und vollständig von der Seite **Discord-Bot** getrennt. Beide Bereiche funktionieren unabhängig voneinander.
 
-## Delivery request
+## Zustellmodi
 
-Each delivery is an HTTP `POST` with a JSON body and these headers:
+### Discord-Chat-Webhook
+
+Das Backend sendet eine fertige Discord-Nachricht direkt an einen nativen Discord-Channel-Webhook. Dafür wird weder der Discord-Bot noch dessen Repository benötigt. Die Webhook-URL wird nach dem Speichern maskiert.
+
+### Signierter JSON-Webhook
+
+Das Backend sendet ein strukturiertes Event an den Discord-Bot oder einen anderen Integrationsdienst. Der Empfänger übernimmt Routing, Deduplizierung und Darstellung.
+
+## Vorlagen
+
+Direkt kopierbare Nachrichtenvorlagen für alle unterstützten Events liegen unter [`docs/webhook-templates/`](webhook-templates/). Die Dateien unter `message-templates/` enthalten ausschließlich den Text, der in das Staff-Panel eingefügt wird.
+
+Beim Discord-Chat-Webhook rendert das Backend die Vorlage. Beim signierten JSON-Webhook wird sie unverändert als `destination.message_template` übertragen.
+
+## Signierte Zustellung
+
+Jede signierte Zustellung ist ein HTTP-`POST` mit JSON-Body und folgenden Headern:
 
 - `Content-Type: application/json; charset=utf-8`
-- `X-RBF-Event`: event type, for example `calendar.event.created`
-- `X-RBF-Delivery`: unique delivery identifier
-- `X-RBF-Timestamp`: Unix timestamp used for replay protection
+- `X-RBF-Event`: Event-Typ
+- `X-RBF-Delivery`: eindeutige Zustellungs-ID
+- `X-RBF-Timestamp`: Unix-Zeitstempel für Replay-Schutz
 - `X-RBF-Signature`: `sha256=<hex digest>`
 
-The signature is an HMAC-SHA256 digest of the **exact raw request body**, using the signing secret shown after webhook creation or secret rotation.
-
-Python verification example:
+Die Signatur ist ein HMAC-SHA256-Digest des exakten Request-Bodys mit dem nach Erstellung oder Rotation angezeigten Secret.
 
 ```python
 import hashlib
@@ -30,102 +44,40 @@ def verify_webhook(raw_body: bytes, signature_header: str, secret: str) -> bool:
     return hmac.compare_digest(expected, signature_header)
 ```
 
-The receiving bot should also reject timestamps outside a short tolerance, such as five minutes, and store `X-RBF-Delivery` values to prevent replayed deliveries.
+Der Empfänger sollte zusätzlich Zeitstempel außerhalb einer kurzen Toleranz ablehnen und `X-RBF-Delivery` speichern, um Wiederholungen zu verhindern.
 
-## Payload envelope
+## Payload-Envelope
 
-```json
-{
-  "id": "unique-delivery-id",
-  "event": "calendar.event.created",
-  "occurred_at": "2026-07-14T12:00:00+00:00",
-  "source": "royal-blackwater-fleet",
-  "destination": {
-    "channel_key": "events",
-    "message_template": "Optional routing or formatting hint"
-  },
-  "actor": {
-    "id": 12,
-    "username": "captain",
-    "display_name": "Captain",
-    "role": "moderator"
-  },
-  "resource": {
-    "type": "calendar_event",
-    "id": "42",
-    "url": "/calendar"
-  },
-  "data": {
-    "id": 42,
-    "title": "Port battle"
-  }
-}
-```
+Ein vollständiges Beispiel liegt unter [`webhook-templates/signed-json-envelope.example.json`](webhook-templates/signed-json-envelope.example.json).
 
-`channel_key` is intentionally not a Discord channel ID. It is a stable routing key such as `events`, `guides`, or `builds`. The external bot maps that key to the appropriate Discord server and channel.
+`channel_key` ist absichtlich keine Discord-Channel-ID. Es ist ein stabiler Routing-Key wie `registrations`, `events` oder `squads`, den der externe Empfänger auf sein eigenes Ziel abbildet.
 
-`message_template` is passed through unchanged. The external bot may ignore it, use it as a template identifier, or interpret it as a formatting hint.
+## Zustellverhalten
 
-## Event catalog
+- Events und Zustellversuche werden vor dem Versand gespeichert.
+- Zustellungen laufen nach der API-Antwort als FastAPI-Hintergrundaufgabe.
+- Erfolge und Fehler sind im Staff-Panel sichtbar.
+- Fehlgeschlagene Zustellungen können manuell wiederholt werden.
+- Jedes Abonnement unterstützt eine Testzustellung.
+- Secrets werden nur nach Erstellung oder Rotation vollständig angezeigt.
+- Produktionsziele müssen HTTPS verwenden.
 
-The initial event catalog contains:
+## Container-Netzwerk und DNS
 
-- `calendar.event.created`
-- `calendar.event.updated`
-- `calendar.event.cancelled`
-- `guide.created`
-- `guide.updated`
-- `guide.removed`
-- `newcomer_guide.updated`
-- `build.created`
-- `build.updated`
-- `build.removed`
-- `forum.thread.created`
-- `forum.thread.updated`
-- `integration.test`
-
-## Delivery behavior
-
-- New events are persisted before delivery.
-- Delivery is attempted as a FastAPI background task after the API response is prepared.
-- Successes and failures are visible in the Staff Panel.
-- Administrators can retry failed deliveries manually.
-- A test delivery can be sent from each configured webhook.
-- Full signing secrets are shown only after creation or rotation.
-- Production endpoints must use HTTPS.
-
-The signing secret is stored server-side because it is required to generate HMAC signatures. Database backups and database access therefore need to be treated as sensitive.
-
-## Container networking and DNS
-
-Outbound deliveries are created by the Compose service named `api`, not by a service named `backend`. The API remains connected to the internal database network and also has a dedicated `outbound` bridge network for DNS and HTTPS egress. PostgreSQL stays isolated on the internal network and no additional host ports are published.
-
-Check the running service names first:
+Ausgehende Zustellungen werden vom Compose-Service `api` gesendet. Der Service besitzt neben dem internen Datenbanknetz ein eigenes Outbound-Netz für DNS und HTTPS.
 
 ```bash
 docker compose -f infrastructure/compose.yml ps
-```
 
-Test DNS from the actual delivery process:
-
-```bash
 docker compose -f infrastructure/compose.yml exec -T api \
   python - <<'PY'
 import socket
-print(socket.getaddrinfo("royal-blackwater-fleet.eu", 443))
+print(socket.getaddrinfo("discord.com", 443))
 PY
 ```
 
-`service "backend" is not running` does not indicate that the application backend is down; it means the Compose file has no service with that name. The service is called `api`.
-
-An error such as `Temporary failure in name resolution` means the request never reached the webhook receiver and the signing secret was not checked. Recreate the API container after a networking change:
+Nach Änderungen am Netzwerk den API-Container neu erstellen:
 
 ```bash
 ./update.sh
-```
-
-or, for a targeted host-side check:
-
-```bash
-docker compose -f infrastructure/compose.yml up -d --force-recreate api
 ```
