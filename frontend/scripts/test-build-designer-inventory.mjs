@@ -304,6 +304,8 @@ assert.equal(eightSlotAccess.availableSlots, 8)
 
 
 const buildCreateSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/pages/BuildCreatePage.vue'), 'utf8')
+const buildDesignerSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/composables/useBuildDesigner.js'), 'utf8')
+const buildEffectsSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/composables/useBuildEffects.js'), 'utf8')
 const indexSource = readFileSync(resolve(frontendRoot, 'index.html'), 'utf8')
 const buildRoutesSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/routes.js'), 'utf8')
 const profilePageSource = readFileSync(resolve(frontendRoot, 'src/modules/accounts/pages/ProfilePage.vue'), 'utf8')
@@ -312,7 +314,7 @@ const mySquadsSource = readFileSync(resolve(frontendRoot, 'src/modules/squads/pa
 
 assert.match(buildCreateSource, /import slotPlaceholderSrc from '@\/assets\/slot-placeholder\.svg'/)
 assert.match(buildRoutesSource, /path: '\/builds\/:id\/edit'/)
-assert.match(buildCreateSource, /updateMyBuild\(props\.id, buildPayload\(\)\)/)
+assert.match(buildDesignerSource, /updateMyBuild\(props\.id, buildPayload\(\)\)/)
 assert.match(profilePageSource, /PreferenceTransferList/)
 assert.match(preferenceTransferSource, /update:modelValue/)
 assert.match(mySquadsSource, /route\.query\.view === 'events'/)
@@ -320,9 +322,9 @@ assert.match(mySquadsSource, /upcomingSquadEvents/)
 assert.match(mySquadsSource, /v-for="event in upcomingSquadEvents"/)
 assert.doesNotMatch(buildCreateSource, /\/icons\/slot-placeholder\.svg/)
 assert.match(buildCreateSource, /<select v-model="form\.lantern"/)
-assert.match(buildCreateSource, /form\.upgrade_7/)
-assert.match(buildCreateSource, /form\.upgrade_8/)
-assert.match(buildCreateSource, /lockedUpgrade8/)
+assert.match(buildEffectsSource, /upgradeSlot7Available/)
+assert.match(buildEffectsSource, /upgradeSlot8Available/)
+assert.match(buildEffectsSource, /lockedUpgrade8/)
 assert.match(buildCreateSource, /optionsFor\('lantern'\)/)
 
 const sailBlock = buildCreateSource.match(/equipment-slot-sail[\s\S]*?<\/label>/)?.[0] || ''
@@ -330,7 +332,7 @@ const lanternBlock = buildCreateSource.match(/equipment-slot-lantern[\s\S]*?<\/l
 assert.doesNotMatch(sailBlock, /slot-effect-text|formatEffects/)
 assert.doesNotMatch(lanternBlock, /slot-effect-text|formatEffects/)
 assert.match(buildCreateSource, /researchUpgradeEffectTotals/)
-assert.match(buildCreateSource, /researchUpgradeEffectTotals\.value/)
+assert.match(buildEffectsSource, /researchUpgradeEffectTotals\.value/)
 
 assert.doesNotMatch(indexSource, /\/branding\/rbf-fleet-icon\.png/)
 assert.match(indexSource, /\/rbf-fleet-icon\.png/)

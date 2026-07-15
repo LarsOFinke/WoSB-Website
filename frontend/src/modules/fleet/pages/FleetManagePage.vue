@@ -1,142 +1,17 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
-
 import MetricCard from '@/core/components/MetricCard.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
-import { useLocale } from '@/locales'
-import { FLEET_MEMBER_STATUSES, FLEET_ROLES, getOfficialFleetManagementDetail, updateFleet, updateFleetMembership } from '@/modules/fleet/api/fleet'
-import { useSession } from '@/modules/accounts/session'
+import { useFleetManagePage } from '@/modules/fleet/composables/useFleetManagePage.js'
 
-const { t } = useLocale()
-const { user } = useSession()
-const selectedFleet = ref(null)
-const activeTab = ref('profile')
-const loading = ref(false)
-const saving = ref(false)
-const error = ref('')
-const success = ref('')
-const memberSearch = ref('')
-const memberStatusFilter = ref('active')
-const memberRoleFilter = ref('')
-
-const form = reactive({ description: '', standing_orders: '' })
-
-const memberships = computed(() => selectedFleet.value?.memberships || [])
-const pendingMembers = computed(() => memberships.value.filter((row) => row.status === 'pending'))
-const activeMembers = computed(() => memberships.value.filter((row) => row.status === 'active'))
-const inactiveMembers = computed(() => memberships.value.filter((row) => row.status === 'inactive'))
-const leadershipMembers = computed(() => activeMembers.value.filter((row) => ['fleet_admiral', 'fleet_lieutenant'].includes(row.role)))
-
-const tabs = computed(() => [
-  { key: 'profile', label: t('fleets.manage.tabs.profile'), count: null },
-  { key: 'requests', label: t('fleets.manage.tabs.requests'), count: pendingMembers.value.length },
-  { key: 'members', label: t('fleets.manage.tabs.members'), count: activeMembers.value.length + inactiveMembers.value.length },
-  { key: 'directory', label: t('fleets.manage.tabs.directory'), count: activeMembers.value.length },
-])
-
-const filteredMembers = computed(() => {
-  const query = memberSearch.value.trim().toLowerCase()
-  return memberships.value.filter((membership) => {
-    const matchesStatus = memberStatusFilter.value ? membership.status === memberStatusFilter.value : true
-    const matchesRole = memberRoleFilter.value ? membership.role === memberRoleFilter.value : true
-    const haystack = [
-      membership.user.display_name,
-      membership.user.username,
-      membership.user.role,
-      membership.note,
-      membership.assignment,
-      membership.availability,
-      membership.preferred_ships,
-      membership.timezone,
-      membership.discord_handle,
-      membership.admin_note,
-    ].filter(Boolean).join(' ').toLowerCase()
-    return matchesStatus && matchesRole && (!query || haystack.includes(query))
-  })
-})
-
-const activeDirectoryMembers = computed(() => filteredMembers.value.filter((membership) => membership.status === 'active'))
-const protectedMembers = computed(() => memberships.value.filter((membership) => managementFor(membership).protected))
-
-function managementFor(membership) {
-  return membership?.management || {
-    can_edit_directory: false,
-    can_change_role: false,
-    can_change_status: false,
-    assignable_roles: [],
-    protected: true,
-    reason: 'insufficient',
-  }
-}
-
-function roleOptionsFor(membership) {
-  return managementFor(membership).assignable_roles || []
-}
-
-function protectionLabel(membership) {
-  const reason = managementFor(membership).reason
-  return reason ? t(`fleets.manage.protectionReasons.${reason}`) : ''
-}
-
-function hasAnyMemberPermission(membership) {
-  const management = managementFor(membership)
-  return management.can_edit_directory || management.can_change_role || management.can_change_status
-}
-
-function syncForm() {
-  form.description = selectedFleet.value?.description || ''
-  form.standing_orders = selectedFleet.value?.standing_orders || ''
-}
-
-async function loadFleetDetail() {
-  loading.value = true
-  error.value = ''
-  try {
-    selectedFleet.value = await getOfficialFleetManagementDetail()
-    if (selectedFleet.value) syncForm()
-  } catch (err) {
-    error.value = err.message || t('fleets.manage.loadError')
-  } finally {
-    loading.value = false
-  }
-}
-
-async function saveFleet() {
-  if (!selectedFleet.value) return
-  saving.value = true
-  error.value = ''
-  success.value = ''
-  try {
-    await updateFleet(selectedFleet.value.id, {
-      description: form.description,
-      standing_orders: form.standing_orders,
-    })
-    success.value = t('fleets.manage.saved')
-    await loadFleetDetail()
-  } catch (err) {
-    error.value = err.message || t('fleets.manage.saveError')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function setMember(membership, payload) {
-  error.value = ''
-  success.value = ''
-  try {
-    await updateFleetMembership(selectedFleet.value.id, membership.id, payload)
-    success.value = t('fleets.manage.memberSaved')
-    await loadFleetDetail()
-  } catch (err) {
-    error.value = err.message || t('fleets.manage.memberError')
-  }
-}
-
-function fieldPayload(field, event) {
-  return { [field]: event.target.value || null }
-}
-
-onMounted(loadFleetDetail)
+const {
+  t, user, selectedFleet, activeTab, loading,
+  saving, error, success, memberSearch, memberStatusFilter,
+  memberRoleFilter, form, memberships, pendingMembers, activeMembers,
+  inactiveMembers, leadershipMembers, tabs, filteredMembers, activeDirectoryMembers,
+  protectedMembers, managementFor, roleOptionsFor, protectionLabel, hasAnyMemberPermission,
+  syncForm, loadFleetDetail, saveFleet, setMember, fieldPayload,
+  FLEET_MEMBER_STATUSES, FLEET_ROLES,
+} = useFleetManagePage()
 </script>
 
 <template>

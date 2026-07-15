@@ -2,18 +2,22 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import test from 'node:test'
 
-const source = fs.readFileSync(new URL('../src/modules/fleet/pages/FleetManagePage.vue', import.meta.url), 'utf8')
+const pageSource = fs.readFileSync(new URL('../src/modules/fleet/pages/FleetManagePage.vue', import.meta.url), 'utf8')
+const modelSource = fs.readFileSync(new URL('../src/modules/fleet/composables/useFleetManagePage.js', import.meta.url), 'utf8')
+const domainSource = fs.readFileSync(new URL('../src/modules/fleet/domain/fleetMemberships.js', import.meta.url), 'utf8')
+const behaviorSource = `${modelSource}\n${domainSource}`
 
 test('fleet management renders backend-provided membership permissions', () => {
-  assert.match(source, /membership\?\.management/)
-  assert.match(source, /can_change_role/)
-  assert.match(source, /can_change_status/)
-  assert.match(source, /can_edit_directory/)
-  assert.match(source, /assignable_roles/)
+  assert.match(behaviorSource, /membership\?\.management/)
+  assert.match(behaviorSource, /can_change_role/)
+  assert.match(behaviorSource, /can_change_status/)
+  assert.match(behaviorSource, /can_edit_directory/)
+  assert.match(behaviorSource, /assignable_roles/)
+  assert.match(pageSource, /managementFor\(membership\)/)
 })
 
 test('protected roles are shown instead of editable controls', () => {
-  assert.match(source, /fleet-protection-notice/)
-  assert.match(source, /protectionReasons/)
-  assert.match(source, /fleet-hierarchy-policy/)
+  assert.match(pageSource, /fleet-protection-notice/)
+  assert.match(modelSource, /protectionReasons/)
+  assert.match(pageSource, /fleet-hierarchy-policy/)
 })

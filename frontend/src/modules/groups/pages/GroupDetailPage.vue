@@ -1,11 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-
-import { useLocale } from '@/locales'
-import { listMyBuilds } from '@/modules/builds/api/builds'
-import { closeGroup, getGroup, joinGroup } from '@/modules/groups/api/groups'
-import { listShips } from '@/modules/ships/api/ships'
-import { useSession } from '@/modules/accounts/session'
+import { useGroupDetailPage } from '@/modules/groups/composables/useGroupDetailPage.js'
 
 const props = defineProps({
   id: {
@@ -14,151 +8,14 @@ const props = defineProps({
   },
 })
 
-const { t } = useLocale()
-const { isAuthenticated, isStaff, user } = useSession()
-
-const group = ref(null)
-const ships = ref([])
-const builds = ref([])
-const loading = ref(false)
-const joining = ref(false)
-const closing = ref(false)
-const error = ref('')
-const joinError = ref('')
-const joinSuccess = ref('')
-
-const joinForm = reactive({
-  display_name: '',
-  fleet_name: '',
-  ship_id: '',
-  build_id: '',
-  note: '',
-})
-
-const canManage = computed(() => group.value && user.value && (group.value.owner_id === user.value.id || isStaff.value))
-const canJoin = computed(() => Boolean(group.value?.is_joinable))
-const selectedBuild = computed(() => builds.value.find((build) => String(build.id) === String(joinForm.build_id)) || null)
-const selectedShip = computed(() => {
-  if (selectedBuild.value) return selectedBuild.value.ship
-  return ships.value.find((ship) => String(ship.id) === String(joinForm.ship_id)) || null
-})
-
-const allowedShips = computed(() => ships.value.filter((ship) => isShipAllowed(ship.rate)))
-const allowedBuilds = computed(() => builds.value.filter((build) => isShipAllowed(build.ship?.rate)))
-
-const rateRequirementText = computed(() => {
-  if (!group.value) return t('groups.detail.anyRate')
-  const minRate = group.value.min_ship_rate
-  const maxRate = group.value.max_ship_rate
-  if (minRate && maxRate) return t('groups.detail.rateRangeRequirement', { max: maxRate, min: minRate })
-  if (minRate) return t('groups.detail.minRateRequirement', { rate: minRate })
-  if (maxRate) return t('groups.detail.maxRateRequirement', { rate: maxRate })
-  return t('groups.detail.anyRate')
-})
-
-const scheduleText = computed(() => {
-  if (!group.value?.scheduled_start_at) return t('groups.detail.noSchedule')
-  const start = formatDateTime(group.value.scheduled_start_at)
-  const end = group.value.scheduled_end_at ? formatDateTime(group.value.scheduled_end_at) : null
-  return end ? `${start} – ${end}` : start
-})
-
-function formatDateTime(value) {
-  if (!value) return ''
-  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-function isShipAllowed(rate) {
-  if (!group.value || !rate) return !group.value?.min_ship_rate && !group.value?.max_ship_rate
-  if (group.value.min_ship_rate && rate > group.value.min_ship_rate) return false
-  if (group.value.max_ship_rate && rate < group.value.max_ship_rate) return false
-  return true
-}
-
-function memberShipLabel(member) {
-  if (member.build) return `${member.build.build_name} · ${member.build.ship.name}`
-  if (member.ship) return `${member.ship.name} · ${t('common.rate')} ${member.ship.rate}`
-  return member.ship_name || t('groups.detail.noShip')
-}
-
-async function loadAuxiliaryData() {
-  try {
-    ships.value = await listShips()
-  } catch {
-    ships.value = []
-  }
-  if (!isAuthenticated.value) {
-    builds.value = []
-    return
-  }
-  try {
-    builds.value = await listMyBuilds()
-  } catch {
-    builds.value = []
-  }
-}
-
-async function loadGroup() {
-  loading.value = true
-  error.value = ''
-  try {
-    group.value = await getGroup(props.id)
-    if (!joinForm.display_name && user.value) joinForm.display_name = user.value.display_name || user.value.username || ''
-  } catch (err) {
-    error.value = err.message || t('groups.detail.loadError')
-  } finally {
-    loading.value = false
-  }
-}
-
-async function submitJoin() {
-  joining.value = true
-  joinError.value = ''
-  joinSuccess.value = ''
-  try {
-    await joinGroup(group.value.id, {
-      display_name: joinForm.display_name || user.value?.display_name || user.value?.username || '',
-      fleet_name: joinForm.fleet_name || null,
-      ship_id: joinForm.build_id ? null : (joinForm.ship_id ? Number(joinForm.ship_id) : null),
-      build_id: joinForm.build_id ? Number(joinForm.build_id) : null,
-      ship_name: selectedShip.value?.name || null,
-      ship_rate: selectedShip.value?.rate || null,
-      note: joinForm.note || null,
-    })
-    joinSuccess.value = t('groups.detail.joined')
-    joinForm.note = ''
-    await loadGroup()
-  } catch (err) {
-    joinError.value = err.message || t('groups.detail.joinError')
-  } finally {
-    joining.value = false
-  }
-}
-
-async function submitClose() {
-  closing.value = true
-  error.value = ''
-  try {
-    await closeGroup(group.value.id)
-    await loadGroup()
-  } catch (err) {
-    error.value = err.message || t('groups.detail.closeError')
-  } finally {
-    closing.value = false
-  }
-}
-
-watch(() => joinForm.build_id, (value) => {
-  if (value) joinForm.ship_id = ''
-})
-
-watch(() => joinForm.ship_id, (value) => {
-  if (value) joinForm.build_id = ''
-})
-
-onMounted(async () => {
-  await Promise.all([loadGroup(), loadAuxiliaryData()])
-})
+const {
+  t, isAuthenticated, isStaff, user, group,
+  ships, builds, loading, joining, closing,
+  error, joinError, joinSuccess, joinForm, canManage,
+  canJoin, selectedBuild, selectedShip, allowedShips, allowedBuilds,
+  rateRequirementText, scheduleText, formatDateTime, isShipAllowed, memberShipLabel,
+  loadAuxiliaryData, loadGroup, submitJoin, submitClose,
+} = useGroupDetailPage(props)
 </script>
 
 <template>

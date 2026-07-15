@@ -2,30 +2,16 @@ import { API_BASE_URL } from '@/config/runtime'
 import { get, postForm } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
+import {
+  ACCEPTED_FILE_TYPES,
+  MAX_DOCUMENT_BYTES,
+  MAX_IMAGE_BYTES,
+  MAX_UPLOAD_BYTES,
+} from '@/modules/files/fileTypes'
+export { ACCEPT_ATTRIBUTE, ACCEPTED_FILE_TYPES, IMAGE_MIME_TYPES, MAX_DOCUMENT_BYTES, MAX_IMAGE_BYTES, MAX_UPLOAD_BYTES } from '@/modules/files/fileTypes'
+
 const EMBEDDABLE_MIME_PREFIXES = ['image/', 'video/']
 const EMBEDDABLE_DOCUMENT_MIME_TYPES = new Set(['application/pdf', 'text/plain'])
-
-export const IMAGE_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/svg+xml',
-]
-
-export const ACCEPTED_FILE_TYPES = [
-  ...IMAGE_MIME_TYPES,
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'application/pdf',
-  'text/plain',
-]
-
-export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_TYPES.join(',')
-export const MAX_UPLOAD_BYTES = 80 * 1024 * 1024
-export const MAX_IMAGE_BYTES = 12 * 1024 * 1024
-export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 
 export function maxBytesForFile(file) {
   const mimeType = String(file?.type || '').toLowerCase()
