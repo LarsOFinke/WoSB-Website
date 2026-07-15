@@ -28,4 +28,5 @@ test('integration management filters endpoints and delivery history', () => {
   for (const binding of ['webhookSearch', 'webhookState', 'deliveryWebhook', 'deliveryStatus', 'deliveryEvent', 'form.delivery_mode', 'form.scope_type']) {
     assert.ok(webhookSource.includes(`v-model="${binding}"`), binding)
   }
+  assert.ok(webhookSource.includes("row.event_types[0] || 'integration.test'"))
 })

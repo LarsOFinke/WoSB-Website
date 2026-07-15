@@ -19,6 +19,7 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
     queue_webhook_event_safely,
     schedule_webhook_deliveries,
 )
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 
 router = APIRouter(prefix="/registration-requests", tags=["admin-registrations"])
 
@@ -89,6 +90,7 @@ def admin_approve_registration_request(
             "wants_fleet_membership": request.wants_fleet_membership,
             "decision_note": request.decision_note,
         },
+        **webhook_event_scope(db, fleet_id=request.fleet_id),
     )
     schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegistrationRequestRead.model_validate(request)
@@ -128,6 +130,7 @@ def admin_reject_registration_request(
             "display_name": request.display_name,
             "decision_note": request.decision_note,
         },
+        **webhook_event_scope(db, fleet_id=request.fleet_id),
     )
     schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegistrationRequestRead.model_validate(request)

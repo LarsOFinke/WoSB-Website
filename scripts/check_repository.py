@@ -7,6 +7,7 @@ import ast
 from configparser import ConfigParser
 import json
 import re
+import runpy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -173,22 +174,18 @@ for index, migration_file in enumerate(migration_files):
     previous_revision = revision
 
 # Every published webhook event must ship with a copy-ready text template.
-webhook_event_source = (
-    ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
-).read_text(encoding="utf-8")
-webhook_module = ast.parse(webhook_event_source)
-event_catalog_node = next(
-    (
-        node.value
-        for node in webhook_module.body
-        if isinstance(node, ast.Assign)
-        and any(isinstance(target, ast.Name) and target.id == "EVENT_CATALOG" for target in node.targets)
-    ),
-    None,
-)
-require(event_catalog_node is not None, "webhook EVENT_CATALOG is missing")
-event_catalog = ast.literal_eval(event_catalog_node)
+webhook_event_path = ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
+webhook_event_source = webhook_event_path.read_text(encoding="utf-8")
+webhook_namespace = runpy.run_path(str(webhook_event_path))
+event_catalog = webhook_namespace.get("EVENT_CATALOG")
+event_test_samples = webhook_namespace.get("EVENT_TEST_SAMPLES")
+require(isinstance(event_catalog, tuple), "webhook EVENT_CATALOG is missing")
+require(isinstance(event_test_samples, dict), "webhook EVENT_TEST_SAMPLES is missing")
 webhook_event_types = {row[0] for row in event_catalog}
+require(
+    set(event_test_samples) == webhook_event_types,
+    "webhook test samples must match EVENT_CATALOG exactly",
+)
 template_dir = ROOT / "docs/webhook-templates/message-templates"
 require(template_dir.is_dir(), "missing copy-ready webhook template directory")
 template_files = {path.stem: path for path in template_dir.glob("*.txt")}
@@ -203,11 +200,44 @@ for event_type, template_path in template_files.items():
     template_text = template_path.read_text(encoding="utf-8").strip()
     require(template_text, f"empty webhook template: {event_type}")
     require(len(template_text) <= 1800, f"webhook template too long for Discord: {event_type}")
+    sample = event_test_samples[event_type]
+    sample_envelope = {
+        "id": "test-delivery",
+        "event": event_type,
+        "occurred_at": "2026-01-01T00:00:00+00:00",
+        "source": "royal-blackwater-fleet",
+        "destination": {"name": "Test destination"},
+        "actor": {
+            "id": 42,
+            "username": "test-captain",
+            "display_name": "Test Captain",
+            "role": "user",
+        },
+        "scope": {
+            "type": sample.get("scope_type", "global"),
+            "id": sample.get("scope_id"),
+            "fleet_id": sample.get("fleet_id"),
+            "squad_id": sample.get("squad_id"),
+        },
+        "resource": {
+            "type": sample["resource_type"],
+            "id": str(sample["resource_id"]),
+            "url": sample.get("resource_url"),
+        },
+        "data": sample["data"],
+    }
     for token in re.findall(r"\{\{?\s*([a-zA-Z0-9_.-]+)\s*\}?\}", template_text):
         require(
             token.split(".", 1)[0] in valid_template_roots,
             f"unsupported webhook template token in {event_type}: {token}",
         )
+        current = sample_envelope
+        for part in token.split("."):
+            require(
+                isinstance(current, dict) and part in current,
+                f"webhook template token has no test payload value in {event_type}: {token}",
+            )
+            current = current[part]
     if event_type != "integration.test":
         require(
             "{resource.url}" in template_text,
@@ -217,6 +247,23 @@ require(
     (ROOT / "docs/webhook-templates/README.md").is_file(),
     "missing webhook template usage guide",
 )
+
+# Every domain event must have exactly one production publisher in a route module.
+publisher_counts = {event_type: 0 for event_type in webhook_event_types}
+for route_path in (ROOT / "backend/src/app/modules").rglob("routes/*.py"):
+    route_tree = ast.parse(route_path.read_text(encoding="utf-8"))
+    for node in ast.walk(route_tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if node.value in publisher_counts:
+                publisher_counts[node.value] += 1
+for event_type, count in publisher_counts.items():
+    if event_type == "integration.test":
+        continue
+    require(
+        count == 1,
+        f"webhook event must have exactly one route publisher ({count} found): {event_type}",
+    )
+
 
 # Prevent generated or embedded payloads from turning source modules into binary containers.
 for path in (ROOT / "frontend/src").rglob("*.js"):

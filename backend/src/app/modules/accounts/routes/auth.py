@@ -24,6 +24,7 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
     queue_webhook_event_safely,
     schedule_webhook_deliveries,
 )
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -69,6 +70,7 @@ def register(
             "fleet_id": request.fleet_id,
             "fleet_application_note": request.fleet_application_note,
         },
+        **webhook_event_scope(db, fleet_id=request.fleet_id),
     )
     schedule_webhook_deliveries(background_tasks, delivery_ids)
     return RegisterResponse(request=request)

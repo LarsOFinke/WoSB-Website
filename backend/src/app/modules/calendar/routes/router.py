@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
-from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.schemas.fleet_event_read import FleetEventRead
 from app.modules.calendar.schemas.fleet_event_update import FleetEventUpdate
@@ -69,6 +73,7 @@ def post_event(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.created", resource_type="calendar_event", resource_id=event.id,
         resource_url=_event_resource_url(event), actor=current_user, data=event,
+        **webhook_event_scope(db, squad_id=event.squad_id, use_primary_fleet=True),
     ))
     return event
 
@@ -102,6 +107,7 @@ def put_event(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.updated", resource_type="calendar_event", resource_id=event.id,
         resource_url=_event_resource_url(event), actor=current_user, data=event,
+        **webhook_event_scope(db, squad_id=event.squad_id, use_primary_fleet=True),
     ))
     return event
 
@@ -124,4 +130,9 @@ def delete_event(
         db, event_type="calendar.event.cancelled", resource_type="calendar_event", resource_id=event_id,
         resource_url=_event_resource_url(existing) if existing else "/calendar", actor=current_user,
         data=existing or {"id": event_id, "is_cancelled": True},
+        **webhook_event_scope(
+            db,
+            squad_id=existing.squad_id if existing is not None else None,
+            use_primary_fleet=True,
+        ),
     ))

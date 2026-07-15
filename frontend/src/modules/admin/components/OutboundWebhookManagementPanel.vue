@@ -155,7 +155,7 @@ async function submit() {
 }
 async function runTest(row) {
   try {
-    const delivery = await testOutboundWebhook(row.id)
+    const delivery = await testOutboundWebhook(row.id, row.event_types[0] || 'integration.test')
     success.value = delivery.status === 'success' ? t('admin.webhooks.messages.testSuccess') : t('admin.webhooks.messages.testFailed')
     await load()
   } catch (err) { error.value = err.message || t('admin.webhooks.errors.test') }

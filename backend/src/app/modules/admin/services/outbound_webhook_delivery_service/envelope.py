@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.time import utc_now
 from app.modules.accounts.models.user import User
 from app.modules.admin.models.outbound_webhook import OutboundWebhook
+from app.modules.admin.services.webhook_events import event_test_sample
 
 from .serialization import JsonSafeEncoder
 
@@ -96,17 +97,21 @@ class WebhookEnvelopeFactory:
         actor: User,
         event_type: str,
     ) -> tuple[str, dict[str, Any]]:
+        sample = event_test_sample(event_type)
+        if event_type == "integration.test":
+            sample["data"]["webhook_name"] = subscription.name
         return self.event(
             subscription,
             event_type=event_type,
-            resource_type="integration",
-            resource_id=subscription.id,
+            resource_type=sample["resource_type"],
+            resource_id=sample["resource_id"],
             actor=actor,
-            resource_url=None,
-            data={
-                "message": "Royal Blackwater Fleet webhook test delivery.",
-                "webhook_name": subscription.name,
-            },
+            resource_url=sample.get("resource_url"),
+            scope_type=sample.get("scope_type", "global"),
+            scope_id=sample.get("scope_id"),
+            fleet_id=sample.get("fleet_id"),
+            squad_id=sample.get("squad_id"),
+            data=sample["data"],
         )
 
     @staticmethod

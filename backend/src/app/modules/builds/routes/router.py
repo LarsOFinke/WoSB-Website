@@ -10,7 +10,11 @@ from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.builds.services.build_service import (
     BuildValidationError,
     create_build,
@@ -52,7 +56,9 @@ def post_build(
     )
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="build.created", resource_type="build", resource_id=created.id,
-        resource_url=f"/builds/{created.id}", actor=current_user, data=created,
+        resource_url=f"/builds/{created.id}", actor=current_user,
+        data=BuildRead.model_validate(created),
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return created
 
@@ -97,7 +103,9 @@ def put_my_build(
     )
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="build.updated", resource_type="build", resource_id=build_id,
-        resource_url=f"/builds/{build_id}", actor=current_user, data=updated,
+        resource_url=f"/builds/{build_id}", actor=current_user,
+        data=BuildRead.model_validate(updated),
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return updated
 
@@ -121,6 +129,7 @@ def delete_my_build(
         db, event_type="build.removed", resource_type="build", resource_id=build_id,
         resource_url="/builds", actor=current_user,
         data={"id": build_id, "build_name": getattr(existing, "build_name", str(build_id))},
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
 
 

@@ -52,6 +52,12 @@ Ein vollständiges Beispiel liegt unter [`webhook-templates/signed-json-envelope
 
 `channel_key` ist absichtlich keine Discord-Channel-ID. Es ist ein stabiler Routing-Key wie `registrations`, `events` oder `squads`, den der externe Empfänger auf sein eigenes Ziel abbildet.
 
+## Testzustellungen und reale Ereignisse
+
+Der Button **Test senden** verwendet das erste ausgewählte Event des Abonnements und erzeugt dafür einen realistischen Vorschau-Payload. Damit werden Ziel-URL, Discord-Darstellung, Template-Platzhalter und Transport geprüft. Die Testzustellung ersetzt jedoch keinen echten Fachvorgang: Sie wird direkt für das ausgewählte Abonnement erzeugt und beweist daher nicht, dass ein späteres Ereignis fachlich zum Fleet-/Squad-Scope passt.
+
+Bei einem echten Vorgang muss in der Zustellhistorie eine neue Zeile mit dem tatsächlichen Event-Typ erscheinen. Fehlt diese Zeile vollständig, wurde das Ereignis nicht für das Abonnement eingeplant, beispielsweise wegen abweichendem Event-Typ, inaktivem Abonnement oder nicht passendem Scope. Eine vorhandene Zeile mit `failed` bedeutet dagegen, dass das Ereignis eingeplant wurde, aber der externe Transport fehlgeschlagen ist.
+
 ## Zustellverhalten
 
 - Events und Zustellversuche werden vor dem Versand gespeichert.

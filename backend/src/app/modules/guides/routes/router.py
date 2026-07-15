@@ -10,7 +10,11 @@ from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.guides.services.guide_service import (
     GuideValidationError,
     create_guide,
@@ -52,6 +56,7 @@ def post_guide(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="guide.created", resource_type="guide", resource_id=guide.id,
         resource_url=f"/guides/{guide.id}", actor=current_user, data=guide,
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return guide
 
@@ -90,6 +95,7 @@ def put_guide(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="guide.updated", resource_type="guide", resource_id=guide_id,
         resource_url=f"/guides/{guide_id}", actor=current_user, data=guide,
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return guide
 
@@ -112,4 +118,5 @@ def delete_own_guide(
         db, event_type="guide.removed", resource_type="guide", resource_id=guide_id,
         resource_url="/guides", actor=current_user,
         data={"id": guide_id, "title": getattr(existing, "title", str(guide_id))},
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))

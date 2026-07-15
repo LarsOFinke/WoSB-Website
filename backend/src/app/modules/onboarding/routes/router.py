@@ -6,7 +6,11 @@ from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.onboarding.schemas.newcomer_guide import NewcomerGuideRead, NewcomerGuideUpdate
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.onboarding.services.newcomer_guide_service import (
     NewcomerGuideValidationError,
     get_newcomer_guide,
@@ -46,5 +50,6 @@ def replace_newcomer_guide(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="newcomer_guide.updated", resource_type="newcomer_guide",
         resource_id=guide.id, resource_url="/newcomer-guide", actor=current_user, data=guide,
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return guide

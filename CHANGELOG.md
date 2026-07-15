@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Echte Build-CRUD-Ereignisse serialisieren nun das öffentliche `BuildRead`-Schema statt eines SQLAlchemy-Objekts; `build.created`, `build.updated` und `build.removed` werden dadurch zuverlässig eingeplant und zugestellt.
+- Fleet-/Squad-Scope-Metadaten für Registrierungen, Kalender, Builds, Guides, Forum und Einsteiger-Guide vereinheitlicht, sodass reale Ereignisse dieselben Abonnements erreichen wie vorgesehen.
+- Event-spezifische Testzustellungen verwenden realistische Payloads; Repository-Prüfungen erzwingen für jedes Event genau einen Publisher, einen serialisierbaren Test-Payload und gültige Template-Felder.
+- Unerwartete Fehler in Webhook-Hintergrundaufgaben werden als fehlgeschlagene Zustellung persistiert, statt Einträge dauerhaft im Status `queued` zu belassen.
 - Englische Webhook-Nachrichtenvorlagen um vollständige Ressourcendaten und anklickbare Deep-Links erweitert; Webhook-Envelopes qualifizieren relative Ressourcenpfade nun gegen die öffentliche Website-Origin.
 - Gelöschte Builds und Guides verlinken in Benachrichtigungen auf ihre weiterhin erreichbaren Übersichtsseiten.
 - Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.

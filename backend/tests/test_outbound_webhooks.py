@@ -277,3 +277,196 @@ def test_default_build_messages_use_the_actual_build_name_field() -> None:
     assert render_message(DEFAULT_MESSAGES["build.created"], envelope) == "Neuer Build: **Heavy Broadside**."
     assert "data.name" not in DEFAULT_MESSAGES["build.updated"]
     assert "data.build_name" in DEFAULT_MESSAGES["build.removed"]
+
+
+def test_every_catalog_event_has_a_serializable_preview_payload() -> None:
+    from app.modules.admin.schemas.outbound_webhook import OutboundWebhookCreate
+    from app.modules.admin.services.webhook_events import EVENT_TEST_SAMPLES, event_test_sample
+
+    with isolated_session() as db:
+        actor = create_user(
+            db,
+            username="webhook-catalog-admin",
+            password="BlackwaterWebhookCatalog123!",
+            display_name="Webhook Catalog Admin",
+            role=ROLE_ADMIN,
+        )
+        webhook = create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="All event previews",
+                endpoint_url="http://bot.example.test/hooks/all-events",
+                event_types=sorted(EVENT_TEST_SAMPLES),
+            ),
+            actor,
+        )
+        for event_type in sorted(EVENT_TEST_SAMPLES):
+            sample = event_test_sample(event_type)
+            delivery_ids = queue_webhook_event(
+                db,
+                event_type=event_type,
+                resource_type=sample["resource_type"],
+                resource_id=sample["resource_id"],
+                resource_url=sample.get("resource_url"),
+                actor=actor,
+                scope_type=sample.get("scope_type", "global"),
+                scope_id=sample.get("scope_id"),
+                fleet_id=sample.get("fleet_id"),
+                squad_id=sample.get("squad_id"),
+                data=sample["data"],
+            )
+            assert len(delivery_ids) == 1, event_type
+            delivery = db.get(OutboundWebhookDelivery, delivery_ids[0])
+            assert delivery is not None
+            assert delivery.webhook_id == webhook.id
+            payload = json.loads(delivery.payload_json)
+            assert payload["event"] == event_type
+            assert isinstance(payload["data"], dict)
+
+
+def test_event_specific_preview_uses_the_real_event_payload_shape() -> None:
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook
+    from app.modules.admin.services.outbound_webhook_delivery_service.envelope import (
+        WebhookEnvelopeFactory,
+    )
+
+    with isolated_session() as db:
+        actor = create_user(
+            db,
+            username="webhook-preview-admin",
+            password="BlackwaterWebhookPreview123!",
+            display_name="Webhook Preview Admin",
+            role=ROLE_ADMIN,
+        )
+        webhook = OutboundWebhook(
+            id=91,
+            name="Build previews",
+            endpoint_url="https://discord.com/api/webhooks/123/token",
+            delivery_mode="discord",
+            event_types_json='["build.created"]',
+            created_by_user_id=actor.id,
+            created_by_username=actor.username,
+        )
+        _, envelope = WebhookEnvelopeFactory().test(webhook, actor, "build.created")
+        assert envelope["event"] == "build.created"
+        assert envelope["data"]["build_name"] == "Heavy Broadside"
+        assert envelope["data"]["ship"]["name"] == "Anson"
+        assert envelope["resource"]["url"].endswith("/builds/401")
+
+
+def test_build_create_update_and_remove_publish_real_webhook_deliveries(monkeypatch) -> None:
+    from app.db.session import engine
+    from app.modules.admin.services import outbound_webhook_delivery_service as delivery_module
+    from app.modules.fleet.models.fleet import Fleet
+    from app.modules.ships.models.ship import Ship
+    from app.seeds.manager import SeedManager
+
+    class CaptureTransport:
+        def __init__(self) -> None:
+            self.requests = []
+
+        def send(self, request):
+            self.requests.append(request)
+            return 202, "accepted"
+
+        @staticmethod
+        def error_message(endpoint_url, exc):
+            return str(exc)
+
+    register_all_models()
+    Base.metadata.create_all(engine)
+    capture = CaptureTransport()
+    monkeypatch.setattr(delivery_module._default_service, "_transport", capture)
+
+    owner_username = "real-build-webhook-owner"
+    owner_password = "RealBuildWebhookOwner123!"
+    with SessionLocal() as db:
+        seed = SeedManager(db)
+        seed.seed_role_catalog()
+        seed.seed_fleets()
+        seed.seed_weapon_slot_types()
+        seed.seed_ships()
+        seed.seed_build_options()
+        actor = create_user(
+            db,
+            username="real-build-webhook-admin",
+            password="RealBuildWebhookAdmin123!",
+            display_name="Real Build Webhook Admin",
+            role=ROLE_ADMIN,
+        )
+        create_user(
+            db,
+            username=owner_username,
+            password=owner_password,
+            display_name="Real Build Webhook Owner",
+        )
+        ship = db.scalar(select(Ship).where(Ship.name == "Anson"))
+        fleet = db.scalar(select(Fleet).where(Fleet.slug == "royal-blackwater-fleet"))
+        assert ship is not None
+        assert fleet is not None
+        ship_id = ship.id
+        fleet_id = fleet.id
+        webhook = create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="Real build events",
+                endpoint_url="http://bot.example.test/hooks/real-builds",
+                event_types=["build.created", "build.updated", "build.removed"],
+                scope_type="fleet",
+                scope_id=fleet_id,
+                message_template="{event}: {data.build_name}",
+            ),
+            actor,
+        )
+        webhook_id = webhook.id
+
+    payload = {
+        "build_name": "Webhook Broadside",
+        "build_type": "balanced",
+        "ship_id": ship_id,
+        "sailors": 80,
+        "soldiers": 80,
+    }
+    with TestClient(app) as client:
+        login = client.post(
+            "/api/auth/login",
+            json={"username": owner_username, "password": owner_password},
+        )
+        assert login.status_code == 200, login.text
+        created = client.post("/api/builds", json=payload)
+        assert created.status_code == 201, created.text
+        build_id = created.json()["id"]
+
+        updated_payload = {**payload, "build_name": "Webhook Broadside Mk II"}
+        updated = client.put(f"/api/builds/mine/{build_id}", json=updated_payload)
+        assert updated.status_code == 200, updated.text
+
+        removed = client.delete(f"/api/builds/mine/{build_id}")
+        assert removed.status_code == 204, removed.text
+
+    with SessionLocal() as db:
+        rows = list(
+            db.scalars(
+                select(OutboundWebhookDelivery)
+                .where(OutboundWebhookDelivery.webhook_id == webhook_id)
+                .order_by(OutboundWebhookDelivery.id.asc())
+            ).all()
+        )
+        assert [row.event_type for row in rows] == [
+            "build.created",
+            "build.updated",
+            "build.removed",
+        ]
+        assert all(row.status == "success" for row in rows)
+        created_payload = json.loads(rows[0].payload_json)
+        updated_payload_json = json.loads(rows[1].payload_json)
+        removed_payload = json.loads(rows[2].payload_json)
+        assert created_payload["data"]["build_name"] == "Webhook Broadside"
+        assert created_payload["data"]["ship"]["name"] == "Anson"
+        assert created_payload["scope"]["fleet_id"] == fleet_id
+        assert updated_payload_json["data"]["build_name"] == "Webhook Broadside Mk II"
+        assert removed_payload["data"] == {
+            "id": build_id,
+            "build_name": "Webhook Broadside Mk II",
+        }
+    assert len(capture.requests) == 3

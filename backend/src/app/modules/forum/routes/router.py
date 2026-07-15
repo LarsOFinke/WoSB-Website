@@ -13,7 +13,11 @@ from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.files.services.file_service import FileValidationError
 from app.modules.admin.services.audit_log_service import record_audit_safely
-from app.modules.admin.services.outbound_webhook_delivery_service import queue_webhook_event_safely, schedule_webhook_deliveries
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.forum.services.forum_service import (
     ForumValidationError,
     add_post,
@@ -56,6 +60,7 @@ def post_thread(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="forum.thread.created", resource_type="forum_thread", resource_id=thread.id,
         resource_url=f"/forum/{thread.id}", actor=current_user, data=thread,
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return thread
 
@@ -94,6 +99,7 @@ def put_thread(
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="forum.thread.updated", resource_type="forum_thread", resource_id=thread_id,
         resource_url=f"/forum/{thread_id}", actor=current_user, data=thread,
+        **webhook_event_scope(db, use_primary_fleet=True),
     ))
     return thread
 

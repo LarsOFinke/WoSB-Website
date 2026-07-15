@@ -98,7 +98,20 @@ class WebhookDeliveryService:
                 self._disable(row, webhook)
                 db.commit()
                 return
-            self._deliver(row, webhook)
+            try:
+                self._deliver(row, webhook)
+            except Exception as exc:  # pragma: no cover - final containment for background tasks
+                row.status = "failed"
+                row.error_message = f"Unexpected delivery error ({type(exc).__name__})."
+                webhook.last_failure_at = utc_now()
+                logger.exception(
+                    "unexpected outbound webhook delivery failure",
+                    extra={
+                        "delivery_id": row.delivery_id,
+                        "event_type": row.event_type,
+                        "webhook_id": webhook.id,
+                    },
+                )
             db.commit()
 
     def create_test(
@@ -113,12 +126,13 @@ class WebhookDeliveryService:
             return None
         selected_event = event_type if event_type in EVENT_TYPES else "integration.test"
         delivery_id, envelope = self._envelopes.test(webhook, actor, selected_event)
+        resource = envelope["resource"]
         row = self._new_row(
             webhook,
             delivery_id=delivery_id,
             event_type=selected_event,
-            resource_type="integration",
-            resource_id=webhook.id,
+            resource_type=str(resource["type"]),
+            resource_id=str(resource["id"]),
             envelope=envelope,
         )
         db.add(row)
