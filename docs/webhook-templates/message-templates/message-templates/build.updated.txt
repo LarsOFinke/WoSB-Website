@@ -1,0 +1,5 @@
+🔧 **Build updated**
+Build: **{data.build_name}**
+Ship: **{data.ship.name}**
+Type: `{data.build_type}`
+Updated by: **{actor.display_name}**

@@ -1,0 +1,4 @@
+❌ **Event cancelled**
+Title: **{data.title}**
+Starts: `{data.start_at}`
+Cancelled by: **{actor.display_name}**

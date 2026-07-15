@@ -1,0 +1,5 @@
+✏️ **Forum thread updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Updated by: **{actor.display_name}**
+Replies: `{data.reply_count}`

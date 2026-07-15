@@ -1,0 +1,7 @@
+🗓️ **Event updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Starts: `{data.start_at}`
+Ends: `{data.end_at}`
+Location: {data.location}
+Updated by: **{actor.display_name}**

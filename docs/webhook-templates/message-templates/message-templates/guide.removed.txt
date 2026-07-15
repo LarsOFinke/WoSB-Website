@@ -1,0 +1,4 @@
+🗑️ **Guide removed**
+Title: **{data.title}**
+Guide ID: `{data.id}`
+Removed by: **{actor.display_name}**

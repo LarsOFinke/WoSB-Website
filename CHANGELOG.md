@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.
 - Discord-Bot und Discord-Webhooks im Staff-Panel in eigenständige Admin-Seiten und Navigationseinträge getrennt; Bot-Laufzeit und Event-Zustellung funktionieren sichtbar unabhängig voneinander.
 - Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/webhook-templates/message-templates/` ergänzt.
 - Standardnachrichten für Build-Webhooks auf das tatsächliche Feld `data.build_name` korrigiert.

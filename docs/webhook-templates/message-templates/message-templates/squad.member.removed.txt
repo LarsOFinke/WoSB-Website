@@ -1,0 +1,4 @@
+➖ **Squad member removed**
+Squad: **{data.squad_name}**
+Membership ID: `{data.member_id}`
+Removed by: **{actor.display_name}**

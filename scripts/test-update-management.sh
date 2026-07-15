@@ -20,6 +20,37 @@ fail() {
 )
 
 (
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "$tmp/site-packages"
+  cp -a "$ROOT_DIR/backend/src/app" "$tmp/site-packages/app"
+  cat > "$tmp/backend.env" <<ENV
+APP_ENV=development
+DATABASE_URL=sqlite:///$tmp/schema-head.db
+DB_SCHEMA_MODE=none
+UPLOAD_DIR=$tmp/uploads
+CONTROL_DIR=$tmp/control
+CORS_ORIGINS=http://localhost
+SESSION_COOKIE_SECURE=false
+AUTO_SEED=false
+ENV
+  (
+    cd "$tmp"
+    RBF_ENV_FILE="$tmp/backend.env" \
+    RBF_CONFIG_DIR="$ROOT_DIR/backend/config" \
+    RBF_ALEMBIC_CONFIG="$ROOT_DIR/backend/alembic.ini" \
+    PYTHONPATH="$tmp/site-packages" \
+      python3 - <<'PY_SCHEMA_HEAD'
+from app.core.config import BACKEND_ROOT
+from app.db.schema_health import expected_alembic_heads
+
+assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
+assert expected_alembic_heads() == frozenset({"0003_webhooks_fleet_roles"})
+PY_SCHEMA_HEAD
+  )
+)
+
+(
   source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
   source "$UPDATE_DIR/workflow.sh"
   tmp="$(mktemp -d)"

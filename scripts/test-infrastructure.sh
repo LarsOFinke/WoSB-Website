@@ -97,6 +97,7 @@ require_pattern '^AUTO_SEED=false$' "$INFRA_DIR/.env.example"
 # assignment-free marker while Compose injects real values as process variables.
 require_file "$BACKEND_DIR/config/container.env"
 require_pattern '^COPY config ./config$' "$BACKEND_DIR/Dockerfile"
+require_pattern 'RBF_ALEMBIC_CONFIG=/app/alembic.ini' "$BACKEND_DIR/Dockerfile"
 python3 - "$BACKEND_DIR/config/container.env" "$INFRA_DIR/compose.yml" <<'PY_CONFIG'
 from pathlib import Path
 import sys

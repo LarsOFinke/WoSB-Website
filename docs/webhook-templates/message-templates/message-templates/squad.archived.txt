@@ -1,0 +1,4 @@
+📦 **Squad archived**
+Name: **{data.name}**
+Final member count: `{data.member_count}`
+Archived by: **{actor.display_name}**

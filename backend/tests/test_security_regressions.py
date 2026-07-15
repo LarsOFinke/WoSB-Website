@@ -8,9 +8,14 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
+from app.core.config import BACKEND_ROOT
 from app.core.middleware import ClientIpResolver, redact_query_string
 from app.core.security import PASSWORD_ITERATIONS, PasswordHasher
-from app.db.schema_health import DatabaseSchemaMismatchError, verify_alembic_heads
+from app.db.schema_health import (
+    DatabaseSchemaMismatchError,
+    expected_alembic_heads,
+    verify_alembic_heads,
+)
 from app.db.session import SessionLocal
 from app.modules.accounts.models.auth_session import AuthSession
 from app.modules.accounts.models.user import ROLE_ADMIN
@@ -193,6 +198,26 @@ def test_client_ip_resolver_rejects_forwarded_chains_and_query_secrets_are_redac
     assert redact_query_string("page=2&token=secret&api_key=hidden") == (
         "page=2&token=%3Credacted%3E&api_key=%3Credacted%3E"
     )
+
+
+def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("RBF_ALEMBIC_CONFIG", str(BACKEND_ROOT / "alembic.ini"))
+
+    heads = expected_alembic_heads(tmp_path / "site-packages")
+
+    assert heads == frozenset({"0003_webhooks_fleet_roles"})
+
+
+def test_schema_head_resolution_rejects_missing_explicit_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    missing = tmp_path / "missing-alembic.ini"
+    monkeypatch.setenv("RBF_ALEMBIC_CONFIG", str(missing))
+
+    with pytest.raises(RuntimeError, match="RBF_ALEMBIC_CONFIG points to a missing"):
+        expected_alembic_heads(tmp_path / "site-packages")
 
 
 def test_schema_readiness_rejects_database_without_current_alembic_head(tmp_path: Path) -> None:

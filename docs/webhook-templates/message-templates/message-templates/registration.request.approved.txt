@@ -1,0 +1,5 @@
+✅ **Registration approved**
+Name: **{data.display_name}**
+Username: `{data.username}`
+Approved by: **{actor.display_name}**
+Decision note: {data.decision_note}

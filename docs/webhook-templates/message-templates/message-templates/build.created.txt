@@ -1,0 +1,5 @@
+⚓ **New build created**
+Build: **{data.build_name}**
+Ship: **{data.ship.name}**
+Type: `{data.build_type}`
+Created by: **{actor.display_name}**

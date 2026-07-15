@@ -1,0 +1,5 @@
+⛔ **Registration rejected**
+Name: **{data.display_name}**
+Username: `{data.username}`
+Rejected by: **{actor.display_name}**
+Decision note: {data.decision_note}
