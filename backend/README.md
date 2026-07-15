@@ -2,6 +2,8 @@
 
 FastAPI-Anwendung mit SQLAlchemy 2, Alembic und fachlich getrennten Modulen.
 
+## Lokale Entwicklung
+
 ```bash
 python -m venv .venv
 . .venv/bin/activate
@@ -11,11 +13,14 @@ cp .env.example .env
 rbf-dev
 ```
 
-Die vollständige Testbasis wird vom Repository-Root über `make test` ausgeführt; der isolierte
-Runner verhindert, dass globale App-/SQLAlchemy-Zustände zwischen Modulen lecken. Produktion nutzt
-ausschließlich PostgreSQL, Alembic und explizite System-/Stammdaten-Seeds.
+Nicht geheime Einstellungen liegen nach Verantwortlichkeit getrennt in `config/*.cfg`.
+Laufzeitwerte und Geheimnisse werden aus der verpflichtenden `.env` gelesen; echte
+Prozessvariablen überschreiben gleichnamige `.env`-Werte. Ein alternatives Verzeichnis
+kann über `RBF_CONFIG_DIR` gesetzt werden, eine einzelne `.cfg`-Datei weiterhin über
+`RBF_CONFIG_FILE`.
 
-Python-Caches lassen sich vom Repository-Root mit `make clear-pycache` oder direkt mit
-`./scripts/clear-pycache.sh` entfernen.
+Die vollständige Testbasis wird vom Repository-Root über `make test` ausgeführt; Produktion
+nutzt ausschließlich PostgreSQL, Alembic und explizite System-/Stammdaten-Seeds.
+Python-Caches lassen sich mit `./scripts/clear-pycache.sh` entfernen.
 
-Siehe `../docs/ARCHITECTURE.md`, `../docs/DATABASE.md` und `../docs/TESTING.md`.
+Siehe `ARCHITECTURE.md`, `CONFIGURATION.md` und `REFACTORING.md`.

@@ -11,11 +11,12 @@ def _read(relative_path: str) -> str:
 
 
 def test_host_runner_writes_a_docker_reachable_bot_binding() -> None:
-    manager = _read("infrastructure/scripts/services/manage-discord-bot.sh")
+    context = _read("infrastructure/scripts/discord-bot/context.sh")
+    configurator = _read("infrastructure/scripts/discord-bot/apply-configuration.py")
     example = _read("infrastructure/config/discord-bot-manager.env.example")
 
-    assert 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' in manager
-    assert "raw_config['server']['host'] = os.environ['RBF_DISCORD_BOT_BIND_HOST']" in manager
+    assert 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' in context
+    assert 'raw_config["server"]["host"] = os.environ["RBF_DISCORD_BOT_BIND_HOST"]' in configurator
     assert "RBF_DISCORD_BOT_BIND_HOST=0.0.0.0" in example
     assert "RBF_DISCORD_BOT_FIREWALL_MODE=auto" in example
     assert "RBF_DISCORD_BOT_PORT" not in example

@@ -1,0 +1,145 @@
+from __future__ import annotations
+
+from sqlalchemy.orm import Session
+
+from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.models.build_slot import BuildSlot
+from app.modules.builds.schemas.build_create import BuildCreate
+from app.modules.builds.services.build_limits import (
+    CONSUMABLE_SLOT_LIMIT,
+    SPECIAL_CREW_SLOT_LIMIT,
+)
+from app.modules.builds.services.build_stat_service import apply_percentage_effects
+from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
+from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
+from app.modules.ships.models.ship import Ship
+
+from .errors import BuildValidationError
+from .options import BuildOptionCatalog, normalize_name
+from .slots import BuildSlotFactory
+from .upgrades import UpgradeAccessEvaluator
+from .weapons import UniqueSlotValidator, WeaponLoadoutValidator
+
+
+class BuildValidator:
+    def __init__(self, db: Session) -> None:
+        self._db = db
+        self._catalog = BuildOptionCatalog(db)
+        self._weapons = WeaponLoadoutValidator()
+        self._slots = BuildSlotFactory()
+
+    def validate_and_prepare(self, build: BuildCreate) -> tuple[Ship, list[BuildSlot]]:
+        ship = self._db.get(Ship, build.ship_id)
+        if ship is None or not ship.is_active:
+            raise BuildValidationError("The selected ship does not exist.")
+
+        option_map = self._catalog.load_for_build(build)
+        upgrades = self._catalog.selected_upgrades(option_map, build)
+        special_crew = self._catalog.selected_special_crew(option_map, build)
+        self._validate_upgrade_slots(ship, build, upgrades)
+        self._validate_crew(ship, build, upgrades, special_crew, option_map)
+        self._weapons.validate(ship, build, option_map)
+        self._validate_inventory(build)
+        return ship, self._slots.create(build, option_map)
+
+    @staticmethod
+    def _validate_upgrade_slots(
+        ship: Ship,
+        build: BuildCreate,
+        upgrades: dict[int, BuildItemOption],
+    ) -> None:
+        access = UpgradeAccessEvaluator.evaluate(
+            ship,
+            upgrades,
+            research_upgrade_slot_unlocked=build.research_upgrade_slot_unlocked,
+        )
+        rules = (
+            (5, "slot_5_unlocked", "Upgrade slot 5 is locked. Enable the ship-line research reward or select an expansion upgrade in slots 1-4."),
+            (6, "slot_6_available", "Upgrade slot 6 requires Structural Expansion or two one-slot sources."),
+            (7, "slot_7_available", "Upgrade slot 7 requires Structural Expansion plus either the research reward or a ship-specific extra slot."),
+            (8, "slot_8_available", "Upgrade slot 8 requires Structural Expansion, the research reward, and a ship-specific extra slot."),
+        )
+        for index, key, message in rules:
+            if normalize_name(getattr(build, f"upgrade_{index}")) and not bool(access[key]):
+                raise BuildValidationError(message)
+
+    @staticmethod
+    def _validate_crew(
+        ship: Ship,
+        build: BuildCreate,
+        upgrades: dict[int, BuildItemOption],
+        special_crew: list[tuple[BuildItemOption, int]],
+        option_map: dict[tuple[str, str], BuildItemOption],
+    ) -> None:
+        selected_equipment: list[BuildItemOption] = []
+        if build.sails:
+            selected_equipment.append(
+                BuildOptionCatalog.require(option_map, build.sails, "sail", "Sail")
+            )
+        if build.lantern:
+            selected_equipment.append(
+                BuildOptionCatalog.require(option_map, build.lantern, "lantern", "Lantern")
+            )
+        effect_sets = [BuildOptionCatalog.effects(option, ship) for option in selected_equipment]
+        effect_sets.extend(BuildOptionCatalog.effects(option, ship) for option in upgrades.values())
+        effect_sets.extend(
+            resolve_specialist_effects(
+                [(BuildOptionCatalog.effects(option, ship), quantity)],
+                sailors=build.sailors,
+                soldiers=build.soldiers,
+                musketeers=build.musketeers,
+                mercenaries=build.mercenaries,
+            )
+            for option, quantity in special_crew
+        )
+        research_effects = research_upgrade_slot_effects(build.research_upgrade_slot_unlocked)
+        if research_effects:
+            effect_sets.append(research_effects)
+
+        totals: dict[str, int | float] = {}
+        for effect_set in effect_sets:
+            for key, value in effect_set.items():
+                totals[key] = totals.get(key, 0) + value
+
+        effective_capacity = max(
+            0,
+            round(
+                apply_percentage_effects(
+                    ship.crew_capacity,
+                    "crew_capacity_pct",
+                    effect_sets,
+                    fallback_total=float(totals.get("crew_capacity_pct", 0) or 0),
+                )
+                + float(totals.get("crew_capacity", 0) or 0)
+            ),
+        )
+        minimum_sailors = max(
+            0, ship.sailor_minimum + int(totals.get("sailor_minimum", 0) or 0)
+        )
+        if build.sailors < minimum_sailors:
+            raise BuildValidationError(
+                f"Sailors ({build.sailors}) are below this build's required minimum ({minimum_sailors})."
+            )
+        crew_total = build.sailors + build.soldiers + build.musketeers + build.mercenaries
+        if crew_total > effective_capacity:
+            raise BuildValidationError(
+                f"The crew distribution ({crew_total}) exceeds the effective ship capacity ({effective_capacity})."
+            )
+
+    @staticmethod
+    def _validate_inventory(build: BuildCreate) -> None:
+        for slots, label in (
+            (build.special_crew_slots, "Special crew"),
+            (build.ammunition_slots, "Ammunition"),
+            (build.consumable_slots, "Consumables"),
+            (build.hold_slots, "Hold"),
+        ):
+            UniqueSlotValidator.validate(slots, label)
+        if len(build.special_crew_slots) > SPECIAL_CREW_SLOT_LIMIT:
+            raise BuildValidationError(
+                f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} distinct specialists."
+            )
+        if len(build.consumable_slots) > CONSUMABLE_SLOT_LIMIT:
+            raise BuildValidationError(
+                f"Consumables are limited to {CONSUMABLE_SLOT_LIMIT} slots."
+            )

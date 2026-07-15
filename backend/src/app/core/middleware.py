@@ -17,52 +17,89 @@ logger = logging.getLogger("app.request")
 ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
 
 
-def should_log_request(path: str, status_code: int, failure: Exception | None = None) -> bool:
-    """Keep actionable failures while suppressing successful routine probes."""
+class RequestLogPolicy:
+    def __init__(self, routine_paths: set[str] | None = None) -> None:
+        self._routine_paths = routine_paths or ROUTINE_HEALTH_PATHS
 
-    return failure is not None or status_code >= 400 or path not in ROUTINE_HEALTH_PATHS
+    def should_log(
+        self, path: str, status_code: int, failure: Exception | None = None
+    ) -> bool:
+        return failure is not None or status_code >= 400 or path not in self._routine_paths
 
 
-def client_ip_from_request(request: Request) -> str | None:
-    peer = request.client.host if request.client else None
-    trust_proxy_headers = False
-    if peer:
-        try:
-            parsed_peer = ip_address(peer)
-            trust_proxy_headers = parsed_peer.is_private or parsed_peer.is_loopback or parsed_peer.is_link_local
-        except ValueError:
-            # Starlette's TestClient uses a symbolic peer name. Treat it like a
-            # local test proxy while real production peers remain IP-validated.
-            trust_proxy_headers = True
-
-    if trust_proxy_headers:
-        # Nginx overwrites X-Real-IP with the direct remote address. Prefer it
-        # over X-Forwarded-For so a client-supplied left-most value cannot
-        # bypass the blocklist or poison security monitoring. For routes
-        # without X-Real-IP, the right-most forwarded address is the immediate
-        # proxy/client hop appended by Nginx.
+class ClientIpResolver:
+    def resolve(self, request: Request) -> str | None:
+        peer = request.client.host if request.client else None
+        if not self._trust_proxy_headers(peer):
+            return peer
         real_ip = request.headers.get("x-real-ip")
         if real_ip:
             return real_ip.strip() or None
         forwarded_for = request.headers.get("x-forwarded-for")
         if forwarded_for:
             return forwarded_for.rsplit(",", 1)[-1].strip() or None
-    return peer
+        return peer
+
+    @staticmethod
+    def _trust_proxy_headers(peer: str | None) -> bool:
+        if not peer:
+            return False
+        try:
+            parsed_peer = ip_address(peer)
+            return (
+                parsed_peer.is_private
+                or parsed_peer.is_loopback
+                or parsed_peer.is_link_local
+            )
+        except ValueError:
+            # Starlette TestClient uses a symbolic local peer.
+            return True
 
 
-def _request_log_context(request: Request, request_id: str, status_code: int, duration_ms: float) -> dict[str, object | None]:
-    return {
-        "request_id": request_id,
-        "method": request.method,
-        "path": request.url.path,
-        "status_code": status_code,
-        "duration_ms": duration_ms,
-        "client": request.client.host if request.client else None,
-        "client_ip": client_ip_from_request(request),
-        "forwarded_for": request.headers.get("x-forwarded-for"),
-        "user_agent": request.headers.get("user-agent"),
-        "query_string": request.url.query or None,
-    }
+class RequestLogContextFactory:
+    def __init__(self, client_ips: ClientIpResolver | None = None) -> None:
+        self._client_ips = client_ips or ClientIpResolver()
+
+    def create(
+        self,
+        request: Request,
+        request_id: str,
+        status_code: int,
+        duration_ms: float,
+    ) -> dict[str, object | None]:
+        return {
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": status_code,
+            "duration_ms": duration_ms,
+            "client": request.client.host if request.client else None,
+            "client_ip": self._client_ips.resolve(request),
+            "forwarded_for": request.headers.get("x-forwarded-for"),
+            "user_agent": request.headers.get("user-agent"),
+            "query_string": request.url.query or None,
+        }
+
+
+_request_log_policy = RequestLogPolicy()
+_client_ip_resolver = ClientIpResolver()
+_request_contexts = RequestLogContextFactory(_client_ip_resolver)
+
+
+def should_log_request(
+    path: str, status_code: int, failure: Exception | None = None
+) -> bool:
+    return _request_log_policy.should_log(path, status_code, failure)
+
+
+def client_ip_from_request(request: Request) -> str | None:
+    return _client_ip_resolver.resolve(request)
+
+
+def _request_log_context(
+    request: Request, request_id: str, status_code: int, duration_ms: float
+) -> dict[str, object | None]:
+    return _request_contexts.create(request, request_id, status_code, duration_ms)
 
 
 class IpBlockMiddleware(BaseHTTPMiddleware):

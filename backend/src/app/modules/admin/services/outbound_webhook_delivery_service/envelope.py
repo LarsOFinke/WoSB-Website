@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+from typing import Any
+from uuid import uuid4
+
+from app.core.time import utc_now
+from app.modules.accounts.models.user import User
+from app.modules.admin.models.outbound_webhook import OutboundWebhook
+
+from .serialization import JsonSafeEncoder
+
+
+class WebhookEnvelopeFactory:
+    SOURCE = "royal-blackwater-fleet"
+
+    def __init__(self, encoder: JsonSafeEncoder | None = None) -> None:
+        self._encoder = encoder or JsonSafeEncoder()
+
+    def event(
+        self,
+        subscription: OutboundWebhook,
+        *,
+        event_type: str,
+        resource_type: str,
+        resource_id: int | str,
+        data: Any,
+        actor: User | None,
+        resource_url: str | None,
+    ) -> tuple[str, dict[str, Any]]:
+        delivery_id = uuid4().hex
+        return delivery_id, {
+            "id": delivery_id,
+            "event": event_type,
+            "occurred_at": utc_now().isoformat(),
+            "source": self.SOURCE,
+            "destination": {
+                "channel_key": subscription.channel_key,
+                "message_template": subscription.message_template,
+            },
+            "actor": self._actor(actor),
+            "resource": {
+                "type": resource_type,
+                "id": str(resource_id),
+                "url": resource_url,
+            },
+            "data": self._encoder.convert(data),
+        }
+
+    def test(
+        self,
+        subscription: OutboundWebhook,
+        actor: User,
+        event_type: str,
+    ) -> tuple[str, dict[str, Any]]:
+        return self.event(
+            subscription,
+            event_type=event_type,
+            resource_type="integration",
+            resource_id=subscription.id,
+            actor=actor,
+            resource_url=None,
+            data={
+                "message": "Royal Blackwater Fleet webhook test delivery.",
+                "webhook_name": subscription.name,
+            },
+        )
+
+    @staticmethod
+    def _actor(actor: User | None) -> dict[str, Any] | None:
+        if actor is None:
+            return None
+        return {
+            "id": actor.id,
+            "username": actor.username,
+            "display_name": actor.display_name,
+            "role": actor.role,
+        }
