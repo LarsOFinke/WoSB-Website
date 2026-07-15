@@ -48,7 +48,6 @@ npm run dev
 make test          # schnelle, deterministische Tests
 make test-full     # Migration, Build und Infrastrukturchecks
 make validate      # vollständige Release-Prüfung
-make clear-pycache # Python-Caches im Backend entfernen
 make doctor        # Produktionsdiagnose auf dem Pi
 make infra-backup  # Datenbank und Uploads sichern
 ```
@@ -73,7 +72,7 @@ Im Admin-Panel stehen beide Update-Modi ebenfalls bereit.
 backend/        FastAPI, SQLAlchemy, Alembic, fachliche Module und Tests
 frontend/       Vue 3, modulare UI, Lokalisierung und deterministische JS-Tests
 infrastructure/ Docker Compose, NGINX, TLS, Backup, systemd und Pi-Bootstrap
-scripts/        schlanke Test- und Release-Werkzeuge
+scripts/        einheitliche Test-, Validierungs- und Release-Werkzeuge
 docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 .github/        CI, Releases, optionales Produktionsdeployment und Dependabot
 ```

@@ -3,6 +3,7 @@ import { adminDashboardMessages } from './adminDashboard'
 import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
+import { botSetupMessages } from './botSetup'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules'
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
@@ -32,6 +33,7 @@ import { registrationAndInventoryCleanupMessages } from './registrationAndInvent
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
+  botSetupMessages,
   appShellMessages,
   privacyMessages,
   authAdminProfileMessages,

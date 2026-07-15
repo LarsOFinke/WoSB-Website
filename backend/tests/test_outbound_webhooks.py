@@ -163,3 +163,18 @@ def test_webhook_dns_errors_are_reported_with_actionable_context() -> None:
     assert "DNS resolution failed" in message
     assert "royal-blackwater-fleet.eu" in message
     assert "API container outbound network" in message
+
+
+def test_bot_event_catalog_has_stable_route_family_for_every_domain_event() -> None:
+    from app.modules.admin.services.outbound_webhook_service import EVENT_CATALOG
+
+    route_families = {
+        "integration.test": ("default", "test"),
+        "calendar.": ("events", "calendar_event"),
+        "guide.": ("guides", "guide"),
+        "newcomer_guide.": ("guides", "guide"),
+        "build.": ("builds", "build"),
+        "forum.thread.": ("forum", "forum_thread"),
+    }
+    for event_type, _, _ in EVENT_CATALOG:
+        assert any(event_type == prefix or event_type.startswith(prefix) for prefix in route_families), event_type

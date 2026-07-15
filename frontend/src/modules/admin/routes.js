@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/bot-setup',
+    name: 'admin-bot-setup',
+    component: () => import('./pages/BotSetupPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'botSetup.title' },
+  },
+  {
     path: '/admin/master-data',
     name: 'admin-master-data',
     component: () => import('./pages/MasterDataPage.vue'),

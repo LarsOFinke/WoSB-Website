@@ -1,4 +1,4 @@
-export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = false, canManageFleet = false } = {}) {
+export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = false, isAdmin = false, canManageFleet = false } = {}) {
   const publicLinks = [
     { to: '/', label: t('common.home'), icon: 'home', exact: true, section: 'public' },
     { to: '/fleet', label: t('common.fleetOverview'), icon: 'fleet', section: 'public' },
@@ -18,6 +18,7 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
 
   if (canManageFleet) memberLinks.push({ to: '/fleets', label: t('common.fleetManagement'), icon: 'fleet', section: 'member' })
   if (isStaff) memberLinks.push({ to: '/admin', label: t('common.staffPanel'), icon: 'shield', section: 'staff' })
+  if (isAdmin) memberLinks.push({ to: '/admin/bot-setup', label: t('botSetup.navigation'), icon: 'spark', section: 'staff' })
   return [...publicLinks, ...memberLinks]
 }
 

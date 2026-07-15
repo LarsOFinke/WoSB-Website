@@ -11006,3 +11006,17 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Dedicated Discord bot setup workspace */
+.bot-setup-page { display: grid; gap: 1.25rem; }
+.bot-setup-intro, .bot-routing-guide { display: grid; gap: 1rem; }
+.bot-setup-intro h2, .bot-routing-guide h2 { margin: .2rem 0 .35rem; }
+.bot-pipeline-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.bot-pipeline-steps li, .bot-routing-cards article, .bot-receiver-card { border: 1px solid var(--border-color, rgba(255,255,255,.12)); border-radius: .9rem; padding: 1rem; background: rgba(255,255,255,.025); }
+.bot-pipeline-steps li { display: flex; align-items: center; gap: .65rem; }
+.bot-pipeline-steps strong { display: grid; place-items: center; min-width: 2rem; height: 2rem; border-radius: 999px; background: rgba(255,255,255,.08); }
+.bot-receiver-card { display: grid; gap: .4rem; }
+.bot-receiver-card code { overflow-wrap: anywhere; }
+.bot-routing-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.bot-routing-cards p { margin: .4rem 0 0; }
+@media (max-width: 900px) { .bot-pipeline-steps, .bot-routing-cards { grid-template-columns: 1fr; } }

@@ -26,10 +26,11 @@ const props = defineProps({
 })
 
 const { t } = useLocale()
-const { canManageFleet, isAuthenticated, isStaff } = useSession()
+const { canManageFleet, isAdmin, isAuthenticated, isStaff } = useSession()
 const workspaceLinks = computed(() => createWorkspaceLinks(t, {
   isAuthenticated: isAuthenticated.value,
   isStaff: isStaff.value,
+  isAdmin: isAdmin.value,
   canManageFleet: canManageFleet.value,
 }))
 const publicLinks = computed(() => workspaceLinks.value.filter((link) => link.section === 'public'))
