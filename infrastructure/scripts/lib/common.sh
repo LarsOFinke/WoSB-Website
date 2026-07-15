@@ -26,7 +26,7 @@ require_command() {
 }
 
 ensure_env_file() {
-  [[ -f "$ENV_FILE" ]] || die "Fehlende Konfiguration: $ENV_FILE. Zuerst infrastructure/setup.sh ausführen."
+  [[ -f "$ENV_FILE" ]] || die "Fehlende Konfiguration: $ENV_FILE. Zuerst den Repository-Einstiegspunkt ./setup.sh ausführen."
 }
 
 read_env() {

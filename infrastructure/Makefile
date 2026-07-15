@@ -1,12 +1,12 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files smoke doctor config
+.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files smoke doctor lint config
 
 setup:
-	./setup.sh --profile full
+	sudo ../setup.sh --profile full
 
 setup-core:
-	./setup.sh --profile core
+	sudo ../setup.sh --profile core
 
 up:
 	./scripts/services/start.sh
@@ -39,6 +39,9 @@ smoke:
 
 doctor:
 	./scripts/checks/doctor.sh
+
+lint:
+	./scripts/checks/lint.sh
 
 config:
 	@source scripts/lib/docker.sh && bw_compose_with_profiles config
