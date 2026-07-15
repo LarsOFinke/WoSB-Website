@@ -30,6 +30,14 @@ Navigation, `shared` wiederverwendbare Technik. Build-Berechnung, Crew-Zuordnung
 Inventar-Reconciliation, Formular-Defaults, Präferenztransfer und Datumskonvertierung sind reine,
 separat testbare JavaScript-Module.
 
+## Frontend-Backend-Vertrag
+
+Frontend und Backend spiegeln dieselben Fachmodule und Begriffe, aber nicht dieselbe technische
+Schichtenstruktur. Vue-Seiten und Composables konsumieren HTTP-Verträge; FastAPI-Routen und
+Application-Services validieren und persistieren die Use-Cases. Ein repositoryweiter Contract-Test
+vergleicht alle Frontend-API-Aufrufe mit dem generierten OpenAPI-Schema und schützt gemeinsame
+Kategorien, Rollen, Statuswerte, MIME-Typen sowie Upload-Limits vor Drift.
+
 ## KISS/SOLID-Leitplanken
 
 - eine fachliche Wahrheit pro Regel; Frontend zeigt, Backend validiert
@@ -42,6 +50,11 @@ separat testbare JavaScript-Module.
 - Repository-Checks begrenzen Wachstum von Python-Services und Vue-Seiten
 
 ## Runtime-Grenzen
+
+Das Backend-Image enthält mit `backend/config/container.env` lediglich eine leere, assignment-freie
+Markerdatei für den verpflichtenden Env-Source-Vertrag. Compose lädt `infrastructure/.env` als
+Prozessumgebung; Geheimnisse werden nicht in das Image kopiert und nicht als zusätzliches Volume
+benötigt.
 
 Laufzeitdaten gehören ausschließlich nach `infrastructure/data`. `.env`, Zugangsdaten, Uploads,
 Backups, Caches, Abhängigkeiten und Build-Ausgaben sind nie Teil eines Release-Archivs.

@@ -1,22 +1,134 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INFRA_DIR="$ROOT_DIR/infrastructure"
+BACKEND_DIR="$ROOT_DIR/backend"
 
-affected=("$ROOT_DIR/setup.sh" "$ROOT_DIR/update.sh")
-while IFS= read -r file; do affected+=("$file"); done < <(find "$ROOT_DIR/infrastructure" "$ROOT_DIR/scripts" "$ROOT_DIR/backend/scripts" -type f -name '*.sh' -print | sort)
-for file in "${affected[@]}"; do bash -n "$file"; done
+require_file() {
+  [[ -f "$1" ]] || {
+    printf 'Missing required file: %s\n' "$1" >&2
+    exit 1
+  }
+}
 
-[[ ! -e "$ROOT_DIR/backend/.env" ]]
+require_pattern() {
+  local pattern="$1"
+  local file="$2"
+  grep -q -- "$pattern" "$file" || {
+    printf 'Expected pattern %q in %s\n' "$pattern" "$file" >&2
+    exit 1
+  }
+}
+
+reject_pattern() {
+  local pattern="$1"
+  local file="$2"
+  if grep -q -- "$pattern" "$file"; then
+    printf 'Unexpected pattern %q in %s\n' "$pattern" "$file" >&2
+    exit 1
+  fi
+}
+
+shell_files=("$ROOT_DIR/setup.sh" "$ROOT_DIR/update.sh")
+while IFS= read -r file; do
+  shell_files+=("$file")
+done < <(
+  find \
+    "$INFRA_DIR" \
+    "$ROOT_DIR/scripts" \
+    "$BACKEND_DIR/scripts" \
+    -type f -name '*.sh' -print | sort
+)
+for file in "${shell_files[@]}"; do
+  bash -n "$file"
+done
+
+[[ ! -e "$BACKEND_DIR/.env" ]]
 [[ ! -e "$ROOT_DIR/frontend/.env" ]]
 [[ ! -e "$INFRA_DIR/.env" ]]
-! grep -R -q '/var/run/docker.sock' "$ROOT_DIR/backend" "$INFRA_DIR/compose.yml"
-grep -q 'update_migrate)' "$INFRA_DIR/scripts/services/update.sh"
-grep -q 'update_migrate_seed)' "$INFRA_DIR/scripts/services/update.sh"
-grep -q 'flock -n' "$INFRA_DIR/scripts/services/update.sh"
-grep -q 'data/postgres/PG_VERSION' "$INFRA_DIR/setup.sh"
-grep -q 'AUTO_SEED=true rbf-seed' "$INFRA_DIR/compose.yml"
-grep -q '^AUTO_SEED=false$' "$INFRA_DIR/.env.example"
+reject_pattern '/var/run/docker.sock' "$INFRA_DIR/compose.yml"
+if grep -R -q '/var/run/docker.sock' "$BACKEND_DIR"; then
+  echo 'Backend must not access the Docker socket.' >&2
+  exit 1
+fi
+
+# Stable public runners stay thin; behavior is owned by the corresponding modules.
+require_pattern 'infrastructure/setup.sh' "$ROOT_DIR/setup.sh"
+require_pattern 'infrastructure/scripts/services/update.sh' "$ROOT_DIR/update.sh"
+require_pattern 'source "$INFRA_DIR/scripts/setup/main.sh"' "$INFRA_DIR/setup.sh"
+require_pattern 'source "$INFRA_DIR/scripts/update/main.sh"' "$INFRA_DIR/scripts/services/update.sh"
+
+# Update and first-run safety rules live in their focused modules.
+require_pattern 'update_migrate)' "$INFRA_DIR/scripts/update/request.sh"
+require_pattern 'update_migrate_seed)' "$INFRA_DIR/scripts/update/request.sh"
+require_pattern 'flock -n' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'data/postgres/PG_VERSION' "$INFRA_DIR/scripts/setup/workflow.sh"
+require_pattern 'data/postgres/PG_VERSION' "$INFRA_DIR/scripts/lib/host/storage.sh"
+require_pattern 'AUTO_SEED=true rbf-seed' "$INFRA_DIR/compose.yml"
+require_pattern '^AUTO_SEED=false$' "$INFRA_DIR/.env.example"
+
+# The backend intentionally requires an env file. The image contains an empty,
+# assignment-free marker while Compose injects real values as process variables.
+require_file "$BACKEND_DIR/config/container.env"
+require_pattern '^COPY config ./config$' "$BACKEND_DIR/Dockerfile"
+python3 - "$BACKEND_DIR/config/container.env" "$INFRA_DIR/compose.yml" <<'PY_CONFIG'
+from pathlib import Path
+import sys
+
+container_env = Path(sys.argv[1])
+compose_file = Path(sys.argv[2])
+assignments = [
+    line.strip()
+    for line in container_env.read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.lstrip().startswith("#")
+]
+assert not assignments, "backend/config/container.env must not contain runtime assignments"
+
+compose = compose_file.read_text(encoding="utf-8")
+for service, next_service in (("migrate", "seed"), ("seed", "api"), ("api", "gateway")):
+    section = compose.split(f"  {service}:\n", 1)[1].split(f"\n  {next_service}:\n", 1)[0]
+    assert "    env_file:\n      - .env\n" in section, f"{service} must receive infrastructure/.env"
+    assert "      RBF_ENV_FILE: /app/config/container.env\n" in section, (
+        f"{service} must point the backend loader at the image marker file"
+    )
+PY_CONFIG
+
+python3 - \
+  "$BACKEND_DIR/config/application.cfg" \
+  "$ROOT_DIR/frontend/.env.example" \
+  "$INFRA_DIR/compose.yml" \
+  "$INFRA_DIR/nginx/default.conf" <<'PY_API_PREFIX'
+from configparser import ConfigParser
+from pathlib import Path
+import sys
+
+application_cfg = Path(sys.argv[1])
+frontend_env = Path(sys.argv[2])
+compose_file = Path(sys.argv[3])
+nginx_file = Path(sys.argv[4])
+
+parser = ConfigParser(interpolation=None)
+assert parser.read(application_cfg, encoding="utf-8") == [str(application_cfg)]
+api_prefix = parser.get("app", "api_prefix").strip().rstrip("/")
+assert api_prefix.startswith("/"), "Backend API prefix must be absolute"
+
+frontend_values = {}
+for raw_line in frontend_env.read_text(encoding="utf-8").splitlines():
+    line = raw_line.strip()
+    if not line or line.startswith("#") or "=" not in line:
+        continue
+    key, value = line.split("=", 1)
+    frontend_values[key.strip()] = value.strip()
+assert frontend_values.get("VITE_API_BASE_URL", "").rstrip("/") == api_prefix, (
+    "Frontend API base must match backend [app].api_prefix"
+)
+
+compose = compose_file.read_text(encoding="utf-8")
+assert f"VITE_API_BASE_URL: {api_prefix}" in compose, "Compose frontend build arg must match API prefix"
+nginx = nginx_file.read_text(encoding="utf-8")
+assert f"location {api_prefix}/" in nginx, "NGINX must proxy the configured API prefix"
+PY_API_PREFIX
 
 python3 - "$INFRA_DIR/compose.yml" <<'PY_COMPOSE'
 from pathlib import Path
@@ -25,8 +137,12 @@ import sys
 text = Path(sys.argv[1]).read_text(encoding="utf-8")
 api_section = text.split("  api:\n", 1)[1].split("\n  gateway:\n", 1)[0]
 networks_section = text.split("\nnetworks:\n", 1)[1]
-assert "      - backend\n      - outbound\n" in api_section, "API must retain database isolation and outbound egress"
-assert "  backend:\n    driver: bridge\n    internal: true\n" in networks_section, "backend network must remain internal"
+assert "      - backend\n      - outbound\n" in api_section, (
+    "API must retain database isolation and outbound egress"
+)
+assert "  backend:\n    driver: bridge\n    internal: true\n" in networks_section, (
+    "backend network must remain internal"
+)
 assert "  outbound:\n    driver: bridge\n" in networks_section, "outbound network must be defined"
 PY_COMPOSE
 
@@ -36,14 +152,14 @@ if docker compose version >/dev/null 2>&1; then
   (cd "$INFRA_DIR" && docker compose -f compose.yml config >/dev/null)
 fi
 
-echo "Infrastructure checks OK."
+require_pattern 'limit_req_zone.*auth_login' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'Content-Security-Policy' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' "$INFRA_DIR/scripts/discord-bot/context.sh"
+require_pattern 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/discord-bot/context.sh"
+require_pattern 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+require_pattern 'ufw allow from "$subnet" to "$HOST_GATEWAY_IP" port "$BOT_PORT"' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+require_pattern 'http://host.docker.internal:${BOT_PORT}/health' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+reject_pattern 'ufw allow 8765/tcp' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
+require_pattern 'proxy_pass http://host.docker.internal:8765/webhooks/rbf;' "$INFRA_DIR/nginx/default.conf"
 
-grep -q "limit_req_zone.*auth_login" "$ROOT_DIR/infrastructure/nginx/default.conf"
-grep -q "Content-Security-Policy" "$ROOT_DIR/infrastructure/nginx/default.conf"
-
-grep -q 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' "$INFRA_DIR/scripts/services/manage-discord-bot.sh"
-grep -q 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
-grep -q 'ufw allow from "$subnet" to "$HOST_GATEWAY_IP" port "$BOT_PORT"' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
-grep -q 'http://host.docker.internal:${BOT_PORT}/health' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
-! grep -q 'ufw allow 8765/tcp' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"
-grep -q 'proxy_pass http://host.docker.internal:8765/webhooks/rbf;' "$INFRA_DIR/nginx/default.conf"
+echo 'Infrastructure checks OK.'

@@ -1,6 +1,15 @@
 import { get, post, put } from '@/shared/api/client'
 
-export const FLEET_FOCUS_VALUES = ['mixed']
+export const FLEET_FOCUS_VALUES = [
+  'trade',
+  'faction',
+  'port_battle',
+  'training',
+  'farming',
+  'recon',
+  'support',
+  'mixed',
+]
 export const FLEET_ROLES = ['member', 'fleet_lieutenant', 'fleet_admiral']
 export const FLEET_MEMBER_STATUSES = ['pending', 'active', 'inactive']
 

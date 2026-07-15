@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from configparser import ConfigParser
 import json
 import re
 from pathlib import Path
@@ -34,7 +35,14 @@ def line_count(path: Path) -> int:
 
 
 pyproject = (ROOT / "backend/pyproject.toml").read_text(encoding="utf-8")
-app_config = (ROOT / "backend/config/app.toml").read_text(encoding="utf-8")
+application_config_path = ROOT / "backend/config/application.cfg"
+application_config = ConfigParser(interpolation=None)
+loaded_application_config = application_config.read(application_config_path, encoding="utf-8")
+require(
+    loaded_application_config == [str(application_config_path)],
+    "could not read backend/config/application.cfg",
+)
+require(application_config.has_section("app"), "application.cfg is missing [app]")
 package = json.loads((ROOT / "frontend/package.json").read_text(encoding="utf-8"))
 lock = json.loads((ROOT / "frontend/package-lock.json").read_text(encoding="utf-8"))
 require(re.fullmatch(r"\d+\.\d+\.\d+", VERSION) is not None, "VERSION is not semantic")
@@ -43,8 +51,8 @@ require(
     "backend version mismatch",
 )
 require(
-    re.search(rf'^version = "{re.escape(VERSION)}"$', app_config, re.MULTILINE) is not None,
-    "app version mismatch",
+    application_config.get("app", "version", fallback="").strip() == VERSION,
+    "application.cfg version mismatch",
 )
 require(package.get("version") == VERSION, "frontend version mismatch")
 require(
@@ -75,6 +83,28 @@ required_files = {
 }
 for relative in required_files:
     require((ROOT / relative).is_file(), f"missing {relative}")
+
+required_backend_config = {
+    "application.cfg",
+    "logging.cfg",
+    "session.cfg",
+    "uploads.cfg",
+    "container.env",
+}
+config_dir = ROOT / "backend/config"
+require(config_dir.is_dir(), "missing backend/config")
+for name in required_backend_config:
+    require((config_dir / name).is_file(), f"missing backend/config/{name}")
+require(not any(config_dir.glob("*.toml")), "legacy TOML configuration remains in backend/config")
+container_env_lines = [
+    line.strip()
+    for line in (config_dir / "container.env").read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.lstrip().startswith("#")
+]
+require(
+    not container_env_lines,
+    "backend/config/container.env must remain assignment-free; Compose injects runtime values",
+)
 
 if ARGS.strict_tree:
     for forbidden in (

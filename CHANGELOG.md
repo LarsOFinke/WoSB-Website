@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- Repository- und Infrastrukturprüfungen an die modularen Setup-/Update-Runner sowie die `.cfg`-Konfiguration angepasst.
+- Frontend-Backend-Contract-Test ergänzt, der API-Pfade und gemeinsam verwendete Fachwerte gegen OpenAPI und Backend-Regeln prüft.
+- Veralteten internen Registry-Verweis aus dem Frontend-Lockfile entfernt und Fleet-Fokuswerte zwischen Frontend und Backend synchronisiert.
 - API-Container um einen dedizierten ausgehenden Netzwerkpfad für signierte Webhooks und Discord-Bot-Zustellungen ergänzt; Datenbanknetz bleibt intern isoliert.
 - DNS-/Transportfehler ausgehender Webhooks liefern nun eine konkrete Diagnose für den tatsächlichen Compose-Service `api`.
 - Staff-Systemlogs um Tagesfilter, sortierbare IP-Übersicht und ein heuristisches Threat-Level-Dashboard erweitert.

@@ -29,6 +29,11 @@ Die Beispiele `.env.example` und `.env.production.example` dokumentieren die not
 Werte. Insbesondere gehören Datenbank-Zugangsdaten, Seed-Passwörter, CORS-Ursprünge und
 Dateisystempfade nicht in `.cfg`-Dateien.
 
+Im Container enthält das Image eine leere `config/container.env`. Compose setzt
+`RBF_ENV_FILE=/app/config/container.env` und injiziert die tatsächlichen Werte aus
+`infrastructure/.env` als Prozessvariablen. Da Prozessvariablen Vorrang haben, erfüllt die
+Markerdatei den verpflichtenden Datei-Vertrag, ohne Geheimnisse in das Image zu schreiben.
+
 Produktionsregeln werden beim Laden validiert: PostgreSQL ist verpflichtend,
 `DB_SCHEMA_MODE=migrate` übergibt das Schema an Alembic und Session-Cookies müssen sicher
 sein.

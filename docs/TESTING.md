@@ -9,8 +9,11 @@ Die v1.0-Testbasis hält die Werkzeugkette klein und prüft die produktionsrelev
 4. **Schema-Baseline:** frische Datenbank bis Head, `alembic check`, Downgrade auf `base` und
    erneuter Aufbau aus `0001_baseline`.
 5. **Frontend-Build:** Locale-Parität und Vite-Produktionsbuild.
-6. **Infrastruktur:** Bash-Syntax, Compose-Modell, NGINX-Sicherheitsheader und kein Docker-Socket.
-7. **Repository:** Versionen, Dokumentation, Secrets, öffentliche Registry-URLs, Dateigrößenbudgets
+6. **Systemvertrag:** alle Frontend-API-Aufrufe gegen OpenAPI sowie gemeinsame Rollen, Kategorien,
+   Statuswerte, MIME-Typen und Upload-Limits.
+7. **Infrastruktur:** Bash-Syntax, modulare Runner, Compose-/Env-Vertrag, NGINX-Sicherheitsheader und
+   kein Docker-Socket.
+8. **Repository:** Versionen, `.cfg`-Konfiguration, Dokumentation, Secrets, öffentliche Registry-URLs, Dateigrößenbudgets
    und release-freie Runtime-Artefakte.
 
 ```bash
@@ -24,6 +27,11 @@ ohne Browser oder Datenbank getestet. End-to-End-Browsertests werden erst eingef
 kritischer Ablauf nicht zuverlässig über Service-, API- und pure UI-Logik abgedeckt werden kann.
 
 ## Testisolation
+
+Der Systemvertrag liegt in `backend/tests/test_frontend_backend_contract.py`. Er liest die
+Frontend-API-Module statisch, erzeugt das echte FastAPI-OpenAPI-Schema und vergleicht beide Seiten.
+Damit bleibt die fachliche Spiegelung überprüfbar, ohne Frontend und Backend künstlich strukturell
+zu koppeln.
 
 `scripts/run_backend_tests.py` startet jedes Backend-Testmodul in einem eigenen Python-Prozess mit
 einem eigenen temporären Datenbank-, Upload- und Control-Verzeichnis. Dadurch beeinflussen globale
