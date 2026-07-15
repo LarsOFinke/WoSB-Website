@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 prepare_data_directories() {
-  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,control,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
+  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,control/inbox,control/status,control/run,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
   prepare_postgres_directory
   apply_runtime_ownership
   apply_runtime_permissions
@@ -24,14 +24,17 @@ apply_runtime_ownership() {
 
   chown -R 70:70 "$INFRA_DIR/data/postgres"
   chown -R 10001:10001 "$INFRA_DIR/data/uploads"
-  chown -R 10001:10001 "$INFRA_DIR/data/control"
+  chown -R 10001:10001 "$INFRA_DIR/data/control/inbox"
+  chown -R root:root "$INFRA_DIR/data/control/status" "$INFRA_DIR/data/control/run"
   chown -R 101:101 "$INFRA_DIR/data/nginx"
   chown -R 1000:1000 "$INFRA_DIR/data/uptime-kuma"
 }
 
 apply_runtime_permissions() {
   chmod 750 "$INFRA_DIR/data/postgres" "$INFRA_DIR/data/uploads" "$INFRA_DIR/data/backups"
-  chmod 770 "$INFRA_DIR/data/control"
+  chmod 750 "$INFRA_DIR/data/control"
+  chmod 700 "$INFRA_DIR/data/control/inbox" "$INFRA_DIR/data/control/run"
+  chmod 755 "$INFRA_DIR/data/control/status"
   chmod 755 "$INFRA_DIR/data/acme" "$INFRA_DIR/data/certs"
   chmod 700 \
     "$INFRA_DIR/data/letsencrypt" \

@@ -4552,6 +4552,15 @@ textarea:focus-visible {
   gap: var(--space-2, 0.5rem);
 }
 
+
+.registration-fleet-request {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid rgba(117, 255, 214, 0.45);
+  background: rgba(29, 78, 89, 0.16);
+}
+
 .registration-actions {
   display: grid;
   gap: var(--space-3, 0.75rem);
@@ -7137,10 +7146,47 @@ body {
   }
 }
 
-/* 0.16.1 registration separation and fleet application cleanup */
-.registration-separation-note {
+/* 0.16.1 registration and fleet application */
+.fleet-registration-option {
   align-content: start;
   gap: 1rem;
+}
+
+.fleet-registration-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid rgba(213, 228, 240, 0.14);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.fleet-registration-card > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.fleet-registration-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  cursor: pointer;
+}
+
+.fleet-registration-toggle input {
+  margin-top: 0.25rem;
+}
+
+.fleet-registration-toggle span {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.fleet-registration-unavailable {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
 }
 
 .fleet-application-form {

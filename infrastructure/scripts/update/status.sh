@@ -43,6 +43,6 @@ payload = {
 temporary = path.with_name(f".{path.name}.tmp")
 temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 temporary.replace(path)
-path.chmod(0o664)
+path.chmod(0o644)
 PY
 }

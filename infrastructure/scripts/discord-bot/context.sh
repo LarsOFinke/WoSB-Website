@@ -2,11 +2,15 @@
 set -Eeuo pipefail
 
 discord_bot_context_init() {
-  CONTROL_DIR="$INFRA_DIR/data/control"
-  REQUEST_FILE="$CONTROL_DIR/discord-bot.request"
-  STATUS_FILE="$CONTROL_DIR/discord-bot-status.json"
-  LOG_FILE="$CONTROL_DIR/discord-bot.log"
-  LOCK_FILE="$CONTROL_DIR/discord-bot.lock"
+  CONTROL_ROOT="$INFRA_DIR/data/control"
+  INBOX_DIR="$CONTROL_ROOT/inbox"
+  STATUS_DIR="$CONTROL_ROOT/status"
+  RUN_DIR="$CONTROL_ROOT/run"
+  INBOX_REQUEST_FILE="$INBOX_DIR/discord-bot.request"
+  REQUEST_FILE="$RUN_DIR/discord-bot.request.$$"
+  STATUS_FILE="$STATUS_DIR/discord-bot-status.json"
+  LOG_FILE="$STATUS_DIR/discord-bot.log"
+  LOCK_FILE="$RUN_DIR/discord-bot.lock"
   MANAGER_ENV="/etc/rbf-hub/discord-bot-manager.env"
   CONFIG_DIR="/etc/rbf-discord-bot"
   BOT_ENV_FILE="$CONFIG_DIR/bot.env"
@@ -27,7 +31,12 @@ discord_bot_context_init() {
   BIND_HOST="${RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0}"
   FIREWALL_MODE="${RBF_DISCORD_BOT_FIREWALL_MODE:-auto}"
 
-  mkdir -p "$CONTROL_DIR"
+  mkdir -p "$INBOX_DIR" "$STATUS_DIR" "$RUN_DIR"
+  chown 10001:10001 "$INBOX_DIR"
+  chown root:root "$STATUS_DIR" "$RUN_DIR"
+  chmod 700 "$INBOX_DIR" "$RUN_DIR"
+  chmod 755 "$STATUS_DIR"
   touch "$LOG_FILE"
-  chmod 664 "$LOG_FILE"
+  chown root:root "$LOG_FILE"
+  chmod 644 "$LOG_FILE"
 }

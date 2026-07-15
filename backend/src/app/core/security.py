@@ -7,7 +7,7 @@ import secrets
 from dataclasses import dataclass
 
 PASSWORD_ALGORITHM = "pbkdf2_sha256"
-PASSWORD_ITERATIONS = 260_000
+PASSWORD_ITERATIONS = 600_000
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +46,14 @@ class PasswordHasher:
             "sha256", password.encode("utf-8"), parsed.salt, parsed.iterations
         )
         return hmac.compare_digest(candidate, parsed.digest)
+
+    def needs_rehash(self, encoded_hash: str) -> bool:
+        parsed = self.parse(encoded_hash)
+        return (
+            parsed is None
+            or parsed.algorithm != self.algorithm
+            or parsed.iterations < self.iterations
+        )
 
     @classmethod
     def parse(cls, encoded: str) -> PasswordHash | None:
@@ -92,6 +100,10 @@ def verify_password(password: str, encoded_hash: str) -> bool:
     return _password_hasher.verify(password, encoded_hash)
 
 
+def password_hash_needs_rehash(encoded_hash: str) -> bool:
+    return _password_hasher.needs_rehash(encoded_hash)
+
+
 def create_session_token() -> str:
     return _session_tokens.create()
 
@@ -109,5 +121,6 @@ __all__ = [
     "create_session_token",
     "hash_password",
     "hash_session_token",
+    "password_hash_needs_rehash",
     "verify_password",
 ]

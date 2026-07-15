@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from ipaddress import ip_address
+from urllib.parse import parse_qsl, urlencode, urlsplit
 from uuid import uuid4
 
 from app.core.config import settings
@@ -15,6 +16,45 @@ from starlette.responses import JSONResponse, Response
 logger = logging.getLogger("app.request")
 
 ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+SENSITIVE_QUERY_KEYS = frozenset(
+    {"access_token", "api_key", "auth", "code", "key", "password", "secret", "signature", "token"}
+)
+
+
+def _normalized_ip(value: str | None) -> str | None:
+    if not value:
+        return None
+    candidate = value.strip()
+    if not candidate or "," in candidate:
+        return None
+    try:
+        return str(ip_address(candidate))
+    except ValueError:
+        return None
+
+
+def redact_query_string(value: str | None) -> str | None:
+    if not value:
+        return None
+    try:
+        pairs = parse_qsl(value, keep_blank_values=True, strict_parsing=False)
+    except ValueError:
+        return "<invalid-query>"
+    redacted = [
+        (key, "<redacted>" if key.casefold() in SENSITIVE_QUERY_KEYS else item)
+        for key, item in pairs
+    ]
+    return urlencode(redacted, doseq=True)
+
+
+def _origin_from_referer(value: str | None) -> str | None:
+    if not value:
+        return None
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 
 class RequestLogPolicy:
@@ -32,12 +72,12 @@ class ClientIpResolver:
         peer = request.client.host if request.client else None
         if not self._trust_proxy_headers(peer):
             return peer
-        real_ip = request.headers.get("x-real-ip")
+        real_ip = _normalized_ip(request.headers.get("x-real-ip"))
         if real_ip:
-            return real_ip.strip() or None
-        forwarded_for = request.headers.get("x-forwarded-for")
+            return real_ip
+        forwarded_for = _normalized_ip(request.headers.get("x-forwarded-for"))
         if forwarded_for:
-            return forwarded_for.rsplit(",", 1)[-1].strip() or None
+            return forwarded_for
         return peer
 
     @staticmethod
@@ -77,7 +117,7 @@ class RequestLogContextFactory:
             "client_ip": self._client_ips.resolve(request),
             "forwarded_for": request.headers.get("x-forwarded-for"),
             "user_agent": request.headers.get("user-agent"),
-            "query_string": request.url.query or None,
+            "query_string": redact_query_string(request.url.query),
         }
 
 
@@ -100,6 +140,42 @@ def _request_log_context(
     request: Request, request_id: str, status_code: int, duration_ms: float
 ) -> dict[str, object | None]:
     return _request_contexts.create(request, request_id, status_code, duration_ms)
+
+
+
+
+class CsrfOriginMiddleware(BaseHTTPMiddleware):
+    """Reject cross-origin state changes authenticated by the session cookie."""
+
+    def __init__(self, app, allowed_origins: tuple[str, ...]) -> None:
+        super().__init__(app)
+        self._allowed_origins = frozenset(origin.rstrip("/") for origin in allowed_origins)
+
+    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[override]
+        if request.method.upper() in SAFE_METHODS:
+            return await call_next(request)
+        if not request.cookies.get(settings.session_cookie_name):
+            return await call_next(request)
+
+        origin = request.headers.get("origin")
+        candidate = origin.rstrip("/") if origin else _origin_from_referer(request.headers.get("referer"))
+        if candidate is not None and candidate not in self._allowed_origins:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "Cross-origin state-changing request was rejected.",
+                    "code": "csrf_origin_rejected",
+                },
+            )
+        if request.headers.get("sec-fetch-site", "").casefold() == "cross-site":
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "Cross-site state-changing request was rejected.",
+                    "code": "csrf_origin_rejected",
+                },
+            )
+        return await call_next(request)
 
 
 class IpBlockMiddleware(BaseHTTPMiddleware):

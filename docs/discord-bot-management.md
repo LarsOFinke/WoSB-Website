@@ -32,6 +32,26 @@ The runner reads this file on every operation. Editing it does not require resta
 For GitHub, prepare the dedicated host-key file and verify the exact key non-interactively:
 
 ```bash
+sudo install -d -m 700 -o root -g root /root/.ssh
+
+sudo ssh-keygen \
+  -t ed25519 \
+  -a 100 \
+  -f /root/.ssh/rbf_discord_bot \
+  -C "rbf-discord-bot@$(hostname)" \
+  -N ""
+
+sudo chown root:root \
+  /root/.ssh/rbf_discord_bot \
+  /root/.ssh/rbf_discord_bot.pub
+
+sudo chmod 600 /root/.ssh/rbf_discord_bot
+sudo chmod 644 /root/.ssh/rbf_discord_bot.pub
+
+sudo cat /root/.ssh/rbf_discord_bot.pub
+```
+
+```bash
 sudo install -d -m 0700 /root/.ssh
 sudo ssh-keyscan -H github.com | sudo tee /root/.ssh/rbf-discord-known_hosts >/dev/null
 sudo chmod 0600 /root/.ssh/rbf_discord_bot /root/.ssh/rbf-discord-known_hosts

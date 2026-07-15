@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.configuration.models import SeedSettings, StorageSettings, UploadLimitSettings
+from app.configuration.models import (
+    MaintenanceSettings,
+    SeedSettings,
+    StorageSettings,
+    UploadLimitSettings,
+)
 from app.configuration.sources.environment_source import EnvironmentSource
 from app.configuration.sources.ini_config_source import IniConfigSource
 from app.configuration.value_parser import ConfigValueParser
@@ -37,13 +42,24 @@ class RuntimeSettingsReader:
         upload_dir = self._paths.resolve(
             self._environment.get("UPLOAD_DIR"), setting_name="UPLOAD_DIR"
         )
-        control_raw = self._environment.get(
+        legacy_control = self._environment.get(
             "CONTROL_DIR",
             required=False,
             default=str(self._backend_root / "storage" / "control"),
         )
-        control_dir = self._paths.resolve(control_raw, setting_name="CONTROL_DIR")
-        return StorageSettings(upload_dir=str(upload_dir), control_dir=str(control_dir))
+        request_raw = self._environment.get(
+            "CONTROL_REQUEST_DIR", required=False, default=legacy_control
+        )
+        status_raw = self._environment.get(
+            "CONTROL_STATUS_DIR", required=False, default=legacy_control
+        )
+        request_dir = self._paths.resolve(request_raw, setting_name="CONTROL_REQUEST_DIR")
+        status_dir = self._paths.resolve(status_raw, setting_name="CONTROL_STATUS_DIR")
+        return StorageSettings(
+            upload_dir=str(upload_dir),
+            control_request_dir=str(request_dir),
+            control_status_dir=str(status_dir),
+        )
 
     def read_seed(self) -> SeedSettings:
         auto_seed = ConfigValueParser.parse_boolean(
@@ -63,12 +79,52 @@ class RuntimeSettingsReader:
             admin_display_name=display_name,
         )
 
+    @staticmethod
+    def _integer_or_default(section, key: str, default: int) -> int:
+        raw = section.get(key, "").strip()
+        if not raw:
+            return default
+        try:
+            return int(raw)
+        except ValueError as exc:
+            raise ConfigError(
+                f"Config value [{section.name}].{key} must be an integer."
+            ) from exc
+
+    def _optional_section(self, name: str):
+        target = name.casefold()
+        return next(
+            (section for key, section in self._config.sections().items() if key.casefold() == target),
+            None,
+        )
+
     def read_upload_limits(self) -> UploadLimitSettings:
         section = self._config.section("upload_limits")
         return UploadLimitSettings(
             image_mb=ConfigValueParser.integer(section, "image_mb"),
             document_mb=ConfigValueParser.integer(section, "document_mb"),
             video_mb=ConfigValueParser.integer(section, "video_mb"),
+            per_user_total_mb=self._integer_or_default(section, "per_user_total_mb", 2048),
+            global_total_mb=self._integer_or_default(section, "global_total_mb", 20480),
+            minimum_free_mb=self._integer_or_default(section, "minimum_free_mb", 1024),
+        )
+
+    def read_maintenance(self) -> MaintenanceSettings:
+        section = self._optional_section("maintenance")
+        if section is None:
+            return MaintenanceSettings(
+                app_log_retention_days=30,
+                audit_log_retention_days=365,
+                interval_hours=24,
+            )
+        return MaintenanceSettings(
+            app_log_retention_days=self._integer_or_default(
+                section, "app_log_retention_days", 30
+            ),
+            audit_log_retention_days=self._integer_or_default(
+                section, "audit_log_retention_days", 365
+            ),
+            interval_hours=self._integer_or_default(section, "interval_hours", 24),
         )
 
     def read_cors_origins(self) -> tuple[str, ...]:

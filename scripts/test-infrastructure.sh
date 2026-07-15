@@ -44,6 +44,31 @@ for file in "${shell_files[@]}"; do
   bash -n "$file"
 done
 
+(
+  source "$INFRA_DIR/scripts/lib/host/control.sh"
+  claim_tmp="$(mktemp -d)"
+  trap 'rm -rf "$claim_tmp"' EXIT
+  printf '{"operation":"update"}\n' > "$claim_tmp/request.json"
+  chmod 600 "$claim_tmp/request.json"
+  claim_control_request \
+    "$claim_tmp/request.json" \
+    "$claim_tmp/private/request.json" \
+    "$(id -u)"
+  [[ ! -e "$claim_tmp/request.json" ]]
+  cmp -s "$claim_tmp/private/request.json" <(printf '{"operation":"update"}\n')
+
+  printf '{"operation":"update"}\n' > "$claim_tmp/target.json"
+  chmod 600 "$claim_tmp/target.json"
+  ln -s "$claim_tmp/target.json" "$claim_tmp/symlink.json"
+  if claim_control_request \
+    "$claim_tmp/symlink.json" \
+    "$claim_tmp/private/symlink.json" \
+    "$(id -u)" 2>/dev/null; then
+    echo 'Control request claim must reject symbolic links.' >&2
+    exit 1
+  fi
+)
+
 [[ ! -e "$BACKEND_DIR/.env" ]]
 [[ ! -e "$ROOT_DIR/frontend/.env" ]]
 [[ ! -e "$INFRA_DIR/.env" ]]
@@ -153,7 +178,20 @@ if docker compose version >/dev/null 2>&1; then
 fi
 
 require_pattern 'limit_req_zone.*auth_login' "$INFRA_DIR/nginx/default.conf"
-require_pattern 'Content-Security-Policy' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'Strict-Transport-Security' "$INFRA_DIR/nginx/security-headers.conf"
+require_pattern '--no-proxy-headers' "$BACKEND_DIR/Dockerfile"
+require_file "$INFRA_DIR/nginx/security-headers.conf"
+require_file "$INFRA_DIR/nginx/upload-security-headers.conf"
+require_pattern 'Content-Security-Policy' "$INFRA_DIR/nginx/security-headers.conf"
+require_pattern 'Content-Security-Policy.*sandbox' "$INFRA_DIR/nginx/upload-security-headers.conf"
+require_pattern 'rbf-security-headers.conf' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'rbf-upload-security-headers.conf' "$INFRA_DIR/nginx/default.conf"
+reject_pattern '\$proxy_add_x_forwarded_for' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'X-Forwarded-For \$remote_addr' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'data/control/inbox:/run/rbf-control/inbox' "$INFRA_DIR/compose.yml"
+require_pattern 'data/control/status:/run/rbf-control/status:ro' "$INFRA_DIR/compose.yml"
+require_pattern 'claim_control_request' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'member.isdir() or member.isfile()' "$INFRA_DIR/scripts/backup/restore-data.sh"
 require_pattern 'RBF_DISCORD_BOT_BIND_HOST:-0.0.0.0' "$INFRA_DIR/scripts/discord-bot/context.sh"
 require_pattern 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/discord-bot/context.sh"
 require_pattern 'RBF_DISCORD_BOT_FIREWALL_MODE:-auto' "$INFRA_DIR/scripts/services/configure-discord-bot-gateway.sh"

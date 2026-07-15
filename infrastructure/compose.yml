@@ -75,10 +75,12 @@ services:
       - .env
     environment:
       RBF_ENV_FILE: /app/config/container.env
-      CONTROL_DIR: /run/rbf-control
+      CONTROL_REQUEST_DIR: /run/rbf-control/inbox
+      CONTROL_STATUS_DIR: /run/rbf-control/status
     volumes:
       - ./data/uploads:/data/uploads
-      - ./data/control:/run/rbf-control
+      - ./data/control/inbox:/run/rbf-control/inbox
+      - ./data/control/status:/run/rbf-control/status:ro
     depends_on:
       - postgres
     expose:
@@ -89,6 +91,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     security_opt:
       - no-new-privileges:true
 
@@ -116,6 +124,17 @@ services:
     networks:
       - frontend
       - backend
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/api/health >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     security_opt:
       - no-new-privileges:true
 
@@ -148,6 +167,11 @@ services:
     networks:
       - frontend
       - backend
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
     security_opt:
       - no-new-privileges:true
 

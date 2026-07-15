@@ -171,6 +171,6 @@ class ShipMasterDataService:
 
     def _reload(self, ship_id: int, *, required: bool = True) -> Ship | None:
         row = self.db.scalar(self.query().where(Ship.id == ship_id))
-        if required:
-            assert row is not None
+        if required and row is None:
+            raise MasterDataError(f"Ship {ship_id} disappeared during reload.")
         return row

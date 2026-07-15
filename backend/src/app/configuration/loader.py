@@ -50,5 +50,6 @@ class SettingsLoader:
             ),
             seed=runtime_reader.read_seed(),
             upload_limits=runtime_reader.read_upload_limits(),
+            maintenance=runtime_reader.read_maintenance(),
             cors_origins=runtime_reader.read_cors_origins(),
         )

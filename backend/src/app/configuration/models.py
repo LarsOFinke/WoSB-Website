@@ -32,7 +32,8 @@ class DatabaseSettings:
 @dataclass(frozen=True, slots=True)
 class StorageSettings:
     upload_dir: str
-    control_dir: str
+    control_request_dir: str
+    control_status_dir: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +67,16 @@ class UploadLimitSettings:
     image_mb: int
     document_mb: int
     video_mb: int
+    per_user_total_mb: int
+    global_total_mb: int
+    minimum_free_mb: int
+
+
+@dataclass(frozen=True, slots=True)
+class MaintenanceSettings:
+    app_log_retention_days: int
+    audit_log_retention_days: int
+    interval_hours: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +90,7 @@ class Settings:
     session: SessionSettings
     seed: SeedSettings
     upload_limits: UploadLimitSettings
+    maintenance: MaintenanceSettings
     cors_origins: tuple[str, ...]
 
     @property
@@ -122,8 +134,17 @@ class Settings:
         return self.storage.upload_dir
 
     @property
+    def control_request_dir(self) -> str:
+        return self.storage.control_request_dir
+
+    @property
+    def control_status_dir(self) -> str:
+        return self.storage.control_status_dir
+
+    @property
     def control_dir(self) -> str:
-        return self.storage.control_dir
+        """Legacy alias used by local tests where request and status share a directory."""
+        return self.storage.control_request_dir
 
     @property
     def auto_seed(self) -> bool:
@@ -192,3 +213,15 @@ class Settings:
     @property
     def upload_video_limit_mb(self) -> int:
         return self.upload_limits.video_mb
+
+    @property
+    def upload_per_user_total_mb(self) -> int:
+        return self.upload_limits.per_user_total_mb
+
+    @property
+    def upload_global_total_mb(self) -> int:
+        return self.upload_limits.global_total_mb
+
+    @property
+    def upload_minimum_free_mb(self) -> int:
+        return self.upload_limits.minimum_free_mb

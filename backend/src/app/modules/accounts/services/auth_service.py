@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.password_policy import PasswordPolicyError, validate_password
-from app.core.security import create_session_token, hash_password, hash_session_token, verify_password
+from app.core.security import (
+    create_session_token,
+    hash_password,
+    hash_session_token,
+    password_hash_needs_rehash,
+    verify_password,
+)
 from app.modules.accounts.models.auth_session import AuthSession
 from app.modules.accounts.models.registration_request import RegistrationRequest
 from app.modules.accounts.models.user import User
@@ -63,6 +69,10 @@ def authenticate_user(db: Session, username: str, password: str) -> User | None:
         return None
     if not verify_password(password, user.password_hash):
         return None
+    if password_hash_needs_rehash(user.password_hash):
+        user.password_hash = hash_password(password)
+        db.commit()
+        db.refresh(user)
     return user
 
 
@@ -82,9 +92,19 @@ def delete_session_by_token(db: Session, token: str | None) -> None:
     db.commit()
 
 
-def delete_expired_sessions(db: Session) -> None:
-    db.execute(delete(AuthSession).where(AuthSession.expires_at <= utc_now()))
-    db.commit()
+def delete_expired_sessions(db: Session, *, commit: bool = True) -> int:
+    result = db.execute(delete(AuthSession).where(AuthSession.expires_at <= utc_now()))
+    if commit:
+        db.commit()
+    return int(result.rowcount or 0)
+
+
+def revoke_user_sessions(db: Session, user_id: int, *, commit: bool = True) -> int:
+    result = db.execute(delete(AuthSession).where(AuthSession.user_id == user_id))
+    if commit:
+        db.commit()
+    return int(result.rowcount or 0)
+
 
 def change_user_password(db: Session, user: User, current_password: str, new_password: str) -> None:
     if not verify_password(current_password, user.password_hash):
@@ -94,5 +114,6 @@ def change_user_password(db: Session, user: User, current_password: str, new_pas
     except PasswordPolicyError as exc:
         raise AuthError(str(exc)) from exc
     user.password_hash = hash_password(new_password)
+    revoke_user_sessions(db, user.id, commit=False)
     db.commit()
 

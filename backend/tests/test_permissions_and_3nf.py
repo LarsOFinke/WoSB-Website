@@ -52,11 +52,11 @@ def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> 
         assert "allowed_slot_types" not in columns("build_item_options")
         assert "weapon_weight_pounds" not in columns("build_item_options")
         assert "max_weapon_pounds" not in columns("ship_weapon_mounts")
+        assert {"fleet_id", "wants_fleet_membership", "fleet_application_note"}.issubset(
+            columns("registration_requests")
+        )
         assert {
             "external_fleet_name",
-            "fleet_id",
-            "wants_fleet_membership",
-            "fleet_application_note",
             "fleet_availability",
             "fleet_preferred_ships",
             "fleet_timezone",

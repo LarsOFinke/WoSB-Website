@@ -100,18 +100,10 @@ def membership_permissions(
     actor = context.actor
     target_user = target.user
 
-    if target.user_id == actor.id:
-        return _base_permissions(reason="self")
-
-    if target_user.role == ROLE_ADMIN:
-        return _base_permissions(reason="site_admin")
-
-    if target_user.role == ROLE_MODERATOR and not actor.is_admin:
-        return _base_permissions(reason="site_peer")
-
-    if target.role == FLEET_ROLE_ADMIRAL and not actor.is_admin:
-        return _base_permissions(reason="fleet_admiral")
-
+    # Site administrators are evaluated before self/peer protections so they can
+    # manage every fleet membership, including their own and those of other site
+    # administrators. The final active fleet admiral remains protected because
+    # removing it would leave the fleet without required command leadership.
     if actor.is_admin:
         last_active_admiral = (
             target.role == FLEET_ROLE_ADMIRAL
@@ -125,6 +117,18 @@ def membership_permissions(
             can_change_status=not last_active_admiral,
             reason="last_admiral" if last_active_admiral else None,
         )
+
+    if target.user_id == actor.id:
+        return _base_permissions(reason="self")
+
+    if target_user.role == ROLE_ADMIN:
+        return _base_permissions(reason="site_admin")
+
+    if target_user.role == ROLE_MODERATOR:
+        return _base_permissions(reason="site_peer")
+
+    if target.role == FLEET_ROLE_ADMIRAL:
+        return _base_permissions(reason="fleet_admiral")
 
     if actor.role == ROLE_MODERATOR:
         return _base_permissions(

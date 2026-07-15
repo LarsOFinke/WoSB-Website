@@ -3,7 +3,7 @@ Description=Royal Blackwater Fleet Discord Bot Request Watcher
 After=local-fs.target
 
 [Path]
-PathExists=@INFRA_DIR@/data/control/discord-bot.request
+PathExists=@INFRA_DIR@/data/control/inbox/discord-bot.request
 Unit=rbf-hub-discord-bot-manager.service
 
 [Install]

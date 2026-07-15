@@ -67,6 +67,7 @@ def admin_approve_registration_request(
             "reviewed_by_id",
             "reviewed_at",
             "created_user_id",
+            "fleet_membership",
         ],
     )
     return RegistrationRequestRead.model_validate(request)

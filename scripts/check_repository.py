@@ -139,15 +139,33 @@ for path in ROOT.rglob("*"):
         )
 
 
-# The historical migration chain is intentionally squashed into one immutable baseline.
+# The historical migration chain starts at the squashed baseline and remains linear.
 migration_files = sorted((ROOT / "backend/migrations/versions").glob("*.py"))
-require(len(migration_files) == 1, "database schema must have exactly one baseline migration")
-baseline_text = migration_files[0].read_text(encoding="utf-8")
-require("revision: str = '0001_baseline'" in baseline_text, "unexpected baseline revision")
-require(
-    "down_revision: Union[str, Sequence[str], None] = None" in baseline_text,
-    "baseline migration must not depend on historical revisions",
-)
+require(bool(migration_files), "database schema must include the baseline migration")
+previous_revision: str | None = None
+seen_revisions: set[str] = set()
+for index, migration_file in enumerate(migration_files):
+    migration_text = migration_file.read_text(encoding="utf-8")
+    revision_match = re.search(r"^revision: str = [\"']([^\"']+)[\"']$", migration_text, re.MULTILINE)
+    require(revision_match is not None, f"migration has no revision: {migration_file.name}")
+    revision = revision_match.group(1)
+    require(revision not in seen_revisions, f"duplicate migration revision: {revision}")
+    seen_revisions.add(revision)
+
+    if index == 0:
+        require(revision == "0001_baseline", "unexpected baseline revision")
+        require(
+            re.search(r"^down_revision: .* = None$", migration_text, re.MULTILINE) is not None,
+            "baseline migration must not depend on historical revisions",
+        )
+    else:
+        down_match = re.search(r"^down_revision: .* = [\"']([^\"']+)[\"']$", migration_text, re.MULTILINE)
+        require(down_match is not None, f"migration has no single down revision: {migration_file.name}")
+        require(
+            down_match.group(1) == previous_revision,
+            f"migration chain is not linear at {migration_file.name}",
+        )
+    previous_revision = revision
 
 # Prevent generated or embedded payloads from turning source modules into binary containers.
 for path in (ROOT / "frontend/src").rglob("*.js"):

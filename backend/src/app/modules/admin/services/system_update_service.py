@@ -20,10 +20,14 @@ class SystemUpdateError(RuntimeError):
     pass
 
 
-def _control_dir() -> Path:
-    path = Path(settings.control_dir)
+def _request_dir() -> Path:
+    path = Path(settings.control_request_dir)
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _status_dir() -> Path:
+    return Path(settings.control_status_dir)
 
 
 def _read_json(path: Path) -> dict:
@@ -47,9 +51,26 @@ def _log_tail(path: Path, limit: int = 120) -> list[str]:
 
 
 def get_system_update_status() -> SystemUpdateStatus:
-    directory = _control_dir()
-    payload = _read_json(directory / STATUS_FILE)
+    request_path = _request_dir() / REQUEST_FILE
+    status_directory = _status_dir()
+    payload = _read_json(status_directory / STATUS_FILE)
+    request_payload = _read_json(request_path)
     state = str(payload.get("state") or "idle")
+
+    # The API cannot write the root-owned status directory. Until the host runner
+    # claims the request, synthesize a queued state from the inbox payload.
+    if request_payload and state not in ACTIVE_STATES:
+        state = "queued"
+        payload = {
+            **payload,
+            "operation": request_payload.get("operation") or "update",
+            "message": "Update request accepted and waiting for the host runner.",
+            "requested_by": request_payload.get("requested_by"),
+            "requested_at": request_payload.get("requested_at"),
+            "started_at": None,
+            "finished_at": None,
+        }
+
     message = str(payload.get("message") or "No update has been requested yet.")
     return SystemUpdateStatus(
         state=state,
@@ -61,15 +82,15 @@ def get_system_update_status() -> SystemUpdateStatus:
         finished_at=payload.get("finished_at"),
         commit_before=payload.get("commit_before"),
         commit_after=payload.get("commit_after"),
-        log_tail=_log_tail(directory / LOG_FILE),
-        request_available=not (directory / REQUEST_FILE).exists() and state not in ACTIVE_STATES,
+        log_tail=_log_tail(status_directory / LOG_FILE),
+        request_available=not request_path.exists() and state not in ACTIVE_STATES,
     )
 
 
 def request_system_update(
     user: User, operation: SystemUpdateOperation = "update"
 ) -> SystemUpdateStatus:
-    directory = _control_dir()
+    directory = _request_dir()
     request_path = directory / REQUEST_FILE
     current = get_system_update_status()
     if request_path.exists() or current.state in ACTIVE_STATES:
@@ -81,24 +102,12 @@ def request_system_update(
         "requested_at": now,
         "operation": operation,
     }
-    queued_status = {
-        "state": "queued",
-        "operation": operation,
-        "message": "Update request accepted and waiting for the host runner.",
-        "requested_by": user.username,
-        "requested_at": now,
-        "started_at": None,
-        "finished_at": None,
-        "commit_before": current.commit_after or current.commit_before,
-        "commit_after": None,
-    }
-
-    status_tmp = directory / f".{STATUS_FILE}.tmp"
-    request_tmp = directory / f".{REQUEST_FILE}.tmp"
-    status_tmp.write_text(json.dumps(queued_status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    request_tmp.write_text(json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(status_tmp, directory / STATUS_FILE)
-    # Create the watched request file last so systemd cannot start before the
-    # queued status is visible to the API.
+    request_tmp = directory / f".{REQUEST_FILE}.{os.getpid()}.tmp"
+    request_tmp.write_text(
+        json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    request_tmp.chmod(0o600)
     os.replace(request_tmp, request_path)
+    request_path.chmod(0o600)
     return get_system_update_status()

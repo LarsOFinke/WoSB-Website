@@ -151,6 +151,6 @@ class OptionMasterDataService:
         self, option_id: int, *, required: bool = True
     ) -> BuildItemOption | None:
         row = self.db.scalar(self.query().where(BuildItemOption.id == option_id))
-        if required:
-            assert row is not None
+        if required and row is None:
+            raise MasterDataError(f"Build item option {option_id} disappeared during reload.")
         return row

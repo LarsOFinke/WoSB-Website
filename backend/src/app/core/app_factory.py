@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -7,13 +8,16 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from urllib.parse import urlsplit
 
 from app.api.router import router as api_router
 from app.configuration.models import Settings
 from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, http_error_handler
 from app.core.logging import LoggingConfigurator
-from app.core.middleware import IpBlockMiddleware, RequestLoggingMiddleware
+from app.core.maintenance import maintenance_loop, run_maintenance_once
+from app.core.middleware import CsrfOriginMiddleware, IpBlockMiddleware, RequestLoggingMiddleware
 from app.db.init_db import create_and_seed, create_tables, verify_database_ready
 from app.modules.registry import register_all_models
 
@@ -34,6 +38,9 @@ class ApplicationFactory:
             version=self._settings.app_version,
             description=self.DESCRIPTION,
             lifespan=self._lifespan,
+            docs_url=None if self._settings.is_production else "/docs",
+            redoc_url=None if self._settings.is_production else "/redoc",
+            openapi_url=None if self._settings.is_production else "/openapi.json",
         )
         self._configure_errors(app)
         self._configure_middleware(app)
@@ -50,7 +57,16 @@ class ApplicationFactory:
                 create_tables()
         else:
             verify_database_ready()
-        yield
+        run_maintenance_once()
+        maintenance_task = asyncio.create_task(maintenance_loop())
+        try:
+            yield
+        finally:
+            maintenance_task.cancel()
+            try:
+                await maintenance_task
+            except asyncio.CancelledError:
+                pass
 
     @staticmethod
     def _configure_errors(app: FastAPI) -> None:
@@ -58,8 +74,21 @@ class ApplicationFactory:
         app.add_exception_handler(HTTPException, http_error_handler)
 
     def _configure_middleware(self, app: FastAPI) -> None:
+        allowed_hosts = {"testserver", "localhost", "127.0.0.1"}
+        for origin in self._settings.cors_origins:
+            hostname = urlsplit(origin).hostname
+            if hostname:
+                allowed_hosts.add(hostname)
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=sorted(allowed_hosts),
+        )
         app.add_middleware(IpBlockMiddleware)
         app.add_middleware(RequestLoggingMiddleware)
+        app.add_middleware(
+            CsrfOriginMiddleware,
+            allowed_origins=self._settings.cors_origins,
+        )
         app.add_middleware(
             CORSMiddleware,
             allow_origins=list(self._settings.cors_origins),

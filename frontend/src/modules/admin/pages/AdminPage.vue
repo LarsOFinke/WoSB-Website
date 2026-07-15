@@ -170,6 +170,10 @@ const {
                 <strong>{{ request.display_name }}</strong>
                 <span>{{ request.username }} · {{ formatDateTime(request.created_at) }} · {{ t(`admin.registrations.status.${request.status}`) }}</span>
                 <small v-if="request.reviewed_at" class="muted">{{ t('admin.workspace.reviewedBy', { user: request.reviewed_by?.display_name || request.reviewed_by?.username || '—', date: formatDateTime(request.reviewed_at) }) }}</small>
+                <div v-if="request.wants_fleet_membership" class="registration-fleet-request">
+                  <strong>{{ t('admin.registrations.fleetApplication') }}</strong>
+                  <p class="muted">{{ request.fleet_application_note || t('admin.registrations.fleetApplicationWithoutNote') }}</p>
+                </div>
                 <p v-if="request.decision_note" class="muted">{{ t('admin.registrations.decisionNote') }}: {{ request.decision_note }}</p>
               </div>
               <div v-if="request.status === 'pending'" class="registration-actions">

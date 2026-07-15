@@ -18,9 +18,12 @@ from app.modules.accounts.models.registration_request import (
 )
 from app.modules.accounts.models.user import ROLE_USER, User
 from app.modules.accounts.models.user_profile import UserProfile
+from app.modules.fleet.models.fleet import FLEET_MEMBER_PENDING, FLEET_ROLE_MEMBER, Fleet
+from app.modules.fleet.models.fleet_membership import FleetMembership
+from app.modules.fleet.services.fleet_service import get_primary_fleet
 from app.modules.accounts.schemas.register_request import RegisterRequest
 from app.modules.admin.schemas.registration_decision import RegistrationDecision
-from app.modules.permissions.services.role_service import assign_site_role
+from app.modules.permissions.services.role_service import assign_fleet_role_definition, assign_site_role
 
 
 logger = logging.getLogger("app.registration")
@@ -55,10 +58,21 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
     except PasswordPolicyError as exc:
         raise RegistrationRequestError(str(exc)) from exc
     _assert_username_available(db, username)
+    fleet: Fleet | None = None
+    if payload.wants_fleet_membership:
+        fleet = get_primary_fleet(db)
+        if fleet is None or not fleet.is_active:
+            raise RegistrationRequestError("Official fleet not found.")
+        if payload.fleet_id is not None and payload.fleet_id != fleet.id:
+            raise RegistrationRequestError("Only the official fleet can be joined.")
+
     request = RegistrationRequest(
         username=username,
         password_hash=hash_password(payload.password),
         display_name=payload.display_name.strip() or username,
+        wants_fleet_membership=payload.wants_fleet_membership,
+        fleet_id=fleet.id if fleet is not None else None,
+        fleet_application_note=payload.fleet_application_note if fleet is not None else None,
         status=REGISTRATION_PENDING,
     )
     db.add(request)
@@ -119,6 +133,21 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
     assign_site_role(db, user, ROLE_USER)
     db.add(user)
     db.flush()
+
+    if request.wants_fleet_membership:
+        fleet = get_primary_fleet(db)
+        if fleet is None or not fleet.is_active:
+            raise RegistrationRequestError("Official fleet not found; fleet application cannot be created.")
+        if request.fleet_id is not None and request.fleet_id != fleet.id:
+            raise RegistrationRequestError("Requested fleet is no longer the official fleet.")
+        membership = FleetMembership(
+            fleet_id=fleet.id,
+            user_id=user.id,
+            status=FLEET_MEMBER_PENDING,
+            note=request.fleet_application_note,
+        )
+        assign_fleet_role_definition(db, membership, FLEET_ROLE_MEMBER)
+        db.add(membership)
 
     request.status = REGISTRATION_APPROVED
     request.decision_note = payload.note

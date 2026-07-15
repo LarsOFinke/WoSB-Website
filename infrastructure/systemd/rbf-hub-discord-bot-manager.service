@@ -5,6 +5,14 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
 ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/services/manage-discord-bot.sh
 Nice=10
 TimeoutStartSec=30min

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import json
 import secrets
 from urllib.parse import urlparse
@@ -60,12 +61,30 @@ def _normalize_event_types(values: list[str]) -> list[str]:
 def _validate_endpoint_url(value: str) -> str:
     url = value.strip()
     parsed = urlparse(url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or not parsed.hostname:
         raise OutboundWebhookError("Webhook endpoint must be a valid HTTP or HTTPS URL.")
     if parsed.username or parsed.password:
         raise OutboundWebhookError("Webhook endpoint URLs must not contain credentials.")
+    if parsed.fragment:
+        raise OutboundWebhookError("Webhook endpoint URLs must not contain fragments.")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise OutboundWebhookError("Webhook endpoint port is invalid.") from exc
+    if port is not None and not 1 <= port <= 65535:
+        raise OutboundWebhookError("Webhook endpoint port is invalid.")
     if settings.is_production and parsed.scheme != "https":
         raise OutboundWebhookError("Production webhook endpoints must use HTTPS.")
+
+    hostname = parsed.hostname.rstrip(".").casefold()
+    if hostname == "localhost" or hostname.endswith((".localhost", ".local")):
+        raise OutboundWebhookError("Webhook endpoints must use a public network host.")
+    try:
+        literal_address = ipaddress.ip_address(hostname)
+    except ValueError:
+        literal_address = None
+    if literal_address is not None and not literal_address.is_global:
+        raise OutboundWebhookError("Webhook endpoints must not target private or reserved addresses.")
     return url
 
 def _events_json(values: list[str]) -> str:

@@ -6,6 +6,7 @@ INFRA_DIR="$(cd "$DISCORD_BOT_LIB_DIR/../.." && pwd)"
 
 source "$INFRA_DIR/scripts/lib/docker.sh"
 source "$INFRA_DIR/scripts/lib/json.sh"
+source "$INFRA_DIR/scripts/lib/host/control.sh"
 source "$DISCORD_BOT_LIB_DIR/context.sh"
 source "$DISCORD_BOT_LIB_DIR/git.sh"
 source "$DISCORD_BOT_LIB_DIR/service.sh"
@@ -55,6 +56,9 @@ discord_bot_on_exit() {
 }
 
 discord_bot_run_request() {
+  [[ -e "$INBOX_REQUEST_FILE" ]] || die "Keine Discord-Bot-Anforderung im Control-Inbox-Verzeichnis gefunden."
+  rm -f "$REQUEST_FILE"
+  claim_control_request "$INBOX_REQUEST_FILE" "$REQUEST_FILE" 10001
   discord_bot_load_request
   if ! discord_bot_operation_is_valid "$OPERATION"; then
     discord_bot_status_write \

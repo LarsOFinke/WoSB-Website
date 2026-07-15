@@ -18,6 +18,20 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rbf_ci
+          POSTGRES_PASSWORD: rbf_ci_password
+          POSTGRES_DB: rbf_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rbf_ci -d rbf_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -35,23 +49,27 @@ jobs:
         run: |
           cd backend && ruff check --no-cache src tests
           cd .. && python scripts/run_backend_tests.py
-      - name: Migration lifecycle
+      - name: PostgreSQL migration lifecycle
         working-directory: backend
         run: |
           tmp_dir="$(mktemp -d)"
           trap 'rm -rf "$tmp_dir"' EXIT
           cat > "$tmp_dir/ci.env" <<ENV
-          APP_ENV=development
-          DATABASE_URL=sqlite:///$tmp_dir/ci.db
-          DB_SCHEMA_MODE=none
+          APP_ENV=staging
+          DATABASE_URL=postgresql+psycopg://rbf_ci:rbf_ci_password@127.0.0.1:5432/rbf_ci
+          DB_SCHEMA_MODE=migrate
           UPLOAD_DIR=$tmp_dir/uploads
-          CONTROL_DIR=$tmp_dir/control
+          CONTROL_REQUEST_DIR=$tmp_dir/control/inbox
+          CONTROL_STATUS_DIR=$tmp_dir/control/status
           CORS_ORIGINS=http://localhost
           SESSION_COOKIE_SECURE=false
           AUTO_SEED=false
           ENV
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic upgrade head
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic check
+          RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src python -c "from app.db.init_db import verify_database_ready; verify_database_ready()"
+          RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic downgrade base
+          RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic upgrade head
 
   frontend:
     name: Frontend

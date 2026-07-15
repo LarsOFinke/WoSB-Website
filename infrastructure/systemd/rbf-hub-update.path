@@ -3,7 +3,7 @@ Description=Royal Blackwater Fleet Admin Update Request Watcher
 After=local-fs.target
 
 [Path]
-PathExists=@INFRA_DIR@/data/control/update.request
+PathExists=@INFRA_DIR@/data/control/inbox/update.request
 Unit=rbf-hub-update.service
 
 [Install]

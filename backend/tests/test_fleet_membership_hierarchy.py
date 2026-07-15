@@ -44,6 +44,7 @@ def test_membership_hierarchy_protects_staff_and_fleet_command() -> None:
         "admiral": "HierarchyAdmiral123!",
         "lieutenant": "HierarchyLieutenant123!",
         "member": "HierarchyMember123!",
+        "admin_peer": "HierarchyAdminPeer123!",
     }
     with TestClient(app) as client:
         with SessionLocal() as db:
@@ -54,6 +55,7 @@ def test_membership_hierarchy_protects_staff_and_fleet_command() -> None:
             admiral = create_user(db, username="fleet-hierarchy-admiral", password=passwords["admiral"], display_name="Protected Admiral", role="user")
             lieutenant = create_user(db, username="fleet-hierarchy-lieutenant", password=passwords["lieutenant"], display_name="Fleet Lieutenant", role="user")
             member = create_user(db, username="fleet-hierarchy-member", password=passwords["member"], display_name="Fleet Member", role="user")
+            admin_peer = create_user(db, username="fleet-hierarchy-admin-peer", password=passwords["admin_peer"], display_name="Hierarchy Admin Peer", role="admin")
 
             memberships = {
                 "admin": assign_fleet_role(db, fleet.id, admin.id, "member"),
@@ -62,6 +64,7 @@ def test_membership_hierarchy_protects_staff_and_fleet_command() -> None:
                 "admiral": assign_fleet_role(db, fleet.id, admiral.id, "fleet_admiral"),
                 "lieutenant": assign_fleet_role(db, fleet.id, lieutenant.id, "fleet_lieutenant"),
                 "member": assign_fleet_role(db, fleet.id, member.id, "member"),
+                "admin_peer": assign_fleet_role(db, fleet.id, admin_peer.id, "member"),
             }
             fleet_id = fleet.id
             membership_ids = {key: value.id for key, value in memberships.items()}
@@ -105,6 +108,43 @@ def test_membership_hierarchy_protects_staff_and_fleet_command() -> None:
         _logout(client)
 
         _login(client, admin.username, passwords["admin"])
+        admin_detail = client.get(f"/api/fleets/{fleet_id}/manage")
+        assert admin_detail.status_code == 200, admin_detail.text
+        admin_rows = {row["user"]["username"]: row for row in admin_detail.json()["memberships"]}
+        assert admin_rows[admin.username]["management"]["can_edit_directory"] is True
+        assert admin_rows[admin.username]["management"]["reason"] is None
+        assert admin_rows[admin_peer.username]["management"]["can_change_status"] is True
+
+        self_edit = client.put(
+            f"/api/fleets/{fleet_id}/memberships/{membership_ids['admin']}",
+            json={"assignment": "Command administration"},
+        )
+        assert self_edit.status_code == 200, self_edit.text
+
+        self_role_change = client.put(
+            f"/api/fleets/{fleet_id}/memberships/{membership_ids['admin']}",
+            json={"role": "fleet_lieutenant"},
+        )
+        assert self_role_change.status_code == 200, self_role_change.text
+
+        self_status_change = client.put(
+            f"/api/fleets/{fleet_id}/memberships/{membership_ids['admin']}",
+            json={"status": "inactive"},
+        )
+        assert self_status_change.status_code == 200, self_status_change.text
+
+        self_reactivation = client.put(
+            f"/api/fleets/{fleet_id}/memberships/{membership_ids['admin']}",
+            json={"status": "active"},
+        )
+        assert self_reactivation.status_code == 200, self_reactivation.text
+
+        peer_admin_edit = client.put(
+            f"/api/fleets/{fleet_id}/memberships/{membership_ids['admin_peer']}",
+            json={"assignment": "Peer command administration"},
+        )
+        assert peer_admin_edit.status_code == 200, peer_admin_edit.text
+
         admin_edit = client.put(
             f"/api/fleets/{fleet_id}/memberships/{membership_ids['admiral']}",
             json={"assignment": "Protected command"},

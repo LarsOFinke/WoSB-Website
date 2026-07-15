@@ -12,7 +12,13 @@ from app.modules.accounts.schemas.password_change_response import PasswordChange
 from app.modules.accounts.schemas.register_request import RegisterRequest
 from app.modules.accounts.schemas.register_response import RegisterResponse
 from app.modules.accounts.schemas.user_read import UserRead
-from app.modules.accounts.services.auth_service import AuthError, authenticate_user, change_user_password, create_user_session, delete_session_by_token
+from app.modules.accounts.services.auth_service import (
+    AuthError,
+    authenticate_user,
+    change_user_password,
+    create_user_session,
+    delete_session_by_token,
+)
 from app.modules.accounts.services.registration_service import RegistrationRequestError, submit_registration_request
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -66,6 +72,7 @@ def logout(
 @router.post("/change-password", response_model=PasswordChangeResponse)
 def change_password(
     payload: PasswordChangeRequest,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> PasswordChangeResponse:
@@ -73,6 +80,10 @@ def change_password(
         change_user_password(db, current_user, payload.current_password, payload.new_password)
     except AuthError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    # All prior sessions are revoked by change_user_password. Rotate the current
+    # browser into a fresh session so the user is not unexpectedly logged out.
+    token = create_user_session(db, current_user)
+    _set_session_cookie(response, token)
     return PasswordChangeResponse(changed=True)
 
 
