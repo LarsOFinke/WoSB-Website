@@ -1,5 +1,0 @@
-➕ **Squad member added**
-Squad: **{data.squad_name}**
-Member: **{data.member_display_name}**
-Role: `{data.member_role}`
-Added by: **{actor.display_name}**

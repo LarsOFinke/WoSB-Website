@@ -1,4 +1,6 @@
-🗑️ **Guide entfernt**
-Titel: **{data.title}**
-Guide-ID: `{data.id}`
-Entfernt von: **{actor.display_name}**
+🗑️ **Guide Removed**
+Title: **{data.title}**
+Guide ID: `{data.id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Browse remaining guides]({resource.url})

@@ -1,4 +1,9 @@
-📦 **Squad archiviert**
+📦 **Squad Archived**
 Name: **{data.name}**
-Letzter Mitgliederstand: `{data.member_count}`
-Archiviert von: **{actor.display_name}**
+Slug: `{data.slug}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Final member count: `{data.member_count}`
+Archived by: **{actor.display_name}**
+Archived at: `{occurred_at}`
+🔗 [Open squad record]({resource.url})

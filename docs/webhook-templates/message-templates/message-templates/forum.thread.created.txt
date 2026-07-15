@@ -1,4 +1,0 @@
-💬 **New forum thread**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**

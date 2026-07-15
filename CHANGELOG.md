@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Englische Webhook-Nachrichtenvorlagen um vollständige Ressourcendaten und anklickbare Deep-Links erweitert; Webhook-Envelopes qualifizieren relative Ressourcenpfade nun gegen die öffentliche Website-Origin.
+- Gelöschte Builds und Guides verlinken in Benachrichtigungen auf ihre weiterhin erreichbaren Übersichtsseiten.
 - Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.
 - Discord-Bot und Discord-Webhooks im Staff-Panel in eigenständige Admin-Seiten und Navigationseinträge getrennt; Bot-Laufzeit und Event-Zustellung funktionieren sichtbar unabhängig voneinander.
 - Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/webhook-templates/message-templates/` ergänzt.

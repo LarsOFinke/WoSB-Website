@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { dateKey, daysInRange, eventsOnDate, filtersForScope, monthGridRange } from '../src/modules/calendar/domain/calendarGrid.js'
+import { dateFromRouteQuery, dateKey, daysInRange, eventsOnDate, filtersForScope, monthGridRange } from '../src/modules/calendar/domain/calendarGrid.js'
 import { profileCompletion, profileInitials, profileUpdatePayload } from '../src/modules/accounts/domain/profileForm.js'
 import { filterFleetMemberships, hasFleetMemberPermission, membershipFieldPayload } from '../src/modules/fleet/domain/fleetMemberships.js'
 import { createGuideDraft, guidePayload, moveArrayItem } from '../src/modules/onboarding/domain/newcomerGuideDraft.js'
@@ -23,6 +23,13 @@ test('calendar events are included on every covered day and scope filters stay e
   assert.equal(eventsOnDate(events, new Date('2026-07-16T12:00:00.000Z')).length, 1)
   assert.deepEqual(filtersForScope('fleet'), { fleetOnly: true, squadId: '' })
   assert.deepEqual(filtersForScope('squad:42'), { fleetOnly: false, squadId: '42' })
+})
+
+test('calendar deep links select a valid event date and reject invalid dates', () => {
+  const fallback = new Date(2026, 0, 5)
+  assert.equal(dateKey(dateFromRouteQuery('2026-07-15', fallback)), '2026-07-15')
+  assert.equal(dateKey(dateFromRouteQuery('2026-02-31', fallback)), '2026-01-05')
+  assert.equal(dateKey(dateFromRouteQuery(undefined, fallback)), '2026-01-05')
 })
 
 test('profile presentation and payload mapping are pure', () => {

@@ -1,5 +1,0 @@
-🆕 **New registration request**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Fleet application: `{data.wants_fleet_membership}`
-Fleet ID: `{data.fleet_id}`

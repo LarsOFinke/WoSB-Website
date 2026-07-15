@@ -2030,6 +2030,11 @@ input[type='range'] {
   background: rgba(5, 12, 20, 0.28);
 }
 
+.calendar-agenda-card.is-linked-event {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(241, 184, 91, 0.18);
+}
+
 .calendar-agenda-topline {
   justify-content: space-between;
   flex-wrap: wrap;

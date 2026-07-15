@@ -1,4 +1,8 @@
-🔄 **Squad-Mitgliedschaft aktualisiert**
+🔄 **Squad Membership Updated**
 Squad: **{data.squad_name}**
-Mitgliedschafts-ID: `{data.member_id}`
-Ausgeführt von: **{actor.display_name}**
+Membership ID: `{data.member_id}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Updated by: **{actor.display_name}**
+Updated at: `{occurred_at}`
+🔗 [Open squad roster]({resource.url})

@@ -1,216 +1,307 @@
-# RBF Webhook-Nachrichten-Templates
+# RBF English Webhook Message Templates
 
-Diese Datei enthält alle aktuell unterstützten Vorlagen in einem Dokument. Für direktes Kopieren ohne Überschriften stehen dieselben Inhalte zusätzlich einzeln unter `message-templates/`.
-
-## `integration.test`
-
-```text
-🧪 **RBF-Webhook-Test**
-Ziel: **{destination.name}**
-Nachricht: {data.message}
-Event: `{event}`
-```
-
-## `registration.request.created`
-
-```text
-🆕 **Neue Registrierungsanfrage**
-Name: **{data.display_name}**
-Benutzername: `{data.username}`
-Flottenbewerbung: `{data.wants_fleet_membership}`
-Flotten-ID: `{data.fleet_id}`
-```
-
-## `registration.request.approved`
-
-```text
-✅ **Registrierung freigegeben**
-Name: **{data.display_name}**
-Benutzername: `{data.username}`
-Freigegeben von: **{actor.display_name}**
-Entscheidungsnotiz: {data.decision_note}
-```
-
-## `registration.request.rejected`
-
-```text
-⛔ **Registrierung abgelehnt**
-Name: **{data.display_name}**
-Benutzername: `{data.username}`
-Abgelehnt von: **{actor.display_name}**
-Entscheidungsnotiz: {data.decision_note}
-```
-
-## `squad.created`
-
-```text
-🛡️ **Neues Squad erstellt**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Mitglieder: `{data.member_count}`
-Erstellt von: **{actor.display_name}**
-```
-
-## `squad.updated`
-
-```text
-🛠️ **Squad aktualisiert**
-Name: **{data.name}**
-Mitglieder: `{data.member_count}`
-Geändert von: **{actor.display_name}**
-```
-
-## `squad.archived`
-
-```text
-📦 **Squad archiviert**
-Name: **{data.name}**
-Letzter Mitgliederstand: `{data.member_count}`
-Archiviert von: **{actor.display_name}**
-```
-
-## `squad.member.added`
-
-```text
-➕ **Squad-Mitglied hinzugefügt**
-Squad: **{data.squad_name}**
-Mitglied: **{data.member_display_name}**
-Rolle: `{data.member_role}`
-Ausgeführt von: **{actor.display_name}**
-```
-
-## `squad.member.updated`
-
-```text
-🔄 **Squad-Mitgliedschaft aktualisiert**
-Squad: **{data.squad_name}**
-Mitgliedschafts-ID: `{data.member_id}`
-Ausgeführt von: **{actor.display_name}**
-```
-
-## `squad.member.removed`
-
-```text
-➖ **Squad-Mitglied entfernt**
-Squad: **{data.squad_name}**
-Mitgliedschafts-ID: `{data.member_id}`
-Ausgeführt von: **{actor.display_name}**
-```
-
-## `calendar.event.created`
-
-```text
-📅 **Neuer Termin**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Beginn: `{data.start_at}`
-Ende: `{data.end_at}`
-Ort: {data.location}
-Erstellt von: **{actor.display_name}**
-```
-
-## `calendar.event.updated`
-
-```text
-🗓️ **Termin aktualisiert**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Beginn: `{data.start_at}`
-Ende: `{data.end_at}`
-Ort: {data.location}
-Geändert von: **{actor.display_name}**
-```
-
-## `calendar.event.cancelled`
-
-```text
-❌ **Termin abgesagt**
-Titel: **{data.title}**
-Beginn: `{data.start_at}`
-Abgesagt von: **{actor.display_name}**
-```
-
-## `guide.created`
-
-```text
-📘 **Neuer Guide veröffentlicht**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Autor: **{data.owner.display_name}**
-Zusammenfassung: {data.summary}
-```
-
-## `guide.updated`
-
-```text
-📝 **Guide aktualisiert**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Geändert von: **{actor.display_name}**
-Zusammenfassung: {data.summary}
-```
-
-## `guide.removed`
-
-```text
-🗑️ **Guide entfernt**
-Titel: **{data.title}**
-Guide-ID: `{data.id}`
-Entfernt von: **{actor.display_name}**
-```
-
-## `newcomer_guide.updated`
-
-```text
-🧭 **Einsteiger-Guide aktualisiert**
-Titel: **{data.title}**
-Aktualisiert von: **{actor.display_name}**
-```
+Copy-ready versions are stored individually under `message-templates/`.
 
 ## `build.created`
 
 ```text
-⚓ **Neuer Build erstellt**
+⚓ **New Build Created**
 Build: **{data.build_name}**
-Schiff: **{data.ship.name}**
-Typ: `{data.build_type}`
-Erstellt von: **{actor.display_name}**
-```
-
-## `build.updated`
-
-```text
-🔧 **Build aktualisiert**
-Build: **{data.build_name}**
-Schiff: **{data.ship.name}**
-Typ: `{data.build_type}`
-Geändert von: **{actor.display_name}**
+Ship: **{data.ship.name}** (Rate `{data.ship.rate}`)
+Build type: `{data.build_type}`
+Official template: `{data.is_official_template}`
+Crew: `{data.sailors}` sailors · `{data.soldiers}` soldiers · `{data.musketeers}` musketeers · `{data.mercenaries}` mercenaries
+Owner ID: `{data.owner_id}`
+Created by: **{actor.display_name}**
+Created at: `{data.created_at}`
+🔗 [Open build]({resource.url})
 ```
 
 ## `build.removed`
 
 ```text
-🗑️ **Build entfernt**
+🗑️ **Build Removed**
 Build: **{data.build_name}**
-Build-ID: `{data.id}`
-Entfernt von: **{actor.display_name}**
+Build ID: `{data.id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Browse remaining builds]({resource.url})
+```
+
+## `build.updated`
+
+```text
+🔧 **Build Updated**
+Build: **{data.build_name}**
+Ship: **{data.ship.name}** (Rate `{data.ship.rate}`)
+Build type: `{data.build_type}`
+Official template: `{data.is_official_template}`
+Crew: `{data.sailors}` sailors · `{data.soldiers}` soldiers · `{data.musketeers}` musketeers · `{data.mercenaries}` mercenaries
+Owner ID: `{data.owner_id}`
+Updated by: **{actor.display_name}**
+Updated at: `{data.updated_at}`
+🔗 [Open build]({resource.url})
+```
+
+## `calendar.event.cancelled`
+
+```text
+❌ **Event Cancelled**
+Title: **{data.title}**
+Category: `{data.category}`
+Starts: `{data.start_at}`
+Ends: `{data.end_at}`
+Location: {data.location}
+Squad: **{data.squad.name}** (`{data.squad_id}`)
+Cancelled by: **{actor.display_name}**
+Cancelled at: `{occurred_at}`
+🔗 [Open calendar]({resource.url})
+```
+
+## `calendar.event.created`
+
+```text
+📅 **New Event Created**
+Title: **{data.title}**
+Category: `{data.category}`
+Starts: `{data.start_at}`
+Ends: `{data.end_at}`
+All day: `{data.all_day}`
+Location: {data.location}
+Squad: **{data.squad.name}** (`{data.squad_id}`)
+Organizer: **{data.owner.display_name}**
+Description: {data.description}
+Created by: **{actor.display_name}**
+🔗 [Open calendar]({resource.url})
+```
+
+## `calendar.event.updated`
+
+```text
+🗓️ **Event Updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Starts: `{data.start_at}`
+Ends: `{data.end_at}`
+All day: `{data.all_day}`
+Location: {data.location}
+Squad: **{data.squad.name}** (`{data.squad_id}`)
+Organizer: **{data.owner.display_name}**
+Description: {data.description}
+Updated by: **{actor.display_name}**
+🔗 [Open calendar]({resource.url})
 ```
 
 ## `forum.thread.created`
 
 ```text
-💬 **Neuer Forenbeitrag**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Autor: **{data.owner.display_name}**
+💬 **New Forum Thread**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Replies: `{data.reply_count}`
+Created at: `{data.created_at}`
+Last activity: `{data.last_activity_at}`
+Created by: **{actor.display_name}**
+🔗 [Open thread]({resource.url})
 ```
 
 ## `forum.thread.updated`
 
 ```text
-✏️ **Forenbeitrag aktualisiert**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Geändert von: **{actor.display_name}**
-Antworten: `{data.reply_count}`
+✏️ **Forum Thread Updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Replies: `{data.reply_count}`
+Last activity: `{data.last_activity_at}`
+Updated by: **{actor.display_name}**
+Updated at: `{data.updated_at}`
+🔗 [Open thread]({resource.url})
+```
+
+## `guide.created`
+
+```text
+📘 **New Guide Published**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Summary: {data.summary}
+Attachments: `{data.attachment_count}`
+Linked builds: `{data.build_reference_count}`
+Published at: `{data.created_at}`
+Created by: **{actor.display_name}**
+🔗 [Open guide]({resource.url})
+```
+
+## `guide.removed`
+
+```text
+🗑️ **Guide Removed**
+Title: **{data.title}**
+Guide ID: `{data.id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Browse remaining guides]({resource.url})
+```
+
+## `guide.updated`
+
+```text
+📝 **Guide Updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Summary: {data.summary}
+Attachments: `{data.attachment_count}`
+Linked builds: `{data.build_reference_count}`
+Updated at: `{data.updated_at}`
+Updated by: **{actor.display_name}**
+🔗 [Open guide]({resource.url})
+```
+
+## `integration.test`
+
+```text
+🧪 **RBF Webhook Test**
+Destination: **{destination.name}**
+Event: `{event}`
+Delivery ID: `{id}`
+Occurred at: `{occurred_at}`
+Message: {data.message}
+```
+
+## `newcomer_guide.updated`
+
+```text
+🧭 **Newcomer Guide Updated**
+Title: **{data.title}**
+Last editor: **{data.updated_by}**
+Updated at: `{data.updated_at}`
+Changed by: **{actor.display_name}**
+🔗 [Open newcomer guide]({resource.url})
+```
+
+## `registration.request.approved`
+
+```text
+✅ **Registration Approved**
+Name: **{data.display_name}**
+Username: `{data.username}`
+Request ID: `{data.id}`
+Fleet application: `{data.wants_fleet_membership}`
+Approved by: **{actor.display_name}** (`{actor.username}`)
+Decision note: {data.decision_note}
+Processed at: `{occurred_at}`
+🔗 [Open registration management]({resource.url})
+```
+
+## `registration.request.created`
+
+```text
+🆕 **New Registration Request**
+Name: **{data.display_name}**
+Username: `{data.username}`
+Request ID: `{data.id}`
+Fleet application: `{data.wants_fleet_membership}`
+Fleet ID: `{data.fleet_id}`
+Application note: {data.fleet_application_note}
+Received at: `{occurred_at}`
+🔗 [Review registration]({resource.url})
+```
+
+## `registration.request.rejected`
+
+```text
+⛔ **Registration Rejected**
+Name: **{data.display_name}**
+Username: `{data.username}`
+Request ID: `{data.id}`
+Rejected by: **{actor.display_name}** (`{actor.username}`)
+Decision note: {data.decision_note}
+Processed at: `{occurred_at}`
+🔗 [Open registration management]({resource.url})
+```
+
+## `squad.archived`
+
+```text
+📦 **Squad Archived**
+Name: **{data.name}**
+Slug: `{data.slug}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Final member count: `{data.member_count}`
+Archived by: **{actor.display_name}**
+Archived at: `{occurred_at}`
+🔗 [Open squad record]({resource.url})
+```
+
+## `squad.created`
+
+```text
+🛡️ **Squad Created**
+Name: **{data.name}**
+Slug: `{data.slug}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Members: `{data.member_count}`
+Created by: **{actor.display_name}**
+Created at: `{occurred_at}`
+🔗 [Open squad]({resource.url})
+```
+
+## `squad.member.added`
+
+```text
+➕ **Squad Member Added**
+Squad: **{data.squad_name}**
+Member: **{data.member_display_name}**
+Role: `{data.member_role}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Added by: **{actor.display_name}**
+Added at: `{occurred_at}`
+🔗 [Open squad roster]({resource.url})
+```
+
+## `squad.member.removed`
+
+```text
+➖ **Squad Member Removed**
+Squad: **{data.squad_name}**
+Membership ID: `{data.member_id}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Open squad roster]({resource.url})
+```
+
+## `squad.member.updated`
+
+```text
+🔄 **Squad Membership Updated**
+Squad: **{data.squad_name}**
+Membership ID: `{data.member_id}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Updated by: **{actor.display_name}**
+Updated at: `{occurred_at}`
+🔗 [Open squad roster]({resource.url})
+```
+
+## `squad.updated`
+
+```text
+🛠️ **Squad Updated**
+Name: **{data.name}**
+Slug: `{data.slug}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Members: `{data.member_count}`
+Updated by: **{actor.display_name}**
+Updated at: `{occurred_at}`
+🔗 [Open squad]({resource.url})
 ```

@@ -1,4 +1,0 @@
-🔄 **Squad membership updated**
-Squad: **{data.squad_name}**
-Membership ID: `{data.member_id}`
-Updated by: **{actor.display_name}**

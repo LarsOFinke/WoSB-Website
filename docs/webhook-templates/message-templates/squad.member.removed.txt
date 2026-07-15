@@ -1,4 +1,8 @@
-➖ **Squad-Mitglied entfernt**
+➖ **Squad Member Removed**
 Squad: **{data.squad_name}**
-Mitgliedschafts-ID: `{data.member_id}`
-Ausgeführt von: **{actor.display_name}**
+Membership ID: `{data.member_id}`
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Open squad roster]({resource.url})

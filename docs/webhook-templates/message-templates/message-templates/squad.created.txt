@@ -1,5 +1,0 @@
-🛡️ **New squad created**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Members: `{data.member_count}`
-Created by: **{actor.display_name}**

@@ -208,6 +208,11 @@ for event_type, template_path in template_files.items():
             token.split(".", 1)[0] in valid_template_roots,
             f"unsupported webhook template token in {event_type}: {token}",
         )
+    if event_type != "integration.test":
+        require(
+            "{resource.url}" in template_text,
+            f"linkable webhook template is missing resource URL: {event_type}",
+        )
 require(
     (ROOT / "docs/webhook-templates/README.md").is_file(),
     "missing webhook template usage guide",

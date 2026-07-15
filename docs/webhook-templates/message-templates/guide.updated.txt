@@ -1,5 +1,10 @@
-📝 **Guide aktualisiert**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Geändert von: **{actor.display_name}**
-Zusammenfassung: {data.summary}
+📝 **Guide Updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Summary: {data.summary}
+Attachments: `{data.attachment_count}`
+Linked builds: `{data.build_reference_count}`
+Updated at: `{data.updated_at}`
+Updated by: **{actor.display_name}**
+🔗 [Open guide]({resource.url})

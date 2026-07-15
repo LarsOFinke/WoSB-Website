@@ -1,3 +1,0 @@
-🧭 **Newcomer guide updated**
-Title: **{data.title}**
-Updated by: **{actor.display_name}**

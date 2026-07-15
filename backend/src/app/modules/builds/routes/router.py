@@ -119,7 +119,7 @@ def delete_my_build(
     )
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="build.removed", resource_type="build", resource_id=build_id,
-        resource_url=f"/builds/{build_id}", actor=current_user,
+        resource_url="/builds", actor=current_user,
         data={"id": build_id, "build_name": getattr(existing, "build_name", str(build_id))},
     ))
 

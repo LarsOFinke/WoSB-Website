@@ -29,6 +29,11 @@ def _raise_event_error(exc: Exception) -> None:
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
+def _event_resource_url(event: FleetEventRead) -> str:
+    event_date = event.start_at.date().isoformat()
+    return f"/calendar?date={event_date}&event={event.id}"
+
+
 @router.get("", response_model=list[FleetEventRead])
 def get_events(
     start: datetime | None = Query(default=None),
@@ -63,7 +68,7 @@ def post_event(
         _raise_event_error(exc)
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.created", resource_type="calendar_event", resource_id=event.id,
-        resource_url="/calendar", actor=current_user, data=event,
+        resource_url=_event_resource_url(event), actor=current_user, data=event,
     ))
     return event
 
@@ -96,7 +101,7 @@ def put_event(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.updated", resource_type="calendar_event", resource_id=event.id,
-        resource_url="/calendar", actor=current_user, data=event,
+        resource_url=_event_resource_url(event), actor=current_user, data=event,
     ))
     return event
 
@@ -117,6 +122,6 @@ def delete_event(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.cancelled", resource_type="calendar_event", resource_id=event_id,
-        resource_url="/calendar", actor=current_user,
+        resource_url=_event_resource_url(existing) if existing else "/calendar", actor=current_user,
         data=existing or {"id": event_id, "is_cancelled": True},
     ))

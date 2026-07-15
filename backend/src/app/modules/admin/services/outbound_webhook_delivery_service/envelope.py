@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
+from app.core.config import settings
 from app.core.time import utc_now
 from app.modules.accounts.models.user import User
 from app.modules.admin.models.outbound_webhook import OutboundWebhook
@@ -13,8 +14,38 @@ from .serialization import JsonSafeEncoder
 class WebhookEnvelopeFactory:
     SOURCE = "royal-blackwater-fleet"
 
-    def __init__(self, encoder: JsonSafeEncoder | None = None) -> None:
+    def __init__(
+        self,
+        encoder: JsonSafeEncoder | None = None,
+        public_base_url: str | None = None,
+    ) -> None:
         self._encoder = encoder or JsonSafeEncoder()
+        self._public_base_url = (
+            public_base_url.rstrip("/")
+            if public_base_url is not None
+            else self._default_public_base_url()
+        )
+
+    @staticmethod
+    def _default_public_base_url() -> str:
+        return next(
+            (
+                origin.rstrip("/")
+                for origin in settings.cors_origins
+                if origin.startswith(("https://", "http://"))
+            ),
+            "",
+        )
+
+    def _resource_url(self, resource_url: str | None) -> str | None:
+        if not resource_url:
+            return None
+        normalized = resource_url.strip()
+        if normalized.startswith(("https://", "http://")):
+            return normalized
+        if self._public_base_url and normalized.startswith("/"):
+            return f"{self._public_base_url}{normalized}"
+        return normalized
 
     def event(
         self,
@@ -54,7 +85,7 @@ class WebhookEnvelopeFactory:
             "resource": {
                 "type": resource_type,
                 "id": str(resource_id),
-                "url": resource_url,
+                "url": self._resource_url(resource_url),
             },
             "data": self._encoder.convert(data),
         }

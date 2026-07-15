@@ -1,5 +1,10 @@
-📘 **Neuer Guide veröffentlicht**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Autor: **{data.owner.display_name}**
-Zusammenfassung: {data.summary}
+📘 **New Guide Published**
+Title: **{data.title}**
+Category: `{data.category}`
+Author: **{data.owner.display_name}**
+Summary: {data.summary}
+Attachments: `{data.attachment_count}`
+Linked builds: `{data.build_reference_count}`
+Published at: `{data.created_at}`
+Created by: **{actor.display_name}**
+🔗 [Open guide]({resource.url})

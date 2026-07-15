@@ -1,7 +1,12 @@
-🗓️ **Termin aktualisiert**
-Titel: **{data.title}**
-Kategorie: `{data.category}`
-Beginn: `{data.start_at}`
-Ende: `{data.end_at}`
-Ort: {data.location}
-Geändert von: **{actor.display_name}**
+🗓️ **Event Updated**
+Title: **{data.title}**
+Category: `{data.category}`
+Starts: `{data.start_at}`
+Ends: `{data.end_at}`
+All day: `{data.all_day}`
+Location: {data.location}
+Squad: **{data.squad.name}** (`{data.squad_id}`)
+Organizer: **{data.owner.display_name}**
+Description: {data.description}
+Updated by: **{actor.display_name}**
+🔗 [Open calendar]({resource.url})

@@ -25,6 +25,15 @@ export function dateKey(date) {
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
 }
 
+
+export function dateFromRouteQuery(value, fallback = new Date()) {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (typeof raw !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(fallback)
+  const [year, month, day] = raw.split('-').map(Number)
+  const parsed = new Date(year, month - 1, day)
+  return dateKey(parsed) === raw ? parsed : new Date(fallback)
+}
+
 export function isSameDay(left, right) {
   return dateKey(left) === dateKey(right)
 }

@@ -6,7 +6,7 @@
   "destination": {
     "mode": "signed_json",
     "channel_key": "registrations",
-    "message_template": "🆕 **Neue Registrierungsanfrage**\nName: **{data.display_name}**",
+    "message_template": "🆕 **New Registration Request**\nName: **{data.display_name}**\n🔗 [Review registration]({resource.url})",
     "scope_type": "global",
     "scope_id": null
   },
@@ -20,7 +20,7 @@
   "resource": {
     "type": "registration_request",
     "id": "42",
-    "url": "/admin?tab=registrations"
+    "url": "https://royal-blackwater-fleet.eu/admin?tab=registrations"
   },
   "data": {
     "id": 42,

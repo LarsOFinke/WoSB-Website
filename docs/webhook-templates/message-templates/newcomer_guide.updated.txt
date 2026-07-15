@@ -1,3 +1,6 @@
-🧭 **Einsteiger-Guide aktualisiert**
-Titel: **{data.title}**
-Aktualisiert von: **{actor.display_name}**
+🧭 **Newcomer Guide Updated**
+Title: **{data.title}**
+Last editor: **{data.updated_by}**
+Updated at: `{data.updated_at}`
+Changed by: **{actor.display_name}**
+🔗 [Open newcomer guide]({resource.url})

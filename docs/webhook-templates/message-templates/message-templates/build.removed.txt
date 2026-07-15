@@ -1,4 +1,0 @@
-🗑️ **Build removed**
-Build: **{data.build_name}**
-Build ID: `{data.id}`
-Removed by: **{actor.display_name}**

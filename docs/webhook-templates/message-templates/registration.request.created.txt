@@ -1,5 +1,9 @@
-🆕 **Neue Registrierungsanfrage**
+🆕 **New Registration Request**
 Name: **{data.display_name}**
-Benutzername: `{data.username}`
-Flottenbewerbung: `{data.wants_fleet_membership}`
-Flotten-ID: `{data.fleet_id}`
+Username: `{data.username}`
+Request ID: `{data.id}`
+Fleet application: `{data.wants_fleet_membership}`
+Fleet ID: `{data.fleet_id}`
+Application note: {data.fleet_application_note}
+Received at: `{occurred_at}`
+🔗 [Review registration]({resource.url})

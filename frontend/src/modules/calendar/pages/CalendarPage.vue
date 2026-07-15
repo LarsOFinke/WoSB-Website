@@ -4,7 +4,7 @@ import { useCalendarPage } from '@/modules/calendar/composables/useCalendarPage.
 const {
   route, locale, t, canManageFleet, today,
   activeMonth, selectedDate, category, scope, events,
-  squads, loading, error, cancellingId, weekdayLabels,
+  squads, loading, error, cancellingId, linkedEventId, weekdayLabels,
   monthLabel, monthRange, calendarDays, visibleSquads, managedSquads,
   canCreateEvent, categoryOptions, scopeOptions, eventCountLabel, selectedEvents,
   newEventTarget, dateKey, isSameDay, eventsForDate, dayClasses,
@@ -108,7 +108,13 @@ const {
 
           <p v-if="selectedEvents.length === 0" class="muted table-state">{{ t('calendar.list.noEventsForDay') }}</p>
           <div v-else class="calendar-agenda-list">
-            <article v-for="event in selectedEvents" :key="event.id" class="calendar-agenda-card">
+            <article
+              v-for="event in selectedEvents"
+              :id="`calendar-event-${event.id}`"
+              :key="event.id"
+              class="calendar-agenda-card"
+              :class="{ 'is-linked-event': event.id === linkedEventId }"
+            >
               <div class="calendar-agenda-topline">
                 <span class="type-pill" :class="`event-${event.category}`">{{ t(`calendar.categories.${event.category}`) }}</span>
                 <span>{{ formatEventTime(event) }}</span>

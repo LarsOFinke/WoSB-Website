@@ -14,9 +14,9 @@ Das Backend sendet ein strukturiertes Event an den Discord-Bot oder einen andere
 
 ## Vorlagen
 
-Direkt kopierbare Nachrichtenvorlagen für alle unterstützten Events liegen unter [`docs/webhook-templates/`](webhook-templates/). Die Dateien unter `message-templates/` enthalten ausschließlich den Text, der in das Staff-Panel eingefügt wird.
+Direkt kopierbare **englische** Nachrichtenvorlagen für alle unterstützten Events liegen unter [`docs/webhook-templates/`](webhook-templates/). Die Dateien unter `message-templates/` enthalten ausschließlich den Text, der in das Staff-Panel eingefügt wird. Die erweiterten Vorlagen enthalten Ereignisdetails und anklickbare Links zu Builds, Guides, Forenbeiträgen, Squads, Kalender und Registrierungsverwaltung.
 
-Beim Discord-Chat-Webhook rendert das Backend die Vorlage. Beim signierten JSON-Webhook wird sie unverändert als `destination.message_template` übertragen.
+Beim Discord-Chat-Webhook rendert das Backend die Vorlage. Beim signierten JSON-Webhook wird sie unverändert als `destination.message_template` übertragen. Relative Ressourcenpfade werden im Envelope gegen die erste HTTP(S)-Origin aus `CORS_ORIGINS` qualifiziert, sodass `{resource.url}` in Discord und externen Integrationen als vollständiger Link verfügbar ist.
 
 ## Signierte Zustellung
 

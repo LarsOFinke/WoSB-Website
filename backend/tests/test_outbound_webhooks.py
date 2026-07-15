@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
@@ -65,7 +66,9 @@ def test_webhook_service_queues_matching_signed_delivery_payload() -> None:
         payload = json.loads(delivery.payload_json)
         assert payload["event"] == "calendar.event.created"
         assert payload["destination"]["channel_key"] == "events"
-        assert payload["resource"]["url"] == "/calendar/events/42"
+        assert payload["resource"]["url"] == (
+            f"{settings.cors_origins[0].rstrip('/')}/calendar/events/42"
+        )
         assert payload["data"]["title"] == "Port battle"
 
         ignored = queue_webhook_event(
@@ -214,7 +217,10 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
                 endpoint_url=f"https://discord.com/api/webhooks/123456789012345678/{token}",
                 event_types=["registration.request.created"],
                 delivery_mode="discord",
-                message_template="Neue Registrierung: {data.display_name}",
+                message_template=(
+                    "New registration: {data.display_name}\n"
+                    "[Review registration]({resource.url})"
+                ),
                 discord_username="RBF Hub",
             ),
             actor,
@@ -227,6 +233,7 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
             resource_type="registration_request",
             resource_id=77,
             actor=actor,
+            resource_url="/admin?tab=registrations",
             data={"display_name": "Test Captain", "username": "captain"},
         )
         delivery = db.get(OutboundWebhookDelivery, delivery_ids[0])
@@ -234,7 +241,12 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
         transport = CaptureTransport()
         WebhookDeliveryService(transport=transport)._deliver(delivery, webhook)
         payload = json.loads(transport.request.data.decode("utf-8"))
-        assert payload["content"] == "Neue Registrierung: Test Captain"
+        public_url = f"{settings.cors_origins[0].rstrip('/')}/admin?tab=registrations"
+        assert payload["content"] == (
+            "New registration: Test Captain\n"
+            f"[Review registration]({public_url})"
+        )
+        assert payload["content"].count(public_url) == 1
         assert payload["username"] == "RBF Hub"
         assert "X-rbf-signature" not in {key.lower() for key, _ in transport.request.header_items()}
         assert delivery.status == "success"

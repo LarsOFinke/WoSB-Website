@@ -110,6 +110,6 @@ def delete_own_guide(
     )
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="guide.removed", resource_type="guide", resource_id=guide_id,
-        resource_url=f"/guides/{guide_id}", actor=current_user,
+        resource_url="/guides", actor=current_user,
         data={"id": guide_id, "title": getattr(existing, "title", str(guide_id))},
     ))

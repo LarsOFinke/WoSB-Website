@@ -4,6 +4,7 @@ import { useLocale } from '@/locales'
 import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
 import {
   calendarDayClasses,
+  dateFromRouteQuery,
   dateKey,
   daysInRange,
   eventsOnDate,
@@ -21,9 +22,15 @@ export function useCalendarPage() {
   const { canManageFleet } = useSession()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const initialDate = dateFromRouteQuery(route.query.date, today)
 
-  const activeMonth = ref(new Date(today.getFullYear(), today.getMonth(), 1))
-  const selectedDate = ref(new Date(today))
+  const activeMonth = ref(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1))
+  const selectedDate = ref(initialDate)
+  const linkedEventId = computed(() => {
+    const raw = Array.isArray(route.query.event) ? route.query.event[0] : route.query.event
+    const value = Number.parseInt(raw, 10)
+    return Number.isInteger(value) && value > 0 ? value : null
+  })
   const category = ref('')
   const scope = ref(route.query.squad ? `squad:${route.query.squad}` : 'all')
   const events = ref([])
@@ -158,7 +165,7 @@ export function useCalendarPage() {
 
   return {
     route, locale, t, canManageFleet, today, activeMonth, selectedDate, category,
-    scope, events, squads, loading, error, cancellingId, weekdayLabels, monthLabel,
+    scope, events, squads, loading, error, cancellingId, linkedEventId, weekdayLabels, monthLabel,
     monthRange, calendarDays, visibleSquads, managedSquads, canCreateEvent,
     categoryOptions, scopeOptions, eventCountLabel, selectedEvents, newEventTarget,
     dateKey, isSameDay, eventsForDate, dayClasses, dayLabel, fullDateLabel,

@@ -1,5 +1,9 @@
-🛡️ **Neues Squad erstellt**
+🛡️ **Squad Created**
 Name: **{data.name}**
 Slug: `{data.slug}`
-Mitglieder: `{data.member_count}`
-Erstellt von: **{actor.display_name}**
+Squad ID: `{data.id}`
+Fleet ID: `{data.fleet_id}`
+Members: `{data.member_count}`
+Created by: **{actor.display_name}**
+Created at: `{occurred_at}`
+🔗 [Open squad]({resource.url})

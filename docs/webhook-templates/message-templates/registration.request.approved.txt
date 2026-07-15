@@ -1,5 +1,9 @@
-✅ **Registrierung freigegeben**
+✅ **Registration Approved**
 Name: **{data.display_name}**
-Benutzername: `{data.username}`
-Freigegeben von: **{actor.display_name}**
-Entscheidungsnotiz: {data.decision_note}
+Username: `{data.username}`
+Request ID: `{data.id}`
+Fleet application: `{data.wants_fleet_membership}`
+Approved by: **{actor.display_name}** (`{actor.username}`)
+Decision note: {data.decision_note}
+Processed at: `{occurred_at}`
+🔗 [Open registration management]({resource.url})
