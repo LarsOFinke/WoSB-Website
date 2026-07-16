@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Staff-Overview mit eigenem responsivem Dashboard-Layout repariert; Kennzahlen, Warteschlangen und Administratorhinweise bleiben auf Desktop, Tablet und Mobilgeräten klar getrennt.
+- Discord-Webhook-Editor um Template-Autofill aus dem versionierten Event-Katalog und eine kompakte, durchsuchbare Mehrfachauswahl für abonnierte Events erweitert.
 - Discord-Chat-Webhooks um unabhängige Mehrkanal-Abonnements und ein manuelles Broadcast-Panel erweitert; Broadcast-only-Ziele, Mehrfachauswahl, eigene Zustellhistorie und Retry werden direkt vom Backend unterstützt.
 - Discord-Channel-Webhooks als einzige Discord-Integration beibehalten; Staff-Navigation, API und Infrastruktur auf direkte Backend-Zustellung bereinigt.
 - Alembic-Schema für den vorgesehenen Clean-Setup in einer aktuellen `0001_baseline` konsolidiert.

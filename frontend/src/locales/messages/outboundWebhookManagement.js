@@ -51,6 +51,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "The Discord URL is treated like a password and is masked after saving.",
         "templateHint": "Discord supports Markdown. The available placeholders depend on the selected event.",
         "eventsHint": "Choose the events posted to this channel. The same event can be assigned to any number of webhooks and channels.",
+        "templatePicker": {
+          "label": "Autofill from event template",
+          "placeholder": "Choose a repository template ...",
+          "apply": "Autofill message",
+          "useDefaults": "Use event defaults",
+          "hint": "Choose an event to load its versioned English template. A custom message is shared by every subscribed event; leave it blank to use each event-specific default."
+        },
+        "eventPicker": {
+          "none": "No events selected",
+          "selected": "{count} event(s) selected",
+          "summaryHint": "Open to manage subscriptions",
+          "search": "Search events ...",
+          "selectVisible": "Select visible",
+          "clear": "Clear",
+          "empty": "No matching events.",
+          "remove": "Remove {event}"
+        },
         "actions": {
           "create": "Create webhook",
           "edit": "Edit",
@@ -200,6 +217,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "Die Discord-URL wird wie ein Passwort behandelt und nach dem Speichern maskiert.",
         "templateHint": "Discord unterstützt Markdown. Die verfügbaren Platzhalter hängen vom gewählten Event ab.",
         "eventsHint": "Wähle die Events für diesen Channel. Dasselbe Event kann beliebig vielen Webhooks und Channels zugeordnet werden.",
+        "templatePicker": {
+          "label": "Aus Event-Template vorausfüllen",
+          "placeholder": "Repository-Template auswählen ...",
+          "apply": "Nachricht vorausfüllen",
+          "useDefaults": "Event-Standards verwenden",
+          "hint": "Wähle ein Event, um dessen versioniertes englisches Template zu laden. Eine eigene Nachricht gilt für alle abonnierten Events; leer lassen nutzt den jeweiligen Event-Standard."
+        },
+        "eventPicker": {
+          "none": "Keine Events ausgewählt",
+          "selected": "{count} Event(s) ausgewählt",
+          "summaryHint": "Öffnen, um Abonnements zu verwalten",
+          "search": "Events durchsuchen ...",
+          "selectVisible": "Sichtbare auswählen",
+          "clear": "Leeren",
+          "empty": "Keine passenden Events.",
+          "remove": "{event} entfernen"
+        },
         "actions": {
           "create": "Webhook erstellen",
           "edit": "Bearbeiten",
@@ -349,6 +383,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "L’URL Discord est traitée comme un mot de passe et masquée après enregistrement.",
         "templateHint": "Discord prend en charge Markdown. Les variables dépendent de l’événement choisi.",
         "eventsHint": "Choisissez les événements de ce salon. Un même événement peut être associé à plusieurs webhooks et salons.",
+        "templatePicker": {
+          "label": "Préremplir avec un modèle d’événement",
+          "placeholder": "Choisir un modèle du dépôt ...",
+          "apply": "Préremplir le message",
+          "useDefaults": "Utiliser les modèles par défaut",
+          "hint": "Choisissez un événement pour charger son modèle anglais versionné. Un message personnalisé s’applique à tous les événements abonnés ; laissez le champ vide pour utiliser le modèle propre à chaque événement."
+        },
+        "eventPicker": {
+          "none": "Aucun événement sélectionné",
+          "selected": "{count} événement(s) sélectionné(s)",
+          "summaryHint": "Ouvrir pour gérer les abonnements",
+          "search": "Rechercher des événements ...",
+          "selectVisible": "Sélectionner les visibles",
+          "clear": "Effacer",
+          "empty": "Aucun événement correspondant.",
+          "remove": "Retirer {event}"
+        },
         "actions": {
           "create": "Créer le webhook",
           "edit": "Modifier",
@@ -498,6 +549,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "La URL de Discord se trata como una contraseña y se oculta después de guardar.",
         "templateHint": "Discord admite Markdown. Los marcadores dependen del evento elegido.",
         "eventsHint": "Selecciona los eventos de este canal. El mismo evento puede asignarse a varios webhooks y canales.",
+        "templatePicker": {
+          "label": "Autocompletar desde una plantilla de evento",
+          "placeholder": "Elegir una plantilla del repositorio ...",
+          "apply": "Autocompletar mensaje",
+          "useDefaults": "Usar valores predeterminados",
+          "hint": "Elige un evento para cargar su plantilla versionada en inglés. Un mensaje personalizado se aplica a todos los eventos suscritos; déjalo vacío para usar la plantilla propia de cada evento."
+        },
+        "eventPicker": {
+          "none": "No hay eventos seleccionados",
+          "selected": "{count} evento(s) seleccionado(s)",
+          "summaryHint": "Abrir para gestionar suscripciones",
+          "search": "Buscar eventos ...",
+          "selectVisible": "Seleccionar visibles",
+          "clear": "Limpiar",
+          "empty": "No hay eventos coincidentes.",
+          "remove": "Quitar {event}"
+        },
         "actions": {
           "create": "Crear webhook",
           "edit": "Editar",
@@ -647,6 +715,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "O URL do Discord é tratado como palavra-passe e fica oculto após guardar.",
         "templateHint": "O Discord suporta Markdown. Os marcadores dependem do evento escolhido.",
         "eventsHint": "Escolha os eventos deste canal. O mesmo evento pode ser associado a vários webhooks e canais.",
+        "templatePicker": {
+          "label": "Preencher com modelo de evento",
+          "placeholder": "Escolher um modelo do repositório ...",
+          "apply": "Preencher mensagem",
+          "useDefaults": "Usar padrões dos eventos",
+          "hint": "Escolha um evento para carregar o respetivo modelo inglês versionado. Uma mensagem personalizada aplica-se a todos os eventos subscritos; deixe em branco para usar o padrão de cada evento."
+        },
+        "eventPicker": {
+          "none": "Nenhum evento selecionado",
+          "selected": "{count} evento(s) selecionado(s)",
+          "summaryHint": "Abrir para gerir subscrições",
+          "search": "Pesquisar eventos ...",
+          "selectVisible": "Selecionar visíveis",
+          "clear": "Limpar",
+          "empty": "Nenhum evento correspondente.",
+          "remove": "Remover {event}"
+        },
         "actions": {
           "create": "Criar webhook",
           "edit": "Editar",
@@ -796,6 +881,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "URL Discord хранится как пароль и после сохранения маскируется.",
         "templateHint": "Discord поддерживает Markdown. Доступные поля зависят от события.",
         "eventsHint": "Выберите события для канала. Одно событие можно назначить нескольким вебхукам и каналам.",
+        "templatePicker": {
+          "label": "Заполнить из шаблона события",
+          "placeholder": "Выберите шаблон из репозитория ...",
+          "apply": "Заполнить сообщение",
+          "useDefaults": "Использовать шаблоны событий",
+          "hint": "Выберите событие, чтобы загрузить его версионируемый английский шаблон. Пользовательское сообщение применяется ко всем подписанным событиям; оставьте поле пустым для отдельных шаблонов событий."
+        },
+        "eventPicker": {
+          "none": "События не выбраны",
+          "selected": "Выбрано событий: {count}",
+          "summaryHint": "Открыть управление подписками",
+          "search": "Поиск событий ...",
+          "selectVisible": "Выбрать видимые",
+          "clear": "Очистить",
+          "empty": "Подходящих событий нет.",
+          "remove": "Удалить {event}"
+        },
         "actions": {
           "create": "Создать вебхук",
           "edit": "Изменить",
@@ -945,6 +1047,23 @@ export const outboundWebhookManagementMessages = {
         "endpointHint": "Discord 地址按密码处理，保存后会被隐藏。",
         "templateHint": "Discord 支持 Markdown，可用占位符取决于所选事件。",
         "eventsHint": "选择此频道接收的事件。同一事件可以配置到多个 Webhook 和频道。",
+        "templatePicker": {
+          "label": "从事件模板自动填充",
+          "placeholder": "选择仓库模板 ...",
+          "apply": "自动填充消息",
+          "useDefaults": "使用事件默认模板",
+          "hint": "选择事件以载入其版本化英文模板。自定义消息会应用于所有已订阅事件；留空则使用每个事件自己的默认模板。"
+        },
+        "eventPicker": {
+          "none": "未选择事件",
+          "selected": "已选择 {count} 个事件",
+          "summaryHint": "打开以管理订阅",
+          "search": "搜索事件 ...",
+          "selectVisible": "选择可见项",
+          "clear": "清除",
+          "empty": "没有匹配的事件。",
+          "remove": "移除 {event}"
+        },
         "actions": {
           "create": "创建 Webhook",
           "edit": "编辑",

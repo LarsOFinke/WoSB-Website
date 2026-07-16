@@ -39,14 +39,6 @@ const { isAdmin } = useSession()
       </div>
     </section>
 
-    <section class="wire-section webhook-template-reference">
-      <div>
-        <span class="command-deck-eyebrow">{{ t('webhookSetup.templates.eyebrow') }}</span>
-        <h2>{{ t('webhookSetup.templates.title') }}</h2>
-        <p>{{ t('webhookSetup.templates.text') }}</p>
-        <code>docs/webhook-templates/message-templates/</code>
-      </div>
-    </section>
 
     <DiscordBroadcastPanel :can-manage="isAdmin" />
 

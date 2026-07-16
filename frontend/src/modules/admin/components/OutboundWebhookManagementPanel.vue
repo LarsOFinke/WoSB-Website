@@ -29,6 +29,8 @@ const webhookState = ref('')
 const deliveryWebhook = ref('')
 const deliveryStatus = ref('')
 const deliveryEvent = ref('')
+const eventSearch = ref('')
+const templateEventKey = ref('')
 
 const form = reactive({
   id: null,
@@ -53,6 +55,24 @@ const groupedEvents = computed(() => {
   return [...groups.entries()].map(([key, items]) => ({ key, items }))
 })
 
+const filteredEventGroups = computed(() => {
+  const term = eventSearch.value.trim().toLowerCase()
+  if (!term) return groupedEvents.value
+  return groupedEvents.value
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((event) => `${event.key} ${event.description}`.toLowerCase().includes(term)),
+    }))
+    .filter((group) => group.items.length > 0)
+})
+
+const selectedEventsLabel = computed(() => form.event_types.length
+  ? t('admin.webhooks.eventPicker.selected', { count: form.event_types.length })
+  : t('admin.webhooks.eventPicker.none'))
+
+const visibleSelectedEvents = computed(() => form.event_types.slice(0, 5))
+const hiddenSelectedEventCount = computed(() => Math.max(0, form.event_types.length - visibleSelectedEvents.value.length))
+
 const filteredWebhooks = computed(() => {
   const term = webhookSearch.value.trim().toLowerCase()
   return webhooks.value.filter((row) => {
@@ -72,6 +92,8 @@ function formatDateTime(value) {
 }
 
 function resetForm() {
+  eventSearch.value = ''
+  templateEventKey.value = ''
   Object.assign(form, {
     id: null,
     name: '',
@@ -88,6 +110,8 @@ function resetForm() {
 }
 
 function editWebhook(row) {
+  eventSearch.value = ''
+  templateEventKey.value = ''
   Object.assign(form, {
     id: row.id,
     name: row.name,
@@ -107,7 +131,30 @@ function editWebhook(row) {
 function toggleEvent(eventType) {
   const selected = new Set(form.event_types)
   selected.has(eventType) ? selected.delete(eventType) : selected.add(eventType)
-  form.event_types = [...selected]
+  form.event_types = [...selected].sort()
+}
+
+function selectVisibleEvents() {
+  const selected = new Set(form.event_types)
+  for (const group of filteredEventGroups.value) {
+    for (const event of group.items) selected.add(event.key)
+  }
+  form.event_types = [...selected].sort()
+}
+
+function clearEvents() {
+  form.event_types = []
+}
+
+function applyTemplatePreset() {
+  const selected = events.value.find((event) => event.key === templateEventKey.value)
+  if (!selected) return
+  form.message_template = selected.default_template
+}
+
+function clearMessageTemplate() {
+  templateEventKey.value = ''
+  form.message_template = ''
 }
 
 async function loadDeliveries() {
@@ -240,8 +287,59 @@ onMounted(load)
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordUsername') }}</span><input v-model="form.discord_username" maxlength="80" /></label>
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordAvatar') }}</span><input v-model="form.discord_avatar_url" type="url" maxlength="1000" /></label>
         </div>
-        <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.template') }}</span><textarea v-model="form.message_template" rows="5" maxlength="4000" :placeholder="t('admin.webhooks.placeholders.template')"></textarea><small>{{ t('admin.webhooks.templateHint') }}</small></label>
-        <fieldset class="webhook-event-fieldset"><legend>{{ t('admin.webhooks.fields.events') }}</legend><p class="muted">{{ t('admin.webhooks.eventsHint') }}</p><div class="webhook-event-groups"><section v-for="group in groupedEvents" :key="group.key"><h4>{{ group.key }}</h4><label v-for="event in group.items" :key="event.key" class="webhook-event-option"><input :checked="form.event_types.includes(event.key)" type="checkbox" @change="toggleEvent(event.key)" /><span><strong>{{ event.key }}</strong><small>{{ event.description }}</small><code>{{ event.default_template }}</code></span></label></section></div></fieldset>
+        <section class="webhook-template-composer" :aria-label="t('admin.webhooks.fields.template')">
+          <label class="input-panel embedded-field webhook-template-picker">
+            <span>{{ t('admin.webhooks.templatePicker.label') }}</span>
+            <div class="webhook-template-picker-row">
+              <select v-model="templateEventKey">
+                <option value="">{{ t('admin.webhooks.templatePicker.placeholder') }}</option>
+                <optgroup v-for="group in groupedEvents" :key="group.key" :label="group.key">
+                  <option v-for="event in group.items" :key="event.key" :value="event.key">{{ event.key }} · {{ event.description }}</option>
+                </optgroup>
+              </select>
+              <button class="small-action" type="button" :disabled="!templateEventKey" @click="applyTemplatePreset">{{ t('admin.webhooks.templatePicker.apply') }}</button>
+              <button v-if="form.message_template" class="small-action" type="button" @click="clearMessageTemplate">{{ t('admin.webhooks.templatePicker.useDefaults') }}</button>
+            </div>
+            <small>{{ t('admin.webhooks.templatePicker.hint') }}</small>
+          </label>
+          <label class="input-panel embedded-field">
+            <span>{{ t('admin.webhooks.fields.template') }}</span>
+            <textarea v-model="form.message_template" rows="6" maxlength="4000" :placeholder="t('admin.webhooks.placeholders.template')"></textarea>
+            <small>{{ t('admin.webhooks.templateHint') }}</small>
+          </label>
+        </section>
+        <fieldset class="webhook-event-fieldset">
+          <legend>{{ t('admin.webhooks.fields.events') }}</legend>
+          <p class="muted">{{ t('admin.webhooks.eventsHint') }}</p>
+          <details class="webhook-event-dropdown">
+            <summary>
+              <span><strong>{{ selectedEventsLabel }}</strong><small>{{ t('admin.webhooks.eventPicker.summaryHint') }}</small></span>
+              <span class="summary-pill">{{ form.event_types.length }}</span>
+            </summary>
+            <div class="webhook-event-dropdown-panel">
+              <div class="webhook-event-dropdown-toolbar">
+                <label class="filter-box admin-search"><input v-model="eventSearch" type="search" :placeholder="t('admin.webhooks.eventPicker.search')" /></label>
+                <div class="webhook-event-dropdown-actions">
+                  <button class="small-action" type="button" :disabled="filteredEventGroups.length === 0" @click="selectVisibleEvents">{{ t('admin.webhooks.eventPicker.selectVisible') }}</button>
+                  <button class="small-action" type="button" :disabled="form.event_types.length === 0" @click="clearEvents">{{ t('admin.webhooks.eventPicker.clear') }}</button>
+                </div>
+              </div>
+              <div v-if="filteredEventGroups.length" class="webhook-event-groups">
+                <section v-for="group in filteredEventGroups" :key="group.key">
+                  <h4>{{ group.key }}</h4>
+                  <label v-for="event in group.items" :key="event.key" class="webhook-event-option">
+                    <input :checked="form.event_types.includes(event.key)" type="checkbox" @change="toggleEvent(event.key)" />
+                    <span><strong>{{ event.key }}</strong><small>{{ event.description }}</small></span>
+                  </label>
+                </section>
+              </div>
+              <p v-else class="muted table-state">{{ t('admin.webhooks.eventPicker.empty') }}</p>
+            </div>
+          </details>
+          <div v-if="form.event_types.length" class="webhook-event-chip-row is-selection">
+            <button v-for="eventType in visibleSelectedEvents" :key="eventType" type="button" :aria-label="t('admin.webhooks.eventPicker.remove', { event: eventType })" @click="toggleEvent(eventType)"><span>{{ eventType }}</span><b aria-hidden="true">×</b></button><span v-if="hiddenSelectedEventCount" class="webhook-event-more-chip">+{{ hiddenSelectedEventCount }}</span>
+          </div>
+        </fieldset>
         <button class="form-button primary-action" type="submit" :disabled="saving || (form.event_types.length === 0 && !form.broadcast_enabled)">{{ saving ? t('common.saving') : (form.id ? t('common.save') : t('admin.webhooks.actions.create')) }}</button>
       </form>
 
@@ -252,7 +350,7 @@ onMounted(load)
         <div class="staff-filter-row"><label class="filter-box admin-search"><input v-model="webhookSearch" type="search" :placeholder="t('admin.workspace.filters.webhookSearch')" /></label><label class="filter-box select-shell"><select v-model="webhookState"><option value="">{{ t('admin.workspace.filters.allWebhookStates') }}</option><option value="active">{{ t('admin.webhooks.status.active') }}</option><option value="inactive">{{ t('admin.webhooks.status.inactive') }}</option><option value="failing">{{ t('admin.workspace.filters.failingWebhooks') }}</option></select></label></div>
         <p v-if="loading" class="muted table-state">{{ t('admin.webhooks.loading') }}</p>
         <p v-else-if="filteredWebhooks.length === 0" class="muted table-state">{{ t('admin.webhooks.empty') }}</p>
-        <div v-else class="webhook-card-list"><article v-for="row in filteredWebhooks" :key="row.id" class="webhook-card" :class="{ 'is-inactive': !row.is_active }"><div class="webhook-card-main"><div class="webhook-card-title"><strong>{{ row.name }}</strong><span class="webhook-status-pill" :class="{ 'is-active': row.is_active }">{{ row.is_active ? t('admin.webhooks.status.active') : t('admin.webhooks.status.inactive') }}</span></div><code>{{ row.endpoint_url }}</code><p>{{ t(`admin.webhooks.scopes.${row.scope_type}`) }}<template v-if="row.scope_id"> #{{ row.scope_id }}</template> · {{ row.event_types.length }} {{ t('admin.webhooks.list.events') }}<template v-if="row.broadcast_enabled"> · {{ t('admin.webhooks.list.broadcastTarget') }}</template></p><div class="webhook-event-chip-row"><span v-for="eventType in row.event_types" :key="eventType">{{ eventType }}</span></div><small>{{ t('admin.webhooks.list.lastSuccess') }}: {{ formatDateTime(row.last_success_at) }} · {{ t('admin.webhooks.list.lastFailure') }}: {{ formatDateTime(row.last_failure_at) }}</small></div><div class="webhook-card-actions"><button class="small-action" type="button" @click="runTest(row)">{{ t('admin.webhooks.actions.test') }}</button><template v-if="canManage"><button class="small-action" type="button" @click="editWebhook(row)">{{ t('admin.webhooks.actions.edit') }}</button><button class="danger-action" type="button" @click="removeWebhook(row)">{{ t('common.delete') }}</button></template></div></article></div>
+        <div v-else class="webhook-card-list"><article v-for="row in filteredWebhooks" :key="row.id" class="webhook-card" :class="{ 'is-inactive': !row.is_active }"><div class="webhook-card-main"><div class="webhook-card-title"><strong>{{ row.name }}</strong><span class="webhook-status-pill" :class="{ 'is-active': row.is_active }">{{ row.is_active ? t('admin.webhooks.status.active') : t('admin.webhooks.status.inactive') }}</span></div><code>{{ row.endpoint_url }}</code><p>{{ t(`admin.webhooks.scopes.${row.scope_type}`) }}<template v-if="row.scope_id"> #{{ row.scope_id }}</template> · {{ row.event_types.length }} {{ t('admin.webhooks.list.events') }}<template v-if="row.broadcast_enabled"> · {{ t('admin.webhooks.list.broadcastTarget') }}</template></p><div class="webhook-event-chip-row"><span v-for="eventType in row.event_types.slice(0, 5)" :key="eventType">{{ eventType }}</span><span v-if="row.event_types.length > 5" class="webhook-event-more-chip">+{{ row.event_types.length - 5 }}</span></div><small>{{ t('admin.webhooks.list.lastSuccess') }}: {{ formatDateTime(row.last_success_at) }} · {{ t('admin.webhooks.list.lastFailure') }}: {{ formatDateTime(row.last_failure_at) }}</small></div><div class="webhook-card-actions"><button class="small-action" type="button" @click="runTest(row)">{{ t('admin.webhooks.actions.test') }}</button><template v-if="canManage"><button class="small-action" type="button" @click="editWebhook(row)">{{ t('admin.webhooks.actions.edit') }}</button><button class="danger-action" type="button" @click="removeWebhook(row)">{{ t('common.delete') }}</button></template></div></article></div>
       </section>
     </div>
 
