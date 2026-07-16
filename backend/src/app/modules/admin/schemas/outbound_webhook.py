@@ -6,21 +6,19 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 WebhookDeliveryStatus = Literal["queued", "success", "failed"]
-WebhookDeliveryMode = Literal["signed_json", "discord"]
 WebhookScopeType = Literal["global", "fleet", "squad"]
 
 
 class OutboundWebhookInput(BaseModel):
     name: str = Field(min_length=3, max_length=120)
     endpoint_url: str | None = Field(default=None, min_length=8, max_length=1000)
-    event_types: list[str] = Field(min_length=1, max_length=64)
-    delivery_mode: WebhookDeliveryMode = "signed_json"
+    event_types: list[str] = Field(default_factory=list, max_length=64)
     scope_type: WebhookScopeType = "global"
     scope_id: int | None = Field(default=None, ge=1)
-    channel_key: str | None = Field(default=None, max_length=120)
     message_template: str | None = Field(default=None, max_length=4000)
     discord_username: str | None = Field(default=None, max_length=80)
     discord_avatar_url: str | None = Field(default=None, max_length=1000)
+    broadcast_enabled: bool = False
     is_active: bool = True
 
     @field_validator("name")
@@ -33,9 +31,7 @@ class OutboundWebhookInput(BaseModel):
     def strip_endpoint(cls, value: str | None) -> str | None:
         return value.strip() if isinstance(value, str) else None
 
-    @field_validator(
-        "channel_key", "message_template", "discord_username", "discord_avatar_url"
-    )
+    @field_validator("message_template", "discord_username", "discord_avatar_url")
     @classmethod
     def strip_optional(cls, value: str | None) -> str | None:
         if value is None:
@@ -54,9 +50,8 @@ class OutboundWebhookInput(BaseModel):
             self.scope_id = None
         elif self.scope_id is None:
             raise ValueError("A fleet or squad scope requires a scope ID.")
-        if self.delivery_mode != "discord":
-            self.discord_username = None
-            self.discord_avatar_url = None
+        if not self.event_types and not self.broadcast_enabled:
+            raise ValueError("Select at least one event or enable this webhook for broadcasts.")
         return self
 
 
@@ -75,21 +70,18 @@ class OutboundWebhookRead(BaseModel):
     name: str
     endpoint_url: str
     event_types: list[str]
-    delivery_mode: WebhookDeliveryMode
     scope_type: WebhookScopeType
     scope_id: int | None = None
-    channel_key: str | None = None
     message_template: str | None = None
     discord_username: str | None = None
     discord_avatar_url: str | None = None
+    broadcast_enabled: bool
     is_active: bool
     created_at: datetime
     updated_at: datetime
     created_by_username: str
     last_success_at: datetime | None = None
     last_failure_at: datetime | None = None
-    secret_hint: str
-    signing_secret: str | None = None
 
 
 class OutboundWebhookDeliveryRead(BaseModel):
@@ -98,7 +90,6 @@ class OutboundWebhookDeliveryRead(BaseModel):
     id: int
     webhook_id: int
     webhook_name: str
-    delivery_mode: WebhookDeliveryMode = "signed_json"
     delivery_id: str
     event_type: str
     resource_type: str
@@ -117,6 +108,37 @@ class OutboundWebhookTestRequest(BaseModel):
     event_type: str = Field(default="integration.test", max_length=80)
 
 
+class OutboundWebhookBroadcastRequest(BaseModel):
+    webhook_ids: list[int] = Field(min_length=1, max_length=50)
+    message: str = Field(min_length=1, max_length=2000)
+    discord_username: str | None = Field(default=None, max_length=80)
+    discord_avatar_url: str | None = Field(default=None, max_length=1000)
+
+    @field_validator("webhook_ids")
+    @classmethod
+    def normalize_webhook_ids(cls, value: list[int]) -> list[int]:
+        normalized = sorted({int(item) for item in value if int(item) > 0})
+        if not normalized:
+            raise ValueError("Select at least one broadcast webhook.")
+        return normalized
+
+    @field_validator("message")
+    @classmethod
+    def strip_message(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Broadcast message must not be empty.")
+        return stripped
+
+    @field_validator("discord_username", "discord_avatar_url")
+    @classmethod
+    def strip_broadcast_optional(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+
 class OutboundWebhookEventCatalogItem(BaseModel):
     key: str
     group: str
@@ -128,7 +150,5 @@ class OutboundWebhookSummary(BaseModel):
     total: int = 0
     active: int = 0
     failing: int = 0
-    discord: int = 0
-    signed_json: int = 0
     successful_deliveries: int = 0
     failed_deliveries: int = 0

@@ -37,21 +37,6 @@ Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch 
 - `scripts/update/repository.sh`: Git und Migrationserkennung.
 - `scripts/update/workflow.sh`: Backup, Build, Deployment und Smoke-Test.
 
-### Discord-Bot
+### Direct Discord channel webhooks
 
-- `scripts/services/manage-discord-bot.sh`: kompatibler systemd-Runner.
-- `scripts/discord-bot/context.sh`: Pfade und Host-Konfiguration.
-- `scripts/discord-bot/git.sh`: nicht-interaktiver Git-Transport.
-- `scripts/discord-bot/service.sh`: systemd- und Installationsstatus.
-- `scripts/discord-bot/request.sh`: Admin-Panel-Anforderung.
-- `scripts/discord-bot/status.sh`: atomare Statuspersistenz.
-- `scripts/discord-bot/configuration.sh`: Aufruf der Konfigurationsvalidierung.
-- `scripts/discord-bot/apply-configuration.py`: Validierung und atomisches Schreiben der Bot-Konfiguration.
-- `scripts/discord-bot/actions.sh`: Installieren, Aktualisieren, Konfigurieren und Dienststeuerung.
-
-## Erweiterungsregeln
-
-Neue CLI-Optionen gehören in das jeweilige `options.sh`; neue Betriebsaktionen in das fachlich
-passende Workflow- oder Actions-Modul. Entry-Points sollen keine Fachlogik enthalten. Gemeinsam
-genutzte Funktionen werden nur dann in `scripts/lib/` verschoben, wenn mindestens zwei Bereiche
-sie tatsächlich benötigen.
+The API container sends selected application events directly to official Discord channel webhook URLs over the outbound network.

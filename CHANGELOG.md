@@ -1,3 +1,10 @@
+## Unreleased
+
+- Discord-Chat-Webhooks um unabhängige Mehrkanal-Abonnements und ein manuelles Broadcast-Panel erweitert; Broadcast-only-Ziele, Mehrfachauswahl, eigene Zustellhistorie und Retry werden direkt vom Backend unterstützt.
+- Discord-Channel-Webhooks als einzige Discord-Integration beibehalten; Staff-Navigation, API und Infrastruktur auf direkte Backend-Zustellung bereinigt.
+- Alembic-Schema für den vorgesehenen Clean-Setup in einer aktuellen `0001_baseline` konsolidiert.
+- Gateway builds now normalize frontend directory permissions to `0755` and file permissions to `0644`, ensuring bundled assets such as `rbf-fleet-icon.png` remain publicly readable.
+
 # Changelog
 
 ## 1.0.0 — Produktionsbaseline
@@ -11,7 +18,6 @@
 - Englische Webhook-Nachrichtenvorlagen um vollständige Ressourcendaten und anklickbare Deep-Links erweitert; Webhook-Envelopes qualifizieren relative Ressourcenpfade nun gegen die öffentliche Website-Origin.
 - Gelöschte Builds und Guides verlinken in Benachrichtigungen auf ihre weiterhin erreichbaren Übersichtsseiten.
 - Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.
-- Discord-Bot und Discord-Webhooks im Staff-Panel in eigenständige Admin-Seiten und Navigationseinträge getrennt; Bot-Laufzeit und Event-Zustellung funktionieren sichtbar unabhängig voneinander.
 - Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/webhook-templates/message-templates/` ergänzt.
 - Standardnachrichten für Build-Webhooks auf das tatsächliche Feld `data.build_name` korrigiert.
 - Update-Erkennung von Git-Diffs auf einen Laufzeitvergleich zwischen Alembic-Head des neu gebauten API-Images und der tatsächlichen PostgreSQL-Revision umgestellt; fehlgeschlagene Migrationen werden im Folgelauf sicher erneut erkannt.
@@ -26,7 +32,6 @@
 - Repository- und Infrastrukturprüfungen an die modularen Setup-/Update-Runner sowie die `.cfg`-Konfiguration angepasst.
 - Frontend-Backend-Contract-Test ergänzt, der API-Pfade und gemeinsam verwendete Fachwerte gegen OpenAPI und Backend-Regeln prüft.
 - Veralteten internen Registry-Verweis aus dem Frontend-Lockfile entfernt und Fleet-Fokuswerte zwischen Frontend und Backend synchronisiert.
-- API-Container um einen dedizierten ausgehenden Netzwerkpfad für signierte Webhooks und Discord-Bot-Zustellungen ergänzt; Datenbanknetz bleibt intern isoliert.
 - DNS-/Transportfehler ausgehender Webhooks liefern nun eine konkrete Diagnose für den tatsächlichen Compose-Service `api`.
 - Staff-Systemlogs um Tagesfilter, sortierbare IP-Übersicht und ein heuristisches Threat-Level-Dashboard erweitert.
 - Audit-Historie für Builds, Forum-Threads/-Beiträge, Leitfäden und den Starter-Leitfaden ergänzt.
@@ -74,8 +79,8 @@
 - große Verantwortungsblöcke aus Build-Statistik, Build-Formular und Systembetrieb extrahiert
 
 Frühere 0.x-Stände waren interne Entwicklungsstände und werden ab v1.0 nicht mehr separat
-dokumentiert. Datenbankmigrationen bleiben vollständig erhalten, damit bestehende Installationen
-verlustfrei auf v1.0 aktualisiert werden können.
+dokumentiert. Das Produktionsschema ist in `0001_baseline` konsolidiert und für einen frischen Clean-Setup ausgelegt.
+Historische Entwicklungsdatenbanken werden nicht per In-Place-Migration übernommen.
 
 ## 1.0.0
 

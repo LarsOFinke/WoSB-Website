@@ -3,7 +3,6 @@ import { adminDashboardMessages } from './adminDashboard'
 import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
-import { botSetupMessages } from './botSetup'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules'
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
@@ -22,11 +21,8 @@ import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul'
 import { systemOperationsMessages } from './systemOperations'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
-import { integrationArchitectureMessages } from './integrationArchitecture'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
-import { discordBotOperationsMessages } from './discordBotOperations'
-import { discordBotConfigurationMessages } from './discordBotConfiguration'
-import { discordIntegrationSeparationMessages } from './discordIntegrationSeparation'
+import { discordWebhooksMessages } from './discordWebhooks'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -35,7 +31,6 @@ import { registrationAndInventoryCleanupMessages } from './registrationAndInvent
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword'
 
 const messageLayers = [
-  botSetupMessages,
   appShellMessages,
   privacyMessages,
   authAdminProfileMessages,
@@ -56,11 +51,8 @@ const messageLayers = [
   systemOperationsMessages,
   securityAuditDashboardMessages,
   ipBlockManagementMessages,
-  integrationArchitectureMessages,
   outboundWebhookManagementMessages,
-  discordBotOperationsMessages,
-  discordBotConfigurationMessages,
-  discordIntegrationSeparationMessages,
+  discordWebhooksMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

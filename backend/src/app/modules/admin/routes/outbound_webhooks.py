@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.outbound_webhook import (
+    OutboundWebhookBroadcastRequest,
     OutboundWebhookCreate,
     OutboundWebhookDeliveryRead,
     OutboundWebhookEventCatalogItem,
@@ -15,22 +16,24 @@ from app.modules.admin.schemas.outbound_webhook import (
 )
 from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.admin.services.outbound_webhook_delivery_service import (
+    create_broadcast_deliveries,
     create_test_delivery,
     retry_delivery,
+    schedule_webhook_deliveries,
 )
 from app.modules.admin.services.outbound_webhook_service import (
     OutboundWebhookError,
     create_webhook,
     delete_webhook,
     event_catalog,
+    list_broadcast_webhooks,
     list_deliveries,
     list_webhooks,
-    rotate_webhook_secret,
     update_webhook,
     webhook_summary,
 )
 
-router = APIRouter(prefix="/integrations/webhooks", tags=["admin-integrations"])
+router = APIRouter(prefix="/discord-webhooks", tags=["admin-discord-webhooks"])
 
 
 def _bad_request(exc: OutboundWebhookError) -> HTTPException:
@@ -50,6 +53,45 @@ def admin_webhook_summary(
     _: User = Depends(require_admin),
 ) -> OutboundWebhookSummary:
     return webhook_summary(db)
+
+
+@router.get("/broadcast/targets", response_model=list[OutboundWebhookRead])
+def admin_list_broadcast_webhooks(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[OutboundWebhookRead]:
+    return list_broadcast_webhooks(db)
+
+
+@router.post("/broadcast/send", response_model=list[OutboundWebhookDeliveryRead])
+def admin_send_broadcast(
+    payload: OutboundWebhookBroadcastRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> list[OutboundWebhookDeliveryRead]:
+    try:
+        rows = create_broadcast_deliveries(
+            db,
+            webhook_ids=payload.webhook_ids,
+            actor=current_user,
+            message=payload.message,
+            discord_username=payload.discord_username,
+            discord_avatar_url=payload.discord_avatar_url,
+        )
+    except OutboundWebhookError as exc:
+        raise _bad_request(exc) from exc
+    schedule_webhook_deliveries(background_tasks, [row.id for row in rows])
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="outbound_webhook",
+        entity_id="manual",
+        action="broadcast",
+        summary=f"Manual Discord broadcast queued for {len(rows)} channel(s).",
+        changed_fields=["webhook_ids", "message"],
+    )
+    return rows
 
 
 @router.get("", response_model=list[OutboundWebhookRead])
@@ -77,7 +119,7 @@ def admin_create_webhook(
         entity_id=row.id,
         action="create",
         summary=f'Outbound webhook “{row.name}” created.',
-        changed_fields=["endpoint_url", "event_types", "delivery_mode", "scope_type", "scope_id", "message_template", "is_active"],
+        changed_fields=["endpoint_url", "event_types", "scope_type", "scope_id", "message_template", "broadcast_enabled", "is_active"],
     )
     return row
 
@@ -102,31 +144,7 @@ def admin_update_webhook(
         entity_id=row.id,
         action="update",
         summary=f'Outbound webhook “{row.name}” updated.',
-        changed_fields=["endpoint_url", "event_types", "delivery_mode", "scope_type", "scope_id", "message_template", "is_active"],
-    )
-    return row
-
-
-@router.post("/{webhook_id}/rotate-secret", response_model=OutboundWebhookRead)
-def admin_rotate_webhook_secret(
-    webhook_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
-) -> OutboundWebhookRead:
-    try:
-        row = rotate_webhook_secret(db, webhook_id)
-    except OutboundWebhookError as exc:
-        raise _bad_request(exc) from exc
-    if row is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found.")
-    record_audit_safely(
-        db,
-        actor=current_user,
-        entity_type="outbound_webhook",
-        entity_id=row.id,
-        action="update",
-        summary=f'Signing secret for outbound webhook “{row.name}” rotated.',
-        changed_fields=["signing_secret"],
+        changed_fields=["endpoint_url", "event_types", "scope_type", "scope_id", "message_template", "broadcast_enabled", "is_active"],
     )
     return row
 

@@ -28,20 +28,29 @@ def render_message(template: str, envelope: dict[str, Any]) -> str:
 
 
 def discord_payload(webhook: OutboundWebhook, envelope: dict[str, Any]) -> dict[str, Any]:
-    template = webhook.message_template or DEFAULT_MESSAGES.get(
-        str(envelope.get("event")), "RBF-Ereignis **{event}** für {resource.type} #{resource.id}."
-    )
-    enriched = {**envelope, "destination": {"name": webhook.name}}
-    content = render_message(template, enriched)
-    resource_url = _lookup(envelope, "resource.url")
-    if resource_url and resource_url not in content:
-        content = f"{content}\n{resource_url}".strip()
+    event_type = str(envelope.get("event"))
+    data = envelope.get("data") if isinstance(envelope.get("data"), dict) else {}
+    if event_type == "broadcast.manual":
+        content = str(data.get("message") or "").strip()
+        username = str(data.get("discord_username") or "").strip() or webhook.discord_username
+        avatar_url = str(data.get("discord_avatar_url") or "").strip() or webhook.discord_avatar_url
+    else:
+        template = webhook.message_template or DEFAULT_MESSAGES.get(
+            event_type, "RBF-Ereignis **{event}** für {resource.type} #{resource.id}."
+        )
+        enriched = {**envelope, "destination": {"name": webhook.name}}
+        content = render_message(template, enriched)
+        resource_url = _lookup(envelope, "resource.url")
+        if resource_url and resource_url not in content:
+            content = f"{content}\n{resource_url}".strip()
+        username = webhook.discord_username
+        avatar_url = webhook.discord_avatar_url
     payload: dict[str, Any] = {
-        "content": (content or f"RBF-Ereignis: {envelope.get('event', 'unknown')}")[:2000],
+        "content": (content or f"RBF-Ereignis: {event_type or 'unknown'}")[:2000],
         "allowed_mentions": {"parse": []},
     }
-    if webhook.discord_username:
-        payload["username"] = webhook.discord_username
-    if webhook.discord_avatar_url:
-        payload["avatar_url"] = webhook.discord_avatar_url
+    if username:
+        payload["username"] = username
+    if avatar_url:
+        payload["avatar_url"] = avatar_url
     return payload

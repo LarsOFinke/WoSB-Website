@@ -19,7 +19,6 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
   if (canManageFleet) memberLinks.push({ to: '/fleets', label: t('common.fleetManagement'), icon: 'fleet', section: 'member' })
   if (isStaff) memberLinks.push({ to: '/admin', label: t('common.staffPanel'), icon: 'shield', section: 'staff' })
   if (isAdmin) {
-    memberLinks.push({ to: '/admin/bot-setup', label: t('botSetup.navigation'), icon: 'spark', section: 'staff' })
     memberLinks.push({ to: '/admin/discord-webhooks', label: t('webhookSetup.navigation'), icon: 'webhook', section: 'staff' })
   }
   return [...publicLinks, ...memberLinks]

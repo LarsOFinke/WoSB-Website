@@ -161,7 +161,7 @@ const {
                 <label v-if="!roleForm.id" class="input-panel embedded-field"><span>{{ t('fleets.manage.roles.code') }}</span><input v-model="roleForm.code" required maxlength="40" pattern="[a-z][a-z0-9_]{1,39}" /></label>
                 <label class="input-panel embedded-field"><span>{{ t('fleets.manage.roles.label') }}</span><input v-model="roleForm.label" required maxlength="80" /></label>
                 <label class="input-panel embedded-field"><span>{{ t('fleets.manage.roles.rank') }}</span><input v-model.number="roleForm.rank" type="number" min="1" max="79" required /><small>{{ t('fleets.manage.roles.rankHint') }}</small></label>
-                <div class="discord-bot-toggle-grid">
+                <div class="fleet-role-toggle-grid">
                   <label class="toggle-card"><span><strong>{{ t('fleets.manage.roles.leadership') }}</strong></span><input v-model="roleForm.is_leadership" type="checkbox" /></label>
                   <label class="toggle-card"><span><strong>{{ t('fleets.manage.roles.manageFleet') }}</strong></span><input v-model="roleForm.can_manage_fleet" type="checkbox" /></label>
                   <label class="toggle-card"><span><strong>{{ t('fleets.manage.roles.manageMembers') }}</strong></span><input v-model="roleForm.can_manage_members" type="checkbox" /></label>

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import time
 from collections.abc import Callable
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -26,7 +25,7 @@ from app.modules.admin.services.webhook_events import EVENT_TYPES
 
 from .discord import discord_payload
 from .envelope import WebhookEnvelopeFactory
-from .transport import WebhookSigner, WebhookTransport
+from .transport import WebhookTransport
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +37,10 @@ class WebhookDeliveryService:
         session_factory: Callable[[], Session] = SessionLocal,
         envelopes: WebhookEnvelopeFactory | None = None,
         transport: WebhookTransport | None = None,
-        signer: WebhookSigner | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._envelopes = envelopes or WebhookEnvelopeFactory()
         self._transport = transport or WebhookTransport()
-        self._signer = signer or WebhookSigner()
 
     def queue_event(self, db: Session, **event: Any) -> list[int]:
         event_type = event["event_type"]
@@ -143,6 +140,58 @@ class WebhookDeliveryService:
         refreshed = db.get(OutboundWebhookDelivery, row.id)
         return serialize_delivery(refreshed) if refreshed is not None else None
 
+    def create_broadcast(
+        self,
+        db: Session,
+        *,
+        webhook_ids: list[int],
+        actor: User,
+        message: str,
+        discord_username: str | None = None,
+        discord_avatar_url: str | None = None,
+    ) -> list[OutboundWebhookDeliveryRead]:
+        subscriptions = list(
+            db.scalars(
+                select(OutboundWebhook)
+                .where(
+                    OutboundWebhook.id.in_(webhook_ids),
+                    OutboundWebhook.is_active.is_(True),
+                    OutboundWebhook.broadcast_enabled.is_(True),
+                )
+                .order_by(OutboundWebhook.id.asc())
+            ).all()
+        )
+        if len(subscriptions) != len(set(webhook_ids)):
+            raise OutboundWebhookError(
+                "Every selected target must be an active broadcast-enabled Discord webhook."
+            )
+        broadcast_id = f"broadcast-{utc_now().strftime('%Y%m%d%H%M%S%f')}"
+        rows: list[OutboundWebhookDelivery] = []
+        for webhook in subscriptions:
+            delivery_id, envelope = self._envelopes.broadcast(
+                webhook,
+                actor,
+                message=message,
+                discord_username=discord_username,
+                discord_avatar_url=discord_avatar_url,
+                broadcast_id=broadcast_id,
+            )
+            rows.append(
+                self._new_row(
+                    webhook,
+                    delivery_id=delivery_id,
+                    event_type="broadcast.manual",
+                    resource_type="broadcast",
+                    resource_id=broadcast_id,
+                    envelope=envelope,
+                )
+            )
+        db.add_all(rows)
+        db.commit()
+        for row in rows:
+            db.refresh(row)
+        return [serialize_delivery(row) for row in rows]
+
     def retry(self, db: Session, delivery_id: int) -> OutboundWebhookDeliveryRead | None:
         row = db.get(OutboundWebhookDelivery, delivery_id)
         if row is None:
@@ -195,19 +244,14 @@ class WebhookDeliveryService:
         )
 
     def _deliver(self, row: OutboundWebhookDelivery, webhook: OutboundWebhook) -> None:
-        timestamp = str(int(time.time()))
-        body = row.payload_json
-        if webhook.delivery_mode == "discord":
-            envelope = json.loads(row.payload_json)
-            body = json.dumps(
-                discord_payload(webhook, envelope), ensure_ascii=False, separators=(",", ":")
-            )
-            headers = {
-                "Content-Type": "application/json; charset=utf-8",
-                "User-Agent": "RoyalBlackwaterFleet-DiscordWebhook/1.0",
-            }
-        else:
-            headers = self._signer.headers(row, webhook.signing_secret, timestamp)
+        envelope = json.loads(row.payload_json)
+        body = json.dumps(
+            discord_payload(webhook, envelope), ensure_ascii=False, separators=(",", ":")
+        )
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "RoyalBlackwaterFleet-DiscordWebhook/1.0",
+        }
         request = Request(
             webhook.endpoint_url,
             data=body.encode("utf-8"),

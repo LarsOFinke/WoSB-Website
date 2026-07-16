@@ -1,11 +1,5 @@
 export const adminRoutes = [
   {
-    path: '/admin/bot-setup',
-    name: 'admin-bot-setup',
-    component: () => import('./pages/BotSetupPage.vue'),
-    meta: { requiresAdmin: true, titleKey: 'botSetup.title' },
-  },
-  {
     path: '/admin/discord-webhooks',
     name: 'admin-discord-webhooks',
     component: () => import('./pages/DiscordWebhooksPage.vue'),

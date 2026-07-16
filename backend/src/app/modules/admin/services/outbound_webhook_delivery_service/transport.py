@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
 import http.client
 import ipaddress
 import socket
@@ -12,7 +10,6 @@ from urllib.error import URLError
 from urllib.parse import urlsplit
 from urllib.request import Request
 
-from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 
 
 class WebhookTargetError(OSError):
@@ -72,29 +69,6 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
         )
         self.sock = self._context.wrap_socket(raw_socket, server_hostname=self.host)
 
-
-class WebhookSigner:
-    @staticmethod
-    def headers(
-        row: OutboundWebhookDelivery,
-        secret: str,
-        timestamp: str,
-    ) -> dict[str, str]:
-        signed_payload = f"{timestamp}.{row.delivery_id}.{row.payload_json}".encode("utf-8")
-        signature = hmac.new(
-            secret.encode("utf-8"),
-            signed_payload,
-            hashlib.sha256,
-        ).hexdigest()
-        return {
-            "Content-Type": "application/json; charset=utf-8",
-            "User-Agent": "RoyalBlackwaterFleet-Webhook/1.0",
-            "X-RBF-Event": row.event_type,
-            "X-RBF-Delivery": row.delivery_id,
-            "X-RBF-Timestamp": timestamp,
-            "X-RBF-Signature": f"sha256={signature}",
-            "X-RBF-Signature-Version": "v2",
-        }
 
 
 class WebhookTransport:

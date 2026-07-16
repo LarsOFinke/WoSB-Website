@@ -45,7 +45,7 @@ from app.core.config import BACKEND_ROOT
 from app.db.schema_health import expected_alembic_heads
 
 assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
-assert expected_alembic_heads() == frozenset({"0003_webhooks_fleet_roles"})
+assert expected_alembic_heads() == frozenset({"0001_baseline"})
 PY_SCHEMA_HEAD
   )
 )
@@ -85,8 +85,8 @@ PY_SCHEMA_HEAD
   RUN_SEED=false
   AUTO_MIGRATIONS=true
   OPERATION=update
-  SCHEMA_CURRENT_HEADS=0001_baseline
-  SCHEMA_EXPECTED_HEADS=0003_webhooks_fleet_roles
+  SCHEMA_CURRENT_HEADS=pre_clean_schema
+  SCHEMA_EXPECTED_HEADS=0001_baseline
   SCHEMA_MATCHES=false
   ensure_postgres_service() { :; }
   read_database_schema_state() { :; }

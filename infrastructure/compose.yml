@@ -119,8 +119,6 @@ services:
       - ./data/nginx:/var/log/nginx
     depends_on:
       - api
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - frontend
       - backend

@@ -70,8 +70,6 @@ class WebhookEnvelopeFactory:
             "occurred_at": utc_now().isoformat(),
             "source": self.SOURCE,
             "destination": {
-                "mode": subscription.delivery_mode,
-                "channel_key": subscription.channel_key,
                 "message_template": subscription.message_template,
                 "scope_type": subscription.scope_type,
                 "scope_id": subscription.scope_id,
@@ -113,6 +111,47 @@ class WebhookEnvelopeFactory:
             squad_id=sample.get("squad_id"),
             data=sample["data"],
         )
+
+    def broadcast(
+        self,
+        subscription: OutboundWebhook,
+        actor: User,
+        *,
+        message: str,
+        discord_username: str | None = None,
+        discord_avatar_url: str | None = None,
+        broadcast_id: str | None = None,
+    ) -> tuple[str, dict[str, Any]]:
+        delivery_id = uuid4().hex
+        resource_id = broadcast_id or uuid4().hex
+        return delivery_id, {
+            "id": delivery_id,
+            "event": "broadcast.manual",
+            "occurred_at": utc_now().isoformat(),
+            "source": self.SOURCE,
+            "destination": {
+                "message_template": None,
+                "scope_type": subscription.scope_type,
+                "scope_id": subscription.scope_id,
+            },
+            "scope": {
+                "type": "global",
+                "id": None,
+                "fleet_id": None,
+                "squad_id": None,
+            },
+            "actor": self._actor(actor),
+            "resource": {
+                "type": "broadcast",
+                "id": resource_id,
+                "url": None,
+            },
+            "data": {
+                "message": message,
+                "discord_username": discord_username,
+                "discord_avatar_url": discord_avatar_url,
+            },
+        }
 
     @staticmethod
     def _actor(actor: User | None) -> dict[str, Any] | None:

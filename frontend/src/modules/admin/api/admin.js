@@ -10,18 +10,6 @@ export function requestSystemUpdate(operation = 'update') {
   return post('/admin/system/update', { operation })
 }
 
-export function getDiscordBotStatus() {
-  return get('/admin/system/discord-bot')
-}
-
-export function requestDiscordBotOperation(operation) {
-  return post('/admin/system/discord-bot', { operation })
-}
-
-export function configureDiscordBot(configuration) {
-  return put('/admin/system/discord-bot/configuration', configuration)
-}
-
 export function listRegistrationRequests({ status = 'pending', search = '', fromDate = '', toDate = '' } = {}) {
   return get(withQuery('/admin/registration-requests', {
     status,
@@ -189,40 +177,45 @@ export function unblockIpBlock(id, reason = '') {
   return post(`/admin/ip-blocks/${id}/unblock`, { reason: reason || null })
 }
 
+
+export function listBroadcastWebhookTargets() {
+  return get('/admin/discord-webhooks/broadcast/targets')
+}
+
+export function sendDiscordBroadcast(payload) {
+  return post('/admin/discord-webhooks/broadcast/send', payload)
+}
+
 export function listOutboundWebhookEvents() {
-  return get('/admin/integrations/webhooks/events')
+  return get('/admin/discord-webhooks/events')
 }
 
 export function getOutboundWebhookSummary() {
-  return get('/admin/integrations/webhooks/summary')
+  return get('/admin/discord-webhooks/summary')
 }
 
 export function listOutboundWebhooks() {
-  return get('/admin/integrations/webhooks')
+  return get('/admin/discord-webhooks')
 }
 
 export function createOutboundWebhook(payload) {
-  return post('/admin/integrations/webhooks', payload)
+  return post('/admin/discord-webhooks', payload)
 }
 
 export function updateOutboundWebhook(id, payload) {
-  return put(`/admin/integrations/webhooks/${id}`, payload)
-}
-
-export function rotateOutboundWebhookSecret(id) {
-  return post(`/admin/integrations/webhooks/${id}/rotate-secret`, {})
+  return put(`/admin/discord-webhooks/${id}`, payload)
 }
 
 export function testOutboundWebhook(id, eventType = 'integration.test') {
-  return post(`/admin/integrations/webhooks/${id}/test`, { event_type: eventType })
+  return post(`/admin/discord-webhooks/${id}/test`, { event_type: eventType })
 }
 
 export function deleteOutboundWebhook(id) {
-  return deleteRequest(`/admin/integrations/webhooks/${id}`)
+  return deleteRequest(`/admin/discord-webhooks/${id}`)
 }
 
 export function listOutboundWebhookDeliveries({ webhookId = '', status = '', limit = 100 } = {}) {
-  return get(withQuery('/admin/integrations/webhooks/deliveries/history', {
+  return get(withQuery('/admin/discord-webhooks/deliveries/history', {
     webhook_id: webhookId,
     status,
     limit,
@@ -230,5 +223,5 @@ export function listOutboundWebhookDeliveries({ webhookId = '', status = '', lim
 }
 
 export function retryOutboundWebhookDelivery(id) {
-  return post(`/admin/integrations/webhooks/deliveries/${id}/retry`, {})
+  return post(`/admin/discord-webhooks/deliveries/${id}/retry`, {})
 }

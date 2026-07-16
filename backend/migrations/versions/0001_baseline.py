@@ -1,8 +1,8 @@
-"""baseline schema
+"""production baseline
 
 Revision ID: 0001_baseline
 Revises: 
-Create Date: 2026-07-15 09:38:50.526080
+Create Date: 2026-07-15 23:22:38.905982
 """
 from typing import Sequence, Union
 
@@ -76,13 +76,18 @@ def upgrade() -> None:
     sa.Column('is_leadership', sa.Boolean(), nullable=False),
     sa.Column('can_manage_fleet', sa.Boolean(), nullable=False),
     sa.Column('can_manage_members', sa.Boolean(), nullable=False),
+    sa.Column('is_system', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.CheckConstraint('rank >= 0', name='ck_fleet_roles_rank'),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('fleet_roles', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_fleet_roles_code'), ['code'], unique=True)
+        batch_op.create_index(batch_op.f('ix_fleet_roles_is_active'), ['is_active'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_roles_is_leadership'), ['is_leadership'], unique=False)
+        batch_op.create_index(batch_op.f('ix_fleet_roles_is_system'), ['is_system'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_roles_rank'), ['rank'], unique=False)
 
     op.create_table('fleets',
@@ -529,10 +534,13 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=120), nullable=False),
     sa.Column('endpoint_url', sa.String(length=1000), nullable=False),
-    sa.Column('signing_secret', sa.String(length=160), nullable=False),
     sa.Column('event_types_json', sa.Text(), nullable=False),
-    sa.Column('channel_key', sa.String(length=120), nullable=True),
+    sa.Column('scope_type', sa.String(length=24), nullable=False),
+    sa.Column('scope_id', sa.Integer(), nullable=True),
     sa.Column('message_template', sa.Text(), nullable=True),
+    sa.Column('discord_username', sa.String(length=80), nullable=True),
+    sa.Column('discord_avatar_url', sa.String(length=1000), nullable=True),
+    sa.Column('broadcast_enabled', sa.Boolean(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -544,12 +552,14 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('outbound_webhooks', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_outbound_webhooks_channel_key'), ['channel_key'], unique=False)
+        batch_op.create_index(batch_op.f('ix_outbound_webhooks_broadcast_enabled'), ['broadcast_enabled'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_created_at'), ['created_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_created_by_user_id'), ['created_by_user_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_is_active'), ['is_active'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_name'), ['name'], unique=False)
+        batch_op.create_index(batch_op.f('ix_outbound_webhooks_scope_id'), ['scope_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_outbound_webhooks_scope_type'), ['scope_type'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhooks_updated_at'), ['updated_at'], unique=False)
 
     op.create_table('registration_requests',
@@ -557,6 +567,9 @@ def upgrade() -> None:
     sa.Column('username', sa.String(length=80), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
     sa.Column('display_name', sa.String(length=120), nullable=False),
+    sa.Column('wants_fleet_membership', sa.Boolean(), nullable=False),
+    sa.Column('fleet_id', sa.Integer(), nullable=True),
+    sa.Column('fleet_application_note', sa.Text(), nullable=True),
     sa.Column('status', sa.String(length=24), nullable=False),
     sa.Column('decision_note', sa.Text(), nullable=True),
     sa.Column('reviewed_by_id', sa.Integer(), nullable=True),
@@ -566,12 +579,14 @@ def upgrade() -> None:
     sa.Column('reviewed_at', sa.DateTime(), nullable=True),
     sa.CheckConstraint("status in ('pending', 'approved', 'rejected')", name='ck_registration_requests_status'),
     sa.ForeignKeyConstraint(['created_user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['fleet_id'], ['fleets.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['reviewed_by_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('registration_requests', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_registration_requests_created_at'), ['created_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_registration_requests_created_user_id'), ['created_user_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_registration_requests_fleet_id'), ['fleet_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_registration_requests_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_registration_requests_reviewed_by_id'), ['reviewed_by_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_registration_requests_status'), ['status'], unique=False)
@@ -1030,18 +1045,20 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_registration_requests_status'))
         batch_op.drop_index(batch_op.f('ix_registration_requests_reviewed_by_id'))
         batch_op.drop_index(batch_op.f('ix_registration_requests_id'))
+        batch_op.drop_index(batch_op.f('ix_registration_requests_fleet_id'))
         batch_op.drop_index(batch_op.f('ix_registration_requests_created_user_id'))
         batch_op.drop_index(batch_op.f('ix_registration_requests_created_at'))
 
     op.drop_table('registration_requests')
     with op.batch_alter_table('outbound_webhooks', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_updated_at'))
+        batch_op.drop_index(batch_op.f('ix_outbound_webhooks_scope_type'))
+        batch_op.drop_index(batch_op.f('ix_outbound_webhooks_scope_id'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_name'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_is_active'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_id'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_created_by_user_id'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhooks_created_at'))
-        batch_op.drop_index(batch_op.f('ix_outbound_webhooks_channel_key'))
 
     op.drop_table('outbound_webhooks')
     op.drop_table('newcomer_guide_pages')
@@ -1190,7 +1207,9 @@ def downgrade() -> None:
     op.drop_table('fleets')
     with op.batch_alter_table('fleet_roles', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_fleet_roles_rank'))
+        batch_op.drop_index(batch_op.f('ix_fleet_roles_is_system'))
         batch_op.drop_index(batch_op.f('ix_fleet_roles_is_leadership'))
+        batch_op.drop_index(batch_op.f('ix_fleet_roles_is_active'))
         batch_op.drop_index(batch_op.f('ix_fleet_roles_code'))
 
     op.drop_table('fleet_roles')

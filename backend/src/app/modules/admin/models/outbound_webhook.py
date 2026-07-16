@@ -10,27 +10,24 @@ from app.db.base import Base
 
 
 class OutboundWebhook(Base):
-    """Admin-managed outbound webhook subscription for external integrations."""
+    """Administrator-managed Discord channel webhook subscription."""
 
     __tablename__ = "outbound_webhooks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
     endpoint_url: Mapped[str] = mapped_column(String(1000), nullable=False)
-    signing_secret: Mapped[str] = mapped_column(String(160), nullable=False)
     event_types_json: Mapped[str] = mapped_column(Text, nullable=False)
-    delivery_mode: Mapped[str] = mapped_column(
-        String(24), nullable=False, default="signed_json", index=True
-    )
     scope_type: Mapped[str] = mapped_column(
         String(24), nullable=False, default="global", index=True
     )
     scope_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    # Legacy receiver hint kept for compatibility with existing signed consumers.
-    channel_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     message_template: Mapped[str | None] = mapped_column(Text, nullable=True)
     discord_username: Mapped[str | None] = mapped_column(String(80), nullable=True)
     discord_avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    broadcast_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now, index=True)
     updated_at: Mapped[datetime] = mapped_column(
@@ -53,7 +50,7 @@ class OutboundWebhook(Base):
 
 
 class OutboundWebhookDelivery(Base):
-    """Persisted delivery attempt history for outbound webhook events."""
+    """Persisted delivery attempt history for Discord channel webhooks."""
 
     __tablename__ = "outbound_webhook_deliveries"
 

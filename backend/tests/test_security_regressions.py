@@ -164,9 +164,9 @@ def test_svg_and_mismatched_uploads_are_rejected_but_valid_png_is_accepted() -> 
 
 def test_webhook_targets_block_private_literals_and_private_dns_results() -> None:
     with pytest.raises(OutboundWebhookError, match="private or reserved"):
-        _validate_endpoint_url("http://127.0.0.1/webhook")
+        _validate_endpoint_url("https://127.0.0.1/api/webhooks/1/token")
     with pytest.raises(OutboundWebhookError, match="public network host"):
-        _validate_endpoint_url("http://localhost/webhook")
+        _validate_endpoint_url("https://localhost/api/webhooks/1/token")
 
     def private_resolver(*_args, **_kwargs):
         return [(2, 1, 6, "", ("10.10.10.10", 443))]
@@ -207,7 +207,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0003_webhooks_fleet_roles"})
+    assert heads == frozenset({"0001_baseline"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(

@@ -6,13 +6,12 @@ from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.modules.accounts.models.user import User
-from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import OutboundWebhookDeliveryRead
 
 from .envelope import WebhookEnvelopeFactory
 from .serialization import JsonSafeEncoder
 from .service import WebhookDeliveryService
-from .transport import WebhookSigner, WebhookTransport
+from .transport import WebhookTransport
 
 _default_service = WebhookDeliveryService()
 
@@ -20,11 +19,6 @@ _default_service = WebhookDeliveryService()
 def _json_safe(value: Any) -> Any:
     return JsonSafeEncoder().convert(value)
 
-
-def _delivery_headers(
-    row: OutboundWebhookDelivery, secret: str, timestamp: str
-) -> dict[str, str]:
-    return WebhookSigner.headers(row, secret, timestamp)
 
 
 def _delivery_transport_error(endpoint_url: str, exc: Exception) -> str:
@@ -58,6 +52,25 @@ def create_test_delivery(
     return _default_service.create_test(db, webhook_id, actor, event_type)
 
 
+def create_broadcast_deliveries(
+    db: Session,
+    *,
+    webhook_ids: list[int],
+    actor: User,
+    message: str,
+    discord_username: str | None = None,
+    discord_avatar_url: str | None = None,
+) -> list[OutboundWebhookDeliveryRead]:
+    return _default_service.create_broadcast(
+        db,
+        webhook_ids=webhook_ids,
+        actor=actor,
+        message=message,
+        discord_username=discord_username,
+        discord_avatar_url=discord_avatar_url,
+    )
+
+
 def retry_delivery(
     db: Session, delivery_id: int
 ) -> OutboundWebhookDeliveryRead | None:
@@ -68,9 +81,9 @@ __all__ = [
     "JsonSafeEncoder",
     "WebhookDeliveryService",
     "WebhookEnvelopeFactory",
-    "WebhookSigner",
     "WebhookTransport",
     "attempt_webhook_delivery",
+    "create_broadcast_deliveries",
     "create_test_delivery",
     "queue_webhook_event",
     "queue_webhook_event_safely",

@@ -29,7 +29,7 @@ def isolated_session() -> Session:
     return Session(engine, expire_on_commit=False)
 
 
-def test_webhook_service_queues_matching_signed_delivery_payload() -> None:
+def test_webhook_service_queues_matching_discord_delivery_payload() -> None:
     with isolated_session() as db:
         actor = create_user(
             db,
@@ -42,15 +42,13 @@ def test_webhook_service_queues_matching_signed_delivery_payload() -> None:
             db,
             OutboundWebhookCreate(
                 name="Discord events",
-                endpoint_url="http://bot.example.test/hooks/events",
+                endpoint_url="https://discord.com/api/webhooks/111111111111111111/test-token-events",
                 event_types=["calendar.event.created", "guide.created"],
-                channel_key="events",
                 message_template="New event: {data.title}",
             ),
             actor,
         )
-        assert created.signing_secret
-        assert created.secret_hint.endswith(created.signing_secret[-6:])
+        assert created.endpoint_url.endswith("/••••••")
 
         delivery_ids = queue_webhook_event(
             db,
@@ -65,7 +63,7 @@ def test_webhook_service_queues_matching_signed_delivery_payload() -> None:
         delivery = db.scalar(select(OutboundWebhookDelivery).where(OutboundWebhookDelivery.id == delivery_ids[0]))
         payload = json.loads(delivery.payload_json)
         assert payload["event"] == "calendar.event.created"
-        assert payload["destination"]["channel_key"] == "events"
+        assert payload["destination"]["scope_type"] == "global"
         assert payload["resource"]["url"] == (
             f"{settings.cors_origins[0].rstrip('/')}/calendar/events/42"
         )
@@ -82,7 +80,7 @@ def test_webhook_service_queues_matching_signed_delivery_payload() -> None:
         assert ignored == []
 
 
-def test_admin_can_manage_webhooks_and_secret_is_only_revealed_on_create_or_rotate() -> None:
+def test_admin_can_manage_discord_webhooks_and_token_stays_masked() -> None:
     username = "webhook-route-admin"
     password = "BlackwaterWebhookRoute123!"
     with TestClient(app) as client:
@@ -98,33 +96,42 @@ def test_admin_can_manage_webhooks_and_secret_is_only_revealed_on_create_or_rota
         assert login.status_code == 200
 
         created = client.post(
-            "/api/admin/integrations/webhooks",
+            "/api/admin/discord-webhooks",
             json={
                 "name": "Discord guides",
-                "endpoint_url": "http://bot.example.test/hooks/guides",
+                "endpoint_url": "https://discord.com/api/webhooks/222222222222222222/test-token-guides",
                 "event_types": ["guide.created", "guide.updated"],
-                "channel_key": "guides",
                 "message_template": "{data.title}",
                 "is_active": True,
             },
         )
         assert created.status_code == 201, created.text
         body = created.json()
-        assert body["signing_secret"]
+        assert body["endpoint_url"].endswith("/••••••")
+        assert "test-token-guides" not in body["endpoint_url"]
         webhook_id = body["id"]
 
-        listing = client.get("/api/admin/integrations/webhooks")
+        listing = client.get("/api/admin/discord-webhooks")
         assert listing.status_code == 200
         listed = next(row for row in listing.json() if row["id"] == webhook_id)
-        assert listed["signing_secret"] is None
+        assert listed["endpoint_url"].endswith("/••••••")
         assert listed["event_types"] == ["guide.created", "guide.updated"]
 
-        rotated = client.post(f"/api/admin/integrations/webhooks/{webhook_id}/rotate-secret", json={})
-        assert rotated.status_code == 200
-        assert rotated.json()["signing_secret"]
-        assert rotated.json()["signing_secret"] != body["signing_secret"]
+        updated = client.put(
+            f"/api/admin/discord-webhooks/{webhook_id}",
+            json={
+                "name": "Discord guide updates",
+                "endpoint_url": None,
+                "event_types": ["guide.updated"],
+                "scope_type": "global",
+                "is_active": True,
+            },
+        )
+        assert updated.status_code == 200, updated.text
+        assert updated.json()["name"] == "Discord guide updates"
+        assert updated.json()["endpoint_url"].endswith("/••••••")
 
-        deleted = client.delete(f"/api/admin/integrations/webhooks/{webhook_id}")
+        deleted = client.delete(f"/api/admin/discord-webhooks/{webhook_id}")
         assert deleted.status_code == 204
 
 
@@ -142,33 +149,39 @@ def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
             )
         login = client.post("/api/auth/login", json={"username": username, "password": password})
         assert login.status_code == 200
-        assert client.get("/api/admin/integrations/webhooks").status_code == 403
-        assert client.get("/api/admin/integrations/webhooks/events").status_code == 403
-        assert client.get("/api/admin/integrations/webhooks/summary").status_code == 403
-        assert client.get("/api/admin/integrations/webhooks/deliveries/history").status_code == 403
+        assert client.get("/api/admin/discord-webhooks").status_code == 403
+        assert client.get("/api/admin/discord-webhooks/events").status_code == 403
+        assert client.get("/api/admin/discord-webhooks/summary").status_code == 403
+        assert client.get("/api/admin/discord-webhooks/broadcast/targets").status_code == 403
+        assert client.get("/api/admin/discord-webhooks/deliveries/history").status_code == 403
         denied = client.post(
-            "/api/admin/integrations/webhooks",
+            "/api/admin/discord-webhooks",
             json={
                 "name": "Denied webhook",
-                "endpoint_url": "http://bot.example.test/hooks/denied",
+                "endpoint_url": "https://discord.com/api/webhooks/333333333333333333/denied-token",
                 "event_types": ["integration.test"],
             },
         )
         assert denied.status_code == 403
+        broadcast_denied = client.post(
+            "/api/admin/discord-webhooks/broadcast/send",
+            json={"webhook_ids": [1], "message": "Denied"},
+        )
+        assert broadcast_denied.status_code == 403
 
 
 def test_webhook_dns_errors_are_reported_with_actionable_context() -> None:
     message = _delivery_transport_error(
-        "https://royal-blackwater-fleet.eu/integrations/discord/webhooks/rbf",
+        "https://discord.com/api/webhooks/444444444444444444/test-token",
         URLError(socket.gaierror(-3, "Temporary failure in name resolution")),
     )
 
     assert "DNS resolution failed" in message
-    assert "royal-blackwater-fleet.eu" in message
+    assert "discord.com" in message
     assert "API container outbound network" in message
 
 
-def test_bot_event_catalog_has_stable_route_family_for_every_domain_event() -> None:
+def test_webhook_event_catalog_has_stable_route_family_for_every_domain_event() -> None:
     from app.modules.admin.services.outbound_webhook_service import EVENT_CATALOG
 
     route_families = {
@@ -216,7 +229,6 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
                 name="Registration chat",
                 endpoint_url=f"https://discord.com/api/webhooks/123456789012345678/{token}",
                 event_types=["registration.request.created"],
-                delivery_mode="discord",
                 message_template=(
                     "New registration: {data.display_name}\n"
                     "[Review registration]({resource.url})"
@@ -226,7 +238,6 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
             actor,
         )
         assert token not in created.endpoint_url
-        assert created.signing_secret is None
         delivery_ids = queue_webhook_event(
             db,
             event_type="registration.request.created",
@@ -248,7 +259,7 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
         )
         assert payload["content"].count(public_url) == 1
         assert payload["username"] == "RBF Hub"
-        assert "X-rbf-signature" not in {key.lower() for key, _ in transport.request.header_items()}
+        assert "x-rbf-signature" not in {key.lower() for key, _ in transport.request.header_items()}
         assert delivery.status == "success"
 
 
@@ -295,7 +306,7 @@ def test_every_catalog_event_has_a_serializable_preview_payload() -> None:
             db,
             OutboundWebhookCreate(
                 name="All event previews",
-                endpoint_url="http://bot.example.test/hooks/all-events",
+                endpoint_url="https://discord.com/api/webhooks/555555555555555555/all-events-token",
                 event_types=sorted(EVENT_TEST_SAMPLES),
             ),
             actor,
@@ -342,7 +353,6 @@ def test_event_specific_preview_uses_the_real_event_payload_shape() -> None:
             id=91,
             name="Build previews",
             endpoint_url="https://discord.com/api/webhooks/123/token",
-            delivery_mode="discord",
             event_types_json='["build.created"]',
             created_by_user_id=actor.id,
             created_by_username=actor.username,
@@ -410,7 +420,7 @@ def test_build_create_update_and_remove_publish_real_webhook_deliveries(monkeypa
             db,
             OutboundWebhookCreate(
                 name="Real build events",
-                endpoint_url="http://bot.example.test/hooks/real-builds",
+                endpoint_url="https://discord.com/api/webhooks/666666666666666666/real-build-token",
                 event_types=["build.created", "build.updated", "build.removed"],
                 scope_type="fleet",
                 scope_id=fleet_id,
@@ -470,3 +480,198 @@ def test_build_create_update_and_remove_publish_real_webhook_deliveries(monkeypa
             "build_name": "Webhook Broadside Mk II",
         }
     assert len(capture.requests) == 3
+
+
+def test_same_event_can_queue_deliveries_for_multiple_discord_channels() -> None:
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook
+
+    with isolated_session() as db:
+        actor = create_user(
+            db,
+            username="webhook-multi-channel-admin",
+            password="BlackwaterMultiChannel123!",
+            display_name="Webhook Multi Channel Admin",
+            role=ROLE_ADMIN,
+        )
+        first = create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="Build announcements",
+                endpoint_url="https://discord.com/api/webhooks/700000000000000001/first-channel-token",
+                event_types=["build.created"],
+            ),
+            actor,
+        )
+        second = create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="Officer build log",
+                endpoint_url="https://discord.com/api/webhooks/700000000000000002/second-channel-token",
+                event_types=["build.created"],
+            ),
+            actor,
+        )
+
+        delivery_ids = queue_webhook_event(
+            db,
+            event_type="build.created",
+            resource_type="build",
+            resource_id=501,
+            actor=actor,
+            data={"id": 501, "build_name": "Multi-channel Broadside"},
+        )
+
+        rows = list(
+            db.scalars(
+                select(OutboundWebhookDelivery)
+                .where(OutboundWebhookDelivery.id.in_(delivery_ids))
+                .order_by(OutboundWebhookDelivery.webhook_id.asc())
+            ).all()
+        )
+        assert len(rows) == 2
+        assert {row.webhook_id for row in rows} == {first.id, second.id}
+        assert {
+            db.get(OutboundWebhook, row.webhook_id).name for row in rows
+        } == {"Build announcements", "Officer build log"}
+
+
+def test_admin_can_send_one_manual_broadcast_to_multiple_discord_channels(monkeypatch) -> None:
+    from app.modules.admin.services import outbound_webhook_delivery_service as delivery_module
+
+    class CaptureTransport:
+        def __init__(self) -> None:
+            self.requests = []
+
+        def send(self, request):
+            self.requests.append(request)
+            return 204, ""
+
+        @staticmethod
+        def error_message(endpoint_url, exc):
+            return str(exc)
+
+    username = "webhook-broadcast-admin"
+    password = "BlackwaterBroadcast123!"
+    transport = CaptureTransport()
+    monkeypatch.setattr(delivery_module._default_service, "_transport", transport)
+
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name="Webhook Broadcast Admin",
+                role=ROLE_ADMIN,
+            )
+        login = client.post("/api/auth/login", json={"username": username, "password": password})
+        assert login.status_code == 200
+
+        target_ids = []
+        for index in range(2):
+            created = client.post(
+                "/api/admin/discord-webhooks",
+                json={
+                    "name": f"Broadcast channel {index + 1}",
+                    "endpoint_url": (
+                        f"https://discord.com/api/webhooks/80000000000000000{index + 1}/"
+                        f"broadcast-channel-token-{index + 1}"
+                    ),
+                    "event_types": [],
+                    "broadcast_enabled": True,
+                    "is_active": True,
+                },
+            )
+            assert created.status_code == 201, created.text
+            target_ids.append(created.json()["id"])
+
+        event_only = client.post(
+            "/api/admin/discord-webhooks",
+            json={
+                "name": "Event only channel",
+                "endpoint_url": "https://discord.com/api/webhooks/800000000000000003/event-only-token",
+                "event_types": ["build.created"],
+                "broadcast_enabled": False,
+                "is_active": True,
+            },
+        )
+        assert event_only.status_code == 201, event_only.text
+
+        targets = client.get("/api/admin/discord-webhooks/broadcast/targets")
+        assert targets.status_code == 200, targets.text
+        returned_ids = {row["id"] for row in targets.json()}
+        assert set(target_ids).issubset(returned_ids)
+        assert event_only.json()["id"] not in returned_ids
+
+        sent = client.post(
+            "/api/admin/discord-webhooks/broadcast/send",
+            json={
+                "webhook_ids": target_ids,
+                "message": "**Fleet broadcast**\nPrepare for departure.",
+                "discord_username": "RBF Broadcast",
+                "discord_avatar_url": "https://royal-blackwater-fleet.eu/rbf-fleet-icon.png?v=test",
+            },
+        )
+        assert sent.status_code == 200, sent.text
+        deliveries = sent.json()
+        assert len(deliveries) == 2
+        assert all(row["event_type"] == "broadcast.manual" for row in deliveries)
+        assert all(row["status"] == "queued" for row in deliveries)
+        delivery_ids = [row["id"] for row in deliveries]
+
+    with SessionLocal() as db:
+        persisted = [db.get(OutboundWebhookDelivery, delivery_id) for delivery_id in delivery_ids]
+        assert all(row is not None and row.status == "success" for row in persisted)
+
+    assert len(transport.requests) == 2
+    for request in transport.requests:
+        payload = json.loads(request.data.decode("utf-8"))
+        assert payload["content"] == "**Fleet broadcast**\nPrepare for departure."
+        assert payload["username"] == "RBF Broadcast"
+        assert payload["avatar_url"].endswith("?v=test")
+        assert payload["allowed_mentions"] == {"parse": []}
+
+
+def test_broadcast_requires_active_broadcast_enabled_targets(monkeypatch) -> None:
+    from app.modules.admin.services import outbound_webhook_delivery_service as delivery_module
+
+    class NoopTransport:
+        def send(self, request):
+            raise AssertionError("Disabled target must not be called")
+
+        @staticmethod
+        def error_message(endpoint_url, exc):
+            return str(exc)
+
+    username = "webhook-broadcast-validation-admin"
+    password = "BlackwaterBroadcastValidation123!"
+    monkeypatch.setattr(delivery_module._default_service, "_transport", NoopTransport())
+
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name="Webhook Broadcast Validation Admin",
+                role=ROLE_ADMIN,
+            )
+        assert client.post(
+            "/api/auth/login", json={"username": username, "password": password}
+        ).status_code == 200
+        created = client.post(
+            "/api/admin/discord-webhooks",
+            json={
+                "name": "Non-broadcast target",
+                "endpoint_url": "https://discord.com/api/webhooks/900000000000000001/non-broadcast-token",
+                "event_types": ["integration.test"],
+                "broadcast_enabled": False,
+            },
+        )
+        assert created.status_code == 201, created.text
+        response = client.post(
+            "/api/admin/discord-webhooks/broadcast/send",
+            json={"webhook_ids": [created.json()["id"]], "message": "Must fail"},
+        )
+        assert response.status_code == 400
+        assert "broadcast-enabled" in response.json()["detail"]

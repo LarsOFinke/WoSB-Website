@@ -141,9 +141,10 @@ for path in ROOT.rglob("*"):
         )
 
 
-# The historical migration chain starts at the squashed baseline and remains linear.
+# Clean installations start from one current production baseline.
 migration_files = sorted((ROOT / "backend/migrations/versions").glob("*.py"))
-require(bool(migration_files), "database schema must include the baseline migration")
+require(len(migration_files) == 1, "clean setup must ship exactly one baseline migration")
+require(migration_files[0].name == "0001_baseline.py", "baseline migration filename must be 0001_baseline.py")
 previous_revision: str | None = None
 seen_revisions: set[str] = set()
 for index, migration_file in enumerate(migration_files):
@@ -172,6 +173,58 @@ for index, migration_file in enumerate(migration_files):
             f"migration chain is not linear at {migration_file.name}",
         )
     previous_revision = revision
+
+# Discord integration is intentionally limited to native channel webhooks.
+legacy_discord_tokens = (
+    "discord_bot",
+    "discord-bot",
+    "BotSetup",
+    "signed_json",
+    "signing_secret",
+    "delivery_mode",
+    "channel_key",
+)
+for source_root in (ROOT / "backend", ROOT / "frontend", ROOT / "infrastructure"):
+    for path in source_root.rglob("*"):
+        if not path.is_file() or any(part in {"node_modules", "__pycache__"} for part in path.parts):
+            continue
+        if path.suffix not in {".py", ".js", ".mjs", ".vue", ".sh", ".yml", ".yaml", ".conf", ".md", ".txt"}:
+            continue
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        for token in legacy_discord_tokens:
+            require(token not in source, f"retired Discord integration token {token!r} in {path.relative_to(ROOT)}")
+
+# Discord channel webhooks support independent multi-channel subscriptions and manual broadcasts.
+webhook_model_source = (
+    ROOT / "backend/src/app/modules/admin/models/outbound_webhook.py"
+).read_text(encoding="utf-8")
+webhook_route_source = (
+    ROOT / "backend/src/app/modules/admin/routes/outbound_webhooks.py"
+).read_text(encoding="utf-8")
+webhook_schema_source = (
+    ROOT / "backend/src/app/modules/admin/schemas/outbound_webhook.py"
+).read_text(encoding="utf-8")
+broadcast_panel_source = (
+    ROOT / "frontend/src/modules/admin/components/DiscordBroadcastPanel.vue"
+).read_text(encoding="utf-8")
+require("broadcast_enabled" in webhook_model_source, "webhook model is missing broadcast targets")
+require(
+    '@router.post("/broadcast/send"' in webhook_route_source,
+    "manual Discord broadcast route is missing",
+)
+require(
+    "OutboundWebhookBroadcastRequest" in webhook_schema_source,
+    "manual Discord broadcast request contract is missing",
+)
+require(
+    "sendDiscordBroadcast" in broadcast_panel_source
+    and "form.webhook_ids" in broadcast_panel_source,
+    "Discord broadcast panel is missing multi-target delivery",
+)
+require(
+    "UniqueConstraint" not in webhook_model_source,
+    "Discord webhook subscriptions must not be unique per event or scope",
+)
 
 # Every published webhook event must ship with a copy-ready text template.
 webhook_event_path = ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
