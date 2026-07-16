@@ -8,9 +8,11 @@ from configparser import ConfigParser
 import json
 import re
 import runpy
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend/src"))
 
 parser = argparse.ArgumentParser(description="Validate repository invariants.")
 parser.add_argument(
@@ -232,12 +234,18 @@ webhook_event_source = webhook_event_path.read_text(encoding="utf-8")
 webhook_namespace = runpy.run_path(str(webhook_event_path))
 event_catalog = webhook_namespace.get("EVENT_CATALOG")
 event_test_samples = webhook_namespace.get("EVENT_TEST_SAMPLES")
+default_messages = webhook_namespace.get("DEFAULT_MESSAGES")
 require(isinstance(event_catalog, tuple), "webhook EVENT_CATALOG is missing")
 require(isinstance(event_test_samples, dict), "webhook EVENT_TEST_SAMPLES is missing")
+require(isinstance(default_messages, dict), "webhook DEFAULT_MESSAGES is missing")
 webhook_event_types = {row[0] for row in event_catalog}
 require(
     set(event_test_samples) == webhook_event_types,
     "webhook test samples must match EVENT_CATALOG exactly",
+)
+require(
+    set(default_messages) == webhook_event_types,
+    "webhook DEFAULT_MESSAGES must match EVENT_CATALOG exactly",
 )
 template_dir = ROOT / "docs/webhook-templates/message-templates"
 require(template_dir.is_dir(), "missing copy-ready webhook template directory")
@@ -252,6 +260,10 @@ valid_template_roots = {
 for event_type, template_path in template_files.items():
     template_text = template_path.read_text(encoding="utf-8").strip()
     require(template_text, f"empty webhook template: {event_type}")
+    require(
+        default_messages[event_type] == template_text,
+        f"backend autofill/default template differs from repository template: {event_type}",
+    )
     require(len(template_text) <= 1800, f"webhook template too long for Discord: {event_type}")
     sample = event_test_samples[event_type]
     sample_envelope = {

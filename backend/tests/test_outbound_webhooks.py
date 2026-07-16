@@ -135,6 +135,32 @@ def test_admin_can_manage_discord_webhooks_and_token_stays_masked() -> None:
         assert deleted.status_code == 204
 
 
+def test_admin_event_catalog_returns_the_versioned_english_repository_templates() -> None:
+    username = "webhook-template-catalog-admin"
+    password = "BlackwaterWebhookTemplates123!"
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name="Webhook Template Catalog Admin",
+                role=ROLE_ADMIN,
+            )
+        login = client.post("/api/auth/login", json={"username": username, "password": password})
+        assert login.status_code == 200
+
+        response = client.get("/api/admin/discord-webhooks/events")
+        assert response.status_code == 200
+        catalog = {row["key"]: row["default_template"] for row in response.json()}
+        build_template = catalog["build.created"]
+        assert build_template.startswith("⚓ **New Build Created**")
+        assert "Ship: **{data.ship.name}**" in build_template
+        assert "Created by: **{actor.display_name}**" in build_template
+        assert "[Open build]({resource.url})" in build_template
+        assert "Neuer Build" not in build_template
+
+
 def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
     username = "webhook-readonly-moderator"
     password = "BlackwaterWebhookReadonly123!"
@@ -275,17 +301,34 @@ def test_webhook_scope_matching_supports_fleet_and_squad_destinations() -> None:
     assert not WebhookDeliveryService._matches_scope(squad_hook, {"squad_id": 35})
 
 
-def test_default_build_messages_use_the_actual_build_name_field() -> None:
+def test_default_build_messages_are_full_english_templates_with_deep_links() -> None:
     from app.modules.admin.services.outbound_webhook_delivery_service.discord import render_message
     from app.modules.admin.services.webhook_events import DEFAULT_MESSAGES
 
     envelope = {
         "event": "build.created",
-        "destination": {"name": "Build channel"},
-        "data": {"build_name": "Heavy Broadside", "name": "wrong-field"},
+        "actor": {"display_name": "Build Captain"},
+        "resource": {"url": "https://royal-blackwater-fleet.eu/builds/401"},
+        "data": {
+            "build_name": "Heavy Broadside",
+            "build_type": "balanced",
+            "ship": {"name": "Anson", "rate": 3},
+            "is_official_template": False,
+            "sailors": 90,
+            "soldiers": 70,
+            "musketeers": 0,
+            "mercenaries": 0,
+            "owner_id": 42,
+            "created_at": "2026-08-15T12:00:00+00:00",
+        },
     }
 
-    assert render_message(DEFAULT_MESSAGES["build.created"], envelope) == "Neuer Build: **Heavy Broadside**."
+    rendered = render_message(DEFAULT_MESSAGES["build.created"], envelope)
+    assert rendered.startswith("⚓ **New Build Created**")
+    assert "Build: **Heavy Broadside**" in rendered
+    assert "Ship: **Anson** (Rate `3`)" in rendered
+    assert "Created by: **Build Captain**" in rendered
+    assert "[Open build](https://royal-blackwater-fleet.eu/builds/401)" in rendered
     assert "data.name" not in DEFAULT_MESSAGES["build.updated"]
     assert "data.build_name" in DEFAULT_MESSAGES["build.removed"]
 

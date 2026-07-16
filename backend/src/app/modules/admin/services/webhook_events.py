@@ -3,6 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from app.modules.admin.services.webhook_message_templates import DEFAULT_MESSAGES
+
 EVENT_CATALOG = (
     ("integration.test", "integration", "Manual connectivity and payload test."),
     ("registration.request.created", "registrations", "A new access request was submitted."),
@@ -29,30 +31,6 @@ EVENT_CATALOG = (
 )
 EVENT_TYPES = {row[0] for row in EVENT_CATALOG}
 
-DEFAULT_MESSAGES = {
-    "integration.test": "RBF-Verbindungstest für **{destination.name}**.",
-    "registration.request.created": "Neue Registrierung: **{data.display_name}** (`{data.username}`).",
-    "registration.request.approved": "Registrierung freigegeben: **{data.display_name}** (`{data.username}`).",
-    "registration.request.rejected": "Registrierung abgelehnt: **{data.display_name}** (`{data.username}`).",
-    "squad.created": "Neues Squad: **{data.name}**.",
-    "squad.updated": "Squad aktualisiert: **{data.name}**.",
-    "squad.archived": "Squad archiviert: **{data.name}**.",
-    "squad.member.added": "**{data.member_display_name}** wurde dem Squad **{data.squad_name}** hinzugefügt.",
-    "squad.member.updated": "Mitgliedschaft in **{data.squad_name}** wurde aktualisiert.",
-    "squad.member.removed": "Ein Mitglied wurde aus **{data.squad_name}** entfernt.",
-    "calendar.event.created": "Neuer Termin: **{data.title}**.",
-    "calendar.event.updated": "Termin aktualisiert: **{data.title}**.",
-    "calendar.event.cancelled": "Termin abgesagt: **{data.title}**.",
-    "guide.created": "Neuer Guide: **{data.title}**.",
-    "guide.updated": "Guide aktualisiert: **{data.title}**.",
-    "guide.removed": "Guide entfernt: **{resource.id}**.",
-    "newcomer_guide.updated": "Der Einsteiger-Guide wurde aktualisiert.",
-    "build.created": "Neuer Build: **{data.build_name}**.",
-    "build.updated": "Build aktualisiert: **{data.build_name}**.",
-    "build.removed": "Build entfernt: **{data.build_name}**.",
-    "forum.thread.created": "Neuer Forenbeitrag: **{data.title}**.",
-    "forum.thread.updated": "Forenbeitrag aktualisiert: **{data.title}**.",
-}
 
 _COMMON_USER = {
     "id": 42,

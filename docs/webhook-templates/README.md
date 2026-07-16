@@ -2,6 +2,8 @@
 
 Every file in [`message-templates/`](message-templates/) contains one copy-ready English message template for a native Discord channel webhook. Paste the complete file content into the **Message template** field in **Staff Panel → Discord Webhooks**.
 
+The Staff Panel template autofill and the backend event defaults use these exact versioned English texts. Repository checks fail if the runtime catalog and the `.txt` files diverge.
+
 The templates are intended only for direct Discord delivery by this backend. They use Discord Markdown and event payload placeholders. Useful common placeholders include:
 
 - `{event}`

@@ -36,7 +36,7 @@ def discord_payload(webhook: OutboundWebhook, envelope: dict[str, Any]) -> dict[
         avatar_url = str(data.get("discord_avatar_url") or "").strip() or webhook.discord_avatar_url
     else:
         template = webhook.message_template or DEFAULT_MESSAGES.get(
-            event_type, "RBF-Ereignis **{event}** für {resource.type} #{resource.id}."
+            event_type, "RBF event **{event}** for {resource.type} #{resource.id}."
         )
         enriched = {**envelope, "destination": {"name": webhook.name}}
         content = render_message(template, enriched)
@@ -46,7 +46,7 @@ def discord_payload(webhook: OutboundWebhook, envelope: dict[str, Any]) -> dict[
         username = webhook.discord_username
         avatar_url = webhook.discord_avatar_url
     payload: dict[str, Any] = {
-        "content": (content or f"RBF-Ereignis: {event_type or 'unknown'}")[:2000],
+        "content": (content or f"RBF event: {event_type or 'unknown'}")[:2000],
         "allowed_mentions": {"parse": []},
     }
     if username:
