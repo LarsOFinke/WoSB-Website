@@ -2,8 +2,12 @@
 __pycache__
 .pytest_cache
 .ruff_cache
+.coverage
+coverage
+htmlcov
 .env
 storage
+*.log
 *.db
 *.sqlite*
 tests

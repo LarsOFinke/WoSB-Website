@@ -24,3 +24,14 @@ test('complex pages delegate state and use-cases to dedicated page models', asyn
     assert.doesNotMatch(script, /async function/, `${relativePath} should not own async use-cases`)
   }
 })
+
+test('build details show upgrade effects once in the live calculation', async () => {
+  const source = await readFile(
+    new URL('../src/modules/builds/pages/BuildDetailPage.vue', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(source, /:effect-rows="activeEffectRows"/)
+  assert.doesNotMatch(source, /build-detail-effect-row/)
+  assert.doesNotMatch(source, /v-for="effect in activeEffectRows"/)
+})

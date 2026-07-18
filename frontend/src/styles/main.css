@@ -11041,7 +11041,6 @@ body {
 .build-readout-copy strong { color: #eef3f8; font-size: .86rem; }
 .build-readout-copy small,.build-readout-copy > span { overflow: hidden; color: #8296a9; font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
 .build-readout-empty { margin: 0; padding: .75rem .85rem; color: #64788c; }
-.build-detail-effect-row { margin: 0; padding: .65rem .85rem; border-top: 1px solid rgba(189,207,224,.1); }
 .build-weapon-readout { display: grid; }
 .build-weapon-arc-row { min-width: 0; display: grid; grid-template-columns: 7rem minmax(0,1fr); align-items: center; gap: .65rem; padding: .58rem .85rem; }
 .build-weapon-arc-row + .build-weapon-arc-row { border-top: 1px solid rgba(189,207,224,.1); }

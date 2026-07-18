@@ -149,11 +149,6 @@ function crewCapacity() {
                 </li>
               </ol>
               <p v-else class="build-readout-empty">—</p>
-              <div v-if="activeEffectRows.length" class="effect-pill-row build-detail-effect-row">
-                <span v-for="effect in activeEffectRows" :key="effect.key" class="effect-pill" :class="{ 'is-debuff': effect.isDebuff }">
-                  {{ effect.label }} {{ effect.value }}
-                </span>
-              </div>
             </section>
 
             <section class="build-readout-panel" aria-labelledby="build-weapons-title">
