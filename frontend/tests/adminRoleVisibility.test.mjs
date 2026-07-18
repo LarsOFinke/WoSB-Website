@@ -2,11 +2,15 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-const pageSource = await readFile(new URL('../src/modules/admin/pages/AdminPage.vue', import.meta.url), 'utf8')
-const workspaceSource = await readFile(new URL('../src/modules/admin/composables/useAdminWorkspace.js', import.meta.url), 'utf8')
-const registrationsSource = await readFile(new URL('../src/modules/admin/composables/useAdminRegistrations.js', import.meta.url), 'utf8')
-const logsSource = await readFile(new URL('../src/modules/admin/composables/useAdminLogs.js', import.meta.url), 'utf8')
-const operationsSource = await readFile(new URL('../src/modules/admin/composables/useAdminOperations.js', import.meta.url), 'utf8')
+async function source(path) {
+  return (await readFile(new URL(path, import.meta.url), 'utf8')).replaceAll('\r\n', '\n')
+}
+
+const pageSource = await source('../src/modules/admin/pages/AdminPage.vue')
+const workspaceSource = await source('../src/modules/admin/composables/useAdminWorkspace.js')
+const registrationsSource = await source('../src/modules/admin/composables/useAdminRegistrations.js')
+const logsSource = await source('../src/modules/admin/composables/useAdminLogs.js')
+const operationsSource = await source('../src/modules/admin/composables/useAdminOperations.js')
 
 test('privacy-sensitive staff tabs are admin-only in navigation and content', () => {
   assert.ok(workspaceSource.includes("const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'users'])"))

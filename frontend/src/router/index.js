@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import { translate } from '@/locales'
+import { onLocaleChange, translate } from '@/locales'
 
 import { loadSession, useSession } from '@/modules/accounts/session'
 import { accountRoutes } from '@/modules/accounts/routes'
@@ -65,10 +65,13 @@ router.beforeEach(async (to) => {
   return true
 })
 
-router.afterEach((to) => {
+function updateDocumentTitle(to) {
   if (typeof document === 'undefined') return
   const label = to.meta.titleKey ? translate(to.meta.titleKey) : translate('common.projectName')
   document.title = label === translate('common.projectName') ? label : `${label} · RBF`
-})
+}
+
+router.afterEach(updateDocumentTitle)
+onLocaleChange(() => updateDocumentTitle(router.currentRoute.value))
 
 export default router

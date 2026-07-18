@@ -20,6 +20,7 @@ from app.modules.builds.services.ship_upgrade_effect_service import effective_up
 
 if TYPE_CHECKING:
     from app.modules.accounts.models.user import User
+    from app.modules.builds.models.build_classification import BuildClassification
     from app.modules.builds.models.build_slot import BuildSlot
 
 WEAPON_SLOT_TYPE_BY_ARC = {
@@ -80,6 +81,16 @@ class Build(Base):
         lazy="selectin",
         order_by="BuildSlot.slot_type, BuildSlot.slot_index",
     )
+    classifications: Mapped[list["BuildClassification"]] = relationship(
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        back_populates="build",
+        order_by="BuildClassification.tag",
+    )
+
+    @property
+    def classification_tags(self) -> list[str]:
+        return [classification.tag for classification in self.classifications]
 
     def _first_option_name(self, slot_type: str) -> str | None:
         for slot in self.slots:

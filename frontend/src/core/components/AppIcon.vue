@@ -118,6 +118,27 @@ defineProps({
       <circle cx="12" cy="12" r="9" />
       <path d="m15.5 8.5-2.2 4.8-4.8 2.2 2.2-4.8z" />
     </template>
+    <template v-else-if="name === 'anchor'">
+      <circle cx="12" cy="5" r="2.5" /><path d="M12 7.5V21M8 11h8M4 15a8 8 0 0 0 16 0M4 15l-2 2M20 15l2 2" />
+    </template>
+    <template v-else-if="name === 'swords' || name === 'duel'">
+      <path d="m5 4 6 6-2 2-6-6V4zM19 4l-6 6 2 2 6-6V4zM7 14l-4 4 3 3 4-4M17 14l4 4-3 3-4-4" />
+    </template>
+    <template v-else-if="name === 'fort'">
+      <path d="M4 21V9h4V5h3v4h2V5h3v4h4v12M8 21v-4h3v4M15 21v-4h3v4M3 21h18" />
+    </template>
+    <template v-else-if="name === 'trade'">
+      <path d="M12 4v16M5 7h14M7 7l-4 7h8zM17 7l-4 7h8z" />
+    </template>
+    <template v-else-if="name === 'speed'">
+      <path d="M4 8h9M2 12h12M5 16h8M17 7c3 1 4 3 4 5s-1 4-4 5" />
+    </template>
+    <template v-else-if="name === 'transport'">
+      <path d="M3 7h11v10H3zM14 10h4l3 3v4h-7zM6 7V4h5v3M7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4M17 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+    </template>
+    <template v-else-if="name === 'crown'">
+      <path d="m4 8 4 4 4-7 4 7 4-4-2 10H6zM6 21h12" />
+    </template>
     <template v-else-if="name === 'edit'">
       <path d="M4 20h4l11-11-4-4L4 16z" />
       <path d="m13.5 6.5 4 4" />

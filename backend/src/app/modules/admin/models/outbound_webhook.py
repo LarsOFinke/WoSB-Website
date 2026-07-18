@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.time import utc_now
@@ -53,6 +53,11 @@ class OutboundWebhookDelivery(Base):
     """Persisted delivery attempt history for Discord channel webhooks."""
 
     __tablename__ = "outbound_webhook_deliveries"
+    __table_args__ = (
+        Index("ix_webhook_deliveries_created_id", "created_at", "id"),
+        Index("ix_webhook_deliveries_status_created_id", "status", "created_at", "id"),
+        Index("ix_webhook_deliveries_webhook_created_id", "webhook_id", "created_at", "id"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     webhook_id: Mapped[int] = mapped_column(

@@ -1,7 +1,7 @@
 from app.core.time import utc_now
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,6 +11,8 @@ class FleetEvent(Base):
     __tablename__ = "fleet_events"
     __table_args__ = (
         CheckConstraint("end_at >= start_at", name="ck_fleet_events_time_range"),
+        Index("ix_fleet_events_active_start", "is_cancelled", "start_at", "id"),
+        Index("ix_fleet_events_squad_active_start", "squad_id", "is_cancelled", "start_at", "id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

@@ -18,7 +18,7 @@ export const slotLimits = Object.freeze({
   starboard_weapon_slots: 12,
   mortar_weapon_slots: 8,
   special_weapon_slots: 8,
-  special_crew_slots: 8,
+  special_crew_slots: 5,
   ammunition_slots: 12,
   consumable_slots: 3,
   hold_slots: 24,
@@ -28,6 +28,7 @@ export function createBuildForm() {
   return {
     build_name: '',
     build_type: 'balanced',
+    classification_tags: [],
     ship_id: '',
     sails: '',
     upgrade_1: '',

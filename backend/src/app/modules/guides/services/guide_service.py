@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.accounts.models.user import User
@@ -54,7 +54,11 @@ def _guide_options():
     )
 
 
-def _guide_summary(guide: Guide) -> GuideSummary:
+def _guide_summary(
+    guide: Guide,
+    attachment_count: int | None = None,
+    build_reference_count: int | None = None,
+) -> GuideSummary:
     return GuideSummary(
         id=guide.id,
         title=guide.title,
@@ -62,8 +66,12 @@ def _guide_summary(guide: Guide) -> GuideSummary:
         summary=guide.summary,
         owner_id=guide.owner_id,
         owner=guide.owner,
-        attachment_count=len(guide.attachments),
-        build_reference_count=len(guide.build_references),
+        attachment_count=len(guide.attachments) if attachment_count is None else attachment_count,
+        build_reference_count=(
+            len(guide.build_references)
+            if build_reference_count is None
+            else build_reference_count
+        ),
         created_at=guide.created_at,
         updated_at=guide.updated_at,
     )
@@ -81,9 +89,20 @@ def _guide_read(guide: Guide) -> GuideRead:
 
 
 def list_guides(db: Session, search: str | None = None, category: str | None = None) -> list[GuideSummary]:
+    attachment_count = (
+        select(func.count(GuideAttachment.id))
+        .where(GuideAttachment.guide_id == Guide.id)
+        .correlate(Guide)
+        .scalar_subquery()
+    )
+    build_reference_count = (
+        select(func.count(GuideBuildReference.id))
+        .where(GuideBuildReference.guide_id == Guide.id)
+        .correlate(Guide)
+        .scalar_subquery()
+    )
     statement = (
-        select(Guide)
-        .options(*_guide_options())
+        select(Guide, attachment_count, build_reference_count)
         .where(Guide.is_published.is_(True))
         .order_by(Guide.updated_at.desc(), Guide.id.desc())
     )
@@ -92,7 +111,14 @@ def list_guides(db: Session, search: str | None = None, category: str | None = N
         statement = statement.where(Guide.title.ilike(like) | Guide.summary.ilike(like) | Guide.body.ilike(like))
     if category:
         statement = statement.where(Guide.category == category.strip().lower())
-    return [_guide_summary(guide) for guide in db.scalars(statement).unique().all()]
+    return [
+        _guide_summary(
+            guide,
+            attachment_count=int(file_count or 0),
+            build_reference_count=int(build_count or 0),
+        )
+        for guide, file_count, build_count in db.execute(statement).unique().all()
+    ]
 
 
 def get_guide(db: Session, guide_id: int) -> GuideRead | None:

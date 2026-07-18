@@ -29,6 +29,12 @@ Composables coordinate Vue state, lifecycle hooks, API calls and user-facing suc
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
 
+## Locale delivery
+
+The editable translation sources live in `src/locales/messages/`. Before development, tests and production builds, `scripts/generate-locales.mjs` compiles them into one ignored runtime module per locale under `src/locales/generated/`.
+
+English is the synchronous fallback in the application entry path. Every other locale is loaded through a dynamic import before it becomes active. This keeps untranslated keys safe, prevents mixed-language rendering during a switch and avoids shipping all seven languages on the first visit. Generated locale modules must not be edited or committed.
+
 ## Extension guide
 
 When adding a page capability:

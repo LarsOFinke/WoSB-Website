@@ -713,12 +713,14 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('fleet_events', schema=None) as batch_op:
+        batch_op.create_index('ix_fleet_events_active_start', ['is_cancelled', 'start_at', 'id'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_category'), ['category'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_end_at'), ['end_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_id'), ['id'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_is_cancelled'), ['is_cancelled'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_owner_id'), ['owner_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_squad_id'), ['squad_id'], unique=False)
+        batch_op.create_index('ix_fleet_events_squad_active_start', ['squad_id', 'is_cancelled', 'start_at', 'id'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_start_at'), ['start_at'], unique=False)
         batch_op.create_index(batch_op.f('ix_fleet_events_title'), ['title'], unique=False)
 
@@ -841,6 +843,9 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_outbound_webhook_deliveries_resource_type'), ['resource_type'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhook_deliveries_status'), ['status'], unique=False)
         batch_op.create_index(batch_op.f('ix_outbound_webhook_deliveries_webhook_id'), ['webhook_id'], unique=False)
+        batch_op.create_index('ix_webhook_deliveries_created_id', ['created_at', 'id'], unique=False)
+        batch_op.create_index('ix_webhook_deliveries_status_created_id', ['status', 'created_at', 'id'], unique=False)
+        batch_op.create_index('ix_webhook_deliveries_webhook_created_id', ['webhook_id', 'created_at', 'id'], unique=False)
 
     op.create_table('squad_members',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -954,6 +959,9 @@ def downgrade() -> None:
 
     op.drop_table('squad_members')
     with op.batch_alter_table('outbound_webhook_deliveries', schema=None) as batch_op:
+        batch_op.drop_index('ix_webhook_deliveries_webhook_created_id')
+        batch_op.drop_index('ix_webhook_deliveries_status_created_id')
+        batch_op.drop_index('ix_webhook_deliveries_created_id')
         batch_op.drop_index(batch_op.f('ix_outbound_webhook_deliveries_webhook_id'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhook_deliveries_status'))
         batch_op.drop_index(batch_op.f('ix_outbound_webhook_deliveries_resource_type'))
@@ -999,6 +1007,7 @@ def downgrade() -> None:
 
     op.drop_table('forum_posts')
     with op.batch_alter_table('fleet_events', schema=None) as batch_op:
+        batch_op.drop_index('ix_fleet_events_squad_active_start')
         batch_op.drop_index(batch_op.f('ix_fleet_events_title'))
         batch_op.drop_index(batch_op.f('ix_fleet_events_start_at'))
         batch_op.drop_index(batch_op.f('ix_fleet_events_squad_id'))
@@ -1007,6 +1016,7 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_fleet_events_id'))
         batch_op.drop_index(batch_op.f('ix_fleet_events_end_at'))
         batch_op.drop_index(batch_op.f('ix_fleet_events_category'))
+        batch_op.drop_index('ix_fleet_events_active_start')
 
     op.drop_table('fleet_events')
     with op.batch_alter_table('build_slots', schema=None) as batch_op:

@@ -17,6 +17,9 @@ export function hydrateBuildForm(form, build, slotLimitForField) {
   for (const fieldName of SCALAR_FIELDS) {
     form[fieldName] = build[fieldName] ?? form[fieldName]
   }
+  form.classification_tags = Array.isArray(build.classification_tags)
+    ? [...build.classification_tags]
+    : []
   for (const fieldName of Object.keys(slotLimits)) {
     const slots = Array.isArray(build[fieldName]) ? build[fieldName].map((slot) => ({ ...slot })) : []
     form[fieldName] = slots.length

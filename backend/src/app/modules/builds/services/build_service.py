@@ -2,9 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.builds.models.build import Build
+from app.modules.builds.models.build_classification import BuildClassification
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.builds.schemas.build_create import BuildCreate
-from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
+from app.modules.builds.schemas.constants import BUILD_CLASSIFICATION_VALUES, BUILD_TYPE_VALUES
 from app.modules.builds.services.build_validation import (
     BuildValidationError,
     validate_and_prepare_build,
@@ -15,12 +16,16 @@ __all__ = ["BuildValidationError", "create_build", "delete_build", "delete_user_
 
 
 def _build_query():
-    return select(Build).options(selectinload(Build.slots).selectinload(BuildSlot.option))
+    return select(Build).options(
+        selectinload(Build.slots).selectinload(BuildSlot.option),
+        selectinload(Build.classifications),
+    )
 
 def list_builds(
     db: Session,
     search: str | None = None,
     build_type: str | None = None,
+    classification: str | None = None,
     owner_id: int | None = None,
 ) -> list[Build]:
     statement = _build_query().join(Build.ship).order_by(Build.created_at.desc(), Build.id.desc())
@@ -35,6 +40,12 @@ def list_builds(
         normalized_type = build_type.strip().lower()
         if normalized_type in BUILD_TYPE_VALUES:
             statement = statement.where(Build.build_type == normalized_type)
+    if classification:
+        normalized_classification = classification.strip().lower()
+        if normalized_classification in BUILD_CLASSIFICATION_VALUES:
+            statement = statement.where(
+                Build.classifications.any(BuildClassification.tag == normalized_classification)
+            )
     if owner_id is not None:
         statement = statement.where(Build.owner_id == owner_id)
     return list(db.scalars(statement).unique().all())
@@ -53,6 +64,7 @@ def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildS
     db_build.mercenaries = build.mercenaries
     db_build.details = build.details
     db_build.slots = slots
+    db_build.classifications = [BuildClassification(tag=tag) for tag in build.classification_tags]
 
 def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -> Build:
     _, slots = validate_and_prepare_build(db, build)
@@ -90,8 +102,15 @@ def list_user_builds(
     user_id: int,
     search: str | None = None,
     build_type: str | None = None,
+    classification: str | None = None,
 ) -> list[Build]:
-    return list_builds(db, search=search, build_type=build_type, owner_id=user_id)
+    return list_builds(
+        db,
+        search=search,
+        build_type=build_type,
+        classification=classification,
+        owner_id=user_id,
+    )
 
 def delete_user_build(db: Session, build_id: int, user_id: int) -> bool:
     build = get_build(db, build_id)

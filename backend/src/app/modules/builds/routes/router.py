@@ -32,10 +32,11 @@ router = APIRouter(prefix="/builds", tags=["builds"])
 def get_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
+    classification: str | None = Query(default=None, max_length=40),
     db: Session = Depends(get_db),
     _: User = Depends(require_user),
 ) -> list[BuildRead]:
-    return list_builds(db, search=search, build_type=build_type)
+    return list_builds(db, search=search, build_type=build_type, classification=classification)
 
 
 @router.post("", response_model=BuildRead, status_code=status.HTTP_201_CREATED)
@@ -76,10 +77,17 @@ def get_build_options(
 def get_my_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
+    classification: str | None = Query(default=None, max_length=40),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> list[BuildRead]:
-    return list_user_builds(db, current_user.id, search=search, build_type=build_type)
+    return list_user_builds(
+        db,
+        current_user.id,
+        search=search,
+        build_type=build_type,
+        classification=classification,
+    )
 
 
 @router.put("/mine/{build_id}", response_model=BuildRead)

@@ -14,6 +14,7 @@ from app.modules.squads.services.squad_service import (
     can_manage_squad,
     can_view_squad_event,
     get_squad_model,
+    user_managed_squad_ids,
     user_squad_ids,
 )
 
@@ -26,7 +27,13 @@ class FleetEventPermissionError(PermissionError):
     pass
 
 
-def _serialize_event(db: Session, event: FleetEvent, user: User) -> FleetEventRead:
+def _serialize_event(
+    db: Session,
+    event: FleetEvent,
+    user: User,
+    *,
+    can_manage: bool | None = None,
+) -> FleetEventRead:
     squad = None
     if event.squad is not None:
         squad = CalendarSquadRead(id=event.squad.id, name=event.squad.name, slug=event.squad.slug)
@@ -43,7 +50,11 @@ def _serialize_event(db: Session, event: FleetEvent, user: User) -> FleetEventRe
         owner=event.owner,
         squad_id=event.squad_id,
         squad=squad,
-        can_manage=_can_manage_scope(db, user, event.squad_id),
+        can_manage=(
+            _can_manage_scope(db, user, event.squad_id)
+            if can_manage is None
+            else can_manage
+        ),
         is_cancelled=event.is_cancelled,
         created_at=event.created_at,
         updated_at=event.updated_at,
@@ -82,8 +93,9 @@ def list_fleet_events(
     squad_id: int | None = None,
     fleet_only: bool = False,
 ) -> list[FleetEventRead]:
+    manages_fleet = can_manage_fleet(db, user)
     statement = select(FleetEvent).where(FleetEvent.is_cancelled.is_(False))
-    if not can_manage_fleet(db, user):
+    if not manages_fleet:
         visible_squad_ids = user_squad_ids(db, user)
         statement = statement.where(
             or_(
@@ -102,7 +114,19 @@ def list_fleet_events(
     elif squad_id is not None:
         statement = statement.where(FleetEvent.squad_id == squad_id)
     statement = statement.order_by(FleetEvent.start_at.asc(), FleetEvent.id.asc())
-    return [_serialize_event(db, event, user) for event in db.scalars(statement).unique().all()]
+    events = db.scalars(statement).unique().all()
+    managed_squad_ids = set() if manages_fleet else set(user_managed_squad_ids(db, user))
+    return [
+        _serialize_event(
+            db,
+            event,
+            user,
+            can_manage=manages_fleet or (
+                event.squad_id is not None and event.squad_id in managed_squad_ids
+            ),
+        )
+        for event in events
+    ]
 
 
 def get_fleet_event(db: Session, event_id: int, user: User) -> FleetEventRead | None:

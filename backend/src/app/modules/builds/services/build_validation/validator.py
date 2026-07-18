@@ -8,6 +8,7 @@ from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_limits import (
     CONSUMABLE_SLOT_LIMIT,
     SPECIAL_CREW_SLOT_LIMIT,
+    regular_specialist_count,
 )
 from app.modules.builds.services.build_stat_service import apply_percentage_effects
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
@@ -135,9 +136,9 @@ class BuildValidator:
             (build.hold_slots, "Hold"),
         ):
             UniqueSlotValidator.validate(slots, label)
-        if len(build.special_crew_slots) > SPECIAL_CREW_SLOT_LIMIT:
+        if regular_specialist_count([slot.item for slot in build.special_crew_slots]) > SPECIAL_CREW_SLOT_LIMIT:
             raise BuildValidationError(
-                f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} distinct specialists."
+                f"Special crew is limited to {SPECIAL_CREW_SLOT_LIMIT} regular specialists. Ginger uses an extra slot."
             )
         if len(build.consumable_slots) > CONSUMABLE_SLOT_LIMIT:
             raise BuildValidationError(

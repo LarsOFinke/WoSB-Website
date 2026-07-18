@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
 import AttachmentInsertPanel from '@/core/components/AttachmentInsertPanel.vue'
 import BuildInsertPanel from '@/core/components/BuildInsertPanel.vue'
+import DiscoveryTileGrid from '@/core/components/DiscoveryTileGrid.vue'
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import MarkdownEditor from '@/core/components/MarkdownEditor.vue'
@@ -12,6 +13,7 @@ import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
 import { listBuilds } from '@/modules/builds/api/builds'
 import { createGuide, getGuide, updateGuide } from '@/modules/guides/api/guides'
+import { localizedGuideCategoryItems } from '@/modules/guides/domain/guideDiscovery'
 import { createBuildEmbedToken, createEmbedToken, removeBuildEmbedTokens, removeFileEmbedTokens, unembeddedAttachments, unembeddedBuilds } from '@/shared/content/richTextEmbeds'
 
 const route = useRoute()
@@ -25,8 +27,8 @@ const attachments = ref([])
 const availableBuilds = ref([])
 const linkedBuilds = ref([])
 const bodyEditor = ref(null)
-const categories = ['general', 'builds', 'combat', 'economy']
 const form = reactive({ title: '', category: 'general', summary: '', body: '' })
+const categories = computed(() => localizedGuideCategoryItems(t))
 const guideId = computed(() => route.params.id ? Number(route.params.id) : null)
 const isEditing = computed(() => Number.isInteger(guideId.value) && guideId.value > 0)
 const canSubmit = computed(() => form.title.trim() && form.body.trim() && !saving.value && !loading.value)
@@ -149,15 +151,14 @@ onMounted(async () => {
       <template v-else>
         <section class="wire-section form-section">
           <div class="section-title"><span>01</span><h2>{{ t('guides.create.sections.basics') }}</h2></div>
-          <div class="section-fields two-fields">
+          <div class="section-fields">
             <label class="input-panel embedded-field">
               <input v-model="form.title" required maxlength="180" :placeholder="t('guides.create.titlePlaceholder')" />
             </label>
-            <label class="select-shell full-select-shell">
-              <select v-model="form.category">
-                <option v-for="category in categories" :key="category" :value="category">{{ t(`guides.categories.${category}`) }}</option>
-              </select>
-            </label>
+          </div>
+          <div class="guide-category-editor">
+            <div class="classification-editor-heading"><div><strong>{{ t('discovery.guides.formTitle') }}</strong><p>{{ t('discovery.guides.formHint') }}</p></div></div>
+            <DiscoveryTileGrid v-model="form.category" :items="categories" compact />
           </div>
           <label class="input-panel embedded-field textarea-shell">
             <textarea v-model="form.summary" rows="3" maxlength="400" :placeholder="t('guides.create.summaryPlaceholder')"></textarea>

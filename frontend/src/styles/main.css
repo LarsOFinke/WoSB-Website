@@ -3857,7 +3857,7 @@ body {
 }
 
 .app-shell {
-  width: min(calc(100vw - (var(--shell-gutter) * 2)), var(--shell-max-width));
+  width: min(calc(100% - (var(--shell-gutter) * 2)), var(--shell-max-width));
   max-width: none;
   margin: 0 auto;
   padding: var(--shell-gutter) 0 clamp(1rem, 2vw, 1.75rem);
@@ -4329,7 +4329,7 @@ textarea:focus-visible {
 
 @media (max-width: 1040px) {
   .app-shell {
-    width: min(calc(100vw - 1rem), var(--shell-max-width));
+    width: min(calc(100% - 1rem), var(--shell-max-width));
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "topbar"
@@ -4493,7 +4493,7 @@ textarea:focus-visible {
 
 @media (max-width: 480px) {
   .app-shell {
-    width: min(calc(100vw - 0.5rem), var(--shell-max-width));
+    width: min(calc(100% - 0.5rem), var(--shell-max-width));
   }
 
   .topbar-brand-group {
@@ -10911,3 +10911,83 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* Build & Guide discovery */
+.discovery-frame { position: relative; overflow: clip; }
+.discovery-frame::before { content: ''; position: absolute; inset: 8rem -8rem auto auto; width: 28rem; aspect-ratio: 1; border: 1px solid rgba(193,146,76,.09); border-radius: 50%; box-shadow: inset 0 0 0 4rem rgba(193,146,76,.025), inset 0 0 0 8rem rgba(193,146,76,.02); pointer-events: none; }
+.discovery-hero, .discovery-toolbar, .discovery-picker, .discovery-results { position: relative; z-index: 1; }
+.discovery-toolbar { display: grid; grid-template-columns: minmax(240px,1fr) minmax(180px,.32fr) auto; gap: .75rem; align-items: center; }
+.guides-page .discovery-toolbar { grid-template-columns: minmax(240px,1fr) auto; }
+.discovery-toolbar .filter-box { min-height: 3.15rem; display: flex; align-items: center; gap: .65rem; padding: 0 .9rem; border: 1px solid rgba(193,146,76,.28); background: rgba(3,17,31,.6); }
+.discovery-toolbar .filter-box input, .discovery-toolbar .filter-box select { width: 100%; border: 0; background: transparent; }
+.discovery-reset { min-height: 3.15rem; padding: 0 1.1rem; border: 1px solid rgba(193,146,76,.26); background: transparent; color: var(--gold, #c9a35f); }
+.discovery-reset:disabled { opacity: .38; }
+.discovery-picker { padding-block: clamp(1.2rem,2vw,2rem); }
+.discovery-section-heading { max-width: 50rem; margin-bottom: 1.25rem; }
+.discovery-section-heading h2 { margin: .15rem 0 .35rem; font-size: clamp(1.45rem,2.6vw,2rem); }
+.discovery-group + .discovery-group { margin-top: 1.35rem; }
+.discovery-group > h3 { margin: 0 0 .65rem; color: var(--gold, #c9a35f); font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; }
+.discovery-tile-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(13rem,1fr)); gap: .7rem; }
+.discovery-tile-grid.is-compact { grid-template-columns: repeat(auto-fit,minmax(10.5rem,1fr)); }
+.discovery-tile { --tile-accent: 88,138,174; position: relative; min-height: 7.1rem; display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center; padding: 1rem; overflow: hidden; text-align: left; color: inherit; border: 1px solid rgba(193,146,76,.3); background: linear-gradient(145deg,rgba(9,31,51,.96),rgba(3,17,31,.9)); transition: transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.discovery-tile-grid.is-compact .discovery-tile { min-height: 5.6rem; padding: .8rem; }
+.discovery-tile::after { content: ''; position: absolute; inset: auto -2rem -3rem auto; width: 8rem; aspect-ratio: 1; border: 1px solid rgba(var(--tile-accent),.14); border-radius: 50%; }
+.discovery-tile.tone-battle { --tile-accent: 184,92,68; }.discovery-tile.tone-trade { --tile-accent: 169,139,67; }.discovery-tile.tone-harbor { --tile-accent: 205,160,83; }.discovery-tile.tone-iron { --tile-accent: 136,151,164; }
+.discovery-tile:hover { transform: translateY(-2px); border-color: rgba(216,171,91,.74); box-shadow: 0 .75rem 1.8rem rgba(0,0,0,.25); }
+.discovery-tile.is-selected { border-color: #d7a957; box-shadow: inset 0 0 0 1px rgba(215,169,87,.34),0 0 1.4rem rgba(215,169,87,.12); background: linear-gradient(145deg,rgba(19,48,73,.98),rgba(5,25,43,.95)); }
+.discovery-tile-icon { display: grid; place-items: center; width: 2.8rem; aspect-ratio: 1; color: rgb(var(--tile-accent)); }
+.discovery-tile-copy { display: grid; gap: .22rem; min-width: 0; }.discovery-tile-copy strong { font-family: var(--font-display,serif); font-size: 1rem; }.discovery-tile-copy small { color: var(--text-muted,#91a2b5); line-height: 1.35; }
+.discovery-tile-check { align-self: start; color: #d7a957; font-weight: 800; }
+.discovery-show-all { width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; margin-top: 1.25rem; padding: 1rem 1.15rem; color: inherit; text-align: left; border: 1px dashed rgba(193,146,76,.4); background: rgba(3,17,31,.45); }
+.discovery-show-all span { display: grid; gap: .2rem; }.discovery-show-all small { color: var(--text-muted,#91a2b5); }
+.discovery-results-heading, .classification-editor-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; }.discovery-results-heading h2 { margin: .1rem 0 0; }
+.classification-chip-row { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0; }.classification-chip-row span { padding: .22rem .5rem; border: 1px solid rgba(193,146,76,.28); color: #cfb47b; font-size: .72rem; }
+.build-classification-editor, .guide-category-editor { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(193,146,76,.18); }.classification-editor-heading p { margin: .25rem 0 0; }.classification-editor-heading > span { color: #cfb47b; white-space: nowrap; }
+.ginger-specialist-card { display: grid; grid-template-columns: auto 1fr auto; gap: .75rem; align-items: center; width: 100%; margin-bottom: .75rem; padding: .75rem; text-align: left; color: inherit; border: 1px dashed rgba(207,180,123,.42); background: rgba(28,47,61,.48); }.ginger-specialist-card span:nth-child(2) { display: grid; gap: .2rem; }.ginger-specialist-card small { color: var(--text-muted,#91a2b5); }.ginger-specialist-card b { color: #d7a957; }.ginger-specialist-card.is-selected { border-style: solid; border-color: #d7a957; background: rgba(54,67,61,.6); }
+@media (max-width: 760px) { .discovery-toolbar, .guides-page .discovery-toolbar { grid-template-columns: 1fr; }.discovery-tile-grid,.discovery-tile-grid.is-compact { grid-template-columns: repeat(2,minmax(0,1fr)); }.discovery-tile { min-height: 6.2rem; grid-template-columns: auto 1fr; }.discovery-tile-check { position: absolute; top: .55rem; right: .65rem; }.discovery-tile-copy small { display: none; } }
+@media (max-width: 430px) { .discovery-tile-grid,.discovery-tile-grid.is-compact { grid-template-columns: 1fr; }.discovery-tile-copy small { display: block; } }
+@media (prefers-reduced-motion: reduce) { .discovery-tile { transition: none; }.discovery-tile:hover { transform: none; } }
+
+/* Compact Build Designer: calculated result first, inputs second */
+.build-designer-compact { gap: .85rem; }
+.build-designer-compact .create-topline { min-height: 0; padding: .9rem 1.1rem; }
+.build-designer-compact .create-topline h1 { font-size: clamp(1.65rem,3vw,2.3rem); }
+.build-designer-compact .create-topline p { margin-bottom: 0; }
+.build-result-summary { padding: .85rem; }
+.compact-workspace-heading, .build-config-heading { display: flex; align-items: flex-start; gap: .75rem; }
+.compact-workspace-heading { margin-bottom: .65rem; }.compact-workspace-heading > span, .build-config-heading > span { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; flex: 0 0 auto; border: 1px solid rgba(214,167,87,.48); color: #d6a757; font-size: .75rem; font-weight: 800; }
+.compact-workspace-heading h2, .build-config-heading h2 { margin: .1rem 0 0; font-size: clamp(1.25rem,2vw,1.65rem); }.build-config-heading { margin: .35rem .1rem 0; }.build-config-heading p:last-child { margin: .2rem 0 0; }
+.build-result-summary .build-command-deck { grid-template-columns: minmax(0,1.2fr) minmax(18rem,.8fr); gap: .65rem; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.build-result-summary .command-deck-header { display: none; }
+.build-result-summary .command-deck-overview { grid-column: 1 / -1; grid-template-columns: minmax(14rem,.58fr) minmax(0,1.42fr); gap: .65rem; }
+.build-result-summary .command-deck-panel { padding: .7rem; border-radius: .65rem; }
+.build-result-summary .ship-identity-panel { grid-template-columns: 5.5rem minmax(0,1fr); gap: .45rem .75rem; align-items: center; }
+.build-result-summary .ship-visual { grid-row: 1 / span 3; width: 5.5rem; min-height: 5rem; height: 5rem; }
+.build-result-summary .ship-catalog-image { min-height: 5rem; }
+.build-result-summary .ship-operational-summary { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .25rem; }
+.build-result-summary .ship-operational-summary span { padding: .3rem .4rem; }
+.build-result-summary .crew-capacity-meter, .build-result-summary .crew-capacity-caption { grid-column: 1 / -1; }
+.build-result-summary .effective-stat-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: .35rem; margin-top: .5rem; }
+.build-result-summary .effective-stat-cell { min-height: 3.7rem; padding: .45rem; }
+.build-result-summary .command-panel-title small { display: none; }
+.build-result-summary .upgrade-rack-panel { grid-column: 1; }
+.build-result-summary .upgrade-rack-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: .35rem; margin-top: .5rem; }
+.build-result-summary .upgrade-rack-slot { grid-template-columns: 1.6rem minmax(0,1fr); min-height: 3.25rem; gap: .35rem; padding: .4rem; }
+.build-result-summary .upgrade-rack-index { width: 1.5rem; height: 1.5rem; }
+.build-result-summary .upgrade-rack-slot small { display: none; }.build-result-summary .upgrade-rack-slot strong { font-size: .72rem; }
+.build-result-summary .modifier-intelligence-panel { grid-column: 2; }
+.build-result-summary .modifier-intelligence-grid { gap: .4rem; margin-top: .5rem; }.build-result-summary .modifier-column { padding: .5rem; }.build-result-summary .modifier-chip { padding: .32rem .42rem; }
+.build-config-grid { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(22rem,.75fr); grid-template-areas: 'basics basics' 'equipment specialists' 'weapons crew' 'inventory inventory' 'details details'; gap: .75rem; align-items: start; }
+.build-config-grid > .form-section { margin: 0; padding: .85rem; }
+.compact-basics-panel { grid-area: basics; }.compact-equipment-panel { grid-area: equipment; }.compact-weapons-panel { grid-area: weapons; }.compact-specialists-panel { grid-area: specialists; }.compact-crew-panel { grid-area: crew; }.compact-inventory-panel { grid-area: inventory; }.compact-details-panel { grid-area: details; }
+.build-designer-compact .section-title { margin-bottom: .65rem; }.build-designer-compact .section-helper-text { margin: -.2rem 0 .55rem; }
+.build-designer-compact .build-classification-editor { margin-top: .65rem; padding-top: .65rem; }.build-designer-compact .classification-editor-heading { margin-bottom: .5rem; }.build-designer-compact .classification-editor-heading p { display: none; }
+.build-designer-compact .build-classification-editor .discovery-group + .discovery-group { margin-top: .6rem; }
+.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(7,minmax(0,1fr)); gap: .35rem; }
+.build-designer-compact .build-classification-editor .discovery-tile { min-height: 3.8rem; grid-template-columns: auto 1fr; gap: .4rem; padding: .45rem; }.build-designer-compact .build-classification-editor .discovery-tile-icon { width: 1.8rem; }.build-designer-compact .build-classification-editor .discovery-tile-copy small { display: none; }.build-designer-compact .build-classification-editor .discovery-tile-copy strong { font-size: .78rem; }.build-designer-compact .build-classification-editor .discovery-tile-check { position: absolute; top: .2rem; right: .35rem; }
+.build-designer-compact .equipment-unified-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: .45rem; }.build-designer-compact .equipment-slot { min-height: 7.1rem; gap: .35rem; padding: .5rem; }.build-designer-compact .equipment-slot .slot-visual { width: 2.6rem; height: 2.6rem; }.build-designer-compact .equipment-slot .field-caption { min-height: auto; font-size: .72rem; }.build-designer-compact .equipment-slot .slot-effect-text { display: none; }
+.build-designer-compact .research-slot-toggle { margin-top: .5rem; }
+.build-designer-compact .weapon-arc-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; }.build-designer-compact .inventory-panel { gap: .4rem; padding: .6rem; }.build-designer-compact .inventory-slot-select { padding: .4rem; }
+.build-designer-compact .crew-allocation-console { gap: .55rem; padding: .65rem; }.build-designer-compact .crew-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .45rem; }.build-designer-compact .crew-slider-card { min-height: 7rem; padding: .55rem; }.build-designer-compact .crew-role-image { width: 2.7rem; height: 2.2rem; margin: 0; }
+.build-designer-compact .compact-inventory-panel .inventory-grid { gap: .55rem; }.build-designer-compact .compact-inventory-panel .slot-hint { display: none; }.build-designer-compact .details-field textarea { min-height: 5rem; }
+@media (max-width: 1180px) { .build-result-summary .build-command-deck { grid-template-columns: 1fr; }.build-result-summary .upgrade-rack-panel,.build-result-summary .modifier-intelligence-panel { grid-column: 1; }.build-config-grid { grid-template-columns: 1fr; grid-template-areas: 'basics' 'equipment' 'weapons' 'crew' 'specialists' 'inventory' 'details'; }.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 720px) { .build-result-summary .command-deck-overview { grid-template-columns: 1fr; }.build-result-summary .effective-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-result-summary .upgrade-rack-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .section-fields.three-fields { grid-template-columns: 1fr; }.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .equipment-unified-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .weapon-arc-grid,.build-designer-compact .compact-inventory-panel .inventory-grid { grid-template-columns: 1fr; } }

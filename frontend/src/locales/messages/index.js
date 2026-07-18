@@ -23,6 +23,7 @@ import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
 import { discordWebhooksMessages } from './discordWebhooks'
+import { discoveryModulesMessages } from './discoveryModules'
 import { squadOrganizationMessages } from './squadOrganization'
 import { fillLocalizedMessages } from '../autoLocalization'
 import { groupManagementMessages } from './groupManagement'
@@ -53,6 +54,7 @@ const messageLayers = [
   ipBlockManagementMessages,
   outboundWebhookManagementMessages,
   discordWebhooksMessages,
+  discoveryModulesMessages,
   adminDashboardMessages,
   masterDataMessages,
   finalNavigationAndGroupSignupMessages,

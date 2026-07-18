@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.accounts.models.user import User
@@ -168,15 +168,24 @@ def user_leadership_memberships(db: Session, user: User) -> list[FleetMembership
 def can_manage_fleet(db: Session, user: User, fleet_id: int | None = None) -> bool:
     if user.can_moderate:
         return True
-    primary = get_primary_fleet(db)
-    if primary is None or (fleet_id is not None and fleet_id != primary.id):
+    primary_id = db.scalar(
+        select(Fleet.id)
+        .where(Fleet.is_active.is_(True))
+        .order_by(
+            case((Fleet.slug == PRIMARY_FLEET_SLUG, 0), else_=1),
+            Fleet.sort_order,
+            Fleet.id,
+        )
+        .limit(1)
+    )
+    if primary_id is None or (fleet_id is not None and fleet_id != primary_id):
         return False
     return db.scalar(
         select(FleetMembership.id)
         .join(FleetMembership.fleet_role)
         .where(
             FleetMembership.user_id == user.id,
-            FleetMembership.fleet_id == primary.id,
+            FleetMembership.fleet_id == primary_id,
             FleetMembership.status == FLEET_MEMBER_ACTIVE,
             FleetRoleDefinition.can_manage_fleet.is_(True),
         )

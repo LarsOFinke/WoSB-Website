@@ -2,13 +2,18 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.modules.builds.schemas.constants import BUILD_TYPE_VALUES
+from app.modules.builds.schemas.constants import (
+    BUILD_CLASSIFICATION_VALUES,
+    BUILD_TYPE_VALUES,
+    MAX_BUILD_CLASSIFICATIONS,
+)
 from app.modules.builds.schemas.inventory_slot import InventorySlot
 
 class BuildBase(BaseModel):
     build_name: str = Field(min_length=1, max_length=140)
     build_type: str = Field(default="balanced", max_length=32)
     ship_id: int
+    classification_tags: list[str] = Field(default_factory=list, max_length=MAX_BUILD_CLASSIFICATIONS)
 
     sails: str | None = Field(default=None, max_length=140)
     upgrade_1: str | None = Field(default=None, max_length=140)
@@ -33,7 +38,7 @@ class BuildBase(BaseModel):
     starboard_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=12)
     mortar_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
     special_weapon_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
-    special_crew_slots: list[InventorySlot] = Field(default_factory=list, max_length=8)
+    special_crew_slots: list[InventorySlot] = Field(default_factory=list, max_length=5)
     ammunition_slots: list[InventorySlot] = Field(default_factory=list, max_length=16)
     consumable_slots: list[InventorySlot] = Field(default_factory=list, max_length=3)
     hold_slots: list[InventorySlot] = Field(default_factory=list, max_length=32)
@@ -45,6 +50,21 @@ class BuildBase(BaseModel):
         normalized = value.strip().lower() if isinstance(value, str) else "balanced"
         if normalized not in BUILD_TYPE_VALUES:
             raise ValueError("Invalid build type.")
+        return normalized
+
+    @field_validator("classification_tags", mode="before")
+    @classmethod
+    def validate_classification_tags(cls, value: object) -> list[str]:
+        if value is None or value == "":
+            return []
+        if not isinstance(value, (list, tuple, set)):
+            raise ValueError("Build classifications must be submitted as a list.")
+        normalized = list(dict.fromkeys(str(tag).strip().lower() for tag in value if str(tag).strip()))
+        invalid = [tag for tag in normalized if tag not in BUILD_CLASSIFICATION_VALUES]
+        if invalid:
+            raise ValueError(f"Invalid build classification: {invalid[0]}.")
+        if len(normalized) > MAX_BUILD_CLASSIFICATIONS:
+            raise ValueError(f"A build can have at most {MAX_BUILD_CLASSIFICATIONS} classifications.")
         return normalized
 
     @field_validator(

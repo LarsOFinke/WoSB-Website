@@ -20,7 +20,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const { locale, setLocale, supportedLocales, t } = useLocale()
+const { locale, localeLoading, setLocale, supportedLocales, t } = useLocale()
 const { isAuthenticated, loadSession, logout, sessionState, user } = useSession()
 
 const profileLinkLabel = computed(() => user.value?.display_name || user.value?.username || t('common.profile'))
@@ -39,8 +39,9 @@ async function handleLogout() {
   }
 }
 
-function handleLocaleChange(event) {
-  setLocale(event.target.value)
+async function handleLocaleChange(event) {
+  const selectedLocale = event.target.value
+  if (!await setLocale(selectedLocale)) event.target.value = locale.value
 }
 
 onMounted(() => {
@@ -77,7 +78,7 @@ onMounted(() => {
       <label class="topbar-locale-select">
         <AppIcon name="globe" :size="17" />
         <span class="sr-only">{{ t('common.language') }}</span>
-        <select :value="locale" :aria-label="t('common.language')" @change="handleLocaleChange">
+        <select :value="locale" :aria-label="t('common.language')" :disabled="Boolean(localeLoading)" @change="handleLocaleChange">
           <option v-for="entry in supportedLocales" :key="entry.code" :value="entry.code">{{ entry.label }}</option>
         </select>
       </label>

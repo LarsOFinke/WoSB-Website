@@ -24,11 +24,6 @@ export default defineConfig({
               priority: 30,
             },
             {
-              name: 'app-locales',
-              test: /src[\/]locales[\/]/,
-              priority: 25,
-            },
-            {
               name: 'rich-text-vendor',
               test: /node_modules[\\/](?:markdown-it|dompurify|linkify-it|mdurl|uc\.micro)[\\/]/,
               priority: 20,

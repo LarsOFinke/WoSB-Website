@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.modules.guides.schemas.constants import GUIDE_CATEGORY_VALUES
+
 
 class GuideCreate(BaseModel):
     title: str = Field(min_length=1, max_length=180)
@@ -16,6 +18,8 @@ class GuideCreate(BaseModel):
     def normalize(self) -> "GuideCreate":
         self.title = self.title.strip()
         self.category = self.category.strip().lower() or "general"
+        if self.category not in GUIDE_CATEGORY_VALUES:
+            raise ValueError("Invalid guide category.")
         self.body = self.body.strip()
         if isinstance(self.summary, str):
             self.summary = self.summary.strip() or None

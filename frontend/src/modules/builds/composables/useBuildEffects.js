@@ -5,6 +5,7 @@ import { equipmentUpgradeCount } from '@/modules/builds/buildForm'
 import { normalizeInventorySlots } from '@/modules/builds/inventorySlots'
 import { calculateSpecialistEffectSets } from '@/modules/builds/specialistEffects'
 import { sailingEfficiencyPercent } from '@/modules/builds/crewAllocation'
+import { splitSpecialistSelection } from '@/modules/builds/domain/specialistSelection'
 
 const UPGRADE_GROUP_ORDER = ['speed', 'expeditionary', 'protection', 'combat', 'unusual', 'mortar', 'other']
 
@@ -88,9 +89,10 @@ export function useBuildEffects({
   const crewInvalid = computed(() => crewOverLimit.value || sailorsBelowMinimum.value)
   const specialCrewLimit = computed(() => Math.max(
     1,
-    Number(optionCatalog.value.limits?.special_crew_rows || optionCatalog.value.limits?.special_crew_total) || 8,
+    Number(optionCatalog.value.limits?.special_crew_regular_limit || optionCatalog.value.limits?.special_crew_total) || 4,
   ))
-  const specialCrewOverCapacity = computed(() => inventory.slotCount('special_crew_slots') > specialCrewLimit.value)
+  const regularSpecialCrewCount = computed(() => splitSpecialistSelection(form.special_crew_slots).regular.length)
+  const specialCrewOverCapacity = computed(() => regularSpecialCrewCount.value > specialCrewLimit.value)
   const upgradeSlotsUsed = computed(() => selectedUpgradeNames.value.filter(Boolean).length)
   const shipStatsPreview = computed(() => ({
     weaponTotal: inventory.allWeaponQuantityTotal(),

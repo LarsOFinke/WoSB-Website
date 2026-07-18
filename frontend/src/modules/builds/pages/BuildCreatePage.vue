@@ -1,7 +1,17 @@
 <script setup>
+import { computed } from 'vue'
+
 import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
+import DiscoveryTileGrid from '@/core/components/DiscoveryTileGrid.vue'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { useBuildDesigner } from '@/modules/builds/composables/useBuildDesigner'
+import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
+import {
+  composeSpecialistSelection,
+  GINGER_SPECIALIST_NAME,
+  REGULAR_SPECIALIST_LIMIT,
+  splitSpecialistSelection,
+} from '@/modules/builds/domain/specialistSelection'
 
 const props = defineProps({
   id: { type: String, default: '' },
@@ -24,10 +34,35 @@ const {
   quantityMaxForField, reconcileInventoryField, onInventoryItemChange, onInventoryQuantityChange,
   crewMaxFor, onCrewSliderInput, resetCrewAllocation, saveBuild,
 } = useBuildDesigner(props, { slotPlaceholderSrc })
+
+const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
+const specialistSelection = computed(() => splitSpecialistSelection(form.special_crew_slots))
+const regularSpecialistRows = computed(() => Array.from(
+  { length: REGULAR_SPECIALIST_LIMIT },
+  (_, index) => specialistSelection.value.regular[index] || { item: '', quantity: 1 },
+))
+const regularSpecialistOptions = computed(() => optionsFor('special_crew').filter((name) => name !== GINGER_SPECIALIST_NAME))
+
+function updateClassificationTags(tags) {
+  if (tags.length <= 6) form.classification_tags = tags
+}
+
+function updateRegularSpecialist(index, event) {
+  const next = regularSpecialistRows.value.map((slot) => ({ ...slot }))
+  next[index].item = event.target.value
+  form.special_crew_slots = composeSpecialistSelection(next, specialistSelection.value.gingerSelected)
+}
+
+function toggleGinger() {
+  form.special_crew_slots = composeSpecialistSelection(
+    specialistSelection.value.regular,
+    !specialistSelection.value.gingerSelected,
+  )
+}
 </script>
 <template>
   <section class="build-create-page" aria-labelledby="build-create-title">
-    <form class="wire-frame page-frame create-frame create-frame-clean" @submit.prevent="saveBuild">
+    <form class="wire-frame page-frame create-frame create-frame-clean build-designer-compact" @submit.prevent="saveBuild">
       <div class="create-topline">
         <div>
           <h1 id="build-create-title">{{ t(isEditing ? 'builds.edit.title' : 'builds.create.title') }}</h1>
@@ -36,12 +71,30 @@ const {
         <RouterLink class="small-action" :to="isEditing ? `/builds/${props.id}` : '/builds'">{{ t('common.back') }}</RouterLink>
       </div>
 
-      <section class="wire-section form-section identity-section" :aria-label="t('builds.create.sections.identity')">
+      <section v-if="selectedShip" class="wire-section build-result-summary" :aria-label="t('discovery.builds.liveResult')">
+        <div class="compact-workspace-heading"><span>01</span><div><p class="eyebrow">{{ t('discovery.builds.resultEyebrow') }}</p><h2>{{ t('discovery.builds.liveResult') }}</h2></div></div>
+        <BuildStatCommandDeck
+          :ship="selectedShip"
+          :stat-rows="buildStatRows"
+          :upgrade-slots="selectedUpgradeCards"
+          :effect-rows="activeEffectRows"
+          :crew-total="crewTotal"
+          :crew-capacity="crewCapacity"
+          :crew-remaining="crewRemaining"
+          :weapon-total="shipStatsPreview.weaponTotal"
+          :upgrade-slots-available="availableUpgradeSlots"
+          :special-crew-total="shipStatsPreview.specialCrew"
+        />
+      </section>
+
+      <div class="build-config-heading"><span>02</span><div><p class="eyebrow">{{ t('discovery.builds.inputEyebrow') }}</p><h2>{{ t('discovery.builds.configureTitle') }}</h2><p>{{ t('discovery.builds.configureHint') }}</p></div></div>
+      <div class="build-config-grid">
+      <section class="wire-section form-section identity-section compact-basics-panel" :aria-label="t('builds.create.sections.identity')">
         <div class="section-title">
           <span>01</span>
           <h2>{{ t('builds.create.sections.identity') }}</h2>
         </div>
-        <div class="section-fields two-fields">
+        <div class="section-fields three-fields">
           <label class="input-panel embedded-field">
             <input
               v-model="form.build_name"
@@ -58,44 +111,34 @@ const {
               </option>
             </select>
           </label>
+          <label class="input-panel embedded-field ship-select-field">
+            <select v-model="form.ship_id" required :disabled="loading" :aria-label="t('builds.create.ship')">
+              <option value="" disabled>{{ t('builds.create.selectShip') }}</option>
+              <option v-for="ship in ships" :key="ship.id" :value="ship.id">{{ ship.name }}</option>
+            </select>
+          </label>
+        </div>
+        <div class="build-classification-editor">
+          <div class="classification-editor-heading">
+            <div><strong>{{ t('discovery.builds.formTitle') }}</strong><p>{{ t('discovery.builds.formHint') }}</p></div>
+            <span>{{ t('discovery.builds.selectionCount', { count: form.classification_tags.length, max: 6 }) }}</span>
+          </div>
+          <div v-for="group in discoveryGroups" :key="group.key" class="discovery-group">
+            <h3>{{ group.label }}</h3>
+            <DiscoveryTileGrid
+              :model-value="form.classification_tags"
+              :items="group.items"
+              multiple
+              compact
+              @update:model-value="updateClassificationTags"
+            />
+          </div>
         </div>
       </section>
 
-      <section class="wire-section form-section ship-section" :aria-label="t('builds.create.sections.ship')">
+      <section class="wire-section form-section equipment-section compact-equipment-panel" :aria-label="t('builds.create.sections.equipment')">
         <div class="section-title">
           <span>02</span>
-          <h2>{{ t('builds.create.sections.ship') }}</h2>
-        </div>
-        <label class="input-panel embedded-field ship-select-field">
-          <select v-model="form.ship_id" required :disabled="loading" :aria-label="t('builds.create.ship')">
-            <option value="" disabled>{{ t('builds.create.selectShip') }}</option>
-            <option v-for="ship in ships" :key="ship.id" :value="ship.id">
-              {{ ship.name }}
-            </option>
-          </select>
-        </label>
-        <div v-if="selectedShip" class="ship-visual-summary">
-          <img :src="selectedShipImage" :alt="selectedShip.name" />
-          <div><span>{{ t('builds.visuals.selectedShip') }}</span><strong>{{ selectedShip.name }}</strong><small>{{ t('common.rate') }} {{ selectedShip.rate }} · {{ selectedShip.ship_type }}</small></div>
-        </div>
-        <BuildStatCommandDeck
-          v-if="selectedShip"
-          :ship="selectedShip"
-          :stat-rows="buildStatRows"
-          :upgrade-slots="selectedUpgradeCards"
-          :effect-rows="activeEffectRows"
-          :crew-total="crewTotal"
-          :crew-capacity="crewCapacity"
-          :crew-remaining="crewRemaining"
-          :weapon-total="shipStatsPreview.weaponTotal"
-          :upgrade-slots-available="availableUpgradeSlots"
-          :special-crew-total="shipStatsPreview.specialCrew"
-        />
-      </section>
-
-      <section class="wire-section form-section equipment-section" :aria-label="t('builds.create.sections.equipment')">
-        <div class="section-title">
-          <span>03</span>
           <h2>{{ t('builds.create.sections.equipment') }}</h2>
         </div>
         <div class="equipment-unified-grid">
@@ -152,9 +195,9 @@ const {
         </button>
       </section>
 
-      <section class="wire-section form-section weapons-section" :aria-label="t('builds.create.sections.weapons')">
+      <section class="wire-section form-section weapons-section compact-weapons-panel" :aria-label="t('builds.create.sections.weapons')">
         <div class="section-title">
-          <span>04</span>
+          <span>03</span>
           <h2>{{ t('builds.create.sections.weapons') }}</h2>
         </div>
         <p class="section-helper-text">{{ t('builds.create.weapons.hint') }}</p>
@@ -192,9 +235,9 @@ const {
         </div>
       </section>
 
-      <section class="wire-section form-section special-crew-section" :aria-label="t('builds.create.sections.specialCrew')">
+      <section class="wire-section form-section special-crew-section compact-specialists-panel" :aria-label="t('builds.create.sections.specialCrew')">
         <div class="section-title">
-          <span>05</span>
+          <span>04</span>
           <h2>{{ t('builds.create.sections.specialCrew') }}</h2>
         </div>
         <p class="section-helper-text">{{ t('builds.create.specialCrew.hint') }}</p>
@@ -202,19 +245,24 @@ const {
           <div class="inventory-panel special-crew-panel">
             <div class="inventory-heading">
               <strong>{{ t('builds.create.specialCrew.title') }}</strong>
-              <span>{{ t('builds.create.inventory.limitedSlotCount', { count: slotCount('special_crew_slots'), max: specialCrewLimit }) }}</span>
+              <span>{{ t('discovery.specialists.regularCount', { count: specialistSelection.regular.length, max: specialCrewLimit }) }}</span>
             </div>
-            <label v-for="(slot, index) in form.special_crew_slots" :key="`special-crew-${index}`" class="inventory-slot-select specialist-slot-select">
+            <button type="button" class="ginger-specialist-card" :class="{ 'is-selected': specialistSelection.gingerSelected }" :aria-pressed="specialistSelection.gingerSelected" @click="toggleGinger">
+              <span class="slot-image-cell"><img :src="inventoryImage('special_crew_slots', GINGER_SPECIALIST_NAME)" alt="" /></span>
+              <span><strong>{{ GINGER_SPECIALIST_NAME }}</strong><small>{{ t('discovery.specialists.gingerHint') }}</small></span>
+              <b>{{ specialistSelection.gingerSelected ? '✓' : '+' }}</b>
+            </button>
+            <label v-for="(slot, index) in regularSpecialistRows" :key="`special-crew-${index}`" class="inventory-slot-select specialist-slot-select">
               <span class="slot-image-cell">
                 <img :src="inventoryImage('special_crew_slots', slot.item)" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
               </span>
-              <select :value="slot.item" @change="onInventoryItemChange('special_crew_slots', index, $event)">
+              <select :value="slot.item" @change="updateRegularSpecialist(index, $event)">
                 <option value="">{{ t('common.empty') }}</option>
                 <option
-                  v-for="option in optionsFor('special_crew')"
+                  v-for="option in regularSpecialistOptions"
                   :key="option"
                   :value="option"
-                  :disabled="isOptionUsed(form.special_crew_slots, option, index)"
+                  :disabled="regularSpecialistRows.some((row, rowIndex) => rowIndex !== index && row.item === option)"
                 >
                   {{ optionLabel(option) }}
                 </option>
@@ -225,9 +273,9 @@ const {
         </div>
       </section>
 
-      <section class="wire-section form-section crew-section" :aria-label="t('builds.create.sections.crew')">
+      <section class="wire-section form-section crew-section compact-crew-panel" :aria-label="t('builds.create.sections.crew')">
         <div class="section-title">
-          <span>06</span>
+          <span>05</span>
           <h2>{{ t('builds.create.sections.crew') }}</h2>
         </div>
         <div class="crew-allocation-console" :class="{ 'is-invalid': crewInvalid }">
@@ -287,9 +335,9 @@ const {
         </div>
       </section>
 
-      <section class="wire-section form-section inventory-section" :aria-label="t('builds.create.sections.inventory')">
+      <section class="wire-section form-section inventory-section compact-inventory-panel" :aria-label="t('builds.create.sections.inventory')">
         <div class="section-title">
-          <span>07</span>
+          <span>06</span>
           <h2>{{ t('builds.create.sections.inventory') }}</h2>
         </div>
         <div class="inventory-grid three-columns">
@@ -391,15 +439,16 @@ const {
         </div>
       </section>
 
-      <section class="wire-section form-section details-section" :aria-label="t('builds.create.sections.details')">
+      <section class="wire-section form-section details-section compact-details-panel" :aria-label="t('builds.create.sections.details')">
         <div class="section-title">
-          <span>08</span>
+          <span>07</span>
           <h2>{{ t('builds.create.sections.details') }}</h2>
         </div>
         <label class="input-panel embedded-field details-field">
           <textarea v-model="form.details" rows="4" maxlength="3000" :placeholder="t('builds.create.detailsPlaceholder')"></textarea>
         </label>
       </section>
+      </div>
 
       <section class="wire-section save-readiness" :class="{ 'is-ready': submitBlockers.length === 0 }" aria-live="polite">
         <div>
