@@ -57,6 +57,8 @@ const translations = {
   'builds.print.notesTitle': 'Captain notes',
   'builds.print.footerHint': 'Prepared from the live build designer for offline review and print distribution.',
   'builds.print.footerBrand': 'Royal Blackwater Fleet · Build Designer',
+  'discovery.builds.tags.pvp_group.label': 'PvP Group',
+  'discovery.builds.tags.heavy.label': 'Heavy',
 }
 
 function t(key, params = {}) {
@@ -124,6 +126,7 @@ test('build print svg contains the key build identifiers', () => {
   assert.match(svg, /https:\/\/fleet\.example\/builds\/42/)
   assert.match(svg, /Weapon loadout/)
   assert.match(svg, /Copper Sheathing/)
+  assert.match(svg, /data-build-sheet-version="2"/)
 })
 
 test('build print file names are sanitized for downloads', () => {
@@ -176,4 +179,26 @@ test('build print renders the complete long captain note without truncation', ()
   const longDetails = `${'A detailed captain note with operational context. '.repeat(55)}${finalToken}`
   const svg = createBuildPrintSvg({ ...build, details: longDetails }, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
   assert.match(svg, new RegExp(finalToken))
+})
+
+test('build print preserves four regular specialists plus Ginger as an extra slot', () => {
+  const specialistBuild = {
+    ...build,
+    classification_tags: ['pvp_group', 'heavy'],
+    special_crew_slots: [
+      { item: 'Doctor', quantity: 1 },
+      { item: 'Gunner', quantity: 1 },
+      { item: 'Navigator', quantity: 1 },
+      { item: 'Carpenter', quantity: 1 },
+      { item: 'Ginger', quantity: 1 },
+    ],
+  }
+  const model = createBuildPrintModel(specialistBuild, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+  assert.equal(model.specialists.length, 4)
+  assert.equal(model.gingerSpecialist, 'Ginger')
+  assert.deepEqual(model.classificationLabels, ['PvP Group', 'Heavy'])
+
+  const svg = createBuildPrintSvg(specialistBuild, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+  assert.match(svg, /\+1 · Ginger/)
+  assert.match(svg, /PVP GROUP\s+·\s+HEAVY/)
 })

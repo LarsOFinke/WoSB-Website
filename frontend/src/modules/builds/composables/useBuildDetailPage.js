@@ -22,6 +22,8 @@ import {
   weaponArcRows as createWeaponArcRows,
 } from '@/modules/builds/domain/buildDetailPresentation'
 import { copyBuildShareLink } from '@/modules/builds/shareBuild'
+import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
+import { GINGER_SPECIALIST_NAME } from '@/modules/builds/domain/specialistSelection'
 import { useSession } from '@/modules/accounts/session'
 
 export function useBuildDetailPage(props) {
@@ -42,6 +44,14 @@ export function useBuildDetailPage(props) {
   const upgrades = computed(() => buildUpgrades(build.value))
   const commandDeckUpgradeSlots = computed(() => commandDeckSlots(build.value, optionLabel))
   const specialCrewSlots = computed(() => build.value?.special_crew_slots || [])
+  const regularSpecialCrewSlots = computed(() => specialCrewSlots.value.filter((slot) => slotItem(slot) !== GINGER_SPECIALIST_NAME))
+  const gingerSpecialCrewSlot = computed(() => specialCrewSlots.value.find((slot) => slotItem(slot) === GINGER_SPECIALIST_NAME) || null)
+  const classificationLabels = computed(() => {
+    const labelByValue = new Map(
+      localizedBuildDiscoveryGroups(t).flatMap((group) => group.items.map((item) => [item.value, item.label])),
+    )
+    return (build.value?.classification_tags || []).map((value) => ({ value, label: labelByValue.get(value) || value }))
+  })
   const ammunitionSlots = computed(() => build.value?.ammunition_slots || [])
   const consumableSlots = computed(() => build.value?.consumable_slots || [])
   const holdSlots = computed(() => build.value?.hold_slots || [])
@@ -109,7 +119,8 @@ export function useBuildDetailPage(props) {
     optionLabel, t, user, build, optionCatalog, loading, error, shareStatus,
     ...printActions,
     categoryFallbackImages, crewFallbackImages, weaponArcRows, crewTotal, canEdit,
-    upgrades, commandDeckUpgradeSlots, specialCrewSlots, ammunitionSlots,
+    upgrades, commandDeckUpgradeSlots, specialCrewSlots, regularSpecialCrewSlots,
+    gingerSpecialCrewSlot, classificationLabels, ammunitionSlots,
     consumableSlots, holdSlots, crewDistributionRows, optionMeta, optionImage,
     inventoryCategory, slotItem, slotLabel, slotQuantity, inventoryImage,
     specialistLabel, shareLinkMeta, shareBuild, buildTypeLabel, roundByPrecision,

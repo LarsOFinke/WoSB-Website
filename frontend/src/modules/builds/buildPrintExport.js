@@ -1,27 +1,27 @@
 import { buildCrewVisualUrl, buildVisualUrl } from './buildVisuals.js'
 import { buildShareUrl } from './shareBuild.js'
 
-const PAGE_WIDTH = 1240
-const BASE_PAGE_HEIGHT = 1480
-const FOOTER_HEIGHT = 72
-const PANEL_GAP = 24
-const PAGE_PADDING = 52
-const CONTENT_WIDTH = PAGE_WIDTH - PAGE_PADDING * 2
-const COLUMN_WIDTH = (CONTENT_WIDTH - PANEL_GAP) / 2
+const PAGE_WIDTH = 1400
+const BASE_PAGE_HEIGHT = 1980
+const PAGE_PADDING = 46
+const CONTENT_WIDTH = PAGE_WIDTH - (PAGE_PADDING * 2)
+const COLUMN_GAP = 22
+const COLUMN_WIDTH = (CONTENT_WIDTH - COLUMN_GAP) / 2
+const SECTION_GAP = 22
+const FOOTER_HEIGHT = 86
 
 const COLORS = {
-  page: '#08111b',
-  pageGlow: '#102032',
-  panel: '#101d2b',
-  panelSoft: '#152537',
-  border: 'rgba(221, 231, 244, 0.14)',
-  borderStrong: 'rgba(241, 184, 91, 0.34)',
-  text: '#f4f7fb',
-  muted: '#b8c4d2',
-  accent: '#f1b85b',
-  accentStrong: '#ffd27a',
-  success: '#9fe6b2',
-  danger: '#ff9d9d',
+  page: '#07111a',
+  panel: '#0d1a26',
+  panelSoft: '#112231',
+  border: '#263847',
+  borderStrong: '#8f713f',
+  text: '#f4f7fa',
+  muted: '#9babb9',
+  faint: '#647889',
+  accent: '#e8be70',
+  accentSoft: '#2c281f',
+  danger: '#d88980',
 }
 
 const CORE_STAT_KEYS = new Set([
@@ -38,14 +38,10 @@ const CORE_STAT_KEYS = new Set([
 
 const PRINT_VISUALS = {
   ship: buildVisualUrl('ship'),
-  stats: buildVisualUrl('ship'),
-  crewPanel: buildCrewVisualUrl('sailors'),
-  upgrade: buildVisualUrl('upgrade'),
-  configuration: buildVisualUrl('sail'),
-  weapon: buildVisualUrl('weapon'),
-  inventory: buildVisualUrl('hold'),
   sail: buildVisualUrl('sail'),
   lantern: buildVisualUrl('lantern'),
+  upgrade: buildVisualUrl('upgrade'),
+  weapon: buildVisualUrl('weapon'),
   specialist: buildVisualUrl('specialist'),
   ammunition: buildVisualUrl('ammunition'),
   consumable: buildVisualUrl('consumable'),
@@ -81,10 +77,6 @@ function formatStatValue(value, unit, precision = 0) {
   return `${number}${unit ? ` ${unit}` : ''}`
 }
 
-function optionOrDash(labeler, value) {
-  return value ? labeler(value) : '—'
-}
-
 function listLabel(slot, labeler) {
   if (!slot) return ''
   if (typeof slot === 'string') return labeler(slot)
@@ -94,46 +86,42 @@ function listLabel(slot, labeler) {
 }
 
 function cleanLines(items, limit = Infinity) {
-  const lines = (items || [])
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
+  const lines = (items || []).map((item) => String(item || '').trim()).filter(Boolean)
   if (lines.length <= limit) return lines
   return [...lines.slice(0, Math.max(0, limit - 1)), `+${lines.length - (limit - 1)} more`]
 }
 
-function wrapText(text, maxChars = 44, maxLines = Infinity) {
+function wrapText(text, maxChars = 58) {
   const paragraphs = String(text || '').replace(/\r/g, '').split('\n')
   const lines = []
   for (const paragraph of paragraphs) {
     const normalized = paragraph.replace(/\s+/g, ' ').trim()
     if (!normalized) {
-      if (lines.length && lines[lines.length - 1] !== '') lines.push('')
+      if (lines.length && lines.at(-1) !== '') lines.push('')
       continue
     }
     let current = ''
-    for (const rawWord of normalized.split(' ')) {
-      const chunks = []
-      let word = rawWord
-      while (word.length > maxChars) {
-        chunks.push(word.slice(0, maxChars - 1) + '…')
-        word = word.slice(maxChars - 1)
+    for (const word of normalized.split(' ')) {
+      const next = current ? `${current} ${word}` : word
+      if (next.length <= maxChars) {
+        current = next
+        continue
       }
-      if (word) chunks.push(word)
-      for (const chunk of chunks) {
-        const next = current ? `${current} ${chunk}` : chunk
-        if (next.length <= maxChars) {
-          current = next
-        } else {
-          if (current) lines.push(current)
-          current = chunk
-        }
-        if (lines.length >= maxLines) return lines.slice(0, maxLines)
+      if (current) lines.push(current)
+      if (word.length <= maxChars) {
+        current = word
+        continue
       }
+      let rest = word
+      while (rest.length > maxChars) {
+        lines.push(`${rest.slice(0, maxChars - 1)}…`)
+        rest = rest.slice(maxChars - 1)
+      }
+      current = rest
     }
     if (current) lines.push(current)
-    if (lines.length >= maxLines) return lines.slice(0, maxLines)
   }
-  while (lines.length && lines[lines.length - 1] === '') lines.pop()
+  while (lines.at(-1) === '') lines.pop()
   return lines
 }
 
@@ -146,199 +134,79 @@ function sanitizeFileName(value) {
     .slice(0, 72) || 'build'
 }
 
-function renderMultilineText(lines, x, y, { fontSize = 18, fill = COLORS.text, fontWeight = 400, lineHeight = 1.4 } = {}) {
-  return lines.map((line, index) => `
-    <text x="${x}" y="${y + (index * fontSize * lineHeight)}" fill="${fill}" font-size="${fontSize}" font-weight="${fontWeight}">${escapeXml(line)}</text>`).join('')
-}
-
-function renderIconBadge(href, x, y, size = 42) {
+function renderIcon(href, x, y, size = 38, accented = false) {
   if (!href) return ''
-  return `
-    <g>
-      <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="14" fill="rgba(241, 184, 91, 0.1)" stroke="${COLORS.borderStrong}" />
-      <image href="${href}" x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" preserveAspectRatio="xMidYMid slice" />
+  return `<g>
+    <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="${accented ? COLORS.accentSoft : COLORS.panelSoft}" stroke="${accented ? COLORS.borderStrong : COLORS.border}" />
+    <image href="${escapeXml(href)}" x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" preserveAspectRatio="xMidYMid meet" />
+  </g>`
+}
+
+function renderSectionHeader(x, y, width, index, eyebrow, title, iconHref) {
+  return `<g>
+    <rect x="${x}" y="${y}" width="${width}" height="76" fill="${COLORS.panelSoft}" />
+    <circle cx="${x + 34}" cy="${y + 38}" r="16" fill="none" stroke="${COLORS.borderStrong}" />
+    <text x="${x + 34}" y="${y + 43}" text-anchor="middle" class="index">${String(index).padStart(2, '0')}</text>
+    ${renderIcon(iconHref, x + width - 58, y + 19, 38, true)}
+    <text x="${x + 62}" y="${y + 27}" class="eyebrow">${escapeXml(String(eyebrow || '').toUpperCase())}</text>
+    <text x="${x + 62}" y="${y + 55}" class="section-title">${escapeXml(title)}</text>
+  </g>`
+}
+
+function renderRowsPanel({ x, y, width, index, eyebrow, title, iconHref, rows, accentLast = false }) {
+  const rowHeight = 62
+  const height = 76 + (rows.length * rowHeight) + 12
+  const rowSvg = rows.map((row, rowIndex) => {
+    const rowY = y + 76 + (rowIndex * rowHeight)
+    const accented = Boolean(row.accent || (accentLast && rowIndex === rows.length - 1))
+    return `<g>
+      ${rowIndex ? `<line x1="${x + 18}" y1="${rowY}" x2="${x + width - 18}" y2="${rowY}" stroke="${COLORS.border}" />` : ''}
+      ${accented ? `<rect x="${x + 10}" y="${rowY + 6}" width="${width - 20}" height="${rowHeight - 10}" rx="5" fill="${COLORS.accentSoft}" stroke="${COLORS.borderStrong}" stroke-dasharray="5 5" />` : ''}
+      ${renderIcon(row.iconHref, x + 20, rowY + 12, 38, accented)}
+      <text x="${x + 72}" y="${rowY + 26}" class="row-label" fill="${accented ? COLORS.accent : COLORS.muted}">${escapeXml(row.label)}</text>
+      <text x="${x + 72}" y="${rowY + 48}" class="row-value">${escapeXml(row.value)}</text>
+      ${row.meta ? `<text x="${x + width - 20}" y="${rowY + 38}" text-anchor="end" class="row-meta">${escapeXml(row.meta)}</text>` : ''}
     </g>`
+  }).join('')
+  return {
+    height,
+    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref)}${rowSvg}</g>`,
+  }
 }
 
-function renderPanel({ x, y, width, height, eyebrow, title, content, iconHref = '' }) {
-  const headerOffset = iconHref ? 84 : 28
-  return `
-    <g>
-      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      ${iconHref ? renderIconBadge(iconHref, x + 28, y + 18, 42) : ''}
-      <text x="${x + headerOffset}" y="${y + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(eyebrow.toUpperCase())}</text>
-      <text x="${x + headerOffset}" y="${y + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(title)}</text>
-      ${content}
+function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, groups }) {
+  const normalizedGroups = groups.map((group) => ({ ...group, wrapped: wrapText(group.lines.join(' · '), 49) }))
+  const groupHeights = normalizedGroups.map((group) => 48 + (Math.max(1, group.wrapped.length) * 23))
+  const height = 76 + groupHeights.reduce((total, value) => total + value, 0) + 12
+  let cursorY = y + 76
+  const groupsSvg = normalizedGroups.map((group, groupIndex) => {
+    const groupY = cursorY
+    cursorY += groupHeights[groupIndex]
+    const lines = group.wrapped.length ? group.wrapped : ['—']
+    return `<g>
+      ${groupIndex ? `<line x1="${x + 18}" y1="${groupY}" x2="${x + width - 18}" y2="${groupY}" stroke="${COLORS.border}" />` : ''}
+      ${renderIcon(group.iconHref, x + 20, groupY + 14, 34)}
+      <text x="${x + 66}" y="${groupY + 28}" class="row-label">${escapeXml(group.label)}</text>
+      ${lines.map((line, lineIndex) => `<text x="${x + 66}" y="${groupY + 52 + (lineIndex * 23)}" class="group-line">${escapeXml(line)}</text>`).join('')}
     </g>`
+  }).join('')
+  return {
+    height,
+    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref)}${groupsSvg}</g>`,
+  }
 }
 
-
-function lineBlockHeight(lineCount, { fontSize = 15, lineHeight = 1.22, titleGap = 20, paddingBottom = 12 } = {}) {
-  const safeCount = Math.max(1, Number(lineCount || 0))
-  return titleGap + (safeCount * fontSize * lineHeight) + paddingBottom
-}
-
-function createBuildPrintDocument(build, helpers = {}) {
-  const model = createBuildPrintModel(build, helpers)
-  const xLeft = PAGE_PADDING
-  const xRight = PAGE_PADDING + COLUMN_WIDTH + PANEL_GAP
-  let leftY = 340
-  let rightY = 340
-
-  const summaryCardWidth = (CONTENT_WIDTH - (PANEL_GAP * 3)) / 4
-  const summaryCardsSvg = model.summaryCards.map((card, index) => {
-    const x = PAGE_PADDING + ((summaryCardWidth + PANEL_GAP) * index)
-    return `
-      <g>
-        <rect x="${x}" y="212" width="${summaryCardWidth}" height="104" rx="22" fill="${COLORS.panelSoft}" stroke="${COLORS.border}" />
-        <text x="${x + 24}" y="244" fill="${COLORS.muted}" font-size="14" font-weight="600">${escapeXml(card.label)}</text>
-        <text x="${x + 24}" y="278" fill="${COLORS.text}" font-size="30" font-weight="700">${escapeXml(card.value)}</text>
-        <text x="${x + 24}" y="298" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(card.detail)}</text>
-      </g>`
-  }).join('')
-
-  const statContent = model.statRows.map((row, index) => {
-    const y = leftY + 110 + index * 38
-    return `
-      <line x1="${xLeft + 28}" y1="${y - 18}" x2="${xLeft + COLUMN_WIDTH - 28}" y2="${y - 18}" stroke="${index === 0 ? 'transparent' : COLORS.border}" />
-      <text x="${xLeft + 28}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="18" font-weight="700">${escapeXml(formatStatValue(row.effective, row.unit, row.precision))}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y + 18}" text-anchor="end" fill="${Number(row.modifier) ? COLORS.accentStrong : COLORS.muted}" font-size="13">${escapeXml(`${formatStatValue(row.base, row.unit, row.precision)} · ${formatModifier(row)}`)}</text>`
-  }).join('')
-  const statPanelHeight = 420
-  const statPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: statPanelHeight, eyebrow: model.t('builds.commandDeck.performanceEyebrow'), title: model.t('builds.commandDeck.performanceTitle'), content: statContent, iconHref: PRINT_VISUALS.stats })
-  leftY += statPanelHeight + PANEL_GAP
-
-  const crewContent = model.crewRows.map((row, index) => {
-    const y = leftY + 112 + index * 54
-    const iconHref = PRINT_VISUALS.crew[row.key] || PRINT_VISUALS.crewPanel
-    return `
-      ${renderIconBadge(iconHref, xLeft + 28, y - 24, 32)}
-      <text x="${xLeft + 72}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xLeft + COLUMN_WIDTH - 28}" y="${y}" text-anchor="end" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>
-      ${row.hint ? `<text x="${xLeft + 72}" y="${y + 20}" fill="${COLORS.accentStrong}" font-size="13">${escapeXml(row.hint)}</text>` : ''}`
-  }).join('')
-  const crewPanelHeight = Math.max(236, 120 + (model.crewRows.length * 54))
-  const crewPanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: crewPanelHeight, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), content: crewContent, iconHref: PRINT_VISUALS.crewPanel })
-  leftY += crewPanelHeight + PANEL_GAP
-
-  let upgradePanel = ''
-  if (model.upgrades.length) {
-    const upgradeLines = model.upgrades
-    const upgradeContent = upgradeLines.map((line, index) => `
-      ${renderIconBadge(PRINT_VISUALS.upgrade, xLeft + 28, leftY + 91 + index * 32, 22)}
-      <text x="${xLeft + 60}" y="${leftY + 116 + index * 32}" fill="${COLORS.text}" font-size="17">${escapeXml(`${String(index + 1).padStart(2, '0')} · ${line}`)}</text>`).join('')
-    const upgradePanelHeight = Math.max(276, 116 + (upgradeLines.length * 32) + 28)
-    upgradePanel = renderPanel({ x: xLeft, y: leftY, width: COLUMN_WIDTH, height: upgradePanelHeight, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.detail.upgrades'), content: upgradeContent, iconHref: PRINT_VISUALS.upgrade })
-    leftY += upgradePanelHeight
+function renderNotesPanel(model, x, y, width, index) {
+  const lineHeight = 25
+  const height = 102 + (model.notes.length * lineHeight) + 22
+  return {
+    height,
+    svg: `<g>
+      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />
+      ${renderSectionHeader(x, y, width, index, model.t('builds.detail.details'), model.t('builds.print.notesTitle'), PRINT_VISUALS.notes)}
+      ${model.notes.map((line, lineIndex) => `<text x="${x + 22}" y="${y + 108 + (lineIndex * lineHeight)}" class="note-line">${escapeXml(line || ' ')}</text>`).join('')}
+    </g>`,
   }
-
-  let equipmentPanel = ''
-  if (model.equipmentRows.length || model.specialists.length) {
-    const equipmentContent = model.equipmentRows.map((row, index) => {
-    const y = rightY + 112 + index * 56
-    const iconHref = PRINT_VISUALS[row.key] || PRINT_VISUALS.configuration
-    return `
-      ${renderIconBadge(iconHref, xRight + 28, y - 26, 34)}
-      <text x="${xRight + 72}" y="${y}" fill="${COLORS.muted}" font-size="16">${escapeXml(row.label)}</text>
-      <text x="${xRight + 72}" y="${y + 24}" fill="${COLORS.text}" font-size="22" font-weight="700">${escapeXml(row.value)}</text>`
-  }).join('') + (model.specialists.length
-    ? renderMultilineText([
-        model.t('builds.detail.specialCrew'),
-        ...model.specialists,
-      ], xRight + 72, rightY + (model.equipmentRows.length * 56) + 136, { fontSize: 16, fill: COLORS.text }) + renderIconBadge(PRINT_VISUALS.specialist, xRight + 28, rightY + (model.equipmentRows.length * 56) + 110, 34)
-    : '')
-    const equipmentPanelHeight = Math.max(228, 136 + (model.equipmentRows.length * 56) + (model.specialists.length ? 26 + (model.specialists.length * 16 * 1.4) : 0))
-    equipmentPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: equipmentPanelHeight, eyebrow: model.t('builds.detail.buildType'), title: model.t('builds.print.configurationTitle'), content: equipmentContent, iconHref: PRINT_VISUALS.configuration })
-    rightY += equipmentPanelHeight + PANEL_GAP
-  }
-
-  let weaponPanel = ''
-  if (model.weapons.length) {
-    const weaponContent = model.weapons.map((group, index) => {
-    const baseY = rightY + 108 + index * 78
-    const lines = group.lines.length ? group.lines : ['—']
-    return `
-      <text x="${xRight + 28}" y="${baseY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.label)}</text>
-      ${renderMultilineText(lines, xRight + 28, baseY + 20, { fontSize: 15, fill: COLORS.text, lineHeight: 1.25 })}`
-  }).join('')
-    const weaponPanelHeight = Math.max(248, 112 + (model.weapons.length * 78))
-    weaponPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: weaponPanelHeight, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), content: weaponContent, iconHref: PRINT_VISUALS.weapon })
-    rightY += weaponPanelHeight + PANEL_GAP
-  }
-
-  let inventoryPanel = ''
-  if (model.inventoryGroups.length) {
-    let inventoryCursorY = rightY + 108
-    const inventoryContent = model.inventoryGroups.map((group, index) => {
-    const sectionY = inventoryCursorY
-    const lines = group.lines.length ? group.lines : ['—']
-    inventoryCursorY += lineBlockHeight(lines.length, { fontSize: 15, lineHeight: 1.24, titleGap: 22, paddingBottom: index === model.inventoryGroups.length - 1 ? 0 : 24 })
-    return `
-      ${renderIconBadge(PRINT_VISUALS[group.iconKey] || PRINT_VISUALS.inventory, xRight + 28, sectionY - 24, 30)}
-      <text x="${xRight + 66}" y="${sectionY}" fill="${COLORS.accentStrong}" font-size="15" font-weight="700">${escapeXml(group.title)}</text>
-      ${renderMultilineText(lines, xRight + 66, sectionY + 22, { fontSize: 15, fill: COLORS.text, lineHeight: 1.24 })}`
-  }).join('')
-    const inventoryPanelHeight = Math.max(212, Math.ceil(inventoryCursorY - rightY + 40))
-    inventoryPanel = renderPanel({ x: xRight, y: rightY, width: COLUMN_WIDTH, height: inventoryPanelHeight, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), content: inventoryContent, iconHref: PRINT_VISUALS.inventory })
-    rightY += inventoryPanelHeight
-  }
-
-  const hasNotes = model.notes.length > 0
-  const footerLines = hasNotes ? model.notes : []
-  const notesTextHeight = Math.max(1, footerLines.length) * 16 * 1.45
-  const contentBottomY = Math.max(leftY, rightY)
-  const notesPanelY = hasNotes ? (contentBottomY + PANEL_GAP) : 0
-  const notesPanelHeight = hasNotes ? Math.max(230, Math.ceil(132 + notesTextHeight)) : 0
-  const footerY = hasNotes ? (notesPanelY + notesPanelHeight + PANEL_GAP) : (contentBottomY + PANEL_GAP)
-  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(footerY + FOOTER_HEIGHT + PAGE_PADDING))
-
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}">
-    <defs>
-      <linearGradient id="pageGlow" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="${COLORS.pageGlow}" stop-opacity="0.78" />
-        <stop offset="100%" stop-color="${COLORS.page}" stop-opacity="1" />
-      </linearGradient>
-      <linearGradient id="accentGlow" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="${COLORS.accent}" stop-opacity="0.92" />
-        <stop offset="100%" stop-color="${COLORS.accentStrong}" stop-opacity="0.35" />
-      </linearGradient>
-    </defs>
-    <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${COLORS.page}" />
-    <circle cx="180" cy="140" r="260" fill="${COLORS.accent}" fill-opacity="0.09" />
-    <circle cx="1080" cy="120" r="220" fill="#5888bb" fill-opacity="0.11" />
-    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" rx="38" fill="url(#pageGlow)" stroke="${COLORS.border}" />
-    <rect x="${PAGE_PADDING}" y="${PAGE_PADDING}" width="${CONTENT_WIDTH}" height="132" rx="30" fill="${COLORS.panel}" stroke="${COLORS.borderStrong}" />
-    <rect x="${PAGE_PADDING + 24}" y="${PAGE_PADDING + 24}" width="6" height="84" rx="3" fill="url(#accentGlow)" />
-    ${renderIconBadge(PRINT_VISUALS.ship, PAGE_PADDING + 44, PAGE_PADDING + 24, 76)}
-    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 38}" fill="${COLORS.accent}" font-size="15" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
-    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 82}" fill="${COLORS.text}" font-size="40" font-weight="800">${escapeXml(model.buildName)}</text>
-    <text x="${PAGE_PADDING + 136}" y="${PAGE_PADDING + 112}" fill="${COLORS.muted}" font-size="20">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
-    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 38}" text-anchor="end" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
-    <text x="${PAGE_PADDING + CONTENT_WIDTH - 24}" y="${PAGE_PADDING + 62}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.shareUrl)}</text>
-    ${summaryCardsSvg}
-    ${statPanel}
-    ${crewPanel}
-    ${upgradePanel}
-    ${equipmentPanel}
-    ${weaponPanel}
-    ${inventoryPanel}
-    ${hasNotes ? `<g>
-      <rect x="${PAGE_PADDING}" y="${notesPanelY}" width="${CONTENT_WIDTH}" height="${notesPanelHeight}" rx="26" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      ${renderIconBadge(PRINT_VISUALS.notes, PAGE_PADDING + 28, notesPanelY + 18, 42)}
-      <text x="${PAGE_PADDING + 84}" y="${notesPanelY + 34}" fill="${COLORS.accent}" font-size="14" font-weight="700" letter-spacing="0.12em">${escapeXml(model.t('builds.detail.details').toUpperCase())}</text>
-      <text x="${PAGE_PADDING + 84}" y="${notesPanelY + 66}" fill="${COLORS.text}" font-size="28" font-weight="700">${escapeXml(model.t('builds.print.notesTitle'))}</text>
-      ${renderMultilineText(footerLines, PAGE_PADDING + 28, notesPanelY + 104, { fontSize: 16, fill: COLORS.text, lineHeight: 1.45 })}
-    </g>` : ''}
-    <g>
-      <line x1="${PAGE_PADDING + 28}" y1="${footerY + 16}" x2="${PAGE_PADDING + CONTENT_WIDTH - 28}" y2="${footerY + 16}" stroke="${COLORS.border}" />
-      <text x="${PAGE_PADDING + 28}" y="${footerY + 48}" fill="${COLORS.muted}" font-size="14">${escapeXml(model.t('builds.print.footerHint'))}</text>
-      <text x="${PAGE_PADDING + CONTENT_WIDTH - 28}" y="${footerY + 48}" text-anchor="end" fill="${COLORS.accentStrong}" font-size="14">${escapeXml(model.t('builds.print.footerBrand'))}</text>
-    </g>
-  </svg>`
-
-  return { svg, width: PAGE_WIDTH, height: pageHeight, model }
 }
 
 function statRowsForBuild(build, t) {
@@ -347,21 +215,8 @@ function statRowsForBuild(build, t) {
     .map((row) => {
       const path = `builds.statLabels.${row.key}`
       const translated = t(path)
-      return {
-        ...row,
-        label: translated === path ? (row.label || String(row.key).replaceAll('_', ' ')) : translated,
-      }
+      return { ...row, label: translated === path ? (row.label || String(row.key).replaceAll('_', ' ')) : translated }
     })
-}
-
-function formatModifier(row) {
-  const value = Number(row?.modifier || 0)
-  if (!Number.isFinite(value) || value === 0) return '—'
-  const sign = value > 0 ? '+' : ''
-  const suffix = row.modifier_kind === 'percent' || row.unit === '%' || String(row.effect_key || '').endsWith('_pct')
-    ? '%'
-    : (row.unit ? ` ${row.unit}` : '')
-  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
 }
 
 function buildTypeLabel(buildType, t) {
@@ -372,59 +227,68 @@ function makeSummaryCards(build, t) {
   const stats = build?.ship_stats || {}
   const crewCapacity = stats.crew_capacity || build?.ship?.crew_capacity || 0
   const crewTotal = stats.crew_total || 0
+  const upgrades = [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean)
   return [
     { label: t('builds.detail.buildType'), value: buildTypeLabel(build?.build_type, t), detail: `${t('common.rate')} ${build?.ship?.rate || '—'}` },
     { label: t('builds.detail.shipStats'), value: `${stats.weapon_total || 0}`, detail: t('builds.detail.weaponCapacity', { count: stats.weapon_capacity_total || 0 }) },
     { label: t('builds.detail.crewDistribution'), value: `${crewTotal}/${crewCapacity}`, detail: t('builds.commandDeck.crewRemaining', { value: stats.crew_remaining || 0 }) },
-    { label: t('builds.detail.upgrades'), value: `${stats.upgrades_selected || [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean).length || 0}`, detail: t('builds.list.upgradeSummary', { used: [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean).length, max: stats.upgrade_slots_available || 0 }) },
+    { label: t('builds.detail.upgrades'), value: `${upgrades.length}`, detail: t('builds.list.upgradeSummary', { used: upgrades.length, max: stats.upgrade_slots_available || 0 }) },
+  ]
+}
+
+function headlineStatsForBuild(build, statRows, t) {
+  const byKey = new Map(statRows.map((row) => [row.key, row]))
+  const statCard = (keys, fallbackLabel) => {
+    const row = keys.map((key) => byKey.get(key)).find(Boolean)
+    return { label: row?.label || fallbackLabel, value: row ? formatStatValue(row.effective, row.unit, row.precision) : '—' }
+  }
+  const stats = build?.ship_stats || {}
+  return [
+    statCard(['speed_knots', 'speed_min_knots'], t('builds.statLabels.speed_knots')),
+    statCard(['durability'], t('builds.statLabels.durability')),
+    statCard(['armor'], t('builds.statLabels.armor')),
+    { label: t('builds.detail.crewDistribution'), value: `${stats.crew_total || 0}/${stats.crew_capacity || build?.ship?.crew_capacity || 0}` },
+    statCard(['hold_capacity'], t('builds.detail.hold')),
   ]
 }
 
 function createBuildPrintModel(build, helpers = {}) {
-  const t = helpers.t || ((key, params = {}) => {
-    if (!params || typeof params !== 'object') return key
-    return Object.entries(params).reduce((acc, [name, value]) => acc.replaceAll(`{${name}}`, value), key)
-  })
+  const t = helpers.t || ((key, params = {}) => Object.entries(params || {}).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), key))
   const optionLabel = helpers.optionLabel || ((value) => value || '')
-  const locationObject = helpers.locationObject || globalThis.location
-  const shareUrl = buildShareUrl(build?.id || 0, locationObject)
+  const shareUrl = buildShareUrl(build?.id || 0, helpers.locationObject || globalThis.location)
   const statRows = statRowsForBuild(build, t)
-  const summaryCards = makeSummaryCards(build, t)
   const upgrades = cleanLines([
-    build?.upgrade_1,
-    build?.upgrade_2,
-    build?.upgrade_3,
-    build?.upgrade_4,
-    build?.upgrade_5,
-    build?.upgrade_6,
-    build?.upgrade_7,
-    build?.upgrade_8,
+    build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4,
+    build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8,
   ].filter(Boolean).map(optionLabel), 8)
-  const weaponGroups = [
-    { label: t('builds.detail.weapons.front'), slots: build?.front_weapon_slots || [] },
-    { label: t('builds.detail.weapons.port'), slots: build?.port_weapon_slots || [] },
-    { label: t('builds.detail.weapons.starboard'), slots: build?.starboard_weapon_slots || [] },
-    { label: t('builds.detail.weapons.rear'), slots: build?.rear_weapon_slots || [] },
-    { label: t('builds.detail.weapons.mortar'), slots: build?.mortar_weapon_slots || [] },
-    { label: t('builds.detail.weapons.special'), slots: build?.special_weapon_slots || [] },
-  ].map((group) => ({
-    ...group,
-    lines: cleanLines(group.slots.map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 3),
-  })).filter((group) => group.lines.length > 0)
+  const weapons = [
+    ['front', build?.front_weapon_slots], ['port', build?.port_weapon_slots],
+    ['starboard', build?.starboard_weapon_slots], ['rear', build?.rear_weapon_slots],
+    ['mortar', build?.mortar_weapon_slots], ['special', build?.special_weapon_slots],
+  ].map(([key, slots]) => ({
+    key,
+    label: t(`builds.detail.weapons.${key}`),
+    lines: cleanLines((slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
+  })).filter((group) => group.lines.length)
 
-  const specialists = cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4)
+  const allSpecialists = cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 5)
+  const gingerSpecialist = allSpecialists.find((name) => name.replace(/ ×\d+$/, '') === 'Ginger') || ''
+  const specialists = allSpecialists.filter((name) => name !== gingerSpecialist)
   const equipmentRows = [
-      build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build?.sails) } : null,
-      build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build?.lantern) } : null,
-      build?.research_upgrade_slot_unlocked ? { key: 'upgrade', label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
-    ].filter(Boolean)
+    build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build.sails) } : null,
+    build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build.lantern) } : null,
+    build?.research_upgrade_slot_unlocked ? { key: 'upgrade', label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
+  ].filter(Boolean)
   const inventoryGroups = [
-    { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
-    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
-    { iconKey: 'hold', title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4) },
-  ].filter((group) => group.lines.length > 0)
-
-  const noteLines = build?.details ? wrapText(build.details, 70) : []
+    { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
+    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
+    { iconKey: 'hold', title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
+  ].filter((group) => group.lines.length)
+  const classificationLabels = (build?.classification_tags || []).map((value) => {
+    const path = `discovery.builds.tags.${value}.label`
+    const translated = t(path)
+    return translated === path ? value.replaceAll('_', ' ') : translated
+  })
 
   return {
     t,
@@ -436,7 +300,9 @@ function createBuildPrintModel(build, helpers = {}) {
     shipRate: build?.ship?.rate || '—',
     shipType: build?.ship?.ship_type || '—',
     generatedAt: new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()),
-    summaryCards,
+    classificationLabels,
+    summaryCards: makeSummaryCards(build, t),
+    headlineStats: headlineStatsForBuild(build, statRows, t),
     statRows,
     crewRows: [
       { key: 'sailors', label: t('builds.create.crew.sailors'), value: `${build?.sailors ?? 0}`, hint: t('builds.list.sailorMin', { value: build?.ship_stats?.sailor_minimum || build?.ship?.sailor_minimum || 0 }) },
@@ -447,10 +313,102 @@ function createBuildPrintModel(build, helpers = {}) {
     equipmentRows,
     upgrades,
     specialists,
-    weapons: weaponGroups,
+    gingerSpecialist,
+    weapons,
     inventoryGroups,
-    notes: noteLines,
+    notes: build?.details ? wrapText(build.details, 112) : [],
   }
+}
+
+function createBuildPrintDocument(build, helpers = {}) {
+  const model = createBuildPrintModel(build, helpers)
+  const leftX = PAGE_PADDING
+  const rightX = PAGE_PADDING + COLUMN_WIDTH + COLUMN_GAP
+  let leftY = 416
+  let rightY = 416
+  let sectionIndex = 1
+  const panels = []
+
+  if (model.equipmentRows.length || model.upgrades.length) {
+    const rows = [
+      ...model.equipmentRows.map((row) => ({ ...row, iconHref: PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
+      ...model.upgrades.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade, iconHref: PRINT_VISUALS.upgrade })),
+    ]
+    const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows })
+    panels.push(panel.svg)
+    leftY += panel.height + SECTION_GAP
+  }
+
+  if (model.weapons.length) {
+    const panel = renderGroupedPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), iconHref: PRINT_VISUALS.weapon, groups: model.weapons.map((group) => ({ label: group.label, lines: group.lines, iconHref: PRINT_VISUALS.weapon })) })
+    panels.push(panel.svg)
+    leftY += panel.height + SECTION_GAP
+  }
+
+  const crewRows = [
+    ...model.crewRows.map((row) => ({ label: row.label, value: row.value, meta: row.hint, iconHref: PRINT_VISUALS.crew[row.key] })),
+    ...model.specialists.map((name) => ({ label: model.t('builds.detail.specialCrew'), value: name, iconHref: PRINT_VISUALS.specialist })),
+    ...(model.gingerSpecialist ? [{ label: '+1 · Ginger', value: model.gingerSpecialist, iconHref: PRINT_VISUALS.specialist, accent: true }] : []),
+  ]
+  const crewPanel = renderRowsPanel({ x: rightX, y: rightY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), iconHref: PRINT_VISUALS.crew.sailors, rows: crewRows })
+  panels.push(crewPanel.svg)
+  rightY += crewPanel.height + SECTION_GAP
+
+  if (model.inventoryGroups.length) {
+    const inventoryOnLeft = leftY <= rightY
+    const inventoryX = inventoryOnLeft ? leftX : rightX
+    const inventoryY = inventoryOnLeft ? leftY : rightY
+    const panel = renderGroupedPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })) })
+    panels.push(panel.svg)
+    if (inventoryOnLeft) leftY += panel.height + SECTION_GAP
+    else rightY += panel.height + SECTION_GAP
+  }
+
+  const contentBottom = Math.max(leftY, rightY)
+  let notesBottom = contentBottom
+  if (model.notes.length) {
+    const notesPanel = renderNotesPanel(model, PAGE_PADDING, contentBottom, CONTENT_WIDTH, sectionIndex++)
+    panels.push(notesPanel.svg)
+    notesBottom += notesPanel.height + SECTION_GAP
+  }
+  const footerY = Math.max(notesBottom + 12, BASE_PAGE_HEIGHT - FOOTER_HEIGHT - PAGE_PADDING)
+  const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(footerY + FOOTER_HEIGHT + PAGE_PADDING))
+  const statWidth = (CONTENT_WIDTH - (4 * 12)) / 5
+  const statCards = model.headlineStats.map((stat, index) => {
+    const x = PAGE_PADDING + (index * (statWidth + 12))
+    return `<g>
+      <rect x="${x}" y="278" width="${statWidth}" height="112" rx="5" fill="${COLORS.panel}" stroke="${index === 0 ? COLORS.borderStrong : COLORS.border}" />
+      <text x="${x + 18}" y="312" class="stat-label">${escapeXml(stat.label)}</text>
+      <text x="${x + 18}" y="357" class="stat-value">${escapeXml(stat.value)}</text>
+      <line x1="${x + 18}" y1="373" x2="${x + statWidth - 18}" y2="373" stroke="${index === 0 ? COLORS.accent : COLORS.border}" />
+    </g>`
+  }).join('')
+  const classifications = model.classificationLabels.length ? model.classificationLabels.join('  ·  ') : model.buildType
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="2">
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${COLORS.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${COLORS.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${COLORS.muted};font-size:19px}.share{fill:${COLORS.accent};font-size:14px}.eyebrow{fill:${COLORS.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${COLORS.text};font-family:Georgia,serif;font-size:24px}.index{fill:${COLORS.accent};font-size:11px;font-weight:800}.row-label{fill:${COLORS.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${COLORS.text};font-size:18px;font-weight:700}.row-meta{fill:${COLORS.faint};font-size:13px}.group-line{fill:${COLORS.text};font-size:16px}.note-line{fill:${COLORS.muted};font-family:Georgia,serif;font-size:17px}.stat-label{fill:${COLORS.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.stat-value{fill:${COLORS.text};font-family:Georgia,serif;font-size:32px}.footer{fill:${COLORS.faint};font-size:13px}
+    </style>
+    <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${COLORS.page}" />
+    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" fill="none" stroke="${COLORS.borderStrong}" stroke-width="2" />
+    <line x1="${PAGE_PADDING}" y1="${PAGE_PADDING}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${PAGE_PADDING}" stroke="${COLORS.accent}" stroke-width="4" />
+    ${renderIcon(PRINT_VISUALS.ship, PAGE_PADDING, 77, 92, true)}
+    <text x="${PAGE_PADDING + 116}" y="92" class="brand">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
+    <text x="${PAGE_PADDING + 116}" y="146" class="title">${escapeXml(model.buildName)}</text>
+    <text x="${PAGE_PADDING + 116}" y="184" class="meta">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
+    <text x="${PAGE_PADDING + 116}" y="218" class="eyebrow">${escapeXml(classifications.toUpperCase())}</text>
+    <text x="${PAGE_WIDTH - PAGE_PADDING}" y="93" text-anchor="end" class="meta">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
+    <text x="${PAGE_WIDTH - PAGE_PADDING}" y="120" text-anchor="end" class="share">${escapeXml(model.shareUrl)}</text>
+    <line x1="${PAGE_PADDING}" y1="252" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="252" stroke="${COLORS.border}" />
+    ${statCards}
+    ${panels.join('')}
+    <line x1="${PAGE_PADDING}" y1="${footerY}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${footerY}" stroke="${COLORS.border}" />
+    <text x="${PAGE_PADDING}" y="${footerY + 39}" class="footer">${escapeXml(model.t('builds.print.footerHint'))}</text>
+    <text x="${PAGE_WIDTH - PAGE_PADDING}" y="${footerY + 39}" text-anchor="end" class="share">${escapeXml(model.t('builds.print.footerBrand'))}</text>
+  </svg>`
+
+  return { svg, width: PAGE_WIDTH, height: pageHeight, model }
 }
 
 export function createBuildPrintSvg(build, helpers = {}) {
@@ -475,20 +433,17 @@ function triggerDownload(blob, fileName) {
 
 export function createBuildPrintPreviewUrl(build, helpers = {}) {
   const { svg } = createBuildPrintDocument(build, helpers)
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  return URL.createObjectURL(blob)
+  return URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
 }
 
 export function downloadBuildPrintSvg(build, helpers = {}) {
   const { svg } = createBuildPrintDocument(build, helpers)
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  triggerDownload(blob, buildPrintFileName(build, 'svg'))
+  triggerDownload(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), buildPrintFileName(build, 'svg'))
 }
 
 export async function downloadBuildPrintPng(build, helpers = {}) {
   const { svg, width, height } = createBuildPrintDocument(build, helpers)
-  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
+  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
   try {
     const image = await new Promise((resolve, reject) => {
       const img = new Image()
@@ -502,12 +457,7 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Canvas context is unavailable.')
     context.drawImage(image, 0, 0, width, height)
-    const pngBlob = await new Promise((resolve, reject) => {
-      canvas.toBlob((result) => {
-        if (result) resolve(result)
-        else reject(new Error('Build image could not be encoded.'))
-      }, 'image/png')
-    })
+    const pngBlob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Build image could not be encoded.')), 'image/png'))
     triggerDownload(pngBlob, buildPrintFileName(build, 'png'))
   } finally {
     URL.revokeObjectURL(url)
@@ -518,7 +468,7 @@ export function openBuildPrintWindow(build, helpers = {}) {
   const { svg } = createBuildPrintDocument(build, helpers)
   const popup = window.open('', '_blank', 'noopener,noreferrer,width=1040,height=1440')
   if (!popup) throw new Error('Print preview could not be opened.')
-  popup.document.write(`<!doctype html><html><head><title>${escapeXml(build?.build_name || 'Build')}</title><style>html,body{margin:0;background:#08111b;color:#f4f7fb;font-family:Inter,system-ui,sans-serif}body{display:grid;place-items:center;padding:24px}img{max-width:min(100%,1000px);height:auto;box-shadow:0 20px 60px rgba(0,0,0,.35);border-radius:20px}button{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:999px;border:1px solid rgba(241,184,91,.35);background:#101d2b;color:#f4f7fb;cursor:pointer}</style></head><body><button onclick="window.print()">Print</button><img alt="Build sheet" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" /></body></html>`)
+  popup.document.write(`<!doctype html><html><head><title>${escapeXml(build?.build_name || 'Build')}</title><style>html,body{margin:0;background:#07111a;color:#f4f7fa;font-family:Inter,system-ui,sans-serif}body{display:grid;place-items:center;padding:24px}img{display:block;width:min(100%,990px);height:auto;box-shadow:0 24px 70px rgba(0,0,0,.5)}button{position:fixed;z-index:2;top:16px;right:16px;padding:10px 18px;border:1px solid #8f713f;border-radius:4px;background:#0d1a26;color:#f4f7fa;cursor:pointer}@media print{body{padding:0;background:#fff}button{display:none}img{width:100%;max-width:none;box-shadow:none}@page{margin:0}}</style></head><body><button onclick="window.print()">Print</button><img alt="Build sheet" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" /></body></html>`)
   popup.document.close()
   return popup
 }
