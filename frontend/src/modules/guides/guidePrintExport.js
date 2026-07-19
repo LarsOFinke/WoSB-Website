@@ -4,17 +4,17 @@ import {
   unembeddedAttachments,
   unembeddedBuilds,
 } from '../../shared/content/richTextEmbeds.js'
+import {
+  createPrintDocumentHtml,
+  createPrintLabels,
+  escapePrintMarkup,
+  openPrintWindow,
+  resolvePrintUrl,
+} from '../../shared/printing/printDocument.js'
 
 const PRINT_BRAND = 'Royal Blackwater Fleet'
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
+const escapeHtml = escapePrintMarkup
+const resolveUrl = resolvePrintUrl
 
 function stripInlineMarkdown(value) {
   return String(value || '')
@@ -58,19 +58,6 @@ function fileKind(file) {
   if (mimeType === 'application/pdf') return 'pdf'
   if (mimeType === 'text/plain') return 'text'
   return 'file'
-}
-
-function resolveUrl(value, locationObject) {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-  if (/^https?:\/\//i.test(raw)) return raw
-  const origin = locationObject?.origin || (typeof window !== 'undefined' ? window.location.origin : '')
-  if (!origin) return raw
-  try {
-    return new URL(raw, origin).href
-  } catch {
-    return raw
-  }
 }
 
 function defaultFormatDate(value) {
@@ -201,32 +188,15 @@ function createGuidePrintHtml(guide, options = {}) {
   const t = options.t || ((key) => key)
   const model = createGuidePrintModel(guide, options)
   model.t = t
-  const lang = escapeHtml(options.lang || (typeof document !== 'undefined' ? document.documentElement.lang : 'en') || 'en')
+  const lang = options.lang || (typeof document !== 'undefined' ? document.documentElement.lang : 'en') || 'en'
   const title = escapeHtml(model.title)
   const body = renderGuideParts(model, { ...options, t })
   const referenceSections = renderReferenceSections(model, t)
   const mastheadLogo = resolveUrl('/rbf-fleet-icon.png', options.locationObject || (typeof window !== 'undefined' ? window.location : null))
 
-  return `<!doctype html>
-<html lang="${lang}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${title} · ${PRINT_BRAND}</title>
-  <style>
-    :root{color-scheme:light;--navy:#071d3d;--navy-soft:#17365d;--gold:#a87516;--ink:#17202b;--muted:#566271;--rule:#ccd3dc;--border:#aeb8c4;--paper:#fff;--canvas:#e9edf1;--surface:#fff;--surface-soft:#fafbfc;--callout:#fbf8f0;--code:#f4f6f8;--link:#174b91;--toolbar:rgba(255,255,255,.95);--button-text:#fff;--document-shadow:rgba(7,29,61,.18)}
-    html[data-theme="dark"]{color-scheme:dark;--navy:#f1c979;--navy-soft:#8ca9c5;--gold:#e4b457;--ink:#eef4fa;--muted:#a7b5c3;--rule:#33485c;--border:#465c70;--paper:#081522;--canvas:#02080e;--surface:#0d1e2c;--surface-soft:#0c1a26;--callout:#132333;--code:#06111b;--link:#8fc1ff;--toolbar:rgba(8,21,34,.96);--button-text:#07111a;--document-shadow:rgba(0,0,0,.55)}
-    @media(prefers-color-scheme:dark){html:not([data-theme]){color-scheme:dark;--navy:#f1c979;--navy-soft:#8ca9c5;--gold:#e4b457;--ink:#eef4fa;--muted:#a7b5c3;--rule:#33485c;--border:#465c70;--paper:#081522;--canvas:#02080e;--surface:#0d1e2c;--surface-soft:#0c1a26;--callout:#132333;--code:#06111b;--link:#8fc1ff;--toolbar:rgba(8,21,34,.96);--button-text:#07111a;--document-shadow:rgba(0,0,0,.55)}}
-    *{box-sizing:border-box}
-    html{background:var(--canvas)}
-    body{margin:0;background:var(--canvas);color:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10.5pt;line-height:1.58}
+  const styles = `
+    body{font-size:10.5pt;line-height:1.58}
     a{color:var(--link);text-decoration-thickness:.06em;text-underline-offset:.13em;overflow-wrap:anywhere}
-    .guide-print-toolbar{position:fixed;z-index:5;top:1rem;right:1rem;display:flex;align-items:center;gap:.6rem;padding:.55rem;border:1px solid var(--rule);border-radius:.4rem;background:var(--toolbar);box-shadow:0 .8rem 2rem var(--document-shadow);backdrop-filter:blur(14px)}
-    .guide-print-toolbar button{min-height:2.4rem;padding:.55rem 1rem;border:1px solid var(--navy);border-radius:.22rem;background:var(--navy);color:var(--button-text);font:700 .84rem/1 Inter,"Segoe UI",sans-serif;cursor:pointer}
-    .guide-print-theme{display:flex;align-items:center;gap:.28rem;padding-right:.6rem;border-right:1px solid var(--rule)}
-    .guide-print-theme>span{margin-right:.2rem;color:var(--muted);font-size:.72rem;font-weight:750;text-transform:uppercase;letter-spacing:.08em}
-    .guide-print-theme button{min-height:2rem;padding:.42rem .62rem;border-color:transparent;background:transparent;color:var(--muted);font-size:.74rem}
-    html:not([data-theme]) [data-theme-choice="system"],html[data-theme="light"] [data-theme-choice="light"],html[data-theme="dark"] [data-theme-choice="dark"]{border-color:var(--gold);background:var(--surface-soft);color:var(--navy)}
     .guide-print-document{width:210mm;min-height:297mm;margin:5.2rem auto 1.4rem;padding:15mm 16mm 18mm;background:var(--paper);box-shadow:0 1rem 3.5rem var(--document-shadow)}
     .guide-print-masthead{display:flex;align-items:center;gap:4mm;padding-bottom:4mm;border-bottom:1.2pt solid var(--navy)}
     .guide-print-masthead img{width:13mm;height:13mm;object-fit:contain}
@@ -284,9 +254,7 @@ function createGuidePrintHtml(guide, options = {}) {
     .guide-print-footer strong{color:var(--navy)}
     @page{size:A4 portrait;margin:15mm 16mm 18mm}
     @media print{
-      html,body{background:var(--paper);-webkit-print-color-adjust:exact;print-color-adjust:exact}
       body{font-size:10.5pt}
-      .guide-print-toolbar{display:none!important}
       .guide-print-document{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
       a{color:var(--link)}
       .guide-print-masthead{break-after:avoid-page}
@@ -295,8 +263,6 @@ function createGuidePrintHtml(guide, options = {}) {
     }
     @media screen and (max-width:760px){
       .guide-print-document{width:calc(100% - 1rem);min-height:0;margin:7.8rem .5rem 1rem;padding:1.1rem}
-      .guide-print-toolbar{left:.5rem;right:.5rem;flex-wrap:wrap;justify-content:space-between}
-      .guide-print-theme{flex:1 1 100%;justify-content:center;padding:0 0 .45rem;border-right:0;border-bottom:1px solid var(--rule)}
       .guide-print-intro{grid-template-columns:1fr}
       .guide-print-meta{grid-template-columns:1fr}
       .guide-print-meta .source{grid-column:auto}
@@ -304,19 +270,8 @@ function createGuidePrintHtml(guide, options = {}) {
       .guide-print-build-stats{text-align:left}
       .guide-print-resource{grid-template-columns:1fr}
     }
-  </style>
-</head>
-<body>
-  <div class="guide-print-toolbar" role="toolbar" aria-label="${escapeHtml(t('guides.print.themeLabel'))}">
-    <div class="guide-print-theme">
-      <span>${escapeHtml(t('guides.print.themeLabel'))}</span>
-      <button type="button" data-theme-choice="system" aria-pressed="true" onclick="setGuidePrintTheme('system')">${escapeHtml(t('guides.print.themeSystem'))}</button>
-      <button type="button" data-theme-choice="light" aria-pressed="false" onclick="setGuidePrintTheme('light')">${escapeHtml(t('guides.print.themeLight'))}</button>
-      <button type="button" data-theme-choice="dark" aria-pressed="false" onclick="setGuidePrintTheme('dark')">${escapeHtml(t('guides.print.themeDark'))}</button>
-    </div>
-    <button type="button" onclick="window.print()">${escapeHtml(t('guides.print.printAction'))}</button>
-  </div>
-  <main class="guide-print-document">
+  `
+  const documentBody = `<main class="guide-print-document">
     <header class="guide-print-masthead">
       ${mastheadLogo ? `<img src="${escapeHtml(mastheadLogo)}" alt="">` : ''}
       <div class="guide-print-brand"><strong>${PRINT_BRAND}</strong><span>${escapeHtml(t('guides.print.brandMotto'))}</span></div>
@@ -334,38 +289,21 @@ function createGuidePrintHtml(guide, options = {}) {
     <article class="guide-print-body">${body}</article>
     ${referenceSections}
     <footer class="guide-print-footer"><span><strong>${PRINT_BRAND}</strong> · ${escapeHtml(t('guides.print.footerHint'))}</span><span>${escapeHtml(t('guides.print.preparedAt', { value: model.preparedAt }))}</span></footer>
-  </main>
-  <script>
-    const guidePrintThemeStorageKey='rbf-guide-print-theme'
-    function updateGuidePrintThemeButtons(theme){
-      document.querySelectorAll('[data-theme-choice]').forEach((button)=>{
-        button.setAttribute('aria-pressed',String(button.dataset.themeChoice===theme))
-      })
-    }
-    function setGuidePrintTheme(theme){
-      if(theme==='system') document.documentElement.removeAttribute('data-theme')
-      else document.documentElement.setAttribute('data-theme',theme)
-      updateGuidePrintThemeButtons(theme)
-      try{localStorage.setItem(guidePrintThemeStorageKey,theme)}catch{}
-    }
-    let savedGuidePrintTheme='system'
-    try{savedGuidePrintTheme=localStorage.getItem(guidePrintThemeStorageKey)||'system'}catch{}
-    if(!['system','light','dark'].includes(savedGuidePrintTheme)) savedGuidePrintTheme='system'
-    setGuidePrintTheme(savedGuidePrintTheme)
-  </script>
-</body>
-</html>`
+  </main>`
+
+  return createPrintDocumentHtml({
+    lang,
+    title: `${model.title} · ${PRINT_BRAND}`,
+    body: documentBody,
+    styles,
+    labels: createPrintLabels(t),
+  })
 }
 
 function openGuidePrintWindow(guide, options = {}) {
-  const popup = window.open('', '_blank')
-  if (!popup) throw new Error('Guide print view could not be opened.')
-  popup.opener = null
-  popup.document.open()
-  popup.document.write(createGuidePrintHtml(guide, options))
-  popup.document.close()
-  popup.focus()
-  return popup
+  return openPrintWindow(createGuidePrintHtml(guide, options), {
+    errorMessage: 'Guide print view could not be opened.',
+  })
 }
 
 export {

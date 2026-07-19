@@ -32,12 +32,13 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Einteilung', availability: 'Verfügbarkeit', timezone: 'Zeitzone', adminNote: 'Interne Notiz' } },
   },
   fr: {
+    print: { themeLabel: 'Apparence', themeSystem: 'Système', themeLight: 'Clair', themeDark: 'Sombre', action: 'Imprimer ou enregistrer en PDF' },
     markdown: {
       toolbar: { hint: 'Source Markdown', bold: 'Gras', italic: 'Italique', bulletList: 'Liste à puces', numberedList: 'Liste numérotée', quote: 'Citation', codeBlock: 'Bloc de code' },
       placeholders: { text: 'texte', code: 'extrait de code' },
     },
     forum: { detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
-    guides: { edit: { title: 'Modifier le guide' }, detail: { edit: 'Modifier le guide' }, print: { action: 'Imprimer le guide', opening: 'Ouverture de la vue d’impression ...', windowOpened: 'La vue d’impression a été ouverte dans un nouvel onglet.', error: 'Impossible d’ouvrir la vue d’impression du guide.', fallbackTitle: 'Fiche guide', unknownAuthor: 'Auteur inconnu', attachmentFallback: 'Pièce jointe', linkedBuildEyebrow: 'Build lié', contentsTitle: 'Sommaire', linkedBuildsTitle: 'Builds liés', attachmentsTitle: 'Pièces jointes et références', printAction: 'Imprimer ou enregistrer en PDF', themeLabel: 'Apparence', themeSystem: 'Système', themeLight: 'Clair', themeDark: 'Sombre', brandMotto: 'Discipline · Honneur · Victoire', author: 'Auteur', updated: 'Mis à jour', source: 'Origine', footerHint: 'Préparé pour une utilisation hors ligne par la flotte.', preparedAt: 'Préparé le {value}' } },
+    guides: { edit: { title: 'Modifier le guide' }, detail: { edit: 'Modifier le guide' }, print: { action: 'Imprimer le guide', opening: 'Ouverture de la vue d’impression ...', windowOpened: 'La vue d’impression a été ouverte dans un nouvel onglet.', error: 'Impossible d’ouvrir la vue d’impression du guide.', fallbackTitle: 'Fiche guide', unknownAuthor: 'Auteur inconnu', attachmentFallback: 'Pièce jointe', linkedBuildEyebrow: 'Build lié', contentsTitle: 'Sommaire', linkedBuildsTitle: 'Builds liés', attachmentsTitle: 'Pièces jointes et références', brandMotto: 'Discipline · Honneur · Victoire', author: 'Auteur', updated: 'Mis à jour', source: 'Origine', footerHint: 'Préparé pour une utilisation hors ligne par la flotte.', preparedAt: 'Préparé le {value}' } },
     common: { modules: 'Sections', groups: 'Recherche de groupe', myGroupSearches: 'Mes recherches de groupe' },
     logs: { clientIp: 'IP client', queryString: 'Chaîne de requête' },
     forum: { categories: { training: 'Entraînement', logistics: 'Logistique', loistics: 'Logistique' }, detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
@@ -64,12 +65,13 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Affectation', availability: 'Disponibilité', timezone: 'Fuseau horaire', adminNote: 'Note interne' } },
   },
   es: {
+    print: { themeLabel: 'Apariencia', themeSystem: 'Sistema', themeLight: 'Claro', themeDark: 'Oscuro', action: 'Imprimir o guardar como PDF' },
     markdown: {
       toolbar: { hint: 'Fuente Markdown', bold: 'Negrita', italic: 'Cursiva', bulletList: 'Lista con viñetas', numberedList: 'Lista numerada', quote: 'Cita', codeBlock: 'Bloque de código' },
       placeholders: { text: 'texto', code: 'fragmento de código' },
     },
     forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
-    guides: { edit: { title: 'Editar guía' }, detail: { edit: 'Editar guía' }, print: { action: 'Imprimir guía', opening: 'Abriendo la vista de impresión ...', windowOpened: 'La vista de impresión se abrió en una pestaña nueva.', error: 'No se pudo abrir la vista de impresión de la guía.', fallbackTitle: 'Guía', unknownAuthor: 'Autor desconocido', attachmentFallback: 'Archivo adjunto', linkedBuildEyebrow: 'Build vinculado', contentsTitle: 'Contenido', linkedBuildsTitle: 'Builds vinculados', attachmentsTitle: 'Archivos adjuntos y referencias', printAction: 'Imprimir o guardar como PDF', themeLabel: 'Apariencia', themeSystem: 'Sistema', themeLight: 'Claro', themeDark: 'Oscuro', brandMotto: 'Disciplina · Honor · Victoria', author: 'Autor', updated: 'Actualizado', source: 'Fuente', footerHint: 'Preparado para el uso sin conexión de la flota.', preparedAt: 'Preparado el {value}' } },
+    guides: { edit: { title: 'Editar guía' }, detail: { edit: 'Editar guía' }, print: { action: 'Imprimir guía', opening: 'Abriendo la vista de impresión ...', windowOpened: 'La vista de impresión se abrió en una pestaña nueva.', error: 'No se pudo abrir la vista de impresión de la guía.', fallbackTitle: 'Guía', unknownAuthor: 'Autor desconocido', attachmentFallback: 'Archivo adjunto', linkedBuildEyebrow: 'Build vinculado', contentsTitle: 'Contenido', linkedBuildsTitle: 'Builds vinculados', attachmentsTitle: 'Archivos adjuntos y referencias', brandMotto: 'Disciplina · Honor · Victoria', author: 'Autor', updated: 'Actualizado', source: 'Fuente', footerHint: 'Preparado para el uso sin conexión de la flota.', preparedAt: 'Preparado el {value}' } },
     common: { modules: 'Módulos', groups: 'Búsqueda de grupo', myGroupSearches: 'Mis búsquedas de grupo' },
     logs: { clientIp: 'IP del cliente', queryString: 'Consulta' },
     forum: { categories: { training: 'Entrenamiento', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
@@ -96,12 +98,13 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Asignación', availability: 'Disponibilidad', timezone: 'Zona horaria', adminNote: 'Nota interna' } },
   },
   pt: {
+    print: { themeLabel: 'Aparência', themeSystem: 'Sistema', themeLight: 'Claro', themeDark: 'Escuro', action: 'Imprimir ou guardar como PDF' },
     markdown: {
       toolbar: { hint: 'Fonte Markdown', bold: 'Negrito', italic: 'Itálico', bulletList: 'Lista com marcadores', numberedList: 'Lista numerada', quote: 'Citação', codeBlock: 'Bloco de código' },
       placeholders: { text: 'texto', code: 'trecho de código' },
     },
     forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
-    guides: { edit: { title: 'Editar guia' }, detail: { edit: 'Editar guia' }, print: { action: 'Imprimir guia', opening: 'A abrir a vista de impressão ...', windowOpened: 'A vista de impressão foi aberta num novo separador.', error: 'Não foi possível abrir a vista de impressão do guia.', fallbackTitle: 'Guia', unknownAuthor: 'Autor desconhecido', attachmentFallback: 'Anexo', linkedBuildEyebrow: 'Build associado', contentsTitle: 'Conteúdo', linkedBuildsTitle: 'Builds associados', attachmentsTitle: 'Anexos e referências', printAction: 'Imprimir ou guardar como PDF', themeLabel: 'Aparência', themeSystem: 'Sistema', themeLight: 'Claro', themeDark: 'Escuro', brandMotto: 'Disciplina · Honra · Vitória', author: 'Autor', updated: 'Atualizado', source: 'Fonte', footerHint: 'Preparado para utilização offline pela frota.', preparedAt: 'Preparado em {value}' } },
+    guides: { edit: { title: 'Editar guia' }, detail: { edit: 'Editar guia' }, print: { action: 'Imprimir guia', opening: 'A abrir a vista de impressão ...', windowOpened: 'A vista de impressão foi aberta num novo separador.', error: 'Não foi possível abrir a vista de impressão do guia.', fallbackTitle: 'Guia', unknownAuthor: 'Autor desconhecido', attachmentFallback: 'Anexo', linkedBuildEyebrow: 'Build associado', contentsTitle: 'Conteúdo', linkedBuildsTitle: 'Builds associados', attachmentsTitle: 'Anexos e referências', brandMotto: 'Disciplina · Honra · Vitória', author: 'Autor', updated: 'Atualizado', source: 'Fonte', footerHint: 'Preparado para utilização offline pela frota.', preparedAt: 'Preparado em {value}' } },
     common: { modules: 'Módulos', groups: 'Procura de grupo', myGroupSearches: 'As minhas procuras de grupo' },
     logs: { clientIp: 'IP do cliente', queryString: 'Consulta' },
     forum: { categories: { training: 'Treino', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
@@ -128,12 +131,13 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Atribuição', availability: 'Disponibilidade', timezone: 'Fuso horário', adminNote: 'Nota interna' } },
   },
   ru: {
+    print: { themeLabel: 'Оформление', themeSystem: 'Система', themeLight: 'Светлое', themeDark: 'Тёмное', action: 'Печать или сохранение в PDF' },
     markdown: {
       toolbar: { hint: 'Исходный Markdown', bold: 'Жирный', italic: 'Курсив', bulletList: 'Маркированный список', numberedList: 'Нумерованный список', quote: 'Цитата', codeBlock: 'Блок кода' },
       placeholders: { text: 'текст', code: 'фрагмент кода' },
     },
     forum: { detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
-    guides: { edit: { title: 'Редактировать гайд' }, detail: { edit: 'Редактировать гайд' }, print: { action: 'Печать гайда', opening: 'Открытие версии для печати ...', windowOpened: 'Версия для печати открыта в новой вкладке.', error: 'Не удалось открыть версию гайда для печати.', fallbackTitle: 'Гайд', unknownAuthor: 'Неизвестный автор', attachmentFallback: 'Вложение', linkedBuildEyebrow: 'Связанный билд', contentsTitle: 'Содержание', linkedBuildsTitle: 'Связанные билды', attachmentsTitle: 'Вложения и источники', printAction: 'Печать или сохранение в PDF', themeLabel: 'Оформление', themeSystem: 'Система', themeLight: 'Светлое', themeDark: 'Тёмное', brandMotto: 'Дисциплина · Честь · Победа', author: 'Автор', updated: 'Обновлено', source: 'Источник', footerHint: 'Подготовлено для автономного использования флотом.', preparedAt: 'Подготовлено {value}' } },
+    guides: { edit: { title: 'Редактировать гайд' }, detail: { edit: 'Редактировать гайд' }, print: { action: 'Печать гайда', opening: 'Открытие версии для печати ...', windowOpened: 'Версия для печати открыта в новой вкладке.', error: 'Не удалось открыть версию гайда для печати.', fallbackTitle: 'Гайд', unknownAuthor: 'Неизвестный автор', attachmentFallback: 'Вложение', linkedBuildEyebrow: 'Связанный билд', contentsTitle: 'Содержание', linkedBuildsTitle: 'Связанные билды', attachmentsTitle: 'Вложения и источники', brandMotto: 'Дисциплина · Честь · Победа', author: 'Автор', updated: 'Обновлено', source: 'Источник', footerHint: 'Подготовлено для автономного использования флотом.', preparedAt: 'Подготовлено {value}' } },
     common: { modules: 'Модули', groups: 'Поиск группы', myGroupSearches: 'Мои поиски группы' },
     logs: { clientIp: 'IP клиента', queryString: 'Строка запроса' },
     forum: { categories: { training: 'Тренировка', logistics: 'Логистика', loistics: 'Логистика' }, detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
@@ -160,12 +164,13 @@ export const localeCompletenessMessages = {
     fleets: { directory: { assignment: 'Назначение', availability: 'Доступность', timezone: 'Часовой пояс', adminNote: 'Внутренняя заметка' } },
   },
   cn: {
+    print: { themeLabel: '外观', themeSystem: '系统', themeLight: '浅色', themeDark: '深色', action: '打印或另存为 PDF' },
     markdown: {
       toolbar: { hint: 'Markdown 源文本', bold: '粗体', italic: '斜体', bulletList: '项目符号列表', numberedList: '编号列表', quote: '引用', codeBlock: '代码块' },
       placeholders: { text: '文本', code: '代码片段' },
     },
     forum: { detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },
-    guides: { edit: { title: '编辑指南' }, detail: { edit: '编辑指南' }, print: { action: '打印指南', opening: '正在打开打印视图…', windowOpened: '打印视图已在新标签页中打开。', error: '无法打开指南打印视图。', fallbackTitle: '指南', unknownAuthor: '未知作者', attachmentFallback: '附件', linkedBuildEyebrow: '关联配装', contentsTitle: '目录', linkedBuildsTitle: '关联配装', attachmentsTitle: '附件与参考资料', printAction: '打印或另存为 PDF', themeLabel: '外观', themeSystem: '系统', themeLight: '浅色', themeDark: '深色', brandMotto: '纪律 · 荣誉 · 胜利', author: '作者', updated: '更新时间', source: '来源', footerHint: '为舰队离线使用而准备。', preparedAt: '生成于 {value}' } },
+    guides: { edit: { title: '编辑指南' }, detail: { edit: '编辑指南' }, print: { action: '打印指南', opening: '正在打开打印视图…', windowOpened: '打印视图已在新标签页中打开。', error: '无法打开指南打印视图。', fallbackTitle: '指南', unknownAuthor: '未知作者', attachmentFallback: '附件', linkedBuildEyebrow: '关联配装', contentsTitle: '目录', linkedBuildsTitle: '关联配装', attachmentsTitle: '附件与参考资料', brandMotto: '纪律 · 荣誉 · 胜利', author: '作者', updated: '更新时间', source: '来源', footerHint: '为舰队离线使用而准备。', preparedAt: '生成于 {value}' } },
     common: { modules: '模块', groups: '组队搜索', myGroupSearches: '我的组队搜索' },
     logs: { clientIp: '客户端 IP', queryString: '查询字符串' },
     forum: { categories: { training: '训练', logistics: '后勤', loistics: '后勤' }, detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },

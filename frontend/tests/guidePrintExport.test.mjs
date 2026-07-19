@@ -19,14 +19,14 @@ const messages = {
   'guides.print.linkedBuildEyebrow': 'Linked build',
   'guides.print.linkedBuildsTitle': 'Linked builds',
   'guides.print.preparedAt': 'Prepared {value}',
-  'guides.print.printAction': 'Print or save as PDF',
   'guides.print.source': 'Source',
-  'guides.print.themeDark': 'Dark',
-  'guides.print.themeLabel': 'Appearance',
-  'guides.print.themeLight': 'Light',
-  'guides.print.themeSystem': 'System',
   'guides.print.unknownAuthor': 'Unknown author',
   'guides.print.updated': 'Updated',
+  'print.themeLabel': 'Appearance',
+  'print.themeSystem': 'System',
+  'print.themeLight': 'Light',
+  'print.themeDark': 'Dark',
+  'print.action': 'Print or save as PDF',
   'builds.list.crew': 'Crew {current}/{max}',
   'builds.list.upgradeSummary': '{used}/{max} upgrades',
   'builds.print.fallbackTitle': 'Build sheet',
@@ -107,6 +107,7 @@ test('guide print HTML is A4-ready and keeps rich references readable offline', 
   assert.match(html, /data-theme-choice="light"/)
   assert.match(html, /data-theme-choice="dark"/)
   assert.match(html, /aria-pressed="true"/)
+  assert.match(html, /rbf-print-theme/)
   assert.match(html, /rbf-guide-print-theme/)
 })
 

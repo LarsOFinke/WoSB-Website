@@ -1,5 +1,13 @@
 import { buildCrewVisualUrl, buildVisualUrl } from './buildVisuals.js'
 import { buildShareUrl } from './shareBuild.js'
+import {
+  createPrintDocumentHtml,
+  createPrintLabels,
+  escapePrintMarkup,
+  openPrintWindow,
+  sanitizePrintFileName,
+  triggerPrintDownload,
+} from '../../shared/printing/printDocument.js'
 
 const PAGE_WIDTH = 1400
 const BASE_PAGE_HEIGHT = 1980
@@ -10,19 +18,18 @@ const COLUMN_WIDTH = (CONTENT_WIDTH - COLUMN_GAP) / 2
 const SECTION_GAP = 22
 const FOOTER_HEIGHT = 86
 
-const COLORS = {
-  page: '#07111a',
-  panel: '#0d1a26',
-  panelSoft: '#112231',
-  border: '#263847',
-  borderStrong: '#8f713f',
-  text: '#f4f7fa',
-  muted: '#9babb9',
-  faint: '#647889',
-  accent: '#e8be70',
-  accentSoft: '#2c281f',
-  danger: '#d88980',
-}
+const BUILD_PRINT_THEMES = Object.freeze({
+  dark: Object.freeze({
+    page: '#07111a', panel: '#0d1a26', panelSoft: '#112231', border: '#263847',
+    borderStrong: '#8f713f', text: '#f4f7fa', muted: '#9babb9', faint: '#647889',
+    accent: '#e8be70', accentSoft: '#2c281f', danger: '#d88980',
+  }),
+  light: Object.freeze({
+    page: '#f8fafc', panel: '#ffffff', panelSoft: '#f1f4f7', border: '#c7d0d9',
+    borderStrong: '#a87516', text: '#10243d', muted: '#526170', faint: '#748391',
+    accent: '#94620b', accentSoft: '#fbf4e5', danger: '#a6413a',
+  }),
+})
 
 const CORE_STAT_KEYS = new Set([
   'durability',
@@ -55,14 +62,7 @@ const PRINT_VISUALS = {
   },
 }
 
-function escapeXml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
-}
+const escapeXml = escapePrintMarkup
 
 function roundByPrecision(value, precision = 0) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
@@ -125,56 +125,47 @@ function wrapText(text, maxChars = 58) {
   return lines
 }
 
-function sanitizeFileName(value) {
-  return String(value || 'build')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 72) || 'build'
-}
-
-function renderIcon(href, x, y, size = 38, accented = false) {
+function renderIcon(href, x, y, size = 38, accented = false, colors = BUILD_PRINT_THEMES.dark) {
   if (!href) return ''
   return `<g>
-    <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="${accented ? COLORS.accentSoft : COLORS.panelSoft}" stroke="${accented ? COLORS.borderStrong : COLORS.border}" />
+    <rect x="${x}" y="${y}" width="${size}" height="${size}" rx="5" fill="${accented ? colors.accentSoft : colors.panelSoft}" stroke="${accented ? colors.borderStrong : colors.border}" />
     <image href="${escapeXml(href)}" x="${x + 3}" y="${y + 3}" width="${size - 6}" height="${size - 6}" preserveAspectRatio="xMidYMid meet" />
   </g>`
 }
 
-function renderSectionHeader(x, y, width, index, eyebrow, title, iconHref) {
+function renderSectionHeader(x, y, width, index, eyebrow, title, iconHref, colors) {
   return `<g>
-    <rect x="${x}" y="${y}" width="${width}" height="76" fill="${COLORS.panelSoft}" />
-    <circle cx="${x + 34}" cy="${y + 38}" r="16" fill="none" stroke="${COLORS.borderStrong}" />
+    <rect x="${x}" y="${y}" width="${width}" height="76" fill="${colors.panelSoft}" />
+    <circle cx="${x + 34}" cy="${y + 38}" r="16" fill="none" stroke="${colors.borderStrong}" />
     <text x="${x + 34}" y="${y + 43}" text-anchor="middle" class="index">${String(index).padStart(2, '0')}</text>
-    ${renderIcon(iconHref, x + width - 58, y + 19, 38, true)}
+    ${renderIcon(iconHref, x + width - 58, y + 19, 38, true, colors)}
     <text x="${x + 62}" y="${y + 27}" class="eyebrow">${escapeXml(String(eyebrow || '').toUpperCase())}</text>
     <text x="${x + 62}" y="${y + 55}" class="section-title">${escapeXml(title)}</text>
   </g>`
 }
 
-function renderRowsPanel({ x, y, width, index, eyebrow, title, iconHref, rows, accentLast = false }) {
+function renderRowsPanel({ x, y, width, index, eyebrow, title, iconHref, rows, accentLast = false, colors }) {
   const rowHeight = 62
   const height = 76 + (rows.length * rowHeight) + 12
   const rowSvg = rows.map((row, rowIndex) => {
     const rowY = y + 76 + (rowIndex * rowHeight)
     const accented = Boolean(row.accent || (accentLast && rowIndex === rows.length - 1))
     return `<g>
-      ${rowIndex ? `<line x1="${x + 18}" y1="${rowY}" x2="${x + width - 18}" y2="${rowY}" stroke="${COLORS.border}" />` : ''}
-      ${accented ? `<rect x="${x + 10}" y="${rowY + 6}" width="${width - 20}" height="${rowHeight - 10}" rx="5" fill="${COLORS.accentSoft}" stroke="${COLORS.borderStrong}" stroke-dasharray="5 5" />` : ''}
-      ${renderIcon(row.iconHref, x + 20, rowY + 12, 38, accented)}
-      <text x="${x + 72}" y="${rowY + 26}" class="row-label" fill="${accented ? COLORS.accent : COLORS.muted}">${escapeXml(row.label)}</text>
+      ${rowIndex ? `<line x1="${x + 18}" y1="${rowY}" x2="${x + width - 18}" y2="${rowY}" stroke="${colors.border}" />` : ''}
+      ${accented ? `<rect x="${x + 10}" y="${rowY + 6}" width="${width - 20}" height="${rowHeight - 10}" rx="5" fill="${colors.accentSoft}" stroke="${colors.borderStrong}" stroke-dasharray="5 5" />` : ''}
+      ${renderIcon(row.iconHref, x + 20, rowY + 12, 38, accented, colors)}
+      <text x="${x + 72}" y="${rowY + 26}" class="row-label" fill="${accented ? colors.accent : colors.muted}">${escapeXml(row.label)}</text>
       <text x="${x + 72}" y="${rowY + 48}" class="row-value">${escapeXml(row.value)}</text>
       ${row.meta ? `<text x="${x + width - 20}" y="${rowY + 38}" text-anchor="end" class="row-meta">${escapeXml(row.meta)}</text>` : ''}
     </g>`
   }).join('')
   return {
     height,
-    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref)}${rowSvg}</g>`,
+    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${colors.panel}" stroke="${colors.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref, colors)}${rowSvg}</g>`,
   }
 }
 
-function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, groups }) {
+function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, groups, colors }) {
   const normalizedGroups = groups.map((group) => ({ ...group, wrapped: wrapText(group.lines.join(' · '), 49) }))
   const groupHeights = normalizedGroups.map((group) => 48 + (Math.max(1, group.wrapped.length) * 23))
   const height = 76 + groupHeights.reduce((total, value) => total + value, 0) + 12
@@ -184,26 +175,26 @@ function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, grou
     cursorY += groupHeights[groupIndex]
     const lines = group.wrapped.length ? group.wrapped : ['—']
     return `<g>
-      ${groupIndex ? `<line x1="${x + 18}" y1="${groupY}" x2="${x + width - 18}" y2="${groupY}" stroke="${COLORS.border}" />` : ''}
-      ${renderIcon(group.iconHref, x + 20, groupY + 14, 34)}
+      ${groupIndex ? `<line x1="${x + 18}" y1="${groupY}" x2="${x + width - 18}" y2="${groupY}" stroke="${colors.border}" />` : ''}
+      ${renderIcon(group.iconHref, x + 20, groupY + 14, 34, false, colors)}
       <text x="${x + 66}" y="${groupY + 28}" class="row-label">${escapeXml(group.label)}</text>
       ${lines.map((line, lineIndex) => `<text x="${x + 66}" y="${groupY + 52 + (lineIndex * 23)}" class="group-line">${escapeXml(line)}</text>`).join('')}
     </g>`
   }).join('')
   return {
     height,
-    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref)}${groupsSvg}</g>`,
+    svg: `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${colors.panel}" stroke="${colors.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref, colors)}${groupsSvg}</g>`,
   }
 }
 
-function renderNotesPanel(model, x, y, width, index) {
+function renderNotesPanel(model, x, y, width, index, colors) {
   const lineHeight = 25
   const height = 102 + (model.notes.length * lineHeight) + 22
   return {
     height,
     svg: `<g>
-      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${COLORS.panel}" stroke="${COLORS.border}" />
-      ${renderSectionHeader(x, y, width, index, model.t('builds.detail.details'), model.t('builds.print.notesTitle'), PRINT_VISUALS.notes)}
+      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${colors.panel}" stroke="${colors.border}" />
+      ${renderSectionHeader(x, y, width, index, model.t('builds.detail.details'), model.t('builds.print.notesTitle'), PRINT_VISUALS.notes, colors)}
       ${model.notes.map((line, lineIndex) => `<text x="${x + 22}" y="${y + 108 + (lineIndex * lineHeight)}" class="note-line">${escapeXml(line || ' ')}</text>`).join('')}
     </g>`,
   }
@@ -322,6 +313,8 @@ function createBuildPrintModel(build, helpers = {}) {
 
 function createBuildPrintDocument(build, helpers = {}) {
   const model = createBuildPrintModel(build, helpers)
+  const theme = helpers.theme === 'light' ? 'light' : 'dark'
+  const colors = BUILD_PRINT_THEMES[theme]
   const leftX = PAGE_PADDING
   const rightX = PAGE_PADDING + COLUMN_WIDTH + COLUMN_GAP
   let leftY = 416
@@ -334,13 +327,13 @@ function createBuildPrintDocument(build, helpers = {}) {
       ...model.equipmentRows.map((row) => ({ ...row, iconHref: PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
       ...model.upgrades.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade, iconHref: PRINT_VISUALS.upgrade })),
     ]
-    const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows })
+    const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows, colors })
     panels.push(panel.svg)
     leftY += panel.height + SECTION_GAP
   }
 
   if (model.weapons.length) {
-    const panel = renderGroupedPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), iconHref: PRINT_VISUALS.weapon, groups: model.weapons.map((group) => ({ label: group.label, lines: group.lines, iconHref: PRINT_VISUALS.weapon })) })
+    const panel = renderGroupedPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), iconHref: PRINT_VISUALS.weapon, groups: model.weapons.map((group) => ({ label: group.label, lines: group.lines, iconHref: PRINT_VISUALS.weapon })), colors })
     panels.push(panel.svg)
     leftY += panel.height + SECTION_GAP
   }
@@ -350,7 +343,7 @@ function createBuildPrintDocument(build, helpers = {}) {
     ...model.specialists.map((name) => ({ label: model.t('builds.detail.specialCrew'), value: name, iconHref: PRINT_VISUALS.specialist })),
     ...(model.gingerSpecialist ? [{ label: '+1 · Ginger', value: model.gingerSpecialist, iconHref: PRINT_VISUALS.specialist, accent: true }] : []),
   ]
-  const crewPanel = renderRowsPanel({ x: rightX, y: rightY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), iconHref: PRINT_VISUALS.crew.sailors, rows: crewRows })
+  const crewPanel = renderRowsPanel({ x: rightX, y: rightY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), iconHref: PRINT_VISUALS.crew.sailors, rows: crewRows, colors })
   panels.push(crewPanel.svg)
   rightY += crewPanel.height + SECTION_GAP
 
@@ -358,7 +351,7 @@ function createBuildPrintDocument(build, helpers = {}) {
     const inventoryOnLeft = leftY <= rightY
     const inventoryX = inventoryOnLeft ? leftX : rightX
     const inventoryY = inventoryOnLeft ? leftY : rightY
-    const panel = renderGroupedPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })) })
+    const panel = renderGroupedPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })), colors })
     panels.push(panel.svg)
     if (inventoryOnLeft) leftY += panel.height + SECTION_GAP
     else rightY += panel.height + SECTION_GAP
@@ -367,7 +360,7 @@ function createBuildPrintDocument(build, helpers = {}) {
   const contentBottom = Math.max(leftY, rightY)
   let notesBottom = contentBottom
   if (model.notes.length) {
-    const notesPanel = renderNotesPanel(model, PAGE_PADDING, contentBottom, CONTENT_WIDTH, sectionIndex++)
+    const notesPanel = renderNotesPanel(model, PAGE_PADDING, contentBottom, CONTENT_WIDTH, sectionIndex++, colors)
     panels.push(notesPanel.svg)
     notesBottom += notesPanel.height + SECTION_GAP
   }
@@ -377,33 +370,33 @@ function createBuildPrintDocument(build, helpers = {}) {
   const statCards = model.headlineStats.map((stat, index) => {
     const x = PAGE_PADDING + (index * (statWidth + 12))
     return `<g>
-      <rect x="${x}" y="278" width="${statWidth}" height="112" rx="5" fill="${COLORS.panel}" stroke="${index === 0 ? COLORS.borderStrong : COLORS.border}" />
+      <rect x="${x}" y="278" width="${statWidth}" height="112" rx="5" fill="${colors.panel}" stroke="${index === 0 ? colors.borderStrong : colors.border}" />
       <text x="${x + 18}" y="312" class="stat-label">${escapeXml(stat.label)}</text>
       <text x="${x + 18}" y="357" class="stat-value">${escapeXml(stat.value)}</text>
-      <line x1="${x + 18}" y1="373" x2="${x + statWidth - 18}" y2="373" stroke="${index === 0 ? COLORS.accent : COLORS.border}" />
+      <line x1="${x + 18}" y1="373" x2="${x + statWidth - 18}" y2="373" stroke="${index === 0 ? colors.accent : colors.border}" />
     </g>`
   }).join('')
   const classifications = model.classificationLabels.length ? model.classificationLabels.join('  ·  ') : model.buildType
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="2">
+  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="2" data-build-sheet-theme="${theme}">
     <style>
-      text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${COLORS.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${COLORS.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${COLORS.muted};font-size:19px}.share{fill:${COLORS.accent};font-size:14px}.eyebrow{fill:${COLORS.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${COLORS.text};font-family:Georgia,serif;font-size:24px}.index{fill:${COLORS.accent};font-size:11px;font-weight:800}.row-label{fill:${COLORS.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${COLORS.text};font-size:18px;font-weight:700}.row-meta{fill:${COLORS.faint};font-size:13px}.group-line{fill:${COLORS.text};font-size:16px}.note-line{fill:${COLORS.muted};font-family:Georgia,serif;font-size:17px}.stat-label{fill:${COLORS.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.stat-value{fill:${COLORS.text};font-family:Georgia,serif;font-size:32px}.footer{fill:${COLORS.faint};font-size:13px}
+      text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${colors.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${colors.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${colors.muted};font-size:19px}.share{fill:${colors.accent};font-size:14px}.eyebrow{fill:${colors.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${colors.text};font-family:Georgia,serif;font-size:24px}.index{fill:${colors.accent};font-size:11px;font-weight:800}.row-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${colors.text};font-size:18px;font-weight:700}.row-meta{fill:${colors.faint};font-size:13px}.group-line{fill:${colors.text};font-size:16px}.note-line{fill:${colors.muted};font-family:Georgia,serif;font-size:17px}.stat-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.stat-value{fill:${colors.text};font-family:Georgia,serif;font-size:32px}.footer{fill:${colors.faint};font-size:13px}
     </style>
-    <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${COLORS.page}" />
-    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" fill="none" stroke="${COLORS.borderStrong}" stroke-width="2" />
-    <line x1="${PAGE_PADDING}" y1="${PAGE_PADDING}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${PAGE_PADDING}" stroke="${COLORS.accent}" stroke-width="4" />
-    ${renderIcon(PRINT_VISUALS.ship, PAGE_PADDING, 77, 92, true)}
+    <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${colors.page}" />
+    <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" fill="none" stroke="${colors.borderStrong}" stroke-width="2" />
+    <line x1="${PAGE_PADDING}" y1="${PAGE_PADDING}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${PAGE_PADDING}" stroke="${colors.accent}" stroke-width="4" />
+    ${renderIcon(PRINT_VISUALS.ship, PAGE_PADDING, 77, 92, true, colors)}
     <text x="${PAGE_PADDING + 116}" y="92" class="brand">${escapeXml(model.t('builds.print.eyebrow').toUpperCase())}</text>
     <text x="${PAGE_PADDING + 116}" y="146" class="title">${escapeXml(model.buildName)}</text>
     <text x="${PAGE_PADDING + 116}" y="184" class="meta">${escapeXml(`${model.shipName} · ${model.t('common.rate')} ${model.shipRate} · ${model.shipType} · ${model.buildType}`)}</text>
     <text x="${PAGE_PADDING + 116}" y="218" class="eyebrow">${escapeXml(classifications.toUpperCase())}</text>
     <text x="${PAGE_WIDTH - PAGE_PADDING}" y="93" text-anchor="end" class="meta">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
     <text x="${PAGE_WIDTH - PAGE_PADDING}" y="120" text-anchor="end" class="share">${escapeXml(model.shareUrl)}</text>
-    <line x1="${PAGE_PADDING}" y1="252" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="252" stroke="${COLORS.border}" />
+    <line x1="${PAGE_PADDING}" y1="252" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="252" stroke="${colors.border}" />
     ${statCards}
     ${panels.join('')}
-    <line x1="${PAGE_PADDING}" y1="${footerY}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${footerY}" stroke="${COLORS.border}" />
+    <line x1="${PAGE_PADDING}" y1="${footerY}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${footerY}" stroke="${colors.border}" />
     <text x="${PAGE_PADDING}" y="${footerY + 39}" class="footer">${escapeXml(model.t('builds.print.footerHint'))}</text>
     <text x="${PAGE_WIDTH - PAGE_PADDING}" y="${footerY + 39}" text-anchor="end" class="share">${escapeXml(model.t('builds.print.footerBrand'))}</text>
   </svg>`
@@ -416,19 +409,8 @@ export function createBuildPrintSvg(build, helpers = {}) {
 }
 
 export function buildPrintFileName(build, extension = 'png') {
-  const base = sanitizeFileName(build?.build_name || 'build-sheet')
+  const base = sanitizePrintFileName(build?.build_name || 'build-sheet', 'build-sheet')
   return `${base}-build-sheet.${String(extension || 'png').replace(/[^a-z0-9]/gi, '')}`
-}
-
-function triggerDownload(blob, fileName) {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1500)
 }
 
 export function createBuildPrintPreviewUrl(build, helpers = {}) {
@@ -438,7 +420,7 @@ export function createBuildPrintPreviewUrl(build, helpers = {}) {
 
 export function downloadBuildPrintSvg(build, helpers = {}) {
   const { svg } = createBuildPrintDocument(build, helpers)
-  triggerDownload(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), buildPrintFileName(build, 'svg'))
+  triggerPrintDownload(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), buildPrintFileName(build, 'svg'))
 }
 
 export async function downloadBuildPrintPng(build, helpers = {}) {
@@ -458,19 +440,45 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
     if (!context) throw new Error('Canvas context is unavailable.')
     context.drawImage(image, 0, 0, width, height)
     const pngBlob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Build image could not be encoded.')), 'image/png'))
-    triggerDownload(pngBlob, buildPrintFileName(build, 'png'))
+    triggerPrintDownload(pngBlob, buildPrintFileName(build, 'png'))
   } finally {
     URL.revokeObjectURL(url)
   }
 }
 
+export function createBuildPrintHtml(build, helpers = {}) {
+  const t = helpers.t || ((key) => key)
+  const lightSvg = createBuildPrintDocument(build, { ...helpers, theme: 'light' }).svg
+  const darkSvg = createBuildPrintDocument(build, { ...helpers, theme: 'dark' }).svg
+  const alt = escapeXml(t('builds.print.previewTitle'))
+  const body = `<main class="build-print-document">
+    <img class="build-print-sheet build-print-sheet-light" data-build-print-theme="light" alt="${alt}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(lightSvg)}">
+    <img class="build-print-sheet build-print-sheet-dark" data-build-print-theme="dark" alt="${alt}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(darkSvg)}">
+  </main>`
+  const styles = `
+    .build-print-document{width:min(calc(100% - 2rem),990px);margin:5.2rem auto 2rem}
+    .build-print-sheet{display:block;width:100%;height:auto;box-shadow:0 1.5rem 4.4rem var(--document-shadow)}
+    .build-print-sheet-dark{display:none}
+    html[data-theme="dark"] .build-print-sheet-light{display:none}
+    html[data-theme="dark"] .build-print-sheet-dark{display:block}
+    @media(prefers-color-scheme:dark){html:not([data-theme]) .build-print-sheet-light{display:none}html:not([data-theme]) .build-print-sheet-dark{display:block}}
+    @media print{.build-print-document{width:100%;margin:0}.build-print-sheet{width:100%;max-width:none;box-shadow:none}@page{margin:0}}
+    @media screen and (max-width:760px){.build-print-document{width:calc(100% - 1rem);margin:7.8rem .5rem 1rem}}
+  `
+  return createPrintDocumentHtml({
+    lang: helpers.lang || (typeof document !== 'undefined' ? document.documentElement.lang : 'en') || 'en',
+    title: build?.build_name || t('builds.print.fallbackTitle'),
+    body,
+    styles,
+    labels: createPrintLabels(t),
+  })
+}
+
 export function openBuildPrintWindow(build, helpers = {}) {
-  const { svg } = createBuildPrintDocument(build, helpers)
-  const popup = window.open('', '_blank', 'noopener,noreferrer,width=1040,height=1440')
-  if (!popup) throw new Error('Print preview could not be opened.')
-  popup.document.write(`<!doctype html><html><head><title>${escapeXml(build?.build_name || 'Build')}</title><style>html,body{margin:0;background:#07111a;color:#f4f7fa;font-family:Inter,system-ui,sans-serif}body{display:grid;place-items:center;padding:24px}img{display:block;width:min(100%,990px);height:auto;box-shadow:0 24px 70px rgba(0,0,0,.5)}button{position:fixed;z-index:2;top:16px;right:16px;padding:10px 18px;border:1px solid #8f713f;border-radius:4px;background:#0d1a26;color:#f4f7fa;cursor:pointer}@media print{body{padding:0;background:#fff}button{display:none}img{width:100%;max-width:none;box-shadow:none}@page{margin:0}}</style></head><body><button onclick="window.print()">Print</button><img alt="Build sheet" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" /></body></html>`)
-  popup.document.close()
-  return popup
+  return openPrintWindow(createBuildPrintHtml(build, helpers), {
+    features: 'width=1040,height=1440',
+    errorMessage: 'Print preview could not be opened.',
+  })
 }
 
 export { createBuildPrintModel, createBuildPrintDocument }

@@ -1,7 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { buildPrintFileName, createBuildPrintModel, createBuildPrintSvg } from '../src/modules/builds/buildPrintExport.js'
+import {
+  buildPrintFileName,
+  createBuildPrintDocument,
+  createBuildPrintHtml,
+  createBuildPrintModel,
+  createBuildPrintSvg,
+} from '../src/modules/builds/buildPrintExport.js'
 
 const translations = {
   'builds.statLabels.durability': 'Durability',
@@ -57,6 +63,12 @@ const translations = {
   'builds.print.notesTitle': 'Captain notes',
   'builds.print.footerHint': 'Prepared from the live build designer for offline review and print distribution.',
   'builds.print.footerBrand': 'Royal Blackwater Fleet · Build Designer',
+  'builds.print.previewTitle': 'Build sheet preview',
+  'print.themeLabel': 'Appearance',
+  'print.themeSystem': 'System',
+  'print.themeLight': 'Light',
+  'print.themeDark': 'Dark',
+  'print.action': 'Print or save as PDF',
   'discovery.builds.tags.pvp_group.label': 'PvP Group',
   'discovery.builds.tags.heavy.label': 'Heavy',
 }
@@ -127,6 +139,19 @@ test('build print svg contains the key build identifiers', () => {
   assert.match(svg, /Weapon loadout/)
   assert.match(svg, /Copper Sheathing/)
   assert.match(svg, /data-build-sheet-version="2"/)
+  assert.match(svg, /data-build-sheet-theme="dark"/)
+})
+
+test('build print uses the shared themed document shell', () => {
+  const lightSvg = createBuildPrintDocument(build, { t, optionLabel: (value) => value, theme: 'light' }).svg
+  const html = createBuildPrintHtml(build, { t, optionLabel: (value) => value })
+
+  assert.match(lightSvg, /data-build-sheet-theme="light"/)
+  assert.match(lightSvg, /#f8fafc/)
+  assert.match(html, /class="print-toolbar"/)
+  assert.match(html, /data-build-print-theme="light"/)
+  assert.match(html, /data-build-print-theme="dark"/)
+  assert.match(html, /Print or save as PDF/)
 })
 
 test('build print file names are sanitized for downloads', () => {

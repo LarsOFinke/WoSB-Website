@@ -4,6 +4,13 @@ export const contentModulesAndBuildStatsMessages = {
       forum: 'Forum',
       guides: 'Guides',
     },
+    print: {
+      themeLabel: 'Appearance',
+      themeSystem: 'System',
+      themeLight: 'Light',
+      themeDark: 'Dark',
+      action: 'Print or save as PDF',
+    },
     markdown: {
       editorHint: 'Use Markdown for headings, emphasis, lists, links, quotes and code. Raw HTML and remote Markdown images are disabled; upload media through the attachment tools.',
       toolbar: {
@@ -345,11 +352,6 @@ export const contentModulesAndBuildStatsMessages = {
         contentsTitle: 'Contents',
         linkedBuildsTitle: 'Linked builds',
         attachmentsTitle: 'Attachments and references',
-        printAction: 'Print or save as PDF',
-        themeLabel: 'Appearance',
-        themeSystem: 'System',
-        themeLight: 'Light',
-        themeDark: 'Dark',
         brandMotto: 'Discipline · Honour · Victory',
         author: 'Author',
         updated: 'Updated',
@@ -363,6 +365,13 @@ export const contentModulesAndBuildStatsMessages = {
     common: {
       forum: 'Forum',
       guides: 'Guides',
+    },
+    print: {
+      themeLabel: 'Darstellung',
+      themeSystem: 'Automatisch',
+      themeLight: 'Hell',
+      themeDark: 'Dunkel',
+      action: 'Drucken oder als PDF speichern',
     },
     markdown: {
       editorHint: 'Nutze Markdown für Überschriften, Hervorhebungen, Listen, Links, Zitate und Code. Rohes HTML und externe Markdown-Bilder sind deaktiviert; Medien werden über die Anhangswerkzeuge hochgeladen.',
@@ -706,11 +715,6 @@ export const contentModulesAndBuildStatsMessages = {
         contentsTitle: 'Inhalt',
         linkedBuildsTitle: 'Verknüpfte Builds',
         attachmentsTitle: 'Anhänge und Referenzen',
-        printAction: 'Drucken oder als PDF speichern',
-        themeLabel: 'Darstellung',
-        themeSystem: 'Automatisch',
-        themeLight: 'Hell',
-        themeDark: 'Dunkel',
         brandMotto: 'Disziplin · Ehre · Sieg',
         author: 'Autor',
         updated: 'Aktualisiert',
