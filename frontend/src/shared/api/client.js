@@ -17,7 +17,15 @@ async function request(path, options = {}) {
     let message = `API error ${response.status}`
     try {
       const payload = await response.json()
-      message = payload.detail || message
+      if (typeof payload.detail === 'string') {
+        message = payload.detail
+      } else if (Array.isArray(payload.detail)) {
+        message = payload.detail
+          .map((item) => item?.msg || item?.message)
+          .filter(Boolean)
+          .join(' ')
+          || message
+      }
     } catch {
       // keep fallback message
     }

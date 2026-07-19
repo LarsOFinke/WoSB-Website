@@ -1,5 +1,6 @@
 import json
 import socket
+from types import SimpleNamespace
 from urllib.error import URLError
 
 from fastapi.testclient import TestClient
@@ -17,7 +18,11 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
     _delivery_transport_error,
     queue_webhook_event,
 )
-from app.modules.admin.services.outbound_webhook_service import create_webhook
+from app.modules.admin.services.outbound_webhook_service import (
+    _public_endpoint,
+    _validate_endpoint_url,
+    create_webhook,
+)
 from app.modules.registry import register_all_models
 from main import app
 
@@ -133,6 +138,22 @@ def test_admin_can_manage_discord_webhooks_and_token_stays_masked() -> None:
 
         deleted = client.delete(f"/api/admin/discord-webhooks/{webhook_id}")
         assert deleted.status_code == 204
+
+
+def test_discord_webhook_url_accepts_copied_and_versioned_official_urls() -> None:
+    copied = "<https://discord.com/api/webhooks/222222222222222222/copied-token>"
+    versioned = "https://discord.com/api/v10/webhooks/222222222222222222/versioned-token"
+
+    assert _validate_endpoint_url(copied) == copied[1:-1]
+    assert _validate_endpoint_url(versioned) == versioned
+
+
+def test_versioned_discord_webhook_url_is_masked_with_its_real_id() -> None:
+    endpoint = "https://discord.com/api/v10/webhooks/222222222222222222/versioned-token"
+
+    assert _public_endpoint(SimpleNamespace(endpoint_url=endpoint)) == (
+        "https://discord.com/api/webhooks/222222222222222222/••••••"
+    )
 
 
 def test_admin_event_catalog_returns_the_versioned_english_repository_templates() -> None:

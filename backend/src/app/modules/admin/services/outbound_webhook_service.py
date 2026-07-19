@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import re
 from urllib.parse import urlparse
 
 from sqlalchemy import func, select
@@ -22,7 +23,17 @@ from app.modules.admin.services.webhook_events import DEFAULT_MESSAGES, EVENT_CA
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.squads.models.squad import Squad
 
-DISCORD_WEBHOOK_HOSTS = {"discord.com", "ptb.discord.com", "canary.discord.com", "discordapp.com"}
+DISCORD_WEBHOOK_HOSTS = {
+    "discord.com",
+    "www.discord.com",
+    "ptb.discord.com",
+    "canary.discord.com",
+    "discordapp.com",
+}
+DISCORD_WEBHOOK_PATH = re.compile(
+    r"^/api(?:/v\d{1,2})?/webhooks/(?P<webhook_id>[^/\s]+)/(?P<token>[^/\s]+)(?:/(?:github|slack))?/?$",
+    re.IGNORECASE,
+)
 
 
 class OutboundWebhookError(ValueError):
@@ -55,6 +66,9 @@ def _normalize_event_types(values: list[str], *, allow_empty: bool = False) -> l
 
 def _validate_endpoint_url(value: str) -> str:
     url = value.strip()
+    # Discord and Markdown clients sometimes copy a link wrapped in angle brackets.
+    if len(url) > 2 and url.startswith("<") and url.endswith(">"):
+        url = url[1:-1].strip()
     parsed = urlparse(url)
     if parsed.scheme != "https" or not parsed.netloc or not parsed.hostname:
         raise OutboundWebhookError("Discord chat webhooks must use a valid HTTPS URL.")
@@ -78,8 +92,13 @@ def _validate_endpoint_url(value: str) -> str:
         literal_address = None
     if literal_address is not None and not literal_address.is_global:
         raise OutboundWebhookError("Discord webhooks must not target private or reserved addresses.")
-    if hostname not in DISCORD_WEBHOOK_HOSTS or not parsed.path.startswith("/api/webhooks/"):
-        raise OutboundWebhookError("Use an official Discord channel webhook URL.")
+    if hostname not in DISCORD_WEBHOOK_HOSTS:
+        raise OutboundWebhookError("Use an official Discord channel webhook URL from discord.com.")
+    if not DISCORD_WEBHOOK_PATH.fullmatch(parsed.path):
+        raise OutboundWebhookError(
+            "The Discord webhook URL must contain both the webhook ID and token. "
+            "Copy it from Discord channel settings under Integrations > Webhooks."
+        )
     return url
 
 
@@ -112,8 +131,8 @@ def _load_events(value: str) -> list[str]:
 
 def _public_endpoint(row: OutboundWebhook) -> str:
     parsed = urlparse(row.endpoint_url)
-    parts = [part for part in parsed.path.split("/") if part]
-    webhook_id = parts[2] if len(parts) > 2 else "configured"
+    path_match = DISCORD_WEBHOOK_PATH.fullmatch(parsed.path)
+    webhook_id = path_match.group("webhook_id") if path_match else "configured"
     return f"{parsed.scheme}://{parsed.netloc}/api/webhooks/{webhook_id}/••••••"
 
 

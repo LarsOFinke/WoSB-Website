@@ -120,6 +120,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Retry succeeded.",
           "retryFailed": "Retry failed."
         },
+        "validation": { "title": "Check the webhook details.", "name": "Enter a name with at least 3 characters.", "endpointRequired": "Paste the Discord webhook URL.", "endpointInvalid": "Use the complete Discord channel webhook URL, including its ID and token.", "scope": "Enter a valid fleet or squad ID.", "events": "Select at least one event or enable manual broadcasts." },
         "errors": {
           "load": "Discord webhooks could not be loaded.",
           "save": "Discord webhook could not be saved.",
@@ -286,6 +287,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Wiederholung erfolgreich.",
           "retryFailed": "Wiederholung fehlgeschlagen."
         },
+        "validation": { "title": "Prüfe die Webhook-Angaben.", "name": "Gib einen Namen mit mindestens 3 Zeichen ein.", "endpointRequired": "Füge die Discord-Webhook-URL ein.", "endpointInvalid": "Verwende die vollständige Discord-Channel-Webhook-URL inklusive ID und Token.", "scope": "Gib eine gültige Flotten- oder Squad-ID ein.", "events": "Wähle mindestens ein Event oder aktiviere manuelle Broadcasts." },
         "errors": {
           "load": "Discord-Webhooks konnten nicht geladen werden.",
           "save": "Discord-Webhook konnte nicht gespeichert werden.",
@@ -452,6 +454,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Nouvelle tentative réussie.",
           "retryFailed": "Nouvelle tentative échouée."
         },
+        "validation": { "title": "Vérifiez les informations du webhook.", "name": "Saisissez un nom d’au moins 3 caractères.", "endpointRequired": "Collez l’URL du webhook Discord.", "endpointInvalid": "Utilisez l’URL complète du webhook de salon avec son ID et son jeton.", "scope": "Saisissez un ID de flotte ou d’escouade valide.", "events": "Sélectionnez un événement ou activez les diffusions manuelles." },
         "errors": {
           "load": "Impossible de charger les webhooks Discord.",
           "save": "Impossible d’enregistrer le webhook Discord.",
@@ -618,6 +621,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Reintento correcto.",
           "retryFailed": "El reintento falló."
         },
+        "validation": { "title": "Revisa los datos del webhook.", "name": "Introduce un nombre de al menos 3 caracteres.", "endpointRequired": "Pega la URL del webhook de Discord.", "endpointInvalid": "Usa la URL completa del webhook del canal, con su ID y token.", "scope": "Introduce un ID de flota o escuadrón válido.", "events": "Selecciona un evento o activa las difusiones manuales." },
         "errors": {
           "load": "No se pudieron cargar los webhooks de Discord.",
           "save": "No se pudo guardar el webhook de Discord.",
@@ -784,6 +788,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Nova tentativa concluída.",
           "retryFailed": "A nova tentativa falhou."
         },
+        "validation": { "title": "Verifique os dados do webhook.", "name": "Introduza um nome com pelo menos 3 caracteres.", "endpointRequired": "Cole o URL do webhook do Discord.", "endpointInvalid": "Use o URL completo do webhook do canal, incluindo ID e token.", "scope": "Introduza um ID de frota ou esquadrão válido.", "events": "Selecione um evento ou ative as transmissões manuais." },
         "errors": {
           "load": "Não foi possível carregar os webhooks do Discord.",
           "save": "Não foi possível guardar o webhook do Discord.",
@@ -950,6 +955,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "Повторная доставка успешна.",
           "retryFailed": "Повторная доставка не удалась."
         },
+        "validation": { "title": "Проверьте данные вебхука.", "name": "Введите название не короче 3 символов.", "endpointRequired": "Вставьте URL вебхука Discord.", "endpointInvalid": "Используйте полный URL вебхука канала с ID и токеном.", "scope": "Введите корректный ID флота или отряда.", "events": "Выберите событие или включите ручные рассылки." },
         "errors": {
           "load": "Не удалось загрузить вебхуки Discord.",
           "save": "Не удалось сохранить вебхук Discord.",
@@ -1116,6 +1122,7 @@ export const outboundWebhookManagementMessages = {
           "retrySuccess": "重试成功。",
           "retryFailed": "重试失败。"
         },
+        "validation": { "title": "请检查 Webhook 信息。", "name": "请输入至少 3 个字符的名称。", "endpointRequired": "请粘贴 Discord Webhook URL。", "endpointInvalid": "请使用包含 ID 和令牌的完整频道 Webhook URL。", "scope": "请输入有效的舰队或小队 ID。", "events": "请选择至少一个事件或启用手动广播。" },
         "errors": {
           "load": "无法加载 Discord Webhook。",
           "save": "无法保存 Discord Webhook。",

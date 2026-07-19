@@ -13,6 +13,10 @@ import {
   testOutboundWebhook,
   updateOutboundWebhook,
 } from '@/modules/admin/api/admin'
+import {
+  outboundWebhookPayload,
+  webhookDraftIssues,
+} from '@/modules/admin/domain/outboundWebhook'
 
 const props = defineProps({ canManage: { type: Boolean, default: false } })
 const { locale, t } = useLocale()
@@ -31,6 +35,8 @@ const deliveryStatus = ref('')
 const deliveryEvent = ref('')
 const eventSearch = ref('')
 const templateEventKey = ref('')
+const editorOpen = ref(false)
+const validationIssues = ref([])
 
 const form = reactive({
   id: null,
@@ -72,6 +78,7 @@ const selectedEventsLabel = computed(() => form.event_types.length
 
 const visibleSelectedEvents = computed(() => form.event_types.slice(0, 5))
 const hiddenSelectedEventCount = computed(() => Math.max(0, form.event_types.length - visibleSelectedEvents.value.length))
+const formIsReady = computed(() => webhookDraftIssues(form, { editing: Boolean(form.id) }).length === 0)
 
 const filteredWebhooks = computed(() => {
   const term = webhookSearch.value.trim().toLowerCase()
@@ -94,6 +101,7 @@ function formatDateTime(value) {
 function resetForm() {
   eventSearch.value = ''
   templateEventKey.value = ''
+  validationIssues.value = []
   Object.assign(form, {
     id: null,
     name: '',
@@ -107,6 +115,17 @@ function resetForm() {
     is_active: true,
     event_types: [],
   })
+}
+
+function openCreateWebhook() {
+  resetForm()
+  editorOpen.value = true
+  requestAnimationFrame(() => document.querySelector('#outbound-webhook-name')?.focus())
+}
+
+function closeEditor() {
+  editorOpen.value = false
+  resetForm()
 }
 
 function editWebhook(row) {
@@ -125,6 +144,8 @@ function editWebhook(row) {
     is_active: row.is_active,
     event_types: [...row.event_types],
   })
+  validationIssues.value = []
+  editorOpen.value = true
   requestAnimationFrame(() => document.querySelector('#outbound-webhook-name')?.focus())
 }
 
@@ -186,25 +207,16 @@ async function load() {
 }
 
 async function submit() {
+  validationIssues.value = webhookDraftIssues(form, { editing: Boolean(form.id) })
+  if (validationIssues.value.length) return
   saving.value = true
   error.value = ''
   success.value = ''
   try {
-    const payload = {
-      name: form.name,
-      endpoint_url: form.endpoint_url || null,
-      scope_type: form.scope_type,
-      scope_id: form.scope_type === 'global' ? null : Number(form.scope_id),
-      message_template: form.message_template || null,
-      discord_username: form.discord_username || null,
-      discord_avatar_url: form.discord_avatar_url || null,
-      broadcast_enabled: form.broadcast_enabled,
-      is_active: form.is_active,
-      event_types: form.event_types,
-    }
+    const payload = outboundWebhookPayload(form)
     form.id ? await updateOutboundWebhook(form.id, payload) : await createOutboundWebhook(payload)
     success.value = form.id ? t('admin.webhooks.messages.updated') : t('admin.webhooks.messages.created')
-    resetForm()
+    closeEditor()
     await load()
   } catch (err) {
     error.value = err.message || t('admin.webhooks.errors.save')
@@ -257,7 +269,10 @@ onMounted(load)
         <h2>{{ t('admin.webhooks.title') }}</h2>
         <p>{{ t('admin.webhooks.subtitle') }}</p>
       </div>
-      <button class="small-action" type="button" :disabled="loading" @click="load">{{ t('admin.logs.refresh') }}</button>
+      <div class="hero-actions">
+        <button class="small-action" type="button" :disabled="loading" @click="load">{{ t('admin.logs.refresh') }}</button>
+        <button v-if="canManage" class="form-button primary-action" type="button" @click="openCreateWebhook">{{ t('admin.webhooks.actions.create') }}</button>
+      </div>
     </div>
 
     <div class="webhook-summary-grid">
@@ -270,15 +285,20 @@ onMounted(load)
     <p v-if="error" class="error-message">{{ error }}</p>
     <p v-if="success" class="success-message">{{ success }}</p>
 
-    <div class="webhook-workspace-grid" :class="{ 'is-read-only': !canManage }">
-      <form v-if="canManage" class="webhook-editor" @submit.prevent="submit">
+    <div class="webhook-workspace-grid" :class="{ 'is-read-only': !canManage, 'is-editing': editorOpen }">
+      <button v-if="canManage && editorOpen" class="webhook-editor-backdrop" type="button" :aria-label="t('common.cancel')" @click="closeEditor"></button>
+      <form v-if="canManage && editorOpen" class="webhook-editor" role="dialog" aria-modal="true" :aria-label="form.id ? t('admin.webhooks.editor.editTitle') : t('admin.webhooks.editor.createTitle')" @submit.prevent="submit">
         <div class="webhook-section-head">
           <div><span class="command-deck-eyebrow">{{ t('admin.webhooks.editor.eyebrow') }}</span><h3>{{ form.id ? t('admin.webhooks.editor.editTitle') : t('admin.webhooks.editor.createTitle') }}</h3></div>
-          <button v-if="form.id" class="small-action" type="button" @click="resetForm">{{ t('common.cancel') }}</button>
+          <button class="small-action" type="button" @click="closeEditor">{{ t('common.cancel') }}</button>
+        </div>
+        <div v-if="validationIssues.length" class="webhook-validation-summary" role="alert">
+          <strong>{{ t('admin.webhooks.validation.title') }}</strong>
+          <ul><li v-for="issue in validationIssues" :key="issue">{{ t(`admin.webhooks.validation.${issue}`) }}</li></ul>
         </div>
         <div class="webhook-toggle-row"><label class="webhook-active-toggle"><input v-model="form.is_active" type="checkbox" /><span>{{ t('admin.webhooks.fields.active') }}</span></label><label class="webhook-active-toggle"><input v-model="form.broadcast_enabled" type="checkbox" /><span>{{ t('admin.webhooks.fields.broadcastEnabled') }}</span></label></div>
-        <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.name') }}</span><input id="outbound-webhook-name" v-model="form.name" required maxlength="120" :placeholder="t('admin.webhooks.placeholders.name')" /></label>
-        <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.endpoint') }}</span><input v-model="form.endpoint_url" type="url" maxlength="1000" :required="!form.id" :placeholder="form.id ? t('admin.webhooks.placeholders.keepEndpoint') : 'https://discord.com/api/webhooks/…'" /><small>{{ t('admin.webhooks.endpointHint') }}</small></label>
+        <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.name') }}</span><input id="outbound-webhook-name" v-model="form.name" required minlength="3" maxlength="120" :placeholder="t('admin.webhooks.placeholders.name')" /></label>
+        <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.endpoint') }}</span><input v-model="form.endpoint_url" type="text" inputmode="url" autocapitalize="none" :spellcheck="false" maxlength="1000" :required="!form.id" :placeholder="form.id ? t('admin.webhooks.placeholders.keepEndpoint') : 'https://discord.com/api/webhooks/…'" /><small>{{ t('admin.webhooks.endpointHint') }}</small></label>
         <div class="webhook-editor-row">
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.scope') }}</span><select v-model="form.scope_type"><option value="global">{{ t('admin.webhooks.scopes.global') }}</option><option value="fleet">{{ t('admin.webhooks.scopes.fleet') }}</option><option value="squad">{{ t('admin.webhooks.scopes.squad') }}</option></select></label>
           <label v-if="form.scope_type !== 'global'" class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.scopeId') }}</span><input v-model.number="form.scope_id" type="number" min="1" required /></label>
@@ -340,10 +360,10 @@ onMounted(load)
             <button v-for="eventType in visibleSelectedEvents" :key="eventType" type="button" :aria-label="t('admin.webhooks.eventPicker.remove', { event: eventType })" @click="toggleEvent(eventType)"><span>{{ eventType }}</span><b aria-hidden="true">×</b></button><span v-if="hiddenSelectedEventCount" class="webhook-event-more-chip">+{{ hiddenSelectedEventCount }}</span>
           </div>
         </fieldset>
-        <button class="form-button primary-action" type="submit" :disabled="saving || (form.event_types.length === 0 && !form.broadcast_enabled)">{{ saving ? t('common.saving') : (form.id ? t('common.save') : t('admin.webhooks.actions.create')) }}</button>
+        <div class="webhook-editor-actions"><button class="small-action" type="button" @click="closeEditor">{{ t('common.cancel') }}</button><button class="form-button primary-action" type="submit" :disabled="saving || !formIsReady">{{ saving ? t('common.saving') : (form.id ? t('common.save') : t('admin.webhooks.actions.create')) }}</button></div>
       </form>
 
-      <article v-else class="webhook-read-only-note"><span class="command-deck-eyebrow">{{ t('admin.webhooks.readOnly.eyebrow') }}</span><h3>{{ t('admin.webhooks.readOnly.title') }}</h3><p>{{ t('admin.webhooks.readOnly.hint') }}</p></article>
+      <article v-if="!canManage" class="webhook-read-only-note"><span class="command-deck-eyebrow">{{ t('admin.webhooks.readOnly.eyebrow') }}</span><h3>{{ t('admin.webhooks.readOnly.title') }}</h3><p>{{ t('admin.webhooks.readOnly.hint') }}</p></article>
 
       <section class="webhook-list-panel">
         <div class="webhook-section-head"><div><span class="command-deck-eyebrow">{{ t('admin.webhooks.list.eyebrow') }}</span><h3>{{ t('admin.webhooks.list.title') }}</h3></div><span class="summary-pill">{{ filteredWebhooks.length }}</span></div>

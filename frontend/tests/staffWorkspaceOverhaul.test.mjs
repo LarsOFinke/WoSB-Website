@@ -43,7 +43,7 @@ test('Discord broadcasts can target several configured channel webhooks', () => 
   assert.ok(broadcastSource.includes('listBroadcastWebhookTargets'))
   assert.ok(broadcastSource.includes('sendDiscordBroadcast'))
   assert.ok(webhookSource.includes('form.broadcast_enabled'))
-  assert.ok(webhookSource.includes('(form.event_types.length === 0 && !form.broadcast_enabled)'))
+  assert.ok(webhookSource.includes('formIsReady'))
 })
 
 
@@ -58,6 +58,30 @@ test('webhook editor offers compact subscriptions and repository template autofi
   assert.ok(webhookSource.includes('clearMessageTemplate'))
   assert.ok(!discordPageSource.includes('webhook-template-reference'))
   assert.ok(!discordPageSource.includes('docs/webhook-templates/message-templates/'))
+  assert.ok(webhookSource.includes('webhook-editor-backdrop'))
+  assert.ok(webhookSource.includes('role="dialog"'))
+  assert.ok(webhookSource.includes('openCreateWebhook'))
+  assert.ok(stylesSource.includes('.webhook-editor-backdrop'))
+})
+
+test('system logs use expandable request rows and defer the dense security dashboard', () => {
+  for (const className of ['staff-log-summary-strip', 'staff-log-list', 'staff-log-entry-details', 'staff-log-security-disclosure']) {
+    assert.ok(adminSource.includes(className), className)
+    assert.ok(stylesSource.includes(`.${className}`), `${className} CSS`)
+  }
+  assert.ok(adminSource.includes(':aria-expanded="expandedLogId === entry.id"'))
+  assert.ok(!adminSource.includes('<table class="security-table staff-log-table">'))
+})
+
+test('mobile staff navigation uses one stable grouped picker instead of an overflowing tab rail', () => {
+  assert.ok(adminSource.includes('staff-mobile-tab-picker'))
+  assert.ok(adminSource.includes('<Teleport to="body">'))
+  assert.ok(adminSource.includes('role="dialog"'))
+  assert.ok(adminSource.includes('staff-mobile-tab-sheet'))
+  assert.ok(adminSource.includes('selectMobileTab'))
+  assert.ok(stylesSource.includes('.staff-mobile-tab-picker'))
+  assert.ok(stylesSource.includes('.staff-mobile-tab-layer'))
+  assert.ok(stylesSource.includes('.staff-workspace-frame > .staff-tabs {\n    display: none;'))
 })
 
 test('staff overview has dedicated responsive dashboard styling', () => {
