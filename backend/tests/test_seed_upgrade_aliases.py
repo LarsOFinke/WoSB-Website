@@ -5,7 +5,7 @@ from app.db.session import SessionLocal, engine
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.registry import register_all_models
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 
 
 def test_legacy_reinforced_ports_is_migrated_to_fortified_ports() -> None:

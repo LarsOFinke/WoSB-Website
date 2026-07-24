@@ -13,7 +13,7 @@ from app.modules.guides.models.guide import Guide
 from app.modules.onboarding.models.newcomer_guide import NewcomerGuideBlock, NewcomerGuidePage
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 
 
 def _count(db: Session, model: type) -> int:

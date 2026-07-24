@@ -25,8 +25,8 @@ from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.registry import register_all_models
 from app.modules.guides.models.guide import Guide
 from app.modules.ships.models.ship import Ship
-from app.seeds.catalog_sync import CUSTOM_MASTER_DATA_REVISION
-from app.seeds.manager import SeedManager
+from app.bootstrap.catalog_sync import CUSTOM_MASTER_DATA_REVISION
+from app.bootstrap.manager import SeedManager
 from main import app
 
 

@@ -127,6 +127,10 @@ function crewCapacity() {
                   <span class="build-configuration-marker" aria-hidden="true">R</span>
                   <span><small>{{ t('builds.detail.researchUpgradeSlot') }}</small><strong>{{ build.research_upgrade_slot_unlocked ? t('builds.detail.researchUpgradeSlotActive') : t('builds.detail.researchUpgradeSlotInactive') }}</strong></span>
                 </div>
+                <div v-if="build.mortar_modification_installed" class="build-configuration-item">
+                  <span class="build-configuration-marker" aria-hidden="true">M</span>
+                  <span><small>{{ t('builds.detail.mortarModification') }}</small><strong>{{ t('builds.detail.mortarModificationActive') }}</strong></span>
+                </div>
               </div>
             </section>
 

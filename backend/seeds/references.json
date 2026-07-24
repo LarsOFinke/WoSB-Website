@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "catalog": "catalog-references",
+  "items": {
+    "items": "https://world-of-sea-battle.fandom.com/wiki/Items",
+    "weapons": "https://world-of-sea-battle.fandom.com/wiki/Weapons",
+    "water_navigation": "https://world-of-sea-battle.fandom.com/wiki/Water",
+    "planner": "https://wosbplanner.com/buildmaker?lang=en",
+    "guide": "https://warshipsgames.com/world-sea-battle-best-ships-guide/",
+    "steam_discussion": "https://steamcommunity.com/app/2948190/discussions/0/824857476142740596/"
+  }
+}

@@ -49,13 +49,28 @@ export function useBuildEffects({
   const researchUpgradeEffectTotals = computed(() => form.research_upgrade_slot_unlocked
     ? optionCatalog.value.research_upgrade_slot_effects || {}
     : {})
+  const mortarModificationEffectTotals = computed(() => {
+    const modification = form.mortar_modification_installed
+      ? selectedShip.value?.mortar_modification
+      : null
+    if (!modification) return {}
+    return {
+      durability: Number(modification.durability_delta) || 0,
+      speed_pct: Number(modification.speed_pct) || 0,
+      maneuverability: Number(modification.maneuverability_delta) || 0,
+      hold_capacity_pct: Number(modification.hold_capacity_pct) || 0,
+      crew_capacity: Number(modification.crew_capacity_delta) || 0,
+    }
+  })
   const buildEffectTotals = computed(() => sumEffects(
+    mortarModificationEffectTotals.value,
     equipmentEffectTotals.value,
     upgradeEffectTotals.value,
     specialCrewEffectTotals.value,
     researchUpgradeEffectTotals.value,
   ))
   const buildEffectSets = computed(() => [
+    mortarModificationEffectTotals.value,
     catalog.optionEffects('sail', form.sails),
     catalog.optionEffects('lantern', form.lantern),
     ...selectedUpgradeNames.value.filter(Boolean).map(catalog.upgradeEffects),
@@ -202,6 +217,7 @@ export function useBuildEffects({
     specialCrewEffectTotals,
     equipmentEffectTotals,
     researchUpgradeEffectTotals,
+    mortarModificationEffectTotals,
     buildEffectTotals,
     buildEffectSets,
     upgradeSlot5Unlocked,

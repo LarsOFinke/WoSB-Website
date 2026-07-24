@@ -58,6 +58,7 @@ def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildS
     db_build.build_type = build.build_type
     db_build.ship_id = build.ship_id
     db_build.research_upgrade_slot_unlocked = build.research_upgrade_slot_unlocked
+    db_build.mortar_modification_installed = build.mortar_modification_installed
     db_build.sailors = build.sailors
     db_build.soldiers = build.soldiers
     db_build.musketeers = build.musketeers

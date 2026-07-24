@@ -433,7 +433,7 @@ def test_build_create_update_and_remove_publish_real_webhook_deliveries(monkeypa
     from app.modules.admin.services import outbound_webhook_delivery_service as delivery_module
     from app.modules.fleet.models.fleet import Fleet
     from app.modules.ships.models.ship import Ship
-    from app.seeds.manager import SeedManager
+    from app.bootstrap.manager import SeedManager
 
     class CaptureTransport:
         def __init__(self) -> None:

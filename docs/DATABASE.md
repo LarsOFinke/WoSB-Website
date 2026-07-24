@@ -42,7 +42,10 @@ Nutzeraktivität. Solche Daten existieren nur als isolierte Test-Fixtures.
 Seed-Datensätze besitzen stabile Identität, Revision, Checksumme und Override-Status. Identische
 Läufe schreiben nichts neu; Admin-Overrides bleiben geschützt; entfernte Defaults werden inaktiv.
 
-Der Schiffskatalog ist nach Rate in `backend/src/app/seeds/ship_data/` gegliedert. Neue Schiffe werden über die gemeinsame `ship()`-Factory ergänzt; dadurch bleiben Standardwerte, Quellenkennzeichnung und das Planungsmodell für Mindestbesatzung konsistent.
+Alle repository-eigenen Stammdaten liegen als streng validierte JSON-Dokumente
+unter `backend/seeds/`. Das Manifest deckt Systemrollen, Flotten, Build-Kategorien
+und -Optionen sowie den nach Rate gegliederten Schiffskatalog ab. Unter
+`backend/src` verbleiben nur Loader und idempotente Synchronisationslogik.
 
 ```bash
 sudo ./update.sh --seed

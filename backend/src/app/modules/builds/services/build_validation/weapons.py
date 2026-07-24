@@ -33,25 +33,52 @@ class WeaponLoadoutValidator:
         build: BuildCreate,
         option_map: dict[tuple[str, str], BuildItemOption],
     ) -> None:
-        capacities = self._capacities(ship)
+        capacities = self._capacities(ship, build)
         for field_name, slot_type in WEAPON_SLOT_TYPE_BY_FIELD.items():
             slots = getattr(build, field_name)
             label = WEAPON_FIELD_LABELS[field_name]
             UniqueSlotValidator.validate(slots, label)
             self._validate_row_and_capacity(field_name, label, slots, capacities[field_name])
+            selected_options: list[tuple[BuildItemOption, int]] = []
             for slot in slots:
                 option = BuildOptionCatalog.require(option_map, slot.item, "weapon", label)
-                self._validate_mount(ship, option, slot_type, label)
+                self._validate_mount(ship, build, option, slot_type, label)
+                selected_options.append((option, int(slot.quantity or 1)))
+            self._validate_special_capacity(
+                ship,
+                slot_type,
+                label,
+                selected_options,
+            )
 
     @staticmethod
-    def _capacities(ship: Ship) -> dict[str, int]:
+    def _capacities(ship: Ship, build: BuildCreate) -> dict[str, int]:
+        installed = build.mortar_modification_installed
         return {
-            "front_weapon_slots": int(ship.front_weapon_capacity or 0),
-            "rear_weapon_slots": int(ship.rear_weapon_capacity or 0),
-            "port_weapon_slots": int(ship.broadside_weapon_capacity or 0),
-            "starboard_weapon_slots": int(ship.broadside_weapon_capacity or 0),
-            "mortar_weapon_slots": int(ship.mortar_weapon_capacity or 0),
-            "special_weapon_slots": int(ship.special_weapon_capacity or 0),
+            "front_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_front",
+                mortar_modification_installed=installed,
+            ),
+            "rear_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_rear",
+                mortar_modification_installed=installed,
+            ),
+            "port_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_port",
+                mortar_modification_installed=installed,
+            ),
+            "starboard_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_starboard",
+                mortar_modification_installed=installed,
+            ),
+            "mortar_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_mortar",
+                mortar_modification_installed=installed,
+            ),
+            "special_weapon_slots": ship.effective_weapon_capacity(
+                "weapon_special",
+                mortar_modification_installed=installed,
+            ),
         }
 
     @staticmethod
@@ -78,32 +105,84 @@ class WeaponLoadoutValidator:
 
     @staticmethod
     def _validate_mount(
-        ship: Ship, option: BuildItemOption, slot_type: str, label: str
+        ship: Ship,
+        build: BuildCreate,
+        option: BuildItemOption,
+        slot_type: str,
+        label: str,
     ) -> None:
         if slot_type not in option.allowed_slots:
             raise BuildValidationError(
                 f"{label}: '{option.name}' cannot be mounted in this slot type."
             )
+        if slot_type == "weapon_mortar":
+            WeaponLoadoutValidator._validate_mortar(ship, build, option, label)
         mount = ship._mount(slot_type)
-        if mount is None or not is_weapon_compatible(option, mount):
+        installed = build.mortar_modification_installed
+        if mount is None or not is_weapon_compatible(
+            option,
+            mount,
+            capacity_override=ship.effective_weapon_capacity(
+                slot_type,
+                mortar_modification_installed=installed,
+            ),
+            max_caliber_override=(
+                ship.effective_max_mortar_caliber_inches(
+                    mortar_modification_installed=installed
+                )
+                if slot_type == "weapon_mortar"
+                else None
+            ),
+        ):
             raise BuildValidationError(
                 f"{label}: '{option.name}' is not compatible with this ship's mount profile."
             )
         if slot_type == "weapon_mortar":
-            WeaponLoadoutValidator._validate_mortar(ship, option, label)
-        elif slot_type == "weapon_special":
+            return
+        if slot_type == "weapon_special":
             if option.option_kind != "special_weapon":
                 raise BuildValidationError(
                     f"{label}: '{option.name}' is not a special weapon."
                 )
-        elif option.option_kind in {"mortar", "mortar_launcher", "special_weapon"}:
+        elif option.option_kind == "special_weapon":
+            if slot_type not in {"weapon_front", "weapon_rear"}:
+                raise BuildValidationError(
+                    f"{label}: '{option.name}' is not valid for this positional mount."
+                )
+        elif option.option_kind in {"mortar", "mortar_launcher"}:
             raise BuildValidationError(
                 f"{label}: '{option.name}' must be placed in its dedicated slot."
             )
 
     @staticmethod
-    def _validate_mortar(ship: Ship, option: BuildItemOption, label: str) -> None:
-        max_caliber = ship.max_mortar_caliber_inches
+    def _validate_special_capacity(
+        ship: Ship,
+        slot_type: str,
+        label: str,
+        selected_options: list[tuple[BuildItemOption, int]],
+    ) -> None:
+        special_quantity = sum(
+            quantity
+            for option, quantity in selected_options
+            if option.option_kind == "special_weapon"
+        )
+        special_capacity = ship.special_weapon_capacity_for(slot_type)
+        if special_quantity > special_capacity:
+            raise BuildValidationError(
+                f"{label}: selected special-weapon quantity ({special_quantity}) exceeds "
+                f"this mount's special capacity ({special_capacity})."
+            )
+
+    @staticmethod
+    def _validate_mortar(
+        ship: Ship,
+        build: BuildCreate,
+        option: BuildItemOption,
+        label: str,
+    ) -> None:
+        max_caliber = ship.effective_max_mortar_caliber_inches(
+            mortar_modification_installed=build.mortar_modification_installed
+        )
         if option.option_kind not in {"mortar", "mortar_launcher"}:
             raise BuildValidationError(
                 f"{label}: '{option.name}' is not a mortar-slot weapon."

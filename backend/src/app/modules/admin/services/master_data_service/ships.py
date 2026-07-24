@@ -9,11 +9,12 @@ from app.modules.admin.schemas.master_data import (
     MasterDataShipUpdate,
 )
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.ships.models.mortar_modification import ShipMortarModification
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import ShipWeaponMount
-from app.seeds.catalog_sync import CUSTOM_MASTER_DATA_REVISION
-from app.seeds.manager import SeedManager
+from app.bootstrap.catalog_sync import CUSTOM_MASTER_DATA_REVISION
+from app.bootstrap.manager import SeedManager
 
 from .common import MasterDataError, MasterDataUnitOfWork, TaxonomyRepository
 from .mappers import MasterDataMapper
@@ -101,10 +102,15 @@ class ShipMasterDataService:
     ) -> None:
         weapon_classes, slot_types = self._taxonomy.maps()
         for field, value in payload.model_dump(
-            exclude={"weapon_mounts", "upgrade_effect_overrides"}
+            exclude={
+                "weapon_mounts",
+                "mortar_modification",
+                "upgrade_effect_overrides",
+            }
         ).items():
             setattr(row, field, value)
         self._replace_mounts(row, payload.weapon_mounts, weapon_classes, slot_types)
+        self._replace_mortar_modification(row, payload.mortar_modification)
         self._replace_upgrade_overrides(row, payload.upgrade_effect_overrides)
 
     @staticmethod
@@ -121,6 +127,7 @@ class ShipMasterDataService:
             values = {
                 "slot_type_id": slot_types[payload.slot_type].id,
                 "capacity": payload.capacity,
+                "special_weapon_capacity": payload.special_weapon_capacity,
                 "max_weapon_class_id": (
                     weapon_classes[payload.max_weapon_class].id
                     if payload.max_weapon_class
@@ -168,6 +175,18 @@ class ShipMasterDataService:
                         effect_value=float(effect_value),
                     )
                 )
+
+    @staticmethod
+    def _replace_mortar_modification(row: Ship, payload) -> None:
+        if payload is None:
+            row.mortar_modification = None
+            return
+        values = payload.model_dump()
+        if row.mortar_modification is None:
+            row.mortar_modification = ShipMortarModification(**values)
+            return
+        for field, value in values.items():
+            setattr(row.mortar_modification, field, value)
 
     def _reload(self, ship_id: int, *, required: bool = True) -> Ship | None:
         row = self.db.scalar(self.query().where(Ship.id == ship_id))

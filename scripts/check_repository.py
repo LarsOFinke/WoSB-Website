@@ -143,9 +143,10 @@ for path in ROOT.rglob("*"):
         )
 
 
-# Clean installations start from one current production baseline.
+# Clean installations start at the production baseline and advance through one
+# explicit, linear migration chain.
 migration_files = sorted((ROOT / "backend/migrations/versions").glob("*.py"))
-require(len(migration_files) == 1, "clean setup must ship exactly one baseline migration")
+require(migration_files, "repository must ship a production baseline migration")
 require(migration_files[0].name == "0001_baseline.py", "baseline migration filename must be 0001_baseline.py")
 previous_revision: str | None = None
 seen_revisions: set[str] = set()
@@ -335,13 +336,31 @@ for path in (ROOT / "frontend/src").rglob("*.js"):
     require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
     require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
 
-# Production seed sources must contain only operational and master data.
-seed_dir = ROOT / "backend/src/app/seeds"
-for forbidden_name in ("starter_content.py", "newcomer_guide.py", "legacy_demo_cleanup.py"):
-    require(not (seed_dir / forbidden_name).exists(), f"production mock seed remains: {forbidden_name}")
+# Production master data must be isolated from application source and every
+# JSON document must be declared by the root manifest.
+legacy_seed_dir = ROOT / "backend/src/app/seeds"
+require(not legacy_seed_dir.exists(), "legacy Python seed package remains in backend/src")
+seed_dir = ROOT / "backend/seeds"
+manifest_path = seed_dir / "manifest.json"
+require(manifest_path.is_file(), "master-data manifest is missing")
+manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+require(manifest.get("schema_version") == 1, "unsupported master-data manifest version")
+document_paths = [str(row.get("path", "")) for row in manifest.get("documents", [])]
+require(len(document_paths) == len(set(document_paths)), "duplicate master-data manifest path")
+declared_json = {(seed_dir / path).resolve() for path in document_paths}
+actual_json = {
+    path.resolve()
+    for path in seed_dir.rglob("*.json")
+    if path.resolve() != manifest_path.resolve()
+}
+require(declared_json == actual_json, "master-data manifest does not cover the complete JSON tree")
+require(
+    not any(seed_dir.rglob("*.py")),
+    "executable Python must not be stored with JSON master data",
+)
 seed_text = "\n".join(
     path.read_text(encoding="utf-8", errors="ignore")
-    for path in seed_dir.glob("*.py")
+    for path in actual_json
 )
 for marker in (
     "Starter Template:",

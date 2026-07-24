@@ -10,7 +10,7 @@ from app.modules.fleet.services.fleet_service import join_fleet
 from app.modules.fleet.schemas.fleet_join_request import FleetJoinRequest
 from app.modules.permissions.models.role import FleetRoleDefinition
 from app.modules.ships.models.ship import Ship
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 from main import app
 
 

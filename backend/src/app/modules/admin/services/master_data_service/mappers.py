@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.modules.admin.schemas.master_data import (
     MasterDataCategoryRead,
     MasterDataOptionRead,
+    MasterDataShipMortarModification,
     MasterDataShipMount,
     MasterDataShipRead,
     MasterDataShipUpgradeOverrideRead,
@@ -64,6 +65,7 @@ class MasterDataMapper:
             MasterDataShipMount(
                 slot_type=mount.slot_type.code,
                 capacity=mount.capacity,
+                special_weapon_capacity=mount.special_weapon_capacity,
                 max_weapon_class=(mount.max_weapon_class.code if mount.max_weapon_class else None),
                 max_caliber_inches=mount.max_caliber_inches,
             )
@@ -103,6 +105,14 @@ class MasterDataMapper:
             has_lantern=row.has_lantern,
             is_active=row.is_active,
             weapon_mounts=mounts,
+            mortar_modification=(
+                MasterDataShipMortarModification.model_validate(
+                    row.mortar_modification,
+                    from_attributes=True,
+                )
+                if row.mortar_modification is not None
+                else None
+            ),
             upgrade_effect_overrides=overrides,
             weapon_layout=row.weapon_layout,
             seed_key=row.seed_key,

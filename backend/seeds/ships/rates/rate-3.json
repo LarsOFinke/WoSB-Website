@@ -1,0 +1,813 @@
+{
+  "schema_version": 1,
+  "catalog": "ships-rate-3",
+  "rate": 3,
+  "items": [
+    {
+      "name": "Anson",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2700,
+      "speed_min_knots": 8.2,
+      "speed_knots": 8.2,
+      "maneuverability": 80,
+      "armor": 5.6,
+      "hold_capacity": 18500,
+      "crew_capacity": 160,
+      "sailor_minimum": 80,
+      "displacement_tons": 3150,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Anson",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 2,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 30,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 30,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Azov",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2750,
+      "speed_min_knots": 7.7,
+      "speed_knots": 7.7,
+      "maneuverability": 65,
+      "armor": 6.4,
+      "hold_capacity": 28000,
+      "crew_capacity": 168,
+      "sailor_minimum": 67,
+      "displacement_tons": 3150,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Azov",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 6,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 8,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Bellona",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 3180,
+      "speed_min_knots": 7.5,
+      "speed_knots": 10.5,
+      "maneuverability": 62,
+      "armor": 7,
+      "hold_capacity": 26000,
+      "crew_capacity": 174,
+      "sailor_minimum": 70,
+      "displacement_tons": 3915,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Bellona",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Deadfish",
+      "rate": 3,
+      "ship_type": "Ship",
+      "durability": 3000,
+      "speed_min_knots": 6.6,
+      "speed_knots": 6.6,
+      "maneuverability": 66,
+      "armor": 8,
+      "hold_capacity": 27000,
+      "crew_capacity": 166,
+      "sailor_minimum": 66,
+      "displacement_tons": 4950,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Deadfish",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 1,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 1
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 8,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 25,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 25,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Iberia",
+      "rate": 3,
+      "ship_type": "Frigate",
+      "durability": 2220,
+      "speed_min_knots": 9.3,
+      "speed_knots": 9.3,
+      "maneuverability": 92,
+      "armor": 3.1,
+      "hold_capacity": 16500,
+      "crew_capacity": 140,
+      "sailor_minimum": 56,
+      "displacement_tons": 2565,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Iberia",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 24,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 24,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Kobukson",
+      "rate": 3,
+      "ship_type": "Phanokson",
+      "durability": 2000,
+      "speed_min_knots": 8,
+      "speed_knots": 8,
+      "maneuverability": 85,
+      "armor": 4.6,
+      "hold_capacity": 18000,
+      "crew_capacity": 124,
+      "sailor_minimum": 50,
+      "displacement_tons": 2250,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Kobukson",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 15,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 15,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 4,
+          "max_weapon_class": null,
+          "max_caliber_inches": 9,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Le Saint Louis",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2700,
+      "speed_min_knots": 7.9,
+      "speed_knots": 7.9,
+      "maneuverability": 78,
+      "armor": 5.6,
+      "hold_capacity": 20000,
+      "crew_capacity": 170,
+      "sailor_minimum": 68,
+      "displacement_tons": 2925,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Le Saint Louis",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 6,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 6,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Leopard",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2040,
+      "speed_min_knots": 9.6,
+      "speed_knots": 9.6,
+      "maneuverability": 98,
+      "armor": 3,
+      "hold_capacity": 16500,
+      "crew_capacity": 130,
+      "sailor_minimum": 52,
+      "displacement_tons": 2340,
+      "source": "WoSB in-game current-event tooltip screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Leopard",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 25,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 25,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Mordaunt",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2380,
+      "speed_min_knots": 8.7,
+      "speed_knots": 8.7,
+      "maneuverability": 87,
+      "armor": 3.9,
+      "hold_capacity": 34000,
+      "crew_capacity": 148,
+      "sailor_minimum": 59,
+      "displacement_tons": 2475,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Mordaunt",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Poltava",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 2100,
+      "speed_min_knots": 9.6,
+      "speed_knots": 11.82,
+      "maneuverability": 95,
+      "armor": 2.8,
+      "hold_capacity": 15500,
+      "crew_capacity": 132,
+      "sailor_minimum": 53,
+      "displacement_tons": 2475,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Poltava",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 23,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 23,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Prins Willem",
+      "rate": 3,
+      "ship_type": "Galleon",
+      "durability": 2440,
+      "speed_min_knots": 8.5,
+      "speed_knots": 8.5,
+      "maneuverability": 78,
+      "armor": 4.8,
+      "hold_capacity": 45000,
+      "crew_capacity": 170,
+      "sailor_minimum": 68,
+      "displacement_tons": 3150,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 6,
+      "has_lantern": true,
+      "seed_id": "Prins Willem",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 4,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 6,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 26,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "San Juan Nepomuceno",
+      "rate": 3,
+      "ship_type": "Ship of the Line",
+      "durability": 3020,
+      "speed_min_knots": 7.9,
+      "speed_knots": 7.9,
+      "maneuverability": 70,
+      "armor": 6.5,
+      "hold_capacity": 24500,
+      "crew_capacity": 180,
+      "sailor_minimum": 72,
+      "displacement_tons": 3690,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "San Juan Nepomuceno",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 35,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    },
+    {
+      "name": "Shen",
+      "rate": 3,
+      "ship_type": "Galiot",
+      "durability": 2160,
+      "speed_min_knots": 7.9,
+      "speed_knots": 7.9,
+      "maneuverability": 85,
+      "armor": 5.2,
+      "hold_capacity": 19000,
+      "crew_capacity": 158,
+      "sailor_minimum": 63,
+      "displacement_tons": 2925,
+      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "sail_slots": 1,
+      "upgrade_slots": 5,
+      "has_lantern": true,
+      "seed_id": "Shen",
+      "image_url": null,
+      "is_active": true,
+      "mortar_modification": null,
+      "weapon_mounts": [
+        {
+          "slot_type": "weapon_front",
+          "capacity": 1,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 1
+        },
+        {
+          "slot_type": "weapon_rear",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_port",
+          "capacity": 22,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_starboard",
+          "capacity": 22,
+          "max_weapon_class": "medium",
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_mortar",
+          "capacity": 2,
+          "max_weapon_class": null,
+          "max_caliber_inches": 11,
+          "special_weapon_capacity": 0
+        },
+        {
+          "slot_type": "weapon_special",
+          "capacity": 0,
+          "max_weapon_class": null,
+          "max_caliber_inches": null,
+          "special_weapon_capacity": 0
+        }
+      ]
+    }
+  ]
+}

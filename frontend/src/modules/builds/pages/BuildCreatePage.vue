@@ -36,6 +36,7 @@ const {
 } = useBuildDesigner(props, { slotPlaceholderSrc })
 
 const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
+const mortarModification = computed(() => selectedShip.value?.mortar_modification ?? null)
 const specialistSelection = computed(() => splitSpecialistSelection(form.special_crew_slots))
 const regularSpecialistRows = computed(() => Array.from(
   { length: REGULAR_SPECIALIST_LIMIT },
@@ -192,6 +193,23 @@ function toggleGinger() {
           <span>{{ form.research_upgrade_slot_unlocked ? '✓' : '+' }}</span>
           <strong>{{ t('builds.create.equipment.researchUpgradeSlot') }}</strong>
           <small>{{ t('builds.create.equipment.researchUpgradeSlotHint') }}</small>
+        </button>
+        <button
+          v-if="mortarModification"
+          type="button"
+          class="research-slot-toggle mortar-modification-toggle"
+          :class="{ 'is-active': form.mortar_modification_installed }"
+          :aria-pressed="form.mortar_modification_installed"
+          @click="form.mortar_modification_installed = !form.mortar_modification_installed"
+        >
+          <span>{{ form.mortar_modification_installed ? '✓' : '+' }}</span>
+          <strong>{{ t('builds.create.equipment.mortarModification') }}</strong>
+          <small>
+            {{ t('builds.create.equipment.mortarModificationHint', {
+              mortars: mortarModification.mortar_capacity,
+              broadside: Math.abs(mortarModification.broadside_capacity_delta),
+            }) }}
+          </small>
         </button>
       </section>
 

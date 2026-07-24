@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "catalog": "system-roles",
+  "site_roles": [
+    {
+      "code": "user",
+      "label": "User",
+      "rank": 10,
+      "is_staff": false,
+      "can_manage_system": false
+    },
+    {
+      "code": "moderator",
+      "label": "Moderator",
+      "rank": 50,
+      "is_staff": true,
+      "can_manage_system": false
+    },
+    {
+      "code": "admin",
+      "label": "Administrator",
+      "rank": 100,
+      "is_staff": true,
+      "can_manage_system": true
+    }
+  ],
+  "fleet_roles": [
+    {
+      "code": "member",
+      "label": "Fleet Member",
+      "rank": 10,
+      "is_leadership": false,
+      "can_manage_fleet": false,
+      "can_manage_members": false,
+      "is_system": true,
+      "is_active": true
+    },
+    {
+      "code": "fleet_lieutenant",
+      "label": "Fleet Lieutenant",
+      "rank": 60,
+      "is_leadership": true,
+      "can_manage_fleet": true,
+      "can_manage_members": true,
+      "is_system": true,
+      "is_active": true
+    },
+    {
+      "code": "fleet_admiral",
+      "label": "Fleet Admiral",
+      "rank": 80,
+      "is_leadership": true,
+      "can_manage_fleet": true,
+      "can_manage_members": true,
+      "is_system": true,
+      "is_active": true
+    }
+  ],
+  "squad_roles": [
+    {
+      "code": "member",
+      "label": "Squad Member",
+      "rank": 10,
+      "can_manage_roster": false,
+      "can_manage_events": false
+    },
+    {
+      "code": "officer",
+      "label": "Squad Officer",
+      "rank": 50,
+      "can_manage_roster": true,
+      "can_manage_events": true
+    },
+    {
+      "code": "leader",
+      "label": "Squad Leader",
+      "rank": 80,
+      "can_manage_roster": true,
+      "can_manage_events": true
+    }
+  ]
+}

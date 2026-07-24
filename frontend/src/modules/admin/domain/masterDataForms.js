@@ -39,6 +39,7 @@ export function createShipForm() {
     has_lantern: true,
     is_active: true,
     weapon_mounts: [],
+    mortar_modification: null,
     upgrade_effect_overrides: [],
   }
 }
@@ -48,6 +49,7 @@ export function weaponMountRows(slotTypes, rows = []) {
   return slotTypes.map((slot) => ({
     slot_type: slot.code,
     capacity: Number(current.get(slot.code)?.capacity || 0),
+    special_weapon_capacity: Number(current.get(slot.code)?.special_weapon_capacity || 0),
     max_weapon_class: current.get(slot.code)?.max_weapon_class || '',
     max_caliber_inches: current.get(slot.code)?.max_caliber_inches ?? '',
   }))
@@ -100,6 +102,9 @@ export function shipFormValues(row = null, slotTypes = []) {
     has_lantern: row?.has_lantern ?? true,
     is_active: row?.is_active ?? true,
     weapon_mounts: weaponMountRows(slotTypes, row?.weapon_mounts || []),
+    mortar_modification: row?.mortar_modification
+      ? { ...row.mortar_modification }
+      : null,
     upgrade_effect_overrides: (row?.upgrade_effect_overrides || []).map((override) => ({
       option_id: override.option_id,
       effects_text: JSON.stringify(override.stat_effects || {}, null, 2),
@@ -160,9 +165,23 @@ export function shipPayload(form, upgradeOverrides) {
     weapon_mounts: form.weapon_mounts.map((mount) => ({
       slot_type: mount.slot_type,
       capacity: Number(mount.capacity || 0),
+      special_weapon_capacity: Number(mount.special_weapon_capacity || 0),
       max_weapon_class: mount.max_weapon_class || null,
       max_caliber_inches: mount.max_caliber_inches === '' ? null : Number(mount.max_caliber_inches),
     })),
+    mortar_modification: form.mortar_modification
+      ? {
+          ...form.mortar_modification,
+          mortar_capacity: Number(form.mortar_modification.mortar_capacity),
+          max_caliber_inches: Number(form.mortar_modification.max_caliber_inches),
+          broadside_capacity_delta: Number(form.mortar_modification.broadside_capacity_delta),
+          durability_delta: Number(form.mortar_modification.durability_delta),
+          speed_pct: Number(form.mortar_modification.speed_pct),
+          maneuverability_delta: Number(form.mortar_modification.maneuverability_delta),
+          hold_capacity_pct: Number(form.mortar_modification.hold_capacity_pct),
+          crew_capacity_delta: Number(form.mortar_modification.crew_capacity_delta),
+        }
+      : null,
   }
 }
 

@@ -4,7 +4,8 @@ import { emptyInventorySlot, normalizeInventorySlots } from '@/modules/builds/in
 const SCALAR_FIELDS = [
   'build_name', 'build_type', 'ship_id', 'sails', 'upgrade_1', 'upgrade_2', 'upgrade_3',
   'upgrade_4', 'upgrade_5', 'upgrade_6', 'upgrade_7', 'upgrade_8', 'lantern',
-  'research_upgrade_slot_unlocked', 'sailors', 'soldiers', 'musketeers', 'mercenaries', 'details',
+  'research_upgrade_slot_unlocked', 'mortar_modification_installed',
+  'sailors', 'soldiers', 'musketeers', 'mercenaries', 'details',
 ]
 
 export function resetBuildSlots(form, slotLimitForField) {

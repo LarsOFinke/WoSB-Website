@@ -6,7 +6,7 @@ from app.db.base import Base
 from app.db.session import engine
 from app.modules.registry import register_all_models
 from app.db.schema_health import verify_alembic_heads
-from app.seeds import SeedManager
+from app.bootstrap.manager import SeedManager
 
 
 def verify_database_ready() -> None:

@@ -1,31 +1,33 @@
-from app.seeds.ammunition import AMMUNITION_OPTIONS
-from app.seeds.build_catalog_quality import (
+from app.bootstrap.build_catalog_validation import (
     validate_build_option_catalog,
     validate_lantern_seed_data,
     validate_sail_seed_data,
     validate_special_crew_seed_data,
     validate_upgrade_seed_data,
 )
-from app.seeds.categories import BUILD_ITEM_CATEGORIES
-from app.seeds.consumables import CONSUMABLE_OPTIONS
-from app.seeds.hold_items import HOLD_OPTIONS
-from app.seeds.lanterns import LANTERN_OPTIONS
-from app.seeds.sails import SAIL_OPTIONS
-from app.seeds.special_crew import SPECIAL_CREW_OPTIONS
-from app.seeds.upgrades import UPGRADE_EFFECTS_BY_NAME, UPGRADE_OPTIONS
-from app.seeds.weapons import WEAPON_OPTIONS
+from app.bootstrap.catalog_loader import load_master_data_catalog
 
 
-ALL_OPTION_GROUPS = (
-    SAIL_OPTIONS,
-    UPGRADE_OPTIONS,
-    LANTERN_OPTIONS,
-    AMMUNITION_OPTIONS,
-    CONSUMABLE_OPTIONS,
-    HOLD_OPTIONS,
-    WEAPON_OPTIONS,
-    SPECIAL_CREW_OPTIONS,
-)
+CATALOG = load_master_data_catalog()
+BUILD_ITEM_CATEGORIES = [
+    row.model_dump(mode="json") for row in CATALOG.build_categories.items
+]
+OPTIONS_BY_CATEGORY = {
+    document.category: [row.model_dump(mode="json") for row in document.items]
+    for document in CATALOG.build_options
+}
+SAIL_OPTIONS = OPTIONS_BY_CATEGORY["sail"]
+UPGRADE_OPTIONS = OPTIONS_BY_CATEGORY["upgrade"]
+LANTERN_OPTIONS = OPTIONS_BY_CATEGORY["lantern"]
+AMMUNITION_OPTIONS = OPTIONS_BY_CATEGORY["ammunition"]
+CONSUMABLE_OPTIONS = OPTIONS_BY_CATEGORY["consumable"]
+HOLD_OPTIONS = OPTIONS_BY_CATEGORY["hold"]
+WEAPON_OPTIONS = OPTIONS_BY_CATEGORY["weapon"]
+SPECIAL_CREW_OPTIONS = OPTIONS_BY_CATEGORY["special_crew"]
+UPGRADE_EFFECTS_BY_NAME = {
+    str(row["name"]): row["stat_effects"] for row in UPGRADE_OPTIONS
+}
+ALL_OPTION_GROUPS = tuple(OPTIONS_BY_CATEGORY.values())
 
 
 def test_every_build_designer_category_has_a_unique_catalog() -> None:

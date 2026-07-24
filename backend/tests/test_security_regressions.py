@@ -207,7 +207,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0001_baseline"})
+    assert heads == frozenset({"0004_mortar_modification"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(

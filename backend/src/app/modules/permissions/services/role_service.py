@@ -3,52 +3,14 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.fleet_role import FleetRole
-from app.core.site_role import SiteRole
+from app.bootstrap.catalog_loader import load_master_data_catalog
 from app.modules.permissions.models.role import FleetRoleDefinition, SiteRoleDefinition, SquadRoleDefinition
 
-SITE_ROLE_CATALOG = (
-    {"code": SiteRole.USER.value, "label": "User", "rank": 10, "is_staff": False, "can_manage_system": False},
-    {"code": SiteRole.MODERATOR.value, "label": "Moderator", "rank": 50, "is_staff": True, "can_manage_system": False},
-    {"code": SiteRole.ADMIN.value, "label": "Administrator", "rank": 100, "is_staff": True, "can_manage_system": True},
-)
-FLEET_ROLE_CATALOG = (
-    {
-        "code": FleetRole.MEMBER.value,
-        "label": "Fleet Member",
-        "rank": 10,
-        "is_leadership": False,
-        "can_manage_fleet": False,
-        "can_manage_members": False,
-        "is_system": True,
-        "is_active": True,
-    },
-    {
-        "code": FleetRole.LIEUTENANT.value,
-        "label": "Fleet Lieutenant",
-        "rank": 60,
-        "is_leadership": True,
-        "can_manage_fleet": True,
-        "can_manage_members": True,
-        "is_system": True,
-        "is_active": True,
-    },
-    {
-        "code": FleetRole.ADMIRAL.value,
-        "label": "Fleet Admiral",
-        "rank": 80,
-        "is_leadership": True,
-        "can_manage_fleet": True,
-        "can_manage_members": True,
-        "is_system": True,
-        "is_active": True,
-    },
-)
-SQUAD_ROLE_CATALOG = (
-    {"code": "member", "label": "Squad Member", "rank": 10, "can_manage_roster": False, "can_manage_events": False},
-    {"code": "officer", "label": "Squad Officer", "rank": 50, "can_manage_roster": True, "can_manage_events": True},
-    {"code": "leader", "label": "Squad Leader", "rank": 80, "can_manage_roster": True, "can_manage_events": True},
-)
+
+def _catalog_rows(name: str) -> tuple[dict[str, object], ...]:
+    document = load_master_data_catalog().roles
+    rows = getattr(document, name)
+    return tuple(row.model_dump(mode="json") for row in rows)
 
 
 def _sync_catalog(db: Session, model, rows: tuple[dict[str, object], ...]) -> None:
@@ -65,9 +27,9 @@ def _sync_catalog(db: Session, model, rows: tuple[dict[str, object], ...]) -> No
 
 
 def ensure_role_catalog(db: Session) -> None:
-    _sync_catalog(db, SiteRoleDefinition, SITE_ROLE_CATALOG)
-    _sync_catalog(db, FleetRoleDefinition, FLEET_ROLE_CATALOG)
-    _sync_catalog(db, SquadRoleDefinition, SQUAD_ROLE_CATALOG)
+    _sync_catalog(db, SiteRoleDefinition, _catalog_rows("site_roles"))
+    _sync_catalog(db, FleetRoleDefinition, _catalog_rows("fleet_roles"))
+    _sync_catalog(db, SquadRoleDefinition, _catalog_rows("squad_roles"))
 
 
 def _get_or_create_role(db: Session, model, catalog: tuple[dict[str, object], ...], code: str):
@@ -85,7 +47,7 @@ def _get_or_create_role(db: Session, model, catalog: tuple[dict[str, object], ..
 
 
 def get_site_role(db: Session, code: str) -> SiteRoleDefinition:
-    return _get_or_create_role(db, SiteRoleDefinition, SITE_ROLE_CATALOG, code)
+    return _get_or_create_role(db, SiteRoleDefinition, _catalog_rows("site_roles"), code)
 
 
 def get_fleet_role(db: Session, code: str, *, include_inactive: bool = False) -> FleetRoleDefinition:
@@ -94,11 +56,11 @@ def get_fleet_role(db: Session, code: str, *, include_inactive: bool = False) ->
         if not row.is_active and not include_inactive:
             raise ValueError(f"Inactive fleet role: {code}")
         return row
-    return _get_or_create_role(db, FleetRoleDefinition, FLEET_ROLE_CATALOG, code)
+    return _get_or_create_role(db, FleetRoleDefinition, _catalog_rows("fleet_roles"), code)
 
 
 def get_squad_role(db: Session, code: str) -> SquadRoleDefinition:
-    return _get_or_create_role(db, SquadRoleDefinition, SQUAD_ROLE_CATALOG, code)
+    return _get_or_create_role(db, SquadRoleDefinition, _catalog_rows("squad_roles"), code)
 
 
 def assign_site_role(db: Session, user, code: str) -> None:

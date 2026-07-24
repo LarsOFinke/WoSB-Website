@@ -33,6 +33,10 @@ class BuildValidator:
         ship = self._db.get(Ship, build.ship_id)
         if ship is None or not ship.is_active:
             raise BuildValidationError("The selected ship does not exist.")
+        if build.mortar_modification_installed and ship.mortar_modification is None:
+            raise BuildValidationError(
+                "The selected ship does not support the Mortar Modification."
+            )
 
         option_map = self._catalog.load_for_build(build)
         upgrades = self._catalog.selected_upgrades(option_map, build)
@@ -96,6 +100,11 @@ class BuildValidator:
         research_effects = research_upgrade_slot_effects(build.research_upgrade_slot_unlocked)
         if research_effects:
             effect_sets.append(research_effects)
+        mortar_modification_effects = ship.mortar_modification_effects(
+            build.mortar_modification_installed
+        )
+        if mortar_modification_effects:
+            effect_sets.append(mortar_modification_effects)
 
         totals: dict[str, int | float] = {}
         for effect_set in effect_sets:

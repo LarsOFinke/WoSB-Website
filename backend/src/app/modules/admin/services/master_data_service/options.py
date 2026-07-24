@@ -12,8 +12,8 @@ from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
-from app.seeds.catalog_sync import CUSTOM_MASTER_DATA_REVISION
-from app.seeds.manager import SeedManager
+from app.bootstrap.catalog_sync import CUSTOM_MASTER_DATA_REVISION
+from app.bootstrap.manager import SeedManager
 
 from .common import MasterDataError, MasterDataUnitOfWork, TaxonomyRepository
 from .mappers import MasterDataMapper

@@ -61,6 +61,11 @@ class Build(Base):
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     is_official_template: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     research_upgrade_slot_unlocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    mortar_modification_installed: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
 
     sailors: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     soldiers: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -281,7 +286,11 @@ class Build(Base):
         special_crew_effect_sets = self._special_crew_effect_sets()
         special_crew_effects = self._combine_effects(*special_crew_effect_sets)
         research_effects = research_upgrade_slot_effects(self.research_upgrade_slot_unlocked)
+        mortar_modification_effects = self.ship.mortar_modification_effects(
+            self.mortar_modification_installed
+        )
         effect_sets = [
+            *([mortar_modification_effects] if mortar_modification_effects else []),
             *sail_effect_sets,
             *lantern_effect_sets,
             *upgrade_effect_sets,
@@ -315,12 +324,30 @@ class Build(Base):
             for arc, slot_type in WEAPON_SLOT_TYPE_BY_ARC.items()
         }
         weapon_capacity = {
-            "front": int(self.ship.front_weapon_capacity or 0),
-            "rear": int(self.ship.rear_weapon_capacity or 0),
-            "port": int(self.ship.broadside_weapon_capacity or 0),
-            "starboard": int(self.ship.broadside_weapon_capacity or 0),
-            "mortar": int(self.ship.mortar_weapon_capacity or 0),
-            "special": int(self.ship.special_weapon_capacity or 0),
+            "front": self.ship.effective_weapon_capacity(
+                "weapon_front",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
+            "rear": self.ship.effective_weapon_capacity(
+                "weapon_rear",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
+            "port": self.ship.effective_weapon_capacity(
+                "weapon_port",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
+            "starboard": self.ship.effective_weapon_capacity(
+                "weapon_starboard",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
+            "mortar": self.ship.effective_weapon_capacity(
+                "weapon_mortar",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
+            "special": self.ship.effective_weapon_capacity(
+                "weapon_special",
+                mortar_modification_installed=self.mortar_modification_installed,
+            ),
         }
         ammunition_count = len(self.ammunition_slots)
         consumable_count = len(self.consumable_slots)
@@ -402,6 +429,8 @@ class Build(Base):
             "upgrade_effects": upgrade_effects,
             "special_crew_effects": special_crew_effects,
             "research_upgrade_slot_effects": research_effects,
+            "mortar_modification_installed": self.mortar_modification_installed,
+            "mortar_modification_effects": mortar_modification_effects,
             "upgrade_buffs": buffs,
             "upgrade_debuffs": debuffs,
             "base_stats": base_stats,

@@ -14,6 +14,7 @@ RUN addgroup --system --gid 10001 blackwater \
 COPY pyproject.toml requirements.lock README.md alembic.ini ./
 COPY migrations ./migrations
 COPY config ./config
+COPY seeds ./seeds
 COPY src ./src
 RUN pip install --upgrade pip \
     && pip install --requirement requirements.lock \

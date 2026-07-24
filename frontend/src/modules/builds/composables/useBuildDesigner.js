@@ -87,6 +87,7 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
   let optionRequestId = 0
   watch(() => form.ship_id, async (shipId) => {
     if (suppressShipChange.value) return
+    form.mortar_modification_installed = false
     crew.resetCrewAllocation()
     if (!shipId) return
     const requestId = ++optionRequestId
@@ -97,6 +98,16 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
       for (const arc of weaponArcFields) inventory.reconcileInventoryField(arc.fieldName)
     } catch (err) {
       if (requestId === optionRequestId) error.value = err.message || t('builds.create.loadError')
+    }
+  })
+
+  watch(() => form.mortar_modification_installed, () => {
+    for (const fieldName of [
+      'port_weapon_slots',
+      'starboard_weapon_slots',
+      'mortar_weapon_slots',
+    ]) {
+      inventory.reconcileInventoryField(fieldName)
     }
   })
 

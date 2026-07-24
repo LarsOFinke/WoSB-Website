@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "catalog": "wosb-master-data",
+  "documents": [
+    {
+      "path": "builds/categories.json",
+      "kind": "build_categories"
+    },
+    {
+      "path": "builds/options/sails.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/upgrades.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/lanterns.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/ammunition.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/consumables.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/hold.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/weapons.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "builds/options/specialists.json",
+      "kind": "build_options"
+    },
+    {
+      "path": "system/fleets.json",
+      "kind": "fleets"
+    },
+    {
+      "path": "system/roles.json",
+      "kind": "roles"
+    },
+    {
+      "path": "references.json",
+      "kind": "references"
+    },
+    {
+      "path": "ships/definitions.json",
+      "kind": "ship_definitions"
+    },
+    {
+      "path": "ships/rates/rate-1.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-2.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-3.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-4.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-5.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-6.json",
+      "kind": "ships"
+    },
+    {
+      "path": "ships/rates/rate-7.json",
+      "kind": "ships"
+    }
+  ]
+}

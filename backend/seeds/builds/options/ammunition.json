@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "catalog": "build-options-ammunition",
+  "category": "ammunition",
+  "items": [
+    {
+      "category": "ammunition",
+      "name": "Bar Shots",
+      "source": "wiki",
+      "seed_id": "bar-shots"
+    },
+    {
+      "category": "ammunition",
+      "name": "Burning Arrows",
+      "source": "wiki",
+      "seed_id": "burning-arrows"
+    },
+    {
+      "category": "ammunition",
+      "name": "Fire Ship",
+      "source": "wiki",
+      "seed_id": "fire-ship"
+    },
+    {
+      "category": "ammunition",
+      "name": "Grapeshot",
+      "source": "wiki",
+      "seed_id": "grapeshot"
+    },
+    {
+      "category": "ammunition",
+      "name": "Heated Shots",
+      "source": "wiki",
+      "seed_id": "heated-shots"
+    },
+    {
+      "category": "ammunition",
+      "name": "Large Phosphorous Mine",
+      "source": "wiki",
+      "seed_id": "large-phosphorous-mine"
+    },
+    {
+      "category": "ammunition",
+      "name": "Large Shrapnel Mines",
+      "source": "wiki",
+      "seed_id": "large-shrapnel-mines"
+    },
+    {
+      "category": "ammunition",
+      "name": "Phosphorous Shots",
+      "source": "wiki",
+      "seed_id": "phosphorous-shots"
+    },
+    {
+      "category": "ammunition",
+      "name": "Round Shots",
+      "source": "wiki",
+      "seed_id": "round-shots"
+    },
+    {
+      "category": "ammunition",
+      "name": "Shrapnel Rounds",
+      "source": "wiki",
+      "seed_id": "shrapnel-rounds"
+    },
+    {
+      "category": "ammunition",
+      "name": "Small Flaming Barrels",
+      "source": "wiki",
+      "seed_id": "small-flaming-barrels"
+    },
+    {
+      "category": "ammunition",
+      "name": "Small Gunpowder Barrels",
+      "source": "wiki",
+      "seed_id": "small-gunpowder-barrels"
+    },
+    {
+      "category": "ammunition",
+      "name": "Small Phosphorous Barrels",
+      "source": "wiki",
+      "seed_id": "small-phosphorous-barrels"
+    },
+    {
+      "category": "ammunition",
+      "name": "Strike Rounds",
+      "source": "wiki",
+      "seed_id": "strike-rounds"
+    }
+  ]
+}

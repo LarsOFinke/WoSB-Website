@@ -269,6 +269,7 @@ function createBuildPrintModel(build, helpers = {}) {
     build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build.sails) } : null,
     build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build.lantern) } : null,
     build?.research_upgrade_slot_unlocked ? { key: 'upgrade', label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
+    build?.mortar_modification_installed ? { key: 'mortar', label: t('builds.detail.mortarModification'), value: t('builds.detail.mortarModificationActive') } : null,
   ].filter(Boolean)
   const inventoryGroups = [
     { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },

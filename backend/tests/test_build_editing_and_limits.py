@@ -7,7 +7,7 @@ from app.modules.accounts.models.user import ROLE_USER, User
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 from main import app
 
 

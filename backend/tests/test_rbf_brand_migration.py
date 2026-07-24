@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.base import Base
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.registry import register_all_models
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 
 
 @pytest.mark.parametrize(

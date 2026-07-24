@@ -35,3 +35,17 @@ test('build details show upgrade effects once in the live calculation', async ()
   assert.doesNotMatch(source, /build-detail-effect-row/)
   assert.doesNotMatch(source, /v-for="effect in activeEffectRows"/)
 })
+
+test('build creation guards mortar data while the selected ship is still loading', async () => {
+  const source = await readFile(
+    new URL('../src/modules/builds/pages/BuildCreatePage.vue', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(
+    source,
+    /computed\(\(\) => selectedShip\.value\?\.mortar_modification \?\? null\)/,
+  )
+  assert.match(source, /v-if="mortarModification"/)
+  assert.doesNotMatch(source, /selectedShip\.mortar_modification/)
+})

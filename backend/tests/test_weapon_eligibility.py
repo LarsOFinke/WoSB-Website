@@ -1,13 +1,16 @@
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_option_service import list_build_options
+from app.modules.builds.services.build_service import BuildValidationError, create_build
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.services.weapon_compatibility import is_weapon_compatible
-from app.seeds.manager import SeedManager
+from app.bootstrap.manager import SeedManager
 
 
 def _catalog(db: Session, ship: Ship) -> dict[str, set[str]]:
@@ -90,7 +93,7 @@ def test_every_active_regular_weapon_has_a_normalized_size_class() -> None:
                 assert option.weapon_class_code in {"light", "medium", "heavy"}
 
 
-def test_special_and_launcher_weapons_use_only_dedicated_mounts() -> None:
+def test_special_weapons_follow_audited_positional_mounts_and_launchers_use_mortar_slots() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -102,16 +105,28 @@ def test_special_and_launcher_weapons_use_only_dedicated_mounts() -> None:
 
         huracan = db.scalar(select(Ship).where(Ship.name == "Huracan"))
         deadfish = db.scalar(select(Ship).where(Ship.name == "Deadfish"))
+        octopus = db.scalar(select(Ship).where(Ship.name == "Octopus"))
+        axel = db.scalar(select(Ship).where(Ship.name == "Axel Thorsen"))
         victory = db.scalar(select(Ship).where(Ship.name == "Victory"))
         sovereign = db.scalar(select(Ship).where(Ship.name == "Sovereign"))
-        assert huracan and deadfish and victory and sovereign
+        assert huracan and deadfish and octopus and axel and victory and sovereign
 
         for special_ship, capacity in ((huracan, 2), (deadfish, 1)):
             catalog = _catalog(db, special_ship)
             assert special_ship.special_weapon_capacity == capacity
-            assert {"Alchemical Fire", "Imperial Bombard"} <= catalog["weapon_special"]
-            assert "Alchemical Fire" not in catalog.get("weapon_front", set())
+            assert {"Alchemical Fire", "Imperial Bombard"} <= catalog["weapon_front"]
+            assert "weapon_special" not in catalog
             assert "Imperial Bombard" not in catalog.get("weapon_rear", set())
+
+        octopus_catalog = _catalog(db, octopus)
+        assert {"Alchemical Fire", "Imperial Bombard"} <= octopus_catalog["weapon_rear"]
+        assert "Alchemical Fire" not in octopus_catalog.get("weapon_front", set())
+        assert "weapon_special" not in octopus_catalog
+
+        axel_catalog = _catalog(db, axel)
+        assert {"Alchemical Fire", "Imperial Bombard"} <= axel_catalog["weapon_special"]
+        assert "Alchemical Fire" not in axel_catalog.get("weapon_front", set())
+        assert "Imperial Bombard" not in axel_catalog.get("weapon_rear", set())
 
         regular_catalog = _catalog(db, victory)
         assert "Alchemical Fire" not in regular_catalog.get("weapon_front", set())
@@ -122,3 +137,115 @@ def test_special_and_launcher_weapons_use_only_dedicated_mounts() -> None:
         assert "Barrel Launcher" in mortar_catalog["weapon_mortar"]
         assert "Barrel Launcher" not in mortar_catalog.get("weapon_front", set())
         assert "Barrel Launcher" not in mortar_catalog.get("weapon_rear", set())
+
+
+def test_special_weapon_quantity_is_limited_inside_a_larger_positional_mount() -> None:
+    register_all_models()
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        manager = SeedManager(db)
+        manager.seed_weapon_slot_types()
+        manager.seed_ships()
+        manager.seed_build_options()
+
+        octopus = db.scalar(select(Ship).where(Ship.name == "Octopus"))
+        assert octopus is not None
+        assert octopus.rear_weapon_capacity == 8
+        assert octopus.rear_special_weapon_capacity == 1
+
+        accepted = create_build(
+            db,
+            BuildCreate(
+                build_name="One audited stern special weapon",
+                ship_id=octopus.id,
+                sailors=octopus.sailor_minimum,
+                rear_weapon_slots=[{"item": "Imperial Bombard", "quantity": 1}],
+            ),
+        )
+        assert accepted.rear_weapon_slots == [{"item": "Imperial Bombard", "quantity": 1}]
+
+        with pytest.raises(BuildValidationError, match="special capacity \\(1\\)"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Too many stern special weapons",
+                    ship_id=octopus.id,
+                    sailors=octopus.sailor_minimum,
+                    rear_weapon_slots=[{"item": "Imperial Bombard", "quantity": 2}],
+                ),
+            )
+
+
+def test_mortar_modification_exchanges_broadsides_for_mortar_capacity() -> None:
+    register_all_models()
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        manager = SeedManager(db)
+        manager.seed_weapon_slot_types()
+        manager.seed_ships()
+        manager.seed_build_options()
+
+        black_wind = db.scalar(select(Ship).where(Ship.name == "Black Wind"))
+        assert black_wind is not None
+        assert black_wind.mortar_modification is not None
+        assert black_wind.mortar_weapon_capacity == 0
+        assert "7-inch Mortar" in _catalog(db, black_wind)["weapon_mortar"]
+
+        with pytest.raises(BuildValidationError, match="capacity \\(0\\)"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Modification missing",
+                    ship_id=black_wind.id,
+                    sailors=black_wind.sailor_minimum,
+                    mortar_weapon_slots=[{"item": "7-inch Mortar", "quantity": 1}],
+                ),
+            )
+
+        accepted = create_build(
+            db,
+            BuildCreate(
+                build_name="Permanent mortar conversion",
+                ship_id=black_wind.id,
+                mortar_modification_installed=True,
+                sailors=black_wind.sailor_minimum,
+                port_weapon_slots=[{"item": "8-pdr Cannon", "quantity": 11}],
+                starboard_weapon_slots=[{"item": "8-pdr Cannon", "quantity": 11}],
+                mortar_weapon_slots=[{"item": "7-inch Mortar", "quantity": 1}],
+            ),
+        )
+        assert accepted.ship_stats["weapon_capacity"]["port"] == 11
+        assert accepted.ship_stats["weapon_capacity"]["starboard"] == 11
+        assert accepted.ship_stats["weapon_capacity"]["mortar"] == 1
+        assert accepted.ship_stats["effective_crew_capacity"] == 93
+        assert accepted.ship_stats["mortar_modification_effects"] == {
+            "durability": -180,
+            "maneuverability": 15,
+            "crew_capacity": -23,
+        }
+
+        with pytest.raises(BuildValidationError, match="capacity \\(11\\)"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Too many broadside guns",
+                    ship_id=black_wind.id,
+                    mortar_modification_installed=True,
+                    sailors=black_wind.sailor_minimum,
+                    port_weapon_slots=[{"item": "8-pdr Cannon", "quantity": 12}],
+                ),
+            )
+
+        with pytest.raises(BuildValidationError, match="caliber limit \\(7"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Mortar too large",
+                    ship_id=black_wind.id,
+                    mortar_modification_installed=True,
+                    sailors=black_wind.sailor_minimum,
+                    mortar_weapon_slots=[{"item": "8-inch Mortar", "quantity": 1}],
+                ),
+            )

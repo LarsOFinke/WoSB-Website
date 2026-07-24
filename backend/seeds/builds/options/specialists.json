@@ -1,0 +1,469 @@
+{
+  "schema_version": 1,
+  "catalog": "build-options-special_crew",
+  "category": "special_crew",
+  "items": [
+    {
+      "category": "special_crew",
+      "seed_id": "corsair",
+      "name": "Corsair",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. All experience +6%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "all_experience_pct": 6
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "scribe",
+      "name": "Scribe",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Experience into ship branches and upgrades +20%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "branch_upgrade_experience_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "mastman",
+      "name": "Mastman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Visibility range +10%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "visibility_range_pct": 10
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "navigator",
+      "name": "Navigator",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Item visibility distance on the minimap +40%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "minimap_item_visibility_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "harpooner",
+      "name": "Harpooner",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Boarding hook reload speed +60%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "boarding_hook_reload_pct": 60
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "skipper",
+      "name": "Skipper",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. For each boarder: maximum cargo weight captured from boarding +0.5%. Pirates and Military conflict unless Ginger is present. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "boarding_cargo_weight_per_boarder_pct": 0.5
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "recruiter",
+      "name": "Recruiter",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Crew limit above the normal threshold when picking crew up at sea or during boarding +10. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "crew_pickup_limit": 10
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "powder-monkey",
+      "name": "Powder Monkey",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Swivel gun reload speed +20%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "swivel_reload_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "daredevil",
+      "name": "Daredevil",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Crew will not die in sorties. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "sortie_death_prevention_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "surgeon",
+      "name": "Doctor",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Pirates. Boarding-company survivability during shelling +40%. Does not increase ship crew capacity. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "boarding_company_shelling_survivability_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "first-mate",
+      "name": "First Mate",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. For each assigned Sailor: speed change +0.2%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "speed_per_sailor_pct": 0.2
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "sailmaker",
+      "name": "Sail Handler",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Speed +4%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "speed_pct": 4
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "helmsman",
+      "name": "Helmsman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Maneuverability while stationary and at first speed +4. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "stationary_first_speed_maneuverability": 4
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "steersman",
+      "name": "Steersman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. When durability is 50% or lower: maneuverability +6. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "low_durability_maneuverability": 6
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "rigger",
+      "name": "Rigger",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Sail auto-repair speed +25%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "sail_autorepair_pct": 25
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "carpenter",
+      "name": "Ship's Carpenter",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Repairs are available at second speed, but are slower. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "second_speed_repair_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "purser",
+      "name": "Purser",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Reduces the speed penalty when overloaded by 30%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "overload_speed_penalty_reduction_pct": 30
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "cook",
+      "name": "Cook",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Food nutrition +33%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "food_nutrition_pct": 33
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "clerk",
+      "name": "Clerk",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Decreases the chance of weapons blowing up by 40%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "weapon_explosion_risk_reduction_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "fisherman",
+      "name": "Fisherman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. For each boarder: whale-hunting and fishing catch +0.5%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "fishing_catch_per_boarder_pct": 0.5
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "boatman",
+      "name": "Boatman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. For each assigned Sailor: fishing speed +1%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "fishing_speed_per_sailor_pct": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "sailing-master",
+      "name": "Sailing Master",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Sailors. Helps maintain a steady course. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "steady_course_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "midshipman",
+      "name": "Midshipman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. During boarding, Musketeers start defending. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "boarding_musketeer_defense_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "watchman",
+      "name": "Watchman",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Fire-extinguishing speed +40%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "fire_extinguishing_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "military-surgeon",
+      "name": "Surgeon",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Half of the crew wounded by cannon fire is healed during repairs. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "repair_wounded_crew_pct": 50
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "sub-lieutenant",
+      "name": "Sub-lieutenant",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. For each assigned Sailor: item reload +0.1%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "item_reload_per_sailor_pct": 0.1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "naval-cadet",
+      "name": "Naval Cadet",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Damage dealt with grapeshot against NPCs +33%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "npc_grapeshot_damage_pct": 33
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "commodore",
+      "name": "Commodore",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Weapon aiming speed +20%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "weapon_aiming_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "commander",
+      "name": "Commander",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. For each assigned Sailor: ammunition-type switch speed +0.2%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "ammo_switch_per_sailor_pct": 0.2
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "gunner",
+      "name": "Gunner",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Reload speed +4%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "reload_pct": 4
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "armorer",
+      "name": "Armorer",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. The next reload after firing a single cannon shot is 20% faster. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "next_single_shot_reload_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "master-gunner",
+      "name": "Master Gunner",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. For each assigned Sailor while durability is 50% or lower: weapon reload speed +0.1%. Pirates and Military conflict unless Ginger is present. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "low_durability_reload_per_sailor_pct": 0.1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "artillerist",
+      "name": "Artillerist",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Military. Mortar aiming speed +25%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "mortar_aiming_pct": 25
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "lifeguard",
+      "name": "Lifeguard",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Chance to find unique crew when boarding Empire ships +15%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "unique_crew_empire_boarding_chance_pct": 15
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "explorer",
+      "name": "Explorer",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Chance to find unique crew at sea, except Adventurers, +5%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "unique_crew_at_sea_chance_pct": 5
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "seafarer",
+      "name": "Seafarer",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Chance to find and save unique crew after mode completion +50%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "unique_crew_save_after_mode_pct": 50
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "scout",
+      "name": "Scout",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. More captives from the total crew count when boarding +30%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "boarding_captives_pct": 30
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "lucky-one",
+      "name": "Lucky One",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Chance to find twice as many items at sea +20%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "double_items_at_sea_chance_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "seeker",
+      "name": "Seeker",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Chance to find rare items at sea and on islands +10%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "rare_items_chance_pct": 10
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "veteran",
+      "name": "Veteran",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Consumables picked up at sea do not receive a timer until entering a port. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "consumables_no_port_timer_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "old-hand",
+      "name": "Old Hand",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Restores durability when examining a shipwreck +5%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "shipwreck_durability_restore_pct": 5
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "ginger",
+      "name": "Ginger",
+      "source": "B20-in-game-screenshots-2026-07-11-v2",
+      "notes": "Group: Adventurers. Resolves incompatibility conflicts between Specialists. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "conflict_resolution_enabled": 1
+      }
+    }
+  ]
+}

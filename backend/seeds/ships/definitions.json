@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "catalog": "ship-definitions",
+  "sources": {
+    "ship_wiki_url": "https://world-of-sea-battle.fandom.com/wiki/Ships",
+    "shipyard_audit_date": "2026-07-12",
+    "weapon_mount_audit_date": "2026-07-12",
+    "notes": "Mount order is explicit. special_weapon_capacity on bow/stern mounts limits how many of those positions may use special weapons.",
+    "mortar_modification_availability_url": "https://world-of-sea-battle.fandom.com/wiki/Category:Mortar_modification_available",
+    "mortar_modification_effects_url": "https://www.theirontide.org/wiki/upgrades",
+    "mortar_modification_audit_date": "2026-07-24"
+  },
+  "weapon_classes": [
+    {
+      "code": "light",
+      "label": "Light",
+      "rank": 10
+    },
+    {
+      "code": "medium",
+      "label": "Medium",
+      "rank": 20
+    },
+    {
+      "code": "heavy",
+      "label": "Heavy",
+      "rank": 30
+    }
+  ],
+  "weapon_slot_types": [
+    {
+      "code": "weapon_front",
+      "label": "Bow weapons",
+      "sort_order": 10
+    },
+    {
+      "code": "weapon_rear",
+      "label": "Stern weapons",
+      "sort_order": 20
+    },
+    {
+      "code": "weapon_port",
+      "label": "Port broadside",
+      "sort_order": 30
+    },
+    {
+      "code": "weapon_starboard",
+      "label": "Starboard broadside",
+      "sort_order": 40
+    },
+    {
+      "code": "weapon_mortar",
+      "label": "Mortars",
+      "sort_order": 50
+    },
+    {
+      "code": "weapon_special",
+      "label": "Special weapons",
+      "sort_order": 60
+    }
+  ]
+}

@@ -15,8 +15,8 @@ from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
-from app.seeds.catalog_sync import seed_key
-from app.seeds.manager import SeedManager
+from app.bootstrap.catalog_sync import seed_key
+from app.bootstrap.manager import SeedManager
 
 
 @contextmanager

@@ -26,6 +26,7 @@ class BuildBase(BaseModel):
     upgrade_8: str | None = Field(default=None, max_length=140)
     lantern: str | None = Field(default=None, max_length=140)
     research_upgrade_slot_unlocked: bool = False
+    mortar_modification_installed: bool = False
 
     sailors: int = Field(default=0, ge=0)
     soldiers: int = Field(default=0, ge=0)

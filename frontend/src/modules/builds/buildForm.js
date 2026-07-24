@@ -41,6 +41,7 @@ export function createBuildForm() {
     upgrade_8: '',
     lantern: '',
     research_upgrade_slot_unlocked: false,
+    mortar_modification_installed: false,
     sailors: 0,
     soldiers: 0,
     musketeers: 0,

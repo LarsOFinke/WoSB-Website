@@ -36,6 +36,8 @@ class ShipStats(BaseModel):
     upgrade_effects: dict[str, int | float] = Field(default_factory=dict)
     special_crew_effects: dict[str, int | float] = Field(default_factory=dict)
     research_upgrade_slot_effects: dict[str, int | float] = Field(default_factory=dict)
+    mortar_modification_installed: bool = False
+    mortar_modification_effects: dict[str, int | float] = Field(default_factory=dict)
     upgrade_buffs: dict[str, int | float] = Field(default_factory=dict)
     upgrade_debuffs: dict[str, int | float] = Field(default_factory=dict)
     base_stats: dict[str, int | float | str | None] = Field(default_factory=dict)

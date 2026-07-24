@@ -15,6 +15,22 @@ const {
   removeUpgradeOverride, saveShip, deactivateCategory, deactivateOption, deactivateShip,
   restoreCategory, restoreOption, restoreShip,
 } = useMasterDataWorkspace()
+
+function setMortarModificationEnabled(enabled) {
+  shipForm.mortar_modification = enabled
+    ? (shipForm.mortar_modification || {
+        mortar_capacity: 1,
+        max_caliber_inches: 7,
+        broadside_capacity_delta: 0,
+        durability_delta: 0,
+        speed_pct: 0,
+        maneuverability_delta: 0,
+        hold_capacity_pct: 0,
+        crew_capacity_delta: 0,
+        source: '',
+      })
+    : null
+}
 </script>
 <template>
   <section class="master-data-page" aria-labelledby="master-data-title">
@@ -260,9 +276,34 @@ const {
               <div v-for="mount in shipForm.weapon_mounts" :key="mount.slot_type" class="mount-card" :class="{ 'has-capacity': Number(mount.capacity || 0) > 0 }">
                 <strong>{{ mountLabel(mount.slot_type) }}</strong>
                 <label><span>{{ t('masterData.fields.capacity') }}</span><input v-model.number="mount.capacity" type="number" min="0" /></label>
+                <label v-if="['weapon_front', 'weapon_rear', 'weapon_special'].includes(mount.slot_type)"><span>{{ t('masterData.fields.specialWeaponCapacity') }}</span><input v-model.number="mount.special_weapon_capacity" type="number" min="0" :max="mount.capacity" /></label>
                 <label><span>{{ t('masterData.fields.weaponClass') }}</span><select v-model="mount.max_weapon_class"><option value="">—</option><option v-for="row in taxonomy.weapon_classes" :key="row.code" :value="row.code">{{ row.label }}</option></select></label>
                 <label><span>{{ t('masterData.fields.caliber') }}</span><input v-model="mount.max_caliber_inches" type="number" min="0" step="0.1" /></label>
               </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="editor-section">
+            <legend>{{ t('masterData.mortarModification.title') }}</legend>
+            <label class="toggle-field">
+              <input
+                :checked="Boolean(shipForm.mortar_modification)"
+                type="checkbox"
+                @change="setMortarModificationEnabled($event.target.checked)"
+              />
+              <span>{{ t('masterData.mortarModification.available') }}</span>
+            </label>
+            <p class="section-description">{{ t('masterData.mortarModification.hint') }}</p>
+            <div v-if="shipForm.mortar_modification" class="form-grid three-columns">
+              <label><span>{{ t('masterData.mortarModification.mortarCapacity') }}</span><input v-model.number="shipForm.mortar_modification.mortar_capacity" type="number" min="1" max="8" /></label>
+              <label><span>{{ t('masterData.fields.caliber') }}</span><input v-model.number="shipForm.mortar_modification.max_caliber_inches" type="number" min="0.1" max="20" step="0.1" /></label>
+              <label><span>{{ t('masterData.mortarModification.broadsideDelta') }}</span><input v-model.number="shipForm.mortar_modification.broadside_capacity_delta" type="number" max="0" /></label>
+              <label><span>{{ t('masterData.mortarModification.durabilityDelta') }}</span><input v-model.number="shipForm.mortar_modification.durability_delta" type="number" max="0" /></label>
+              <label><span>{{ t('masterData.mortarModification.speedPercent') }}</span><input v-model.number="shipForm.mortar_modification.speed_pct" type="number" step="0.1" /></label>
+              <label><span>{{ t('masterData.mortarModification.maneuverabilityDelta') }}</span><input v-model.number="shipForm.mortar_modification.maneuverability_delta" type="number" step="0.1" /></label>
+              <label><span>{{ t('masterData.mortarModification.holdPercent') }}</span><input v-model.number="shipForm.mortar_modification.hold_capacity_pct" type="number" step="0.1" /></label>
+              <label><span>{{ t('masterData.mortarModification.crewDelta') }}</span><input v-model.number="shipForm.mortar_modification.crew_capacity_delta" type="number" max="0" /></label>
+              <label><span>{{ t('masterData.fields.source') }}</span><input v-model="shipForm.mortar_modification.source" required maxlength="500" /></label>
             </div>
           </fieldset>
 

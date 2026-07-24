@@ -23,19 +23,23 @@ Shipyard-panel speed values are normalized from the raw metres-per-second displa
 | Admin override protection | Present |
 | Removed defaults | Deactivated, not destructively deleted |
 | Weapon mounts | Normalized tables and slot taxonomy |
-| Upgrade slots | API, database and calculator aligned to a maximum of 6 |
+| Upgrade slots | API, database and calculator aligned to a maximum of 8 |
 
 ## Maintainability
 
-The ship data is grouped by in-game rate instead of living in one monolithic file:
+All repository-owned master data is isolated under `backend/seeds`:
 
-- `app/seeds/ship_data/common.py` contains provenance constants, types and the canonical factory.
-- `rate_1.py` through `rate_7.py` contain focused catalog slices.
-- shared defaults cover the normal five upgrade slots, one sail slot, lantern availability and the documented crew-planning rule.
-- exceptions such as event provenance, special weapons, six-slot ships and explicit sailor targets remain next to the affected record.
-- the public import contract (`SHIP_SEED_DATA`) remains unchanged.
+- `manifest.json` declares every loaded document and rejects missing or unlisted JSON files.
+- `system/` contains roles and the operational fleet record.
+- `builds/` separates categories from one option catalog per equipment area.
+- `ships/definitions.json` owns the mount taxonomy; `ships/rates/rate-1.json`
+  through `rate-7.json` contain focused ship slices.
+- stable `seed_id` values preserve database identity independently from display names.
 
-Validation rejects invalid rates, negative capacities, sailor targets above crew capacity, invalid weapon classes/layouts, non-boolean lantern capability and upgrade-slot values outside the six-slot model. Regression tests require every active ship seed to be present in the screenshot/event audit map and to carry current panel/event provenance.
+Validation rejects invalid rates, negative capacities, sailor targets above crew
+capacity, invalid weapon classes/layouts, non-boolean lantern capability and
+upgrade-slot values outside the eight-slot model. Regression tests require every
+active ship record to carry current panel/event provenance.
 
 ## Admin and minimum crew
 

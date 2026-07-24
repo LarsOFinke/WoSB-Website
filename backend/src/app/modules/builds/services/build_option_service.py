@@ -59,11 +59,33 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
         if option.category.key == "weapon" and ship_id is not None:
             if ship is None:
                 continue
-            allowed_slot_types = sorted(
-                mount.slot_type.code
-                for mount in ship.weapon_mounts
-                if is_weapon_compatible(option, mount)
-            )
+            allowed_slot_types: list[str] = []
+            for mount in ship.weapon_mounts:
+                is_modifier_mortar = (
+                    mount.slot_type.code == "weapon_mortar"
+                    and ship.mortar_modification is not None
+                )
+                if is_weapon_compatible(
+                    option,
+                    mount,
+                    capacity_override=(
+                        ship.effective_weapon_capacity(
+                            "weapon_mortar",
+                            mortar_modification_installed=True,
+                        )
+                        if is_modifier_mortar
+                        else None
+                    ),
+                    max_caliber_override=(
+                        ship.effective_max_mortar_caliber_inches(
+                            mortar_modification_installed=True
+                        )
+                        if is_modifier_mortar
+                        else None
+                    ),
+                ):
+                    allowed_slot_types.append(mount.slot_type.code)
+            allowed_slot_types.sort()
             if not allowed_slot_types:
                 continue
         else:

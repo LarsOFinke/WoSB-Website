@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.modules.ships.models.mortar_modification import ShipMortarModification
     from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
     from app.modules.ships.models.weapon_mount import ShipWeaponMount
 
@@ -76,6 +77,13 @@ class Ship(Base):
         lazy="selectin",
         order_by="ShipUpgradeEffectOverride.option_id, ShipUpgradeEffectOverride.effect_key",
     )
+    mortar_modification: Mapped["ShipMortarModification | None"] = relationship(
+        "ShipMortarModification",
+        back_populates="ship",
+        cascade="all, delete-orphan",
+        lazy="joined",
+        uselist=False,
+    )
 
     def _mount(self, code: str):
         return next((mount for mount in self.weapon_mounts if mount.slot_type.code == code), None)
@@ -83,6 +91,39 @@ class Ship(Base):
     def weapon_capacity(self, code: str) -> int:
         mount = self._mount(code)
         return int(mount.capacity if mount is not None else 0)
+
+    def effective_weapon_capacity(
+        self,
+        code: str,
+        *,
+        mortar_modification_installed: bool = False,
+    ) -> int:
+        capacity = self.weapon_capacity(code)
+        modification = self.mortar_modification if mortar_modification_installed else None
+        if modification is None:
+            return capacity
+        if code == "weapon_mortar":
+            return capacity + int(modification.mortar_capacity)
+        if code in {"weapon_port", "weapon_starboard"}:
+            return max(0, capacity + int(modification.broadside_capacity_delta))
+        return capacity
+
+    def effective_max_mortar_caliber_inches(
+        self,
+        *,
+        mortar_modification_installed: bool = False,
+    ) -> int | float | None:
+        base = self.max_mortar_caliber_inches
+        modification = self.mortar_modification if mortar_modification_installed else None
+        if modification is None:
+            return base
+        value = max(float(base or 0), float(modification.max_caliber_inches))
+        return int(value) if value.is_integer() else value
+
+    def mortar_modification_effects(self, installed: bool) -> dict[str, int | float]:
+        if not installed or self.mortar_modification is None:
+            return {}
+        return dict(self.mortar_modification.stat_effects)
 
     @property
     def front_weapon_capacity(self) -> int:
@@ -101,8 +142,31 @@ class Ship(Base):
         return self.weapon_capacity("weapon_mortar")
 
     @property
+    def dedicated_special_weapon_capacity(self) -> int:
+        mount = self._mount("weapon_special")
+        return int(mount.special_weapon_capacity if mount is not None else 0)
+
+    @property
+    def front_special_weapon_capacity(self) -> int:
+        mount = self._mount("weapon_front")
+        return int(mount.special_weapon_capacity if mount is not None else 0)
+
+    @property
+    def rear_special_weapon_capacity(self) -> int:
+        mount = self._mount("weapon_rear")
+        return int(mount.special_weapon_capacity if mount is not None else 0)
+
+    @property
     def special_weapon_capacity(self) -> int:
-        return self.weapon_capacity("weapon_special")
+        return (
+            self.front_special_weapon_capacity
+            + self.rear_special_weapon_capacity
+            + self.dedicated_special_weapon_capacity
+        )
+
+    def special_weapon_capacity_for(self, code: str) -> int:
+        mount = self._mount(code)
+        return int(mount.special_weapon_capacity if mount is not None else 0)
 
     @property
     def max_mortar_caliber_inches(self) -> int | float | None:
@@ -120,7 +184,12 @@ class Ship(Base):
         if mortar is not None and mortar.capacity > 0:
             caliber = int(mortar.max_caliber_inches or 0)
             suffixes.append(f"mortar {caliber}in x{mortar.capacity}")
-        special = self._mount("weapon_special")
-        if special is not None and special.capacity > 0:
-            suffixes.append(f"special x{special.capacity}")
+        for label, mount_code in (
+            ("bow special", "weapon_front"),
+            ("stern special", "weapon_rear"),
+            ("special", "weapon_special"),
+        ):
+            mount = self._mount(mount_code)
+            if mount is not None and mount.special_weapon_capacity > 0:
+                suffixes.append(f"{label} x{mount.special_weapon_capacity}")
         return f"{regular}; {'; '.join(suffixes)}" if suffixes else regular

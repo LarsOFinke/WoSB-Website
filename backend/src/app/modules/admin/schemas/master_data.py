@@ -109,6 +109,7 @@ class MasterDataOptionRead(MasterDataOptionBase, SeedMetadataRead):
 class MasterDataShipMount(BaseModel):
     slot_type: str = Field(min_length=1, max_length=40)
     capacity: int = Field(default=0, ge=0, le=1000)
+    special_weapon_capacity: int = Field(default=0, ge=0, le=1000)
     max_weapon_class: str | None = Field(default=None, max_length=24)
     max_caliber_inches: float | None = Field(default=None, ge=0)
 
@@ -125,6 +126,20 @@ class MasterDataShipMount(BaseModel):
         value = value.strip()
         return value or None
 
+    @model_validator(mode="after")
+    def validate_special_capacity(self) -> "MasterDataShipMount":
+        if self.special_weapon_capacity > self.capacity:
+            raise ValueError("Special-weapon capacity cannot exceed mount capacity.")
+        if self.special_weapon_capacity and self.slot_type not in {
+            "weapon_front",
+            "weapon_rear",
+            "weapon_special",
+        }:
+            raise ValueError(
+                "Special weapons are only valid on bow, stern or dedicated mounts."
+            )
+        return self
+
 
 class MasterDataShipUpgradeOverride(BaseModel):
     option_id: int = Field(ge=1)
@@ -140,6 +155,18 @@ class MasterDataShipUpgradeOverrideRead(MasterDataShipUpgradeOverride):
     option_name: str
     base_stat_effects: dict[str, float] = Field(default_factory=dict)
     effective_stat_effects: dict[str, float] = Field(default_factory=dict)
+
+
+class MasterDataShipMortarModification(BaseModel):
+    mortar_capacity: int = Field(gt=0, le=8)
+    max_caliber_inches: float = Field(gt=0, le=20)
+    broadside_capacity_delta: int = Field(le=0)
+    durability_delta: int = Field(le=0)
+    speed_pct: float = Field(default=0, gt=-100)
+    maneuverability_delta: float = 0
+    hold_capacity_pct: float = Field(default=0, gt=-100)
+    crew_capacity_delta: int = Field(le=0)
+    source: str = Field(min_length=1, max_length=500)
 
 
 class MasterDataShipBase(BaseModel):
@@ -162,6 +189,7 @@ class MasterDataShipBase(BaseModel):
     has_lantern: bool = True
     is_active: bool = True
     weapon_mounts: list[MasterDataShipMount] = Field(default_factory=list)
+    mortar_modification: MasterDataShipMortarModification | None = None
     upgrade_effect_overrides: list[MasterDataShipUpgradeOverride] = Field(default_factory=list)
 
     @field_validator("name", "ship_type")
@@ -189,6 +217,22 @@ class MasterDataShipBase(BaseModel):
         slot_types = [row.slot_type for row in self.weapon_mounts]
         if len(slot_types) != len(set(slot_types)):
             raise ValueError("Each weapon slot type can only occur once per ship.")
+        if self.mortar_modification is not None:
+            modification = self.mortar_modification
+            broadside = next(
+                (
+                    row.capacity
+                    for row in self.weapon_mounts
+                    if row.slot_type == "weapon_port"
+                ),
+                0,
+            )
+            if broadside + modification.broadside_capacity_delta < 0:
+                raise ValueError("Mortar conversion cannot reduce broadside capacity below zero.")
+            if self.durability + modification.durability_delta <= 0:
+                raise ValueError("Mortar conversion cannot reduce durability below one.")
+            if self.crew_capacity + modification.crew_capacity_delta <= 0:
+                raise ValueError("Mortar conversion cannot reduce crew capacity below one.")
         return self
 
 

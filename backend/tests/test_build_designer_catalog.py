@@ -12,9 +12,59 @@ from app.modules.builds.services.build_service import BuildValidationError, crea
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.squads.models.squad import Squad  # noqa: F401
-from app.seeds.ships import SHIP_SEED_DATA
-from app.seeds.weapons import WEAPON_OPTIONS
-from app.seeds.weapon_mounts import parse_weapon_layout
+from app.bootstrap.catalog_loader import load_master_data_catalog, load_ship_seed_document
+
+
+SHIP_SEED_DATA = [
+    row.model_dump(mode="json")
+    for row in load_ship_seed_document().ships
+]
+WEAPON_OPTIONS = [
+    row.model_dump(mode="json")
+    for document in load_master_data_catalog().build_options
+    if document.category == "weapon"
+    for row in document.items
+]
+
+
+def _mounts(row: dict[str, object]) -> dict[str, dict[str, object]]:
+    return {
+        str(mount["slot_type"]): mount
+        for mount in row["weapon_mounts"]
+    }
+
+
+def _legacy_weapon_layout(row: dict[str, object]) -> str:
+    mounts = _mounts(row)
+    layout = (
+        f"{mounts['weapon_rear']['capacity']}-"
+        f"{mounts['weapon_port']['capacity']}-"
+        f"{mounts['weapon_front']['capacity']}"
+    )
+    mortar = mounts["weapon_mortar"]
+    if int(mortar["capacity"]) > 0:
+        caliber = float(mortar["max_caliber_inches"])
+        rendered_caliber = int(caliber) if caliber.is_integer() else caliber
+        layout += f" + mortar {rendered_caliber}in x{mortar['capacity']}"
+    return layout
+
+
+def _max_regular_weapon_class(row: dict[str, object]) -> str | None:
+    return next(
+        (
+            str(mount["max_weapon_class"])
+            for mount in row["weapon_mounts"]
+            if mount.get("max_weapon_class")
+        ),
+        None,
+    )
+
+
+def _special_weapon_capacity(row: dict[str, object]) -> int:
+    return sum(
+        int(mount.get("special_weapon_capacity") or 0)
+        for mount in row["weapon_mounts"]
+    )
 
 
 
@@ -243,8 +293,8 @@ def test_in_game_screenshot_ship_stats_match_catalog() -> None:
             row["hold_capacity"],
             row["crew_capacity"],
             row["displacement_tons"],
-            row["max_weapon_class"],
-            row["weapon_layout"],
+            _max_regular_weapon_class(row),
+            _legacy_weapon_layout(row),
         )
         assert actual == expected, name
         assert row["speed_knots"] == AUDITED_CRUISE_MAX_SPEEDS.get(name, expected[1])
@@ -259,16 +309,16 @@ def test_in_game_screenshot_build_designer_metadata_match_catalog() -> None:
             row["rate"],
             row["ship_type"],
             row["upgrade_slots"],
-            row.get("special_weapon_capacity", 0),
+            _special_weapon_capacity(row),
         )
         assert actual == expected, name
 
 
 def test_all_ship_weapon_layouts_match_audited_catalog() -> None:
-    actual = {row["name"]: row["weapon_layout"] for row in SHIP_SEED_DATA}
+    actual = {row["name"]: _legacy_weapon_layout(row) for row in SHIP_SEED_DATA}
     assert actual == EXPECTED_WEAPON_LAYOUTS
     zeven = next(row for row in SHIP_SEED_DATA if row["name"] == "De Zeven Provincien")
-    mounts = {row["slot_type"]: row for row in parse_weapon_layout(zeven["weapon_layout"], rate=zeven["rate"])}
+    mounts = _mounts(zeven)
     assert mounts["weapon_front"]["capacity"] == 4
     assert mounts["weapon_port"]["capacity"] == 42
     assert mounts["weapon_rear"]["capacity"] == 4
@@ -347,11 +397,11 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
         "bow_stern": {"weapon_front", "weapon_rear"},
         "mortar": {"weapon_mortar"},
         "mortar_launcher": {"weapon_mortar"},
-        "special_weapon": {"weapon_special"},
+        "special_weapon": {"weapon_front", "weapon_rear", "weapon_special"},
     }
     assert WEAPON_OPTIONS
     for row in WEAPON_OPTIONS:
-        slots = {slot.strip() for slot in str(row["allowed_slot_types"]).split(",") if slot.strip()}
+        slots = set(row["allowed_slot_types"])
         assert slots == expected[row["option_kind"]], row["name"]
 
 
@@ -417,10 +467,11 @@ def test_specialist_effects_apply_once_even_when_quantity_is_submitted() -> None
         assert build.ship_stats["crew_remaining"] == 0
 
 
-def test_weapon_layout_uses_stern_broadside_bow_game_order() -> None:
-    mounts = {row["slot_type"]: row for row in parse_weapon_layout("8-28-0", rate=1)}
-    assert mounts["weapon_rear"]["capacity"] == 8
-    assert mounts["weapon_front"]["capacity"] == 0
-    mounts = {row["slot_type"]: row for row in parse_weapon_layout("0-23-4", rate=3)}
-    assert mounts["weapon_rear"]["capacity"] == 0
-    assert mounts["weapon_front"]["capacity"] == 4
+def test_json_mounts_keep_stern_broadside_bow_game_order_explicit() -> None:
+    rows = {row["name"]: row for row in SHIP_SEED_DATA}
+    couronne_mounts = _mounts(rows["La Couronne"])
+    assert couronne_mounts["weapon_rear"]["capacity"] == 8
+    assert couronne_mounts["weapon_front"]["capacity"] == 0
+    poltava_mounts = _mounts(rows["Poltava"])
+    assert poltava_mounts["weapon_rear"]["capacity"] == 0
+    assert poltava_mounts["weapon_front"]["capacity"] == 4

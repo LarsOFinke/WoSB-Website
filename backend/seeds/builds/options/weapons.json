@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "catalog": "build-options-weapon",
+  "category": "weapon",
+  "items": [
+    {
+      "category": "weapon",
+      "name": "6-pdr Culverin",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "light",
+      "seed_id": "6-pdr-culverin"
+    },
+    {
+      "category": "weapon",
+      "name": "6-pdr Rusty Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "light",
+      "seed_id": "6-pdr-rusty-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "8-pdr Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "light",
+      "seed_id": "8-pdr-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "8-pdr Culverin",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "light",
+      "seed_id": "8-pdr-culverin"
+    },
+    {
+      "category": "weapon",
+      "name": "12-pdr Carronade",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "light",
+      "seed_id": "12-pdr-carronade"
+    },
+    {
+      "category": "weapon",
+      "name": "16-pdr Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "16-pdr-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "16-pdr Carronade",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "16-pdr-carronade"
+    },
+    {
+      "category": "weapon",
+      "name": "16-pdr Culverin",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "16-pdr-culverin"
+    },
+    {
+      "category": "weapon",
+      "name": "18-pdr Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "18-pdr-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "18-pdr Long Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "18-pdr-long-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "20-pdr Admiral",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "20-pdr-admiral"
+    },
+    {
+      "category": "weapon",
+      "name": "22-pdr Scorcher",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "22-pdr-scorcher"
+    },
+    {
+      "category": "weapon",
+      "name": "24-pdr Carronade",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "24-pdr-carronade"
+    },
+    {
+      "category": "weapon",
+      "name": "28-pdr Carronade",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "28-pdr-carronade"
+    },
+    {
+      "category": "weapon",
+      "name": "32-pdr Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "32-pdr-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "32-pdr Long Cannon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "32-pdr-long-cannon"
+    },
+    {
+      "category": "weapon",
+      "name": "32-pdr Stormbringer",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "32-pdr-stormbringer"
+    },
+    {
+      "category": "weapon",
+      "name": "36-pdr Inrog",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "36-pdr-inrog"
+    },
+    {
+      "category": "weapon",
+      "name": "38-pdr Jericho",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "38-pdr-jericho"
+    },
+    {
+      "category": "weapon",
+      "name": "42-pdr Carronade",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "42-pdr-carronade"
+    },
+    {
+      "category": "weapon",
+      "name": "48-pdr Colossus",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "cannon",
+      "allowed_slot_types": [
+        "weapon_port",
+        "weapon_starboard"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "48-pdr-colossus"
+    },
+    {
+      "category": "weapon",
+      "name": "Alchemical Fire",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "special_weapon",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear",
+        "weapon_special"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": null,
+      "seed_id": "alchemical-fire"
+    },
+    {
+      "category": "weapon",
+      "name": "Barrel Launcher",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar_launcher",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": null,
+      "seed_id": "barrel-launcher"
+    },
+    {
+      "category": "weapon",
+      "name": "Twin 6-pdr",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "light",
+      "seed_id": "twin-6-pdr"
+    },
+    {
+      "category": "weapon",
+      "name": "Triple 10-pdr",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "light",
+      "seed_id": "triple-10-pdr"
+    },
+    {
+      "category": "weapon",
+      "name": "Basilisk",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "basilisk"
+    },
+    {
+      "category": "weapon",
+      "name": "Imperial Bombard",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "special_weapon",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear",
+        "weapon_special"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": null,
+      "seed_id": "imperial-bombard"
+    },
+    {
+      "category": "weapon",
+      "name": "Onager",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "onager"
+    },
+    {
+      "category": "weapon",
+      "name": "Twin 14-pdr",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "twin-14-pdr"
+    },
+    {
+      "category": "weapon",
+      "name": "Triple 16-pdr",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "medium",
+      "seed_id": "triple-16-pdr"
+    },
+    {
+      "category": "weapon",
+      "name": "Gilgamesh",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "gilgamesh"
+    },
+    {
+      "category": "weapon",
+      "name": "Mjolnir",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "mjolnir"
+    },
+    {
+      "category": "weapon",
+      "name": "Poseidon",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "poseidon"
+    },
+    {
+      "category": "weapon",
+      "name": "Twin 20-pdr",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "twin-20-pdr"
+    },
+    {
+      "category": "weapon",
+      "name": "Zeus",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "bow_stern",
+      "allowed_slot_types": [
+        "weapon_front",
+        "weapon_rear"
+      ],
+      "weapon_class": "heavy",
+      "seed_id": "zeus"
+    },
+    {
+      "category": "weapon",
+      "name": "6-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 6,
+      "seed_id": "6-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "7-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 7,
+      "seed_id": "7-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "8-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 8,
+      "seed_id": "8-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "9-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 9,
+      "seed_id": "9-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "10-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 10,
+      "seed_id": "10-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "11-inch Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 11,
+      "seed_id": "11-inch-mortar"
+    },
+    {
+      "category": "weapon",
+      "name": "Heavy Mortar",
+      "source": "WoSB wiki Basic Weapons audit 2026-07",
+      "option_kind": "mortar",
+      "allowed_slot_types": [
+        "weapon_mortar"
+      ],
+      "weapon_class": null,
+      "weapon_caliber_inches": 11,
+      "seed_id": "heavy-mortar"
+    }
+  ]
+}

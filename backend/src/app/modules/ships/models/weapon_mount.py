@@ -44,6 +44,10 @@ class ShipWeaponMount(Base):
     __table_args__ = (
         UniqueConstraint("ship_id", "slot_type_id", name="uq_ship_weapon_mount_slot"),
         CheckConstraint("capacity >= 0", name="ck_ship_weapon_mount_capacity"),
+        CheckConstraint(
+            "special_weapon_capacity >= 0 and special_weapon_capacity <= capacity",
+            name="ck_ship_weapon_mount_special_capacity",
+        ),
         CheckConstraint("max_caliber_inches is null or max_caliber_inches >= 0", name="ck_ship_weapon_mount_max_caliber"),
     )
 
@@ -53,6 +57,9 @@ class ShipWeaponMount(Base):
         ForeignKey("weapon_slot_types.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    special_weapon_capacity: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
     max_weapon_class_id: Mapped[int | None] = mapped_column(
         ForeignKey("weapon_classes.id", ondelete="RESTRICT"), nullable=True, index=True
     )
