@@ -109,6 +109,12 @@ const build = {
     stat_rows: [
       { key: 'durability', base: 2040, effective: 2142, modifier: 5, modifier_kind: 'percent', precision: 0 },
       { key: 'speed_knots', base: 9.6, effective: 10.1, modifier: 5, modifier_kind: 'percent', precision: 1 },
+      { key: 'maneuverability', base: 72, effective: 78, modifier: 8, modifier_kind: 'percent', precision: 0 },
+      { key: 'armor', base: 18, effective: 20, modifier: 2, modifier_kind: 'flat', precision: 1 },
+      { key: 'hold_capacity', base: 650, effective: 650, modifier: 0, modifier_kind: 'flat', precision: 0 },
+      { key: 'crew_capacity', base: 160, effective: 170, modifier: 10, modifier_kind: 'flat', precision: 0 },
+      { key: 'sailor_minimum', base: 80, effective: 76, modifier: -5, modifier_kind: 'percent', precision: 0 },
+      { key: 'displacement_tons', base: 780, effective: 780, modifier: 0, modifier_kind: 'flat', precision: 0, unit: 't' },
     ],
   },
   front_weapon_slots: [{ item: 'Bow Chaser', quantity: 2 }],
@@ -130,6 +136,9 @@ test('build print model exposes export-ready sections', () => {
   assert.deepEqual(model.upgrades, ['Copper Sheathing', 'Trim'])
   assert.equal(model.weapons[1].lines[0], 'Long 18-pdr ×12')
   assert.equal(model.inventoryGroups[0].title, 'Ammunition')
+  assert.deepEqual(model.inventoryGroups[0].lines, ['Round Shot ×200'])
+  assert.deepEqual(model.inventoryGroups[1].lines, ['Repair Kit'])
+  assert.deepEqual(model.inventoryGroups[2].lines, ['Oak Logs ×50'])
 })
 
 test('build print svg contains the key build identifiers', () => {
@@ -140,6 +149,36 @@ test('build print svg contains the key build identifiers', () => {
   assert.match(svg, /Copper Sheathing/)
   assert.match(svg, /data-build-sheet-version="2"/)
   assert.match(svg, /data-build-sheet-theme="dark"/)
+  assert.match(svg, /data-build-performance-panel="true"/)
+  assert.match(svg, /data-performance-stat="maneuverability"/)
+  assert.match(svg, /data-performance-stat="sailor_minimum"/)
+  assert.match(svg, />\+8%<\/text>/)
+})
+
+test('build print inventory renders each entry vertically and hides consumable quantities', () => {
+  const inventoryBuild = {
+    ...build,
+    ammunition_slots: [
+      { item: 'Round Shot', quantity: 200 },
+      { item: 'Chain Shot', quantity: 120 },
+    ],
+    consumable_slots: [
+      { item: 'Repair Kit', quantity: 3 },
+      { item: 'Rum Ration', quantity: 5 },
+    ],
+  }
+  const svg = createBuildPrintSvg(inventoryBuild, { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } })
+
+  assert.match(svg, /data-build-inventory-panel="true"/)
+  assert.match(svg, /data-inventory-item="ammunition-1"/)
+  assert.match(svg, /data-inventory-item="ammunition-2"/)
+  assert.match(svg, />Round Shot ×200<\/text>/)
+  assert.match(svg, />Chain Shot ×120<\/text>/)
+  assert.match(svg, />Repair Kit<\/text>/)
+  assert.match(svg, />Rum Ration<\/text>/)
+  assert.doesNotMatch(svg, /Repair Kit ×3/)
+  assert.doesNotMatch(svg, /Rum Ration ×5/)
+  assert.doesNotMatch(svg, /Round Shot ×200 · Chain Shot ×120/)
 })
 
 test('build print uses the shared themed document shell', () => {

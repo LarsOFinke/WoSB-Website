@@ -77,12 +77,12 @@ function formatStatValue(value, unit, precision = 0) {
   return `${number}${unit ? ` ${unit}` : ''}`
 }
 
-function listLabel(slot, labeler) {
+function listLabel(slot, labeler, { includeQuantity = true } = {}) {
   if (!slot) return ''
   if (typeof slot === 'string') return labeler(slot)
   if (!slot.item) return ''
   const quantity = Number(slot.quantity || 1)
-  return `${labeler(slot.item)}${quantity > 1 ? ` ×${quantity}` : ''}`
+  return `${labeler(slot.item)}${includeQuantity && quantity > 1 ? ` ×${quantity}` : ''}`
 }
 
 function cleanLines(items, limit = Infinity) {
@@ -187,6 +187,90 @@ function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, grou
   }
 }
 
+function formatStatModifier(row) {
+  const value = Number(row?.modifier || 0)
+  if (!Number.isFinite(value) || value === 0) return ''
+  if (String(row?.effect_key || row?.key || '').endsWith('_enabled')) return '✓'
+  const sign = value > 0 ? '+' : ''
+  const suffix = row?.modifier_kind === 'percent'
+    || row?.unit === '%'
+    || String(row?.effect_key || '').endsWith('_pct')
+    ? '%'
+    : (row?.unit ? ` ${row.unit}` : '')
+  return `${sign}${roundByPrecision(value, row?.precision || 0)}${suffix}`
+}
+
+function renderPerformancePanel({ x, y, width, index, eyebrow, title, iconHref, rows, colors }) {
+  if (!rows.length) return { height: 0, svg: '' }
+  const columns = 3
+  const cellGap = 10
+  const cellHeight = 92
+  const gridPadding = 14
+  const cellWidth = (width - (gridPadding * 2) - (cellGap * (columns - 1))) / columns
+  const rowCount = Math.ceil(rows.length / columns)
+  const height = 76 + (gridPadding * 2) + (rowCount * cellHeight) + ((rowCount - 1) * cellGap)
+  const cells = rows.map((row, rowIndex) => {
+    const column = rowIndex % columns
+    const gridRow = Math.floor(rowIndex / columns)
+    const cellX = x + gridPadding + (column * (cellWidth + cellGap))
+    const cellY = y + 76 + gridPadding + (gridRow * (cellHeight + cellGap))
+    const modifier = formatStatModifier(row)
+    const modified = Boolean(modifier)
+    const debuff = Boolean(row.isDebuff ?? row.is_debuff)
+    const statusColor = debuff ? colors.danger : colors.accent
+    const baseValue = formatStatValue(row.base, row.unit, row.precision)
+    return `<g data-performance-stat="${escapeXml(row.key)}">
+      <rect x="${cellX}" y="${cellY}" width="${cellWidth}" height="${cellHeight}" rx="5" fill="${colors.panelSoft}" stroke="${modified ? statusColor : colors.border}" />
+      <text x="${cellX + 16}" y="${cellY + 24}" class="performance-label">${escapeXml(row.label)}</text>
+      <text x="${cellX + 16}" y="${cellY + 61}" class="performance-value">${escapeXml(formatStatValue(row.effective, row.unit, row.precision))}</text>
+      <text x="${cellX + cellWidth - 16}" y="${cellY + 59}" text-anchor="end" class="performance-base">${escapeXml(baseValue)}</text>
+      ${modified ? `<text x="${cellX + cellWidth - 16}" y="${cellY + 79}" text-anchor="end" class="performance-modifier" fill="${statusColor}">${escapeXml(modifier)}</text>` : ''}
+      <line x1="${cellX + 16}" y1="${cellY + 78}" x2="${cellX + (modified ? 80 : cellWidth - 16)}" y2="${cellY + 78}" stroke="${modified ? statusColor : colors.border}" />
+    </g>`
+  }).join('')
+  return {
+    height,
+    svg: `<g data-build-performance-panel="true"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${colors.panel}" stroke="${colors.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref, colors)}${cells}</g>`,
+  }
+}
+
+function renderInventoryPanel({ x, y, width, index, eyebrow, title, iconHref, groups, colors }) {
+  const normalizedGroups = groups.map((group) => ({
+    ...group,
+    items: group.lines.map((line) => wrapText(line, 44)),
+  }))
+  const itemHeight = (lines) => 18 + (Math.max(1, lines.length) * 22)
+  const groupHeights = normalizedGroups.map((group) => 52 + group.items.reduce((total, lines) => total + itemHeight(lines) + 6, 0))
+  const height = 76 + groupHeights.reduce((total, value) => total + value, 0) + 12
+  let cursorY = y + 76
+  const groupsSvg = normalizedGroups.map((group, groupIndex) => {
+    const groupY = cursorY
+    cursorY += groupHeights[groupIndex]
+    let itemY = groupY + 48
+    const items = group.items.map((lines, itemIndex) => {
+      const rowHeight = itemHeight(lines)
+      const rowY = itemY
+      itemY += rowHeight + 6
+      const visibleLines = lines.length ? lines : ['—']
+      return `<g data-inventory-item="${escapeXml(group.iconKey || group.label)}-${itemIndex + 1}">
+        <rect x="${x + 64}" y="${rowY}" width="${width - 84}" height="${rowHeight}" rx="4" fill="${colors.panelSoft}" stroke="${colors.border}" />
+        <text x="${x + 82}" y="${rowY + 25}" class="inventory-index">${String(itemIndex + 1).padStart(2, '0')}</text>
+        ${visibleLines.map((line, lineIndex) => `<text x="${x + 116}" y="${rowY + 25 + (lineIndex * 22)}" class="group-line">${escapeXml(line)}</text>`).join('')}
+      </g>`
+    }).join('')
+    return `<g>
+      ${groupIndex ? `<line x1="${x + 18}" y1="${groupY}" x2="${x + width - 18}" y2="${groupY}" stroke="${colors.border}" />` : ''}
+      ${renderIcon(group.iconHref, x + 20, groupY + 8, 34, false, colors)}
+      <text x="${x + 66}" y="${groupY + 30}" class="row-label">${escapeXml(group.label)}</text>
+      ${items}
+    </g>`
+  }).join('')
+  return {
+    height,
+    svg: `<g data-build-inventory-panel="true"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" fill="${colors.panel}" stroke="${colors.border}" />${renderSectionHeader(x, y, width, index, eyebrow, title, iconHref, colors)}${groupsSvg}</g>`,
+  }
+}
+
 function renderNotesPanel(model, x, y, width, index, colors) {
   const lineHeight = 25
   const height = 102 + (model.notes.length * lineHeight) + 22
@@ -273,7 +357,7 @@ function createBuildPrintModel(build, helpers = {}) {
   ].filter(Boolean)
   const inventoryGroups = [
     { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
-    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
+    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel, { includeQuantity: false })).filter(Boolean), 6) },
     { iconKey: 'hold', title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
   ].filter((group) => group.lines.length)
   const classificationLabels = (build?.classification_tags || []).map((value) => {
@@ -318,10 +402,23 @@ function createBuildPrintDocument(build, helpers = {}) {
   const colors = BUILD_PRINT_THEMES[theme]
   const leftX = PAGE_PADDING
   const rightX = PAGE_PADDING + COLUMN_WIDTH + COLUMN_GAP
-  let leftY = 416
-  let rightY = 416
   let sectionIndex = 1
   const panels = []
+  const performancePanel = renderPerformancePanel({
+    x: PAGE_PADDING,
+    y: 278,
+    width: CONTENT_WIDTH,
+    index: sectionIndex++,
+    eyebrow: model.t('builds.commandDeck.performanceEyebrow'),
+    title: model.t('builds.commandDeck.performanceTitle'),
+    iconHref: PRINT_VISUALS.ship,
+    rows: model.statRows,
+    colors,
+  })
+  if (performancePanel.svg) panels.push(performancePanel.svg)
+  const columnStartY = performancePanel.height ? 278 + performancePanel.height + SECTION_GAP : 278
+  let leftY = columnStartY
+  let rightY = columnStartY
 
   if (model.equipmentRows.length || model.upgrades.length) {
     const rows = [
@@ -352,7 +449,7 @@ function createBuildPrintDocument(build, helpers = {}) {
     const inventoryOnLeft = leftY <= rightY
     const inventoryX = inventoryOnLeft ? leftX : rightX
     const inventoryY = inventoryOnLeft ? leftY : rightY
-    const panel = renderGroupedPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })), colors })
+    const panel = renderInventoryPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ iconKey: group.iconKey, label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })), colors })
     panels.push(panel.svg)
     if (inventoryOnLeft) leftY += panel.height + SECTION_GAP
     else rightY += panel.height + SECTION_GAP
@@ -367,22 +464,12 @@ function createBuildPrintDocument(build, helpers = {}) {
   }
   const footerY = Math.max(notesBottom + 12, BASE_PAGE_HEIGHT - FOOTER_HEIGHT - PAGE_PADDING)
   const pageHeight = Math.max(BASE_PAGE_HEIGHT, Math.ceil(footerY + FOOTER_HEIGHT + PAGE_PADDING))
-  const statWidth = (CONTENT_WIDTH - (4 * 12)) / 5
-  const statCards = model.headlineStats.map((stat, index) => {
-    const x = PAGE_PADDING + (index * (statWidth + 12))
-    return `<g>
-      <rect x="${x}" y="278" width="${statWidth}" height="112" rx="5" fill="${colors.panel}" stroke="${index === 0 ? colors.borderStrong : colors.border}" />
-      <text x="${x + 18}" y="312" class="stat-label">${escapeXml(stat.label)}</text>
-      <text x="${x + 18}" y="357" class="stat-value">${escapeXml(stat.value)}</text>
-      <line x1="${x + 18}" y1="373" x2="${x + statWidth - 18}" y2="373" stroke="${index === 0 ? colors.accent : colors.border}" />
-    </g>`
-  }).join('')
   const classifications = model.classificationLabels.length ? model.classificationLabels.join('  ·  ') : model.buildType
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="2" data-build-sheet-theme="${theme}">
     <style>
-      text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${colors.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${colors.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${colors.muted};font-size:19px}.share{fill:${colors.accent};font-size:14px}.eyebrow{fill:${colors.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${colors.text};font-family:Georgia,serif;font-size:24px}.index{fill:${colors.accent};font-size:11px;font-weight:800}.row-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${colors.text};font-size:18px;font-weight:700}.row-meta{fill:${colors.faint};font-size:13px}.group-line{fill:${colors.text};font-size:16px}.note-line{fill:${colors.muted};font-family:Georgia,serif;font-size:17px}.stat-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.stat-value{fill:${colors.text};font-family:Georgia,serif;font-size:32px}.footer{fill:${colors.faint};font-size:13px}
+      text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${colors.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${colors.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${colors.muted};font-size:19px}.share{fill:${colors.accent};font-size:14px}.eyebrow{fill:${colors.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${colors.text};font-family:Georgia,serif;font-size:24px}.index{fill:${colors.accent};font-size:11px;font-weight:800}.row-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${colors.text};font-size:18px;font-weight:700}.row-meta{fill:${colors.faint};font-size:13px}.group-line{fill:${colors.text};font-size:16px}.inventory-index{fill:${colors.accent};font-size:11px;font-weight:800}.note-line{fill:${colors.muted};font-family:Georgia,serif;font-size:17px}.performance-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:.7px;text-transform:uppercase}.performance-value{fill:${colors.text};font-family:Georgia,serif;font-size:29px}.performance-base{fill:${colors.faint};font-size:13px}.performance-modifier{font-size:13px;font-weight:800}.footer{fill:${colors.faint};font-size:13px}
     </style>
     <rect width="${PAGE_WIDTH}" height="${pageHeight}" fill="${colors.page}" />
     <rect x="14" y="14" width="${PAGE_WIDTH - 28}" height="${pageHeight - 28}" fill="none" stroke="${colors.borderStrong}" stroke-width="2" />
@@ -395,7 +482,6 @@ function createBuildPrintDocument(build, helpers = {}) {
     <text x="${PAGE_WIDTH - PAGE_PADDING}" y="93" text-anchor="end" class="meta">${escapeXml(model.t('builds.print.preparedAt', { value: model.generatedAt }))}</text>
     <text x="${PAGE_WIDTH - PAGE_PADDING}" y="120" text-anchor="end" class="share">${escapeXml(model.shareUrl)}</text>
     <line x1="${PAGE_PADDING}" y1="252" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="252" stroke="${colors.border}" />
-    ${statCards}
     ${panels.join('')}
     <line x1="${PAGE_PADDING}" y1="${footerY}" x2="${PAGE_WIDTH - PAGE_PADDING}" y2="${footerY}" stroke="${colors.border}" />
     <text x="${PAGE_PADDING}" y="${footerY + 39}" class="footer">${escapeXml(model.t('builds.print.footerHint'))}</text>
