@@ -6,7 +6,7 @@ REQUIRED_UPGRADE_FIELDS = ("category", "name", "source", "notes", "option_kind",
 MIN_SAIL_OPTIONS = 9
 MIN_LANTERN_OPTIONS = 9
 MIN_UPGRADE_OPTIONS = 30
-MIN_SPECIALIST_OPTIONS = 42
+MIN_SPECIALIST_OPTIONS = 51
 
 
 def validate_upgrade_seed_data(rows: list[dict[str, object]]) -> None:

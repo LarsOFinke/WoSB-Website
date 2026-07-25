@@ -49,6 +49,17 @@
     },
     {
       "category": "special_crew",
+      "seed_id": "quartermaster",
+      "name": "Quartermaster",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Pirates. Only one random target is selected at the start of boarding. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "single_random_boarding_target_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
       "seed_id": "harpooner",
       "name": "Harpooner",
       "source": "B20-in-game-screenshots-2026-07-11-v2",
@@ -67,6 +78,17 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_cargo_weight_per_boarder_pct": 0.5
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "swimmer",
+      "name": "Swimmer",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Pirates. Item pick-up range +40%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "item_pickup_range_pct": 40
       }
     },
     {
@@ -111,6 +133,28 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_company_shelling_survivability_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "senior-doctor",
+      "name": "Senior doctor",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Pirates. Crew healing after boarding +20%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "post_boarding_crew_healing_pct": 20
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "pilot",
+      "name": "Pilot",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Sailors. Speed penalty when turning at cruise speed -25%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "cruising_turn_speed_penalty_pct": -25
       }
     },
     {
@@ -181,6 +225,17 @@
     },
     {
       "category": "special_crew",
+      "seed_id": "butcher",
+      "name": "Butcher",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Sailors. Enables animal slaughter for food and allows more animals to be found. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "animal_slaughter_for_food_enabled": 1
+      }
+    },
+    {
+      "category": "special_crew",
       "seed_id": "purser",
       "name": "Purser",
       "source": "B20-in-game-screenshots-2026-07-11-v2",
@@ -236,6 +291,17 @@
     },
     {
       "category": "special_crew",
+      "seed_id": "crew-carpenter",
+      "name": "Carpenter",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Sailors. For each assigned Sailor: repair speed +0.3%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "repair_speed_per_sailor_pct": 0.3
+      }
+    },
+    {
+      "category": "special_crew",
       "seed_id": "sailing-master",
       "name": "Sailing Master",
       "source": "B20-in-game-screenshots-2026-07-11-v2",
@@ -258,6 +324,17 @@
     },
     {
       "category": "special_crew",
+      "seed_id": "junior-provost",
+      "name": "Junior provost",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Military. Large-fire damage -50%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "large_fire_damage_pct": -50
+      }
+    },
+    {
+      "category": "special_crew",
       "seed_id": "watchman",
       "name": "Watchman",
       "source": "B20-in-game-screenshots-2026-07-11-v2",
@@ -265,6 +342,17 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "fire_extinguishing_pct": 40
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "provost",
+      "name": "Provost",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Military. Microfire extinguishing speed +25%. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "microfire_extinguishing_pct": 25
       }
     },
     {
@@ -364,6 +452,17 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "mortar_aiming_pct": 25
+      }
+    },
+    {
+      "category": "special_crew",
+      "seed_id": "bombardier",
+      "name": "Bombardier",
+      "source": "B20-in-game-screenshots-2026-07-26",
+      "notes": "Group: Military. Mortar reload speed +10% while weapons are loaded. Catalog status: verified-from-project-owner-screenshots.",
+      "option_kind": "crew_specialist",
+      "stat_effects": {
+        "loaded_weapons_mortar_reload_pct": 10
       }
     },
     {

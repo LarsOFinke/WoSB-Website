@@ -6,6 +6,7 @@ def test_specialist_effects_expand_per_sailor_and_per_boarder_values() -> None:
         [
             ({"speed_per_sailor_pct": 0.2}, 1),
             ({"boarding_cargo_weight_per_boarder_pct": 0.5}, 1),
+            ({"repair_speed_per_sailor_pct": 0.3}, 1),
             ({"reload_pct": 4}, 2),
         ],
         sailors=80,
@@ -17,6 +18,7 @@ def test_specialist_effects_expand_per_sailor_and_per_boarder_values() -> None:
     assert effects == {
         "speed_pct": 16,
         "boarding_cargo_weight_pct": 35,
+        "repair_speed_pct": 24,
         "reload_pct": 4,
     }
 

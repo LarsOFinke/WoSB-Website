@@ -98,81 +98,57 @@ function formatDateTime(value) {
       </div>
     </div>
 
+    <section class="staff-priority-board">
+      <header class="staff-priority-heading">
+        <div><span>{{ t('admin.workspace.queueEyebrow') }}</span><h3>{{ t('admin.workspace.overviewTitle') }}</h3></div>
+      </header>
+      <button class="staff-priority-row" type="button" @click="emit('navigate', 'registrations')">
+        <span class="staff-priority-icon" :class="{ 'has-work': oldestPendingRequest }"><AppIcon name="inbox" :size="19" /></span>
+        <span class="staff-priority-copy">
+          <strong>{{ t('admin.workspace.accessQueue') }}</strong>
+          <small v-if="oldestPendingRequest">{{ oldestPendingRequest.display_name }} · {{ oldestPendingRequest.username }}</small>
+          <small v-else>{{ t('admin.workspace.noPendingRequests') }}</small>
+        </span>
+        <time v-if="oldestPendingRequest">{{ t('admin.workspace.requestSince', { date: formatDateTime(oldestPendingRequest.created_at) }) }}</time>
+        <AppIcon name="chevron-right" :size="16" />
+      </button>
+      <button class="staff-priority-row" type="button" @click="emit('navigate', 'calendar')">
+        <span class="staff-priority-icon"><AppIcon name="calendar" :size="19" /></span>
+        <span class="staff-priority-copy">
+          <strong>{{ t('admin.workspace.nextEvent') }}</strong>
+          <small v-if="nextEvent">{{ nextEvent.title }} · {{ t(`calendar.categories.${nextEvent.category}`) }}</small>
+          <small v-else>{{ t('admin.workspace.noUpcomingEvents') }}</small>
+        </span>
+        <time v-if="nextEvent">{{ formatDateTime(nextEvent.start_at) }}</time>
+        <AppIcon name="chevron-right" :size="16" />
+      </button>
+    </section>
+
     <section class="staff-overview-section">
       <div class="staff-overview-section-head">
-        <div>
-          <span>{{ t('admin.workspace.moderationGroup') }}</span>
-          <strong>{{ t('admin.workspace.moderationTitle') }}</strong>
-        </div>
+        <div><span>{{ t('admin.workspace.moderationGroup') }}</span><strong>{{ t('admin.workspace.moderationTitle') }}</strong></div>
         <small>{{ t('admin.workspace.moderationHint') }}</small>
       </div>
-      <div class="staff-overview-card-grid">
-        <button
-          v-for="card in moderationCards"
-          :key="card.tab"
-          class="staff-overview-card"
-          :class="[`tone-${card.tone || 'default'}`]"
-          type="button"
-          @click="emit('navigate', card.tab)"
-        >
-          <span class="staff-overview-card-icon"><AppIcon :name="card.icon" :size="20" /></span>
-          <span class="staff-overview-card-copy"><small>{{ card.label }}</small><strong>{{ card.value }}</strong><span>{{ card.hint }}</span></span>
-          <AppIcon class="staff-overview-card-arrow" name="arrow-right" :size="17" />
+      <div class="staff-overview-metric-band">
+        <button v-for="card in moderationCards" :key="card.tab" :class="[`tone-${card.tone || 'default'}`]" type="button" @click="emit('navigate', card.tab)">
+          <AppIcon :name="card.icon" :size="18" />
+          <span><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em>{{ card.hint }}</em></span>
         </button>
       </div>
     </section>
 
     <section v-if="isAdmin" class="staff-overview-section is-admin-scope">
       <div class="staff-overview-section-head">
-        <div>
-          <span>{{ t('admin.workspace.adminGroup') }}</span>
-          <strong>{{ t('admin.workspace.adminTitle') }}</strong>
-        </div>
+        <div><span>{{ t('admin.workspace.adminGroup') }}</span><strong>{{ t('admin.workspace.adminTitle') }}</strong></div>
         <small>{{ t('admin.workspace.adminHint') }}</small>
       </div>
-      <div class="staff-overview-card-grid">
-        <button
-          v-for="card in adminCards"
-          :key="card.tab"
-          class="staff-overview-card"
-          :class="[`tone-${card.tone || 'default'}`]"
-          type="button"
-          @click="emit('navigate', card.tab)"
-        >
-          <span class="staff-overview-card-icon"><AppIcon :name="card.icon" :size="20" /></span>
-          <span class="staff-overview-card-copy"><small>{{ card.label }}</small><strong>{{ card.value }}</strong><span>{{ card.hint }}</span></span>
-          <AppIcon class="staff-overview-card-arrow" name="arrow-right" :size="17" />
+      <div class="staff-overview-metric-band is-admin-band">
+        <button v-for="card in adminCards" :key="card.tab" :class="[`tone-${card.tone || 'default'}`]" type="button" @click="emit('navigate', card.tab)">
+          <AppIcon :name="card.icon" :size="18" />
+          <span><small>{{ card.label }}</small><strong>{{ card.value }}</strong><em>{{ card.hint }}</em></span>
         </button>
       </div>
     </section>
-
-    <div class="staff-overview-queue-grid">
-      <article class="staff-overview-queue-card">
-        <div class="staff-overview-section-head compact">
-          <div><span>{{ t('admin.workspace.queueEyebrow') }}</span><strong>{{ t('admin.workspace.accessQueue') }}</strong></div>
-          <button class="small-action" type="button" @click="emit('navigate', 'registrations')">{{ t('admin.workspace.openArea') }}</button>
-        </div>
-        <template v-if="oldestPendingRequest">
-          <strong>{{ oldestPendingRequest.display_name }}</strong>
-          <span>{{ oldestPendingRequest.username }}</span>
-          <small>{{ t('admin.workspace.requestSince', { date: formatDateTime(oldestPendingRequest.created_at) }) }}</small>
-        </template>
-        <p v-else class="muted">{{ t('admin.workspace.noPendingRequests') }}</p>
-      </article>
-
-      <article class="staff-overview-queue-card">
-        <div class="staff-overview-section-head compact">
-          <div><span>{{ t('admin.workspace.queueEyebrow') }}</span><strong>{{ t('admin.workspace.nextEvent') }}</strong></div>
-          <button class="small-action" type="button" @click="emit('navigate', 'calendar')">{{ t('admin.workspace.openArea') }}</button>
-        </div>
-        <template v-if="nextEvent">
-          <strong>{{ nextEvent.title }}</strong>
-          <span>{{ t(`calendar.categories.${nextEvent.category}`) }}</span>
-          <small>{{ formatDateTime(nextEvent.start_at) }}</small>
-        </template>
-        <p v-else class="muted">{{ t('admin.workspace.noUpcomingEvents') }}</p>
-      </article>
-    </div>
 
     <aside class="staff-role-scope-note" :class="{ 'is-admin': isAdmin }">
       <AppIcon :name="isAdmin ? 'shield' : 'lock'" :size="19" />

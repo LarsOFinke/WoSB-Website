@@ -18,6 +18,7 @@ PER_CREW_EFFECTS: dict[str, tuple[str, str]] = {
     "boarding_cargo_weight_per_boarder_pct": ("boarding_cargo_weight_pct", "boarders"),
     "fishing_catch_per_boarder_pct": ("fishing_catch_pct", "boarders"),
     "fishing_speed_per_sailor_pct": ("fishing_speed_pct", "sailors"),
+    "repair_speed_per_sailor_pct": ("repair_speed_pct", "sailors"),
 }
 
 

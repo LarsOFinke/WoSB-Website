@@ -7,8 +7,13 @@ const auditSource = await readFile(new URL('../src/modules/admin/components/Audi
 const webhookSource = await readFile(new URL('../src/modules/admin/components/OutboundWebhookManagementPanel.vue', import.meta.url), 'utf8')
 const broadcastSource = await readFile(new URL('../src/modules/admin/components/DiscordBroadcastPanel.vue', import.meta.url), 'utf8')
 const discordPageSource = await readFile(new URL('../src/modules/admin/pages/DiscordWebhooksPage.vue', import.meta.url), 'utf8')
+const masterDataPageSource = await readFile(new URL('../src/modules/admin/pages/MasterDataPage.vue', import.meta.url), 'utf8')
 const staffOverviewSource = await readFile(new URL('../src/modules/admin/components/StaffOverviewPanel.vue', import.meta.url), 'utf8')
-const stylesSource = await readFile(new URL('../src/styles/main.css', import.meta.url), 'utf8')
+const navigationSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceNavigation.vue', import.meta.url), 'utf8')
+const shellSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceShell.vue', import.meta.url), 'utf8')
+const staffStylesSource = await readFile(new URL('../src/modules/admin/styles/staffWorkspace.css', import.meta.url), 'utf8')
+const navigationDomainSource = await readFile(new URL('../src/modules/admin/domain/staffNavigation.js', import.meta.url), 'utf8')
+const stylesSource = `${await readFile(new URL('../src/styles/main.css', import.meta.url), 'utf8')}\n${staffStylesSource}`
 
 test('staff workspace exposes combined filters for all shared management modules', () => {
   for (const binding of [
@@ -73,24 +78,28 @@ test('system logs use expandable request rows and defer the dense security dashb
   assert.ok(!adminSource.includes('<table class="security-table staff-log-table">'))
 })
 
-test('mobile staff navigation uses one stable grouped picker instead of an overflowing tab rail', () => {
-  assert.ok(adminSource.includes('staff-mobile-tab-picker'))
-  assert.ok(adminSource.includes('<Teleport to="body">'))
-  assert.ok(adminSource.includes('role="dialog"'))
-  assert.ok(adminSource.includes('staff-mobile-tab-sheet'))
-  assert.ok(adminSource.includes('selectMobileTab'))
-  assert.ok(stylesSource.includes('.staff-mobile-tab-picker'))
-  assert.ok(stylesSource.includes('.staff-mobile-tab-layer'))
-  assert.ok(stylesSource.includes('.staff-workspace-frame > .staff-tabs {\n    display: none;'))
+test('all staff routes share one stable grouped navigation shell', () => {
+  assert.ok(adminSource.includes('<StaffWorkspaceShell'))
+  assert.ok(discordPageSource.includes('<StaffWorkspaceShell'))
+  assert.ok(masterDataPageSource.includes('<StaffWorkspaceShell'))
+  assert.ok(shellSource.includes('<StaffWorkspaceNavigation'))
+  assert.ok(navigationSource.includes('<Teleport to="body">'))
+  assert.ok(navigationSource.includes('role="dialog"'))
+  assert.ok(navigationSource.includes('staff-navigation-mobile-panel'))
+  assert.ok(staffStylesSource.includes('.staff-navigation-trigger'))
+  assert.ok(staffStylesSource.includes('.staff-navigation-mobile-layer'))
+  assert.ok(navigationDomainSource.includes("key: 'master-data'"))
+  assert.ok(navigationDomainSource.includes("key: 'webhooks'"))
 })
 
-test('staff overview has dedicated responsive dashboard styling', () => {
+test('staff overview prioritizes work and uses compact responsive metric bands', () => {
   for (const className of [
-    'staff-overview-panel', 'staff-overview-card-grid', 'staff-overview-card-copy',
-    'staff-overview-queue-grid', 'staff-role-scope-note',
+    'staff-overview-panel', 'staff-priority-board', 'staff-priority-row',
+    'staff-overview-metric-band', 'staff-role-scope-note',
   ]) {
     assert.ok(staffOverviewSource.includes(className), className)
     assert.ok(stylesSource.includes(`.${className}`), `${className} CSS`)
   }
-  assert.ok(stylesSource.includes('grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr))'))
+  assert.ok(staffStylesSource.includes('grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr))'))
+  assert.ok(staffStylesSource.includes('@media (max-width: 430px)'))
 })

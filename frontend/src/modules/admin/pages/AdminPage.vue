@@ -3,16 +3,17 @@ import { computed, ref } from 'vue'
 
 import AppIcon from '@/core/components/AppIcon.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
-import PageHeader from '@/core/components/PageHeader.vue'
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
 import SecurityLogDashboard from '@/modules/admin/components/SecurityLogDashboard.vue'
 import StaffOverviewPanel from '@/modules/admin/components/StaffOverviewPanel.vue'
+import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
 import { useAdminWorkspace } from '@/modules/admin/composables/useAdminWorkspace'
+import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
 
 const {
-  locale, t, isAdmin, isStaff, sessionState, user, activeTab, tabGroups,
+  locale, t, isAdmin, isStaff, user, activeTab,
   builds, users, fleetEvents, forumThreads, guides, groups, registrationRequests, appLogs,
   ipBlockPrefill, logSummary, ipBlockOverview, overviewLoading,
   search, contentSearch, calendarCategory, registrationStatus, registrationSearch,
@@ -36,10 +37,7 @@ const {
 } = useAdminWorkspace()
 
 const expandedLogId = ref(null)
-const mobileTabPickerOpen = ref(false)
-const activeTabLabel = computed(() => tabGroups.value
-  .flatMap((group) => group.tabs)
-  .find((tab) => tab.key === activeTab.value)?.label || '')
+const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
 const activeLogFilterCount = computed(() => [logLevel.value, logPath.value, logIp.value, logThreat.value].filter(Boolean).length)
 
 function isoDate(value) {
@@ -64,103 +62,25 @@ function resetLogFilters() {
   setLogRange(7)
 }
 
-function selectMobileTab(tab) {
-  navigateToTab(tab)
-  mobileTabPickerOpen.value = false
-}
 </script>
 <template>
-  <section class="admin-page" aria-labelledby="admin-title">
-    <div class="wire-frame page-frame admin-frame staff-workspace-frame">
-      <PageHeader
-        :eyebrow="t('admin.eyebrow')"
-        :title="isAdmin ? t('admin.title') : t('admin.moderatorTitle')"
-        :description="isAdmin ? t('admin.subtitle') : t('admin.moderatorSubtitle')"
-        title-id="admin-title"
-      >
-        <template #meta>
-          <span v-if="user" class="summary-pill">{{ user.display_name }}</span>
-          <span v-if="user" class="summary-pill">{{ t(`roles.${user.role}`) }}</span>
-          <span v-if="isAdmin" class="summary-pill" :class="{ 'fleet-status-pill': apiStatus === t('admin.status.online') }">{{ apiStatus }}</span>
-        </template>
-        <template #actions>
-          <RouterLink class="button-box" to="/calendar">{{ t('common.calendar') }}</RouterLink>
-          <RouterLink v-if="isStaff" class="button-box primary-action" to="/calendar/new">{{ t('admin.quickActions.newEvent') }}</RouterLink>
-        </template>
-      </PageHeader>
-
-      <section v-if="!isStaff" class="wire-section admin-locked">
-        <h2>{{ t('admin.lockedTitle') }}</h2>
-        <p>{{ t('admin.lockedText') }}</p>
-        <RouterLink class="button-box primary-action" to="/login">{{ t('auth.login') }}</RouterLink>
-      </section>
-
-      <template v-else>
-        <section class="wire-section staff-command-center polished-command-center" :aria-label="t('admin.quickActions.label')">
-          <RouterLink class="staff-command-card" to="/calendar/new">
-            <span class="staff-command-card-topline"><AppIcon name="calendar" :size="18" />{{ t('admin.quickActions.scheduleLabel') }}</span>
-            <strong>{{ t('admin.quickActions.newEvent') }}</strong>
-            <small>{{ t('admin.quickActions.scheduleText') }}</small>
-            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
-          </RouterLink>
-          <RouterLink class="staff-command-card" to="/forum/new">
-            <span class="staff-command-card-topline"><AppIcon name="forum" :size="18" />{{ t('admin.quickActions.forumLabel') }}</span>
-            <strong>{{ t('admin.quickActions.newThread') }}</strong>
-            <small>{{ t('admin.quickActions.forumText') }}</small>
-            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
-          </RouterLink>
-          <RouterLink class="staff-command-card" to="/guides/new">
-            <span class="staff-command-card-topline"><AppIcon name="guides" :size="18" />{{ t('admin.quickActions.guidesLabel') }}</span>
-            <strong>{{ t('admin.quickActions.newGuide') }}</strong>
-            <small>{{ t('admin.quickActions.guidesText') }}</small>
-            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
-          </RouterLink>
-          <RouterLink v-if="isAdmin" class="staff-command-card" to="/admin/master-data">
-            <span class="staff-command-card-topline"><AppIcon name="builds" :size="18" />{{ t('masterData.eyebrow') }}</span>
-            <strong>{{ t('masterData.title') }}</strong>
-            <small>{{ t('masterData.subtitle') }}</small>
-            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
-          </RouterLink>
-          <RouterLink class="staff-command-card" to="/fleets">
-            <span class="staff-command-card-topline"><AppIcon name="fleet" :size="18" />{{ t('fleets.manage.eyebrow') }}</span>
-            <strong>{{ t('common.fleetManagement') }}</strong>
-            <small>{{ t('fleets.manage.subtitle') }}</small>
-            <AppIcon class="staff-command-card-arrow" name="arrow-right" :size="17" />
-          </RouterLink>
-        </section>
-
-        <div class="wire-section staff-mobile-tab-picker" :class="{ 'is-open': mobileTabPickerOpen }">
-          <button class="staff-mobile-tab-trigger" type="button" :aria-expanded="mobileTabPickerOpen" @click="mobileTabPickerOpen = true"><span>{{ activeTabLabel }}</span><small>{{ t('admin.tabsLabel') }}</small><AppIcon name="chevron-right" :size="18" /></button>
-          <Teleport to="body">
-            <div v-if="mobileTabPickerOpen" class="staff-mobile-tab-layer" role="presentation" @click.self="mobileTabPickerOpen = false">
-              <div class="staff-mobile-tab-sheet" role="dialog" aria-modal="true" :aria-label="t('admin.tabsLabel')">
-                <div class="staff-mobile-tab-sheet-head"><strong>{{ t('admin.tabsLabel') }}</strong><button class="small-action" type="button" @click="mobileTabPickerOpen = false">{{ t('common.close') }}</button></div>
-                <section v-for="group in tabGroups" :key="group.key" class="staff-mobile-tab-group">
-                  <span>{{ group.label }}</span>
-                  <button v-for="tab in group.tabs" :key="tab.key" type="button" :class="{ 'is-active': activeTab === tab.key }" @click="selectMobileTab(tab.key)"><AppIcon :name="tab.icon" :size="18" /><strong>{{ tab.label }}</strong><i v-if="activeTab === tab.key" aria-hidden="true"></i></button>
-                </section>
-              </div>
-            </div>
-          </Teleport>
-        </div>
-
-        <nav class="wire-section admin-tabs staff-tabs workspace-tab-rail" :aria-label="t('admin.tabsLabel')">
-          <section v-for="group in tabGroups" :key="group.key" class="staff-tab-group">
-            <span class="staff-tab-group-label">{{ group.label }}</span>
-            <button
-              v-for="tab in group.tabs"
-              :key="tab.key"
-              class="tab-button"
-              :class="{ 'is-active': activeTab === tab.key }"
-              type="button"
-              :aria-current="activeTab === tab.key ? 'page' : undefined"
-              @click="navigateToTab(tab.key)"
-            >
-              <span><AppIcon :name="tab.icon" :size="17" />{{ tab.label }}</span>
-              <AppIcon name="chevron-right" :size="15" />
-            </button>
-          </section>
-        </nav>
+  <StaffWorkspaceShell
+    v-if="isStaff"
+    :eyebrow="t('admin.eyebrow')"
+    :title="isAdmin ? t('admin.title') : t('admin.moderatorTitle')"
+    :description="isAdmin ? t('admin.subtitle') : t('admin.moderatorSubtitle')"
+    title-id="admin-title"
+    :groups="navigationGroups"
+    :active-key="activeTab"
+    :user="user"
+    :role-label="user ? t(`roles.${user.role}`) : ''"
+    :status="isAdmin ? apiStatus : ''"
+    :is-admin="isAdmin"
+  >
+    <template #actions>
+      <RouterLink class="button-box" to="/calendar">{{ t('common.calendar') }}</RouterLink>
+      <RouterLink class="button-box primary-action" to="/calendar/new">{{ t('admin.quickActions.newEvent') }}</RouterLink>
+    </template>
 
         <section v-if="activeTab === 'overview'" class="wire-section admin-panel staff-overview-shell">
           <StaffOverviewPanel
@@ -395,7 +315,15 @@ function selectMobileTab(tab) {
             </article>
           </div>
         </section>
-      </template>
+  </StaffWorkspaceShell>
+
+  <section v-else class="admin-page" aria-labelledby="admin-locked-title">
+    <div class="wire-frame page-frame admin-frame">
+      <section class="wire-section admin-locked">
+        <h2 id="admin-locked-title">{{ t('admin.lockedTitle') }}</h2>
+        <p>{{ t('admin.lockedText') }}</p>
+        <RouterLink class="button-box primary-action" to="/login">{{ t('auth.login') }}</RouterLink>
+      </section>
     </div>
   </section>
 </template>

@@ -1,4 +1,5 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
@@ -14,6 +15,8 @@ import { crewTotal } from '@/modules/admin/domain/adminWorkspace'
 const ADMIN_ONLY_TABS = new Set(['status', 'logs', 'ip-blocks', 'audit', 'users'])
 
 export function useAdminWorkspace() {
+  const route = useRoute()
+  const router = useRouter()
   const { locale, t } = useLocale()
   const { isAdmin, isStaff, loadSession, sessionState, user } = useSession()
   const activeTab = ref('overview')
@@ -92,7 +95,12 @@ export function useAdminWorkspace() {
   }
 
   function navigateToTab(tab) {
-    if (canAccessTab(tab)) activeTab.value = tab
+    if (!canAccessTab(tab)) return
+    activeTab.value = tab
+    const query = tab === 'overview' ? {} : { section: tab }
+    if (String(route.query.section || '') !== String(query.section || '')) {
+      router.replace({ path: '/admin', query })
+    }
   }
 
   async function loadOverview() {
@@ -134,10 +142,18 @@ export function useAdminWorkspace() {
     if (tab === 'content') await contentWorkspace.loadContent()
   })
 
+  watch(() => route.query.section, (section) => {
+    if (route.path !== '/admin') return
+    const requestedTab = Array.isArray(section) ? section[0] : section
+    const nextTab = requestedTab && canAccessTab(requestedTab) ? requestedTab : 'overview'
+    if (activeTab.value !== nextTab) activeTab.value = nextTab
+  })
+
   onMounted(async () => {
     if (!sessionState.isReady) await loadSession()
-    activeTab.value = 'overview'
-    await loadOverview()
+    const requestedTab = Array.isArray(route.query.section) ? route.query.section[0] : route.query.section
+    activeTab.value = requestedTab && canAccessTab(requestedTab) ? requestedTab : 'overview'
+    if (activeTab.value === 'overview') await loadOverview()
   })
 
   return {

@@ -126,18 +126,35 @@ def test_specialist_catalog_matches_verified_screenshot_roster() -> None:
     names = {str(row["name"]) for row in SPECIAL_CREW_OPTIONS}
     effects = {str(row["name"]): row["stat_effects"] for row in SPECIAL_CREW_OPTIONS}
 
-    assert len(SPECIAL_CREW_OPTIONS) == 42
-    assert {
-        "Doctor", "Surgeon", "Sail Handler", "First Mate", "Master Gunner",
-        "Ship's Carpenter", "Skipper", "Ginger", "Old Hand", "Artillerist",
-    } <= names
+    assert len(SPECIAL_CREW_OPTIONS) == 51
+    assert names == {
+        "Armorer", "Artillerist", "Boatman", "Bombardier", "Butcher",
+        "Carpenter", "Clerk", "Commander", "Commodore", "Cook", "Corsair",
+        "Daredevil", "Doctor", "Explorer", "First Mate", "Fisherman", "Ginger",
+        "Gunner", "Harpooner", "Helmsman", "Junior provost", "Lifeguard",
+        "Lucky One", "Master Gunner", "Mastman", "Midshipman", "Naval Cadet",
+        "Navigator", "Old Hand", "Pilot", "Powder Monkey", "Provost", "Purser",
+        "Quartermaster", "Recruiter", "Rigger", "Sail Handler", "Sailing Master",
+        "Scout", "Scribe", "Seafarer", "Seeker", "Senior doctor", "Ship's Carpenter",
+        "Skipper", "Steersman", "Sub-lieutenant", "Surgeon", "Swimmer", "Veteran",
+        "Watchman",
+    }
     assert effects["Doctor"] == {"boarding_company_shelling_survivability_pct": 40}
     assert effects["Sail Handler"] == {"speed_pct": 4}
     assert effects["First Mate"] == {"speed_per_sailor_pct": 0.2}
     assert effects["Gunner"] == {"reload_pct": 4}
     assert effects["Artillerist"] == {"mortar_aiming_pct": 25}
+    assert effects["Quartermaster"] == {"single_random_boarding_target_enabled": 1}
+    assert effects["Swimmer"] == {"item_pickup_range_pct": 40}
+    assert effects["Senior doctor"] == {"post_boarding_crew_healing_pct": 20}
+    assert effects["Pilot"] == {"cruising_turn_speed_penalty_pct": -25}
+    assert effects["Butcher"] == {"animal_slaughter_for_food_enabled": 1}
+    assert effects["Carpenter"] == {"repair_speed_per_sailor_pct": 0.3}
+    assert effects["Junior provost"] == {"large_fire_damage_pct": -50}
+    assert effects["Provost"] == {"microfire_extinguishing_pct": 25}
+    assert effects["Bombardier"] == {"loaded_weapons_mortar_reload_pct": 10}
     assert all(row["option_kind"] == "crew_specialist" for row in SPECIAL_CREW_OPTIONS)
-    assert len({row["seed_id"] for row in SPECIAL_CREW_OPTIONS}) == 42
+    assert len({row["seed_id"] for row in SPECIAL_CREW_OPTIONS}) == 51
     assert all("Group:" in str(row.get("notes", "")) for row in SPECIAL_CREW_OPTIONS)
 
 

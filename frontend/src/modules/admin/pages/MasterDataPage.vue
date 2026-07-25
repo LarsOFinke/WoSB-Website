@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue'
+
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
-import PageHeader from '@/core/components/PageHeader.vue'
+import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import { useMasterDataWorkspace } from '@/modules/admin/composables/useMasterDataWorkspace'
+import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
+import { useSession } from '@/modules/accounts/session'
 import { IMAGE_MIME_TYPES } from '@/modules/files/fileTypes'
 
 const {
@@ -15,6 +19,8 @@ const {
   removeUpgradeOverride, saveShip, deactivateCategory, deactivateOption, deactivateShip,
   restoreCategory, restoreOption, restoreShip,
 } = useMasterDataWorkspace()
+const { isAdmin, user } = useSession()
+const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
 
 function setMortarModificationEnabled(enabled) {
   shipForm.mortar_modification = enabled
@@ -33,18 +39,19 @@ function setMortarModificationEnabled(enabled) {
 }
 </script>
 <template>
-  <section class="master-data-page" aria-labelledby="master-data-title">
-    <div class="wire-frame page-frame master-data-frame">
-      <PageHeader
-        :eyebrow="t('masterData.eyebrow')"
-        :title="t('masterData.title')"
-        :description="t('masterData.subtitle')"
-        title-id="master-data-title"
-      >
-        <template #actions>
-          <RouterLink class="button-box" to="/admin">{{ t('masterData.back') }}</RouterLink>
-        </template>
-      </PageHeader>
+  <StaffWorkspaceShell
+    :eyebrow="t('masterData.eyebrow')"
+    :title="t('masterData.title')"
+    :description="t('masterData.subtitle')"
+    title-id="master-data-title"
+    :groups="navigationGroups"
+    active-key="master-data"
+    :user="user"
+    :role-label="user ? t(`roles.${user.role}`) : ''"
+    :is-admin="isAdmin"
+  >
+    <template #actions><RouterLink class="button-box" to="/admin">{{ t('masterData.back') }}</RouterLink></template>
+    <div class="master-data-frame staff-subworkspace">
 
       <section class="master-data-metrics" aria-label="Master data summary">
         <MetricCard :label="t('masterData.metrics.categories')" :value="overview.category_count" />
@@ -322,7 +329,7 @@ function setMortarModificationEnabled(enabled) {
         </form>
       </section>
     </div>
-  </section>
+  </StaffWorkspaceShell>
 </template>
 
 <style scoped>
