@@ -20,7 +20,7 @@ postgres = [
   "psycopg[binary]>=3.2,<4.0",
 ]
 dev = [
-  "pytest>=8,<9",
+  "pytest>=8,<10",
   "httpx>=0.27,<1.0",
   "ruff>=0.6,<1.0",
 ]
