@@ -2,10 +2,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import AppIcon from '@/core/components/AppIcon.vue'
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
 import AttachmentInsertPanel from '@/core/components/AttachmentInsertPanel.vue'
 import BuildInsertPanel from '@/core/components/BuildInsertPanel.vue'
-import DiscoveryTileGrid from '@/core/components/DiscoveryTileGrid.vue'
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import MarkdownEditor from '@/core/components/MarkdownEditor.vue'
@@ -14,7 +14,15 @@ import { useLocale } from '@/locales'
 import { listBuilds } from '@/modules/builds/api/builds'
 import { createGuide, getGuide, updateGuide } from '@/modules/guides/api/guides'
 import { localizedGuideCategoryItems } from '@/modules/guides/domain/guideDiscovery'
-import { createBuildEmbedToken, createEmbedToken, removeBuildEmbedTokens, removeFileEmbedTokens, unembeddedAttachments, unembeddedBuilds } from '@/shared/content/richTextEmbeds'
+import '@/modules/guides/styles/guides.css'
+import {
+  createBuildEmbedToken,
+  createEmbedToken,
+  removeBuildEmbedTokens,
+  removeFileEmbedTokens,
+  unembeddedAttachments,
+  unembeddedBuilds,
+} from '@/shared/content/richTextEmbeds'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +36,7 @@ const availableBuilds = ref([])
 const linkedBuilds = ref([])
 const bodyEditor = ref(null)
 const form = reactive({ title: '', category: 'general', summary: '', body: '' })
+
 const categories = computed(() => localizedGuideCategoryItems(t))
 const guideId = computed(() => route.params.id ? Number(route.params.id) : null)
 const isEditing = computed(() => Number.isInteger(guideId.value) && guideId.value > 0)
@@ -38,9 +47,7 @@ const hasPreview = computed(() => form.body.trim() || attachments.value.length |
 const backTarget = computed(() => isEditing.value ? `/guides/${guideId.value}` : '/guides')
 
 function addAttachment(file) {
-  if (!attachments.value.some((item) => item.id === file.id)) {
-    attachments.value.push(file)
-  }
+  if (!attachments.value.some((item) => item.id === file.id)) attachments.value.push(file)
 }
 
 function removeAttachment(fileId) {
@@ -135,86 +142,100 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="guide-create-page" aria-labelledby="guide-create-title">
-    <form class="wire-frame page-frame create-frame create-frame-clean guide-create-frame" @submit.prevent="submitGuide">
-      <div class="create-topline">
-        <RouterLink class="small-action" :to="backTarget">{{ t('common.back') }}</RouterLink>
-        <div>
-          <p class="eyebrow">{{ t('common.guides') }}</p>
-          <h1 id="guide-create-title">{{ t(isEditing ? 'guides.edit.title' : 'guides.create.title') }}</h1>
-          <p>{{ t(isEditing ? 'guides.edit.subtitle' : 'guides.create.subtitle') }}</p>
-        </div>
-      </div>
-
-      <p v-if="loading" class="wire-section muted">{{ t('guides.edit.loading') }}</p>
-
-      <template v-else>
-        <section class="wire-section form-section">
-          <div class="section-title"><span>01</span><h2>{{ t('guides.create.sections.basics') }}</h2></div>
-          <div class="section-fields">
-            <label class="input-panel embedded-field">
-              <input v-model="form.title" required maxlength="180" :placeholder="t('guides.create.titlePlaceholder')" />
-            </label>
-          </div>
-          <div class="guide-category-editor">
-            <div class="classification-editor-heading"><div><strong>{{ t('discovery.guides.formTitle') }}</strong><p>{{ t('discovery.guides.formHint') }}</p></div></div>
-            <DiscoveryTileGrid v-model="form.category" :items="categories" compact />
-          </div>
-          <label class="input-panel embedded-field textarea-shell">
-            <textarea v-model="form.summary" rows="3" maxlength="400" :placeholder="t('guides.create.summaryPlaceholder')"></textarea>
-          </label>
-        </section>
-
-        <section class="wire-section form-section rich-editor-section">
-          <div class="section-title"><span>02</span><h2>{{ t('guides.create.sections.body') }}</h2></div>
-          <p class="section-helper-text">{{ t('markdown.editorHint') }}</p>
-          <MarkdownEditor
-            ref="bodyEditor"
-            v-model="form.body"
-            :rows="14"
-            :maxlength="20000"
-            :placeholder="t('guides.create.bodyPlaceholder')"
-            required
-          />
-        </section>
-
-        <section class="wire-section form-section">
-          <div class="section-title"><span>03</span><h2>{{ t('buildEmbeds.sectionTitle') }}</h2></div>
-          <p class="section-helper-text">{{ t('buildEmbeds.sectionHint') }}</p>
-          <BuildInsertPanel
-            :builds="availableBuilds"
-            :linked-builds="linkedBuilds"
-            :loading="loadingBuilds"
-            @link="addBuildReference"
-            @unlink="removeBuildReference"
-            @insert="insertBuild"
-          />
-        </section>
-
-        <section class="wire-section form-section">
-          <div class="section-title"><span>04</span><h2>{{ t('files.attachments') }}</h2></div>
-          <FileUploadPanel usage-context="guide" @uploaded="addAttachment" />
-          <AttachmentInsertPanel :attachments="attachments" @insert="insertAttachment" @remove="removeAttachment" />
-          <AttachmentGallery :attachments="galleryAttachments" />
-        </section>
-
-        <section v-if="hasPreview" class="wire-section form-section rich-preview-section">
-          <div class="section-title"><span>05</span><h2>{{ t('files.previewTitle') }}</h2></div>
-          <p v-if="form.summary" class="guide-summary">{{ form.summary }}</p>
-          <RichTextRenderer :body="form.body" :attachments="attachments" :builds="linkedBuilds" />
-          <LinkedBuildList :builds="linkedBuildCards" />
-          <AttachmentGallery :attachments="galleryAttachments" />
-        </section>
-      </template>
-
-      <p v-if="error" class="error-text form-message">{{ error }}</p>
-      <div v-if="!loading" class="form-actions">
-        <button class="wire-section form-button primary" type="submit" :disabled="!canSubmit">
+  <section class="guide-editor-page" aria-labelledby="guide-create-title">
+    <form class="guide-module-frame guide-editor-frame" @submit.prevent="submitGuide">
+      <header class="guide-editor-commandbar">
+        <RouterLink class="guide-back-action" :to="backTarget">
+          <AppIcon name="chevron-left" :size="18" />
+          {{ t('common.back') }}
+        </RouterLink>
+        <h1 id="guide-create-title">{{ t(isEditing ? 'guides.edit.title' : 'guides.create.title') }}</h1>
+        <button class="guide-primary-action is-compact" type="submit" :disabled="!canSubmit">
           {{ saving
             ? t(isEditing ? 'guides.edit.saving' : 'guides.create.saving')
             : t(isEditing ? 'guides.edit.save' : 'guides.create.save') }}
         </button>
-      </div>
+      </header>
+
+      <p v-if="loading" class="guide-state-message">{{ t('guides.edit.loading') }}</p>
+      <p v-if="error" class="guide-inline-status error-text">{{ error }}</p>
+
+      <template v-if="!loading">
+        <section class="guide-editor-meta" :aria-label="t('guides.create.sections.basics')">
+          <label class="guide-editor-field is-title">
+            <span>{{ t('guides.create.titlePlaceholder') }}</span>
+            <input v-model="form.title" required maxlength="180" :placeholder="t('guides.create.titlePlaceholder')" />
+          </label>
+          <label class="guide-editor-field is-category">
+            <span>{{ t('discovery.guides.formTitle') }}</span>
+            <select v-model="form.category">
+              <option v-for="item in categories" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </label>
+          <label class="guide-editor-field is-summary">
+            <span>{{ t('guides.create.summaryPlaceholder') }}</span>
+            <textarea v-model="form.summary" rows="2" maxlength="400" :placeholder="t('guides.create.summaryPlaceholder')"></textarea>
+          </label>
+        </section>
+
+        <div class="guide-editor-workspace">
+          <main class="guide-writing-column">
+            <section class="guide-writing-panel">
+              <header>
+                <h2>{{ t('guides.create.sections.body') }}</h2>
+                <p>{{ t('markdown.editorHint') }}</p>
+              </header>
+              <MarkdownEditor
+                ref="bodyEditor"
+                v-model="form.body"
+                :rows="22"
+                :maxlength="20000"
+                :placeholder="t('guides.create.bodyPlaceholder')"
+                required
+              />
+            </section>
+
+            <details v-if="hasPreview" class="guide-editor-disclosure guide-preview-disclosure">
+              <summary>{{ t('files.previewTitle') }}</summary>
+              <div class="guide-editor-preview">
+                <p v-if="form.summary" class="guide-summary">{{ form.summary }}</p>
+                <RichTextRenderer :body="form.body" :attachments="attachments" :builds="linkedBuilds" />
+                <LinkedBuildList :builds="linkedBuildCards" />
+                <AttachmentGallery :attachments="galleryAttachments" />
+              </div>
+            </details>
+          </main>
+
+          <aside class="guide-resource-rail">
+            <details class="guide-editor-disclosure" open>
+              <summary>{{ t('buildEmbeds.sectionTitle') }}</summary>
+              <div class="guide-resource-content">
+                <p>{{ t('buildEmbeds.sectionHint') }}</p>
+                <BuildInsertPanel
+                  :builds="availableBuilds"
+                  :linked-builds="linkedBuilds"
+                  :loading="loadingBuilds"
+                  @link="addBuildReference"
+                  @unlink="removeBuildReference"
+                  @insert="insertBuild"
+                />
+              </div>
+            </details>
+
+            <details class="guide-editor-disclosure" open>
+              <summary>{{ t('files.attachments') }}</summary>
+              <div class="guide-resource-content">
+                <FileUploadPanel usage-context="guide" @uploaded="addAttachment" />
+                <AttachmentInsertPanel
+                  :attachments="attachments"
+                  @insert="insertAttachment"
+                  @remove="removeAttachment"
+                />
+              </div>
+            </details>
+          </aside>
+        </div>
+      </template>
     </form>
   </section>
 </template>

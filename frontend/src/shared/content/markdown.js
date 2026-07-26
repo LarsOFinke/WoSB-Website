@@ -22,8 +22,18 @@ markdown.renderer.rules.link_open = (tokens, index, options, env, self) => {
   return defaultLinkOpen(tokens, index, options, env, self)
 }
 
-export function renderMarkdown(source = '') {
-  const rendered = markdown.render(String(source || ''))
+export function renderMarkdown(source = '', options = {}) {
+  const environment = {}
+  const tokens = markdown.parse(String(source || ''), environment)
+  if (options.headingIdPrefix) {
+    let headingIndex = Number(options.headingStartIndex || 0)
+    for (const token of tokens) {
+      if (token.type !== 'heading_open') continue
+      headingIndex += 1
+      token.attrSet('id', `${options.headingIdPrefix}-${headingIndex}`)
+    }
+  }
+  const rendered = markdown.renderer.render(tokens, markdown.options, environment)
   return DOMPurify.sanitize(rendered, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ['style'],

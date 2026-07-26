@@ -19,12 +19,26 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  headingIdPrefix: {
+    type: String,
+    default: '',
+  },
 })
 
 const { optionLabel, t } = useLocale()
-const parts = computed(() => parseRichTextEmbeds(props.body).map((part) => (
-  part.type === 'text' ? { ...part, html: renderMarkdown(part.text) } : part
-)))
+const parts = computed(() => {
+  let headingIndex = 0
+  return parseRichTextEmbeds(props.body).map((part) => {
+    if (part.type !== 'text') return part
+    const html = renderMarkdown(part.text, {
+      headingIdPrefix: props.headingIdPrefix,
+      headingStartIndex: headingIndex,
+    })
+    headingIndex += String(part.text || '').split(/\r?\n/)
+      .filter((line) => /^\s*#{1,6}\s+\S/.test(line)).length
+    return { ...part, html }
+  })
+})
 const fileMap = computed(() => {
   const map = new Map()
   for (const file of props.attachments || []) {

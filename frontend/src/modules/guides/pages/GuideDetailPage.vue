@@ -1,14 +1,18 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
+import AppIcon from '@/core/components/AppIcon.vue'
 import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
 import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useLocale } from '@/locales'
-import { deleteGuide, getGuide } from '@/modules/guides/api/guides'
-import { useGuidePrintActions } from '@/modules/guides/composables/useGuidePrintActions'
-import { unembeddedAttachments, unembeddedBuilds } from '@/shared/content/richTextEmbeds'
 import { useSession } from '@/modules/accounts/session'
+import { deleteGuide, getGuide } from '@/modules/guides/api/guides'
+import GuideTableOfContents from '@/modules/guides/components/GuideTableOfContents.vue'
+import { useGuidePrintActions } from '@/modules/guides/composables/useGuidePrintActions'
+import { formatGuideDate, guideHeadingNavigation } from '@/modules/guides/domain/guidePresentation'
+import '@/modules/guides/styles/guides.css'
+import { unembeddedAttachments, unembeddedBuilds } from '@/shared/content/richTextEmbeds'
 
 const props = defineProps({ id: { type: String, required: true } })
 const { t } = useLocale()
@@ -19,13 +23,15 @@ const deleting = ref(false)
 const error = ref('')
 const { printBusy, printStatus, printGuide } = useGuidePrintActions(guide, { t })
 
-const canManage = computed(() => guide.value && user.value && (guide.value.owner_id === user.value.id || isStaff.value))
-const galleryAttachments = computed(() => guide.value ? unembeddedAttachments(guide.value.attachments || [], guide.value.body) : [])
-const linkedBuildCards = computed(() => guide.value ? unembeddedBuilds(guide.value.builds || [], guide.value.body) : [])
-
-function formatDate(value) {
-  return value ? new Date(value).toLocaleString() : '—'
-}
+const canManage = computed(() => guide.value && user.value
+  && (guide.value.owner_id === user.value.id || isStaff.value))
+const galleryAttachments = computed(() => guide.value
+  ? unembeddedAttachments(guide.value.attachments || [], guide.value.body)
+  : [])
+const linkedBuildCards = computed(() => guide.value
+  ? unembeddedBuilds(guide.value.builds || [], guide.value.body)
+  : [])
+const headings = computed(() => guideHeadingNavigation(guide.value?.body))
 
 async function loadGuide() {
   loading.value = true
@@ -57,19 +63,17 @@ onMounted(loadGuide)
 </script>
 
 <template>
-  <section class="guide-detail-page" aria-labelledby="guide-detail-title">
-    <div class="wire-frame page-frame detail-frame guide-detail-frame">
-      <header class="wire-section detail-header guide-detail-header">
-        <div v-if="guide">
-          <p class="eyebrow">{{ t(`guides.categories.${guide.category}`) }}</p>
-          <h1 id="guide-detail-title">{{ guide.title }}</h1>
-          <p>{{ t('guides.detail.meta', { name: guide.owner.display_name, value: formatDate(guide.created_at) }) }}</p>
-        </div>
-        <div class="detail-header-actions guide-detail-actions">
-          <RouterLink class="small-action" to="/guides">{{ t('common.back') }}</RouterLink>
+  <section class="guide-reader-page" aria-labelledby="guide-detail-title">
+    <div class="guide-module-frame guide-reader-frame">
+      <header class="guide-reader-commandbar">
+        <RouterLink class="guide-back-action" to="/guides">
+          <AppIcon name="chevron-left" :size="18" />
+          {{ t('common.back') }}
+        </RouterLink>
+        <div class="guide-reader-actions">
           <button
             v-if="guide"
-            class="small-action primary-action"
+            class="guide-toolbar-action"
             data-testid="guide-print-action"
             type="button"
             :disabled="printBusy"
@@ -77,31 +81,69 @@ onMounted(loadGuide)
           >
             {{ printBusy ? t('guides.print.opening') : t('guides.print.action') }}
           </button>
+          <RouterLink v-if="canManage" class="guide-primary-action is-compact" :to="`/guides/${guide.id}/edit`">
+            <AppIcon name="edit" :size="17" />
+            {{ t('guides.detail.edit') }}
+          </RouterLink>
         </div>
       </header>
 
-      <p v-if="printStatus" class="wire-section share-status guide-print-status" role="status">{{ printStatus }}</p>
-
-      <p v-if="loading" class="wire-section muted">{{ t('guides.detail.loading') }}</p>
-      <p v-else-if="error" class="wire-section error-text">{{ error }}</p>
+      <p v-if="printStatus" class="guide-inline-status" role="status">{{ printStatus }}</p>
+      <p v-if="loading" class="guide-state-message">{{ t('guides.detail.loading') }}</p>
+      <p v-else-if="error" class="guide-state-message error-text">{{ error }}</p>
 
       <template v-else-if="guide">
-        <article class="wire-section guide-content-card">
-          <p v-if="guide.summary" class="guide-summary">{{ guide.summary }}</p>
-          <RichTextRenderer :body="guide.body" :attachments="guide.attachments" :builds="guide.builds" />
-          <LinkedBuildList :builds="linkedBuildCards" />
-          <AttachmentGallery :attachments="galleryAttachments" />
-        </article>
+        <header class="guide-reader-masthead">
+          <h1 id="guide-detail-title">{{ guide.title }}</h1>
+          <p v-if="guide.summary">{{ guide.summary }}</p>
+          <dl class="guide-reader-meta">
+            <div>
+              <dt>{{ t('masterData.fields.category') }}</dt>
+              <dd>{{ t(`guides.categories.${guide.category}`) }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('guides.print.author') }}</dt>
+              <dd>{{ guide.owner.display_name }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('guides.print.updated') }}</dt>
+              <dd><time :datetime="guide.updated_at || guide.created_at">{{ formatGuideDate(guide.updated_at || guide.created_at) }}</time></dd>
+            </div>
+          </dl>
+        </header>
 
-        <section v-if="canManage" class="wire-section guide-management-panel">
-          <p class="eyebrow">{{ t('guides.detail.manageEyebrow') }}</p>
-          <div class="content-management-actions">
-            <RouterLink class="small-action" :to="`/guides/${guide.id}/edit`">{{ t('guides.detail.edit') }}</RouterLink>
-            <button class="danger-action" type="button" :disabled="deleting" @click="submitDelete">
+        <div class="guide-reading-layout">
+          <article class="guide-reading-article">
+            <RichTextRenderer
+              :body="guide.body"
+              :attachments="guide.attachments"
+              :builds="guide.builds"
+              heading-id-prefix="guide-section"
+            />
+
+            <section v-if="linkedBuildCards.length || galleryAttachments.length" class="guide-reference-section">
+              <div v-if="linkedBuildCards.length" class="guide-reference-group">
+                <h2>{{ t('guides.print.linkedBuildsTitle') }}</h2>
+                <LinkedBuildList :builds="linkedBuildCards" />
+              </div>
+              <div v-if="galleryAttachments.length" class="guide-reference-group">
+                <h2>{{ t('guides.print.attachmentsTitle') }}</h2>
+                <AttachmentGallery :attachments="galleryAttachments" />
+              </div>
+            </section>
+          </article>
+
+          <aside class="guide-reading-aside">
+            <GuideTableOfContents :headings="headings" />
+          </aside>
+        </div>
+
+        <footer v-if="canManage" class="guide-owner-footer">
+          <span>{{ t('guides.detail.manageEyebrow') }}</span>
+          <button class="danger-action" type="button" :disabled="deleting" @click="submitDelete">
             {{ deleting ? t('guides.detail.deleting') : t('guides.detail.delete') }}
-            </button>
-          </div>
-        </section>
+          </button>
+        </footer>
       </template>
     </div>
   </section>

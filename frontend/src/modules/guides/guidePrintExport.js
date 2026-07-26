@@ -11,31 +11,11 @@ import {
   openPrintWindow,
   resolvePrintUrl,
 } from '../../shared/printing/printDocument.js'
+import { extractGuideHeadings } from './domain/guidePresentation.js'
 
 const PRINT_BRAND = 'Royal Blackwater Fleet'
 const escapeHtml = escapePrintMarkup
 const resolveUrl = resolvePrintUrl
-
-function stripInlineMarkdown(value) {
-  return String(value || '')
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/[*_~`>#]/g, '')
-    .trim()
-}
-
-function extractGuideHeadings(body) {
-  return String(body || '')
-    .split(/\r?\n/)
-    .map((line) => line.match(/^\s*(#{1,3})\s+(.+?)\s*#*\s*$/))
-    .filter(Boolean)
-    .map((match, index) => ({
-      level: match[1].length,
-      label: stripInlineMarkdown(match[2]),
-      number: String(index + 1).padStart(2, '0'),
-    }))
-    .filter((heading) => heading.label)
-}
 
 function formatFileSize(sizeBytes) {
   const size = Number(sizeBytes || 0)
