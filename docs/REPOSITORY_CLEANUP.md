@@ -5,6 +5,7 @@
 - Route-Module koordinieren HTTP, Berechtigungen und Fehlerabbildung; Fachlogik bleibt in Services.
 - Services werden nach Use Case getrennt. Ein Modul soll nicht zugleich CRUD, Validierung und externe Transporte besitzen.
 - Frontend-Module referenzieren Assets als Dateien; Binärdaten und Base64-Payloads gehören nicht in JavaScript.
+- `frontend/src/styles/main.css` enthält nur modulübergreifende Grundlagen. Fachspezifische Oberflächen wie der Staff-Workspace besitzen ihre Styles im jeweiligen Modul und hinterlassen nach einem Redesign keine globalen Altselektoren.
 - Das SQLAlchemy-Modell ist die fachliche Schemaquelle. `0001_baseline` ist der eingefrorene Startpunkt für neue Datenbanken.
 
 ## Größenbudgets

@@ -23,6 +23,16 @@ parser.add_argument(
 ARGS = parser.parse_args()
 
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+SCAN_EXCLUDED_DIRS = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "node_modules",
+}
 
 
 def fail(message: str) -> None:
@@ -125,7 +135,7 @@ if ARGS.strict_tree:
     require(not egg_info, f"package metadata in release tree: {egg_info[0] if egg_info else '.egg-info'}")
 
 for path in ROOT.rglob("*"):
-    if not path.is_file() or ".git" in path.parts:
+    if not path.is_file() or any(part in SCAN_EXCLUDED_DIRS for part in path.parts):
         continue
     relative = path.relative_to(ROOT)
     if ARGS.strict_tree:
@@ -189,7 +199,7 @@ legacy_discord_tokens = (
 )
 for source_root in (ROOT / "backend", ROOT / "frontend", ROOT / "infrastructure"):
     for path in source_root.rglob("*"):
-        if not path.is_file() or any(part in {"node_modules", "__pycache__"} for part in path.parts):
+        if not path.is_file() or any(part in SCAN_EXCLUDED_DIRS for part in path.parts):
             continue
         if path.suffix not in {".py", ".js", ".mjs", ".vue", ".sh", ".yml", ".yaml", ".conf", ".md", ".txt"}:
             continue
@@ -335,6 +345,23 @@ for event_type, count in publisher_counts.items():
 for path in (ROOT / "frontend/src").rglob("*.js"):
     require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
     require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
+
+# The shared stylesheet must not regain the retired staff dashboard. The active
+# implementation is isolated in modules/admin/styles/staffWorkspace.css.
+main_styles = (ROOT / "frontend/src/styles/main.css").read_text(encoding="utf-8")
+for retired_selector in (
+    ".staff-command-card",
+    ".staff-command-center",
+    ".staff-mobile-tab-picker",
+    ".staff-mobile-tab-sheet",
+    ".staff-overview-card-grid",
+    ".staff-overview-queue-grid",
+    ".staff-workspace-frame",
+):
+    require(
+        retired_selector not in main_styles,
+        f"retired staff dashboard selector remains in shared CSS: {retired_selector}",
+    )
 
 # Production master data must be isolated from application source and every
 # JSON document must be declared by the root manifest.

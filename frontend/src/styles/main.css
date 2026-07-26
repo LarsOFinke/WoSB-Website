@@ -356,9 +356,6 @@ p {
 
 .muted,
 .table-state,
-.header-block p,
-.header-info p,
-.about-block p,
 .build-filter-panel p,
 .home-card p,
 .group-card-description,
@@ -405,8 +402,7 @@ p {
 .refined-meta span,
 .module-meta-row span,
 .home-status-card span,
-.home-status-card strong,
-.effect-pill {
+.home-status-card strong {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -838,9 +834,7 @@ select option {
 .ship-stat-row,
 .module-meta-row,
 .auth-benefit-list,
-.attachment-chip-row,
-.effect-pill-row,
-.crew-status {
+.attachment-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -1200,7 +1194,6 @@ input[type='range'] {
 }
 
 .readonly-bars,
-.notes-card,
 .simple-list {
   margin: 0;
 }
@@ -1210,8 +1203,7 @@ input[type='range'] {
 }
 
 .simple-list li + li,
-.readonly-bars p + p,
-.about-block p + p {
+.readonly-bars p + p {
   margin-top: 0.45rem;
 }
 
@@ -1648,13 +1640,7 @@ input[type='range'] {
   font-size: 0.9rem;
 }
 
-/* Legacy utility coverage */
-.header-block,
-.header-info,
-.about-block,
-.slim-block,
-.build-info-panel,
-.notes-card,
+/* Inventory utility coverage */
 .ammunition-panel,
 .consumable-panel,
 .hold-panel {
@@ -1662,24 +1648,8 @@ input[type='range'] {
   gap: 0.65rem;
 }
 
-.header-block h1,
-.about-block h2,
-.slim-block h1 {
-  margin: 0;
-}
-
-.header-block p,
-.header-info p,
-.about-block p {
-  line-height: 1.7;
-}
-
 .login-callout {
   justify-self: start;
-}
-
-.effect-pill.is-debuff {
-  border-style: dashed;
 }
 
 /* Responsive */
@@ -2122,66 +2092,12 @@ input[type='range'] {
 }
 
 /* Staff panel workspace */
-.staff-workspace-frame {
-  gap: 1.15rem;
-}
-
-.staff-hero {
-  align-items: flex-start;
-}
-
-.staff-hero-actions,
 .staff-filter-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-}
-
-.staff-command-center {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9rem;
-  padding: 1rem;
-}
-
-.staff-command-card {
-  display: flex;
-  min-height: 8.5rem;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1.1rem;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
-}
-
-.staff-command-card:hover,
-.staff-command-card:focus-visible {
-  border-color: rgba(227, 177, 94, 0.5);
-  background: linear-gradient(145deg, rgba(227, 177, 94, 0.16), rgba(255, 255, 255, 0.035));
-  transform: translateY(-1px);
-}
-
-.staff-command-card span,
-.staff-command-card small {
-  color: var(--text-muted);
-}
-
-.staff-command-card strong {
-  font-size: 1.08rem;
-}
-
-.staff-tabs {
-  position: sticky;
-  top: 0.75rem;
-  z-index: 5;
-  backdrop-filter: blur(16px);
 }
 
 .staff-management-panel {
@@ -2229,60 +2145,21 @@ input[type='range'] {
 }
 
 @media (max-width: 1100px) {
-  .staff-command-center,
   .staff-content-grid {
     grid-template-columns: 1fr;
-  }
-
-  .staff-tabs {
-    position: static;
   }
 }
 
 @media (max-width: 720px) {
-  .staff-hero-actions,
   .staff-filter-row {
     justify-content: flex-start;
   }
 }
 
-/* Fleet management prototype */
+/* Fleet management */
 .fleet-frame {
   display: grid;
   gap: var(--space-5);
-}
-
-.fleet-hero {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  align-items: flex-start;
-}
-
-.fleet-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-4);
-}
-
-.fleet-card {
-  display: grid;
-  gap: var(--space-3);
-  min-height: 260px;
-}
-
-.fleet-card-header,
-.fleet-leaders {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.fleet-leaders {
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-soft);
 }
 
 .fleet-management-panel,
@@ -2295,15 +2172,6 @@ input[type='range'] {
 .fleet-member-board {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-items: start;
-}
-
-.fleet-member-column {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-muted);
 }
 
 .fleet-member-row {
@@ -2319,13 +2187,7 @@ input[type='range'] {
   color: var(--color-text);
 }
 
-@media (max-width: 760px) {
-  .fleet-hero {
-    flex-direction: column;
-  }
-}
-
-/* Fleet management iteration: connected applications and member directory */
+/* Fleet management: connected applications and member directory */
 .hero-action-stack,
 .compact-actions,
 .member-pill-row,
@@ -2713,7 +2575,6 @@ input[type='range'] {
   min-height: 3rem;
 }
 
-.fleet-card,
 .guide-content-card,
 .content-post-card,
 .forum-results-panel .thread-card,
@@ -2727,7 +2588,7 @@ input[type='range'] {
   }
 }
 
-/* Enterprise-grade UI pass: token aliases, adaptive spacing and resilient mobile layouts. */
+/* Shared UI tokens, adaptive spacing and resilient mobile layouts */
 :root {
   --space-1: 0.35rem;
   --space-2: 0.55rem;
@@ -2801,24 +2662,18 @@ textarea {
 .wire-section,
 .auth-form,
 .register-form-section,
-.fleet-card,
-.staff-command-card,
 .home-card,
 .build-card,
 .guide-card,
 .thread-card,
 .calendar-day,
 .calendar-agenda-card,
-.profile-fleet-card,
-.fleet-member-column {
+.profile-fleet-card {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
     0 16px 40px rgba(0, 0, 0, 0.18);
 }
 
-.header-block p,
-.header-info p,
-.about-block p,
 .home-hero p,
 .build-list-hero p,
 .profile-hero p,
@@ -2998,12 +2853,6 @@ textarea {
   min-width: 0;
 }
 
-.staff-command-center {
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-}
-
-.staff-command-card,
-.fleet-card,
 .profile-fleet-card,
 .calendar-agenda-card,
 .fleet-member-row,
@@ -3071,7 +2920,6 @@ textarea {
 
 .attachment-gallery,
 .fleet-calendar-grid,
-.fleet-card-grid,
 .staff-content-grid,
 .inventory-grid,
 .equipment-unified-grid {
@@ -3127,7 +2975,6 @@ textarea {
   }
 
   .hero-actions,
-  .staff-hero-actions,
   .calendar-toolbar,
   .calendar-navigation,
   .form-actions,
@@ -3326,15 +3173,9 @@ textarea {
     padding: 0.7rem;
   }
 
-  .staff-command-card,
-  .fleet-card,
   .profile-fleet-card,
   .calendar-agenda-card {
     padding: 0.85rem;
-  }
-
-  .fleet-card-grid {
-    grid-template-columns: 1fr;
   }
 
   .fleet-calendar-grid {
@@ -3422,8 +3263,7 @@ textarea {
   .button-box:hover,
   .form-button:hover,
   .small-action:hover,
-  .tab-button:hover,
-  .staff-command-card:hover {
+  .tab-button:hover {
     transform: none;
   }
 }
@@ -4222,8 +4062,6 @@ body.sidebar-collapsed .sidebar-link-icon {
 .password-panel,
 .form-section,
 .group-join-panel,
-.fleet-card,
-.staff-command-card,
 .calendar-agenda-card,
 .linked-build-card,
 .inline-build-embed,
@@ -4708,7 +4546,7 @@ textarea:focus-visible {
   }
 }
 
-/* Final group-signup and log-dashboard polish */
+/* Group signup and log dashboard */
 .group-time-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5496,71 +5334,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 /* Staff workspace */
-.staff-workspace-frame {
-  grid-template-columns: minmax(220px, 0.28fr) minmax(0, 1fr);
-  align-items: start;
-}
-
-.staff-workspace-frame > .workspace-page-header,
-.staff-workspace-frame > .admin-locked,
-.staff-workspace-frame > .polished-command-center {
-  grid-column: 1 / -1;
-}
-
-.staff-workspace-frame > .staff-tabs {
-  grid-column: 1;
-  position: sticky;
-  top: calc(var(--topbar-min-height) + (var(--shell-gutter) * 2));
-  display: grid;
-  align-content: start;
-  gap: 0.45rem;
-  padding: 0.55rem;
-}
-
-.staff-workspace-frame > .admin-panel {
-  grid-column: 2;
-  min-width: 0;
-}
-
-.staff-mobile-tab-picker {
-  display: none;
-}
-
-.staff-tabs .tab-button {
-  width: 100%;
-  justify-content: space-between;
-  min-height: 2.8rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 0.8rem;
-  text-align: left;
-}
-
-.staff-tabs .tab-button.is-active {
-  border-color: rgba(241, 184, 91, 0.34);
-  background: linear-gradient(90deg, rgba(241,184,91,0.16), rgba(241,184,91,0.04));
-}
-
-.polished-command-center {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.polished-command-center .staff-command-card {
-  min-height: 9.25rem;
-  align-content: space-between;
-  border-radius: 1.05rem;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
-    rgba(9, 19, 30, 0.76);
-}
-
-.polished-command-center .staff-command-card:hover {
-  transform: translateY(-2px);
-}
-
 .admin-status-panel .home-status-card {
   min-height: auto;
   border-radius: 1rem;
@@ -5658,144 +5431,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
   text-align: right;
 }
 
-.staff-overview-section-head.compact {
-  align-items: flex-start;
-}
-
-.staff-overview-section-head.compact > div > strong {
-  font-size: 0.95rem;
-}
-
-.staff-overview-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.staff-overview-card {
-  appearance: none;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.8rem;
-  min-width: 0;
-  min-height: 7.35rem;
-  padding: 0.95rem;
-  border: 1px solid rgba(221, 231, 244, 0.12);
-  border-radius: 1rem;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
-    rgba(7, 16, 26, 0.68);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
-}
-
-.staff-overview-card:hover,
-.staff-overview-card:focus-visible {
-  border-color: rgba(159, 201, 223, 0.32);
-  background:
-    linear-gradient(145deg, rgba(159, 201, 223, 0.1), rgba(255, 255, 255, 0.02)),
-    rgba(7, 16, 26, 0.78);
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
-}
-
-.staff-overview-card.tone-accent {
-  border-color: rgba(241, 184, 91, 0.32);
-  background:
-    linear-gradient(145deg, rgba(241, 184, 91, 0.15), rgba(255, 255, 255, 0.015)),
-    rgba(11, 20, 29, 0.76);
-}
-
-.staff-overview-card.tone-danger {
-  border-color: rgba(255, 130, 130, 0.3);
-  background:
-    linear-gradient(145deg, rgba(255, 130, 130, 0.12), rgba(255, 255, 255, 0.015)),
-    rgba(11, 20, 29, 0.76);
-}
-
-.staff-overview-card-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border: 1px solid rgba(221, 231, 244, 0.14);
-  border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.045);
-  color: var(--accent-strong);
-}
-
-.staff-overview-card-copy {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: 0.22rem 0.55rem;
-  min-width: 0;
-}
-
-.staff-overview-card-copy small {
-  grid-column: 1 / -1;
-  color: var(--muted-soft);
-  font-size: 0.7rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.staff-overview-card-copy strong {
-  color: var(--text);
-  font-size: clamp(1.55rem, 2vw, 2.05rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
-.staff-overview-card-copy > span {
-  align-self: center;
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
-}
-
-.staff-overview-card-arrow {
-  color: var(--muted-soft);
-}
-
-.staff-overview-queue-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.staff-overview-queue-card {
-  display: grid;
-  align-content: start;
-  gap: 0.45rem;
-  min-width: 0;
-  min-height: 9rem;
-  padding: 1rem;
-  border: 1px solid rgba(221, 231, 244, 0.11);
-  border-radius: 1rem;
-  background: rgba(5, 13, 22, 0.42);
-}
-
-.staff-overview-queue-card > strong,
-.staff-overview-queue-card > span,
-.staff-overview-queue-card > small,
-.staff-overview-queue-card > p {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.staff-overview-queue-card > span,
-.staff-overview-queue-card > small {
-  color: var(--muted);
-}
-
 .staff-role-scope-note {
   display: flex;
   align-items: flex-start;
@@ -5831,12 +5466,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
   line-height: 1.45;
 }
 
-@media (max-width: 1380px) {
-  .staff-overview-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 720px) {
   .staff-overview-heading,
   .staff-overview-section-head {
@@ -5853,14 +5482,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
     text-align: left;
   }
 
-  .staff-overview-card-grid,
-  .staff-overview-queue-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .staff-overview-card-copy {
-    grid-template-columns: 1fr;
-  }
 }
 
 .admin-build-row,
@@ -5884,10 +5505,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .polished-command-center {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .topbar-account-summary .account-copy {
     display: none;
   }
@@ -5904,154 +5521,6 @@ body.sidebar-collapsed .sidebar-account-link::before {
     position: static;
   }
 
-  .staff-workspace-frame {
-    grid-template-columns: 1fr;
-  }
-
-  .staff-workspace-frame > .staff-tabs,
-  .staff-workspace-frame > .admin-panel {
-    grid-column: 1;
-  }
-
-  .staff-workspace-frame > .staff-tabs {
-    display: none;
-  }
-
-  .staff-mobile-tab-picker {
-    position: sticky;
-    top: calc(var(--topbar-min-height) + 0.5rem);
-    z-index: 32;
-    display: block;
-    grid-column: 1;
-    padding: 0;
-    overflow: visible;
-  }
-
-  .staff-mobile-tab-trigger {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.15rem 0.75rem;
-    align-items: center;
-    min-height: 3.7rem;
-    padding: 0.75rem 0.9rem;
-    list-style: none;
-    cursor: pointer;
-    width: 100%;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    text-align: left;
-  }
-
-  .staff-mobile-tab-trigger span {
-    overflow: hidden;
-    color: var(--text);
-    font-weight: 850;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .staff-mobile-tab-trigger small {
-    grid-column: 1;
-    color: var(--muted-soft);
-    font-size: 0.68rem;
-  }
-
-  .staff-mobile-tab-trigger svg {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    color: var(--accent-strong);
-    transform: rotate(90deg);
-    transition: transform 150ms ease;
-  }
-
-  .staff-mobile-tab-picker.is-open .staff-mobile-tab-trigger svg {
-    transform: rotate(-90deg);
-  }
-
-  .staff-mobile-tab-layer {
-    position: fixed;
-    inset: 0;
-    z-index: 120;
-    display: grid;
-    align-items: end;
-    background: rgba(2, 7, 12, 0.74);
-  }
-
-  .staff-mobile-tab-sheet {
-    position: relative;
-    display: grid;
-    gap: 1rem;
-    width: 100%;
-    max-height: min(75dvh, 48rem);
-    overflow: auto;
-    padding: 1rem max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-    border: 1px solid rgba(221, 231, 244, 0.18);
-    border-radius: 1.25rem 1.25rem 0 0;
-    background: #0a1623;
-    box-shadow: 0 -24px 64px rgba(0, 0, 0, 0.42);
-  }
-
-  .staff-mobile-tab-sheet-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .staff-mobile-tab-sheet-head > strong {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-  }
-
-  .staff-mobile-tab-group {
-    display: grid;
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid rgba(221, 231, 244, 0.12);
-    border-radius: 0.9rem;
-  }
-
-  .staff-mobile-tab-group > span {
-    padding: 0.65rem 0.8rem;
-    border-bottom: 1px solid rgba(221, 231, 244, 0.1);
-    color: var(--accent-strong);
-    font-size: 0.7rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .staff-mobile-tab-group button {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.75rem;
-    min-height: 3.25rem;
-    padding: 0.7rem 0.8rem;
-    border: 0;
-    border-bottom: 1px solid rgba(221, 231, 244, 0.08);
-    background: #0b1927;
-    color: var(--text);
-    text-align: left;
-  }
-
-  .staff-mobile-tab-group button:last-child {
-    border-bottom: 0;
-  }
-
-  .staff-mobile-tab-group button.is-active {
-    box-shadow: inset 3px 0 var(--accent);
-    color: var(--accent-strong);
-    background: #142131;
-  }
-
-  .staff-mobile-tab-group button i {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: var(--accent);
-  }
 }
 
 @media (max-width: 840px) {
@@ -6080,8 +5549,7 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 @media (max-width: 620px) {
-  .workspace-metric-grid,
-  .polished-command-center {
+  .workspace-metric-grid {
     grid-template-columns: 1fr;
   }
 
@@ -6124,7 +5592,7 @@ body.sidebar-collapsed .sidebar-account-link::before {
 }
 
 /* ========================================================================== */
-/* RBF UI iteration 1 — scalable identity, clearer navigation, better access  */
+/* Identity, navigation and accessibility                                    */
 /* ========================================================================== */
 
 :root {
@@ -6520,7 +5988,7 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 }
 
 /* ========================================================================== */
-/* RBF UI iteration 2 — visual hierarchy, tactile states and responsive polish */
+/* Visual hierarchy, interaction states and responsive behavior             */
 /* ========================================================================== */
 
 body {
@@ -6587,7 +6055,6 @@ body {
 
 .workspace-metric-card,
 .fleet-module-card,
-.staff-command-card,
 .profile-tool-link,
 .admin-panel,
 .wire-section {
@@ -6648,13 +6115,11 @@ body {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 42px rgba(0,0,0,0.19);
 }
 
-.fleet-module-card,
-.polished-command-center .staff-command-card {
+.fleet-module-card {
   overflow: hidden;
 }
 
-.fleet-module-card::before,
-.polished-command-center .staff-command-card::before {
+.fleet-module-card::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -6664,23 +6129,8 @@ body {
   transition: opacity 170ms ease;
 }
 
-.fleet-module-card:hover::before,
-.polished-command-center .staff-command-card:hover::before {
+.fleet-module-card:hover::before {
   opacity: 1;
-}
-
-.staff-tabs .tab-button {
-  position: relative;
-}
-
-.staff-tabs .tab-button.is-active::after {
-  content: "";
-  width: 0.38rem;
-  height: 0.38rem;
-  margin-left: auto;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(241, 184, 91, 0.11);
 }
 
 .input-panel,
@@ -6983,7 +6433,7 @@ body {
 }
 
 /* ========================================================================== */
-/* RBF 0.13 spring cleanup — system operations and staff observability          */
+/* System operations and staff observability                                */
 /* ========================================================================== */
 
 .system-status-grid {
@@ -7105,7 +6555,7 @@ body {
 }
 
 /* ========================================================================== */
-/* RBF 0.14 — editable newcomer roadmap                                       */
+/* Editable newcomer roadmap                                                */
 /* ========================================================================== */
 
 .newcomer-guide-frame {
@@ -7242,7 +6692,7 @@ body {
 }
 
 /* ========================================================================== */
-/* RBF 0.15 — public surface boundary                                         */
+/* Public surface boundary                                                  */
 /* ========================================================================== */
 
 .public-landing-frame,
@@ -7280,7 +6730,7 @@ body {
 }
 
 /* ========================================================================== */
-/* RBF 0.16 — fleet squads and scoped calendar planning                       */
+/* Fleet squads and scoped calendar planning                                */
 /* ========================================================================== */
 
 .squad-frame,
@@ -7574,7 +7024,7 @@ body {
   }
 }
 
-/* 0.16.1 registration and fleet application */
+/* Registration and fleet application */
 .fleet-registration-option {
   align-content: start;
   gap: 1rem;
@@ -7635,7 +7085,7 @@ body {
   background: rgba(255, 255, 255, 0.025);
 }
 
-/* 0.16.2 personal squad workspace */
+/* Personal squad workspace */
 .my-squads-frame {
   gap: 1rem;
 }
