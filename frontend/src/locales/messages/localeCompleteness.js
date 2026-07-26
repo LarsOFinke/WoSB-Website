@@ -9,6 +9,7 @@ export const localeCompletenessMessages = {
     },
   },
   de: {
+    auth: { password: 'Passwort' },
     markdown: { toolbar: { link: 'Verknüpfung' } },
     common: { modules: 'Module', groups: 'Gruppensuche', myGroupSearches: 'Meine Gruppensuchen' },
     logs: { clientIp: 'Client-IP', queryString: 'Query-String' },
@@ -23,13 +24,15 @@ export const localeCompletenessMessages = {
     admin: { content: { announcements: 'Gruppensuchen', closeError: 'Gruppensuche konnte nicht geschlossen werden.' } },
     buildEmbeds: { sectionTitle: 'Build-Referenzen', selected: 'Ausgewähltes Build', linkedEyebrow: 'Guide-Referenzen', linkedCardEyebrow: 'Build-Referenz', inlineEyebrow: 'Eingebettetes Build', layouts: { compact: 'Kompakt', card: 'Karte' } },
     builds: {
+      types: { all: 'Alle Build-Typen' },
+      list: { searchPlaceholder: 'Nach Build-Name, Schiff oder Build-Typ suchen ...' },
       create: { stats: { durability: 'Haltbarkeit {value}', speed: 'Geschwindigkeit {value} kn' }, weapons: { capacity: '{count}/{max} montiert' } },
       stats: { breakdownTitle: 'Build-Stat-Aufschlüsselung', baseAndModifier: 'Basis {base} · Modifikator {modifier}', columns: { stat: 'Wert', base: 'Basis', modifier: 'Modifikator', effective: 'Effektiv' } },
       statLabels: {
         durability: 'Haltbarkeit', speed_min_knots: 'Basisgeschwindigkeit', speed_knots: 'Maximale Reisegeschwindigkeit', maneuverability: 'Wendigkeit', hold_capacity: 'Laderaum', displacement_tons: 'Verdrängung', reload_pct: 'Nachladegeschwindigkeit', weapon_range_pct: 'Kanonenreichweite', cannon_damage_pct: 'Kanonen-Schaden', low_hp_damage_pct: 'Schaden unter 50 % HP', fire_damage_pct: 'Feuerschaden', siege_damage_pct: 'Belagerungsschaden', ram_damage_pct: 'Rammschaden', repair_efficiency_pct: 'Reparatureffizienz', sail_hp_pct: 'Segelhaltbarkeit', fire_resistance_pct: 'Feuerresistenz', cargo_loss_reduction_pct: 'Frachtverlust-Reduktion', hold_slots: 'Laderaumplätze', fire_risk_pct: 'Brandrisiko',
       },
     },
-    fleets: { directory: { assignment: 'Einteilung', availability: 'Verfügbarkeit', timezone: 'Zeitzone', adminNote: 'Interne Notiz' } },
+    fleets: { directory: { assignment: 'Einteilung', availability: 'Verfügbarkeit', timezone: 'Zeitzone', discord: 'Discord-Name', adminNote: 'Interne Notiz' } },
   },
   fr: {
     print: { themeLabel: 'Apparence', themeSystem: 'Système', themeLight: 'Clair', themeDark: 'Sombre', action: 'Imprimer ou enregistrer en PDF' },

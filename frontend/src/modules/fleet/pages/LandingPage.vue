@@ -3,10 +3,11 @@ import { computed, onMounted, ref } from 'vue'
 
 import fleetIconUrl from '@/assets/rbf-fleet-icon.png'
 import AppIcon from '@/core/components/AppIcon.vue'
-import PageHeader from '@/core/components/PageHeader.vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import { getPublicOfficialFleet } from '@/modules/fleet/api/fleet'
+import '@/styles/workspaceRefresh.css'
+import '@/modules/fleet/styles/fleetPortalRefresh.css'
 
 const { t } = useLocale()
 const { isAuthenticated } = useSession()
@@ -21,11 +22,11 @@ onMounted(async () => {
 })
 
 const newcomerSteps = computed(() => [
-  { number: '01', icon: 'compass', title: t('home.newcomer.guideTitle'), text: t('home.newcomer.guideText'), meta: t('home.newcomer.guideMeta'), path: '/new-captain' },
-  { number: '02', icon: 'guides', title: t('home.newcomer.learnTitle'), text: t('home.newcomer.learnText'), meta: t('home.newcomer.learnMeta'), path: '/guides' },
-  { number: '03', icon: 'builds', title: t('home.newcomer.prepareTitle'), text: t('home.newcomer.prepareText'), meta: t('home.newcomer.prepareMeta'), path: '/builds' },
-  { number: '04', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), meta: t('home.newcomer.askMeta'), path: '/forum' },
-  { number: '05', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), meta: t('home.newcomer.joinMeta'), path: '/calendar' },
+  { number: '01', icon: 'compass', title: t('home.newcomer.guideTitle'), text: t('home.newcomer.guideText'), path: '/new-captain' },
+  { number: '02', icon: 'guides', title: t('home.newcomer.learnTitle'), text: t('home.newcomer.learnText'), path: '/guides' },
+  { number: '03', icon: 'builds', title: t('home.newcomer.prepareTitle'), text: t('home.newcomer.prepareText'), path: '/builds' },
+  { number: '04', icon: 'forum', title: t('home.newcomer.askTitle'), text: t('home.newcomer.askText'), path: '/forum' },
+  { number: '05', icon: 'calendar', title: t('home.newcomer.joinTitle'), text: t('home.newcomer.joinText'), path: '/calendar' },
 ])
 
 const memberModules = computed(() => [
@@ -43,135 +44,69 @@ function memberRoute(path) {
 </script>
 
 <template>
-  <section class="fleet-page" aria-labelledby="landing-title">
-    <div class="wire-frame page-frame fleet-frame fleet-portal-frame public-landing-frame">
-      <PageHeader
-        :eyebrow="t('home.eyebrow')"
-        :title="t('home.title')"
-        :description="t('home.subtitle')"
-        title-id="landing-title"
-      >
-        <template #meta>
-          <span class="summary-pill">{{ t('home.publicAccessBadge') }}</span>
-        </template>
-        <template #actions>
-          <RouterLink class="button-box" to="/fleet">{{ t('common.fleetOverview') }}</RouterLink>
-          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/new-captain">{{ t('common.newCaptainGuide') }}</RouterLink>
-          <RouterLink v-else class="button-box primary-action" to="/register">{{ t('home.joinCta') }}</RouterLink>
-        </template>
-      </PageHeader>
-
-      <div class="fleet-portal-layout public-landing-layout">
-        <main class="fleet-portal-main">
-          <article class="wire-section fleet-briefing-panel fleet-identity-panel">
-            <div class="workspace-section-heading fleet-identity-heading">
-              <div>
-                <p class="eyebrow">{{ t('home.aboutEyebrow') }}</p>
-                <h2>{{ t('home.aboutTitle') }}</h2>
-                <p>{{ t('home.about') }}</p>
-                <p class="fleet-identity-extra">{{ t('home.aboutExtra') }}</p>
-              </div>
-              <figure class="fleet-crest-card public-fleet-crest">
-                <img :src="fleetIconUrl" :alt="t('common.projectName')" loading="eager" decoding="async" />
-              </figure>
-            </div>
-          </article>
-
-          <section v-if="publicFleet?.leaders?.length" class="wire-section fleet-leadership-block">
-            <div class="workspace-section-heading compact-heading">
-              <div>
-                <p class="eyebrow">{{ publicFleet.name }}</p>
-                <h2>{{ t('fleets.leadership') }}</h2>
-              </div>
-            </div>
-            <div class="fleet-leadership-grid">
-              <article v-for="leader in publicFleet.leaders" :key="`${leader.display_name}-${leader.role}`" class="fleet-leader-card">
-                <span class="fleet-module-icon"><AppIcon name="fleet" :size="19" /></span>
-                <div><strong>{{ leader.display_name }}</strong><small>{{ leader.role_label || t(`fleets.roles.${leader.role}`) }}</small></div>
-              </article>
-            </div>
-          </section>
-
-          <section class="wire-section newcomer-path-panel">
-            <div class="workspace-section-heading">
-              <div>
-                <p class="eyebrow">{{ t('home.newcomer.eyebrow') }}</p>
-                <h2>{{ t('home.newcomer.title') }}</h2>
-                <p>{{ t('home.newcomer.subtitle') }}</p>
-              </div>
-            </div>
-            <div class="newcomer-path-grid">
-              <RouterLink
-                v-for="step in newcomerSteps"
-                :key="step.number"
-                class="newcomer-step-card"
-                :class="{ 'is-locked': !isAuthenticated }"
-                :to="memberRoute(step.path)"
-              >
-                <span class="newcomer-step-number">{{ step.number }}</span>
-                <span class="fleet-module-icon"><AppIcon :name="step.icon" :size="20" /></span>
-                <strong>{{ step.title }}</strong>
-                <p>{{ step.text }}</p>
-                <small>{{ step.meta }}</small>
-                <AppIcon v-if="!isAuthenticated" class="newcomer-step-arrow" name="lock" :size="15" />
-                <AppIcon v-else class="newcomer-step-arrow" name="arrow-right" :size="17" />
-              </RouterLink>
-            </div>
-          </section>
-
-          <section class="wire-section fleet-public-modules">
-            <div class="workspace-section-heading">
-              <div>
-                <p class="eyebrow">{{ t('home.showcase.eyebrow') }}</p>
-                <h2>{{ t('home.showcase.title') }}</h2>
-                <p>{{ t('home.memberGateText') }}</p>
-              </div>
-            </div>
-            <div class="fleet-module-grid fleet-learning-module-grid">
-              <RouterLink
-                v-for="module in memberModules"
-                :key="module.path"
-                class="fleet-module-card is-locked"
-                :to="memberRoute(module.path)"
-              >
-                <span class="fleet-module-icon"><AppIcon :name="module.icon" :size="20" /></span>
-                <span class="fleet-module-access">
-                  <AppIcon v-if="!isAuthenticated" name="lock" :size="13" />
-                  {{ isAuthenticated ? t('home.showcase.memberModule') : t('home.loginRequired') }}
-                </span>
-                <strong>{{ module.title }}</strong>
-                <small>{{ module.text }}</small>
-                <b aria-hidden="true"><AppIcon name="arrow-right" :size="17" /></b>
-              </RouterLink>
-            </div>
-          </section>
-        </main>
-
-        <aside class="fleet-portal-side">
-          <section class="wire-section fleet-operations-panel">
-            <div class="workspace-section-heading compact-heading">
-              <div>
-                <p class="eyebrow">{{ t('home.operations.eyebrow') }}</p>
-                <h2>{{ t('home.operations.title') }}</h2>
-                <p>{{ t('home.operations.subtitle') }}</p>
-              </div>
-            </div>
-            <dl class="fleet-rhythm-list">
-              <div><dt>{{ t('home.operations.activeHoursLabel') }}</dt><dd>{{ t('home.operations.activeHoursValue') }}</dd></div>
-              <div><dt>{{ t('home.operations.primeTimeLabel') }}</dt><dd>{{ t('home.operations.primeTimeValue') }}</dd></div>
-              <div><dt>{{ t('home.operations.voiceLabel') }}</dt><dd>{{ t('home.operations.voiceValue') }}</dd></div>
-            </dl>
-          </section>
-
-          <section class="wire-section fleet-access-panel public-access-panel">
-            <p class="eyebrow">{{ t('home.publicAreaTitle') }}</p>
-            <h2>{{ t('home.publicAreaHeading') }}</h2>
-            <p>{{ t('home.publicAreaText') }}</p>
+  <section class="landing-refresh-page" aria-labelledby="landing-title">
+    <div class="wire-frame page-frame landing-refresh-frame">
+      <header class="landing-refresh-hero">
+        <figure class="landing-refresh-crest">
+          <img :src="fleetIconUrl" :alt="t('common.projectName')" loading="eager" decoding="async" />
+        </figure>
+        <div class="landing-refresh-copy">
+          <h1 id="landing-title">{{ t('home.title') }}</h1>
+          <p>{{ t('home.subtitle') }}</p>
+          <p class="landing-refresh-about">{{ t('home.about') }} {{ t('home.aboutExtra') }}</p>
+          <div class="landing-refresh-actions">
             <RouterLink class="button-box" to="/fleet">{{ t('common.fleetOverview') }}</RouterLink>
-            <RouterLink v-if="!isAuthenticated" class="button-box primary-action" to="/login">{{ t('auth.login') }}</RouterLink>
-          </section>
-        </aside>
+            <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/new-captain">{{ t('common.newCaptainGuide') }}</RouterLink>
+            <RouterLink v-else class="button-box primary-action" to="/register">{{ t('home.joinCta') }}</RouterLink>
+          </div>
+        </div>
+      </header>
+
+      <section class="landing-refresh-journey" aria-labelledby="landing-journey-title">
+        <h2 id="landing-journey-title">{{ t('home.newcomer.title') }}</h2>
+        <div class="landing-refresh-steps">
+          <RouterLink v-for="step in newcomerSteps" :key="step.number" class="landing-refresh-step" :to="memberRoute(step.path)">
+            <span class="landing-refresh-step-number">{{ step.number }}</span>
+            <span>
+              <strong>{{ step.title }}</strong>
+              <small>{{ step.text }}</small>
+            </span>
+          </RouterLink>
+        </div>
+      </section>
+
+      <div class="landing-refresh-band">
+        <section class="landing-refresh-section" aria-labelledby="landing-leadership-title">
+          <h2 id="landing-leadership-title">{{ t('fleets.leadership') }}</h2>
+          <div v-if="publicFleet?.leaders?.length" class="landing-refresh-leaders">
+            <article v-for="leader in publicFleet.leaders" :key="`${leader.display_name}-${leader.role}`" class="landing-refresh-leader">
+              <span><AppIcon name="fleet" :size="19" /></span>
+              <div><strong>{{ leader.display_name }}</strong><small>{{ leader.role_label || t(`fleets.roles.${leader.role}`) }}</small></div>
+            </article>
+          </div>
+          <p v-else class="landing-refresh-empty">{{ t('fleets.noLeaders') }}</p>
+        </section>
+
+        <section class="landing-refresh-section" aria-labelledby="landing-operations-title">
+          <h2 id="landing-operations-title">{{ t('home.operations.title') }}</h2>
+          <dl class="landing-refresh-operations">
+            <div><dt>{{ t('home.operations.activeHoursLabel') }}</dt><dd>{{ t('home.operations.activeHoursValue') }}</dd></div>
+            <div><dt>{{ t('home.operations.primeTimeLabel') }}</dt><dd>{{ t('home.operations.primeTimeValue') }}</dd></div>
+            <div><dt>{{ t('home.operations.voiceLabel') }}</dt><dd>{{ t('home.operations.voiceValue') }}</dd></div>
+          </dl>
+        </section>
       </div>
+
+      <section class="landing-refresh-modules" aria-labelledby="landing-modules-title">
+        <h2 id="landing-modules-title">{{ t('home.showcase.title') }}</h2>
+        <nav class="landing-refresh-module-list" :aria-label="t('home.showcase.title')">
+          <RouterLink v-for="module in memberModules" :key="module.path" class="landing-refresh-module" :to="memberRoute(module.path)">
+            <AppIcon :name="module.icon" :size="20" />
+            <span><strong>{{ module.title }}</strong><small>{{ module.text }}</small></span>
+            <AppIcon :name="isAuthenticated ? 'chevron-right' : 'lock'" :size="16" />
+          </RouterLink>
+        </nav>
+      </section>
     </div>
   </section>
 </template>

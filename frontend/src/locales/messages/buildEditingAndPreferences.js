@@ -16,6 +16,11 @@ export const buildEditingAndPreferencesMessages = {
       },
     },
     profile: {
+      completion: {
+        label: 'Profile completion',
+        hint: 'Add preferences to make your profile more useful for fleet planning.',
+        complete: 'Your profile is ready for fleet planning.',
+      },
       preferenceTransfer: {
         available: 'Available',
         selected: 'Selected',
@@ -43,6 +48,11 @@ export const buildEditingAndPreferencesMessages = {
       },
     },
     profile: {
+      completion: {
+        label: 'Profil vollständig',
+        hint: 'Ergänze Präferenzen, damit dein Profil für die Flottenplanung aussagekräftiger wird.',
+        complete: 'Dein Profil ist für die Flottenplanung vollständig.',
+      },
       preferenceTransfer: {
         available: 'Verfügbar',
         selected: 'Ausgewählt',
@@ -65,7 +75,7 @@ export const buildEditingAndPreferencesMessages = {
         save: 'Enregistrer les modifications', saving: 'Enregistrement ...', saveError: 'Les modifications du build n’ont pas pu être enregistrées.',
       },
     },
-    profile: { preferenceTransfer: { available: 'Disponibles', selected: 'Sélectionnés', select: 'Sélectionner', remove: 'Retirer', noneAvailable: 'Toutes les entrées sont sélectionnées.', noneSelected: 'Aucune entrée sélectionnée.' } },
+    profile: { completion: { label: 'Profil complété', hint: 'Ajoutez vos préférences pour faciliter la planification de la flotte.', complete: 'Votre profil est prêt pour la planification de la flotte.' }, preferenceTransfer: { available: 'Disponibles', selected: 'Sélectionnés', select: 'Sélectionner', remove: 'Retirer', noneAvailable: 'Toutes les entrées sont sélectionnées.', noneSelected: 'Aucune entrée sélectionnée.' } },
   },
   es: {
     builds: {
@@ -79,7 +89,7 @@ export const buildEditingAndPreferencesMessages = {
         save: 'Guardar cambios', saving: 'Guardando cambios ...', saveError: 'No se pudieron guardar los cambios del build.',
       },
     },
-    profile: { preferenceTransfer: { available: 'Disponibles', selected: 'Seleccionados', select: 'Seleccionar', remove: 'Quitar', noneAvailable: 'Todas las entradas están seleccionadas.', noneSelected: 'Todavía no hay entradas seleccionadas.' } },
+    profile: { completion: { label: 'Perfil completado', hint: 'Añade preferencias para facilitar la planificación de la flota.', complete: 'Tu perfil está listo para la planificación de la flota.' }, preferenceTransfer: { available: 'Disponibles', selected: 'Seleccionados', select: 'Seleccionar', remove: 'Quitar', noneAvailable: 'Todas las entradas están seleccionadas.', noneSelected: 'Todavía no hay entradas seleccionadas.' } },
   },
   pt: {
     builds: {
@@ -93,7 +103,7 @@ export const buildEditingAndPreferencesMessages = {
         save: 'Guardar alterações', saving: 'A guardar alterações ...', saveError: 'Não foi possível guardar as alterações do build.',
       },
     },
-    profile: { preferenceTransfer: { available: 'Disponíveis', selected: 'Selecionados', select: 'Selecionar', remove: 'Remover', noneAvailable: 'Todas as entradas estão selecionadas.', noneSelected: 'Ainda não há entradas selecionadas.' } },
+    profile: { completion: { label: 'Perfil completo', hint: 'Adicione preferências para facilitar o planeamento da frota.', complete: 'O seu perfil está pronto para o planeamento da frota.' }, preferenceTransfer: { available: 'Disponíveis', selected: 'Selecionados', select: 'Selecionar', remove: 'Remover', noneAvailable: 'Todas as entradas estão selecionadas.', noneSelected: 'Ainda não há entradas selecionadas.' } },
   },
   ru: {
     builds: {
@@ -107,7 +117,7 @@ export const buildEditingAndPreferencesMessages = {
         save: 'Сохранить изменения', saving: 'Сохранение ...', saveError: 'Не удалось сохранить изменения билда.',
       },
     },
-    profile: { preferenceTransfer: { available: 'Доступно', selected: 'Выбрано', select: 'Выбрать', remove: 'Убрать', noneAvailable: 'Все записи выбраны.', noneSelected: 'Пока ничего не выбрано.' } },
+    profile: { completion: { label: 'Заполнение профиля', hint: 'Добавьте предпочтения, чтобы упростить планирование флота.', complete: 'Профиль готов для планирования флота.' }, preferenceTransfer: { available: 'Доступно', selected: 'Выбрано', select: 'Выбрать', remove: 'Убрать', noneAvailable: 'Все записи выбраны.', noneSelected: 'Пока ничего не выбрано.' } },
   },
   cn: {
     builds: {
@@ -121,6 +131,6 @@ export const buildEditingAndPreferencesMessages = {
         save: '保存更改', saving: '正在保存更改…', saveError: '无法保存配装更改。',
       },
     },
-    profile: { preferenceTransfer: { available: '可选', selected: '已选', select: '选择', remove: '移除', noneAvailable: '所有条目均已选择。', noneSelected: '尚未选择任何条目。' } },
+    profile: { completion: { label: '资料完整度', hint: '添加偏好，让舰队规划更准确。', complete: '你的资料已可用于舰队规划。' }, preferenceTransfer: { available: '可选', selected: '已选', select: '选择', remove: '移除', noneAvailable: '所有条目均已选择。', noneSelected: '尚未选择任何条目。' } },
   },
 }
