@@ -11,7 +11,7 @@ RUN printf 'VITE_API_BASE_URL=%s\nVITE_MONITORING_HTTPS_PORT=%s\n' "$VITE_API_BA
     && npm run check:locales \
     && npm run build
 
-FROM nginx:1.27.5-alpine3.21 AS runtime
+FROM nginx:1.28.0-alpine3.21 AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
     && find /usr/share/nginx/html -type f -exec chmod 0644 {} +
