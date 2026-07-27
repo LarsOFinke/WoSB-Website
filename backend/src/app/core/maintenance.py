@@ -12,6 +12,9 @@ from app.db.session import SessionLocal
 from app.modules.accounts.services.auth_service import delete_expired_sessions
 from app.modules.admin.models.app_log import AppLog
 from app.modules.admin.models.audit_log import AuditLog
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    recover_pending_webhook_deliveries,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,3 +53,27 @@ async def maintenance_loop() -> None:
             raise
         except Exception:
             logger.exception("periodic maintenance failed")
+
+
+async def _recover_webhook_deliveries(*, stale_after_seconds: int) -> None:
+    try:
+        recovered = await asyncio.to_thread(
+            recover_pending_webhook_deliveries,
+            stale_after_seconds=stale_after_seconds,
+        )
+        if recovered:
+            logger.info(
+                "recovered pending outbound webhook deliveries",
+                extra={"delivery_count": recovered},
+            )
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        logger.exception("outbound webhook delivery recovery failed")
+
+
+async def webhook_delivery_recovery_loop() -> None:
+    await _recover_webhook_deliveries(stale_after_seconds=0)
+    while True:
+        await asyncio.sleep(5 * 60)
+        await _recover_webhook_deliveries(stale_after_seconds=5 * 60)

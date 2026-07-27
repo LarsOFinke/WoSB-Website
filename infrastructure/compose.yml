@@ -6,7 +6,7 @@ x-logging: &default-logging
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.14-alpine3.24
     logging: *default-logging
     restart: unless-stopped
     env_file:
@@ -137,7 +137,7 @@ services:
       - no-new-privileges:true
 
   uptime-kuma:
-    image: louislam/uptime-kuma:1
+    image: louislam/uptime-kuma:1.23.16
     logging: *default-logging
     restart: unless-stopped
     profiles: ["monitoring"]

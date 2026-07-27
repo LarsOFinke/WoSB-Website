@@ -1,16 +1,15 @@
 <script setup>
-import { computed } from 'vue'
-
 import DiscordBroadcastPanel from '@/modules/admin/components/DiscordBroadcastPanel.vue'
 import OutboundWebhookManagementPanel from '@/modules/admin/components/OutboundWebhookManagementPanel.vue'
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
-import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
-import { useLocale } from '@/locales'
-import { useSession } from '@/modules/accounts/session'
+import { useDiscordWebhooksPage } from '@/modules/admin/composables/useDiscordWebhooksPage'
 
-const { t } = useLocale()
-const { isAdmin, user } = useSession()
-const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
+const {
+  t,
+  isAdmin,
+  user,
+  navigationGroups,
+} = useDiscordWebhooksPage()
 </script>
 
 <template>

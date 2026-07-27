@@ -5,6 +5,7 @@ from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.files.schemas.file_asset import FileRead
+from app.modules.files.routes.content import router as content_router
 from app.modules.files.services.file_service import FileValidationError, delete_file, get_file, list_files, upload_file
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -42,3 +43,6 @@ def delete_own_file(
     if file is None or (file.owner_id != current_user.id and not current_user.can_moderate):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found.")
     delete_file(db, file)
+
+
+router.include_router(content_router)

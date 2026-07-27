@@ -3,11 +3,9 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from urllib.parse import urlsplit
 
@@ -16,9 +14,14 @@ from app.configuration.models import Settings
 from app.core.config import settings
 from app.core.errors import AppError, app_error_handler, http_error_handler
 from app.core.logging import LoggingConfigurator
-from app.core.maintenance import maintenance_loop, run_maintenance_once
+from app.core.maintenance import (
+    maintenance_loop,
+    run_maintenance_once,
+    webhook_delivery_recovery_loop,
+)
 from app.core.middleware import CsrfOriginMiddleware, IpBlockMiddleware, RequestLoggingMiddleware
 from app.db.init_db import create_and_seed, create_tables, verify_database_ready
+from app.modules.files.routes.content import legacy_router as legacy_upload_router
 from app.modules.registry import register_all_models
 
 
@@ -59,14 +62,24 @@ class ApplicationFactory:
             verify_database_ready()
         run_maintenance_once()
         maintenance_task = asyncio.create_task(maintenance_loop())
+        webhook_recovery_task = (
+            asyncio.create_task(webhook_delivery_recovery_loop())
+            if self._settings.is_production
+            else None
+        )
         try:
             yield
         finally:
-            maintenance_task.cancel()
-            try:
-                await maintenance_task
-            except asyncio.CancelledError:
-                pass
+            tasks = [maintenance_task]
+            if webhook_recovery_task is not None:
+                tasks.append(webhook_recovery_task)
+            for task in tasks:
+                task.cancel()
+            for task in tasks:
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
 
     @staticmethod
     def _configure_errors(app: FastAPI) -> None:
@@ -98,9 +111,7 @@ class ApplicationFactory:
         )
 
     def _configure_routes(self, app: FastAPI) -> None:
-        upload_path = Path(self._settings.upload_dir)
-        upload_path.mkdir(parents=True, exist_ok=True)
-        app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
+        app.include_router(legacy_upload_router)
         app.include_router(api_router, prefix=self._settings.api_prefix)
 
 

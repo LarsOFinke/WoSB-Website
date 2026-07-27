@@ -187,6 +187,16 @@ require_pattern 'Content-Security-Policy' "$INFRA_DIR/nginx/security-headers.con
 require_pattern 'Content-Security-Policy.*sandbox' "$INFRA_DIR/nginx/upload-security-headers.conf"
 require_pattern 'rbf-security-headers.conf' "$INFRA_DIR/nginx/default.conf"
 require_pattern 'rbf-upload-security-headers.conf' "$INFRA_DIR/nginx/default.conf"
+python3 - "$INFRA_DIR/nginx/default.conf" <<'PY_UPLOAD_PROXY'
+from pathlib import Path
+import sys
+
+nginx = Path(sys.argv[1]).read_text(encoding="utf-8")
+upload_block = nginx.split("    location /uploads/ {", 1)[1].split("\n    }", 1)[0]
+assert "proxy_pass http://api:8000;" in upload_block, "legacy upload access policy must be enforced by the API"
+assert 'Cache-Control "private, no-store" always' in upload_block, "uploads must not use a public cache"
+assert "immutable" not in upload_block and "max-age" not in upload_block, "uploads must not be publicly cacheable"
+PY_UPLOAD_PROXY
 reject_pattern '\$proxy_add_x_forwarded_for' "$INFRA_DIR/nginx/default.conf"
 require_pattern 'X-Forwarded-For \$remote_addr' "$INFRA_DIR/nginx/default.conf"
 require_pattern 'data/control/inbox:/run/rbf-control/inbox' "$INFRA_DIR/compose.yml"

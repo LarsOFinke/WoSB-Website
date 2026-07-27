@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
+import { readGlobalStyles } from './helpers/readGlobalStyles.mjs'
 
 const adminSource = await readFile(new URL('../src/modules/admin/pages/AdminPage.vue', import.meta.url), 'utf8')
 const auditSource = await readFile(new URL('../src/modules/admin/components/AuditLogPanel.vue', import.meta.url), 'utf8')
@@ -13,7 +14,7 @@ const navigationSource = await readFile(new URL('../src/modules/admin/components
 const shellSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceShell.vue', import.meta.url), 'utf8')
 const staffStylesSource = await readFile(new URL('../src/modules/admin/styles/staffWorkspace.css', import.meta.url), 'utf8')
 const navigationDomainSource = await readFile(new URL('../src/modules/admin/domain/staffNavigation.js', import.meta.url), 'utf8')
-const stylesSource = `${await readFile(new URL('../src/styles/main.css', import.meta.url), 'utf8')}\n${staffStylesSource}`
+const stylesSource = `${readGlobalStyles()}\n${staffStylesSource}`
 
 test('staff workspace exposes combined filters for all shared management modules', () => {
   for (const binding of [

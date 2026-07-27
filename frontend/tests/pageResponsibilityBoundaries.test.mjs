@@ -1,27 +1,43 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
+import path from 'node:path'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 
-const pages = [
-  ['admin/pages/AdminPage.vue', 'useAdminWorkspace'],
-  ['admin/pages/MasterDataPage.vue', 'useMasterDataWorkspace'],
-  ['builds/pages/BuildCreatePage.vue', 'useBuildDesigner'],
-  ['builds/pages/BuildDetailPage.vue', 'useBuildDetailPage'],
-  ['accounts/pages/ProfilePage.vue', 'useProfilePage'],
-  ['calendar/pages/CalendarPage.vue', 'useCalendarPage'],
-  ['fleet/pages/FleetManagePage.vue', 'useFleetManagePage'],
-  ['groups/pages/GroupDetailPage.vue', 'useGroupDetailPage'],
-  ['onboarding/pages/NewcomerGuidePage.vue', 'useNewcomerGuidePage'],
-  ['squads/pages/SquadDetailPage.vue', 'useSquadDetailPage'],
-]
+const modulesRoot = fileURLToPath(new URL('../src/modules', import.meta.url))
 
-test('complex pages delegate state and use-cases to dedicated page models', async () => {
-  for (const [relativePath, composable] of pages) {
-    const source = await readFile(new URL(`../src/modules/${relativePath}`, import.meta.url), 'utf8')
-    const script = source.match(/<script setup>([\s\S]*?)<\/script>/)?.[1] || ''
-    assert.match(script, new RegExp(`${composable}\\(`), `${relativePath} should invoke ${composable}`)
-    assert.doesNotMatch(script, /\/api\//, `${relativePath} should not call APIs directly`)
-    assert.doesNotMatch(script, /async function/, `${relativePath} should not own async use-cases`)
+async function collectRoutePages(directory = modulesRoot) {
+  const pages = []
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name)
+    if (entry.isDirectory()) {
+      pages.push(...await collectRoutePages(target))
+    } else if (entry.name.endsWith('Page.vue') && target.includes(`${path.sep}pages${path.sep}`)) {
+      pages.push(target)
+    }
+  }
+  return pages.sort()
+}
+
+function scriptSetup(source) {
+  return source.match(/<script setup>([\s\S]*?)<\/script>/)?.[1] || ''
+}
+
+test('every route page delegates stateful work to a page model', async () => {
+  const pages = await collectRoutePages()
+  assert.equal(pages.length, 30, 'update the architecture expectation when route pages are added or removed')
+
+  for (const page of pages) {
+    const relativePath = path.relative(modulesRoot, page)
+    const script = scriptSetup(await readFile(page, 'utf8'))
+    assert.match(
+      script,
+      /\buse(?:[A-Z][A-Za-z0-9]+Page|AdminWorkspace|MasterDataWorkspace|BuildDesigner|FleetManagePage|NewcomerGuidePage)\s*\(/,
+      `${relativePath} should invoke a dedicated page model`,
+    )
+    assert.doesNotMatch(script, /\/api\//, `${relativePath} should not import API transport modules`)
+    assert.doesNotMatch(script, /\basync\s+(?:function|\()/, `${relativePath} should not own async use-cases`)
+    assert.doesNotMatch(script, /\bonMounted\s*\(/, `${relativePath} should not own lifecycle-driven loading`)
   }
 })
 

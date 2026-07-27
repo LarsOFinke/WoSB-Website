@@ -18,7 +18,7 @@ const props = defineProps({
 })
 
 const {
-  optionLabel, t, isEditing, ships, optionCatalog, loading, saving, error, buildCrewVisuals, buildTypeOptions,
+  optionLabel, t, isEditing, ships, optionCatalog, loading, saving, deleting, error, buildCrewVisuals, buildTypeOptions,
   optionsFor, form, selectedShip, availableWeaponArcs, optionMeta, optionEffects, optionImage,
   selectedShipImage, inventoryCategory, inventoryImage, upgradeEffects, specialCrewEffects,
   formatEffects, equipmentUpgradeCount, upgradeAccess, selectedUpgradeNames, upgradeEffectTotals, specialCrewEffectSets,
@@ -32,7 +32,7 @@ const {
   slotLimitForField, weaponOptionsForField, isWeaponFieldUnavailable, weaponFieldOverCapacity,
   weaponSelectionInvalid, allWeaponsValid, isUpgradeSlotDisabled, upgradeSlotPlaceholder,
   quantityMaxForField, reconcileInventoryField, onInventoryItemChange, onInventoryQuantityChange,
-  crewMaxFor, onCrewSliderInput, resetCrewAllocation, saveBuild,
+  crewMaxFor, onCrewSliderInput, resetCrewAllocation, saveBuild, deleteBuild,
 } = useBuildDesigner(props, { slotPlaceholderSrc })
 
 const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
@@ -480,9 +480,18 @@ function toggleGinger() {
 
       <p v-if="error" class="error-text">{{ error }}</p>
 
-      <div class="form-actions">
+      <div class="form-actions build-editor-actions">
+        <button
+          v-if="isEditing"
+          class="wire-section danger-action build-editor-delete-action"
+          type="button"
+          :disabled="saving || deleting"
+          @click="deleteBuild"
+        >
+          {{ t('myBuilds.deleteNow') }}
+        </button>
         <RouterLink class="wire-section form-button" :to="isEditing ? `/builds/${props.id}` : '/builds'">{{ t('common.cancel') }}</RouterLink>
-        <button class="wire-section form-button primary" type="submit" :disabled="!canSubmit">
+        <button class="wire-section form-button primary" type="submit" :disabled="!canSubmit || deleting">
           {{ saving ? t(isEditing ? 'builds.edit.saving' : 'builds.create.saving') : t(isEditing ? 'builds.edit.save' : 'builds.create.save') }}
         </button>
       </div>

@@ -21,13 +21,17 @@ page -> composable -> domain
 page -> component
 ```
 
-Pages must not call API modules directly or own asynchronous workflows. They bind a page model to route-level markup and compose components.
+Pages must not call API modules directly or own asynchronous workflows. They bind a page model to route-level markup and compose components. This boundary applies to every route page and is enforced repository-wide by `pageResponsibilityBoundaries.test.mjs` and `scripts/check_repository.py`.
 
 Domain modules are framework-independent wherever practical. They receive their data and collaborators as arguments, return values without side effects, and can be tested with Node's built-in test runner.
 
 Composables coordinate Vue state, lifecycle hooks, API calls and user-facing success/error state. A composable may combine smaller feature composables, as `useAdminWorkspace` and `useBuildDesigner` do.
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
+
+## Global style layers
+
+`src/styles/main.css` is an ordered import manifest rather than a monolithic stylesheet. Cross-module rules are split into numbered files under `src/styles/layers/`; the numeric prefixes preserve cascade order. A layer must stay below 60 KB and the complete frontend source CSS below 400 KB. Feature-local styles remain beside their module whenever they are not shared globally.
 
 ## Locale delivery
 

@@ -1,90 +1,28 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { useMyBuildsPage } from '@/modules/builds/composables/useMyBuildsPage'
 
-import { useLocale } from '@/locales'
-import { deleteMyBuild, listMyBuilds } from '@/modules/builds/api/builds'
-import { copyBuildShareLink } from '@/modules/builds/shareBuild'
-
-const { optionLabel, t } = useLocale()
-
-const builds = ref([])
-const search = ref('')
-const buildType = ref('')
-const loading = ref(false)
-const error = ref('')
-const pendingDeleteId = ref(null)
-const sharedBuildId = ref(null)
-const shareError = ref('')
-let searchTimer = null
-
-const buildTypeOptions = computed(() => [
-  { value: '', label: t('builds.types.all') },
-  { value: 'balanced', label: t('builds.types.balanced') },
-  { value: 'gunnery', label: t('builds.types.gunnery') },
-  { value: 'boarding', label: t('builds.types.boarding') },
-  { value: 'defensive', label: t('builds.types.defensive') },
-])
-
-const buildCountLabel = computed(() =>
-  builds.value.length === 1 ? t('myBuilds.summaryOne') : t('myBuilds.summaryMany', { count: builds.value.length }),
-)
-
-function crewTotal(build) {
-  return build.sailors + build.soldiers + build.musketeers + build.mercenaries
-}
-
-function slotLabel(slot) {
-  if (typeof slot === 'string') return optionLabel(slot)
-  if (!slot?.item) return ''
-  return `${optionLabel(slot.item)} ×${slot.quantity || 1}`
-}
-
-function previewItems(items) {
-  const labels = (items || []).map(slotLabel).filter(Boolean)
-  if (!labels.length) return t('builds.list.noSlots')
-  return labels.slice(0, 2).join(', ') + (labels.length > 2 ? ' …' : '')
-}
-
-async function loadMyBuilds() {
-  loading.value = true
-  error.value = ''
-  try {
-    builds.value = await listMyBuilds(search.value, buildType.value)
-  } catch (err) {
-    error.value = err.message || t('myBuilds.loadError')
-  } finally {
-    loading.value = false
-  }
-}
-
-async function shareBuild(buildId) {
-  shareError.value = ''
-  try {
-    await copyBuildShareLink(buildId)
-    sharedBuildId.value = buildId
-    window.setTimeout(() => { if (sharedBuildId.value === buildId) sharedBuildId.value = null }, 2200)
-  } catch {
-    shareError.value = t('builds.share.error')
-  }
-}
-
-async function confirmDelete(buildId) {
-  error.value = ''
-  try {
-    await deleteMyBuild(buildId)
-    pendingDeleteId.value = null
-    await loadMyBuilds()
-  } catch (err) {
-    error.value = err.message || t('myBuilds.deleteError')
-  }
-}
-
-watch([search, buildType], () => {
-  window.clearTimeout(searchTimer)
-  searchTimer = window.setTimeout(loadMyBuilds, 220)
-})
-
-onMounted(loadMyBuilds)
+const {
+  optionLabel,
+  t,
+  builds,
+  search,
+  buildType,
+  loading,
+  error,
+  pendingDeleteId,
+  sharedBuildId,
+  shareError,
+  searchTimer,
+  buildTypeOptions,
+  buildCountLabel,
+  crewTotal,
+  slotLabel,
+  previewItems,
+  loadMyBuilds,
+  shareBuild,
+  confirmDelete,
+  copyBuildShareLink,
+} = useMyBuildsPage()
 </script>
 
 <template>

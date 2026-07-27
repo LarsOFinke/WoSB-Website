@@ -205,7 +205,7 @@ def upload_file(
     relative_path = str(target.relative_to(upload_root)).replace("\\", "/")
     db_file = StoredFile(
         owner_id=owner.id,
-        original_name=upload.filename or stored_name,
+        original_name=(upload.filename or stored_name)[:255],
         stored_name=stored_name,
         relative_path=relative_path,
         mime_type=mime_type,
@@ -242,6 +242,23 @@ def get_file(db: Session, file_id: int) -> StoredFile | None:
     return db.get(StoredFile, file_id)
 
 
+def get_file_by_relative_path(db: Session, relative_path: str) -> StoredFile | None:
+    normalized = str(relative_path or "").replace("\\", "/").strip("/")
+    if not normalized or any(part in {"", ".", ".."} for part in normalized.split("/")):
+        return None
+    return db.scalar(select(StoredFile).where(StoredFile.relative_path == normalized))
+
+
+def resolve_stored_file_path(stored_file: StoredFile) -> Path | None:
+    root = Path(settings.upload_dir).resolve()
+    candidate = (root / stored_file.relative_path).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+
 def get_files_for_owner(
     db: Session, file_ids: list[int], owner: User
 ) -> list[StoredFile]:
@@ -261,9 +278,11 @@ def get_files_for_owner(
 
 
 def delete_file(db: Session, file: StoredFile) -> None:
-    path = Path(settings.upload_dir) / file.relative_path
+    path = resolve_stored_file_path(file)
     db.delete(file)
     db.commit()
+    if path is None:
+        return
     path.unlink(missing_ok=True)
     for parent in [path.parent, path.parent.parent]:
         try:

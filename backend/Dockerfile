@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS runtime
+FROM python:3.12.13-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -16,9 +16,8 @@ COPY migrations ./migrations
 COPY config ./config
 COPY seeds ./seeds
 COPY src ./src
-RUN pip install --upgrade pip \
-    && pip install --requirement requirements.lock \
-    && pip install --no-deps .
+RUN python -m pip install --requirement requirements.lock \
+    && python -m pip install --no-deps .
 
 RUN mkdir -p /data/uploads \
     && chown -R blackwater:blackwater /app /data/uploads

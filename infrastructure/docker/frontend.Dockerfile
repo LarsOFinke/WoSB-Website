@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22.23.1-alpine3.24 AS build
 WORKDIR /app
 
 COPY frontend/package.json frontend/package-lock.json ./
@@ -11,7 +11,7 @@ RUN printf 'VITE_API_BASE_URL=%s\nVITE_MONITORING_HTTPS_PORT=%s\n' "$VITE_API_BA
     && npm run check:locales \
     && npm run build
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.27.5-alpine3.21 AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
     && find /usr/share/nginx/html -type f -exec chmod 0644 {} +

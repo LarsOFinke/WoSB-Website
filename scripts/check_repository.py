@@ -346,9 +346,70 @@ for path in (ROOT / "frontend/src").rglob("*.js"):
     require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
     require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
 
+# The shared stylesheet is an ordered import manifest. Feature CSS remains
+# split into reviewable layers so one global file cannot become a monolith again.
+styles_root = ROOT / "frontend/src/styles"
+main_styles_path = styles_root / "main.css"
+main_styles = main_styles_path.read_text(encoding="utf-8")
+expected_style_layers = [
+    "01-foundation.css",
+    "02-calendar-fleet.css",
+    "03-adaptive-shell.css",
+    "04-workspaces.css",
+    "05-squads-builds-content.css",
+    "06-administration.css",
+    "07-integrations-discovery.css",
+]
+expected_imports = "".join(
+    f"@import './layers/{name}';\n" for name in expected_style_layers
+)
+require(main_styles == expected_imports, "frontend/src/styles/main.css must remain the ordered layer manifest")
+for layer_name in expected_style_layers:
+    layer_path = styles_root / "layers" / layer_name
+    require(layer_path.is_file(), f"missing CSS layer: {layer_name}")
+    require(layer_path.stat().st_size <= 60_000, f"CSS layer exceeds 60 KB: {layer_path.relative_to(ROOT)}")
+all_css = list((ROOT / "frontend/src").rglob("*.css"))
+require(
+    sum(path.stat().st_size for path in all_css) <= 400_000,
+    "frontend CSS exceeds the 400 KB source budget",
+)
+
+# Route pages are composition-only: network and lifecycle workflows belong in
+# page-model composables, where they can be tested independently.
+route_pages = sorted((ROOT / "frontend/src/modules").glob("*/pages/*Page.vue"))
+require(len(route_pages) == 30, "route page inventory changed; update the architecture budget")
+for page_path in route_pages:
+    page_source = page_path.read_text(encoding="utf-8")
+    script_match = re.search(r"<script setup>([\s\S]*?)</script>", page_source)
+    script_source = script_match.group(1) if script_match else ""
+    require("/api/" not in script_source, f"route page imports API transport directly: {page_path.relative_to(ROOT)}")
+    require(
+        re.search(r"\basync\s+(?:function|\()", script_source) is None,
+        f"route page owns an async workflow: {page_path.relative_to(ROOT)}",
+    )
+    require("onMounted(" not in script_source, f"route page owns lifecycle loading: {page_path.relative_to(ROOT)}")
+    require(
+        re.search(
+            r"\buse(?:[A-Z][A-Za-z0-9]+Page|AdminWorkspace|MasterDataWorkspace|BuildDesigner|FleetManagePage|NewcomerGuidePage)\s*\(",
+            script_source,
+        ) is not None,
+        f"route page has no dedicated page model: {page_path.relative_to(ROOT)}",
+    )
+
+# Production containers use explicit runtime versions. Local application image
+# names remain configurable through Compose, but third-party bases may not float.
+backend_dockerfile = (ROOT / "backend/Dockerfile").read_text(encoding="utf-8")
+frontend_dockerfile = (ROOT / "infrastructure/docker/frontend.Dockerfile").read_text(encoding="utf-8")
+compose_source = (ROOT / "infrastructure/compose.yml").read_text(encoding="utf-8")
+require("FROM python:3.12.13-slim-bookworm AS runtime" in backend_dockerfile, "backend Python image is not pinned")
+require("pip install --upgrade pip" not in backend_dockerfile, "backend image performs an unpinned pip upgrade")
+require("FROM node:22.23.1-alpine3.24 AS build" in frontend_dockerfile, "frontend Node image is not pinned")
+require("FROM nginx:1.27.5-alpine3.21 AS runtime" in frontend_dockerfile, "gateway NGINX image is not pinned")
+require("image: postgres:16.14-alpine3.24" in compose_source, "PostgreSQL image is not pinned")
+require("image: louislam/uptime-kuma:1.23.16" in compose_source, "Uptime Kuma image is not pinned")
+
 # The shared stylesheet must not regain the retired staff dashboard. The active
 # implementation is isolated in modules/admin/styles/staffWorkspace.css.
-main_styles = (ROOT / "frontend/src/styles/main.css").read_text(encoding="utf-8")
 for retired_selector in (
     ".staff-command-card",
     ".staff-command-center",

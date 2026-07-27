@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16.14-alpine3.24
         env:
           POSTGRES_USER: rbf_ci
           POSTGRES_PASSWORD: rbf_ci_password

@@ -43,6 +43,14 @@ def attempt_webhook_delivery(delivery_id: int) -> None:
     _default_service.attempt(delivery_id)
 
 
+def recover_pending_webhook_deliveries(*, stale_after_seconds: int = 300) -> int:
+    from datetime import timedelta
+
+    return _default_service.recover_pending(
+        stale_after=timedelta(seconds=max(0, stale_after_seconds))
+    )
+
+
 def create_test_delivery(
     db: Session,
     webhook_id: int,
@@ -87,6 +95,7 @@ __all__ = [
     "create_test_delivery",
     "queue_webhook_event",
     "queue_webhook_event_safely",
+    "recover_pending_webhook_deliveries",
     "retry_delivery",
     "schedule_webhook_deliveries",
 ]

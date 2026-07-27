@@ -24,4 +24,4 @@ class StoredFile(Base):
 
     @property
     def public_url(self) -> str:
-        return f"/uploads/{self.relative_path}"
+        return f"/api/files/{self.id}/content"

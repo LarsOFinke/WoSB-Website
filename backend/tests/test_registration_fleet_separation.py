@@ -46,6 +46,7 @@ def test_registration_can_optionally_create_a_pending_fleet_application() -> Non
                 db.commit()
                 db.refresh(fleet)
             fleet_id = fleet.id
+            initial_membership_count = db.query(FleetMembership).count()
 
             admin = db.query(User).filter(User.username == ADMIN_USERNAME).one_or_none()
             if admin is None:
@@ -127,7 +128,7 @@ def test_registration_can_optionally_create_a_pending_fleet_application() -> Non
                 "fleet_timezone",
                 "fleet_discord_handle",
             }.isdisjoint(registration_columns)
-            assert db.query(FleetMembership).count() == 0
+            assert db.query(FleetMembership).count() == initial_membership_count
 
         _login(client, ADMIN_USERNAME, ADMIN_PASSWORD)
         pending_rows = client.get("/api/admin/registration-requests", params={"status": "pending"})

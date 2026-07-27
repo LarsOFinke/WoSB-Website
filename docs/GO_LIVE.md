@@ -55,7 +55,7 @@ Die alte Datenbank bleibt bis zur vollständigen Abnahme unverändert als Rollba
 - Squad-Events unter „My Squads → Upcoming Events“
 - Admin-Stammdaten, Standard-Update sowie Update + Migration + Seed
 - Cookie-Einwilligung akzeptieren, ablehnen und erneut öffnen
-- Upload sowie öffentliche Asset-Auslieferung ohne 403
+- Upload-Auslieferung über `/api/files/{id}/content`: Guide-/Forum-/Master-Data-Dateien anonym lesbar, private Uploads anonym mit 401; Legacy-Links verhalten sich identisch
 
 ## Nach dem Start
 

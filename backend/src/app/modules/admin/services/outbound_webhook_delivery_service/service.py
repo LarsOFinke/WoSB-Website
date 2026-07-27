@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request
 
 from fastapi import BackgroundTasks
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now
@@ -28,6 +29,10 @@ from .envelope import WebhookEnvelopeFactory
 from .transport import WebhookTransport
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_RECOVERY_STALE_AFTER = timedelta(minutes=5)
+DEFAULT_MAX_AUTOMATIC_ATTEMPTS = 3
+DEFAULT_RECOVERY_BATCH_SIZE = 100
 
 
 class WebhookDeliveryService:
@@ -86,11 +91,30 @@ class WebhookDeliveryService:
 
     def attempt(self, delivery_id: int) -> None:
         with self._session_factory() as db:
+            attempt_started_at = utc_now()
+            claimed = db.execute(
+                update(OutboundWebhookDelivery)
+                .where(
+                    OutboundWebhookDelivery.id == delivery_id,
+                    OutboundWebhookDelivery.status == "queued",
+                )
+                .values(
+                    status="processing",
+                    attempts=OutboundWebhookDelivery.attempts + 1,
+                    last_attempt_at=attempt_started_at,
+                    response_status=None,
+                    response_body=None,
+                    error_message=None,
+                )
+            ).rowcount
+            db.commit()
+            if not claimed:
+                return
+
             row = db.get(OutboundWebhookDelivery, delivery_id)
             if row is None:
                 return
             webhook = row.webhook
-            self._begin_attempt(row)
             if not webhook.is_active and row.event_type != "integration.test":
                 self._disable(row, webhook)
                 db.commit()
@@ -110,6 +134,75 @@ class WebhookDeliveryService:
                     },
                 )
             db.commit()
+
+    def recover_pending(
+        self,
+        *,
+        stale_after: timedelta = DEFAULT_RECOVERY_STALE_AFTER,
+        max_attempts: int = DEFAULT_MAX_AUTOMATIC_ATTEMPTS,
+        limit: int = DEFAULT_RECOVERY_BATCH_SIZE,
+    ) -> int:
+        now = utc_now()
+        cutoff = now - max(stale_after, timedelta(0))
+        with self._session_factory() as db:
+            db.execute(
+                update(OutboundWebhookDelivery)
+                .where(
+                    OutboundWebhookDelivery.status.in_(("queued", "processing")),
+                    OutboundWebhookDelivery.attempts >= max_attempts,
+                )
+                .values(
+                    status="failed",
+                    error_message="Automatic webhook delivery retry limit reached.",
+                )
+            )
+            candidate_ids = list(
+                db.scalars(
+                    select(OutboundWebhookDelivery.id)
+                    .where(
+                        OutboundWebhookDelivery.attempts < max_attempts,
+                        or_(
+                            and_(
+                                OutboundWebhookDelivery.status == "queued",
+                                OutboundWebhookDelivery.created_at <= cutoff,
+                            ),
+                            and_(
+                                OutboundWebhookDelivery.status == "processing",
+                                or_(
+                                    OutboundWebhookDelivery.last_attempt_at.is_(None),
+                                    OutboundWebhookDelivery.last_attempt_at <= cutoff,
+                                ),
+                            ),
+                        ),
+                    )
+                    .order_by(
+                        OutboundWebhookDelivery.created_at.asc(),
+                        OutboundWebhookDelivery.id.asc(),
+                    )
+                    .limit(max(1, limit))
+                ).all()
+            )
+            if candidate_ids:
+                db.execute(
+                    update(OutboundWebhookDelivery)
+                    .where(
+                        OutboundWebhookDelivery.id.in_(candidate_ids),
+                        OutboundWebhookDelivery.status == "processing",
+                        or_(
+                            OutboundWebhookDelivery.last_attempt_at.is_(None),
+                            OutboundWebhookDelivery.last_attempt_at <= cutoff,
+                        ),
+                    )
+                    .values(
+                        status="queued",
+                        error_message="Recovered after an interrupted delivery attempt.",
+                    )
+                )
+            db.commit()
+
+        for candidate_id in candidate_ids:
+            self.attempt(candidate_id)
+        return len(candidate_ids)
 
     def create_test(
         self,
@@ -291,14 +384,6 @@ class WebhookDeliveryService:
             payload_json=json.dumps(envelope, ensure_ascii=False, separators=(",", ":")),
             status="queued",
         )
-
-    @staticmethod
-    def _begin_attempt(row: OutboundWebhookDelivery) -> None:
-        row.attempts += 1
-        row.last_attempt_at = utc_now()
-        row.response_status = None
-        row.response_body = None
-        row.error_message = None
 
     @staticmethod
     def _disable(row: OutboundWebhookDelivery, webhook: OutboundWebhook) -> None:

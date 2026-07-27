@@ -156,10 +156,46 @@ def test_svg_and_mismatched_uploads_are_rejected_but_valid_png_is_accepted() -> 
         )
         assert accepted.status_code == 201, accepted.text
         assert accepted.json()["mime_type"] == "image/png"
-        public_path = accepted.json()["public_url"]
-        response = client.get(public_path)
+        private_file = accepted.json()
+        private_content_path = private_file["public_url"]
+        assert private_content_path == f"/api/files/{private_file['id']}/content"
+
+        response = client.get(private_content_path)
         assert response.status_code == 200
         assert response.content.startswith(b"\x89PNG")
+        assert response.headers["cache-control"] == "private, no-store"
+        assert response.headers["x-content-type-options"] == "nosniff"
+
+        private_legacy_path = f"/uploads/{private_file['relative_path']}"
+        legacy_response = client.get(private_legacy_path)
+        assert legacy_response.status_code == 200
+        assert legacy_response.content == response.content
+
+        public_upload = client.post(
+            "/api/files?usage_context=guide",
+            files={"file": ("guide-pixel.png", BytesIO(png), "image/png")},
+        )
+        assert public_upload.status_code == 201, public_upload.text
+        public_file = public_upload.json()
+        public_content_path = public_file["public_url"]
+        public_legacy_path = f"/uploads/{public_file['relative_path']}"
+
+        client.cookies.clear()
+        assert client.get(private_content_path).status_code == 401
+        assert client.get(private_legacy_path).status_code == 401
+        assert client.get(public_content_path).status_code == 200
+        assert client.get(public_legacy_path).status_code == 200
+
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="other-upload-user",
+                password="BlackwaterOtherUpload123!",
+                display_name="Other Upload User",
+            )
+        _login(client, "other-upload-user", "BlackwaterOtherUpload123!")
+        assert client.get(private_content_path).status_code == 403
+        assert client.get(private_legacy_path).status_code == 403
 
 
 def test_webhook_targets_block_private_literals_and_private_dns_results() -> None:

@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
-import { createBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
+import { createBuild, deleteMyBuild, getBuild, getBuildOptions, updateMyBuild } from '@/modules/builds/api/builds'
 import { createBuildForm, slotLimits, sortShipsForDropdown, weaponArcFields } from '@/modules/builds/buildForm'
 import { useBuildCatalog } from '@/modules/builds/composables/useBuildCatalog'
 import { useBuildCrew } from '@/modules/builds/composables/useBuildCrew'
@@ -29,6 +29,7 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
   const optionCatalog = ref({ ...EMPTY_CATALOG })
   const loading = ref(false)
   const saving = ref(false)
+  const deleting = ref(false)
   const error = ref('')
   const suppressShipChange = ref(false)
   const isEditing = computed(() => Boolean(props.id))
@@ -81,6 +82,21 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
       error.value = err.message || t(isEditing.value ? 'builds.edit.saveError' : 'builds.create.saveError')
     } finally {
       saving.value = false
+    }
+  }
+
+  async function deleteBuild() {
+    if (!isEditing.value || saving.value || deleting.value) return
+    if (!window.confirm(t('myBuilds.confirmDelete'))) return
+    deleting.value = true
+    error.value = ''
+    try {
+      await deleteMyBuild(props.id)
+      await router.replace('/profile/builds')
+    } catch (err) {
+      error.value = err.message || t('myBuilds.deleteError')
+    } finally {
+      deleting.value = false
     }
   }
 
@@ -160,10 +176,12 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
     optionCatalog,
     loading,
     saving,
+    deleting,
     error,
     form,
     selectedShip,
     saveBuild,
+    deleteBuild,
     ...catalog,
     ...inventory,
     ...effects,

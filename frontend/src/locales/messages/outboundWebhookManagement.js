@@ -79,7 +79,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Inactive",
           "success": "Delivered",
           "failed": "Failed",
-          "queued": "Queued"
+          "queued": "Queued",
+          "processing": "Delivering"
         },
         "scopes": {
           "global": "Global",
@@ -246,7 +247,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Inaktiv",
           "success": "Zugestellt",
           "failed": "Fehlgeschlagen",
-          "queued": "Eingeplant"
+          "queued": "Eingeplant",
+          "processing": "Wird zugestellt"
         },
         "scopes": {
           "global": "Übergreifend",
@@ -413,7 +415,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Inactif",
           "success": "Livré",
           "failed": "Échec",
-          "queued": "En attente"
+          "queued": "En attente",
+          "processing": "Livraison en cours"
         },
         "scopes": {
           "global": "Général",
@@ -580,7 +583,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Inactivo",
           "success": "Entregado",
           "failed": "Fallido",
-          "queued": "En cola"
+          "queued": "En cola",
+          "processing": "Entregando"
         },
         "scopes": {
           "global": "General",
@@ -747,7 +751,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Inativo",
           "success": "Entregue",
           "failed": "Falhou",
-          "queued": "Na fila"
+          "queued": "Na fila",
+          "processing": "A entregar"
         },
         "scopes": {
           "global": "Geral",
@@ -914,7 +919,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "Неактивен",
           "success": "Доставлено",
           "failed": "Ошибка",
-          "queued": "В очереди"
+          "queued": "В очереди",
+          "processing": "Доставляется"
         },
         "scopes": {
           "global": "Глобально",
@@ -1081,7 +1087,8 @@ export const outboundWebhookManagementMessages = {
           "inactive": "停用",
           "success": "已投递",
           "failed": "失败",
-          "queued": "排队中"
+          "queued": "排队中",
+          "processing": "投递中"
         },
         "scopes": {
           "global": "全局",

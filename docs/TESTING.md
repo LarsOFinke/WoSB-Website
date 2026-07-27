@@ -4,7 +4,7 @@ Die v1.0-Testbasis hält die Werkzeugkette klein und prüft die produktionsrelev
 
 1. **Backend:** Pytest-Module in getrennten Prozessen und Laufzeitverzeichnissen.
 2. **Frontend:** Node-eigene Unit-Tests für reine Berechnungen, Crew, Präferenzen und Datum sowie
-   gezielte Build-Designer-Regressionen.
+   gezielte Build-Designer-Regressionen. Ein Architekturtest prüft jede Route-Page auf Page-Model-Bindung und verbietet dort direkte API-/Async-Verantwortung.
 3. **Katalog:** Vollständigkeit, Seed-Idempotenz und die Invariante „keine Produktions-Mockdaten“.
 4. **Schema-Baseline:** frische Datenbank bis Head, `alembic check`, Downgrade auf `base` und
    erneuter Aufbau aus `0001_baseline`.
@@ -13,7 +13,7 @@ Die v1.0-Testbasis hält die Werkzeugkette klein und prüft die produktionsrelev
    Statuswerte, MIME-Typen und Upload-Limits.
 7. **Infrastruktur:** Bash-Syntax, modulare Runner, Compose-/Env-Vertrag, NGINX-Sicherheitsheader und
    kein Docker-Socket.
-8. **Repository:** Versionen, `.cfg`-Konfiguration, Dokumentation, Secrets, öffentliche Registry-URLs, Dateigrößenbudgets
+8. **Repository:** Versionen, `.cfg`-Konfiguration, Dokumentation, Secrets, öffentliche Registry-URLs, Dateigrößenbudgets, CSS-Layer, gepinnte Container-Basisimages
    und release-freie Runtime-Artefakte.
 
 ```bash

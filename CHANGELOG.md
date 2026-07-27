@@ -1,5 +1,15 @@
 ## Unreleased
 
+- Alle Route-Pages auf verbindliche Page-Composables umgestellt; direkte API-Imports, Lifecycle-Ladevorgänge und eigene asynchrone Workflows in Seiten werden repositoryweit verhindert.
+- Globales Frontend-CSS unter Beibehaltung der Kaskadenreihenfolge in sieben größenbegrenzte Layer zerlegt und mit CSS-Budgets abgesichert.
+- Python-, Node-, NGINX-, PostgreSQL- und Uptime-Kuma-Basisimages auf konkrete Versionen festgeschrieben; unversioniertes pip-Self-Upgrade aus dem Backend-Build entfernt.
+- Upload-Auslieferung durch API-Zugriffspolitik und private No-Store-Header gehärtet: Guide-, Forum- und Master-Data-Dateien bleiben öffentlich, sonstige Dateien sind auf Eigentümer und Staff begrenzt; bestehende `/uploads/...`-Links bleiben kompatibel.
+- Build-Editor um eine abgesicherte Löschaktion für eigene Builds ergänzt; nach Bestätigung wird der Build entfernt und zur persönlichen Build-Bibliothek zurück navigiert.
+- Discord-Webhook-Editor als isolierten, responsiven Body-Drawer umgesetzt; Checkboxen, Formularelemente und Aktionen überlagern sich nicht mehr, der Hintergrund wird während der Bearbeitung gesperrt.
+- Webhook-Zustellungen atomar beansprucht und um automatische Wiederaufnahme verwaister `queued`-/`processing`-Einträge mit begrenzten Versuchen ergänzt.
+- Produktionslogging gibt strukturierte Meldungen zusätzlich auf der Konsole aus, damit Datenbankausfälle nicht gleichzeitig die Laufzeitdiagnose abschalten.
+- Release-Prüfungen gegen plattformabhängige Zeilenenden und einen veralteten Alembic-Head gehärtet; mehrere testreihenfolgeabhängige Fixtures korrigiert.
+- Ursprüngliche Upload-Dateinamen werden vor der Persistierung auf die Datenbankgrenze gekürzt.
 - Webhook-Template-Autofill und Backend-Standardnachrichten verwenden nun exakt die vollständigen englischen Repository-Templates mit Kontextfeldern und Deep-Links; eine Release-Invariante verhindert erneute Abweichungen.
 - Staff-Overview mit eigenem responsivem Dashboard-Layout repariert; Kennzahlen, Warteschlangen und Administratorhinweise bleiben auf Desktop, Tablet und Mobilgeräten klar getrennt.
 - Discord-Webhook-Editor um Template-Autofill aus dem versionierten Event-Katalog und eine kompakte, durchsuchbare Mehrfachauswahl für abonnierte Events erweitert.

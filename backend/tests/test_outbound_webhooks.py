@@ -739,3 +739,95 @@ def test_broadcast_requires_active_broadcast_enabled_targets(monkeypatch) -> Non
         )
         assert response.status_code == 400
         assert "broadcast-enabled" in response.json()["detail"]
+
+
+def test_stale_processing_webhook_delivery_is_recovered_once(tmp_path) -> None:
+    from datetime import timedelta
+
+    from sqlalchemy.orm import sessionmaker
+
+    from app.core.time import utc_now
+    from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
+    from app.modules.admin.services.outbound_webhook_delivery_service.service import (
+        WebhookDeliveryService,
+    )
+
+    class CaptureTransport:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def send(self, request):
+            self.calls += 1
+            return 204, ""
+
+        @staticmethod
+        def error_message(endpoint_url, exc):
+            return str(exc)
+
+    register_all_models()
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'webhook-recovery.db'}")
+    Base.metadata.create_all(engine)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+
+    with session_factory() as db:
+        actor = create_user(
+            db,
+            username="webhook-recovery-admin",
+            password="BlackwaterWebhookRecovery123!",
+            display_name="Webhook Recovery Admin",
+            role=ROLE_ADMIN,
+        )
+        create_webhook(
+            db,
+            OutboundWebhookCreate(
+                name="Recovery target",
+                endpoint_url="https://discord.com/api/webhooks/666666666666666666/recovery-token",
+                event_types=["build.created"],
+            ),
+            actor,
+        )
+        delivery_id = queue_webhook_event(
+            db,
+            event_type="build.created",
+            resource_type="build",
+            resource_id=91,
+            actor=actor,
+            data={"id": 91, "build_name": "Recovered build"},
+        )[0]
+        fresh_delivery_id = queue_webhook_event(
+            db,
+            event_type="build.created",
+            resource_type="build",
+            resource_id=92,
+            actor=actor,
+            data={"id": 92, "build_name": "Active delivery"},
+        )[0]
+        delivery = db.get(OutboundWebhookDelivery, delivery_id)
+        delivery.status = "processing"
+        delivery.attempts = 1
+        delivery.last_attempt_at = utc_now() - timedelta(minutes=10)
+        fresh_delivery = db.get(OutboundWebhookDelivery, fresh_delivery_id)
+        fresh_delivery.status = "processing"
+        fresh_delivery.attempts = 1
+        fresh_delivery.last_attempt_at = utc_now()
+        db.commit()
+
+    transport = CaptureTransport()
+    service = WebhookDeliveryService(
+        session_factory=session_factory,
+        transport=transport,
+    )
+
+    assert service.recover_pending(stale_after=timedelta(minutes=5)) == 1
+    assert transport.calls == 1
+
+    with session_factory() as db:
+        delivery = db.get(OutboundWebhookDelivery, delivery_id)
+        assert delivery.status == "success"
+        assert delivery.attempts == 2
+        fresh_delivery = db.get(OutboundWebhookDelivery, fresh_delivery_id)
+        assert fresh_delivery.status == "processing"
+        assert fresh_delivery.attempts == 1
+
+    service.attempt(delivery_id)
+    assert transport.calls == 1

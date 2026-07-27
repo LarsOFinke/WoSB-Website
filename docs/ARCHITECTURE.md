@@ -9,7 +9,7 @@ Uptime Kuma → internes Gateway/Health-Endpunkte
 ```
 
 NGINX liefert das Vue-Frontend und leitet `/api` an FastAPI weiter. PostgreSQL bleibt im internen
-Compose-Netz; der Loopback-Port dient nur der Host-Wartung.
+Compose-Netz; der Loopback-Port dient nur der Host-Wartung. Upload-Inhalte werden nicht direkt aus dem Dateisystem ausgeliefert: `/api/files/{id}/content` und der kompatible `/uploads/...`-Pfad laufen durch die API und antworten ohne öffentlichen Cache. Die ausdrücklich öffentlichen Kontexte `guide`, `forum` und `master-data` bleiben anonym lesbar; sonstige Uploads verlangen den Eigentümer oder Staff-Rechte.
 
 ## Backend
 
@@ -25,10 +25,10 @@ Modulen synchronisiert. Produktions-Seeds enthalten keine Nutzerinhalte.
 
 ## Frontend
 
-`frontend/src/modules/<domain>` kapselt API, Seiten und Komponenten. `core` enthält Shell und
-Navigation, `shared` wiederverwendbare Technik. Build-Berechnung, Crew-Zuordnung,
+`frontend/src/modules/<domain>` kapselt API, Domainlogik, Composables, Seiten und Komponenten. `core` enthält Shell und
+Navigation, `shared` wiederverwendbare Technik. Jede Route-Page bindet ausschließlich ein Page-Model; API-Aufrufe, Lifecycle-Ladevorgänge und asynchrone Workflows liegen in Composables. Build-Berechnung, Crew-Zuordnung,
 Inventar-Reconciliation, Formular-Defaults, Präferenztransfer und Datumskonvertierung sind reine,
-separat testbare JavaScript-Module.
+separat testbare JavaScript-Module. Das globale CSS wird über ein geordnetes Manifest aus größenbegrenzten Layern geladen.
 
 ## Frontend-Backend-Vertrag
 
