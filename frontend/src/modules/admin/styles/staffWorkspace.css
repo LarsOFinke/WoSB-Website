@@ -741,3 +741,192 @@ body.staff-workspace-route .sidebar-collapse-button {
     transition: none;
   }
 }
+
+/* System log workspace: keep sensitive operations grouped and responsive. */
+.system-log-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.system-log-heading,
+.system-log-heading-actions,
+.system-log-entry-actions,
+.system-log-entry-delete-confirmation {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.system-log-heading {
+  justify-content: space-between;
+}
+
+.system-log-heading-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.system-log-delete-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(241, 104, 104, 0.28);
+  border-radius: 0.7rem;
+  background: rgba(241, 104, 104, 0.07);
+}
+
+.system-log-delete-confirmation > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.system-log-delete-confirmation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.system-log-filter-surface {
+  display: grid;
+  gap: 0;
+}
+
+.system-log-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border-top: 1px solid rgba(205, 221, 235, 0.08);
+}
+
+.system-log-field {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.system-log-field > span {
+  color: var(--muted-soft);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.system-log-field input,
+.system-log-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.65rem;
+  font-size: 0.78rem;
+}
+
+.system-log-field--wide {
+  grid-column: span 2;
+}
+
+.system-log-blocked-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  margin: 0 0.8rem 0.8rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(241, 184, 91, 0.16);
+  border-radius: 0.6rem;
+  background: rgba(241, 184, 91, 0.045);
+  cursor: pointer;
+}
+
+.system-log-blocked-toggle input {
+  width: 1rem !important;
+  min-width: 1rem;
+  height: 1rem;
+  min-height: 1rem !important;
+  margin-top: 0.1rem;
+}
+
+.system-log-blocked-toggle > span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.system-log-blocked-toggle strong {
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+.system-log-blocked-toggle small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.system-log-entry-actions {
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.system-log-entry-delete-confirmation {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(241, 104, 104, 0.2);
+  border-radius: 0.55rem;
+  background: rgba(241, 104, 104, 0.055);
+}
+
+.system-log-entry-delete-confirmation > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.system-log-admin-panel > .system-log-panel {
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .system-log-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .system-log-heading,
+  .system-log-delete-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .system-log-heading-actions,
+  .system-log-delete-confirmation .hero-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .system-log-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-log-field--wide {
+    grid-column: auto;
+  }
+
+  .system-log-entry-actions,
+  .system-log-entry-delete-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .system-log-entry-actions > *,
+  .system-log-entry-delete-confirmation > * {
+    width: 100%;
+  }
+}

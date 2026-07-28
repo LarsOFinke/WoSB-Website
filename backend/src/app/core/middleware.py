@@ -16,6 +16,7 @@ from starlette.responses import JSONResponse, Response
 logger = logging.getLogger("app.request")
 
 ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
+ROUTINE_LOG_ROUTE_ROOTS = ("/api/admin/logs",)
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 SENSITIVE_QUERY_KEYS = frozenset(
     {"access_token", "api_key", "auth", "code", "key", "password", "secret", "signature", "token"}
@@ -64,7 +65,14 @@ class RequestLogPolicy:
     def should_log(
         self, path: str, status_code: int, failure: Exception | None = None
     ) -> bool:
-        return failure is not None or status_code >= 400 or path not in self._routine_paths
+        if failure is not None or status_code >= 400:
+            return True
+        if path in self._routine_paths:
+            return False
+        return not any(
+            path == root or path.startswith(f"{root}/")
+            for root in ROUTINE_LOG_ROUTE_ROOTS
+        )
 
 
 class ClientIpResolver:

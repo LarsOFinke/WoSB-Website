@@ -1,6 +1,11 @@
 import { computed, ref, watch } from 'vue'
 
-import { getAdminLogSummary, listAdminLogs } from '@/modules/admin/api/admin'
+import {
+  deleteAdminLog,
+  deleteFilteredAdminLogs,
+  getAdminLogSummary,
+  listAdminLogs,
+} from '@/modules/admin/api/admin'
 import { formatDuration, isoDate, shiftDate } from '@/modules/admin/domain/adminWorkspace'
 import { useDebouncedWatch } from '@/shared/composables/useDebouncedWatch'
 
@@ -16,10 +21,14 @@ export function useAdminLogs({ isAdmin, activeTab, t }) {
   const logThreat = ref('')
   const logFromDate = ref(isoDate(shiftDate(today, -6)))
   const logToDate = ref(isoDate(today))
+  const logIncludeBlocked = ref(false)
   const logSort = ref('created_at')
   const logOrder = ref('desc')
   const logsLoading = ref(false)
+  const logsDeleting = ref(false)
   const logsError = ref('')
+  const logsActionError = ref('')
+  const logsActionSuccess = ref('')
 
   const logsCountLabel = computed(() => t('admin.logs.summary', {
     count: logSummary.value.total || appLogs.value.length,
@@ -33,7 +42,13 @@ export function useAdminLogs({ isAdmin, activeTab, t }) {
       threatLevel: logThreat.value,
       fromDate: logFromDate.value,
       toDate: logToDate.value,
+      includeBlocked: logIncludeBlocked.value,
     }
+  }
+
+  function clearLogActionState() {
+    logsActionError.value = ''
+    logsActionSuccess.value = ''
   }
 
   async function loadLogs() {
@@ -55,18 +70,59 @@ export function useAdminLogs({ isAdmin, activeTab, t }) {
     }
   }
 
+  async function deleteLogEntry(id) {
+    if (!isAdmin.value || !id) return false
+    logsDeleting.value = true
+    clearLogActionState()
+    try {
+      await deleteAdminLog(id)
+      logsActionSuccess.value = t('admin.logs.deleteOneSuccess')
+      await loadLogs()
+      return true
+    } catch (err) {
+      logsActionError.value = err.message || t('admin.logs.deleteError')
+      return false
+    } finally {
+      logsDeleting.value = false
+    }
+  }
+
+  async function deleteFilteredLogs() {
+    if (!isAdmin.value) return 0
+    logsDeleting.value = true
+    clearLogActionState()
+    try {
+      const result = await deleteFilteredAdminLogs(query())
+      const deletedCount = Number(result?.deleted_count || 0)
+      logsActionSuccess.value = t('admin.logs.deleteFilteredSuccess', { count: deletedCount })
+      await loadLogs()
+      return deletedCount
+    } catch (err) {
+      logsActionError.value = err.message || t('admin.logs.deleteError')
+      return -1
+    } finally {
+      logsDeleting.value = false
+    }
+  }
+
   function openLogsForIp(ipAddress) {
     if (!isAdmin.value) return
     logIp.value = ipAddress || ''
+    logIncludeBlocked.value = Boolean(ipAddress)
     activeTab.value = 'logs'
   }
 
-  watch([logLevel, logIp, logThreat, logFromDate, logToDate, logSort, logOrder], loadLogs)
+  watch(
+    [logLevel, logIp, logThreat, logFromDate, logToDate, logIncludeBlocked, logSort, logOrder],
+    loadLogs,
+  )
   useDebouncedWatch(logPath, loadLogs, 260)
 
   return {
     appLogs, logSummary, logLevel, logPath, logIp, logThreat, logFromDate, logToDate,
-    logSort, logOrder, logsLoading, logsError, logsCountLabel,
-    loadLogs, formatDuration, openLogsForIp,
+    logIncludeBlocked, logSort, logOrder, logsLoading, logsDeleting, logsError,
+    logsActionError, logsActionSuccess, logsCountLabel,
+    loadLogs, deleteLogEntry, deleteFilteredLogs, clearLogActionState,
+    formatDuration, openLogsForIp,
   }
 }

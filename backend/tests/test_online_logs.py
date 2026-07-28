@@ -125,3 +125,161 @@ def test_moderator_cannot_read_privacy_sensitive_logs() -> None:
         assert client.get('/api/admin/logs').status_code == 403
         assert client.get('/api/admin/logs/summary').status_code == 403
         assert client.get('/api/admin/logs/security-dashboard').status_code == 403
+        assert client.delete('/api/admin/logs', params={'confirm': 'true'}).status_code == 403
+        assert client.delete('/api/admin/logs/1').status_code == 403
+
+
+def test_active_ip_blocks_are_hidden_from_logs_unless_explicitly_included() -> None:
+    username = 'blocked-log-admin'
+    password = 'BlackwaterBlockedLogs123!'
+    blocked_ip = '203.0.113.211'
+    path = '/api/__tests__/blocked-log-noise'
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name='Blocked Log Admin',
+                role=ROLE_ADMIN,
+            )
+            db.add(AppLog(
+                created_at=utc_now(),
+                level='INFO',
+                logger='request',
+                message='blocked request noise',
+                path=path,
+                status_code=403,
+                client_ip=blocked_ip,
+            ))
+            db.commit()
+
+        login = client.post('/api/auth/login', json={'username': username, 'password': password})
+        assert login.status_code == 200
+        created = client.post('/api/admin/ip-blocks', json={
+            'ip_address': blocked_ip,
+            'reason': 'Repeated blocked request noise',
+        })
+        assert created.status_code == 201, created.text
+
+        hidden = client.get('/api/admin/logs', params={'path': path})
+        assert hidden.status_code == 200, hidden.text
+        assert hidden.json() == []
+
+        hidden_summary = client.get('/api/admin/logs/summary', params={'path': path})
+        assert hidden_summary.status_code == 200
+        assert hidden_summary.json()['total'] == 0
+
+        visible = client.get('/api/admin/logs', params={'path': path, 'include_blocked': 'true'})
+        assert visible.status_code == 200, visible.text
+        assert len(visible.json()) == 1
+        assert visible.json()[0]['client_ip'] == blocked_ip
+
+        visible_summary = client.get('/api/admin/logs/summary', params={
+            'path': path,
+            'include_blocked': 'true',
+        })
+        assert visible_summary.status_code == 200
+        assert visible_summary.json()['total'] == 1
+
+        dashboard_hidden = client.get('/api/admin/logs/security-dashboard', params={
+            'client_ip': blocked_ip,
+        })
+        assert dashboard_hidden.status_code == 200
+        assert dashboard_hidden.json()['total_requests'] == 0
+
+        dashboard_visible = client.get('/api/admin/logs/security-dashboard', params={
+            'client_ip': blocked_ip,
+            'include_blocked': 'true',
+        })
+        assert dashboard_visible.status_code == 200
+        assert dashboard_visible.json()['total_requests'] == 1
+
+
+def test_admin_can_delete_single_and_filtered_system_logs() -> None:
+    username = 'delete-log-admin'
+    password = 'BlackwaterDeleteLogs123!'
+    visible_path = '/api/__tests__/delete-visible-logs'
+    blocked_path = '/api/__tests__/delete-blocked-logs'
+    blocked_ip = '198.51.100.212'
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name='Delete Log Admin',
+                role=ROLE_ADMIN,
+            )
+            single = AppLog(
+                created_at=utc_now(),
+                level='WARNING',
+                logger='request',
+                message='single delete marker',
+                path='/api/__tests__/delete-one-log',
+                status_code=429,
+                client_ip='198.51.100.210',
+            )
+            db.add(single)
+            db.add_all([
+                AppLog(created_at=utc_now(), level='INFO', logger='request', message='visible 1', path=visible_path, status_code=200, client_ip='198.51.100.211'),
+                AppLog(created_at=utc_now(), level='ERROR', logger='request', message='visible 2', path=visible_path, status_code=500, client_ip='198.51.100.211'),
+                AppLog(created_at=utc_now(), level='INFO', logger='request', message='blocked', path=blocked_path, status_code=403, client_ip=blocked_ip),
+            ])
+            db.commit()
+            db.refresh(single)
+            single_id = single.id
+
+        login = client.post('/api/auth/login', json={'username': username, 'password': password})
+        assert login.status_code == 200
+        created = client.post('/api/admin/ip-blocks', json={
+            'ip_address': blocked_ip,
+            'reason': 'Deletion scope regression',
+        })
+        assert created.status_code == 201, created.text
+
+        deleted_one = client.delete(f'/api/admin/logs/{single_id}')
+        assert deleted_one.status_code == 204, deleted_one.text
+        assert client.delete(f'/api/admin/logs/{single_id}').status_code == 404
+
+        missing_confirmation = client.delete('/api/admin/logs', params={'path': visible_path})
+        assert missing_confirmation.status_code == 400
+
+        deleted_visible = client.delete('/api/admin/logs', params={
+            'path': visible_path,
+            'confirm': 'true',
+        })
+        assert deleted_visible.status_code == 200, deleted_visible.text
+        assert deleted_visible.json()['deleted_count'] == 2
+        assert client.get('/api/admin/logs', params={
+            'path': visible_path,
+            'include_blocked': 'true',
+        }).json() == []
+
+        blocked_still_exists = client.get('/api/admin/logs', params={
+            'path': blocked_path,
+            'include_blocked': 'true',
+        })
+        assert len(blocked_still_exists.json()) == 1
+
+        deleted_blocked = client.delete('/api/admin/logs', params={
+            'path': blocked_path,
+            'include_blocked': 'true',
+            'confirm': 'true',
+        })
+        assert deleted_blocked.status_code == 200, deleted_blocked.text
+        assert deleted_blocked.json()['deleted_count'] == 1
+
+
+        audit_rows = client.get('/api/admin/audit-logs', params={'entity_type': 'app_log'})
+        assert audit_rows.status_code == 200, audit_rows.text
+        assert len(audit_rows.json()) == 3
+        assert {row['action'] for row in audit_rows.json()} == {'delete'}
+
+
+def test_successful_log_management_requests_do_not_pollute_system_logs() -> None:
+    assert should_log_request('/api/admin/logs', 200) is False
+    assert should_log_request('/api/admin/logs/summary', 200) is False
+    assert should_log_request('/api/admin/logs/security-dashboard', 200) is False
+    assert should_log_request('/api/admin/logs/123', 204) is False
+    assert should_log_request('/api/admin/logs', 500) is True

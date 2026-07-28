@@ -4,6 +4,7 @@ import test from 'node:test'
 import { readGlobalStyles } from './helpers/readGlobalStyles.mjs'
 
 const adminSource = await readFile(new URL('../src/modules/admin/pages/AdminPage.vue', import.meta.url), 'utf8')
+const systemLogSource = await readFile(new URL('../src/modules/admin/components/SystemLogPanel.vue', import.meta.url), 'utf8')
 const auditSource = await readFile(new URL('../src/modules/admin/components/AuditLogPanel.vue', import.meta.url), 'utf8')
 const webhookSource = await readFile(new URL('../src/modules/admin/components/OutboundWebhookManagementPanel.vue', import.meta.url), 'utf8')
 const broadcastSource = await readFile(new URL('../src/modules/admin/components/DiscordBroadcastPanel.vue', import.meta.url), 'utf8')
@@ -29,7 +30,7 @@ test('staff workspace exposes combined filters for all shared management modules
 })
 
 test('audit history includes newly introduced administrative entity types', () => {
-  for (const entity of ['registration_request', 'user_account', 'fleet_membership', 'ip_block', 'outbound_webhook']) {
+  for (const entity of ['registration_request', 'user_account', 'fleet_membership', 'ip_block', 'app_log', 'outbound_webhook']) {
     assert.ok(auditSource.includes(`value="${entity}"`), entity)
   }
 })
@@ -70,13 +71,17 @@ test('webhook editor offers compact subscriptions and repository template autofi
   assert.ok(stylesSource.includes('.webhook-editor-backdrop'))
 })
 
-test('system logs use expandable request rows and defer the dense security dashboard', () => {
+test('system logs use a dedicated manageable panel and defer the dense security dashboard', () => {
+  assert.ok(adminSource.includes('<SystemLogPanel'))
   for (const className of ['staff-log-summary-strip', 'staff-log-list', 'staff-log-entry-details', 'staff-log-security-disclosure']) {
-    assert.ok(adminSource.includes(className), className)
+    assert.ok(systemLogSource.includes(className), className)
     assert.ok(stylesSource.includes(`.${className}`), `${className} CSS`)
   }
-  assert.ok(adminSource.includes(':aria-expanded="expandedLogId === entry.id"'))
-  assert.ok(!adminSource.includes('<table class="security-table staff-log-table">'))
+  assert.ok(systemLogSource.includes(':aria-expanded="expandedLogId === entry.id"'))
+  assert.ok(systemLogSource.includes('v-model="logIncludeBlocked"'))
+  assert.ok(systemLogSource.includes('deleteFilteredLogs'))
+  assert.ok(systemLogSource.includes('deleteLogEntry'))
+  assert.ok(!systemLogSource.includes('<table class="security-table staff-log-table">'))
 })
 
 test('all staff routes share one stable grouped navigation shell', () => {

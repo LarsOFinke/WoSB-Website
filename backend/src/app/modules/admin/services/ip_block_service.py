@@ -86,6 +86,19 @@ def find_active_ip_block(db: Session, value: str | None) -> IpBlock | None:
     )
 
 
+def active_blocked_ip_addresses(db: Session, now: datetime | None = None) -> set[str]:
+    """Return normalized addresses for blocks that are currently enforced."""
+    now = now or utc_now()
+    return set(
+        db.scalars(
+            select(IpBlock.ip_address).where(
+                IpBlock.unblocked_at.is_(None),
+                or_(IpBlock.expires_at.is_(None), IpBlock.expires_at > now),
+            )
+        ).all()
+    )
+
+
 def create_ip_block(db: Session, *, actor: User, payload: IpBlockCreate) -> IpBlockRead:
     normalized = validate_blockable_ip(payload.ip_address)
     if len(payload.reason.strip()) < 3:

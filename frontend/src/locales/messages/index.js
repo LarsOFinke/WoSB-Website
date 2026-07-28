@@ -19,6 +19,7 @@ import { masterDataMessages } from './masterData'
 import { staffPanelMessages } from './staffPanel'
 import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul'
 import { systemOperationsMessages } from './systemOperations'
+import { systemLogManagementMessages } from './systemLogManagement'
 import { securityAuditDashboardMessages } from './securityAuditDashboard'
 import { ipBlockManagementMessages } from './ipBlockManagement'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement'
@@ -50,6 +51,7 @@ const messageLayers = [
   staffPanelMessages,
   staffWorkspaceOverhaulMessages,
   systemOperationsMessages,
+  systemLogManagementMessages,
   securityAuditDashboardMessages,
   ipBlockManagementMessages,
   outboundWebhookManagementMessages,

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.time import utc_now
 from app.modules.admin.models.app_log import AppLog
+from app.modules.admin.services.ip_block_service import active_blocked_ip_addresses
 from app.modules.admin.schemas.security_dashboard import (
     SecurityDashboard,
     SecurityDayBucket,
@@ -86,10 +87,15 @@ class SecurityDashboardService:
         from_date: date | None = None,
         to_date: date | None = None,
         threat_level: str | None = None,
+        include_blocked: bool = False,
     ) -> set[str]:
         if not threat_level:
             return set()
-        _, _, rows = self._load_rows(from_date=from_date, to_date=to_date)
+        _, _, rows = self._load_rows(
+            from_date=from_date,
+            to_date=to_date,
+            include_blocked=include_blocked,
+        )
         return {
             row.client_ip
             for row in self._build_ip_rows(rows)
@@ -105,9 +111,12 @@ class SecurityDashboardService:
         limit: int = 100,
         threat_level: str | None = None,
         client_ip: str | None = None,
+        include_blocked: bool = False,
     ) -> SecurityDashboard:
         effective_from, effective_to, rows = self._load_rows(
-            from_date=from_date, to_date=to_date
+            from_date=from_date,
+            to_date=to_date,
+            include_blocked=include_blocked,
         )
         all_ip_rows = self._build_ip_rows(rows)
         threat_counts = {level: 0 for level in THREAT_LEVELS}
@@ -153,7 +162,11 @@ class SecurityDashboardService:
         )
 
     def _load_rows(
-        self, *, from_date: date | None, to_date: date | None
+        self,
+        *,
+        from_date: date | None,
+        to_date: date | None,
+        include_blocked: bool = False,
     ) -> tuple[date, date, list[AppLog]]:
         effective_from, effective_to = self._effective_range(from_date, to_date)
         start = datetime.combine(effective_from, time.min)
@@ -165,6 +178,10 @@ class SecurityDashboardService:
                 .order_by(AppLog.created_at.asc(), AppLog.id.asc())
             ).all()
         )
+        if not include_blocked:
+            blocked_ips = active_blocked_ip_addresses(self.db)
+            if blocked_ips:
+                rows = [row for row in rows if self._client_ip(row) not in blocked_ips]
         return effective_from, effective_to, rows
 
     def _build_ip_rows(self, rows: list[AppLog]) -> list[SecurityIpRow]:

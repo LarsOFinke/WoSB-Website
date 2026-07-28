@@ -174,6 +174,7 @@ export function useAdminWorkspace() {
     navigateToTab,
     canAccessTab,
     loadOverview,
+    logsWorkspace,
     ...buildsWorkspace,
     ...usersWorkspace,
     ...registrationsWorkspace,

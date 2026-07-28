@@ -9,6 +9,7 @@ const props = defineProps({
   toDate: { type: String, default: '' },
   threatLevel: { type: String, default: '' },
   selectedIp: { type: String, default: '' },
+  includeBlocked: { type: Boolean, default: false },
   canBlock: { type: Boolean, default: false },
 })
 
@@ -100,6 +101,7 @@ async function load() {
       toDate: props.toDate,
       threatLevel: props.threatLevel,
       clientIp: props.selectedIp,
+      includeBlocked: props.includeBlocked,
       sort: sort.value,
       limit: 250,
     })
@@ -120,7 +122,7 @@ async function load() {
 }
 
 watch(
-  () => [props.fromDate, props.toDate, props.threatLevel, props.selectedIp, sort.value],
+  () => [props.fromDate, props.toDate, props.threatLevel, props.selectedIp, props.includeBlocked, sort.value],
   load,
   { immediate: true },
 )
