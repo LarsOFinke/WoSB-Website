@@ -19,14 +19,22 @@ update_apply_request_file() {
     ""|update)
       RUN_MIGRATIONS=false
       RUN_SEED=false
+      RESTORE_SEED_DEFAULTS=false
       ;;
     update_migrate)
       RUN_MIGRATIONS=true
       RUN_SEED=false
+      RESTORE_SEED_DEFAULTS=false
       ;;
     update_migrate_seed)
       RUN_MIGRATIONS=true
       RUN_SEED=true
+      RESTORE_SEED_DEFAULTS=false
+      ;;
+    update_migrate_seed_restore)
+      RUN_MIGRATIONS=true
+      RUN_SEED=true
+      RESTORE_SEED_DEFAULTS=true
       ;;
     *)
       INVALID_REQUEST_OPERATION="$requested_operation"

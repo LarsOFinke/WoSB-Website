@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed master-data seed recovery: individual restore actions are real buttons, admins can reset all repository-owned categories, options and ships from the master-data workspace, and custom records/user content remain untouched. Added `update.sh --restore-seed-defaults` for the equivalent audited server-side repair flow and explicit reporting when normal seeds preserve admin overrides.
 - Completed the selectable ammunition seed catalog with Heavy Shots and Saxon Shots, stable seed IDs and translations in every supported locale.
 - Audited Build Designer arithmetic end to end: De Zeven Provincien plus Raiding Sails is fixed at the verified `14.7 kn`, percentage/flat components remain dimensionally correct, and all Python/JavaScript crew and specialist rounding now uses one decimal half-up contract.
 - Added a shared calculation contract and coverage gate for all 106 numeric seed-effect keys.

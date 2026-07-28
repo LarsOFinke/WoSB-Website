@@ -23,15 +23,25 @@ def create_tables() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def seed_database() -> None:
+def seed_database(*, restore_seed_defaults: bool = False) -> dict[str, dict[str, int]]:
     register_all_models()
     with Session(engine) as db:
-        SeedManager(db).run()
+        manager = SeedManager(db)
+        restored = (
+            manager.restore_repository_seed_defaults()
+            if restore_seed_defaults
+            else {"categories": 0, "options": 0, "ships": 0}
+        )
+        manager.run()
+        return {
+            "restored": restored,
+            "preserved": manager.seed_override_counts(),
+        }
 
 
-def create_and_seed() -> None:
+def create_and_seed(*, restore_seed_defaults: bool = False) -> dict[str, dict[str, int]]:
     create_tables()
-    seed_database()
+    return seed_database(restore_seed_defaults=restore_seed_defaults)
 
 
 def reset_database() -> None:

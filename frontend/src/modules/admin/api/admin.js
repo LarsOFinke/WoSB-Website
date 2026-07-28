@@ -87,6 +87,10 @@ export function getMasterDataTaxonomy() {
   return get('/admin/master-data/taxonomy')
 }
 
+export function restoreAllMasterDataSeedDefaults() {
+  return post('/admin/master-data/restore-seed-defaults', {})
+}
+
 export function listMasterDataCategories() {
   return get('/admin/master-data/categories')
 }

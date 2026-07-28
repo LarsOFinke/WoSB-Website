@@ -116,6 +116,7 @@ verify_database_schema_head() {
 deploy_application_update() {
   local run_migrations="${1:-false}"
   local run_seed="${2:-false}"
+  local restore_seed_defaults="${3:-false}"
 
   ensure_env_file
 
@@ -134,8 +135,13 @@ deploy_application_update() {
   fi
 
   if [[ "$run_seed" == true ]]; then
-    log "Führe beabsichtigtes idempotentes Seed aus."
-    bw_compose run --rm seed
+    if [[ "$restore_seed_defaults" == true ]]; then
+      log "Stelle repository-eigene Seed-Defaults wieder her und führe das Seed aus."
+      bw_compose run --rm seed rbf-seed --restore-seed-defaults
+    else
+      log "Führe beabsichtigtes idempotentes Seed aus."
+      bw_compose run --rm seed
+    fi
   else
     log "Seed wird übersprungen."
   fi

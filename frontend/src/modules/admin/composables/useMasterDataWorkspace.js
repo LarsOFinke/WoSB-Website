@@ -13,6 +13,7 @@ import {
   listMasterDataCategories,
   listMasterDataOptions,
   listMasterDataShips,
+  restoreAllMasterDataSeedDefaults,
   restoreMasterDataCategory,
   restoreMasterDataOption,
   restoreMasterDataShip,
@@ -69,6 +70,7 @@ export function useMasterDataWorkspace() {
   const optionForm = reactive(createOptionForm())
   const shipForm = reactive(createShipForm())
 
+  const selectedCategory = computed(() => categories.value.find((row) => row.id === categoryEditingId.value))
   const selectedOption = computed(() => options.value.find((row) => row.id === optionEditingId.value))
   const selectedShip = computed(() => ships.value.find((row) => row.id === shipEditingId.value))
   const tabCounts = computed(() => ({
@@ -273,6 +275,30 @@ export function useMasterDataWorkspace() {
   const restoreOption = (row) => runRecordAction(() => restoreMasterDataOption(row.id), loadOptions, resetOption)
   const restoreShip = (row) => runRecordAction(() => restoreMasterDataShip(row.id), loadShips, resetShip)
 
+  async function restoreAllSeedDefaults() {
+    if (!window.confirm(t('masterData.restoreAllConfirm'))) return
+    clearMessages()
+    saving.value = true
+    try {
+      const result = await restoreAllMasterDataSeedDefaults()
+      await reloadAll()
+      if (error.value) throw new Error(error.value)
+      resetCategory()
+      resetOption()
+      resetShip()
+      success.value = t('masterData.restoreAllSuccess', {
+        categories: result.categories,
+        options: result.options,
+        ships: result.ships,
+        overrides: result.overrides_discarded,
+      })
+    } catch (err) {
+      error.value = err.message || t('masterData.restoreAllError')
+    } finally {
+      saving.value = false
+    }
+  }
+
   useDebouncedWatch([optionCategory, optionSearch], loadOptions, 180)
   useDebouncedWatch(shipSearch, loadShips, 180)
   onMounted(reloadAll)
@@ -281,12 +307,12 @@ export function useMasterDataWorkspace() {
     t, activeTab, loading, saving, error, success, overview, taxonomy, categories, options,
     upgradeOptions, ships, optionCategory, optionSearch, shipSearch, categoryEditingId,
     optionEditingId, shipEditingId, effectsText, categoryForm, optionForm, shipForm,
-    selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
+    selectedCategory, selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
     seedStatusLabel, clearMessages, imagePreview, applyUploadedImage, blankMounts,
     resetCategory, resetOption, resetShip, loadOverview, loadCategories, loadOptions,
     loadUpgradeOptions, loadShips, reloadAll, saveCategory, parseEffects, saveOption,
     upgradeOptionById, upgradeChoicesForOverride, addUpgradeOverride, removeUpgradeOverride,
     parseShipUpgradeOverrides, saveShip, deactivateCategory, deactivateOption, deactivateShip,
-    restoreCategory, restoreOption, restoreShip,
+    restoreCategory, restoreOption, restoreShip, restoreAllSeedDefaults,
   }
 }

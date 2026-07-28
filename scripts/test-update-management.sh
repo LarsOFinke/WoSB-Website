@@ -20,6 +20,18 @@ fail() {
 )
 
 (
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/options.sh"
+  update_options_reset
+  update_parse_options --restore-seed-defaults
+  [[ "$RUN_MIGRATIONS" == true ]] || fail "--restore-seed-defaults must imply migrations"
+  [[ "$RUN_SEED" == true ]] || fail "--restore-seed-defaults must enable seed"
+  [[ "$RESTORE_SEED_DEFAULTS" == true ]] || fail "--restore-seed-defaults must release overrides"
+  [[ "$OPERATION" == update_migrate_seed_restore ]] \
+    || fail "restore operation must expose migrate+seed+restore"
+)
+
+(
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
   mkdir -p "$tmp/site-packages"

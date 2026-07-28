@@ -20,6 +20,15 @@ class MasterDataOverview(BaseModel):
     inactive_count: int
 
 
+class MasterDataSeedRestoreSummary(BaseModel):
+    categories: int = Field(ge=0)
+    options: int = Field(ge=0)
+    ships: int = Field(ge=0)
+    total: int = Field(ge=0)
+    overrides_discarded: int = Field(ge=0)
+    custom_records_preserved: bool = True
+
+
 class MasterDataCategoryBase(BaseModel):
     label: str = Field(min_length=1, max_length=80)
     sort_order: int = Field(default=100, ge=0, le=100000)

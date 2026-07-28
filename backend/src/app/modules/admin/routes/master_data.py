@@ -12,11 +12,13 @@ from app.modules.admin.schemas.master_data import (
     MasterDataOptionRead,
     MasterDataOptionUpdate,
     MasterDataOverview,
+    MasterDataSeedRestoreSummary,
     MasterDataShipCreate,
     MasterDataShipRead,
     MasterDataShipUpdate,
     MasterDataTaxonomyRead,
 )
+from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.admin.services.master_data_service import (
     MasterDataError,
     create_category,
@@ -30,6 +32,7 @@ from app.modules.admin.services.master_data_service import (
     list_options,
     list_ships,
     master_data_overview,
+    restore_all_seed_defaults,
     restore_category_seed,
     restore_option_seed,
     restore_ship_seed,
@@ -37,6 +40,7 @@ from app.modules.admin.services.master_data_service import (
     update_option,
     update_ship,
 )
+
 
 router = APIRouter(prefix="/master-data", tags=["admin-master-data"])
 
@@ -51,6 +55,31 @@ def overview(
     _: User = Depends(require_admin),
 ) -> MasterDataOverview:
     return master_data_overview(db)
+
+
+@router.post("/restore-seed-defaults", response_model=MasterDataSeedRestoreSummary)
+def restore_seed_defaults(
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_admin),
+) -> MasterDataSeedRestoreSummary:
+    try:
+        result = restore_all_seed_defaults(db)
+    except (MasterDataError, ValueError) as exc:
+        raise _bad_request(MasterDataError(str(exc))) from exc
+    record_audit_safely(
+        db,
+        actor=actor,
+        entity_type="master_data",
+        entity_id="repository-seed-defaults",
+        action="restore_seed_defaults",
+        summary=(
+            "Repository-owned master data restored "
+            f"(categories={result.categories}, options={result.options}, ships={result.ships}, "
+            f"overrides_discarded={result.overrides_discarded})."
+        ),
+        changed_fields=["categories", "options", "ships"],
+    )
+    return result
 
 
 @router.get("/taxonomy", response_model=MasterDataTaxonomyRead)

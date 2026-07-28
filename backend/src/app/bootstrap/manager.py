@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.modules.permissions.services.role_service import ensure_role_catalog
+from app.modules.builds.models.build_item_category import BuildItemCategory
+from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.ships.models.ship import Ship
 from app.bootstrap.admin_user import seed_admin_user
 from app.bootstrap.build_catalog import seed_build_option_catalog
 from app.bootstrap.ship_catalog import (
@@ -30,6 +34,56 @@ class SeedManager:
         seed_ship_catalog(self.db)
         seed_build_option_catalog(self.db)
         seed_ship_upgrade_effect_overrides(self.db)
+
+    def seed_override_counts(self) -> dict[str, int]:
+        """Return repository-owned records intentionally protected from normal seeds."""
+
+        models = {
+            "categories": BuildItemCategory,
+            "options": BuildItemOption,
+            "ships": Ship,
+        }
+        return {
+            name: int(
+                self.db.scalar(
+                    select(func.count()).select_from(model).where(
+                        model.seed_key.is_not(None),
+                        model.is_seed_overridden.is_(True),
+                    )
+                )
+                or 0
+            )
+            for name, model in models.items()
+        }
+
+    def restore_repository_seed_defaults(self) -> dict[str, int]:
+        """Release all repository-owned overrides before an explicit repair seed.
+
+        Custom records have no ``seed_key`` and are never touched. The following
+        regular seed run restores scalar values, relationships and sparse effect
+        rows from the versioned JSON catalog.
+        """
+
+        models = {
+            "categories": BuildItemCategory,
+            "options": BuildItemOption,
+            "ships": Ship,
+        }
+        restored: dict[str, int] = {}
+        for name, model in models.items():
+            rows = self.db.scalars(
+                select(model).where(
+                    model.seed_key.is_not(None),
+                    model.is_seed_overridden.is_(True),
+                )
+            ).all()
+            restored[name] = len(rows)
+            for row in rows:
+                row.is_seed_overridden = False
+                row.seed_revision = None
+                row.seed_checksum = None
+        self.db.commit()
+        return restored
 
     # Small explicit entry points are retained for admin restore operations and
     # focused tests. The implementation stays in responsibility-specific modules.

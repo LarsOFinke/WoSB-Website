@@ -13,11 +13,11 @@ const {
   t, activeTab, loading, saving, error, success, overview, taxonomy, categories, options,
   upgradeOptions, ships, optionCategory, optionSearch, shipSearch, categoryEditingId,
   optionEditingId, shipEditingId, effectsText, categoryForm, optionForm, shipForm,
-  selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
+  selectedCategory, selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
   seedStatusLabel, imagePreview, applyUploadedImage, resetCategory, resetOption, resetShip,
   saveCategory, saveOption, upgradeOptionById, upgradeChoicesForOverride, addUpgradeOverride,
   removeUpgradeOverride, saveShip, deactivateCategory, deactivateOption, deactivateShip,
-  restoreCategory, restoreOption, restoreShip,
+  restoreCategory, restoreOption, restoreShip, restoreAllSeedDefaults,
 } = useMasterDataWorkspace()
 const { isAdmin, user } = useSession()
 const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
@@ -59,6 +59,22 @@ function setMortarModificationEnabled(enabled) {
         <MetricCard :label="t('masterData.metrics.ships')" :value="overview.ship_count" />
         <MetricCard :label="t('masterData.metrics.overrides')" :value="overview.overridden_count" tone="warning" />
         <MetricCard :label="t('masterData.metrics.inactive')" :value="overview.inactive_count" />
+      </section>
+
+      <section class="master-data-reset-panel" aria-labelledby="master-data-reset-title">
+        <div>
+          <span class="panel-kicker">{{ t('masterData.restoreAllKicker') }}</span>
+          <h2 id="master-data-reset-title">{{ t('masterData.restoreAllTitle') }}</h2>
+          <p>{{ t('masterData.restoreAllHint') }}</p>
+        </div>
+        <button
+          class="form-button danger-action master-data-reset-button"
+          type="button"
+          :disabled="loading || saving"
+          @click="restoreAllSeedDefaults"
+        >
+          {{ t('masterData.restoreAllButton') }}
+        </button>
       </section>
 
       <nav class="master-data-tabs" aria-label="Master data catalogs">
@@ -113,7 +129,8 @@ function setMortarModificationEnabled(enabled) {
 
         <form class="editor-panel" @submit.prevent="saveCategory">
           <header class="editor-header">
-            <div><span class="panel-kicker">{{ categoryEditingId ? seedStatusLabel(categories.find((row) => row.id === categoryEditingId)) : t('masterData.customRecord') }}</span><h2>{{ categoryEditingId ? t('masterData.categories.edit') : t('masterData.categories.create') }}</h2></div>
+            <div><span class="panel-kicker">{{ categoryEditingId ? seedStatusLabel(selectedCategory) : t('masterData.customRecord') }}</span><h2>{{ categoryEditingId ? t('masterData.categories.edit') : t('masterData.categories.create') }}</h2></div>
+            <button v-if="selectedCategory?.seed_status === 'overridden'" class="small-action" type="button" :disabled="saving" @click="restoreCategory(selectedCategory)">{{ t('masterData.restore') }}</button>
           </header>
           <div class="editor-section form-grid two-columns">
             <label><span>{{ t('masterData.fields.key') }}</span><input v-model="categoryForm.key" required maxlength="40" :disabled="Boolean(categoryEditingId)" /></label>
@@ -160,7 +177,10 @@ function setMortarModificationEnabled(enabled) {
             <div class="editor-preview"><img v-if="optionForm.image_url" :src="imagePreview(optionForm.image_url)" alt="" /><span v-else>✦</span></div>
             <div><span class="panel-kicker">{{ selectedOption ? seedStatusLabel(selectedOption) : t('masterData.customRecord') }}</span><h2>{{ optionEditingId ? t('masterData.options.edit') : t('masterData.options.create') }}</h2><p>{{ optionForm.name || '—' }}</p></div>
           </header>
-          <div v-if="selectedOption" class="seed-note"><strong>{{ seedStatusLabel(selectedOption) }}</strong><span>{{ selectedOption.seed_status === 'custom' ? t('masterData.customRecord') : selectedOption.seed_revision }}</span></div>
+          <div v-if="selectedOption" class="seed-note">
+            <div><strong>{{ seedStatusLabel(selectedOption) }}</strong><span>{{ selectedOption.seed_status === 'custom' ? t('masterData.customRecord') : selectedOption.seed_revision }}</span></div>
+            <button v-if="selectedOption.seed_status === 'overridden'" class="small-action" type="button" :disabled="saving" @click="restoreOption(selectedOption)">{{ t('masterData.restore') }}</button>
+          </div>
 
           <fieldset class="editor-section"><legend>{{ t('masterData.options.title') }}</legend>
             <div class="form-grid two-columns">
@@ -247,7 +267,10 @@ function setMortarModificationEnabled(enabled) {
             <div><span class="panel-kicker">{{ selectedShip ? seedStatusLabel(selectedShip) : t('masterData.customRecord') }}</span><h2>{{ shipForm.name || (shipEditingId ? t('masterData.ships.edit') : t('masterData.ships.create')) }}</h2><p>{{ t('common.rate') }} {{ shipForm.rate }} · {{ shipForm.ship_type || '—' }}</p></div>
             <div class="ship-quick-stats"><span><small>{{ t('masterData.fields.durability') }}</small><strong>{{ shipForm.durability }}</strong></span><span><small>{{ t('masterData.fields.cruiseMaxSpeed') }}</small><strong>{{ shipForm.speed_knots }}</strong></span><span><small>{{ t('masterData.fields.crewCapacity') }}</small><strong>{{ shipForm.crew_capacity }}</strong></span></div>
           </header>
-          <div v-if="selectedShip" class="seed-note"><strong>{{ seedStatusLabel(selectedShip) }}</strong><span>{{ selectedShip.seed_status === 'custom' ? t('masterData.customRecord') : selectedShip.seed_revision }}</span></div>
+          <div v-if="selectedShip" class="seed-note">
+            <div><strong>{{ seedStatusLabel(selectedShip) }}</strong><span>{{ selectedShip.seed_status === 'custom' ? t('masterData.customRecord') : selectedShip.seed_revision }}</span></div>
+            <button v-if="selectedShip.seed_status === 'overridden'" class="small-action" type="button" :disabled="saving" @click="restoreShip(selectedShip)">{{ t('masterData.restore') }}</button>
+          </div>
 
           <fieldset class="editor-section"><legend>{{ t('masterData.ships.title') }}</legend>
             <div class="form-grid two-columns">
@@ -335,6 +358,10 @@ function setMortarModificationEnabled(enabled) {
 <style scoped>
 .master-data-frame { gap: clamp(1rem, 1.8vw, 1.45rem); }
 .master-data-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .75rem; }
+.master-data-reset-panel { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; padding: 1rem 1.1rem; border: 1px solid rgba(224, 96, 96, .32); border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(130, 38, 38, .16), rgba(16, 29, 43, .84)); box-shadow: var(--shadow-soft); }
+.master-data-reset-panel h2 { margin: .1rem 0 .25rem; font-size: clamp(1.05rem, 1.7vw, 1.3rem); }
+.master-data-reset-panel p { max-width: 70rem; margin: 0; color: var(--muted); }
+.master-data-reset-button { flex: 0 0 auto; min-width: min(100%, 15rem); }
 .master-data-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; padding: .45rem; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(8, 17, 27, .58); }
 .catalog-tab { min-height: 3.65rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; border: 1px solid transparent; border-radius: var(--radius-md); color: var(--muted); background: transparent; cursor: pointer; font-weight: 850; }
 .catalog-tab strong { min-width: 2.1rem; padding: .18rem .5rem; border-radius: var(--radius-pill); color: var(--text); background: rgba(255,255,255,.07); text-align: center; }
@@ -383,7 +410,8 @@ function setMortarModificationEnabled(enabled) {
 .ship-quick-stats span, .mount-summary span { display: grid; gap: .05rem; padding: .48rem .62rem; border: 1px solid rgba(221,231,244,.12); border-radius: .75rem; background: rgba(5,12,19,.38); }
 .ship-quick-stats small, .mount-summary small { color: var(--muted-soft); font-size: .68rem; }
 .ship-quick-stats strong, .mount-summary strong { color: var(--accent-strong); font-size: .95rem; }
-.seed-note { display: flex; justify-content: space-between; gap: 1rem; margin: .85rem 1rem 0; padding: .75rem .85rem; border: 1px solid rgba(241,184,91,.2); border-radius: var(--radius-sm); color: var(--muted); background: rgba(241,184,91,.055); }
+.seed-note { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .85rem 1rem 0; padding: .75rem .85rem; border: 1px solid rgba(241,184,91,.2); border-radius: var(--radius-sm); color: var(--muted); background: rgba(241,184,91,.055); }
+.seed-note > div { display: grid; gap: .15rem; min-width: 0; }
 .seed-note strong { color: var(--accent-strong); }
 .editor-section { min-width: 0; display: grid; gap: .85rem; margin: 1rem 1rem 0; padding: 1rem; border: 1px solid rgba(221,231,244,.12); border-radius: var(--radius-md); background: rgba(5,12,19,.25); }
 .editor-section legend { padding: 0 .45rem; color: var(--accent); font-size: .76rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
@@ -417,5 +445,5 @@ function setMortarModificationEnabled(enabled) {
 
 @media (max-width: 1180px) { .master-data-workspace { grid-template-columns: minmax(300px,.8fr) minmax(460px,1.2fr); } .mount-grid { grid-template-columns: 1fr; } .mount-card { grid-template-columns: minmax(110px,.8fr) repeat(3,minmax(80px,1fr)); } .ship-quick-stats { grid-template-columns: 1fr; } }
 @media (max-width: 920px) { .master-data-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .master-data-workspace { grid-template-columns: 1fr; } .catalog-panel { position: static; max-height: none; } .catalog-scroll { max-height: 34rem; } .ship-quick-stats { grid-template-columns: repeat(3,minmax(70px,1fr)); } }
-@media (max-width: 640px) { .master-data-tabs { grid-template-columns: 1fr; } .catalog-toolbar, .form-grid.two-columns, .two-columns, .form-grid.three-columns, .choice-grid { grid-template-columns: 1fr; } .catalog-record { grid-template-columns: 1fr; } .record-meta { justify-content: flex-start; padding-left: 3.3rem; } .editor-header-with-preview { align-items: flex-start; flex-wrap: wrap; } .ship-quick-stats { width: 100%; margin-left: 0; } .mount-card { grid-template-columns: 1fr; } .editor-actions { align-items: stretch; flex-direction: column; } .editor-actions .primary-action { width: 100%; } }
+@media (max-width: 640px) { .master-data-reset-panel, .seed-note { align-items: stretch; flex-direction: column; } .master-data-reset-button, .seed-note .small-action { width: 100%; } .master-data-tabs { grid-template-columns: 1fr; } .catalog-toolbar, .form-grid.two-columns, .two-columns, .form-grid.three-columns, .choice-grid { grid-template-columns: 1fr; } .catalog-record { grid-template-columns: 1fr; } .record-meta { justify-content: flex-start; padding-left: 3.3rem; } .editor-header-with-preview { align-items: flex-start; flex-wrap: wrap; } .ship-quick-stats { width: 100%; margin-left: 0; } .mount-card { grid-template-columns: 1fr; } .editor-actions { align-items: stretch; flex-direction: column; } .editor-actions .primary-action { width: 100%; } }
 </style>

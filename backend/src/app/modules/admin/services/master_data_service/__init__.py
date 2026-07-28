@@ -23,6 +23,10 @@ def get_taxonomy(db: Session):
     return MasterDataService(db).taxonomy()
 
 
+def restore_all_seed_defaults(db: Session):
+    return MasterDataService(db).restore_seed_defaults()
+
+
 def list_categories(db: Session):
     return MasterDataService(db).categories.list()
 
@@ -97,6 +101,7 @@ __all__ = [
     "list_options",
     "list_ships",
     "master_data_overview",
+    "restore_all_seed_defaults",
     "restore_category_seed",
     "restore_option_seed",
     "restore_ship_seed",

@@ -8,6 +8,7 @@ update_options_reset() {
   CREATE_BACKUP=true
   RUN_MIGRATIONS=false
   RUN_SEED=false
+  RESTORE_SEED_DEFAULTS=false
   AUTO_MIGRATIONS=true
   OPERATION=update
   INVALID_REQUEST_OPERATION=""
@@ -27,6 +28,10 @@ migrations. PostgreSQL is never seeded unless explicitly requested.
 Options:
   --migrate            Run Alembic migrations intentionally.
   --seed               Run migrations and then the idempotent seed intentionally.
+  --restore-seed-defaults
+                       Run migrations and seed after discarding overrides on
+                       repository-owned master data. Custom records and user
+                       content remain untouched.
   --no-auto-migrate    Refuse deployment when the database is behind instead of migrating.
   --requested-by NAME  Record the requesting operator.
   --skip-pull          Deploy the current checkout without fetching Git.
@@ -48,6 +53,12 @@ update_parse_options() {
       --no-backup) CREATE_BACKUP=false; shift ;;
       --migrate) RUN_MIGRATIONS=true; shift ;;
       --seed) RUN_MIGRATIONS=true; RUN_SEED=true; shift ;;
+      --restore-seed-defaults)
+        RUN_MIGRATIONS=true
+        RUN_SEED=true
+        RESTORE_SEED_DEFAULTS=true
+        shift
+        ;;
       --no-auto-migrate) AUTO_MIGRATIONS=false; shift ;;
       -h|--help) update_usage; exit 0 ;;
       *) die "Unbekannte Update-Option: $1" ;;
@@ -57,7 +68,9 @@ update_parse_options() {
 }
 
 update_refresh_operation() {
-  if [[ "$RUN_MIGRATIONS" == true && "$RUN_SEED" == true ]]; then
+  if [[ "$RESTORE_SEED_DEFAULTS" == true ]]; then
+    OPERATION=update_migrate_seed_restore
+  elif [[ "$RUN_MIGRATIONS" == true && "$RUN_SEED" == true ]]; then
     OPERATION=update_migrate_seed
   elif [[ "$RUN_MIGRATIONS" == true ]]; then
     OPERATION=update_migrate

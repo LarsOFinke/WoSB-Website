@@ -42,7 +42,7 @@ test('staff filters use one reusable presentational surface', () => {
 })
 
 test('audit history includes newly introduced administrative entity types', () => {
-  for (const entity of ['registration_request', 'user_account', 'fleet_membership', 'ip_block', 'app_log', 'outbound_webhook']) {
+  for (const entity of ['registration_request', 'user_account', 'fleet_membership', 'ip_block', 'app_log', 'outbound_webhook', 'master_data']) {
     assert.ok(auditSource.includes(`value="${entity}"`), entity)
   }
 })

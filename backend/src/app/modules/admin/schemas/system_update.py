@@ -5,7 +5,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-SystemUpdateOperation = Literal["update", "update_migrate", "update_migrate_seed"]
+SystemUpdateOperation = Literal[
+    "update",
+    "update_migrate",
+    "update_migrate_seed",
+    "update_migrate_seed_restore",
+]
 
 
 class SystemUpdateRequest(BaseModel):

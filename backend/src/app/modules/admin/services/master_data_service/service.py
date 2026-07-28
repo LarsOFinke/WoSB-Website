@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.admin.schemas.master_data import (
     MasterDataOverview,
+    MasterDataSeedRestoreSummary,
     MasterDataTaxonomyRead,
     WeaponClassRead,
     WeaponSlotTypeRead,
@@ -41,6 +42,33 @@ class MasterDataService:
             inactive_count=sum(
                 self._count(model, model.is_active.is_(False)) for model in models
             ),
+        )
+
+    def restore_seed_defaults(self) -> MasterDataSeedRestoreSummary:
+        """Restore every repository-owned master-data record from the seed catalog.
+
+        Local records are identified by a missing ``seed_key`` and remain untouched.
+        The reset deliberately covers only the master-data workspace (categories,
+        options, ships and their related catalog rows), not users, fleets or content.
+        """
+
+        from app.bootstrap.manager import SeedManager
+
+        manager = SeedManager(self.db)
+        restored = manager.restore_repository_seed_defaults()
+        manager.seed_weapon_slot_types()
+        manager.seed_build_options()
+        manager.seed_ships()
+        categories = self._count(BuildItemCategory, BuildItemCategory.seed_key.is_not(None))
+        options = self._count(BuildItemOption, BuildItemOption.seed_key.is_not(None))
+        ships = self._count(Ship, Ship.seed_key.is_not(None))
+        return MasterDataSeedRestoreSummary(
+            categories=categories,
+            options=options,
+            ships=ships,
+            total=categories + options + ships,
+            overrides_discarded=sum(restored.values()),
+            custom_records_preserved=True,
         )
 
     def taxonomy(self) -> MasterDataTaxonomyRead:

@@ -5,6 +5,7 @@ database_action_summary() {
   local actions=()
   [[ "$RUN_MIGRATIONS" == true ]] && actions+=("Migrationen")
   [[ "$RUN_SEED" == true ]] && actions+=("Seed")
+  [[ "$RESTORE_SEED_DEFAULTS" == true ]] && actions+=("Repository-Seed-Defaults wiederherstellen")
 
   if ((${#actions[@]} == 0)); then
     printf 'keine Schemaänderung; PostgreSQL wurde nur auf Revisionsgleichheit geprüft'
@@ -161,7 +162,7 @@ update_execute_deployment() {
   log "Aktualisiere systemd-Units und Host-Runner."
   /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
 
-  deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED"
+  deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED" "$RESTORE_SEED_DEFAULTS"
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 

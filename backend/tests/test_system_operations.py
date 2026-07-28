@@ -87,6 +87,19 @@ def test_only_admin_can_read_or_queue_system_updates() -> None:
 
         shutil.rmtree(control_dir, ignore_errors=True)
         control_dir.mkdir(parents=True, exist_ok=True)
+
+        restore_update = client.post(
+            '/api/admin/system/update',
+            json={'operation': 'update_migrate_seed_restore'},
+        )
+        assert restore_update.status_code == 202, restore_update.text
+        restore_payload = restore_update.json()
+        assert restore_payload['status']['operation'] == 'update_migrate_seed_restore'
+        request_payload = json.loads(request_file.read_text(encoding='utf-8'))
+        assert request_payload['operation'] == 'update_migrate_seed_restore'
+
+        shutil.rmtree(control_dir, ignore_errors=True)
+        control_dir.mkdir(parents=True, exist_ok=True)
         invalid = client.post('/api/admin/system/update', json={'operation': 'shell_command'})
         assert invalid.status_code == 422
 

@@ -65,6 +65,15 @@ expliziter Migration und Stammdaten:
 sudo ./update.sh --migrate --seed
 ```
 
+Repository-eigene Stammdaten können bei bewusstem Verwerfen aller Admin-Overrides repariert werden:
+
+```bash
+sudo ./update.sh --restore-seed-defaults
+```
+
+Eigene Stammdatensätze und Benutzerinhalte bleiben dabei erhalten. Dieselbe Funktion steht Admins
+in der Stammdatenverwaltung als bestätigter Button zur Verfügung.
+
 Im Admin-Panel stehen Standardupdate, explizite Migration und Migration mit Seed ebenfalls bereit.
 
 ## Projektstruktur
