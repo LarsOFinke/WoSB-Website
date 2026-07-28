@@ -267,14 +267,14 @@
       "ship_type": "Clipper",
       "durability": 1800,
       "speed_min_knots": 11.5,
-      "speed_knots": 11.5,
+      "speed_knots": 13.3,
       "maneuverability": 58,
       "armor": 2.9,
       "hold_capacity": 30000,
       "crew_capacity": 100,
       "sailor_minimum": 40,
       "displacement_tons": 3375,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-29",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -320,6 +320,14 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-cannons",
+          "stat_effects": {
+            "bow_stern_weapon_damage_pct": 113
+          }
         }
       ]
     },

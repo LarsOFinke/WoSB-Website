@@ -103,6 +103,24 @@ def test_seeded_combat_upgrade_values_follow_current_ship_screenshots() -> None:
         assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Santisima Trinidad")) == {
             "bow_stern_weapon_damage_pct": 87,
         }
+        assert effective_upgrade_effects(ammunition_cradles, _ship(db, "12 Apostolov")) == {
+            "reload_pct": 18,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "12 Apostolov")) == {
+            "bow_stern_weapon_damage_pct": 113,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Flying Cloud")) == {
+            "bow_stern_weapon_damage_pct": 113,
+        }
+        assert effective_upgrade_effects(ammunition_cradles, _ship(db, "Huracan")) == {
+            "reload_pct": 18,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Huracan")) == {
+            "bow_stern_weapon_damage_pct": 100,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "La Royale")) == {
+            "bow_stern_weapon_damage_pct": 74,
+        }
         assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Savannah")) == {
             "bow_stern_weapon_damage_pct": 121,
         }

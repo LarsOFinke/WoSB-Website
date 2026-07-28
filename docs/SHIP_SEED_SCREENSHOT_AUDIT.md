@@ -1,36 +1,41 @@
 # Build Designer ship catalog audit
 
-## Owned-ship batch — 2026-07-28
+## Owned-ship batches — 2026-07-28 and 2026-07-29
 
-The repository now contains **204 in-game screenshots** documenting all **33 ships currently owned by the contributor**. Every documented ship includes its statistics panel and the available upgrade groups. Adventure, Eagle, Golden Apostle, Kobukson, Red Arrow and Sovereign additionally include the mortar-upgrade group.
+The repository now contains **230 in-game screenshots** documenting all **38 ships currently owned by the contributor**. Every documented ship includes its statistics panel. The 37 ships with an upgrade rack also include their available upgrade groups; Balloon exposes no upgrade rack and therefore has only a statistics capture. Adventure, Eagle, Golden Apostle, Kobukson, La Royale, Red Arrow and Sovereign additionally include the mortar-upgrade group.
 
 Audited ships:
 
-- Rate I: De Zeven Provincien, La Couronne, Santisima Trinidad, Sovereign, Victory
+- Rate I: 12 Apostolov, De Zeven Provincien, Huracan, La Couronne, La Royale, Santisima Trinidad, Sovereign, Victory
 - Rate II: Adventure, Firestorm, Ingermanland, La Sirene, Neptuno, Redoutable, Sans Pareil, Vasa
 - Rate III: Anson, Azov, Bellona, Kobukson, Mordaunt, Poltava
-- Rate IV: Constitution, Devourer, Essex, Red Arrow
+- Rate IV: Constitution, Devourer, Essex, Flying Cloud, Red Arrow
 - Rate V: Black Prince, Eagle, La Creole, Russia, San Martin
-- Rate VI: Golden Apostle, Le Cerf, Mercury, Savannah, Shunsen
+- Rate VI: Balloon, Golden Apostle, Le Cerf, Mercury, Savannah, Shunsen
 
 The following values were updated from the displayed panels:
 
 | Ship | Updated values |
 |---|---|
+| 12 Apostolov | cruise maximum 9.2 kn |
 | Adventure | cruise maximum 11.0 kn |
 | Anson | cruise maximum 11.0 kn |
 | Azov | cruise maximum 10.6 kn |
+| Balloon | cruise maximum 23.0 kn; no upgrade rack |
 | Black Prince | cruise maximum 12.2 kn |
 | Constitution | cruise maximum 10.9 kn |
 | Devourer | cruise maximum 10.5 kn |
 | Eagle | cruise maximum 11.8 kn |
 | Essex | cruise maximum 11.5 kn |
 | Firestorm | cruise maximum 11.3 kn |
+| Flying Cloud | cruise maximum 13.3 kn |
 | Golden Apostle | cruise maximum 11.9 kn |
+| Huracan | cruise maximum 8.5 kn |
 | Ingermanland | cruise maximum 11.6 kn |
 | Kobukson | cruise maximum 10.9 kn |
 | La Couronne | cruise maximum 10.6 kn |
 | La Creole | cruise maximum 12.9 kn |
+| La Royale | cruise maximum 10.4 kn |
 | La Sirene | cruise maximum 10.9 kn |
 | Le Cerf | cruise maximum 12.2 kn |
 | Mercury | cruise maximum 11.7 kn |
@@ -48,11 +53,13 @@ The following values were updated from the displayed panels:
 | Vasa | cruise maximum 9.6 kn |
 | Victory | cruise maximum 10.1 kn |
 
-Values not listed above already matched the repository catalog and were retained. All 33 records carry the provenance `WoSB in-game owned-ship screenshot audit 2026-07-28`.
+Values not listed above already matched the repository catalog and were retained. The first 33 records carry the provenance `WoSB in-game owned-ship screenshot audit 2026-07-28`; 12 Apostolov, Balloon, Flying Cloud, Huracan and La Royale carry `WoSB in-game owned-ship screenshot audit 2026-07-29`.
 
 ## Upgrade-slot interpretation
 
-The screenshots show six ordinary upgrade spaces on most ships and seven on La Couronne. The account also displays a researched `Spaces for upgrades +1` benefit. Therefore the screenshots contain one account-level slot in addition to the ship base value. The seed catalog correctly retains five base slots for ordinary ships and six for La Couronne.
+The upgrade-capable screenshots show six ordinary upgrade spaces on most ships, seven on La Couronne and seven on Huracan. The account also displays a researched `Spaces for upgrades +1` benefit. Therefore the screenshots contain one account-level slot in addition to the ship base value. The seed catalog correctly retains five configured slots for ordinary ships and six for La Couronne and Huracan.
+
+Balloon explicitly displays `Upgrades -`. It is seeded with zero upgrade slots, and the slot-access service prevents research or Structural Expansion effects from creating an upgrade rack on a ship that has none.
 
 The unlabelled `0/4` indicator is treated as player/account state rather than a ship property and is not seeded.
 

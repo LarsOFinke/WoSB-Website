@@ -40,20 +40,23 @@ def calculate_upgrade_slot_access(
     represented by the build itself and must not be subtracted from capacity.
 
     ``ship_upgrade_slots`` keeps the existing seed/admin contract: five denotes
-    a normal ship and six denotes one built-in ship extra. Values above six are
-    accepted for future exceptional ships. ``unlock_effect_slots`` is the gross
-    number of positions granted by installed expansion upgrades.
+    a normal ship and six denotes one built-in ship extra. Zero denotes a ship
+    without an upgrade rack; research and expansion effects cannot create one.
+    Values above six are accepted for future exceptional ships.
+    ``unlock_effect_slots`` is the gross number of positions granted by installed
+    expansion upgrades.
     """
 
     configured_slots = max(int(ship_upgrade_slots or 0), 0)
     base_slots = min(configured_slots, BASE_UPGRADE_SLOT_LIMIT)
-    research_slots = 1 if research_upgrade_slot_unlocked else 0
+    has_upgrade_rack = configured_slots > 0
+    research_slots = 1 if has_upgrade_rack and research_upgrade_slot_unlocked else 0
     ship_extra_slots = min(
         max(configured_slots - STANDARD_SHIP_UPGRADE_SLOTS, 0),
         UPGRADE_SLOT_LIMIT - base_slots,
     )
     effect_slots = min(
-        max(int(unlock_effect_slots or 0), 0),
+        max(int(unlock_effect_slots or 0), 0) if has_upgrade_rack else 0,
         UPGRADE_SLOT_LIMIT - base_slots,
     )
 

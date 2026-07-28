@@ -24,12 +24,13 @@
 
 ### Owned-ship seed audit
 
-- Re-audited 33 owned ships from 204 current in-game screenshots, adding Azov, Firestorm, Santisima Trinidad, Savannah and Sovereign and updating their displayed cruise-speed maxima.
-- Added sparse screenshot-backed upgrade values for 24 ships, including newly verified Ammunition Cradles and Reinforced Cannons exceptions while preserving inherited global effects for all unlisted values.
+- Re-audited 38 owned ships from 230 current in-game screenshots, adding 12 Apostolov, Balloon, Flying Cloud, Huracan and La Royale to the prior owned batch and updating their displayed cruise-speed maxima.
+- Added sparse screenshot-backed upgrade values for 28 ships, including the newly verified 12 Apostolov, Flying Cloud, Huracan and La Royale combat exceptions while preserving inherited global effects for all unlisted values.
 - Ship master-data edits now synchronize existing sparse upgrade rows in place, preventing uniqueness conflicts when administrators edit ships that already have seeded overrides.
 - Corrected the global Teak Frames armor value from `15` to `1.5`.
 - Extended the JSON seed schema and bootstrap so ship-specific upgrade values resolve by stable upgrade IDs, survive normal reseeds and are restored by the master-data admin workflow.
 - Documented account-level upgrade-slot handling and retained ambiguous mortar layouts until quantified modification panels are available.
+- Corrected Balloon to zero upgrade slots from its explicit `Upgrades -` panel and prevented research or expansion effects from creating a rack on rackless ships.
 
 ### Repository spring clean and privacy hardening
 

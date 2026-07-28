@@ -41,3 +41,17 @@ def test_structural_expansion_alone_adds_both_tooltip_slots() -> None:
     assert access.available_slots == 6
     assert access.slot_6_available is True
     assert access.slot_7_available is False
+
+
+def test_ship_without_upgrade_rack_stays_at_zero() -> None:
+    access = calculate_upgrade_slot_access(
+        ship_upgrade_slots=0,
+        research_upgrade_slot_unlocked=True,
+        unlock_effect_slots=2,
+    )
+
+    assert access.base_slots == 0
+    assert access.research_slots == 0
+    assert access.unlock_effect_slots == 0
+    assert access.available_slots == 0
+    assert access.slot_5_unlocked is False

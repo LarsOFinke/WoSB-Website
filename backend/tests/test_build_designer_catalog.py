@@ -229,6 +229,7 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
  '12 Apostolov': (1, 'Ship of the Line', 5, 0),
  'La Royale': (1, 'Galley', 5, 0),
  'Huracan': (1, 'Ship of the Line', 6, 2),
+ 'Balloon': (6, 'Montgolfiere', 0, 0),
  'Savannah': (6, 'Frigate', 5, 0),
  'Golden Apostle': (6, 'Cutter', 5, 0),
  'Shunsen': (6, 'Junk', 5, 0),
@@ -262,9 +263,11 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
 
 
 AUDITED_CRUISE_MAX_SPEEDS = {
+    "12 Apostolov": 9.2,
     "Adventure": 11.0,
     "Anson": 11.0,
     "Azov": 10.6,
+    "Balloon": 23.0,
     "Bellona": 10.5,
     "Black Prince": 12.2,
     "Constitution": 10.9,
@@ -273,10 +276,13 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Eagle": 11.8,
     "Essex": 11.5,
     "Firestorm": 11.3,
+    "Flying Cloud": 13.3,
     "Golden Apostle": 11.9,
     "Ingermanland": 11.6,
+    "Huracan": 8.5,
     "Kobukson": 10.9,
     "La Couronne": 10.6,
+    "La Royale": 10.4,
     "La Creole": 12.9,
     "La Sirene": 10.9,
     "Le Cerf": 12.2,
@@ -306,6 +312,11 @@ def test_shipyard_speed_ranges_match_owned_ship_screenshots() -> None:
     assert rows["La Creole"]["speed_knots"] == 12.9
     assert rows["Mordaunt"]["speed_min_knots"] == 9.1
     assert rows["Russia"]["speed_min_knots"] == 10.4
+    assert rows["12 Apostolov"]["speed_knots"] == 9.2
+    assert rows["Balloon"]["speed_knots"] == 23.0
+    assert rows["Flying Cloud"]["speed_knots"] == 13.3
+    assert rows["Huracan"]["speed_knots"] == 8.5
+    assert rows["La Royale"]["speed_knots"] == 10.4
     assert rows["Azov"]["speed_knots"] == 10.6
     assert rows["Firestorm"]["speed_knots"] == 11.3
     assert rows["Santisima Trinidad"]["speed_knots"] == 9.4
@@ -421,6 +432,7 @@ def test_all_ship_seeds_use_current_panel_or_event_provenance() -> None:
         "WoSB in-game shipyard screenshot audit 2026-07",
         "WoSB in-game current-event tooltip screenshot audit 2026-07",
         "WoSB in-game owned-ship screenshot audit 2026-07-28",
+        "WoSB in-game owned-ship screenshot audit 2026-07-29",
     }
     assert {str(row["source"]) for row in SHIP_SEED_DATA} <= allowed_sources
 

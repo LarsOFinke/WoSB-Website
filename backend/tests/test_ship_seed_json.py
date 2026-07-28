@@ -86,16 +86,20 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         ship.name for ship in ships.values() if ship.upgrade_effect_overrides
     }
     assert overridden == {
+        "12 Apostolov",
         "Adventure",
         "Azov",
         "Black Prince",
         "De Zeven Provincien",
         "Eagle",
         "Firestorm",
+        "Flying Cloud",
         "Golden Apostle",
+        "Huracan",
         "Ingermanland",
         "La Couronne",
         "La Creole",
+        "La Royale",
         "La Sirene",
         "Le Cerf",
         "Mercury",
@@ -127,6 +131,10 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "armor": 1.0,
         "crew_capacity": 14,
     }
+    assert values("12 Apostolov", "ammunition-cradles") == {"reload_pct": 18}
+    assert values("12 Apostolov", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 113,
+    }
     assert ships["Anson"].upgrade_effect_overrides == []
     assert values("Black Prince", "reinforced-masts") == {
         "speed_knots": 0.6,
@@ -143,6 +151,16 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
     assert values("Firestorm", "reinforced-cannons") == {
         "bow_stern_weapon_damage_pct": 35,
     }
+    assert values("Flying Cloud", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 113,
+    }
+    assert values("Huracan", "ammunition-cradles") == {"reload_pct": 18}
+    assert values("Huracan", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 100,
+    }
+    assert values("La Royale", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 74,
+    }
     assert values("Santisima Trinidad", "ammunition-cradles") == {
         "reload_pct": 18,
     }
@@ -154,8 +172,8 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
     }
 
 
-def test_owned_ship_screenshot_batch_has_audited_source_and_expected_size() -> None:
-    owned = {
+def test_owned_ship_screenshot_batches_have_audited_sources_and_expected_size() -> None:
+    first_batch = {
         "Adventure", "Anson", "Azov", "Bellona", "Black Prince", "Constitution",
         "De Zeven Provincien", "Devourer", "Eagle", "Essex", "Firestorm",
         "Golden Apostle", "Ingermanland", "Kobukson", "La Couronne", "La Creole",
@@ -163,12 +181,18 @@ def test_owned_ship_screenshot_batch_has_audited_source_and_expected_size() -> N
         "Red Arrow", "Redoutable", "Russia", "San Martin", "Santisima Trinidad",
         "Sans Pareil", "Savannah", "Shunsen", "Sovereign", "Vasa", "Victory",
     }
+    second_batch = {"12 Apostolov", "Balloon", "Flying Cloud", "Huracan", "La Royale"}
     ships = {ship.name: ship for ship in load_ship_seed_document().ships}
-    assert len(owned) == 33
-    assert owned <= set(ships)
-    assert {ships[name].source for name in owned} == {
+
+    assert len(first_batch | second_batch) == 38
+    assert first_batch | second_batch <= set(ships)
+    assert {ships[name].source for name in first_batch} == {
         "WoSB in-game owned-ship screenshot audit 2026-07-28"
     }
+    assert {ships[name].source for name in second_batch} == {
+        "WoSB in-game owned-ship screenshot audit 2026-07-29"
+    }
+    assert ships["Balloon"].upgrade_slots == 0
 
 
 def test_ship_seed_loader_rejects_special_capacity_above_mount_capacity(tmp_path) -> None:
