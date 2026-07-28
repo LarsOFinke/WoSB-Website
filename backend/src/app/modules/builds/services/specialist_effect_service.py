@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 
+from app.modules.builds.services.build_stat_service import round_half_up
+
 
 PER_CREW_EFFECTS: dict[str, tuple[str, str]] = {
     "speed_per_sailor_pct": ("speed_pct", "sailors"),
@@ -80,6 +82,6 @@ def resolve_specialist_effects(
             totals[key] = totals.get(key, 0) + (value * quantity)
 
     return {
-        key: int(value) if float(value).is_integer() else round(float(value), 4)
+        key: int(value) if float(value).is_integer() else round_half_up(float(value), 4)
         for key, value in totals.items()
     }

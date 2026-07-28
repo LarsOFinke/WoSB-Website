@@ -12,6 +12,7 @@ from app.modules.builds.services.build_stat_service import (
     build_base_stats,
     build_stat_rows,
     effective_stats_from_rows,
+    round_half_up,
 )
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
@@ -302,7 +303,7 @@ class Build(Base):
         base_crew_capacity = self.ship.crew_capacity
         effective_crew_capacity = max(
             0,
-            round(
+            round_half_up(
                 apply_percentage_effects(
                     base_crew_capacity,
                     "crew_capacity_pct",
@@ -317,7 +318,7 @@ class Build(Base):
         sailing_efficiency_pct = (
             100
             if effective_sailor_minimum <= 0
-            else min(100, max(0, round((self.sailors / effective_sailor_minimum) * 100)))
+            else min(100, max(0, round_half_up((self.sailors / effective_sailor_minimum) * 100)))
         )
         weapon_slots = {
             arc: self._slot_quantity_total(slot_type)

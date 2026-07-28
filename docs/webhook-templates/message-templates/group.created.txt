@@ -1,0 +1,11 @@
+🔎 **New Group Search**
+Group: **{data.title}**
+Focus: `{data.focus}`
+Owner: **{data.owner.display_name}**
+Slots: `{data.spots_left}` / `{data.max_members}` available
+Allowed ship rates: `{data.max_ship_rate}` to `{data.min_ship_rate}`
+Starts: `{data.scheduled_start_at}`
+Ends: `{data.scheduled_end_at}`
+Expires: `{data.expires_at}`
+Created by: **{actor.display_name}**
+🔗 [Open group search]({resource.url})

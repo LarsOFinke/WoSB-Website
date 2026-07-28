@@ -257,6 +257,48 @@ Updated at: `{data.updated_at}`
 🔗 [Open thread]({resource.url})
 ```
 
+## `group.closed`
+
+```text
+🔒 **Group Search Closed**
+Group: **{data.title}**
+Focus: `{data.focus}`
+Members: `{data.active_members_count}` / `{data.max_members}`
+Closed by: **{actor.display_name}**
+Closed at: `{occurred_at}`
+🔗 [Open group record]({resource.url})
+```
+
+## `group.created`
+
+```text
+🔎 **New Group Search**
+Group: **{data.title}**
+Focus: `{data.focus}`
+Owner: **{data.owner.display_name}**
+Slots: `{data.spots_left}` / `{data.max_members}` available
+Allowed ship rates: `{data.max_ship_rate}` to `{data.min_ship_rate}`
+Starts: `{data.scheduled_start_at}`
+Ends: `{data.scheduled_end_at}`
+Expires: `{data.expires_at}`
+Created by: **{actor.display_name}**
+🔗 [Open group search]({resource.url})
+```
+
+## `group.member.joined`
+
+```text
+🙋 **Member Joined Group Search**
+Group: **{data.title}**
+Member: **{data.member.display_name}**
+Fleet: {data.member.fleet_name}
+Ship: **{data.member.ship_name}** (Rate `{data.member.ship_rate}`)
+Members: `{data.active_members_count}` / `{data.max_members}`
+Remaining slots: `{data.spots_left}`
+Joined at: `{occurred_at}`
+🔗 [Open group search]({resource.url})
+```
+
 ## `guide.created`
 
 ```text

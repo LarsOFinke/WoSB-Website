@@ -1,3 +1,5 @@
+import { roundByPrecision } from './buildMath.js'
+
 const PER_CREW_EFFECTS = {
   speed_per_sailor_pct: ['speed_pct', 'sailors'],
   item_reload_per_sailor_pct: ['item_reload_pct', 'sailors'],
@@ -50,7 +52,7 @@ export function calculateSpecialistEffectTotals({ slots = [], effectForItem, cre
   }
 
   return Object.fromEntries(Object.entries(totals).map(([key, value]) => {
-    const rounded = Math.round(Number(value) * 10000) / 10000
+    const rounded = roundByPrecision(value, 4)
     return [key, Number.isInteger(rounded) ? Math.trunc(rounded) : rounded]
   }))
 }

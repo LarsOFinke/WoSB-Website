@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Completed the selectable ammunition seed catalog with Heavy Shots and Saxon Shots, stable seed IDs and translations in every supported locale.
+- Audited Build Designer arithmetic end to end: De Zeven Provincien plus Raiding Sails is fixed at the verified `14.7 kn`, percentage/flat components remain dimensionally correct, and all Python/JavaScript crew and specialist rounding now uses one decimal half-up contract.
+- Added a shared calculation contract and coverage gate for all 106 numeric seed-effect keys.
+- Added Discord website-webhook events and versioned templates for group-search creation, joins and closure; fleet-scoped delivery follows the listing owner and payloads omit contact/member notes.
+
 - Fixed a deployment deadlock where seed or migration updates invoked `backup-all.sh` while already holding `update.lock`; update backups now reuse the existing update lock and acquire only `backup.lock`.
 
 ### Owned-ship seed audit

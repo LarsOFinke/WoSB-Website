@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-
 from pydantic import BaseModel
+
 
 class BuildStatDefinitionRead(BaseModel):
     key: str
@@ -15,3 +15,4 @@ class BuildStatDefinitionRead(BaseModel):
     precision: int = 0
     positive_is_good: bool = True
     source: str | None = None
+    pct_base_field: str | None = None

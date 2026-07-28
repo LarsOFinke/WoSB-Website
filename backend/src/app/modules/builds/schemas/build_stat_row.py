@@ -10,6 +10,8 @@ class BuildStatRow(BaseModel):
     category: str
     base: int | float | None = None
     modifier: int | float | None = None
+    percent_modifier: int | float | None = None
+    flat_modifier: int | float | None = None
     effective: int | float | None = None
     unit: str | None = None
     precision: int = 0

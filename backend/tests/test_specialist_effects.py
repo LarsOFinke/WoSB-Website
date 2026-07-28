@@ -33,3 +33,15 @@ def test_specialist_boolean_effects_do_not_stack() -> None:
     )
 
     assert effects == {"steady_course_enabled": 1}
+
+
+def test_specialist_effect_rounding_uses_the_shared_half_up_contract() -> None:
+    effects = resolve_specialist_effects(
+        [({"speed_per_sailor_pct": -0.123445}, 1)],
+        sailors=10,
+        soldiers=0,
+        musketeers=0,
+        mercenaries=0,
+    )
+
+    assert effects == {"speed_pct": -1.2345}

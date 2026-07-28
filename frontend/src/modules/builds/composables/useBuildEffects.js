@@ -1,3 +1,4 @@
+import { roundByPrecision } from '../buildMath.js'
 import { computed } from 'vue'
 
 import { applyPercentageEffects, calculateBuildStatRows, calculateBuildUpgradeSlotAccess, sumEffects } from '@/modules/builds/buildCalculations'
@@ -6,6 +7,7 @@ import { normalizeInventorySlots } from '@/modules/builds/inventorySlots'
 import { calculateSpecialistEffectSets } from '@/modules/builds/specialistEffects'
 import { sailingEfficiencyPercent } from '@/modules/builds/crewAllocation'
 import { splitSpecialistSelection } from '@/modules/builds/domain/specialistSelection'
+import { isActiveBuildEffect } from '@/modules/builds/domain/buildStatPresentation'
 
 const UPGRADE_GROUP_ORDER = ['speed', 'expeditionary', 'protection', 'combat', 'unusual', 'mortar', 'other']
 
@@ -83,7 +85,7 @@ export function useBuildEffects({
   const upgradeSlot7Available = computed(() => upgradeAccess.value.slot7Available)
   const upgradeSlot8Available = computed(() => upgradeAccess.value.slot8Available)
   const availableUpgradeSlots = computed(() => upgradeAccess.value.availableSlots)
-  const crewCapacity = computed(() => Math.max(0, Math.round(
+  const crewCapacity = computed(() => Math.max(0, roundByPrecision(
     applyPercentageEffects(
       baseCrewCapacity.value,
       'crew_capacity_pct',
@@ -157,7 +159,7 @@ export function useBuildEffects({
       locked: isUpgradeSlotDisabled(index),
     }
   }))
-  const activeEffectRows = computed(() => buildStatRows.value.filter((row) => Number(row.modifier || 0) !== 0))
+  const activeEffectRows = computed(() => buildStatRows.value.filter(isActiveBuildEffect))
 
   function upgradeOptionsForSlot(index) {
     const current = form[`upgrade_${index}`]

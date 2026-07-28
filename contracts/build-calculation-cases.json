@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "rounding": "decimal-half-up",
+  "percentage_stacking": "multiplicative-per-installed-effect",
+  "flat_effect_order": "after-percentage-effects",
+  "cases": [
+    {
+      "id": "de-zeven-raiding-sails",
+      "source": "docs/ingame-screenshots/ships/De Zeven Provincien/stats.png plus user in-game comparison 2026-07-28",
+      "ship": {
+        "speed_min_knots": 7.7,
+        "speed_knots": 10.6
+      },
+      "effects": {
+        "speed_knots": 4.1
+      },
+      "effect_sets": [
+        {
+          "speed_knots": 4.1
+        }
+      ],
+      "definitions": [
+        {
+          "key": "speed_min_knots",
+          "label": "Base speed",
+          "category": "mobility",
+          "base_field": "speed_min_knots",
+          "unit": "kn",
+          "pct_effect": "speed_pct",
+          "precision": 1,
+          "positive_is_good": true
+        },
+        {
+          "key": "speed_knots",
+          "label": "Cruise max. speed",
+          "category": "mobility",
+          "base_field": "speed_knots",
+          "unit": "kn",
+          "pct_effect": "speed_pct",
+          "calculation_flat_effect": "speed_knots",
+          "precision": 1,
+          "positive_is_good": true,
+          "pct_base_field": "speed_min_knots"
+        }
+      ],
+      "expected": {
+        "speed_min_knots": {
+          "base": 7.7,
+          "modifier": 0,
+          "percent_modifier": null,
+          "flat_modifier": null,
+          "effective": 7.7
+        },
+        "speed_knots": {
+          "base": 10.6,
+          "modifier": 4.1,
+          "percent_modifier": null,
+          "flat_modifier": 4.1,
+          "effective": 14.7
+        }
+      }
+    },
+    {
+      "id": "la-couronne-composite-speed-and-armor",
+      "source": "owned-ship screenshots and verified catalog effects",
+      "ship": {
+        "speed_min_knots": 7.6,
+        "speed_knots": 10.6,
+        "armor": 5.5,
+        "maneuverability": 72
+      },
+      "effects": {
+        "speed_pct": 9,
+        "speed_knots": 4.1,
+        "armor_pct": -10,
+        "turn_rate_pct": 5
+      },
+      "effect_sets": [
+        {
+          "speed_pct": 5,
+          "armor_pct": 5
+        },
+        {
+          "speed_pct": 4,
+          "armor_pct": -15,
+          "turn_rate_pct": 5
+        },
+        {
+          "speed_knots": 4.1
+        }
+      ],
+      "definitions": [
+        {
+          "key": "speed_min_knots",
+          "label": "Base speed",
+          "category": "mobility",
+          "base_field": "speed_min_knots",
+          "unit": "kn",
+          "pct_effect": "speed_pct",
+          "precision": 1,
+          "positive_is_good": true
+        },
+        {
+          "key": "speed_knots",
+          "label": "Cruise max. speed",
+          "category": "mobility",
+          "base_field": "speed_knots",
+          "unit": "kn",
+          "pct_effect": "speed_pct",
+          "calculation_flat_effect": "speed_knots",
+          "precision": 1,
+          "positive_is_good": true,
+          "pct_base_field": "speed_min_knots"
+        },
+        {
+          "key": "armor",
+          "label": "Broadside armor",
+          "category": "survivability",
+          "base_field": "armor",
+          "pct_effect": "armor_pct",
+          "calculation_flat_effect": "armor",
+          "precision": 1,
+          "positive_is_good": true
+        },
+        {
+          "key": "maneuverability",
+          "label": "Maneuverability",
+          "category": "mobility",
+          "base_field": "maneuverability",
+          "pct_effect": "turn_rate_pct",
+          "calculation_flat_effect": "maneuverability",
+          "precision": 0,
+          "positive_is_good": true
+        }
+      ],
+      "expected": {
+        "speed_min_knots": {
+          "base": 7.6,
+          "modifier": 0.7,
+          "percent_modifier": 9.2,
+          "flat_modifier": null,
+          "effective": 8.3
+        },
+        "speed_knots": {
+          "base": 10.6,
+          "modifier": 4.8,
+          "percent_modifier": 9.2,
+          "flat_modifier": 4.1,
+          "effective": 15.4
+        },
+        "armor": {
+          "base": 5.5,
+          "modifier": -0.6,
+          "percent_modifier": -10.8,
+          "flat_modifier": null,
+          "effective": 4.9
+        },
+        "maneuverability": {
+          "base": 72,
+          "modifier": 4,
+          "percent_modifier": 5,
+          "flat_modifier": null,
+          "effective": 76
+        }
+      }
+    },
+    {
+      "id": "percentage-before-flat-durability",
+      "source": "calculation contract",
+      "ship": {
+        "durability": 1000
+      },
+      "effects": {
+        "hull_hp_pct": 10,
+        "durability": 150
+      },
+      "effect_sets": [
+        {
+          "hull_hp_pct": 10
+        },
+        {
+          "durability": 150
+        }
+      ],
+      "definitions": [
+        {
+          "key": "durability",
+          "label": "Durability",
+          "category": "survivability",
+          "base_field": "durability",
+          "pct_effect": "hull_hp_pct",
+          "calculation_flat_effect": "durability",
+          "precision": 0,
+          "positive_is_good": true
+        }
+      ],
+      "expected": {
+        "durability": {
+          "base": 1000,
+          "modifier": 250,
+          "percent_modifier": 10,
+          "flat_modifier": 150,
+          "effective": 1250
+        }
+      }
+    },
+    {
+      "id": "crew-capacity-half-up",
+      "source": "cross-runtime rounding contract",
+      "ship": {
+        "crew_capacity": 10
+      },
+      "effects": {
+        "crew_capacity_pct": 5
+      },
+      "effect_sets": [
+        {
+          "crew_capacity_pct": 5
+        }
+      ],
+      "definitions": [
+        {
+          "key": "crew_capacity",
+          "label": "Crew capacity",
+          "category": "crew",
+          "base_field": "crew_capacity",
+          "pct_effect": "crew_capacity_pct",
+          "calculation_flat_effect": "crew_capacity",
+          "precision": 0,
+          "positive_is_good": true
+        }
+      ],
+      "expected": {
+        "crew_capacity": {
+          "base": 10,
+          "modifier": 1,
+          "percent_modifier": 5,
+          "flat_modifier": null,
+          "effective": 11
+        }
+      }
+    }
+  ]
+}

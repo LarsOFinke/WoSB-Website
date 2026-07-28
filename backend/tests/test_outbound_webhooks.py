@@ -395,6 +395,7 @@ def test_webhook_event_catalog_has_stable_route_family_for_every_domain_event() 
         "integration.test": ("default", "test"),
         "registration.request.": ("registrations", "registration_request"),
         "squad.": ("squads", "squad"),
+        "group.": ("groups", "group"),
         "calendar.": ("events", "calendar_event"),
         "guide.": ("guides", "guide"),
         "newcomer_guide.": ("guides", "guide"),

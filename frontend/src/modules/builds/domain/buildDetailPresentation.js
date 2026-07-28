@@ -1,3 +1,11 @@
+import {
+  formatBuildModifier,
+  isActiveBuildEffect,
+  roundByPrecision,
+} from './buildStatPresentation.js'
+
+export { formatBuildModifier, roundByPrecision }
+
 export function weaponArcRows(build, t) {
   return [
     ['front', 'front_weapon_slots'],
@@ -73,25 +81,6 @@ export function shareLinkMeta(slot) {
   return typeof slot === 'string' ? '' : (slot?.notes || '')
 }
 
-export function roundByPrecision(value, precision = 0) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
-  const factor = 10 ** Number(precision || 0)
-  const rounded = Math.round(Number(value) * factor) / factor
-  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
-}
-
-export function formatBuildModifier(row) {
-  const value = Number(row.modifier || 0)
-  if (!Number.isFinite(value) || value === 0) return '—'
-  const sign = value > 0 ? '+' : ''
-  const suffix = row.modifier_kind === 'percent'
-    || row.unit === '%'
-    || String(row.effect_key || '').endsWith('_pct')
-    ? '%'
-    : (row.unit ? ` ${row.unit}` : '')
-  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
-}
-
 export function translatedStatRows(build, t) {
   return (build?.ship_stats?.stat_rows || []).map((row) => {
     const path = `builds.statLabels.${row.key}`
@@ -105,6 +94,6 @@ export function translatedStatRows(build, t) {
 
 export function activeBuildEffects(statRows) {
   return statRows
-    .filter((row) => Number(row.modifier || 0) !== 0)
+    .filter(isActiveBuildEffect)
     .map((row) => ({ ...row, value: formatBuildModifier(row), isDebuff: row.is_debuff }))
 }

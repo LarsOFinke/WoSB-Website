@@ -1,6 +1,12 @@
 import { buildCrewVisualUrl, buildVisualUrl } from './buildVisuals.js'
 import { buildShareUrl } from './shareBuild.js'
 import {
+  CORE_BUILD_STAT_KEYS,
+  formatBuildModifier,
+  formatStatValue,
+  roundByPrecision,
+} from './domain/buildStatPresentation.js'
+import {
   createPrintDocumentHtml,
   createPrintLabels,
   escapePrintMarkup,
@@ -31,18 +37,6 @@ const BUILD_PRINT_THEMES = Object.freeze({
   }),
 })
 
-const CORE_STAT_KEYS = new Set([
-  'durability',
-  'speed_min_knots',
-  'speed_knots',
-  'maneuverability',
-  'armor',
-  'hold_capacity',
-  'crew_capacity',
-  'sailor_minimum',
-  'displacement_tons',
-])
-
 const PRINT_VISUALS = {
   ship: buildVisualUrl('ship'),
   sail: buildVisualUrl('sail'),
@@ -63,19 +57,6 @@ const PRINT_VISUALS = {
 }
 
 const escapeXml = escapePrintMarkup
-
-function roundByPrecision(value, precision = 0) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
-  const factor = 10 ** Number(precision || 0)
-  const rounded = Math.round(Number(value) * factor) / factor
-  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
-}
-
-function formatStatValue(value, unit, precision = 0) {
-  const number = roundByPrecision(value, precision)
-  if (number === null) return '—'
-  return `${number}${unit ? ` ${unit}` : ''}`
-}
 
 function listLabel(slot, labeler, { includeQuantity = true } = {}) {
   if (!slot) return ''
@@ -187,19 +168,6 @@ function renderGroupedPanel({ x, y, width, index, eyebrow, title, iconHref, grou
   }
 }
 
-function formatStatModifier(row) {
-  const value = Number(row?.modifier || 0)
-  if (!Number.isFinite(value) || value === 0) return ''
-  if (String(row?.effect_key || row?.key || '').endsWith('_enabled')) return '✓'
-  const sign = value > 0 ? '+' : ''
-  const suffix = row?.modifier_kind === 'percent'
-    || row?.unit === '%'
-    || String(row?.effect_key || '').endsWith('_pct')
-    ? '%'
-    : (row?.unit ? ` ${row.unit}` : '')
-  return `${sign}${roundByPrecision(value, row?.precision || 0)}${suffix}`
-}
-
 function renderPerformancePanel({ x, y, width, index, eyebrow, title, iconHref, rows, colors }) {
   if (!rows.length) return { height: 0, svg: '' }
   const columns = 3
@@ -214,7 +182,7 @@ function renderPerformancePanel({ x, y, width, index, eyebrow, title, iconHref, 
     const gridRow = Math.floor(rowIndex / columns)
     const cellX = x + gridPadding + (column * (cellWidth + cellGap))
     const cellY = y + 76 + gridPadding + (gridRow * (cellHeight + cellGap))
-    const modifier = formatStatModifier(row)
+    const modifier = formatBuildModifier(row)
     const modified = Boolean(modifier)
     const debuff = Boolean(row.isDebuff ?? row.is_debuff)
     const statusColor = debuff ? colors.danger : colors.accent
@@ -286,7 +254,7 @@ function renderNotesPanel(model, x, y, width, index, colors) {
 
 function statRowsForBuild(build, t) {
   return (build?.ship_stats?.stat_rows || [])
-    .filter((row) => CORE_STAT_KEYS.has(row.key))
+    .filter((row) => CORE_BUILD_STAT_KEYS.has(row.key))
     .map((row) => {
       const path = `builds.statLabels.${row.key}`
       const translated = t(path)

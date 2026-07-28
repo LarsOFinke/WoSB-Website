@@ -146,7 +146,7 @@ test('La Couronne verified equipment stack matches the in-game speed range', () 
     { speed_knots: 4.1 },
   ]
   const rows = calculateBuildStatRows({
-    ship: { speed_min_knots: 7.6, speed_knots: 10.3, armor: 5.5 },
+    ship: { speed_min_knots: 7.6, speed_knots: 10.6, armor: 5.5 },
     definitions: [
       {
         key: 'speed_min_knots',
@@ -173,5 +173,8 @@ test('La Couronne verified equipment stack matches the in-game speed range', () 
     effectSets,
   })
 
-  assert.deepEqual(rows.map((row) => row.effective), [8.3, 15.1, 4.9])
+  assert.deepEqual(rows.map((row) => row.effective), [8.3, 15.4, 4.9])
+  assert.deepEqual(rows[1].percent_modifier, 9.2)
+  assert.deepEqual(rows[1].flat_modifier, 4.1)
+  assert.deepEqual(rows[1].modifier, 4.8)
 })

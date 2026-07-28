@@ -1,3 +1,5 @@
+import { roundByPrecision } from './buildMath.js'
+
 export function sumEffects(...effectSets) {
   const totals = {}
   for (const effects of effectSets) {
@@ -94,13 +96,7 @@ function numberOrNull(value) {
   return Number(value)
 }
 
-function roundByPrecision(value, precision = 0) {
-  const number = numberOrNull(value)
-  if (number === null) return null
-  const factor = 10 ** Number(precision || 0)
-  const rounded = Math.round(number * factor) / factor
-  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
-}
+export { roundByPrecision } from './buildMath.js'
 
 /**
  * Calculate the live Build Designer stat rows from the exact same catalog
@@ -113,10 +109,13 @@ export function calculateBuildStatRows({ ship, definitions = [], effects = {}, e
   return definitions
     .map((definition) => {
       const base = definition?.base_field ? numberOrNull(ship[definition.base_field]) : null
-      const pctModifier = Number(effects[definition?.pct_effect] || 0)
-      const flatModifier = Number(effects[definition?.flat_effect] || 0)
-      const modifier = pctModifier + flatModifier
-      if (base === null && modifier === 0) return null
+      const pctMultiplier = definition?.pct_effect
+        ? percentageMultiplier(effectSets, definition.pct_effect, Number(effects[definition.pct_effect] || 0))
+        : 1
+      const percentModifier = definition?.pct_effect ? (pctMultiplier - 1) * 100 : 0
+      const flatEffectKey = definition?.calculation_flat_effect || definition?.flat_effect
+      const flatModifier = flatEffectKey ? Number(effects[flatEffectKey] || 0) : 0
+      if (base === null && percentModifier === 0 && flatModifier === 0) return null
 
       let effective = base
       if (effective !== null && definition.pct_effect) {
@@ -126,28 +125,38 @@ export function calculateBuildStatRows({ ship, definitions = [], effects = {}, e
         const pctBase = configuredPctBase === null || (configuredPctBase <= 0 && base > 0)
           ? base
           : configuredPctBase
-        const pctDelta = percentageMultiplier(effectSets, definition.pct_effect, pctModifier) - 1
-        effective += pctBase * pctDelta
+        effective = base + (pctBase * percentModifier / 100)
       }
-      const calculationFlatModifier = Number(effects[definition.calculation_flat_effect] || 0)
-      if (effective !== null && definition.calculation_flat_effect) {
-        effective += calculationFlatModifier
-      } else if (effective !== null && definition.flat_effect) {
+      if (effective !== null) {
         effective += flatModifier
-      }
-      if (effective === null && definition.flat_effect) {
+      } else if (definition.flat_effect) {
         effective = flatModifier
       }
+
+      const rawModifier = base !== null && effective !== null
+        ? effective - base
+        : (flatModifier || percentModifier)
+      const hasPercentage = percentModifier !== 0
+      const hasFlat = flatModifier !== 0
+      const modifierKind = hasPercentage && hasFlat
+        ? 'composite'
+        : hasPercentage
+          ? 'percent'
+          : 'flat'
+      const delta = base !== null && effective !== null ? effective - base : rawModifier
+      const isDebuff = delta !== 0
+        && (definition.positive_is_good === false ? delta > 0 : delta < 0)
 
       return {
         ...definition,
         base: roundByPrecision(base, definition.precision),
-        modifier: roundByPrecision(modifier, definition.precision),
+        modifier: roundByPrecision(rawModifier, definition.precision),
+        percent_modifier: hasPercentage ? roundByPrecision(percentModifier, 1) : null,
+        flat_modifier: hasFlat ? roundByPrecision(flatModifier, definition.precision) : null,
         effective: roundByPrecision(effective, definition.precision),
-        modifier_kind: definition.pct_effect && definition.base_field ? 'percent' : 'flat',
+        modifier_kind: modifierKind,
         effect_key: definition.pct_effect || definition.flat_effect,
-        isDebuff: modifier !== 0
-          && (definition.positive_is_good === false ? modifier > 0 : modifier < 0),
+        isDebuff,
       }
     })
     .filter(Boolean)

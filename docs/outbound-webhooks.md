@@ -79,3 +79,15 @@ The gateway image normalizes all built frontend directories to mode `0755` and f
 ## Forum and fleet events
 
 Automatic website webhooks include forum replies and removals as well as fleet creation, applications, profile changes, membership updates, leadership assignments and role changes. Every supported event has a versioned English template under `docs/webhook-templates/message-templates/`. Forum reply deletion is available to the reply author and Staff after explicit confirmation; the opening post remains tied to thread deletion.
+
+## Group-search events
+
+The group-search module publishes automatic events for:
+
+- `group.created` when a listing is created,
+- `group.member.joined` when a captain joins,
+- `group.closed` when the owner or Staff closes a listing.
+
+Payloads intentionally omit free-text contact notes, descriptions and member
+notes. Fleet-scoped routing follows the listing owner's fleet for the entire
+lifecycle, not the fleet of a joining member or moderating Staff user.

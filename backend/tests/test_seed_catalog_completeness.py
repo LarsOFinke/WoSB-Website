@@ -6,6 +6,7 @@ from app.bootstrap.build_catalog_validation import (
     validate_upgrade_seed_data,
 )
 from app.bootstrap.catalog_loader import load_master_data_catalog
+from app.modules.builds.services.stat_catalog import STAT_DEFINITIONS
 
 
 CATALOG = load_master_data_catalog()
@@ -160,3 +161,57 @@ def test_specialist_catalog_matches_verified_screenshot_roster() -> None:
 
 def test_hold_catalog_contains_tackles() -> None:
     assert "Tackles" in {str(row["name"]) for row in HOLD_OPTIONS}
+
+
+def test_ammunition_catalog_contains_every_current_selectable_payload() -> None:
+    names = {str(row["name"]) for row in AMMUNITION_OPTIONS}
+    assert len(AMMUNITION_OPTIONS) == 16
+    assert names == {
+        "Bar Shots",
+        "Burning Arrows",
+        "Fire Ship",
+        "Grapeshot",
+        "Heated Shots",
+        "Heavy Shots",
+        "Large Phosphorous Mine",
+        "Large Shrapnel Mines",
+        "Phosphorous Shots",
+        "Round Shots",
+        "Saxon Shots",
+        "Shrapnel Rounds",
+        "Small Flaming Barrels",
+        "Small Gunpowder Barrels",
+        "Small Phosphorous Barrels",
+        "Strike Rounds",
+    }
+    broadside_names = {
+        "Round Shots",
+        "Heated Shots",
+        "Bar Shots",
+        "Grapeshot",
+        "Saxon Shots",
+        "Heavy Shots",
+    }
+    assert broadside_names <= names
+    assert len({row["seed_id"] for row in AMMUNITION_OPTIONS}) == 16
+
+
+def test_every_seeded_numeric_effect_has_a_stat_catalog_definition() -> None:
+    seeded_effect_keys = {
+        key
+        for rows in ALL_OPTION_GROUPS
+        for row in rows
+        for key in (row.get("stat_effects") or {})
+    }
+    calculated_effect_keys = {
+        key
+        for definition in STAT_DEFINITIONS
+        for key in (
+            definition.pct_effect,
+            definition.flat_effect,
+            definition.calculation_flat_effect,
+        )
+        if key
+    }
+
+    assert seeded_effect_keys <= calculated_effect_keys

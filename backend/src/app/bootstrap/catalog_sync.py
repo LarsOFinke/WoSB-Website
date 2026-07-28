@@ -4,7 +4,7 @@ import hashlib
 import json
 from typing import Any
 
-MASTER_DATA_SEED_REVISION = "2026-07-master-data-v7-owned-ship-audit"
+MASTER_DATA_SEED_REVISION = "2026-07-master-data-v8-ammunition-calculation-audit"
 CUSTOM_MASTER_DATA_REVISION = "custom"
 
 

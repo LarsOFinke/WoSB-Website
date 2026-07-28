@@ -10,7 +10,10 @@ from app.modules.builds.services.build_limits import (
     SPECIAL_CREW_SLOT_LIMIT,
     regular_specialist_count,
 )
-from app.modules.builds.services.build_stat_service import apply_percentage_effects
+from app.modules.builds.services.build_stat_service import (
+    apply_percentage_effects,
+    round_half_up,
+)
 from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
 from app.modules.ships.models.ship import Ship
@@ -113,7 +116,7 @@ class BuildValidator:
 
         effective_capacity = max(
             0,
-            round(
+            round_half_up(
                 apply_percentage_effects(
                     ship.crew_capacity,
                     "crew_capacity_pct",

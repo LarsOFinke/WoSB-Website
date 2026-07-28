@@ -4,6 +4,13 @@ import { computed } from 'vue'
 import { useLocale } from '@/locales'
 import { buildVisualUrl } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
+import {
+  CORE_BUILD_STAT_KEYS,
+  formatBuildModifier,
+  formatStatValue,
+  isActiveBuildEffect,
+  rowIsDebuff,
+} from '@/modules/builds/domain/buildStatPresentation'
 
 const props = defineProps({
   ship: { type: Object, required: true },
@@ -21,50 +28,8 @@ const props = defineProps({
 
 const { t } = useLocale()
 
-const CORE_STAT_KEYS = new Set([
-  'durability',
-  'speed_min_knots',
-  'speed_knots',
-  'maneuverability',
-  'armor',
-  'hold_capacity',
-  'crew_capacity',
-  'sailor_minimum',
-  'displacement_tons',
-])
-
-function roundByPrecision(value, precision = 0) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return null
-  const factor = 10 ** Number(precision || 0)
-  const rounded = Math.round(Number(value) * factor) / factor
-  return Number(precision || 0) === 0 ? Math.round(rounded) : rounded
-}
-
-function formatStatValue(value, unit, precision = 0) {
-  const number = roundByPrecision(value, precision)
-  if (number === null) return '—'
-  return `${number}${unit ? ` ${unit}` : ''}`
-}
-
-function formatModifier(row) {
-  const value = Number(row.modifier || 0)
-  if (!Number.isFinite(value) || value === 0) return '—'
-  if (String(row.effect_key || row.key || '').endsWith('_enabled')) return '✓'
-  const sign = value > 0 ? '+' : ''
-  const suffix = row.modifier_kind === 'percent'
-    || row.unit === '%'
-    || String(row.effect_key || '').endsWith('_pct')
-    ? '%'
-    : (row.unit ? ` ${row.unit}` : '')
-  return `${sign}${roundByPrecision(value, row.precision || 0)}${suffix}`
-}
-
-function rowIsDebuff(row) {
-  return Boolean(row.isDebuff ?? row.is_debuff)
-}
-
-const coreRows = computed(() => props.statRows.filter((row) => CORE_STAT_KEYS.has(row.key)))
-const activeEffects = computed(() => props.effectRows.filter((row) => Number(row.modifier || 0) !== 0))
+const coreRows = computed(() => props.statRows.filter((row) => CORE_BUILD_STAT_KEYS.has(row.key)))
+const activeEffects = computed(() => props.effectRows.filter(isActiveBuildEffect))
 const buffRows = computed(() => activeEffects.value.filter((row) => !rowIsDebuff(row)))
 const debuffRows = computed(() => activeEffects.value.filter((row) => rowIsDebuff(row)))
 const filledUpgradeSlots = computed(() => props.upgradeSlots.filter((slot) => slot?.name).length)
@@ -144,7 +109,7 @@ const crewUsagePercent = computed(() => {
             <strong>{{ formatStatValue(row.effective, row.unit, row.precision) }}</strong>
             <small>
               {{ formatStatValue(row.base, row.unit, row.precision) }}
-              <template v-if="Number(row.modifier) !== 0"> · {{ formatModifier(row) }}</template>
+              <template v-if="Number(row.modifier) !== 0"> · {{ formatBuildModifier(row) }}</template>
             </small>
           </div>
         </div>
@@ -194,7 +159,7 @@ const crewUsagePercent = computed(() => {
           <div class="modifier-chip-grid">
             <span v-for="row in buffRows" :key="row.key" class="modifier-chip">
               <small>{{ row.label }}</small>
-              <strong>{{ formatModifier(row) }}</strong>
+              <strong>{{ formatBuildModifier(row) }}</strong>
             </span>
             <span v-if="!buffRows.length" class="modifier-empty">{{ t('builds.commandDeck.noBuffs') }}</span>
           </div>
@@ -207,7 +172,7 @@ const crewUsagePercent = computed(() => {
           <div class="modifier-chip-grid">
             <span v-for="row in debuffRows" :key="row.key" class="modifier-chip is-debuff">
               <small>{{ row.label }}</small>
-              <strong>{{ formatModifier(row) }}</strong>
+              <strong>{{ formatBuildModifier(row) }}</strong>
             </span>
             <span v-if="!debuffRows.length" class="modifier-empty">{{ t('builds.commandDeck.noDebuffs') }}</span>
           </div>

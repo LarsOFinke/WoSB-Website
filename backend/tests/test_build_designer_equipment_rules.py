@@ -82,6 +82,31 @@ LANTERN_EFFECTS = {
 }
 
 
+def test_de_zeven_with_raiding_sails_matches_the_verified_in_game_value() -> None:
+    with seeded_session() as db:
+        ship = _ship(db, "De Zeven Provincien")
+        assert ship.speed_min_knots == pytest.approx(7.7)
+        assert ship.speed_knots == pytest.approx(10.6)
+
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="De Zeven verified speed",
+                ship_id=ship.id,
+                sails="Raiding Sails",
+                sailors=ship.sailor_minimum,
+            ),
+        )
+
+        speed_row = next(
+            row for row in build.ship_stats["stat_rows"] if row["key"] == "speed_knots"
+        )
+        assert speed_row["base"] == pytest.approx(10.6)
+        assert speed_row["flat_modifier"] == pytest.approx(4.1)
+        assert speed_row["effective"] == pytest.approx(14.7)
+        assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(14.7)
+
+
 def test_raiding_sails_apply_every_verified_tooltip_effect() -> None:
     with seeded_session() as db:
         ship = _ship(db)
@@ -194,6 +219,12 @@ def test_build_catalog_api_forwards_verified_sail_and_lantern_effects() -> None:
 
         assert sails == SAIL_EFFECTS
         assert lanterns == LANTERN_EFFECTS
+        speed_definition = next(
+            definition
+            for definition in catalog.stat_definitions
+            if definition.key == "speed_knots"
+        )
+        assert speed_definition.pct_base_field == "speed_min_knots"
 
 
 def test_research_reward_unlocks_and_persists_fifth_upgrade_slot() -> None:
