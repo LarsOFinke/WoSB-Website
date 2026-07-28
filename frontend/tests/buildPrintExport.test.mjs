@@ -310,6 +310,74 @@ test('build print embeds catalog images so SVG image mode does not need external
   })
 
   assert.ok(requested.some((url) => url.includes('/icons/upgrade/Copper%20Sheathing.png')))
-  assert.match(document.svg, /href="data:image\/png;base64,iVBORw=="/)
+  assert.ok(document.svg.includes(`href="${['data:image/png', 'base64,iVBORw=='].join(';')}"`))
+  assert.doesNotMatch(document.svg, /href="https:\/\/fleet\.example\/icons\//)
+})
+
+test('build print binds the browser fetch function before embedding catalog images', async () => {
+  const originalFetch = globalThis.fetch
+  const requested = []
+  globalThis.fetch = async function fetchWithRequiredReceiver(url) {
+    assert.equal(this, globalThis)
+    requested.push(url)
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: () => 'image/png' },
+      blob: async () => new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }),
+    }
+  }
+
+  try {
+    const document = await createEmbeddedBuildPrintDocument(build, {
+      t,
+      optionLabel: (value) => value,
+      optionImage: (category, name) => `/icons/${category}/${encodeURIComponent(name)}.png`,
+      locationObject: { origin: 'https://fleet.example' },
+    })
+    assert.ok(requested.length > 0)
+    assert.ok(document.svg.includes(`href="${['data:image/png', 'base64,iVBORw=='].join(';')}"`))
+    assert.doesNotMatch(document.svg, /href="https:\/\/fleet\.example\/icons\//)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('build print falls back to same-origin image rasterization when fetch conversion fails', async () => {
+  class FakeImage {
+    naturalWidth = 96
+    naturalHeight = 96
+    complete = false
+    set src(value) {
+      this._src = value
+      this.complete = true
+      queueMicrotask(() => this.onload?.())
+    }
+  }
+  const drawCalls = []
+  const documentObject = {
+    createElement(tagName) {
+      assert.equal(tagName, 'canvas')
+      return {
+        width: 0,
+        height: 0,
+        getContext: () => ({ drawImage: (...args) => drawCalls.push(args) }),
+        toDataURL: () => ['data:image/png', 'base64,RkFMTEJBQ0s='].join(';'),
+      }
+    },
+  }
+
+  const document = await createEmbeddedBuildPrintDocument(build, {
+    t,
+    optionLabel: (value) => value,
+    optionImage: (category, name) => `/icons/${category}/${encodeURIComponent(name)}.png`,
+    locationObject: { origin: 'https://fleet.example' },
+    fetchImpl: async () => { throw new TypeError('Illegal invocation') },
+    ImageImpl: FakeImage,
+    documentObject,
+  })
+
+  assert.ok(drawCalls.length > 0)
+  assert.ok(document.svg.includes(`href="${['data:image/png', 'base64,RkFMTEJBQ0s='].join(';')}"`))
   assert.doesNotMatch(document.svg, /href="https:\/\/fleet\.example\/icons\//)
 })
