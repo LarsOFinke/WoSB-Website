@@ -24,7 +24,6 @@ const form = reactive({
   name: '',
   endpoint_url: '',
   discord_username: '',
-  discord_avatar_url: '',
   is_active: true,
 })
 
@@ -37,7 +36,6 @@ function resetForm() {
     name: '',
     endpoint_url: '',
     discord_username: '',
-    discord_avatar_url: '',
     is_active: true,
   })
 }
@@ -54,7 +52,6 @@ function editTarget(row) {
     name: row.name,
     endpoint_url: '',
     discord_username: row.discord_username || '',
-    discord_avatar_url: row.discord_avatar_url || '',
     is_active: row.is_active,
   })
   editorOpen.value = true
@@ -89,7 +86,6 @@ function payload() {
     scope_id: existing?.scope_id || null,
     message_template: existing?.message_template || null,
     discord_username: form.discord_username || null,
-    discord_avatar_url: form.discord_avatar_url || null,
     broadcast_enabled: true,
     is_active: form.is_active,
   }
@@ -132,7 +128,6 @@ async function removeTarget(row) {
         scope_id: row.scope_id,
         message_template: row.message_template,
         discord_username: row.discord_username,
-        discord_avatar_url: row.discord_avatar_url,
         broadcast_enabled: false,
         is_active: row.is_active,
       })
@@ -203,10 +198,7 @@ defineExpose({ load, broadcastWebhooks })
           <label class="webhook-active-toggle"><input v-model="form.is_active" type="checkbox" /><span>{{ t('admin.webhooks.fields.active') }}</span></label>
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.name') }}</span><input v-model="form.name" required minlength="3" maxlength="120" :placeholder="t('admin.webhooks.broadcast.targets.namePlaceholder')" /></label>
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.endpoint') }}</span><input v-model="form.endpoint_url" type="text" inputmode="url" autocapitalize="none" :spellcheck="false" maxlength="1000" :required="!form.id" :placeholder="form.id ? t('admin.webhooks.placeholders.keepEndpoint') : 'https://discord.com/api/webhooks/…'" /><small>{{ t('admin.webhooks.endpointHint') }}</small></label>
-          <div class="webhook-editor-row">
-            <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordUsername') }}</span><input v-model="form.discord_username" maxlength="80" /></label>
-            <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordAvatar') }}</span><input v-model="form.discord_avatar_url" type="url" maxlength="1000" /></label>
-          </div>
+          <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordUsername') }}</span><input v-model="form.discord_username" maxlength="80" /></label>
           <p class="muted">{{ t('admin.webhooks.broadcast.targets.separationHint') }}</p>
           <div class="webhook-editor-actions"><button class="small-action" type="button" @click="closeEditor">{{ t('common.cancel') }}</button><button class="form-button primary-action" type="submit" :disabled="saving || form.name.trim().length < 3 || (!form.id && !form.endpoint_url.trim())">{{ saving ? t('common.saving') : t('common.save') }}</button></div>
         </form>

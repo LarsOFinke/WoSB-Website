@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed Build Print icon rendering from `blob:` and data-URL SVG documents by resolving catalog assets against the public website origin before export. Upgrade, sail, lantern, specialist and inventory entries now use their selected catalog images with category fallbacks.
+- Discord event webhooks and manual broadcasts now always use the bundled Royal Blackwater Fleet icon. Custom avatar controls were removed from the Staff UI and legacy avatar values can no longer override the server-side payload.
 - Corrected First Mate semantics: `+0.2% per Sailor` now increases sail deployment speed only, appears as its own calculated stat, and can no longer inflate base or cruise ship speed. Added the 102-Sailor Zeven regression (`14.7 kn` ship speed and `+20.4%` sail deployment speed).
 - Fixed master-data seed recovery: individual restore actions are real buttons, admins can reset all repository-owned categories, options and ships from the master-data workspace, and custom records/user content remain untouched. Added `update.sh --restore-seed-defaults` for the equivalent audited server-side repair flow and explicit reporting when normal seeds preserve admin overrides.
 - Completed the selectable ammunition seed catalog with Heavy Shots and Saxon Shots, stable seed IDs and translations in every supported locale.

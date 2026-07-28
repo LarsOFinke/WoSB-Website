@@ -11,6 +11,7 @@ import {
   createPrintLabels,
   escapePrintMarkup,
   openPrintWindow,
+  resolvePrintUrl,
   sanitizePrintFileName,
   triggerPrintDownload,
 } from '../../shared/printing/printDocument.js'
@@ -70,6 +71,20 @@ function cleanLines(items, limit = Infinity) {
   const lines = (items || []).map((item) => String(item || '').trim()).filter(Boolean)
   if (lines.length <= limit) return lines
   return [...lines.slice(0, Math.max(0, limit - 1)), `+${lines.length - (limit - 1)} more`]
+}
+
+function cleanEntries(items, limit = Infinity) {
+  const entries = (items || []).filter((item) => item && String(item.value || '').trim())
+  if (entries.length <= limit) return entries
+  return [
+    ...entries.slice(0, Math.max(0, limit - 1)),
+    { name: '', value: `+${entries.length - (limit - 1)} more`, iconHref: '' },
+  ]
+}
+
+function rawSlotItem(slot) {
+  if (!slot) return ''
+  return typeof slot === 'string' ? slot : String(slot.item || '')
 }
 
 function wrapText(text, maxChars = 58) {
@@ -205,25 +220,29 @@ function renderPerformancePanel({ x, y, width, index, eyebrow, title, iconHref, 
 function renderInventoryPanel({ x, y, width, index, eyebrow, title, iconHref, groups, colors }) {
   const normalizedGroups = groups.map((group) => ({
     ...group,
-    items: group.lines.map((line) => wrapText(line, 44)),
+    items: (group.items || group.lines.map((value) => ({ value, iconHref: group.iconHref }))).map((item) => ({
+      ...item,
+      wrapped: wrapText(item.value, 38),
+    })),
   }))
-  const itemHeight = (lines) => 18 + (Math.max(1, lines.length) * 22)
-  const groupHeights = normalizedGroups.map((group) => 52 + group.items.reduce((total, lines) => total + itemHeight(lines) + 6, 0))
+  const itemHeight = (item) => Math.max(42, 18 + (Math.max(1, item.wrapped.length) * 22))
+  const groupHeights = normalizedGroups.map((group) => 52 + group.items.reduce((total, item) => total + itemHeight(item) + 6, 0))
   const height = 76 + groupHeights.reduce((total, value) => total + value, 0) + 12
   let cursorY = y + 76
   const groupsSvg = normalizedGroups.map((group, groupIndex) => {
     const groupY = cursorY
     cursorY += groupHeights[groupIndex]
     let itemY = groupY + 48
-    const items = group.items.map((lines, itemIndex) => {
-      const rowHeight = itemHeight(lines)
+    const items = group.items.map((item, itemIndex) => {
+      const rowHeight = itemHeight(item)
       const rowY = itemY
       itemY += rowHeight + 6
-      const visibleLines = lines.length ? lines : ['—']
+      const visibleLines = item.wrapped.length ? item.wrapped : ['—']
       return `<g data-inventory-item="${escapeXml(group.iconKey || group.label)}-${itemIndex + 1}">
         <rect x="${x + 64}" y="${rowY}" width="${width - 84}" height="${rowHeight}" rx="4" fill="${colors.panelSoft}" stroke="${colors.border}" />
-        <text x="${x + 82}" y="${rowY + 25}" class="inventory-index">${String(itemIndex + 1).padStart(2, '0')}</text>
+        ${renderIcon(item.iconHref || group.iconHref, x + 72, rowY + 6, 30, false, colors)}
         ${visibleLines.map((line, lineIndex) => `<text x="${x + 116}" y="${rowY + 25 + (lineIndex * 22)}" class="group-line">${escapeXml(line)}</text>`).join('')}
+        <text x="${x + width - 24}" y="${rowY + 25}" text-anchor="end" class="inventory-index">${String(itemIndex + 1).padStart(2, '0')}</text>
       </g>`
     }).join('')
     return `<g>
@@ -298,26 +317,53 @@ function headlineStatsForBuild(build, statRows, t) {
 function createBuildPrintModel(build, helpers = {}) {
   const t = helpers.t || ((key, params = {}) => Object.entries(params || {}).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), key))
   const optionLabel = helpers.optionLabel || ((value) => value || '')
-  const optionImage = helpers.optionImage || (() => '')
-  const shareUrl = buildShareUrl(build?.id || 0, helpers.locationObject || globalThis.location)
+  const locationObject = helpers.locationObject || globalThis.location
+  const rawOptionImage = helpers.optionImage || (() => '')
+  const optionImage = (categoryKey, name) => resolvePrintUrl(rawOptionImage(categoryKey, name), locationObject)
+  const shareUrl = buildShareUrl(build?.id || 0, locationObject)
   const statRows = statRowsForBuild(build, t)
-  const upgrades = cleanLines([
+  const upgradeRows = cleanEntries([
     build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4,
     build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8,
-  ].filter(Boolean).map(optionLabel), 8)
+  ].filter(Boolean).map((name) => ({
+    name,
+    value: optionLabel(name),
+    iconHref: optionImage('upgrade', name),
+  })), 8)
+  const upgrades = upgradeRows.map((row) => row.value)
   const weapons = [
     ['front', build?.front_weapon_slots], ['port', build?.port_weapon_slots],
     ['starboard', build?.starboard_weapon_slots], ['rear', build?.rear_weapon_slots],
     ['mortar', build?.mortar_weapon_slots], ['special', build?.special_weapon_slots],
-  ].map(([key, slots]) => ({
-    key,
-    label: t(`builds.detail.weapons.${key}`),
-    lines: cleanLines((slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 4),
-  })).filter((group) => group.lines.length)
+  ].map(([key, slots]) => {
+    const items = cleanEntries((slots || []).map((slot) => {
+      const name = rawSlotItem(slot)
+      return {
+        name,
+        value: listLabel(slot, optionLabel),
+        iconHref: optionImage('weapon', name),
+      }
+    }), 4)
+    return {
+      key,
+      label: t(`builds.detail.weapons.${key}`),
+      items,
+      lines: items.map((item) => item.value),
+    }
+  }).filter((group) => group.lines.length)
 
-  const allSpecialists = cleanLines((build?.special_crew_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 5)
-  const gingerSpecialist = allSpecialists.find((name) => name.replace(/ ×\d+$/, '') === 'Ginger') || ''
-  const specialists = allSpecialists.filter((name) => name !== gingerSpecialist)
+  const allSpecialistRows = cleanEntries((build?.special_crew_slots || []).map((slot) => {
+    const name = rawSlotItem(slot)
+    return {
+      name,
+      value: listLabel(slot, optionLabel),
+      iconHref: optionImage('special_crew', name),
+    }
+  }), 5)
+  const gingerSpecialistRow = allSpecialistRows.find((row) => row.name === 'Ginger') || null
+  const specialistRows = allSpecialistRows.filter((row) => row !== gingerSpecialistRow)
+  const gingerSpecialist = gingerSpecialistRow?.value || ''
+  const specialists = specialistRows.map((row) => row.value)
   const equipmentRows = [
     build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build.sails), iconHref: optionImage('sail', build.sails) } : null,
     build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build.lantern), iconHref: optionImage('lantern', build.lantern) } : null,
@@ -325,10 +371,20 @@ function createBuildPrintModel(build, helpers = {}) {
     build?.mortar_modification_installed ? { key: 'mortar', label: t('builds.detail.mortarModification'), value: t('builds.detail.mortarModificationActive') } : null,
   ].filter(Boolean)
   const inventoryGroups = [
-    { iconKey: 'ammunition', title: t('builds.detail.ammunition'), lines: cleanLines((build?.ammunition_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
-    { iconKey: 'consumable', title: t('builds.detail.consumables'), lines: cleanLines((build?.consumable_slots || []).map((slot) => listLabel(slot, optionLabel, { includeQuantity: false })).filter(Boolean), 6) },
-    { iconKey: 'hold', title: t('builds.detail.hold'), lines: cleanLines((build?.hold_slots || []).map((slot) => listLabel(slot, optionLabel)).filter(Boolean), 6) },
-  ].filter((group) => group.lines.length)
+    ['ammunition', t('builds.detail.ammunition'), build?.ammunition_slots, true],
+    ['consumable', t('builds.detail.consumables'), build?.consumable_slots, false],
+    ['hold', t('builds.detail.hold'), build?.hold_slots, true],
+  ].map(([iconKey, title, slots, includeQuantity]) => {
+    const items = cleanEntries((slots || []).map((slot) => {
+      const name = rawSlotItem(slot)
+      return {
+        name,
+        value: listLabel(slot, optionLabel, { includeQuantity }),
+        iconHref: optionImage(iconKey, name),
+      }
+    }), 6)
+    return { iconKey, title, items, lines: items.map((item) => item.value) }
+  }).filter((group) => group.lines.length)
   const classificationLabels = (build?.classification_tags || []).map((value) => {
     const path = `discovery.builds.tags.${value}.label`
     const translated = t(path)
@@ -358,8 +414,11 @@ function createBuildPrintModel(build, helpers = {}) {
     ],
     equipmentRows,
     upgrades,
+    upgradeRows,
     specialists,
+    specialistRows,
     gingerSpecialist,
+    gingerSpecialistRow,
     weapons,
     inventoryGroups,
     notes: build?.details ? wrapText(build.details, 112) : [],
@@ -393,7 +452,7 @@ function createBuildPrintDocument(build, helpers = {}) {
   if (model.equipmentRows.length || model.upgrades.length) {
     const rows = [
       ...model.equipmentRows.map((row) => ({ ...row, iconHref: row.iconHref || PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
-      ...model.upgrades.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade, iconHref: model.optionImage('upgrade', [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean)[index]) || PRINT_VISUALS.upgrade })),
+      ...model.upgradeRows.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade.value, iconHref: upgrade.iconHref || PRINT_VISUALS.upgrade })),
     ]
     const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows, colors })
     panels.push(panel.svg)
@@ -401,15 +460,15 @@ function createBuildPrintDocument(build, helpers = {}) {
   }
 
   if (model.weapons.length) {
-    const panel = renderGroupedPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), iconHref: PRINT_VISUALS.weapon, groups: model.weapons.map((group) => ({ label: group.label, lines: group.lines, iconHref: PRINT_VISUALS.weapon })), colors })
+    const panel = renderGroupedPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.shipStats'), title: model.t('builds.print.weaponLoadoutTitle'), iconHref: PRINT_VISUALS.weapon, groups: model.weapons.map((group) => ({ label: group.label, lines: group.lines, iconHref: group.items.find((item) => item.iconHref)?.iconHref || PRINT_VISUALS.weapon })), colors })
     panels.push(panel.svg)
     leftY += panel.height + SECTION_GAP
   }
 
   const crewRows = [
     ...model.crewRows.map((row) => ({ label: row.label, value: row.value, meta: row.hint, iconHref: PRINT_VISUALS.crew[row.key] })),
-    ...model.specialists.map((name) => ({ label: model.t('builds.detail.specialCrew'), value: name, iconHref: model.optionImage('special_crew', name.replace(/ ×\d+$/, '')) || PRINT_VISUALS.specialist })),
-    ...(model.gingerSpecialist ? [{ label: '+1 · Ginger', value: model.gingerSpecialist, iconHref: model.optionImage('special_crew', model.gingerSpecialist.replace(/ ×\d+$/, '')) || PRINT_VISUALS.specialist, accent: true }] : []),
+    ...model.specialistRows.map((row) => ({ label: model.t('builds.detail.specialCrew'), value: row.value, iconHref: row.iconHref || PRINT_VISUALS.specialist })),
+    ...(model.gingerSpecialistRow ? [{ label: '+1 · Ginger', value: model.gingerSpecialistRow.value, iconHref: model.gingerSpecialistRow.iconHref || PRINT_VISUALS.specialist, accent: true }] : []),
   ]
   const crewPanel = renderRowsPanel({ x: rightX, y: rightY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), iconHref: PRINT_VISUALS.crew.sailors, rows: crewRows, colors })
   panels.push(crewPanel.svg)
@@ -419,7 +478,7 @@ function createBuildPrintDocument(build, helpers = {}) {
     const inventoryOnLeft = leftY <= rightY
     const inventoryX = inventoryOnLeft ? leftX : rightX
     const inventoryY = inventoryOnLeft ? leftY : rightY
-    const panel = renderInventoryPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ iconKey: group.iconKey, label: group.title, lines: group.lines, iconHref: PRINT_VISUALS[group.iconKey] })), colors })
+    const panel = renderInventoryPanel({ x: inventoryX, y: inventoryY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.detail.inventory'), title: model.t('builds.print.inventoryTitle'), iconHref: PRINT_VISUALS.hold, groups: model.inventoryGroups.map((group) => ({ iconKey: group.iconKey, label: group.title, lines: group.lines, items: group.items, iconHref: PRINT_VISUALS[group.iconKey] })), colors })
     panels.push(panel.svg)
     if (inventoryOnLeft) leftY += panel.height + SECTION_GAP
     else rightY += panel.height + SECTION_GAP

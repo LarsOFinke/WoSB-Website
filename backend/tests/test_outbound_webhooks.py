@@ -444,6 +444,7 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
                     "[Review registration]({resource.url})"
                 ),
                 discord_username="RBF Hub",
+                discord_avatar_url="https://example.invalid/custom-avatar.png",
             ),
             actor,
         )
@@ -468,6 +469,9 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
             f"[Review registration]({public_url})"
         )
         assert payload["content"].count(public_url) == 1
+        assert payload["avatar_url"] == (
+            f"{settings.cors_origins[0].rstrip('/')}/rbf-fleet-icon.png"
+        )
         assert payload["username"] == "RBF Hub"
         assert "x-rbf-signature" not in {key.lower() for key, _ in transport.request.header_items()}
         assert delivery.status == "success"
@@ -855,7 +859,9 @@ def test_admin_can_send_one_manual_broadcast_to_multiple_discord_channels(monkey
         payload = json.loads(request.data.decode("utf-8"))
         assert payload["content"] == "**Fleet broadcast**\nPrepare for departure."
         assert payload["username"] == "RBF Broadcast"
-        assert payload["avatar_url"].endswith("?v=test")
+        assert payload["avatar_url"] == (
+            f"{settings.cors_origins[0].rstrip('/')}/rbf-fleet-icon.png"
+        )
         assert payload["allowed_mentions"] == {"parse": []}
 
 

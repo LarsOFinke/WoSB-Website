@@ -41,7 +41,6 @@ const form = reactive({
   scope_id: null,
   message_template: '',
   discord_username: '',
-  discord_avatar_url: '',
   broadcast_enabled: false,
   is_active: true,
   event_types: [],
@@ -105,7 +104,6 @@ function resetForm() {
     scope_id: null,
     message_template: '',
     discord_username: '',
-    discord_avatar_url: '',
     broadcast_enabled: false,
     is_active: true,
     event_types: [],
@@ -134,7 +132,6 @@ function editWebhook(row) {
     scope_id: row.scope_id,
     message_template: row.message_template || '',
     discord_username: row.discord_username || '',
-    discord_avatar_url: row.discord_avatar_url || '',
     broadcast_enabled: row.broadcast_enabled,
     is_active: row.is_active,
     event_types: [...row.event_types],
@@ -300,7 +297,6 @@ onMounted(load)
           </div>
           <div class="webhook-editor-row">
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordUsername') }}</span><input v-model="form.discord_username" maxlength="80" /></label>
-          <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.discordAvatar') }}</span><input v-model="form.discord_avatar_url" type="url" maxlength="1000" /></label>
           </div>
           <section class="webhook-template-composer" :aria-label="t('admin.webhooks.fields.template')">
           <label class="input-panel embedded-field webhook-template-picker">

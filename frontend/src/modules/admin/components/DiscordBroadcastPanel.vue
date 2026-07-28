@@ -18,7 +18,6 @@ const form = reactive({
   webhook_ids: [],
   message: '',
   discord_username: '',
-  discord_avatar_url: '',
 })
 
 const allSelected = computed(
@@ -63,7 +62,6 @@ async function submit() {
       webhook_ids: form.webhook_ids,
       message: form.message,
       discord_username: form.discord_username || null,
-      discord_avatar_url: form.discord_avatar_url || null,
     })
     success.value = t('admin.webhooks.broadcast.messages.queued', { count: rows.length })
     form.message = ''
@@ -142,16 +140,10 @@ onMounted(loadTargets)
           ></textarea>
           <small>{{ t('admin.webhooks.broadcast.messageHint') }}</small>
         </label>
-        <div class="webhook-editor-row">
-          <label class="input-panel embedded-field">
-            <span>{{ t('admin.webhooks.fields.discordUsername') }}</span>
-            <input v-model="form.discord_username" maxlength="80" />
-          </label>
-          <label class="input-panel embedded-field">
-            <span>{{ t('admin.webhooks.fields.discordAvatar') }}</span>
-            <input v-model="form.discord_avatar_url" type="url" maxlength="1000" />
-          </label>
-        </div>
+        <label class="input-panel embedded-field">
+          <span>{{ t('admin.webhooks.fields.discordUsername') }}</span>
+          <input v-model="form.discord_username" maxlength="80" />
+        </label>
         <p class="muted broadcast-selection-summary">
           {{ t('admin.webhooks.broadcast.selected', { count: selectedTargets.length }) }}
         </p>

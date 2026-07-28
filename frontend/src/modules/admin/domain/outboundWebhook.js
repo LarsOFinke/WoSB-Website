@@ -29,7 +29,6 @@ export function outboundWebhookPayload(form) {
     scope_id: form.scope_type === 'global' ? null : Number(form.scope_id),
     message_template: String(form.message_template || '').trim() || null,
     discord_username: String(form.discord_username || '').trim() || null,
-    discord_avatar_url: String(form.discord_avatar_url || '').trim() || null,
     broadcast_enabled: Boolean(form.broadcast_enabled),
     is_active: Boolean(form.is_active),
     event_types: [...new Set(form.event_types || [])].sort(),

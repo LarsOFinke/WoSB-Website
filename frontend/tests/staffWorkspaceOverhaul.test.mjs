@@ -64,9 +64,12 @@ test('website webhook management and delivery history remain focused and filtera
 
 
 test('Discord broadcasts have a separate workspace and target administration', () => {
-  for (const binding of ['form.webhook_ids', 'form.message', 'form.discord_username', 'form.discord_avatar_url']) {
+  for (const binding of ['form.webhook_ids', 'form.message', 'form.discord_username']) {
     assert.ok(broadcastSource.includes(binding), binding)
   }
+  assert.ok(!broadcastSource.includes('form.discord_avatar_url'))
+  assert.ok(!broadcastManagementSource.includes('form.discord_avatar_url'))
+  assert.ok(!webhookSource.includes('form.discord_avatar_url'))
   assert.ok(broadcastSource.includes('listBroadcastWebhookTargets'))
   assert.ok(broadcastSource.includes('sendDiscordBroadcast'))
   assert.ok(broadcastManagementSource.includes("listOutboundWebhooks('broadcast')"))

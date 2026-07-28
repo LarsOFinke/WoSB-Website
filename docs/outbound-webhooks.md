@@ -19,7 +19,8 @@ Webhook subscriptions are independent. The same event may be selected on any num
 - Discord webhook URL,
 - event selection,
 - global, fleet or squad scope,
-- sender name and avatar,
+- optional sender name,
+- the fixed Royal Blackwater Fleet avatar,
 - message template,
 - active state.
 
@@ -35,7 +36,8 @@ The panel supports:
 
 - selecting one, several or all broadcast targets,
 - one message of up to 2,000 characters,
-- optional sender-name and avatar overrides,
+- an optional sender-name override,
+- the fixed Royal Blackwater Fleet avatar,
 - safe Discord delivery with automatic mentions disabled,
 - one stored delivery per target,
 - the normal delivery history and retry workflow.
@@ -66,13 +68,17 @@ Templates support Discord Markdown and event-specific placeholders such as `{dat
 
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
 
-## Avatar URLs
+## Webhook avatar
 
-`Discord avatar URL` must be a public HTTPS image URL that Discord can fetch without authentication. The bundled fleet icon is available at:
+Every automatic event and manual broadcast uses the bundled Royal Blackwater Fleet icon:
 
 ```text
 https://royal-blackwater-fleet.eu/rbf-fleet-icon.png
 ```
+
+The delivery backend sets this URL for every Discord request. Historical
+`discord_avatar_url` values are retained only for database and API backwards
+compatibility and cannot override the fleet icon.
 
 The gateway image normalizes all built frontend directories to mode `0755` and files to `0644`, preventing unreadable static assets from producing HTTP 403 responses.
 

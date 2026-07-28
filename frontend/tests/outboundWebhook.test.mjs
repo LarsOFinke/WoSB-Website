@@ -27,12 +27,12 @@ test('Discord webhook payloads trim optional values and normalize global scope',
   assert.deepEqual(outboundWebhookPayload({
     name: '  Fleet alerts  ', endpoint_url: ' <https://discord.com/api/webhooks/123/token> ',
     scope_type: 'global', scope_id: 44, message_template: ' ', discord_username: ' RBF ',
-    discord_avatar_url: '', broadcast_enabled: false, is_active: true,
+    broadcast_enabled: false, is_active: true,
     event_types: ['guide.updated', 'guide.updated', 'build.created'],
   }), {
     name: 'Fleet alerts', endpoint_url: 'https://discord.com/api/webhooks/123/token',
     scope_type: 'global', scope_id: null, message_template: null, discord_username: 'RBF',
-    discord_avatar_url: null, broadcast_enabled: false, is_active: true,
+    broadcast_enabled: false, is_active: true,
     event_types: ['build.created', 'guide.updated'],
   })
 })
