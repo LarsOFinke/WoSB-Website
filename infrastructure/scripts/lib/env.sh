@@ -7,6 +7,10 @@ random_hex() {
   openssl rand -hex "$bytes"
 }
 
+random_fernet_key() {
+  openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n'
+}
+
 escape_sed_value() {
   printf '%s' "$1" | sed -e 's/[&|]/\\&/g'
 }
@@ -55,7 +59,7 @@ initialize_env() {
     created=true
   fi
 
-  local app_hostname app_ip postgres_user postgres_database postgres_password admin_password secrets_changed=false
+  local app_hostname app_ip postgres_user postgres_database postgres_password admin_password webhook_encryption_key secrets_changed=false
   if [[ -n "$requested_hostname" ]]; then
     app_hostname="$requested_hostname"
   elif [[ "$created" == true ]]; then
@@ -81,6 +85,13 @@ initialize_env() {
   else
     postgres_password="$(read_env POSTGRES_PASSWORD)"
     admin_password="$(read_env SEED_ADMIN_PASSWORD)"
+  fi
+
+  webhook_encryption_key="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
+  if [[ "$created" == true || "$regenerate" == true || -z "$webhook_encryption_key" || "$webhook_encryption_key" == CHANGE_ME* ]]; then
+    webhook_encryption_key="$(random_fernet_key)"
+    set_env_value WEBHOOK_ENCRYPTION_KEYS "$webhook_encryption_key"
+    secrets_changed=true
   fi
 
   local tls_mode letsencrypt_email
@@ -128,6 +139,17 @@ CREDS
   fi
 }
 
+ensure_runtime_secrets() {
+  ensure_env_file
+  local webhook_encryption_key
+  webhook_encryption_key="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
+  if [[ -z "$webhook_encryption_key" || "$webhook_encryption_key" == CHANGE_ME* ]]; then
+    set_env_value WEBHOOK_ENCRYPTION_KEYS "$(random_fernet_key)"
+    chmod 600 "$ENV_FILE"
+    log "Ein separater Schlüssel für verschlüsselte Discord-Webhook-Zugangsdaten wurde erzeugt."
+  fi
+}
+
 validate_env() {
   local missing=()
   while IFS= read -r key; do
@@ -159,4 +181,8 @@ validate_env() {
   fi
   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
   [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
+  local webhook_encryption_keys
+  webhook_encryption_keys="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
+  [[ -z "$webhook_encryption_keys" || "$webhook_encryption_keys" != CHANGE_ME* ]] || \
+    die "WEBHOOK_ENCRYPTION_KEYS wurde noch nicht sicher erzeugt."
 }

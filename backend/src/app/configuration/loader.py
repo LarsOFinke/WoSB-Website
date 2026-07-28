@@ -49,6 +49,7 @@ class SettingsLoader:
                 application_environment=application.environment
             ),
             seed=runtime_reader.read_seed(),
+            security=runtime_reader.read_security(),
             upload_limits=runtime_reader.read_upload_limits(),
             maintenance=runtime_reader.read_maintenance(),
             cors_origins=runtime_reader.read_cors_origins(),

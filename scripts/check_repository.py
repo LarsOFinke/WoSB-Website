@@ -91,9 +91,12 @@ required_files = {
     "docs/DATABASE.md",
     "docs/TESTING.md",
     "docs/DEPLOYMENT.md",
+    "docs/UPTIME_KUMA_2_MIGRATION.md",
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
     ".github/workflows/deploy.yml",
+    ".github/workflows/security.yml",
+    "scripts/security_audit.py",
 }
 for relative in required_files:
     require((ROOT / relative).is_file(), f"missing {relative}")
@@ -272,6 +275,18 @@ require(
     "UniqueConstraint" not in webhook_model_source,
     "Discord webhook subscriptions must not be unique per event or scope",
 )
+require(
+    "discord_avatar_url" not in webhook_model_source
+    and "discord_avatar_url" not in webhook_schema_source,
+    "obsolete Discord avatar override remains in the runtime contract",
+)
+webhook_service_source = (
+    ROOT / "backend/src/app/modules/admin/services/outbound_webhook_service.py"
+).read_text(encoding="utf-8")
+require(
+    "webhook_secret_box.encrypt" in webhook_service_source,
+    "Discord webhook credentials must be encrypted before persistence",
+)
 
 # Every published webhook event must ship with a copy-ready text template.
 webhook_event_path = ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
@@ -443,19 +458,15 @@ workflow_sources = "\n".join(
     for path in sorted((ROOT / ".github/workflows").glob("*.yml"))
 )
 for supported_action in (
-    "actions/checkout@v6",
-    "actions/setup-python@v6",
-    "actions/setup-node@v6",
-    "actions/upload-artifact@v6",
+    "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803",
+    "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
+    "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
+    "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+    "google/osv-scanner-action/.github/workflows/osv-scanner-reusable",
+    "@3adb4b14a2b0623876d18d863a498b785fb3752d",
 ):
-    require(supported_action in workflow_sources, f"supported GitHub Action missing: {supported_action}")
-for unreleased_action in (
-    "actions/checkout@v7",
-    "actions/setup-python@v7",
-    "actions/setup-node@v7",
-    "actions/upload-artifact@v7",
-):
-    require(unreleased_action not in workflow_sources, f"unreleased GitHub Action used: {unreleased_action}")
+    require(supported_action in workflow_sources, f"approved GitHub Action missing: {supported_action}")
+require("pull_request_target:" not in workflow_sources, "pull_request_target workflows are forbidden")
 
 # API responses embed the smallest useful identity instead of full user profiles.
 for schema_path in (

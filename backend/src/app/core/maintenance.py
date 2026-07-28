@@ -11,6 +11,9 @@ from app.modules.accounts.services.auth_service import delete_expired_sessions
 from app.modules.admin.services.outbound_webhook_delivery_service import (
     recover_pending_webhook_deliveries,
 )
+from app.modules.admin.services.outbound_webhook_service import (
+    encrypt_legacy_webhook_endpoints,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +22,18 @@ def run_maintenance_once() -> dict[str, int]:
     now = utc_now()
     with SessionLocal() as db:
         expired_sessions = delete_expired_sessions(db, commit=False)
+        encrypted_webhooks = encrypt_legacy_webhook_endpoints(db, commit=False)
         removed = purge_expired_records(
             db,
             now=now,
             policy=settings.maintenance,
         )
         db.commit()
-    return {"expired_sessions": int(expired_sessions or 0), **removed}
+    return {
+        "expired_sessions": int(expired_sessions or 0),
+        "encrypted_webhooks": int(encrypted_webhooks or 0),
+        **removed,
+    }
 
 
 async def maintenance_loop() -> None:

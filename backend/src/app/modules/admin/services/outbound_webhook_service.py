@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
+from app.core.secret_box import SecretBoxError, webhook_secret_box
 from app.core.time import utc_now
 from app.modules.accounts.models.user import User
 from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
@@ -130,8 +131,20 @@ def _load_events(value: str) -> list[str]:
     return [str(item) for item in payload] if isinstance(payload, list) else []
 
 
+def endpoint_url_for_delivery(row: OutboundWebhook) -> str:
+    try:
+        endpoint_url = webhook_secret_box.decrypt(row.endpoint_url)
+    except SecretBoxError as exc:
+        raise OutboundWebhookError(
+            "Stored Discord webhook credential cannot be decrypted. Re-enter the webhook URL."
+        ) from exc
+    # Treat persisted data as untrusted as well: encryption protects secrecy and
+    # integrity, while this allowlist check preserves the outbound SSRF boundary.
+    return _validate_endpoint_url(endpoint_url)
+
+
 def _public_endpoint(row: OutboundWebhook) -> str:
-    parsed = urlparse(row.endpoint_url)
+    parsed = urlparse(endpoint_url_for_delivery(row))
     path_match = DISCORD_WEBHOOK_PATH.fullmatch(parsed.path)
     webhook_id = path_match.group("webhook_id") if path_match else "configured"
     return f"{parsed.scheme}://{parsed.netloc}/api/webhooks/{webhook_id}/••••••"
@@ -147,7 +160,6 @@ def serialize_webhook(row: OutboundWebhook) -> OutboundWebhookRead:
         scope_id=row.scope_id,
         message_template=row.message_template,
         discord_username=row.discord_username,
-        discord_avatar_url=row.discord_avatar_url,
         broadcast_enabled=row.broadcast_enabled,
         is_active=row.is_active,
         created_at=row.created_at,
@@ -250,10 +262,11 @@ def webhook_summary(db: Session, purpose: str | None = None) -> OutboundWebhookS
 def _apply_payload(db: Session, row: OutboundWebhook, payload: OutboundWebhookCreate | OutboundWebhookUpdate) -> None:
     scope_type, scope_id = _validate_scope(db, payload.scope_type, payload.scope_id)
     row.name = payload.name.strip()
-    endpoint_url = payload.endpoint_url or row.endpoint_url
-    if not endpoint_url:
+    if payload.endpoint_url:
+        endpoint_url = _validate_endpoint_url(payload.endpoint_url)
+        row.endpoint_url = webhook_secret_box.encrypt(endpoint_url)
+    elif not row.endpoint_url:
         raise OutboundWebhookError("Discord webhook URL is required.")
-    row.endpoint_url = _validate_endpoint_url(endpoint_url)
     row.event_types_json = _events_json(
         payload.event_types, allow_empty=payload.broadcast_enabled
     )
@@ -261,9 +274,34 @@ def _apply_payload(db: Session, row: OutboundWebhook, payload: OutboundWebhookCr
     row.scope_id = scope_id
     row.message_template = payload.message_template
     row.discord_username = payload.discord_username
-    row.discord_avatar_url = payload.discord_avatar_url
     row.broadcast_enabled = payload.broadcast_enabled
     row.is_active = payload.is_active
+
+
+def encrypt_legacy_webhook_endpoints(db: Session, *, commit: bool = True) -> int:
+    """Encrypt plaintext endpoints and rotate ciphertext to the active key."""
+    rows = db.scalars(select(OutboundWebhook)).all()
+    changed = 0
+    for row in rows:
+        if not row.endpoint_url:
+            continue
+        try:
+            if webhook_secret_box.is_encrypted(row.endpoint_url):
+                replacement = webhook_secret_box.rotate(row.endpoint_url)
+            else:
+                replacement = webhook_secret_box.encrypt(
+                    _validate_endpoint_url(row.endpoint_url)
+                )
+        except SecretBoxError as exc:
+            raise OutboundWebhookError(
+                f"Webhook {row.id} credential cannot be decrypted; re-enter its URL."
+            ) from exc
+        if replacement != row.endpoint_url:
+            row.endpoint_url = replacement
+            changed += 1
+    if changed and commit:
+        db.commit()
+    return changed
 
 
 def create_webhook(db: Session, payload: OutboundWebhookCreate, actor: User) -> OutboundWebhookRead:

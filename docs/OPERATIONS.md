@@ -87,6 +87,31 @@ Für die Funktion müssen `rbf-hub-backup-admin.path` und
 `rbf-hub-backup-admin.service` installiert sein. Ein erfolgreiches `sudo ./update.sh` installiert
 und aktiviert beide Units automatisch.
 
+## Discord-Webhook-Schlüssel
+
+`infrastructure/.env` enthält `WEBHOOK_ENCRYPTION_KEYS`. Der erste, kommagetrennte
+Fernet-Schlüssel verschlüsselt neue Discord-Webhook-Tokens; nachfolgende Schlüssel dienen der
+Entschlüsselung während einer Rotation. Der Updater erzeugt den Schlüssel bei alten Installationen
+automatisch. Die Datei bleibt mit Modus `0600` geschützt und muss getrennt vom Datenbankbackup
+gesichert werden.
+
+Rotation in einem Wartungsfenster:
+
+1. neuen Schlüssel erzeugen und vor die bestehende Liste setzen;
+2. API neu starten und den Maintenance-Start abwarten;
+3. alle Webhooks testen und ein neues Datenbankbackup erstellen;
+4. erst danach alte Schlüssel aus der Liste entfernen.
+
+Ein Datenbankbackup ohne mindestens einen gültigen Schlüssel kann die gespeicherten Discord-Ziele
+nicht wiederherstellen.
+
+## Monitoring-Major-Upgrade
+
+Uptime Kuma bleibt bis zur kontrollierten Datenmigration auf 1.23.16. Das verbindliche Verfahren
+für Backup, Migration, Verifikation und Rollback steht in `docs/UPTIME_KUMA_2_MIGRATION.md`. Die
+Image-Version darf nicht im Rahmen eines normalen unbeaufsichtigten App-Updates auf 2.x geändert
+werden.
+
 ## Automatische Datenbereinigung
 
 Der Maintenance-Lauf entfernt abgelaufene Sessions und wendet die in `backend/config/uploads.cfg`

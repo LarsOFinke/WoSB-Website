@@ -20,6 +20,7 @@ from app.modules.admin.schemas.outbound_webhook import OutboundWebhookDeliveryRe
 from app.modules.admin.services.outbound_webhook_service import (
     OutboundWebhookError,
     _load_events,
+    endpoint_url_for_delivery,
     serialize_delivery,
 )
 from app.modules.admin.services.webhook_events import EVENT_TYPES
@@ -241,7 +242,6 @@ class WebhookDeliveryService:
         actor: User,
         message: str,
         discord_username: str | None = None,
-        discord_avatar_url: str | None = None,
     ) -> list[OutboundWebhookDeliveryRead]:
         subscriptions = list(
             db.scalars(
@@ -266,7 +266,6 @@ class WebhookDeliveryService:
                 actor,
                 message=message,
                 discord_username=discord_username,
-                discord_avatar_url=discord_avatar_url,
                 broadcast_id=broadcast_id,
             )
             rows.append(
@@ -345,8 +344,9 @@ class WebhookDeliveryService:
             "Content-Type": "application/json; charset=utf-8",
             "User-Agent": "RoyalBlackwaterFleet-DiscordWebhook/1.0",
         }
+        endpoint_url = endpoint_url_for_delivery(webhook)
         request = Request(
-            webhook.endpoint_url,
+            endpoint_url,
             data=body.encode("utf-8"),
             headers=headers,
             method="POST",
@@ -362,7 +362,7 @@ class WebhookDeliveryService:
             webhook.last_failure_at = utc_now()
         except (URLError, TimeoutError, OSError) as exc:
             row.status = "failed"
-            row.error_message = self._transport.error_message(webhook.endpoint_url, exc)
+            row.error_message = self._transport.error_message(endpoint_url, exc)
             webhook.last_failure_at = utc_now()
 
     @staticmethod

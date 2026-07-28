@@ -76,11 +76,28 @@ Every automatic event and manual broadcast uses the bundled Royal Blackwater Fle
 https://royal-blackwater-fleet.eu/rbf-fleet-icon.png
 ```
 
-The delivery backend sets this URL for every Discord request. Historical
-`discord_avatar_url` values are retained only for database and API backwards
-compatibility and cannot override the fleet icon.
+The delivery backend sets this URL for every Discord request. The obsolete
+`discord_avatar_url` API and database fields were removed; callers cannot override the fleet icon.
 
 The gateway image normalizes all built frontend directories to mode `0755` and files to `0644`, preventing unreadable static assets from producing HTTP 403 responses.
+
+## Credential encryption and key rotation
+
+Discord webhook URLs contain write-capable tokens. They are stored as authenticated, versioned
+Fernet ciphertext and are never returned to the browser. Setup generates
+`WEBHOOK_ENCRYPTION_KEYS` in `infrastructure/.env`; this value must be backed up separately from the
+database and protected with mode `0600`.
+
+To rotate the key, prepend a newly generated key while retaining the old values temporarily:
+
+```bash
+new_key="$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n')"
+# WEBHOOK_ENCRYPTION_KEYS=new_key,current_key,older_key
+```
+
+Restart the API. The startup maintenance pass re-encrypts stored webhook credentials with the first
+key. After every webhook can be tested successfully and a database backup has been taken, remove
+retired keys from the environment. Never remove an old key before the rotation pass has completed.
 
 ## Forum and fleet events
 

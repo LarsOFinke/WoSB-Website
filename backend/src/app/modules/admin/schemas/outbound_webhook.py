@@ -10,6 +10,8 @@ WebhookScopeType = Literal["global", "fleet", "squad"]
 
 
 class OutboundWebhookInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(min_length=3, max_length=120)
     endpoint_url: str | None = Field(default=None, min_length=8, max_length=1000)
     event_types: list[str] = Field(default_factory=list, max_length=64)
@@ -17,7 +19,6 @@ class OutboundWebhookInput(BaseModel):
     scope_id: int | None = Field(default=None, ge=1)
     message_template: str | None = Field(default=None, max_length=4000)
     discord_username: str | None = Field(default=None, max_length=80)
-    discord_avatar_url: str | None = Field(default=None, max_length=1000)
     broadcast_enabled: bool = False
     is_active: bool = True
 
@@ -31,7 +32,7 @@ class OutboundWebhookInput(BaseModel):
     def strip_endpoint(cls, value: str | None) -> str | None:
         return value.strip() if isinstance(value, str) else None
 
-    @field_validator("message_template", "discord_username", "discord_avatar_url")
+    @field_validator("message_template", "discord_username")
     @classmethod
     def strip_optional(cls, value: str | None) -> str | None:
         if value is None:
@@ -74,7 +75,6 @@ class OutboundWebhookRead(BaseModel):
     scope_id: int | None = None
     message_template: str | None = None
     discord_username: str | None = None
-    discord_avatar_url: str | None = None
     broadcast_enabled: bool
     is_active: bool
     created_at: datetime
@@ -104,8 +104,6 @@ class OutboundWebhookDeliveryRead(BaseModel):
     delivered_at: datetime | None = None
 
 
-
-
 class OutboundWebhookDeliveryDeleteResult(BaseModel):
     deleted_count: int = 0
 
@@ -115,10 +113,11 @@ class OutboundWebhookTestRequest(BaseModel):
 
 
 class OutboundWebhookBroadcastRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     webhook_ids: list[int] = Field(min_length=1, max_length=50)
     message: str = Field(min_length=1, max_length=2000)
     discord_username: str | None = Field(default=None, max_length=80)
-    discord_avatar_url: str | None = Field(default=None, max_length=1000)
 
     @field_validator("webhook_ids")
     @classmethod
@@ -136,7 +135,7 @@ class OutboundWebhookBroadcastRequest(BaseModel):
             raise ValueError("Broadcast message must not be empty.")
         return stripped
 
-    @field_validator("discord_username", "discord_avatar_url")
+    @field_validator("discord_username")
     @classmethod
     def strip_broadcast_optional(cls, value: str | None) -> str | None:
         if value is None:

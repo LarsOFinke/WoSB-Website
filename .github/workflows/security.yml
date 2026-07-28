@@ -1,0 +1,42 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  osv-pr:
+    name: Dependency delta scan
+    if: github.event_name == 'pull_request'
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@3adb4b14a2b0623876d18d863a498b785fb3752d # v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=frontend/package-lock.json
+        --lockfile=requirements.txt:backend/requirements.lock
+        --lockfile=requirements.txt:backend/requirements-dev.lock
+
+  osv-full:
+    name: Full dependency scan
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'merge_group' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@3adb4b14a2b0623876d18d863a498b785fb3752d # v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=frontend/package-lock.json
+        --lockfile=requirements.txt:backend/requirements.lock
+        --lockfile=requirements.txt:backend/requirements-dev.lock

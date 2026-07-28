@@ -16,7 +16,7 @@ class OutboundWebhook(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False, index=True)
-    endpoint_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    endpoint_url: Mapped[str] = mapped_column(Text, nullable=False)
     event_types_json: Mapped[str] = mapped_column(Text, nullable=False)
     scope_type: Mapped[str] = mapped_column(
         String(24), nullable=False, default="global", index=True
@@ -24,7 +24,6 @@ class OutboundWebhook(Base):
     scope_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     message_template: Mapped[str | None] = mapped_column(Text, nullable=True)
     discord_username: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    discord_avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     broadcast_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, index=True
     )

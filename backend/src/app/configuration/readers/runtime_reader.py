@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import base64
+import binascii
 from pathlib import Path
 
 from app.configuration.models import (
     MaintenanceSettings,
+    SecuritySettings,
     SeedSettings,
     StorageSettings,
     UploadLimitSettings,
@@ -151,6 +154,26 @@ class RuntimeSettingsReader:
             ),
             interval_hours=self._positive_integer_or_default(section, "interval_hours", 24),
         )
+
+    def read_security(self) -> SecuritySettings:
+        raw = self._environment.get(
+            "WEBHOOK_ENCRYPTION_KEYS", required=False, default=""
+        )
+        if not raw:
+            return SecuritySettings(webhook_encryption_keys=())
+        keys = ConfigValueParser.csv(raw, name="WEBHOOK_ENCRYPTION_KEYS")
+        for key in keys:
+            try:
+                decoded = base64.b64decode(key.encode("ascii"), altchars=b"-_", validate=True)
+            except (UnicodeEncodeError, binascii.Error, ValueError) as exc:
+                raise ConfigError(
+                    "WEBHOOK_ENCRYPTION_KEYS must contain URL-safe Base64 Fernet keys."
+                ) from exc
+            if len(decoded) != 32:
+                raise ConfigError(
+                    "Each WEBHOOK_ENCRYPTION_KEYS entry must decode to exactly 32 bytes."
+                )
+        return SecuritySettings(webhook_encryption_keys=keys)
 
     def read_cors_origins(self) -> tuple[str, ...]:
         return ConfigValueParser.csv(

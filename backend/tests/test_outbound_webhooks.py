@@ -444,7 +444,6 @@ def test_discord_chat_webhook_renders_direct_payload_and_hides_token() -> None:
                     "[Review registration]({resource.url})"
                 ),
                 discord_username="RBF Hub",
-                discord_avatar_url="https://example.invalid/custom-avatar.png",
             ),
             actor,
         )
@@ -840,7 +839,6 @@ def test_admin_can_send_one_manual_broadcast_to_multiple_discord_channels(monkey
                 "webhook_ids": target_ids,
                 "message": "**Fleet broadcast**\nPrepare for departure.",
                 "discord_username": "RBF Broadcast",
-                "discord_avatar_url": "https://royal-blackwater-fleet.eu/rbf-fleet-icon.png?v=test",
             },
         )
         assert sent.status_code == 200, sent.text

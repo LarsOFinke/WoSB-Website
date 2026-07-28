@@ -67,7 +67,6 @@ def create_broadcast_deliveries(
     actor: User,
     message: str,
     discord_username: str | None = None,
-    discord_avatar_url: str | None = None,
 ) -> list[OutboundWebhookDeliveryRead]:
     return _default_service.create_broadcast(
         db,
@@ -75,7 +74,6 @@ def create_broadcast_deliveries(
         actor=actor,
         message=message,
         discord_username=discord_username,
-        discord_avatar_url=discord_avatar_url,
     )
 
 

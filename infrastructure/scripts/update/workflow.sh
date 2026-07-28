@@ -254,6 +254,10 @@ update_run() {
   log "Server-Update angefordert von: $REQUESTED_BY"
   update_capture_running_images
   update_repository
+  # Source the just-updated helper so old installations receive newly required
+  # generated secrets before images are built.
+  source "$INFRA_DIR/scripts/lib/env.sh"
+  ensure_runtime_secrets
   update_execute_deployment
 
   FINISHED_AT="$(now_iso)"

@@ -106,3 +106,38 @@ def test_retention_settings_reject_non_positive_values(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match="webhook_delivery_retention_days.*greater than zero"):
         SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()
+
+
+def test_webhook_encryption_key_ring_is_loaded_and_validated(tmp_path: Path) -> None:
+    from cryptography.fernet import Fernet
+
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+    first = Fernet.generate_key().decode("ascii")
+    second = Fernet.generate_key().decode("ascii")
+    env_file.write_text(
+        env_file.read_text(encoding="utf-8")
+        + f"WEBHOOK_ENCRYPTION_KEYS={first},{second}\n",
+        encoding="utf-8",
+    )
+
+    settings = SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()
+
+    assert settings.webhook_encryption_keys == (first, second)
+
+
+def test_webhook_encryption_key_ring_rejects_non_fernet_base64(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+    env_file.write_text(
+        env_file.read_text(encoding="utf-8")
+        + "WEBHOOK_ENCRYPTION_KEYS=!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="URL-safe Base64 Fernet keys"):
+        SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()

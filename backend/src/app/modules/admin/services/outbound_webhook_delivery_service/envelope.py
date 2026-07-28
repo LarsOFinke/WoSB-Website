@@ -119,7 +119,6 @@ class WebhookEnvelopeFactory:
         *,
         message: str,
         discord_username: str | None = None,
-        discord_avatar_url: str | None = None,
         broadcast_id: str | None = None,
     ) -> tuple[str, dict[str, Any]]:
         delivery_id = uuid4().hex
@@ -149,7 +148,6 @@ class WebhookEnvelopeFactory:
             "data": {
                 "message": message,
                 "discord_username": discord_username,
-                "discord_avatar_url": discord_avatar_url,
             },
         }
 

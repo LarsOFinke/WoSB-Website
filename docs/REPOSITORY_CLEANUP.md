@@ -20,6 +20,17 @@
 
 Budgets sind Schutzplanken, keine Zielwerte. Neue Funktionen sollen möglichst deutlich darunter bleiben.
 
+## Sicherheitsgate
+
+```bash
+make security-audit
+```
+
+Der Offline-Audit prüft unter anderem Workflow-Pins, gefährliche GitHub-Trigger, Secret-Muster,
+Containerprivilegien, Edge-Header, dynamische Python-Ausführung und die Verschlüsselungsgrenze der
+Discord-Webhooks. Bekannte Schwachstellen in Drittanbieterpaketen werden zusätzlich durch den
+separaten OSV-Workflow geprüft.
+
 ## Lokale Artefakte
 
 ```bash

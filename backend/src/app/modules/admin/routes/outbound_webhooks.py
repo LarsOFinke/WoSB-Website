@@ -81,7 +81,6 @@ def admin_send_broadcast(
             actor=current_user,
             message=payload.message,
             discord_username=payload.discord_username,
-            discord_avatar_url=payload.discord_avatar_url,
         )
     except OutboundWebhookError as exc:
         raise _bad_request(exc) from exc

@@ -63,6 +63,11 @@ class SeedSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class SecuritySettings:
+    webhook_encryption_keys: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class UploadLimitSettings:
     image_mb: int
     document_mb: int
@@ -93,6 +98,7 @@ class Settings:
     logging: LoggingSettings
     session: SessionSettings
     seed: SeedSettings
+    security: SecuritySettings
     upload_limits: UploadLimitSettings
     maintenance: MaintenanceSettings
     cors_origins: tuple[str, ...]
@@ -205,6 +211,10 @@ class Settings:
     @property
     def seed_admin_display_name(self) -> str:
         return self.seed.admin_display_name
+
+    @property
+    def webhook_encryption_keys(self) -> tuple[str, ...]:
+        return self.security.webhook_encryption_keys
 
     @property
     def upload_image_limit_mb(self) -> int:

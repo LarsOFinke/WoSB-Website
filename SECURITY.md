@@ -22,14 +22,17 @@ Version, Reproduktionsschritte, Auswirkung und einen möglichen Fix.
 - Vor Migration oder Seed erstellt der Updater ein vollständiges Sicherheitsbackup.
 - Manuelle Remote-Backups verwenden einen separaten root-seitigen systemd-Runner. Die API besitzt weder Docker-Socket- noch Lesezugriff auf den privaten Backup-Schlüssel; SSH-Host-Keys werden vor jeder Verbindung strikt aus einer dedizierten `known_hosts`-Datei geprüft.
 
-Secrets nach einem Verdacht sofort rotieren: PostgreSQL, Seed-Admin, SSH-Deploy-Key und gegebenenfalls
-TLS-Zugangsdaten.
+Secrets nach einem Verdacht sofort rotieren: PostgreSQL, Seed-Admin,
+`WEBHOOK_ENCRYPTION_KEYS`, Discord-Webhooks, SSH-Deploy-Key und gegebenenfalls TLS-Zugangsdaten.
 
 ## Secret-Rotation
 
 `setup.sh --regenerate-secrets` ist nur für eine noch nicht initialisierte Installation vorgesehen.
 Bei einer bestehenden PostgreSQL-Instanz werden Datenbankrolle, `.env` und abhängige Dienste in
 einem geplanten Wartungsfenster gemeinsam rotiert; ein bloßes Überschreiben der `.env` ist verboten.
+Discord-Webhook-Schlüssel werden als kommagetrennte Key-Ring-Liste rotiert: neuen Schlüssel zuerst
+eintragen, Maintenance-Reverschlüsselung und Webhook-Tests abwarten, Backup erstellen und erst dann
+alte Schlüssel entfernen.
 
 
 ## Datenschutz und Aufbewahrung

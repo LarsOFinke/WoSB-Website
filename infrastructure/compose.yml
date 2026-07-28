@@ -42,6 +42,9 @@ services:
     restart: "no"
     networks:
       - backend
+    read_only: true
+    tmpfs:
+      - /tmp
     security_opt:
       - no-new-privileges:true
 
@@ -61,6 +64,9 @@ services:
     restart: "no"
     networks:
       - backend
+    read_only: true
+    tmpfs:
+      - /tmp
     security_opt:
       - no-new-privileges:true
 

@@ -1,3 +1,12 @@
+## 2026-07-28 - Repository spring clean and security audit
+
+- Discord webhook credentials are now stored as authenticated, versioned ciphertext with automatic plaintext migration and key rotation; deployment setup generates a database-independent key, and decrypted targets are revalidated against the Discord allowlist immediately before delivery.
+- Removed the obsolete Discord avatar override from API, service, model and database; all webhook deliveries keep the public fleet icon.
+- Added offline repository-specific security invariants plus OSV pull-request, main-branch and weekly dependency scans.
+- Hardened GitHub checkout usage, NGINX cross-origin headers, and the read-only migration/seed container posture.
+- Added a reviewed Uptime Kuma 1→2 migration runbook instead of applying an unsafe unattended major upgrade.
+- Refreshed security, privacy, operations and webhook documentation and removed stale compatibility guidance.
+
 # Changelog
 
 ## Unreleased

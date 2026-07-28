@@ -15,6 +15,9 @@ printf '\n[backend] lint and isolated tests\n'
   python "$ROOT_DIR/scripts/run_backend_tests.py"
 )
 
+printf '\n[security] offline repository audit\n'
+python "$ROOT_DIR/scripts/security_audit.py"
+
 printf '\n[css] architecture audit\n'
 python "$ROOT_DIR/scripts/audit_css.py"
 
