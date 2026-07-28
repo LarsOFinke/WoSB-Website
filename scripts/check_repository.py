@@ -187,6 +187,40 @@ for index, migration_file in enumerate(migration_files):
         )
     previous_revision = revision
 
+# Builds persist only user-authored inputs and normalized references. Derived
+# statistics must always be calculated from the current ship/effect catalog.
+from app.modules.registry import register_all_models
+from app.modules.builds.models.build import Build
+from app.modules.builds.models.build_slot import BuildSlot
+
+register_all_models()
+expected_build_columns = {
+    "id", "build_name", "build_type", "ship_id", "owner_id",
+    "is_official_template", "research_upgrade_slot_unlocked",
+    "mortar_modification_installed", "sailors", "soldiers",
+    "musketeers", "mercenaries", "details", "created_at", "updated_at",
+}
+expected_build_slot_columns = {
+    "id", "build_id", "slot_type", "slot_index", "option_id", "quantity",
+    "created_at", "updated_at",
+}
+require(
+    set(Build.__table__.columns.keys()) == expected_build_columns,
+    "builds must contain only authored inputs and foreign-key references; derived result columns are forbidden",
+)
+require(
+    set(BuildSlot.__table__.columns.keys()) == expected_build_slot_columns,
+    "build_slots must contain only normalized option references and quantities",
+)
+for forbidden_result_name in (
+    "ship_stats", "effective_stats", "base_stats", "stat_rows",
+    "item_effects", "calculated_stats", "result_snapshot",
+):
+    require(
+        forbidden_result_name not in Build.__table__.columns,
+        f"derived build result must not be persisted: {forbidden_result_name}",
+    )
+
 # Discord integration is intentionally limited to native channel webhooks.
 legacy_discord_tokens = (
     "discord_bot",

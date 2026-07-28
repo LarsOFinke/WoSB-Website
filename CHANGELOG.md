@@ -136,6 +136,8 @@ Frühere 0.x-Stände waren interne Entwicklungsstände und werden ab v1.0 nicht 
 dokumentiert. Das Produktionsschema ist in `0001_baseline` konsolidiert und für einen frischen Clean-Setup ausgelegt.
 Historische Entwicklungsdatenbanken werden nicht per In-Place-Migration übernommen.
 
+- Build-Persistenz als strikt referenzbasiertes 3NF-Modell abgesichert: Endwerte werden nie gespeichert, alte Builds werden bei jedem Lesen aus aktuellen Schiff-/Optionsreferenzen neu berechnet.
+- Repository-Invariante und Integrationstest verhindern künftig berechnete Ergebnisfelder beziehungsweise Build-Snapshots in der Datenbank.
 ## 1.0.0
 
 - New Captain Guide supports linked guides and builds.

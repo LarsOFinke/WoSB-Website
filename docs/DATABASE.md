@@ -9,6 +9,20 @@ Das Schema folgt der 3. Normalform: Rollen, Schiffe, Mounts, Präferenzen, Mitgl
 Katalogoptionen und Effekte besitzen eigene Tabellen und Fremdschlüssel. Historisch referenzierte
 Stammdaten werden deaktiviert statt gelöscht.
 
+### Builds: Referenzen statt Ergebnis-Snapshots
+
+Gespeicherte Builds enthalten ausschließlich vom Nutzer eingegebene Daten und normalisierte
+Referenzen: `ship_id`, `option_id`, Slotpositionen, Mengen, Crewverteilung und Freitext.
+Berechnete Werte wie Geschwindigkeit, Haltbarkeit, Rüstung, Kapazitäten, Buffs oder Warnungen
+werden **nicht** in `builds` oder `build_slots` gespeichert. Die API erzeugt `ship_stats` bei jedem
+Lesen aus den aktuell referenzierten Schiffen, Optionen, Effekten und schiffsspezifischen
+Overrides. Dadurch übernehmen auch ältere Builds korrigierte Stammdaten automatisch, ohne dass
+sie erneut gespeichert oder angelegt werden müssen.
+
+Ein Repository-Gate prüft die zulässigen Spalten beider Build-Tabellen, und ein Integrationstest
+ändert nach dem Speichern eines Builds dessen Schiff-/Segel-Stammdaten und verifiziert die
+unmittelbare Neuberechnung desselben Datensatzes. Ergebnis-Snapshots sind bewusst verboten.
+
 ## Migrationen
 
 ```bash
