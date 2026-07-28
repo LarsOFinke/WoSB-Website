@@ -17,7 +17,19 @@ The owned-ship screenshot batch from 2026-07-28 demonstrates three value sets fo
 | Teak Frames — armor | +1.0 | +1.5 | +2.0 |
 | Teak Frames — crew | +14 | +10 | +6 |
 
-All percentage, boolean and secondary effects shown in the screenshots match the global definition and continue to be inherited. No value is extrapolated to an unscreenshoted ship: sparse overrides are included only for the 19 owned rate I–II and V–VI ships. The nine owned rate III–IV ships use the verified global defaults. Rate VII retains the global catalog until a direct ship-specific capture is available.
+The five latest ship captures also show that two combat-upgrade values can vary independently of the size tiers:
+
+| Upgrade | Ship | Screenshot value |
+|---|---|---:|
+| Ammunition Cradles — reload | Santisima Trinidad | +18% |
+| Ammunition Cradles — reload | Azov | +18% |
+| Reinforced Cannons — bow/stern damage | Firestorm | +35% |
+| Reinforced Cannons — bow/stern damage | Sovereign | +61% |
+| Reinforced Cannons — bow/stern damage | Azov | +61% |
+| Reinforced Cannons — bow/stern damage | Santisima Trinidad | +87% (global value) |
+| Reinforced Cannons — bow/stern damage | Savannah | +121% |
+
+All percentage, boolean and secondary effects not listed as exceptions match the global definition and continue to be inherited. No value is extrapolated to an unscreenshoted ship. Size-tier overrides are now stored for 23 owned rate I–II and V–VI ships. Azov retains the verified rate III–IV size defaults but has two directly evidenced combat overrides. In total, 24 ships contain sparse screenshot-backed override rows; the other nine owned rate III–IV ships use the global values throughout. Rate VII retains the global catalog until a direct ship-specific capture is available.
 
 ## Verified global defaults
 

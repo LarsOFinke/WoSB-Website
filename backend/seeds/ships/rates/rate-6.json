@@ -563,14 +563,14 @@
       "ship_type": "Frigate",
       "durability": 1000,
       "speed_min_knots": 10.8,
-      "speed_knots": 10.8,
+      "speed_knots": 12.8,
       "maneuverability": 92,
       "armor": 3,
       "hold_capacity": 10000,
       "crew_capacity": 94,
       "sailor_minimum": 38,
       "displacement_tons": 1575,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -616,6 +616,52 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-cannons",
+          "stat_effects": {
+            "bow_stern_weapon_damage_pct": 121
+          }
+        },
+        {
+          "upgrade_seed_id": "reinforced-masts",
+          "stat_effects": {
+            "speed_knots": 0.6,
+            "sail_efficiency": 1.2
+          }
+        },
+        {
+          "upgrade_seed_id": "double-hold",
+          "stat_effects": {
+            "hold_capacity": 3000
+          }
+        },
+        {
+          "upgrade_seed_id": "cellars",
+          "stat_effects": {
+            "hold_capacity": 1500
+          }
+        },
+        {
+          "upgrade_seed_id": "extra-bunks",
+          "stat_effects": {
+            "crew_capacity": 10
+          }
+        },
+        {
+          "upgrade_seed_id": "repair-arsenal",
+          "stat_effects": {
+            "durability": 80
+          }
+        },
+        {
+          "upgrade_seed_id": "teak-frames",
+          "stat_effects": {
+            "armor": 2.0,
+            "crew_capacity": 6
+          }
         }
       ]
     },

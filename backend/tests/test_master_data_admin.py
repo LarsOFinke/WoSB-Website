@@ -84,7 +84,7 @@ def test_admin_overrides_survive_seed_and_can_be_restored() -> None:
             "water_fire_protection_pct": 25.0,
             "explosive_fire_ship_protection_pct": 30.0,
         }
-        assert restored.image_url is None
+        assert restored.image_url == "/build-assets/options/upgrades/copper-plating.png"
         assert restored.seed_status == "seeded"
 
         ship = db.scalar(select(Ship).where(Ship.name == "Firestorm"))
@@ -111,7 +111,7 @@ def test_admin_overrides_survive_seed_and_can_be_restored() -> None:
         assert preserved_ship.seed_status == "overridden"
 
         restored_ship = restore_ship_seed(db, ship.id)
-        assert restored_ship.speed_knots == 8.7
+        assert restored_ship.speed_knots == 11.3
         assert restored_ship.image_url is None
         assert restored_ship.seed_status == "seeded"
 
@@ -365,7 +365,18 @@ def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly
         assert build.ship_stats["upgrade_effects"]["speed_pct"] == 12
 
         restored = restore_ship_seed(db, ship.id)
-        assert restored.upgrade_effect_overrides == []
+        restored_effects = {
+            row.option_name: row.effective_stat_effects
+            for row in restored.upgrade_effect_overrides
+        }
+        assert restored_effects["Reinforced Cannons"] == {
+            "bow_stern_weapon_damage_pct": 35,
+        }
+        assert restored_effects["Reinforced Masts"] == {
+            "speed_knots": 0.4,
+            "sail_efficiency": 0.8,
+        }
+        assert "Lightweight Hull" not in restored_effects
         catalog = list_build_options(db, ship.id)
         lightweight = next(row for row in catalog.options["upgrade"] if row.name == "Lightweight Hull")
         assert lightweight.stat_effects["speed_pct"] == 4

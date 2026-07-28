@@ -15,8 +15,9 @@
 
 ### Owned-ship seed audit
 
-- Re-audited 28 owned ships from 173 current in-game screenshots and updated their displayed speed ranges plus the corrected Mordaunt, Russia and Sans Pareil statistics.
-- Added sparse screenshot-backed upgrade values for 19 rate I–II and V–VI ships while preserving the normalized rate III–IV defaults.
+- Re-audited 33 owned ships from 204 current in-game screenshots, adding Azov, Firestorm, Santisima Trinidad, Savannah and Sovereign and updating their displayed cruise-speed maxima.
+- Added sparse screenshot-backed upgrade values for 24 ships, including newly verified Ammunition Cradles and Reinforced Cannons exceptions while preserving inherited global effects for all unlisted values.
+- Ship master-data edits now synchronize existing sparse upgrade rows in place, preventing uniqueness conflicts when administrators edit ships that already have seeded overrides.
 - Corrected the global Teak Frames armor value from `15` to `1.5`.
 - Extended the JSON seed schema and bootstrap so ship-specific upgrade values resolve by stable upgrade IDs, survive normal reseeds and are restored by the master-data admin workflow.
 - Documented account-level upgrade-slot handling and retained ambiguous mortar layouts until quantified modification panels are available.

@@ -264,6 +264,7 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
 AUDITED_CRUISE_MAX_SPEEDS = {
     "Adventure": 11.0,
     "Anson": 11.0,
+    "Azov": 10.6,
     "Bellona": 10.5,
     "Black Prince": 12.2,
     "Constitution": 10.9,
@@ -271,6 +272,7 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Devourer": 10.5,
     "Eagle": 11.8,
     "Essex": 11.5,
+    "Firestorm": 11.3,
     "Golden Apostle": 11.9,
     "Ingermanland": 11.6,
     "Kobukson": 10.9,
@@ -286,8 +288,11 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Redoutable": 10.0,
     "Russia": 12.5,
     "San Martin": 11.2,
+    "Santisima Trinidad": 9.4,
     "Sans Pareil": 10.6,
+    "Savannah": 12.8,
     "Shunsen": 11.2,
+    "Sovereign": 10.4,
     "Vasa": 9.6,
     "Victory": 10.1,
 }
@@ -301,6 +306,11 @@ def test_shipyard_speed_ranges_match_owned_ship_screenshots() -> None:
     assert rows["La Creole"]["speed_knots"] == 12.9
     assert rows["Mordaunt"]["speed_min_knots"] == 9.1
     assert rows["Russia"]["speed_min_knots"] == 10.4
+    assert rows["Azov"]["speed_knots"] == 10.6
+    assert rows["Firestorm"]["speed_knots"] == 11.3
+    assert rows["Santisima Trinidad"]["speed_knots"] == 9.4
+    assert rows["Savannah"]["speed_knots"] == 12.8
+    assert rows["Sovereign"]["speed_knots"] == 10.4
 
 
 def test_in_game_screenshot_ship_stats_match_catalog() -> None:

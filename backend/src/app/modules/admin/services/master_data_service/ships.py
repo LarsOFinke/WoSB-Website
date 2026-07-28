@@ -165,16 +165,31 @@ class ShipMasterDataService:
                 raise MasterDataError(f"Upgrade option {item.option_id} not found.")
             if option.category.key != "upgrade":
                 raise MasterDataError(f"Option {item.option_id} is not an upgrade.")
-        row.upgrade_effect_overrides.clear()
-        for item in payloads:
-            for effect_key, effect_value in item.stat_effects.items():
+        desired = {
+            (item.option_id, effect_key): float(effect_value)
+            for item in payloads
+            for effect_key, effect_value in item.stat_effects.items()
+        }
+        current = {
+            (override.option_id, override.effect_key): override
+            for override in row.upgrade_effect_overrides
+        }
+        for key, effect_value in desired.items():
+            override = current.get(key)
+            if override is None:
+                option_id, effect_key = key
                 row.upgrade_effect_overrides.append(
                     ShipUpgradeEffectOverride(
-                        option_id=item.option_id,
+                        option_id=option_id,
                         effect_key=effect_key,
-                        effect_value=float(effect_value),
+                        effect_value=effect_value,
                     )
                 )
+            else:
+                override.effect_value = effect_value
+        for key, override in current.items():
+            if key not in desired:
+                row.upgrade_effect_overrides.remove(override)
 
     @staticmethod
     def _replace_mortar_modification(row: Ship, payload) -> None:

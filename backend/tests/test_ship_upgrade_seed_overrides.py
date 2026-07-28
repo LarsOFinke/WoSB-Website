@@ -80,6 +80,34 @@ def test_seeded_upgrade_values_follow_the_three_audited_ship_size_tiers() -> Non
         }
 
 
+def test_seeded_combat_upgrade_values_follow_current_ship_screenshots() -> None:
+    with _seeded_db() as db:
+        ammunition_cradles = _option(db, "Ammunition Cradles")
+        reinforced_cannons = _option(db, "Reinforced Cannons")
+
+        assert effective_upgrade_effects(ammunition_cradles, _ship(db, "Azov")) == {
+            "reload_pct": 18,
+        }
+        assert effective_upgrade_effects(ammunition_cradles, _ship(db, "Santisima Trinidad")) == {
+            "reload_pct": 18,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Firestorm")) == {
+            "bow_stern_weapon_damage_pct": 35,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Sovereign")) == {
+            "bow_stern_weapon_damage_pct": 61,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Azov")) == {
+            "bow_stern_weapon_damage_pct": 61,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Santisima Trinidad")) == {
+            "bow_stern_weapon_damage_pct": 87,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Savannah")) == {
+            "bow_stern_weapon_damage_pct": 121,
+        }
+
+
 def test_admin_ship_override_survives_bootstrap_and_restore_reinstates_seed_values() -> None:
     with _seeded_db() as db:
         ship = _ship(db, "Adventure")

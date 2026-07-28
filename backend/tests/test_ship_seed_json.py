@@ -87,9 +87,11 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
     }
     assert overridden == {
         "Adventure",
+        "Azov",
         "Black Prince",
         "De Zeven Provincien",
         "Eagle",
+        "Firestorm",
         "Golden Apostle",
         "Ingermanland",
         "La Couronne",
@@ -101,8 +103,11 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "Redoutable",
         "Russia",
         "San Martin",
+        "Santisima Trinidad",
         "Sans Pareil",
+        "Savannah",
         "Shunsen",
+        "Sovereign",
         "Vasa",
         "Victory",
     }
@@ -131,19 +136,35 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "armor": 2.0,
         "crew_capacity": 6,
     }
+    assert values("Azov", "ammunition-cradles") == {"reload_pct": 18}
+    assert values("Azov", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 61,
+    }
+    assert values("Firestorm", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 35,
+    }
+    assert values("Santisima Trinidad", "ammunition-cradles") == {
+        "reload_pct": 18,
+    }
+    assert values("Savannah", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 121,
+    }
+    assert values("Sovereign", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 61,
+    }
 
 
 def test_owned_ship_screenshot_batch_has_audited_source_and_expected_size() -> None:
     owned = {
-        "Adventure", "Anson", "Bellona", "Black Prince", "Constitution",
-        "De Zeven Provincien", "Devourer", "Eagle", "Essex", "Golden Apostle",
-        "Ingermanland", "Kobukson", "La Couronne", "La Creole", "La Sirene",
-        "Le Cerf", "Mercury", "Mordaunt", "Neptuno", "Poltava", "Red Arrow",
-        "Redoutable", "Russia", "San Martin", "Sans Pareil", "Shunsen",
-        "Vasa", "Victory",
+        "Adventure", "Anson", "Azov", "Bellona", "Black Prince", "Constitution",
+        "De Zeven Provincien", "Devourer", "Eagle", "Essex", "Firestorm",
+        "Golden Apostle", "Ingermanland", "Kobukson", "La Couronne", "La Creole",
+        "La Sirene", "Le Cerf", "Mercury", "Mordaunt", "Neptuno", "Poltava",
+        "Red Arrow", "Redoutable", "Russia", "San Martin", "Santisima Trinidad",
+        "Sans Pareil", "Savannah", "Shunsen", "Sovereign", "Vasa", "Victory",
     }
     ships = {ship.name: ship for ship in load_ship_seed_document().ships}
-    assert len(owned) == 28
+    assert len(owned) == 33
     assert owned <= set(ships)
     assert {ships[name].source for name in owned} == {
         "WoSB in-game owned-ship screenshot audit 2026-07-28"
