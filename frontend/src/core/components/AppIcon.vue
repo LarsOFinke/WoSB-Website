@@ -91,6 +91,11 @@ defineProps({
     <template v-else-if="name === 'activity'">
       <path d="M3 12h4l2.5-7 5 14 2.5-7h4" />
     </template>
+    <template v-else-if="name === 'database'">
+      <ellipse cx="12" cy="5" rx="8" ry="3" />
+      <path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5" />
+      <path d="M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" />
+    </template>
     <template v-else-if="name === 'inbox'">
       <path d="M4 5h16v14H4z" />
       <path d="M4 14h4l2 3h4l2-3h4" />

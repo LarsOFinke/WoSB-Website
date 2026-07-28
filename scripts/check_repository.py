@@ -366,7 +366,7 @@ require(
 # Route pages are composition-only: network and lifecycle workflows belong in
 # page-model composables, where they can be tested independently.
 route_pages = sorted((ROOT / "frontend/src/modules").glob("*/pages/*Page.vue"))
-require(len(route_pages) == 31, "route page inventory changed; update the architecture budget")
+require(len(route_pages) == 32, "route page inventory changed; update the architecture budget")
 for page_path in route_pages:
     page_source = page_path.read_text(encoding="utf-8")
     script_match = re.search(r"<script setup>([\s\S]*?)</script>", page_source)
@@ -461,4 +461,33 @@ for path in (ROOT / "frontend/src/modules").rglob("*.vue"):
 
 require(not any((ROOT / "docs").glob("RELEASE_0_*")), "legacy release documents remain")
 require(not any((ROOT / "docs").glob("UI_UX_RELEASE_*")), "legacy UI release documents remain")
+
+backup_required_files = {
+    "backend/src/app/modules/admin/routes/backups.py",
+    "backend/src/app/modules/admin/schemas/backup_control.py",
+    "backend/src/app/modules/admin/services/backup_control_service.py",
+    "frontend/src/modules/admin/pages/DatabaseBackupsPage.vue",
+    "frontend/src/modules/admin/composables/useDatabaseBackupsPage.js",
+    "infrastructure/scripts/backup/backup-admin-runner.py",
+    "infrastructure/scripts/services/backup-from-admin.sh",
+    "infrastructure/systemd/rbf-hub-backup-admin.path",
+    "infrastructure/systemd/rbf-hub-backup-admin.service",
+}
+for relative_path in backup_required_files:
+    require((ROOT / relative_path).is_file(), f"missing backup control file: {relative_path}")
+
+backup_route = (ROOT / "backend/src/app/modules/admin/routes/backups.py").read_text(encoding="utf-8")
+require("Depends(require_admin)" in backup_route, "backup routes must remain admin-only")
+backup_runner = (ROOT / "infrastructure/scripts/backup/backup-admin-runner.py").read_text(encoding="utf-8")
+require("StrictHostKeyChecking=yes" in backup_runner, "remote backups must verify SSH host keys")
+require("sha256sum -c" in backup_runner, "remote backups must verify the uploaded checksum")
+backup_schema = (ROOT / "backend/src/app/modules/admin/schemas/backup_control.py").read_text(encoding="utf-8")
+backup_summary_block = backup_schema.split("class BackupConnectionSummary", 1)[1].split(
+    "class BackupControlStatus", 1
+)[0]
+require(
+    "private_key:" not in backup_summary_block,
+    "backup status schema must not expose private-key material",
+)
+
 print(f"Repository invariants OK (v{VERSION}).")

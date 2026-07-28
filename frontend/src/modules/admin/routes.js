@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/database-backups',
+    name: 'admin-database-backups',
+    component: () => import('./pages/DatabaseBackupsPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'admin.backups.title' },
+  },
+  {
     path: '/admin/discord-broadcasts',
     name: 'admin-discord-broadcasts',
     component: () => import('./pages/DiscordBroadcastsPage.vue'),

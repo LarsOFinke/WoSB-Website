@@ -1,0 +1,10 @@
+[Unit]
+Description=Royal Blackwater Fleet Admin Backup Request Watcher
+After=local-fs.target
+
+[Path]
+PathExists=@INFRA_DIR@/data/control/inbox/backup.request
+Unit=rbf-hub-backup-admin.service
+
+[Install]
+WantedBy=multi-user.target

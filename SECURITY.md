@@ -20,6 +20,7 @@ Version, Reproduktionsschritte, Auswirkung und einen möglichen Fix.
 - GitHub Actions besitzen standardmäßig nur Leserechte. Produktion nutzt ein geschütztes
   `production`-Environment und einen dedizierten SSH-Schlüssel.
 - Vor Migration oder Seed erstellt der Updater ein vollständiges Sicherheitsbackup.
+- Manuelle Remote-Backups verwenden einen separaten root-seitigen systemd-Runner. Die API besitzt weder Docker-Socket- noch Lesezugriff auf den privaten Backup-Schlüssel; SSH-Host-Keys werden vor jeder Verbindung strikt aus einer dedizierten `known_hosts`-Datei geprüft.
 
 Secrets nach einem Verdacht sofort rotieren: PostgreSQL, Seed-Admin, SSH-Deploy-Key und gegebenenfalls
 TLS-Zugangsdaten.

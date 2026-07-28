@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Admin-exklusive Datenbank-Backup-Verwaltung ergänzt: SSH-/SFTP-Ziel inklusive verifizierter Host-Key-Pinierung über die Webseite einrichten, Verbindung testen und komprimierte PostgreSQL-Backups per Knopfdruck übertragen sowie remote per SHA-256 verifizieren. Private Schlüssel verbleiben im root-geschützten Host-Control-Verzeichnis und werden nie von der API zurückgegeben.
+- Frontend-Release-Gate repariert: vollständige Übersetzungen für die neue Broadcast-Navigation ergänzt und die Route-Page-Invarianten an die Backup-Unterseite angepasst; GitHub Actions auf veröffentlichte, runner-kompatible Major-Versionen zurückgeführt.
 - Discord-Verwaltung fachlich getrennt: automatische Website-Webhooks bleiben unter „Discord-Webhooks“, während externe Partnerflotten- und Diplomatieziele eine eigene Broadcast-Unterseite erhalten; der Zustellmonitor ist standardmäßig eingeklappt und seine Historie kann einzeln oder gefiltert gelöscht werden.
 - Forum-Antworten können nach Inline-Bestätigung durch Autor oder Staff gelöscht werden; neue Webhook-Events und versionierte Templates decken Antworten, Thread-Löschungen sowie Flotten-, Mitgliedschafts-, Führungs- und Rollenänderungen ab.
 - Staff-Systemlogs in einen eigenen responsiven Arbeitsbereich ausgelagert; aktive IP-Sperren werden standardmäßig aus Liste, Kennzahlen und Threat-Auswertung entfernt und können bewusst wieder eingeblendet werden. Admins können einzelne oder den aktuellen Filterbereich nach Bestätigung löschen; jede Löschung bleibt im Audit-Log nachvollziehbar.

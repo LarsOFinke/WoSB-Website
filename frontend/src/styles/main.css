@@ -11326,3 +11326,141 @@ body.webhook-editor-open {
     grid-template-columns: 1fr;
   }
 }
+
+/* Admin database backup workspace */
+.backup-workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.backup-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.backup-configuration-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(8rem, .7fr) minmax(0, 1.2fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.backup-directory-field,
+.backup-host-key-panel,
+.backup-private-key-field,
+.backup-form-actions {
+  grid-column: 1 / -1;
+}
+
+.backup-security-note,
+.backup-host-key-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, .12));
+  background: var(--surface-raised, rgba(255, 255, 255, .04));
+}
+
+.backup-security-note {
+  display: block;
+}
+
+.backup-security-note p,
+.backup-host-key-panel small {
+  margin: .35rem 0 0;
+  color: var(--text-muted);
+}
+
+.backup-host-key-panel > div {
+  min-width: 0;
+  display: grid;
+  gap: .25rem;
+}
+
+.backup-host-key-panel strong,
+.backup-checksum {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.backup-private-key-field {
+  position: relative;
+}
+
+.backup-private-key-field textarea {
+  min-height: 12rem;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: .78rem;
+}
+
+.backup-private-key-field textarea.is-concealed {
+  -webkit-text-security: disc;
+}
+
+.backup-key-toggle {
+  justify-self: start;
+}
+
+.backup-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: center;
+}
+
+.backup-result-meta {
+  margin-top: 1rem;
+}
+
+.backup-log-panel > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.backup-log-panel pre {
+  max-height: 28rem;
+  overflow: auto;
+  margin: 1rem 0 0;
+  padding: 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface-inset, rgba(0, 0, 0, .18));
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, .12));
+}
+
+@media (max-width: 900px) {
+  .backup-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-configuration-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .backup-directory-field,
+  .backup-host-key-panel,
+  .backup-private-key-field,
+  .backup-form-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .backup-configuration-form {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-host-key-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .backup-form-actions > * {
+    width: 100%;
+  }
+}

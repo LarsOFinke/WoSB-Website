@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.modules.admin.routes.backups import router as backups_router
 from app.modules.admin.routes.content import router as content_router
 from app.modules.admin.routes.ip_blocks import router as ip_blocks_router
 from app.modules.admin.routes.logs import router as logs_router
@@ -11,6 +12,7 @@ from app.modules.admin.routes.users import router as users_router
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 router.include_router(system_router)
+router.include_router(backups_router)
 router.include_router(registrations_router)
 router.include_router(logs_router)
 router.include_router(ip_blocks_router)

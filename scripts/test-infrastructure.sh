@@ -228,4 +228,124 @@ assert run.index('update_acquire_lock') < run.index('update_claim_admin_request'
 PY_UPDATE_ORDER
 
 bash "$ROOT_DIR/scripts/test-update-management.sh"
+
+require_file "$INFRA_DIR/systemd/rbf-hub-backup-admin.path"
+require_file "$INFRA_DIR/systemd/rbf-hub-backup-admin.service"
+require_pattern 'backup.request' "$INFRA_DIR/systemd/rbf-hub-backup-admin.path"
+require_pattern 'backup-from-admin.sh' "$INFRA_DIR/systemd/rbf-hub-backup-admin.service"
+require_pattern 'rbf-hub-backup-admin.path' "$INFRA_DIR/scripts/deployment/install-systemd.sh"
+require_pattern 'control/secrets' "$INFRA_DIR/scripts/lib/host/storage.sh"
+require_pattern 'BACKUP_RESULT_FILE' "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
+require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
+require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
+
+python3 - \
+  "$INFRA_DIR/scripts/services/backup-from-admin.sh" \
+  "$INFRA_DIR/scripts/backup/backup-all.sh" <<'PY_BACKUP_LOCKS'
+from pathlib import Path
+import sys
+
+admin_runner = Path(sys.argv[1]).read_text(encoding="utf-8")
+scheduled_backup = Path(sys.argv[2]).read_text(encoding="utf-8")
+assert admin_runner.index('exec 8>"$run_dir/update.lock"') < admin_runner.index('flock 8')
+assert admin_runner.index('flock 8') < admin_runner.index('exec 9>"$run_dir/backup.lock"')
+assert admin_runner.index('flock 9') < admin_runner.index('claim_control_request')
+assert scheduled_backup.index('exec 8>"$run_dir/update.lock"') < scheduled_backup.index('flock 8')
+assert scheduled_backup.index('flock 8') < scheduled_backup.index('exec 9>"$run_dir/backup.lock"')
+assert scheduled_backup.index('flock 9') < scheduled_backup.index('backup-postgres.sh')
+PY_BACKUP_LOCKS
+
+python3 - "$INFRA_DIR/scripts/backup/backup-admin-runner.py" <<'PY_BACKUP_RUNNER'
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+script = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("rbf_backup_admin_runner", script)
+module = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(module)
+
+with tempfile.TemporaryDirectory() as temporary:
+    infra = Path(temporary) / "infrastructure"
+    request = infra / "data/control/run/request.json"
+    request.parent.mkdir(parents=True)
+    runner = module.Runner(infra, request)
+    runner.prepare()
+
+    def fake_fingerprint(_line):
+        return "SHA256:test-host-key"
+
+    def fake_private_key(content):
+        temporary_key = runner.run_dir / "validated-private-key"
+        temporary_key.write_text(content, encoding="utf-8")
+        os.chmod(temporary_key, 0o600)
+        return temporary_key
+
+    runner.fingerprint_for_line = fake_fingerprint
+    runner.validate_private_key = fake_private_key
+    runner.request = {
+        "operation": "configure",
+        "host": "backup.example.net",
+        "port": 2222,
+        "username": "rbf_backup",
+        "remote_directory": "/srv/backups/rbf",
+        "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestHostKeyMaterial",
+        "private_key": "test-private-key\n",
+    }
+    runner.configure()
+    config = json.loads(runner.config_file.read_text(encoding="utf-8"))
+    assert config["host"] == "backup.example.net"
+    assert config["remote_directory"] == "/srv/backups/rbf"
+    assert "private_key" not in config
+    assert os.stat(runner.key_file).st_mode & 0o077 == 0
+    assert os.stat(runner.known_hosts_file).st_mode & 0o077 == 0
+    assert runner.known_hosts_file.read_text(encoding="utf-8").startswith("[backup.example.net]:2222 ")
+    assert runner.known_hosts_token("backup.example.net", 22) == "backup.example.net"
+    assert runner.known_hosts_token("backup.example.net", 2222) == "[backup.example.net]:2222"
+
+    backup_file = infra / "data/backups/postgres/rbf-test.sql.gz"
+    backup_file.parent.mkdir(parents=True)
+    backup_file.write_bytes(b"database-backup")
+    checksum_file = Path(str(backup_file) + ".sha256")
+    checksum_file.write_text(
+        f"{module.hashlib.sha256(backup_file.read_bytes()).hexdigest()}  {backup_file.name}\n",
+        encoding="utf-8",
+    )
+    calls = []
+
+    class Result:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return Result()
+
+    original_run = module.subprocess.run
+    module.subprocess.run = fake_run
+    try:
+        transfer = runner.transfer(config, backup_file)
+    finally:
+        module.subprocess.run = original_run
+
+    assert transfer["backup_filename"] == backup_file.name
+    assert transfer["backup_size_bytes"] == len(b"database-backup")
+    assert transfer["remote_path"] == f"/srv/backups/rbf/{backup_file.name}"
+    assert len(calls) == 2
+    assert calls[0][0][0] == "sftp"
+    assert "StrictHostKeyChecking=yes" in calls[0][0]
+    assert f"put {backup_file} {backup_file.name}.part" in calls[0][1]["input"]
+    assert calls[1][0][0] == "ssh"
+    assert "sha256sum -c" in calls[1][0][-1]
+PY_BACKUP_RUNNER
+
 echo 'Infrastructure checks OK.'

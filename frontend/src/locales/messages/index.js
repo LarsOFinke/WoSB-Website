@@ -3,6 +3,7 @@ import { adminDashboardMessages } from './adminDashboard'
 import { appShellMessages } from './appShell'
 import { authAdminProfileMessages } from './authAdminProfile'
 import { baseMessages } from './base'
+import { backupManagementMessages } from './backupManagement'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules'
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats'
@@ -44,6 +45,7 @@ const messageLayers = [
   dateFieldFixMessages,
   buildDesignerEquipmentRulesMessages,
   buildEditingAndPreferencesMessages,
+  backupManagementMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,
   mySquadsWorkspaceMessages,

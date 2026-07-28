@@ -9,6 +9,8 @@ units=(
   rbf-hub.service
   rbf-hub-backup.service
   rbf-hub-backup.timer
+  rbf-hub-backup-admin.service
+  rbf-hub-backup-admin.path
   rbf-hub-cert-renew.service
   rbf-hub-cert-renew.timer
   rbf-hub-update.service
@@ -40,6 +42,7 @@ done
 systemctl daemon-reload
 systemctl enable rbf-hub.service
 systemctl enable --now rbf-hub-backup.timer
+systemctl enable --now rbf-hub-backup-admin.path
 systemctl enable --now rbf-hub-cert-renew.timer
 systemctl enable --now rbf-hub-update.path
-success "RBF systemd-Startdienst, Backup-/TLS-Timer und Admin-Update-Runner wurden installiert."
+success "RBF systemd-Startdienst, Backup-/TLS-Timer und Admin-Update-/Backup-Runner wurden installiert."

@@ -544,6 +544,7 @@ export const outboundWebhookManagementMessages = {
           "retry": "Impossible de relancer la livraison."
         },
         "broadcast": {
+          "openAutomation": "Webhooks du site",
           "eyebrow": "Message manuel",
           "title": "Panneau de diffusion",
           "subtitle": "Rédigez un message et envoyez-le directement à plusieurs salons Discord configurés.",
@@ -712,6 +713,7 @@ export const outboundWebhookManagementMessages = {
           "retry": "No se pudo reintentar la entrega."
         },
         "broadcast": {
+          "openAutomation": "Webhooks del sitio web",
           "eyebrow": "Mensaje manual",
           "title": "Panel de difusión",
           "subtitle": "Escribe un mensaje y envíalo directamente a varios canales de Discord configurados.",
@@ -880,6 +882,7 @@ export const outboundWebhookManagementMessages = {
           "retry": "Não foi possível repetir a entrega."
         },
         "broadcast": {
+          "openAutomation": "Webhooks do site",
           "eyebrow": "Mensagem manual",
           "title": "Painel de transmissão",
           "subtitle": "Escreva uma mensagem e envie-a diretamente para vários canais Discord configurados.",
@@ -1048,6 +1051,7 @@ export const outboundWebhookManagementMessages = {
           "retry": "Не удалось повторить доставку."
         },
         "broadcast": {
+          "openAutomation": "Вебхуки сайта",
           "eyebrow": "Ручное сообщение",
           "title": "Панель рассылки",
           "subtitle": "Создайте одно сообщение и отправьте его сразу в несколько настроенных каналов Discord.",
@@ -1216,6 +1220,7 @@ export const outboundWebhookManagementMessages = {
           "retry": "无法重试投递。"
         },
         "broadcast": {
+          "openAutomation": "网站 Webhook",
           "eyebrow": "手动频道消息",
           "title": "广播面板",
           "subtitle": "编写一条消息并同时直接发送到多个已配置的 Discord 频道。",

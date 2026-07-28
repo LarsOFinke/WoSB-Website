@@ -247,3 +247,27 @@ export function deleteOutboundWebhookDeliveryHistory({ webhookId = '', status = 
 export function retryOutboundWebhookDelivery(id) {
   return post(`/admin/discord-webhooks/deliveries/${id}/retry`, {})
 }
+
+export function getBackupControlStatus() {
+  return get('/admin/backups/status')
+}
+
+export function discoverBackupHost(payload) {
+  return post('/admin/backups/discover', payload)
+}
+
+export function configureBackupConnection(payload) {
+  return put('/admin/backups/configuration', payload)
+}
+
+export function testBackupConnection() {
+  return post('/admin/backups/test', {})
+}
+
+export function runDatabaseBackup() {
+  return post('/admin/backups/run', {})
+}
+
+export function deleteBackupConnection() {
+  return deleteRequest('/admin/backups/configuration')
+}
