@@ -8,6 +8,9 @@ const systemLogSource = await readFile(new URL('../src/modules/admin/components/
 const auditSource = await readFile(new URL('../src/modules/admin/components/AuditLogPanel.vue', import.meta.url), 'utf8')
 const webhookSource = await readFile(new URL('../src/modules/admin/components/OutboundWebhookManagementPanel.vue', import.meta.url), 'utf8')
 const broadcastSource = await readFile(new URL('../src/modules/admin/components/DiscordBroadcastPanel.vue', import.meta.url), 'utf8')
+const broadcastManagementSource = await readFile(new URL('../src/modules/admin/components/BroadcastWebhookManagementPanel.vue', import.meta.url), 'utf8')
+const deliveryMonitorSource = await readFile(new URL('../src/modules/admin/components/WebhookDeliveryMonitor.vue', import.meta.url), 'utf8')
+const broadcastPageSource = await readFile(new URL('../src/modules/admin/pages/DiscordBroadcastsPage.vue', import.meta.url), 'utf8')
 const discordPageSource = await readFile(new URL('../src/modules/admin/pages/DiscordWebhooksPage.vue', import.meta.url), 'utf8')
 const masterDataPageSource = await readFile(new URL('../src/modules/admin/pages/MasterDataPage.vue', import.meta.url), 'utf8')
 const staffOverviewSource = await readFile(new URL('../src/modules/admin/components/StaffOverviewPanel.vue', import.meta.url), 'utf8')
@@ -35,22 +38,37 @@ test('audit history includes newly introduced administrative entity types', () =
   }
 })
 
-test('integration management filters endpoints and delivery history', () => {
-  for (const binding of ['webhookSearch', 'webhookState', 'deliveryWebhook', 'deliveryStatus', 'deliveryEvent', 'form.scope_type']) {
+test('website webhook management and delivery history remain focused and filterable', () => {
+  for (const binding of ['webhookSearch', 'webhookState', 'form.scope_type']) {
     assert.ok(webhookSource.includes(`v-model="${binding}"`), binding)
   }
+  for (const binding of ['deliveryWebhook', 'deliveryStatus', 'deliveryEvent']) {
+    assert.ok(deliveryMonitorSource.includes(`v-model="${binding}"`), binding)
+  }
   assert.ok(webhookSource.includes("row.event_types[0] || 'integration.test'"))
+  assert.ok(webhookSource.includes(':events="events"'))
+  assert.ok(deliveryMonitorSource.includes('<details class="webhook-delivery-panel webhook-delivery-disclosure"'))
+  assert.ok(!deliveryMonitorSource.includes('<details open'))
+  assert.ok(deliveryMonitorSource.includes('deleteOutboundWebhookDeliveryHistory'))
+  assert.ok(deliveryMonitorSource.includes('deleteOutboundWebhookDelivery'))
 })
 
 
-test('Discord broadcasts can target several configured channel webhooks', () => {
+test('Discord broadcasts have a separate workspace and target administration', () => {
   for (const binding of ['form.webhook_ids', 'form.message', 'form.discord_username', 'form.discord_avatar_url']) {
     assert.ok(broadcastSource.includes(binding), binding)
   }
   assert.ok(broadcastSource.includes('listBroadcastWebhookTargets'))
   assert.ok(broadcastSource.includes('sendDiscordBroadcast'))
-  assert.ok(webhookSource.includes('form.broadcast_enabled'))
-  assert.ok(webhookSource.includes('formIsReady'))
+  assert.ok(broadcastManagementSource.includes("listOutboundWebhooks('broadcast')"))
+  assert.ok(broadcastManagementSource.includes('broadcast_enabled: true'))
+  assert.ok(broadcastManagementSource.includes('sharedWithAutomation'))
+  assert.ok(broadcastManagementSource.includes('broadcast_enabled: false'))
+  assert.ok(broadcastPageSource.includes('<BroadcastWebhookManagementPanel'))
+  assert.ok(broadcastPageSource.includes('<DiscordBroadcastPanel'))
+  assert.ok(broadcastPageSource.includes('fixed-event-type="broadcast.manual"'))
+  assert.ok(!discordPageSource.includes('<DiscordBroadcastPanel'))
+  assert.ok(!webhookSource.includes('v-model="form.broadcast_enabled"'))
 })
 
 
@@ -87,6 +105,7 @@ test('system logs use a dedicated manageable panel and defer the dense security 
 test('all staff routes share one stable grouped navigation shell', () => {
   assert.ok(adminSource.includes('<StaffWorkspaceShell'))
   assert.ok(discordPageSource.includes('<StaffWorkspaceShell'))
+  assert.ok(broadcastPageSource.includes('<StaffWorkspaceShell'))
   assert.ok(masterDataPageSource.includes('<StaffWorkspaceShell'))
   assert.ok(shellSource.includes('<StaffWorkspaceNavigation'))
   assert.ok(navigationSource.includes('<Teleport to="body">'))
@@ -96,6 +115,7 @@ test('all staff routes share one stable grouped navigation shell', () => {
   assert.ok(staffStylesSource.includes('.staff-navigation-mobile-layer'))
   assert.ok(navigationDomainSource.includes("key: 'master-data'"))
   assert.ok(navigationDomainSource.includes("key: 'webhooks'"))
+  assert.ok(navigationDomainSource.includes("key: 'broadcasts'"))
 })
 
 test('staff overview prioritizes work and uses compact responsive metric bands', () => {

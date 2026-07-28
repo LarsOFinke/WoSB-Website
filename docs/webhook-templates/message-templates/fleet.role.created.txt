@@ -1,0 +1,5 @@
+➕ **Fleet Role Created**
+Role: **{data.label}** (`{data.code}`)
+Rank: `{data.rank}`
+Created by: **{actor.display_name}**
+🔗 [Open fleet roles]({resource.url})

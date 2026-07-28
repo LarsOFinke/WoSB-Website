@@ -1,0 +1,6 @@
+⚓ **Fleet Created**
+Fleet: **{data.name}**
+Focus: `{data.focus}`
+Members: `{data.active_members_count}`
+Created by: **{actor.display_name}**
+🔗 [Open fleet]({resource.url})

@@ -1,0 +1,7 @@
+🗑️ **Forum Reply Removed**
+Thread ID: `{data.thread_id}`
+Reply ID: `{data.id}`
+Original author: **{data.author.display_name}**
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Open discussion]({resource.url})

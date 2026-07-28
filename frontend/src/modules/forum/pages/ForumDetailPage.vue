@@ -16,6 +16,8 @@ const {
   loading,
   saving,
   updating,
+  deletingPostId,
+  pendingDeletePostId,
   error,
   replyAttachments,
   replyEditor,
@@ -31,6 +33,9 @@ const {
   canManageThread,
   postGalleryAttachments,
   canEditPost,
+  canDeletePost,
+  askDeletePost,
+  cancelDeletePost,
   normalizeForumCategory,
   formatDate,
   wasEdited,
@@ -46,6 +51,7 @@ const {
   loadThread,
   submitReply,
   submitPostEdit,
+  submitPostDelete,
   createEmbedToken,
   removeFileEmbedTokens,
   unembeddedAttachments,
@@ -121,10 +127,20 @@ const {
           <template v-else>
             <RichTextRenderer :body="post.body" :attachments="post.attachments" />
             <AttachmentGallery :attachments="postGalleryAttachments(post)" />
-            <div v-if="canEditPost(post, index)" class="post-actions">
-              <button class="small-action" type="button" @click="startPostEdit(post)">
-                {{ t('forum.detail.editPost') }}
-              </button>
+            <div v-if="canEditPost(post, index) || canDeletePost(post, index)" class="post-actions forum-post-management-actions">
+              <template v-if="pendingDeletePostId === post.id">
+                <div class="forum-post-delete-confirmation" role="alert">
+                  <div><strong>{{ t('forum.detail.deletePostConfirmTitle') }}</strong><span>{{ t('forum.detail.deletePostConfirmText') }}</span></div>
+                  <div class="compact-actions">
+                    <button class="danger-action" type="button" :disabled="deletingPostId === post.id" @click="submitPostDelete(post)">{{ deletingPostId === post.id ? t('forum.detail.deletingPost') : t('forum.detail.deletePostNow') }}</button>
+                    <button class="small-action" type="button" :disabled="deletingPostId === post.id" @click="cancelDeletePost">{{ t('common.cancel') }}</button>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <button v-if="canEditPost(post, index)" class="small-action" type="button" @click="startPostEdit(post)">{{ t('forum.detail.editPost') }}</button>
+                <button v-if="canDeletePost(post, index)" class="danger-action" type="button" @click="askDeletePost(post.id)">{{ t('forum.detail.deletePost') }}</button>
+              </template>
             </div>
           </template>
         </article>

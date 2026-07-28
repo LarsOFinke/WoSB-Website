@@ -11161,3 +11161,168 @@ body.webhook-editor-open {
 .build-print-sheet-preview .build-print-export-preview img { width: min(100%,48rem); border: 1px solid rgba(230,181,92,.24); border-radius: .15rem; box-shadow: 0 24px 70px rgba(0,0,0,.45); }
 @media (max-width: 1050px) { .build-detail-command-layout { grid-template-columns: 1fr; }.build-detail-command-column { display: contents; }.build-detail-command-column:first-child .build-readout-panel:nth-child(1) { order: 1; }.build-detail-command-column:first-child .build-readout-panel:nth-child(2) { order: 2; }.build-detail-command-column:first-child .build-readout-panel:nth-child(3) { order: 3; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(1) { order: 4; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(2) { order: 5; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(3) { order: 6; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(4) { order: 7; } }
 @media (max-width: 720px) { .build-detail-command-header { padding: .9rem; }.build-detail-command-heading { align-items: stretch; flex-direction: column; }.build-detail-command-actions { justify-content: stretch; }.build-detail-command-actions > * { flex: 1 1 auto; text-align: center; }.build-detail-result-summary .effective-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-configuration-strip,.build-inventory-readout { grid-template-columns: 1fr; }.build-configuration-item + .build-configuration-item,.build-inventory-readout > section + section { border-top: 1px solid rgba(189,207,224,.1); border-left: 0; }.build-weapon-arc-row { grid-template-columns: 5.2rem minmax(0,1fr); }.build-crew-meter-row { grid-template-columns: 1.75rem 5rem minmax(2rem,1fr) 2.2rem; gap: .38rem; }.build-readout-panel-header { padding-inline: .7rem; }.build-print-sheet-preview .build-print-export-header { align-items: stretch; flex-direction: column; }.build-print-export-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }.build-print-sheet-preview .build-print-export-preview { padding: .55rem; } }
+
+/* Collapsible Discord delivery history and separated broadcast administration */
+.discord-broadcasts-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.broadcast-webhook-management,
+.broadcast-target-management-list {
+  min-width: 0;
+}
+
+.broadcast-target-editor {
+  grid-auto-rows: max-content;
+}
+
+.webhook-delivery-disclosure {
+  overflow: hidden;
+  border: 1px solid rgba(221, 231, 244, 0.12);
+  border-radius: 1.05rem;
+  background: rgba(8, 18, 30, 0.74);
+}
+
+.webhook-delivery-disclosure > summary {
+  list-style: none;
+}
+
+.webhook-delivery-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.webhook-delivery-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 5rem;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+}
+
+.webhook-delivery-summary > span:first-child {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.webhook-delivery-summary strong {
+  font-size: 1.05rem;
+}
+
+.webhook-delivery-summary small {
+  color: var(--text-muted, #9caabd);
+  line-height: 1.45;
+}
+
+.webhook-delivery-disclosure[open] .webhook-delivery-summary {
+  border-bottom: 1px solid rgba(221, 231, 244, 0.1);
+}
+
+.webhook-delivery-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.webhook-delivery-header-actions,
+.webhook-history-delete-confirmation,
+.webhook-delivery-row-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.webhook-delivery-header-actions {
+  justify-content: flex-end;
+}
+
+.webhook-history-delete-confirmation {
+  justify-content: space-between;
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 116, 116, 0.34);
+  border-radius: 0.85rem;
+  background: rgba(91, 23, 28, 0.22);
+}
+
+.webhook-history-delete-confirmation > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.webhook-history-delete-confirmation span,
+.webhook-delivery-row-confirmation > span {
+  color: var(--text-muted, #b8c4d2);
+  font-size: 0.82rem;
+}
+
+.webhook-delivery-row-confirmation {
+  min-width: 14rem;
+}
+
+.webhook-delivery-table-shell {
+  min-width: 0;
+}
+
+/* Forum reply moderation */
+.forum-post-management-actions {
+  align-items: stretch;
+}
+
+.forum-post-delete-confirmation {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 116, 116, 0.34);
+  border-radius: 0.8rem;
+  background: rgba(91, 23, 28, 0.2);
+}
+
+.forum-post-delete-confirmation > div:first-child {
+  display: grid;
+  gap: 0.18rem;
+  min-width: min(100%, 22rem);
+}
+
+.forum-post-delete-confirmation span {
+  color: var(--text-muted, #b8c4d2);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .webhook-delivery-summary,
+  .webhook-section-head,
+  .webhook-history-delete-confirmation,
+  .forum-post-delete-confirmation {
+    align-items: stretch;
+  }
+
+  .webhook-delivery-summary,
+  .webhook-history-delete-confirmation,
+  .forum-post-delete-confirmation {
+    flex-direction: column;
+  }
+
+  .webhook-delivery-summary .summary-pill {
+    align-self: flex-start;
+  }
+
+  .webhook-delivery-header-actions,
+  .webhook-history-delete-confirmation .compact-actions,
+  .forum-post-delete-confirmation .compact-actions {
+    justify-content: flex-start;
+  }
+
+  .webhook-delivery-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

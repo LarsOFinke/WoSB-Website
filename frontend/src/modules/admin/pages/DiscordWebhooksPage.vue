@@ -1,5 +1,4 @@
 <script setup>
-import DiscordBroadcastPanel from '@/modules/admin/components/DiscordBroadcastPanel.vue'
 import OutboundWebhookManagementPanel from '@/modules/admin/components/OutboundWebhookManagementPanel.vue'
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import { useDiscordWebhooksPage } from '@/modules/admin/composables/useDiscordWebhooksPage'
@@ -24,12 +23,14 @@ const {
     :role-label="user ? t(`roles.${user.role}`) : ''"
     :is-admin="isAdmin"
   >
-    <template #actions><RouterLink class="button-box" to="/admin">{{ t('masterData.back') }}</RouterLink></template>
+    <template #actions>
+      <RouterLink class="button-box primary-action" to="/admin/discord-broadcasts">{{ t('admin.webhooks.broadcast.openPanel') }}</RouterLink>
+      <RouterLink class="button-box" to="/admin">{{ t('masterData.back') }}</RouterLink>
+    </template>
     <div class="discord-webhooks-page staff-subworkspace">
 
       <OutboundWebhookManagementPanel :can-manage="isAdmin" />
 
-      <DiscordBroadcastPanel :can-manage="isAdmin" />
 
       <details class="wire-section webhook-delivery-guide webhook-help-disclosure">
         <summary><span>{{ t('webhookSetup.delivery.title') }}</span><small>{{ t('webhookSetup.delivery.text') }}</small></summary>

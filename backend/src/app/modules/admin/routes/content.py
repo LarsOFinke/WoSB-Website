@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_staff
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.builds.services.build_service import delete_build, get_build, list_builds
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
@@ -57,6 +62,7 @@ def admin_list_forum_threads(
 @router.delete("/forum/threads/{thread_id}", status_code=status.HTTP_204_NO_CONTENT)
 def admin_delete_forum_thread(
     thread_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ) -> None:
@@ -71,6 +77,12 @@ def admin_delete_forum_thread(
         action="delete",
         summary=f'Forum thread “{getattr(existing, "title", thread_id)}” removed by staff.',
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.thread.removed", resource_type="forum_thread", resource_id=thread_id,
+        resource_url="/forum", actor=current_user,
+        data={"id": thread_id, "title": getattr(existing, "title", str(thread_id))},
+        **webhook_event_scope(db, use_primary_fleet=True),
+    ))
 
 
 @router.get("/guides", response_model=list[GuideSummary])

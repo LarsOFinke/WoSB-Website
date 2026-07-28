@@ -214,3 +214,32 @@ def delete_thread(db: Session, thread_id: int, user: User) -> bool:
     db.delete(thread)
     db.commit()
     return True
+
+
+def delete_post(db: Session, post_id: int, user: User) -> ForumPostRead | None:
+    post = db.scalar(
+        select(ForumPost)
+        .options(
+            selectinload(ForumPost.author),
+            selectinload(ForumPost.attachments).selectinload(ForumPostAttachment.file),
+        )
+        .where(ForumPost.id == post_id)
+    )
+    if post is None or (post.author_id != user.id and not user.can_moderate):
+        return None
+    thread = db.scalar(
+        select(ForumThread)
+        .options(selectinload(ForumThread.posts))
+        .where(ForumThread.id == post.thread_id)
+    )
+    if thread is None:
+        return None
+    if thread.posts and thread.posts[0].id == post.id:
+        raise ForumValidationError(
+            "The opening post belongs to the thread and must be removed by deleting the thread."
+        )
+    snapshot = _post_to_read(post)
+    thread.updated_at = utc_now()
+    db.delete(post)
+    db.commit()
+    return snapshot

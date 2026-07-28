@@ -199,12 +199,12 @@ export function listOutboundWebhookEvents() {
   return get('/admin/discord-webhooks/events')
 }
 
-export function getOutboundWebhookSummary() {
-  return get('/admin/discord-webhooks/summary')
+export function getOutboundWebhookSummary(purpose = '') {
+  return get(withQuery('/admin/discord-webhooks/summary', { purpose }))
 }
 
-export function listOutboundWebhooks() {
-  return get('/admin/discord-webhooks')
+export function listOutboundWebhooks(purpose = '') {
+  return get(withQuery('/admin/discord-webhooks', { purpose }))
 }
 
 export function createOutboundWebhook(payload) {
@@ -223,11 +223,24 @@ export function deleteOutboundWebhook(id) {
   return deleteRequest(`/admin/discord-webhooks/${id}`)
 }
 
-export function listOutboundWebhookDeliveries({ webhookId = '', status = '', limit = 100 } = {}) {
+export function listOutboundWebhookDeliveries({ webhookId = '', status = '', eventType = '', limit = 100 } = {}) {
   return get(withQuery('/admin/discord-webhooks/deliveries/history', {
     webhook_id: webhookId,
     status,
+    event_type: eventType,
     limit,
+  }))
+}
+
+export function deleteOutboundWebhookDelivery(id) {
+  return deleteRequest(`/admin/discord-webhooks/deliveries/${id}`)
+}
+
+export function deleteOutboundWebhookDeliveryHistory({ webhookId = '', status = '', eventType = '' } = {}) {
+  return deleteRequest(withQuery('/admin/discord-webhooks/deliveries/history', {
+    webhook_id: webhookId,
+    status,
+    event_type: eventType,
   }))
 }
 

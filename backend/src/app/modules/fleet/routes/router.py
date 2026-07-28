@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin, require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.fleet.models.fleet_membership import FleetMembership
 from app.modules.fleet.schemas.fleet_create import FleetCreate
 from app.modules.fleet.schemas.fleet_detail import FleetDetail
@@ -126,26 +131,44 @@ def get_my_fleet_memberships(
 @router.post("", response_model=FleetRead, status_code=status.HTTP_201_CREATED)
 def post_fleet(
     payload: FleetCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> FleetRead:
     try:
-        return create_fleet(db, payload)
+        fleet = create_fleet(db, payload)
     except FleetValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db, actor=current_user, entity_type="fleet", entity_id=fleet.id, action="create",
+        summary=f'Fleet “{fleet.name}” created.', changed_fields=list(payload.model_fields_set),
+    )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.created", resource_type="fleet", resource_id=fleet.id,
+        resource_url="/fleet", actor=current_user, data=fleet,
+        **webhook_event_scope(db, fleet_id=fleet.id),
+    ))
+    return fleet
 
 
 @router.post("/join", response_model=FleetMembershipRead, status_code=status.HTTP_201_CREATED)
 def post_fleet_join(
     payload: FleetJoinRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> FleetMembershipRead:
     try:
         membership = join_fleet(db, current_user, payload)
-        return FleetMembershipRead.model_validate(membership)
+        result = FleetMembershipRead.model_validate(membership)
     except FleetValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.application.created", resource_type="fleet_membership",
+        resource_id=result.id, resource_url="/fleets", actor=current_user, data=result,
+        **webhook_event_scope(db, fleet_id=result.fleet_id),
+    ))
+    return result
 
 
 @router.get("/{fleet_id}", response_model=FleetDetail)
@@ -178,6 +201,7 @@ def get_fleet_management_detail(
 def put_fleet(
     fleet_id: int,
     payload: FleetUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> FleetRead:
@@ -189,6 +213,15 @@ def put_fleet(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     if fleet is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fleet not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="fleet", entity_id=fleet.id, action="update",
+        summary=f'Fleet “{fleet.name}” updated.', changed_fields=list(payload.model_fields_set),
+    )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.updated", resource_type="fleet", resource_id=fleet.id,
+        resource_url="/fleet", actor=current_user, data=fleet,
+        **webhook_event_scope(db, fleet_id=fleet.id),
+    ))
     return fleet
 
 
@@ -197,6 +230,7 @@ def put_membership(
     fleet_id: int,
     membership_id: int,
     payload: FleetMembershipUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> FleetMembershipRead:
@@ -223,7 +257,13 @@ def put_membership(
         changed_fields=payload.model_fields_set,
     )
     context = build_management_context(db, current_user, fleet_id)
-    return _membership_read(updated, context)
+    result = _membership_read(updated, context)
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.membership.updated", resource_type="fleet_membership",
+        resource_id=result.id, resource_url="/fleets", actor=current_user, data=result,
+        **webhook_event_scope(db, fleet_id=fleet_id),
+    ))
+    return result
 
 
 @router.post("/{fleet_id}/leaders/{user_id}", response_model=FleetMembershipRead)
@@ -231,11 +271,28 @@ def post_fleet_leader(
     fleet_id: int,
     user_id: int,
     payload: FleetMembershipUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    current_user: User = Depends(require_admin),
 ) -> FleetMembershipRead:
     role = payload.role or "fleet_admiral"
     try:
-        return FleetMembershipRead.model_validate(assign_fleet_role(db, fleet_id, user_id, role))
+        membership = assign_fleet_role(db, fleet_id, user_id, role)
     except FleetValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    result = FleetMembershipRead.model_validate(membership)
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="fleet_membership",
+        entity_id=result.id,
+        action="update",
+        summary=f"Assigned fleet leadership role {result.role} to user #{user_id}.",
+        changed_fields=["role", "status"],
+    )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.leader.assigned", resource_type="fleet_membership",
+        resource_id=result.id, resource_url="/fleets", actor=current_user, data=result,
+        **webhook_event_scope(db, fleet_id=fleet_id),
+    ))
+    return result

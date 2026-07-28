@@ -2,14 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 import { useLocale } from '@/locales'
+import WebhookDeliveryMonitor from '@/modules/admin/components/WebhookDeliveryMonitor.vue'
 import {
   createOutboundWebhook,
   deleteOutboundWebhook,
   getOutboundWebhookSummary,
-  listOutboundWebhookDeliveries,
   listOutboundWebhookEvents,
   listOutboundWebhooks,
-  retryOutboundWebhookDelivery,
   testOutboundWebhook,
   updateOutboundWebhook,
 } from '@/modules/admin/api/admin'
@@ -22,7 +21,6 @@ const props = defineProps({ canManage: { type: Boolean, default: false } })
 const { locale, t } = useLocale()
 const webhooks = ref([])
 const events = ref([])
-const deliveries = ref([])
 const summary = ref({ total: 0, active: 0, failing: 0, successful_deliveries: 0, failed_deliveries: 0 })
 const loading = ref(false)
 const saving = ref(false)
@@ -30,9 +28,6 @@ const error = ref('')
 const success = ref('')
 const webhookSearch = ref('')
 const webhookState = ref('')
-const deliveryWebhook = ref('')
-const deliveryStatus = ref('')
-const deliveryEvent = ref('')
 const eventSearch = ref('')
 const templateEventKey = ref('')
 const editorOpen = ref(false)
@@ -178,27 +173,19 @@ function clearMessageTemplate() {
   form.message_template = ''
 }
 
-async function loadDeliveries() {
-  try {
-    deliveries.value = await listOutboundWebhookDeliveries({ webhookId: deliveryWebhook.value, status: deliveryStatus.value, limit: 120 })
-  } catch (err) {
-    error.value = err.message || t('admin.webhooks.errors.load')
-  }
-}
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
     const [hookRows, eventRows, totals] = await Promise.all([
-      listOutboundWebhooks(),
+      listOutboundWebhooks('automation'),
       listOutboundWebhookEvents(),
-      getOutboundWebhookSummary(),
+      getOutboundWebhookSummary('automation'),
     ])
     webhooks.value = hookRows
     events.value = eventRows
     summary.value = totals
-    await loadDeliveries()
   } catch (err) {
     error.value = err.message || t('admin.webhooks.errors.load')
   } finally {
@@ -247,17 +234,7 @@ async function removeWebhook(row) {
   }
 }
 
-async function retryDelivery(row) {
-  try {
-    const result = await retryOutboundWebhookDelivery(row.id)
-    success.value = result.status === 'success' ? t('admin.webhooks.messages.retrySuccess') : t('admin.webhooks.messages.retryFailed')
-    await load()
-  } catch (err) {
-    error.value = err.message || t('admin.webhooks.errors.retry')
-  }
-}
 
-watch([deliveryWebhook, deliveryStatus], loadDeliveries)
 watch(editorOpen, (isOpen) => {
   document.body.classList.toggle('webhook-editor-open', isOpen)
 })
@@ -314,7 +291,7 @@ onMounted(load)
           <strong>{{ t('admin.webhooks.validation.title') }}</strong>
           <ul><li v-for="issue in validationIssues" :key="issue">{{ t(`admin.webhooks.validation.${issue}`) }}</li></ul>
           </div>
-          <div class="webhook-toggle-row"><label class="webhook-active-toggle"><input v-model="form.is_active" type="checkbox" /><span>{{ t('admin.webhooks.fields.active') }}</span></label><label class="webhook-active-toggle"><input v-model="form.broadcast_enabled" type="checkbox" /><span>{{ t('admin.webhooks.fields.broadcastEnabled') }}</span></label></div>
+          <div class="webhook-toggle-row"><label class="webhook-active-toggle"><input v-model="form.is_active" type="checkbox" /><span>{{ t('admin.webhooks.fields.active') }}</span></label></div>
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.name') }}</span><input id="outbound-webhook-name" v-model="form.name" required minlength="3" maxlength="120" :placeholder="t('admin.webhooks.placeholders.name')" /></label>
           <label class="input-panel embedded-field"><span>{{ t('admin.webhooks.fields.endpoint') }}</span><input v-model="form.endpoint_url" type="text" inputmode="url" autocapitalize="none" :spellcheck="false" maxlength="1000" :required="!form.id" :placeholder="form.id ? t('admin.webhooks.placeholders.keepEndpoint') : 'https://discord.com/api/webhooks/…'" /><small>{{ t('admin.webhooks.endpointHint') }}</small></label>
           <div class="webhook-editor-row">
@@ -384,6 +361,6 @@ onMounted(load)
       </Transition>
     </Teleport>
 
-    <section class="webhook-delivery-panel"><div class="webhook-section-head"><div><span class="command-deck-eyebrow">{{ t('admin.webhooks.deliveries.eyebrow') }}</span><h3>{{ t('admin.webhooks.deliveries.title') }}</h3></div><div class="webhook-delivery-filters"><select v-model="deliveryWebhook"><option value="">{{ t('admin.webhooks.deliveries.allWebhooks') }}</option><option v-for="row in webhooks" :key="row.id" :value="row.id">{{ row.name }}</option></select><select v-model="deliveryStatus"><option value="">{{ t('admin.webhooks.deliveries.allStatuses') }}</option><option value="success">{{ t('admin.webhooks.status.success') }}</option><option value="failed">{{ t('admin.webhooks.status.failed') }}</option><option value="queued">{{ t('admin.webhooks.status.queued') }}</option><option value="processing">{{ t('admin.webhooks.status.processing') }}</option></select><select v-model="deliveryEvent"><option value="">{{ t('admin.workspace.filters.allWebhookEvents') }}</option><option value="broadcast.manual">broadcast.manual</option><option v-for="event in events" :key="event.key" :value="event.key">{{ event.key }}</option></select></div></div><p v-if="deliveries.filter(row => !deliveryEvent || row.event_type === deliveryEvent).length === 0" class="muted table-state">{{ t('admin.webhooks.deliveries.empty') }}</p><div v-else class="responsive-table-shell webhook-delivery-table-shell"><table class="security-table webhook-delivery-table"><thead><tr><th>{{ t('admin.webhooks.deliveries.created') }}</th><th>{{ t('admin.webhooks.deliveries.webhook') }}</th><th>{{ t('admin.webhooks.deliveries.event') }}</th><th>{{ t('admin.webhooks.deliveries.status') }}</th><th>HTTP</th><th>{{ t('admin.webhooks.deliveries.details') }}</th><th></th></tr></thead><tbody><tr v-for="row in deliveries.filter(item => !deliveryEvent || item.event_type === deliveryEvent)" :key="row.id"><td>{{ formatDateTime(row.created_at) }}</td><td>{{ row.webhook_name }}</td><td><code>{{ row.event_type }}</code></td><td><span class="webhook-delivery-status" :class="`is-${row.status}`">{{ t(`admin.webhooks.status.${row.status}`) }}</span></td><td>{{ row.response_status || '—' }}</td><td>{{ row.error_message || row.response_body || '—' }}</td><td><button v-if="canManage && row.status === 'failed'" class="small-action" type="button" @click="retryDelivery(row)">{{ t('admin.webhooks.actions.retry') }}</button></td></tr></tbody></table></div></section>
+    <WebhookDeliveryMonitor :webhooks="webhooks" :events="events" :can-manage="canManage" />
   </section>
 </template>

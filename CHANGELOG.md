@@ -1,5 +1,7 @@
 ## Unreleased
 
+- Discord-Verwaltung fachlich getrennt: automatische Website-Webhooks bleiben unter „Discord-Webhooks“, während externe Partnerflotten- und Diplomatieziele eine eigene Broadcast-Unterseite erhalten; der Zustellmonitor ist standardmäßig eingeklappt und seine Historie kann einzeln oder gefiltert gelöscht werden.
+- Forum-Antworten können nach Inline-Bestätigung durch Autor oder Staff gelöscht werden; neue Webhook-Events und versionierte Templates decken Antworten, Thread-Löschungen sowie Flotten-, Mitgliedschafts-, Führungs- und Rollenänderungen ab.
 - Staff-Systemlogs in einen eigenen responsiven Arbeitsbereich ausgelagert; aktive IP-Sperren werden standardmäßig aus Liste, Kennzahlen und Threat-Auswertung entfernt und können bewusst wieder eingeblendet werden. Admins können einzelne oder den aktuellen Filterbereich nach Bestätigung löschen; jede Löschung bleibt im Audit-Log nachvollziehbar.
 - Alle Route-Pages auf verbindliche Page-Composables umgestellt; direkte API-Imports, Lifecycle-Ladevorgänge und eigene asynchrone Workflows in Seiten werden repositoryweit verhindert.
 - Globales Frontend-CSS unter Beibehaltung der Kaskadenreihenfolge in sieben größenbegrenzte Layer zerlegt und mit CSS-Budgets abgesichert.

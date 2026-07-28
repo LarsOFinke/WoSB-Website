@@ -1,0 +1,6 @@
+📨 **New Fleet Application**
+Applicant: **{data.user.display_name}** (`{data.user.username}`)
+Fleet ID: `{data.fleet_id}`
+Status: `{data.status}`
+Application note: {data.note}
+🔗 [Open fleet management]({resource.url})

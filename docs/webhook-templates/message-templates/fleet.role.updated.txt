@@ -1,0 +1,6 @@
+🔄 **Fleet Role Updated**
+Role: **{data.label}** (`{data.code}`)
+Rank: `{data.rank}`
+Active: `{data.is_active}`
+Updated by: **{actor.display_name}**
+🔗 [Open fleet roles]({resource.url})

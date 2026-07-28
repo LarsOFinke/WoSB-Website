@@ -5,7 +5,7 @@ import json
 import re
 from urllib.parse import urlparse
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now
@@ -13,6 +13,7 @@ from app.modules.accounts.models.user import User
 from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import (
     OutboundWebhookCreate,
+    OutboundWebhookDeliveryDeleteResult,
     OutboundWebhookDeliveryRead,
     OutboundWebhookEventCatalogItem,
     OutboundWebhookRead,
@@ -177,10 +178,14 @@ def serialize_delivery(row: OutboundWebhookDelivery) -> OutboundWebhookDeliveryR
     )
 
 
-def list_webhooks(db: Session) -> list[OutboundWebhookRead]:
+def list_webhooks(db: Session, purpose: str | None = None) -> list[OutboundWebhookRead]:
     rows = db.scalars(
         select(OutboundWebhook).order_by(OutboundWebhook.name.asc(), OutboundWebhook.id.asc())
     ).all()
+    if purpose == "automation":
+        rows = [row for row in rows if _load_events(row.event_types_json)]
+    elif purpose == "broadcast":
+        rows = [row for row in rows if row.broadcast_enabled]
     return [serialize_webhook(row) for row in rows]
 
 
@@ -196,41 +201,43 @@ def list_broadcast_webhooks(db: Session) -> list[OutboundWebhookRead]:
     return [serialize_webhook(row) for row in rows]
 
 
-def webhook_summary(db: Session) -> OutboundWebhookSummary:
-    total = int(db.scalar(select(func.count(OutboundWebhook.id))) or 0)
-    active = int(
-        db.scalar(select(func.count(OutboundWebhook.id)).where(OutboundWebhook.is_active.is_(True)))
-        or 0
+def webhook_summary(db: Session, purpose: str | None = None) -> OutboundWebhookSummary:
+    rows = db.scalars(select(OutboundWebhook)).all()
+    if purpose == "automation":
+        rows = [row for row in rows if _load_events(row.event_types_json)]
+    elif purpose == "broadcast":
+        rows = [row for row in rows if row.broadcast_enabled]
+    webhook_ids = [row.id for row in rows]
+    total = len(rows)
+    active = sum(1 for row in rows if row.is_active)
+    failing = sum(
+        1
+        for row in rows
+        if row.is_active
+        and row.last_failure_at is not None
+        and (row.last_success_at is None or row.last_failure_at > row.last_success_at)
     )
-    failing = int(
-        db.scalar(
-            select(func.count(OutboundWebhook.id)).where(
-                OutboundWebhook.is_active.is_(True),
-                OutboundWebhook.last_failure_at.is_not(None),
-                (
-                    OutboundWebhook.last_success_at.is_(None)
-                    | (OutboundWebhook.last_failure_at > OutboundWebhook.last_success_at)
-                ),
+    successful = 0
+    failed = 0
+    if webhook_ids:
+        successful = int(
+            db.scalar(
+                select(func.count(OutboundWebhookDelivery.id)).where(
+                    OutboundWebhookDelivery.webhook_id.in_(webhook_ids),
+                    OutboundWebhookDelivery.status == "success",
+                )
             )
+            or 0
         )
-        or 0
-    )
-    successful = int(
-        db.scalar(
-            select(func.count(OutboundWebhookDelivery.id)).where(
-                OutboundWebhookDelivery.status == "success"
+        failed = int(
+            db.scalar(
+                select(func.count(OutboundWebhookDelivery.id)).where(
+                    OutboundWebhookDelivery.webhook_id.in_(webhook_ids),
+                    OutboundWebhookDelivery.status == "failed",
+                )
             )
+            or 0
         )
-        or 0
-    )
-    failed = int(
-        db.scalar(
-            select(func.count(OutboundWebhookDelivery.id)).where(
-                OutboundWebhookDelivery.status == "failed"
-            )
-        )
-        or 0
-    )
     return OutboundWebhookSummary(
         total=total,
         active=active,
@@ -301,6 +308,7 @@ def list_deliveries(
     *,
     webhook_id: int | None = None,
     status: str | None = None,
+    event_type: str | None = None,
     limit: int = 100,
 ) -> list[OutboundWebhookDeliveryRead]:
     query = select(OutboundWebhookDelivery)
@@ -308,9 +316,42 @@ def list_deliveries(
         query = query.where(OutboundWebhookDelivery.webhook_id == webhook_id)
     if status:
         query = query.where(OutboundWebhookDelivery.status == status)
+    if event_type:
+        query = query.where(OutboundWebhookDelivery.event_type == event_type)
     rows = db.scalars(
         query.order_by(
             OutboundWebhookDelivery.created_at.desc(), OutboundWebhookDelivery.id.desc()
         ).limit(limit)
     ).all()
     return [serialize_delivery(row) for row in rows]
+
+
+def delete_delivery(db: Session, delivery_id: int) -> OutboundWebhookDeliveryDeleteResult:
+    row = db.get(OutboundWebhookDelivery, delivery_id)
+    if row is None:
+        return OutboundWebhookDeliveryDeleteResult(deleted_count=0)
+    db.delete(row)
+    db.commit()
+    return OutboundWebhookDeliveryDeleteResult(deleted_count=1)
+
+
+def delete_deliveries(
+    db: Session,
+    *,
+    webhook_id: int | None = None,
+    status: str | None = None,
+    event_type: str | None = None,
+) -> OutboundWebhookDeliveryDeleteResult:
+    conditions = []
+    if webhook_id is not None:
+        conditions.append(OutboundWebhookDelivery.webhook_id == webhook_id)
+    if status:
+        conditions.append(OutboundWebhookDelivery.status == status)
+    if event_type:
+        conditions.append(OutboundWebhookDelivery.event_type == event_type)
+    statement = delete(OutboundWebhookDelivery)
+    if conditions:
+        statement = statement.where(*conditions)
+    result = db.execute(statement)
+    db.commit()
+    return OutboundWebhookDeliveryDeleteResult(deleted_count=max(int(result.rowcount or 0), 0))

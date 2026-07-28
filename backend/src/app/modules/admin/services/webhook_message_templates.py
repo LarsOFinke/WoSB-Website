@@ -289,4 +289,134 @@ Updated at: `{occurred_at}`
     ),
 }
 
+
+DEFAULT_MESSAGES.update({
+    'forum.thread.removed': _message(
+        """
+🗑️ **Forum Thread Removed**
+Title: **{data.title}**
+Thread ID: `{data.id}`
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Browse forum]({resource.url})
+        """
+    ),
+    'forum.post.created': _message(
+        """
+💬 **New Forum Reply**
+Thread ID: `{data.thread_id}`
+Author: **{data.author.display_name}**
+Reply ID: `{data.id}`
+Posted at: `{data.created_at}`
+Message: {data.body}
+🔗 [Open discussion]({resource.url})
+        """
+    ),
+    'forum.post.updated': _message(
+        """
+✏️ **Forum Reply Updated**
+Thread ID: `{data.thread_id}`
+Author: **{data.author.display_name}**
+Reply ID: `{data.id}`
+Updated by: **{actor.display_name}**
+Updated at: `{data.updated_at}`
+Message: {data.body}
+🔗 [Open discussion]({resource.url})
+        """
+    ),
+    'forum.post.removed': _message(
+        """
+🗑️ **Forum Reply Removed**
+Thread ID: `{data.thread_id}`
+Reply ID: `{data.id}`
+Original author: **{data.author.display_name}**
+Removed by: **{actor.display_name}**
+Removed at: `{occurred_at}`
+🔗 [Open discussion]({resource.url})
+        """
+    ),
+    'fleet.created': _message(
+        """
+⚓ **Fleet Created**
+Fleet: **{data.name}**
+Focus: `{data.focus}`
+Members: `{data.active_members_count}`
+Created by: **{actor.display_name}**
+🔗 [Open fleet]({resource.url})
+        """
+    ),
+    'fleet.updated': _message(
+        """
+🛠️ **Fleet Profile Updated**
+Fleet: **{data.name}**
+Focus: `{data.focus}`
+Members: `{data.active_members_count}`
+Description: {data.description}
+Updated by: **{actor.display_name}**
+🔗 [Open fleet]({resource.url})
+        """
+    ),
+    'fleet.application.created': _message(
+        """
+📨 **New Fleet Application**
+Applicant: **{data.user.display_name}** (`{data.user.username}`)
+Fleet ID: `{data.fleet_id}`
+Status: `{data.status}`
+Application note: {data.note}
+🔗 [Open fleet management]({resource.url})
+        """
+    ),
+    'fleet.membership.updated': _message(
+        """
+🧭 **Fleet Membership Updated**
+Member: **{data.user.display_name}** (`{data.user.username}`)
+Fleet ID: `{data.fleet_id}`
+Status: `{data.status}`
+Role: `{data.role}`
+Assignment: {data.assignment}
+Updated by: **{actor.display_name}**
+🔗 [Open fleet management]({resource.url})
+        """
+    ),
+    'fleet.leader.assigned': _message(
+        """
+🧭 **Fleet Leadership Assigned**
+Member: **{data.user.display_name}** (`{data.user.username}`)
+Fleet ID: `{data.fleet_id}`
+Role: `{data.role}`
+Assigned by: **{actor.display_name}**
+🔗 [Open fleet management]({resource.url})
+        """
+    ),
+    'fleet.role.created': _message(
+        """
+➕ **Fleet Role Created**
+Role: **{data.label}** (`{data.code}`)
+Rank: `{data.rank}`
+Created by: **{actor.display_name}**
+🔗 [Open fleet roles]({resource.url})
+        """
+    ),
+    'fleet.role.updated': _message(
+        """
+🔄 **Fleet Role Updated**
+Role: **{data.label}** (`{data.code}`)
+Rank: `{data.rank}`
+Active: `{data.is_active}`
+Updated by: **{actor.display_name}**
+🔗 [Open fleet roles]({resource.url})
+        """
+    ),
+    'fleet.role.removed': _message(
+        """
+➖ **Fleet Role Removed**
+Role: **{data.label}** (`{data.code}`)
+Role ID: `{data.id}`
+Removed by: **{actor.display_name}**
+🔗 [Open fleet roles]({resource.url})
+        """
+    ),
+})
+
+
 __all__ = ["DEFAULT_MESSAGES"]

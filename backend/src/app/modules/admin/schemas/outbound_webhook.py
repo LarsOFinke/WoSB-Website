@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-WebhookDeliveryStatus = Literal["queued", "success", "failed"]
+WebhookDeliveryStatus = Literal["queued", "processing", "success", "failed"]
 WebhookScopeType = Literal["global", "fleet", "squad"]
 
 
@@ -102,6 +102,12 @@ class OutboundWebhookDeliveryRead(BaseModel):
     created_at: datetime
     last_attempt_at: datetime | None = None
     delivered_at: datetime | None = None
+
+
+
+
+class OutboundWebhookDeliveryDeleteResult(BaseModel):
+    deleted_count: int = 0
 
 
 class OutboundWebhookTestRequest(BaseModel):

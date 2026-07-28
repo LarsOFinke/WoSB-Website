@@ -184,3 +184,79 @@ def test_forum_thread_and_reply_can_be_edited_with_permissions() -> None:
         )
         assert moderated.status_code == 200, moderated.text
         assert moderated.json()["body"] == "> Moderator edit"
+
+
+def test_forum_replies_can_be_deleted_by_author_or_moderator_but_not_as_opening_post() -> None:
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="forum-delete-owner",
+                password="ForumDeleteOwner123!",
+                display_name="Forum Delete Owner",
+                role=ROLE_USER,
+            )
+            create_user(
+                db,
+                username="forum-delete-other",
+                password="ForumDeleteOther123!",
+                display_name="Forum Delete Other",
+                role=ROLE_USER,
+            )
+            create_user(
+                db,
+                username="forum-delete-moderator",
+                password="ForumDeleteModerator123!",
+                display_name="Forum Delete Moderator",
+                role=ROLE_MODERATOR,
+            )
+
+        _login(client, "forum-delete-owner", "ForumDeleteOwner123!")
+        created = client.post(
+            "/api/forum/threads",
+            json={
+                "title": "Deletable replies",
+                "category": "general",
+                "body": "Opening post remains tied to the thread",
+                "file_ids": [],
+            },
+        )
+        assert created.status_code == 201, created.text
+        thread_id = created.json()["id"]
+        opening_post_id = created.json()["posts"][0]["id"]
+
+        first_reply = client.post(
+            f"/api/forum/threads/{thread_id}/posts",
+            json={"body": "Owner removable reply", "file_ids": []},
+        )
+        assert first_reply.status_code == 201, first_reply.text
+        first_reply_id = first_reply.json()["id"]
+
+        opening_denied = client.delete(f"/api/forum/posts/{opening_post_id}")
+        assert opening_denied.status_code == 400
+        assert "opening post" in opening_denied.json()["detail"].lower()
+        _logout(client)
+
+        _login(client, "forum-delete-other", "ForumDeleteOther123!")
+        unauthorized = client.delete(f"/api/forum/posts/{first_reply_id}")
+        assert unauthorized.status_code == 404
+        _logout(client)
+
+        _login(client, "forum-delete-owner", "ForumDeleteOwner123!")
+        owner_deleted = client.delete(f"/api/forum/posts/{first_reply_id}")
+        assert owner_deleted.status_code == 204, owner_deleted.text
+        second_reply = client.post(
+            f"/api/forum/threads/{thread_id}/posts",
+            json={"body": "Moderator removable reply", "file_ids": []},
+        )
+        assert second_reply.status_code == 201, second_reply.text
+        second_reply_id = second_reply.json()["id"]
+        _logout(client)
+
+        _login(client, "forum-delete-moderator", "ForumDeleteModerator123!")
+        moderator_deleted = client.delete(f"/api/forum/posts/{second_reply_id}")
+        assert moderator_deleted.status_code == 204, moderator_deleted.text
+
+        detail = client.get(f"/api/forum/threads/{thread_id}")
+        assert detail.status_code == 200, detail.text
+        assert [post["id"] for post in detail.json()["posts"]] == [opening_post_id]

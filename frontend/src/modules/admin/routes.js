@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/discord-broadcasts',
+    name: 'admin-discord-broadcasts',
+    component: () => import('./pages/DiscordBroadcastsPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'admin.webhooks.broadcast.pageTitle' },
+  },
+  {
     path: '/admin/discord-webhooks',
     name: 'admin-discord-webhooks',
     component: () => import('./pages/DiscordWebhooksPage.vue'),

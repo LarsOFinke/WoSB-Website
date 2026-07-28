@@ -1,5 +1,6 @@
 import json
 import socket
+from uuid import uuid4
 from types import SimpleNamespace
 from urllib.error import URLError
 
@@ -12,7 +13,7 @@ from app.db.base import Base
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
-from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
+from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
 from app.modules.admin.schemas.outbound_webhook import OutboundWebhookCreate
 from app.modules.admin.services.outbound_webhook_delivery_service import (
     _delivery_transport_error,
@@ -180,6 +181,70 @@ def test_admin_event_catalog_returns_the_versioned_english_repository_templates(
         assert "Created by: **{actor.display_name}**" in build_template
         assert "[Open build]({resource.url})" in build_template
         assert "Neuer Build" not in build_template
+        assert catalog["forum.post.removed"].startswith("🗑️ **Forum Reply Removed**")
+        assert "{data.author.display_name}" in catalog["forum.post.removed"]
+        assert catalog["fleet.leader.assigned"].startswith("🧭 **Fleet Leadership Assigned**")
+        assert "[Open fleet management]({resource.url})" in catalog["fleet.leader.assigned"]
+
+
+
+def test_webhook_lists_separate_website_automation_from_broadcast_targets() -> None:
+    username = "webhook-purpose-admin"
+    password = "BlackwaterWebhookPurpose123!"
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name="Webhook Purpose Admin",
+                role=ROLE_ADMIN,
+            )
+        assert client.post(
+            "/api/auth/login", json={"username": username, "password": password}
+        ).status_code == 200
+
+        payloads = [
+            {
+                "name": "Website automation only",
+                "endpoint_url": "https://discord.com/api/webhooks/610000000000000001/automation-token",
+                "event_types": ["fleet.updated"],
+                "broadcast_enabled": False,
+            },
+            {
+                "name": "External broadcast only",
+                "endpoint_url": "https://discord.com/api/webhooks/610000000000000002/broadcast-token",
+                "event_types": [],
+                "broadcast_enabled": True,
+            },
+            {
+                "name": "Legacy combined destination",
+                "endpoint_url": "https://discord.com/api/webhooks/610000000000000003/combined-token",
+                "event_types": ["forum.thread.created"],
+                "broadcast_enabled": True,
+            },
+        ]
+        created_ids = {}
+        for payload in payloads:
+            response = client.post("/api/admin/discord-webhooks", json=payload)
+            assert response.status_code == 201, response.text
+            created_ids[payload["name"]] = response.json()["id"]
+
+        automation = client.get(
+            "/api/admin/discord-webhooks", params={"purpose": "automation"}
+        )
+        broadcasts = client.get(
+            "/api/admin/discord-webhooks", params={"purpose": "broadcast"}
+        )
+        assert automation.status_code == 200
+        assert broadcasts.status_code == 200
+        automation_ids = {row["id"] for row in automation.json()}
+        broadcast_ids = {row["id"] for row in broadcasts.json()}
+        assert created_ids["Website automation only"] in automation_ids
+        assert created_ids["Website automation only"] not in broadcast_ids
+        assert created_ids["External broadcast only"] not in automation_ids
+        assert created_ids["External broadcast only"] in broadcast_ids
+        assert created_ids["Legacy combined destination"] in automation_ids & broadcast_ids
 
 
 def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
@@ -201,6 +266,8 @@ def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
         assert client.get("/api/admin/discord-webhooks/summary").status_code == 403
         assert client.get("/api/admin/discord-webhooks/broadcast/targets").status_code == 403
         assert client.get("/api/admin/discord-webhooks/deliveries/history").status_code == 403
+        assert client.delete("/api/admin/discord-webhooks/deliveries/history").status_code == 403
+        assert client.delete("/api/admin/discord-webhooks/deliveries/1").status_code == 403
         denied = client.post(
             "/api/admin/discord-webhooks",
             json={
@@ -215,6 +282,99 @@ def test_moderator_cannot_view_or_manage_outbound_webhooks() -> None:
             json={"webhook_ids": [1], "message": "Denied"},
         )
         assert broadcast_denied.status_code == 403
+
+
+
+def test_admin_can_delete_individual_and_filtered_webhook_delivery_history() -> None:
+    username = "webhook-history-admin"
+    password = "BlackwaterWebhookHistory123!"
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username=username,
+                password=password,
+                display_name="Webhook History Admin",
+                role=ROLE_ADMIN,
+            )
+        login = client.post("/api/auth/login", json={"username": username, "password": password})
+        assert login.status_code == 200
+
+        created = client.post(
+            "/api/admin/discord-webhooks",
+            json={
+                "name": "History cleanup target",
+                "endpoint_url": "https://discord.com/api/webhooks/555555555555555555/history-token",
+                "event_types": ["integration.test"],
+                "is_active": True,
+            },
+        )
+        assert created.status_code == 201, created.text
+        webhook_id = created.json()["id"]
+
+        with SessionLocal() as db:
+            webhook = db.get(OutboundWebhook, webhook_id)
+            rows = [
+                OutboundWebhookDelivery(
+                    webhook_id=webhook.id,
+                    delivery_id=f"history-{uuid4().hex}",
+                    event_type="integration.test",
+                    resource_type="integration",
+                    resource_id="one",
+                    payload_json="{}",
+                    status="failed",
+                    attempts=1,
+                    error_message="test failure",
+                ),
+                OutboundWebhookDelivery(
+                    webhook_id=webhook.id,
+                    delivery_id=f"history-{uuid4().hex}",
+                    event_type="fleet.updated",
+                    resource_type="fleet",
+                    resource_id="1",
+                    payload_json="{}",
+                    status="processing",
+                    attempts=1,
+                ),
+                OutboundWebhookDelivery(
+                    webhook_id=webhook.id,
+                    delivery_id=f"history-{uuid4().hex}",
+                    event_type="fleet.updated",
+                    resource_type="fleet",
+                    resource_id="1",
+                    payload_json="{}",
+                    status="failed",
+                    attempts=1,
+                ),
+            ]
+            db.add_all(rows)
+            db.commit()
+            delivery_ids = [row.id for row in rows]
+
+        history = client.get(
+            "/api/admin/discord-webhooks/deliveries/history",
+            params={"webhook_id": webhook_id, "event_type": "fleet.updated"},
+        )
+        assert history.status_code == 200, history.text
+        assert {row["status"] for row in history.json()} == {"processing", "failed"}
+
+        deleted_one = client.delete(f"/api/admin/discord-webhooks/deliveries/{delivery_ids[0]}")
+        assert deleted_one.status_code == 200, deleted_one.text
+        assert deleted_one.json() == {"deleted_count": 1}
+
+        deleted_filtered = client.delete(
+            "/api/admin/discord-webhooks/deliveries/history",
+            params={"webhook_id": webhook_id, "status": "failed", "event_type": "fleet.updated"},
+        )
+        assert deleted_filtered.status_code == 200, deleted_filtered.text
+        assert deleted_filtered.json() == {"deleted_count": 1}
+
+        remaining = client.get(
+            "/api/admin/discord-webhooks/deliveries/history",
+            params={"webhook_id": webhook_id},
+        )
+        assert remaining.status_code == 200
+        assert [row["id"] for row in remaining.json()] == [delivery_ids[1]]
 
 
 def test_webhook_dns_errors_are_reported_with_actionable_context() -> None:
@@ -240,6 +400,8 @@ def test_webhook_event_catalog_has_stable_route_family_for_every_domain_event() 
         "newcomer_guide.": ("guides", "guide"),
         "build.": ("builds", "build"),
         "forum.thread.": ("forum", "forum_thread"),
+        "forum.post.": ("forum", "forum_post"),
+        "fleet.": ("fleets", "fleet"),
     }
     for event_type, _, _ in EVENT_CATALOG:
         assert any(event_type == prefix or event_type.startswith(prefix) for prefix in route_families), event_type
@@ -747,7 +909,7 @@ def test_stale_processing_webhook_delivery_is_recovered_once(tmp_path) -> None:
     from sqlalchemy.orm import sessionmaker
 
     from app.core.time import utc_now
-    from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
     from app.modules.admin.services.outbound_webhook_delivery_service.service import (
         WebhookDeliveryService,
     )

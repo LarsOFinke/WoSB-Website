@@ -7,6 +7,7 @@ from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.outbound_webhook import (
     OutboundWebhookBroadcastRequest,
     OutboundWebhookCreate,
+    OutboundWebhookDeliveryDeleteResult,
     OutboundWebhookDeliveryRead,
     OutboundWebhookEventCatalogItem,
     OutboundWebhookRead,
@@ -24,6 +25,8 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
 from app.modules.admin.services.outbound_webhook_service import (
     OutboundWebhookError,
     create_webhook,
+    delete_deliveries,
+    delete_delivery,
     delete_webhook,
     event_catalog,
     list_broadcast_webhooks,
@@ -49,10 +52,11 @@ def admin_webhook_event_catalog(
 
 @router.get("/summary", response_model=OutboundWebhookSummary)
 def admin_webhook_summary(
+    purpose: str | None = Query(default=None, pattern="^(automation|broadcast)$"),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> OutboundWebhookSummary:
-    return webhook_summary(db)
+    return webhook_summary(db, purpose=purpose)
 
 
 @router.get("/broadcast/targets", response_model=list[OutboundWebhookRead])
@@ -96,10 +100,11 @@ def admin_send_broadcast(
 
 @router.get("", response_model=list[OutboundWebhookRead])
 def admin_list_webhooks(
+    purpose: str | None = Query(default=None, pattern="^(automation|broadcast)$"),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[OutboundWebhookRead]:
-    return list_webhooks(db)
+    return list_webhooks(db, purpose=purpose)
 
 
 @router.post("", response_model=OutboundWebhookRead, status_code=status.HTTP_201_CREATED)
@@ -165,12 +170,60 @@ def admin_test_webhook(
 @router.get("/deliveries/history", response_model=list[OutboundWebhookDeliveryRead])
 def admin_list_webhook_deliveries(
     webhook_id: int | None = Query(default=None, ge=1),
-    delivery_status: str | None = Query(default=None, alias="status", pattern="^(queued|success|failed)$"),
+    delivery_status: str | None = Query(default=None, alias="status", pattern="^(queued|success|failed|processing)$"),
+    event_type: str | None = Query(default=None, max_length=80),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[OutboundWebhookDeliveryRead]:
-    return list_deliveries(db, webhook_id=webhook_id, status=delivery_status, limit=limit)
+    return list_deliveries(
+        db, webhook_id=webhook_id, status=delivery_status, event_type=event_type, limit=limit
+    )
+
+
+@router.delete("/deliveries/history", response_model=OutboundWebhookDeliveryDeleteResult)
+def admin_delete_webhook_delivery_history(
+    webhook_id: int | None = Query(default=None, ge=1),
+    delivery_status: str | None = Query(
+        default=None, alias="status", pattern="^(queued|success|failed|processing)$"
+    ),
+    event_type: str | None = Query(default=None, max_length=80),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> OutboundWebhookDeliveryDeleteResult:
+    result = delete_deliveries(
+        db, webhook_id=webhook_id, status=delivery_status, event_type=event_type
+    )
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="outbound_webhook_delivery",
+        entity_id="filtered",
+        action="delete",
+        summary=f"Deleted {result.deleted_count} Discord webhook delivery record(s).",
+        changed_fields=["webhook_id", "status", "event_type"],
+    )
+    return result
+
+
+@router.delete("/deliveries/{delivery_id}", response_model=OutboundWebhookDeliveryDeleteResult)
+def admin_delete_webhook_delivery(
+    delivery_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> OutboundWebhookDeliveryDeleteResult:
+    result = delete_delivery(db, delivery_id)
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Delivery not found.")
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="outbound_webhook_delivery",
+        entity_id=delivery_id,
+        action="delete",
+        summary=f"Discord webhook delivery #{delivery_id} deleted.",
+    )
+    return result
 
 
 @router.post("/deliveries/{delivery_id}/retry", response_model=OutboundWebhookDeliveryRead)

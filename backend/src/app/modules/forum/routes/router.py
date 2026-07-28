@@ -22,6 +22,7 @@ from app.modules.forum.services.forum_service import (
     ForumValidationError,
     add_post,
     create_thread,
+    delete_post,
     get_thread,
     list_threads,
     update_post,
@@ -108,6 +109,7 @@ def put_thread(
 def post_reply(
     thread_id: int,
     payload: ForumPostCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> ForumPostRead:
@@ -122,6 +124,11 @@ def post_reply(
         summary=f'Forum reply added to thread #{thread_id}.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.post.created", resource_type="forum_post", resource_id=post.id,
+        resource_url=f"/forum/{thread_id}", actor=current_user, data=post,
+        **webhook_event_scope(db, use_primary_fleet=True),
+    ))
     return post
 
 
@@ -129,6 +136,7 @@ def post_reply(
 def put_post(
     post_id: int,
     payload: ForumPostUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> ForumPostRead:
@@ -143,4 +151,33 @@ def put_post(
         summary=f'Forum post #{post_id} updated.',
         changed_fields=list(payload.model_dump(exclude_unset=True).keys()),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.post.updated", resource_type="forum_post", resource_id=post.id,
+        resource_url=f"/forum/{post.thread_id}", actor=current_user, data=post,
+        **webhook_event_scope(db, use_primary_fleet=True),
+    ))
     return post
+
+
+@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_forum_post(
+    post_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> None:
+    try:
+        post = delete_post(db, post_id, current_user)
+    except ForumValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if post is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
+    record_audit_safely(
+        db, actor=current_user, entity_type="forum_post", entity_id=post_id, action="delete",
+        summary=f'Forum post #{post_id} removed from thread #{post.thread_id}.',
+    )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="forum.post.removed", resource_type="forum_post", resource_id=post.id,
+        resource_url=f"/forum/{post.thread_id}", actor=current_user, data=post,
+        **webhook_event_scope(db, use_primary_fleet=True),
+    ))

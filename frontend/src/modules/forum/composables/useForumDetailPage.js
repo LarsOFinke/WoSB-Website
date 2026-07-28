@@ -1,6 +1,6 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useLocale } from '@/locales'
-import { createPost, getThread, updatePost } from '@/modules/forum/api/forum'
+import { createPost, deletePost, getThread, updatePost } from '@/modules/forum/api/forum'
 import { createEmbedToken, removeFileEmbedTokens, unembeddedAttachments } from '@/shared/content/richTextEmbeds'
 import { useSession } from '@/modules/accounts/session'
 
@@ -12,6 +12,8 @@ export function useForumDetailPage(props) {
   const loading = ref(false)
   const saving = ref(false)
   const updating = ref(false)
+  const deletingPostId = ref(null)
+  const pendingDeletePostId = ref(null)
   const error = ref('')
   const replyAttachments = ref([])
   const replyEditor = ref(null)
@@ -34,6 +36,19 @@ export function useForumDetailPage(props) {
   function canEditPost(post, index) {
     if (index === 0 || !user.value) return false
     return post.author_id === user.value.id || isStaff.value
+  }
+
+  function canDeletePost(post, index) {
+    return canEditPost(post, index)
+  }
+
+  function askDeletePost(postId) {
+    pendingDeletePostId.value = postId
+    error.value = ''
+  }
+
+  function cancelDeletePost() {
+    pendingDeletePostId.value = null
   }
 
   function normalizeForumCategory(value) {
@@ -157,6 +172,22 @@ export function useForumDetailPage(props) {
     }
   }
 
+  async function submitPostDelete(post) {
+    if (!post || pendingDeletePostId.value !== post.id) return
+    deletingPostId.value = post.id
+    error.value = ''
+    try {
+      await deletePost(post.id)
+      pendingDeletePostId.value = null
+      if (editingPostId.value === post.id) cancelPostEdit()
+      await loadThread()
+    } catch (err) {
+      error.value = err.message || t('forum.detail.deletePostError')
+    } finally {
+      deletingPostId.value = null
+    }
+  }
+
   onMounted(loadThread)
 
   return {
@@ -168,6 +199,8 @@ export function useForumDetailPage(props) {
     loading,
     saving,
     updating,
+    deletingPostId,
+    pendingDeletePostId,
     error,
     replyAttachments,
     replyEditor,
@@ -183,6 +216,9 @@ export function useForumDetailPage(props) {
     canManageThread,
     postGalleryAttachments,
     canEditPost,
+    canDeletePost,
+    askDeletePost,
+    cancelDeletePost,
     normalizeForumCategory,
     formatDate,
     wasEdited,
@@ -198,6 +234,7 @@ export function useForumDetailPage(props) {
     loadThread,
     submitReply,
     submitPostEdit,
+    submitPostDelete,
     createEmbedToken,
     removeFileEmbedTokens,
     unembeddedAttachments,

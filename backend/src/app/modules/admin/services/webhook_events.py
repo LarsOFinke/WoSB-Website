@@ -28,6 +28,18 @@ EVENT_CATALOG = (
     ("build.removed", "builds", "A build was removed."),
     ("forum.thread.created", "forum", "A new forum thread was created."),
     ("forum.thread.updated", "forum", "A forum thread was updated."),
+    ("forum.thread.removed", "forum", "A forum thread was removed."),
+    ("forum.post.created", "forum", "A new forum reply was posted."),
+    ("forum.post.updated", "forum", "A forum reply was updated."),
+    ("forum.post.removed", "forum", "A forum reply was removed."),
+    ("fleet.created", "fleet", "A fleet was created."),
+    ("fleet.updated", "fleet", "A fleet profile was updated."),
+    ("fleet.application.created", "fleet", "A fleet application was submitted."),
+    ("fleet.membership.updated", "fleet", "A fleet membership was updated."),
+    ("fleet.leader.assigned", "fleet", "A fleet leadership role was assigned."),
+    ("fleet.role.created", "fleet", "A fleet role was created."),
+    ("fleet.role.updated", "fleet", "A fleet role was updated."),
+    ("fleet.role.removed", "fleet", "A fleet role was removed."),
 )
 EVENT_TYPES = {row[0] for row in EVENT_CATALOG}
 
@@ -362,6 +374,58 @@ EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
         },
     },
 }
+
+
+EVENT_TEST_SAMPLES.update({
+    "forum.thread.removed": {
+        **_COMMON_EVENT, "resource_type": "forum_thread", "resource_id": 501, "resource_url": "/forum",
+        "data": {"id": 501, "title": "Fleet formation questions"},
+    },
+    "forum.post.created": {
+        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
+        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER, "body": "Formation reply", "created_at": "2026-08-16T12:00:00+00:00"},
+    },
+    "forum.post.updated": {
+        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
+        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER, "body": "Updated formation reply", "updated_at": "2026-08-16T13:00:00+00:00"},
+    },
+    "forum.post.removed": {
+        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
+        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER},
+    },
+    "fleet.created": {
+        **_COMMON_EVENT, "resource_type": "fleet", "resource_id": 1, "resource_url": "/fleet",
+        "data": {"id": 1, "name": "Royal Blackwater Fleet", "focus": "mixed", "description": "Official fleet", "active_members_count": 1},
+    },
+    "fleet.updated": {
+        **_COMMON_EVENT, "resource_type": "fleet", "resource_id": 1, "resource_url": "/fleet",
+        "data": {"id": 1, "name": "Royal Blackwater Fleet", "focus": "mixed", "description": "Updated official fleet", "active_members_count": 12},
+    },
+    "fleet.application.created": {
+        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 701, "resource_url": "/fleets",
+        "data": {"id": 701, "fleet_id": 1, "user": _COMMON_USER, "status": "pending", "note": "Ready to sail"},
+    },
+    "fleet.membership.updated": {
+        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 701, "resource_url": "/fleets",
+        "data": {"id": 701, "fleet_id": 1, "user": _COMMON_USER, "status": "active", "role": "member", "assignment": "Line squadron"},
+    },
+    "fleet.leader.assigned": {
+        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 702, "resource_url": "/fleets",
+        "data": {"id": 702, "fleet_id": 1, "user": _COMMON_USER, "status": "active", "role": "fleet_admiral", "assignment": "Fleet command"},
+    },
+    "fleet.role.created": {
+        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
+        "data": {"id": 801, "code": "quartermaster", "label": "Quartermaster", "rank": 20, "is_active": True},
+    },
+    "fleet.role.updated": {
+        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
+        "data": {"id": 801, "code": "quartermaster", "label": "Senior Quartermaster", "rank": 22, "is_active": True},
+    },
+    "fleet.role.removed": {
+        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
+        "data": {"id": 801, "code": "quartermaster", "label": "Quartermaster"},
+    },
+})
 
 
 def event_test_sample(event_type: str) -> dict[str, Any]:

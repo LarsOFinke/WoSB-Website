@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.services.audit_log_service import record_audit_safely
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
+from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.fleet.schemas.fleet_role import FleetRoleCreate, FleetRoleRead, FleetRoleUpdate
 from app.modules.fleet.services.fleet_role_service import (
     FleetRolePermissionError,
@@ -39,6 +44,7 @@ def get_fleet_roles(
 def post_fleet_role(
     fleet_id: int,
     payload: FleetRoleCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> FleetRoleRead:
@@ -55,6 +61,11 @@ def post_fleet_role(
         summary=f'Fleet role “{row.label}” created.',
         changed_fields=list(payload.model_fields_set),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.role.created", resource_type="fleet_role", resource_id=row.id,
+        resource_url="/fleets", actor=current_user, data=row,
+        **webhook_event_scope(db, fleet_id=fleet_id),
+    ))
     return row
 
 
@@ -63,6 +74,7 @@ def put_fleet_role(
     fleet_id: int,
     role_id: int,
     payload: FleetRoleUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> FleetRoleRead:
@@ -81,6 +93,11 @@ def put_fleet_role(
         summary=f'Fleet role “{row.label}” updated.',
         changed_fields=list(payload.model_fields_set),
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.role.updated", resource_type="fleet_role", resource_id=row.id,
+        resource_url="/fleets", actor=current_user, data=row,
+        **webhook_event_scope(db, fleet_id=fleet_id),
+    ))
     return row
 
 
@@ -88,9 +105,11 @@ def put_fleet_role(
 def delete_role(
     fleet_id: int,
     role_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> None:
+    existing = next((row for row in list_fleet_roles(db, include_inactive=True) if row.id == role_id), None)
     try:
         deleted = delete_fleet_role(db, fleet_id, role_id, current_user)
     except (FleetRolePermissionError, FleetRoleValidationError) as exc:
@@ -105,3 +124,9 @@ def delete_role(
         action="delete",
         summary=f"Fleet role #{role_id} deleted.",
     )
+    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
+        db, event_type="fleet.role.removed", resource_type="fleet_role", resource_id=role_id,
+        resource_url="/fleets", actor=current_user,
+        data=existing or {"id": role_id, "code": "removed", "label": f"Role #{role_id}"},
+        **webhook_event_scope(db, fleet_id=fleet_id),
+    ))

@@ -1,4 +1,4 @@
-import { get, post, put } from '@/shared/api/client'
+import { deleteRequest, get, post, put } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
 export function listThreads(search = '', category = '') {
@@ -23,4 +23,8 @@ export function updateThread(id, payload) {
 
 export function updatePost(id, payload) {
   return put(`/forum/posts/${id}`, payload)
+}
+
+export function deletePost(id) {
+  return deleteRequest(`/forum/posts/${id}`)
 }
