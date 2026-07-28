@@ -215,3 +215,35 @@ def test_every_seeded_numeric_effect_has_a_stat_catalog_definition() -> None:
     }
 
     assert seeded_effect_keys <= calculated_effect_keys
+
+
+def test_visual_build_options_reference_versioned_frontend_assets() -> None:
+    from pathlib import Path
+
+    repository_root = Path(__file__).resolve().parents[2]
+    public_root = repository_root / "frontend" / "public"
+    visual_categories = {
+        "sail": SAIL_OPTIONS,
+        "upgrade": UPGRADE_OPTIONS,
+        "lantern": LANTERN_OPTIONS,
+        "special_crew": SPECIAL_CREW_OPTIONS,
+    }
+
+    for category, rows in visual_categories.items():
+        assert rows, category
+        for row in rows:
+            image_url = str(row.get("image_url") or "")
+            assert image_url.startswith("/build-assets/options/"), (category, row["name"])
+            asset = public_root / image_url.removeprefix("/")
+            assert asset.is_file(), asset
+            assert asset.stat().st_size >= 300, asset
+
+    consumable_images = {
+        row["seed_id"]: row.get("image_url")
+        for row in CONSUMABLE_OPTIONS
+        if row["seed_id"] in {"large-additional-sails", "small-additional-sails"}
+    }
+    assert set(consumable_images) == {"large-additional-sails", "small-additional-sails"}
+    for image_url in consumable_images.values():
+        assert image_url
+        assert (public_root / str(image_url).removeprefix("/")).is_file()

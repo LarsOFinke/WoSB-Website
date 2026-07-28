@@ -12,7 +12,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "all_experience_pct": 6
-      }
+      },
+      "image_url": "/build-assets/options/specialists/corsair.png"
     },
     {
       "category": "special_crew",
@@ -23,7 +24,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "branch_upgrade_experience_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/scribe.png"
     },
     {
       "category": "special_crew",
@@ -34,7 +36,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "visibility_range_pct": 10
-      }
+      },
+      "image_url": "/build-assets/options/specialists/mastman.png"
     },
     {
       "category": "special_crew",
@@ -45,7 +48,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "minimap_item_visibility_pct": 40
-      }
+      },
+      "image_url": "/build-assets/options/specialists/navigator.png"
     },
     {
       "category": "special_crew",
@@ -56,7 +60,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "single_random_boarding_target_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/quartermaster.png"
     },
     {
       "category": "special_crew",
@@ -67,7 +72,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_hook_reload_pct": 60
-      }
+      },
+      "image_url": "/build-assets/options/specialists/harpooner.png"
     },
     {
       "category": "special_crew",
@@ -78,7 +84,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_cargo_weight_per_boarder_pct": 0.5
-      }
+      },
+      "image_url": "/build-assets/options/specialists/skipper.png"
     },
     {
       "category": "special_crew",
@@ -89,7 +96,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "item_pickup_range_pct": 40
-      }
+      },
+      "image_url": "/build-assets/options/specialists/swimmer.png"
     },
     {
       "category": "special_crew",
@@ -100,7 +108,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "crew_pickup_limit": 10
-      }
+      },
+      "image_url": "/build-assets/options/specialists/recruiter.png"
     },
     {
       "category": "special_crew",
@@ -111,7 +120,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "swivel_reload_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/powder-monkey.png"
     },
     {
       "category": "special_crew",
@@ -122,7 +132,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "sortie_death_prevention_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/daredevil.png"
     },
     {
       "category": "special_crew",
@@ -133,7 +144,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_company_shelling_survivability_pct": 40
-      }
+      },
+      "image_url": "/build-assets/options/specialists/surgeon.png"
     },
     {
       "category": "special_crew",
@@ -144,7 +156,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "post_boarding_crew_healing_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/senior-doctor.png"
     },
     {
       "category": "special_crew",
@@ -155,7 +168,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "cruising_turn_speed_penalty_pct": -25
-      }
+      },
+      "image_url": "/build-assets/options/specialists/pilot.png"
     },
     {
       "category": "special_crew",
@@ -166,7 +180,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "sail_deployment_speed_per_sailor_pct": 0.2
-      }
+      },
+      "image_url": "/build-assets/options/specialists/first-mate.png"
     },
     {
       "category": "special_crew",
@@ -177,7 +192,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "speed_pct": 4
-      }
+      },
+      "image_url": "/build-assets/options/specialists/sailmaker.png"
     },
     {
       "category": "special_crew",
@@ -188,7 +204,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "stationary_first_speed_maneuverability": 4
-      }
+      },
+      "image_url": "/build-assets/options/specialists/helmsman.png"
     },
     {
       "category": "special_crew",
@@ -199,7 +216,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "low_durability_maneuverability": 6
-      }
+      },
+      "image_url": "/build-assets/options/specialists/steersman.png"
     },
     {
       "category": "special_crew",
@@ -210,7 +228,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "sail_autorepair_pct": 25
-      }
+      },
+      "image_url": "/build-assets/options/specialists/rigger.png"
     },
     {
       "category": "special_crew",
@@ -221,7 +240,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "second_speed_repair_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/carpenter.png"
     },
     {
       "category": "special_crew",
@@ -232,7 +252,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "animal_slaughter_for_food_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/butcher.png"
     },
     {
       "category": "special_crew",
@@ -243,7 +264,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "overload_speed_penalty_reduction_pct": 30
-      }
+      },
+      "image_url": "/build-assets/options/specialists/purser.png"
     },
     {
       "category": "special_crew",
@@ -254,7 +276,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "food_nutrition_pct": 33
-      }
+      },
+      "image_url": "/build-assets/options/specialists/cook.png"
     },
     {
       "category": "special_crew",
@@ -265,7 +288,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "weapon_explosion_risk_reduction_pct": 40
-      }
+      },
+      "image_url": "/build-assets/options/specialists/clerk.png"
     },
     {
       "category": "special_crew",
@@ -276,7 +300,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "fishing_catch_per_boarder_pct": 0.5
-      }
+      },
+      "image_url": "/build-assets/options/specialists/fisherman.png"
     },
     {
       "category": "special_crew",
@@ -287,7 +312,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "fishing_speed_per_sailor_pct": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/boatman.png"
     },
     {
       "category": "special_crew",
@@ -298,7 +324,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "repair_speed_per_sailor_pct": 0.3
-      }
+      },
+      "image_url": "/build-assets/options/specialists/crew-carpenter.png"
     },
     {
       "category": "special_crew",
@@ -309,7 +336,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "steady_course_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/sailing-master.png"
     },
     {
       "category": "special_crew",
@@ -320,7 +348,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_musketeer_defense_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/midshipman.png"
     },
     {
       "category": "special_crew",
@@ -331,7 +360,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "large_fire_damage_pct": -50
-      }
+      },
+      "image_url": "/build-assets/options/specialists/junior-provost.png"
     },
     {
       "category": "special_crew",
@@ -342,7 +372,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "fire_extinguishing_pct": 40
-      }
+      },
+      "image_url": "/build-assets/options/specialists/watchman.png"
     },
     {
       "category": "special_crew",
@@ -353,7 +384,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "microfire_extinguishing_pct": 25
-      }
+      },
+      "image_url": "/build-assets/options/specialists/provost.png"
     },
     {
       "category": "special_crew",
@@ -364,7 +396,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "repair_wounded_crew_pct": 50
-      }
+      },
+      "image_url": "/build-assets/options/specialists/military-surgeon.png"
     },
     {
       "category": "special_crew",
@@ -375,7 +408,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "item_reload_per_sailor_pct": 0.1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/sub-lieutenant.png"
     },
     {
       "category": "special_crew",
@@ -386,7 +420,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "npc_grapeshot_damage_pct": 33
-      }
+      },
+      "image_url": "/build-assets/options/specialists/naval-cadet.png"
     },
     {
       "category": "special_crew",
@@ -397,7 +432,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "weapon_aiming_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/commodore.png"
     },
     {
       "category": "special_crew",
@@ -408,7 +444,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "ammo_switch_per_sailor_pct": 0.2
-      }
+      },
+      "image_url": "/build-assets/options/specialists/commander.png"
     },
     {
       "category": "special_crew",
@@ -419,7 +456,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "reload_pct": 4
-      }
+      },
+      "image_url": "/build-assets/options/specialists/gunner.png"
     },
     {
       "category": "special_crew",
@@ -430,7 +468,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "next_single_shot_reload_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/armorer.png"
     },
     {
       "category": "special_crew",
@@ -441,7 +480,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "low_durability_reload_per_sailor_pct": 0.1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/master-gunner.png"
     },
     {
       "category": "special_crew",
@@ -452,7 +492,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "mortar_aiming_pct": 25
-      }
+      },
+      "image_url": "/build-assets/options/specialists/artillerist.png"
     },
     {
       "category": "special_crew",
@@ -463,7 +504,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "loaded_weapons_mortar_reload_pct": 10
-      }
+      },
+      "image_url": "/build-assets/options/specialists/bombardier.png"
     },
     {
       "category": "special_crew",
@@ -474,7 +516,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "unique_crew_empire_boarding_chance_pct": 15
-      }
+      },
+      "image_url": "/build-assets/options/specialists/lifeguard.png"
     },
     {
       "category": "special_crew",
@@ -485,7 +528,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "unique_crew_at_sea_chance_pct": 5
-      }
+      },
+      "image_url": "/build-assets/options/specialists/explorer.png"
     },
     {
       "category": "special_crew",
@@ -496,7 +540,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "unique_crew_save_after_mode_pct": 50
-      }
+      },
+      "image_url": "/build-assets/options/specialists/seafarer.png"
     },
     {
       "category": "special_crew",
@@ -507,7 +552,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "boarding_captives_pct": 30
-      }
+      },
+      "image_url": "/build-assets/options/specialists/scout.png"
     },
     {
       "category": "special_crew",
@@ -518,7 +564,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "double_items_at_sea_chance_pct": 20
-      }
+      },
+      "image_url": "/build-assets/options/specialists/lucky-one.png"
     },
     {
       "category": "special_crew",
@@ -529,7 +576,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "rare_items_chance_pct": 10
-      }
+      },
+      "image_url": "/build-assets/options/specialists/seeker.png"
     },
     {
       "category": "special_crew",
@@ -540,7 +588,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "consumables_no_port_timer_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/veteran.png"
     },
     {
       "category": "special_crew",
@@ -551,7 +600,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "shipwreck_durability_restore_pct": 5
-      }
+      },
+      "image_url": "/build-assets/options/specialists/old-hand.png"
     },
     {
       "category": "special_crew",
@@ -562,7 +612,8 @@
       "option_kind": "crew_specialist",
       "stat_effects": {
         "conflict_resolution_enabled": 1
-      }
+      },
+      "image_url": "/build-assets/options/specialists/ginger.png"
     }
   ]
 }

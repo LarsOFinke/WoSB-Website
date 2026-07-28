@@ -143,3 +143,11 @@ Historische Entwicklungsdatenbanken werden nicht per In-Place-Migration übernom
 ## 1.0.0
 
 - New Captain Guide supports linked guides and builds.
+
+## 2026-07-28 — Build Designer option visuals
+
+- Added screenshot-derived icons for all 32 ship upgrades and all 51 specialists.
+- Added distinct sail and lantern visuals plus additional-sail consumable icons.
+- Replaced the equipment and specialist native selects with an accessible,
+  icon-aware picker that shows localized effect values directly in the menu.
+- Added seed/asset consistency tests and documented icon provenance.

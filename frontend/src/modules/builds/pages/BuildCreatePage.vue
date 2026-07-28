@@ -3,8 +3,10 @@ import { computed } from 'vue'
 
 import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
 import DiscoveryTileGrid from '@/core/components/DiscoveryTileGrid.vue'
+import BuildOptionPicker from '@/modules/builds/components/BuildOptionPicker.vue'
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { useBuildDesigner } from '@/modules/builds/composables/useBuildDesigner'
+import '@/modules/builds/styles/buildOptionPicker.css'
 import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
 import {
   composeSpecialistSelection,
@@ -43,14 +45,43 @@ const regularSpecialistRows = computed(() => Array.from(
   (_, index) => specialistSelection.value.regular[index] || { item: '', quantity: 1 },
 ))
 const regularSpecialistOptions = computed(() => optionsFor('special_crew').filter((name) => name !== GINGER_SPECIALIST_NAME))
+const sailPickerOptions = computed(() => pickerOptions('sail', optionsFor('sail')))
+const lanternPickerOptions = computed(() => pickerOptions('lantern', optionsFor('lantern')))
+
+function pickerOptions(categoryKey, names, disabledNames = new Set()) {
+  return names.map((name) => ({
+    value: name,
+    label: optionLabel(name),
+    image: optionImage(categoryKey, name),
+    meta: formatEffects(name, categoryKey),
+    disabled: disabledNames.has(name),
+  }))
+}
+
+function upgradePickerGroups(index) {
+  return upgradeGroupsForSlot(index).map((group) => ({
+    key: group.key,
+    label: group.label,
+    options: pickerOptions('upgrade', group.options),
+  }))
+}
+
+function specialistPickerOptions(index) {
+  const selectedElsewhere = new Set(
+    regularSpecialistRows.value
+      .filter((row, rowIndex) => rowIndex !== index && row.item)
+      .map((row) => row.item),
+  )
+  return pickerOptions('special_crew', regularSpecialistOptions.value, selectedElsewhere)
+}
 
 function updateClassificationTags(tags) {
   if (tags.length <= 6) form.classification_tags = tags
 }
 
-function updateRegularSpecialist(index, event) {
+function updateRegularSpecialist(index, value) {
   const next = regularSpecialistRows.value.map((slot) => ({ ...slot }))
-  next[index].item = event.target.value
+  next[index].item = value
   form.special_crew_slots = composeSpecialistSelection(next, specialistSelection.value.gingerSelected)
 }
 
@@ -143,45 +174,45 @@ function toggleGinger() {
           <h2>{{ t('builds.create.sections.equipment') }}</h2>
         </div>
         <div class="equipment-unified-grid">
-          <label class="square-slot equipment-slot equipment-slot-sail">
+          <div class="square-slot equipment-slot equipment-slot-sail">
             <span class="slot-visual"><img :src="optionImage('sail', form.sails)" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.sail') }}</span>
-            <span class="select-shell">
-              <select v-model="form.sails" :aria-label="t('builds.create.equipment.sail')">
-                <option value="">{{ t('common.empty') }}</option>
-                <option v-for="option in optionsFor('sail')" :key="option" :value="option">{{ optionLabel(option) }}</option>
-              </select>
-            </span>
-          </label>
+            <div class="select-shell">
+              <BuildOptionPicker
+                v-model="form.sails"
+                :options="sailPickerOptions"
+                :placeholder="t('common.empty')"
+                :aria-label="t('builds.create.equipment.sail')"
+              />
+            </div>
+          </div>
 
-          <label v-for="index in equipmentUpgradeCount" :key="index" class="square-slot equipment-slot equipment-slot-upgrade">
+          <div v-for="index in equipmentUpgradeCount" :key="index" class="square-slot equipment-slot equipment-slot-upgrade">
             <span class="slot-visual"><img :src="optionImage('upgrade', form[`upgrade_${index}`])" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.upgrade', { index }) }}</span>
-            <span class="select-shell">
-              <select
+            <div class="select-shell">
+              <BuildOptionPicker
                 v-model="form[`upgrade_${index}`]"
+                :groups="upgradePickerGroups(index)"
+                :placeholder="upgradeSlotPlaceholder(index)"
                 :aria-label="t('builds.create.equipment.upgrade', { index })"
                 :disabled="isUpgradeSlotDisabled(index)"
-              >
-                <option value="">{{ upgradeSlotPlaceholder(index) }}</option>
-                <optgroup v-for="group in upgradeGroupsForSlot(index)" :key="group.key" :label="group.label">
-                  <option v-for="option in group.options" :key="option" :value="option">{{ optionLabel(option) }}</option>
-                </optgroup>
-              </select>
-              <small v-if="form[`upgrade_${index}`]" class="slot-effect-text">{{ formatEffects(form[`upgrade_${index}`]) }}</small>
-            </span>
-          </label>
+              />
+            </div>
+          </div>
 
-          <label class="square-slot equipment-slot equipment-slot-lantern">
+          <div class="square-slot equipment-slot equipment-slot-lantern">
             <span class="slot-visual"><img :src="optionImage('lantern', form.lantern)" alt="" /></span>
             <span class="field-caption">{{ t('builds.create.equipment.lantern') }}</span>
-            <span class="select-shell">
-              <select v-model="form.lantern" :aria-label="t('builds.create.equipment.lantern')">
-                <option value="">{{ t('common.empty') }}</option>
-                <option v-for="option in optionsFor('lantern')" :key="option" :value="option">{{ optionLabel(option) }}</option>
-              </select>
-            </span>
-          </label>
+            <div class="select-shell">
+              <BuildOptionPicker
+                v-model="form.lantern"
+                :options="lanternPickerOptions"
+                :placeholder="t('common.empty')"
+                :aria-label="t('builds.create.equipment.lantern')"
+              />
+            </div>
+          </div>
         </div>
         <button
           type="button"
@@ -270,23 +301,18 @@ function toggleGinger() {
               <span><strong>{{ GINGER_SPECIALIST_NAME }}</strong><small>{{ t('discovery.specialists.gingerHint') }}</small></span>
               <b>{{ specialistSelection.gingerSelected ? '✓' : '+' }}</b>
             </button>
-            <label v-for="(slot, index) in regularSpecialistRows" :key="`special-crew-${index}`" class="inventory-slot-select specialist-slot-select">
+            <div v-for="(slot, index) in regularSpecialistRows" :key="`special-crew-${index}`" class="inventory-slot-select specialist-slot-select">
               <span class="slot-image-cell">
                 <img :src="inventoryImage('special_crew_slots', slot.item)" :alt="t('builds.create.specialCrew.alt', { index: index + 1 })" />
               </span>
-              <select :value="slot.item" @change="updateRegularSpecialist(index, $event)">
-                <option value="">{{ t('common.empty') }}</option>
-                <option
-                  v-for="option in regularSpecialistOptions"
-                  :key="option"
-                  :value="option"
-                  :disabled="regularSpecialistRows.some((row, rowIndex) => rowIndex !== index && row.item === option)"
-                >
-                  {{ optionLabel(option) }}
-                </option>
-              </select>
-              <small v-if="slot.item" class="slot-effect-text">{{ formatEffects(slot.item, 'special_crew') }}</small>
-            </label>
+              <BuildOptionPicker
+                :model-value="slot.item"
+                :options="specialistPickerOptions(index)"
+                :placeholder="t('common.empty')"
+                :aria-label="t('builds.create.specialCrew.alt', { index: index + 1 })"
+                @update:model-value="updateRegularSpecialist(index, $event)"
+              />
+            </div>
           </div>
         </div>
       </section>

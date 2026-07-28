@@ -12,7 +12,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "speed_pct": 6
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/blue.svg"
     },
     {
       "category": "lantern",
@@ -23,7 +24,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "hold_capacity_pct": 12
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/bright.svg"
     },
     {
       "category": "lantern",
@@ -36,7 +38,8 @@
         "speed_pct": 5,
         "armor_pct": 5,
         "damage_pct": 5
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/golden.svg"
     },
     {
       "category": "lantern",
@@ -47,7 +50,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "hull_hp_pct": 7
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/green.svg"
     },
     {
       "category": "lantern",
@@ -60,7 +64,8 @@
         "speed_pct": 5,
         "hold_capacity_pct": 5,
         "hull_hp_pct": 5
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/ice.svg"
     },
     {
       "category": "lantern",
@@ -71,7 +76,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "turn_rate_pct": 7
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/lilac.svg"
     },
     {
       "category": "lantern",
@@ -84,7 +90,8 @@
         "turn_rate_pct": 5,
         "damage_pct": 5,
         "exp_loot_pct": 7
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/red.svg"
     },
     {
       "category": "lantern",
@@ -95,7 +102,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "exp_loot_pct": 10
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/white.svg"
     },
     {
       "category": "lantern",
@@ -106,7 +114,8 @@
       "option_kind": "lantern",
       "stat_effects": {
         "damage_pct": 7
-      }
+      },
+      "image_url": "/build-assets/options/lanterns/yellow.svg"
     }
   ]
 }

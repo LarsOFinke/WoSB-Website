@@ -323,16 +323,21 @@ assert.match(mySquadsSource, /useMySquadsPage/)
 assert.match(mySquadsSource, /upcomingSquadEvents/)
 assert.match(mySquadsSource, /v-for="event in upcomingSquadEvents"/)
 assert.doesNotMatch(buildCreateSource, /\/icons\/slot-placeholder\.svg/)
-assert.match(buildCreateSource, /<select v-model="form\.lantern"/)
+assert.match(buildCreateSource, /<BuildOptionPicker[\s\S]*v-model="form\.lantern"/)
 assert.match(buildEffectsSource, /upgradeSlot7Available/)
 assert.match(buildEffectsSource, /upgradeSlot8Available/)
 assert.match(buildEffectsSource, /lockedUpgrade8/)
 assert.match(buildCreateSource, /optionsFor\('lantern'\)/)
 
-const sailBlock = buildCreateSource.match(/equipment-slot-sail[\s\S]*?<\/label>/)?.[0] || ''
-const lanternBlock = buildCreateSource.match(/equipment-slot-lantern[\s\S]*?<\/label>/)?.[0] || ''
-assert.doesNotMatch(sailBlock, /slot-effect-text|formatEffects/)
-assert.doesNotMatch(lanternBlock, /slot-effect-text|formatEffects/)
+const pickerSource = readFileSync(resolve(frontendRoot, 'src/modules/builds/components/BuildOptionPicker.vue'), 'utf8')
+const sailBlock = buildCreateSource.match(/equipment-slot-sail[\s\S]*?<\/div>/)?.[0] || ''
+const lanternBlock = buildCreateSource.match(/equipment-slot-lantern[\s\S]*?<\/div>/)?.[0] || ''
+assert.match(buildCreateSource, /import BuildOptionPicker/)
+assert.match(sailBlock, /:options="sailPickerOptions"/)
+assert.match(lanternBlock, /:options="lanternPickerOptions"/)
+assert.match(buildCreateSource, /meta: formatEffects\(name, categoryKey\)/)
+assert.match(pickerSource, /<small v-if="option\.meta">/)
+assert.match(pickerSource, /<img v-if="option\.image"/)
 assert.match(buildCreateSource, /researchUpgradeEffectTotals/)
 assert.match(buildEffectsSource, /researchUpgradeEffectTotals\.value/)
 

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="green lantern">
+  <defs><radialGradient id="glow"><stop stop-color="#4aa86d" stop-opacity=".9"/><stop offset="1" stop-color="#4aa86d" stop-opacity="0"/></radialGradient></defs>
+  <rect x="1" y="1" width="94" height="94" rx="10" fill="#121a22" stroke="#775f2f" stroke-width="2"/>
+  <circle cx="48" cy="51" r="34" fill="url(#glow)"/>
+  <path d="M38 24h20M41 19h14M35 30h26l-4 45H39z" fill="#202830" stroke="#d0ae61" stroke-width="2"/>
+  <rect x="40" y="36" width="16" height="28" rx="4" fill="#4aa86d" fill-opacity=".88" stroke="#f0d996" stroke-width="1.5"/>
+  <path d="M39 70h18M45 24v6h6v-6" stroke="#d0ae61" stroke-width="2"/>
+</svg>

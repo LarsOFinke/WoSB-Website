@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Small Additional Sails">
+  <rect x="1" y="1" width="94" height="94" rx="10" fill="#152029" stroke="#775f2f" stroke-width="2"/>
+  <path d="M48 15v65M20 79h60" stroke="#8d7140" stroke-width="2"/>
+  <path d="M37.9 29.9h20.2v30.2H37.9z" fill="#eee8d8" stroke="#ab9f7d" stroke-width="2"/>
+  <path d="M37.9 45.0h20.2M48 29.9v30.2" stroke="#b9ad8c" stroke-width="1"/>
+</svg>

@@ -7,3 +7,10 @@ The screenshots are intentionally versioned with the repository as source eviden
 - Imported: 2026-07-28
 - Scope: owned-ship statistics and upgrade screens
 - Integrity manifest: `SHA256SUMS.txt`
+
+## Derived website assets
+
+Cropped upgrade and specialist icons derived from these originals live under
+`frontend/public/build-assets/options/`. Their source mapping and the rules for
+adding new assets are documented in [`../../BUILD_OPTION_ICONS.md`](../../BUILD_OPTION_ICONS.md).
+The original screenshots in this directory remain the audit source of truth.

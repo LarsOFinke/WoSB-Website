@@ -13,7 +13,8 @@
         "turn_rate_pct": 8,
         "cruising_turn_speed_penalty_pct": -15
       },
-      "seed_id": "maneuverable-helm"
+      "seed_id": "maneuverable-helm",
+      "image_url": "/build-assets/options/upgrades/maneuverable-helm.png"
     },
     {
       "category": "upgrade",
@@ -25,7 +26,8 @@
         "speed_knots": 0.5,
         "sail_efficiency": 1
       },
-      "seed_id": "reinforced-masts"
+      "seed_id": "reinforced-masts",
+      "image_url": "/build-assets/options/upgrades/reinforced-masts.png"
     },
     {
       "category": "upgrade",
@@ -38,7 +40,8 @@
         "speed_pct": 4,
         "armor_pct": -15
       },
-      "seed_id": "lightweight-hull"
+      "seed_id": "lightweight-hull",
+      "image_url": "/build-assets/options/upgrades/lightweight-hull.png"
     },
     {
       "category": "upgrade",
@@ -51,7 +54,8 @@
         "fishing_speed_pct": 30,
         "boarding_range_pct": 15
       },
-      "seed_id": "small-hooks"
+      "seed_id": "small-hooks",
+      "image_url": "/build-assets/options/upgrades/small-hooks.png"
     },
     {
       "category": "upgrade",
@@ -63,7 +67,8 @@
         "visibility_range_pct": 50,
         "weapon_aiming_pct": 60
       },
-      "seed_id": "combat-crow-s-nest"
+      "seed_id": "combat-crow-s-nest",
+      "image_url": "/build-assets/options/upgrades/combat-crow-s-nest.png"
     },
     {
       "category": "upgrade",
@@ -76,7 +81,8 @@
         "hold_capacity_pct": 12,
         "speed_pct": -15
       },
-      "seed_id": "sturdy-frames"
+      "seed_id": "sturdy-frames",
+      "image_url": "/build-assets/options/upgrades/sturdy-frames.png"
     },
     {
       "category": "upgrade",
@@ -89,7 +95,8 @@
         "item_loss_pct": -40,
         "hull_hp_pct": -5
       },
-      "seed_id": "double-hold"
+      "seed_id": "double-hold",
+      "image_url": "/build-assets/options/upgrades/double-hold.png"
     },
     {
       "category": "upgrade",
@@ -101,7 +108,8 @@
         "ship_roll_reduction_pct": 50,
         "weapon_spread_pct": -40
       },
-      "seed_id": "extra-ballast"
+      "seed_id": "extra-ballast",
+      "image_url": "/build-assets/options/upgrades/extra-ballast.png"
     },
     {
       "category": "upgrade",
@@ -113,7 +121,8 @@
         "hold_capacity": 2000,
         "perishable_goods_preserved_enabled": 1
       },
-      "seed_id": "cellars"
+      "seed_id": "cellars",
+      "image_url": "/build-assets/options/upgrades/cellars.png"
     },
     {
       "category": "upgrade",
@@ -125,7 +134,8 @@
         "crew_capacity": 14,
         "crew_count_hidden_enabled": 1
       },
-      "seed_id": "extra-bunks"
+      "seed_id": "extra-bunks",
+      "image_url": "/build-assets/options/upgrades/extra-bunks.png"
     },
     {
       "category": "upgrade",
@@ -137,7 +147,8 @@
         "durability": 150,
         "repair_item_efficiency_pct": 20
       },
-      "seed_id": "repair-arsenal"
+      "seed_id": "repair-arsenal",
+      "image_url": "/build-assets/options/upgrades/repair-arsenal.png"
     },
     {
       "category": "upgrade",
@@ -149,7 +160,8 @@
         "water_fire_protection_pct": 45,
         "armor_pct": -10
       },
-      "seed_id": "iron-plating"
+      "seed_id": "iron-plating",
+      "image_url": "/build-assets/options/upgrades/iron-plating.png"
     },
     {
       "category": "upgrade",
@@ -161,7 +173,8 @@
         "water_fire_protection_pct": 25,
         "explosive_fire_ship_protection_pct": 30
       },
-      "seed_id": "copper-plating"
+      "seed_id": "copper-plating",
+      "image_url": "/build-assets/options/upgrades/copper-plating.png"
     },
     {
       "category": "upgrade",
@@ -174,7 +187,8 @@
         "bow_damage_absorption_pct": 20,
         "quick_sinking_by_ramming_enabled": 1
       },
-      "seed_id": "iron-ram"
+      "seed_id": "iron-ram",
+      "image_url": "/build-assets/options/upgrades/iron-ram.png"
     },
     {
       "category": "upgrade",
@@ -186,7 +200,8 @@
         "sail_protection_pct": 30,
         "sail_fire_protection_pct": 50
       },
-      "seed_id": "reinforced-bolt-ropes"
+      "seed_id": "reinforced-bolt-ropes",
+      "image_url": "/build-assets/options/upgrades/reinforced-bolt-ropes.png"
     },
     {
       "category": "upgrade",
@@ -199,7 +214,8 @@
         "crew_capacity": 10,
         "turn_rate_pct": -6
       },
-      "seed_id": "teak-frames"
+      "seed_id": "teak-frames",
+      "image_url": "/build-assets/options/upgrades/teak-frames.png"
     },
     {
       "category": "upgrade",
@@ -211,7 +227,8 @@
         "barrel_reload_pct": 35,
         "swivel_gun_reload_pct": 35
       },
-      "seed_id": "upper-deck"
+      "seed_id": "upper-deck",
+      "image_url": "/build-assets/options/upgrades/upper-deck.png"
     },
     {
       "category": "upgrade",
@@ -222,7 +239,8 @@
       "stat_effects": {
         "reload_pct": 12
       },
-      "seed_id": "ammunition-cradles"
+      "seed_id": "ammunition-cradles",
+      "image_url": "/build-assets/options/upgrades/ammunition-cradles.png"
     },
     {
       "category": "upgrade",
@@ -234,7 +252,8 @@
         "weapon_angle": 10,
         "weapon_aiming_pct": 30
       },
-      "seed_id": "advanced-gun-carriages"
+      "seed_id": "advanced-gun-carriages",
+      "image_url": "/build-assets/options/upgrades/advanced-gun-carriages.png"
     },
     {
       "category": "upgrade",
@@ -245,7 +264,8 @@
       "stat_effects": {
         "bow_stern_weapon_damage_pct": 87
       },
-      "seed_id": "reinforced-cannons"
+      "seed_id": "reinforced-cannons",
+      "image_url": "/build-assets/options/upgrades/reinforced-cannons.png"
     },
     {
       "category": "upgrade",
@@ -257,7 +277,8 @@
         "all_ammo_ignition_enabled": 1,
         "projectile_speed_pct": 10
       },
-      "seed_id": "incendiary-mixture"
+      "seed_id": "incendiary-mixture",
+      "image_url": "/build-assets/options/upgrades/incendiary-mixture.png"
     },
     {
       "category": "upgrade",
@@ -268,7 +289,8 @@
       "stat_effects": {
         "weapon_range": 10
       },
-      "seed_id": "fortified-ports"
+      "seed_id": "fortified-ports",
+      "image_url": "/build-assets/options/upgrades/fortified-ports.png"
     },
     {
       "category": "upgrade",
@@ -280,7 +302,8 @@
         "item_reload_pct": 20,
         "ammo_switch_speed_pct": 50
       },
-      "seed_id": "combat-arsenal"
+      "seed_id": "combat-arsenal",
+      "image_url": "/build-assets/options/upgrades/combat-arsenal.png"
     },
     {
       "category": "upgrade",
@@ -293,7 +316,8 @@
         "mortar_protection_pct": 30,
         "speed_pct": -5
       },
-      "seed_id": "strong-beams"
+      "seed_id": "strong-beams",
+      "image_url": "/build-assets/options/upgrades/strong-beams.png"
     },
     {
       "category": "upgrade",
@@ -304,7 +328,8 @@
       "stat_effects": {
         "boarding_gold_pct": 5
       },
-      "seed_id": "portable-chest"
+      "seed_id": "portable-chest",
+      "image_url": "/build-assets/options/upgrades/portable-chest.png"
     },
     {
       "category": "upgrade",
@@ -315,7 +340,8 @@
       "stat_effects": {
         "low_hp_damage_pct": 25
       },
-      "seed_id": "emergency-powder-charge"
+      "seed_id": "emergency-powder-charge",
+      "image_url": "/build-assets/options/upgrades/emergency-powder-charge.png"
     },
     {
       "category": "upgrade",
@@ -327,7 +353,8 @@
         "barrels_mines_third_speed_enabled": 1,
         "barrel_mine_radius_pct": 30
       },
-      "seed_id": "high-helm-port"
+      "seed_id": "high-helm-port",
+      "image_url": "/build-assets/options/upgrades/high-helm-port.png"
     },
     {
       "category": "upgrade",
@@ -339,7 +366,8 @@
         "extra_upgrade_slots": 2,
         "turn_rate_pct": -10
       },
-      "seed_id": "structural-expansion"
+      "seed_id": "structural-expansion",
+      "image_url": "/build-assets/options/upgrades/structural-expansion.png"
     },
     {
       "category": "upgrade",
@@ -351,7 +379,8 @@
         "mortar_range": 10,
         "turn_rate_pct": -8
       },
-      "seed_id": "long-range-mortars"
+      "seed_id": "long-range-mortars",
+      "image_url": "/build-assets/options/upgrades/long-range-mortars.png"
     },
     {
       "category": "upgrade",
@@ -363,7 +392,8 @@
         "mortar_aiming_pct": 40,
         "mortar_dead_zone_reduction_pct": 30
       },
-      "seed_id": "reinforced-centre-line"
+      "seed_id": "reinforced-centre-line",
+      "image_url": "/build-assets/options/upgrades/reinforced-centre-line.png"
     },
     {
       "category": "upgrade",
@@ -376,7 +406,8 @@
         "hold_capacity_pct": 25,
         "mortar_damage_pct": -25
       },
-      "seed_id": "lightweight-construction"
+      "seed_id": "lightweight-construction",
+      "image_url": "/build-assets/options/upgrades/lightweight-construction.png"
     },
     {
       "category": "upgrade",
@@ -389,7 +420,8 @@
         "mortar_angle_degrees": 50,
         "mortar_aiming_pct": -25
       },
-      "seed_id": "swivel-mortars"
+      "seed_id": "swivel-mortars",
+      "image_url": "/build-assets/options/upgrades/swivel-mortars.png"
     }
   ],
   "aliases": {

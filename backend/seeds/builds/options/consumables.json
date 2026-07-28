@@ -67,7 +67,8 @@
       "category": "consumable",
       "name": "Large Additional Sails",
       "source": "wiki",
-      "seed_id": "large-additional-sails"
+      "seed_id": "large-additional-sails",
+      "image_url": "/build-assets/options/consumables/large-additional-sails.svg"
     },
     {
       "category": "consumable",
@@ -115,7 +116,8 @@
       "category": "consumable",
       "name": "Small Additional Sails",
       "source": "wiki",
-      "seed_id": "small-additional-sails"
+      "seed_id": "small-additional-sails",
+      "image_url": "/build-assets/options/consumables/small-additional-sails.svg"
     },
     {
       "category": "consumable",

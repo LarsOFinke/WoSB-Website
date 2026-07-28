@@ -1,0 +1,160 @@
+.build-option-picker {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+}
+
+.build-option-picker-trigger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .55rem;
+  align-items: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: .55rem .65rem;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgba(137, 164, 185, .28);
+  border-radius: .42rem;
+  background: rgba(8, 21, 31, .74);
+}
+
+.build-option-picker-trigger:hover,
+.build-option-picker-trigger:focus-visible,
+.build-option-picker.is-open .build-option-picker-trigger {
+  border-color: rgba(215, 169, 87, .72);
+  outline: none;
+}
+
+.build-option-picker-trigger-copy,
+.build-option-picker-option-copy {
+  display: grid;
+  gap: .16rem;
+  min-width: 0;
+}
+
+.build-option-picker-trigger-copy strong,
+.build-option-picker-option-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.build-option-picker-trigger-copy small,
+.build-option-picker-option-copy small {
+  color: var(--text-muted, #91a2b5);
+  font-size: .76rem;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.build-option-picker-chevron {
+  color: #d7a957;
+  font-size: 1.05rem;
+  transition: transform .15s ease;
+}
+
+.build-option-picker.is-open .build-option-picker-chevron {
+  transform: rotate(180deg);
+}
+
+.build-option-picker-menu {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + .35rem);
+  left: 0;
+  width: max(100%, 24rem);
+  max-width: min(34rem, calc(100vw - 2rem));
+  max-height: 24rem;
+  overflow: auto;
+  padding: .4rem;
+  border: 1px solid rgba(215, 169, 87, .56);
+  border-radius: .55rem;
+  background: #0b1721;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .48);
+}
+
+.build-option-picker-group + .build-option-picker-group {
+  margin-top: .35rem;
+  padding-top: .35rem;
+  border-top: 1px solid rgba(137, 164, 185, .18);
+}
+
+.build-option-picker-group-label {
+  margin: .15rem .4rem .3rem;
+  color: #d7a957;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.build-option-picker-option {
+  display: grid;
+  grid-template-columns: 2.85rem minmax(0, 1fr) auto;
+  gap: .65rem;
+  align-items: center;
+  width: 100%;
+  padding: .45rem;
+  color: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: .42rem;
+  background: transparent;
+}
+
+.build-option-picker-option + .build-option-picker-option {
+  margin-top: .18rem;
+}
+
+.build-option-picker-option:hover,
+.build-option-picker-option.is-active {
+  border-color: rgba(215, 169, 87, .44);
+  background: rgba(37, 55, 68, .82);
+}
+
+.build-option-picker-option.is-selected {
+  background: rgba(72, 69, 48, .46);
+}
+
+.build-option-picker-option:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.build-option-picker-option img {
+  width: 2.85rem;
+  height: 2.85rem;
+  object-fit: cover;
+  border: 1px solid rgba(215, 169, 87, .32);
+  border-radius: .34rem;
+  background: #101a23;
+}
+
+.build-option-picker-option.is-empty {
+  grid-template-columns: 1fr;
+  min-height: 2.45rem;
+}
+
+.build-option-picker-check {
+  color: #e8bd66;
+  font-weight: 800;
+}
+
+.build-option-picker.is-disabled {
+  opacity: .58;
+}
+
+@media (max-width: 640px) {
+  .build-option-picker-menu {
+    position: fixed;
+    z-index: 120;
+    top: auto;
+    right: .75rem;
+    bottom: .75rem;
+    left: .75rem;
+    width: auto;
+    max-width: none;
+    max-height: min(70vh, 32rem);
+  }
+}

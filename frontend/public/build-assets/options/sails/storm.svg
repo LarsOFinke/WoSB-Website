@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="storm">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#26313a"/><stop offset="1" stop-color="#111820"/></linearGradient></defs>
+  <rect x="1" y="1" width="94" height="94" rx="10" fill="url(#bg)" stroke="#775f2f" stroke-width="2"/>
+  <circle cx="48" cy="47" r="34" fill="#e2ba63" opacity=".08"/>
+  <path d="M25 70 48 18l19 52z" fill="#657481" stroke="#2e3e4b" stroke-width="2"/><path d="m47 29-8 17h9l-7 17 18-23h-10l7-11z" fill="#f2c866"/>
+</svg>
