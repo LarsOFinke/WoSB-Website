@@ -14,6 +14,7 @@ from app.modules.accounts.models.registration_request import (
     REGISTRATION_PENDING,
     REGISTRATION_REJECTED,
     REGISTRATION_STATUSES,
+    REDACTED_REGISTRATION_PASSWORD_HASH,
     RegistrationRequest,
 )
 from app.modules.accounts.models.user import ROLE_USER, User
@@ -154,6 +155,7 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
     request.reviewed_by_id = reviewer.id
     request.reviewed_at = utc_now()
     request.created_user_id = user.id
+    request.password_hash = REDACTED_REGISTRATION_PASSWORD_HASH
     db.add(request)
     db.commit()
     db.refresh(request)
@@ -171,6 +173,7 @@ def reject_registration_request(db: Session, request_id: int, reviewer: User, pa
     request.decision_note = payload.note
     request.reviewed_by_id = reviewer.id
     request.reviewed_at = utc_now()
+    request.password_hash = REDACTED_REGISTRATION_PASSWORD_HASH
     db.add(request)
     db.commit()
     db.refresh(request)

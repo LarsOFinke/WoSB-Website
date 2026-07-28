@@ -18,11 +18,6 @@ logger = logging.getLogger("app.request")
 ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
 ROUTINE_LOG_ROUTE_ROOTS = ("/api/admin/logs",)
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
-SENSITIVE_QUERY_KEYS = frozenset(
-    {"access_token", "api_key", "auth", "code", "key", "password", "secret", "signature", "token"}
-)
-
-
 def _normalized_ip(value: str | None) -> str | None:
     if not value:
         return None
@@ -42,10 +37,9 @@ def redact_query_string(value: str | None) -> str | None:
         pairs = parse_qsl(value, keep_blank_values=True, strict_parsing=False)
     except ValueError:
         return "<invalid-query>"
-    redacted = [
-        (key, "<redacted>" if key.casefold() in SENSITIVE_QUERY_KEYS else item)
-        for key, item in pairs
-    ]
+    # Query values frequently contain search terms, identifiers, or personal data.
+    # Keep parameter names for diagnostics while removing every value.
+    redacted = [(key, "<redacted>") for key, _item in pairs]
     return urlencode(redacted, doseq=True)
 
 
@@ -121,9 +115,9 @@ class RequestLogContextFactory:
             "path": request.url.path,
             "status_code": status_code,
             "duration_ms": duration_ms,
-            "client": request.client.host if request.client else None,
+            "client": None,
             "client_ip": self._client_ips.resolve(request),
-            "forwarded_for": request.headers.get("x-forwarded-for"),
+            "forwarded_for": None,
             "user_agent": request.headers.get("user-agent"),
             "query_string": redact_query_string(request.url.query),
         }
@@ -224,7 +218,6 @@ class IpBlockMiddleware(BaseHTTPMiddleware):
         payload = {
             "detail": "Access denied for this network address.",
             "code": "ip_blocked",
-            "ip_address": block.ip_address,
             "expires_at": block.expires_at.isoformat() if block.expires_at else None,
         }
         headers = {"X-RBF-IP-Blocked": "1"}

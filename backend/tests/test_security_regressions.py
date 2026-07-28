@@ -9,7 +9,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
 from app.core.config import BACKEND_ROOT
-from app.core.middleware import ClientIpResolver, redact_query_string
+from app.core.middleware import (
+    ClientIpResolver,
+    RequestLogContextFactory,
+    redact_query_string,
+)
 from app.core.security import PASSWORD_ITERATIONS, PasswordHasher
 from app.db.schema_health import (
     DatabaseSchemaMismatchError,
@@ -232,8 +236,24 @@ def test_client_ip_resolver_rejects_forwarded_chains_and_query_secrets_are_redac
     request = StarletteRequest(scope)
     assert ClientIpResolver().resolve(request) == "172.18.0.4"
     assert redact_query_string("page=2&token=secret&api_key=hidden") == (
-        "page=2&token=%3Credacted%3E&api_key=%3Credacted%3E"
+        "page=%3Credacted%3E&token=%3Credacted%3E&api_key=%3Credacted%3E"
     )
+
+    single_hop_scope = {
+        **scope,
+        "headers": [(b"x-forwarded-for", b"203.0.113.5")],
+        "query_string": b"search=Captain+Nemo",
+    }
+    context = RequestLogContextFactory().create(
+        StarletteRequest(single_hop_scope),
+        request_id="request-1",
+        status_code=200,
+        duration_ms=12.5,
+    )
+    assert context["client_ip"] == "203.0.113.5"
+    assert context["client"] is None
+    assert context["forwarded_for"] is None
+    assert context["query_string"] == "search=%3Credacted%3E"
 
 
 def test_schema_head_resolution_uses_explicit_config_in_installed_layout(

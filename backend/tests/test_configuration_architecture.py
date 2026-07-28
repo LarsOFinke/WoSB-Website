@@ -90,3 +90,19 @@ def test_ini_source_rejects_toml_files(tmp_path: Path) -> None:
 
     with pytest.raises(ConfigError, match=".cfg extension"):
         IniConfigSource(path)
+
+
+def test_retention_settings_reject_non_positive_values(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+    uploads = config_dir / "uploads.cfg"
+    uploads.write_text(
+        uploads.read_text(encoding="utf-8")
+        + "\n[maintenance]\nwebhook_delivery_retention_days=0\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="webhook_delivery_retention_days.*greater than zero"):
+        SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()

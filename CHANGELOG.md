@@ -1,4 +1,18 @@
+# Changelog
+
 ## Unreleased
+
+### Repository spring clean and privacy hardening
+
+- Split the historical 11,466-line global stylesheet into eight deterministic JavaScript-imported cascade layers with budgets and a standalone CSS audit.
+- Reused one presentational filter surface across the staff workspace and documented KISS/SOLID boundaries.
+- Replaced nested full user profiles with minimal identity references in shared content APIs.
+- Redacted reviewed registration password hashes and all request query values.
+- Added configurable retention for webhook deliveries, cookie consent history, and registration requests.
+- Added a security/privacy audit and operational data-retention documentation.
+- Split webhook event metadata, samples, and templates behind a thin compatibility facade.
+- Made the locale completeness check directly executable with Node instead of requiring a Vite server.
+- Pinned GitHub workflows to the published v6 releases of checkout, setup-node, setup-python, and upload-artifact.
 
 - Admin-exklusive Datenbank-Backup-Verwaltung ergänzt: SSH-/SFTP-Ziel inklusive verifizierter Host-Key-Pinierung über die Webseite einrichten, Verbindung testen und komprimierte PostgreSQL-Backups per Knopfdruck übertragen sowie remote per SHA-256 verifizieren. Private Schlüssel verbleiben im root-geschützten Host-Control-Verzeichnis und werden nie von der API zurückgegeben.
 - Frontend-Release-Gate repariert: vollständige Übersetzungen für die neue Broadcast-Navigation ergänzt und die Route-Page-Invarianten an die Backup-Unterseite angepasst; GitHub Actions auf veröffentlichte, runner-kompatible Major-Versionen zurückgeführt.
@@ -6,7 +20,7 @@
 - Forum-Antworten können nach Inline-Bestätigung durch Autor oder Staff gelöscht werden; neue Webhook-Events und versionierte Templates decken Antworten, Thread-Löschungen sowie Flotten-, Mitgliedschafts-, Führungs- und Rollenänderungen ab.
 - Staff-Systemlogs in einen eigenen responsiven Arbeitsbereich ausgelagert; aktive IP-Sperren werden standardmäßig aus Liste, Kennzahlen und Threat-Auswertung entfernt und können bewusst wieder eingeblendet werden. Admins können einzelne oder den aktuellen Filterbereich nach Bestätigung löschen; jede Löschung bleibt im Audit-Log nachvollziehbar.
 - Alle Route-Pages auf verbindliche Page-Composables umgestellt; direkte API-Imports, Lifecycle-Ladevorgänge und eigene asynchrone Workflows in Seiten werden repositoryweit verhindert.
-- Globales Frontend-CSS unter Beibehaltung der Kaskadenreihenfolge in sieben größenbegrenzte Layer zerlegt und mit CSS-Budgets abgesichert.
+- Globales Frontend-CSS unter Beibehaltung der Kaskadenreihenfolge in acht größenbegrenzte Layer zerlegt und mit CSS-Budgets abgesichert.
 - Python-, Node-, NGINX-, PostgreSQL- und Uptime-Kuma-Basisimages auf konkrete Versionen festgeschrieben; unversioniertes pip-Self-Upgrade aus dem Backend-Build entfernt.
 - Upload-Auslieferung durch API-Zugriffspolitik und private No-Store-Header gehärtet: Guide-, Forum- und Master-Data-Dateien bleiben öffentlich, sonstige Dateien sind auf Eigentümer und Staff begrenzt; bestehende `/uploads/...`-Links bleiben kompatibel.
 - Build-Editor um eine abgesicherte Löschaktion für eigene Builds ergänzt; nach Bestätigung wird der Build entfernt und zur persönlichen Build-Bibliothek zurück navigiert.
@@ -23,7 +37,6 @@
 - Alembic-Schema für den vorgesehenen Clean-Setup in einer aktuellen `0001_baseline` konsolidiert.
 - Gateway builds now normalize frontend directory permissions to `0755` and file permissions to `0644`, ensuring bundled assets such as `rbf-fleet-icon.png` remain publicly readable.
 
-# Changelog
 
 
 ## 2026-07-28 - Default discovery results and CSS cascade restoration

@@ -91,6 +91,15 @@ class RuntimeSettingsReader:
                 f"Config value [{section.name}].{key} must be an integer."
             ) from exc
 
+    @classmethod
+    def _positive_integer_or_default(cls, section, key: str, default: int) -> int:
+        value = cls._integer_or_default(section, key, default)
+        if value < 1:
+            raise ConfigError(
+                f"Config value [{section.name}].{key} must be greater than zero."
+            )
+        return value
+
     def _optional_section(self, name: str):
         target = name.casefold()
         return next(
@@ -104,9 +113,9 @@ class RuntimeSettingsReader:
             image_mb=ConfigValueParser.integer(section, "image_mb"),
             document_mb=ConfigValueParser.integer(section, "document_mb"),
             video_mb=ConfigValueParser.integer(section, "video_mb"),
-            per_user_total_mb=self._integer_or_default(section, "per_user_total_mb", 2048),
-            global_total_mb=self._integer_or_default(section, "global_total_mb", 20480),
-            minimum_free_mb=self._integer_or_default(section, "minimum_free_mb", 1024),
+            per_user_total_mb=self._positive_integer_or_default(section, "per_user_total_mb", 2048),
+            global_total_mb=self._positive_integer_or_default(section, "global_total_mb", 20480),
+            minimum_free_mb=self._positive_integer_or_default(section, "minimum_free_mb", 1024),
         )
 
     def read_maintenance(self) -> MaintenanceSettings:
@@ -115,16 +124,32 @@ class RuntimeSettingsReader:
             return MaintenanceSettings(
                 app_log_retention_days=30,
                 audit_log_retention_days=365,
+                webhook_delivery_retention_days=30,
+                cookie_consent_retention_days=400,
+                pending_registration_retention_days=30,
+                reviewed_registration_retention_days=90,
                 interval_hours=24,
             )
         return MaintenanceSettings(
-            app_log_retention_days=self._integer_or_default(
+            app_log_retention_days=self._positive_integer_or_default(
                 section, "app_log_retention_days", 30
             ),
-            audit_log_retention_days=self._integer_or_default(
+            audit_log_retention_days=self._positive_integer_or_default(
                 section, "audit_log_retention_days", 365
             ),
-            interval_hours=self._integer_or_default(section, "interval_hours", 24),
+            webhook_delivery_retention_days=self._positive_integer_or_default(
+                section, "webhook_delivery_retention_days", 30
+            ),
+            cookie_consent_retention_days=self._positive_integer_or_default(
+                section, "cookie_consent_retention_days", 400
+            ),
+            pending_registration_retention_days=self._positive_integer_or_default(
+                section, "pending_registration_retention_days", 30
+            ),
+            reviewed_registration_retention_days=self._positive_integer_or_default(
+                section, "reviewed_registration_retention_days", 90
+            ),
+            interval_hours=self._positive_integer_or_default(section, "interval_hours", 24),
         )
 
     def read_cors_origins(self) -> tuple[str, ...]:

@@ -1,4 +1,4 @@
-import { createServer } from 'vite'
+import { messages } from '../src/locales/messages/index.js'
 
 const SAME_VALUE_ALLOWLIST = new Set([
   'Royal Blackwater Fleet', 'Royal Blackwater Fleet MVP', 'Royal Blackwater', 'Fleet', 'RBF', '12:00–02:00 CET', '18:00–23:00 CET', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV', '-----BEGIN OPENSSH PRIVATE KEY-----',
@@ -48,49 +48,37 @@ function flattenEntries(obj, prefix = '') {
   })
 }
 
-const server = await createServer({
-  root: process.cwd(),
-  logLevel: 'silent',
-  server: { middlewareMode: true },
-  appType: 'custom',
-})
+const locales = Object.keys(messages)
+const englishEntries = Object.fromEntries(flattenEntries(messages.en))
+const allKeys = [...new Set(locales.flatMap((locale) => flattenEntries(messages[locale]).map(([key]) => key)))]
+let errorTotal = 0
 
-try {
-  const { messages } = await server.ssrLoadModule('/src/locales/messages/index.js')
-  const locales = Object.keys(messages)
-  const englishEntries = Object.fromEntries(flattenEntries(messages.en))
-  const allKeys = [...new Set(locales.flatMap((locale) => flattenEntries(messages[locale]).map(([key]) => key)))]
-  let errorTotal = 0
+for (const locale of locales) {
+  const entries = Object.fromEntries(flattenEntries(messages[locale]))
+  const missing = allKeys.filter((key) => !(key in entries))
+  const englishFallbacks = locale === 'en'
+    ? []
+    : Object.entries(englishEntries).filter(([key, englishValue]) => {
+      const localizedValue = entries[key]
+      return typeof englishValue === 'string'
+        && englishValue === localizedValue
+        && !SAME_VALUE_ALLOWLIST.has(englishValue)
+    })
+  const pseudoLocalized = Object.entries(entries).filter(([, value]) => typeof value === 'string' && PSEUDO_PREFIX_PATTERN.test(value))
+  const missingDynamicKeys = DYNAMIC_KEY_CONTRACTS.filter((key) => !(key in entries))
 
-  for (const locale of locales) {
-    const entries = Object.fromEntries(flattenEntries(messages[locale]))
-    const missing = allKeys.filter((key) => !(key in entries))
-    const englishFallbacks = locale === 'en'
-      ? []
-      : Object.entries(englishEntries).filter(([key, englishValue]) => {
-        const localizedValue = entries[key]
-        return typeof englishValue === 'string'
-          && englishValue === localizedValue
-          && !SAME_VALUE_ALLOWLIST.has(englishValue)
-      })
-    const pseudoLocalized = Object.entries(entries).filter(([, value]) => typeof value === 'string' && PSEUDO_PREFIX_PATTERN.test(value))
-    const missingDynamicKeys = DYNAMIC_KEY_CONTRACTS.filter((key) => !(key in entries))
-
-    errorTotal += missing.length + englishFallbacks.length + pseudoLocalized.length + missingDynamicKeys.length
-    console.log(`${locale}: ${Object.keys(entries).length} keys, missing ${missing.length}, english-fallback ${englishFallbacks.length}, pseudo ${pseudoLocalized.length}, dynamic-missing ${missingDynamicKeys.length}`)
-    if (missing.length > 0) console.log(missing.map((key) => `  - missing ${key}`).join('\n'))
-    if (missingDynamicKeys.length > 0) console.log(missingDynamicKeys.map((key) => `  - missing dynamic ${key}`).join('\n'))
-    if (pseudoLocalized.length > 0) {
-      console.log(pseudoLocalized.slice(0, 50).map(([key, value]) => `  - pseudo ${key}: ${value}`).join('\n'))
-      if (pseudoLocalized.length > 50) console.log(`  ... ${pseudoLocalized.length - 50} more`)
-    }
-    if (englishFallbacks.length > 0) {
-      console.log(englishFallbacks.slice(0, 50).map(([key, value]) => `  - fallback ${key}: ${value}`).join('\n'))
-      if (englishFallbacks.length > 50) console.log(`  ... ${englishFallbacks.length - 50} more`)
-    }
+  errorTotal += missing.length + englishFallbacks.length + pseudoLocalized.length + missingDynamicKeys.length
+  console.log(`${locale}: ${Object.keys(entries).length} keys, missing ${missing.length}, english-fallback ${englishFallbacks.length}, pseudo ${pseudoLocalized.length}, dynamic-missing ${missingDynamicKeys.length}`)
+  if (missing.length > 0) console.log(missing.map((key) => `  - missing ${key}`).join('\n'))
+  if (missingDynamicKeys.length > 0) console.log(missingDynamicKeys.map((key) => `  - missing dynamic ${key}`).join('\n'))
+  if (pseudoLocalized.length > 0) {
+    console.log(pseudoLocalized.slice(0, 50).map(([key, value]) => `  - pseudo ${key}: ${value}`).join('\n'))
+    if (pseudoLocalized.length > 50) console.log(`  ... ${pseudoLocalized.length - 50} more`)
   }
-
-  if (errorTotal > 0) process.exitCode = 1
-} finally {
-  await server.close()
+  if (englishFallbacks.length > 0) {
+    console.log(englishFallbacks.slice(0, 50).map(([key, value]) => `  - fallback ${key}: ${value}`).join('\n'))
+    if (englishFallbacks.length > 50) console.log(`  ... ${englishFallbacks.length - 50} more`)
+  }
 }
+
+if (errorTotal > 0) process.exitCode = 1

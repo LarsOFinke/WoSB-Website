@@ -13,6 +13,7 @@ const deliveryMonitorSource = await readFile(new URL('../src/modules/admin/compo
 const broadcastPageSource = await readFile(new URL('../src/modules/admin/pages/DiscordBroadcastsPage.vue', import.meta.url), 'utf8')
 const discordPageSource = await readFile(new URL('../src/modules/admin/pages/DiscordWebhooksPage.vue', import.meta.url), 'utf8')
 const masterDataPageSource = await readFile(new URL('../src/modules/admin/pages/MasterDataPage.vue', import.meta.url), 'utf8')
+const filterSurfaceSource = await readFile(new URL('../src/modules/admin/components/StaffFilterSurface.vue', import.meta.url), 'utf8')
 const staffOverviewSource = await readFile(new URL('../src/modules/admin/components/StaffOverviewPanel.vue', import.meta.url), 'utf8')
 const navigationSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceNavigation.vue', import.meta.url), 'utf8')
 const shellSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceShell.vue', import.meta.url), 'utf8')
@@ -30,6 +31,14 @@ test('staff workspace exposes combined filters for all shared management modules
   ]) {
     assert.ok(adminSource.includes(`v-model="${binding}"`), binding)
   }
+})
+
+
+test('staff filters use one reusable presentational surface', () => {
+  assert.equal((adminSource.match(/<StaffFilterSurface/g) || []).length, 5)
+  assert.ok(filterSurfaceSource.includes('<slot />'))
+  assert.ok(filterSurfaceSource.includes('<slot name="actions">'))
+  assert.ok(filterSurfaceSource.includes("defineEmits(['reset'])"))
 })
 
 test('audit history includes newly introduced administrative entity types', () => {

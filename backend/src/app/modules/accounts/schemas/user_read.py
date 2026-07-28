@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -21,7 +22,7 @@ class UserRead(BaseModel):
     availability: str | None = None
     timezone: str | None = None
     discord_handle: str | None = None
-    preferred_ship_ids: list[int] = []
-    preferred_role_ids: list[int] = []
+    preferred_ship_ids: list[int] = Field(default_factory=list)
+    preferred_role_ids: list[int] = Field(default_factory=list)
     note: str | None = None
     created_at: datetime

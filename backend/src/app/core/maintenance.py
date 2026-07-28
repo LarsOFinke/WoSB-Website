@@ -2,16 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import timedelta
-
-from sqlalchemy import delete
 
 from app.core.config import settings
+from app.core.retention import purge_expired_records
 from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.modules.accounts.services.auth_service import delete_expired_sessions
-from app.modules.admin.models.app_log import AppLog
-from app.modules.admin.models.audit_log import AuditLog
 from app.modules.admin.services.outbound_webhook_delivery_service import (
     recover_pending_webhook_deliveries,
 )
@@ -23,24 +19,13 @@ def run_maintenance_once() -> dict[str, int]:
     now = utc_now()
     with SessionLocal() as db:
         expired_sessions = delete_expired_sessions(db, commit=False)
-        app_logs = db.execute(
-            delete(AppLog).where(
-                AppLog.created_at
-                < now - timedelta(days=settings.maintenance.app_log_retention_days)
-            )
-        ).rowcount
-        audit_logs = db.execute(
-            delete(AuditLog).where(
-                AuditLog.created_at
-                < now - timedelta(days=settings.maintenance.audit_log_retention_days)
-            )
-        ).rowcount
+        removed = purge_expired_records(
+            db,
+            now=now,
+            policy=settings.maintenance,
+        )
         db.commit()
-    return {
-        "expired_sessions": int(expired_sessions or 0),
-        "app_logs": int(app_logs or 0),
-        "audit_logs": int(audit_logs or 0),
-    }
+    return {"expired_sessions": int(expired_sessions or 0), **removed}
 
 
 async def maintenance_loop() -> None:

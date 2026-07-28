@@ -87,6 +87,14 @@ Für die Funktion müssen `rbf-hub-backup-admin.path` und
 `rbf-hub-backup-admin.service` installiert sein. Ein erfolgreiches `sudo ./update.sh` installiert
 und aktiviert beide Units automatisch.
 
+## Automatische Datenbereinigung
+
+Der Maintenance-Lauf entfernt abgelaufene Sessions und wendet die in `backend/config/uploads.cfg`
+konfigurierten Fristen auf Anwendungslogs, Audit-Historie, Webhook-Deliveries, Cookie-Einwilligungen
+und Registrierungsanträge an. Die Standardwerte und betrieblichen Auswirkungen sind in
+`docs/DATA_RETENTION.md` dokumentiert. Nach Änderungen an Fristen sollte der nächste Lauf beobachtet
+und das Ergebnis über die Systemlogs geprüft werden.
+
 ## TLS
 
 ```bash

@@ -117,6 +117,7 @@ def test_staff_can_block_and_unblock_ip_through_middleware() -> None:
         blocked = client.get("/api/builds", headers={"X-Forwarded-For": "203.0.113.91"})
         assert blocked.status_code == 403
         assert blocked.json()["code"] == "ip_blocked"
+        assert "ip_address" not in blocked.json()
         assert blocked.headers["X-RBF-IP-Blocked"] == "1"
 
         spoof_attempt = client.get(

@@ -4,7 +4,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import inspect
 
 from app.db.session import SessionLocal
-from app.modules.accounts.models.registration_request import RegistrationRequest
+from app.modules.accounts.models.registration_request import (
+    REDACTED_REGISTRATION_PASSWORD_HASH,
+    RegistrationRequest,
+)
 from app.modules.accounts.models.user import ROLE_ADMIN, User
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.fleet.models.fleet import Fleet
@@ -154,6 +157,11 @@ def test_registration_can_optionally_create_a_pending_fleet_application() -> Non
         with SessionLocal() as db:
             account_only_user = db.query(User).filter(User.username == ACCOUNT_ONLY_USERNAME).one()
             assert db.query(FleetMembership).filter(FleetMembership.user_id == account_only_user.id).count() == 0
+
+            reviewed_account_only = db.get(RegistrationRequest, account_only_request_id)
+            reviewed_member = db.get(RegistrationRequest, request_id)
+            assert reviewed_account_only.password_hash == REDACTED_REGISTRATION_PASSWORD_HASH
+            assert reviewed_member.password_hash == REDACTED_REGISTRATION_PASSWORD_HASH
 
             member = db.query(User).filter(User.username == MEMBER_USERNAME).one()
             membership = db.query(FleetMembership).filter(FleetMembership.user_id == member.id).one()

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.modules.accounts.schemas.user_read import UserRead
+from app.modules.accounts.schemas.user_reference_read import UserReferenceRead
 
 
 class CalendarSquadRead(BaseModel):
@@ -23,7 +23,7 @@ class FleetEventRead(BaseModel):
     end_at: datetime
     all_day: bool
     owner_id: int
-    owner: UserRead
+    owner: UserReferenceRead
     squad_id: int | None = None
     squad: CalendarSquadRead | None = None
     can_manage: bool = False

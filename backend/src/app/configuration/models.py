@@ -76,6 +76,10 @@ class UploadLimitSettings:
 class MaintenanceSettings:
     app_log_retention_days: int
     audit_log_retention_days: int
+    webhook_delivery_retention_days: int
+    cookie_consent_retention_days: int
+    pending_registration_retention_days: int
+    reviewed_registration_retention_days: int
     interval_hours: int
 
 

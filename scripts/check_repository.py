@@ -346,22 +346,103 @@ for path in (ROOT / "frontend/src").rglob("*.js"):
     require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
     require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
 
-# Keep the global cascade in one deterministic stylesheet. Splitting this file
-# through nested @imports changed CSS extraction/cascade behaviour in production
-# and caused visible layout drift even though the concatenated declarations were
-# equivalent. Feature-local CSS remains beside its module.
+# Keep the global cascade deterministic without returning to the historical
+# 11k-line stylesheet. JavaScript imports preserve order without the production
+# extraction differences previously caused by nested CSS @imports.
 styles_root = ROOT / "frontend/src/styles"
-main_styles_path = styles_root / "main.css"
-main_styles = main_styles_path.read_text(encoding="utf-8")
-require("@import" not in main_styles, "frontend/src/styles/main.css must not use nested CSS imports")
-require(main_styles.lstrip().startswith(":root"), "frontend/src/styles/main.css must start with the global tokens")
-require(main_styles_path.stat().st_size <= 260_000, "frontend/src/styles/main.css exceeds 260 KB")
-require(not (styles_root / "layers").exists(), "obsolete frontend/src/styles/layers directory must not return")
+global_styles_root = styles_root / "global"
+global_styles_manifest = global_styles_root / "index.js"
+expected_global_styles = [
+    "00-tokens.css",
+    "10-foundation.css",
+    "20-layout.css",
+    "30-shell.css",
+    "40-navigation-and-portal.css",
+    "50-domain-workspaces.css",
+    "60-operations.css",
+    "70-integrations.css",
+]
+require(not (styles_root / "main.css").exists(), "monolithic frontend/src/styles/main.css must not return")
+require(global_styles_manifest.is_file(), "global CSS cascade manifest is missing")
+manifest_source = global_styles_manifest.read_text(encoding="utf-8")
+manifest_styles = re.findall(r"import './(\d{2}-[^']+\.css)'", manifest_source)
+require(manifest_styles == expected_global_styles, "global CSS cascade order changed")
+global_style_sources = []
+for filename in expected_global_styles:
+    path = global_styles_root / filename
+    require(path.is_file(), f"global CSS layer is missing: {filename}")
+    source = path.read_text(encoding="utf-8")
+    require("@import" not in source, f"CSS @import is forbidden in {filename}")
+    require(path.stat().st_size <= 75_000, f"global CSS layer exceeds 75 KB: {filename}")
+    require(len(source.splitlines()) <= 3_500, f"global CSS layer exceeds 3,500 lines: {filename}")
+    global_style_sources.append(source)
+main_styles = "\n".join(global_style_sources)
+require(main_styles.lstrip().startswith(":root"), "global CSS must start with the token layer")
+require(len(re.findall(r"(?m)^:root\s*\{", main_styles)) == 1, "global CSS must expose exactly one :root block")
+require("--font-display:" in global_style_sources[0], "display font token must be defined")
+require(main_styles.count("!important") <= 28, "global CSS exceeds the !important budget")
 all_css = list((ROOT / "frontend/src").rglob("*.css"))
 require(
     sum(path.stat().st_size for path in all_css) <= 400_000,
     "frontend CSS exceeds the 400 KB source budget",
 )
+require((ROOT / "docs/CSS_ARCHITECTURE.md").is_file(), "CSS architecture documentation is missing")
+require((ROOT / "scripts/audit_css.py").is_file(), "CSS audit script is missing")
+require((ROOT / "docs/DATA_RETENTION.md").is_file(), "data-retention documentation is missing")
+webhook_event_facade = ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
+require(webhook_event_facade.is_file(), "webhook event compatibility facade is missing")
+require(
+    (ROOT / "backend/src/app/modules/admin/services/webhook_event_catalog.py").is_file(),
+    "webhook event catalog module is missing",
+)
+require(
+    (ROOT / "backend/src/app/modules/admin/services/webhook_event_samples.py").is_file(),
+    "webhook event sample module is missing",
+)
+require(
+    line_count(webhook_event_facade) <= 60,
+    "webhook event facade must remain a thin compatibility layer",
+)
+require((ROOT / "docs/SECURITY_PRIVACY_AUDIT.md").is_file(), "security/privacy audit is missing")
+workflow_sources = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in sorted((ROOT / ".github/workflows").glob("*.yml"))
+)
+for supported_action in (
+    "actions/checkout@v6",
+    "actions/setup-python@v6",
+    "actions/setup-node@v6",
+    "actions/upload-artifact@v6",
+):
+    require(supported_action in workflow_sources, f"supported GitHub Action missing: {supported_action}")
+for unreleased_action in (
+    "actions/checkout@v7",
+    "actions/setup-python@v7",
+    "actions/setup-node@v7",
+    "actions/upload-artifact@v7",
+):
+    require(unreleased_action not in workflow_sources, f"unreleased GitHub Action used: {unreleased_action}")
+
+# API responses embed the smallest useful identity instead of full user profiles.
+for schema_path in (
+    ROOT / "backend/src/app/modules/groups/schemas/group_read.py",
+    ROOT / "backend/src/app/modules/guides/schemas/guide_summary.py",
+    ROOT / "backend/src/app/modules/forum/schemas/forum_thread_summary.py",
+    ROOT / "backend/src/app/modules/forum/schemas/forum_post_read.py",
+    ROOT / "backend/src/app/modules/calendar/schemas/fleet_event_read.py",
+):
+    schema_source = schema_path.read_text(encoding="utf-8")
+    require("UserReferenceRead" in schema_source, f"nested full user profile returned by {schema_path.relative_to(ROOT)}")
+    require("UserRead" not in schema_source.replace("UserReferenceRead", ""), f"nested UserRead returned by {schema_path.relative_to(ROOT)}")
+
+maintenance_config = (ROOT / "backend/config/uploads.cfg").read_text(encoding="utf-8")
+for retention_key in (
+    "webhook_delivery_retention_days",
+    "cookie_consent_retention_days",
+    "pending_registration_retention_days",
+    "reviewed_registration_retention_days",
+):
+    require(retention_key in maintenance_config, f"maintenance retention key is missing: {retention_key}")
 
 # Route pages are composition-only: network and lifecycle workflows belong in
 # page-model composables, where they can be tested independently.

@@ -5,6 +5,7 @@ import MetricCard from '@/core/components/MetricCard.vue'
 import AuditLogPanel from '@/modules/admin/components/AuditLogPanel.vue'
 import IpBlockManagementPanel from '@/modules/admin/components/IpBlockManagementPanel.vue'
 import StaffOverviewPanel from '@/modules/admin/components/StaffOverviewPanel.vue'
+import StaffFilterSurface from '@/modules/admin/components/StaffFilterSurface.vue'
 import SystemLogPanel from '@/modules/admin/components/SystemLogPanel.vue'
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import SystemOperationsPanel from '@/modules/admin/components/SystemOperationsPanel.vue'
@@ -92,18 +93,17 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
             <div><h2>{{ t('admin.registrations.title') }}</h2><p>{{ t('admin.registrations.subtitle') }}</p></div>
             <span class="summary-pill">{{ registrationCountLabel }}</span>
           </div>
-          <div class="staff-filter-surface">
-            <div class="staff-filter-surface-head">
-              <div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.registrationHint') }}</small></div>
-              <button class="small-action" type="button" @click="resetRegistrationFilters">{{ t('admin.workspace.filters.reset') }}</button>
-            </div>
-            <div class="staff-filter-row staff-filter-row--wide">
-              <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="registrationStatus"><option value="pending">{{ t('admin.registrations.status.pending') }}</option><option value="approved">{{ t('admin.registrations.status.approved') }}</option><option value="rejected">{{ t('admin.registrations.status.rejected') }}</option><option value="">{{ t('admin.registrations.status.all') }}</option></select></label>
+          <StaffFilterSurface
+            :title="t('admin.workspace.filters.title')"
+            :hint="t('admin.workspace.filters.registrationHint')"
+            :reset-label="t('admin.workspace.filters.reset')"
+            @reset="resetRegistrationFilters"
+          >
+            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="registrationStatus"><option value="pending">{{ t('admin.registrations.status.pending') }}</option><option value="approved">{{ t('admin.registrations.status.approved') }}</option><option value="rejected">{{ t('admin.registrations.status.rejected') }}</option><option value="">{{ t('admin.registrations.status.all') }}</option></select></label>
               <label class="filter-box admin-search"><input v-model="registrationSearch" type="search" :placeholder="t('admin.workspace.filters.registrationSearch')" /></label>
               <label class="filter-box staff-date-filter"><span>{{ t('admin.security.from') }}</span><input v-model="registrationFromDate" type="date" /></label>
               <label class="filter-box staff-date-filter"><span>{{ t('admin.security.to') }}</span><input v-model="registrationToDate" type="date" /></label>
-            </div>
-          </div>
+          </StaffFilterSurface>
           <p v-if="registrationLoading" class="muted table-state">{{ t('admin.registrations.loading') }}</p>
           <p v-else-if="registrationError" class="error-text table-state">{{ registrationError }}</p>
           <p v-else-if="registrationRequests.length === 0" class="muted table-state">{{ t('admin.registrations.empty') }}</p>
@@ -149,18 +149,23 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
             <div><h2>{{ t('admin.calendar.title') }}</h2><p>{{ t('admin.calendar.subtitle') }}</p></div>
             <div class="hero-actions"><span class="summary-pill">{{ eventCountLabel }}</span><RouterLink class="button-box primary-action" to="/calendar/new">{{ t('calendar.list.newEvent') }}</RouterLink></div>
           </div>
-          <div class="staff-filter-surface">
-            <div class="staff-filter-surface-head">
-              <div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.calendarHint') }}</small></div>
-              <div class="hero-actions"><RouterLink class="small-action" to="/calendar">{{ t('admin.calendar.openCalendar') }}</RouterLink><button class="small-action" type="button" @click="resetCalendarFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
-            </div>
-            <div class="staff-filter-row staff-filter-row--wide">
-              <label class="filter-box admin-search"><input v-model="calendarSearch" type="search" :placeholder="t('admin.workspace.filters.calendarSearch')" /></label>
-              <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="calendarCategory"><option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
-              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.from') }}</span><input v-model="calendarFromDate" type="date" /></label>
-              <label class="filter-box staff-date-filter"><span>{{ t('admin.security.to') }}</span><input v-model="calendarToDate" type="date" /></label>
-            </div>
-          </div>
+          <StaffFilterSurface
+            :title="t('admin.workspace.filters.title')"
+            :hint="t('admin.workspace.filters.calendarHint')"
+            :reset-label="t('admin.workspace.filters.reset')"
+            @reset="resetCalendarFilters"
+          >
+            <template #actions>
+              <div class="hero-actions">
+                <RouterLink class="small-action" to="/calendar">{{ t('admin.calendar.openCalendar') }}</RouterLink>
+                <button class="small-action" type="button" @click="resetCalendarFilters">{{ t('admin.workspace.filters.reset') }}</button>
+              </div>
+            </template>
+            <label class="filter-box admin-search"><input v-model="calendarSearch" type="search" :placeholder="t('admin.workspace.filters.calendarSearch')" /></label>
+            <label class="filter-box type-filter-box select-shell toolbar-select-shell"><select v-model="calendarCategory"><option v-for="option in categoryOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select></label>
+            <label class="filter-box staff-date-filter"><span>{{ t('admin.security.from') }}</span><input v-model="calendarFromDate" type="date" /></label>
+            <label class="filter-box staff-date-filter"><span>{{ t('admin.security.to') }}</span><input v-model="calendarToDate" type="date" /></label>
+          </StaffFilterSurface>
           <p v-if="calendarLoading" class="muted table-state">{{ t('admin.calendar.loading') }}</p>
           <p v-else-if="calendarError" class="error-text table-state">{{ calendarError }}</p>
           <p v-else-if="upcomingEvents.length === 0" class="muted table-state">{{ t('admin.calendar.empty') }}</p>
@@ -178,14 +183,16 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
 
         <section v-if="activeTab === 'content'" class="wire-section admin-panel staff-management-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.content.title') }}</h2><p>{{ t('admin.content.subtitle') }}</p></div><span class="summary-pill">{{ contentCountLabel }}</span></div>
-          <div class="staff-filter-surface">
-            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.contentHint') }}</small></div><button class="small-action" type="button" @click="resetContentFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
-            <div class="staff-filter-row staff-filter-row--wide">
-              <label class="filter-box admin-search"><input v-model="contentSearch" type="search" :placeholder="t('admin.content.searchPlaceholder')" /></label>
+          <StaffFilterSurface
+            :title="t('admin.workspace.filters.title')"
+            :hint="t('admin.workspace.filters.contentHint')"
+            :reset-label="t('admin.workspace.filters.reset')"
+            @reset="resetContentFilters"
+          >
+            <label class="filter-box admin-search"><input v-model="contentSearch" type="search" :placeholder="t('admin.content.searchPlaceholder')" /></label>
               <label class="filter-box select-shell"><select v-model="contentScope"><option value="all">{{ t('admin.workspace.filters.allContent') }}</option><option value="forum">{{ t('admin.content.forum') }}</option><option value="guides">{{ t('admin.content.guides') }}</option><option value="groups">{{ t('admin.content.announcements') }}</option></select></label>
               <label class="filter-box admin-search"><input v-model="contentOwner" type="search" :placeholder="t('admin.workspace.filters.ownerSearch')" /></label>
-            </div>
-          </div>
+          </StaffFilterSurface>
           <p v-if="contentLoading" class="muted table-state">{{ t('admin.content.loading') }}</p>
           <p v-else-if="contentError" class="error-text table-state">{{ contentError }}</p>
           <div class="staff-content-grid" :class="{ 'is-single-scope': contentScope !== 'all' }">
@@ -197,15 +204,17 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
 
         <section v-if="activeTab === 'builds'" class="wire-section admin-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.builds.title') }}</h2><p>{{ t('admin.builds.subtitle') }}</p></div><span class="summary-pill">{{ buildCountLabel }}</span></div>
-          <div class="staff-filter-surface">
-            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.buildHint') }}</small></div><button class="small-action" type="button" @click="resetBuildFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
-            <div class="staff-filter-row staff-filter-row--wide">
-              <label class="filter-box admin-search"><input v-model="search" type="search" :placeholder="t('admin.builds.searchPlaceholder')" /></label>
+          <StaffFilterSurface
+            :title="t('admin.workspace.filters.title')"
+            :hint="t('admin.workspace.filters.buildHint')"
+            :reset-label="t('admin.workspace.filters.reset')"
+            @reset="resetBuildFilters"
+          >
+            <label class="filter-box admin-search"><input v-model="search" type="search" :placeholder="t('admin.builds.searchPlaceholder')" /></label>
               <label class="filter-box select-shell"><select v-model="buildType"><option value="">{{ t('admin.workspace.filters.allBuildTypes') }}</option><option value="balanced">{{ t('builds.types.balanced') }}</option><option value="gunnery">{{ t('builds.types.gunnery') }}</option><option value="boarding">{{ t('builds.types.boarding') }}</option><option value="defensive">{{ t('builds.types.defensive') }}</option></select></label>
               <label class="filter-box select-shell"><select v-model="buildRate"><option value="">{{ t('admin.workspace.filters.allRates') }}</option><option v-for="rate in buildRates" :key="rate" :value="String(rate)">{{ t('common.rate') }} {{ rate }}</option></select></label>
               <label class="filter-box select-shell"><select v-model="buildVisibility"><option value="">{{ t('admin.workspace.filters.allSources') }}</option><option value="official">{{ t('admin.workspace.filters.officialBuilds') }}</option><option value="community">{{ t('admin.workspace.filters.communityBuilds') }}</option></select></label>
-            </div>
-          </div>
+          </StaffFilterSurface>
           <p v-if="loading" class="muted table-state">{{ t('admin.builds.loading') }}</p><p v-else-if="error" class="error-text table-state">{{ error }}</p><p v-else-if="filteredBuilds.length === 0" class="muted table-state">{{ t('admin.builds.empty') }}</p>
           <div v-else class="admin-build-list"><article v-for="build in filteredBuilds" :key="build.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ build.build_name }}</strong><span>{{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ t(`builds.types.${build.build_type}`) }} · {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span><small v-if="build.is_official_template" class="summary-pill staff-inline-pill">{{ t('admin.workspace.filters.officialBuilds') }}</small></div><div v-if="isPending('build', build.id)" class="delete-confirmation"><span>{{ t('admin.builds.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteBuild(build.id)">{{ t('admin.builds.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('build', build.id)">{{ t('admin.builds.delete') }}</button></article></div>
         </section>
@@ -213,14 +222,16 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
         <section v-if="activeTab === 'users' && isAdmin" class="wire-section admin-panel admin-users-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.users.title') }}</h2><p>{{ t('admin.users.subtitle') }}</p></div><span class="summary-pill">{{ userCountLabel }}</span></div>
           <form class="moderator-form" @submit.prevent="submitModerator"><label class="input-panel embedded-field"><span>{{ t('auth.username') }}</span><input v-model="moderatorForm.username" required minlength="3" maxlength="80" /></label><label class="input-panel embedded-field"><span>{{ t('profile.displayName') }}</span><input v-model="moderatorForm.display_name" required maxlength="120" /></label><label class="input-panel embedded-field"><span>{{ t('auth.password') }}</span><input v-model="moderatorForm.password" type="password" required minlength="12" /></label><button class="form-button primary-action" type="submit">{{ t('admin.users.createModerator') }}</button></form>
-          <div class="staff-filter-surface">
-            <div class="staff-filter-surface-head"><div><strong>{{ t('admin.workspace.filters.title') }}</strong><small>{{ t('admin.workspace.filters.userHint') }}</small></div><button class="small-action" type="button" @click="resetUserFilters">{{ t('admin.workspace.filters.reset') }}</button></div>
-            <div class="staff-filter-row staff-filter-row--wide">
-              <label class="filter-box admin-search"><input v-model="userSearch" type="search" :placeholder="t('admin.workspace.filters.userSearch')" /></label>
+          <StaffFilterSurface
+            :title="t('admin.workspace.filters.title')"
+            :hint="t('admin.workspace.filters.userHint')"
+            :reset-label="t('admin.workspace.filters.reset')"
+            @reset="resetUserFilters"
+          >
+            <label class="filter-box admin-search"><input v-model="userSearch" type="search" :placeholder="t('admin.workspace.filters.userSearch')" /></label>
               <label class="filter-box select-shell"><select v-model="userRole"><option value="">{{ t('admin.workspace.filters.allRoles') }}</option><option value="admin">{{ t('roles.admin') }}</option><option value="moderator">{{ t('roles.moderator') }}</option><option value="user">{{ t('roles.user') }}</option></select></label>
               <label class="filter-box select-shell"><select v-model="userStatus"><option value="">{{ t('admin.workspace.filters.allStatuses') }}</option><option value="active">{{ t('fleets.status.active') }}</option><option value="inactive">{{ t('fleets.status.inactive') }}</option></select></label>
-            </div>
-          </div>
+          </StaffFilterSurface>
           <p v-if="userLoading" class="muted table-state">{{ t('admin.users.loading') }}</p><p v-if="userError" class="error-text table-state">{{ userError }}</p><p v-if="moderatorSuccess" class="success-text table-state">{{ moderatorSuccess }}</p>
           <p v-if="!userLoading && filteredUsers.length === 0" class="muted table-state">{{ t('admin.workspace.filters.noResults') }}</p>
           <div v-else class="admin-user-list">

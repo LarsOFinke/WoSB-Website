@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
-from app.modules.accounts.schemas.user_read import UserRead
+from app.modules.accounts.schemas.user_reference_read import UserReferenceRead
 from app.modules.files.schemas.file_asset import FileRead
 
 class ForumPostRead(BaseModel):
@@ -14,7 +14,7 @@ class ForumPostRead(BaseModel):
     id: int
     thread_id: int
     author_id: int
-    author: UserRead
+    author: UserReferenceRead
     body: str
     attachments: list[FileRead] = Field(default_factory=list)
     created_at: datetime

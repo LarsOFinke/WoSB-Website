@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: dev-backend dev-frontend test test-full lint build validate clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
+.PHONY: dev-backend dev-frontend test test-full lint css-audit build validate clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
 
 dev-backend:
 	cd backend && rbf-dev
@@ -16,6 +16,9 @@ test-full:
 
 lint:
 	cd backend && ruff check --no-cache src tests
+
+css-audit:
+	python scripts/audit_css.py
 
 validate:
 	bash ./scripts/test.sh full

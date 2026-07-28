@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import ConfigDict, Field
 
-from app.modules.accounts.schemas.user_read import UserRead
+from app.modules.accounts.schemas.user_reference_read import UserReferenceRead
 
 from app.modules.groups.schemas.group_member_read import GroupMemberRead
 from app.modules.groups.schemas.group_base import GroupBase
@@ -19,7 +19,7 @@ class GroupRead(GroupBase):
     updated_at: datetime
     expires_at: datetime
     closed_at: datetime | None = None
-    owner: UserRead
+    owner: UserReferenceRead
     members: list[GroupMemberRead] = Field(default_factory=list)
     active_members_count: int
     spots_left: int

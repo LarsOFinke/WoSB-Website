@@ -30,3 +30,12 @@ TLS-Zugangsdaten.
 `setup.sh --regenerate-secrets` ist nur für eine noch nicht initialisierte Installation vorgesehen.
 Bei einer bestehenden PostgreSQL-Instanz werden Datenbankrolle, `.env` und abhängige Dienste in
 einem geplanten Wartungsfenster gemeinsam rotiert; ein bloßes Überschreiben der `.env` ist verboten.
+
+
+## Datenschutz und Aufbewahrung
+
+Datenminimierung und Löschfristen sind Sicherheitsanforderungen. Die technisch erzwungenen Fristen
+stehen in `docs/DATA_RETENTION.md`; offene Befunde und Verantwortlichkeiten stehen in
+`docs/SECURITY_PRIVACY_AUDIT.md`. Query-Werte, Proxy-Ketten und geprüfte Registrierungsgeheimnisse
+dürfen nicht dauerhaft gespeichert werden. Änderungen an Datenflüssen, Logging, Drittanbietern oder
+Backups benötigen eine erneute Datenschutzprüfung.
