@@ -5,6 +5,7 @@ import {
   buildPrintFileName,
   createBuildPrintDocument,
   createBuildPrintHtml,
+  createEmbeddedBuildPrintDocument,
   createBuildPrintModel,
   createBuildPrintSvg,
 } from '../src/modules/builds/buildPrintExport.js'
@@ -181,9 +182,9 @@ test('build print inventory renders each entry vertically and hides consumable q
   assert.doesNotMatch(svg, /Round Shot ×200 · Chain Shot ×120/)
 })
 
-test('build print uses the shared themed document shell', () => {
+test('build print uses the shared themed document shell', async () => {
   const lightSvg = createBuildPrintDocument(build, { t, optionLabel: (value) => value, theme: 'light' }).svg
-  const html = createBuildPrintHtml(build, { t, optionLabel: (value) => value })
+  const html = await createBuildPrintHtml(build, { t, optionLabel: (value) => value })
 
   assert.match(lightSvg, /data-build-sheet-theme="light"/)
   assert.match(lightSvg, /#f8fafc/)
@@ -287,4 +288,28 @@ test('build print renders catalog icons for selected equipment, upgrades, and sp
   assert.match(svg, /https:\/\/fleet\.example\/icons\/special_crew\/Doctor\.png/)
   assert.match(svg, /https:\/\/fleet\.example\/icons\/consumable\/Repair%20Kit\.png/)
   assert.doesNotMatch(svg, /href="\/icons\//)
+})
+
+
+test('build print embeds catalog images so SVG image mode does not need external requests', async () => {
+  const requested = []
+  const document = await createEmbeddedBuildPrintDocument(build, {
+    t,
+    optionLabel: (value) => value,
+    optionImage: (category, name) => `/icons/${category}/${encodeURIComponent(name)}.png`,
+    locationObject: { origin: 'https://fleet.example' },
+    fetchImpl: async (url) => {
+      requested.push(url)
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'image/png' },
+        blob: async () => new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }),
+      }
+    },
+  })
+
+  assert.ok(requested.some((url) => url.includes('/icons/upgrade/Copper%20Sheathing.png')))
+  assert.match(document.svg, /href="data:image\/png;base64,iVBORw=="/)
+  assert.doesNotMatch(document.svg, /href="https:\/\/fleet\.example\/icons\//)
 })

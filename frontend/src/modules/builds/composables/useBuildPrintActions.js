@@ -17,9 +17,9 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     printPreviewUrl.value = ''
   }
 
-  function ensurePrintPreview() {
+  async function ensurePrintPreview() {
     revokePrintPreview()
-    printPreviewUrl.value = createBuildPrintPreviewUrl(build.value, { t, optionLabel, optionImage })
+    printPreviewUrl.value = await createBuildPrintPreviewUrl(build.value, { t, optionLabel, optionImage })
     printPreviewOpen.value = true
   }
 
@@ -28,7 +28,7 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     printStatus.value = ''
     printBusy.value = true
     try {
-      ensurePrintPreview()
+      await ensurePrintPreview()
       printStatus.value = t('builds.print.previewReady')
     } catch {
       printStatus.value = t('builds.print.error')
@@ -42,7 +42,7 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     printStatus.value = ''
     printBusy.value = true
     try {
-      if (!printPreviewUrl.value) ensurePrintPreview()
+      if (!printPreviewUrl.value) await ensurePrintPreview()
       await downloadBuildPrintPng(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.downloadedPng')
     } catch {
@@ -52,23 +52,23 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     }
   }
 
-  function downloadBuildImageSvg() {
+  async function downloadBuildImageSvg() {
     if (!build.value) return
     printStatus.value = ''
     try {
-      if (!printPreviewUrl.value) ensurePrintPreview()
-      downloadBuildPrintSvg(build.value, { t, optionLabel, optionImage })
+      if (!printPreviewUrl.value) await ensurePrintPreview()
+      await downloadBuildPrintSvg(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.downloadedSvg')
     } catch {
       printStatus.value = t('builds.print.error')
     }
   }
 
-  function printBuildSheet() {
+  async function printBuildSheet() {
     if (!build.value) return
     printStatus.value = ''
     try {
-      openBuildPrintWindow(build.value, { t, optionLabel, optionImage })
+      await openBuildPrintWindow(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.windowOpened')
     } catch {
       printStatus.value = t('builds.print.error')

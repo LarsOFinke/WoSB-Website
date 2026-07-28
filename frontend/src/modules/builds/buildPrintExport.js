@@ -10,7 +10,6 @@ import {
   createPrintDocumentHtml,
   createPrintLabels,
   escapePrintMarkup,
-  openPrintWindow,
   resolvePrintUrl,
   sanitizePrintFileName,
   triggerPrintDownload,
@@ -58,6 +57,67 @@ const PRINT_VISUALS = {
 }
 
 const escapeXml = escapePrintMarkup
+
+
+function xmlAttributeValue(value) {
+  return String(value || '')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize))
+  }
+  return btoa(binary)
+}
+
+async function fetchPrintImageDataUrl(url, fetchImpl) {
+  const response = await fetchImpl(url, { credentials: 'same-origin', cache: 'force-cache' })
+  if (!response?.ok) throw new Error(`Print image request failed (${response?.status || 'network'}): ${url}`)
+  const blob = await response.blob()
+  const mimeType = String(blob.type || response.headers?.get?.('content-type') || 'application/octet-stream')
+    .split(';')[0]
+    .trim() || 'application/octet-stream'
+  return `data:${mimeType};base64,${arrayBufferToBase64(await blob.arrayBuffer())}`
+}
+
+async function inlinePrintImageResources(svg, { fetchImpl = globalThis.fetch, cache = new Map() } = {}) {
+  if (typeof fetchImpl !== 'function') return svg
+  const hrefs = [...String(svg || '').matchAll(/\bhref="([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((href, index, values) => values.indexOf(href) === index)
+  const externalHrefs = hrefs.filter((href) => /^https?:\/\//i.test(xmlAttributeValue(href)))
+  if (!externalHrefs.length) return svg
+
+  const replacements = new Map()
+  await Promise.all(externalHrefs.map(async (escapedHref) => {
+    const href = xmlAttributeValue(escapedHref)
+    let task = cache.get(href)
+    if (!task) {
+      task = fetchPrintImageDataUrl(href, fetchImpl)
+      cache.set(href, task)
+    }
+    try {
+      replacements.set(escapedHref, await task)
+    } catch {
+      cache.delete(href)
+    }
+  }))
+
+  return externalHrefs.reduce(
+    (result, escapedHref) => replacements.has(escapedHref)
+      ? result.replaceAll(`href="${escapedHref}"`, `href="${replacements.get(escapedHref)}"`)
+      : result,
+    svg,
+  )
+}
 
 function listLabel(slot, labeler, { includeQuantity = true } = {}) {
   if (!slot) return ''
@@ -529,18 +589,29 @@ export function buildPrintFileName(build, extension = 'png') {
   return `${base}-build-sheet.${String(extension || 'png').replace(/[^a-z0-9]/gi, '')}`
 }
 
-export function createBuildPrintPreviewUrl(build, helpers = {}) {
-  const { svg } = createBuildPrintDocument(build, helpers)
+export async function createEmbeddedBuildPrintDocument(build, helpers = {}) {
+  const document = createBuildPrintDocument(build, helpers)
+  return {
+    ...document,
+    svg: await inlinePrintImageResources(document.svg, {
+      fetchImpl: helpers.fetchImpl || globalThis.fetch,
+      cache: helpers.resourceCache || new Map(),
+    }),
+  }
+}
+
+export async function createBuildPrintPreviewUrl(build, helpers = {}) {
+  const { svg } = await createEmbeddedBuildPrintDocument(build, helpers)
   return URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
 }
 
-export function downloadBuildPrintSvg(build, helpers = {}) {
-  const { svg } = createBuildPrintDocument(build, helpers)
+export async function downloadBuildPrintSvg(build, helpers = {}) {
+  const { svg } = await createEmbeddedBuildPrintDocument(build, helpers)
   triggerPrintDownload(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), buildPrintFileName(build, 'svg'))
 }
 
 export async function downloadBuildPrintPng(build, helpers = {}) {
-  const { svg, width, height } = createBuildPrintDocument(build, helpers)
+  const { svg, width, height } = await createEmbeddedBuildPrintDocument(build, helpers)
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
   try {
     const image = await new Promise((resolve, reject) => {
@@ -562,10 +633,13 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
   }
 }
 
-export function createBuildPrintHtml(build, helpers = {}) {
+export async function createBuildPrintHtml(build, helpers = {}) {
   const t = helpers.t || ((key) => key)
-  const lightSvg = createBuildPrintDocument(build, { ...helpers, theme: 'light' }).svg
-  const darkSvg = createBuildPrintDocument(build, { ...helpers, theme: 'dark' }).svg
+  const resourceCache = new Map()
+  const lightDocument = await createEmbeddedBuildPrintDocument(build, { ...helpers, theme: 'light', resourceCache })
+  const darkDocument = await createEmbeddedBuildPrintDocument(build, { ...helpers, theme: 'dark', resourceCache })
+  const lightSvg = lightDocument.svg
+  const darkSvg = darkDocument.svg
   const alt = escapeXml(t('builds.print.previewTitle'))
   const body = `<main class="build-print-document">
     <img class="build-print-sheet build-print-sheet-light" data-build-print-theme="light" alt="${alt}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(lightSvg)}">
@@ -590,11 +664,24 @@ export function createBuildPrintHtml(build, helpers = {}) {
   })
 }
 
-export function openBuildPrintWindow(build, helpers = {}) {
-  return openPrintWindow(createBuildPrintHtml(build, helpers), {
-    features: 'width=1040,height=1440',
-    errorMessage: 'Print preview could not be opened.',
-  })
+export async function openBuildPrintWindow(build, helpers = {}) {
+  const popup = window.open('', '_blank', 'width=1040,height=1440')
+  if (!popup) throw new Error('Print preview could not be opened.')
+  popup.opener = null
+  popup.document.open()
+  popup.document.write('<!doctype html><title>Preparing print preview…</title><p style="font-family:sans-serif;padding:2rem">Preparing print preview…</p>')
+  popup.document.close()
+  try {
+    const html = await createBuildPrintHtml(build, helpers)
+    popup.document.open()
+    popup.document.write(html)
+    popup.document.close()
+    popup.focus()
+    return popup
+  } catch (error) {
+    popup.close()
+    throw error
+  }
 }
 
-export { createBuildPrintModel, createBuildPrintDocument }
+export { createBuildPrintModel, createBuildPrintDocument, inlinePrintImageResources }
