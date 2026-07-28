@@ -15,6 +15,7 @@ test('webhook editor is rendered in a body-level isolated drawer layer', () => {
   assert.match(webhookPanel, /document\.body\.classList\.toggle\('webhook-editor-open'/)
   assert.match(mainCss, /\.webhook-editor-layer\s*\{[^}]*position:\s*fixed;[^}]*isolation:\s*isolate;/s)
   assert.match(mainCss, /body\.webhook-editor-open\s*\{[^}]*overflow:\s*hidden;/s)
+  assert.match(mainCss, /\.webhook-editor\s*\{[^}]*grid-auto-rows:\s*max-content;/s)
   assert.match(mainCss, /\.webhook-active-toggle input\[type="checkbox"\][\s\S]*width:\s*1rem;/)
   assert.doesNotMatch(mainCss, /\.webhook-editor-actions\s*\{[^}]*position:\s*sticky;/s)
 })

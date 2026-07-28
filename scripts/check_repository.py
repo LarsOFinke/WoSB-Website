@@ -346,28 +346,17 @@ for path in (ROOT / "frontend/src").rglob("*.js"):
     require(path.stat().st_size <= 250_000, f"JavaScript module exceeds 250 KB: {path.relative_to(ROOT)}")
     require(";base64," not in path.read_text(encoding="utf-8", errors="ignore"), f"embedded base64 payload in {path.relative_to(ROOT)}")
 
-# The shared stylesheet is an ordered import manifest. Feature CSS remains
-# split into reviewable layers so one global file cannot become a monolith again.
+# Keep the global cascade in one deterministic stylesheet. Splitting this file
+# through nested @imports changed CSS extraction/cascade behaviour in production
+# and caused visible layout drift even though the concatenated declarations were
+# equivalent. Feature-local CSS remains beside its module.
 styles_root = ROOT / "frontend/src/styles"
 main_styles_path = styles_root / "main.css"
 main_styles = main_styles_path.read_text(encoding="utf-8")
-expected_style_layers = [
-    "01-foundation.css",
-    "02-calendar-fleet.css",
-    "03-adaptive-shell.css",
-    "04-workspaces.css",
-    "05-squads-builds-content.css",
-    "06-administration.css",
-    "07-integrations-discovery.css",
-]
-expected_imports = "".join(
-    f"@import './layers/{name}';\n" for name in expected_style_layers
-)
-require(main_styles == expected_imports, "frontend/src/styles/main.css must remain the ordered layer manifest")
-for layer_name in expected_style_layers:
-    layer_path = styles_root / "layers" / layer_name
-    require(layer_path.is_file(), f"missing CSS layer: {layer_name}")
-    require(layer_path.stat().st_size <= 60_000, f"CSS layer exceeds 60 KB: {layer_path.relative_to(ROOT)}")
+require("@import" not in main_styles, "frontend/src/styles/main.css must not use nested CSS imports")
+require(main_styles.lstrip().startswith(":root"), "frontend/src/styles/main.css must start with the global tokens")
+require(main_styles_path.stat().st_size <= 260_000, "frontend/src/styles/main.css exceeds 260 KB")
+require(not (styles_root / "layers").exists(), "obsolete frontend/src/styles/layers directory must not return")
 all_css = list((ROOT / "frontend/src").rglob("*.css"))
 require(
     sum(path.stat().st_size for path in all_css) <= 400_000,

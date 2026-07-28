@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
 import { listBuilds } from '@/modules/builds/api/builds'
 import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
@@ -9,13 +9,14 @@ export function useBuildListPage() {
   const search = ref('')
   const buildType = ref('')
   const classification = ref('')
-  const showAll = ref(false)
+  const showAll = ref(true)
   const loading = ref(false)
   const error = ref('')
   let searchTimer = null
 
   const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
-  const hasActiveDiscovery = computed(() => showAll.value || Boolean(search.value.trim() || buildType.value || classification.value))
+  const hasFilters = computed(() => Boolean(search.value.trim() || buildType.value || classification.value))
+  const hasActiveDiscovery = computed(() => showAll.value || hasFilters.value)
   const buildTypeOptions = computed(() => [
     { value: '', label: t('builds.types.all') },
     { value: 'balanced', label: t('builds.types.balanced') },
@@ -79,26 +80,27 @@ export function useBuildListPage() {
   }
 
   function resetDiscovery() {
+    const hadFilters = hasFilters.value
     search.value = ''
     buildType.value = ''
     classification.value = ''
-    showAll.value = false
-    builds.value = []
+    showAll.value = true
     error.value = ''
+    window.clearTimeout(searchTimer)
+    if (!hadFilters) void loadBuilds()
   }
 
   function showAllBuilds() {
-    showAll.value = true
-    classification.value = ''
-    loadBuilds()
+    resetDiscovery()
   }
 
   watch([search, buildType, classification], () => {
-    showAll.value = false
+    showAll.value = !hasFilters.value
     window.clearTimeout(searchTimer)
     searchTimer = window.setTimeout(loadBuilds, 220)
   })
 
+  onMounted(loadBuilds)
   onBeforeUnmount(() => window.clearTimeout(searchTimer))
 
   return {
@@ -112,6 +114,7 @@ export function useBuildListPage() {
     error,
     searchTimer,
     discoveryGroups,
+    hasFilters,
     hasActiveDiscovery,
     buildTypeOptions,
     buildTypeLabels,

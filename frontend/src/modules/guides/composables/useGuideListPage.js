@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import { listGuides } from '@/modules/guides/api/guides'
@@ -10,13 +10,14 @@ export function useGuideListPage() {
   const guides = ref([])
   const search = ref('')
   const category = ref('')
-  const showAll = ref(false)
+  const showAll = ref(true)
   const loading = ref(false)
   const error = ref('')
   let searchTimer = null
 
   const discoveryGroups = computed(() => localizedGuideDiscoveryGroups(t))
-  const hasActiveDiscovery = computed(() => showAll.value || Boolean(search.value.trim() || category.value))
+  const hasFilters = computed(() => Boolean(search.value.trim() || category.value))
+  const hasActiveDiscovery = computed(() => showAll.value || hasFilters.value)
   const summary = computed(() => guides.value.length === 1
     ? t('guides.list.summaryOne')
     : t('guides.list.summaryMany', { count: guides.value.length }))
@@ -41,25 +42,26 @@ export function useGuideListPage() {
   }
 
   function resetDiscovery() {
+    const hadFilters = hasFilters.value
     search.value = ''
     category.value = ''
-    showAll.value = false
-    guides.value = []
+    showAll.value = true
     error.value = ''
+    window.clearTimeout(searchTimer)
+    if (!hadFilters) void loadGuides()
   }
 
   function showAllGuides() {
-    showAll.value = true
-    category.value = ''
-    loadGuides()
+    resetDiscovery()
   }
 
   watch([search, category], () => {
-    showAll.value = false
+    showAll.value = !hasFilters.value
     window.clearTimeout(searchTimer)
     searchTimer = window.setTimeout(loadGuides, 220)
   })
 
+  onMounted(loadGuides)
   onBeforeUnmount(() => window.clearTimeout(searchTimer))
 
   return {
@@ -73,6 +75,7 @@ export function useGuideListPage() {
     error,
     searchTimer,
     discoveryGroups,
+    hasFilters,
     hasActiveDiscovery,
     summary,
     selectedCategoryLabel,

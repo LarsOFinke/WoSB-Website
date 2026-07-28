@@ -31,7 +31,7 @@ API modules contain transport concerns only. File type policy is therefore kept 
 
 ## Global style layers
 
-`src/styles/main.css` is an ordered import manifest rather than a monolithic stylesheet. Cross-module rules are split into numbered files under `src/styles/layers/`; the numeric prefixes preserve cascade order. A layer must stay below 60 KB and the complete frontend source CSS below 400 KB. Feature-local styles remain beside their module whenever they are not shared globally.
+`src/styles/main.css` contains the shared global cascade in one deterministic file. It intentionally does not use nested CSS `@import` files: an earlier split changed production extraction and cascade behaviour and caused visual drift despite equivalent concatenated declarations. The global file must stay below 260 KB and complete frontend source CSS below 400 KB. Feature-local styles remain beside their module whenever they are not shared globally.
 
 ## Locale delivery
 

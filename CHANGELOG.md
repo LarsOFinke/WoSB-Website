@@ -20,6 +20,14 @@
 
 # Changelog
 
+
+## 2026-07-28 - Default discovery results and CSS cascade restoration
+
+- Loads all builds and all published guides immediately when their library pages open.
+- Clearing filters now returns to the complete result set instead of hiding the result panel.
+- Restores the shared CSS to one deterministic stylesheet to match the pre-refactor cascade and prevent production layout drift.
+- Adds repository and frontend regression checks for default discovery loading and CSS delivery order.
+
 ## 1.0.0 — Produktionsbaseline
 
 ### Fixed

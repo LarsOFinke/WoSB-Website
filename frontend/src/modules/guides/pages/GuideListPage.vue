@@ -11,18 +11,15 @@ const {
   guides,
   search,
   category,
-  showAll,
   loading,
   error,
-  searchTimer,
   discoveryGroups,
+  hasFilters,
   hasActiveDiscovery,
   summary,
   selectedCategoryLabel,
-  loadGuides,
   resetDiscovery,
   showAllGuides,
-  localizedGuideDiscoveryGroups,
 } = useGuideListPage()
 </script>
 
@@ -57,7 +54,7 @@ const {
         <button
           type="button"
           class="guide-toolbar-action is-quiet"
-          :disabled="!hasActiveDiscovery"
+          :disabled="!hasFilters"
           @click="resetDiscovery"
         >
           {{ t('discovery.reset') }}

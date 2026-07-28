@@ -8,26 +8,21 @@ import { useBuildListPage } from '@/modules/builds/composables/useBuildListPage'
 
 const {
   t,
-  builds,
   search,
   buildType,
   classification,
-  showAll,
   loading,
   error,
-  searchTimer,
   discoveryGroups,
+  hasFilters,
   hasActiveDiscovery,
   buildTypeOptions,
-  buildTypeLabels,
   buildCountLabel,
   selectedDiscoveryLabel,
   resultLabels,
   buildRows,
-  loadBuilds,
   resetDiscovery,
   showAllBuilds,
-  localizedBuildDiscoveryGroups,
 } = useBuildListPage()
 </script>
 
@@ -54,7 +49,7 @@ const {
             <option v-for="option in buildTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </label>
-        <button type="button" :disabled="!hasActiveDiscovery" @click="resetDiscovery">{{ t('discovery.reset') }}</button>
+        <button type="button" :disabled="!hasFilters" @click="resetDiscovery">{{ t('discovery.reset') }}</button>
         <button type="button" @click="showAllBuilds">{{ t('discovery.builds.showAll') }}</button>
       </section>
 
