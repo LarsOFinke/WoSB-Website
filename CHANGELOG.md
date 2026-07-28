@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Owned-ship seed audit
+
+- Re-audited 28 owned ships from 173 current in-game screenshots and updated their displayed speed ranges plus the corrected Mordaunt, Russia and Sans Pareil statistics.
+- Added sparse screenshot-backed upgrade values for 19 rate I–II and V–VI ships while preserving the normalized rate III–IV defaults.
+- Corrected the global Teak Frames armor value from `15` to `1.5`.
+- Extended the JSON seed schema and bootstrap so ship-specific upgrade values resolve by stable upgrade IDs, survive normal reseeds and are restored by the master-data admin workflow.
+- Documented account-level upgrade-slot handling and retained ambiguous mortar layouts until quantified modification panels are available.
+
 ### Repository spring clean and privacy hardening
 
 - Split the historical 11,466-line global stylesheet into eight deterministic JavaScript-imported cascade layers with budgets and a standalone CSS audit.

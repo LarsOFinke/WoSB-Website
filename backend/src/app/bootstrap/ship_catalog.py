@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
+from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.ships.models.mortar_modification import ShipMortarModification
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import (
     ShipWeaponMount,
     WeaponClassDefinition,
     WeaponSlotType,
 )
-from app.bootstrap.catalog_loader import load_ship_seed_document
+from app.bootstrap.catalog_loader import load_master_data_catalog, load_ship_seed_document
 from app.bootstrap.catalog_sync import mark_seed_applied, seed_key, should_apply_seed
 
 
@@ -51,11 +53,13 @@ def seed_ships(db: Session, *, document=None) -> None:
         stable_id = raw_payload.pop("seed_id")
         normalized_mounts = list(raw_payload.pop("weapon_mounts"))
         mortar_modification = raw_payload.pop("mortar_modification")
+        upgrade_effect_overrides = list(raw_payload.pop("upgrade_effect_overrides"))
         key = seed_key("ship", stable_id)
         active_seed_keys.add(key)
         canonical_payload = {
             **raw_payload,
             "mortar_modification": mortar_modification,
+            "upgrade_effect_overrides": upgrade_effect_overrides,
             "weapon_mounts": normalized_mounts,
         }
 
@@ -95,6 +99,117 @@ def seed_ships(db: Session, *, document=None) -> None:
             ship.seed_revision = None
             ship.seed_checksum = None
     db.commit()
+
+
+def seed_ship_upgrade_effect_overrides(db: Session, *, document=None) -> bool:
+    """Synchronize sparse per-ship upgrade values after build options exist.
+
+    The ship catalog may be seeded independently in focused tests and admin
+    workflows. In that case build options are not necessarily present yet, so
+    this function deliberately returns ``False`` without changing existing rows.
+    A full bootstrap and ``seed_build_options`` call always retry the sync.
+    """
+
+    document = document or load_ship_seed_document()
+    requested_seed_ids = {
+        override.upgrade_seed_id
+        for ship in document.ships
+        for override in ship.upgrade_effect_overrides
+    }
+    if not requested_seed_ids:
+        return True
+
+    upgrade_effect_keys = {
+        option.seed_id: set(option.stat_effects)
+        for option_document in load_master_data_catalog().build_options
+        if option_document.category == "upgrade"
+        for option in option_document.items
+    }
+    missing_seed_definitions = sorted(requested_seed_ids.difference(upgrade_effect_keys))
+    if missing_seed_definitions:
+        raise ValueError(
+            f"Unknown upgrade seed IDs in ship override catalog: {missing_seed_definitions}"
+        )
+
+    option_keys = {
+        seed_key("build-option", "upgrade", stable_id): stable_id
+        for stable_id in requested_seed_ids
+    }
+    options = db.scalars(
+        select(BuildItemOption)
+        .options(selectinload(BuildItemOption.effects))
+        .where(BuildItemOption.seed_key.in_(option_keys))
+    ).unique().all()
+    if not options:
+        return False
+
+    options_by_seed_id = {
+        option_keys[option.seed_key]: option
+        for option in options
+        if option.seed_key in option_keys
+    }
+    missing = sorted(requested_seed_ids.difference(options_by_seed_id))
+    if missing:
+        raise ValueError(f"Unknown seeded upgrade IDs in ship overrides: {missing}")
+
+    ship_keys = {seed_key("ship", ship.seed_id): ship for ship in document.ships}
+    ships_by_key = {
+        ship.seed_key: ship
+        for ship in db.scalars(
+            select(Ship)
+            .options(selectinload(Ship.upgrade_effect_overrides))
+            .where(Ship.seed_key.in_(ship_keys))
+        ).unique().all()
+    }
+
+    changed = False
+    for ship_key, ship_seed in ship_keys.items():
+        ship = ships_by_key.get(ship_key)
+        if ship is None or ship.is_seed_overridden:
+            continue
+
+        desired: dict[tuple[int, str], float] = {}
+        for override in ship_seed.upgrade_effect_overrides:
+            option = options_by_seed_id[override.upgrade_seed_id]
+            available_keys = upgrade_effect_keys[override.upgrade_seed_id]
+            unknown_keys = sorted(set(override.stat_effects).difference(available_keys))
+            if unknown_keys:
+                raise ValueError(
+                    f"Ship {ship_seed.name!r} overrides unknown effects for "
+                    f"{option.name!r}: {unknown_keys}"
+                )
+            for effect_key, effect_value in override.stat_effects.items():
+                desired[(option.id, effect_key)] = float(effect_value)
+
+        current_rows = {
+            (row.option_id, row.effect_key): row
+            for row in ship.upgrade_effect_overrides
+        }
+        current = {key: float(row.effect_value) for key, row in current_rows.items()}
+        if current == desired:
+            continue
+
+        for key, effect_value in sorted(desired.items()):
+            row = current_rows.get(key)
+            if row is None:
+                option_id, effect_key = key
+                ship.upgrade_effect_overrides.append(
+                    ShipUpgradeEffectOverride(
+                        option_id=option_id,
+                        effect_key=effect_key,
+                        effect_value=effect_value,
+                    )
+                )
+            else:
+                row.effect_value = effect_value
+        for key, row in current_rows.items():
+            if key not in desired:
+                ship.upgrade_effect_overrides.remove(row)
+        changed = True
+
+    if changed:
+        db.commit()
+    return True
 
 
 def _sync_mounts(

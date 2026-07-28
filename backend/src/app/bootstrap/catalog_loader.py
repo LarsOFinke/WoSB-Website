@@ -275,6 +275,17 @@ class ShipWeaponMountSeed(StrictSeedModel):
         return self
 
 
+class ShipUpgradeEffectOverrideSeed(StrictSeedModel):
+    upgrade_seed_id: str = Field(min_length=1, max_length=160)
+    stat_effects: dict[str, int | float] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_effects(self) -> "ShipUpgradeEffectOverrideSeed":
+        if any(not key.strip() or len(key) > 80 for key in self.stat_effects):
+            raise ValueError("ship upgrade effect keys must be non-empty and at most 80 characters")
+        return self
+
+
 class ShipMortarModificationSeed(StrictSeedModel):
     mortar_capacity: int = Field(gt=0, le=8)
     max_caliber_inches: float = Field(gt=0, le=20)
@@ -308,6 +319,7 @@ class ShipSeed(StrictSeedModel):
     has_lantern: bool = True
     is_active: bool = True
     mortar_modification: ShipMortarModificationSeed | None
+    upgrade_effect_overrides: list[ShipUpgradeEffectOverrideSeed] = Field(default_factory=list)
     weapon_mounts: list[ShipWeaponMountSeed] = Field(min_length=6, max_length=6)
 
     @model_validator(mode="after")
@@ -320,6 +332,10 @@ class ShipSeed(StrictSeedModel):
             raise ValueError("non-Montgolfiere ships require positive displacement_tons")
         if not self.source.startswith(("WoSB wiki", "WoSB in-game")):
             raise ValueError("source must identify an audited WoSB catalog")
+
+        override_ids = [row.upgrade_seed_id.casefold() for row in self.upgrade_effect_overrides]
+        if len(override_ids) != len(set(override_ids)):
+            raise ValueError("ship upgrade override seed IDs must be unique")
 
         mounts = {mount.slot_type: mount for mount in self.weapon_mounts}
         if len(mounts) != len(self.weapon_mounts):

@@ -444,7 +444,7 @@ def test_la_couronne_speed_range_matches_verified_upgrade_screenshots() -> None:
             ),
         )
         assert hull_only.ship_stats["effective_stats"]["speed_min_knots"] == pytest.approx(8.3)
-        assert hull_only.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(11.0)
+        assert hull_only.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(11.3)
         assert hull_only.ship_stats["effective_stats"]["armor"] == pytest.approx(4.9)
         assert hull_only.ship_stats["effective_stats"]["maneuverability"] == 76
 
@@ -460,7 +460,7 @@ def test_la_couronne_speed_range_matches_verified_upgrade_screenshots() -> None:
             ),
         )
         assert with_sails.ship_stats["effective_stats"]["speed_min_knots"] == pytest.approx(8.3)
-        assert with_sails.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(15.1)
+        assert with_sails.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(15.4)
 
 
 def test_structural_expansion_and_special_ship_stack_to_eighth_upgrade_slot() -> None:

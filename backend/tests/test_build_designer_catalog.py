@@ -164,12 +164,12 @@ SCREENSHOT_AUDITED_SHIPS = {'Pickle': (700, 9.2, 94, 1.6, 6000, 66, 900, 'light'
  'Devourer': (1760, 7.5, 110, 5.5, 17000, 144, 2610, 'medium', '12-11-8'),
  'Poltava': (2100, 9.6, 95, 2.8, 15500, 132, 2475, 'medium', '0-23-4'),
  'Anson': (2700, 8.2, 80, 5.6, 18500, 160, 3150, 'medium', '4-30-2'),
- 'Mordaunt': (2380, 8.7, 87, 3.9, 34000, 148, 2475, 'medium', '4-26-0'),
+ 'Mordaunt': (2380, 9.1, 87, 4.1, 34000, 148, 2475, 'medium', '4-26-0'),
  'Bellona': (3180, 7.5, 62, 7.0, 26000, 174, 3915, 'medium', '0-35-0'),
  'Kobukson': (2000, 8.0, 85, 4.6, 18000, 124, 2250, 'medium', '0-15-0 + mortar 9in x4'),
  'Deadfish': (3000, 6.6, 66, 8.0, 27000, 166, 4950, 'medium', '8-25-1'),
  'Ingermanland': (2340, 9.0, 87, 3.2, 17500, 152, 3060, 'heavy', '0-32-4'),
- 'Sans Pareil': (3000, 7.7, 74, 6.4, 21500, 184, 3330, 'heavy', '4-38-2'),
+ 'Sans Pareil': (3000, 7.7, 78, 6.4, 21500, 184, 3330, 'heavy', '4-38-2'),
  'La Sirene': (2660, 8.1, 80, 4.4, 43000, 170, 3600, 'heavy', '4-32-0'),
  'Redoutable': (3540, 7.0, 57, 8.0, 30500, 198, 3600, 'heavy', '0-43-0'),
  'Adventure': (2660, 8.2, 92, 5.2, 21000, 140, 2925, 'heavy', '4-19-0 + mortar 10in x2'),
@@ -211,7 +211,7 @@ SCREENSHOT_AUDITED_SHIPS = {'Pickle': (700, 9.2, 94, 1.6, 6000, 66, 900, 'light'
  'Leopard': (2040, 9.6, 98, 3.0, 16500, 130, 2340, 'medium', '0-25-4'),
  'La Creole': (1400, 11.0, 100, 2.0, 11000, 96, 1620, 'light', '4-12-0'),
  'Black Wind': (1820, 9.4, 84, 4.0, 13000, 116, 2250, 'light', '2-16-2'),
- 'Russia': (1600, 9.9, 91, 2.7, 22000, 108, 2070, 'light', '2-14-0'),
+ 'Russia': (1600, 10.4, 91, 2.8, 22000, 108, 2070, 'light', '2-14-0'),
  'San Martin': (2140, 8.5, 72, 5.0, 17500, 126, 2475, 'light', '0-20-0'),
  'Le Requin': (1520, 9.6, 105, 3.2, 12500, 88, 2025, 'light', '2-12-0 + mortar 7in x1')}
 
@@ -262,22 +262,45 @@ SCREENSHOT_AUDITED_BUILD_DETAILS = {'Kobukson': (3, 'Phanokson', 5, 0),
 
 
 AUDITED_CRUISE_MAX_SPEEDS = {
-    "La Couronne": 10.3,
-    "La Creole": 12.75,
-    "Russia": 12.0,
-    "San Martin": 11.2,
-    "De Zeven Provincien": 10.6,
+    "Adventure": 11.0,
+    "Anson": 11.0,
     "Bellona": 10.5,
-    "Poltava": 11.82,
+    "Black Prince": 12.2,
+    "Constitution": 10.9,
+    "De Zeven Provincien": 10.6,
+    "Devourer": 10.5,
+    "Eagle": 11.8,
+    "Essex": 11.5,
+    "Golden Apostle": 11.9,
+    "Ingermanland": 11.6,
+    "Kobukson": 10.9,
+    "La Couronne": 10.6,
+    "La Creole": 12.9,
+    "La Sirene": 10.9,
+    "Le Cerf": 12.2,
+    "Mercury": 11.7,
+    "Mordaunt": 11.6,
+    "Neptuno": 11.0,
+    "Poltava": 12.0,
+    "Red Arrow": 11.3,
+    "Redoutable": 10.0,
+    "Russia": 12.5,
+    "San Martin": 11.2,
+    "Sans Pareil": 10.6,
+    "Shunsen": 11.2,
+    "Vasa": 9.6,
+    "Victory": 10.1,
 }
 
 
-def test_shipyard_speed_ranges_keep_the_raw_base_endpoint() -> None:
+def test_shipyard_speed_ranges_match_owned_ship_screenshots() -> None:
     rows = {row["name"]: row for row in SHIP_SEED_DATA}
     assert rows["La Couronne"]["speed_min_knots"] == 7.6
-    assert rows["La Couronne"]["speed_knots"] == 10.3
+    assert rows["La Couronne"]["speed_knots"] == 10.6
     assert rows["La Creole"]["speed_min_knots"] == 11.0
-    assert rows["La Creole"]["speed_knots"] == 12.75
+    assert rows["La Creole"]["speed_knots"] == 12.9
+    assert rows["Mordaunt"]["speed_min_knots"] == 9.1
+    assert rows["Russia"]["speed_min_knots"] == 10.4
 
 
 def test_in_game_screenshot_ship_stats_match_catalog() -> None:
@@ -387,6 +410,7 @@ def test_all_ship_seeds_use_current_panel_or_event_provenance() -> None:
     allowed_sources = {
         "WoSB in-game shipyard screenshot audit 2026-07",
         "WoSB in-game current-event tooltip screenshot audit 2026-07",
+        "WoSB in-game owned-ship screenshot audit 2026-07-28",
     }
     assert {str(row["source"]) for row in SHIP_SEED_DATA} <= allowed_sources
 

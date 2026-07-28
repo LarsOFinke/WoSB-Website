@@ -1,53 +1,71 @@
-# Build Designer catalog audit (2026-07-12)
+# Build Designer ship catalog audit
 
-The Build Designer master data has been reconciled against the supplied in-game panels and event tooltips. Player-state messages, owned resources, unlock progress, construction prices and port restrictions are intentionally excluded.
+## Owned-ship batch — 2026-07-28
 
-## Completion batch
+A new set of **173 in-game screenshots** documents all **28 ships currently owned by the contributor**. Each documented ship includes its statistics panel and the available upgrade groups; Adventure, Eagle, Golden Apostle, Kobukson and Red Arrow additionally include the mortar-upgrade group.
 
-The final five previously wiki-audited records were verified against the newly supplied current in-game panels:
+Audited ships:
 
-- **La Creole**: regular weapon class corrected to `light`; orientation corrected to `4-12-0`.
-- **Black Wind**: regular weapon class corrected to `light`; layout confirmed as `2-16-2`. The generic `Mortar modification available` notice is not treated as a quantified mortar mount.
-- **Russia**: regular weapon class corrected to `light`; orientation corrected to `2-14-0`.
-- **San Martin**: regular weapon class corrected to `light`; layout confirmed as `0-20-0`.
-- **Le Requin**: regular weapon class corrected to `light`; orientation corrected to `2-12-0`, with one mortar mount up to 7 inches.
+- Rate I: De Zeven Provincien, La Couronne, Victory
+- Rate II: Adventure, Ingermanland, La Sirene, Neptuno, Redoutable, Sans Pareil, Vasa
+- Rate III: Anson, Bellona, Kobukson, Mordaunt, Poltava
+- Rate IV: Constitution, Devourer, Essex, Red Arrow
+- Rate V: Black Prince, Eagle, La Creole, Russia, San Martin
+- Rate VI: Golden Apostle, Le Cerf, Mercury, Shunsen
 
-The ship catalog contains **67 active seed records**. All **67** are now backed by supplied in-game screenshots or current-event tooltips. A regression test enforces that no active ship seed falls back to wiki-only provenance.
+The following values were updated from the displayed panels:
 
-## Earlier final additions
+| Ship | Updated values |
+|---|---|
+| Adventure | cruise maximum 11.0 kn |
+| Anson | cruise maximum 11.0 kn |
+| Black Prince | cruise maximum 12.2 kn |
+| Constitution | cruise maximum 10.9 kn |
+| Devourer | cruise maximum 10.5 kn |
+| Eagle | cruise maximum 11.8 kn |
+| Essex | cruise maximum 11.5 kn |
+| Golden Apostle | cruise maximum 11.9 kn |
+| Ingermanland | cruise maximum 11.6 kn |
+| Kobukson | cruise maximum 10.9 kn |
+| La Couronne | cruise maximum 10.6 kn |
+| La Creole | cruise maximum 12.9 kn |
+| La Sirene | cruise maximum 10.9 kn |
+| Le Cerf | cruise maximum 12.2 kn |
+| Mercury | cruise maximum 11.7 kn |
+| Mordaunt | speed range 9.1–11.6 kn; armor 4.1 |
+| Neptuno | cruise maximum 11.0 kn |
+| Poltava | cruise maximum 12.0 kn |
+| Red Arrow | cruise maximum 11.3 kn |
+| Redoutable | cruise maximum 10.0 kn |
+| Russia | speed range 10.4–12.5 kn; armor 2.8 |
+| Sans Pareil | cruise maximum 10.6 kn; maneuverability 78 |
+| Shunsen | cruise maximum 11.2 kn |
+| Vasa | cruise maximum 9.6 kn |
+| Victory | cruise maximum 10.1 kn |
 
-- **De Zeven Provincien**: current in-game panel; standard five upgrade slots because the panel does not show `Spaces for upgrades +1`.
-- **Sovereign**: current in-game panel; weapon orientation `4-38-8 + mortar 7in x2`; standard five upgrade slots.
-- **Leopard**: current-event rate III Ship of the Line with medium mounts and layout `0-25-4`.
-- **Ice Lantern**: current-event lantern with `+5% speed`, `+5% hold capacity` and `+5% durability`.
+Values not listed above already matched the repository catalog and were retained. All 28 records now carry the provenance `WoSB in-game owned-ship screenshot audit 2026-07-28`.
 
-## Fields represented by the Build Designer
+## Upgrade-slot interpretation
+
+The screenshots show six ordinary upgrade spaces on most ships and seven on La Couronne. The account also displays a researched `Spaces for upgrades +1` benefit. Therefore the screenshots contain one account-level slot in addition to the ship base value. The seed catalog correctly retains five base slots for ordinary ships and six for La Couronne.
+
+The unlabelled `0/4` indicator is treated as player/account state rather than a ship property and is not seeded.
+
+## Mortar interpretation
+
+Adventure and Golden Apostle expose explicit mortar capacities in their ship statistics and remain modeled accordingly. Eagle, Kobukson and Red Arrow show the mortar upgrade category, but the supplied panels do not quantify a modification delta. Their existing audited weapon layouts are therefore unchanged. A future change requires a dedicated screenshot showing the complete before/after modification values; the catalog does not infer capacities from upgrade-category visibility alone.
+
+## Catalog scope
+
+The ship catalog contains **67 active seed records**. All records remain backed by supplied in-game panels or current-event tooltips. The Build Designer represents:
 
 - name, rate and ship type
-- durability, speed, maneuverability and broadside armor
-  - the shipyard panel speed is a raw metres-per-second value; the seed factory converts it to knots (`m/s × 1.943844`, rounded to one decimal) before persistence
-  - the complete 67-ship conversion table is documented in `SHIP_SPEED_CONVERSION_AUDIT.md`
+- durability, minimum and cruise-maximum speed, maneuverability and broadside armor
 - hold and crew capacity
-- editable planning sailor minimum
-- displacement
-- sail, lantern and upgrade-slot availability
-- maximum regular weapon class
-- bow, side and stern weapon capacities
-- mortar capacity/caliber and special-weapon capacity
+- planning sailor minimum and displacement
+- sail, lantern and base upgrade-slot availability
+- regular weapon class and explicit positional capacities
+- quantified mortar and special-weapon capabilities
+- sparse ship-specific upgrade-effect values where directly visible
 
-## Intentionally excluded
-
-- green inventory or upgrade notices
-- player resources, construction costs and owned currencies
-- unlock, event and experience progress
-- port/faction restrictions and build availability messages
-- hull dimensions, swivel guns and integrity
-- historical descriptions and role labels
-- unique wind rose, oars, named passives, XP/loot bonuses and Imperial NPC behavior
-- unquantified notices such as `Mortar modification available`
-
-Those values are either player state, presentation-only data, or outside the current Build Designer calculation model.
-
-## Planning metadata
-
-The supplied ship panels do not expose minimum sailing crew. `sailor_minimum` therefore remains a documented planning value. The shared seed factory derives 40% of crew capacity unless an explicit project value is retained. Administrators can correct this field later in the master-data panel without losing the override on subsequent seed runs.
+Player resources, prices, ownership counts, unlock progress, port restrictions, inventory labels and other account state are intentionally excluded.

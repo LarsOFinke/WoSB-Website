@@ -80,6 +80,76 @@ def test_permanent_mortar_modifications_are_explicit_and_ship_specific() -> None
     assert friede.broadside_capacity_delta == -2
 
 
+def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
+    ships = {ship.name: ship for ship in load_ship_seed_document().ships}
+    overridden = {
+        ship.name for ship in ships.values() if ship.upgrade_effect_overrides
+    }
+    assert overridden == {
+        "Adventure",
+        "Black Prince",
+        "De Zeven Provincien",
+        "Eagle",
+        "Golden Apostle",
+        "Ingermanland",
+        "La Couronne",
+        "La Creole",
+        "La Sirene",
+        "Le Cerf",
+        "Mercury",
+        "Neptuno",
+        "Redoutable",
+        "Russia",
+        "San Martin",
+        "Sans Pareil",
+        "Shunsen",
+        "Vasa",
+        "Victory",
+    }
+
+    def values(ship_name: str, upgrade_seed_id: str) -> dict[str, int | float]:
+        return next(
+            row.stat_effects
+            for row in ships[ship_name].upgrade_effect_overrides
+            if row.upgrade_seed_id == upgrade_seed_id
+        )
+
+    assert values("Adventure", "reinforced-masts") == {
+        "speed_knots": 0.4,
+        "sail_efficiency": 0.8,
+    }
+    assert values("Adventure", "teak-frames") == {
+        "armor": 1.0,
+        "crew_capacity": 14,
+    }
+    assert ships["Anson"].upgrade_effect_overrides == []
+    assert values("Black Prince", "reinforced-masts") == {
+        "speed_knots": 0.6,
+        "sail_efficiency": 1.2,
+    }
+    assert values("Black Prince", "teak-frames") == {
+        "armor": 2.0,
+        "crew_capacity": 6,
+    }
+
+
+def test_owned_ship_screenshot_batch_has_audited_source_and_expected_size() -> None:
+    owned = {
+        "Adventure", "Anson", "Bellona", "Black Prince", "Constitution",
+        "De Zeven Provincien", "Devourer", "Eagle", "Essex", "Golden Apostle",
+        "Ingermanland", "Kobukson", "La Couronne", "La Creole", "La Sirene",
+        "Le Cerf", "Mercury", "Mordaunt", "Neptuno", "Poltava", "Red Arrow",
+        "Redoutable", "Russia", "San Martin", "Sans Pareil", "Shunsen",
+        "Vasa", "Victory",
+    }
+    ships = {ship.name: ship for ship in load_ship_seed_document().ships}
+    assert len(owned) == 28
+    assert owned <= set(ships)
+    assert {ships[name].source for name in owned} == {
+        "WoSB in-game owned-ship screenshot audit 2026-07-28"
+    }
+
+
 def test_ship_seed_loader_rejects_special_capacity_above_mount_capacity(tmp_path) -> None:
     source_path = SHIP_SEED_PATH / "rates" / "rate-1.json"
     payload = json.loads(source_path.read_text(encoding="utf-8"))

@@ -71,14 +71,14 @@
       "ship_type": "Cutter",
       "durability": 900,
       "speed_min_knots": 9.5,
-      "speed_knots": 9.5,
+      "speed_knots": 11.9,
       "maneuverability": 120,
       "armor": 2.2,
       "hold_capacity": 8500,
       "crew_capacity": 96,
       "sailor_minimum": 38,
       "displacement_tons": 1260,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -124,6 +124,46 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-masts",
+          "stat_effects": {
+            "speed_knots": 0.6,
+            "sail_efficiency": 1.2
+          }
+        },
+        {
+          "upgrade_seed_id": "double-hold",
+          "stat_effects": {
+            "hold_capacity": 3000
+          }
+        },
+        {
+          "upgrade_seed_id": "cellars",
+          "stat_effects": {
+            "hold_capacity": 1500
+          }
+        },
+        {
+          "upgrade_seed_id": "extra-bunks",
+          "stat_effects": {
+            "crew_capacity": 10
+          }
+        },
+        {
+          "upgrade_seed_id": "repair-arsenal",
+          "stat_effects": {
+            "durability": 80
+          }
+        },
+        {
+          "upgrade_seed_id": "teak-frames",
+          "stat_effects": {
+            "armor": 2.0,
+            "crew_capacity": 6
+          }
         }
       ]
     },
@@ -195,14 +235,14 @@
       "ship_type": "Cutter",
       "durability": 900,
       "speed_min_knots": 10,
-      "speed_knots": 10,
+      "speed_knots": 12.2,
       "maneuverability": 97,
       "armor": 1.8,
       "hold_capacity": 8000,
       "crew_capacity": 78,
       "sailor_minimum": 31,
       "displacement_tons": 990,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -249,6 +289,46 @@
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
         }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-masts",
+          "stat_effects": {
+            "speed_knots": 0.6,
+            "sail_efficiency": 1.2
+          }
+        },
+        {
+          "upgrade_seed_id": "double-hold",
+          "stat_effects": {
+            "hold_capacity": 3000
+          }
+        },
+        {
+          "upgrade_seed_id": "cellars",
+          "stat_effects": {
+            "hold_capacity": 1500
+          }
+        },
+        {
+          "upgrade_seed_id": "extra-bunks",
+          "stat_effects": {
+            "crew_capacity": 10
+          }
+        },
+        {
+          "upgrade_seed_id": "repair-arsenal",
+          "stat_effects": {
+            "durability": 80
+          }
+        },
+        {
+          "upgrade_seed_id": "teak-frames",
+          "stat_effects": {
+            "armor": 2.0,
+            "crew_capacity": 6
+          }
+        }
       ]
     },
     {
@@ -257,14 +337,14 @@
       "ship_type": "Galleon",
       "durability": 1040,
       "speed_min_knots": 9.2,
-      "speed_knots": 9.2,
+      "speed_knots": 11.7,
       "maneuverability": 89,
       "armor": 2.5,
       "hold_capacity": 15500,
       "crew_capacity": 88,
       "sailor_minimum": 35,
       "displacement_tons": 2025,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -310,6 +390,46 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-masts",
+          "stat_effects": {
+            "speed_knots": 0.6,
+            "sail_efficiency": 1.2
+          }
+        },
+        {
+          "upgrade_seed_id": "double-hold",
+          "stat_effects": {
+            "hold_capacity": 3000
+          }
+        },
+        {
+          "upgrade_seed_id": "cellars",
+          "stat_effects": {
+            "hold_capacity": 1500
+          }
+        },
+        {
+          "upgrade_seed_id": "extra-bunks",
+          "stat_effects": {
+            "crew_capacity": 10
+          }
+        },
+        {
+          "upgrade_seed_id": "repair-arsenal",
+          "stat_effects": {
+            "durability": 80
+          }
+        },
+        {
+          "upgrade_seed_id": "teak-frames",
+          "stat_effects": {
+            "armor": 2.0,
+            "crew_capacity": 6
+          }
         }
       ]
     },
@@ -505,14 +625,14 @@
       "ship_type": "Junk",
       "durability": 1000,
       "speed_min_knots": 8.5,
-      "speed_knots": 8.5,
+      "speed_knots": 11.2,
       "maneuverability": 90,
       "armor": 3,
       "hold_capacity": 11000,
       "crew_capacity": 92,
       "sailor_minimum": 37,
       "displacement_tons": 1485,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -558,6 +678,46 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-masts",
+          "stat_effects": {
+            "speed_knots": 0.6,
+            "sail_efficiency": 1.2
+          }
+        },
+        {
+          "upgrade_seed_id": "double-hold",
+          "stat_effects": {
+            "hold_capacity": 3000
+          }
+        },
+        {
+          "upgrade_seed_id": "cellars",
+          "stat_effects": {
+            "hold_capacity": 1500
+          }
+        },
+        {
+          "upgrade_seed_id": "extra-bunks",
+          "stat_effects": {
+            "crew_capacity": 10
+          }
+        },
+        {
+          "upgrade_seed_id": "repair-arsenal",
+          "stat_effects": {
+            "durability": 80
+          }
+        },
+        {
+          "upgrade_seed_id": "teak-frames",
+          "stat_effects": {
+            "armor": 2.0,
+            "crew_capacity": 6
+          }
         }
       ]
     }

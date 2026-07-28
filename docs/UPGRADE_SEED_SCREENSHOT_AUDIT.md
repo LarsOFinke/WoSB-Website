@@ -2,14 +2,24 @@
 
 ## Scope
 
-The upgrade catalog was transcribed from the supplied in-game panels of one ship. These values are the global Build Designer defaults. The game can vary an upgrade's values by ship; those differences are stored as sparse rows in `ship_upgrade_effect_overrides` and can be edited from the ship record in the master-data admin workspace.
+The global upgrade catalog contains **32 active upgrades**. Upgrade definitions remain normalized and reusable; only numeric values that visibly differ for a particular ship are stored as sparse rows in `ship_upgrade_effect_overrides`.
 
-- Catalog revision: `WoSB in-game upgrade panels 2026-07`
-- Active global upgrades: **32**
-- Groups: Speed, Expeditionary, Protection, Combat, Unusual, Mortar
-- Player inventory labels such as `installed` and `in warehouse` are not master data and were ignored.
+The owned-ship screenshot batch from 2026-07-28 demonstrates three value sets for six upgrades:
 
-## Verified defaults
+| Upgrade | Rates I–II | Rates III–IV global default | Rates V–VI |
+|---|---:|---:|---:|
+| Reinforced Masts — speed | +0.4 kn | +0.5 kn | +0.6 kn |
+| Reinforced Masts — sail efficiency | +0.8 | +1.0 | +1.2 |
+| Double Hold — hold | +6500 | +4500 | +3000 |
+| Cellars — hold | +3500 | +2000 | +1500 |
+| Extra Bunks — crew | +20 | +14 | +10 |
+| Repair Arsenal — durability | +210 | +150 | +80 |
+| Teak Frames — armor | +1.0 | +1.5 | +2.0 |
+| Teak Frames — crew | +14 | +10 | +6 |
+
+All percentage, boolean and secondary effects shown in the screenshots match the global definition and continue to be inherited. No value is extrapolated to an unscreenshoted ship: sparse overrides are included only for the 19 owned rate I–II and V–VI ships. The nine owned rate III–IV ships use the verified global defaults. Rate VII retains the global catalog until a direct ship-specific capture is available.
+
+## Verified global defaults
 
 ### Speed
 
@@ -40,7 +50,7 @@ The upgrade catalog was transcribed from the supplied in-game panels of one ship
 | Copper Plating | Water-fire protection +25%; gunpowder-barrel and fire-ship protection +30% |
 | Iron Ram | Ram damage +20%; bow damage absorption +20%; quick sinking by ramming |
 | Reinforced Bolt Ropes | Sail protection +30%; sail-fire protection +50% |
-| Teak Frames | Armor +15; crew +10; maneuverability -6% |
+| Teak Frames | Armor +1.5; crew +10; maneuverability -6% |
 
 ### Combat
 
@@ -73,12 +83,10 @@ The upgrade catalog was transcribed from the supplied in-game panels of one ship
 | Lightweight Construction | Mortar reload +40%; hold +25%; mortar damage -25% |
 | Swivel Mortars | Mortar damage +12%; mortar angle +50°; mortar aiming -25% |
 
-## Compatibility
+## Synchronization behavior
 
-The seed sync deactivates superseded seed options instead of deleting referenced data. Clear renames are migrated before synchronization:
-
-- `Reinforced Ports` → `Fortified Ports`
-- `Additional Hammocks` → `Extra Bunks`
-- `Improved Gun Carriages` → `Advanced Gun Carriages`
-
-Saved build-slot references and ship-specific override references are transferred during these renames.
+- Ship JSON documents contain only the effects that differ from the global option.
+- The bootstrap resolves references by stable upgrade `seed_id`, never by display name.
+- Administratively overridden ships are not changed by later seed runs.
+- Restoring a ship seed reinstates its screenshot-backed sparse values.
+- Renamed global options continue to preserve saved build and override references.
