@@ -1,8 +1,9 @@
 """Resolve Specialist effects against a build's crew allocation.
 
 Catalog rows store the literal tooltip modifier. Effects such as ``+0.2% per
-Sailor`` must be expanded with the current crew allocation, while conditional
-or boolean abilities must stay separate from always-on ship base modifiers.
+Sailor`` are expanded into their dedicated operational stat. They must never be
+folded into an unrelated core stat; First Mate affects sail deployment speed,
+not the ship-wide speed percentage.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from app.modules.builds.services.build_stat_service import round_half_up
 
 
 PER_CREW_EFFECTS: dict[str, tuple[str, str]] = {
-    "speed_per_sailor_pct": ("speed_pct", "sailors"),
+    "sail_deployment_speed_per_sailor_pct": ("sail_deployment_speed_pct", "sailors"),
     "item_reload_per_sailor_pct": ("item_reload_pct", "sailors"),
     "ammo_switch_per_sailor_pct": ("ammo_switch_speed_pct", "sailors"),
     "low_durability_reload_per_sailor_pct": ("low_durability_reload_pct", "sailors"),

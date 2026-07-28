@@ -4,7 +4,7 @@ from app.modules.builds.services.specialist_effect_service import resolve_specia
 def test_specialist_effects_expand_per_sailor_and_per_boarder_values() -> None:
     effects = resolve_specialist_effects(
         [
-            ({"speed_per_sailor_pct": 0.2}, 1),
+            ({"sail_deployment_speed_per_sailor_pct": 0.2}, 1),
             ({"boarding_cargo_weight_per_boarder_pct": 0.5}, 1),
             ({"repair_speed_per_sailor_pct": 0.3}, 1),
             ({"reload_pct": 4}, 2),
@@ -16,7 +16,7 @@ def test_specialist_effects_expand_per_sailor_and_per_boarder_values() -> None:
     )
 
     assert effects == {
-        "speed_pct": 16,
+        "sail_deployment_speed_pct": 16,
         "boarding_cargo_weight_pct": 35,
         "repair_speed_pct": 24,
         "reload_pct": 4,
@@ -37,11 +37,11 @@ def test_specialist_boolean_effects_do_not_stack() -> None:
 
 def test_specialist_effect_rounding_uses_the_shared_half_up_contract() -> None:
     effects = resolve_specialist_effects(
-        [({"speed_per_sailor_pct": -0.123445}, 1)],
+        [({"sail_deployment_speed_per_sailor_pct": -0.123445}, 1)],
         sailors=10,
         soldiers=0,
         musketeers=0,
         mercenaries=0,
     )
 
-    assert effects == {"speed_pct": -1.2345}
+    assert effects == {"sail_deployment_speed_pct": -1.2345}

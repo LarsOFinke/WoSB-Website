@@ -1,7 +1,9 @@
 import { roundByPrecision } from './buildMath.js'
 
+// Per-crew effects must map to their own operational stat. In particular,
+// First Mate changes sail deployment speed and must never feed ship-wide speed_pct.
 const PER_CREW_EFFECTS = {
-  speed_per_sailor_pct: ['speed_pct', 'sailors'],
+  sail_deployment_speed_per_sailor_pct: ['sail_deployment_speed_pct', 'sailors'],
   item_reload_per_sailor_pct: ['item_reload_pct', 'sailors'],
   ammo_switch_per_sailor_pct: ['ammo_switch_speed_pct', 'sailors'],
   low_durability_reload_per_sailor_pct: ['low_durability_reload_pct', 'sailors'],

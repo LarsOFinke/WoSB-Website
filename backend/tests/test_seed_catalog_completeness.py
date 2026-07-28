@@ -142,7 +142,7 @@ def test_specialist_catalog_matches_verified_screenshot_roster() -> None:
     }
     assert effects["Doctor"] == {"boarding_company_shelling_survivability_pct": 40}
     assert effects["Sail Handler"] == {"speed_pct": 4}
-    assert effects["First Mate"] == {"speed_per_sailor_pct": 0.2}
+    assert effects["First Mate"] == {"sail_deployment_speed_per_sailor_pct": 0.2}
     assert effects["Gunner"] == {"reload_pct": 4}
     assert effects["Artillerist"] == {"mortar_aiming_pct": 25}
     assert effects["Quartermaster"] == {"single_random_boarding_target_enabled": 1}

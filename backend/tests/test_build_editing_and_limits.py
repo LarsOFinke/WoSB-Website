@@ -125,7 +125,7 @@ def test_doctor_does_not_create_six_extra_crew_places() -> None:
         assert "effective ship capacity (160)" in response.json()["detail"]
 
 
-def test_first_mate_scales_speed_with_assigned_sailors() -> None:
+def test_first_mate_scales_sail_deployment_without_changing_ship_speed() -> None:
     ship_id = _prepare_catalog()
     _ensure_user(OWNER_USERNAME, OWNER_PASSWORD, "Build Edit Owner")
 
@@ -134,7 +134,7 @@ def test_first_mate_scales_speed_with_assigned_sailors() -> None:
         response = client.post(
             "/api/builds",
             json={
-                "build_name": "First Mate sailor scaling",
+                "build_name": "First Mate sail deployment",
                 "ship_id": ship_id,
                 "sailors": 80,
                 "soldiers": 80,
@@ -143,13 +143,17 @@ def test_first_mate_scales_speed_with_assigned_sailors() -> None:
         )
         assert response.status_code == 201, response.text
         body = response.json()
-        assert body["ship_stats"]["special_crew_effects"]["speed_pct"] == 16
-        base_speed = float(body["ship_stats"]["base_stats"]["speed_min_knots"])
+        assert body["ship_stats"]["special_crew_effects"] == {
+            "sail_deployment_speed_pct": 16
+        }
         base_cruise_max = float(body["ship_stats"]["base_stats"]["speed_knots"])
-        assert body["ship_stats"]["effective_stats"]["speed_knots"] == round(
-            base_cruise_max + base_speed * 0.16,
-            1,
+        assert body["ship_stats"]["effective_stats"]["speed_knots"] == base_cruise_max
+        deployment_row = next(
+            row
+            for row in body["ship_stats"]["stat_rows"]
+            if row["key"] == "sail_deployment_speed_pct"
         )
+        assert deployment_row["modifier"] == 16
 
 
 def test_specialist_quantity_is_normalized_and_weapon_capacity_is_enforced() -> None:

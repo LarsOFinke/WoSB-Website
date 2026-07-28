@@ -82,7 +82,7 @@ LANTERN_EFFECTS = {
 }
 
 
-def test_de_zeven_with_raiding_sails_matches_the_verified_in_game_value() -> None:
+def test_de_zeven_with_first_mate_and_raiding_sails_matches_verified_values() -> None:
     with seeded_session() as db:
         ship = _ship(db, "De Zeven Provincien")
         assert ship.speed_min_knots == pytest.approx(7.7)
@@ -94,7 +94,10 @@ def test_de_zeven_with_raiding_sails_matches_the_verified_in_game_value() -> Non
                 build_name="De Zeven verified speed",
                 ship_id=ship.id,
                 sails="Raiding Sails",
-                sailors=ship.sailor_minimum,
+                sailors=102,
+                soldiers=56,
+                musketeers=30,
+                special_crew_slots=[{"item": "First Mate", "quantity": 1}],
             ),
         )
 
@@ -103,8 +106,18 @@ def test_de_zeven_with_raiding_sails_matches_the_verified_in_game_value() -> Non
         )
         assert speed_row["base"] == pytest.approx(10.6)
         assert speed_row["flat_modifier"] == pytest.approx(4.1)
+        assert speed_row["percent_modifier"] is None
         assert speed_row["effective"] == pytest.approx(14.7)
         assert build.ship_stats["effective_stats"]["speed_knots"] == pytest.approx(14.7)
+        assert build.ship_stats["special_crew_effects"] == {
+            "sail_deployment_speed_pct": 20.4
+        }
+        deployment_row = next(
+            row
+            for row in build.ship_stats["stat_rows"]
+            if row["key"] == "sail_deployment_speed_pct"
+        )
+        assert deployment_row["modifier"] == pytest.approx(20.4)
 
 
 def test_raiding_sails_apply_every_verified_tooltip_effect() -> None:

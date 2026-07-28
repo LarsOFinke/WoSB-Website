@@ -146,7 +146,7 @@ assert.deepEqual(sumEffects({ speed_pct: 4 }, { speed_pct: 3, reload_pct: 2 }), 
 })
 
 const specialistCatalog = {
-  'First Mate': { speed_per_sailor_pct: 0.2 },
+  'First Mate': { sail_deployment_speed_per_sailor_pct: 0.2 },
   Doctor: { boarding_company_shelling_survivability_pct: 40 },
   Skipper: { boarding_cargo_weight_per_boarder_pct: 0.5 },
   'Sailing Master': { steady_course_enabled: 1 },
@@ -162,7 +162,7 @@ const specialistTotals = calculateSpecialistEffectTotals({
   crew: { sailors: 80, soldiers: 40, musketeers: 20, mercenaries: 10 },
 })
 assert.deepEqual(specialistTotals, {
-  speed_pct: 16,
+  sail_deployment_speed_pct: 16,
   boarding_company_shelling_survivability_pct: 40,
   boarding_cargo_weight_pct: 35,
   steady_course_enabled: 1,

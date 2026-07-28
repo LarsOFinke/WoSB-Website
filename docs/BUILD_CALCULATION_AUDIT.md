@@ -28,9 +28,17 @@ Sails` adds a flat `4.1 kn`, therefore:
 10.6 kn + 4.1 kn = 14.7 kn
 ```
 
-A planner value of `16.3 kn` means the running database still contains the old
-`12.2 kn` maximum (`12.2 + 4.1`). Deploy this release with `--seed` so the
-current ship and ammunition catalog reaches the database.
+`First Mate` does **not** change ship speed. Its tooltip is `+0.2% sail
+deployment speed per assigned Sailor`; with 102 Sailors this becomes a separate
+`+20.4% sail deployment speed` row. The historical `16.3 kn` result came from
+mapping that operational effect to the unrelated ship-wide `speed_pct`:
+
+```text
+10.6 kn + (7.7 kn × 20.4%) + 4.1 kn = 16.2708 kn → 16.3 kn
+```
+
+The raw seed key and the calculated key are now explicitly separated as
+`sail_deployment_speed_per_sailor_pct` and `sail_deployment_speed_pct`.
 
 ## Consistency fixes
 
