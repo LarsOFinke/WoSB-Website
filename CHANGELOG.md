@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed a deployment deadlock where seed or migration updates invoked `backup-all.sh` while already holding `update.lock`; update backups now reuse the existing update lock and acquire only `backup.lock`.
+
 ### Owned-ship seed audit
 
 - Re-audited 28 owned ships from 173 current in-game screenshots and updated their displayed speed ranges plus the corrected Mordaunt, Russia and Sans Pareil statistics.

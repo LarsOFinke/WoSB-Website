@@ -88,15 +88,32 @@ update_restore_captured_images() {
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
+update_run_backup_scripts() {
+  local include_postgres="$1"
+
+  # update_run already owns update.lock. Calling backup-all.sh here would try
+  # to acquire the same lock in a child process and deadlock the deployment.
+  # Acquire only the secondary backup lock and execute the concrete backup
+  # steps while the update lock remains held by the parent process.
+  (
+    exec 8>"$RUN_DIR/backup.lock"
+    flock 8
+    if [[ "$include_postgres" == true ]]; then
+      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+    fi
+    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+  )
+}
+
 update_create_backup() {
   [[ "$CREATE_BACKUP" == true ]] || return 0
 
   if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
     log "Erstelle Sicherheitsbackup inklusive PostgreSQL vor beabsichtigten Datenbankarbeiten."
-    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-all.sh"
+    update_run_backup_scripts true
   else
     log "Erstelle Datei-Backup; das geprüfte PostgreSQL-Schema bleibt unverändert."
-    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+    update_run_backup_scripts false
   fi
 }
 

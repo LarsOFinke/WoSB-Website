@@ -211,6 +211,9 @@ require_pattern 'read_database_schema_state' "$INFRA_DIR/scripts/update/workflow
 reject_pattern 'migration_files_changed' "$INFRA_DIR/scripts/update/repository.sh"
 require_pattern 'update_capture_running_images' "$INFRA_DIR/scripts/update/workflow.sh"
 require_pattern 'heartbeat_at' "$INFRA_DIR/scripts/update/status.sh"
+require_pattern 'update_run_backup_scripts true' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'exec 8>"$RUN_DIR/backup.lock"' "$INFRA_DIR/scripts/update/workflow.sh"
+reject_pattern 'backup/backup-all.sh' "$INFRA_DIR/scripts/update/workflow.sh"
 require_pattern 'bw_compose stop api gateway' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'backup-postgres.sh' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern "-mindepth 2" "$INFRA_DIR/scripts/checks/doctor.sh"
@@ -240,8 +243,8 @@ require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-ad
 require_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
 require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
 require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
-require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
-require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern '/proc/$$/fd/9' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern 'exec 7>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
 
 python3 - \
   "$INFRA_DIR/scripts/services/backup-from-admin.sh" \
@@ -254,9 +257,10 @@ scheduled_backup = Path(sys.argv[2]).read_text(encoding="utf-8")
 assert admin_runner.index('exec 8>"$run_dir/update.lock"') < admin_runner.index('flock 8')
 assert admin_runner.index('flock 8') < admin_runner.index('exec 9>"$run_dir/backup.lock"')
 assert admin_runner.index('flock 9') < admin_runner.index('claim_control_request')
-assert scheduled_backup.index('exec 8>"$run_dir/update.lock"') < scheduled_backup.index('flock 8')
-assert scheduled_backup.index('flock 8') < scheduled_backup.index('exec 9>"$run_dir/backup.lock"')
-assert scheduled_backup.index('flock 9') < scheduled_backup.index('backup-postgres.sh')
+assert scheduled_backup.index('/proc/$$/fd/9') < scheduled_backup.index('exec 8>"$update_lock"')
+assert scheduled_backup.index('exec 8>"$update_lock"') < scheduled_backup.index('flock 8')
+assert scheduled_backup.index('flock 8') < scheduled_backup.index('exec 7>"$run_dir/backup.lock"')
+assert scheduled_backup.index('flock 7') < scheduled_backup.index('backup-postgres.sh')
 PY_BACKUP_LOCKS
 
 python3 - "$INFRA_DIR/scripts/backup/backup-admin-runner.py" <<'PY_BACKUP_RUNNER'
