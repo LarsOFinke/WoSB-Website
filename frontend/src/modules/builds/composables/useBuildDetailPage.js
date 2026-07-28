@@ -36,7 +36,7 @@ export function useBuildDetailPage(props) {
   const shareStatus = ref('')
   const categoryFallbackImages = buildCategoryVisuals
   const crewFallbackImages = buildCrewVisuals
-  const printActions = useBuildPrintActions(build, { t, optionLabel })
+  const printActions = useBuildPrintActions(build, { t, optionLabel, optionImage })
 
   const weaponArcRows = computed(() => createWeaponArcRows(build.value, t))
   const crewTotal = computed(() => build.value?.ship_stats?.crew_total || 0)

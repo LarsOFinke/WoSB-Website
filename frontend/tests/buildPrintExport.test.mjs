@@ -266,3 +266,23 @@ test('build print preserves four regular specialists plus Ginger as an extra slo
   assert.match(svg, /\+1 · Ginger/)
   assert.match(svg, /PVP GROUP\s+·\s+HEAVY/)
 })
+
+test('build print renders catalog icons for selected equipment, upgrades, and specialists', () => {
+  const iconUrl = (category, name) => `https://fleet.example/icons/${category}/${encodeURIComponent(name)}.png`
+  const iconBuild = {
+    ...build,
+    special_crew_slots: [{ item: 'Doctor', quantity: 1 }],
+  }
+  const svg = createBuildPrintSvg(iconBuild, {
+    t,
+    optionLabel: (value) => value,
+    optionImage: iconUrl,
+    locationObject: { origin: 'https://fleet.example' },
+  })
+
+  assert.match(svg, /https:\/\/fleet\.example\/icons\/sail\/Raiding%20Sails\.png/)
+  assert.match(svg, /https:\/\/fleet\.example\/icons\/lantern\/Ice%20Lantern\.png/)
+  assert.match(svg, /https:\/\/fleet\.example\/icons\/upgrade\/Copper%20Sheathing\.png/)
+  assert.match(svg, /https:\/\/fleet\.example\/icons\/upgrade\/Trim\.png/)
+  assert.match(svg, /https:\/\/fleet\.example\/icons\/special_crew\/Doctor\.png/)
+})

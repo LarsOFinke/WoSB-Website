@@ -1,6 +1,0 @@
-node_modules/
-dist/
-src/locales/generated/
-.env
-npm-debug.log*
-.DS_Store

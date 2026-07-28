@@ -6,7 +6,7 @@ import {
   openBuildPrintWindow,
 } from '@/modules/builds/buildPrintExport'
 
-export function useBuildPrintActions(build, { optionLabel, t }) {
+export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
   const printStatus = ref('')
   const printPreviewUrl = ref('')
   const printPreviewOpen = ref(false)
@@ -19,7 +19,7 @@ export function useBuildPrintActions(build, { optionLabel, t }) {
 
   function ensurePrintPreview() {
     revokePrintPreview()
-    printPreviewUrl.value = createBuildPrintPreviewUrl(build.value, { t, optionLabel })
+    printPreviewUrl.value = createBuildPrintPreviewUrl(build.value, { t, optionLabel, optionImage })
     printPreviewOpen.value = true
   }
 
@@ -43,7 +43,7 @@ export function useBuildPrintActions(build, { optionLabel, t }) {
     printBusy.value = true
     try {
       if (!printPreviewUrl.value) ensurePrintPreview()
-      await downloadBuildPrintPng(build.value, { t, optionLabel })
+      await downloadBuildPrintPng(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.downloadedPng')
     } catch {
       printStatus.value = t('builds.print.error')
@@ -57,7 +57,7 @@ export function useBuildPrintActions(build, { optionLabel, t }) {
     printStatus.value = ''
     try {
       if (!printPreviewUrl.value) ensurePrintPreview()
-      downloadBuildPrintSvg(build.value, { t, optionLabel })
+      downloadBuildPrintSvg(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.downloadedSvg')
     } catch {
       printStatus.value = t('builds.print.error')
@@ -68,7 +68,7 @@ export function useBuildPrintActions(build, { optionLabel, t }) {
     if (!build.value) return
     printStatus.value = ''
     try {
-      openBuildPrintWindow(build.value, { t, optionLabel })
+      openBuildPrintWindow(build.value, { t, optionLabel, optionImage })
       printStatus.value = t('builds.print.windowOpened')
     } catch {
       printStatus.value = t('builds.print.error')

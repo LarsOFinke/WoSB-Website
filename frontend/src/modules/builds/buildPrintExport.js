@@ -298,6 +298,7 @@ function headlineStatsForBuild(build, statRows, t) {
 function createBuildPrintModel(build, helpers = {}) {
   const t = helpers.t || ((key, params = {}) => Object.entries(params || {}).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), key))
   const optionLabel = helpers.optionLabel || ((value) => value || '')
+  const optionImage = helpers.optionImage || (() => '')
   const shareUrl = buildShareUrl(build?.id || 0, helpers.locationObject || globalThis.location)
   const statRows = statRowsForBuild(build, t)
   const upgrades = cleanLines([
@@ -318,8 +319,8 @@ function createBuildPrintModel(build, helpers = {}) {
   const gingerSpecialist = allSpecialists.find((name) => name.replace(/ ×\d+$/, '') === 'Ginger') || ''
   const specialists = allSpecialists.filter((name) => name !== gingerSpecialist)
   const equipmentRows = [
-    build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build.sails) } : null,
-    build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build.lantern) } : null,
+    build?.sails ? { key: 'sail', label: t('builds.detail.sail'), value: optionLabel(build.sails), iconHref: optionImage('sail', build.sails) } : null,
+    build?.lantern ? { key: 'lantern', label: t('builds.detail.lantern'), value: optionLabel(build.lantern), iconHref: optionImage('lantern', build.lantern) } : null,
     build?.research_upgrade_slot_unlocked ? { key: 'upgrade', label: t('builds.detail.researchUpgradeSlot'), value: t('builds.detail.researchUpgradeSlotActive') } : null,
     build?.mortar_modification_installed ? { key: 'mortar', label: t('builds.detail.mortarModification'), value: t('builds.detail.mortarModificationActive') } : null,
   ].filter(Boolean)
@@ -337,6 +338,7 @@ function createBuildPrintModel(build, helpers = {}) {
   return {
     t,
     optionLabel,
+    optionImage,
     shareUrl,
     buildName: build?.build_name || t('builds.print.fallbackTitle'),
     buildType: buildTypeLabel(build?.build_type, t),
@@ -390,8 +392,8 @@ function createBuildPrintDocument(build, helpers = {}) {
 
   if (model.equipmentRows.length || model.upgrades.length) {
     const rows = [
-      ...model.equipmentRows.map((row) => ({ ...row, iconHref: PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
-      ...model.upgrades.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade, iconHref: PRINT_VISUALS.upgrade })),
+      ...model.equipmentRows.map((row) => ({ ...row, iconHref: row.iconHref || PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
+      ...model.upgrades.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade, iconHref: model.optionImage('upgrade', [build?.upgrade_1, build?.upgrade_2, build?.upgrade_3, build?.upgrade_4, build?.upgrade_5, build?.upgrade_6, build?.upgrade_7, build?.upgrade_8].filter(Boolean)[index]) || PRINT_VISUALS.upgrade })),
     ]
     const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows, colors })
     panels.push(panel.svg)
@@ -406,8 +408,8 @@ function createBuildPrintDocument(build, helpers = {}) {
 
   const crewRows = [
     ...model.crewRows.map((row) => ({ label: row.label, value: row.value, meta: row.hint, iconHref: PRINT_VISUALS.crew[row.key] })),
-    ...model.specialists.map((name) => ({ label: model.t('builds.detail.specialCrew'), value: name, iconHref: PRINT_VISUALS.specialist })),
-    ...(model.gingerSpecialist ? [{ label: '+1 · Ginger', value: model.gingerSpecialist, iconHref: PRINT_VISUALS.specialist, accent: true }] : []),
+    ...model.specialists.map((name) => ({ label: model.t('builds.detail.specialCrew'), value: name, iconHref: model.optionImage('special_crew', name.replace(/ ×\d+$/, '')) || PRINT_VISUALS.specialist })),
+    ...(model.gingerSpecialist ? [{ label: '+1 · Ginger', value: model.gingerSpecialist, iconHref: model.optionImage('special_crew', model.gingerSpecialist.replace(/ ×\d+$/, '')) || PRINT_VISUALS.specialist, accent: true }] : []),
   ]
   const crewPanel = renderRowsPanel({ x: rightX, y: rightY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.crewConsole.eyebrow'), title: model.t('builds.detail.crewDistribution'), iconHref: PRINT_VISUALS.crew.sailors, rows: crewRows, colors })
   panels.push(crewPanel.svg)
