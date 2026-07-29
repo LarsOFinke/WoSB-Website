@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-import { getAdminLogSummary, getIpBlockSummary } from '@/modules/admin/api/admin'
+import { getIpBlockSummary } from '@/modules/admin/api/admin'
 
 export function useAdminOperations({ isAdmin, activeTab, t, logs }) {
   const ipBlockPrefill = ref('')
@@ -29,11 +29,11 @@ export function useAdminOperations({ isAdmin, activeTab, t, logs }) {
   async function loadAdminOverviewMetrics() {
     if (!isAdmin.value) return
     try {
-      const [logRows, blocks] = await Promise.all([
-        getAdminLogSummary({ fromDate: logs.logFromDate.value, toDate: logs.logToDate.value }),
+      const [securitySummary, blocks] = await Promise.all([
+        logs.loadLogs(),
         getIpBlockSummary(),
       ])
-      logs.logSummary.value = logRows
+      if (securitySummary) logs.logSummary.value = securitySummary
       ipBlockOverview.value = blocks
     } catch (err) {
       logs.logsError.value = err.message || t('admin.workspace.overviewLoadError')

@@ -3,21 +3,42 @@ from __future__ import annotations
 import logging
 import time
 from ipaddress import ip_address
-from urllib.parse import parse_qsl, urlencode, urlsplit
+from urllib.parse import urlsplit
 from uuid import uuid4
-
-from app.core.config import settings
-from app.core.time import utc_now
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from app.core.config import settings
+from app.core.time import utc_now
+from app.modules.admin.models.security_event import (
+    SECURITY_SIGNAL_LOGIN_FAILURE,
+    SECURITY_SIGNAL_RATE_LIMIT,
+    SECURITY_SIGNAL_RECONNAISSANCE,
+)
+
 logger = logging.getLogger("app.request")
+security_logger = logging.getLogger("app.security")
 
 ROUTINE_HEALTH_PATHS = {"/api/health", "/api/health/ready"}
-ROUTINE_LOG_ROUTE_ROOTS = ("/api/admin/logs",)
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+SUSPICIOUS_PATH_PARTS = (
+    "/.env",
+    "/.git",
+    "/wp-admin",
+    "/wp-login",
+    "/vendor/phpunit",
+    "/phpunit",
+    "/cgi-bin",
+    "/adminer",
+    "/server-status",
+    "/etc/passwd",
+    "/actuator",
+    ".php",
+)
+
+
 def _normalized_ip(value: str | None) -> str | None:
     if not value:
         return None
@@ -30,18 +51,6 @@ def _normalized_ip(value: str | None) -> str | None:
         return None
 
 
-def redact_query_string(value: str | None) -> str | None:
-    if not value:
-        return None
-    try:
-        pairs = parse_qsl(value, keep_blank_values=True, strict_parsing=False)
-    except ValueError:
-        return "<invalid-query>"
-    # Query values frequently contain search terms, identifiers, or personal data.
-    # Keep parameter names for diagnostics while removing every value.
-    redacted = [(key, "<redacted>") for key, _item in pairs]
-    return urlencode(redacted, doseq=True)
-
 
 def _origin_from_referer(value: str | None) -> str | None:
     if not value:
@@ -52,35 +61,52 @@ def _origin_from_referer(value: str | None) -> str | None:
     return f"{parsed.scheme}://{parsed.netloc}"
 
 
+class SecuritySignalClassifier:
+    """Map a completed request to a coarse signal useful for an IP-ban decision.
+
+    Routes are inspected only in memory. The returned signal contains no URL,
+    account identifier, user agent or request payload.
+    """
+
+    @staticmethod
+    def classify(path: str, status_code: int) -> str | None:
+        normalized_path = (path or "").casefold()
+        if status_code == 429:
+            return SECURITY_SIGNAL_RATE_LIMIT
+        if normalized_path == "/api/auth/login" and status_code in {400, 401, 403}:
+            return SECURITY_SIGNAL_LOGIN_FAILURE
+        if status_code >= 400 and any(part in normalized_path for part in SUSPICIOUS_PATH_PARTS):
+            return SECURITY_SIGNAL_RECONNAISSANCE
+        return None
+
+
 class RequestLogPolicy:
-    def __init__(self, routine_paths: set[str] | None = None) -> None:
-        self._routine_paths = routine_paths or ROUTINE_HEALTH_PATHS
+    def __init__(self, classifier: SecuritySignalClassifier | None = None) -> None:
+        self._classifier = classifier or SecuritySignalClassifier()
+
+    def signal_for(self, path: str, status_code: int) -> str | None:
+        return self._classifier.classify(path, status_code)
 
     def should_log(
         self, path: str, status_code: int, failure: Exception | None = None
     ) -> bool:
-        if failure is not None or status_code >= 400:
-            return True
-        if path in self._routine_paths:
-            return False
-        return not any(
-            path == root or path.startswith(f"{root}/")
-            for root in ROUTINE_LOG_ROUTE_ROOTS
-        )
+        # Application failures are operational console events, not grounds for
+        # retaining a visitor IP in the ban-candidate store.
+        return failure is None and self.signal_for(path, status_code) is not None
 
 
 class ClientIpResolver:
     def resolve(self, request: Request) -> str | None:
         peer = request.client.host if request.client else None
         if not self._trust_proxy_headers(peer):
-            return peer
+            return _normalized_ip(peer)
         real_ip = _normalized_ip(request.headers.get("x-real-ip"))
         if real_ip:
             return real_ip
         forwarded_for = _normalized_ip(request.headers.get("x-forwarded-for"))
         if forwarded_for:
             return forwarded_for
-        return peer
+        return _normalized_ip(peer)
 
     @staticmethod
     def _trust_proxy_headers(peer: str | None) -> bool:
@@ -88,19 +114,14 @@ class ClientIpResolver:
             return False
         try:
             parsed_peer = ip_address(peer)
-            return (
-                parsed_peer.is_private
-                or parsed_peer.is_loopback
-                or parsed_peer.is_link_local
-            )
+            return parsed_peer.is_private or parsed_peer.is_loopback or parsed_peer.is_link_local
         except ValueError:
             # Starlette TestClient uses a symbolic local peer.
             return True
 
 
 class RequestLogContextFactory:
-    def __init__(self, client_ips: ClientIpResolver | None = None) -> None:
-        self._client_ips = client_ips or ClientIpResolver()
+    """Build non-personal operational context for console errors."""
 
     def create(
         self,
@@ -112,26 +133,24 @@ class RequestLogContextFactory:
         return {
             "request_id": request_id,
             "method": request.method,
-            "path": request.url.path,
             "status_code": status_code,
             "duration_ms": duration_ms,
-            "client": None,
-            "client_ip": self._client_ips.resolve(request),
-            "forwarded_for": None,
-            "user_agent": request.headers.get("user-agent"),
-            "query_string": redact_query_string(request.url.query),
         }
 
 
 _request_log_policy = RequestLogPolicy()
 _client_ip_resolver = ClientIpResolver()
-_request_contexts = RequestLogContextFactory(_client_ip_resolver)
+_request_contexts = RequestLogContextFactory()
 
 
 def should_log_request(
     path: str, status_code: int, failure: Exception | None = None
 ) -> bool:
     return _request_log_policy.should_log(path, status_code, failure)
+
+
+def security_signal_for_request(path: str, status_code: int) -> str | None:
+    return _request_log_policy.signal_for(path, status_code)
 
 
 def client_ip_from_request(request: Request) -> str | None:
@@ -142,8 +161,6 @@ def _request_log_context(
     request: Request, request_id: str, status_code: int, duration_ms: float
 ) -> dict[str, object | None]:
     return _request_contexts.create(request, request_id, status_code, duration_ms)
-
-
 
 
 class CsrfOriginMiddleware(BaseHTTPMiddleware):
@@ -199,10 +216,8 @@ class IpBlockMiddleware(BaseHTTPMiddleware):
             with SessionLocal() as db:
                 block = find_active_ip_block(db, client_ip)
         except Exception:
-            # Production fails closed so a database outage cannot become an IP
-            # block bypass. Development remains fail-open to keep local schema
-            # setup and migration troubleshooting possible.
-            logger.exception("ip block middleware lookup failed", extra={"client_ip": client_ip})
+            # Do not copy the client IP into console/container logs.
+            logger.exception("ip block middleware lookup failed")
             if settings.is_production:
                 return JSONResponse(
                     status_code=503,
@@ -228,10 +243,10 @@ class IpBlockMiddleware(BaseHTTPMiddleware):
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Add request IDs and persist actionable request/exception logs."""
+    """Emit operational errors and minimal, purpose-bound IP-ban signals."""
 
     async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[override]
-        request_id = request.headers.get("x-request-id") or uuid4().hex
+        request_id = uuid4().hex
         started = time.perf_counter()
         response: Response | None = None
         failure: Exception | None = None
@@ -246,14 +261,19 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             status_code = response.status_code if response is not None else 500
             if response is not None:
                 response.headers["X-Request-ID"] = request_id
-            context = _request_log_context(request, request_id, status_code, duration_ms)
+
             if failure is not None:
+                # The request boundary intentionally avoids exception text and
+                # tracebacks: framework errors may contain submitted values.
                 logger.error(
                     "request failed",
-                    extra=context,
-                    exc_info=(type(failure), failure, failure.__traceback__),
+                    extra=_request_log_context(request, request_id, status_code, duration_ms),
                 )
-            elif should_log_request(request.url.path, status_code):
-                # Readiness/liveness probes are intentionally excluded from the
-                # persisted system log. Failed checks remain visible.
-                logger.info("request completed", extra=context)
+            else:
+                signal = security_signal_for_request(request.url.path, status_code)
+                client_ip = client_ip_from_request(request) if signal else None
+                if signal and client_ip:
+                    security_logger.warning(
+                        "security event",
+                        extra={"security_signal": signal, "client_ip": client_ip},
+                    )

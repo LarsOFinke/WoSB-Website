@@ -101,17 +101,16 @@ test('webhook editor offers compact subscriptions and repository template autofi
   assert.ok(stylesSource.includes('.webhook-editor-backdrop'))
 })
 
-test('system logs use a dedicated manageable panel and defer the dense security dashboard', () => {
+test('IP-ban candidates use a dedicated purpose-limited panel without raw request logs', () => {
   assert.ok(adminSource.includes('<SystemLogPanel'))
-  for (const className of ['staff-log-summary-strip', 'staff-log-list', 'staff-log-entry-details', 'staff-log-security-disclosure']) {
-    assert.ok(systemLogSource.includes(className), className)
-    assert.ok(stylesSource.includes(`.${className}`), `${className} CSS`)
-  }
-  assert.ok(systemLogSource.includes(':aria-expanded="expandedLogId === entry.id"'))
-  assert.ok(systemLogSource.includes('v-model="logIncludeBlocked"'))
-  assert.ok(systemLogSource.includes('deleteFilteredLogs'))
-  assert.ok(systemLogSource.includes('deleteLogEntry'))
-  assert.ok(!systemLogSource.includes('<table class="security-table staff-log-table">'))
+  assert.ok(systemLogSource.includes('security-privacy-notice'))
+  assert.ok(systemLogSource.includes('<SecurityLogDashboard'))
+  assert.ok(stylesSource.includes('.security-privacy-notice'))
+  assert.ok(!systemLogSource.includes('staff-log-list'))
+  assert.ok(!systemLogSource.includes('expandedLogId'))
+  assert.ok(!systemLogSource.includes('logIncludeBlocked'))
+  assert.ok(!systemLogSource.includes('deleteFilteredLogs'))
+  assert.ok(!systemLogSource.includes('deleteLogEntry'))
 })
 
 test('all staff routes share one stable grouped navigation shell', () => {

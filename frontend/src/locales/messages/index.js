@@ -6,6 +6,7 @@ import { baseMessages } from './base.js'
 import { backupManagementMessages } from './backupManagement.js'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules.js'
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences.js'
+import { buildVotingRolesAndSearchMessages } from './buildVotingRolesAndSearch.js'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats.js'
 import { dateFieldFixMessages } from './dateFieldFixes.js'
 import { fleetCalendarMessages } from './fleetCalendar.js'
@@ -45,6 +46,7 @@ const messageLayers = [
   dateFieldFixMessages,
   buildDesignerEquipmentRulesMessages,
   buildEditingAndPreferencesMessages,
+  buildVotingRolesAndSearchMessages,
   backupManagementMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,

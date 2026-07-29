@@ -8,7 +8,7 @@ export const adminDashboardMessages = {
     admin: {
       tabs: {
         registrations: 'Access review',
-        logs: 'System logs',
+        logs: 'IP-ban candidates',
       },
       registrations: {
         title: 'Access review',
@@ -36,25 +36,7 @@ export const adminDashboardMessages = {
           rejected: 'Rejected',
         },
       },
-      logs: {
-        title: 'System logs',
-        subtitle: 'Inspect persisted request and application logs directly from the admin dashboard.',
-        summary: '{count} log entries',
-        total: 'Total logs',
-        warnings: 'Warnings',
-        errors: 'Errors',
-        slowRequests: 'Slow requests',
-        dashboardHint: 'Persisted application/request events.',
-        errorHint: 'Errors and critical entries.',
-        slowHint: 'Requests at or above 750 ms.',
-        loadError: 'Logs could not be loaded.',
-        loading: 'Loading logs ...',
-        empty: 'No matching logs found.',
-        levelAll: 'All levels',
-        pathPlaceholder: 'Filter by path, e.g. /api/auth',
-        ipPlaceholder: 'Filter by IP address',
-        requestId: 'Request ID',
-      },
+      logs: { title: 'IP-ban candidates', subtitle: 'Review minimal security signals solely to decide whether an IP should be blocked.', summary: '{count} security signals', dashboardHint: 'Aggregated ban-relevant signal count.', errorHint: 'Elevated or critical ban candidates.', slowHint: 'Unique candidate IP addresses.', loadError: 'IP-ban candidates could not be loaded.', loading: 'Loading IP-ban candidates ...', empty: 'No matching IP-ban candidates.' },
     },
   },
   de: {
@@ -66,7 +48,7 @@ export const adminDashboardMessages = {
     admin: {
       tabs: {
         registrations: 'Zugangsprüfung',
-        logs: 'Systemlogs',
+        logs: 'IP-Sperrkandidaten',
       },
       registrations: {
         title: 'Zugangsprüfung',
@@ -94,45 +76,27 @@ export const adminDashboardMessages = {
           rejected: 'Abgelehnt',
         },
       },
-      logs: {
-        title: 'Systemlogs',
-        subtitle: 'Persistierte Request- und Applikationslogs direkt im Admin-Dashboard prüfen.',
-        summary: '{count} Logeinträge',
-        total: 'Logs gesamt',
-        warnings: 'Warnungen',
-        errors: 'Fehler',
-        slowRequests: 'Langsame Requests',
-        dashboardHint: 'Persistierte App-/Request-Ereignisse.',
-        errorHint: 'Fehler und kritische Einträge.',
-        slowHint: 'Requests ab 750 ms.',
-        loadError: 'Logs konnten nicht geladen werden.',
-        loading: 'Logs werden geladen ...',
-        empty: 'Keine passenden Logs gefunden.',
-        levelAll: 'Alle Level',
-        pathPlaceholder: 'Nach Pfad filtern, z. B. /api/auth',
-        ipPlaceholder: 'Nach IP-Adresse filtern',
-        requestId: 'Request-ID',
-      },
+      logs: { title: 'IP-Sperrkandidaten', subtitle: 'Minimale Sicherheitssignale ausschließlich für die Entscheidung über eine IP-Sperre prüfen.', summary: '{count} Sicherheitssignale', dashboardHint: 'Aggregierte Anzahl sperrrelevanter Signale.', errorHint: 'Erhöhte oder kritische Sperrkandidaten.', slowHint: 'Eindeutige IP-Sperrkandidaten.', loadError: 'IP-Sperrkandidaten konnten nicht geladen werden.', loading: 'IP-Sperrkandidaten werden geladen ...', empty: 'Keine passenden IP-Sperrkandidaten.' },
     },
   },
   fr: {
     auth: { registerPendingTitle: 'Demande d’accès reçue', registerRequestId: 'Demande n°{id}', registerSuccess: 'Votre inscription attend la validation admin. Vous pourrez vous connecter après acceptation.' },
-    admin: { tabs: { registrations: 'Validation d’accès', logs: 'Journaux système' }, registrations: { title: 'Validation d’accès', subtitle: 'Les nouvelles inscriptions sont mises en attente et ne deviennent des comptes qu’après validation.', dashboardLabel: 'Demandes ouvertes', dashboardHint: 'Inscriptions en attente de vérification.', summaryOne: '1 demande d’accès', summaryMany: '{count} demandes d’accès', loading: 'Chargement des demandes ...', loadError: 'Impossible de charger les demandes.', empty: 'Aucune demande trouvée.', approve: 'Approuver le compte', reject: 'Refuser', approveError: 'Impossible d’approuver l’inscription.', rejectError: 'Impossible de refuser l’inscription.', noteLabel: 'Note de décision', notePlaceholder: 'Note interne facultative', fleetApplication: 'Candidature de flotte', externalFleet: 'Note de flotte externe', decisionNote: 'Note de décision', status: { all: 'Toutes les demandes', pending: 'En attente', approved: 'Approuvée', rejected: 'Refusée' } }, logs: { title: 'Journaux système', subtitle: 'Consultez les journaux applicatifs et requêtes persistés.', summary: '{count} entrées de journal', total: 'Total journaux', warnings: 'Avertissements', errors: 'Erreurs', slowRequests: 'Requêtes lentes', dashboardHint: 'Événements applicatifs/requêtes persistés.', errorHint: 'Erreurs et entrées critiques.', slowHint: 'Requêtes à partir de 750 ms.', loadError: 'Impossible de charger les journaux.', loading: 'Chargement des journaux ...', empty: 'Aucun journal correspondant.', levelAll: 'Tous les niveaux', pathPlaceholder: 'Filtrer par chemin, p. ex. /api/auth', ipPlaceholder: 'Filtrer par adresse IP', requestId: 'ID de requête' } },
+    admin: { tabs: { registrations: 'Validation d’accès', logs: 'Candidats au blocage IP' }, registrations: { title: 'Validation d’accès', subtitle: 'Les nouvelles inscriptions sont mises en attente et ne deviennent des comptes qu’après validation.', dashboardLabel: 'Demandes ouvertes', dashboardHint: 'Inscriptions en attente de vérification.', summaryOne: '1 demande d’accès', summaryMany: '{count} demandes d’accès', loading: 'Chargement des demandes ...', loadError: 'Impossible de charger les demandes.', empty: 'Aucune demande trouvée.', approve: 'Approuver le compte', reject: 'Refuser', approveError: 'Impossible d’approuver l’inscription.', rejectError: 'Impossible de refuser l’inscription.', noteLabel: 'Note de décision', notePlaceholder: 'Note interne facultative', fleetApplication: 'Candidature de flotte', externalFleet: 'Note de flotte externe', decisionNote: 'Note de décision', status: { all: 'Toutes les demandes', pending: 'En attente', approved: 'Approuvée', rejected: 'Refusée' } }, logs: { title: 'Candidats au blocage IP', subtitle: 'Examinez uniquement les signaux de sécurité minimaux utiles à une décision de blocage IP.', summary: '{count} signaux de sécurité', dashboardHint: 'Nombre agrégé de signaux utiles au blocage.', errorHint: 'Candidats au niveau élevé ou critique.', slowHint: 'Adresses IP candidates uniques.', loadError: 'Impossible de charger les candidats au blocage.', loading: 'Chargement des candidats au blocage ...', empty: 'Aucun candidat correspondant.' } },
   },
   es: {
     auth: { registerPendingTitle: 'Solicitud de acceso recibida', registerRequestId: 'Solicitud #{id}', registerSuccess: 'Tu registro espera aprobación de administración. Podrás iniciar sesión cuando se acepte.' },
-    admin: { tabs: { registrations: 'Revisión de acceso', logs: 'Logs del sistema' }, registrations: { title: 'Revisión de acceso', subtitle: 'Los registros nuevos quedan en espera y solo se convierten en cuentas tras la aprobación.', dashboardLabel: 'Solicitudes abiertas', dashboardHint: 'Registros pendientes de revisión.', summaryOne: '1 solicitud de acceso', summaryMany: '{count} solicitudes de acceso', loading: 'Cargando solicitudes ...', loadError: 'No se pudieron cargar las solicitudes.', empty: 'No se encontraron solicitudes.', approve: 'Aprobar cuenta', reject: 'Rechazar', approveError: 'No se pudo aprobar el registro.', rejectError: 'No se pudo rechazar el registro.', noteLabel: 'Nota de decisión', notePlaceholder: 'Nota interna opcional', fleetApplication: 'Solicitud de flota', externalFleet: 'Nota de flota externa', decisionNote: 'Nota de decisión', status: { all: 'Todas las solicitudes', pending: 'En revisión', approved: 'Aprobada', rejected: 'Rechazada' } }, logs: { title: 'Logs del sistema', subtitle: 'Revisa logs persistidos de solicitudes y aplicación.', summary: '{count} entradas de log', total: 'Logs totales', warnings: 'Advertencias', errors: 'Errores', slowRequests: 'Solicitudes lentas', dashboardHint: 'Eventos persistidos de app/solicitudes.', errorHint: 'Errores y entradas críticas.', slowHint: 'Solicitudes desde 750 ms.', loadError: 'No se pudieron cargar los logs.', loading: 'Cargando logs ...', empty: 'No hay logs coincidentes.', levelAll: 'Todos los niveles', pathPlaceholder: 'Filtrar por ruta, p. ej. /api/auth', ipPlaceholder: 'Filtrar por dirección IP', requestId: 'ID de solicitud' } },
+    admin: { tabs: { registrations: 'Revisión de acceso', logs: 'Candidatos de bloqueo IP' }, registrations: { title: 'Revisión de acceso', subtitle: 'Los registros nuevos quedan en espera y solo se convierten en cuentas tras la aprobación.', dashboardLabel: 'Solicitudes abiertas', dashboardHint: 'Registros pendientes de revisión.', summaryOne: '1 solicitud de acceso', summaryMany: '{count} solicitudes de acceso', loading: 'Cargando solicitudes ...', loadError: 'No se pudieron cargar las solicitudes.', empty: 'No se encontraron solicitudes.', approve: 'Aprobar cuenta', reject: 'Rechazar', approveError: 'No se pudo aprobar el registro.', rejectError: 'No se pudo rechazar el registro.', noteLabel: 'Nota de decisión', notePlaceholder: 'Nota interna opcional', fleetApplication: 'Solicitud de flota', externalFleet: 'Nota de flota externa', decisionNote: 'Nota de decisión', status: { all: 'Todas las solicitudes', pending: 'En revisión', approved: 'Aprobada', rejected: 'Rechazada' } }, logs: { title: 'Candidatos de bloqueo IP', subtitle: 'Revisa solo señales mínimas de seguridad para decidir un bloqueo IP.', summary: '{count} señales de seguridad', dashboardHint: 'Recuento agregado de señales relevantes para bloqueo.', errorHint: 'Candidatos elevados o críticos.', slowHint: 'Direcciones IP candidatas únicas.', loadError: 'No se pudieron cargar los candidatos de bloqueo.', loading: 'Cargando candidatos de bloqueo ...', empty: 'No hay candidatos coincidentes.' } },
   },
   pt: {
     auth: { registerPendingTitle: 'Pedido de acesso recebido', registerRequestId: 'Pedido #{id}', registerSuccess: 'O seu registo aguarda aprovação de admin. Poderá entrar depois de aceite.' },
-    admin: { tabs: { registrations: 'Revisão de acesso', logs: 'Logs do sistema' }, registrations: { title: 'Revisão de acesso', subtitle: 'Novos registos ficam pendentes e só viram contas após aprovação.', dashboardLabel: 'Pedidos abertos', dashboardHint: 'Registos à espera de revisão.', summaryOne: '1 pedido de acesso', summaryMany: '{count} pedidos de acesso', loading: 'A carregar pedidos ...', loadError: 'Não foi possível carregar pedidos.', empty: 'Nenhum pedido encontrado.', approve: 'Aprovar conta', reject: 'Rejeitar', approveError: 'Não foi possível aprovar o registo.', rejectError: 'Não foi possível rejeitar o registo.', noteLabel: 'Nota de decisão', notePlaceholder: 'Nota interna opcional', fleetApplication: 'Candidatura de frota', externalFleet: 'Nota de frota externa', decisionNote: 'Nota de decisão', status: { all: 'Todos os pedidos', pending: 'Em revisão', approved: 'Aprovado', rejected: 'Rejeitado' } }, logs: { title: 'Logs do sistema', subtitle: 'Analise logs persistidos de pedidos e aplicação.', summary: '{count} entradas de log', total: 'Total de logs', warnings: 'Avisos', errors: 'Erros', slowRequests: 'Pedidos lentos', dashboardHint: 'Eventos persistidos da app/pedidos.', errorHint: 'Erros e entradas críticas.', slowHint: 'Pedidos a partir de 750 ms.', loadError: 'Não foi possível carregar logs.', loading: 'A carregar logs ...', empty: 'Nenhum log correspondente.', levelAll: 'Todos os níveis', pathPlaceholder: 'Filtrar por caminho, ex. /api/auth', ipPlaceholder: 'Filtrar por endereço IP', requestId: 'ID do pedido' } },
+    admin: { tabs: { registrations: 'Revisão de acesso', logs: 'Candidatos a bloqueio de IP' }, registrations: { title: 'Revisão de acesso', subtitle: 'Novos registos ficam pendentes e só viram contas após aprovação.', dashboardLabel: 'Pedidos abertos', dashboardHint: 'Registos à espera de revisão.', summaryOne: '1 pedido de acesso', summaryMany: '{count} pedidos de acesso', loading: 'A carregar pedidos ...', loadError: 'Não foi possível carregar pedidos.', empty: 'Nenhum pedido encontrado.', approve: 'Aprovar conta', reject: 'Rejeitar', approveError: 'Não foi possível aprovar o registo.', rejectError: 'Não foi possível rejeitar o registo.', noteLabel: 'Nota de decisão', notePlaceholder: 'Nota interna opcional', fleetApplication: 'Candidatura de frota', externalFleet: 'Nota de frota externa', decisionNote: 'Nota de decisão', status: { all: 'Todos os pedidos', pending: 'Em revisão', approved: 'Aprovado', rejected: 'Rejeitado' } }, logs: { title: 'Candidatos a bloqueio de IP', subtitle: 'Analise apenas sinais mínimos de segurança para decidir um bloqueio de IP.', summary: '{count} sinais de segurança', dashboardHint: 'Contagem agregada de sinais relevantes para bloqueio.', errorHint: 'Candidatos elevados ou críticos.', slowHint: 'Endereços IP candidatos únicos.', loadError: 'Não foi possível carregar os candidatos a bloqueio.', loading: 'A carregar candidatos a bloqueio ...', empty: 'Nenhum candidato correspondente.' } },
   },
   ru: {
     auth: { registerPendingTitle: 'Запрос доступа получен', registerRequestId: 'Запрос #{id}', registerSuccess: 'Ваша регистрация ожидает одобрения администратора. Войти можно после принятия запроса.' },
-    admin: { tabs: { registrations: 'Проверка доступа', logs: 'Системные логи' }, registrations: { title: 'Проверка доступа', subtitle: 'Новые регистрации ожидают решения и становятся аккаунтами только после одобрения.', dashboardLabel: 'Открытые запросы', dashboardHint: 'Регистрации, ожидающие проверки.', summaryOne: '1 запрос доступа', summaryMany: '{count} запросов доступа', loading: 'Загрузка запросов ...', loadError: 'Не удалось загрузить запросы.', empty: 'Запросы не найдены.', approve: 'Одобрить аккаунт', reject: 'Отклонить', approveError: 'Не удалось одобрить регистрацию.', rejectError: 'Не удалось отклонить регистрацию.', noteLabel: 'Заметка решения', notePlaceholder: 'Необязательная внутренняя заметка', fleetApplication: 'Заявка во флот', externalFleet: 'Заметка о внешнем флоте', decisionNote: 'Заметка решения', status: { all: 'Все запросы', pending: 'Ожидает проверки', approved: 'Одобрен', rejected: 'Отклонен' } }, logs: { title: 'Системные логи', subtitle: 'Просмотр сохраненных логов запросов и приложения.', summary: '{count} записей лога', total: 'Всего логов', warnings: 'Предупреждения', errors: 'Ошибки', slowRequests: 'Медленные запросы', dashboardHint: 'Сохраненные события приложения/запросов.', errorHint: 'Ошибки и критические записи.', slowHint: 'Запросы от 750 мс.', loadError: 'Не удалось загрузить логи.', loading: 'Загрузка логов ...', empty: 'Подходящих логов нет.', levelAll: 'Все уровни', pathPlaceholder: 'Фильтр по пути, напр. /api/auth', ipPlaceholder: 'Фильтр по IP-адресу', requestId: 'ID запроса' } },
+    admin: { tabs: { registrations: 'Проверка доступа', logs: 'Кандидаты на блокировку IP' }, registrations: { title: 'Проверка доступа', subtitle: 'Новые регистрации ожидают решения и становятся аккаунтами только после одобрения.', dashboardLabel: 'Открытые запросы', dashboardHint: 'Регистрации, ожидающие проверки.', summaryOne: '1 запрос доступа', summaryMany: '{count} запросов доступа', loading: 'Загрузка запросов ...', loadError: 'Не удалось загрузить запросы.', empty: 'Запросы не найдены.', approve: 'Одобрить аккаунт', reject: 'Отклонить', approveError: 'Не удалось одобрить регистрацию.', rejectError: 'Не удалось отклонить регистрацию.', noteLabel: 'Заметка решения', notePlaceholder: 'Необязательная внутренняя заметка', fleetApplication: 'Заявка во флот', externalFleet: 'Заметка о внешнем флоте', decisionNote: 'Заметка решения', status: { all: 'Все запросы', pending: 'Ожидает проверки', approved: 'Одобрен', rejected: 'Отклонен' } }, logs: { title: 'Кандидаты на блокировку IP', subtitle: 'Просматривайте только минимальные сигналы безопасности для решения о блокировке IP.', summary: 'Сигналов безопасности: {count}', dashboardHint: 'Агрегированное число значимых для блокировки сигналов.', errorHint: 'Кандидаты повышенного или критического уровня.', slowHint: 'Уникальные IP-кандидаты.', loadError: 'Не удалось загрузить кандидатов на блокировку.', loading: 'Загрузка кандидатов на блокировку ...', empty: 'Подходящих кандидатов нет.' } },
   },
   cn: {
     auth: { registerPendingTitle: '已收到访问申请', registerRequestId: '申请 #{id}', registerSuccess: '你的注册正在等待管理员批准。申请通过后即可登录。' },
-    admin: { tabs: { registrations: '访问审核', logs: '系统日志' }, registrations: { title: '访问审核', subtitle: '新注册会先进入待审状态，批准后才会创建正式账号。', dashboardLabel: '待处理访问申请', dashboardHint: '等待审核的注册。', summaryOne: '1 个访问申请', summaryMany: '{count} 个访问申请', loading: '正在加载申请 ...', loadError: '无法加载访问申请。', empty: '未找到访问申请。', approve: '批准账号', reject: '拒绝', approveError: '无法批准注册。', rejectError: '无法拒绝注册。', noteLabel: '决定备注', notePlaceholder: '可选内部备注', fleetApplication: '舰队申请', externalFleet: '外部舰队备注', decisionNote: '决定备注', status: { all: '所有申请', pending: '等待审核', approved: '已批准', rejected: '已拒绝' } }, logs: { title: '系统日志', subtitle: '在管理员仪表盘中查看已保存的请求和应用日志。', summary: '{count} 条日志', total: '日志总数', warnings: '警告', errors: '错误', slowRequests: '慢请求', dashboardHint: '已保存的应用/请求事件。', errorHint: '错误和严重日志。', slowHint: '750 ms 以上请求。', loadError: '无法加载日志。', loading: '正在加载日志 ...', empty: '没有匹配的日志。', levelAll: '所有级别', pathPlaceholder: '按路径过滤，例如 /api/auth', ipPlaceholder: '按 IP 地址过滤', requestId: '请求 ID' } },
+    admin: { tabs: { registrations: '访问审核', logs: 'IP 封禁候选' }, registrations: { title: '访问审核', subtitle: '新注册会先进入待审状态，批准后才会创建正式账号。', dashboardLabel: '待处理访问申请', dashboardHint: '等待审核的注册。', summaryOne: '1 个访问申请', summaryMany: '{count} 个访问申请', loading: '正在加载申请 ...', loadError: '无法加载访问申请。', empty: '未找到访问申请。', approve: '批准账号', reject: '拒绝', approveError: '无法批准注册。', rejectError: '无法拒绝注册。', noteLabel: '决定备注', notePlaceholder: '可选内部备注', fleetApplication: '舰队申请', externalFleet: '外部舰队备注', decisionNote: '决定备注', status: { all: '所有申请', pending: '等待审核', approved: '已批准', rejected: '已拒绝' } }, logs: { title: 'IP 封禁候选', subtitle: '仅查看用于决定是否封禁 IP 的最小化安全信号。', summary: '{count} 个安全信号', dashboardHint: '与封禁相关的聚合信号数量。', errorHint: '高风险或严重候选。', slowHint: '唯一候选 IP 地址。', loadError: '无法加载封禁候选。', loading: '正在加载封禁候选 ...', empty: '没有匹配的封禁候选。' } },
   },
 }

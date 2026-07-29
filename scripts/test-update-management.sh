@@ -57,7 +57,7 @@ from app.core.config import BACKEND_ROOT
 from app.db.schema_health import expected_alembic_heads
 
 assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
-assert expected_alembic_heads() == frozenset({"0005_webhook_security"})
+assert expected_alembic_heads() == frozenset({"0007_build_votes_and_roles"})
 PY_SCHEMA_HEAD
   )
 )

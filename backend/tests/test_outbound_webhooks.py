@@ -403,6 +403,7 @@ def test_webhook_event_catalog_has_stable_route_family_for_every_domain_event() 
         "forum.thread.": ("forum", "forum_thread"),
         "forum.post.": ("forum", "forum_post"),
         "fleet.": ("fleets", "fleet"),
+        "system.update.": ("admin", "system_update"),
     }
     for event_type, _, _ in EVENT_CATALOG:
         assert any(event_type == prefix or event_type.startswith(prefix) for prefix in route_families), event_type

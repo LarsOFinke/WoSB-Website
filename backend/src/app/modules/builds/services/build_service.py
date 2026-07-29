@@ -1,11 +1,13 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.builds.models.build import Build
 from app.modules.builds.models.build_classification import BuildClassification
 from app.modules.builds.models.build_slot import BuildSlot
+from app.modules.builds.models.build_role import BuildRole
+from app.modules.builds.models.build_vote import BuildVote
 from app.modules.builds.schemas.build_create import BuildCreate
-from app.modules.builds.schemas.constants import BUILD_CLASSIFICATION_VALUES, BUILD_TYPE_VALUES
+from app.modules.builds.schemas.constants import BUILD_CLASSIFICATION_VALUES
 from app.modules.builds.services.build_validation import (
     BuildValidationError,
     validate_and_prepare_build,
@@ -21,14 +23,63 @@ def _build_query():
         selectinload(Build.classifications),
     )
 
+def _decorate_builds(
+    db: Session,
+    builds: list[Build],
+    viewer_id: int | None = None,
+) -> list[Build]:
+    if not builds:
+        return builds
+    role_labels = {
+        row.slug: row.label
+        for row in db.scalars(select(BuildRole)).all()
+    }
+    vote_counts = dict(
+        db.execute(
+            select(BuildVote.build_id, func.count(BuildVote.id))
+            .where(BuildVote.build_id.in_([build.id for build in builds]))
+            .group_by(BuildVote.build_id)
+        ).all()
+    )
+    voted_build_ids: set[int] = set()
+    if viewer_id is not None:
+        voted_build_ids = set(
+            db.scalars(
+                select(BuildVote.build_id).where(
+                    BuildVote.user_id == viewer_id,
+                    BuildVote.build_id.in_([build.id for build in builds]),
+                )
+            ).all()
+        )
+    for build in builds:
+        build._build_role_label = role_labels.get(
+            build.build_type,
+            build.build_type.replace("_", " ").title(),
+        )
+        build._upvote_count = int(vote_counts.get(build.id, 0))
+        build._viewer_has_upvoted = build.id in voted_build_ids
+    return builds
+
+
 def list_builds(
     db: Session,
     search: str | None = None,
     build_type: str | None = None,
     classification: str | None = None,
     owner_id: int | None = None,
+    viewer_id: int | None = None,
 ) -> list[Build]:
-    statement = _build_query().join(Build.ship).order_by(Build.created_at.desc(), Build.id.desc())
+    vote_count = (
+        select(func.count(BuildVote.id))
+        .where(BuildVote.build_id == Build.id)
+        .correlate(Build)
+        .scalar_subquery()
+    )
+    statement = _build_query().join(Build.ship).order_by(
+        vote_count.desc(),
+        Build.created_at.desc(),
+        Build.id.desc(),
+    )
     if search:
         like = f"%{search.strip()}%"
         statement = statement.where(
@@ -37,9 +88,7 @@ def list_builds(
             | Build.build_type.ilike(like)
         )
     if build_type:
-        normalized_type = build_type.strip().lower()
-        if normalized_type in BUILD_TYPE_VALUES:
-            statement = statement.where(Build.build_type == normalized_type)
+        statement = statement.where(Build.build_type == build_type.strip().lower())
     if classification:
         normalized_classification = classification.strip().lower()
         if normalized_classification in BUILD_CLASSIFICATION_VALUES:
@@ -48,10 +97,15 @@ def list_builds(
             )
     if owner_id is not None:
         statement = statement.where(Build.owner_id == owner_id)
-    return list(db.scalars(statement).unique().all())
+    rows = list(db.scalars(statement).unique().all())
+    return _decorate_builds(db, rows, viewer_id)
 
-def get_build(db: Session, build_id: int) -> Build | None:
-    return db.scalar(_build_query().where(Build.id == build_id))
+
+def get_build(db: Session, build_id: int, viewer_id: int | None = None) -> Build | None:
+    build = db.scalar(_build_query().where(Build.id == build_id))
+    if build is None:
+        return None
+    return _decorate_builds(db, [build], viewer_id)[0]
 
 def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildSlot]) -> None:
     db_build.build_name = build.build_name
@@ -73,7 +127,7 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
     _apply_build_payload(db_build, build, slots)
     db.add(db_build)
     db.commit()
-    return get_build(db, db_build.id) or db_build
+    return get_build(db, db_build.id, viewer_id=owner_id) or db_build
 
 def update_user_build(
     db: Session, build_id: int, user_id: int, build: BuildCreate
@@ -88,7 +142,7 @@ def update_user_build(
     _apply_build_payload(db_build, build, slots)
     db.add(db_build)
     db.commit()
-    return get_build(db, db_build.id) or db_build
+    return get_build(db, db_build.id, viewer_id=user_id) or db_build
 
 def delete_build(db: Session, build_id: int) -> bool:
     build = get_build(db, build_id)
@@ -111,6 +165,7 @@ def list_user_builds(
         build_type=build_type,
         classification=classification,
         owner_id=user_id,
+        viewer_id=user_id,
     )
 
 def delete_user_build(db: Session, build_id: int, user_id: int) -> bool:

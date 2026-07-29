@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.permissions.services.role_service import ensure_role_catalog
+from app.modules.builds.services.build_role_service import ensure_default_build_roles
 from app.bootstrap.admin_user import seed_admin_user
 from app.bootstrap.catalog_loader import load_master_data_catalog
 
@@ -13,6 +14,7 @@ def seed_system_catalog(db: Session) -> None:
     """Seed the minimum operational records required by a fresh installation."""
 
     ensure_role_catalog(db)
+    ensure_default_build_roles(db)
     db.commit()
     seed_admin_user(db)
     seed_fleets(db)

@@ -1,5 +1,7 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+import { filterOptionGroups } from '@/modules/builds/domain/optionSearch'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -9,6 +11,9 @@ const props = defineProps({
   ariaLabel: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
   allowEmpty: { type: Boolean, default: true },
+  searchable: { type: Boolean, default: false },
+  searchPlaceholder: { type: String, default: '' },
+  noResultsText: { type: String, default: '' },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -16,25 +21,34 @@ const root = ref(null)
 const menu = ref(null)
 const open = ref(false)
 const activeIndex = ref(-1)
+const searchQuery = ref('')
+const searchInput = ref(null)
 
 const normalizedGroups = computed(() => {
   if (props.groups.length) return props.groups
   return [{ key: 'default', label: '', options: props.options }]
 })
+const filteredGroups = computed(() => filterOptionGroups(normalizedGroups.value, searchQuery.value))
 const flatOptions = computed(() => normalizedGroups.value.flatMap((group) => group.options || []))
+const filteredOptions = computed(() => filteredGroups.value.flatMap((group) => group.options || []))
 const selected = computed(() => flatOptions.value.find((option) => option.value === props.modelValue) || null)
-const enabledOptions = computed(() => flatOptions.value.filter((option) => !option.disabled))
+const enabledOptions = computed(() => filteredOptions.value.filter((option) => !option.disabled))
 
 function openMenu() {
   if (props.disabled) return
   open.value = true
   const selectedIndex = enabledOptions.value.findIndex((option) => option.value === props.modelValue)
   activeIndex.value = selectedIndex >= 0 ? selectedIndex : 0
-  nextTick(() => menu.value?.focus({ preventScroll: true }))
+  searchQuery.value = ''
+  nextTick(() => {
+    if (props.searchable) searchInput.value?.focus({ preventScroll: true })
+    else menu.value?.focus({ preventScroll: true })
+  })
 }
 
 function closeMenu({ restoreFocus = false } = {}) {
   open.value = false
+  searchQuery.value = ''
   if (restoreFocus) root.value?.querySelector('.build-option-picker-trigger')?.focus()
 }
 
@@ -71,6 +85,8 @@ function onTriggerKeydown(event) {
 }
 
 function onMenuKeydown(event) {
+  const fromSearch = event.target === searchInput.value
+  if (fromSearch && !['ArrowDown', 'ArrowUp', 'Escape', 'Tab'].includes(event.key)) return
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
     moveActive(event.key === 'ArrowDown' ? 1 : -1)
@@ -92,6 +108,8 @@ function onMenuKeydown(event) {
 function onDocumentPointerDown(event) {
   if (open.value && root.value && !root.value.contains(event.target)) closeMenu()
 }
+
+watch(searchQuery, () => { activeIndex.value = enabledOptions.value.length ? 0 : -1 })
 
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown))
 onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
@@ -126,6 +144,17 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       :aria-label="ariaLabel"
       @keydown="onMenuKeydown"
     >
+      <label v-if="searchable" class="build-option-picker-search">
+        <span class="sr-only">{{ searchPlaceholder }}</span>
+        <input
+          ref="searchInput"
+          v-model="searchQuery"
+          type="search"
+          autocomplete="off"
+          :placeholder="searchPlaceholder"
+          @keydown.stop="onMenuKeydown"
+        />
+      </label>
       <button
         v-if="allowEmpty"
         type="button"
@@ -137,7 +166,9 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
         <span class="build-option-picker-option-copy"><strong>{{ placeholder }}</strong></span>
       </button>
 
-      <section v-for="group in normalizedGroups" :key="group.key" class="build-option-picker-group">
+      <p v-if="searchable && filteredGroups.length === 0" class="build-option-picker-empty">{{ noResultsText }}</p>
+
+      <section v-for="group in filteredGroups" :key="group.key" class="build-option-picker-group">
         <p v-if="group.label" class="build-option-picker-group-label">{{ group.label }}</p>
         <button
           v-for="option in group.options"

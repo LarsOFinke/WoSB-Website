@@ -79,7 +79,7 @@ def submit_registration_request(db: Session, payload: RegisterRequest) -> Regist
     db.add(request)
     db.commit()
     db.refresh(request)
-    logger.info("registration request submitted", extra={"path": "/api/auth/register"})
+    logger.info("registration request submitted")
     return request
 
 
@@ -159,7 +159,7 @@ def approve_registration_request(db: Session, request_id: int, reviewer: User, p
     db.add(request)
     db.commit()
     db.refresh(request)
-    logger.info("registration request approved", extra={"path": f"/api/admin/registration-requests/{request_id}/approve"})
+    logger.info("registration request approved")
     return request
 
 
@@ -177,5 +177,5 @@ def reject_registration_request(db: Session, request_id: int, reviewer: User, pa
     db.add(request)
     db.commit()
     db.refresh(request)
-    logger.info("registration request rejected", extra={"path": f"/api/admin/registration-requests/{request_id}/reject"})
+    logger.info("registration request rejected")
     return request

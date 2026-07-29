@@ -109,11 +109,15 @@ Skripte sind auf `'self'` beschränkt; dynamische Vue-Styles erfordern jedoch we
 Langfristig sollten dynamische Werte über validierte CSS-Custom-Properties oder Klassenstufen
 abgebildet werden.
 
-### Niedrig — Sicherheitslogs enthalten IP-Adresse und User-Agent
+### Behoben — Zweckgebundene IP-Sperrsignale statt Request-Logs
 
-Diese Daten sind für Missbrauchserkennung nachvollziehbar, können aber personenbezogen sein. Die
-bestehende Retention und Query-Redaktion reduzieren das Risiko. Zweck, Rechtsgrundlage,
-Zugriffskreis und Löschfrist müssen in der Datenschutzerklärung genannt werden.
+Die allgemeine persistente Request-Telemetrie wurde entfernt. Die Anwendung speichert nur noch
+IP-Adresse, UTC-Kalendertag, Tageszähler und eine grobe bannrelevante Kategorie (Scan,
+Login-Fehlschlag oder Rate-Limit). Einzelne Request-Zeitpunkte werden nicht gespeichert. Route, Query-String, User-Agent, Request-ID, Inhalte, Statusdetails und Exceptions werden
+nicht in der Datenbank gespeichert und nicht über die Admin-Webseite bereitgestellt. Signale werden
+nach sieben Tagen oder unmittelbar beim Sperren der IP gelöscht. NGINX-Access-Logs sind deaktiviert.
+Die konkrete Rechtsgrundlage, Empfängerkreis und Löschfrist müssen weiterhin in der
+Datenschutzerklärung des Betreibers genannt werden.
 
 ## Datenschutz-Datenfluss
 
@@ -121,7 +125,7 @@ Zugriffskreis und Löschfrist müssen in der Datenschutzerklärung genannt werde
 |---|---|---|---|
 | Anmeldung | Benutzername, Passworthash, Session | PostgreSQL, Browser-Cookie | PBKDF2, serverseitiges Token-Hashing, HttpOnly/Secure/SameSite |
 | Registrierung | Profilkern, optionaler Flottenantrag | Staff, PostgreSQL | Rollenprüfung, Hashentfernung nach Review, Retention |
-| Request-Telemetrie | IP, User-Agent, Route, Status | Admin-Systemlogs | Admin-only, Query-Redaktion, Retention |
+| IP-Sperrsignale | IP, UTC-Tag, grobe Signalkategorie, Tageszähler | Admin-Sperrkandidaten | Admin-only, Tagesaggregation, 7-Kalendertage-Retention, Sofortlöschung bei Sperre |
 | Inhalte/Uploads | Beiträge, Guides, Builds, Dateien | fachlich berechtigte Nutzer | MIME-/Magic-Byte-Prüfung, Quota, Zugriffsendpunkt |
 | Discord | ausgewählte Event-/Broadcast-Inhalte | konfigurierte Discord-Server | Ziel-Allowlist, verschlüsselte Tokens, Maskierung, Delivery-Retention |
 | Backup | vollständiger PostgreSQL-Dump | Backup-Server | root-Runner, SFTP, Host-Key-Pinning, SHA-256 |
@@ -139,19 +143,19 @@ Zugriffskreis und Löschfrist müssen in der Datenschutzerklärung genannt werde
 
 Für diesen Stand wurden erfolgreich ausgeführt:
 
-- 7.027 deterministische Offline-Sicherheitsinvarianten;
-- Repository-, CSS-, Workflow-YAML-, Shell- und Infrastrukturprüfungen;
-- Alembic Upgrade/Check/Downgrade/Upgrade auf einer temporären Datenbank;
-- 44 direkt betroffene Backend-Regressionstests für Webhooks, Verschlüsselung, Konfiguration,
-  Retention und Sicherheitsgrenzen sowie 29 angrenzende Build-Regeltests;
-- 99 von 100 direkt gestarteten Frontend-Unit-Tests. Der verbleibende Guide-Export-Test benötigt
-  das in der Analyseumgebung nicht installierte Paket `dompurify`.
+- 197 Backendtests aus allen 46 Testmodulen;
+- Alembic Upgrade/Check/Downgrade/Upgrade einschließlich absichtlicher Löschung der bisherigen
+  `app_logs`-Daten beim Wechsel auf tägliche IP-Sperrsignale;
+- 99 von 100 direkt gestarteten Frontend-Unit-Tests sowie alle 18 unmittelbar betroffenen
+  Datenschutz-/Staff-UI-Regressionstests;
+- Locale-Vollständigkeitsprüfung mit 2.059 Schlüsseln pro Sprache und ohne fehlende oder
+  englische Fallback-Texte in allen sieben unterstützten Sprachen;
+- 6.932 deterministische Offline-Sicherheitsinvarianten sowie Repository-, CSS-, Workflow-YAML-, Shell- und Infrastrukturprüfungen.
 
-Der vollständige Backend-Sammellauf und der npm-/Vite-Build konnten in der Sandbox nicht vollständig
-abgeschlossen werden: der Backend-Sammellauf überschritt das Ausführungszeitfenster, und es waren
-keine installierten npm-Abhängigkeiten beziehungsweise kein Paketnetz verfügbar. Die isolierten,
-direkt betroffenen Module sind grün; die neu ergänzten CI-Jobs führen die vollständigen Online- und
-Build-Prüfungen im Repository aus.
+Der einzige nicht ausführbare Frontend-Test ist der Guide-Export-Test, weil das im Repository-Archiv
+nicht installierte Paket `dompurify` in der Analyseumgebung fehlt. Ein vollständiger npm-/Vite-Build
+konnte deshalb ohne erfolgreiches `npm ci` nicht reproduziert werden; die direkt betroffenen
+Frontendtests sind grün.
 
 Reproduzierbare Einstiegspunkte:
 

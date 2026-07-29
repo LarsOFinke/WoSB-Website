@@ -15,6 +15,9 @@ class BuildRead(BuildBase):
     id: int
     owner_id: int | None = None
     is_official_template: bool = False
+    build_role_label: str
+    upvote_count: int = 0
+    has_upvoted: bool = False
     ship: ShipRead
     ship_stats: ShipStats
     created_at: datetime

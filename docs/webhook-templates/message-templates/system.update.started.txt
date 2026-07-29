@@ -1,0 +1,7 @@
+🚀 **Server Update Started**
+Mode: `{data.operation}`
+Requested by: **{data.requested_by}**
+Requested at: `{data.requested_at}`
+Status: `{data.state}`
+{data.message}
+🔗 [Open system status]({resource.url})

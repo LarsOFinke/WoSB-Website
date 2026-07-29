@@ -17,7 +17,11 @@ from app.modules.accounts.models.registration_request import (
 )
 from app.modules.accounts.schemas.user_read import UserRead
 from app.modules.accounts.schemas.user_reference_read import UserReferenceRead
-from app.modules.admin.models.app_log import AppLog
+from app.modules.admin.models.ip_block import IpBlock
+from app.modules.admin.models.security_event import (
+    SECURITY_SIGNAL_RECONNAISSANCE,
+    SecuritySignalBucket,
+)
 from app.modules.admin.models.audit_log import AuditLog
 from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
 from app.modules.privacy.models.cookie_consent import CookieConsentDecision
@@ -26,7 +30,8 @@ from main import app
 
 def _policy() -> MaintenanceSettings:
     return MaintenanceSettings(
-        app_log_retention_days=30,
+        security_event_retention_days=7,
+        inactive_ip_block_retention_days=90,
         audit_log_retention_days=365,
         webhook_delivery_retention_days=30,
         cookie_consent_retention_days=400,
@@ -49,8 +54,12 @@ def test_retention_policy_removes_only_expired_operational_and_personal_records(
         db.add(webhook)
         db.flush()
 
-        old_log = AppLog(created_at=now - timedelta(days=31), level="INFO", logger=prefix, message="old")
-        fresh_log = AppLog(created_at=now - timedelta(days=1), level="INFO", logger=prefix, message="fresh")
+        old_log = SecuritySignalBucket(day=(now - timedelta(days=8)).date(), client_ip="198.51.100.30", signal=SECURITY_SIGNAL_RECONNAISSANCE, event_count=3)
+        fresh_log = SecuritySignalBucket(day=(now - timedelta(days=1)).date(), client_ip="198.51.100.31", signal=SECURITY_SIGNAL_RECONNAISSANCE, event_count=2)
+        inactive_block = IpBlock(
+            ip_address="198.51.100.32", reason="expired", created_by_username=prefix,
+            created_at=now - timedelta(days=120), expires_at=now - timedelta(days=91),
+        )
         old_audit = AuditLog(
             created_at=now - timedelta(days=366), actor_username=prefix, actor_role="admin",
             entity_type="test", entity_id="old", action="delete", summary="old",
@@ -91,12 +100,12 @@ def test_retention_policy_removes_only_expired_operational_and_personal_records(
             created_at=now - timedelta(days=100), reviewed_at=now - timedelta(days=91), updated_at=now,
         )
         db.add_all([
-            old_log, fresh_log, old_audit, fresh_audit, old_delivery, fresh_delivery,
+            old_log, fresh_log, inactive_block, old_audit, fresh_audit, old_delivery, fresh_delivery,
             old_consent, fresh_consent, old_pending, fresh_pending, old_reviewed,
         ])
         db.commit()
         ids = {
-            "old_log": old_log.id, "fresh_log": fresh_log.id,
+            "old_log": old_log.id, "fresh_log": fresh_log.id, "inactive_block": inactive_block.id,
             "old_audit": old_audit.id, "fresh_audit": fresh_audit.id,
             "old_delivery": old_delivery.id, "fresh_delivery": fresh_delivery.id,
             "old_consent": old_consent.id, "fresh_consent": fresh_consent.id,
@@ -108,14 +117,16 @@ def test_retention_policy_removes_only_expired_operational_and_personal_records(
         db.commit()
 
         assert removed == {
-            "app_logs": 1,
+            "security_signal_buckets": 1,
+            "inactive_ip_blocks": 1,
             "audit_logs": 1,
             "webhook_deliveries": 1,
             "cookie_consents": 1,
             "registration_requests": 2,
         }
-        assert db.get(AppLog, ids["old_log"]) is None
-        assert db.get(AppLog, ids["fresh_log"]) is not None
+        assert db.get(SecuritySignalBucket, ids["old_log"]) is None
+        assert db.get(SecuritySignalBucket, ids["fresh_log"]) is not None
+        assert db.get(IpBlock, ids["inactive_block"]) is None
         assert db.get(AuditLog, ids["old_audit"]) is None
         assert db.get(AuditLog, ids["fresh_audit"]) is not None
         assert db.get(OutboundWebhookDelivery, ids["old_delivery"]) is None

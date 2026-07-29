@@ -12,7 +12,6 @@ from app.core.config import BACKEND_ROOT
 from app.core.middleware import (
     ClientIpResolver,
     RequestLogContextFactory,
-    redact_query_string,
 )
 from app.core.security import PASSWORD_ITERATIONS, PasswordHasher
 from app.db.schema_health import (
@@ -222,7 +221,7 @@ def test_webhook_targets_block_private_literals_and_private_dns_results() -> Non
         )
 
 
-def test_client_ip_resolver_rejects_forwarded_chains_and_query_secrets_are_redacted() -> None:
+def test_client_ip_resolver_rejects_forwarded_chains_and_log_context_is_minimal() -> None:
     scope = {
         "type": "http",
         "method": "GET",
@@ -235,9 +234,6 @@ def test_client_ip_resolver_rejects_forwarded_chains_and_query_secrets_are_redac
     }
     request = StarletteRequest(scope)
     assert ClientIpResolver().resolve(request) == "172.18.0.4"
-    assert redact_query_string("page=2&token=secret&api_key=hidden") == (
-        "page=%3Credacted%3E&token=%3Credacted%3E&api_key=%3Credacted%3E"
-    )
 
     single_hop_scope = {
         **scope,
@@ -250,10 +246,12 @@ def test_client_ip_resolver_rejects_forwarded_chains_and_query_secrets_are_redac
         status_code=200,
         duration_ms=12.5,
     )
-    assert context["client_ip"] == "203.0.113.5"
-    assert context["client"] is None
-    assert context["forwarded_for"] is None
-    assert context["query_string"] == "search=%3Credacted%3E"
+    assert context == {
+        "request_id": "request-1",
+        "method": "GET",
+        "status_code": 200,
+        "duration_ms": 12.5,
+    }
 
 
 def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
@@ -263,7 +261,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0005_webhook_security"})
+    assert heads == frozenset({"0007_build_votes_and_roles"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(

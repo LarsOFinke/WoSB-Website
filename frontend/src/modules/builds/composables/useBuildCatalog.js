@@ -4,12 +4,16 @@ import { buildCategoryVisuals, buildCrewVisuals, buildVisualUrl } from '@/module
 import { absoluteFileUrl } from '@/modules/files/api/files'
 
 export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, slotPlaceholderSrc }) {
-  const buildTypeOptions = computed(() => [
-    { value: 'balanced', label: t('builds.types.balanced') },
-    { value: 'gunnery', label: t('builds.types.gunnery') },
-    { value: 'boarding', label: t('builds.types.boarding') },
-    { value: 'defensive', label: t('builds.types.defensive') },
-  ])
+  const buildTypeOptions = computed(() => {
+    const roles = optionCatalog.value.build_roles || []
+    if (roles.length) return roles.map((role) => ({ value: role.slug, label: role.label, meta: role.description || '' }))
+    return [
+      { value: 'balanced', label: t('builds.types.balanced') },
+      { value: 'gunnery', label: t('builds.types.gunnery') },
+      { value: 'boarding', label: t('builds.types.boarding') },
+      { value: 'defensive', label: t('builds.types.defensive') },
+    ]
+  })
 
   function optionsFor(categoryKey) {
     return (optionCatalog.value.options?.[categoryKey] || [])

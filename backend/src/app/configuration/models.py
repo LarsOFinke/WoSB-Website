@@ -79,7 +79,8 @@ class UploadLimitSettings:
 
 @dataclass(frozen=True, slots=True)
 class MaintenanceSettings:
-    app_log_retention_days: int
+    security_event_retention_days: int
+    inactive_ip_block_retention_days: int
     audit_log_retention_days: int
     webhook_delivery_retention_days: int
     cookie_consent_retention_days: int

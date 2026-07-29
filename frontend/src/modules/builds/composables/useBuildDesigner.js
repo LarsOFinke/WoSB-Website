@@ -13,6 +13,7 @@ import { createBuildPayload, hydrateBuildForm, resetBuildSlots } from '@/modules
 import { listShips } from '@/modules/ships/api/ships'
 
 const EMPTY_CATALOG = {
+  build_roles: [],
   categories: [],
   options: {},
   stat_definitions: [],
@@ -69,6 +70,13 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
   const resetSlots = () => resetBuildSlots(form, inventory.slotLimitForField)
   const hydrateBuild = (build) => hydrateBuildForm(form, build, inventory.slotLimitForField)
 
+  function reconcileBuildRole() {
+    const roles = optionCatalog.value.build_roles || []
+    if (roles.length && !roles.some((role) => role.slug === form.build_type)) {
+      form.build_type = roles[0].slug
+    }
+  }
+
   async function saveBuild() {
     error.value = ''
     if (!effects.canSubmit.value) return
@@ -111,6 +119,7 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
       const options = await getBuildOptions(Number(shipId))
       if (requestId !== optionRequestId) return
       optionCatalog.value = options
+      reconcileBuildRole()
       for (const arc of weaponArcFields) inventory.reconcileInventoryField(arc.fieldName)
     } catch (err) {
       if (requestId === optionRequestId) error.value = err.message || t('builds.create.loadError')
@@ -152,11 +161,13 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
         form.ship_id = existing.ship_id
         optionCatalog.value = await getBuildOptions(existing.ship_id)
         hydrateBuild(existing)
+        reconcileBuildRole()
         for (const fieldName of Object.keys(slotLimits)) inventory.reconcileInventoryField(fieldName)
         suppressShipChange.value = false
       } else {
         form.ship_id = ships.value[0]?.id || ''
         optionCatalog.value = await getBuildOptions(form.ship_id || null)
+        reconcileBuildRole()
         resetSlots()
         crew.resetCrewAllocation()
       }

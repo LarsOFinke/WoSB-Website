@@ -6,6 +6,8 @@ from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_item_category_read import BuildItemCategoryRead
 from app.modules.builds.schemas.build_item_option_read import BuildItemOptionRead
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
+from app.modules.builds.schemas.build_role import BuildRoleRead
+from app.modules.builds.services.build_role_service import list_build_roles
 from app.modules.builds.services.build_limits import build_limits_for_api
 from app.modules.builds.services.build_stat_service import stat_definitions_for_api
 from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
@@ -112,6 +114,7 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
         )
 
     return BuildOptionsCatalog(
+        build_roles=[BuildRoleRead.model_validate(role) for role in list_build_roles(db)],
         categories=[BuildItemCategoryRead.model_validate(category) for category in categories],
         options=grouped,
         stat_definitions=stat_definitions_for_api(),

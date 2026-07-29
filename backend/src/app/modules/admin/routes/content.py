@@ -11,6 +11,20 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
 )
 from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.builds.schemas.build_read import BuildRead
+from app.modules.builds.schemas.build_role import (
+    BuildRoleAssignment,
+    BuildRoleCreate,
+    BuildRoleRead,
+    BuildRoleUpdate,
+)
+from app.modules.builds.services.build_role_service import (
+    BuildRoleError,
+    assign_build_role,
+    create_build_role,
+    delete_build_role,
+    list_build_roles,
+    update_build_role,
+)
 from app.modules.builds.services.build_service import delete_build, get_build, list_builds
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.services.forum_service import delete_thread, get_thread, list_threads
@@ -25,9 +39,108 @@ def admin_list_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
     db: Session = Depends(get_db),
-    _: User = Depends(require_staff),
+    current_user: User = Depends(require_staff),
 ) -> list[BuildRead]:
-    return list_builds(db, search=search, build_type=build_type)
+    return list_builds(db, search=search, build_type=build_type, viewer_id=current_user.id)
+
+
+@router.get("/build-roles", response_model=list[BuildRoleRead])
+def admin_list_build_roles(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+) -> list[BuildRoleRead]:
+    return list_build_roles(db)
+
+
+@router.post("/build-roles", response_model=BuildRoleRead, status_code=status.HTTP_201_CREATED)
+def admin_create_build_role(
+    payload: BuildRoleCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+) -> BuildRoleRead:
+    try:
+        role = create_build_role(db, payload)
+    except BuildRoleError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="build_role",
+        entity_id=role.slug,
+        action="create",
+        summary=f'Build role “{role.label}” created.',
+        changed_fields=list(payload.model_dump().keys()),
+    )
+    return role
+
+
+@router.put("/build-roles/{slug}", response_model=BuildRoleRead)
+def admin_update_build_role(
+    slug: str,
+    payload: BuildRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+) -> BuildRoleRead:
+    try:
+        role = update_build_role(db, slug, payload)
+    except BuildRoleError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="build_role",
+        entity_id=role.slug,
+        action="update",
+        summary=f'Build role “{role.label}” updated.',
+        changed_fields=list(payload.model_dump().keys()),
+    )
+    return role
+
+
+@router.delete("/build-roles/{slug}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_build_role(
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+) -> None:
+    try:
+        delete_build_role(db, slug)
+    except BuildRoleError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="build_role",
+        entity_id=slug,
+        action="delete",
+        summary=f'Build role “{slug}” deleted.',
+    )
+
+
+@router.put("/builds/{build_id}/role", response_model=BuildRead)
+def admin_assign_build_role(
+    build_id: int,
+    payload: BuildRoleAssignment,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+) -> BuildRead:
+    try:
+        build = assign_build_role(db, build_id, payload.build_type)
+    except BuildRoleError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if build is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    build = get_build(db, build_id, viewer_id=current_user.id) or build
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="build",
+        entity_id=build_id,
+        action="update_role",
+        summary=f'Build “{build.build_name}” assigned to role “{build.build_role_label}”.',
+        changed_fields=["build_type"],
+    )
+    return build
 
 
 @router.delete("/builds/{build_id}", status_code=status.HTTP_204_NO_CONTENT)

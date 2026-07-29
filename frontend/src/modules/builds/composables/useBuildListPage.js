@@ -1,11 +1,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
-import { listBuilds } from '@/modules/builds/api/builds'
+import { listBuilds, listBuildRoles } from '@/modules/builds/api/builds'
 import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
 
 export function useBuildListPage() {
   const { t } = useLocale()
   const builds = ref([])
+  const roles = ref([])
   const search = ref('')
   const buildType = ref('')
   const classification = ref('')
@@ -19,10 +20,7 @@ export function useBuildListPage() {
   const hasActiveDiscovery = computed(() => showAll.value || hasFilters.value)
   const buildTypeOptions = computed(() => [
     { value: '', label: t('builds.types.all') },
-    { value: 'balanced', label: t('builds.types.balanced') },
-    { value: 'gunnery', label: t('builds.types.gunnery') },
-    { value: 'boarding', label: t('builds.types.boarding') },
-    { value: 'defensive', label: t('builds.types.defensive') },
+    ...roles.value.map((role) => ({ value: role.slug, label: role.label })),
   ])
   const buildTypeLabels = computed(() => Object.fromEntries(buildTypeOptions.value.map((option) => [option.value, option.label])))
   const buildCountLabel = computed(() => builds.value.length === 1
@@ -41,6 +39,7 @@ export function useBuildListPage() {
     weapons: t('builds.create.sections.weapons'),
     specialists: t('builds.create.sections.specialCrew'),
     inventory: t('builds.create.sections.inventory'),
+    upvotes: t('builds.voting.upvotes'),
   }))
   const buildRows = computed(() => builds.value.map((build) => {
     const stats = build.ship_stats || {}
@@ -50,11 +49,12 @@ export function useBuildListPage() {
       id: build.id,
       name: build.build_name,
       ship: [build.ship?.name, build.ship?.rate ? `${t('common.rate')} ${build.ship.rate}` : '', build.ship?.ship_type].filter(Boolean).join(' · '),
-      type: buildTypeLabels.value[build.build_type] || build.build_type || t('builds.types.balanced'),
+      type: build.build_role_label || buildTypeLabels.value[build.build_type] || build.build_type || t('builds.types.balanced'),
       crew: t('builds.list.crew', { current: crew, max: stats.crew_capacity || build.ship?.crew_capacity || 0 }),
       upgrades: t('builds.list.upgradeSummary', { used: usedUpgrades, max: stats.upgrade_slots_available || 5 }),
       weapons: t('builds.list.weaponSummary', { count: stats.weapon_total || 0 }),
       specialists: t('builds.list.specialCrewSummary', { count: stats.special_crew_total || 0 }),
+      upvotes: Number(build.upvote_count || 0),
       inventory: t('builds.list.inventorySummary', {
         ammo: stats.ammunition_slots_used ?? build.ammunition_slots?.length ?? 0,
         consumables: stats.consumable_slots_used ?? build.consumable_slots?.length ?? 0,
@@ -71,7 +71,12 @@ export function useBuildListPage() {
     loading.value = true
     error.value = ''
     try {
-      builds.value = await listBuilds(search.value, buildType.value, classification.value)
+      const [nextBuilds, nextRoles] = await Promise.all([
+        listBuilds(search.value, buildType.value, classification.value),
+        roles.value.length ? Promise.resolve(roles.value) : listBuildRoles(),
+      ])
+      builds.value = nextBuilds
+      roles.value = nextRoles
     } catch (err) {
       error.value = err.message || t('builds.list.loadError')
     } finally {
@@ -106,6 +111,7 @@ export function useBuildListPage() {
   return {
     t,
     builds,
+    roles,
     search,
     buildType,
     classification,

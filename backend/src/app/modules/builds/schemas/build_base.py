@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.modules.builds.schemas.constants import (
     BUILD_CLASSIFICATION_VALUES,
-    BUILD_TYPE_VALUES,
     MAX_BUILD_CLASSIFICATIONS,
 )
+from app.modules.builds.schemas.build_role import BUILD_ROLE_SLUG_PATTERN
 from app.modules.builds.schemas.inventory_slot import InventorySlot
 
 class BuildBase(BaseModel):
@@ -49,8 +49,8 @@ class BuildBase(BaseModel):
     @classmethod
     def validate_build_type(cls, value: str) -> str:
         normalized = value.strip().lower() if isinstance(value, str) else "balanced"
-        if normalized not in BUILD_TYPE_VALUES:
-            raise ValueError("Invalid build type.")
+        if not BUILD_ROLE_SLUG_PATTERN.fullmatch(normalized):
+            raise ValueError("Invalid build role.")
         return normalized
 
     @field_validator("classification_tags", mode="before")

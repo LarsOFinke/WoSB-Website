@@ -310,6 +310,9 @@ function toggleGinger() {
                 :options="specialistPickerOptions(index)"
                 :placeholder="t('common.empty')"
                 :aria-label="t('builds.create.specialCrew.alt', { index: index + 1 })"
+                searchable
+                :search-placeholder="t('builds.create.specialCrew.searchPlaceholder')"
+                :no-results-text="t('builds.create.specialCrew.noMatches')"
                 @update:model-value="updateRegularSpecialist(index, $event)"
               />
             </div>

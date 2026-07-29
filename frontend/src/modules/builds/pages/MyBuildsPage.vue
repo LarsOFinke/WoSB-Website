@@ -76,7 +76,8 @@ const {
               <strong>{{ build.build_name }}</strong>
               <span>
                 {{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} ·
-                {{ t(`builds.types.${build.build_type}`) }} ·
+                {{ build.build_role_label || build.build_type }} ·
+                ▲ {{ build.upvote_count || 0 }} ·
                 {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship_stats?.crew_capacity || build.ship.crew_capacity }) }}
               </span>
               <small>

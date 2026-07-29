@@ -10,14 +10,14 @@ const props = defineProps({
 })
 
 const {
-  optionLabel, t, build, loading, error, shareStatus, printStatus, printPreviewUrl,
+  optionLabel, t, build, loading, error, shareStatus, voteBusy, voteError, printStatus, printPreviewUrl,
   printPreviewOpen, printBusy, weaponArcRows, crewTotal, canEdit, upgrades,
   commandDeckUpgradeSlots, regularSpecialCrewSlots, gingerSpecialCrewSlot,
   classificationLabels, ammunitionSlots, consumableSlots, holdSlots,
   crewDistributionRows, optionMeta, optionImage, slotItem, slotLabel, slotQuantity,
   inventoryImage, specialistLabel, shareLinkMeta, shareBuild, prepareBuildImage,
   downloadBuildImagePng, downloadBuildImageSvg, printBuildSheet, closePrintPreview,
-  buildTypeLabel, statRows, activeEffectRows,
+  buildTypeLabel, toggleUpvote, statRows, activeEffectRows,
 } = useBuildDetailPage(props)
 
 function crewCapacity() {
@@ -48,6 +48,17 @@ function crewCapacity() {
               </div>
             </div>
             <div class="detail-header-actions build-detail-command-actions">
+              <button
+                class="small-action build-upvote-action"
+                :class="{ 'is-active': build.has_upvoted }"
+                type="button"
+                :disabled="voteBusy"
+                :aria-pressed="build.has_upvoted"
+                @click="toggleUpvote"
+              >
+                <span aria-hidden="true">▲</span>
+                {{ build.upvote_count }} · {{ build.has_upvoted ? t('builds.voting.remove') : t('builds.voting.upvote') }}
+              </button>
               <button class="small-action" type="button" @click="shareBuild">{{ t('builds.share.action') }}</button>
               <button class="small-action" type="button" :disabled="printBusy" @click="prepareBuildImage">
                 {{ printBusy ? t('builds.print.preparing') : t('builds.print.action') }}
@@ -60,6 +71,7 @@ function crewCapacity() {
         </header>
 
         <p v-if="shareStatus" class="share-status" role="status">{{ shareStatus }}</p>
+        <p v-if="voteError" class="error-text share-status" role="alert">{{ voteError }}</p>
         <p v-if="printStatus" class="share-status" role="status">{{ printStatus }}</p>
 
         <section v-if="printPreviewOpen" class="build-print-export-panel build-print-sheet-preview">

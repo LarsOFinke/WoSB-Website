@@ -57,7 +57,13 @@ class Build(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     build_name: Mapped[str] = mapped_column(String(140), nullable=False, index=True)
-    build_type: Mapped[str] = mapped_column(String(32), nullable=False, default="balanced", index=True)
+    build_type: Mapped[str] = mapped_column(
+        String(32),
+        ForeignKey("build_roles.slug", ondelete="RESTRICT", onupdate="RESTRICT"),
+        nullable=False,
+        default="balanced",
+        index=True,
+    )
     ship_id: Mapped[int] = mapped_column(ForeignKey("ships.id"), nullable=False, index=True)
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     is_official_template: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
@@ -97,6 +103,18 @@ class Build(Base):
     @property
     def classification_tags(self) -> list[str]:
         return [classification.tag for classification in self.classifications]
+
+    @property
+    def build_role_label(self) -> str:
+        return getattr(self, "_build_role_label", self.build_type.replace("_", " ").title())
+
+    @property
+    def upvote_count(self) -> int:
+        return max(0, int(getattr(self, "_upvote_count", 0)))
+
+    @property
+    def has_upvoted(self) -> bool:
+        return bool(getattr(self, "_viewer_has_upvoted", False))
 
     def _first_option_name(self, slot_type: str) -> str | None:
         for slot in self.slots:

@@ -14,13 +14,13 @@ import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigat
 
 const {
   locale, t, isAdmin, isStaff, user, activeTab,
-  builds, users, fleetEvents, forumThreads, guides, groups, registrationRequests,
+  builds, buildRoles, roleDrafts, newBuildRole, pendingRoleDelete, users, fleetEvents, forumThreads, guides, groups, registrationRequests,
   ipBlockPrefill, logSummary, ipBlockOverview, overviewLoading, logsWorkspace,
   search, contentSearch, calendarCategory, registrationStatus, registrationSearch,
   registrationFromDate, registrationToDate, calendarSearch, calendarFromDate, calendarToDate,
   contentScope, contentOwner, buildType, buildRate, buildVisibility, userSearch, userRole,
   userStatus,
-  loading, userLoading, calendarLoading, contentLoading, registrationLoading,
+  loading, roleBusy, roleMessage, userLoading, calendarLoading, contentLoading, registrationLoading,
   error, userError, calendarError, contentError, registrationError, moderatorSuccess,
   pendingDelete, registrationDecisionNotes, apiStatus, apiStatusDetail, moderatorForm,
   filteredBuilds, filteredUsers, filteredEvents, upcomingEvents, visibleForumThreads, visibleGuides,
@@ -29,8 +29,8 @@ const {
   contentCountLabel, registrationCountLabel, categoryOptions,
   crewTotal, formatDateTime, formatEventRange, clearConfirmation, isPending, askDelete,
   loadBuilds, loadUsers, loadStatus, loadAdminOverviewMetrics, loadOverview, loadRegistrations,
-  approveRegistration, rejectRegistration, openIpBlockManager, openLogsForIp, loadCalendar,
-  loadContent, confirmDeleteBuild, confirmDeleteEvent, confirmDeleteThread, confirmDeleteGuide,
+  approveRegistration, rejectRegistration, openIpBlockManager, loadCalendar,
+  loadContent, confirmDeleteBuild, submitBuildRole, saveBuildRole, askDeleteBuildRole, cancelDeleteBuildRole, removeBuildRole, changeBuildRole, confirmDeleteEvent, confirmDeleteThread, confirmDeleteGuide,
   confirmCloseGroup, submitModerator, changeUserRole, toggleUserActive, canManageUser,
   navigateToTab, resetRegistrationFilters, resetCalendarFilters, resetContentFilters,
   resetBuildFilters, resetUserFilters, canAccessTab,
@@ -81,9 +81,9 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
 
           <div class="workspace-metric-grid admin-dashboard-grid">
             <MetricCard :label="t('admin.registrations.dashboardLabel')" :value="pendingRegistrationRows.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />
-            <MetricCard :label="t('admin.logs.total')" :value="logSummary.total" :hint="t('admin.logs.dashboardHint')" />
-            <MetricCard :label="t('admin.logs.errors')" :value="logSummary.errors" :hint="t('admin.logs.errorHint')" tone="danger" />
-            <MetricCard :label="t('admin.logs.slowRequests')" :value="logSummary.slow_requests" :hint="t('admin.logs.slowHint')" />
+            <MetricCard :label="t('admin.security.events')" :value="logSummary.total_events" :hint="t('admin.logs.dashboardHint')" />
+            <MetricCard :label="t('admin.security.elevatedCandidates')" :value="(logSummary.threat_counts?.elevated || 0) + (logSummary.threat_counts?.critical || 0)" :hint="t('admin.logs.errorHint')" tone="danger" />
+            <MetricCard :label="t('admin.security.uniqueIps')" :value="logSummary.unique_ips" :hint="t('admin.logs.slowHint')" />
             <MetricCard :label="t('admin.workspace.cards.ipBlocks')" :value="ipBlockOverview.active" :hint="t('admin.workspace.cards.ipBlocksHint')" />
           </div>
         </section>
@@ -136,7 +136,6 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
             :initial-ip="ipBlockPrefill"
             :can-manage="isAdmin"
             @consumed-initial-ip="ipBlockPrefill = ''"
-            @view-logs="openLogsForIp"
           />
         </section>
 
@@ -204,6 +203,38 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
 
         <section v-if="activeTab === 'builds'" class="wire-section admin-panel">
           <div class="admin-panel-heading"><div><h2>{{ t('admin.builds.title') }}</h2><p>{{ t('admin.builds.subtitle') }}</p></div><span class="summary-pill">{{ buildCountLabel }}</span></div>
+
+          <section class="staff-build-role-manager" aria-labelledby="staff-build-roles-title">
+            <div class="staff-build-role-heading">
+              <div><h3 id="staff-build-roles-title">{{ t('admin.buildRoles.title') }}</h3><p>{{ t('admin.buildRoles.subtitle') }}</p></div>
+            </div>
+            <form class="staff-build-role-create" @submit.prevent="submitBuildRole">
+              <label><span>{{ t('admin.buildRoles.slug') }}</span><input v-model="newBuildRole.slug" required maxlength="32" pattern="[a-z0-9][a-z0-9_-]{0,31}" /></label>
+              <label><span>{{ t('admin.buildRoles.label') }}</span><input v-model="newBuildRole.label" required maxlength="80" /></label>
+              <label class="is-wide"><span>{{ t('admin.buildRoles.description') }}</span><input v-model="newBuildRole.description" maxlength="500" /></label>
+              <label><span>{{ t('admin.buildRoles.sortOrder') }}</span><input v-model.number="newBuildRole.sort_order" type="number" min="-10000" max="10000" /></label>
+              <button class="small-action primary-action" type="submit" :disabled="roleBusy === 'create'">{{ t('admin.buildRoles.create') }}</button>
+            </form>
+            <p v-if="roleMessage" class="success-text table-state" role="status">{{ roleMessage }}</p>
+            <div class="staff-build-role-list">
+              <article v-for="role in buildRoles" :key="role.slug" class="staff-build-role-row">
+                <code>{{ role.slug }}</code>
+                <label><span>{{ t('admin.buildRoles.label') }}</span><input v-model="roleDrafts[role.slug].label" maxlength="80" /></label>
+                <label class="is-wide"><span>{{ t('admin.buildRoles.description') }}</span><input v-model="roleDrafts[role.slug].description" maxlength="500" /></label>
+                <label><span>{{ t('admin.buildRoles.sortOrder') }}</span><input v-model.number="roleDrafts[role.slug].sort_order" type="number" min="-10000" max="10000" /></label>
+                <div v-if="pendingRoleDelete === role.slug" class="delete-confirmation compact-actions">
+                  <span>{{ t('admin.buildRoles.confirmDelete') }}</span>
+                  <button class="danger-action" type="button" :disabled="roleBusy === `delete:${role.slug}`" @click="removeBuildRole(role.slug)">{{ t('admin.buildRoles.deleteNow') }}</button>
+                  <button class="small-action" type="button" @click="cancelDeleteBuildRole">{{ t('common.cancel') }}</button>
+                </div>
+                <div v-else class="compact-actions">
+                  <button class="small-action" type="button" :disabled="roleBusy === `save:${role.slug}`" @click="saveBuildRole(role.slug)">{{ t('admin.buildRoles.save') }}</button>
+                  <button class="danger-action" type="button" @click="askDeleteBuildRole(role.slug)">{{ t('admin.buildRoles.delete') }}</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
           <StaffFilterSurface
             :title="t('admin.workspace.filters.title')"
             :hint="t('admin.workspace.filters.buildHint')"
@@ -211,12 +242,18 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
             @reset="resetBuildFilters"
           >
             <label class="filter-box admin-search"><input v-model="search" type="search" :placeholder="t('admin.builds.searchPlaceholder')" /></label>
-              <label class="filter-box select-shell"><select v-model="buildType"><option value="">{{ t('admin.workspace.filters.allBuildTypes') }}</option><option value="balanced">{{ t('builds.types.balanced') }}</option><option value="gunnery">{{ t('builds.types.gunnery') }}</option><option value="boarding">{{ t('builds.types.boarding') }}</option><option value="defensive">{{ t('builds.types.defensive') }}</option></select></label>
-              <label class="filter-box select-shell"><select v-model="buildRate"><option value="">{{ t('admin.workspace.filters.allRates') }}</option><option v-for="rate in buildRates" :key="rate" :value="String(rate)">{{ t('common.rate') }} {{ rate }}</option></select></label>
-              <label class="filter-box select-shell"><select v-model="buildVisibility"><option value="">{{ t('admin.workspace.filters.allSources') }}</option><option value="official">{{ t('admin.workspace.filters.officialBuilds') }}</option><option value="community">{{ t('admin.workspace.filters.communityBuilds') }}</option></select></label>
+            <label class="filter-box select-shell"><select v-model="buildType"><option value="">{{ t('admin.workspace.filters.allBuildTypes') }}</option><option v-for="role in buildRoles" :key="role.slug" :value="role.slug">{{ role.label }}</option></select></label>
+            <label class="filter-box select-shell"><select v-model="buildRate"><option value="">{{ t('admin.workspace.filters.allRates') }}</option><option v-for="rate in buildRates" :key="rate" :value="String(rate)">{{ t('common.rate') }} {{ rate }}</option></select></label>
+            <label class="filter-box select-shell"><select v-model="buildVisibility"><option value="">{{ t('admin.workspace.filters.allSources') }}</option><option value="official">{{ t('admin.workspace.filters.officialBuilds') }}</option><option value="community">{{ t('admin.workspace.filters.communityBuilds') }}</option></select></label>
           </StaffFilterSurface>
           <p v-if="loading" class="muted table-state">{{ t('admin.builds.loading') }}</p><p v-else-if="error" class="error-text table-state">{{ error }}</p><p v-else-if="filteredBuilds.length === 0" class="muted table-state">{{ t('admin.builds.empty') }}</p>
-          <div v-else class="admin-build-list"><article v-for="build in filteredBuilds" :key="build.id" class="admin-build-row"><div class="admin-build-main"><strong>{{ build.build_name }}</strong><span>{{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ t(`builds.types.${build.build_type}`) }} · {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span><small v-if="build.is_official_template" class="summary-pill staff-inline-pill">{{ t('admin.workspace.filters.officialBuilds') }}</small></div><div v-if="isPending('build', build.id)" class="delete-confirmation"><span>{{ t('admin.builds.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteBuild(build.id)">{{ t('admin.builds.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('build', build.id)">{{ t('admin.builds.delete') }}</button></article></div>
+          <div v-else class="admin-build-list">
+            <article v-for="build in filteredBuilds" :key="build.id" class="admin-build-row staff-build-role-assignment">
+              <div class="admin-build-main"><strong>{{ build.build_name }}</strong><span>{{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} · {{ build.build_role_label }} · ▲ {{ build.upvote_count || 0 }} · {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship.crew_capacity }) }}</span><small v-if="build.is_official_template" class="summary-pill staff-inline-pill">{{ t('admin.workspace.filters.officialBuilds') }}</small></div>
+              <label class="staff-build-role-select"><span>{{ t('admin.buildRoles.assign') }}</span><select :value="build.build_type" :disabled="roleBusy === `assign:${build.id}`" @change="changeBuildRole(build, $event)"><option v-for="role in buildRoles" :key="role.slug" :value="role.slug">{{ role.label }}</option></select></label>
+              <div v-if="isPending('build', build.id)" class="delete-confirmation"><span>{{ t('admin.builds.confirmDelete') }}</span><button class="danger-action" type="button" @click="confirmDeleteBuild(build.id)">{{ t('admin.builds.deleteNow') }}</button><button class="small-action" type="button" @click="clearConfirmation">{{ t('common.cancel') }}</button></div><button v-else class="danger-action" type="button" @click="askDelete('build', build.id)">{{ t('admin.builds.delete') }}</button>
+            </article>
+          </div>
         </section>
 
         <section v-if="activeTab === 'users' && isAdmin" class="wire-section admin-panel admin-users-panel">

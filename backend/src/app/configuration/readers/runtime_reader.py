@@ -125,7 +125,8 @@ class RuntimeSettingsReader:
         section = self._optional_section("maintenance")
         if section is None:
             return MaintenanceSettings(
-                app_log_retention_days=30,
+                security_event_retention_days=7,
+                inactive_ip_block_retention_days=90,
                 audit_log_retention_days=365,
                 webhook_delivery_retention_days=30,
                 cookie_consent_retention_days=400,
@@ -134,8 +135,11 @@ class RuntimeSettingsReader:
                 interval_hours=24,
             )
         return MaintenanceSettings(
-            app_log_retention_days=self._positive_integer_or_default(
-                section, "app_log_retention_days", 30
+            security_event_retention_days=self._positive_integer_or_default(
+                section, "security_event_retention_days", 7
+            ),
+            inactive_ip_block_retention_days=self._positive_integer_or_default(
+                section, "inactive_ip_block_retention_days", 90
             ),
             audit_log_retention_days=self._positive_integer_or_default(
                 section, "audit_log_retention_days", 365

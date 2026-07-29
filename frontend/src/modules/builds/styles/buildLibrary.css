@@ -129,7 +129,7 @@
 .build-library-table-head,
 .build-library-row {
   display: grid;
-  grid-template-columns: minmax(230px, 1.5fr) minmax(110px, 0.7fr) minmax(92px, 0.55fr) minmax(115px, 0.72fr) minmax(110px, 0.68fr) minmax(105px, 0.68fr) minmax(130px, 0.82fr) 28px;
+  grid-template-columns: minmax(220px, 1.45fr) minmax(105px, .68fr) minmax(78px, .45fr) minmax(92px, .55fr) minmax(110px, .72fr) minmax(105px, .68fr) minmax(105px, .68fr) minmax(125px, .8fr) 28px;
   align-items: center;
 }
 
@@ -197,6 +197,11 @@
   color: var(--accent);
 }
 
+.build-library-upvotes {
+  color: var(--accent);
+  font-weight: 800;
+}
+
 .build-library-open {
   color: var(--muted-soft);
 }
@@ -208,11 +213,11 @@
 @media (max-width: 1180px) {
   .build-library-table-head,
   .build-library-row {
-    grid-template-columns: minmax(210px, 1.35fr) minmax(105px, 0.7fr) minmax(90px, 0.58fr) minmax(110px, 0.72fr) minmax(105px, 0.68fr) minmax(120px, 0.78fr) 28px;
+    grid-template-columns: minmax(205px, 1.35fr) minmax(100px, .7fr) minmax(75px, .46fr) minmax(90px, .58fr) minmax(105px, .7fr) minmax(100px, .66fr) minmax(115px, .76fr) 28px;
   }
 
-  .build-library-table-head > span:nth-child(6),
-  .build-library-row > span:nth-child(6) {
+  .build-library-table-head > span:nth-child(7),
+  .build-library-row > span:nth-child(7) {
     display: none;
   }
 }
@@ -245,14 +250,14 @@
   }
 
   .build-library-row {
-    grid-template-columns: minmax(0, 1fr) repeat(3, minmax(85px, auto)) 28px;
+    grid-template-columns: minmax(0, 1fr) repeat(4, minmax(75px, auto)) 28px;
     border: 1px solid var(--line);
     border-radius: 10px;
   }
 
-  .build-library-row > span:nth-child(5),
   .build-library-row > span:nth-child(6),
-  .build-library-row > span:nth-child(7) {
+  .build-library-row > span:nth-child(7),
+  .build-library-row > span:nth-child(8) {
     display: none;
   }
 
@@ -294,4 +299,14 @@
   .build-library-row > span:nth-child(n + 2):not(.build-library-open) {
     display: none;
   }
+}
+
+.build-upvote-action {
+  gap: .35rem;
+}
+
+.build-upvote-action.is-active {
+  border-color: rgba(241, 184, 91, .58);
+  color: var(--accent);
+  background: rgba(241, 184, 91, .12);
 }

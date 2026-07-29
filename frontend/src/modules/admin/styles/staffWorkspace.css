@@ -702,15 +702,6 @@ body.staff-workspace-route .sidebar-collapse-button {
   .staff-subworkspace .master-data-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .staff-log-entry-summary {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .staff-log-entry-summary > time,
-  .staff-log-entry-summary > .staff-log-response {
-    display: none;
-  }
 }
 
 @media (max-width: 430px) {
@@ -742,191 +733,99 @@ body.staff-workspace-route .sidebar-collapse-button {
   }
 }
 
-/* System log workspace: keep sensitive operations grouped and responsive. */
+/* Purpose-limited IP-ban candidate workspace. */
 .system-log-panel {
   display: grid;
   gap: 1rem;
   min-width: 0;
 }
 
-.system-log-heading,
-.system-log-heading-actions,
-.system-log-entry-actions,
-.system-log-entry-delete-confirmation {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
 .system-log-heading {
-  justify-content: space-between;
-}
-
-.system-log-heading-actions {
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.system-log-delete-confirmation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(241, 104, 104, 0.28);
-  border-radius: 0.7rem;
-  background: rgba(241, 104, 104, 0.07);
-}
-
-.system-log-delete-confirmation > div:first-child {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.system-log-delete-confirmation p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.45;
-}
-
-.system-log-filter-surface {
-  display: grid;
-  gap: 0;
-}
-
-.system-log-filter-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.65rem;
-  padding: 0.8rem;
-  border-top: 1px solid rgba(205, 221, 235, 0.08);
-}
-
-.system-log-field {
-  display: grid;
-  align-content: start;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.system-log-field > span {
-  color: var(--muted-soft);
-  font-size: 0.66rem;
-  font-weight: 850;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.system-log-field input,
-.system-log-field select {
-  width: 100%;
-  min-width: 0;
-  min-height: 2.65rem;
-  font-size: 0.78rem;
-}
-
-.system-log-field--wide {
-  grid-column: span 2;
-}
-
-.system-log-blocked-toggle {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  gap: 0.65rem;
-  margin: 0 0.8rem 0.8rem;
-  padding: 0.7rem 0.75rem;
-  border: 1px solid rgba(241, 184, 91, 0.16);
-  border-radius: 0.6rem;
-  background: rgba(241, 184, 91, 0.045);
-  cursor: pointer;
-}
-
-.system-log-blocked-toggle input {
-  width: 1rem !important;
-  min-width: 1rem;
-  height: 1rem;
-  min-height: 1rem !important;
-  margin-top: 0.1rem;
-}
-
-.system-log-blocked-toggle > span {
-  display: grid;
-  gap: 0.15rem;
-}
-
-.system-log-blocked-toggle strong {
-  color: var(--text);
-  font-size: 0.78rem;
-}
-
-.system-log-blocked-toggle small {
-  color: var(--muted);
-  font-size: 0.7rem;
-  line-height: 1.4;
-}
-
-.system-log-entry-actions {
-  justify-content: space-between;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.system-log-entry-delete-confirmation {
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid rgba(241, 104, 104, 0.2);
-  border-radius: 0.55rem;
-  background: rgba(241, 104, 104, 0.055);
-}
-
-.system-log-entry-delete-confirmation > span {
-  color: var(--muted);
-  font-size: 0.72rem;
 }
 
 .system-log-admin-panel > .system-log-panel {
   width: 100%;
 }
 
-@media (max-width: 980px) {
-  .system-log-filter-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 760px) {
+  .system-log-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
-@media (max-width: 760px) {
-  .system-log-heading,
-  .system-log-delete-confirmation {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.security-privacy-notice {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.12));
+  border-radius: 0.8rem;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.04));
+}
 
-  .system-log-heading-actions,
-  .system-log-delete-confirmation .hero-actions {
-    justify-content: flex-start;
-    width: 100%;
-  }
+.security-privacy-notice p {
+  margin: 0;
+  max-width: 78ch;
+}
 
-  .system-log-filter-grid {
-    grid-template-columns: 1fr;
-  }
+.staff-build-role-manager {
+  display: grid;
+  gap: .8rem;
+  padding: .9rem;
+  border: 1px solid rgba(205, 221, 235, .12);
+  border-radius: .75rem;
+  background: rgba(255, 255, 255, .018);
+}
 
-  .system-log-field--wide {
-    grid-column: auto;
-  }
+.staff-build-role-heading h3,
+.staff-build-role-heading p { margin: 0; }
+.staff-build-role-heading p { margin-top: .25rem; color: var(--muted); }
 
-  .system-log-entry-actions,
-  .system-log-entry-delete-confirmation {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.staff-build-role-create,
+.staff-build-role-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, .7fr) minmax(10rem, 1fr) minmax(16rem, 1.6fr) 6rem auto;
+  gap: .6rem;
+  align-items: end;
+}
 
-  .system-log-entry-actions > *,
-  .system-log-entry-delete-confirmation > * {
-    width: 100%;
-  }
+.staff-build-role-create label,
+.staff-build-role-row label,
+.staff-build-role-select {
+  display: grid;
+  gap: .25rem;
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 750;
+}
+
+.staff-build-role-create input,
+.staff-build-role-row input,
+.staff-build-role-select select {
+  width: 100%;
+  min-height: 2.45rem;
+}
+
+.staff-build-role-list { display: grid; gap: .5rem; }
+.staff-build-role-row {
+  grid-template-columns: 8rem minmax(10rem, 1fr) minmax(16rem, 1.6fr) 6rem auto;
+  padding: .65rem;
+  border: 1px solid rgba(205, 221, 235, .09);
+  border-radius: .55rem;
+}
+.staff-build-role-row code { align-self: center; color: var(--accent-strong); }
+.staff-build-role-assignment { grid-template-columns: minmax(0, 1fr) minmax(10rem, 14rem) auto; }
+.staff-build-role-select { align-self: center; }
+
+@media (max-width: 960px) {
+  .staff-build-role-create,
+  .staff-build-role-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .staff-build-role-create .is-wide,
+  .staff-build-role-row .is-wide { grid-column: 1 / -1; }
+  .staff-build-role-assignment { grid-template-columns: 1fr; }
 }

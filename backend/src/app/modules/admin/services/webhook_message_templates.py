@@ -330,6 +330,34 @@ Updated at: `{occurred_at}`
 
 
 DEFAULT_MESSAGES.update({
+    'system.update.started': _message(
+        """
+🚀 **Server Update Started**
+Mode: `{data.operation}`
+Requested by: **{data.requested_by}**
+Requested at: `{data.requested_at}`
+Status: `{data.state}`
+{data.message}
+🔗 [Open system status]({resource.url})
+        """
+    ),
+    'system.update.result': _message(
+        """
+{data.state} **Server Update Result**
+Mode: `{data.operation}`
+Result: `{data.state}`
+Requested by: **{data.requested_by}**
+Started: `{data.started_at}`
+Finished: `{data.finished_at}`
+Revision: `{data.commit_before}` → `{data.commit_after}`
+{data.message}
+🔗 [Open system status]({resource.url})
+        """
+    ),
+})
+
+
+DEFAULT_MESSAGES.update({
     'forum.thread.removed': _message(
         """
 🗑️ **Forum Thread Removed**

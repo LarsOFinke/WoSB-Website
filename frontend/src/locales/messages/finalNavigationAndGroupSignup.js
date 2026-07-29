@@ -58,12 +58,6 @@ export const finalNavigationAndGroupSignupMessages = {
       profileCardTitle: 'My group searches',
       profileCardText: 'Manage your scheduled group searches, signups and closed calls.',
     },
-    logs: {
-      dbOnly: 'Persisted logs are available here for authorized administrative review.',
-      clientIp: 'Client IP',
-      userAgent: 'User agent',
-      queryString: 'Query',
-    },
   },
   de: {
     common: {
@@ -123,12 +117,6 @@ export const finalNavigationAndGroupSignupMessages = {
       emptyText: 'Du hast noch keine Gruppensuche erstellt.',
       profileCardTitle: 'Meine Gruppensuchen',
       profileCardText: 'Verwalte deine geplanten Gruppensuchen, Anmeldungen und geschlossenen Aufrufe.',
-    },
-    logs: {
-      dbOnly: 'Persistierte Logs stehen hier für die autorisierte administrative Prüfung bereit.',
-      clientIp: 'Client-IP',
-      userAgent: 'User-Agent',
-      queryString: 'Query',
     },
   },
 }

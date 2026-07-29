@@ -12,6 +12,7 @@ defineProps({
     <div class="build-library-table-head" role="row">
       <span role="columnheader">{{ labels.build }}</span>
       <span role="columnheader">{{ labels.type }}</span>
+      <span role="columnheader">{{ labels.upvotes }}</span>
       <span role="columnheader">{{ labels.crew }}</span>
       <span role="columnheader">{{ labels.upgrades }}</span>
       <span role="columnheader">{{ labels.weapons }}</span>
@@ -25,6 +26,7 @@ defineProps({
         <span><strong>{{ row.name }}</strong><small>{{ row.ship }}</small></span>
       </span>
       <span role="cell"><small class="build-library-mobile-label">{{ labels.type }}</small>{{ row.type }}</span>
+      <span class="build-library-upvotes" role="cell"><small class="build-library-mobile-label">{{ labels.upvotes }}</small><span aria-hidden="true">▲</span> {{ row.upvotes }}</span>
       <span role="cell"><small class="build-library-mobile-label">{{ labels.crew }}</small>{{ row.crew }}</span>
       <span role="cell"><small class="build-library-mobile-label">{{ labels.upgrades }}</small>{{ row.upgrades }}</span>
       <span role="cell"><small class="build-library-mobile-label">{{ labels.weapons }}</small>{{ row.weapons }}</span>

@@ -24,6 +24,42 @@ _COMMON_EVENT = {
 }
 
 EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
+    "system.update.started": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "system_update",
+        "resource_id": "2026-08-15T12:00:00+00:00",
+        "resource_url": "/admin?section=status",
+        "data": {
+            "state": "queued",
+            "operation": "update_migrate",
+            "requested_by": "admin",
+            "requested_at": "2026-08-15T12:00:00+00:00",
+            "message": "Update request accepted and waiting for the host runner.",
+        },
+    },
+    "system.update.result": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "system_update",
+        "resource_id": "2026-08-15T12:00:10+00:00",
+        "resource_url": "/admin?section=status",
+        "data": {
+            "state": "succeeded",
+            "operation": "update_migrate",
+            "requested_by": "admin",
+            "requested_at": "2026-08-15T12:00:00+00:00",
+            "started_at": "2026-08-15T12:00:10+00:00",
+            "finished_at": "2026-08-15T12:04:30+00:00",
+            "commit_before": "1111111",
+            "commit_after": "2222222",
+            "message": "Server update completed successfully.",
+        },
+    },
     "integration.test": {
         **_COMMON_EVENT,
         "data": {

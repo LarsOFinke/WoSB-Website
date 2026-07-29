@@ -1,97 +1,121 @@
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from types import SimpleNamespace
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from app.db.base import Base
 from app.core.time import utc_now
-from app.modules.admin.models.app_log import AppLog
+from app.db.base import Base
+from app.modules.admin.models.security_event import (
+    SECURITY_SIGNAL_LOGIN_FAILURE,
+    SECURITY_SIGNAL_RATE_LIMIT,
+    SECURITY_SIGNAL_RECONNAISSANCE,
+    SecuritySignalBucket,
+)
 from app.modules.admin.services.audit_log_service import list_audit_logs, record_audit
-from app.modules.admin.services.security_dashboard_service import build_security_dashboard, security_ip_addresses_for_level
+from app.modules.admin.services.security_dashboard_service import build_security_dashboard
 from app.modules.registry import register_all_models
 
 
 def isolated_session():
     register_all_models()
-    engine = create_engine("sqlite+pysqlite:///:memory:")
+    engine = create_engine('sqlite+pysqlite:///:memory:')
     Base.metadata.create_all(engine)
     return Session(engine, expire_on_commit=False)
 
 
-def test_security_dashboard_scores_suspicious_probe_ip_above_normal_traffic() -> None:
+def test_security_dashboard_scores_only_coarse_ban_signals() -> None:
     with isolated_session() as db:
-        now = datetime.combine(utc_now().date(), time(hour=12))
-        db.add_all([
-            AppLog(created_at=now - timedelta(hours=2), level="INFO", logger="request", message="ok", path="/api/builds", status_code=200, client_ip="10.0.0.1"),
-            AppLog(created_at=now - timedelta(hours=1), level="INFO", logger="request", message="probe", path="/api/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php", status_code=404, client_ip="198.51.100.44"),
-            AppLog(created_at=now, level="ERROR", logger="request", message="probe", path="/.env", status_code=500, client_ip="198.51.100.44"),
-        ])
+        today = utc_now().date()
+        db.add_all(
+            [
+                SecuritySignalBucket(
+                    day=today,
+                    signal=SECURITY_SIGNAL_LOGIN_FAILURE,
+                    client_ip='10.0.0.1',
+                    event_count=1,
+                ),
+                SecuritySignalBucket(
+                    day=today,
+                    signal=SECURITY_SIGNAL_RECONNAISSANCE,
+                    client_ip='198.51.100.44',
+                    event_count=2,
+                ),
+            ]
+        )
         db.commit()
 
-        dashboard = build_security_dashboard(db, from_date=now.date(), to_date=now.date())
+        dashboard = build_security_dashboard(db, from_date=today, to_date=today)
 
-        assert dashboard.total_requests == 3
+        assert dashboard.total_events == 3
         assert dashboard.unique_ips == 2
-        assert dashboard.suspicious_hits == 2
-        assert dashboard.ips[0].client_ip == "198.51.100.44"
-        assert dashboard.ips[0].threat_score > dashboard.ips[1].threat_score
-        assert dashboard.ips[0].threat_level in {"elevated", "critical"}
-        assert dashboard.threat_counts[dashboard.ips[0].threat_level] == 1
-        assert dashboard.threat_counts["low"] == 1
+        assert dashboard.signal_counts[SECURITY_SIGNAL_RECONNAISSANCE] == 2
+        assert dashboard.ips[0].client_ip == '198.51.100.44'
+        assert dashboard.ips[0].reconnaissance == 2
+        assert dashboard.ips[0].threat_level == 'elevated'
+        assert dashboard.ips[1].login_failures == 1
+        assert not hasattr(dashboard.ips[0], 'top_paths')
+        assert not hasattr(dashboard.ips[0], 'user_agent')
 
 
 def test_security_dashboard_combines_date_threat_and_ip_filters() -> None:
     with isolated_session() as db:
-        now = datetime.combine(utc_now().date(), time(hour=12))
-        yesterday = now - timedelta(days=1)
-        db.add_all([
-            AppLog(created_at=yesterday, level="INFO", logger="request", message="ok", path="/api/builds", status_code=200, client_ip="10.0.0.1"),
-            AppLog(created_at=now - timedelta(hours=2), level="INFO", logger="request", message="probe", path="/.git/config", status_code=404, client_ip="198.51.100.44"),
-            AppLog(created_at=now - timedelta(hours=1), level="ERROR", logger="request", message="probe", path="/.env", status_code=500, client_ip="198.51.100.44"),
-            AppLog(created_at=now, level="INFO", logger="request", message="other", path="/api/forum", status_code=200, client_ip="203.0.113.7"),
-        ])
-        db.commit()
-
-        matching_ips = security_ip_addresses_for_level(
-            db,
-            from_date=yesterday.date(),
-            to_date=now.date(),
-            threat_level="elevated",
+        today = utc_now().date()
+        yesterday = today - timedelta(days=1)
+        db.add_all(
+            [
+                SecuritySignalBucket(
+                    day=yesterday,
+                    signal=SECURITY_SIGNAL_LOGIN_FAILURE,
+                    client_ip='10.0.0.1',
+                    event_count=1,
+                ),
+                SecuritySignalBucket(
+                    day=today,
+                    signal=SECURITY_SIGNAL_RECONNAISSANCE,
+                    client_ip='198.51.100.44',
+                    event_count=2,
+                ),
+                SecuritySignalBucket(
+                    day=today,
+                    signal=SECURITY_SIGNAL_RATE_LIMIT,
+                    client_ip='203.0.113.7',
+                    event_count=1,
+                ),
+            ]
         )
-        assert matching_ips == {"198.51.100.44"}
+        db.commit()
 
         dashboard = build_security_dashboard(
             db,
-            from_date=yesterday.date(),
-            to_date=now.date(),
-            threat_level="elevated",
-            client_ip="198.51.100.44",
+            from_date=yesterday,
+            to_date=today,
+            threat_level='elevated',
+            client_ip='198.51.100.44',
         )
         assert dashboard.unique_ips == 1
-        assert dashboard.total_requests == 2
-        assert dashboard.suspicious_hits == 2
-        assert [row.client_ip for row in dashboard.ips] == ["198.51.100.44"]
-        assert dashboard.days[0].total == 0
-        assert dashboard.days[1].total == 2
+        assert dashboard.total_events == 2
+        assert [row.client_ip for row in dashboard.ips] == ['198.51.100.44']
+        assert dashboard.days[0].total_events == 0
+        assert dashboard.days[1].total_events == 2
 
 
 def test_audit_log_records_actor_action_and_changed_field_names() -> None:
     with isolated_session() as db:
-        actor = SimpleNamespace(id=None, username="moderator", role="moderator")
+        actor = SimpleNamespace(id=None, username='moderator', role='moderator')
         record_audit(
             db,
             actor=actor,
-            entity_type="build",
+            entity_type='build',
             entity_id=42,
-            action="update",
-            summary="Build updated.",
-            changed_fields=["details", "upgrade_1", "details"],
+            action='update',
+            summary='Build updated.',
+            changed_fields=['details', 'upgrade_1', 'details'],
         )
 
-        rows = list_audit_logs(db, entity_type="build", actor="moder")
+        rows = list_audit_logs(db, entity_type='build', actor='moder')
         assert len(rows) == 1
-        assert rows[0].actor_username == "moderator"
-        assert rows[0].action == "update"
-        assert rows[0].entity_id == "42"
-        assert rows[0].changed_fields == ["details", "upgrade_1"]
+        assert rows[0].actor_username == 'moderator'
+        assert rows[0].action == 'update'
+        assert rows[0].entity_id == '42'
+        assert rows[0].changed_fields == ['details', 'upgrade_1']

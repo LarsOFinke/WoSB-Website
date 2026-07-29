@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.services.build_role_service import BuildRoleError, require_build_role
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_limits import (
@@ -33,6 +34,10 @@ class BuildValidator:
         self._slots = BuildSlotFactory()
 
     def validate_and_prepare(self, build: BuildCreate) -> tuple[Ship, list[BuildSlot]]:
+        try:
+            require_build_role(self._db, build.build_type)
+        except BuildRoleError as exc:
+            raise BuildValidationError(str(exc)) from exc
         ship = self._db.get(Ship, build.ship_id)
         if ship is None or not ship.is_active:
             raise BuildValidationError("The selected ship does not exist.")

@@ -58,9 +58,21 @@
   transform: rotate(180deg);
 }
 
+.build-option-picker.is-open {
+  z-index: 61;
+}
+
+.equipment-slot:has(.build-option-picker.is-open),
+.inventory-slot-select:has(.build-option-picker.is-open),
+.form-section:has(.build-option-picker.is-open) {
+  position: relative;
+  z-index: 60;
+  overflow: visible;
+}
+
 .build-option-picker-menu {
   position: absolute;
-  z-index: 80;
+  z-index: 70;
   top: calc(100% + .35rem);
   left: 0;
   width: max(100%, 24rem);
@@ -72,6 +84,38 @@
   border-radius: .55rem;
   background: #0b1721;
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .48);
+}
+
+
+.build-option-picker-search {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: .15rem .15rem .45rem;
+  background: #0b1721;
+}
+
+.build-option-picker-search input {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: .55rem .65rem;
+  color: inherit;
+  border: 1px solid rgba(137, 164, 185, .34);
+  border-radius: .42rem;
+  background: rgba(4, 13, 21, .92);
+}
+
+.build-option-picker-search input:focus {
+  border-color: rgba(215, 169, 87, .72);
+  outline: none;
+}
+
+.build-option-picker-empty {
+  margin: .35rem;
+  padding: .8rem;
+  color: var(--text-muted, #91a2b5);
+  text-align: center;
 }
 
 .build-option-picker-group + .build-option-picker-group {
@@ -148,7 +192,7 @@
 @media (max-width: 640px) {
   .build-option-picker-menu {
     position: fixed;
-    z-index: 120;
+    z-index: 110;
     top: auto;
     right: .75rem;
     bottom: .75rem;

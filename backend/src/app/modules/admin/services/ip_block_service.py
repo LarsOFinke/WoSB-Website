@@ -3,12 +3,13 @@ from __future__ import annotations
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.time import utc_now
 from app.modules.accounts.models.user import User
 from app.modules.admin.models.ip_block import IpBlock
+from app.modules.admin.models.security_event import SecuritySignalBucket
 from app.modules.admin.schemas.ip_block import IpBlockCreate, IpBlockRead, IpBlockSummary
 
 
@@ -117,6 +118,9 @@ def create_ip_block(db: Session, *, actor: User, payload: IpBlockCreate) -> IpBl
         expires_at=payload.expires_at,
     )
     db.add(row)
+    # Once enforcement is configured, the temporary ban-candidate signals have
+    # fulfilled their purpose and are removed immediately.
+    db.execute(delete(SecuritySignalBucket).where(SecuritySignalBucket.client_ip == normalized))
     db.commit()
     db.refresh(row)
     return to_read(row)

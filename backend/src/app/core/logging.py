@@ -5,7 +5,7 @@ from typing import Any
 
 from app.configuration.models import Settings
 from app.core.config import settings
-from app.core.database_log_handler import DatabaseLogHandler
+from app.core.database_log_handler import SecurityEventHandler
 from app.core.json_formatter import JsonFormatter
 
 
@@ -19,7 +19,8 @@ class LoggingConfigurator:
     def build_config(self) -> dict[str, Any]:
         formatter_name = "json" if self._settings.log_format == "json" else "default"
         handlers = self._build_handlers(formatter_name)
-        app_handlers = self._enabled_app_handlers()
+        app_handlers = ["console"] if self._settings.console_logging_enabled else ["null"]
+        security_handlers = ["security_database"] if self._settings.db_logging_enabled else ["null"]
         root_handlers = ["console"] if self._settings.console_logging_enabled else ["null"]
         return {
             "version": 1,
@@ -38,6 +39,14 @@ class LoggingConfigurator:
                     "handlers": app_handlers,
                     "propagate": False,
                 },
+                # Exact IPs are written only by this dedicated logger and only
+                # into daily purpose-bound security-signal buckets. They never enter
+                # console/container logs.
+                "app.security": {
+                    "level": self._settings.db_log_level,
+                    "handlers": security_handlers,
+                    "propagate": False,
+                },
                 "uvicorn.access": {"level": "WARNING"},
                 "sqlalchemy.engine": {"level": self._settings.sql_log_level},
             },
@@ -50,21 +59,12 @@ class LoggingConfigurator:
                 "level": self._settings.log_level,
                 "formatter": formatter_name,
             },
-            "database": {
-                "()": "app.core.database_log_handler.DatabaseLogHandler",
+            "security_database": {
+                "()": "app.core.database_log_handler.SecurityEventHandler",
                 "level": self._settings.db_log_level,
-                "formatter": "default",
             },
             "null": {"class": "logging.NullHandler"},
         }
-
-    def _enabled_app_handlers(self) -> list[str]:
-        handlers: list[str] = []
-        if self._settings.console_logging_enabled:
-            handlers.append("console")
-        if self._settings.db_logging_enabled:
-            handlers.append("database")
-        return handlers or ["null"]
 
 
 def configure_logging() -> None:
@@ -72,7 +72,7 @@ def configure_logging() -> None:
 
 
 __all__ = [
-    "DatabaseLogHandler",
+    "SecurityEventHandler",
     "JsonFormatter",
     "LoggingConfigurator",
     "configure_logging",

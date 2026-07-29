@@ -13,53 +13,49 @@ const panelSource = await source('../src/modules/admin/components/SystemLogPanel
 const logsSource = await source('../src/modules/admin/composables/useAdminLogs.js')
 const dashboardSource = await source('../src/modules/admin/components/SecurityLogDashboard.vue')
 const pageSource = await source('../src/modules/admin/pages/AdminPage.vue')
+const blockPanelSource = await source('../src/modules/admin/components/IpBlockManagementPanel.vue')
 const styleSource = await source('../src/modules/admin/styles/staffWorkspace.css')
 
 
-test('blocked-IP noise is hidden by default and can be deliberately revealed', () => {
-  assert.ok(logsSource.includes('const logIncludeBlocked = ref(false)'))
-  assert.ok(logsSource.includes('includeBlocked: logIncludeBlocked.value'))
-  assert.ok(logsSource.includes('logIncludeBlocked.value = Boolean(ipAddress)'))
-  assert.ok(apiSource.includes('include_blocked: includeBlocked'))
-  assert.ok(panelSource.includes('v-model="logIncludeBlocked"'))
-  assert.ok(panelSource.includes("t('admin.logs.blockedHidden')"))
-  assert.ok(dashboardSource.includes('includeBlocked: props.includeBlocked'))
-})
-
-
-test('system log deletion remains explicit, confirmed and admin-scoped', () => {
+test('the admin UI exposes only aggregated IP-ban candidates', () => {
   assert.ok(pageSource.includes("activeTab === 'logs' && isAdmin"))
-  assert.ok(apiSource.includes('export function deleteAdminLog(id)'))
-  assert.ok(apiSource.includes('export function deleteFilteredAdminLogs'))
-  assert.ok(apiSource.includes('confirm: true'))
-  assert.ok(logsSource.includes('if (!isAdmin.value || !id) return false'))
-  assert.ok(logsSource.includes('if (!isAdmin.value) return 0'))
-  assert.ok(panelSource.includes('confirmFilteredDelete'))
-  assert.ok(panelSource.includes('pendingEntryDeleteId'))
-  assert.ok(panelSource.includes("t('admin.logs.deleteFilteredConfirmTitle')"))
-  assert.ok(panelSource.includes("t('admin.logs.deleteOneConfirm')"))
+  assert.ok(apiSource.includes('export function getSecurityDashboard'))
+  assert.ok(!apiSource.includes('export function listAdminLogs'))
+  assert.ok(!apiSource.includes('export function getAdminLogSummary'))
+  assert.ok(!apiSource.includes('export function deleteAdminLog'))
+  assert.ok(!apiSource.includes('export function deleteFilteredAdminLogs'))
+  assert.ok(panelSource.includes('security-privacy-notice'))
+  assert.ok(panelSource.includes('SecurityLogDashboard'))
+  assert.ok(!panelSource.includes('staff-log-list'))
+  assert.ok(!panelSource.includes('expandedLogId'))
 })
 
 
-test('the extracted log workspace has responsive, non-overlapping controls', () => {
-  for (const selector of [
-    '.system-log-panel',
-    '.system-log-heading-actions',
-    '.system-log-filter-grid',
-    '.system-log-blocked-toggle',
-    '.system-log-entry-actions',
-  ]) {
-    assert.ok(styleSource.includes(selector), selector)
+test('routes, user agents and raw request details are absent from the candidate view', () => {
+  for (const forbidden of ['top_paths', 'distinct_paths', 'user_agent', 'query_string', 'request_id', 'entry.path', 'entry.exception']) {
+    assert.ok(!dashboardSource.includes(forbidden), forbidden)
+    assert.ok(!panelSource.includes(forbidden), forbidden)
   }
-  assert.ok(styleSource.includes('grid-template-columns: repeat(4, minmax(0, 1fr))'))
+  for (const required of ['reconnaissance', 'login_failures', 'rate_limits', 'event_count', 'block-ip']) {
+    assert.ok(dashboardSource.includes(required), required)
+  }
+  assert.ok(!logsSource.includes('logPath'))
+  assert.ok(!logsSource.includes('logLevel'))
+  assert.ok(!logsSource.includes('logIncludeBlocked'))
+  assert.ok(!blockPanelSource.includes('view-logs'))
+})
+
+
+test('the privacy notice is present and responsive', () => {
+  assert.ok(styleSource.includes('.security-privacy-notice'))
   assert.ok(styleSource.includes('@media (max-width: 760px)'))
 })
 
 
-test('system log management copy is complete for every supported locale', () => {
+test('purpose limitation copy exists for every supported locale', () => {
   for (const locale of ['en', 'de', 'fr', 'es', 'pt', 'ru', 'cn']) {
-    assert.ok(systemLogManagementMessages[locale]?.admin?.logs?.deleteFiltered, locale)
-    assert.ok(systemLogManagementMessages[locale]?.admin?.logs?.includeBlocked, locale)
-    assert.ok(systemLogManagementMessages[locale]?.admin?.audit?.entities?.app_log, locale)
+    assert.ok(systemLogManagementMessages[locale]?.admin?.logs?.privacyTitle, locale)
+    assert.ok(systemLogManagementMessages[locale]?.admin?.logs?.privacyText, locale)
+    assert.ok(systemLogManagementMessages[locale]?.admin?.audit?.entities?.security_event, locale)
   }
 })

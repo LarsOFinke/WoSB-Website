@@ -25,6 +25,18 @@ export function getBuildOptions(shipId = null) {
   return get(withQuery('/builds/options', { ship_id: shipId || '' }))
 }
 
+export function listBuildRoles() {
+  return get('/builds/roles')
+}
+
+export function addBuildUpvote(id) {
+  return post(`/builds/${id}/upvote`, {})
+}
+
+export function removeBuildUpvote(id) {
+  return deleteRequest(`/builds/${id}/upvote`)
+}
+
 export function createBuild(payload) {
   return post('/builds', payload)
 }

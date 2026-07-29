@@ -10,9 +10,10 @@ from app.modules.accounts.models.registration_request import (
     REGISTRATION_PENDING,
     RegistrationRequest,
 )
-from app.modules.admin.models.app_log import AppLog
 from app.modules.admin.models.audit_log import AuditLog
+from app.modules.admin.models.ip_block import IpBlock
 from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
+from app.modules.admin.models.security_event import SecuritySignalBucket
 from app.modules.privacy.models.cookie_consent import CookieConsentDecision
 
 
@@ -33,7 +34,10 @@ def purge_expired_records(
 ) -> dict[str, int]:
     """Apply the centrally documented data-retention policy."""
 
-    app_log_cutoff = now - timedelta(days=policy.app_log_retention_days)
+    security_cutoff_day = now.date() - timedelta(
+        days=policy.security_event_retention_days - 1
+    )
+    inactive_block_cutoff = now - timedelta(days=policy.inactive_ip_block_retention_days)
     audit_log_cutoff = now - timedelta(days=policy.audit_log_retention_days)
     webhook_cutoff = now - timedelta(days=policy.webhook_delivery_retention_days)
     consent_cutoff = now - timedelta(days=policy.cookie_consent_retention_days)
@@ -51,9 +55,24 @@ def purge_expired_records(
             )
         )
     )
+    inactive_blocks = db.execute(
+        delete(IpBlock).where(
+            or_(
+                IpBlock.unblocked_at < inactive_block_cutoff,
+                (
+                    IpBlock.unblocked_at.is_(None)
+                    & IpBlock.expires_at.is_not(None)
+                    & (IpBlock.expires_at < inactive_block_cutoff)
+                ),
+            )
+        )
+    )
 
     return {
-        "app_logs": _delete_before(db, AppLog, AppLog.created_at, app_log_cutoff),
+        "security_signal_buckets": _delete_before(
+            db, SecuritySignalBucket, SecuritySignalBucket.day, security_cutoff_day
+        ),
+        "inactive_ip_blocks": _deleted(inactive_blocks.rowcount),
         "audit_logs": _delete_before(db, AuditLog, AuditLog.created_at, audit_log_cutoff),
         "webhook_deliveries": _delete_before(
             db,

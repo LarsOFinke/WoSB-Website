@@ -14,6 +14,9 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
 from app.modules.admin.services.outbound_webhook_service import (
     encrypt_legacy_webhook_endpoints,
 )
+from app.modules.admin.services.system_update_webhook_service import (
+    deliver_pending_system_update_result,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +32,11 @@ def run_maintenance_once() -> dict[str, int]:
             policy=settings.maintenance,
         )
         db.commit()
+    update_webhooks = deliver_pending_system_update_result()
     return {
         "expired_sessions": int(expired_sessions or 0),
         "encrypted_webhooks": int(encrypted_webhooks or 0),
+        "system_update_webhooks": int(update_webhooks or 0),
         **removed,
     }
 
@@ -69,4 +74,5 @@ async def webhook_delivery_recovery_loop() -> None:
     await _recover_webhook_deliveries(stale_after_seconds=0)
     while True:
         await asyncio.sleep(5 * 60)
+        await asyncio.to_thread(deliver_pending_system_update_result)
         await _recover_webhook_deliveries(stale_after_seconds=5 * 60)

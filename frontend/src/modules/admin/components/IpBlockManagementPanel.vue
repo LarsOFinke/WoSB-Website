@@ -9,7 +9,7 @@ const props = defineProps({
   canManage: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['consumed-initial-ip', 'changed', 'view-logs'])
+const emit = defineEmits(['consumed-initial-ip', 'changed'])
 const { locale, t } = useLocale()
 
 const rows = ref([])
@@ -246,7 +246,6 @@ onBeforeUnmount(() => window.clearTimeout(searchTimer))
               <small v-if="row.notes" class="ip-block-notes">{{ row.notes }}</small>
             </div>
             <div class="ip-block-card-actions">
-              <button class="small-action" type="button" @click="emit('view-logs', row.ip_address)">{{ t('admin.ipBlocks.viewLogs') }}</button>
               <button v-if="canManage && row.is_active && pendingUnblockId !== row.id" class="small-action" type="button" @click="requestUnblock(row.id)">{{ t('admin.ipBlocks.unblockAction') }}</button>
               <div v-else-if="canManage && row.is_active" class="ip-unblock-confirmation">
                 <input v-model="unblockReason" maxlength="240" :placeholder="t('admin.ipBlocks.unblockReasonPlaceholder')" />

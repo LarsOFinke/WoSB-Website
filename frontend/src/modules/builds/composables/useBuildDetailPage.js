@@ -3,7 +3,7 @@ import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
 import { buildCategoryVisuals, buildCrewVisuals } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 import { useLocale } from '@/locales'
-import { getBuild, getBuildOptions } from '@/modules/builds/api/builds'
+import { addBuildUpvote, getBuild, getBuildOptions, removeBuildUpvote } from '@/modules/builds/api/builds'
 import { useBuildPrintActions } from '@/modules/builds/composables/useBuildPrintActions'
 import {
   activeBuildEffects,
@@ -34,6 +34,8 @@ export function useBuildDetailPage(props) {
   const loading = ref(false)
   const error = ref('')
   const shareStatus = ref('')
+  const voteBusy = ref(false)
+  const voteError = ref('')
   const categoryFallbackImages = buildCategoryVisuals
   const crewFallbackImages = buildCrewVisuals
   const printActions = useBuildPrintActions(build, { t, optionLabel, optionImage })
@@ -93,7 +95,26 @@ export function useBuildDetailPage(props) {
   }
 
   function buildTypeLabel(value) {
-    return t(`builds.types.${value || 'balanced'}`)
+    if (build.value?.build_role_label) return build.value.build_role_label
+    const translated = t(`builds.types.${value || 'balanced'}`)
+    return translated.startsWith('builds.types.') ? (value || 'Balanced') : translated
+  }
+
+  async function toggleUpvote() {
+    if (!build.value || voteBusy.value) return
+    voteBusy.value = true
+    voteError.value = ''
+    try {
+      const state = build.value.has_upvoted
+        ? await removeBuildUpvote(build.value.id)
+        : await addBuildUpvote(build.value.id)
+      build.value.upvote_count = state.upvote_count
+      build.value.has_upvoted = state.has_upvoted
+    } catch (err) {
+      voteError.value = err.message || t('builds.voting.error')
+    } finally {
+      voteBusy.value = false
+    }
   }
 
   function formatModifier(row) {
@@ -116,14 +137,14 @@ export function useBuildDetailPage(props) {
   onMounted(loadBuild)
 
   return {
-    optionLabel, t, user, build, optionCatalog, loading, error, shareStatus,
+    optionLabel, t, user, build, optionCatalog, loading, error, shareStatus, voteBusy, voteError,
     ...printActions,
     categoryFallbackImages, crewFallbackImages, weaponArcRows, crewTotal, canEdit,
     upgrades, commandDeckUpgradeSlots, specialCrewSlots, regularSpecialCrewSlots,
     gingerSpecialCrewSlot, classificationLabels, ammunitionSlots,
     consumableSlots, holdSlots, crewDistributionRows, optionMeta, optionImage,
     inventoryCategory, slotItem, slotLabel, slotQuantity, inventoryImage,
-    specialistLabel, shareLinkMeta, shareBuild, buildTypeLabel, roundByPrecision,
+    specialistLabel, shareLinkMeta, shareBuild, buildTypeLabel, toggleUpvote, roundByPrecision,
     formatModifier, statRows, activeEffectRows, loadBuild,
   }
 }

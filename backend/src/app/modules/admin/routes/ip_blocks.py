@@ -79,7 +79,7 @@ def admin_create_ip_block(
         entity_type="ip_block",
         entity_id=row.id,
         action="create",
-        summary=f"IP {row.ip_address} blocked: {row.reason}",
+        summary=f"IP address blocked: {row.reason}",
         changed_fields=["ip_address", "reason", "expires_at"],
     )
     return row
@@ -107,7 +107,7 @@ def admin_unblock_ip(
         entity_type="ip_block",
         entity_id=row.id,
         action="update",
-        summary=f"IP {row.ip_address} unblocked.",
+        summary="IP address unblocked.",
         changed_fields=["unblocked_at", "unblock_reason"],
     )
     return row

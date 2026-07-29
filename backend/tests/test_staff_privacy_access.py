@@ -95,8 +95,6 @@ def test_moderator_cannot_access_admin_privacy_and_integration_endpoints() -> No
 
         admin_only_gets = [
             '/api/admin/system/update',
-            '/api/admin/logs',
-            '/api/admin/logs/summary',
             '/api/admin/logs/security-dashboard',
             '/api/admin/ip-blocks',
             '/api/admin/ip-blocks/summary',

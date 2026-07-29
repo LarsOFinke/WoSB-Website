@@ -7,6 +7,8 @@ from app.modules.accounts.models.user import User
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
 from app.modules.builds.schemas.build_read import BuildRead
+from app.modules.builds.schemas.build_role import BuildRoleRead
+from app.modules.builds.schemas.build_vote import BuildVoteState
 from app.modules.builds.schemas.build_update import BuildUpdate
 from app.modules.builds.services.build_option_service import list_build_options
 from app.modules.admin.services.audit_log_service import record_audit_safely
@@ -15,6 +17,8 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
     schedule_webhook_deliveries,
 )
 from app.modules.admin.services.webhook_event_scope import webhook_event_scope
+from app.modules.builds.services.build_role_service import list_build_roles
+from app.modules.builds.services.build_vote_service import add_build_upvote, remove_build_upvote
 from app.modules.builds.services.build_service import (
     BuildValidationError,
     create_build,
@@ -34,9 +38,15 @@ def get_builds(
     build_type: str | None = Query(default=None, max_length=32),
     classification: str | None = Query(default=None, max_length=40),
     db: Session = Depends(get_db),
-    _: User = Depends(require_user),
+    current_user: User = Depends(require_user),
 ) -> list[BuildRead]:
-    return list_builds(db, search=search, build_type=build_type, classification=classification)
+    return list_builds(
+        db,
+        search=search,
+        build_type=build_type,
+        classification=classification,
+        viewer_id=current_user.id,
+    )
 
 
 @router.post("", response_model=BuildRead, status_code=status.HTTP_201_CREATED)
@@ -71,6 +81,38 @@ def get_build_options(
     _: User = Depends(require_user),
 ) -> BuildOptionsCatalog:
     return list_build_options(db, ship_id=ship_id)
+
+
+@router.get("/roles", response_model=list[BuildRoleRead])
+def get_build_roles(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_user),
+) -> list[BuildRoleRead]:
+    return list_build_roles(db)
+
+
+@router.post("/{build_id}/upvote", response_model=BuildVoteState)
+def post_build_upvote(
+    build_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> BuildVoteState:
+    state = add_build_upvote(db, build_id, current_user.id)
+    if state is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    return state
+
+
+@router.delete("/{build_id}/upvote", response_model=BuildVoteState)
+def delete_build_upvote(
+    build_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> BuildVoteState:
+    state = remove_build_upvote(db, build_id, current_user.id)
+    if state is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
+    return state
 
 
 @router.get("/mine", response_model=list[BuildRead])
@@ -145,9 +187,9 @@ def delete_my_build(
 def get_build_detail(
     build_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_user),
+    current_user: User = Depends(require_user),
 ) -> BuildRead:
-    build = get_build(db, build_id)
+    build = get_build(db, build_id, viewer_id=current_user.id)
     if build is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
     return build

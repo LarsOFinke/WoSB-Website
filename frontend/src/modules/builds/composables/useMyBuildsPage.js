@@ -1,12 +1,13 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
-import { deleteMyBuild, listMyBuilds } from '@/modules/builds/api/builds'
+import { deleteMyBuild, listBuildRoles, listMyBuilds } from '@/modules/builds/api/builds'
 import { copyBuildShareLink } from '@/modules/builds/shareBuild'
 
 export function useMyBuildsPage() {
   const { optionLabel, t } = useLocale()
 
   const builds = ref([])
+  const buildRoles = ref([])
   const search = ref('')
   const buildType = ref('')
   const loading = ref(false)
@@ -19,10 +20,7 @@ export function useMyBuildsPage() {
 
   const buildTypeOptions = computed(() => [
     { value: '', label: t('builds.types.all') },
-    { value: 'balanced', label: t('builds.types.balanced') },
-    { value: 'gunnery', label: t('builds.types.gunnery') },
-    { value: 'boarding', label: t('builds.types.boarding') },
-    { value: 'defensive', label: t('builds.types.defensive') },
+    ...buildRoles.value.map((role) => ({ value: role.slug, label: role.label })),
   ])
 
   const buildCountLabel = computed(() =>
@@ -49,7 +47,12 @@ export function useMyBuildsPage() {
     loading.value = true
     error.value = ''
     try {
-      builds.value = await listMyBuilds(search.value, buildType.value)
+      const [nextBuilds, nextRoles] = await Promise.all([
+        listMyBuilds(search.value, buildType.value),
+        buildRoles.value.length ? Promise.resolve(buildRoles.value) : listBuildRoles(),
+      ])
+      builds.value = nextBuilds
+      buildRoles.value = nextRoles
     } catch (err) {
       error.value = err.message || t('myBuilds.loadError')
     } finally {
@@ -98,6 +101,7 @@ export function useMyBuildsPage() {
     optionLabel,
     t,
     builds,
+    buildRoles,
     search,
     buildType,
     loading,
