@@ -28,6 +28,7 @@ from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperTemplateWrite,
 )
 from app.modules.raid_helper.services.errors import RaidHelperError
+from app.modules.raid_helper.payload_policy import validate_payload_capability
 from app.modules.squads.services.squad_service import get_squad_model
 
 _ALLOWED_API_HOSTS = {
@@ -261,6 +262,7 @@ def _template_read(row: RaidHelperTemplate) -> RaidHelperTemplateRead:
         description_template=row.description_template,
         announcement_template=row.announcement_template,
         payload_template_json=row.payload_template_json,
+        uses_premium_features=row.uses_premium_features,
         is_default=row.is_default,
         is_active=row.is_active,
         created_at=row.created_at,
@@ -274,6 +276,14 @@ def list_templates(db: Session) -> list[RaidHelperTemplateRead]:
 
 
 def save_template(db: Session, payload: RaidHelperTemplateWrite, template_id: int | None = None) -> RaidHelperTemplateRead:
+    try:
+        validate_payload_capability(
+            raid_template_id=payload.raid_template_id,
+            payload_template_json=payload.payload_template_json,
+            uses_premium_features=payload.uses_premium_features,
+        )
+    except ValueError as exc:
+        raise RaidHelperError(str(exc)) from exc
     if db.get(RaidHelperProfile, payload.profile_id) is None:
         raise RaidHelperError("Raid-Helper profile not found.")
     row = db.get(RaidHelperTemplate, template_id) if template_id else RaidHelperTemplate()
@@ -281,7 +291,7 @@ def save_template(db: Session, payload: RaidHelperTemplateWrite, template_id: in
         raise RaidHelperError("Raid-Helper template not found.")
     if template_id is not None and _template_has_links(db, template_id) and row.profile_id != payload.profile_id:
         raise RaidHelperError("A template used by synchronized events cannot move to another profile; create a new template instead.")
-    for field in ("profile_id", "name", "raid_template_id", "scope_type", "title_template", "description_template", "announcement_template", "payload_template_json", "is_default", "is_active"):
+    for field in ("profile_id", "name", "raid_template_id", "scope_type", "title_template", "description_template", "announcement_template", "payload_template_json", "uses_premium_features", "is_default", "is_active"):
         setattr(row, field, getattr(payload, field))
     if template_id is None:
         db.add(row)

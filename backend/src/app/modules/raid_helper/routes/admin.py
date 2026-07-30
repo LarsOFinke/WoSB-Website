@@ -152,7 +152,7 @@ def template_create(payload: RaidHelperTemplateWrite, db: Session = Depends(get_
         row = save_template(db, payload)
     except RaidHelperError as exc:
         raise _bad(exc) from exc
-    record_audit_safely(db, actor=actor, entity_type="raid_helper_template", entity_id=row.id, action="create", summary=f'Raid-Helper template “{row.name}” created.', changed_fields=["profile_id", "raid_template_id", "scope_type", "categories", "title_template", "description_template", "announcement_template", "payload_template_json", "is_default", "is_active"])
+    record_audit_safely(db, actor=actor, entity_type="raid_helper_template", entity_id=row.id, action="create", summary=f'Raid-Helper template “{row.name}” created.', changed_fields=["profile_id", "raid_template_id", "scope_type", "categories", "title_template", "description_template", "announcement_template", "payload_template_json", "uses_premium_features", "is_default", "is_active"])
     return row
 
 
@@ -164,7 +164,7 @@ def template_update(template_id: int, payload: RaidHelperTemplateWrite, db: Sess
         if "not found" in str(exc).lower():
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         raise _bad(exc) from exc
-    record_audit_safely(db, actor=actor, entity_type="raid_helper_template", entity_id=row.id, action="update", summary=f'Raid-Helper template “{row.name}” updated.', changed_fields=["profile_id", "raid_template_id", "scope_type", "categories", "title_template", "description_template", "announcement_template", "payload_template_json", "is_default", "is_active"])
+    record_audit_safely(db, actor=actor, entity_type="raid_helper_template", entity_id=row.id, action="update", summary=f'Raid-Helper template “{row.name}” updated.', changed_fields=["profile_id", "raid_template_id", "scope_type", "categories", "title_template", "description_template", "announcement_template", "payload_template_json", "uses_premium_features", "is_default", "is_active"])
     return row
 
 

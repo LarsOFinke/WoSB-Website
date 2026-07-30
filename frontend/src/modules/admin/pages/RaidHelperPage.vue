@@ -6,7 +6,8 @@ const {
   t, isAdmin, user, navigationGroups, profiles, destinations, templates, loading, error, notice,
   profileEditId, destinationEditId, templateEditId, destinationTestTemplateIds, profileForm, destinationForm, templateForm,
   profileOptions, activeSquads, templatesForDestination, FLEET_EVENT_CATEGORIES, RAID_HELPER_CALENDAR_PRESETS,
-  applyRaidHelperCalendarPreset, applyRaidHelperRecommendedPayload, toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
+  applyRaidHelperCalendarPreset, applyRaidHelperFreePayload, applyRaidHelperPremiumPayload, setRaidHelperPremiumFeatures,
+  toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
   testProfile, resetDestination, editDestination, saveDestination, testDestination, removeDestination, resetTemplate,
   editTemplate, saveTemplate, removeTemplate,
 } = useRaidHelperPage()
@@ -94,19 +95,20 @@ const {
           </div>
           <select v-model="templateForm.profile_id" required><option disabled value="">{{ t('raidHelper.profile') }}</option><option v-for="row in profileOptions" :key="row.id" :value="row.id">{{ row.name }}</option></select>
           <input v-model="templateForm.name" required :placeholder="t('raidHelper.name')" />
-          <label><span>{{ t('raidHelper.raidTemplateId') }}</span><input v-model="templateForm.raid_template_id" :placeholder="t('raidHelper.raidTemplateIdPlaceholder')" /><small>{{ t('raidHelper.raidTemplateIdHelp') }}</small></label>
+          <label class="is-wide raid-helper-premium-toggle"><input v-model="templateForm.uses_premium_features" type="checkbox" @change="setRaidHelperPremiumFeatures(templateForm, templateForm.uses_premium_features)" /> <span>{{ t('raidHelper.premiumFeatures') }}</span><small>{{ t('raidHelper.premiumFeaturesHelp') }}</small></label>
+          <label><span>{{ t('raidHelper.raidTemplateId') }}</span><input v-model="templateForm.raid_template_id" :disabled="!templateForm.uses_premium_features" :placeholder="t('raidHelper.raidTemplateIdPlaceholder')" /><small>{{ t('raidHelper.raidTemplateIdHelp') }}</small></label>
           <select v-model="templateForm.scope_type"><option value="both">{{ t('raidHelper.bothScopes') }}</option><option value="fleet">{{ t('raidHelper.fleet') }}</option><option value="squad">{{ t('raidHelper.squad') }}</option></select>
           <fieldset><legend>{{ t('raidHelper.categories') }}</legend><label v-for="category in FLEET_EVENT_CATEGORIES" :key="category"><input type="checkbox" :checked="templateForm.categories.includes(category)" @change="toggleCategory(templateForm, category)" /> {{ t(`calendar.categories.${category}`) }}</label></fieldset>
           <label class="is-wide"><span>{{ t('raidHelper.titleTemplate') }}</span><input v-model="templateForm.title_template" required /></label>
           <label class="is-wide"><span>{{ t('raidHelper.descriptionTemplate') }}</span><textarea v-model="templateForm.description_template" rows="5"></textarea></label>
-          <label class="is-wide"><span>{{ t('raidHelper.announcementTemplate') }}</span><textarea v-model="templateForm.announcement_template" rows="3"></textarea></label>
-          <label class="is-wide"><span>{{ t('raidHelper.payloadTemplate') }}</span><textarea v-model="templateForm.payload_template_json" rows="12" spellcheck="false"></textarea><small>{{ t('raidHelper.payloadHelp') }}</small><button class="small-action raid-helper-payload-preset" type="button" @click="applyRaidHelperRecommendedPayload(templateForm)">{{ t('raidHelper.recommendedPayload') }}</button></label>
+          <label class="is-wide"><span>{{ t('raidHelper.announcementTemplate') }}</span><textarea v-model="templateForm.announcement_template" :disabled="!templateForm.uses_premium_features" rows="3"></textarea></label>
+          <label class="is-wide"><span>{{ t('raidHelper.payloadTemplate') }}</span><textarea v-model="templateForm.payload_template_json" rows="12" spellcheck="false"></textarea><small>{{ t('raidHelper.payloadHelp') }}</small><span class="raid-helper-payload-actions"><button class="small-action raid-helper-payload-preset" type="button" @click="applyRaidHelperFreePayload(templateForm)">{{ t('raidHelper.freePayload') }}</button><button class="small-action raid-helper-payload-preset" type="button" @click="applyRaidHelperPremiumPayload(templateForm)">{{ t('raidHelper.premiumPayload') }}</button></span></label>
           <label><input v-model="templateForm.is_default" type="checkbox" /> {{ t('raidHelper.defaultTemplate') }}</label>
           <label><input v-model="templateForm.is_active" type="checkbox" /> {{ t('common.active') }}</label>
           <div class="form-actions is-wide"><button class="button-box primary-action" type="submit">{{ t('common.save') }}</button><button v-if="templateEditId" class="button-box" type="button" @click="resetTemplate">{{ t('common.cancel') }}</button></div>
         </form>
         <article v-for="row in templates" :key="row.id" class="raid-helper-row">
-          <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · {{ row.raid_template_id || t('raidHelper.serverDefaultTemplate') }} · {{ row.scope_type }}</small></div>
+          <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · {{ row.raid_template_id || t('raidHelper.serverDefaultTemplate') }} · {{ row.scope_type }} · {{ row.uses_premium_features ? t('raidHelper.premiumMode') : t('raidHelper.freeMode') }}</small></div>
           <div><button class="small-action" @click="editTemplate(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeTemplate(row)">{{ t('common.delete') }}</button></div>
         </article>
       </section>

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -14,6 +16,7 @@ from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.services.fleet_event_service import create_fleet_event
 from app.modules.fleet.models.fleet import Fleet
 from app.modules.raid_helper.models.raid_helper import RaidHelperEventLink, RaidHelperProfile
+from app.modules.raid_helper.payload_policy import PREMIUM_PAYLOAD_TEMPLATE, validate_payload_capability
 from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperDestinationWrite,
     RaidHelperDispatchSelection,
@@ -142,7 +145,6 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
                     name="Fleet operation template",
-                    raid_template_id="fleet-operation",
                     scope_type="fleet",
                     categories=["operation"],
                     title_template="{{scope.name}}: {{event.title}}",
@@ -156,7 +158,6 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
                     name="Squad training template",
-                    raid_template_id="squad-training",
                     scope_type="squad",
                     categories=["training"],
                     is_default=True,
@@ -223,11 +224,9 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
             assert requests[0][2]["time"] == "20:00"
             assert requests[0][2]["duration"] == 120
             assert requests[0][2]["leaderId"] == "913456789012345678"
-            assert requests[0][2]["date_variant"] == "both"
-            assert requests[0][2]["12h_format"] is False
-            assert requests[0][2]["info_variant"] == "long"
-            assert requests[0][2]["preserve_order"] is True
-            assert requests[0][2]["apply_unregister"] is True
+            assert "templateId" not in requests[0][2]
+            assert "date_variant" not in requests[0][2]
+            assert "announcement" not in requests[0][2]
             assert link.external_event_id == "987654321098765432"
             assert link.status == "delivered"
 
@@ -269,7 +268,6 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
                     name="Cancellation template",
-                    raid_template_id="cancel-operation",
                     scope_type="fleet",
                     categories=["operation"],
                     is_default=True,
@@ -470,6 +468,14 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                     profile_id=profile.id,
                     name="Retry template",
                     raid_template_id="123456789012345678",
+                    payload_template_json='''{
+                      "title": "{{rendered.title}}",
+                      "description": "{{rendered.description}}",
+                      "date": "{{event.date}}",
+                      "time": "{{event.time}}",
+                      "templateId": "{{raid_helper.template_id}}"
+                    }''',
+                    uses_premium_features=True,
                     scope_type="fleet",
                     categories=["operation"],
                     is_default=True,
@@ -783,7 +789,7 @@ def test_destination_test_uses_selected_application_template(monkeypatch) -> Non
             assert result.ok is True
             assert 'template "Server default application template"' in result.message
             assert calls[0][0] == "POST"
-            assert calls[0][2]["date_variant"] == "both"
+            assert "date_variant" not in calls[0][2]
             assert calls[0][2]["leaderId"] == "913456789012345678"
             assert "templateId" not in calls[0][2]
             assert calls[1][0:2] == ("DELETE", "/events/963456789012345678")
@@ -827,6 +833,14 @@ def test_destination_template_401_identifies_template_authorization(monkeypatch)
                     profile_id=profile.id,
                     name="Restricted custom template",
                     raid_template_id="123456789012345678",
+                    payload_template_json='''{
+                      "title": "{{rendered.title}}",
+                      "description": "{{rendered.description}}",
+                      "date": "{{event.date}}",
+                      "time": "{{event.time}}",
+                      "templateId": "{{raid_helper.template_id}}"
+                    }''',
+                    uses_premium_features=True,
                     scope_type="fleet",
                     categories=[],
                     is_default=True,
@@ -849,3 +863,85 @@ def test_destination_template_401_identifies_template_authorization(monkeypatch)
             assert result.status_code == 401
             assert 'templateId "123456789012345678"' in result.message
             assert "leave the template id blank" in result.message.lower()
+
+
+def test_free_payload_policy_blocks_premium_kwargs_without_opt_in() -> None:
+    template = RaidHelperTemplateWrite(profile_id=1, name="Free template")
+    assert template.uses_premium_features is False
+    assert set(json.loads(template.payload_template_json)) == {
+        "title", "description", "date", "time", "duration"
+    }
+
+    with pytest.raises(ValueError, match="outside the free-compatible payload"):
+        validate_payload_capability(
+            raid_template_id="",
+            payload_template_json=PREMIUM_PAYLOAD_TEMPLATE,
+            uses_premium_features=False,
+        )
+
+    validate_payload_capability(
+        raid_template_id="123456789012345678",
+        payload_template_json=PREMIUM_PAYLOAD_TEMPLATE,
+        uses_premium_features=True,
+    )
+
+
+def test_destination_probe_reports_local_premium_policy_errors(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-free-policy-admin",
+                password="RaidHelperFreePolicyPassword123!",
+                display_name="Free Policy Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Free Policy Profile",
+                    server_id="993456789012345678",
+                    api_key="free-policy-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Free policy channel",
+                    channel_id="994456789012345678",
+                    scope_type="fleet",
+                    categories=[],
+                    is_default=True,
+                ),
+            )
+            template = raid_helper_service.save_template(
+                db,
+                RaidHelperTemplateWrite(
+                    profile_id=profile.id,
+                    name="Initially Premium template",
+                    payload_template_json=PREMIUM_PAYLOAD_TEMPLATE,
+                    uses_premium_features=True,
+                    is_default=True,
+                ),
+            )
+            from app.modules.raid_helper.models.raid_helper import RaidHelperTemplate
+            stored = db.get(RaidHelperTemplate, template.id)
+            assert stored is not None
+            stored.uses_premium_features = False
+            db.commit()
+
+            monkeypatch.setattr(
+                raid_helper_service,
+                "_request",
+                lambda *args, **kwargs: pytest.fail("invalid free payload must not reach Raid-Helper"),
+            )
+            result = raid_helper_service.test_destination(
+                db, destination.id, template_id=template.id
+            )
+            assert result is not None
+            assert result.ok is False
+            assert "outside the free-compatible payload" in result.message

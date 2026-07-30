@@ -23,7 +23,15 @@ export function applyRaidHelperCalendarPreset(form, preset) {
   form.announcement_template = preset.announcement_template
 }
 
-export const RAID_HELPER_RECOMMENDED_PAYLOAD = `{
+export const RAID_HELPER_FREE_PAYLOAD = `{
+  "title": "{{rendered.title}}",
+  "description": "{{rendered.description}}",
+  "date": "{{event.date}}",
+  "time": "{{event.time}}",
+  "duration": "{{event.duration_minutes}}"
+}`
+
+export const RAID_HELPER_PREMIUM_PAYLOAD = `{
   "title": "{{rendered.title}}",
   "description": "{{rendered.description}}",
   "date": "{{event.date}}",
@@ -38,6 +46,18 @@ export const RAID_HELPER_RECOMMENDED_PAYLOAD = `{
   "apply_unregister": true
 }`
 
-export function applyRaidHelperRecommendedPayload(form) {
-  form.payload_template_json = RAID_HELPER_RECOMMENDED_PAYLOAD
+export function applyRaidHelperFreePayload(form) {
+  form.uses_premium_features = false
+  form.raid_template_id = ''
+  form.payload_template_json = RAID_HELPER_FREE_PAYLOAD
+}
+
+export function applyRaidHelperPremiumPayload(form) {
+  form.uses_premium_features = true
+  form.payload_template_json = RAID_HELPER_PREMIUM_PAYLOAD
+}
+
+export function setRaidHelperPremiumFeatures(form, enabled) {
+  form.uses_premium_features = Boolean(enabled)
+  if (!form.uses_premium_features) applyRaidHelperFreePayload(form)
 }

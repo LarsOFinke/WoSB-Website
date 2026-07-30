@@ -116,11 +116,14 @@ def test_destination(
         }
         template_label = "minimal default payload"
     else:
-        payload = raid_helper_service._payload(
-            _temporary_test_event(row, template, starts_at),
-            template,
-            leader_id,
-        )
+        try:
+            payload = raid_helper_service._payload(
+                _temporary_test_event(row, template, starts_at),
+                template,
+                leader_id,
+            )
+        except RaidHelperError as exc:
+            return RaidHelperProfileTestResult(ok=False, message=str(exc))
         template_label = f'template "{template.name}"'
 
     path = f"/servers/{profile.server_id}/channels/{row.channel_id}/event"

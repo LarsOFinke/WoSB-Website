@@ -20,16 +20,18 @@ import {
 } from '@/modules/admin/api/admin'
 import {
   RAID_HELPER_CALENDAR_PRESETS,
-  RAID_HELPER_RECOMMENDED_PAYLOAD,
+  RAID_HELPER_FREE_PAYLOAD,
   applyRaidHelperCalendarPreset,
-  applyRaidHelperRecommendedPayload,
+  applyRaidHelperFreePayload,
+  applyRaidHelperPremiumPayload,
+  setRaidHelperPremiumFeatures,
 } from '@/modules/admin/domain/raidHelperTemplates'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
 import { FLEET_EVENT_CATEGORIES } from '@/modules/calendar/api/calendar'
 import { listSquads } from '@/modules/squads/api/squads'
 
 const DEFAULT_API_BASE_URL = 'https://raid-helper.xyz/api/v4'
-const DEFAULT_RAID_HELPER_PAYLOAD = RAID_HELPER_RECOMMENDED_PAYLOAD
+const DEFAULT_RAID_HELPER_PAYLOAD = RAID_HELPER_FREE_PAYLOAD
 
 function defaultProfileForm() {
   return {
@@ -67,6 +69,7 @@ function defaultTemplateForm(profileId = '') {
     description_template: '**{{scope.name}}**\n{{event.description}}\nLocation: {{event.location}}',
     announcement_template: 'New {{event.category}} event: **{{event.title}}**',
     payload_template_json: DEFAULT_RAID_HELPER_PAYLOAD,
+    uses_premium_features: false,
     is_default: true,
     is_active: true,
   }
@@ -277,6 +280,7 @@ export function useRaidHelperPage() {
       description_template: row.description_template,
       announcement_template: row.announcement_template,
       payload_template_json: row.payload_template_json,
+      uses_premium_features: row.uses_premium_features,
       is_default: row.is_default,
       is_active: row.is_active,
     })
@@ -332,9 +336,10 @@ export function useRaidHelperPage() {
     templatesForDestination,
     FLEET_EVENT_CATEGORIES,
     RAID_HELPER_CALENDAR_PRESETS,
-    RAID_HELPER_RECOMMENDED_PAYLOAD,
     applyRaidHelperCalendarPreset,
-    applyRaidHelperRecommendedPayload,
+    applyRaidHelperFreePayload,
+    applyRaidHelperPremiumPayload,
+    setRaidHelperPremiumFeatures,
     toggleCategory,
     resetProfile,
     editProfile,

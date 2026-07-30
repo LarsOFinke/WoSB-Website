@@ -98,6 +98,7 @@ class RaidHelperTemplate(Base):
     description_template: Mapped[str] = mapped_column(Text, nullable=False, default="{{event.description}}")
     announcement_template: Mapped[str] = mapped_column(Text, nullable=False, default="")
     payload_template_json: Mapped[str] = mapped_column(Text, nullable=False)
+    uses_premium_features: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)

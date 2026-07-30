@@ -70,7 +70,7 @@ test('robots policy and NGINX limits reduce crawler load beyond voluntary direct
 })
 
 
-test('Raid-Helper defaults use the canonical API host and advanced timezone presentation', async () => {
+test('Raid-Helper defaults are free-compatible and Premium kwargs require explicit opt-in', async () => {
   const [page, pageModel, templates] = await Promise.all([
     readFile(adminPageUrl, 'utf8'),
     readFile(adminModelUrl, 'utf8'),
@@ -83,12 +83,19 @@ test('Raid-Helper defaults use the canonical API host and advanced timezone pres
   assert.match(pageModel, /destinationTestConfirm/)
   assert.doesNotMatch(pageModel, /authorization_mode|bearer|x-api-key/)
   assert.match(page, /raidHelper\.timezoneHelp/)
-  assert.match(page, /applyRaidHelperRecommendedPayload/)
+  assert.match(page, /templateForm\.uses_premium_features/)
+  assert.match(page, /applyRaidHelperFreePayload/)
+  assert.match(page, /applyRaidHelperPremiumPayload/)
+  assert.match(pageModel, /uses_premium_features:\s*false/)
+  assert.match(templates, /RAID_HELPER_FREE_PAYLOAD/)
+  assert.match(templates, /RAID_HELPER_PREMIUM_PAYLOAD/)
   assert.match(templates, /"date_variant": "both"/)
   assert.match(templates, /"12h_format": false/)
   assert.match(templates, /"info_variant": "long"/)
   assert.match(templates, /"preserve_order": true/)
   assert.match(templates, /"apply_unregister": true/)
+  assert.match(templates, /form\.uses_premium_features = false/)
+  assert.match(templates, /form\.uses_premium_features = true/)
 })
 
 

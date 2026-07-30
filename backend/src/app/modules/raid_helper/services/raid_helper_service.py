@@ -33,6 +33,7 @@ from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperProfileTestResult,
 )
 from app.modules.raid_helper.services.errors import RaidHelperError
+from app.modules.raid_helper.payload_policy import validate_payload_capability
 from app.modules.raid_helper.services.raid_helper_configuration import (
     _validate_base_url,
     create_profile,
@@ -340,6 +341,14 @@ def _render_json(value: Any, context: dict[str, Any]) -> Any:
 
 
 def _payload(event: FleetEvent, template: RaidHelperTemplate, leader_id: str) -> dict[str, Any]:
+    try:
+        validate_payload_capability(
+            raid_template_id=template.raid_template_id,
+            payload_template_json=template.payload_template_json,
+            uses_premium_features=getattr(template, "uses_premium_features", False),
+        )
+    except ValueError as exc:
+        raise RaidHelperError(str(exc)) from exc
     context = _event_context(event, template)
     context["raid_helper"]["leader_id"] = leader_id
     value = json.loads(template.payload_template_json)

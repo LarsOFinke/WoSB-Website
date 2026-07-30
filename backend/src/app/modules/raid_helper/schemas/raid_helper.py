@@ -6,21 +6,9 @@ from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 
 from app.modules.calendar.constants import FLEET_EVENT_CATEGORY_VALUES
+from app.modules.raid_helper.payload_policy import FREE_PAYLOAD_TEMPLATE
 
-DEFAULT_PAYLOAD_TEMPLATE = '''{
-  "title": "{{rendered.title}}",
-  "description": "{{rendered.description}}",
-  "date": "{{event.date}}",
-  "time": "{{event.time}}",
-  "duration": "{{event.duration_minutes}}",
-  "templateId": "{{raid_helper.template_id}}",
-  "announcement": "{{rendered.announcement}}",
-  "date_variant": "both",
-  "12h_format": false,
-  "info_variant": "long",
-  "preserve_order": true,
-  "apply_unregister": true
-}'''
+DEFAULT_PAYLOAD_TEMPLATE = FREE_PAYLOAD_TEMPLATE
 
 
 def _categories(values: list[str]) -> list[str]:
@@ -116,6 +104,7 @@ class RaidHelperTemplateWrite(BaseModel):
     description_template: str = Field(default="{{event.description}}", max_length=4000)
     announcement_template: str = Field(default="", max_length=2000)
     payload_template_json: str = Field(default=DEFAULT_PAYLOAD_TEMPLATE, min_length=2, max_length=12000)
+    uses_premium_features: bool = False
     is_default: bool = False
     is_active: bool = True
 
