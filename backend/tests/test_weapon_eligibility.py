@@ -22,7 +22,7 @@ def _catalog(db: Session, ship: Ship) -> dict[str, set[str]]:
     return by_slot
 
 
-def test_weapon_dropdown_uses_class_for_broadsides_and_slot_type_for_positional_weapons() -> None:
+def test_weapon_dropdown_uses_size_class_for_broadsides_and_positional_weapons() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -36,29 +36,24 @@ def test_weapon_dropdown_uses_class_for_broadsides_and_slot_type_for_positional_
         essex = db.scalar(select(Ship).where(Ship.name == "Essex"))
         poltava = db.scalar(select(Ship).where(Ship.name == "Poltava"))
         victory = db.scalar(select(Ship).where(Ship.name == "Victory"))
+        friede = db.scalar(select(Ship).where(Ship.name == "Friede"))
+        azov = db.scalar(select(Ship).where(Ship.name == "Azov"))
+        eagle = db.scalar(select(Ship).where(Ship.name == "Eagle"))
         cannon_8 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "8-pdr Cannon"))
         cannon_16 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "16-pdr Cannon"))
         cannon_32 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "32-pdr Cannon"))
         twin_6 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 6-pdr"))
-        twin_14 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 14-pdr"))
+        basilisk = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Basilisk"))
+        poseidon = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Poseidon"))
         zeus = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Zeus"))
-        assert all(
-            (
-                russia,
-                essex,
-                poltava,
-                victory,
-                cannon_8,
-                cannon_16,
-                cannon_32,
-                twin_6,
-                twin_14,
-                zeus,
-            )
-        )
+        gilgamesh = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Gilgamesh"))
+        assert all((
+            russia, essex, poltava, victory, friede, azov, eagle,
+            cannon_8, cannon_16, cannon_32, twin_6, basilisk, poseidon, zeus, gilgamesh,
+        ))
 
-        # The mount ceiling is audited per ship rather than inferred from rate.
-        # Russia uses Light mounts, Essex and Poltava use Medium, Victory accepts Heavy.
+        # The normalized mount ceiling applies to both broadside and bow/stern
+        # weapon families. Light ships cannot select Medium or Heavy weapons.
         russia_catalog = _catalog(db, russia)
         assert "8-pdr Cannon" in russia_catalog["weapon_port"]
         assert "16-pdr Cannon" not in russia_catalog["weapon_port"]
@@ -70,22 +65,32 @@ def test_weapon_dropdown_uses_class_for_broadsides_and_slot_type_for_positional_
 
         victory_catalog = _catalog(db, victory)
         assert "32-pdr Cannon" in victory_catalog["weapon_port"]
+        assert "Gilgamesh" in victory_catalog["weapon_front"]
 
-        # Bow/stern weapons never leak into broadside choices.
-        assert "Twin 14-pdr" not in victory_catalog["weapon_port"]
-        assert "Twin 14-pdr" in victory_catalog["weapon_front"]
+        friede_catalog = _catalog(db, friede)
+        assert {"Twin 6-pdr", "Basilisk", "Poseidon"} <= friede_catalog["weapon_rear"]
+        assert "Zeus" not in friede_catalog["weapon_rear"]
+        assert "Gilgamesh" not in friede_catalog["weapon_rear"]
 
-        russia_port = russia._mount("weapon_port")
+        azov_catalog = _catalog(db, azov)
+        assert "Zeus" in azov_catalog["weapon_front"]
+        assert "Zeus" in azov_catalog["weapon_rear"]
+        assert "Gilgamesh" not in azov_catalog["weapon_front"]
+
+        eagle_catalog = _catalog(db, eagle)
+        assert {"Basilisk", "Poseidon"} <= eagle_catalog["weapon_rear"]
+        assert "Zeus" not in eagle_catalog["weapon_rear"]
+
         russia_rear = russia._mount("weapon_rear")
-        assert russia_port and russia_rear
-        assert is_weapon_compatible(cannon_8, russia_port)
-        assert not is_weapon_compatible(cannon_16, russia_port)
+        azov_rear = azov._mount("weapon_rear")
+        russia_port = russia._mount("weapon_port")
+        assert russia_rear and azov_rear and russia_port
         assert is_weapon_compatible(twin_6, russia_rear)
-        assert is_weapon_compatible(twin_14, russia_rear)
-        assert is_weapon_compatible(zeus, russia_rear)
+        assert is_weapon_compatible(basilisk, russia_rear)
+        assert not is_weapon_compatible(zeus, russia_rear)
+        assert is_weapon_compatible(zeus, azov_rear)
+        assert not is_weapon_compatible(gilgamesh, azov_rear)
         assert not is_weapon_compatible(twin_6, russia_port)
-        assert not is_weapon_compatible(zeus, russia_port)
-
 
 def test_weapon_families_use_normalized_class_or_slot_compatibility() -> None:
     register_all_models()
@@ -102,12 +107,16 @@ def test_weapon_families_use_normalized_class_or_slot_compatibility() -> None:
             if option.option_kind == "mortar":
                 assert option.weapon_class is None
                 assert option.weapon_caliber_inches is not None
-            elif option.option_kind == "cannon":
+            elif option.option_kind in {"cannon", "bow_stern"}:
                 assert option.weapon_class_code in {"light", "medium", "heavy"}
-                assert set(option.allowed_slots) == {"weapon_port", "weapon_starboard"}
+                expected_slots = (
+                    {"weapon_port", "weapon_starboard"}
+                    if option.option_kind == "cannon"
+                    else {"weapon_front", "weapon_rear"}
+                )
+                assert set(option.allowed_slots) == expected_slots
             else:
                 assert option.option_kind in {
-                    "bow_stern",
                     "mortar_launcher",
                     "special_weapon",
                 }
@@ -273,7 +282,7 @@ def test_mortar_modification_exchanges_broadsides_for_mortar_capacity() -> None:
             )
 
 
-def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> None:
+def test_bow_stern_weapons_follow_each_mounts_normalized_class_ceiling() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -291,7 +300,7 @@ def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> Non
         ).unique().all()
         positional_names = {option.name for option in positional_weapons}
         assert {"Zeus", "Basilisk", "Poseidon"} <= positional_names
-        assert all(option.weapon_class is None for option in positional_weapons)
+        assert all(option.weapon_class_code in {"light", "medium", "heavy"} for option in positional_weapons)
         assert all(
             set(option.allowed_slots) == {"weapon_front", "weapon_rear"}
             for option in positional_weapons
@@ -305,10 +314,16 @@ def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> Non
                 mount = ship._mount(slot_code)
                 assert mount is not None
                 available = catalog.get(slot_code, set())
-                if mount.capacity > 0:
-                    assert positional_names <= available, (ship.name, slot_code)
-                else:
-                    assert positional_names.isdisjoint(available), (ship.name, slot_code)
+                for option in positional_weapons:
+                    expected = (
+                        mount.capacity > 0
+                        and mount.max_weapon_class is not None
+                        and option.weapon_class is not None
+                        and option.weapon_class.rank <= mount.max_weapon_class.rank
+                    )
+                    assert (option.name in available) is expected, (
+                        ship.name, slot_code, option.name, mount.max_weapon_class_code
+                    )
             for slot_code in (
                 "weapon_port",
                 "weapon_starboard",
@@ -320,20 +335,23 @@ def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> Non
                     slot_code,
                 )
 
-        russia = db.scalar(select(Ship).where(Ship.name == "Russia"))
+        friede = db.scalar(select(Ship).where(Ship.name == "Friede"))
+        azov = db.scalar(select(Ship).where(Ship.name == "Azov"))
+        deadfish = db.scalar(select(Ship).where(Ship.name == "Deadfish"))
         eagle = db.scalar(select(Ship).where(Ship.name == "Eagle"))
-        assert russia and eagle
+        assert friede and azov and deadfish and eagle
 
-        russia_build = create_build(
-            db,
-            BuildCreate(
-                build_name="Russia positional Zeus",
-                ship_id=russia.id,
-                sailors=russia.sailor_minimum,
-                rear_weapon_slots=[{"item": "Zeus", "quantity": 1}],
-            ),
-        )
-        assert russia_build.rear_weapon_slots == [{"item": "Zeus", "quantity": 1}]
+        for medium_ship in (azov, deadfish):
+            build = create_build(
+                db,
+                BuildCreate(
+                    build_name=f"{medium_ship.name} positional Zeus",
+                    ship_id=medium_ship.id,
+                    sailors=medium_ship.sailor_minimum,
+                    rear_weapon_slots=[{"item": "Zeus", "quantity": 1}],
+                ),
+            )
+            assert build.rear_weapon_slots == [{"item": "Zeus", "quantity": 1}]
 
         eagle_build = create_build(
             db,
@@ -351,4 +369,15 @@ def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> Non
             {"item": "Basilisk", "quantity": 1},
             {"item": "Poseidon", "quantity": 1},
         ]
+
+        with pytest.raises(BuildValidationError, match="not compatible"):
+            create_build(
+                db,
+                BuildCreate(
+                    build_name="Friede cannot carry medium Zeus",
+                    ship_id=friede.id,
+                    sailors=friede.sailor_minimum,
+                    rear_weapon_slots=[{"item": "Zeus", "quantity": 1}],
+                ),
+            )
 

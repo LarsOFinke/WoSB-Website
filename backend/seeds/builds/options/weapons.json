@@ -290,7 +290,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "light",
       "seed_id": "twin-6-pdr"
     },
     {
@@ -302,7 +302,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "light",
       "seed_id": "triple-10-pdr"
     },
     {
@@ -314,7 +314,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "light",
       "seed_id": "basilisk"
     },
     {
@@ -340,7 +340,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "medium",
       "seed_id": "onager"
     },
     {
@@ -352,7 +352,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "medium",
       "seed_id": "twin-14-pdr"
     },
     {
@@ -364,7 +364,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "medium",
       "seed_id": "triple-16-pdr"
     },
     {
@@ -376,7 +376,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "heavy",
       "seed_id": "gilgamesh"
     },
     {
@@ -388,7 +388,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "heavy",
       "seed_id": "mjolnir"
     },
     {
@@ -400,7 +400,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "light",
       "seed_id": "poseidon"
     },
     {
@@ -412,7 +412,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "heavy",
       "seed_id": "twin-20-pdr"
     },
     {
@@ -424,7 +424,7 @@
         "weapon_front",
         "weapon_rear"
       ],
-      "weapon_class": null,
+      "weapon_class": "medium",
       "seed_id": "zeus"
     },
     {

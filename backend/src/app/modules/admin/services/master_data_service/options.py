@@ -130,18 +130,22 @@ class OptionMasterDataService:
                     f"{payload.option_kind} weapons require exactly these slot types: "
                     f"{', '.join(sorted(expected_slots))}."
                 )
-            if payload.option_kind == "cannon" and not payload.weapon_class:
+            if payload.option_kind in {"cannon", "bow_stern"} and not payload.weapon_class:
+                family = (
+                    "Broadside cannons"
+                    if payload.option_kind == "cannon"
+                    else "Bow/stern weapons"
+                )
                 raise MasterDataError(
-                    "Broadside cannons require a Light, Medium or Heavy weapon class."
+                    f"{family} require a Light, Medium or Heavy weapon class."
                 )
             if payload.option_kind in {
-                "bow_stern",
                 "mortar",
                 "mortar_launcher",
                 "special_weapon",
             } and payload.weapon_class:
                 raise MasterDataError(
-                    "This weapon family is compatible by slot type and must not define a weapon class."
+                    "This weapon family uses dedicated mount rules and must not define a weapon class."
                 )
 
         for field, value in payload.model_dump(

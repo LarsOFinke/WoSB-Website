@@ -72,6 +72,11 @@ Jedes Schiff definiert genau sechs Mounts, auch wenn deren `capacity` null ist:
 Spezialmount erlaubt. Ein bestückbarer Mörser-Mount benötigt zusätzlich
 `max_caliber_inches`.
 
+Reguläre Breitseiten- **und** Bug-/Heckwaffen besitzen eine normalisierte
+`weapon_class` (`light`, `medium`, `heavy`). Für ihre Auswahl müssen sowohl der
+Slottyp als auch die maximale Waffenklasse des konkreten Mounts passen. Mörser
+und echte Spezialwaffen verwenden weiterhin ihre getrennten Regeln.
+
 `mortar_modification` bildet den permanenten Schiffsumbau ab und ist kein
 normales Upgrade. `null` bedeutet, dass der Umbau nicht verfügbar ist. Aktuell
 ist er für `Black Wind`, `Falmouth` und `Friede` hinterlegt. Das Build speichert

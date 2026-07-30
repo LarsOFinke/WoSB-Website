@@ -15,7 +15,7 @@ const baseForm = {
   is_active: true,
 }
 
-test('bow and stern weapon payloads cannot retain broadside weapon classes', () => {
+test('bow and stern weapon payloads retain their normalized size class', () => {
   const payload = optionPayload({
     ...baseForm,
     option_kind: 'bow_stern',
@@ -23,7 +23,7 @@ test('bow and stern weapon payloads cannot retain broadside weapon classes', () 
     allowed_slot_types: ['weapon_front', 'weapon_rear'],
   }, {})
 
-  assert.equal(payload.weapon_class, null)
+  assert.equal(payload.weapon_class, 'heavy')
 })
 
 test('broadside cannon payloads retain their normalized size class', () => {

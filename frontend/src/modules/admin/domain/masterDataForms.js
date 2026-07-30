@@ -135,7 +135,7 @@ export function optionPayload(form, statEffects) {
     notes: form.notes || null,
     image_url: form.image_url || null,
     option_kind: form.option_kind || null,
-    weapon_class: form.option_kind === 'cannon' ? (form.weapon_class || null) : null,
+    weapon_class: ['cannon', 'bow_stern'].includes(form.option_kind) ? (form.weapon_class || null) : null,
     weapon_caliber_inches: form.weapon_caliber_inches === '' ? null : Number(form.weapon_caliber_inches),
     stat_effects: statEffects,
     allowed_slot_types: [...form.allowed_slot_types],

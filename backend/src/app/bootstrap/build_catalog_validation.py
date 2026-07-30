@@ -200,12 +200,16 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
                 f"{', '.join(sorted(expected_slots))}"
             )
         weapon_class = row.get("weapon_class")
-        if option_kind == "cannon":
+        if option_kind in {"cannon", "bow_stern"}:
             if weapon_class not in {"light", "medium", "heavy"}:
-                errors.append(f"{name}: broadside cannons require light, medium or heavy weapon_class")
+                family = "broadside cannons" if option_kind == "cannon" else "bow/stern weapons"
+                errors.append(
+                    f"{name}: {family} require light, medium or heavy weapon_class"
+                )
         elif weapon_class not in (None, ""):
             errors.append(
-                f"{name}: {option_kind} compatibility is defined by slot type and must not use weapon_class"
+                f"{name}: {option_kind} compatibility is defined by its dedicated mount rules "
+                "and must not use weapon_class"
             )
         if option_kind == "mortar" and row.get("weapon_caliber_inches") in (None, ""):
             errors.append(f"{name}: mortar caliber is required")
