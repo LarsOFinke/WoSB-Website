@@ -13,3 +13,13 @@ test('system update panel exposes only privacy-minimal status fields', async () 
   assert.match(panel, /update\.started_at/)
   assert.match(panel, /update\.finished_at/)
 })
+
+
+test('system operations expose a confirmed application-only restart', async () => {
+  const panel = await readFile(panelPath, 'utf8')
+  assert.match(panel, /trigger\('restart'\)/)
+  assert.match(panel, /admin\.system\.restartConfirm/)
+  assert.match(panel, /admin\.system\.restartRequestAccepted/)
+  assert.match(panel, /system-restart-action/)
+  assert.match(panel, /danger-action/)
+})

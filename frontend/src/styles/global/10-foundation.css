@@ -61,7 +61,7 @@ button {
 }
 
 button:disabled,
-[aria-disabled='true'] {
+[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -69,22 +69,6 @@ button:disabled,
 :focus-visible {
   outline: 3px solid rgba(241, 184, 91, 0.42);
   outline-offset: 3px;
-}
-
-.app-shell {
-  width: var(--page-width);
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: clamp(0.85rem, 1.6vw, 1.4rem) 0 clamp(1rem, 2vw, 1.75rem);
-  display: flex;
-  flex-direction: column;
-  gap: var(--content-gap);
-}
-
-.app-main {
-  flex: 1;
-  display: grid;
-  min-width: 0;
 }
 
 .wire-frame,
@@ -124,42 +108,6 @@ button:disabled,
 }
 
 /* Navigation */
-.navbar {
-  position: sticky;
-  top: 0.85rem;
-  z-index: var(--z-shell-topbar);
-  display: grid;
-  grid-template-columns: auto minmax(360px, 1fr) auto auto;
-  gap: 0.75rem;
-  align-items: center;
-  padding: 0.65rem;
-  border: 1px solid rgba(221, 231, 244, 0.18);
-  border-radius: var(--radius-xl);
-  background: rgba(10, 20, 31, 0.88);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
-}
-
-.nav-brand,
-.nav-links,
-.nav-account,
-.nav-utilities,
-.nav-session,
-.locale-switcher {
-  display: flex;
-  align-items: center;
-}
-
-.nav-brand {
-  min-width: 0;
-  gap: 0.65rem;
-  padding: 0.35rem 0.6rem 0.35rem 0.35rem;
-  border-radius: var(--radius-pill);
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
 
 .brand-mark {
   width: 2.35rem;
@@ -183,27 +131,6 @@ button:disabled,
   white-space: nowrap;
 }
 
-.nav-links,
-.nav-account {
-  min-width: 0;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-
-.nav-links {
-  padding: 0.25rem;
-  border: 1px solid rgba(221, 231, 244, 0.12);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.035);
-}
-
-.nav-account {
-  justify-content: flex-end;
-}
-
-.nav-link,
-.nav-action,
-.locale-button,
 .small-action,
 .button-box,
 .form-button,
@@ -226,74 +153,6 @@ button:disabled,
   white-space: nowrap;
 }
 
-.nav-link {
-  padding: 0.58rem 0.82rem;
-  font-size: 0.9rem;
-}
-
-.nav-link:hover,
-.nav-link.router-link-active,
-.nav-link.router-link-exact-active {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.nav-link-secondary {
-  border-color: rgba(221, 231, 244, 0.14);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.nav-utilities {
-  justify-content: flex-end;
-  gap: 0.65rem;
-  min-width: 0;
-}
-
-.locale-switcher,
-.nav-session {
-  gap: 0.35rem;
-}
-
-.locale-switcher {
-  padding: 0.25rem;
-  border: 1px solid rgba(221, 231, 244, 0.12);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.locale-button {
-  min-height: 1.85rem;
-  padding: 0.34rem 0.55rem;
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.locale-button:hover,
-.locale-button.is-active {
-  color: #08111b;
-  background: var(--accent);
-}
-
-.session-user {
-  max-width: 14ch;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-action {
-  padding: 0.58rem 0.82rem;
-  border-color: rgba(221, 231, 244, 0.16);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  font-size: 0.86rem;
-}
-
-.nav-action:hover,
 .nav-action-strong,
 .primary-action,
 .form-button.primary {
@@ -997,14 +856,14 @@ textarea {
   color: var(--muted);
 }
 
-input[type='checkbox'] {
+input[type="checkbox"] {
   width: 1.2rem;
   min-width: 1.2rem;
   height: 1.2rem;
   accent-color: var(--accent);
 }
 
-input[type='range'] {
+input[type="range"] {
   accent-color: var(--accent);
 }
 
@@ -1115,7 +974,7 @@ input[type='range'] {
   grid-template-columns: 2.45rem minmax(0, 1fr) 4.8rem;
 }
 
-.inventory-slot-select input[type='number'] {
+.inventory-slot-select input[type="number"] {
   text-align: right;
   border-left: 1px solid rgba(221, 231, 244, 0.12);
   padding-left: 0.55rem;
@@ -1584,16 +1443,4 @@ input[type='range'] {
 }
 
 /* Footer */
-.footer {
-  min-height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: var(--radius-lg);
-  background: rgba(10, 20, 31, 0.68);
-}
 
-.footer-text {
-  color: var(--muted);
-  font-size: 0.9rem;
-}

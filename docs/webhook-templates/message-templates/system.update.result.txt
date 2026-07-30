@@ -1,4 +1,4 @@
-{data.state} **Server Update Result**
+{data.state} **Server Operation Result**
 Mode: `{data.operation}`
 Result: `{data.state}`
 Requested by: **{data.requested_by}**

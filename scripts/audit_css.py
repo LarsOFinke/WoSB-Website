@@ -36,6 +36,30 @@ STACKING_TOKENS = (
     "--z-skip-link",
 )
 
+LEGACY_CLASS_SELECTORS = (
+    "navbar",
+    "nav-brand",
+    "nav-links",
+    "nav-account",
+    "nav-utilities",
+    "nav-session",
+    "locale-switcher",
+    "locale-button",
+    "nav-action",
+    "nav-link",
+    "session-user",
+    "topbar-section-label",
+    "topbar-locale",
+    "footer",
+    "footer-text",
+    "footer-meta",
+    "footer-legal-link",
+    "footer-cookie-settings",
+)
+SHELL_SELECTOR_PATTERN = re.compile(
+    r"(?<![a-zA-Z0-9_-])\.app-(?:shell|main|footer(?:-[a-zA-Z0-9_-]+)?)(?![a-zA-Z0-9_-])"
+)
+
 
 def fail(message: str) -> None:
     print(f"[css-audit] {message}", file=sys.stderr)
@@ -54,6 +78,38 @@ def main() -> None:
 
     sources = {path: path.read_text(encoding="utf-8") for path in css_files}
     combined = "\n".join(sources.values())
+
+    shell_path = GLOBAL_ROOT / "30-shell.css"
+    shell_source = sources[shell_path]
+    for path, source in sources.items():
+        if path != shell_path and SHELL_SELECTOR_PATTERN.search(source):
+            fail(f"application-shell styles must be owned by 30-shell.css: {path.relative_to(ROOT)}")
+
+    for selector in LEGACY_CLASS_SELECTORS:
+        pattern = re.compile(
+            rf"(?<![a-zA-Z0-9_-])\.{re.escape(selector)}(?![a-zA-Z0-9_-])"
+        )
+        if pattern.search(combined):
+            fail(f"retired global selector remains in the cascade: .{selector}")
+
+    required_shell_contracts = (
+        '"sidebar footer"',
+        "grid-template-rows: auto minmax(0, 1fr) auto",
+        ".app-footer {",
+        "grid-area: footer",
+        "align-self: end",
+    )
+    for contract in required_shell_contracts:
+        if contract not in shell_source:
+            fail(f"missing application-shell contract: {contract}")
+    if '"footer footer"' in shell_source:
+        fail("desktop footer must align with the main workspace, not span below the sidebar")
+
+    footer_component = (ROOT / "frontend/src/core/components/AppFooter.vue").read_text(encoding="utf-8")
+    if 'class="wire-section app-footer"' not in footer_component:
+        fail("AppFooter must use the shell-owned app-footer class")
+    if re.search(r'class="[^"]*(?:^|\s)footer(?:\s|$)', footer_component):
+        fail("AppFooter still uses the retired footer class")
 
     token_source = sources[GLOBAL_ROOT / "00-tokens.css"]
     stacking_values: list[int] = []

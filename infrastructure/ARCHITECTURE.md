@@ -28,14 +28,15 @@ Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch 
 - `scripts/lib/host/firewall.sh`: UFW-Regeln.
 - `scripts/lib/host/tls.sh`: Bootstrap- und Let's-Encrypt-Zertifikate.
 
-### Server-Update
+### Kontrollierte Server-Aktionen
 
 - `scripts/services/update.sh`: kompatibler Runner für den Repository-Entry-Point und systemd.
-- `scripts/update/options.sh`: CLI und Update-Modus.
+- `scripts/update/options.sh`: CLI sowie Update- und Neustartmodus.
 - `scripts/update/request.sh`: Admin-Panel-Anforderung.
 - `scripts/update/status.sh`: atomare Statuspersistenz.
 - `scripts/update/repository.sh`: Git und Migrationserkennung.
-- `scripts/update/workflow.sh`: Backup, Build, Deployment und Smoke-Test.
+- `scripts/update/workflow.sh`: kontrollierter Anwendungsneustart oder Backup, Build, Deployment und Smoke-Test.
+- `scripts/services/restart-application.sh`: startet ausschließlich API und Gateway neu, wartet auf Readiness und lässt PostgreSQL online.
 
 ### Direct Discord channel webhooks
 

@@ -62,6 +62,7 @@ async function refresh() {
 async function trigger(operation) {
   if (!props.isAdmin || inProgress.value) return
   const confirmKey = {
+    restart: 'admin.system.restartConfirm',
     update_migrate: 'admin.system.migrateConfirm',
     update_migrate_seed: 'admin.system.migrateSeedConfirm',
   }[operation]
@@ -74,6 +75,7 @@ async function trigger(operation) {
     const response = await requestSystemUpdate(operation)
     update.value = response.status
     const successKey = {
+      restart: 'admin.system.restartRequestAccepted',
       update: 'admin.system.requestAccepted',
       update_migrate: 'admin.system.migrateRequestAccepted',
       update_migrate_seed: 'admin.system.migrateSeedRequestAccepted',
@@ -120,6 +122,9 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatDateTime(update.finished_at) }}</dd></div>
       </dl>
       <div v-if="isAdmin" class="system-update-actions">
+        <button class="form-button danger-action system-restart-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('restart')">
+          {{ t('admin.system.restartButton') }}
+        </button>
         <button class="form-button primary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update')">
           {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
         </button>

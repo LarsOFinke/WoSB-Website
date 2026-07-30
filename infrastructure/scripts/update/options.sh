@@ -10,6 +10,7 @@ update_options_reset() {
   RUN_SEED=false
   RESTORE_SEED_DEFAULTS=false
   AUTO_MIGRATIONS=true
+  RESTART_ONLY=false
   OPERATION=update
   INVALID_REQUEST_OPERATION=""
 }
@@ -68,7 +69,9 @@ update_parse_options() {
 }
 
 update_refresh_operation() {
-  if [[ "$RESTORE_SEED_DEFAULTS" == true ]]; then
+  if [[ "$RESTART_ONLY" == true ]]; then
+    OPERATION=restart
+  elif [[ "$RESTORE_SEED_DEFAULTS" == true ]]; then
     OPERATION=update_migrate_seed_restore
   elif [[ "$RUN_MIGRATIONS" == true && "$RUN_SEED" == true ]]; then
     OPERATION=update_migrate_seed

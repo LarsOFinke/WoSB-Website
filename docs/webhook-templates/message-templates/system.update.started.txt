@@ -1,4 +1,4 @@
-🚀 **Server Update Started**
+🚀 **Server Operation Started**
 Mode: `{data.operation}`
 Requested by: **{data.requested_by}**
 Requested at: `{data.requested_at}`

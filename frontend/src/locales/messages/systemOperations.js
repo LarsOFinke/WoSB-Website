@@ -107,3 +107,118 @@ export const systemOperationsMessages = {
     },
   },
 }
+
+const restartMessages = {
+  en: {
+    restartButton: 'Restart server',
+    restartConfirm: 'Restart the API and frontend gateway now? PostgreSQL remains online and a readiness check must pass.',
+    restartRequestAccepted: 'The controlled restart was accepted by the host runner.',
+    restartOperation: 'Application server restart',
+  },
+  de: {
+    restartButton: 'Server neu starten',
+    restartConfirm: 'API und Frontend-Gateway jetzt neu starten? PostgreSQL bleibt online und die Bereitschaftsprüfung muss erfolgreich sein.',
+    restartRequestAccepted: 'Der kontrollierte Neustart wurde vom Host-Runner angenommen.',
+    restartOperation: 'Anwendungsserver neu starten',
+  },
+  fr: {
+    restartButton: 'Redémarrer le serveur',
+    restartConfirm: 'Redémarrer maintenant l’API et la passerelle frontend ? PostgreSQL reste en ligne et le contrôle de disponibilité doit réussir.',
+    restartRequestAccepted: 'Le redémarrage contrôlé a été accepté par le runner hôte.',
+    restartOperation: 'Redémarrage du serveur applicatif',
+  },
+  es: {
+    restartButton: 'Reiniciar servidor',
+    restartConfirm: '¿Reiniciar ahora la API y la pasarela frontend? PostgreSQL seguirá en línea y deberá superarse la comprobación de disponibilidad.',
+    restartRequestAccepted: 'El runner del host aceptó el reinicio controlado.',
+    restartOperation: 'Reinicio del servidor de aplicaciones',
+  },
+  pt: {
+    restartButton: 'Reiniciar servidor',
+    restartConfirm: 'Reiniciar agora a API e o gateway do frontend? O PostgreSQL permanece online e a verificação de disponibilidade tem de ser concluída.',
+    restartRequestAccepted: 'O runner do host aceitou o reinício controlado.',
+    restartOperation: 'Reinício do servidor da aplicação',
+  },
+  ru: {
+    restartButton: 'Перезапустить сервер',
+    restartConfirm: 'Перезапустить API и frontend-шлюз сейчас? PostgreSQL останется доступным, а проверка готовности должна завершиться успешно.',
+    restartRequestAccepted: 'Контролируемый перезапуск принят host runner.',
+    restartOperation: 'Перезапуск сервера приложения',
+  },
+  cn: {
+    restartButton: '重启服务器',
+    restartConfirm: '现在重启 API 和前端网关吗？PostgreSQL 将保持在线，并且必须通过就绪检查。',
+    restartRequestAccepted: '主机执行器已接受受控重启请求。',
+    restartOperation: '应用服务器重启',
+  },
+}
+
+for (const [locale, copy] of Object.entries(restartMessages)) {
+  const system = systemOperationsMessages[locale].admin.system
+  Object.assign(system, copy)
+  system.operations.restart = copy.restartOperation
+}
+
+
+const operationPanelMessages = {
+  en: {
+    updateTitle: 'Server operations',
+    updateText: 'Restart the application services or deploy an update through the controlled host runner. PostgreSQL remains isolated from application-only restarts.',
+    updateRunning: 'Operation running ...',
+    requestError: 'The server operation could not be requested.',
+    loadError: 'The server-operation status could not be loaded.',
+    adminOnly: 'Only administrators can start a server operation.',
+  },
+  de: {
+    updateTitle: 'Server-Aktionen',
+    updateText: 'Anwendungsdienste kontrolliert neu starten oder ein Update über den Host-Runner ausrollen. PostgreSQL bleibt von reinen Anwendungsneustarts unberührt.',
+    updateRunning: 'Aktion läuft ...',
+    requestError: 'Die Server-Aktion konnte nicht angefordert werden.',
+    loadError: 'Der Status der Server-Aktion konnte nicht geladen werden.',
+    adminOnly: 'Nur Administratoren können eine Server-Aktion starten.',
+  },
+  fr: {
+    updateTitle: 'Opérations serveur',
+    updateText: 'Redémarrez les services applicatifs ou déployez une mise à jour via le runner hôte contrôlé. PostgreSQL reste isolé des redémarrages applicatifs.',
+    updateRunning: 'Opération en cours ...',
+    requestError: 'Impossible de demander l’opération serveur.',
+    loadError: 'Impossible de charger l’état de l’opération serveur.',
+    adminOnly: 'Seuls les administrateurs peuvent lancer une opération serveur.',
+  },
+  es: {
+    updateTitle: 'Operaciones del servidor',
+    updateText: 'Reinicia los servicios de la aplicación o despliega una actualización mediante el runner controlado. PostgreSQL queda aislado de los reinicios de la aplicación.',
+    updateRunning: 'Operación en curso ...',
+    requestError: 'No se pudo solicitar la operación del servidor.',
+    loadError: 'No se pudo cargar el estado de la operación del servidor.',
+    adminOnly: 'Solo los administradores pueden iniciar una operación del servidor.',
+  },
+  pt: {
+    updateTitle: 'Operações do servidor',
+    updateText: 'Reinicie os serviços da aplicação ou aplique uma atualização através do runner controlado. O PostgreSQL fica isolado dos reinícios da aplicação.',
+    updateRunning: 'Operação em curso ...',
+    requestError: 'Não foi possível pedir a operação do servidor.',
+    loadError: 'Não foi possível carregar o estado da operação do servidor.',
+    adminOnly: 'Apenas administradores podem iniciar uma operação do servidor.',
+  },
+  ru: {
+    updateTitle: 'Операции сервера',
+    updateText: 'Перезапустите службы приложения или разверните обновление через контролируемый host runner. PostgreSQL не затрагивается перезапуском приложения.',
+    updateRunning: 'Операция выполняется ...',
+    requestError: 'Не удалось запросить операцию сервера.',
+    loadError: 'Не удалось загрузить состояние операции сервера.',
+    adminOnly: 'Только администраторы могут запускать операции сервера.',
+  },
+  cn: {
+    updateTitle: '服务器操作',
+    updateText: '通过受控主机执行器重启应用服务或部署更新。仅重启应用时不会影响 PostgreSQL。',
+    updateRunning: '操作进行中 ...',
+    requestError: '无法请求服务器操作。',
+    loadError: '无法加载服务器操作状态。',
+    adminOnly: '只有管理员可以启动服务器操作。',
+  },
+}
+
+for (const [locale, copy] of Object.entries(operationPanelMessages)) {
+  Object.assign(systemOperationsMessages[locale].admin.system, copy)
+}

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 EVENT_CATALOG = (
     ("integration.test", "integration", "Manual connectivity and payload test."),
-    ("system.update.started", "system", "A controlled server update was requested and queued."),
-    ("system.update.result", "system", "A controlled server update completed or failed."),
+    ("system.update.started", "system", "A controlled server operation was requested and queued."),
+    ("system.update.result", "system", "A controlled server operation completed or failed."),
     ("registration.request.created", "registrations", "A new access request was submitted."),
     ("registration.request.approved", "registrations", "An access request was approved."),
     ("registration.request.rejected", "registrations", "An access request was rejected."),

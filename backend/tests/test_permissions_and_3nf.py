@@ -69,6 +69,26 @@ def test_only_bootstrap_admin_can_grant_administrator_role() -> None:
         else:
             raise AssertionError("A promoted administrator must not be able to grant administrator access.")
 
+        demoted = update_user_account(
+            db,
+            actor=bootstrap,
+            target_id=promoted_admin.id,
+            payload=UserAdministrationUpdate(role="moderator"),
+        )
+        assert demoted.role == "moderator"
+
+        try:
+            update_user_account(
+                db,
+                actor=promoted,
+                target_id=bootstrap.id,
+                payload=UserAdministrationUpdate(role="moderator"),
+            )
+        except UserAdministrationError as exc:
+            assert "bootstrap administrator" in str(exc)
+        else:
+            raise AssertionError("The bootstrap administrator must not be demotable by another account.")
+
 
 def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> None:
     with _db() as db:

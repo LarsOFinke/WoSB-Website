@@ -87,7 +87,15 @@ class SystemUpdateInternalStatus:
     request_available: bool
 
 
-def _public_message(state: str) -> str:
+def _public_message(state: str, operation: str) -> str:
+    if operation == "restart":
+        return {
+            "idle": "No server restart has been requested yet.",
+            "queued": "A server restart is queued for the host runner.",
+            "running": "The application server is restarting.",
+            "succeeded": "The application server restarted successfully.",
+            "failed": "The server restart failed. Review the configured webhook or host logs.",
+        }.get(state, "Server restart status is available.")
     return {
         "idle": "No update has been requested yet.",
         "queued": "An update is queued for the host runner.",
@@ -112,12 +120,13 @@ def _read_system_update_status() -> SystemUpdateInternalStatus:
         now=now,
     ):
         state = "failed"
+        operation = str(payload.get("operation") or "update")
         payload = {
             **payload,
             "state": state,
             "message": (
-                "The previous update no longer reports an active host-runner heartbeat. "
-                "It is treated as interrupted and a new update may be requested."
+                f"The previous {operation} operation no longer reports an active host-runner heartbeat. "
+                "It is treated as interrupted and a new server operation may be requested."
             ),
             "finished_at": now.isoformat(),
         }
@@ -126,10 +135,11 @@ def _read_system_update_status() -> SystemUpdateInternalStatus:
     # claims the request, synthesize a queued state from the inbox payload.
     if request_payload and state not in ACTIVE_STATES:
         state = "queued"
+        requested_operation = str(request_payload.get("operation") or "update")
         payload = {
             **payload,
-            "operation": request_payload.get("operation") or "update",
-            "message": "Update request accepted and waiting for the host runner.",
+            "operation": requested_operation,
+            "message": f"{requested_operation} request accepted and waiting for the host runner.",
             "requested_by": request_payload.get("requested_by"),
             "requested_at": request_payload.get("requested_at"),
             "started_at": None,
@@ -161,7 +171,7 @@ def get_system_update_status() -> SystemUpdateStatus:
     return SystemUpdateStatus(
         state=status.state,
         operation=status.operation,
-        message=_public_message(status.state),
+        message=_public_message(status.state, status.operation),
         requested_at=status.requested_at,
         started_at=status.started_at,
         finished_at=status.finished_at,
@@ -176,7 +186,7 @@ def request_system_update(
     request_path = directory / REQUEST_FILE
     current = get_system_update_status()
     if request_path.exists() or current.state in ACTIVE_STATES:
-        raise SystemUpdateError("A server update is already queued or running.")
+        raise SystemUpdateError("A server operation is already queued or running.")
 
     now = datetime.now(timezone.utc).isoformat()
     request_payload = {

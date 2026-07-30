@@ -1132,14 +1132,21 @@
 }
 
 .system-update-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-self: end;
   gap: 0.65rem;
 }
 
 .system-update-actions .form-button {
-  justify-self: auto;
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
+}
+
+.system-update-actions .primary-action,
+.system-update-actions .system-restart-action {
+  grid-column: 1 / -1;
 }
 
 .system-update-actions .secondary-action {
@@ -1189,13 +1196,6 @@
   max-height: 16rem;
   overflow: auto;
   padding: 0.45rem;
-}
-
-.preference-transfer-option {
-  display: flex;
-  width: 100%;
-  padding: 0.5rem 0.55rem;
-  border-radius: 0.25rem;
 }
 
 .preference-transfer-option:hover,
@@ -1263,11 +1263,15 @@
 }
 
 .preference-transfer-option {
+  width: 100%;
+  min-height: 2.65rem;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  min-height: 2.65rem;
+  padding: 0.5rem 0.55rem;
   border: 1px solid transparent;
+  border-radius: 0.25rem;
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -1391,4 +1395,15 @@
 .system-update-actions .seed-action:hover:not(:disabled) {
   border-color: rgba(241, 184, 91, 0.5);
   background: rgba(241, 184, 91, 0.13);
+}
+
+@media (max-width: 480px) {
+  .system-update-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .system-update-actions .primary-action,
+  .system-update-actions .system-restart-action {
+    grid-column: auto;
+  }
 }

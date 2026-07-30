@@ -31,7 +31,7 @@ const {
   loadBuilds, loadUsers, loadStatus, loadAdminOverviewMetrics, loadOverview, loadRegistrations,
   approveRegistration, rejectRegistration, openIpBlockManager, loadCalendar,
   loadContent, confirmDeleteBuild, submitBuildRole, saveBuildRole, askDeleteBuildRole, cancelDeleteBuildRole, removeBuildRole, changeBuildRole, confirmDeleteEvent, confirmDeleteThread, confirmDeleteGuide,
-  confirmCloseGroup, submitModerator, changeUserRole, toggleUserActive, canManageUser, canGrantAdmin,
+  confirmCloseGroup, submitModerator, changeUserRole, toggleUserActive, canManageUser, canToggleUserActive, canGrantAdmin,
   navigateToTab, resetRegistrationFilters, resetCalendarFilters, resetContentFilters,
   resetBuildFilters, resetUserFilters, canAccessTab,
 } = useAdminWorkspace()
@@ -282,7 +282,7 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
                   <option value="moderator">{{ t('roles.moderator') }}</option>
                   <option v-if="canGrantAdmin()" value="admin">{{ t('roles.admin') }}</option>
                 </select>
-                <button class="small-action" type="button" @click="toggleUserActive(row)">
+                <button v-if="canToggleUserActive(row)" class="small-action" type="button" @click="toggleUserActive(row)">
                   {{ row.is_active ? t('fleets.status.inactive') : t('fleets.status.active') }}
                 </button>
               </div>

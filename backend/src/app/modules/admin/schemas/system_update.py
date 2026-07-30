@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 
 SystemUpdateOperation = Literal[
+    "restart",
     "update",
     "update_migrate",
     "update_migrate_seed",

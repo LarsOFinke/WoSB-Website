@@ -42,10 +42,22 @@ def update_user_account(
         if payload.role is not None and payload.role != actor.role:
             raise UserAdministrationError("You cannot change your own site role.")
 
-    # Strict hierarchy: nobody may alter an account at their own or a higher
-    # authority level. This permanently prevents moderators from disabling or
-    # demoting administrators and prevents peer-admin account takeovers.
-    if target.id != actor.id and target.role_rank >= actor.role_rank:
+    if target.is_bootstrap_admin and target.id != actor.id:
+        raise UserAdministrationError("The bootstrap administrator account cannot be modified by another account.")
+
+    # Strict hierarchy with one deliberate exception: the bootstrap
+    # administrator may demote a non-bootstrap administrator. Promoted
+    # administrators remain peers for every other operation and therefore
+    # cannot alter one another.
+    bootstrap_admin_demotion = (
+        actor.can_grant_admin
+        and target.is_admin
+        and not target.is_bootstrap_admin
+        and payload.role is not None
+        and payload.role != ROLE_ADMIN
+        and payload.is_active is not False
+    )
+    if target.id != actor.id and target.role_rank >= actor.role_rank and not bootstrap_admin_demotion:
         raise UserAdministrationError("You cannot modify an account with an equal or higher role.")
 
     security_state_changed = False
@@ -55,8 +67,8 @@ def update_user_account(
             raise UserAdministrationError("Only administrators can change site roles.")
         if payload.role == ROLE_ADMIN and target.role != ROLE_ADMIN and not actor.can_grant_admin:
             raise UserAdministrationError("Only the bootstrap administrator can grant administrator access.")
-        if target.role == ROLE_ADMIN and payload.role != ROLE_ADMIN:
-            raise UserAdministrationError("Administrator accounts cannot be demoted by another account.")
+        if target.role == ROLE_ADMIN and payload.role != ROLE_ADMIN and not actor.can_grant_admin:
+            raise UserAdministrationError("Only the bootstrap administrator can demote administrator accounts.")
         if payload.role != target.role:
             assign_site_role(db, target, payload.role)
             security_state_changed = True

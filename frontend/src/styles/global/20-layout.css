@@ -12,21 +12,6 @@
 
 /* Responsive */
 @media (max-width: 1180px) {
-  .navbar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .nav-brand,
-  .nav-links,
-  .nav-account,
-  .nav-utilities {
-    justify-content: flex-start;
-  }
-
-  .nav-utilities {
-    flex-wrap: wrap;
-  }
 
   .equipment-unified-grid,
   .equipment-row,
@@ -69,10 +54,6 @@
     --page-width: min(100vw - 18px, 1480px);
   }
 
-  .app-shell {
-    padding-top: 0.55rem;
-  }
-
   .home-hero,
   .build-list-hero,
   .profile-hero,
@@ -101,8 +82,7 @@
     grid-template-columns: 1fr;
   }
 
-  .hero-actions,
-  .nav-session {
+  .hero-actions {
     justify-content: flex-start;
   }
 
@@ -125,27 +105,8 @@
 }
 
 @media (max-width: 640px) {
-  .navbar,
   .page-frame {
     border-radius: var(--radius-lg);
-  }
-
-  .nav-links,
-  .nav-account,
-  .nav-utilities,
-  .locale-switcher,
-  .nav-session {
-    width: 100%;
-  }
-
-  .nav-links,
-  .nav-account {
-    border-radius: var(--radius-md);
-  }
-
-  .nav-link,
-  .nav-action {
-    flex: 1 1 auto;
   }
 
   .brand-copy {
@@ -265,7 +226,7 @@
 
 .calendar-day {
   min-width: 0;
-  min-height: clamp(7.2rem, 11vw, 10.4rem);
+  min-height: clamp(6.75rem, 9.5vw, 9.5rem);
   display: grid;
   align-content: start;
   gap: 0.45rem;
@@ -454,17 +415,13 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.75rem;
 }
 
 .staff-management-panel {
   display: grid;
   gap: 1rem;
-}
-
-.staff-filter-row {
-  justify-content: space-between;
 }
 
 .staff-event-list,
@@ -668,7 +625,12 @@
 
 .compact-summary-card {
   min-height: auto;
+  display: grid;
+  gap: 0.35rem;
   padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
 }
 
 .compact-summary-card span {
@@ -757,21 +719,20 @@
   }
 }
 
-.compact-summary-card {
-  display: grid;
-  gap: 0.35rem;
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-muted);
-}
-
 /* Registration UX refresh: stronger field affordance and clearer form grouping. */
 .register-card {
   grid-template-columns: minmax(280px, 0.75fr) minmax(360px, 1fr);
   align-items: stretch;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(241, 184, 91, 0.12), transparent 19rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.018)),
+    rgba(13, 24, 36, 0.82);
 }
 
 .register-copy {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
   padding: clamp(0.5rem, 1.2vw, 1rem);
 }
 
@@ -796,14 +757,15 @@
 }
 
 .register-benefits span {
-  min-height: 2rem;
+  min-height: 2.25rem;
   padding: 0.35rem 0.65rem;
 }
 
 .register-form {
   display: grid;
   gap: 1rem;
-  border-color: rgba(221, 231, 244, 0.26);
+  border: 1px solid rgba(221, 231, 244, 0.30);
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
     rgba(6, 14, 23, 0.72);
@@ -811,6 +773,8 @@
 }
 
 .register-form-section {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 0.85rem;
   padding: clamp(0.85rem, 1.4vw, 1.15rem);
@@ -946,7 +910,6 @@
 
 /* Shared UI tokens, adaptive spacing and resilient mobile layouts */
 
-
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -968,8 +931,6 @@ button,
 input,
 select,
 textarea,
-.nav-link,
-.nav-action,
 .button-box,
 .form-button,
 .small-action,
@@ -986,10 +947,6 @@ textarea {
 ::selection {
   color: #08111b;
   background: rgba(241, 184, 91, 0.92);
-}
-
-.app-shell {
-  isolation: isolate;
 }
 
 .page-frame {
@@ -1021,13 +978,6 @@ textarea {
   max-width: var(--reading-width);
 }
 
-.navbar {
-  grid-template-columns: minmax(220px, auto) minmax(340px, 1fr) minmax(180px, auto) minmax(220px, auto);
-  gap: clamp(0.45rem, 1vw, 0.85rem);
-}
-
-.nav-link.router-link-active,
-.nav-link.router-link-exact-active,
 .tab-button.is-active,
 .fleet-tab-button.is-active {
   border-color: rgba(241, 184, 91, 0.34);
@@ -1035,11 +985,6 @@ textarea {
     linear-gradient(135deg, rgba(241, 184, 91, 0.18), rgba(255, 255, 255, 0.045));
   color: var(--text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.locale-switcher {
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .auth-page,
@@ -1059,35 +1004,8 @@ textarea {
   gap: clamp(1rem, 2vw, 1.5rem);
 }
 
-.register-card {
-  background:
-    radial-gradient(circle at 8% 8%, rgba(241, 184, 91, 0.12), transparent 19rem),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.068), rgba(255, 255, 255, 0.018)),
-    rgba(13, 24, 36, 0.82);
-}
-
-.register-copy {
-  display: grid;
-  align-content: start;
-  gap: 1rem;
-}
-
 .register-copy h1 {
   font-size: clamp(2rem, 4vw, 3.8rem);
-}
-
-.register-benefits span {
-  min-height: 2.25rem;
-}
-
-.register-form {
-  border: 1px solid rgba(221, 231, 244, 0.30);
-  border-radius: var(--radius-lg);
-}
-
-.register-form-section {
-  position: relative;
-  overflow: hidden;
 }
 
 .register-form-section::before {
@@ -1239,10 +1157,6 @@ textarea {
   gap: var(--space-3);
 }
 
-.calendar-day {
-  min-height: clamp(6.75rem, 9.5vw, 9.5rem);
-}
-
 .calendar-event-chip,
 .calendar-more-chip,
 .summary-pill,
@@ -1261,20 +1175,6 @@ textarea {
 }
 
 @media (max-width: 1280px) {
-  .navbar {
-    grid-template-columns: minmax(200px, auto) minmax(0, 1fr);
-  }
-
-  .nav-account,
-  .nav-utilities {
-    justify-content: flex-start;
-  }
-
-  .nav-links,
-  .nav-account,
-  .nav-utilities {
-    grid-column: 1 / -1;
-  }
 
   .calendar-layout,
   .detail-grid,
@@ -1333,48 +1233,6 @@ textarea {
     --page-width: min(100vw - 0.9rem, 1500px);
     --touch-target: 2.85rem;
     font-size: 15px;
-  }
-
-  .app-shell {
-    padding-top: 0.45rem;
-  }
-
-  .navbar {
-    top: 0.45rem;
-    padding: 0.55rem;
-    border-radius: 1.25rem;
-  }
-
-  .nav-brand {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .nav-links,
-  .nav-account,
-  .locale-switcher,
-  .nav-session {
-    width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    border-radius: 1rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .nav-links::-webkit-scrollbar,
-  .nav-account::-webkit-scrollbar,
-  .locale-switcher::-webkit-scrollbar,
-  .nav-session::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nav-link,
-  .nav-action,
-  .locale-button {
-    flex: 0 0 auto;
-    min-width: max-content;
   }
 
   .page-frame,
@@ -1470,10 +1328,6 @@ textarea {
     --control-height: 2.95rem;
   }
 
-  .app-shell {
-    gap: 0.65rem;
-  }
-
   .page-frame {
     padding: 0.55rem;
     box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
@@ -1526,11 +1380,6 @@ textarea {
     height: 1.55rem;
   }
 
-  .footer {
-    display: grid;
-    justify-items: start;
-    gap: 0.45rem;
-  }
 }
 
 @media (max-width: 420px) {
@@ -1538,13 +1387,8 @@ textarea {
     font-size: 14.5px;
   }
 
-  .navbar,
   .page-frame {
     border-radius: 0.95rem;
-  }
-
-  .nav-brand {
-    padding-inline: 0.2rem;
   }
 
   .brand-mark {
@@ -1581,14 +1425,11 @@ textarea {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .nav-link,
-  .nav-action,
   .button-box,
   .form-button,
   .small-action,
   .danger-action,
   .tab-button,
-  .locale-button,
   .calendar-day {
     min-height: 44px;
   }

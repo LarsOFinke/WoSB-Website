@@ -332,7 +332,7 @@ Updated at: `{occurred_at}`
 DEFAULT_MESSAGES.update({
     'system.update.started': _message(
         """
-🚀 **Server Update Started**
+🚀 **Server Operation Started**
 Mode: `{data.operation}`
 Requested by: **{data.requested_by}**
 Requested at: `{data.requested_at}`
@@ -343,7 +343,7 @@ Status: `{data.state}`
     ),
     'system.update.result': _message(
         """
-{data.state} **Server Update Result**
+{data.state} **Server Operation Result**
 Mode: `{data.operation}`
 Result: `{data.state}`
 Requested by: **{data.requested_by}**

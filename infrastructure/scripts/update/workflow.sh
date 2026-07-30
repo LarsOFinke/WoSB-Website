@@ -36,7 +36,7 @@ update_acquire_lock() {
 
   if [[ -e "$INBOX_REQUEST_FILE" ]]; then
     local wait_seconds="${UPDATE_LOCK_WAIT_SECONDS:-600}"
-    warn "Ein anderes Server-Update läuft bereits; die Admin-Anforderung bleibt in der Inbox und wartet bis zu ${wait_seconds}s auf den exklusiven Lock."
+    warn "Eine andere Server-Aktion läuft bereits; die Admin-Anforderung bleibt in der Inbox und wartet bis zu ${wait_seconds}s auf den exklusiven Lock."
     if flock -w "$wait_seconds" 9; then
       LOCK_ACQUIRED=true
       return 0
@@ -44,7 +44,7 @@ update_acquire_lock() {
     warn "Der Update-Lock wurde nicht rechtzeitig frei; die Admin-Anforderung bleibt unverändert in der Inbox."
     return 1
   fi
-  die "Ein anderes Server-Update läuft bereits."
+  die "Eine andere Server-Aktion läuft bereits."
 }
 
 update_claim_admin_request() {
@@ -166,7 +166,19 @@ update_execute_deployment() {
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
+update_execute_restart() {
+  update_status_write \
+    running \
+    "API und Frontend-Gateway werden kontrolliert neu gestartet." \
+    "$STARTED_AT"
+  /usr/bin/env bash "$INFRA_DIR/scripts/services/restart-application.sh"
+}
+
 update_attempt_rollback() {
+  if [[ "$RESTART_ONLY" == true ]]; then
+    warn "Ein fehlgeschlagener Neustart wird nicht durch einen Code-Rollback behandelt."
+    return 1
+  fi
   if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
     warn "Automatischer Code-Rollback wird nach Datenbankaktionen konservativ übersprungen."
     return 1
@@ -215,7 +227,11 @@ update_on_exit() {
   if [[ "$UPDATE_COMPLETED" != true && "$exit_code" -ne 0 ]]; then
     local finished message
     finished="$(now_iso)"
-    message="Server-Update fehlgeschlagen (Exit ${exit_code})."
+    if [[ "$RESTART_ONLY" == true ]]; then
+      message="Anwendungsserver-Neustart fehlgeschlagen (Exit ${exit_code})."
+    else
+      message="Server-Update fehlgeschlagen (Exit ${exit_code})."
+    fi
     if update_attempt_rollback; then
       message="$message Der vorherige Code- und Image-Stand wurde automatisch wiederhergestellt."
     else
@@ -225,7 +241,7 @@ update_on_exit() {
       failed \
       "$message" \
       "$STARTED_AT" "$finished" "$COMMIT_BEFORE" "$COMMIT_AFTER" || true
-    warn "Server-Update fehlgeschlagen. Details: $LOG_FILE"
+    warn "Server-Aktion fehlgeschlagen. Details: $LOG_FILE"
   fi
 }
 
@@ -251,21 +267,32 @@ update_run() {
   exec > >(tee -a "$LOG_FILE") 2>&1
   trap update_on_exit EXIT
 
-  log "Server-Update angefordert von: $REQUESTED_BY"
-  update_capture_running_images
-  update_repository
-  # Source the just-updated helper so old installations receive newly required
-  # generated secrets before images are built.
-  source "$INFRA_DIR/scripts/lib/env.sh"
-  ensure_runtime_secrets
-  update_execute_deployment
+  log "Server-Aktion angefordert von: $REQUESTED_BY"
+  if [[ "$RESTART_ONLY" == true ]]; then
+    update_execute_restart
+  else
+    update_capture_running_images
+    update_repository
+    # Source the just-updated helper so old installations receive newly required
+    # generated secrets before images are built.
+    source "$INFRA_DIR/scripts/lib/env.sh"
+    ensure_runtime_secrets
+    update_execute_deployment
+  fi
 
   FINISHED_AT="$(now_iso)"
   update_heartbeat_stop
-  update_status_write \
-    succeeded \
-    "Server-Update erfolgreich abgeschlossen. Datenbankaktionen: $(database_action_summary)." \
-    "$STARTED_AT" "$FINISHED_AT" "$COMMIT_BEFORE" "$COMMIT_AFTER"
+  local success_message
+  if [[ "$RESTART_ONLY" == true ]]; then
+    success_message="Anwendungsserver erfolgreich neu gestartet."
+  else
+    success_message="Server-Update erfolgreich abgeschlossen. Datenbankaktionen: $(database_action_summary)."
+  fi
+  update_status_write succeeded "$success_message" "$STARTED_AT" "$FINISHED_AT" "$COMMIT_BEFORE" "$COMMIT_AFTER"
   UPDATE_COMPLETED=true
-  success "Server-Update erfolgreich abgeschlossen (${COMMIT_BEFORE:-unbekannt} → ${COMMIT_AFTER:-unbekannt})."
+  if [[ "$RESTART_ONLY" == true ]]; then
+    success "Anwendungsserver erfolgreich neu gestartet."
+  else
+    success "Server-Update erfolgreich abgeschlossen (${COMMIT_BEFORE:-unbekannt} → ${COMMIT_AFTER:-unbekannt})."
+  fi
 }

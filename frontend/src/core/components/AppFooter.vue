@@ -8,11 +8,21 @@ const { openSettings } = useCookieConsent()
 </script>
 
 <template>
-  <footer class="wire-section footer">
-    <BrandLockup compact />
-    <span class="footer-text">{{ t('footer.tagline') }}</span>
-    <RouterLink class="footer-legal-link" to="/impressum">{{ t('legalNotice.public.footerLink') }}</RouterLink>
-    <button type="button" class="footer-cookie-settings" @click="openSettings">{{ t('privacy.cookies.footerSettings') }}</button>
-    <span class="footer-meta">RBF · {{ new Date().getFullYear() }}</span>
+  <footer class="wire-section app-footer">
+    <div class="app-footer-identity">
+      <BrandLockup compact />
+      <span class="app-footer-tagline">{{ t('footer.tagline') }}</span>
+    </div>
+
+    <nav class="app-footer-actions" :aria-label="t('footer.tagline')">
+      <RouterLink class="app-footer-link" to="/impressum">
+        {{ t('legalNotice.public.footerLink') }}
+      </RouterLink>
+      <button type="button" class="app-footer-link app-footer-button" @click="openSettings">
+        {{ t('privacy.cookies.footerSettings') }}
+      </button>
+    </nav>
+
+    <span class="app-footer-meta">RBF · {{ new Date().getFullYear() }}</span>
   </footer>
 </template>

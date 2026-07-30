@@ -7,8 +7,8 @@ from app.modules.admin.services.webhook_message_templates import DEFAULT_MESSAGE
 
 def test_server_update_events_are_configurable_webhook_events() -> None:
     assert {"system.update.started", "system.update.result"}.issubset(EVENT_TYPES)
-    assert "Server Update Started" in DEFAULT_MESSAGES["system.update.started"]
-    assert "Server Update Result" in DEFAULT_MESSAGES["system.update.result"]
+    assert "Server Operation Started" in DEFAULT_MESSAGES["system.update.started"]
+    assert "Server Operation Result" in DEFAULT_MESSAGES["system.update.result"]
 
 
 def test_completed_update_result_is_queued_only_once(tmp_path, monkeypatch) -> None:

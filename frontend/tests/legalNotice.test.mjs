@@ -71,4 +71,7 @@ test('the application shell keeps the footer at the viewport bottom on short pag
   assert.ok(shellStyles.includes('min-height: 100dvh'))
   assert.ok(shellStyles.includes('grid-template-rows: auto minmax(0, 1fr) auto'))
   assert.ok(shellStyles.includes('align-self: end'))
+  assert.ok(shellStyles.includes('"sidebar footer"'))
+  assert.equal(shellStyles.includes('"footer footer"'), false)
+  assert.ok(footer.includes('class="wire-section app-footer"'))
 })

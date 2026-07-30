@@ -109,7 +109,6 @@
   gap: 0.75rem;
 }
 
-
 .security-metric-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -190,7 +189,6 @@
   padding: 0.8rem;
 }
 
-
 .security-ip-empty-focus {
   padding: 0.75rem 0.85rem;
   border: 1px dashed rgba(221, 231, 244, 0.12);
@@ -247,7 +245,6 @@
   background: rgba(241, 184, 91, 0.08);
 }
 
-
 .responsive-table-shell {
   overflow-x: auto;
 }
@@ -287,7 +284,6 @@
   margin: 0;
   font-size: 0.78rem;
 }
-
 
 .audit-day-groups {
   display: grid;
@@ -352,7 +348,6 @@
     grid-template-columns: 1fr;
   }
 
-
   .security-ip-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -389,8 +384,8 @@
 /* Build manager visual catalog foundation */
 .ship-visual-summary {
   display: grid;
-  grid-template-columns: 8.5rem minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.9rem;
   align-items: center;
   margin: 1rem 0;
   padding: 0.85rem;
@@ -401,10 +396,13 @@
 
 .ship-visual-summary img {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 6.75rem;
+  aspect-ratio: auto;
   object-fit: cover;
   border-radius: 0.75rem;
   background: #0b1521;
+  transform: scale(1.085);
+  transform-origin: center;
 }
 
 .ship-visual-summary > div {
@@ -427,8 +425,8 @@
 }
 
 .crew-role-image {
-  width: 3.3rem;
-  height: 2.55rem;
+  width: 3.8rem;
+  height: 3.1rem;
   margin-bottom: 0.45rem;
   border-radius: 0.55rem;
   object-fit: cover;
@@ -447,7 +445,7 @@
   .audit-row { grid-template-columns: 1fr; }
   .audit-action { justify-self: start; }
   .ship-visual-summary { grid-template-columns: 1fr; }
-  .ship-visual-summary img { max-height: 14rem; }
+  .ship-visual-summary img { height: 12rem; max-height: 14rem; }
 }
 
 /* Build module visual refinement */
@@ -476,21 +474,7 @@
 }
 
 .ship-catalog-image {
-  transform: scale(1.045);
-  transform-origin: center;
-}
-
-.ship-visual-summary {
-  grid-template-columns: 7rem minmax(0, 1fr);
-  gap: 0.9rem;
-  align-items: center;
-}
-
-.ship-visual-summary img {
-  width: 100%;
-  height: 6.75rem;
-  aspect-ratio: auto;
-  transform: scale(1.04);
+  transform: scale(1.085);
   transform-origin: center;
 }
 
@@ -538,12 +522,6 @@
   row-gap: 0.4rem;
 }
 
-.crew-role-image {
-  width: 3.8rem;
-  height: 3.1rem;
-  object-fit: cover;
-}
-
 .inventory-panel .slot-hint {
   margin: 0 0 0.15rem;
   max-width: 44ch;
@@ -567,29 +545,10 @@
   }
 }
 
-@media (max-width: 640px) {
-  .ship-visual-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .ship-visual-summary img {
-    height: 12rem;
-  }
-}
-
-
 /* Build image crop + system log readability refinement */
 .ship-catalog-image,
 .ship-visual-summary img {
   object-position: center 58%;
-}
-
-.ship-catalog-image {
-  transform: scale(1.085);
-}
-
-.ship-visual-summary img {
-  transform: scale(1.085);
 }
 
 .slot-visual img,
@@ -606,7 +565,6 @@
 .build-visual-list img {
   transform: scale(1.045);
 }
-
 
 /* Unified security log filtering and overview */
 .security-heading-actions {
@@ -836,7 +794,6 @@
   color: var(--text-muted, #b8c4d2);
 }
 
-
 @media (max-width: 1180px) {
   .security-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1030,6 +987,10 @@
 
 .ip-block-card-actions {
   min-width: 13rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .ip-unblock-confirmation {
@@ -1093,13 +1054,6 @@
   .security-block-ip-action {
     margin-left: 0;
   }
-}
-
-.ip-block-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
 }
 
 .ip-block-card-actions .ip-unblock-confirmation {

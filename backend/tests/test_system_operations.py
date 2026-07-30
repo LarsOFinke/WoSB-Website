@@ -62,6 +62,20 @@ def test_only_admin_can_read_or_queue_system_updates() -> None:
         shutil.rmtree(control_dir, ignore_errors=True)
         control_dir.mkdir(parents=True, exist_ok=True)
 
+        restart = client.post(
+            '/api/admin/system/update',
+            json={'operation': 'restart'},
+        )
+        assert restart.status_code == 202, restart.text
+        restart_payload = restart.json()
+        assert restart_payload['status']['operation'] == 'restart'
+        assert 'restart' in restart_payload['status']['message'].lower()
+        request_payload = json.loads(request_file.read_text(encoding='utf-8'))
+        assert request_payload['operation'] == 'restart'
+
+        shutil.rmtree(control_dir, ignore_errors=True)
+        control_dir.mkdir(parents=True, exist_ok=True)
+
         migration_only_update = client.post(
             '/api/admin/system/update',
             json={'operation': 'update_migrate'},
@@ -123,7 +137,8 @@ def test_only_admin_can_read_or_queue_system_updates() -> None:
         recovered_payload = recovered.json()
         assert recovered_payload['state'] == 'failed'
         assert recovered_payload['request_available'] is True
-        assert 'heartbeat' in recovered_payload['message'].lower()
+        assert recovered_payload['message'] == 'The update failed. Review the configured webhook or host logs.'
+        assert 'heartbeat' not in recovered_payload['message'].lower()
 
         replacement = client.post('/api/admin/system/update', json={'operation': 'update'})
         assert replacement.status_code == 202, replacement.text

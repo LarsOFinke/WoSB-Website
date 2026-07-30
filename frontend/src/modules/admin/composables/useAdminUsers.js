@@ -69,7 +69,13 @@ export function useAdminUsers({ isAdmin, user, t }) {
   }
 
   function canManageUser(row) {
-    return row.id !== user.value?.id && row.role !== 'admin'
+    if (row.id === user.value?.id || row.is_bootstrap_admin) return false
+    if (row.role === 'admin') return canGrantAdmin()
+    return true
+  }
+
+  function canToggleUserActive(row) {
+    return canManageUser(row) && row.role !== 'admin'
   }
 
   function canGrantAdmin() {
@@ -86,6 +92,6 @@ export function useAdminUsers({ isAdmin, user, t }) {
     users, userSearch, userRole, userStatus, userLoading, userError,
     moderatorSuccess, moderatorForm, filteredUsers, userCountLabel,
     loadUsers, submitModerator, changeUserRole, toggleUserActive,
-    canManageUser, canGrantAdmin, resetUserFilters,
+    canManageUser, canToggleUserActive, canGrantAdmin, resetUserFilters,
   }
 }

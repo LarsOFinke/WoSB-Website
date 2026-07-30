@@ -16,27 +16,38 @@ update_apply_request_file() {
   [[ -z "$requested_at_from_file" ]] || REQUESTED_AT="$requested_at_from_file"
 
   case "$requested_operation" in
+    restart)
+      RESTART_ONLY=true
+      RUN_MIGRATIONS=false
+      RUN_SEED=false
+      RESTORE_SEED_DEFAULTS=false
+      ;;
     ""|update)
+      RESTART_ONLY=false
       RUN_MIGRATIONS=false
       RUN_SEED=false
       RESTORE_SEED_DEFAULTS=false
       ;;
     update_migrate)
+      RESTART_ONLY=false
       RUN_MIGRATIONS=true
       RUN_SEED=false
       RESTORE_SEED_DEFAULTS=false
       ;;
     update_migrate_seed)
+      RESTART_ONLY=false
       RUN_MIGRATIONS=true
       RUN_SEED=true
       RESTORE_SEED_DEFAULTS=false
       ;;
     update_migrate_seed_restore)
+      RESTART_ONLY=false
       RUN_MIGRATIONS=true
       RUN_SEED=true
       RESTORE_SEED_DEFAULTS=true
       ;;
     *)
+      RESTART_ONLY=false
       INVALID_REQUEST_OPERATION="$requested_operation"
       RUN_MIGRATIONS=false
       RUN_SEED=false

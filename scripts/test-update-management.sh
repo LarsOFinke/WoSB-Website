@@ -21,6 +21,23 @@ fail() {
 
 (
   source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$ROOT_DIR/infrastructure/scripts/lib/json.sh"
+  source "$UPDATE_DIR/options.sh"
+  source "$UPDATE_DIR/request.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  REQUEST_FILE="$tmp/restart.request"
+  printf '{"requested_by":"admin","operation":"restart","requested_at":"2026-07-30T18:00:00+02:00"}\n' > "$REQUEST_FILE"
+  update_options_reset
+  update_apply_request_file
+  [[ "$RESTART_ONLY" == true ]] || fail "restart request must enable restart-only mode"
+  [[ "$RUN_MIGRATIONS" == false ]] || fail "restart request must not run migrations"
+  [[ "$RUN_SEED" == false ]] || fail "restart request must not run seed"
+  [[ "$OPERATION" == restart ]] || fail "restart request must expose restart operation"
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
   source "$UPDATE_DIR/options.sh"
   update_options_reset
   update_parse_options --restore-seed-defaults
