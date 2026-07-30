@@ -219,7 +219,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                 "/servers/223456789012345678/channels/323456789012345678/event"
             )
             assert requests[0][2]["title"] == "Fleet: Fleet assault"
-            assert requests[0][2]["date"] == "2026-08-01"
+            assert requests[0][2]["date"] == "01.08.2026"
             assert requests[0][2]["time"] == "20:00"
             assert requests[0][2]["duration"] == 120
             assert requests[0][2]["leaderId"] == "913456789012345678"
@@ -541,3 +541,141 @@ def test_raid_helper_authentication_is_fixed_to_raw_authorization_header() -> No
 
     assert "authorization_mode" not in RaidHelperProfile.__table__.columns
     assert "authorization_mode" not in RaidHelperProfileWrite.model_fields
+
+
+def test_raid_helper_api_key_normalization_removes_copy_wrappers() -> None:
+    assert raid_helper_service._normalized_api_key("  raw-secret  ") == "raw-secret"
+    assert raid_helper_service._normalized_api_key("Bearer raw-secret") == "raw-secret"
+    assert raid_helper_service._normalized_api_key('"raw-secret"') == "raw-secret"
+
+
+def test_profile_test_does_not_claim_create_authorization(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-profile-probe-admin",
+                password="RaidHelperProfileProbePassword123!",
+                display_name="Profile Probe Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Read Probe Profile",
+                    server_id="333456789012345678",
+                    api_key="read-probe-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            monkeypatch.setattr(
+                raid_helper_service,
+                "_request",
+                lambda *args, **kwargs: (200, []),
+            )
+            result = raid_helper_service.test_profile(db, profile.id)
+            assert result is not None
+            assert result.ok is True
+            assert "read access" in result.message.lower()
+            assert "destination" in result.message.lower()
+
+
+def test_destination_test_uses_exact_create_and_delete_paths(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-destination-probe-admin",
+                password="RaidHelperDestinationProbePassword123!",
+                display_name="Destination Probe Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Destination Probe Profile",
+                    server_id="433456789012345678",
+                    api_key="destination-probe-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Destination probe channel",
+                    channel_id="533456789012345678",
+                    scope_type="fleet",
+                    categories=[],
+                    is_default=True,
+                ),
+            )
+            calls: list[tuple[str, str, dict | None]] = []
+
+            def fake_request(profile_row, method, path, payload=None):
+                calls.append((method, path, payload))
+                if method == "POST":
+                    return 201, {"eventId": "633456789012345678"}
+                return 204, None
+
+            monkeypatch.setattr(raid_helper_service, "_request", fake_request)
+            result = raid_helper_service.test_destination(db, destination.id)
+
+            assert result is not None
+            assert result.ok is True
+            assert calls[0][0:2] == (
+                "POST",
+                "/servers/433456789012345678/channels/533456789012345678/event",
+            )
+            assert calls[0][2]["leaderId"] == "913456789012345678"
+            assert calls[0][2]["date"].count(".") == 2
+            assert calls[1][0:2] == ("DELETE", "/events/633456789012345678")
+
+
+def test_destination_test_reports_actionable_401(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-destination-401-admin",
+                password="RaidHelperDestination401Password123!",
+                display_name="Destination 401 Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Destination 401 Profile",
+                    server_id="733456789012345678",
+                    api_key="destination-401-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Destination 401 channel",
+                    channel_id="833456789012345678",
+                    scope_type="fleet",
+                    categories=[],
+                    is_default=True,
+                ),
+            )
+            monkeypatch.setattr(
+                raid_helper_service,
+                "_request",
+                lambda *args, **kwargs: (401, {"message": "Unauthorized"}),
+            )
+            result = raid_helper_service.test_destination(db, destination.id)
+            assert result is not None
+            assert result.ok is False
+            assert result.status_code == 401
+            assert "exact api key" in result.message.lower()
+            assert "server/channel" in result.message.lower()

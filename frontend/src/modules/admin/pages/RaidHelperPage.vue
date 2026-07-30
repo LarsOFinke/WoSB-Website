@@ -7,7 +7,7 @@ const {
   profileEditId, destinationEditId, templateEditId, profileForm, destinationForm, templateForm,
   profileOptions, activeSquads, FLEET_EVENT_CATEGORIES, RAID_HELPER_CALENDAR_PRESETS,
   applyRaidHelperCalendarPreset, applyRaidHelperRecommendedPayload, toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
-  testProfile, resetDestination, editDestination, saveDestination, removeDestination, resetTemplate,
+  testProfile, resetDestination, editDestination, saveDestination, testDestination, removeDestination, resetTemplate,
   editTemplate, saveTemplate, removeTemplate,
 } = useRaidHelperPage()
 </script>
@@ -59,7 +59,7 @@ const {
         </form>
         <article v-for="row in destinations" :key="row.id" class="raid-helper-row">
           <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · #{{ row.channel_id }} · {{ row.scope_type }}{{ row.squad_name ? ` / ${row.squad_name}` : '' }}</small></div>
-          <div><button class="small-action" @click="editDestination(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeDestination(row)">{{ t('common.delete') }}</button></div>
+          <div><button class="small-action" @click="testDestination(row)">{{ t('raidHelper.testDestination') }}</button><button class="small-action" @click="editDestination(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeDestination(row)">{{ t('common.delete') }}</button></div>
         </article>
       </section>
 

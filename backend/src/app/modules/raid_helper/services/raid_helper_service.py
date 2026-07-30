@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import timezone
+from datetime import timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any
 from urllib.request import Request
@@ -147,6 +147,7 @@ def configure_event_links(db: Session, event: FleetEvent, selections: list[RaidH
 def _link_read(row: RaidHelperEventLink) -> RaidHelperEventLinkRead:
     return RaidHelperEventLinkRead(
         id=row.id, destination_id=row.destination_id, destination_name=row.destination.name,
+        profile_name=row.destination.profile.name,
         template_id=row.template_id, template_name=row.template.name,
         external_event_id=row.external_event_id, status=row.status, last_operation=row.last_operation,
         error_message=row.error_message, synced_at=row.synced_at,
@@ -162,6 +163,18 @@ def event_links(db: Session, event_id: int) -> list[RaidHelperEventLinkRead]:
     return serialize_event_links(list(rows))
 
 
+def _normalized_api_key(value: str) -> str:
+    """Normalize common copy/paste wrappers without weakening validation."""
+    key = value.strip()
+    if key.lower().startswith("bearer "):
+        key = key[7:].strip()
+    if len(key) >= 2 and key[0] == key[-1] and key[0] in {"\"", "'"}:
+        key = key[1:-1].strip()
+    if not key or any(character in key for character in "\r\n"):
+        raise RaidHelperError("Stored Raid-Helper API key is empty or malformed.")
+    return key
+
+
 def _auth_headers(profile: RaidHelperProfile) -> dict[str, str]:
     try:
         key = webhook_secret_box.decrypt(profile.api_key_encrypted)
@@ -169,7 +182,7 @@ def _auth_headers(profile: RaidHelperProfile) -> dict[str, str]:
         raise RaidHelperError("Stored Raid-Helper API key could not be decrypted.") from exc
     # Raid-Helper's v4 server API expects the API key as the raw value of
     # Authorization. It is not an OAuth bearer token and does not use X-API-Key.
-    return {"Authorization": key}
+    return {"Authorization": _normalized_api_key(key)}
 
 
 _RAID_HELPER_TRANSPORT = WebhookTransport(timeout_seconds=10)
@@ -210,6 +223,7 @@ def _request(
 
 
 def test_profile(db: Session, profile_id: int) -> RaidHelperProfileTestResult | None:
+    """Check server read access without claiming event-create authorization."""
     row = db.get(RaidHelperProfile, profile_id)
     if row is None:
         return None
@@ -218,7 +232,90 @@ def test_profile(db: Session, profile_id: int) -> RaidHelperProfileTestResult | 
     except Exception as exc:
         return RaidHelperProfileTestResult(ok=False, message=f"Connection failed: {type(exc).__name__}")
     ok = 200 <= status_code < 300
-    return RaidHelperProfileTestResult(ok=ok, status_code=status_code, message="Raid-Helper profile verified." if ok else "Raid-Helper rejected the profile credentials or server configuration.")
+    message = (
+        "Raid-Helper server read access succeeded. Test the exact channel destination to verify event creation."
+        if ok
+        else "Raid-Helper rejected the saved profile or server configuration."
+    )
+    return RaidHelperProfileTestResult(ok=ok, status_code=status_code, message=message)
+
+
+def test_destination(db: Session, destination_id: int) -> RaidHelperProfileTestResult | None:
+    """Create and immediately delete a temporary event on the exact destination.
+
+    This is intentionally opt-in from the staff panel. It verifies the same API
+    key, server ID, channel ID and write/delete endpoints used by calendar sync,
+    eliminating false positives from read-only profile checks.
+    """
+    row = db.get(RaidHelperDestination, destination_id)
+    if row is None:
+        return None
+    profile = row.profile
+    leader_id = profile.default_leader_id
+    if not leader_id:
+        return RaidHelperProfileTestResult(
+            ok=False,
+            message="Configure a default leader ID before testing this destination.",
+        )
+    try:
+        zone = ZoneInfo(profile.timezone)
+    except ZoneInfoNotFoundError:
+        return RaidHelperProfileTestResult(ok=False, message="The configured Raid-Helper timezone is invalid.")
+
+    starts_at = (utc_now().replace(tzinfo=timezone.utc) + timedelta(minutes=15)).astimezone(zone)
+    payload = {
+        "leaderId": leader_id,
+        "title": "Royal Blackwater Fleet connection test",
+        "description": "Temporary API verification event. It should be removed automatically.",
+        "date": starts_at.strftime("%d.%m.%Y"),
+        "time": starts_at.strftime("%H:%M"),
+    }
+    path = f"/servers/{profile.server_id}/channels/{row.channel_id}/event"
+    try:
+        status_code, body = _request(profile, "POST", path, payload)
+    except Exception as exc:
+        return RaidHelperProfileTestResult(ok=False, message=f"Destination test failed: {type(exc).__name__}")
+
+    if not 200 <= status_code < 300:
+        if status_code == 401:
+            message = (
+                "Raid-Helper rejected event creation for this destination (HTTP 401). "
+                "Re-enter the exact API key used by a working create-event request and verify the server/channel IDs."
+            )
+        else:
+            message = _failed_request_message(status_code, body)
+        return RaidHelperProfileTestResult(ok=False, status_code=status_code, message=message)
+
+    external_id = _external_id(body)
+    if not external_id:
+        return RaidHelperProfileTestResult(
+            ok=False,
+            status_code=status_code,
+            message="The temporary event was created, but Raid-Helper returned no event ID for cleanup.",
+        )
+
+    try:
+        delete_status, delete_body = _request(profile, "DELETE", f"/events/{external_id}")
+    except Exception as exc:
+        return RaidHelperProfileTestResult(
+            ok=False,
+            status_code=status_code,
+            message=f"The temporary event was created, but automatic cleanup failed: {type(exc).__name__}.",
+        )
+    if not 200 <= delete_status < 300:
+        return RaidHelperProfileTestResult(
+            ok=False,
+            status_code=delete_status,
+            message=(
+                "The temporary event was created, but Raid-Helper could not delete it automatically. "
+                f"{_failed_request_message(delete_status, delete_body)}"
+            ),
+        )
+    return RaidHelperProfileTestResult(
+        ok=True,
+        status_code=status_code,
+        message="Raid-Helper event creation and cleanup succeeded for this exact destination.",
+    )
 
 
 def _event_context(event: FleetEvent, template: RaidHelperTemplate) -> dict[str, Any]:
@@ -239,7 +336,7 @@ def _event_context(event: FleetEvent, template: RaidHelperTemplate) -> dict[str,
             "start_at": start.isoformat(), "end_at": end.isoformat(),
             "start_at_utc": start_utc.isoformat(), "end_at_utc": end_utc.isoformat(),
             "start_unix": int(start_utc.timestamp()), "end_unix": int(end_utc.timestamp()),
-            "date": start.strftime("%Y-%m-%d"), "time": start.strftime("%H:%M"),
+            "date": start.strftime("%d.%m.%Y"), "time": start.strftime("%H:%M"),
             "duration_minutes": duration, "all_day": event.all_day,
             "timezone": template.profile.timezone,
             "timezone_abbreviation": start.tzname() or template.profile.timezone,
@@ -349,7 +446,13 @@ def _response_error_reason(body: Any) -> str | None:
 
 def _failed_request_message(status_code: int, body: Any) -> str:
     reason = _response_error_reason(body)
-    base = f"Raid-Helper returned HTTP {status_code}."
+    if status_code == 401:
+        base = (
+            "Raid-Helper rejected event authorization (HTTP 401). "
+            "Re-enter the API key and test the exact channel destination in the Staff Panel."
+        )
+    else:
+        base = f"Raid-Helper returned HTTP {status_code}."
     return f"{base} {reason}" if reason else base
 
 def _sync_link(db: Session, link: RaidHelperEventLink) -> None:

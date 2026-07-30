@@ -11,6 +11,8 @@
 
 ## Unreleased
 
+- Replaced the misleading Raid-Helper profile “connection” result with an explicitly read-only server check and added an exact destination write test that creates and immediately removes a temporary event using the same API key, server, channel, leader and endpoints as calendar synchronization. Calendar status now identifies the profile behind each destination, 401 errors provide actionable reconfiguration guidance, copied key wrappers are normalized, and event dates use Raid-Helper's `DD.MM.YYYY` format. No database migration is required.
+
 - Fixed Raid-Helper HTTP 401 responses by removing the misleading Bearer/X-API-Key options and always sending the decrypted API key as the raw `Authorization` header required by the v4 server API. Migration `0018` removes the obsolete profile authorization-mode column.
 
 - Added required Raid-Helper leader assignment: profiles can store a default Discord leader user ID, event managers can persist a manual override per selected appointment destination, and the validated effective value is resolved at delivery time and injected as `leaderId` into every create/update payload, including custom JSON templates. Migration `0017` adds the profile default and per-event override columns.

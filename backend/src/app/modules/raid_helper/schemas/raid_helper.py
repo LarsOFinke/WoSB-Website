@@ -177,6 +177,7 @@ class RaidHelperEventLinkRead(BaseModel):
     id: int
     destination_id: int
     destination_name: str
+    profile_name: str
     template_id: int
     template_name: str
     external_event_id: str | None = None

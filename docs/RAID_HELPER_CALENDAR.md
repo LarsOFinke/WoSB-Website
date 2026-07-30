@@ -17,6 +17,8 @@ Destinations may be restricted to selected calendar categories. An empty categor
 
 A **template** belongs to one profile and can be limited to fleet events, squad events or both. Category restrictions work in the same way as destinations. The Staff page includes versioned fleet and squad presets based on the existing calendar webhook messages.
 
+The profile test checks server event-list read access only and reports that limited scope explicitly. Each destination also has an opt-in write test that creates and immediately deletes a temporary event in the configured channel. That destination test exercises the same saved API key, server ID, channel ID, leader ID, create endpoint and delete endpoint as calendar synchronization, so it is the authoritative connection check for event delivery.
+
 ## Event workflow
 
 The event form enables Raid-Helper delivery by default. When the scope or category changes, the frontend requests only compatible destinations and templates. The user may disable delivery or select several destinations, including destinations from different profiles. Each selected destination uses its current profile default leader ID unless the event manager chooses a manual Discord user ID for that appointment. Manual overrides are stored on the synchronization link; profiles without a default automatically require a manual leader.
@@ -35,7 +37,7 @@ Title, description, announcement and JSON payload fields use the existing safe p
 - `{{raid_helper.template_id}}`, `{{raid_helper.leader_id}}` (JSON payload templates)
 - `{{rendered.title}}`, `{{rendered.description}}`, `{{rendered.announcement}}`
 
-The JSON payload is administrator-managed because Raid-Helper template fields can evolve independently from this project. The application always injects the validated effective leader as the top-level `leaderId`, so custom templates cannot accidentally omit or replace the required value. The API base is restricted to official HTTPS Raid-Helper hosts and must end in `/api/v4`. Requests authenticate with the API key as the raw `Authorization` header value, matching Raid-Helper v4; OAuth-style `Bearer` prefixes and `X-API-Key` are intentionally unsupported.
+The JSON payload is administrator-managed because Raid-Helper template fields can evolve independently from this project. The application always injects the validated effective leader as the top-level `leaderId`, so custom templates cannot accidentally omit or replace the required value. Calendar dates are rendered in Raid-Helper's `DD.MM.YYYY` format after conversion to the profile timezone. The API base is restricted to official HTTPS Raid-Helper hosts and must end in `/api/v4`. Requests authenticate with the API key as the raw `Authorization` header value; accidental surrounding quotes, whitespace and a pasted `Bearer ` wrapper are normalized before transmission, while `X-API-Key` remains unsupported.
 
 ## Deployment
 

@@ -127,7 +127,7 @@ const {
               <div v-if="event.can_manage && event.raid_helper_links?.length" class="raid-helper-sync-list">
                 <p class="field-label">{{ t('raidHelper.calendar.syncStatus') }}</p>
                 <div v-for="link in event.raid_helper_links" :key="link.id" class="raid-helper-sync-row">
-                  <span><strong>{{ link.destination_name }}</strong> · {{ link.template_name }}</span>
+                  <span><strong>{{ link.destination_name }}</strong> · {{ link.profile_name }} · {{ link.template_name }}</span>
                   <span class="type-pill" :class="`raid-helper-status-${link.status}`">{{ t(`raidHelper.calendar.status.${link.status}`) }}</span>
                   <small v-if="link.error_message" class="error-text">{{ link.error_message }}</small>
                 </div>

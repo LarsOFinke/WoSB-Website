@@ -26,6 +26,7 @@ from app.modules.raid_helper.services.raid_helper_service import (
     list_templates,
     save_destination,
     save_template,
+    test_destination,
     test_profile,
     update_profile,
 )
@@ -86,6 +87,14 @@ def profile_test(profile_id: int, db: Session = Depends(get_db), _: User = Depen
 @router.get("/destinations", response_model=list[RaidHelperDestinationRead])
 def destinations(db: Session = Depends(get_db), _: User = Depends(require_admin)):
     return list_destinations(db)
+
+
+@router.post("/destinations/{destination_id}/test", response_model=RaidHelperProfileTestResult)
+def destination_test(destination_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    result = test_destination(db, destination_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Raid-Helper destination not found.")
+    return result
 
 
 @router.post("/destinations", response_model=RaidHelperDestinationRead, status_code=status.HTTP_201_CREATED)

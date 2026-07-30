@@ -12,6 +12,7 @@ import {
   listRaidHelperDestinations,
   listRaidHelperProfiles,
   listRaidHelperTemplates,
+  testRaidHelperDestination,
   testRaidHelperProfile,
   updateRaidHelperDestination,
   updateRaidHelperProfile,
@@ -216,6 +217,19 @@ export function useRaidHelperPage() {
     }
   }
 
+  async function testDestination(row) {
+    if (!confirm(t('raidHelper.destinationTestConfirm'))) return
+    error.value = ''
+    notice.value = ''
+    try {
+      const result = await testRaidHelperDestination(row.id)
+      if (result.ok) notice.value = result.message
+      else error.value = result.message
+    } catch (err) {
+      error.value = err.message
+    }
+  }
+
   async function removeDestination(row) {
     if (!confirm(t('raidHelper.confirmDelete'))) return
     try {
@@ -308,6 +322,7 @@ export function useRaidHelperPage() {
     resetDestination,
     editDestination,
     saveDestination,
+    testDestination,
     removeDestination,
     resetTemplate,
     editTemplate,

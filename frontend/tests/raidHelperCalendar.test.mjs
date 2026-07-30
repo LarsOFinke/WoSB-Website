@@ -49,6 +49,7 @@ test('Raid-Helper credentials and routing are managed only in the admin workspac
   assert.match(page, /profileForm\.default_leader_id/)
   assert.match(page, /destinationForm\.scope_type/)
   assert.match(page, /templateForm\.categories/)
+  assert.match(page, /testDestination\(row\)/)
   assert.doesNotMatch(page, /authorization_mode|Bearer|X-API-Key/)
 })
 
@@ -74,6 +75,8 @@ test('Raid-Helper defaults use the canonical API host and advanced timezone pres
     readFile(templateDomainUrl, 'utf8'),
   ])
   assert.match(pageModel, /https:\/\/raid-helper\.xyz\/api\/v4/)
+  assert.match(pageModel, /testRaidHelperDestination/)
+  assert.match(pageModel, /destinationTestConfirm/)
   assert.doesNotMatch(pageModel, /authorization_mode|bearer|x-api-key/)
   assert.match(page, /raidHelper\.timezoneHelp/)
   assert.match(page, /applyRaidHelperRecommendedPayload/)
@@ -92,6 +95,7 @@ test('failed Raid-Helper deliveries expose an explicit manager retry action', as
     readFile(calendarApiUrl, 'utf8'),
   ])
   assert.match(page, /link\.status === 'failed'/)
+  assert.match(page, /link\.profile_name/)
   assert.match(page, /retryRaidHelper\(event\)/)
   assert.match(pageModel, /retryRaidHelperEvent\(event\.id\)/)
   assert.match(api, /\/raid-helper\/retry/)
