@@ -36,6 +36,7 @@ _ALLOWED_API_HOSTS = {
     "raid-helper.xyz",
     "www.raid-helper.xyz",
 }
+_CANONICAL_API_HOST = "raid-helper.xyz"
 
 
 def _validate_base_url(value: str) -> str:
@@ -47,7 +48,11 @@ def _validate_base_url(value: str) -> str:
         raise RaidHelperError("Raid-Helper API URL must end with /api/v4.")
     if parsed.query or parsed.fragment or parsed.username or parsed.password:
         raise RaidHelperError("Raid-Helper API URL contains unsupported components.")
-    return f"https://{parsed.hostname}{path}"
+    # The public documentation currently publishes the API on raid-helper.xyz.
+    # Accept the historical .dev host in saved configuration, but normalize every
+    # request to the canonical API host so existing installations recover without
+    # requiring an administrator to re-enter the profile.
+    return f"https://{_CANONICAL_API_HOST}{path}"
 
 def _validate_timezone(value: str) -> str:
     try:

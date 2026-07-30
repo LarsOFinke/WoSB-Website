@@ -4,13 +4,13 @@ import { useCalendarPage } from '@/modules/calendar/composables/useCalendarPage.
 const {
   route, locale, t, canManageFleet, today,
   activeMonth, selectedDate, category, scope, events,
-  squads, loading, error, cancellingId, linkedEventId, weekdayLabels,
+  squads, loading, error, cancellingId, retryingId, linkedEventId, weekdayLabels,
   monthLabel, monthRange, calendarDays, visibleSquads, managedSquads,
   canCreateEvent, categoryOptions, scopeOptions, eventCountLabel, selectedEvents,
   newEventTarget, dateKey, isSameDay, eventsForDate, dayClasses,
   dayLabel, fullDateLabel, formatEventTime, eventScopeLabel, selectDay,
   moveMonth, jumpToToday, scopeFilters, loadEvents, loadSquadScopes,
-  cancelEvent,
+  retryRaidHelper, cancelEvent,
 } = useCalendarPage()
 </script>
 
@@ -132,6 +132,15 @@ const {
                   <small v-if="link.error_message" class="error-text">{{ link.error_message }}</small>
                 </div>
               </div>
+              <button
+                v-if="event.can_manage && event.raid_helper_links?.some((link) => link.status === 'failed')"
+                class="small-action"
+                type="button"
+                :disabled="retryingId === event.id"
+                @click="retryRaidHelper(event)"
+              >
+                {{ retryingId === event.id ? t('raidHelper.calendar.retrying') : t('raidHelper.calendar.retry') }}
+              </button>
               <button
                 v-if="event.can_manage"
                 class="danger-action calendar-cancel-action"

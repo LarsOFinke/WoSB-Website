@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(120), nullable=False),
         sa.Column("server_id", sa.String(32), nullable=False),
         sa.Column("api_key_encrypted", sa.Text(), nullable=False),
-        sa.Column("api_base_url", sa.String(200), nullable=False, server_default="https://raid-helper.dev/api/v4"),
+        sa.Column("api_base_url", sa.String(200), nullable=False, server_default="https://raid-helper.xyz/api/v4"),
         sa.Column("authorization_mode", sa.String(24), nullable=False, server_default="authorization"),
         sa.Column("timezone", sa.String(80), nullable=False, server_default="Europe/Berlin"),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),

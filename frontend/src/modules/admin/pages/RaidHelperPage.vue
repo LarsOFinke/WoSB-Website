@@ -6,7 +6,7 @@ const {
   t, isAdmin, user, navigationGroups, profiles, destinations, templates, loading, error, notice,
   profileEditId, destinationEditId, templateEditId, profileForm, destinationForm, templateForm,
   profileOptions, activeSquads, FLEET_EVENT_CATEGORIES, RAID_HELPER_CALENDAR_PRESETS,
-  applyRaidHelperCalendarPreset, toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
+  applyRaidHelperCalendarPreset, applyRaidHelperRecommendedPayload, toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
   testProfile, resetDestination, editDestination, saveDestination, removeDestination, resetTemplate,
   editTemplate, saveTemplate, removeTemplate,
 } = useRaidHelperPage()
@@ -33,7 +33,7 @@ const {
           <input v-model="profileForm.api_key" :required="!profileEditId" type="password" autocomplete="new-password" :placeholder="profileEditId ? t('raidHelper.keepApiKey') : t('raidHelper.apiKey')" />
           <input v-model="profileForm.api_base_url" required aria-label="API base URL" />
           <select v-model="profileForm.authorization_mode"><option value="authorization">Authorization</option><option value="bearer">Bearer</option><option value="x-api-key">X-API-Key</option></select>
-          <input v-model="profileForm.timezone" required placeholder="Europe/Berlin" />
+          <label><span>{{ t('raidHelper.timezone') }}</span><input v-model="profileForm.timezone" required placeholder="Europe/Berlin" /><small>{{ t('raidHelper.timezoneHelp') }}</small></label>
           <label><input v-model="profileForm.is_active" type="checkbox" /> {{ t('common.active') }}</label>
           <div class="form-actions"><button class="button-box primary-action" type="submit">{{ t('common.save') }}</button><button v-if="profileEditId" class="button-box" type="button" @click="resetProfile">{{ t('common.cancel') }}</button></div>
         </form>
@@ -87,7 +87,7 @@ const {
           <label class="is-wide"><span>{{ t('raidHelper.titleTemplate') }}</span><input v-model="templateForm.title_template" required /></label>
           <label class="is-wide"><span>{{ t('raidHelper.descriptionTemplate') }}</span><textarea v-model="templateForm.description_template" rows="5"></textarea></label>
           <label class="is-wide"><span>{{ t('raidHelper.announcementTemplate') }}</span><textarea v-model="templateForm.announcement_template" rows="3"></textarea></label>
-          <label class="is-wide"><span>{{ t('raidHelper.payloadTemplate') }}</span><textarea v-model="templateForm.payload_template_json" rows="12" spellcheck="false"></textarea><small>{{ t('raidHelper.payloadHelp') }}</small></label>
+          <label class="is-wide"><span>{{ t('raidHelper.payloadTemplate') }}</span><textarea v-model="templateForm.payload_template_json" rows="12" spellcheck="false"></textarea><small>{{ t('raidHelper.payloadHelp') }}</small><button class="small-action raid-helper-payload-preset" type="button" @click="applyRaidHelperRecommendedPayload(templateForm)">{{ t('raidHelper.recommendedPayload') }}</button></label>
           <label><input v-model="templateForm.is_default" type="checkbox" /> {{ t('raidHelper.defaultTemplate') }}</label>
           <label><input v-model="templateForm.is_active" type="checkbox" /> {{ t('common.active') }}</label>
           <div class="form-actions is-wide"><button class="button-box primary-action" type="submit">{{ t('common.save') }}</button><button v-if="templateEditId" class="button-box" type="button" @click="resetTemplate">{{ t('common.cancel') }}</button></div>

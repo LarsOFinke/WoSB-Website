@@ -14,7 +14,11 @@ from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.schemas.fleet_event_read import FleetEventRead
 from app.modules.calendar.schemas.fleet_event_update import FleetEventUpdate
-from app.modules.raid_helper.services.raid_helper_service import RaidHelperError, sync_event
+from app.modules.raid_helper.services.raid_helper_service import (
+    RaidHelperError,
+    queue_existing_links_for_update,
+    sync_event,
+)
 from app.modules.calendar.services.fleet_event_service import (
     FleetEventPermissionError,
     FleetEventValidationError,
@@ -115,6 +119,34 @@ def put_event(
         **webhook_event_scope(db, squad_id=event.squad_id, use_primary_fleet=True),
     ))
     return event
+
+
+@router.post("/{event_id}/raid-helper/retry", response_model=FleetEventRead)
+def retry_raid_helper_event(
+    event_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> FleetEventRead:
+    event = get_fleet_event(db, event_id, current_user)
+    if event is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+    if not event.can_manage:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Event management access required.",
+        )
+    if not event.raid_helper_links:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This event has no Raid-Helper destinations to retry.",
+        )
+    queue_existing_links_for_update(db, event_id)
+    background_tasks.add_task(sync_event, event_id, "update")
+    refreshed = get_fleet_event(db, event_id, current_user)
+    if refreshed is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+    return refreshed
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)

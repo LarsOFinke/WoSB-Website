@@ -217,6 +217,11 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
             assert requests[0][2]["date"] == "2026-08-01"
             assert requests[0][2]["time"] == "20:00"
             assert requests[0][2]["duration"] == 120
+            assert requests[0][2]["date_variant"] == "both"
+            assert requests[0][2]["12h_format"] is False
+            assert requests[0][2]["info_variant"] == "long"
+            assert requests[0][2]["preserve_order"] is True
+            assert requests[0][2]["apply_unregister"] is True
             assert link.external_event_id == "987654321098765432"
             assert link.status == "delivered"
 
@@ -360,3 +365,147 @@ def test_raid_helper_runtime_service_has_no_httpx_dependency() -> None:
     source = service_path.read_text(encoding="utf-8")
     assert "import httpx" not in source
     assert "WebhookTransport" in source
+
+
+def test_raid_helper_api_host_is_canonicalized() -> None:
+    from app.modules.raid_helper.services.raid_helper_configuration import _validate_base_url
+
+    assert _validate_base_url("https://raid-helper.dev/api/v4") == (
+        "https://raid-helper.xyz/api/v4"
+    )
+    assert _validate_base_url("https://www.raid-helper.xyz/api/v4") == (
+        "https://raid-helper.xyz/api/v4"
+    )
+
+
+def test_raid_helper_payload_preserves_exact_placeholder_types() -> None:
+    context = {
+        "event": {"duration_minutes": 90},
+        "raid_helper": {"template_id": "123456789012345678"},
+    }
+
+    payload = raid_helper_service._render_json(
+        {
+            "duration": "{{event.duration_minutes}}",
+            "templateId": "{{raid_helper.template_id}}",
+            "label": "Template {{raid_helper.template_id}}",
+        },
+        context,
+    )
+
+    assert payload == {
+        "duration": 90,
+        "templateId": "123456789012345678",
+        "label": "Template 123456789012345678",
+    }
+
+
+def test_raid_helper_http_error_reason_is_bounded_and_safe() -> None:
+    assert raid_helper_service._failed_request_message(
+        400,
+        {"message": "  Invalid   templateId  "},
+    ) == "Raid-Helper returned HTTP 400. Invalid templateId"
+    assert raid_helper_service._failed_request_message(
+        400,
+        {"private": {"request": "must not leak"}},
+    ) == "Raid-Helper returned HTTP 400."
+
+
+def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-retry-admin",
+                password="RaidHelperRetryPassword123!",
+                display_name="Retry Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Retry Profile",
+                    server_id="523456789012345678",
+                    api_key="retry-secret-key",
+                    timezone="Europe/Berlin",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Retry channel",
+                    channel_id="623456789012345678",
+                    scope_type="fleet",
+                    categories=["operation"],
+                    is_default=True,
+                ),
+            )
+            template = raid_helper_service.save_template(
+                db,
+                RaidHelperTemplateWrite(
+                    profile_id=profile.id,
+                    name="Retry template",
+                    raid_template_id="123456789012345678",
+                    scope_type="fleet",
+                    categories=["operation"],
+                    is_default=True,
+                ),
+            )
+            start = datetime(2026, 8, 2, 18, 0, tzinfo=timezone.utc)
+            event = create_fleet_event(
+                db,
+                FleetEventCreate(
+                    title="Retry operation",
+                    category="operation",
+                    start_at=start,
+                    end_at=start + timedelta(hours=1),
+                    all_day=False,
+                    squad_id=None,
+                    raid_helper_enabled=True,
+                    raid_helper_dispatches=[
+                        RaidHelperDispatchSelection(
+                            destination_id=destination.id,
+                            template_id=template.id,
+                        )
+                    ],
+                ),
+                user,
+            )
+            event_id = event.id
+            link = db.scalar(
+                select(RaidHelperEventLink).where(RaidHelperEventLink.event_id == event_id)
+            )
+            assert link is not None
+            link.status = "failed"
+            link.error_message = "Raid-Helper returned HTTP 400. Invalid templateId"
+            db.commit()
+
+        login = client.post(
+            "/api/auth/login",
+            json={
+                "username": "raid-helper-retry-admin",
+                "password": "RaidHelperRetryPassword123!",
+            },
+        )
+        assert login.status_code == 200
+
+        requests: list[dict] = []
+
+        def fake_request(profile_row, method, path, payload=None):
+            requests.append(payload)
+            return 201, {"eventId": "112233445566778899"}
+
+        monkeypatch.setattr(raid_helper_service, "_request", fake_request)
+        response = client.post(f"/api/calendar/events/{event_id}/raid-helper/retry", json={})
+        assert response.status_code == 200
+
+        with SessionLocal() as db:
+            link = db.scalar(
+                select(RaidHelperEventLink).where(RaidHelperEventLink.event_id == event_id)
+            )
+            assert link is not None
+            assert link.status == "delivered"
+            assert link.external_event_id == "112233445566778899"
+            assert requests[0]["templateId"] == "123456789012345678"

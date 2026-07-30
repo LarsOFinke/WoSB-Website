@@ -1,7 +1,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocale } from '@/locales'
-import { deleteFleetEvent, FLEET_EVENT_CATEGORIES, listFleetEvents } from '@/modules/calendar/api/calendar'
+import {
+  deleteFleetEvent,
+  FLEET_EVENT_CATEGORIES,
+  listFleetEvents,
+  retryRaidHelperEvent,
+} from '@/modules/calendar/api/calendar'
 import {
   calendarDayClasses,
   dateFromRouteQuery,
@@ -38,6 +43,7 @@ export function useCalendarPage() {
   const loading = ref(false)
   const error = ref('')
   const cancellingId = ref(null)
+  const retryingId = ref(null)
 
   const weekdayLabels = computed(() => {
     const monday = new Date(2024, 0, 1)
@@ -143,6 +149,19 @@ export function useCalendarPage() {
     }
   }
 
+  async function retryRaidHelper(event) {
+    retryingId.value = event.id
+    error.value = ''
+    try {
+      await retryRaidHelperEvent(event.id)
+      await loadEvents()
+    } catch (err) {
+      error.value = err.message || t('raidHelper.calendar.retryError')
+    } finally {
+      retryingId.value = null
+    }
+  }
+
   async function cancelEvent(event) {
     if (!window.confirm(t('calendar.list.cancelConfirm', { title: event.title }))) return
     cancellingId.value = event.id
@@ -165,11 +184,11 @@ export function useCalendarPage() {
 
   return {
     route, locale, t, canManageFleet, today, activeMonth, selectedDate, category,
-    scope, events, squads, loading, error, cancellingId, linkedEventId, weekdayLabels, monthLabel,
+    scope, events, squads, loading, error, cancellingId, retryingId, linkedEventId, weekdayLabels, monthLabel,
     monthRange, calendarDays, visibleSquads, managedSquads, canCreateEvent,
     categoryOptions, scopeOptions, eventCountLabel, selectedEvents, newEventTarget,
     dateKey, isSameDay, eventsForDate, dayClasses, dayLabel, fullDateLabel,
     formatEventTime, eventScopeLabel, selectDay, moveMonth, jumpToToday,
-    scopeFilters, loadEvents, loadSquadScopes, cancelEvent,
+    scopeFilters, loadEvents, loadSquadScopes, retryRaidHelper, cancelEvent,
   }
 }

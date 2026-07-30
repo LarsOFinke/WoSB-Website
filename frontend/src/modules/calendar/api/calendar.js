@@ -33,6 +33,10 @@ export function deleteFleetEvent(id) {
   return deleteRequest(`/calendar/events/${id}`)
 }
 
+export function retryRaidHelperEvent(id) {
+  return post(`/calendar/events/${id}/raid-helper/retry`, {})
+}
+
 export function listRaidHelperOptions({ category, squadId = '' }) {
   return get(withQuery('/calendar/raid-helper/options', {
     category,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any
@@ -222,8 +223,13 @@ def _event_context(event: FleetEvent, template: RaidHelperTemplate) -> dict[str,
             "start_at_utc": start_utc.isoformat(), "end_at_utc": end_utc.isoformat(),
             "start_unix": int(start_utc.timestamp()), "end_unix": int(end_utc.timestamp()),
             "date": start.strftime("%Y-%m-%d"), "time": start.strftime("%H:%M"),
-            "duration_minutes": duration, "all_day": str(event.all_day).lower(),
+            "duration_minutes": duration, "all_day": event.all_day,
             "timezone": template.profile.timezone,
+            "timezone_abbreviation": start.tzname() or template.profile.timezone,
+            "utc_offset": start.strftime("%z")[:3] + ":" + start.strftime("%z")[3:],
+            "start_discord": f"<t:{int(start_utc.timestamp())}:F>",
+            "end_discord": f"<t:{int(end_utc.timestamp())}:F>",
+            "start_discord_relative": f"<t:{int(start_utc.timestamp())}:R>",
         },
         "scope": {"type": "squad" if event.squad_id else "fleet", "name": scope_name, "squad_id": event.squad_id or ""},
         "raid_helper": {"template_id": template.raid_template_id},
@@ -236,14 +242,27 @@ def _event_context(event: FleetEvent, template: RaidHelperTemplate) -> dict[str,
     return context
 
 
+_EXACT_TEMPLATE_TOKEN = re.compile(r"^\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}$")
+
+
+def _context_value(context: dict[str, Any], path: str) -> Any:
+    current: Any = context
+    for part in path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return ""
+        current = current[part]
+    return "" if current is None else current
+
+
 def _render_json(value: Any, context: dict[str, Any]) -> Any:
     if isinstance(value, str):
-        rendered = render_message(value, context)
-        if rendered.isdigit() and value.strip().startswith("{{") and value.strip().endswith("}}"):
-            return int(rendered)
-        if rendered.lower() in {"true", "false"} and value.strip().startswith("{{"):
-            return rendered.lower() == "true"
-        return rendered
+        token = _EXACT_TEMPLATE_TOKEN.fullmatch(value.strip())
+        if token:
+            # Preserve the actual type of exact placeholders. This keeps numeric
+            # fields such as duration as integers while ensuring numeric-looking
+            # identifiers (notably templateId) remain strings.
+            return _context_value(context, token.group(1))
+        return render_message(value, context)
     if isinstance(value, list):
         return [_render_json(item, context) for item in value]
     if isinstance(value, dict):
@@ -277,6 +296,30 @@ def sync_event(event_id: int, operation: str = "sync") -> None:
                 link.status = "queued"
             _sync_link(db, link)
 
+
+
+def _response_error_reason(body: Any) -> str | None:
+    """Return a bounded, non-structural Raid-Helper error reason for staff UI."""
+    if not isinstance(body, dict):
+        return None
+    for key in ("message", "error", "detail"):
+        value = body.get(key)
+        if isinstance(value, str):
+            reason = " ".join(value.split())
+            if reason:
+                return reason[:240]
+    errors = body.get("errors")
+    if isinstance(errors, list):
+        reasons = [" ".join(item.split()) for item in errors if isinstance(item, str) and item.strip()]
+        if reasons:
+            return "; ".join(reasons)[:240]
+    return None
+
+
+def _failed_request_message(status_code: int, body: Any) -> str:
+    reason = _response_error_reason(body)
+    base = f"Raid-Helper returned HTTP {status_code}."
+    return f"{base} {reason}" if reason else base
 
 def _sync_link(db: Session, link: RaidHelperEventLink) -> None:
     link.attempts += 1
@@ -317,7 +360,7 @@ def _sync_link(db: Session, link: RaidHelperEventLink) -> None:
             link.synced_at = utc_now()
         else:
             link.status = "failed"
-            link.error_message = f"Raid-Helper returned HTTP {status_code}."
+            link.error_message = _failed_request_message(status_code, body)
     except Exception as exc:
         link.status = "failed"
         link.error_message = str(exc)[:1000]

@@ -14,7 +14,12 @@ DEFAULT_PAYLOAD_TEMPLATE = '''{
   "time": "{{event.time}}",
   "duration": "{{event.duration_minutes}}",
   "templateId": "{{raid_helper.template_id}}",
-  "announcement": "{{rendered.announcement}}"
+  "announcement": "{{rendered.announcement}}",
+  "date_variant": "both",
+  "12h_format": false,
+  "info_variant": "long",
+  "preserve_order": true,
+  "apply_unregister": true
 }'''
 
 
@@ -30,7 +35,7 @@ class RaidHelperProfileWrite(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     server_id: str = Field(min_length=5, max_length=32, pattern=r"^[0-9]+$")
     api_key: str | None = Field(default=None, max_length=500)
-    api_base_url: str = Field(default="https://raid-helper.dev/api/v4", max_length=200)
+    api_base_url: str = Field(default="https://raid-helper.xyz/api/v4", max_length=200)
     authorization_mode: Literal["authorization", "bearer", "x-api-key"] = "authorization"
     timezone: str = Field(default="Europe/Berlin", min_length=1, max_length=80)
     is_active: bool = True

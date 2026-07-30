@@ -1511,3 +1511,8 @@ body.webhook-editor-open {
   align-items: center;
   gap: 0.6rem;
 }
+
+.raid-helper-payload-preset {
+  justify-self: start;
+  margin-top: 0.35rem;
+}

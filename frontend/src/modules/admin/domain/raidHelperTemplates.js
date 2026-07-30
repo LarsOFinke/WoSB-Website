@@ -22,3 +22,22 @@ export function applyRaidHelperCalendarPreset(form, preset) {
   form.description_template = preset.description_template
   form.announcement_template = preset.announcement_template
 }
+
+export const RAID_HELPER_RECOMMENDED_PAYLOAD = `{
+  "title": "{{rendered.title}}",
+  "description": "{{rendered.description}}",
+  "date": "{{event.date}}",
+  "time": "{{event.time}}",
+  "duration": "{{event.duration_minutes}}",
+  "templateId": "{{raid_helper.template_id}}",
+  "announcement": "{{rendered.announcement}}",
+  "date_variant": "both",
+  "12h_format": false,
+  "info_variant": "long",
+  "preserve_order": true,
+  "apply_unregister": true
+}`
+
+export function applyRaidHelperRecommendedPayload(form) {
+  form.payload_template_json = RAID_HELPER_RECOMMENDED_PAYLOAD
+}

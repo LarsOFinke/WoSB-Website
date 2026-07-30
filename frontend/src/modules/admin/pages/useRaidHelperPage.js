@@ -19,22 +19,16 @@ import {
 } from '@/modules/admin/api/admin'
 import {
   RAID_HELPER_CALENDAR_PRESETS,
+  RAID_HELPER_RECOMMENDED_PAYLOAD,
   applyRaidHelperCalendarPreset,
+  applyRaidHelperRecommendedPayload,
 } from '@/modules/admin/domain/raidHelperTemplates'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
 import { FLEET_EVENT_CATEGORIES } from '@/modules/calendar/api/calendar'
 import { listSquads } from '@/modules/squads/api/squads'
 
-const DEFAULT_API_BASE_URL = 'https://raid-helper.dev/api/v4'
-const DEFAULT_RAID_HELPER_PAYLOAD = `{
-  "title": "{{rendered.title}}",
-  "description": "{{rendered.description}}",
-  "date": "{{event.date}}",
-  "time": "{{event.time}}",
-  "duration": "{{event.duration_minutes}}",
-  "templateId": "{{raid_helper.template_id}}",
-  "announcement": "{{rendered.announcement}}"
-}`
+const DEFAULT_API_BASE_URL = 'https://raid-helper.xyz/api/v4'
+const DEFAULT_RAID_HELPER_PAYLOAD = RAID_HELPER_RECOMMENDED_PAYLOAD
 
 function defaultProfileForm() {
   return {
@@ -301,7 +295,9 @@ export function useRaidHelperPage() {
     activeSquads,
     FLEET_EVENT_CATEGORIES,
     RAID_HELPER_CALENDAR_PRESETS,
+  RAID_HELPER_RECOMMENDED_PAYLOAD,
     applyRaidHelperCalendarPreset,
+    applyRaidHelperRecommendedPayload,
     toggleCategory,
     resetProfile,
     editProfile,
