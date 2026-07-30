@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { installDeploymentChunkRecovery } from '@/core/navigation/deploymentChunkRecovery'
 import { onLocaleChange, translate } from '@/locales'
 
 import { loadSession, useSession } from '@/modules/accounts/session'
@@ -37,6 +38,8 @@ const router = createRouter({
     return { top: 0 }
   },
 })
+
+installDeploymentChunkRecovery(router)
 
 router.beforeEach(async (to) => {
   const { canManageFleet, isAdmin, isAuthenticated, isStaff, sessionState } = useSession()
