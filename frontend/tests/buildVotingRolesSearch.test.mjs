@@ -55,9 +55,14 @@ test('moderators receive build role CRUD and assignment controls', async () => {
   assert.match(page, /v-for="role in buildRoles"/)
 })
 
-test('planner dropdowns raise their parent stacking context without covering dialogs', async () => {
-  const css = await read('../src/modules/builds/styles/buildOptionPicker.css')
-  assert.match(css, /:has\(\.build-option-picker\.is-open\)/)
-  assert.match(css, /z-index: 70/)
-  assert.match(css, /z-index: 110/)
+test('planner dropdowns use a body-level popover layer without parent stacking traps', async () => {
+  const [picker, css] = await Promise.all([
+    read('../src/modules/builds/components/BuildOptionPicker.vue'),
+    read('../src/modules/builds/styles/buildOptionPicker.css'),
+  ])
+  assert.match(picker, /<Teleport to="body">/)
+  assert.match(picker, /calculatePickerPlacement/)
+  assert.match(css, /position: fixed/)
+  assert.match(css, /z-index: var\(--z-popover\)/)
+  assert.doesNotMatch(css, /:has\(\.build-option-picker\.is-open\)/)
 })

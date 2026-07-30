@@ -20,7 +20,7 @@
   position: fixed;
   top: 0.6rem;
   left: 0.6rem;
-  z-index: 200;
+  z-index: var(--z-skip-link);
   padding: 0.7rem 0.95rem;
   border: 1px solid var(--rbf-gold);
   border-radius: 0.75rem;
@@ -428,7 +428,7 @@ body {
 .workspace-page-header::before {
   content: "RBF";
   position: absolute;
-  z-index: -1;
+  z-index: var(--z-behind);
   right: clamp(0.8rem, 3vw, 2.6rem);
   bottom: clamp(-1.1rem, -2vw, -0.25rem);
   color: rgba(241, 184, 91, 0.035);
@@ -441,7 +441,7 @@ body {
 
 .workspace-page-header-copy {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 .workspace-page-header h1 {

@@ -73,6 +73,22 @@
   --surface-glass: rgba(8, 17, 27, 0.82);
   --surface-glass-strong: rgba(12, 23, 35, 0.94);
 
+  /* Global stacking order. Feature styles must use these semantic layers. */
+  --z-behind: -1;
+  --z-base: 0;
+  --z-raised: 1;
+  --z-local-sticky: 20;
+  --z-sticky-content: 100;
+  --z-shell-sidebar: 200;
+  --z-shell-topbar: 220;
+  --z-popover: 400;
+  --z-scrim: 500;
+  --z-drawer: 520;
+  --z-modal: 600;
+  --z-notice: 800;
+  --z-consent: 900;
+  --z-skip-link: 1000;
+
   /* Compatibility aliases for domain workspaces */
   --rbf-gold: #f1b85b;
   --rbf-gold-soft: rgba(241, 184, 91, 0.14);

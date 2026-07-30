@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { filterOptionGroups } from '@/modules/builds/domain/optionSearch'
+import { calculatePickerPlacement } from '@/modules/builds/domain/pickerPlacement'
 
 const props = defineProps({
   modelValue: { type: [String, Number], default: '' },
@@ -24,6 +25,8 @@ const open = ref(false)
 const activeIndex = ref(-1)
 const searchQuery = ref('')
 const searchInput = ref(null)
+const menuStyle = ref({})
+let positionFrame = 0
 
 const normalizedGroups = computed(() => {
   if (props.groups.length) return props.groups
@@ -35,6 +38,36 @@ const filteredOptions = computed(() => filteredGroups.value.flatMap((group) => g
 const selected = computed(() => flatOptions.value.find((option) => option.value === props.modelValue) || null)
 const enabledOptions = computed(() => filteredOptions.value.filter((option) => !option.disabled))
 
+function updateMenuPosition() {
+  if (!open.value || !root.value) return
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    menuStyle.value = {}
+    return
+  }
+  const trigger = root.value.querySelector('.build-option-picker-trigger')
+  if (!trigger) return
+  const placement = calculatePickerPlacement(trigger.getBoundingClientRect(), {
+    width: window.visualViewport?.width || window.innerWidth,
+    height: window.visualViewport?.height || window.innerHeight,
+  })
+  menuStyle.value = {
+    left: `${placement.left}px`,
+    width: `${placement.width}px`,
+    maxHeight: `${placement.maxHeight}px`,
+    top: placement.top == null ? 'auto' : `${placement.top}px`,
+    bottom: placement.bottom == null ? 'auto' : `${placement.bottom}px`,
+  }
+}
+
+function scheduleMenuPosition() {
+  if (!open.value) return
+  if (positionFrame) window.cancelAnimationFrame(positionFrame)
+  positionFrame = window.requestAnimationFrame(() => {
+    positionFrame = 0
+    updateMenuPosition()
+  })
+}
+
 function openMenu() {
   if (props.disabled) return
   open.value = true
@@ -42,6 +75,7 @@ function openMenu() {
   activeIndex.value = selectedIndex >= 0 ? selectedIndex : 0
   searchQuery.value = ''
   nextTick(() => {
+    updateMenuPosition()
     if (props.searchable) searchInput.value?.focus({ preventScroll: true })
     else menu.value?.focus({ preventScroll: true })
   })
@@ -50,6 +84,11 @@ function openMenu() {
 function closeMenu({ restoreFocus = false } = {}) {
   open.value = false
   searchQuery.value = ''
+  menuStyle.value = {}
+  if (positionFrame) {
+    window.cancelAnimationFrame(positionFrame)
+    positionFrame = 0
+  }
   if (restoreFocus) root.value?.querySelector('.build-option-picker-trigger')?.focus()
 }
 
@@ -107,13 +146,29 @@ function onMenuKeydown(event) {
 }
 
 function onDocumentPointerDown(event) {
-  if (open.value && root.value && !root.value.contains(event.target)) closeMenu()
+  if (!open.value) return
+  if (root.value?.contains(event.target) || menu.value?.contains(event.target)) return
+  closeMenu()
 }
 
 watch(searchQuery, () => { activeIndex.value = enabledOptions.value.length ? 0 : -1 })
+watch(() => [props.options, props.groups], () => nextTick(scheduleMenuPosition), { deep: true })
 
-onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown))
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown)
+  window.addEventListener('resize', scheduleMenuPosition)
+  window.addEventListener('scroll', scheduleMenuPosition, true)
+  window.visualViewport?.addEventListener('resize', scheduleMenuPosition)
+  window.visualViewport?.addEventListener('scroll', scheduleMenuPosition)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown)
+  window.removeEventListener('resize', scheduleMenuPosition)
+  window.removeEventListener('scroll', scheduleMenuPosition, true)
+  window.visualViewport?.removeEventListener('resize', scheduleMenuPosition)
+  window.visualViewport?.removeEventListener('scroll', scheduleMenuPosition)
+  if (positionFrame) window.cancelAnimationFrame(positionFrame)
+})
 </script>
 
 <template>
@@ -137,62 +192,65 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       <span class="build-option-picker-chevron" aria-hidden="true">⌄</span>
     </button>
 
-    <div
-      v-if="open"
-      ref="menu"
-      class="build-option-picker-menu"
-      role="listbox"
-      tabindex="-1"
-      :aria-label="ariaLabel"
-      @keydown="onMenuKeydown"
-    >
-      <label v-if="searchable" class="build-option-picker-search">
-        <span class="sr-only">{{ searchPlaceholder }}</span>
-        <input
-          ref="searchInput"
-          v-model="searchQuery"
-          type="search"
-          autocomplete="off"
-          :placeholder="searchPlaceholder"
-          @keydown.stop="onMenuKeydown"
-        />
-      </label>
-      <button
-        v-if="allowEmpty"
-        type="button"
-        class="build-option-picker-option is-empty"
-        role="option"
-        :aria-selected="modelValue === ''"
-        @click="selectValue('')"
+    <Teleport to="body">
+      <div
+        v-if="open"
+        ref="menu"
+        class="build-option-picker-menu"
+        role="listbox"
+        tabindex="-1"
+        :aria-label="ariaLabel"
+        :style="menuStyle"
+        @keydown="onMenuKeydown"
       >
-        <span class="build-option-picker-option-copy"><strong>{{ placeholder }}</strong></span>
-      </button>
-
-      <p v-if="searchable && filteredGroups.length === 0" class="build-option-picker-empty">{{ noResultsText }}</p>
-
-      <section v-for="group in filteredGroups" :key="group.key" class="build-option-picker-group">
-        <p v-if="group.label" class="build-option-picker-group-label">{{ group.label }}</p>
+        <label v-if="searchable" class="build-option-picker-search">
+          <span class="sr-only">{{ searchPlaceholder }}</span>
+          <input
+            ref="searchInput"
+            v-model="searchQuery"
+            type="search"
+            autocomplete="off"
+            :placeholder="searchPlaceholder"
+            @keydown.stop="onMenuKeydown"
+          />
+        </label>
         <button
-          v-for="option in group.options"
-          :key="option.value"
+          v-if="allowEmpty"
           type="button"
-          class="build-option-picker-option"
-          :class="{ 'is-selected': option.value === modelValue, 'is-active': enabledOptions[activeIndex]?.value === option.value }"
+          class="build-option-picker-option is-empty"
           role="option"
-          :data-option-value="option.value"
-          :aria-selected="option.value === modelValue"
-          :disabled="option.disabled"
-          @mouseenter="activeIndex = enabledOptions.findIndex((candidate) => candidate.value === option.value)"
-          @click="selectValue(option.value)"
+          :aria-selected="modelValue === ''"
+          @click="selectValue('')"
         >
-          <img v-if="option.image" :src="option.image" alt="" />
-          <span class="build-option-picker-option-copy">
-            <strong>{{ option.label }}</strong>
-            <small v-if="option.meta">{{ option.meta }}</small>
-          </span>
-          <span v-if="option.value === modelValue" class="build-option-picker-check" aria-hidden="true">✓</span>
+          <span class="build-option-picker-option-copy"><strong>{{ placeholder }}</strong></span>
         </button>
-      </section>
-    </div>
+
+        <p v-if="searchable && filteredGroups.length === 0" class="build-option-picker-empty">{{ noResultsText }}</p>
+
+        <section v-for="group in filteredGroups" :key="group.key" class="build-option-picker-group">
+          <p v-if="group.label" class="build-option-picker-group-label">{{ group.label }}</p>
+          <button
+            v-for="option in group.options"
+            :key="option.value"
+            type="button"
+            class="build-option-picker-option"
+            :class="{ 'is-selected': option.value === modelValue, 'is-active': enabledOptions[activeIndex]?.value === option.value }"
+            role="option"
+            :data-option-value="option.value"
+            :aria-selected="option.value === modelValue"
+            :disabled="option.disabled"
+            @mouseenter="activeIndex = enabledOptions.findIndex((candidate) => candidate.value === option.value)"
+            @click="selectValue(option.value)"
+          >
+            <img v-if="option.image" :src="option.image" alt="" />
+            <span class="build-option-picker-option-copy">
+              <strong>{{ option.label }}</strong>
+              <small v-if="option.meta">{{ option.meta }}</small>
+            </span>
+            <span v-if="option.value === modelValue" class="build-option-picker-check" aria-hidden="true">✓</span>
+          </button>
+        </section>
+      </div>
+    </Teleport>
   </div>
 </template>

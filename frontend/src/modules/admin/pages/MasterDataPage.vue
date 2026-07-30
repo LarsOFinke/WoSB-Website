@@ -429,7 +429,7 @@ function setMortarModificationEnabled(enabled) {
 .mount-card { display: grid; grid-template-columns: minmax(100px, .8fr) repeat(3, minmax(85px,1fr)); gap: .55rem; align-items: end; padding: .72rem; border: 1px solid rgba(221,231,244,.1); border-radius: var(--radius-sm); background: rgba(255,255,255,.018); }
 .mount-card.has-capacity { border-color: rgba(241,184,91,.24); background: rgba(241,184,91,.045); }
 .mount-card > strong { align-self: center; color: var(--text); font-size: .86rem; }
-.editor-actions { position: sticky; bottom: 0; z-index: 2; margin-top: 1rem; border-top: 1px solid var(--line); background: rgba(11,21,32,.94); backdrop-filter: blur(14px); }
+.editor-actions { position: sticky; bottom: 0; z-index: var(--z-local-sticky); margin-top: 1rem; border-top: 1px solid var(--line); background: rgba(11,21,32,.94); backdrop-filter: blur(14px); }
 .editor-toggles { display: flex; gap: .55rem; flex-wrap: wrap; }
 .editor-actions .primary-action { min-width: 9rem; }
 .section-description { margin: 0; color: var(--muted); line-height: 1.55; }

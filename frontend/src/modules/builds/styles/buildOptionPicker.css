@@ -58,40 +58,26 @@
   transform: rotate(180deg);
 }
 
-.build-option-picker.is-open {
-  z-index: 61;
-}
-
-.equipment-slot:has(.build-option-picker.is-open),
-.inventory-slot-select:has(.build-option-picker.is-open),
-.form-section:has(.build-option-picker.is-open) {
-  position: relative;
-  z-index: 60;
-  overflow: visible;
-}
-
 .build-option-picker-menu {
-  position: absolute;
-  z-index: 70;
-  top: calc(100% + .35rem);
-  left: 0;
-  width: max(100%, 24rem);
-  max-width: min(34rem, calc(100vw - 2rem));
+  position: fixed;
+  z-index: var(--z-popover);
+  max-width: calc(100vw - 2rem);
   max-height: 24rem;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: .4rem;
   border: 1px solid rgba(215, 169, 87, .56);
   border-radius: .55rem;
   background: #0b1721;
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .48);
+  isolation: isolate;
 }
-
 
 .build-option-picker-search {
   display: block;
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-raised);
   padding: .15rem .15rem .45rem;
   background: #0b1721;
 }
@@ -191,8 +177,7 @@
 
 @media (max-width: 640px) {
   .build-option-picker-menu {
-    position: fixed;
-    z-index: 110;
+    z-index: var(--z-popover);
     top: auto;
     right: .75rem;
     bottom: .75rem;

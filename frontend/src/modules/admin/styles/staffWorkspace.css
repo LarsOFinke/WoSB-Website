@@ -204,7 +204,7 @@ body.staff-workspace-route .sidebar-collapse-button {
 .staff-navigation-mobile-layer {
   position: fixed;
   inset: 0;
-  z-index: 150;
+  z-index: var(--z-modal);
   display: grid;
   align-items: end;
   padding-top: max(1rem, env(safe-area-inset-top));
@@ -567,7 +567,7 @@ body.staff-workspace-route .sidebar-collapse-button {
   .staff-navigation {
     position: sticky;
     top: calc(var(--topbar-min-height) + 0.5rem);
-    z-index: 35;
+    z-index: var(--z-sticky-content);
   }
 
   .staff-navigation-desktop {

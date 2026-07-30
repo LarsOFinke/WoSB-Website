@@ -90,7 +90,7 @@
 .profile-refresh-save {
   position: sticky;
   bottom: 0;
-  z-index: 2;
+  z-index: var(--z-local-sticky);
   display: flex;
   align-items: center;
   justify-content: space-between;

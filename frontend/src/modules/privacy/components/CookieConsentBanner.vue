@@ -100,7 +100,7 @@ onMounted(initialize)
 <style scoped>
 .cookie-consent {
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-consent);
   right: 1rem;
   bottom: 1rem;
   left: 1rem;

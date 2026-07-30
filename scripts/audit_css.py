@@ -19,6 +19,22 @@ EXPECTED_GLOBAL_LAYERS = (
     "60-operations.css",
     "70-integrations.css",
 )
+STACKING_TOKENS = (
+    "--z-behind",
+    "--z-base",
+    "--z-raised",
+    "--z-local-sticky",
+    "--z-sticky-content",
+    "--z-shell-sidebar",
+    "--z-shell-topbar",
+    "--z-popover",
+    "--z-scrim",
+    "--z-drawer",
+    "--z-modal",
+    "--z-notice",
+    "--z-consent",
+    "--z-skip-link",
+)
 
 
 def fail(message: str) -> None:
@@ -38,6 +54,24 @@ def main() -> None:
 
     sources = {path: path.read_text(encoding="utf-8") for path in css_files}
     combined = "\n".join(sources.values())
+
+    token_source = sources[GLOBAL_ROOT / "00-tokens.css"]
+    stacking_values: list[int] = []
+    for token in STACKING_TOKENS:
+        match = re.search(rf"{re.escape(token)}\s*:\s*(-?\d+)\s*;", token_source)
+        if match is None:
+            fail(f"missing stacking token: {token}")
+        stacking_values.append(int(match.group(1)))
+    if any(current <= previous for previous, current in zip(stacking_values, stacking_values[1:])):
+        fail(f"stacking tokens must be strictly increasing: {stacking_values}")
+
+    style_sources = dict(sources)
+    style_sources.update(
+        {path: path.read_text(encoding="utf-8") for path in sorted(CSS_ROOT.rglob("*.vue"))}
+    )
+    for path, source in style_sources.items():
+        if re.search(r"z-index\s*:\s*-?\d+\s*;", source):
+            fail(f"numeric z-index bypasses the semantic layer scale: {path.relative_to(ROOT)}")
     definitions = set(re.findall(r"(--[a-zA-Z0-9_-]+)\s*:", combined))
     unresolved_without_fallback: Counter[str] = Counter()
     for match in re.finditer(r"var\(\s*(--[a-zA-Z0-9_-]+)([^)]*)\)", combined):
