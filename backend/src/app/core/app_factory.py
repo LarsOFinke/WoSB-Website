@@ -22,6 +22,7 @@ from app.core.maintenance import (
 from app.core.middleware import CsrfOriginMiddleware, IpBlockMiddleware, RequestLoggingMiddleware
 from app.db.init_db import create_and_seed, create_tables, verify_database_ready
 from app.modules.files.routes.content import legacy_router as legacy_upload_router
+from app.modules.legal.services.legal_notice_service import ensure_legal_notice_from_environment
 from app.modules.registry import register_all_models
 
 
@@ -60,6 +61,7 @@ class ApplicationFactory:
                 create_tables()
         else:
             verify_database_ready()
+        ensure_legal_notice_from_environment()
         run_maintenance_once()
         maintenance_task = asyncio.create_task(maintenance_loop())
         webhook_recovery_task = (

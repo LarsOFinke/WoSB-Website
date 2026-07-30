@@ -5,6 +5,7 @@ import binascii
 from pathlib import Path
 
 from app.configuration.models import (
+    LegalNoticeSettings,
     MaintenanceSettings,
     SecuritySettings,
     SeedSettings,
@@ -158,6 +159,88 @@ class RuntimeSettingsReader:
             ),
             interval_hours=self._positive_integer_or_default(section, "interval_hours", 24),
         )
+
+
+    def read_legal_notice(self) -> LegalNoticeSettings:
+        get = self._environment.get
+        legal_notice = LegalNoticeSettings(
+            published=ConfigValueParser.parse_boolean(
+                get("LEGAL_NOTICE_PUBLISHED", required=False, default="false"),
+                name="LEGAL_NOTICE_PUBLISHED",
+            ),
+            provider_name=get("LEGAL_NOTICE_PROVIDER_NAME", required=False, default=""),
+            legal_form=get("LEGAL_NOTICE_LEGAL_FORM", required=False, default=""),
+            represented_by=get("LEGAL_NOTICE_REPRESENTED_BY", required=False, default=""),
+            street=get("LEGAL_NOTICE_STREET", required=False, default=""),
+            postal_code=get("LEGAL_NOTICE_POSTAL_CODE", required=False, default=""),
+            city=get("LEGAL_NOTICE_CITY", required=False, default=""),
+            country=get("LEGAL_NOTICE_COUNTRY", required=False, default="Deutschland"),
+            email=get("LEGAL_NOTICE_EMAIL", required=False, default=""),
+            phone=get("LEGAL_NOTICE_PHONE", required=False, default=""),
+            register_name=get("LEGAL_NOTICE_REGISTER_NAME", required=False, default=""),
+            register_court=get("LEGAL_NOTICE_REGISTER_COURT", required=False, default=""),
+            register_number=get("LEGAL_NOTICE_REGISTER_NUMBER", required=False, default=""),
+            vat_id=get("LEGAL_NOTICE_VAT_ID", required=False, default=""),
+            business_id=get("LEGAL_NOTICE_BUSINESS_ID", required=False, default=""),
+            supervisory_authority=get(
+                "LEGAL_NOTICE_SUPERVISORY_AUTHORITY", required=False, default=""
+            ),
+            editorial_responsible_name=get(
+                "LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_NAME", required=False, default=""
+            ),
+            editorial_responsible_street=get(
+                "LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_STREET", required=False, default=""
+            ),
+            editorial_responsible_postal_code=get(
+                "LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_POSTAL_CODE", required=False, default=""
+            ),
+            editorial_responsible_city=get(
+                "LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_CITY", required=False, default=""
+            ),
+            editorial_responsible_country=get(
+                "LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_COUNTRY",
+                required=False,
+                default="Deutschland",
+            ),
+            dispute_resolution_text=get(
+                "LEGAL_NOTICE_DISPUTE_RESOLUTION_TEXT", required=False, default=""
+            ),
+            additional_information=get(
+                "LEGAL_NOTICE_ADDITIONAL_INFORMATION", required=False, default=""
+            ),
+        )
+        if legal_notice.email and (
+            "@" not in legal_notice.email
+            or legal_notice.email.startswith("@")
+            or legal_notice.email.endswith("@")
+        ):
+            raise ConfigError("LEGAL_NOTICE_EMAIL must be a valid contact email address.")
+        if legal_notice.published:
+            required = {
+                "LEGAL_NOTICE_PROVIDER_NAME": legal_notice.provider_name,
+                "LEGAL_NOTICE_STREET": legal_notice.street,
+                "LEGAL_NOTICE_POSTAL_CODE": legal_notice.postal_code,
+                "LEGAL_NOTICE_CITY": legal_notice.city,
+                "LEGAL_NOTICE_COUNTRY": legal_notice.country,
+                "LEGAL_NOTICE_EMAIL": legal_notice.email,
+            }
+            missing = [name for name, value in required.items() if not value]
+            if missing:
+                raise ConfigError(
+                    "A published legal notice requires complete provider details. "
+                    f"Missing environment values: {', '.join(missing)}."
+                )
+        editorial = (
+            legal_notice.editorial_responsible_name,
+            legal_notice.editorial_responsible_street,
+            legal_notice.editorial_responsible_postal_code,
+            legal_notice.editorial_responsible_city,
+        )
+        if any(editorial) and not all(editorial):
+            raise ConfigError(
+                "Editorial legal-notice environment values require name and a complete address."
+            )
+        return legal_notice
 
     def read_security(self) -> SecuritySettings:
         raw = self._environment.get(

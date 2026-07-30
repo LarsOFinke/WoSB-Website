@@ -52,5 +52,6 @@ class SettingsLoader:
             security=runtime_reader.read_security(),
             upload_limits=runtime_reader.read_upload_limits(),
             maintenance=runtime_reader.read_maintenance(),
+            legal_notice=runtime_reader.read_legal_notice(),
             cors_origins=runtime_reader.read_cors_origins(),
         )

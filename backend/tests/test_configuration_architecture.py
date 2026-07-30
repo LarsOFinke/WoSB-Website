@@ -141,3 +141,39 @@ def test_webhook_encryption_key_ring_rejects_non_fernet_base64(tmp_path: Path) -
 
     with pytest.raises(ConfigError, match="URL-safe Base64 Fernet keys"):
         SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()
+
+
+def test_legal_notice_defaults_are_loaded_from_environment(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+    env_file.write_text(
+        env_file.read_text(encoding="utf-8")
+        + "LEGAL_NOTICE_PROVIDER_NAME=Example Community\n"
+        + "LEGAL_NOTICE_EMAIL=legal@example.invalid\n",
+        encoding="utf-8",
+    )
+
+    settings = SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()
+
+    assert settings.legal_notice.published is False
+    assert settings.legal_notice.provider_name == "Example Community"
+    assert settings.legal_notice.email == "legal@example.invalid"
+    assert settings.legal_notice.country == "Deutschland"
+
+
+def test_published_legal_notice_rejects_incomplete_environment_values(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+    env_file.write_text(
+        env_file.read_text(encoding="utf-8")
+        + "LEGAL_NOTICE_PUBLISHED=true\n"
+        + "LEGAL_NOTICE_PROVIDER_NAME=Incomplete Provider\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="complete provider details"):
+        SettingsLoader(ConfigurationPaths(tmp_path, env_file, config_dir)).load()

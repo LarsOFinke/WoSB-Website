@@ -9,6 +9,7 @@ _MODEL_MODULES = (
     "app.modules.accounts.models.user_profile",
     "app.modules.permissions.models.role",
     "app.modules.privacy.models.cookie_consent",
+    "app.modules.legal.models.legal_notice",
     "app.modules.admin.models.security_event",
     "app.modules.admin.models.audit_log",
     "app.modules.admin.models.ip_block",

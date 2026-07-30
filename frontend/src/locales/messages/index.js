@@ -15,6 +15,7 @@ import { fleetIdentityMessages } from './fleetIdentity.js'
 import { fleetManagementMessages } from './fleetManagement.js'
 import { finalNavigationAndGroupSignupMessages } from './finalNavigationAndGroupSignup.js'
 import { localeCompletenessMessages } from './localeCompleteness.js'
+import { legalNoticeMessages } from './legalNotice.js'
 import { newcomerGuideMessages } from './newcomerGuide.js'
 import { mySquadsWorkspaceMessages } from './mySquadsWorkspace.js'
 import { privacyMessages } from './privacy.js'
@@ -38,6 +39,7 @@ import { userBuildsAndPasswordMessages } from './userBuildsAndPassword.js'
 const messageLayers = [
   appShellMessages,
   privacyMessages,
+  legalNoticeMessages,
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,
   groupManagementMessages,

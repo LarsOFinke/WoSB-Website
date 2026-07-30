@@ -77,6 +77,35 @@ class UploadLimitSettings:
     minimum_free_mb: int
 
 
+
+
+@dataclass(frozen=True, slots=True)
+class LegalNoticeSettings:
+    published: bool
+    provider_name: str
+    legal_form: str
+    represented_by: str
+    street: str
+    postal_code: str
+    city: str
+    country: str
+    email: str
+    phone: str
+    register_name: str
+    register_court: str
+    register_number: str
+    vat_id: str
+    business_id: str
+    supervisory_authority: str
+    editorial_responsible_name: str
+    editorial_responsible_street: str
+    editorial_responsible_postal_code: str
+    editorial_responsible_city: str
+    editorial_responsible_country: str
+    dispute_resolution_text: str
+    additional_information: str
+
+
 @dataclass(frozen=True, slots=True)
 class MaintenanceSettings:
     security_event_retention_days: int
@@ -102,6 +131,7 @@ class Settings:
     security: SecuritySettings
     upload_limits: UploadLimitSettings
     maintenance: MaintenanceSettings
+    legal_notice: LegalNoticeSettings
     cors_origins: tuple[str, ...]
 
     @property

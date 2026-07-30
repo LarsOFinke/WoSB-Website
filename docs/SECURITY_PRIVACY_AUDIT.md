@@ -57,13 +57,16 @@ Zeitplan. Der Scan bleibt bewusst vom deterministischen Offline-Testlauf getrenn
 
 ## Offene Befunde
 
-### Hoch — Rechtstexte und Verantwortlichenangaben fehlen als öffentliche Route
+### Teilweise behoben — Öffentliche Anbieterkennzeichnung vorhanden, Datenschutztext weiter offen
 
-Die Anwendung besitzt Cookie-Einstellungen, aber keine repositoryseitig geprüfte Datenschutz- oder
-Impressumsseite. Vor öffentlicher Nutzung müssen Verantwortlicher, Kontakt, Zwecke,
-Rechtsgrundlagen, Empfänger, Drittlandtransfers, Aufbewahrungsfristen und Betroffenenrechte in einer
-rechtlich geprüften Fassung bereitgestellt und im Footer verlinkt werden. Diese Inhalte dürfen nicht
-automatisch erfunden werden.
+Die Anwendung besitzt nun eine öffentliche, im Footer verlinkte Impressumsseite mit Entwurfsmodus.
+Auslieferungsdefaults kommen aus `LEGAL_NOTICE_*`; nach einer Bearbeitung im admin-exklusiven
+Staff-Panel bleibt die persistierte Fassung maßgeblich. Unveröffentlichte Entwurfsangaben werden
+nicht über die öffentliche API ausgegeben. Die Anwendung entscheidet jedoch nicht automatisch, ob
+für den konkreten Betreiber bereits eine Pflicht nach § 18 MStV, § 5 DDG oder weiteren Vorschriften
+besteht, und ersetzt keine rechtliche Prüfung. Eine rechtlich geprüfte Datenschutzerklärung mit
+Verantwortlichem, Zwecken, Rechtsgrundlagen, Empfängern, Drittlandtransfers, Aufbewahrungsfristen
+und Betroffenenrechten fehlt weiterhin und bleibt ein Go-live-Punkt.
 
 ### Hoch — Uptime Kuma 1.23.16 benötigt eine geplante Major-Migration
 
@@ -132,7 +135,7 @@ Datenschutzerklärung des Betreibers genannt werden.
 
 ## Priorisierte nächste Schritte
 
-1. Rechtlich geprüfte Datenschutz-/Impressumsseiten bereitstellen.
+1. Impressumsentwurf rechtlich prüfen/veröffentlichen und eine vollständige Datenschutzerklärung bereitstellen.
 2. Uptime-Kuma-2-Migration nach dem neuen Runbook in einem Wartungsfenster durchführen.
 3. Image-Scan und Release-SBOM ergänzen.
 4. Export-/Löschworkflow für Betroffenenanfragen umsetzen.

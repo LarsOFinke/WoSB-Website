@@ -255,6 +255,19 @@ body.sidebar-collapsed .sidebar-account-link .app-icon:first-child {
 }
 
 
+
+.footer-legal-link {
+  color: var(--muted-soft);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.footer-legal-link:hover,
+.footer-legal-link:focus-visible {
+  color: var(--text);
+}
+
 .footer-cookie-settings {
   padding: 0.4rem 0.55rem;
   border: 0;

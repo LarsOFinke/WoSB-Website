@@ -37,3 +37,21 @@ Markerdatei den verpflichtenden Datei-Vertrag, ohne Geheimnisse in das Image zu 
 Produktionsregeln werden beim Laden validiert: PostgreSQL ist verpflichtend,
 `DB_SCHEMA_MODE=migrate` übergibt das Schema an Alembic und Session-Cookies müssen sicher
 sein.
+
+## Impressum / Anbieterkennzeichnung
+
+Die optionalen `LEGAL_NOTICE_*`-Variablen liefern die initialen Angaben für die öffentliche
+Impressumsseite. `LEGAL_NOTICE_PUBLISHED=false` hält die Seite im Entwurfsmodus und gibt keine
+personenbezogenen Entwurfsangaben über die öffentliche API aus. Bei
+`LEGAL_NOTICE_PUBLISHED=true` sind mindestens Anbietername, vollständige ladungsfähige Anschrift,
+Land und E-Mail-Adresse erforderlich; unvollständige Konfigurationen werden beim Start abgewiesen.
+
+Beim ersten Start nach Migration `0013` wird ein Singleton-Datensatz aus der geladenen Umgebung
+erzeugt. Solange dieser Datensatz nicht im Staff-Panel angepasst wurde, können aktualisierte
+Umgebungswerte ihn beim Anwendungsstart auffrischen. Nach einer Admin-Änderung bleibt die
+Datenbankfassung maßgeblich und wird durch Updates nicht überschrieben. Die Aktion
+„Auf Umgebungswerte zurücksetzen“ übernimmt bewusst die beim letzten Prozessstart geladenen Werte;
+nach Änderungen an `.env` ist daher zuerst ein Neustart erforderlich.
+
+Die Konfiguration bildet keine Rechtsberatung ab. Ob und welche Angaben veröffentlicht werden
+müssen, ist für den konkreten Betreiber und das konkrete Angebot rechtlich zu prüfen.

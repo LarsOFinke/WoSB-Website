@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/legal-notice',
+    name: 'admin-legal-notice',
+    component: () => import('@/modules/legal/pages/LegalNoticeAdminPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'legalNotice.admin.title' },
+  },
+  {
     path: '/admin/database-backups',
     name: 'admin-database-backups',
     component: () => import('./pages/DatabaseBackupsPage.vue'),
