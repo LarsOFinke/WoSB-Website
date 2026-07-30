@@ -46,6 +46,16 @@ def is_weapon_compatible(
 
     if option.option_kind in {"mortar", "mortar_launcher"}:
         return False
+
+    # Audited named exceptions are normalized as mount/option associations.
+    # They intentionally bypass only the regular size ceiling; the slot taxonomy
+    # and the dedicated mortar/special-weapon rules above remain authoritative.
+    if any(
+        allowance.build_item_option_id == option.id
+        for allowance in mount.option_allowances
+    ):
+        return True
+
     if option.weapon_class is None or mount.max_weapon_class is None:
         return False
     return option.weapon_class.rank <= mount.max_weapon_class.rank

@@ -249,3 +249,62 @@ def test_mortar_modification_exchanges_broadsides_for_mortar_capacity() -> None:
                     mortar_weapon_slots=[{"item": "8-inch Mortar", "quantity": 1}],
                 ),
             )
+
+
+def test_audited_bow_stern_weapon_exceptions_are_ship_and_mount_specific() -> None:
+    register_all_models()
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        manager = SeedManager(db)
+        manager.seed_weapon_slot_types()
+        manager.seed_ships()
+        manager.seed_build_options()
+
+        azov = db.scalar(select(Ship).where(Ship.name == "Azov"))
+        deadfish = db.scalar(select(Ship).where(Ship.name == "Deadfish"))
+        eagle = db.scalar(select(Ship).where(Ship.name == "Eagle"))
+        assert azov and deadfish and eagle
+
+        azov_catalog = _catalog(db, azov)
+        deadfish_catalog = _catalog(db, deadfish)
+        eagle_catalog = _catalog(db, eagle)
+
+        assert "Zeus" in azov_catalog["weapon_front"]
+        assert "Zeus" in azov_catalog["weapon_rear"]
+        assert "Zeus" in deadfish_catalog["weapon_front"]
+        assert "Zeus" in deadfish_catalog["weapon_rear"]
+        assert {"Basilisk", "Poseidon"} <= eagle_catalog["weapon_rear"]
+
+        # Exact allowances do not leak bow/stern assemblies into broadsides.
+        assert "Basilisk" not in eagle_catalog.get("weapon_port", set())
+        assert "Zeus" not in azov_catalog.get("weapon_port", set())
+
+        azov_build = create_build(
+            db,
+            BuildCreate(
+                build_name="Azov audited Zeus",
+                ship_id=azov.id,
+                sailors=azov.sailor_minimum,
+                front_weapon_slots=[{"item": "Zeus", "quantity": 1}],
+                rear_weapon_slots=[{"item": "Zeus", "quantity": 1}],
+            ),
+        )
+        assert azov_build.front_weapon_slots == [{"item": "Zeus", "quantity": 1}]
+
+        eagle_build = create_build(
+            db,
+            BuildCreate(
+                build_name="Eagle audited stern weapons",
+                ship_id=eagle.id,
+                sailors=eagle.sailor_minimum,
+                rear_weapon_slots=[
+                    {"item": "Basilisk", "quantity": 1},
+                    {"item": "Poseidon", "quantity": 1},
+                ],
+            ),
+        )
+        assert eagle_build.rear_weapon_slots == [
+            {"item": "Basilisk", "quantity": 1},
+            {"item": "Poseidon", "quantity": 1},
+        ]

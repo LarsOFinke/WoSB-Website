@@ -314,6 +314,11 @@ class ShipWeaponMountSeed(StrictSeedModel):
         return self
 
 
+class ShipWeaponOptionAllowanceSeed(StrictSeedModel):
+    slot_type: WeaponSlotCode
+    weapon_seed_id: str = Field(min_length=1, max_length=160)
+
+
 class ShipUpgradeEffectOverrideSeed(StrictSeedModel):
     upgrade_seed_id: str = Field(min_length=1, max_length=160)
     stat_effects: dict[str, int | float] = Field(min_length=1)
@@ -359,6 +364,7 @@ class ShipSeed(StrictSeedModel):
     is_active: bool = True
     mortar_modification: ShipMortarModificationSeed | None
     upgrade_effect_overrides: list[ShipUpgradeEffectOverrideSeed] = Field(default_factory=list)
+    weapon_option_allowances: list[ShipWeaponOptionAllowanceSeed] = Field(default_factory=list)
     weapon_mounts: list[ShipWeaponMountSeed] = Field(min_length=6, max_length=6)
 
     @model_validator(mode="after")
@@ -376,6 +382,13 @@ class ShipSeed(StrictSeedModel):
         if len(override_ids) != len(set(override_ids)):
             raise ValueError("ship upgrade override seed IDs must be unique")
 
+        allowance_keys = [
+            (row.slot_type, row.weapon_seed_id.casefold())
+            for row in self.weapon_option_allowances
+        ]
+        if len(allowance_keys) != len(set(allowance_keys)):
+            raise ValueError("ship weapon option allowances must be unique per mount")
+
         mounts = {mount.slot_type: mount for mount in self.weapon_mounts}
         if len(mounts) != len(self.weapon_mounts):
             raise ValueError("weapon mount slot types must be unique")
@@ -387,6 +400,14 @@ class ShipSeed(StrictSeedModel):
             raise ValueError("port and starboard broadside capacities must match")
         if mounts["weapon_port"].max_weapon_class != mounts["weapon_starboard"].max_weapon_class:
             raise ValueError("port and starboard weapon classes must match")
+        for allowance in self.weapon_option_allowances:
+            mount = mounts[allowance.slot_type]
+            if mount.capacity <= 0:
+                raise ValueError("weapon option allowances require an armed mount")
+            if allowance.slot_type in {"weapon_mortar", "weapon_special"}:
+                raise ValueError(
+                    "weapon option allowances are only valid for regular positional mounts"
+                )
         if self.mortar_modification is not None:
             modification = self.mortar_modification
             if mounts["weapon_mortar"].capacity > 0:

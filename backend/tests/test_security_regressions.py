@@ -261,7 +261,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0008_normalized_build_rules"})
+    assert heads == frozenset({"0009_weapon_allowances"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(

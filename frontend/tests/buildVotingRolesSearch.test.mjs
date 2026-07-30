@@ -15,6 +15,22 @@ test('specialist filtering is immediate and operates on preloaded options', () =
   assert.deepEqual(filterOptionGroups(groups, 'sails')[0].options.map((row) => row.value), ['First Mate'])
 })
 
+test('ship filtering uses the same preloaded option search without API requests while typing', async () => {
+  const groups = [{ key: 'ships', options: [
+    { value: 11, label: 'HMS Victory', meta: 'Ship of the Line · Rate 1' },
+    { value: 12, label: 'Snow', meta: 'Brig · Rate 6' },
+  ] }]
+
+  assert.deepEqual(filterOptionGroups(groups, 'vict')[0].options.map((row) => row.value), [11])
+  assert.deepEqual(filterOptionGroups(groups, 'rate 6')[0].options.map((row) => row.value), [12])
+
+  const page = await read('../src/modules/builds/pages/BuildCreatePage.vue')
+  assert.match(page, /:options="shipPickerOptions"/)
+  assert.match(page, /builds\.create\.shipSearch\.searchPlaceholder/)
+  assert.match(page, /searchable/)
+  assert.doesNotMatch(page, /watch\([^)]*shipSearch/)
+})
+
 test('build voting is exposed in API, detail and overview', async () => {
   const [api, detail, table] = await Promise.all([
     read('../src/modules/builds/api/builds.js'),

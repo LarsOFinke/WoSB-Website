@@ -139,6 +139,16 @@
             "bow_stern_weapon_damage_pct": 61
           }
         }
+      ],
+      "weapon_option_allowances": [
+        {
+          "slot_type": "weapon_front",
+          "weapon_seed_id": "zeus"
+        },
+        {
+          "slot_type": "weapon_rear",
+          "weapon_seed_id": "zeus"
+        }
       ]
     },
     {
@@ -262,6 +272,16 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "weapon_option_allowances": [
+        {
+          "slot_type": "weapon_front",
+          "weapon_seed_id": "zeus"
+        },
+        {
+          "slot_type": "weapon_rear",
+          "weapon_seed_id": "zeus"
         }
       ]
     },

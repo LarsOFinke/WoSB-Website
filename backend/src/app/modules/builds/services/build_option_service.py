@@ -52,6 +52,7 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
             .options(
                 selectinload(Ship.weapon_mounts).selectinload(ShipWeaponMount.slot_type),
                 selectinload(Ship.weapon_mounts).selectinload(ShipWeaponMount.max_weapon_class),
+                selectinload(Ship.weapon_mounts).selectinload(ShipWeaponMount.option_allowances),
                 selectinload(Ship.upgrade_effect_overrides)
                 .selectinload(ShipUpgradeEffectOverride.option)
                 .selectinload(BuildItemOption.effects),

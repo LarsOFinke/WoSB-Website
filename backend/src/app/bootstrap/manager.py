@@ -13,6 +13,7 @@ from app.bootstrap.ship_catalog import (
     seed_ship_catalog,
     seed_ship_rate_weapon_class_rules,
     seed_ship_upgrade_effect_overrides,
+    seed_ship_weapon_option_allowances,
     seed_ships,
     seed_weapon_definitions,
 )
@@ -35,6 +36,7 @@ class SeedManager:
         seed_ship_catalog(self.db)
         seed_build_option_catalog(self.db)
         seed_ship_upgrade_effect_overrides(self.db)
+        seed_ship_weapon_option_allowances(self.db)
 
     def seed_override_counts(self) -> dict[str, int]:
         """Return repository-owned records intentionally protected from normal seeds."""
@@ -106,8 +108,10 @@ class SeedManager:
         seed_ship_rate_weapon_class_rules(self.db)
         seed_ships(self.db)
         seed_ship_upgrade_effect_overrides(self.db)
+        seed_ship_weapon_option_allowances(self.db)
 
     def seed_build_options(self) -> None:
         seed_build_features(self.db)
         seed_build_option_catalog(self.db)
         seed_ship_upgrade_effect_overrides(self.db)
+        seed_ship_weapon_option_allowances(self.db)

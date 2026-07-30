@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { filterOptionGroups } from '@/modules/builds/domain/optionSearch'
 
 const props = defineProps({
-  modelValue: { type: String, default: '' },
+  modelValue: { type: [String, Number], default: '' },
   options: { type: Array, default: () => [] },
   groups: { type: Array, default: () => [] },
   placeholder: { type: String, default: '' },
@@ -14,6 +14,7 @@ const props = defineProps({
   searchable: { type: Boolean, default: false },
   searchPlaceholder: { type: String, default: '' },
   noResultsText: { type: String, default: '' },
+  required: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -124,6 +125,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
       aria-haspopup="listbox"
       :aria-expanded="open"
       :aria-label="ariaLabel"
+      :aria-required="required || undefined"
       :disabled="disabled"
       @click="toggleMenu"
       @keydown="onTriggerKeydown"

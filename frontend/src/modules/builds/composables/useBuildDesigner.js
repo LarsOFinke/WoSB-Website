@@ -37,6 +37,7 @@ export function useBuildDesigner(props, { slotPlaceholderSrc }) {
   const selectedShip = computed(() => ships.value.find((ship) => ship.id === Number(form.ship_id)))
 
   const catalog = useBuildCatalog({
+    ships,
     optionCatalog,
     selectedShip,
     optionLabel,

@@ -20,9 +20,9 @@ const props = defineProps({
 })
 
 const {
-  optionLabel, t, isEditing, ships, optionCatalog, loading, saving, deleting, error, buildCrewVisuals, buildTypeOptions,
+  optionLabel, t, isEditing, optionCatalog, loading, saving, deleting, error, buildCrewVisuals, buildTypeOptions,
   optionsFor, form, selectedShip, availableWeaponArcs, optionMeta, optionEffects, optionImage,
-  selectedShipImage, inventoryCategory, inventoryImage, upgradeEffects, specialCrewEffects,
+  selectedShipImage, shipPickerOptions, inventoryCategory, inventoryImage, upgradeEffects, specialCrewEffects,
   formatEffectMap, formatEffects, equipmentUpgradeCount, upgradeAccess, selectedUpgradeNames, upgradeEffectTotals, specialCrewEffectSets,
   specialCrewEffectTotals, equipmentEffectTotals, researchUpgradeEffectTotals, buildEffectTotals,
   buildEffectSets, upgradeSlot5Unlocked, upgradeSlot6Available, upgradeSlot7Available,
@@ -144,12 +144,20 @@ function toggleGinger() {
               </option>
             </select>
           </label>
-          <label class="input-panel embedded-field ship-select-field">
-            <select v-model="form.ship_id" required :disabled="loading" :aria-label="t('builds.create.ship')">
-              <option value="" disabled>{{ t('builds.create.selectShip') }}</option>
-              <option v-for="ship in ships" :key="ship.id" :value="ship.id">{{ ship.name }}</option>
-            </select>
-          </label>
+          <div class="input-panel embedded-field ship-select-field">
+            <BuildOptionPicker
+              v-model="form.ship_id"
+              :options="shipPickerOptions"
+              :placeholder="t('builds.create.selectShip')"
+              :aria-label="t('builds.create.ship')"
+              :disabled="loading"
+              :allow-empty="false"
+              searchable
+              required
+              :search-placeholder="t('builds.create.shipSearch.searchPlaceholder')"
+              :no-results-text="t('builds.create.shipSearch.noMatches')"
+            />
+          </div>
         </div>
         <div class="build-classification-editor">
           <div class="classification-editor-heading">

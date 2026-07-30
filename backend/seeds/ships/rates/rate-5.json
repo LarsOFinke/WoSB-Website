@@ -339,6 +339,16 @@
             "crew_capacity": 6
           }
         }
+      ],
+      "weapon_option_allowances": [
+        {
+          "slot_type": "weapon_rear",
+          "weapon_seed_id": "basilisk"
+        },
+        {
+          "slot_type": "weapon_rear",
+          "weapon_seed_id": "poseidon"
+        }
       ]
     },
     {

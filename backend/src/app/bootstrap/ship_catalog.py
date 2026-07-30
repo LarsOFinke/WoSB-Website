@@ -9,6 +9,7 @@ from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import (
     ShipWeaponMount,
+    ShipWeaponOptionAllowance,
     WeaponClassDefinition,
     WeaponSlotType,
 )
@@ -78,12 +79,14 @@ def seed_ships(db: Session, *, document=None) -> None:
         normalized_mounts = list(raw_payload.pop("weapon_mounts"))
         mortar_modification = raw_payload.pop("mortar_modification")
         upgrade_effect_overrides = list(raw_payload.pop("upgrade_effect_overrides"))
+        weapon_option_allowances = list(raw_payload.pop("weapon_option_allowances"))
         key = seed_key("ship", stable_id)
         active_seed_keys.add(key)
         canonical_payload = {
             **raw_payload,
             "mortar_modification": mortar_modification,
             "upgrade_effect_overrides": upgrade_effect_overrides,
+            "weapon_option_allowances": weapon_option_allowances,
             "weapon_mounts": normalized_mounts,
         }
 
@@ -123,6 +126,108 @@ def seed_ships(db: Session, *, document=None) -> None:
             ship.seed_revision = None
             ship.seed_checksum = None
     db.commit()
+
+
+def seed_ship_weapon_option_allowances(db: Session, *, document=None) -> bool:
+    """Synchronize sparse audited ship/mount/weapon compatibility exceptions."""
+
+    document = document or load_ship_seed_document()
+    requested_seed_ids = {
+        allowance.weapon_seed_id
+        for ship in document.ships
+        for allowance in ship.weapon_option_allowances
+    }
+    if not requested_seed_ids:
+        return True
+
+    weapon_definitions = {
+        option.seed_id: option
+        for option_document in load_master_data_catalog().build_options
+        if option_document.category == "weapon"
+        for option in option_document.items
+    }
+    missing_seed_definitions = sorted(requested_seed_ids.difference(weapon_definitions))
+    if missing_seed_definitions:
+        raise ValueError(
+            "Unknown weapon seed IDs in ship allowances: "
+            f"{missing_seed_definitions}"
+        )
+
+    for ship_seed in document.ships:
+        for allowance in ship_seed.weapon_option_allowances:
+            definition = weapon_definitions[allowance.weapon_seed_id]
+            if allowance.slot_type not in definition.allowed_slot_types:
+                raise ValueError(
+                    f"Weapon {definition.name!r} is not valid for "
+                    f"{allowance.slot_type!r} on ship {ship_seed.name!r}"
+                )
+            if definition.option_kind in {"mortar", "mortar_launcher", "special_weapon"}:
+                raise ValueError(
+                    "Regular weapon allowances cannot target mortar or special weapons: "
+                    f"{definition.name!r}"
+                )
+
+    option_keys = {
+        seed_key("build-option", "weapon", stable_id): stable_id
+        for stable_id in requested_seed_ids
+    }
+    options = db.scalars(
+        select(BuildItemOption).where(BuildItemOption.seed_key.in_(option_keys))
+    ).unique().all()
+    if not options:
+        return False
+    options_by_seed_id = {
+        option_keys[option.seed_key]: option
+        for option in options
+        if option.seed_key in option_keys
+    }
+    missing_options = sorted(requested_seed_ids.difference(options_by_seed_id))
+    if missing_options:
+        raise ValueError(
+            f"Unknown seeded weapon IDs in ship allowances: {missing_options}"
+        )
+
+    ship_keys = {seed_key("ship", ship.seed_id): ship for ship in document.ships}
+    ships_by_key = {
+        ship.seed_key: ship
+        for ship in db.scalars(
+            select(Ship)
+            .options(
+                selectinload(Ship.weapon_mounts)
+                .selectinload(ShipWeaponMount.option_allowances)
+            )
+            .where(Ship.seed_key.in_(ship_keys))
+        ).unique().all()
+    }
+
+    changed = False
+    for ship_key, ship_seed in ship_keys.items():
+        ship = ships_by_key.get(ship_key)
+        if ship is None or ship.is_seed_overridden:
+            continue
+        mounts_by_code = {mount.slot_type.code: mount for mount in ship.weapon_mounts}
+        desired: dict[int, set[int]] = {mount.id: set() for mount in ship.weapon_mounts}
+        for allowance in ship_seed.weapon_option_allowances:
+            mount = mounts_by_code[allowance.slot_type]
+            desired[mount.id].add(options_by_seed_id[allowance.weapon_seed_id].id)
+
+        for mount in ship.weapon_mounts:
+            current = {row.build_item_option_id: row for row in mount.option_allowances}
+            wanted = desired[mount.id]
+            if set(current) == wanted:
+                continue
+            for option_id in sorted(wanted.difference(current)):
+                mount.option_allowances.append(
+                    ShipWeaponOptionAllowance(build_item_option_id=option_id)
+                )
+            for option_id, row in list(current.items()):
+                if option_id not in wanted:
+                    mount.option_allowances.remove(row)
+            changed = True
+
+    if changed:
+        db.commit()
+    return True
 
 
 def seed_ship_upgrade_effect_overrides(db: Session, *, document=None) -> bool:

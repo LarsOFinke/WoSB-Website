@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { buildCategoryVisuals, buildCrewVisuals, buildVisualUrl } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 
-export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, slotPlaceholderSrc }) {
+export function useBuildCatalog({ ships, optionCatalog, selectedShip, optionLabel, t, slotPlaceholderSrc }) {
   const buildTypeOptions = computed(() => {
     const roles = optionCatalog.value.build_roles || []
     if (roles.length) return roles.map((role) => ({ value: role.slug, label: role.label, meta: role.description || '' }))
@@ -36,6 +36,12 @@ export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, s
   }
 
   const selectedShipImage = computed(() => absoluteFileUrl(selectedShip.value?.image_url) || buildVisualUrl('ship'))
+  const shipPickerOptions = computed(() => ships.value.map((ship) => ({
+    value: ship.id,
+    label: ship.name,
+    image: absoluteFileUrl(ship.image_url) || buildVisualUrl('ship'),
+    meta: [ship.ship_type, ship.rate ? `${t('common.rate')} ${ship.rate}` : ''].filter(Boolean).join(' · '),
+  })))
 
   function inventoryCategory(fieldName) {
     if (fieldName.includes('weapon')) return 'weapon'
@@ -85,6 +91,7 @@ export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, s
     optionEffects,
     optionImage,
     selectedShipImage,
+    shipPickerOptions,
     inventoryCategory,
     inventoryImage,
     upgradeEffects,

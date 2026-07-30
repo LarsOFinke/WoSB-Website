@@ -57,7 +57,7 @@ from app.core.config import BACKEND_ROOT
 from app.db.schema_health import expected_alembic_heads
 
 assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
-assert expected_alembic_heads() == frozenset({"0008_normalized_build_rules"})
+assert expected_alembic_heads() == frozenset({"0009_weapon_allowances"})
 PY_SCHEMA_HEAD
   )
 )
