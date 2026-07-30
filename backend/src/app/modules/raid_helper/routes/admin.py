@@ -48,7 +48,7 @@ def profile_create(payload: RaidHelperProfileCreate, db: Session = Depends(get_d
         row = create_profile(db, payload, actor)
     except RaidHelperError as exc:
         raise _bad(exc) from exc
-    record_audit_safely(db, actor=actor, entity_type="raid_helper_profile", entity_id=row.id, action="create", summary=f'Raid-Helper profile “{row.name}” created.', changed_fields=["server_id", "api_key", "api_base_url", "authorization_mode", "timezone"])
+    record_audit_safely(db, actor=actor, entity_type="raid_helper_profile", entity_id=row.id, action="create", summary=f'Raid-Helper profile “{row.name}” created.', changed_fields=["server_id", "api_key", "api_base_url", "timezone"])
     return row
 
 
@@ -60,7 +60,7 @@ def profile_update(profile_id: int, payload: RaidHelperProfileWrite, db: Session
         raise _bad(exc) from exc
     if row is None:
         raise HTTPException(status_code=404, detail="Raid-Helper profile not found.")
-    record_audit_safely(db, actor=actor, entity_type="raid_helper_profile", entity_id=row.id, action="update", summary=f'Raid-Helper profile “{row.name}” updated.', changed_fields=["server_id", "api_key", "api_base_url", "authorization_mode", "timezone", "is_active"])
+    record_audit_safely(db, actor=actor, entity_type="raid_helper_profile", entity_id=row.id, action="update", summary=f'Raid-Helper profile “{row.name}” updated.', changed_fields=["server_id", "api_key", "api_base_url", "timezone", "is_active"])
     return row
 
 

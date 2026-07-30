@@ -12,10 +12,6 @@ from app.db.base import Base
 class RaidHelperProfile(Base):
     __tablename__ = "raid_helper_profiles"
     __table_args__ = (
-        CheckConstraint(
-            "authorization_mode IN ('authorization', 'bearer', 'x-api-key')",
-            name="ck_raid_helper_profile_authorization_mode",
-        ),
         UniqueConstraint("name", name="uq_raid_helper_profiles_name"),
     )
 
@@ -24,7 +20,6 @@ class RaidHelperProfile(Base):
     server_id: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     api_key_encrypted: Mapped[str] = mapped_column(Text, nullable=False)
     api_base_url: Mapped[str] = mapped_column(String(200), nullable=False, default="https://raid-helper.xyz/api/v4")
-    authorization_mode: Mapped[str] = mapped_column(String(24), nullable=False, default="authorization")
     timezone: Mapped[str] = mapped_column(String(80), nullable=False, default="Europe/Berlin")
     default_leader_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)

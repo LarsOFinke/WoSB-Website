@@ -36,7 +36,6 @@ class RaidHelperProfileWrite(BaseModel):
     server_id: str = Field(min_length=5, max_length=32, pattern=r"^[0-9]+$")
     api_key: str | None = Field(default=None, max_length=500)
     api_base_url: str = Field(default="https://raid-helper.xyz/api/v4", max_length=200)
-    authorization_mode: Literal["authorization", "bearer", "x-api-key"] = "authorization"
     timezone: str = Field(default="Europe/Berlin", min_length=1, max_length=80)
     default_leader_id: str | None = Field(default=None, min_length=5, max_length=32, pattern=r"^[0-9]+$")
     is_active: bool = True
@@ -63,7 +62,6 @@ class RaidHelperProfileRead(BaseModel):
     name: str
     server_id: str
     api_base_url: str
-    authorization_mode: str
     timezone: str
     default_leader_id: str | None = None
     is_active: bool

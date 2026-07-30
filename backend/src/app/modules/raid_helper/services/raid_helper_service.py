@@ -167,10 +167,8 @@ def _auth_headers(profile: RaidHelperProfile) -> dict[str, str]:
         key = webhook_secret_box.decrypt(profile.api_key_encrypted)
     except SecretBoxError as exc:
         raise RaidHelperError("Stored Raid-Helper API key could not be decrypted.") from exc
-    if profile.authorization_mode == "bearer":
-        return {"Authorization": f"Bearer {key}"}
-    if profile.authorization_mode == "x-api-key":
-        return {"X-API-Key": key}
+    # Raid-Helper's v4 server API expects the API key as the raw value of
+    # Authorization. It is not an OAuth bearer token and does not use X-API-Key.
     return {"Authorization": key}
 
 

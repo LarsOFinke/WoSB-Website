@@ -49,6 +49,7 @@ test('Raid-Helper credentials and routing are managed only in the admin workspac
   assert.match(page, /profileForm\.default_leader_id/)
   assert.match(page, /destinationForm\.scope_type/)
   assert.match(page, /templateForm\.categories/)
+  assert.doesNotMatch(page, /authorization_mode|Bearer|X-API-Key/)
 })
 
 test('robots policy and NGINX limits reduce crawler load beyond voluntary directives', async () => {
@@ -73,6 +74,7 @@ test('Raid-Helper defaults use the canonical API host and advanced timezone pres
     readFile(templateDomainUrl, 'utf8'),
   ])
   assert.match(pageModel, /https:\/\/raid-helper\.xyz\/api\/v4/)
+  assert.doesNotMatch(pageModel, /authorization_mode|bearer|x-api-key/)
   assert.match(page, /raidHelper\.timezoneHelp/)
   assert.match(page, /applyRaidHelperRecommendedPayload/)
   assert.match(templates, /"date_variant": "both"/)

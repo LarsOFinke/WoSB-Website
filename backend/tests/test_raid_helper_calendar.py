@@ -534,3 +534,10 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
             assert requests[0]["templateId"] == "123456789012345678"
             assert requests[0]["leaderId"] == "923456789012345678"
             assert link.leader_id_override == "923456789012345678"
+
+
+def test_raid_helper_authentication_is_fixed_to_raw_authorization_header() -> None:
+    from app.modules.raid_helper.schemas.raid_helper import RaidHelperProfileWrite
+
+    assert "authorization_mode" not in RaidHelperProfile.__table__.columns
+    assert "authorization_mode" not in RaidHelperProfileWrite.model_fields

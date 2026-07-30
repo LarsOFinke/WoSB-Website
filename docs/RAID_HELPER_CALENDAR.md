@@ -6,7 +6,7 @@ The calendar can create, update and cancel Raid-Helper events through the offici
 
 Only administrators can access **Staff Panel → Raid-Helper**.
 
-A **profile** stores one Discord server ID, an encrypted API key, the API base URL, authorization-header mode, server timezone and an optional default Discord leader user ID. API keys use the same authenticated encryption and rotation mechanism as Discord webhook credentials and are never returned to the frontend.
+A **profile** stores one Discord server ID, an encrypted API key, the API base URL, server timezone and an optional default Discord leader user ID. API keys use the same authenticated encryption and rotation mechanism as Discord webhook credentials and are never returned to the frontend.
 
 A **destination** binds one profile and Discord channel to exactly one calendar scope:
 
@@ -35,8 +35,8 @@ Title, description, announcement and JSON payload fields use the existing safe p
 - `{{raid_helper.template_id}}`, `{{raid_helper.leader_id}}` (JSON payload templates)
 - `{{rendered.title}}`, `{{rendered.description}}`, `{{rendered.announcement}}`
 
-The JSON payload is administrator-managed because Raid-Helper template fields can evolve independently from this project. The application always injects the validated effective leader as the top-level `leaderId`, so custom templates cannot accidentally omit or replace the required value. The API base is restricted to official HTTPS Raid-Helper hosts and must end in `/api/v4`.
+The JSON payload is administrator-managed because Raid-Helper template fields can evolve independently from this project. The application always injects the validated effective leader as the top-level `leaderId`, so custom templates cannot accidentally omit or replace the required value. The API base is restricted to official HTTPS Raid-Helper hosts and must end in `/api/v4`. Requests authenticate with the API key as the raw `Authorization` header value, matching Raid-Helper v4; OAuth-style `Bearer` prefixes and `X-API-Key` are intentionally unsupported.
 
 ## Deployment
 
-Migration `0014_raid_helper_calendar` creates the integration tables and adds the event-level delivery toggle. Migration `0016_raid_helper_api_host` canonicalizes the v4 host and safe defaults. Migration `0017_raid_helper_leaders` adds the optional profile default and per-event leader override. No seed is required.
+Migration `0014_raid_helper_calendar` creates the integration tables and adds the event-level delivery toggle. Migration `0016_raid_helper_api_host` canonicalizes the v4 host and safe defaults. Migration `0017_raid_helper_leaders` adds the optional profile default and per-event leader override. Migration `0018_raid_helper_raw_auth` removes the obsolete configurable authorization mode so every saved profile uses Raid-Helper's required raw `Authorization` header. No seed is required.

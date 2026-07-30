@@ -68,7 +68,6 @@ def _profile_read(row: RaidHelperProfile) -> RaidHelperProfileRead:
         name=row.name,
         server_id=row.server_id,
         api_base_url=row.api_base_url,
-        authorization_mode=row.authorization_mode,
         timezone=row.timezone,
         default_leader_id=row.default_leader_id,
         is_active=row.is_active,
@@ -90,7 +89,6 @@ def create_profile(db: Session, payload: RaidHelperProfileCreate, actor: User) -
         server_id=payload.server_id,
         api_key_encrypted=webhook_secret_box.encrypt(payload.api_key),
         api_base_url=base,
-        authorization_mode=payload.authorization_mode,
         timezone=_validate_timezone(payload.timezone),
         default_leader_id=payload.default_leader_id,
         is_active=payload.is_active,
@@ -118,7 +116,6 @@ def update_profile(db: Session, profile_id: int, payload: RaidHelperProfileWrite
     row.name = payload.name
     row.server_id = payload.server_id
     row.api_base_url = _validate_base_url(payload.api_base_url)
-    row.authorization_mode = payload.authorization_mode
     row.timezone = _validate_timezone(payload.timezone)
     row.default_leader_id = payload.default_leader_id
     row.is_active = payload.is_active

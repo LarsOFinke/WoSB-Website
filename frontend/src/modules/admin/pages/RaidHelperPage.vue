@@ -32,7 +32,6 @@ const {
           <input v-model="profileForm.server_id" required inputmode="numeric" :placeholder="t('raidHelper.serverId')" />
           <input v-model="profileForm.api_key" :required="!profileEditId" type="password" autocomplete="new-password" :placeholder="profileEditId ? t('raidHelper.keepApiKey') : t('raidHelper.apiKey')" />
           <input v-model="profileForm.api_base_url" required aria-label="API base URL" />
-          <select v-model="profileForm.authorization_mode"><option value="authorization">Authorization</option><option value="bearer">Bearer</option><option value="x-api-key">X-API-Key</option></select>
           <label><span>{{ t('raidHelper.timezone') }}</span><input v-model="profileForm.timezone" required placeholder="Europe/Berlin" /><small>{{ t('raidHelper.timezoneHelp') }}</small></label>
           <label><span>{{ t('raidHelper.defaultLeaderId') }}</span><input v-model="profileForm.default_leader_id" inputmode="numeric" pattern="[0-9]+" :placeholder="t('raidHelper.defaultLeaderPlaceholder')" /><small>{{ t('raidHelper.defaultLeaderHelp') }}</small></label>
           <label><input v-model="profileForm.is_active" type="checkbox" /> {{ t('common.active') }}</label>
