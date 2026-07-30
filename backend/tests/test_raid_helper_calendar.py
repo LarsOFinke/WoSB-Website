@@ -679,3 +679,173 @@ def test_destination_test_reports_actionable_401(monkeypatch) -> None:
             assert result.status_code == 401
             assert "exact api key" in result.message.lower()
             assert "server/channel" in result.message.lower()
+
+
+def test_legacy_standard_template_id_is_omitted_from_calendar_payload() -> None:
+    from types import SimpleNamespace
+
+    profile = SimpleNamespace(timezone="Europe/Berlin")
+    template = SimpleNamespace(
+        profile=profile,
+        raid_template_id="Standard",
+        title_template="{{event.title}}",
+        description_template="{{event.description}}",
+        announcement_template="",
+        payload_template_json='''{
+          "title": "{{rendered.title}}",
+          "description": "{{rendered.description}}",
+          "date": "{{event.date}}",
+          "time": "{{event.time}}",
+          "templateId": "{{raid_helper.template_id}}"
+        }''',
+    )
+    event = SimpleNamespace(
+        id=1,
+        title="Default template event",
+        category="meeting",
+        description="Uses the server default.",
+        location="",
+        start_at=datetime(2026, 8, 3, 18, 0, tzinfo=timezone.utc),
+        end_at=datetime(2026, 8, 3, 19, 0, tzinfo=timezone.utc),
+        all_day=False,
+        squad_id=None,
+        squad=None,
+    )
+
+    payload = raid_helper_service._payload(event, template, "913456789012345678")
+
+    assert "templateId" not in payload
+    assert payload["leaderId"] == "913456789012345678"
+    assert raid_helper_service._normalized_template_id("") is None
+    assert raid_helper_service._normalized_template_id(" Standard ") is None
+    assert raid_helper_service._normalized_template_id("123456789012345678") == "123456789012345678"
+
+
+def test_destination_test_uses_selected_application_template(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-template-probe-admin",
+                password="RaidHelperTemplateProbePassword123!",
+                display_name="Template Probe Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Template Probe Profile",
+                    server_id="943456789012345678",
+                    api_key="template-probe-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Template probe channel",
+                    channel_id="953456789012345678",
+                    scope_type="fleet",
+                    categories=["meeting"],
+                    is_default=True,
+                ),
+            )
+            template = raid_helper_service.save_template(
+                db,
+                RaidHelperTemplateWrite(
+                    profile_id=profile.id,
+                    name="Server default application template",
+                    raid_template_id="Standard",
+                    scope_type="fleet",
+                    categories=["meeting"],
+                    is_default=True,
+                ),
+            )
+            calls: list[tuple[str, str, dict | None]] = []
+
+            def fake_request(profile_row, method, path, payload=None):
+                calls.append((method, path, payload))
+                if method == "POST":
+                    return 201, {"eventId": "963456789012345678"}
+                return 204, None
+
+            monkeypatch.setattr(raid_helper_service, "_request", fake_request)
+            result = raid_helper_service.test_destination(
+                db,
+                destination.id,
+                template_id=template.id,
+            )
+
+            assert result is not None
+            assert result.ok is True
+            assert 'template "Server default application template"' in result.message
+            assert calls[0][0] == "POST"
+            assert calls[0][2]["date_variant"] == "both"
+            assert calls[0][2]["leaderId"] == "913456789012345678"
+            assert "templateId" not in calls[0][2]
+            assert calls[1][0:2] == ("DELETE", "/events/963456789012345678")
+
+
+def test_destination_template_401_identifies_template_authorization(monkeypatch) -> None:
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-template-401-admin",
+                password="RaidHelperTemplate401Password123!",
+                display_name="Template 401 Admin",
+                role=ROLE_ADMIN,
+            )
+            profile = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Template 401 Profile",
+                    server_id="973456789012345678",
+                    api_key="template-401-key",
+                    timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
+                ),
+                user,
+            )
+            destination = raid_helper_service.save_destination(
+                db,
+                RaidHelperDestinationWrite(
+                    profile_id=profile.id,
+                    name="Template 401 channel",
+                    channel_id="983456789012345678",
+                    scope_type="fleet",
+                    categories=[],
+                    is_default=True,
+                ),
+            )
+            template = raid_helper_service.save_template(
+                db,
+                RaidHelperTemplateWrite(
+                    profile_id=profile.id,
+                    name="Restricted custom template",
+                    raid_template_id="123456789012345678",
+                    scope_type="fleet",
+                    categories=[],
+                    is_default=True,
+                ),
+            )
+            monkeypatch.setattr(
+                raid_helper_service,
+                "_request",
+                lambda *args, **kwargs: (401, {"message": "Unauthorized"}),
+            )
+
+            result = raid_helper_service.test_destination(
+                db,
+                destination.id,
+                template_id=template.id,
+            )
+
+            assert result is not None
+            assert result.ok is False
+            assert result.status_code == 401
+            assert 'templateId "123456789012345678"' in result.message
+            assert "leave the template id blank" in result.message.lower()

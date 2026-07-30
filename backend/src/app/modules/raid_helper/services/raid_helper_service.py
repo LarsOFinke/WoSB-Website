@@ -175,6 +175,20 @@ def _normalized_api_key(value: str) -> str:
     return key
 
 
+def _normalized_template_id(value: str | None) -> str | None:
+    """Return an explicit custom template ID, or None for Raid-Helper's default template.
+
+    Earlier releases prefilled the literal ``Standard`` even though the API's
+    templateId field is optional. That made the minimal destination probe pass
+    while real calendar delivery could be rejected as an unauthorized template
+    request. Treat that legacy application default as no explicit template.
+    """
+    template_id = (value or "").strip()
+    if not template_id or template_id.casefold() == "standard":
+        return None
+    return template_id
+
+
 def _auth_headers(profile: RaidHelperProfile) -> dict[str, str]:
     try:
         key = webhook_secret_box.decrypt(profile.api_key_encrypted)
@@ -240,81 +254,22 @@ def test_profile(db: Session, profile_id: int) -> RaidHelperProfileTestResult | 
     return RaidHelperProfileTestResult(ok=ok, status_code=status_code, message=message)
 
 
-def test_destination(db: Session, destination_id: int) -> RaidHelperProfileTestResult | None:
-    """Create and immediately delete a temporary event on the exact destination.
+def test_destination(
+    db: Session,
+    destination_id: int,
+    *,
+    template_id: int | None = None,
+    use_minimal_payload: bool = False,
+) -> RaidHelperProfileTestResult | None:
+    from app.modules.raid_helper.services.raid_helper_probe_service import (
+        test_destination as run_probe,
+    )
 
-    This is intentionally opt-in from the staff panel. It verifies the same API
-    key, server ID, channel ID and write/delete endpoints used by calendar sync,
-    eliminating false positives from read-only profile checks.
-    """
-    row = db.get(RaidHelperDestination, destination_id)
-    if row is None:
-        return None
-    profile = row.profile
-    leader_id = profile.default_leader_id
-    if not leader_id:
-        return RaidHelperProfileTestResult(
-            ok=False,
-            message="Configure a default leader ID before testing this destination.",
-        )
-    try:
-        zone = ZoneInfo(profile.timezone)
-    except ZoneInfoNotFoundError:
-        return RaidHelperProfileTestResult(ok=False, message="The configured Raid-Helper timezone is invalid.")
-
-    starts_at = (utc_now().replace(tzinfo=timezone.utc) + timedelta(minutes=15)).astimezone(zone)
-    payload = {
-        "leaderId": leader_id,
-        "title": "Royal Blackwater Fleet connection test",
-        "description": "Temporary API verification event. It should be removed automatically.",
-        "date": starts_at.strftime("%d.%m.%Y"),
-        "time": starts_at.strftime("%H:%M"),
-    }
-    path = f"/servers/{profile.server_id}/channels/{row.channel_id}/event"
-    try:
-        status_code, body = _request(profile, "POST", path, payload)
-    except Exception as exc:
-        return RaidHelperProfileTestResult(ok=False, message=f"Destination test failed: {type(exc).__name__}")
-
-    if not 200 <= status_code < 300:
-        if status_code == 401:
-            message = (
-                "Raid-Helper rejected event creation for this destination (HTTP 401). "
-                "Re-enter the exact API key used by a working create-event request and verify the server/channel IDs."
-            )
-        else:
-            message = _failed_request_message(status_code, body)
-        return RaidHelperProfileTestResult(ok=False, status_code=status_code, message=message)
-
-    external_id = _external_id(body)
-    if not external_id:
-        return RaidHelperProfileTestResult(
-            ok=False,
-            status_code=status_code,
-            message="The temporary event was created, but Raid-Helper returned no event ID for cleanup.",
-        )
-
-    try:
-        delete_status, delete_body = _request(profile, "DELETE", f"/events/{external_id}")
-    except Exception as exc:
-        return RaidHelperProfileTestResult(
-            ok=False,
-            status_code=status_code,
-            message=f"The temporary event was created, but automatic cleanup failed: {type(exc).__name__}.",
-        )
-    if not 200 <= delete_status < 300:
-        return RaidHelperProfileTestResult(
-            ok=False,
-            status_code=delete_status,
-            message=(
-                "The temporary event was created, but Raid-Helper could not delete it automatically. "
-                f"{_failed_request_message(delete_status, delete_body)}"
-            ),
-        )
-    return RaidHelperProfileTestResult(
-        ok=True,
-        status_code=status_code,
-        message="Raid-Helper event creation and cleanup succeeded for this exact destination.",
+    return run_probe(
+        db,
+        destination_id,
+        template_id=template_id,
+        use_minimal_payload=use_minimal_payload,
     )
 
 
@@ -346,7 +301,7 @@ def _event_context(event: FleetEvent, template: RaidHelperTemplate) -> dict[str,
             "start_discord_relative": f"<t:{int(start_utc.timestamp())}:R>",
         },
         "scope": {"type": "squad" if event.squad_id else "fleet", "name": scope_name, "squad_id": event.squad_id or ""},
-        "raid_helper": {"template_id": template.raid_template_id},
+        "raid_helper": {"template_id": _normalized_template_id(template.raid_template_id) or ""},
     }
     context["rendered"] = {
         "title": render_message(template.title_template, context),
@@ -389,6 +344,13 @@ def _payload(event: FleetEvent, template: RaidHelperTemplate, leader_id: str) ->
     context["raid_helper"]["leader_id"] = leader_id
     value = json.loads(template.payload_template_json)
     payload = _render_json(value, context)
+    if not isinstance(payload, dict):
+        raise RaidHelperError("Raid-Helper payload template must render to a JSON object.")
+    # templateId is optional. Do not send the legacy application default
+    # ``Standard`` or an empty placeholder: Raid-Helper can interpret an explicit
+    # template request as a separate authorization decision and return HTTP 401.
+    if not _normalized_template_id(template.raid_template_id) or not str(payload.get("templateId", "")).strip():
+        payload.pop("templateId", None)
     # Raid-Helper requires leaderId for event creation. Keep this field under
     # application control so every custom payload receives the validated value.
     payload["leaderId"] = leader_id
@@ -448,8 +410,9 @@ def _failed_request_message(status_code: int, body: Any) -> str:
     reason = _response_error_reason(body)
     if status_code == 401:
         base = (
-            "Raid-Helper rejected event authorization (HTTP 401). "
-            "Re-enter the API key and test the exact channel destination in the Staff Panel."
+            "Raid-Helper rejected this event payload (HTTP 401). "
+            "Test the exact destination with the same application template; an explicit templateId or "
+            "permission-dependent advanced option may be unauthorized even when the API key is valid."
         )
     else:
         base = f"Raid-Helper returned HTTP {status_code}."

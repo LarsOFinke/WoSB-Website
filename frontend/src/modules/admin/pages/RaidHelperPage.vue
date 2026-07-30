@@ -4,8 +4,8 @@ import { useRaidHelperPage } from '@/modules/admin/pages/useRaidHelperPage'
 
 const {
   t, isAdmin, user, navigationGroups, profiles, destinations, templates, loading, error, notice,
-  profileEditId, destinationEditId, templateEditId, profileForm, destinationForm, templateForm,
-  profileOptions, activeSquads, FLEET_EVENT_CATEGORIES, RAID_HELPER_CALENDAR_PRESETS,
+  profileEditId, destinationEditId, templateEditId, destinationTestTemplateIds, profileForm, destinationForm, templateForm,
+  profileOptions, activeSquads, templatesForDestination, FLEET_EVENT_CATEGORIES, RAID_HELPER_CALENDAR_PRESETS,
   applyRaidHelperCalendarPreset, applyRaidHelperRecommendedPayload, toggleCategory, resetProfile, editProfile, saveProfile, removeProfile,
   testProfile, resetDestination, editDestination, saveDestination, testDestination, removeDestination, resetTemplate,
   editTemplate, saveTemplate, removeTemplate,
@@ -59,7 +59,20 @@ const {
         </form>
         <article v-for="row in destinations" :key="row.id" class="raid-helper-row">
           <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · #{{ row.channel_id }} · {{ row.scope_type }}{{ row.squad_name ? ` / ${row.squad_name}` : '' }}</small></div>
-          <div><button class="small-action" @click="testDestination(row)">{{ t('raidHelper.testDestination') }}</button><button class="small-action" @click="editDestination(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeDestination(row)">{{ t('common.delete') }}</button></div>
+          <div class="raid-helper-row-actions">
+            <label class="raid-helper-test-template">
+              <span>{{ t('raidHelper.testTemplate') }}</span>
+              <select v-model="destinationTestTemplateIds[row.id]">
+                <option value="">{{ t('raidHelper.minimalPayload') }}</option>
+                <option v-for="template in templatesForDestination(row)" :key="template.id" :value="template.id">
+                  {{ template.name }}{{ template.raid_template_id ? ` · ${template.raid_template_id}` : ` · ${t('raidHelper.serverDefaultTemplate')}` }}
+                </option>
+              </select>
+            </label>
+            <button class="small-action" @click="testDestination(row)">{{ t('raidHelper.testDestination') }}</button>
+            <button class="small-action" @click="editDestination(row)">{{ t('common.edit') }}</button>
+            <button class="small-action danger" @click="removeDestination(row)">{{ t('common.delete') }}</button>
+          </div>
         </article>
       </section>
 
@@ -81,7 +94,7 @@ const {
           </div>
           <select v-model="templateForm.profile_id" required><option disabled value="">{{ t('raidHelper.profile') }}</option><option v-for="row in profileOptions" :key="row.id" :value="row.id">{{ row.name }}</option></select>
           <input v-model="templateForm.name" required :placeholder="t('raidHelper.name')" />
-          <input v-model="templateForm.raid_template_id" required :placeholder="t('raidHelper.raidTemplateId')" />
+          <label><span>{{ t('raidHelper.raidTemplateId') }}</span><input v-model="templateForm.raid_template_id" :placeholder="t('raidHelper.raidTemplateIdPlaceholder')" /><small>{{ t('raidHelper.raidTemplateIdHelp') }}</small></label>
           <select v-model="templateForm.scope_type"><option value="both">{{ t('raidHelper.bothScopes') }}</option><option value="fleet">{{ t('raidHelper.fleet') }}</option><option value="squad">{{ t('raidHelper.squad') }}</option></select>
           <fieldset><legend>{{ t('raidHelper.categories') }}</legend><label v-for="category in FLEET_EVENT_CATEGORIES" :key="category"><input type="checkbox" :checked="templateForm.categories.includes(category)" @change="toggleCategory(templateForm, category)" /> {{ t(`calendar.categories.${category}`) }}</label></fieldset>
           <label class="is-wide"><span>{{ t('raidHelper.titleTemplate') }}</span><input v-model="templateForm.title_template" required /></label>
@@ -93,7 +106,7 @@ const {
           <div class="form-actions is-wide"><button class="button-box primary-action" type="submit">{{ t('common.save') }}</button><button v-if="templateEditId" class="button-box" type="button" @click="resetTemplate">{{ t('common.cancel') }}</button></div>
         </form>
         <article v-for="row in templates" :key="row.id" class="raid-helper-row">
-          <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · {{ row.raid_template_id }} · {{ row.scope_type }}</small></div>
+          <div><strong>{{ row.name }}</strong><small>{{ row.profile_name }} · {{ row.raid_template_id || t('raidHelper.serverDefaultTemplate') }} · {{ row.scope_type }}</small></div>
           <div><button class="small-action" @click="editTemplate(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeTemplate(row)">{{ t('common.delete') }}</button></div>
         </article>
       </section>

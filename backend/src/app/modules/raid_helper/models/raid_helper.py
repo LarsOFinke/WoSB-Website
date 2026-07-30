@@ -92,7 +92,7 @@ class RaidHelperTemplate(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("raid_helper_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
-    raid_template_id: Mapped[str] = mapped_column(String(80), nullable=False, default="Standard")
+    raid_template_id: Mapped[str] = mapped_column(String(80), nullable=False, default="")
     scope_type: Mapped[str] = mapped_column(String(16), nullable=False, default="both")
     title_template: Mapped[str] = mapped_column(String(300), nullable=False, default="{{event.title}}")
     description_template: Mapped[str] = mapped_column(Text, nullable=False, default="{{event.description}}")

@@ -1440,6 +1440,10 @@ body.webhook-editor-open {
 .raid-helper-row { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .75rem 0; border-top: 1px solid var(--color-border-soft); }
 .raid-helper-row small { display: block; opacity: .75; margin-top: .2rem; }
 .raid-helper-row > div:last-child { display: flex; flex-wrap: wrap; gap: .4rem; }
+.raid-helper-row-actions { align-items: end; }
+.raid-helper-test-template { display: grid; gap: .2rem; min-width: min(20rem, 100%); }
+.raid-helper-test-template span { font-size: .78rem; opacity: .78; }
+.raid-helper-test-template select { width: 100%; }
 @media (max-width: 850px) { .raid-helper-admin-grid, .raid-helper-template-form { grid-template-columns: 1fr; } .raid-helper-wide, .raid-helper-form .is-wide { grid-column: auto; } .raid-helper-row { align-items: flex-start; flex-direction: column; } }
 
 .raid-helper-event-section {

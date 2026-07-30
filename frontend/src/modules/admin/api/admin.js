@@ -315,8 +315,11 @@ export function deleteRaidHelperDestination(id) {
   return deleteRequest(`/admin/raid-helper/destinations/${id}`)
 }
 
-export function testRaidHelperDestination(id) {
-  return post(`/admin/raid-helper/destinations/${id}/test`, {})
+export function testRaidHelperDestination(id, templateId = null, useMinimalPayload = false) {
+  return post(`/admin/raid-helper/destinations/${id}/test`, {
+    template_id: templateId,
+    use_minimal_payload: useMinimalPayload,
+  })
 }
 
 export function listRaidHelperTemplates() {

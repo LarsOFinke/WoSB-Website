@@ -60,7 +60,7 @@ function defaultTemplateForm(profileId = '') {
   return {
     profile_id: profileId,
     name: '',
-    raid_template_id: 'Standard',
+    raid_template_id: '',
     scope_type: 'both',
     categories: [],
     title_template: '{{event.title}}',
@@ -86,6 +86,7 @@ export function useRaidHelperPage() {
   const profileEditId = ref(null)
   const destinationEditId = ref(null)
   const templateEditId = ref(null)
+  const destinationTestTemplateIds = reactive({})
 
   const profileForm = reactive(defaultProfileForm())
   const destinationForm = reactive(defaultDestinationForm())
@@ -93,6 +94,22 @@ export function useRaidHelperPage() {
 
   const profileOptions = computed(() => profiles.value.filter((row) => row.is_active))
   const activeSquads = computed(() => squads.value.filter((row) => row.is_active))
+
+  function templatesForDestination(destination) {
+    return templates.value
+      .filter((template) => template.profile_id === destination.profile_id && template.is_active)
+      .sort((left, right) => Number(right.is_default) - Number(left.is_default) || left.name.localeCompare(right.name))
+  }
+
+  function initializeDestinationTestTemplates() {
+    for (const destination of destinations.value) {
+      const available = templatesForDestination(destination)
+      const current = Number(destinationTestTemplateIds[destination.id])
+      if (!available.some((template) => template.id === current)) {
+        destinationTestTemplateIds[destination.id] = available[0]?.id || ''
+      }
+    }
+  }
 
   function toggleCategory(form, category) {
     const next = new Set(form.categories)
@@ -113,6 +130,7 @@ export function useRaidHelperPage() {
       const firstProfileId = profileOptions.value[0]?.id || ''
       if (!destinationForm.profile_id) destinationForm.profile_id = firstProfileId
       if (!templateForm.profile_id) templateForm.profile_id = firstProfileId
+      initializeDestinationTestTemplates()
     } catch (err) {
       error.value = err.message
     } finally {
@@ -222,7 +240,9 @@ export function useRaidHelperPage() {
     error.value = ''
     notice.value = ''
     try {
-      const result = await testRaidHelperDestination(row.id)
+      const selected = destinationTestTemplateIds[row.id]
+      const templateId = Number(selected) || null
+      const result = await testRaidHelperDestination(row.id, templateId, !selected)
       if (result.ok) notice.value = result.message
       else error.value = result.message
     } catch (err) {
@@ -265,7 +285,7 @@ export function useRaidHelperPage() {
   async function saveTemplate() {
     error.value = ''
     notice.value = ''
-    const payload = { ...templateForm, profile_id: Number(templateForm.profile_id) }
+    const payload = { ...templateForm, profile_id: Number(templateForm.profile_id), raid_template_id: templateForm.raid_template_id.trim() }
     try {
       if (templateEditId.value) await updateRaidHelperTemplate(templateEditId.value, payload)
       else await createRaidHelperTemplate(payload)
@@ -303,11 +323,13 @@ export function useRaidHelperPage() {
     profileEditId,
     destinationEditId,
     templateEditId,
+    destinationTestTemplateIds,
     profileForm,
     destinationForm,
     templateForm,
     profileOptions,
     activeSquads,
+    templatesForDestination,
     FLEET_EVENT_CATEGORIES,
     RAID_HELPER_CALENDAR_PRESETS,
     RAID_HELPER_RECOMMENDED_PAYLOAD,

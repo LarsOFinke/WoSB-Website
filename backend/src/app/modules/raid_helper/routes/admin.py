@@ -7,6 +7,7 @@ from app.modules.accounts.models.user import User
 from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperDestinationRead,
+    RaidHelperDestinationTestRequest,
     RaidHelperDestinationWrite,
     RaidHelperProfileCreate,
     RaidHelperProfileRead,
@@ -90,8 +91,18 @@ def destinations(db: Session = Depends(get_db), _: User = Depends(require_admin)
 
 
 @router.post("/destinations/{destination_id}/test", response_model=RaidHelperProfileTestResult)
-def destination_test(destination_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    result = test_destination(db, destination_id)
+def destination_test(
+    destination_id: int,
+    payload: RaidHelperDestinationTestRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    result = test_destination(
+        db,
+        destination_id,
+        template_id=payload.template_id,
+        use_minimal_payload=payload.use_minimal_payload,
+    )
     if result is None:
         raise HTTPException(status_code=404, detail="Raid-Helper destination not found.")
     return result

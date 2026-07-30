@@ -74,7 +74,7 @@ from app.core.config import BACKEND_ROOT
 from app.db.schema_health import expected_alembic_heads
 
 assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
-assert expected_alembic_heads() == frozenset({"0018_raid_helper_raw_auth"})
+assert expected_alembic_heads() == frozenset({"0019_raid_helper_template_id"})
 PY_SCHEMA_HEAD
   )
 )

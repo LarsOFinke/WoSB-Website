@@ -50,6 +50,8 @@ test('Raid-Helper credentials and routing are managed only in the admin workspac
   assert.match(page, /destinationForm\.scope_type/)
   assert.match(page, /templateForm\.categories/)
   assert.match(page, /testDestination\(row\)/)
+  assert.match(page, /destinationTestTemplateIds\[row\.id\]/)
+  assert.match(page, /raidHelper\.raidTemplateIdHelp/)
   assert.doesNotMatch(page, /authorization_mode|Bearer|X-API-Key/)
 })
 
@@ -76,6 +78,8 @@ test('Raid-Helper defaults use the canonical API host and advanced timezone pres
   ])
   assert.match(pageModel, /https:\/\/raid-helper\.xyz\/api\/v4/)
   assert.match(pageModel, /testRaidHelperDestination/)
+  assert.match(pageModel, /raid_template_id:\s*''/)
+  assert.match(pageModel, /useMinimalPayload|!selected/)
   assert.match(pageModel, /destinationTestConfirm/)
   assert.doesNotMatch(pageModel, /authorization_mode|bearer|x-api-key/)
   assert.match(page, /raidHelper\.timezoneHelp/)

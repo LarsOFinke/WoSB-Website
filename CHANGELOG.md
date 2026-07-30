@@ -11,7 +11,9 @@
 
 ## Unreleased
 
-- Replaced the misleading Raid-Helper profile “connection” result with an explicitly read-only server check and added an exact destination write test that creates and immediately removes a temporary event using the same API key, server, channel, leader and endpoints as calendar synchronization. Calendar status now identifies the profile behind each destination, 401 errors provide actionable reconfiguration guidance, copied key wrappers are normalized, and event dates use Raid-Helper's `DD.MM.YYYY` format. No database migration is required.
+- Fixed the remaining Raid-Helper 401 false positive by making destination tests render the same selected application template and JSON payload as calendar delivery. Raid-Helper template IDs are now optional, the legacy application default `Standard` is omitted instead of sent as `templateId`, and the Staff panel can compare a selected template payload against a minimal payload. Migration `0019` clears legacy `Standard` values and changes the database default to an empty template ID.
+
+- Replaced the misleading Raid-Helper profile “connection” result with an explicitly read-only server check and added an exact destination write test that creates and immediately removes a temporary event using the same API key, server, channel, leader and endpoints as calendar synchronization. Calendar status now identifies the profile behind each destination, copied key wrappers are normalized, and event dates use Raid-Helper's `DD.MM.YYYY` format.
 
 - Fixed Raid-Helper HTTP 401 responses by removing the misleading Bearer/X-API-Key options and always sending the decrypted API key as the raw `Authorization` header required by the v4 server API. Migration `0018` removes the obsolete profile authorization-mode column.
 

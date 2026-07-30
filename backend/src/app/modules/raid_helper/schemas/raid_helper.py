@@ -93,6 +93,11 @@ class RaidHelperDestinationWrite(BaseModel):
         return self
 
 
+class RaidHelperDestinationTestRequest(BaseModel):
+    template_id: int | None = Field(default=None, gt=0)
+    use_minimal_payload: bool = False
+
+
 class RaidHelperDestinationRead(RaidHelperDestinationWrite):
     id: int
     profile_name: str
@@ -104,7 +109,7 @@ class RaidHelperDestinationRead(RaidHelperDestinationWrite):
 class RaidHelperTemplateWrite(BaseModel):
     profile_id: int
     name: str = Field(min_length=1, max_length=120)
-    raid_template_id: str = Field(default="Standard", min_length=1, max_length=80)
+    raid_template_id: str = Field(default="", max_length=80)
     scope_type: Literal["both", "fleet", "squad"] = "both"
     categories: list[str] = Field(default_factory=list)
     title_template: str = Field(default="{{event.title}}", min_length=1, max_length=300)
