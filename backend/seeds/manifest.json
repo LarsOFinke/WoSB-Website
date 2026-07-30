@@ -39,6 +39,10 @@
       "kind": "build_options"
     },
     {
+      "path": "system/build-rules.json",
+      "kind": "build_rules"
+    },
+    {
       "path": "system/fleets.json",
       "kind": "fleets"
     },

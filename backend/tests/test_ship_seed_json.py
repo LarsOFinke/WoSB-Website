@@ -211,7 +211,7 @@ def test_manifest_covers_every_json_master_data_file() -> None:
     catalog = load_master_data_catalog()
 
     assert catalog.manifest.catalog == "wosb-master-data"
-    assert len(catalog.manifest.documents) == 20
+    assert len(catalog.manifest.documents) == 21
     assert {document.category for document in catalog.build_options} == {
         "sail",
         "upgrade",

@@ -4,7 +4,7 @@ from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_s
 def test_all_slot_sources_stack_to_eight() -> None:
     access = calculate_upgrade_slot_access(
         ship_upgrade_slots=6,
-        research_upgrade_slot_unlocked=True,
+        research_upgrade_slots=1,
         unlock_effect_slots=2,
     )
 
@@ -22,7 +22,7 @@ def test_all_slot_sources_stack_to_eight() -> None:
 def test_normal_ship_with_research_and_structural_expansion_reaches_seven() -> None:
     access = calculate_upgrade_slot_access(
         ship_upgrade_slots=5,
-        research_upgrade_slot_unlocked=True,
+        research_upgrade_slots=1,
         unlock_effect_slots=2,
     )
 
@@ -46,7 +46,7 @@ def test_structural_expansion_alone_adds_both_tooltip_slots() -> None:
 def test_ship_without_upgrade_rack_stays_at_zero() -> None:
     access = calculate_upgrade_slot_access(
         ship_upgrade_slots=0,
-        research_upgrade_slot_unlocked=True,
+        research_upgrade_slots=1,
         unlock_effect_slots=2,
     )
 

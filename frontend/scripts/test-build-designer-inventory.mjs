@@ -274,7 +274,7 @@ assert.equal(yellowRows.damage_pct.modifier, 7)
 
 const researchAccess = calculateUpgradeSlotAccess({
   shipUpgradeSlots: 5,
-  researchUpgradeSlotUnlocked: true,
+  researchUpgradeSlots: 1,
 })
 assert.equal(researchAccess.slot5Unlocked, true)
 assert.equal(researchAccess.slot6Available, false)
@@ -284,7 +284,7 @@ assert.equal(researchAccess.availableSlots, 5)
 
 const stackedAccess = calculateUpgradeSlotAccess({
   shipUpgradeSlots: 5,
-  researchUpgradeSlotUnlocked: true,
+  researchUpgradeSlots: 1,
   unlockEffectSlots: 2,
 })
 assert.equal(stackedAccess.slot5Unlocked, true)
@@ -295,7 +295,7 @@ assert.equal(stackedAccess.availableSlots, 7)
 
 const eightSlotAccess = calculateUpgradeSlotAccess({
   shipUpgradeSlots: 6,
-  researchUpgradeSlotUnlocked: true,
+  researchUpgradeSlots: 1,
   unlockEffectSlots: 2,
 })
 assert.equal(eightSlotAccess.slot7Available, true)

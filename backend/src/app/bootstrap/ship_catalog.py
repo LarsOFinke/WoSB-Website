@@ -12,6 +12,7 @@ from app.modules.ships.models.weapon_mount import (
     WeaponClassDefinition,
     WeaponSlotType,
 )
+from app.modules.ships.models.rate_weapon_class import ShipRateWeaponClassRule
 from app.bootstrap.catalog_loader import load_master_data_catalog, load_ship_seed_document
 from app.bootstrap.catalog_sync import mark_seed_applied, seed_key, should_apply_seed
 
@@ -19,6 +20,7 @@ from app.bootstrap.catalog_sync import mark_seed_applied, seed_key, should_apply
 def seed_ship_catalog(db: Session) -> None:
     document = load_ship_seed_document()
     seed_weapon_definitions(db, document=document)
+    seed_ship_rate_weapon_class_rules(db)
     seed_ships(db, document=document)
 
 
@@ -38,6 +40,28 @@ def seed_weapon_definitions(db: Session, *, document=None) -> None:
                 setattr(existing, field_name, value)
     db.commit()
 
+
+
+def seed_ship_rate_weapon_class_rules(db: Session) -> None:
+    document = load_master_data_catalog().build_rules
+    weapon_classes = {
+        row.code: row for row in db.scalars(select(WeaponClassDefinition)).all()
+    }
+    for item in document.ship_rate_weapon_classes:
+        weapon_class = weapon_classes.get(item.weapon_class)
+        if weapon_class is None:
+            raise ValueError(f"Unknown weapon class in rate rule: {item.weapon_class}")
+        rule = db.get(ShipRateWeaponClassRule, item.rate)
+        if rule is None:
+            db.add(
+                ShipRateWeaponClassRule(
+                    rate=item.rate,
+                    weapon_class_id=weapon_class.id,
+                )
+            )
+        else:
+            rule.weapon_class_id = weapon_class.id
+    db.commit()
 
 def seed_ships(db: Session, *, document=None) -> None:
     document = document or load_ship_seed_document()

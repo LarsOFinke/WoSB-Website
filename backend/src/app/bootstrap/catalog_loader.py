@@ -59,6 +59,7 @@ class ManifestDocument(StrictSeedModel):
         "references",
         "roles",
         "fleets",
+        "build_rules",
         "build_categories",
         "build_options",
         "ship_definitions",
@@ -168,6 +169,44 @@ class FleetCatalogDocument(StrictSeedModel):
             raise ValueError("fleet slugs must be unique")
         if set(slugs) & set(self.legacy_slugs):
             raise ValueError("current fleet slugs cannot also be legacy slugs")
+        return self
+
+
+class BuildFeatureSeed(StrictSeedModel):
+    code: str = Field(min_length=1, max_length=64, pattern=r"^[a-z][a-z0-9_]*$")
+    label: str = Field(min_length=1, max_length=120)
+    upgrade_slots_granted: int = Field(ge=0, le=8)
+    stat_effects: dict[str, int | float] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_stat_effects(self) -> "BuildFeatureSeed":
+        for key in self.stat_effects:
+            if not key.strip() or len(key) > 80 or not key.replace("_", "").isalnum():
+                raise ValueError(f"invalid build feature effect key: {key}")
+        return self
+
+
+class ShipRateWeaponClassRuleSeed(StrictSeedModel):
+    rate: int = Field(ge=1, le=7)
+    weapon_class: WeaponClassCode
+
+
+class BuildRuleCatalogDocument(StrictSeedModel):
+    schema_version: Literal[1]
+    catalog: Literal["build-rules"]
+    build_features: list[BuildFeatureSeed] = Field(min_length=1)
+    ship_rate_weapon_classes: list[ShipRateWeaponClassRuleSeed] = Field(min_length=7, max_length=7)
+
+    @model_validator(mode="after")
+    def validate_rules(self) -> "BuildRuleCatalogDocument":
+        feature_codes = [row.code for row in self.build_features]
+        if len(feature_codes) != len(set(feature_codes)):
+            raise ValueError("build feature codes must be unique")
+        if "research_upgrade_slot" not in feature_codes:
+            raise ValueError("build rules must define research_upgrade_slot")
+        rates = [row.rate for row in self.ship_rate_weapon_classes]
+        if sorted(rates) != list(range(1, 8)):
+            raise ValueError("ship rate weapon classes must define rates 1 through 7 exactly once")
         return self
 
 
@@ -420,6 +459,7 @@ class MasterDataCatalog(StrictSeedModel):
     references: ReferenceCatalogDocument
     roles: RoleCatalogDocument
     fleets: FleetCatalogDocument
+    build_rules: BuildRuleCatalogDocument
     build_categories: BuildCategoryDocument
     build_options: list[BuildOptionDocument]
     ships: ShipSeedDocument
@@ -472,6 +512,7 @@ def load_master_data_catalog(
         "references": ReferenceCatalogDocument,
         "roles": RoleCatalogDocument,
         "fleets": FleetCatalogDocument,
+        "build_rules": BuildRuleCatalogDocument,
         "build_categories": BuildCategoryDocument,
         "build_options": BuildOptionDocument,
         "ship_definitions": ShipDefinitionDocument,
@@ -512,6 +553,7 @@ def load_master_data_catalog(
         references=_single(parsed["references"], "references"),
         roles=_single(parsed["roles"], "roles"),
         fleets=_single(parsed["fleets"], "fleets"),
+        build_rules=_single(parsed["build_rules"], "build_rules"),
         build_categories=categories,
         build_options=option_documents,
         ships=ships,

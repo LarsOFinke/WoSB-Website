@@ -60,3 +60,17 @@ The shared contract currently covers:
 - multiplicatively stacked speed/armor effects,
 - percentage-before-flat durability,
 - crew-capacity rounding at an exact `.5` boundary.
+
+## Upgrade add-on normalization
+
+The unlockable upgrade add-on is a referenced Build feature rather than a hard-coded calculator
+branch. `build_features` provides the slot grant and `build_feature_effects` stores one row per
+stat modifier. The current normalized definition grants one upgrade slot and applies `-5%` to
+durability (`hull_hp_pct`), maneuverability (`turn_rate_pct`) and cargo hold
+(`hold_capacity_pct`). Builds persist only the feature foreign key, so corrections to the
+repository-owned definition are reflected when an existing Build is read again.
+
+A regression test changes the feature rows inside the test database and verifies that both the
+slot count and calculated ship statistics follow those changed rows. This prevents the frontend
+or backend from silently reintroducing fixed copies of the values.
+

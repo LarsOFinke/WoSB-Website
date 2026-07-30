@@ -11,10 +11,12 @@ from app.modules.admin.schemas.master_data import (
     MasterDataCategoryUpdate,
     MasterDataOptionCreate,
     MasterDataOptionUpdate,
+    MasterDataShipCreate,
     MasterDataShipUpdate,
 )
 from app.modules.admin.services.master_data_service import (
     create_option,
+    create_ship,
     list_options,
     list_ships,
     restore_all_seed_defaults,
@@ -381,3 +383,79 @@ def test_ship_specific_upgrade_effects_overlay_global_values_and_restore_cleanly
         lightweight = next(row for row in catalog.options["upgrade"] if row.name == "Lightweight Hull")
         assert lightweight.stat_effects["speed_pct"] == 4
         assert lightweight.is_ship_specific is False
+
+
+def test_new_custom_ships_receive_rate_weapon_class_defaults() -> None:
+    with _seeded_db() as db:
+        def payload(rate: int, name: str, explicit_class: str | None = None):
+            return MasterDataShipCreate(
+                name=name,
+                rate=rate,
+                ship_type="Test frigate",
+                durability=100,
+                speed_min_knots=5,
+                speed_knots=8,
+                maneuverability=50,
+                armor=2,
+                hold_capacity=100,
+                crew_capacity=50,
+                sailor_minimum=10,
+                displacement_tons=100,
+                source="manual test",
+                weapon_mounts=[
+                    {
+                        "slot_type": code,
+                        "capacity": 4 if code in {"weapon_port", "weapon_starboard"} else 0,
+                        "special_weapon_capacity": 0,
+                        "max_weapon_class": (
+                            explicit_class
+                            if code in {"weapon_port", "weapon_starboard"}
+                            else None
+                        ),
+                        "max_caliber_inches": None,
+                    }
+                    for code in (
+                        "weapon_front",
+                        "weapon_rear",
+                        "weapon_port",
+                        "weapon_starboard",
+                        "weapon_mortar",
+                        "weapon_special",
+                    )
+                ],
+            )
+
+        ships_by_rate = {
+            rate: create_ship(db, payload(rate, f"Automatic rate {rate} test"))
+            for rate in range(1, 8)
+        }
+        exception_ship = create_ship(
+            db, payload(6, "Explicit weapon exception", explicit_class="heavy")
+        )
+
+        def broadside_classes(ship):
+            return {
+                mount.max_weapon_class
+                for mount in ship.weapon_mounts
+                if mount.slot_type in {"weapon_port", "weapon_starboard"}
+            }
+
+        expected_by_rate = {
+            1: "heavy",
+            2: "heavy",
+            3: "medium",
+            4: "medium",
+            5: "light",
+            6: "light",
+            7: "light",
+        }
+        assert {
+            rate: broadside_classes(ship)
+            for rate, ship in ships_by_rate.items()
+        } == {rate: {weapon_class} for rate, weapon_class in expected_by_rate.items()}
+        assert broadside_classes(exception_ship) == {"heavy"}
+        assert all(
+            mount.max_weapon_class is None
+            for mount in ships_by_rate[6].weapon_mounts
+            if mount.slot_type in {"weapon_mortar", "weapon_special"}
+        )

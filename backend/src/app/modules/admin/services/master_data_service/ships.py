@@ -11,6 +11,7 @@ from app.modules.admin.schemas.master_data import (
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.ships.models.mortar_modification import ShipMortarModification
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.models.rate_weapon_class import ShipRateWeaponClassRule
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import ShipWeaponMount
 from app.bootstrap.catalog_sync import CUSTOM_MASTER_DATA_REVISION
@@ -18,6 +19,14 @@ from app.bootstrap.manager import SeedManager
 
 from .common import MasterDataError, MasterDataUnitOfWork, TaxonomyRepository
 from .mappers import MasterDataMapper
+
+
+REGULAR_WEAPON_SLOT_TYPES = frozenset({
+    "weapon_front",
+    "weapon_rear",
+    "weapon_port",
+    "weapon_starboard",
+})
 
 
 class ShipMasterDataService:
@@ -101,6 +110,16 @@ class ShipMasterDataService:
         payload: MasterDataShipCreate | MasterDataShipUpdate,
     ) -> None:
         weapon_classes, slot_types = self._taxonomy.maps()
+        rate_rule = self.db.get(ShipRateWeaponClassRule, payload.rate)
+        if rate_rule is None:
+            raise MasterDataError(
+                f"No default regular-weapon class is configured for rate {payload.rate}."
+            )
+        default_weapon_class = weapon_classes.get(rate_rule.weapon_class.code)
+        if default_weapon_class is None:
+            raise MasterDataError(
+                f"Unknown default weapon class for rate {payload.rate}."
+            )
         for field, value in payload.model_dump(
             exclude={
                 "weapon_mounts",
@@ -109,30 +128,47 @@ class ShipMasterDataService:
             }
         ).items():
             setattr(row, field, value)
-        self._replace_mounts(row, payload.weapon_mounts, weapon_classes, slot_types)
+        self._replace_mounts(
+            row,
+            payload.weapon_mounts,
+            weapon_classes,
+            slot_types,
+            default_weapon_class,
+        )
         self._replace_mortar_modification(row, payload.mortar_modification)
         self._replace_upgrade_overrides(row, payload.upgrade_effect_overrides)
 
     @staticmethod
-    def _replace_mounts(row: Ship, payloads: list, weapon_classes: dict, slot_types: dict) -> None:
+    def _replace_mounts(
+        row: Ship,
+        payloads: list,
+        weapon_classes: dict,
+        slot_types: dict,
+        default_weapon_class,
+    ) -> None:
         current = {mount.slot_type.code: mount for mount in row.weapon_mounts}
         active: set[str] = set()
         for payload in payloads:
             if payload.slot_type not in slot_types:
                 raise MasterDataError(f"Unknown weapon slot type: {payload.slot_type}")
-            if payload.max_weapon_class and payload.max_weapon_class not in weapon_classes:
-                raise MasterDataError(f"Unknown weapon class: {payload.max_weapon_class}")
+            requested_class = payload.max_weapon_class
+            if requested_class and requested_class not in weapon_classes:
+                raise MasterDataError(f"Unknown weapon class: {requested_class}")
+            if payload.slot_type in REGULAR_WEAPON_SLOT_TYPES and payload.capacity > 0:
+                resolved_class = (
+                    weapon_classes[requested_class]
+                    if requested_class
+                    else default_weapon_class
+                )
+            else:
+                resolved_class = None
             active.add(payload.slot_type)
             mount = current.get(payload.slot_type)
             values = {
                 "slot_type_id": slot_types[payload.slot_type].id,
                 "capacity": payload.capacity,
                 "special_weapon_capacity": payload.special_weapon_capacity,
-                "max_weapon_class_id": (
-                    weapon_classes[payload.max_weapon_class].id
-                    if payload.max_weapon_class
-                    else None
-                ),
+                "max_weapon_class_id": (resolved_class.id if resolved_class is not None else None),
                 "max_caliber_inches": payload.max_caliber_inches,
             }
             if mount is None:

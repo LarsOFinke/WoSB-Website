@@ -62,8 +62,8 @@ export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, s
     return translated === path ? (definition?.label || String(key).replaceAll('_', ' ')) : translated
   }
 
-  function formatEffects(name, categoryKey = 'upgrade') {
-    const entries = Object.entries(optionEffects(categoryKey, name))
+  function formatEffectMap(effects) {
+    const entries = Object.entries(effects || {})
       .filter(([, value]) => Number(value) !== 0)
     return entries.map(([key, value]) => {
       if (key.endsWith('_enabled')) return statLabel(key)
@@ -71,6 +71,10 @@ export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, s
       const display = number > 0 ? `+${number}` : String(number)
       return `${statLabel(key)} ${display}${key.endsWith('_pct') ? '%' : ''}`
     }).join(' · ')
+  }
+
+  function formatEffects(name, categoryKey = 'upgrade') {
+    return formatEffectMap(optionEffects(categoryKey, name))
   }
 
   return {
@@ -85,6 +89,7 @@ export function useBuildCatalog({ optionCatalog, selectedShip, optionLabel, t, s
     inventoryImage,
     upgradeEffects,
     specialCrewEffects,
+    formatEffectMap,
     formatEffects,
   }
 }

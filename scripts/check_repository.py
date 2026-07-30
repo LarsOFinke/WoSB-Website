@@ -199,7 +199,7 @@ from app.modules.builds.models.build_slot import BuildSlot
 register_all_models()
 expected_build_columns = {
     "id", "build_name", "build_type", "ship_id", "owner_id",
-    "is_official_template", "research_upgrade_slot_unlocked",
+    "is_official_template", "research_upgrade_feature_id",
     "mortar_modification_installed", "sailors", "soldiers",
     "musketeers", "mercenaries", "details", "created_at", "updated_at",
 }

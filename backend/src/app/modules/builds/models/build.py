@@ -15,13 +15,13 @@ from app.modules.builds.services.build_stat_service import (
     round_half_up,
 )
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
-from app.modules.builds.services.research_upgrade_reward import research_upgrade_slot_effects
 from app.modules.builds.services.specialist_effect_service import resolve_specialist_effects
 from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 
 if TYPE_CHECKING:
     from app.modules.accounts.models.user import User
     from app.modules.builds.models.build_classification import BuildClassification
+    from app.modules.builds.models.build_feature import BuildFeatureDefinition
     from app.modules.builds.models.build_slot import BuildSlot
 
 WEAPON_SLOT_TYPE_BY_ARC = {
@@ -67,7 +67,11 @@ class Build(Base):
     ship_id: Mapped[int] = mapped_column(ForeignKey("ships.id"), nullable=False, index=True)
     owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     is_official_template: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
-    research_upgrade_slot_unlocked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    research_upgrade_feature_id: Mapped[int | None] = mapped_column(
+        ForeignKey("build_features.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     mortar_modification_installed: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -88,6 +92,9 @@ class Build(Base):
 
     ship: Mapped[Ship] = relationship(lazy="joined")
     owner: Mapped["User | None"] = relationship("User", lazy="joined")
+    research_upgrade_feature: Mapped["BuildFeatureDefinition | None"] = relationship(
+        "BuildFeatureDefinition", lazy="selectin"
+    )
     slots: Mapped[list["BuildSlot"]] = relationship(
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -103,6 +110,22 @@ class Build(Base):
     @property
     def classification_tags(self) -> list[str]:
         return [classification.tag for classification in self.classifications]
+
+    @property
+    def research_upgrade_slot_unlocked(self) -> bool:
+        return self.research_upgrade_feature is not None
+
+    @property
+    def research_upgrade_slot_effects(self) -> dict[str, int | float]:
+        if self.research_upgrade_feature is None:
+            return {}
+        return dict(self.research_upgrade_feature.stat_effects)
+
+    @property
+    def research_upgrade_slots(self) -> int:
+        if self.research_upgrade_feature is None:
+            return 0
+        return max(0, int(self.research_upgrade_feature.upgrade_slots_granted or 0))
 
     @property
     def build_role_label(self) -> str:
@@ -304,7 +327,7 @@ class Build(Base):
         upgrade_effects = self._combine_effects(*upgrade_effect_sets)
         special_crew_effect_sets = self._special_crew_effect_sets()
         special_crew_effects = self._combine_effects(*special_crew_effect_sets)
-        research_effects = research_upgrade_slot_effects(self.research_upgrade_slot_unlocked)
+        research_effects = self.research_upgrade_slot_effects
         mortar_modification_effects = self.ship.mortar_modification_effects(
             self.mortar_modification_installed
         )
@@ -377,7 +400,7 @@ class Build(Base):
         pre_expansion_access = calculate_upgrade_slot_access(
             ship_upgrade_slots=int(self.ship.upgrade_slots or 0),
             unlock_effect_slots=0,
-            research_upgrade_slot_unlocked=self.research_upgrade_slot_unlocked,
+            research_upgrade_slots=self.research_upgrade_slots,
         )
         expansion_upgrade_slots = self._upgrade_unlock_slot_total(
             max_index=pre_expansion_access.available_slots
@@ -385,7 +408,7 @@ class Build(Base):
         upgrade_access = calculate_upgrade_slot_access(
             ship_upgrade_slots=int(self.ship.upgrade_slots or 0),
             unlock_effect_slots=expansion_upgrade_slots,
-            research_upgrade_slot_unlocked=self.research_upgrade_slot_unlocked,
+            research_upgrade_slots=self.research_upgrade_slots,
         )
         base_upgrade_slots_available = upgrade_access.base_slots
         upgrade_slot_5_unlocked = upgrade_access.slot_5_unlocked
@@ -407,13 +430,13 @@ class Build(Base):
         if self.sailors < effective_sailor_minimum:
             warnings.append("Sailor count is below the required minimum.")
         if self.upgrade_5 and not upgrade_slot_5_unlocked:
-            warnings.append("Upgrade slot 5 is selected but neither the research reward nor an expansion effect unlocks it.")
+            warnings.append("Upgrade slot 5 is selected but neither the upgrade add-on slot nor an expansion effect unlocks it.")
         if self.upgrade_6 and not upgrade_slot_6_available:
             warnings.append("Upgrade slot 6 is selected without enough independent slot unlocks.")
         if self.upgrade_7 and not upgrade_slot_7_available:
             warnings.append("Upgrade slot 7 is selected without enough upgrade-slot capacity.")
         if self.upgrade_8 and not upgrade_slot_8_available:
-            warnings.append("Upgrade slot 8 requires Structural Expansion, the research reward, and a ship-specific extra slot.")
+            warnings.append("Upgrade slot 8 requires Structural Expansion, the upgrade add-on slot, and a ship-specific extra slot.")
 
         return {
             "crew_total": crew_total,

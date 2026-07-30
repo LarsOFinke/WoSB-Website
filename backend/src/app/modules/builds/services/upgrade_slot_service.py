@@ -24,14 +24,14 @@ def calculate_upgrade_slot_access(
     *,
     ship_upgrade_slots: int,
     unlock_effect_slots: int = 0,
-    research_upgrade_slot_unlocked: bool = False,
+    research_upgrade_slots: int = 0,
 ) -> UpgradeSlotAccess:
     """Calculate the eight-slot Build Designer access model.
 
     Slots 1-4 are the regular rack. The remaining capacity comes from the
     actual in-game slot sources:
 
-    * the ship-line research reward grants one slot,
+    * the configured build feature grants its normalized slot count,
     * expansion upgrades grant their full ``extra_upgrade_slots`` value, and
     * exceptional ships can provide built-in slots (for example La Couronne).
 
@@ -50,7 +50,11 @@ def calculate_upgrade_slot_access(
     configured_slots = max(int(ship_upgrade_slots or 0), 0)
     base_slots = min(configured_slots, BASE_UPGRADE_SLOT_LIMIT)
     has_upgrade_rack = configured_slots > 0
-    research_slots = 1 if has_upgrade_rack and research_upgrade_slot_unlocked else 0
+    research_slots = (
+        min(max(int(research_upgrade_slots or 0), 0), UPGRADE_SLOT_LIMIT - base_slots)
+        if has_upgrade_rack
+        else 0
+    )
     ship_extra_slots = min(
         max(configured_slots - STANDARD_SHIP_UPGRADE_SLOTS, 0),
         UPGRADE_SLOT_LIMIT - base_slots,

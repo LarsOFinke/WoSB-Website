@@ -7,12 +7,14 @@ from app.modules.admin.schemas.master_data import (
     MasterDataOverview,
     MasterDataSeedRestoreSummary,
     MasterDataTaxonomyRead,
+    ShipRateWeaponClassRuleRead,
     WeaponClassRead,
     WeaponSlotTypeRead,
 )
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.ships.models.ship import Ship
+from app.modules.ships.models.rate_weapon_class import ShipRateWeaponClassRule
 from app.modules.ships.models.weapon_mount import WeaponClassDefinition, WeaponSlotType
 
 from .categories import CategoryMasterDataService
@@ -78,6 +80,9 @@ class MasterDataService:
         slots = self.db.scalars(
             select(WeaponSlotType).order_by(WeaponSlotType.sort_order)
         ).all()
+        rate_rules = self.db.scalars(
+            select(ShipRateWeaponClassRule).order_by(ShipRateWeaponClassRule.rate)
+        ).all()
         return MasterDataTaxonomyRead(
             weapon_classes=[
                 WeaponClassRead(code=row.code, label=row.label, rank=row.rank)
@@ -88,6 +93,12 @@ class MasterDataService:
                     code=row.code, label=row.label, sort_order=row.sort_order
                 )
                 for row in slots
+            ],
+            ship_rate_weapon_classes=[
+                ShipRateWeaponClassRuleRead(
+                    rate=row.rate, weapon_class=row.weapon_class.code
+                )
+                for row in rate_rules
             ],
         )
 

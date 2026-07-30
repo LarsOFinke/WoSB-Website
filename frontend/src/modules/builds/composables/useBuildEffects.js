@@ -27,6 +27,7 @@ export function useBuildEffects({
     form,
     shipUpgradeSlots: selectedShip.value?.upgrade_slots || 0,
     effectForUpgrade: catalog.upgradeEffects,
+    researchUpgradeSlots: optionCatalog.value.research_upgrade_slot_grant || 0,
     slotLimit: equipmentUpgradeCount,
   }))
   const selectedUpgradeNames = computed(() => upgradeAccess.value.selectedUpgradeNames)

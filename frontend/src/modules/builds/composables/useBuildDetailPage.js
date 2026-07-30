@@ -30,7 +30,7 @@ export function useBuildDetailPage(props) {
   const { optionLabel, t } = useLocale()
   const { user } = useSession()
   const build = ref(null)
-  const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {}, limits: {} })
+  const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {}, research_upgrade_slot_grant: 0, limits: {} })
   const loading = ref(false)
   const error = ref('')
   const shareStatus = ref('')

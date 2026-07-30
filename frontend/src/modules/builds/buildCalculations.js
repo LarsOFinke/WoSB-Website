@@ -13,7 +13,7 @@ export function sumEffects(...effectSets) {
 export function calculateUpgradeSlotAccess({
   shipUpgradeSlots,
   unlockEffectSlots = 0,
-  researchUpgradeSlotUnlocked = false,
+  researchUpgradeSlots = 0,
   slotLimit = 8,
   baseSlotLimit = 4,
   standardShipSlots = 5,
@@ -21,7 +21,10 @@ export function calculateUpgradeSlotAccess({
   const configuredSlots = Math.max(Number(shipUpgradeSlots) || 0, 0)
   const baseSlots = Math.min(configuredSlots, baseSlotLimit)
   const effectSlots = Math.min(Math.max(Number(unlockEffectSlots) || 0, 0), slotLimit - baseSlots)
-  const researchSlots = researchUpgradeSlotUnlocked ? 1 : 0
+  const researchSlots = Math.min(
+    Math.max(Number(researchUpgradeSlots) || 0, 0),
+    slotLimit - baseSlots,
+  )
   const shipExtraSlots = Math.min(
     Math.max(configuredSlots - standardShipSlots, 0),
     slotLimit - baseSlots,
@@ -48,16 +51,19 @@ export function calculateBuildUpgradeSlotAccess({
   form,
   shipUpgradeSlots,
   effectForUpgrade,
+  researchUpgradeSlots = 0,
   slotLimit = 8,
 }) {
   const selectedUpgradeNames = Array.from(
     { length: slotLimit },
     (_, offset) => form?.[`upgrade_${offset + 1}`] || '',
   )
-  const researchUpgradeSlotUnlocked = Boolean(form?.research_upgrade_slot_unlocked)
+  const appliedResearchUpgradeSlots = form?.research_upgrade_slot_unlocked
+    ? Math.max(Number(researchUpgradeSlots) || 0, 0)
+    : 0
   const preExpansionAccess = calculateUpgradeSlotAccess({
     shipUpgradeSlots,
-    researchUpgradeSlotUnlocked,
+    researchUpgradeSlots: appliedResearchUpgradeSlots,
     slotLimit,
   })
   const expansionUnlockSlots = selectedUpgradeNames
@@ -71,7 +77,7 @@ export function calculateBuildUpgradeSlotAccess({
     ...calculateUpgradeSlotAccess({
       shipUpgradeSlots,
       unlockEffectSlots: expansionUnlockSlots,
-      researchUpgradeSlotUnlocked,
+      researchUpgradeSlots: appliedResearchUpgradeSlots,
       slotLimit,
     }),
     selectedUpgradeNames,

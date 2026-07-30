@@ -1,4 +1,4 @@
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useLocale } from '@/locales'
 import {
@@ -35,6 +35,7 @@ import {
   shipPayload,
   weaponMountRows,
 } from '@/modules/admin/domain/masterDataForms'
+import { applyRateWeaponClassDefaults as applyWeaponClassDefaults } from '@/modules/admin/domain/shipWeaponClassDefaults'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 import { useDebouncedWatch } from '@/shared/composables/useDebouncedWatch'
 
@@ -54,7 +55,7 @@ export function useMasterDataWorkspace() {
   const error = ref('')
   const success = ref('')
   const overview = ref({ ...EMPTY_OVERVIEW })
-  const taxonomy = ref({ weapon_classes: [], weapon_slot_types: [] })
+  const taxonomy = ref({ weapon_classes: [], weapon_slot_types: [], ship_rate_weapon_classes: [] })
   const categories = ref([])
   const options = ref([])
   const upgradeOptions = ref([])
@@ -69,6 +70,17 @@ export function useMasterDataWorkspace() {
   const categoryForm = reactive(createCategoryForm())
   const optionForm = reactive(createOptionForm())
   const shipForm = reactive(createShipForm())
+  const suppressRateDefaults = ref(false)
+
+
+  function applyRateWeaponClassDefaults(rate, options = {}) {
+    applyWeaponClassDefaults(
+      shipForm.weapon_mounts,
+      taxonomy.value.ship_rate_weapon_classes,
+      rate,
+      options,
+    )
+  }
 
   const selectedCategory = computed(() => categories.value.find((row) => row.id === categoryEditingId.value))
   const selectedOption = computed(() => options.value.find((row) => row.id === optionEditingId.value))
@@ -118,8 +130,11 @@ export function useMasterDataWorkspace() {
   }
 
   function resetShip(row = null) {
+    suppressRateDefaults.value = true
     shipEditingId.value = row?.id || null
     Object.assign(shipForm, shipFormValues(row, taxonomy.value.weapon_slot_types))
+    suppressRateDefaults.value = false
+    if (!row) applyRateWeaponClassDefaults(shipForm.rate, { force: true })
     clearMessages()
   }
 
@@ -157,7 +172,10 @@ export function useMasterDataWorkspace() {
       taxonomy.value = taxonomyRows
       categories.value = categoryRows
       await Promise.all([loadOptions(), loadUpgradeOptions(), loadShips()])
-      if (!shipForm.weapon_mounts.length) shipForm.weapon_mounts = blankMounts()
+      if (!shipForm.weapon_mounts.length) {
+        shipForm.weapon_mounts = blankMounts()
+        applyRateWeaponClassDefaults(shipForm.rate, { force: true })
+      }
     } catch (err) {
       error.value = err.message || t('masterData.loadError')
     } finally {
@@ -298,6 +316,11 @@ export function useMasterDataWorkspace() {
       saving.value = false
     }
   }
+
+  watch(() => shipForm.rate, (rate, previousRate) => {
+    if (suppressRateDefaults.value) return
+    applyRateWeaponClassDefaults(rate, { previousRate })
+  }, { flush: 'sync' })
 
   useDebouncedWatch([optionCategory, optionSearch], loadOptions, 180)
   useDebouncedWatch(shipSearch, loadShips, 180)

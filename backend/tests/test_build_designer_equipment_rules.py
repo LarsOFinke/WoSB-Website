@@ -7,11 +7,11 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
+from app.modules.builds.models.build_feature import BuildFeatureDefinition
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.services.build_service import BuildValidationError, create_build
-from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
@@ -272,7 +272,7 @@ def test_research_reward_unlocks_and_persists_fifth_upgrade_slot() -> None:
         db.add(ship)
         db.commit()
 
-        with pytest.raises(BuildValidationError, match="research reward"):
+        with pytest.raises(BuildValidationError, match="upgrade add-on"):
             create_build(
                 db,
                 BuildCreate(
@@ -297,7 +297,11 @@ def test_research_reward_unlocks_and_persists_fifth_upgrade_slot() -> None:
         assert build.ship_stats["research_upgrade_slots"] == 1
         assert build.ship_stats["upgrade_slot_5_unlocked"] is True
         assert build.ship_stats["upgrade_slots_available"] == 5
-        assert build.ship_stats["research_upgrade_slot_effects"] == RESEARCH_UPGRADE_SLOT_EFFECTS
+        assert build.ship_stats["research_upgrade_slot_effects"] == {
+            "hull_hp_pct": -5,
+            "turn_rate_pct": -5,
+            "hold_capacity_pct": -5,
+        }
 
 
 def test_research_reward_debuffs_are_applied_to_live_and_saved_stats() -> None:
@@ -335,35 +339,21 @@ def test_research_reward_debuffs_are_applied_to_live_and_saved_stats() -> None:
 
         stats = build.ship_stats
         assert stats["research_upgrade_slot_effects"] == {
-            "hull_hp_pct": -10,
-            "speed_pct": -10,
-            "turn_rate_pct": -10,
-            "armor_pct": -10,
-            "hold_capacity_pct": -10,
-            "crew_capacity_pct": -10,
+            "hull_hp_pct": -5,
+            "turn_rate_pct": -5,
+            "hold_capacity_pct": -5,
         }
         assert stats["effective_stats"] == {
             **stats["effective_stats"],
-            "durability": 90,
-            "speed_knots": 7.2,
-            "maneuverability": 72,
-            "armor": 9.0,
-            "hold_capacity": 90,
-            "crew_capacity": 18,
+            "durability": 95,
+            "speed_knots": 8.0,
+            "maneuverability": 76,
+            "armor": 10.0,
+            "hold_capacity": 95,
+            "crew_capacity": 20,
         }
-        assert stats["effective_crew_capacity"] == 18
-        assert all(value == -10 for value in stats["research_upgrade_slot_effects"].values())
-
-        with pytest.raises(BuildValidationError, match="effective ship capacity"):
-            create_build(
-                db,
-                BuildCreate(
-                    build_name="Research penalty validation",
-                    ship_id=ship.id,
-                    research_upgrade_slot_unlocked=True,
-                    sailors=19,
-                ),
-            )
+        assert stats["effective_crew_capacity"] == 20
+        assert all(value == -5 for value in stats["research_upgrade_slot_effects"].values())
 
 
 def test_reseeding_repairs_incomplete_non_overridden_equipment_effects() -> None:
@@ -673,3 +663,56 @@ def test_ship_specific_structural_expansion_value_controls_slot_unlock() -> None
                     upgrade_8=helm.name,
                 ),
             )
+
+
+def test_upgrade_add_on_rule_is_loaded_from_normalized_database_rows() -> None:
+    with seeded_session() as db:
+        feature = db.scalar(
+            select(BuildFeatureDefinition).where(
+                BuildFeatureDefinition.code == "research_upgrade_slot"
+            )
+        )
+        assert feature is not None
+        feature.upgrade_slots_granted = 2
+        for effect in feature.effects:
+            effect.effect_value = -7 if effect.effect_key == "hull_hp_pct" else 0
+        db.commit()
+
+        ship = Ship(
+            name="Normalized feature test ship",
+            rate=5,
+            ship_type="Test",
+            durability=100,
+            speed_knots=8,
+            maneuverability=80,
+            armor=10,
+            hold_capacity=100,
+            crew_capacity=20,
+            sailor_minimum=0,
+            displacement_tons=100,
+            source="test",
+            sail_slots=1,
+            upgrade_slots=4,
+            has_lantern=True,
+            is_active=True,
+        )
+        db.add(ship)
+        db.commit()
+
+        build = create_build(
+            db,
+            BuildCreate(
+                build_name="Database-driven add-on",
+                ship_id=ship.id,
+                research_upgrade_slot_unlocked=True,
+            ),
+        )
+
+        assert build.ship_stats["research_upgrade_slots"] == 2
+        assert build.ship_stats["upgrade_slots_available"] == 6
+        assert build.ship_stats["research_upgrade_slot_effects"] == {
+            "hold_capacity_pct": 0,
+            "hull_hp_pct": -7,
+            "turn_rate_pct": 0,
+        }
+        assert build.ship_stats["effective_stats"]["durability"] == 93

@@ -10,7 +10,10 @@ from app.modules.builds.schemas.build_role import BuildRoleRead
 from app.modules.builds.services.build_role_service import list_build_roles
 from app.modules.builds.services.build_limits import build_limits_for_api
 from app.modules.builds.services.build_stat_service import stat_definitions_for_api
-from app.modules.builds.services.research_upgrade_reward import RESEARCH_UPGRADE_SLOT_EFFECTS
+from app.modules.builds.services.build_feature_service import (
+    RESEARCH_UPGRADE_SLOT_CODE,
+    get_build_feature,
+)
 from app.modules.builds.services.ship_upgrade_effect_service import (
     effective_upgrade_effects,
     has_ship_upgrade_override,
@@ -113,11 +116,18 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
             )
         )
 
+    research_feature = get_build_feature(db, RESEARCH_UPGRADE_SLOT_CODE)
+
     return BuildOptionsCatalog(
         build_roles=[BuildRoleRead.model_validate(role) for role in list_build_roles(db)],
         categories=[BuildItemCategoryRead.model_validate(category) for category in categories],
         options=grouped,
         stat_definitions=stat_definitions_for_api(),
-        research_upgrade_slot_effects=dict(RESEARCH_UPGRADE_SLOT_EFFECTS),
+        research_upgrade_slot_effects=(
+            dict(research_feature.stat_effects) if research_feature is not None else {}
+        ),
+        research_upgrade_slot_grant=(
+            int(research_feature.upgrade_slots_granted) if research_feature is not None else 0
+        ),
         limits=build_limits_for_api(),
     )

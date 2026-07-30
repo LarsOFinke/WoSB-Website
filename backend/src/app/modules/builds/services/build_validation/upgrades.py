@@ -13,12 +13,12 @@ class UpgradeAccessEvaluator:
         ship: Ship,
         selected_upgrades: dict[int, BuildItemOption],
         *,
-        research_upgrade_slot_unlocked: bool,
+        research_upgrade_slots: int,
     ) -> dict[str, int | bool]:
         pre_expansion = calculate_upgrade_slot_access(
             ship_upgrade_slots=int(ship.upgrade_slots or 0),
             unlock_effect_slots=0,
-            research_upgrade_slot_unlocked=research_upgrade_slot_unlocked,
+            research_upgrade_slots=research_upgrade_slots,
         )
         unlock_effect_slots = sum(
             max(
@@ -31,7 +31,7 @@ class UpgradeAccessEvaluator:
         access = calculate_upgrade_slot_access(
             ship_upgrade_slots=int(ship.upgrade_slots or 0),
             unlock_effect_slots=unlock_effect_slots,
-            research_upgrade_slot_unlocked=research_upgrade_slot_unlocked,
+            research_upgrade_slots=research_upgrade_slots,
         )
         return {
             "base_slots": access.base_slots,

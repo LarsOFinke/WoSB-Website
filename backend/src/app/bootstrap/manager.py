@@ -11,11 +11,12 @@ from app.bootstrap.admin_user import seed_admin_user
 from app.bootstrap.build_catalog import seed_build_option_catalog
 from app.bootstrap.ship_catalog import (
     seed_ship_catalog,
+    seed_ship_rate_weapon_class_rules,
     seed_ship_upgrade_effect_overrides,
     seed_ships,
     seed_weapon_definitions,
 )
-from app.bootstrap.system_catalog import seed_fleets, seed_system_catalog
+from app.bootstrap.system_catalog import seed_build_features, seed_fleets, seed_system_catalog
 
 
 class SeedManager:
@@ -99,11 +100,14 @@ class SeedManager:
 
     def seed_weapon_slot_types(self) -> None:
         seed_weapon_definitions(self.db)
+        seed_ship_rate_weapon_class_rules(self.db)
 
     def seed_ships(self) -> None:
+        seed_ship_rate_weapon_class_rules(self.db)
         seed_ships(self.db)
         seed_ship_upgrade_effect_overrides(self.db)
 
     def seed_build_options(self) -> None:
+        seed_build_features(self.db)
         seed_build_option_catalog(self.db)
         seed_ship_upgrade_effect_overrides(self.db)

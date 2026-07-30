@@ -23,7 +23,7 @@ const {
   optionLabel, t, isEditing, ships, optionCatalog, loading, saving, deleting, error, buildCrewVisuals, buildTypeOptions,
   optionsFor, form, selectedShip, availableWeaponArcs, optionMeta, optionEffects, optionImage,
   selectedShipImage, inventoryCategory, inventoryImage, upgradeEffects, specialCrewEffects,
-  formatEffects, equipmentUpgradeCount, upgradeAccess, selectedUpgradeNames, upgradeEffectTotals, specialCrewEffectSets,
+  formatEffectMap, formatEffects, equipmentUpgradeCount, upgradeAccess, selectedUpgradeNames, upgradeEffectTotals, specialCrewEffectSets,
   specialCrewEffectTotals, equipmentEffectTotals, researchUpgradeEffectTotals, buildEffectTotals,
   buildEffectSets, upgradeSlot5Unlocked, upgradeSlot6Available, upgradeSlot7Available,
   upgradeSlot8Available, availableUpgradeSlots, crewCapacity, sailorMinimum, sailingEfficiency,
@@ -39,6 +39,7 @@ const {
 
 const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
 const mortarModification = computed(() => selectedShip.value?.mortar_modification ?? null)
+const researchUpgradeEffectSummary = computed(() => formatEffectMap(optionCatalog.value.research_upgrade_slot_effects || {}))
 const specialistSelection = computed(() => splitSpecialistSelection(form.special_crew_slots))
 const regularSpecialistRows = computed(() => Array.from(
   { length: REGULAR_SPECIALIST_LIMIT },
@@ -224,6 +225,7 @@ function toggleGinger() {
           <span>{{ form.research_upgrade_slot_unlocked ? '✓' : '+' }}</span>
           <strong>{{ t('builds.create.equipment.researchUpgradeSlot') }}</strong>
           <small>{{ t('builds.create.equipment.researchUpgradeSlotHint') }}</small>
+          <small v-if="researchUpgradeEffectSummary" class="research-slot-effects">{{ researchUpgradeEffectSummary }}</small>
         </button>
         <button
           v-if="mortarModification"

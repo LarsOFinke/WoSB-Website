@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "catalog": "build-rules",
+  "build_features": [
+    {
+      "code": "research_upgrade_slot",
+      "label": "Upgrade add-on slot",
+      "upgrade_slots_granted": 1,
+      "stat_effects": {
+        "hull_hp_pct": -5,
+        "turn_rate_pct": -5,
+        "hold_capacity_pct": -5
+      }
+    }
+  ],
+  "ship_rate_weapon_classes": [
+    { "rate": 1, "weapon_class": "heavy" },
+    { "rate": 2, "weapon_class": "heavy" },
+    { "rate": 3, "weapon_class": "medium" },
+    { "rate": 4, "weapon_class": "medium" },
+    { "rate": 5, "weapon_class": "light" },
+    { "rate": 6, "weapon_class": "light" },
+    { "rate": 7, "weapon_class": "light" }
+  ]
+}

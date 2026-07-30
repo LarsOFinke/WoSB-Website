@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.modules.builds.models.build import Build
 from app.modules.builds.models.build_classification import BuildClassification
+from app.modules.builds.models.build_feature import BuildFeatureDefinition
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.builds.models.build_role import BuildRole
 from app.modules.builds.models.build_vote import BuildVote
@@ -21,6 +22,9 @@ def _build_query():
     return select(Build).options(
         selectinload(Build.slots).selectinload(BuildSlot.option),
         selectinload(Build.classifications),
+        selectinload(Build.research_upgrade_feature).selectinload(
+            BuildFeatureDefinition.effects
+        ),
     )
 
 def _decorate_builds(
@@ -107,11 +111,16 @@ def get_build(db: Session, build_id: int, viewer_id: int | None = None) -> Build
         return None
     return _decorate_builds(db, [build], viewer_id)[0]
 
-def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildSlot]) -> None:
+def _apply_build_payload(
+    db_build: Build,
+    build: BuildCreate,
+    slots: list[BuildSlot],
+    research_feature: BuildFeatureDefinition | None,
+) -> None:
     db_build.build_name = build.build_name
     db_build.build_type = build.build_type
     db_build.ship_id = build.ship_id
-    db_build.research_upgrade_slot_unlocked = build.research_upgrade_slot_unlocked
+    db_build.research_upgrade_feature = research_feature
     db_build.mortar_modification_installed = build.mortar_modification_installed
     db_build.sailors = build.sailors
     db_build.soldiers = build.soldiers
@@ -122,9 +131,9 @@ def _apply_build_payload(db_build: Build, build: BuildCreate, slots: list[BuildS
     db_build.classifications = [BuildClassification(tag=tag) for tag in build.classification_tags]
 
 def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -> Build:
-    _, slots = validate_and_prepare_build(db, build)
+    _, slots, research_feature = validate_and_prepare_build(db, build)
     db_build = Build(owner_id=owner_id)
-    _apply_build_payload(db_build, build, slots)
+    _apply_build_payload(db_build, build, slots, research_feature)
     db.add(db_build)
     db.commit()
     return get_build(db, db_build.id, viewer_id=owner_id) or db_build
@@ -136,10 +145,10 @@ def update_user_build(
     if db_build is None or db_build.owner_id != user_id or db_build.is_official_template:
         return None
 
-    _, slots = validate_and_prepare_build(db, build)
+    _, slots, research_feature = validate_and_prepare_build(db, build)
     db_build.slots.clear()
     db.flush()
-    _apply_build_payload(db_build, build, slots)
+    _apply_build_payload(db_build, build, slots, research_feature)
     db.add(db_build)
     db.commit()
     return get_build(db, db_build.id, viewer_id=user_id) or db_build

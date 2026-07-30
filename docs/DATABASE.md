@@ -23,6 +23,21 @@ Ein Repository-Gate prüft die zulässigen Spalten beider Build-Tabellen, und ei
 ändert nach dem Speichern eines Builds dessen Schiff-/Segel-Stammdaten und verifiziert die
 unmittelbare Neuberechnung desselben Datensatzes. Ergebnis-Snapshots sind bewusst verboten.
 
+Auch freischaltbare Build-Funktionen sind normalisiert. Ein Build speichert für den
+Upgrade-Add-on-Slot ausschließlich `research_upgrade_feature_id`. Die Definition in
+`build_features` enthält die Anzahl zusätzlicher Slots; jede statistische Auswirkung liegt als
+eigene Zeile in `build_feature_effects`. Der aktuelle Katalog definiert einen zusätzlichen Slot
+sowie jeweils `-5 %` Haltbarkeit, Manövrierfähigkeit und Laderaum. Berechnung und Anzeige lesen
+diese Zeilen zur Laufzeit; die Werte sind nicht in Python- oder JavaScript-Formeln eingebettet.
+
+Die Standard-Waffenklasse neuer Schiffe wird ebenfalls referenziell über
+`ship_rate_weapon_class_rules` bestimmt: Rate 7–5 → Light, Rate 4–3 → Medium und Rate 2–1 →
+Heavy. Die Regel gilt nur für reguläre Bug-, Heck- und Breitseiten-Mounts. Mörser und spezielle
+Waffen sind ausgeschlossen. Ein expliziter Mount-Wert bleibt für geprüfte Schiffsausnahmen
+erlaubt. Migration `0008` ergänzt die Klasse außerdem bei bereits gespeicherten regulären Mounts,
+wenn deren Klasse leer und deren Kapazität größer als null ist; vorhandene Werte werden nie
+überschrieben.
+
 ## Migrationen
 
 ```bash
@@ -57,8 +72,8 @@ Seed-Datensätze besitzen stabile Identität, Revision, Checksumme und Override-
 Läufe schreiben nichts neu; Admin-Overrides bleiben geschützt; entfernte Defaults werden inaktiv.
 
 Alle repository-eigenen Stammdaten liegen als streng validierte JSON-Dokumente
-unter `backend/seeds/`. Das Manifest deckt Systemrollen, Flotten, Build-Kategorien
-und -Optionen sowie den nach Rate gegliederten Schiffskatalog ab. Unter
+unter `backend/seeds/`. Das Manifest deckt Systemrollen, Flotten, normalisierte Build-Regeln,
+Build-Kategorien und -Optionen sowie den nach Rate gegliederten Schiffskatalog ab. Unter
 `backend/src` verbleiben nur Loader und idempotente Synchronisationslogik.
 
 ```bash

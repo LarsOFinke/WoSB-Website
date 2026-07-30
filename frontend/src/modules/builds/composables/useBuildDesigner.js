@@ -17,7 +17,7 @@ const EMPTY_CATALOG = {
   categories: [],
   options: {},
   stat_definitions: [],
-  research_upgrade_slot_effects: {},
+  research_upgrade_slot_effects: {}, research_upgrade_slot_grant: 0,
   limits: {},
 }
 

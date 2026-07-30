@@ -273,6 +273,12 @@ class WeaponSlotTypeRead(BaseModel):
     sort_order: int
 
 
+class ShipRateWeaponClassRuleRead(BaseModel):
+    rate: int = Field(ge=1, le=7)
+    weapon_class: str = Field(min_length=1, max_length=24)
+
+
 class MasterDataTaxonomyRead(BaseModel):
     weapon_classes: list[WeaponClassRead]
     weapon_slot_types: list[WeaponSlotTypeRead]
+    ship_rate_weapon_classes: list[ShipRateWeaponClassRuleRead] = Field(default_factory=list)

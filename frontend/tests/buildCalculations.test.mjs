@@ -43,9 +43,9 @@ test('calculateBuildStatRows applies percentage before the flat calculator bonus
 })
 
 
-test('research reward unlocks one optional slot and reports its availability', () => {
+test('upgrade add-on slot unlocks one optional slot and reports its availability', () => {
   assert.deepEqual(
-    calculateUpgradeSlotAccess({ shipUpgradeSlots: 4, researchUpgradeSlotUnlocked: true }),
+    calculateUpgradeSlotAccess({ shipUpgradeSlots: 4, researchUpgradeSlots: 1 }),
     {
       baseSlots: 4,
       effectSlots: 0,
@@ -70,6 +70,7 @@ test('Structural Expansion grants both tooltip slots while occupying its selecte
     },
     shipUpgradeSlots: 5,
     effectForUpgrade: (name) => name === 'Structural Expansion' ? { extra_upgrade_slots: 2 } : {},
+    researchUpgradeSlots: 1,
   })
 
   assert.equal(access.expansionUnlockSlots, 2)
@@ -122,7 +123,7 @@ test('research, Structural Expansion and a ship extra stack to eight slots', () 
   assert.deepEqual(
     calculateUpgradeSlotAccess({
       shipUpgradeSlots: 6,
-      researchUpgradeSlotUnlocked: true,
+      researchUpgradeSlots: 1,
       unlockEffectSlots: 2,
     }),
     {

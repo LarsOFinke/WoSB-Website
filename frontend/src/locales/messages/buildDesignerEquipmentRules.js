@@ -3,12 +3,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Locked: enable the research reward or use an expansion upgrade in slots 1-4',
+          lockedUpgrade5: 'Locked: enable the upgrade add-on slot or use an expansion upgrade in slots 1-4',
           lockedUpgrade6: 'Locked: requires Structural Expansion or two one-slot sources',
-          lockedUpgrade7: 'Locked: requires Structural Expansion plus the research reward or a ship extra slot',
-          lockedUpgrade8: 'Locked: requires Structural Expansion + research reward + ship extra slot',
+          lockedUpgrade7: 'Locked: requires Structural Expansion plus the upgrade add-on slot or a ship extra slot',
+          lockedUpgrade8: 'Locked: requires Structural Expansion + upgrade add-on slot + ship extra slot',
           researchUpgradeSlot: 'Unlock additional upgrade slot',
-          researchUpgradeSlotHint: 'Enable when the account-wide reward for researching all ship lines has been unlocked. The associated -10% penalties to the ship\'s principal values are applied automatically.',
+          researchUpgradeSlotHint: 'Enable when the account-wide upgrade add-on slot has been unlocked. The data-driven penalties shown below are applied automatically.',
           mortarModification: 'Install Mortar Modification',
           mortarModificationHint: 'Permanent conversion in game: +{mortars} mortar slot(s), -{broadside} gun positions per broadside. It uses no upgrade slot; all stat changes appear in the live result.',
         },
@@ -19,7 +19,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Ship-line research reward',
+        researchUpgradeSlot: 'Upgrade add-on slot',
         researchUpgradeSlotActive: 'Additional upgrade slot enabled',
         researchUpgradeSlotInactive: 'Not enabled',
         mortarModification: 'Mortar Modification',
@@ -47,12 +47,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Gesperrt: Forschung oder Ausbau nötig',
+          lockedUpgrade5: 'Gesperrt: Upgrade-Add-on oder Ausbau nötig',
           lockedUpgrade6: 'Gesperrt: Ausbau oder 2 Slot-Quellen',
-          lockedUpgrade7: 'Gesperrt: Ausbau + Forschung / Extra-Slot',
-          lockedUpgrade8: 'Gesperrt: Ausbau + Forschung + Extra-Slot',
+          lockedUpgrade7: 'Gesperrt: Ausbau + Upgrade-Add-on / Extra-Slot',
+          lockedUpgrade8: 'Gesperrt: Ausbau + Upgrade-Add-on + Extra-Slot',
           researchUpgradeSlot: 'Zusätzlichen Upgrade-Slot freischalten',
-          researchUpgradeSlotHint: 'Aktivieren, wenn die accountweite Belohnung für alle erforschten Schiffsreihen freigeschaltet wurde. Die zugehörigen -10-%-Mali auf die wichtigsten Schiffswerte werden automatisch angewendet.',
+          researchUpgradeSlotHint: 'Aktivieren, wenn der accountweite Upgrade-Add-on-Slot freigeschaltet wurde. Die unten aus den Stammdaten angezeigten Mali werden automatisch angewendet.',
           mortarModification: 'Mörser-Modifikation einbauen',
           mortarModificationHint: 'Im Spiel dauerhaft: +{mortars} Mörser-Slot(s), -{broadside} Kanonenplätze je Breitseite. Belegt keinen Upgrade-Slot; alle Werte fließen oben ins Live-Ergebnis ein.',
         },
@@ -63,7 +63,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Belohnung für erforschte Schiffsreihen',
+        researchUpgradeSlot: 'Upgrade-Add-on-Slot',
         researchUpgradeSlotActive: 'Zusätzlicher Upgrade-Slot aktiv',
         researchUpgradeSlotInactive: 'Nicht aktiviert',
         mortarModification: 'Mörser-Modifikation',
@@ -91,12 +91,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Verrouillé : activez la récompense de recherche ou une amélioration d’extension dans les emplacements 1 à 4',
+          lockedUpgrade5: 'Verrouillé : activez l’emplacement d’amélioration additionnel ou une amélioration d’extension dans les emplacements 1 à 4',
           lockedUpgrade6: 'Verrouillé : nécessite Structural Expansion ou deux sources d’un emplacement',
-          lockedUpgrade7: 'Verrouillé : nécessite Structural Expansion plus la récompense de recherche ou un emplacement supplémentaire du navire',
-          lockedUpgrade8: 'Verrouillé : nécessite Structural Expansion + récompense de recherche + emplacement supplémentaire du navire',
+          lockedUpgrade7: 'Verrouillé : nécessite Structural Expansion plus l’emplacement d’amélioration additionnel ou un emplacement supplémentaire du navire',
+          lockedUpgrade8: 'Verrouillé : nécessite Structural Expansion + emplacement d’amélioration additionnel + emplacement supplémentaire du navire',
           researchUpgradeSlot: 'Déverrouiller l’emplacement d’amélioration supplémentaire',
-          researchUpgradeSlotHint: 'À activer lorsque la récompense de compte pour toutes les lignées de navires recherchées est débloquée. Les pénalités associées de -10 % sur les valeurs principales du navire sont appliquées automatiquement.',
+          researchUpgradeSlotHint: 'À activer lorsque l’emplacement d’amélioration additionnel du compte est débloqué. Les pénalités issues des données de référence affichées ci-dessous sont appliquées automatiquement.',
           mortarModification: 'Installer la modification mortier',
           mortarModificationHint: 'Conversion permanente en jeu : +{mortars} emplacement(s) de mortier, -{broadside} canons par bordée. Aucun emplacement d’amélioration utilisé ; tous les effets sont inclus dans le résultat en direct.',
         },
@@ -107,7 +107,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Récompense de recherche des lignées de navires',
+        researchUpgradeSlot: 'Emplacement d’amélioration additionnel',
         researchUpgradeSlotActive: 'Emplacement supplémentaire activé',
         researchUpgradeSlotInactive: 'Non activé',
         mortarModification: 'Modification mortier',
@@ -135,12 +135,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Bloqueado: activa la recompensa de investigación o usa una mejora de expansión en los espacios 1-4',
+          lockedUpgrade5: 'Bloqueado: activa el espacio adicional de mejora o usa una mejora de expansión en los espacios 1-4',
           lockedUpgrade6: 'Bloqueado: requiere Structural Expansion o dos fuentes de un espacio',
-          lockedUpgrade7: 'Bloqueado: requiere Structural Expansion más la recompensa de investigación o un espacio extra del barco',
-          lockedUpgrade8: 'Bloqueado: requiere Structural Expansion + recompensa de investigación + espacio extra del barco',
+          lockedUpgrade7: 'Bloqueado: requiere Structural Expansion más el espacio adicional de mejora o un espacio extra del barco',
+          lockedUpgrade8: 'Bloqueado: requiere Structural Expansion + espacio adicional de mejora + espacio extra del barco',
           researchUpgradeSlot: 'Desbloquear espacio de mejora adicional',
-          researchUpgradeSlotHint: 'Actívalo cuando se haya desbloqueado la recompensa de cuenta por investigar todas las líneas de barcos. Las penalizaciones asociadas del -10 % a los valores principales se aplican automáticamente.',
+          researchUpgradeSlotHint: 'Actívalo cuando se haya desbloqueado el espacio adicional de mejora de la cuenta. Las penalizaciones basadas en los datos de referencia que se muestran debajo se aplican automáticamente.',
           mortarModification: 'Instalar modificación de mortero',
           mortarModificationHint: 'Conversión permanente en el juego: +{mortars} espacio(s) de mortero, -{broadside} cañones por banda. No usa espacio de mejora y todos los efectos aparecen en el resultado en vivo.',
         },
@@ -151,7 +151,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Recompensa por investigar líneas de barcos',
+        researchUpgradeSlot: 'Espacio adicional de mejora',
         researchUpgradeSlotActive: 'Espacio de mejora adicional activo',
         researchUpgradeSlotInactive: 'No activado',
         mortarModification: 'Modificación de mortero',
@@ -179,12 +179,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Bloqueado: ativa a recompensa de pesquisa ou usa uma melhoria de expansão nos espaços 1-4',
+          lockedUpgrade5: 'Bloqueado: ativa o espaço adicional de melhoria ou usa uma melhoria de expansão nos espaços 1-4',
           lockedUpgrade6: 'Bloqueado: requer Structural Expansion ou duas fontes de um espaço',
-          lockedUpgrade7: 'Bloqueado: requer Structural Expansion mais a recompensa de investigação ou um espaço extra do navio',
-          lockedUpgrade8: 'Bloqueado: requer Structural Expansion + recompensa de investigação + espaço extra do navio',
+          lockedUpgrade7: 'Bloqueado: requer Structural Expansion mais o espaço adicional de melhoria ou um espaço extra do navio',
+          lockedUpgrade8: 'Bloqueado: requer Structural Expansion + espaço adicional de melhoria + espaço extra do navio',
           researchUpgradeSlot: 'Desbloquear espaço de melhoria adicional',
-          researchUpgradeSlotHint: 'Ativa quando a recompensa de conta por pesquisar todas as linhas de navios estiver desbloqueada. As penalizações associadas de -10% nos valores principais são aplicadas automaticamente.',
+          researchUpgradeSlotHint: 'Ativa quando o espaço adicional de melhoria da conta estiver desbloqueado. As penalizações baseadas nos dados de referência mostradas abaixo são aplicadas automaticamente.',
           mortarModification: 'Instalar modificação de morteiro',
           mortarModificationHint: 'Conversão permanente no jogo: +{mortars} espaço(s) de morteiro, -{broadside} canhões por bordo. Não usa espaço de melhoria e todos os efeitos entram no resultado ao vivo.',
         },
@@ -195,7 +195,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Recompensa de pesquisa das linhas de navios',
+        researchUpgradeSlot: 'Espaço adicional de melhoria',
         researchUpgradeSlotActive: 'Espaço de melhoria adicional ativo',
         researchUpgradeSlotInactive: 'Não ativado',
         mortarModification: 'Modificação de morteiro',
@@ -223,12 +223,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: 'Заблокировано: включите награду за исследование или используйте расширение в слотах 1–4',
+          lockedUpgrade5: 'Заблокировано: включите дополнительный слот улучшения или используйте расширение в слотах 1–4',
           lockedUpgrade6: 'Заблокировано: нужна Structural Expansion или два источника по одному слоту',
-          lockedUpgrade7: 'Заблокировано: нужна Structural Expansion и награда исследования либо дополнительный слот корабля',
-          lockedUpgrade8: 'Заблокировано: нужны Structural Expansion + награда исследования + дополнительный слот корабля',
+          lockedUpgrade7: 'Заблокировано: нужна Structural Expansion и дополнительный слот улучшения либо дополнительный слот корабля',
+          lockedUpgrade8: 'Заблокировано: нужны Structural Expansion + дополнительный слот улучшения + дополнительный слот корабля',
           researchUpgradeSlot: 'Разблокировать дополнительный слот улучшения',
-          researchUpgradeSlotHint: 'Включите, если получена общая награда аккаунта за исследование всех веток кораблей. Связанные штрафы -10% к основным параметрам корабля применяются автоматически.',
+          researchUpgradeSlotHint: 'Включите, если на аккаунте открыт дополнительный слот улучшения. Показанные ниже штрафы из справочных данных применяются автоматически.',
           mortarModification: 'Установить миномётную модификацию',
           mortarModificationHint: 'Постоянная переделка в игре: +{mortars} миномётных слота, -{broadside} орудий на каждом борту. Слот улучшения не занимает; эффекты учтены в результате.',
         },
@@ -239,7 +239,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: 'Награда за исследование веток кораблей',
+        researchUpgradeSlot: 'Дополнительный слот улучшения',
         researchUpgradeSlotActive: 'Дополнительный слот улучшения включён',
         researchUpgradeSlotInactive: 'Не включено',
         mortarModification: 'Миномётная модификация',
@@ -267,12 +267,12 @@ export const buildDesignerEquipmentRulesMessages = {
     builds: {
       create: {
         equipment: {
-          lockedUpgrade5: '已锁定：启用研究奖励，或在 1-4 号槽使用扩展升级',
+          lockedUpgrade5: '已锁定：启用额外升级槽，或在 1-4 号槽使用扩展升级',
           lockedUpgrade6: '已锁定：需要 Structural Expansion，或两个单槽位来源',
-          lockedUpgrade7: '已锁定：需要 Structural Expansion，加上研究奖励或舰船额外槽位',
-          lockedUpgrade8: '已锁定：需要 Structural Expansion + 研究奖励 + 舰船额外槽位',
+          lockedUpgrade7: '已锁定：需要 Structural Expansion，加上额外升级槽或舰船额外槽位',
+          lockedUpgrade8: '已锁定：需要 Structural Expansion + 额外升级槽 + 舰船额外槽位',
           researchUpgradeSlot: '解锁额外升级槽',
-          researchUpgradeSlotHint: '在账号已解锁研究全部舰船线的奖励时启用。相关的主要舰船属性 -10% 减益会自动应用。',
+          researchUpgradeSlotHint: '在账号已解锁额外升级槽时启用。下方依据主数据展示的减益会自动应用。',
           mortarModification: '安装迫击炮改装',
           mortarModificationHint: '游戏内永久改装：+{mortars} 个迫击炮槽，每侧舷炮 -{broadside}。不占升级槽，所有属性变化都会计入实时结果。',
         },
@@ -283,7 +283,7 @@ export const buildDesignerEquipmentRulesMessages = {
         },
       },
       detail: {
-        researchUpgradeSlot: '舰船线研究奖励',
+        researchUpgradeSlot: '额外升级槽',
         researchUpgradeSlotActive: '额外升级槽已启用',
         researchUpgradeSlotInactive: '未启用',
         mortarModification: '迫击炮改装',

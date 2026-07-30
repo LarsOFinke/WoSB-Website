@@ -14,4 +14,5 @@ class BuildOptionsCatalog(BaseModel):
     options: dict[str, list[BuildItemOptionRead]]
     stat_definitions: list[BuildStatDefinitionRead] = Field(default_factory=list)
     research_upgrade_slot_effects: dict[str, int | float] = Field(default_factory=dict)
+    research_upgrade_slot_grant: int = Field(default=0, ge=0, le=8)
     limits: dict[str, int] = Field(default_factory=dict)

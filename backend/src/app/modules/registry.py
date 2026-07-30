@@ -14,6 +14,7 @@ _MODEL_MODULES = (
     "app.modules.admin.models.ip_block",
     "app.modules.admin.models.outbound_webhook",
     "app.modules.builds.models.build",
+    "app.modules.builds.models.build_feature",
     "app.modules.builds.models.build_role",
     "app.modules.builds.models.build_vote",
     "app.modules.builds.models.build_classification",
@@ -40,6 +41,7 @@ _MODEL_MODULES = (
     "app.modules.onboarding.models.newcomer_guide",
     "app.modules.ships.models.ship",
     "app.modules.ships.models.mortar_modification",
+    "app.modules.ships.models.rate_weapon_class",
     "app.modules.ships.models.ship_upgrade_effect",
     "app.modules.ships.models.weapon_mount",
 )
