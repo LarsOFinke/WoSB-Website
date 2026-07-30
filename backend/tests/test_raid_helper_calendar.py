@@ -33,6 +33,7 @@ def _profile(db, admin):
             server_id="123456789012345678",
             api_key="super-secret-raid-key",
             timezone="Europe/Berlin",
+            default_leader_id="913456789012345678",
         ),
         admin,
     )
@@ -54,6 +55,7 @@ def test_raid_helper_profiles_are_admin_only_and_keys_are_encrypted() -> None:
             assert stored is not None
             assert "super-secret-raid-key" not in stored.api_key_encrypted
             assert created.api_key_configured is True
+            assert created.default_leader_id == "913456789012345678"
             assert not hasattr(created, "api_key")
 
         login = client.post(
@@ -64,6 +66,7 @@ def test_raid_helper_profiles_are_admin_only_and_keys_are_encrypted() -> None:
         response = client.get("/api/admin/raid-helper/profiles")
         assert response.status_code == 200
         assert response.json()[0]["api_key_configured"] is True
+        assert response.json()[0]["default_leader_id"] == "913456789012345678"
         assert "api_key" not in response.json()[0]
 
 
@@ -86,6 +89,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                     server_id="223456789012345678",
                     api_key="routing-secret-key",
                     timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
                 ),
                 user,
             )
@@ -163,6 +167,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                 db, user, category="operation", squad_id=None
             )
             assert [row.id for row in fleet_options] == [fleet_destination.id]
+            assert fleet_options[0].default_leader_id == "913456789012345678"
             assert [row.id for row in fleet_options[0].templates] == [fleet_template.id]
             squad_options = raid_helper_service.integration_options(
                 db, user, category="training", squad_id=squad.id
@@ -217,6 +222,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
             assert requests[0][2]["date"] == "2026-08-01"
             assert requests[0][2]["time"] == "20:00"
             assert requests[0][2]["duration"] == 120
+            assert requests[0][2]["leaderId"] == "913456789012345678"
             assert requests[0][2]["date_variant"] == "both"
             assert requests[0][2]["12h_format"] is False
             assert requests[0][2]["info_variant"] == "long"
@@ -243,6 +249,7 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
                     server_id="523456789012345678",
                     api_key="cancel-secret-key",
                     timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
                 ),
                 user,
             )
@@ -328,6 +335,7 @@ def test_raid_helper_requests_reuse_hardened_runtime_transport(monkeypatch) -> N
                     server_id="723456789012345678",
                     api_key="transport-secret-key",
                     timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
                 ),
                 user,
             )
@@ -365,6 +373,19 @@ def test_raid_helper_runtime_service_has_no_httpx_dependency() -> None:
     source = service_path.read_text(encoding="utf-8")
     assert "import httpx" not in source
     assert "WebhookTransport" in source
+
+
+def test_raid_helper_manual_leader_override_takes_precedence() -> None:
+    from types import SimpleNamespace
+
+    link = SimpleNamespace(
+        leader_id_override="923456789012345678",
+        destination=SimpleNamespace(
+            profile=SimpleNamespace(default_leader_id="913456789012345678")
+        ),
+    )
+
+    assert raid_helper_service._effective_leader_id(link) == "923456789012345678"
 
 
 def test_raid_helper_api_host_is_canonicalized() -> None:
@@ -428,6 +449,7 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                     server_id="523456789012345678",
                     api_key="retry-secret-key",
                     timezone="Europe/Berlin",
+                    default_leader_id="913456789012345678",
                 ),
                 user,
             )
@@ -468,6 +490,7 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                         RaidHelperDispatchSelection(
                             destination_id=destination.id,
                             template_id=template.id,
+                            leader_id="923456789012345678",
                         )
                     ],
                 ),
@@ -509,3 +532,5 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
             assert link.status == "delivered"
             assert link.external_event_id == "112233445566778899"
             assert requests[0]["templateId"] == "123456789012345678"
+            assert requests[0]["leaderId"] == "923456789012345678"
+            assert link.leader_id_override == "923456789012345678"

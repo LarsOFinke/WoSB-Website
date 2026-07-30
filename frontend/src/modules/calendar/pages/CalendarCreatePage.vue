@@ -26,6 +26,7 @@ const {
   endAt,
   dateRangeInvalid,
   selectedRaidHelperCount,
+  raidHelperLeaderInvalid,
   loadScopes,
   loadRaidHelperOptions,
   destinationSelected,
@@ -186,7 +187,7 @@ const {
                   <span class="field-label">{{ t('raidHelper.calendar.template') }}</span>
                   <span class="select-shell full-select-shell">
                     <select
-                      :value="raidHelperSelections[destination.id]"
+                      :value="raidHelperSelections[destination.id].templateId"
                       @change="setDestinationTemplate(destination.id, $event.target.value)"
                     >
                       <option v-for="template in destination.templates" :key="template.id" :value="template.id">
@@ -194,6 +195,30 @@ const {
                       </option>
                     </select>
                   </span>
+                </label>
+                <label v-if="destinationSelected(destination.id)" class="field-stack">
+                  <span class="field-label">{{ t('raidHelper.calendar.leaderSource') }}</span>
+                  <span class="select-shell full-select-shell">
+                    <select v-model="raidHelperSelections[destination.id].leaderMode">
+                      <option value="profile" :disabled="!destination.default_leader_id">
+                        {{ destination.default_leader_id ? t('raidHelper.calendar.useProfileLeader', { id: destination.default_leader_id }) : t('raidHelper.calendar.profileLeaderUnavailable') }}
+                      </option>
+                      <option value="manual">{{ t('raidHelper.calendar.useManualLeader') }}</option>
+                    </select>
+                  </span>
+                </label>
+                <label v-if="destinationSelected(destination.id) && raidHelperSelections[destination.id].leaderMode === 'manual'" class="field-stack">
+                  <span class="field-label">{{ t('raidHelper.calendar.manualLeaderId') }}</span>
+                  <span class="input-panel embedded-field">
+                    <input
+                      v-model="raidHelperSelections[destination.id].leaderId"
+                      required
+                      inputmode="numeric"
+                      pattern="[0-9]{5,32}"
+                      :placeholder="t('raidHelper.calendar.manualLeaderPlaceholder')"
+                    />
+                  </span>
+                  <small>{{ t('raidHelper.calendar.manualLeaderHelp') }}</small>
                 </label>
               </article>
             </div>
@@ -207,7 +232,7 @@ const {
         <p v-if="dateRangeInvalid" class="error-text form-message">{{ t('calendar.create.dateRangeInvalid') }}</p>
         <p v-if="error" class="error-text form-message">{{ error }}</p>
         <div class="form-actions calendar-create-actions">
-          <button class="wire-section form-button primary" type="submit" :disabled="saving || dateRangeInvalid || loadingScopes || !form.scope">
+          <button class="wire-section form-button primary" type="submit" :disabled="saving || dateRangeInvalid || raidHelperLeaderInvalid || loadingScopes || !form.scope">
             {{ saving ? t('calendar.create.saving') : t('calendar.create.save') }}
           </button>
         </div>

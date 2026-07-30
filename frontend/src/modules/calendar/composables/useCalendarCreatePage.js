@@ -10,6 +10,8 @@ import {
 import { useSession } from '@/modules/accounts/session'
 import { listSquads } from '@/modules/squads/api/squads'
 
+const DISCORD_ID_PATTERN = /^[0-9]{5,32}$/
+
 export function useCalendarCreatePage() {
   const route = useRoute()
   const router = useRouter()
@@ -66,7 +68,10 @@ export function useCalendarCreatePage() {
     return date
   })
   const dateRangeInvalid = computed(() => !startAt.value || !endAt.value || endAt.value <= startAt.value)
-  const selectedRaidHelperCount = computed(() => Object.values(raidHelperSelections).filter(Boolean).length)
+  const selectedRaidHelperCount = computed(() => Object.values(raidHelperSelections).filter((selection) => selection?.templateId).length)
+  const raidHelperLeaderInvalid = computed(() => Object.values(raidHelperSelections).some((selection) => (
+    selection?.leaderMode === 'manual' && !DISCORD_ID_PATTERN.test(selection.leaderId.trim())
+  )))
 
   function clearRaidHelperSelections() {
     for (const key of Object.keys(raidHelperSelections)) delete raidHelperSelections[key]
@@ -74,6 +79,15 @@ export function useCalendarCreatePage() {
 
   function defaultTemplate(destination) {
     return destination.templates.find((template) => template.is_default) || destination.templates[0] || null
+  }
+
+  function createRaidHelperSelection(destination, templateId, previous = null) {
+    const useProfileDefault = Boolean(destination.default_leader_id)
+    return {
+      templateId,
+      leaderMode: previous?.leaderMode === 'manual' || !useProfileDefault ? 'manual' : 'profile',
+      leaderId: previous?.leaderId || '',
+    }
   }
 
   async function loadRaidHelperOptions() {
@@ -93,13 +107,20 @@ export function useCalendarCreatePage() {
       clearRaidHelperSelections()
       raidHelperOptions.value = options
       for (const destination of options) {
+        const prior = previous[destination.id]
         const allowedTemplateIds = new Set(destination.templates.map((template) => template.id))
-        if (previous[destination.id] && allowedTemplateIds.has(Number(previous[destination.id]))) {
-          raidHelperSelections[destination.id] = Number(previous[destination.id])
+        if (prior?.templateId && allowedTemplateIds.has(Number(prior.templateId))) {
+          raidHelperSelections[destination.id] = createRaidHelperSelection(
+            destination,
+            Number(prior.templateId),
+            prior,
+          )
           continue
         }
         const template = defaultTemplate(destination)
-        if (destination.is_default && template) raidHelperSelections[destination.id] = template.id
+        if (destination.is_default && template) {
+          raidHelperSelections[destination.id] = createRaidHelperSelection(destination, template.id)
+        }
       }
     } catch (err) {
       raidHelperOptions.value = []
@@ -111,7 +132,7 @@ export function useCalendarCreatePage() {
   }
 
   function destinationSelected(destinationId) {
-    return Boolean(raidHelperSelections[destinationId])
+    return Boolean(raidHelperSelections[destinationId]?.templateId)
   }
 
   function toggleDestination(destination) {
@@ -120,12 +141,16 @@ export function useCalendarCreatePage() {
       return
     }
     const template = defaultTemplate(destination)
-    if (template) raidHelperSelections[destination.id] = template.id
+    if (template) {
+      raidHelperSelections[destination.id] = createRaidHelperSelection(destination, template.id)
+    }
   }
 
   function setDestinationTemplate(destinationId, value) {
     const templateId = Number(value)
-    if (Number.isInteger(templateId) && templateId > 0) raidHelperSelections[destinationId] = templateId
+    if (Number.isInteger(templateId) && templateId > 0 && raidHelperSelections[destinationId]) {
+      raidHelperSelections[destinationId].templateId = templateId
+    }
   }
 
   async function loadScopes() {
@@ -152,6 +177,10 @@ export function useCalendarCreatePage() {
       error.value = t('calendar.create.noScopeError')
       return
     }
+    if (form.raidHelperEnabled && raidHelperLeaderInvalid.value) {
+      error.value = t('raidHelper.calendar.leaderRequired')
+      return
+    }
 
     saving.value = true
     try {
@@ -168,10 +197,11 @@ export function useCalendarCreatePage() {
         raid_helper_enabled: form.raidHelperEnabled,
         raid_helper_dispatches: form.raidHelperEnabled
           ? Object.entries(raidHelperSelections)
-            .filter(([, templateId]) => Boolean(templateId))
-            .map(([destinationId, templateId]) => ({
+            .filter(([, selection]) => Boolean(selection?.templateId))
+            .map(([destinationId, selection]) => ({
               destination_id: Number(destinationId),
-              template_id: Number(templateId),
+              template_id: Number(selection.templateId),
+              leader_id: selection.leaderMode === 'manual' ? selection.leaderId.trim() : null,
             }))
           : [],
       })
@@ -218,6 +248,7 @@ export function useCalendarCreatePage() {
     endAt,
     dateRangeInvalid,
     selectedRaidHelperCount,
+    raidHelperLeaderInvalid,
     loadScopes,
     loadRaidHelperOptions,
     destinationSelected,

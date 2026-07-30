@@ -22,7 +22,8 @@ test('calendar creation enables Raid-Helper by default and submits explicit dest
   assert.match(source, /raid_helper_enabled:\s*form\.raidHelperEnabled/)
   assert.match(source, /raid_helper_dispatches:/)
   assert.match(source, /destination_id:\s*Number\(destinationId\)/)
-  assert.match(source, /template_id:\s*Number\(templateId\)/)
+  assert.match(source, /template_id:\s*Number\(selection\.templateId\)/)
+  assert.match(source, /leader_id:\s*selection\.leaderMode === 'manual'/)
 })
 
 test('calendar UI filters targets by scope/category and exposes a per-event opt-out', async () => {
@@ -31,6 +32,9 @@ test('calendar UI filters targets by scope/category and exposes a per-event opt-
   assert.match(source, /raidHelperOptions/)
   assert.match(source, /destination\.templates/)
   assert.match(source, /toggleDestination\(destination\)/)
+  assert.match(source, /destination\.default_leader_id/)
+  assert.match(source, /raidHelperSelections\[destination\.id\]\.leaderMode/)
+  assert.match(source, /raidHelperSelections\[destination\.id\]\.leaderId/)
 })
 
 test('Raid-Helper credentials and routing are managed only in the admin workspace', async () => {
@@ -42,6 +46,7 @@ test('Raid-Helper credentials and routing are managed only in the admin workspac
   assert.match(routes, /requiresAdmin:\s*true/)
   assert.match(page, /type="password"/)
   assert.match(page, /profileForm\.server_id/)
+  assert.match(page, /profileForm\.default_leader_id/)
   assert.match(page, /destinationForm\.scope_type/)
   assert.match(page, /templateForm\.categories/)
 })

@@ -34,11 +34,12 @@ const {
           <input v-model="profileForm.api_base_url" required aria-label="API base URL" />
           <select v-model="profileForm.authorization_mode"><option value="authorization">Authorization</option><option value="bearer">Bearer</option><option value="x-api-key">X-API-Key</option></select>
           <label><span>{{ t('raidHelper.timezone') }}</span><input v-model="profileForm.timezone" required placeholder="Europe/Berlin" /><small>{{ t('raidHelper.timezoneHelp') }}</small></label>
+          <label><span>{{ t('raidHelper.defaultLeaderId') }}</span><input v-model="profileForm.default_leader_id" inputmode="numeric" pattern="[0-9]+" :placeholder="t('raidHelper.defaultLeaderPlaceholder')" /><small>{{ t('raidHelper.defaultLeaderHelp') }}</small></label>
           <label><input v-model="profileForm.is_active" type="checkbox" /> {{ t('common.active') }}</label>
           <div class="form-actions"><button class="button-box primary-action" type="submit">{{ t('common.save') }}</button><button v-if="profileEditId" class="button-box" type="button" @click="resetProfile">{{ t('common.cancel') }}</button></div>
         </form>
         <article v-for="row in profiles" :key="row.id" class="raid-helper-row">
-          <div><strong>{{ row.name }}</strong><small>{{ row.server_id }} · {{ row.timezone }} · {{ row.api_key_configured ? 'API key set' : 'No API key' }}</small></div>
+          <div><strong>{{ row.name }}</strong><small>{{ row.server_id }} · {{ row.timezone }} · {{ row.default_leader_id ? t('raidHelper.defaultLeaderConfigured', { id: row.default_leader_id }) : t('raidHelper.defaultLeaderMissing') }} · {{ row.api_key_configured ? 'API key set' : 'No API key' }}</small></div>
           <div><button class="small-action" @click="testProfile(row)">{{ t('raidHelper.test') }}</button><button class="small-action" @click="editProfile(row)">{{ t('common.edit') }}</button><button class="small-action danger" @click="removeProfile(row)">{{ t('common.delete') }}</button></div>
         </article>
       </section>

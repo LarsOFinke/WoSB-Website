@@ -38,6 +38,7 @@ function defaultProfileForm() {
     api_base_url: DEFAULT_API_BASE_URL,
     authorization_mode: 'authorization',
     timezone: 'Europe/Berlin',
+    default_leader_id: '',
     is_active: true,
   }
 }
@@ -133,6 +134,7 @@ export function useRaidHelperPage() {
       api_base_url: row.api_base_url,
       authorization_mode: row.authorization_mode,
       timezone: row.timezone,
+      default_leader_id: row.default_leader_id || '',
       is_active: row.is_active,
     })
   }
@@ -144,6 +146,7 @@ export function useRaidHelperPage() {
       const payload = {
         ...profileForm,
         api_key: profileForm.api_key || (profileEditId.value ? null : ''),
+        default_leader_id: profileForm.default_leader_id.trim() || null,
       }
       if (profileEditId.value) await updateRaidHelperProfile(profileEditId.value, payload)
       else await createRaidHelperProfile(payload)
@@ -295,7 +298,7 @@ export function useRaidHelperPage() {
     activeSquads,
     FLEET_EVENT_CATEGORIES,
     RAID_HELPER_CALENDAR_PRESETS,
-  RAID_HELPER_RECOMMENDED_PAYLOAD,
+    RAID_HELPER_RECOMMENDED_PAYLOAD,
     applyRaidHelperCalendarPreset,
     applyRaidHelperRecommendedPayload,
     toggleCategory,

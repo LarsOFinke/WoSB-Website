@@ -93,6 +93,7 @@ def integration_options(db: Session, user: User, *, category: str, squad_id: int
             result.append(RaidHelperOptionDestination(
                 id=row.id, name=row.name, profile_id=row.profile_id, profile_name=row.profile.name,
                 scope_type=row.scope_type, squad_id=row.squad_id, is_default=row.is_default,
+                default_leader_id=row.profile.default_leader_id,
                 templates=templates,
             ))
     return result
@@ -100,18 +101,36 @@ def integration_options(db: Session, user: User, *, category: str, squad_id: int
 
 def configure_event_links(db: Session, event: FleetEvent, selections: list[RaidHelperDispatchSelection], user: User) -> None:
     options = integration_options(db, user, category=event.category, squad_id=event.squad_id)
-    allowed = {(destination.id, template.id) for destination in options for template in destination.templates}
+    allowed = {
+        (destination.id, template.id): destination
+        for destination in options
+        for template in destination.templates
+    }
     requested = {(item.destination_id, item.template_id) for item in selections}
     if not requested.issubset(allowed):
         raise RaidHelperError("One or more Raid-Helper destinations or templates are not valid for this event.")
     existing = {row.destination_id: row for row in db.scalars(select(RaidHelperEventLink).where(RaidHelperEventLink.event_id == event.id)).all()}
-    requested_destinations = {destination_id for destination_id, _ in requested}
-    for destination_id, template_id in requested:
-        row = existing.get(destination_id)
+    requested_destinations = {item.destination_id for item in selections}
+    for selection in selections:
+        destination = allowed[(selection.destination_id, selection.template_id)]
+        if not selection.leader_id and not destination.default_leader_id:
+            raise RaidHelperError(
+                f'Raid-Helper destination "{destination.name}" requires a leader ID. '
+                "Set a profile default or enter one for this appointment."
+            )
+        row = existing.get(selection.destination_id)
         if row is None:
-            db.add(RaidHelperEventLink(event_id=event.id, destination_id=destination_id, template_id=template_id, status="queued", last_operation="create"))
+            db.add(RaidHelperEventLink(
+                event_id=event.id,
+                destination_id=selection.destination_id,
+                template_id=selection.template_id,
+                leader_id_override=selection.leader_id,
+                status="queued",
+                last_operation="create",
+            ))
         else:
-            row.template_id = template_id
+            row.template_id = selection.template_id
+            row.leader_id_override = selection.leader_id
             row.status = "queued"
             row.last_operation = "update" if row.external_event_id else "create"
             row.error_message = None
@@ -270,10 +289,24 @@ def _render_json(value: Any, context: dict[str, Any]) -> Any:
     return value
 
 
-def _payload(event: FleetEvent, template: RaidHelperTemplate) -> dict[str, Any]:
+def _payload(event: FleetEvent, template: RaidHelperTemplate, leader_id: str) -> dict[str, Any]:
     context = _event_context(event, template)
+    context["raid_helper"]["leader_id"] = leader_id
     value = json.loads(template.payload_template_json)
-    return _render_json(value, context)
+    payload = _render_json(value, context)
+    # Raid-Helper requires leaderId for event creation. Keep this field under
+    # application control so every custom payload receives the validated value.
+    payload["leaderId"] = leader_id
+    return payload
+
+
+def _effective_leader_id(link: RaidHelperEventLink) -> str:
+    leader_id = link.leader_id_override or link.destination.profile.default_leader_id
+    if not leader_id:
+        raise RaidHelperError(
+            "Raid-Helper leader ID is missing. Set a profile default or edit the appointment selection."
+        )
+    return leader_id
 
 
 def _external_id(body: Any) -> str | None:
@@ -338,11 +371,11 @@ def _sync_link(db: Session, link: RaidHelperEventLink) -> None:
                 return
             status_code, body = _request(link.destination.profile, "DELETE", f"/events/{link.external_event_id}")
         elif link.external_event_id:
-            status_code, body = _request(link.destination.profile, "PATCH", f"/events/{link.external_event_id}", _payload(link.event, link.template))
+            status_code, body = _request(link.destination.profile, "PATCH", f"/events/{link.external_event_id}", _payload(link.event, link.template, _effective_leader_id(link)))
             link.last_operation = "update"
         else:
             path = f"/servers/{link.destination.profile.server_id}/channels/{link.destination.channel_id}/event"
-            status_code, body = _request(link.destination.profile, "POST", path, _payload(link.event, link.template))
+            status_code, body = _request(link.destination.profile, "POST", path, _payload(link.event, link.template, _effective_leader_id(link)))
             link.last_operation = "create"
         link.response_status = status_code
         if 200 <= status_code < 300:

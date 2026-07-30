@@ -38,6 +38,7 @@ class RaidHelperProfileWrite(BaseModel):
     api_base_url: str = Field(default="https://raid-helper.xyz/api/v4", max_length=200)
     authorization_mode: Literal["authorization", "bearer", "x-api-key"] = "authorization"
     timezone: str = Field(default="Europe/Berlin", min_length=1, max_length=80)
+    default_leader_id: str | None = Field(default=None, min_length=5, max_length=32, pattern=r"^[0-9]+$")
     is_active: bool = True
 
     @model_validator(mode="after")
@@ -46,6 +47,8 @@ class RaidHelperProfileWrite(BaseModel):
         self.server_id = self.server_id.strip()
         self.api_base_url = self.api_base_url.strip().rstrip("/")
         self.timezone = self.timezone.strip()
+        if isinstance(self.default_leader_id, str):
+            self.default_leader_id = self.default_leader_id.strip() or None
         if isinstance(self.api_key, str):
             self.api_key = self.api_key.strip() or None
         return self
@@ -62,6 +65,7 @@ class RaidHelperProfileRead(BaseModel):
     api_base_url: str
     authorization_mode: str
     timezone: str
+    default_leader_id: str | None = None
     is_active: bool
     api_key_configured: bool
     created_by_username: str
@@ -141,6 +145,13 @@ class RaidHelperTemplateRead(RaidHelperTemplateWrite):
 class RaidHelperDispatchSelection(BaseModel):
     destination_id: int
     template_id: int
+    leader_id: str | None = Field(default=None, min_length=5, max_length=32, pattern=r"^[0-9]+$")
+
+    @model_validator(mode="after")
+    def normalize(self):
+        if isinstance(self.leader_id, str):
+            self.leader_id = self.leader_id.strip() or None
+        return self
 
 
 class RaidHelperOptionTemplate(BaseModel):
@@ -160,6 +171,7 @@ class RaidHelperOptionDestination(BaseModel):
     scope_type: str
     squad_id: int | None = None
     is_default: bool
+    default_leader_id: str | None = None
     templates: list[RaidHelperOptionTemplate]
 
 
