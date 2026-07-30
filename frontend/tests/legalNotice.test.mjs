@@ -13,6 +13,10 @@ const publicPage = readFileSync(new URL('../src/modules/legal/pages/LegalNoticeP
 const adminPage = readFileSync(new URL('../src/modules/legal/pages/LegalNoticeAdminPage.vue', import.meta.url), 'utf8')
 const api = readFileSync(new URL('../src/modules/legal/api/legalNotice.js', import.meta.url), 'utf8')
 
+const shellStyles = readFileSync(new URL('../src/styles/global/30-shell.css', import.meta.url), 'utf8')
+const adminComposable = readFileSync(new URL('../src/modules/legal/composables/useLegalNoticeAdminPage.js', import.meta.url), 'utf8')
+const generatedEnglish = readFileSync(new URL('../src/locales/generated/en.js', import.meta.url), 'utf8')
+
 
 test('public legal notice is permanently reachable from the footer', () => {
   assert.ok(router.includes('...legalRoutes'))
@@ -38,6 +42,9 @@ test('only administrators receive the legal notice editor', () => {
   assert.ok(adminPage.includes('resetToEnvironment'))
   assert.ok(api.includes("get('/admin/legal-notice')"))
   assert.ok(api.includes("put('/admin/legal-notice'"))
+  assert.ok(api.includes("post('/admin/legal-notice/reset-environment'"))
+  assert.ok(adminPage.includes('@click.prevent="resetToEnvironment"'))
+  assert.ok(adminComposable.includes('hydrate(await resetAdminLegalNoticeToEnvironment())'))
 })
 
 
@@ -47,4 +54,21 @@ test('legal notice copy exists for every supported locale', () => {
     assert.ok(legalNoticeMessages[locale]?.legalNotice?.admin?.legalWarningText, locale)
     assert.ok(legalNoticeMessages[locale]?.legalNotice?.fields?.providerName, locale)
   }
+})
+
+
+test('the German legal-page name remains Impressum in the default English interface', () => {
+  assert.equal(legalNoticeMessages.en.legalNotice.public.title, 'Impressum')
+  assert.equal(legalNoticeMessages.en.legalNotice.public.footerLink, 'Impressum')
+  assert.equal(legalNoticeMessages.en.legalNotice.admin.title, 'Impressum')
+  assert.equal(legalNoticeMessages.en.legalNotice.admin.navigation, 'Impressum')
+  assert.ok(generatedEnglish.includes('\"footerLink\":\"Impressum\"'))
+  assert.ok(generatedEnglish.includes('\"navigation\":\"Impressum\"'))
+})
+
+
+test('the application shell keeps the footer at the viewport bottom on short pages', () => {
+  assert.ok(shellStyles.includes('min-height: 100dvh'))
+  assert.ok(shellStyles.includes('grid-template-rows: auto minmax(0, 1fr) auto'))
+  assert.ok(shellStyles.includes('align-self: end'))
 })

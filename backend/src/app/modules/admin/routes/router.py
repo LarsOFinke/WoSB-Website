@@ -10,6 +10,7 @@ from app.modules.admin.routes.outbound_webhooks import router as outbound_webhoo
 from app.modules.admin.routes.registrations import router as registrations_router
 from app.modules.admin.routes.system import router as system_router
 from app.modules.admin.routes.users import router as users_router
+from app.modules.raid_helper.routes.admin import router as raid_helper_router
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 router.include_router(system_router)
@@ -22,3 +23,5 @@ router.include_router(content_router)
 router.include_router(users_router)
 router.include_router(master_data_router)
 router.include_router(outbound_webhooks_router)
+
+router.include_router(raid_helper_router)

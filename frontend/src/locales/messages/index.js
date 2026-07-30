@@ -34,6 +34,7 @@ import { fillLocalizedMessages } from '../autoLocalization.js'
 import { groupManagementMessages } from './groupManagement.js'
 import { royalBlackwaterFleetMessages } from './royalBlackwaterFleet.js'
 import { registrationAndInventoryCleanupMessages } from './registrationAndInventoryCleanup.js'
+import { raidHelperMessages } from './raidHelper.js'
 import { userBuildsAndPasswordMessages } from './userBuildsAndPassword.js'
 
 const messageLayers = [
@@ -70,6 +71,7 @@ const messageLayers = [
   finalNavigationAndGroupSignupMessages,
   fleetIdentityMessages,
   registrationAndInventoryCleanupMessages,
+  raidHelperMessages,
 ]
 
 export const messages = cloneMessages(baseMessages)

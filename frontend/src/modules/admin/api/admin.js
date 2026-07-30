@@ -278,3 +278,55 @@ export function runDatabaseBackup() {
 export function deleteBackupConnection() {
   return deleteRequest('/admin/backups/configuration')
 }
+
+export function listRaidHelperProfiles() {
+  return get('/admin/raid-helper/profiles')
+}
+
+export function createRaidHelperProfile(payload) {
+  return post('/admin/raid-helper/profiles', payload)
+}
+
+export function updateRaidHelperProfile(id, payload) {
+  return put(`/admin/raid-helper/profiles/${id}`, payload)
+}
+
+export function deleteRaidHelperProfile(id) {
+  return deleteRequest(`/admin/raid-helper/profiles/${id}`)
+}
+
+export function testRaidHelperProfile(id) {
+  return post(`/admin/raid-helper/profiles/${id}/test`, {})
+}
+
+export function listRaidHelperDestinations() {
+  return get('/admin/raid-helper/destinations')
+}
+
+export function createRaidHelperDestination(payload) {
+  return post('/admin/raid-helper/destinations', payload)
+}
+
+export function updateRaidHelperDestination(id, payload) {
+  return put(`/admin/raid-helper/destinations/${id}`, payload)
+}
+
+export function deleteRaidHelperDestination(id) {
+  return deleteRequest(`/admin/raid-helper/destinations/${id}`)
+}
+
+export function listRaidHelperTemplates() {
+  return get('/admin/raid-helper/templates')
+}
+
+export function createRaidHelperTemplate(payload) {
+  return post('/admin/raid-helper/templates', payload)
+}
+
+export function updateRaidHelperTemplate(id, payload) {
+  return put(`/admin/raid-helper/templates/${id}`, payload)
+}
+
+export function deleteRaidHelperTemplate(id) {
+  return deleteRequest(`/admin/raid-helper/templates/${id}`)
+}

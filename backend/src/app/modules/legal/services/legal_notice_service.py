@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, fields
 
 from sqlalchemy.orm import Session
 
+from app.configuration import SettingsLoader
 from app.configuration.models import LegalNoticeSettings
-from app.core.config import settings
+from app.core.config import BACKEND_ROOT, settings
 from app.db.session import engine
 from app.modules.accounts.models.user import User
 from app.modules.admin.services.audit_log_service import record_audit_safely
@@ -17,11 +18,24 @@ from app.modules.legal.schemas.legal_notice import (
 )
 
 LEGAL_NOTICE_ID = 1
-LEGAL_NOTICE_FIELDS = tuple(asdict(settings.legal_notice).keys())
+LEGAL_NOTICE_FIELDS = tuple(field.name for field in fields(LegalNoticeSettings))
 
 
 def _environment_values(config: LegalNoticeSettings | None = None) -> dict[str, object]:
     return asdict(config or settings.legal_notice)
+
+
+def _reload_environment_values() -> dict[str, object]:
+    """Read the current configured env source instead of the startup settings cache.
+
+    Process environment values still reflect the running process. For Docker Compose,
+    changes to the host ``.env`` therefore require recreating/restarting the API
+    container before this action can see them. A configured dotenv file is reread
+    immediately.
+    """
+
+    reloaded = SettingsLoader.for_backend(BACKEND_ROOT).load().legal_notice
+    return _environment_values(reloaded)
 
 
 def _row_or_create(db: Session) -> LegalNotice:
@@ -98,7 +112,7 @@ def update_legal_notice(
         entity_type="legal_notice",
         entity_id=LEGAL_NOTICE_ID,
         action="update",
-        summary="Legal notice settings updated.",
+        summary="Impressum settings updated.",
         changed_fields=changed or ["source"],
     )
     return serialize_admin(row)
@@ -107,7 +121,7 @@ def update_legal_notice(
 def reset_legal_notice_to_environment(db: Session, *, actor: User) -> LegalNoticeAdminRead:
     row = _row_or_create(db)
     changed = []
-    for field, value in _environment_values().items():
+    for field, value in _reload_environment_values().items():
         if getattr(row, field) != value:
             setattr(row, field, value)
             changed.append(field)
@@ -121,7 +135,7 @@ def reset_legal_notice_to_environment(db: Session, *, actor: User) -> LegalNotic
         entity_type="legal_notice",
         entity_id=LEGAL_NOTICE_ID,
         action="restore",
-        summary="Legal notice settings restored from environment configuration.",
+        summary="Impressum settings restored from environment configuration.",
         changed_fields=changed or ["source"],
     )
     return serialize_admin(row)

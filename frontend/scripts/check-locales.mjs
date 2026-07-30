@@ -3,7 +3,7 @@ import { messages } from '../src/locales/messages/index.js'
 const SAME_VALUE_ALLOWLIST = new Set([
   'Royal Blackwater Fleet', 'Royal Blackwater Fleet MVP', 'Royal Blackwater', 'Fleet', 'RBF', '12:00–02:00 CET', '18:00–23:00 CET', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV', '-----BEGIN OPENSSH PRIVATE KEY-----',
   'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
-  'Rate', 'Type', 'Crew', 'Upgrades', 'Status', 'Details', 'Thread', 'Threads', 'Video', 'Text', 'Image', 'Training', 'Operation',
+  'Impressum', 'Rate', 'Type', 'Crew', 'Upgrades', 'Status', 'Details', 'Thread', 'Threads', 'Video', 'Text', 'Image', 'Training', 'Operation',
   'Focus', 'Description', 'Contact', 'Combat', 'General', 'API online', 'Upgrade {index}', 'Crew {current}/{max}',
   'Rate {value}', '{value}', 'Crew {value}', 'Crew: {current} / {max}', '1 build', '{count} builds', '1 guide', '{count} guides',
 ])

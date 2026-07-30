@@ -51,7 +51,7 @@ Category: `{data.category}`
 Starts: `{data.start_at}`
 Ends: `{data.end_at}`
 Location: {data.location}
-Squad: **{data.squad.name}** (`{data.squad_id}`)
+Scope: **{data.scope_name}** (`{data.scope_type}`)
 Cancelled by: **{actor.display_name}**
 Cancelled at: `{occurred_at}`
 🔗 [Open calendar]({resource.url})
@@ -66,7 +66,7 @@ Starts: `{data.start_at}`
 Ends: `{data.end_at}`
 All day: `{data.all_day}`
 Location: {data.location}
-Squad: **{data.squad.name}** (`{data.squad_id}`)
+Scope: **{data.scope_name}** (`{data.scope_type}`)
 Organizer: **{data.owner.display_name}**
 Description: {data.description}
 Created by: **{actor.display_name}**
@@ -82,7 +82,7 @@ Starts: `{data.start_at}`
 Ends: `{data.end_at}`
 All day: `{data.all_day}`
 Location: {data.location}
-Squad: **{data.squad.name}** (`{data.squad_id}`)
+Scope: **{data.scope_name}** (`{data.scope_type}`)
 Organizer: **{data.owner.display_name}**
 Description: {data.description}
 Updated by: **{actor.display_name}**

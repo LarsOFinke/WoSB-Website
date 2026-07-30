@@ -1,8 +1,12 @@
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocale } from '@/locales'
 import { dateInputValue, localDateFromInputs, timeInputValue } from '@/shared/datetime/localDateTime'
-import { createFleetEvent, FLEET_EVENT_CATEGORIES } from '@/modules/calendar/api/calendar'
+import {
+  createFleetEvent,
+  FLEET_EVENT_CATEGORIES,
+  listRaidHelperOptions,
+} from '@/modules/calendar/api/calendar'
 import { useSession } from '@/modules/accounts/session'
 import { listSquads } from '@/modules/squads/api/squads'
 
@@ -19,8 +23,12 @@ export function useCalendarCreatePage() {
 
   const squads = ref([])
   const loadingScopes = ref(false)
+  const loadingRaidHelper = ref(false)
   const saving = ref(false)
   const error = ref('')
+  const raidHelperError = ref('')
+  const raidHelperOptions = ref([])
+  const raidHelperSelections = reactive({})
   const form = reactive({
     title: '',
     category: 'training',
@@ -32,6 +40,7 @@ export function useCalendarCreatePage() {
     endTime: timeInputValue(later),
     allDay: false,
     description: '',
+    raidHelperEnabled: true,
   })
 
   const managedSquads = computed(() => squads.value.filter((squad) => squad.can_manage && squad.is_active))
@@ -42,6 +51,9 @@ export function useCalendarCreatePage() {
     return options
   })
   const canCreate = computed(() => scopeOptions.value.length > 0)
+  const selectedSquadId = computed(() => (
+    form.scope.startsWith('squad:') ? Number(form.scope.split(':')[1]) : null
+  ))
 
   const categoryOptions = computed(() =>
     FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) })),
@@ -54,6 +66,67 @@ export function useCalendarCreatePage() {
     return date
   })
   const dateRangeInvalid = computed(() => !startAt.value || !endAt.value || endAt.value <= startAt.value)
+  const selectedRaidHelperCount = computed(() => Object.values(raidHelperSelections).filter(Boolean).length)
+
+  function clearRaidHelperSelections() {
+    for (const key of Object.keys(raidHelperSelections)) delete raidHelperSelections[key]
+  }
+
+  function defaultTemplate(destination) {
+    return destination.templates.find((template) => template.is_default) || destination.templates[0] || null
+  }
+
+  async function loadRaidHelperOptions() {
+    raidHelperError.value = ''
+    if (!form.raidHelperEnabled || !form.scope) {
+      raidHelperOptions.value = []
+      clearRaidHelperSelections()
+      return
+    }
+    loadingRaidHelper.value = true
+    try {
+      const options = await listRaidHelperOptions({
+        category: form.category,
+        squadId: selectedSquadId.value ?? '',
+      })
+      const previous = { ...raidHelperSelections }
+      clearRaidHelperSelections()
+      raidHelperOptions.value = options
+      for (const destination of options) {
+        const allowedTemplateIds = new Set(destination.templates.map((template) => template.id))
+        if (previous[destination.id] && allowedTemplateIds.has(Number(previous[destination.id]))) {
+          raidHelperSelections[destination.id] = Number(previous[destination.id])
+          continue
+        }
+        const template = defaultTemplate(destination)
+        if (destination.is_default && template) raidHelperSelections[destination.id] = template.id
+      }
+    } catch (err) {
+      raidHelperOptions.value = []
+      clearRaidHelperSelections()
+      raidHelperError.value = err.message || t('raidHelper.calendar.loadError')
+    } finally {
+      loadingRaidHelper.value = false
+    }
+  }
+
+  function destinationSelected(destinationId) {
+    return Boolean(raidHelperSelections[destinationId])
+  }
+
+  function toggleDestination(destination) {
+    if (destinationSelected(destination.id)) {
+      delete raidHelperSelections[destination.id]
+      return
+    }
+    const template = defaultTemplate(destination)
+    if (template) raidHelperSelections[destination.id] = template.id
+  }
+
+  function setDestinationTemplate(destinationId, value) {
+    const templateId = Number(value)
+    if (Number.isInteger(templateId) && templateId > 0) raidHelperSelections[destinationId] = templateId
+  }
 
   async function loadScopes() {
     loadingScopes.value = true
@@ -82,7 +155,7 @@ export function useCalendarCreatePage() {
 
     saving.value = true
     try {
-      const squadId = form.scope.startsWith('squad:') ? Number(form.scope.split(':')[1]) : null
+      const squadId = selectedSquadId.value
       await createFleetEvent({
         title: form.title,
         category: form.category,
@@ -92,6 +165,15 @@ export function useCalendarCreatePage() {
         end_at: endAt.value.toISOString(),
         all_day: form.allDay,
         squad_id: squadId,
+        raid_helper_enabled: form.raidHelperEnabled,
+        raid_helper_dispatches: form.raidHelperEnabled
+          ? Object.entries(raidHelperSelections)
+            .filter(([, templateId]) => Boolean(templateId))
+            .map(([destinationId, templateId]) => ({
+              destination_id: Number(destinationId),
+              template_id: Number(templateId),
+            }))
+          : [],
       })
       router.push(squadId ? { path: '/calendar', query: { squad: squadId } } : '/calendar')
     } catch (err) {
@@ -101,7 +183,15 @@ export function useCalendarCreatePage() {
     }
   }
 
-  onMounted(loadScopes)
+  watch(
+    () => [form.category, form.scope, form.raidHelperEnabled],
+    () => loadRaidHelperOptions(),
+  )
+
+  onMounted(async () => {
+    await loadScopes()
+    await loadRaidHelperOptions()
+  })
 
   return {
     route,
@@ -112,17 +202,27 @@ export function useCalendarCreatePage() {
     later,
     squads,
     loadingScopes,
+    loadingRaidHelper,
     saving,
     error,
+    raidHelperError,
+    raidHelperOptions,
+    raidHelperSelections,
     form,
     managedSquads,
     scopeOptions,
     canCreate,
+    selectedSquadId,
     categoryOptions,
     startAt,
     endAt,
     dateRangeInvalid,
+    selectedRaidHelperCount,
     loadScopes,
+    loadRaidHelperOptions,
+    destinationSelected,
+    toggleDestination,
+    setDestinationTemplate,
     submitEvent,
     dateInputValue,
     localDateFromInputs,

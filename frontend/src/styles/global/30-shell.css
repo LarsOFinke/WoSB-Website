@@ -12,6 +12,8 @@ body {
 .app-shell {
   width: min(calc(100% - (var(--shell-gutter) * 2)), var(--shell-max-width));
   max-width: none;
+  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
   padding: var(--shell-gutter) 0 clamp(1rem, 2vw, 1.75rem);
   display: grid;
@@ -20,6 +22,7 @@ body {
     "topbar topbar"
     "sidebar main"
     "footer footer";
+  grid-template-rows: auto minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--shell-gap);
 }
@@ -195,8 +198,10 @@ body.sidebar-collapsed .app-shell {
   position: sticky;
   top: calc(var(--topbar-min-height) + (var(--shell-gutter) * 2));
   z-index: var(--z-shell-sidebar);
-  height: calc(100vh - var(--topbar-min-height) - (var(--shell-gutter) * 3));
+  height: auto;
   min-height: 30rem;
+  max-height: calc(100dvh - var(--topbar-min-height) - (var(--shell-gutter) * 3));
+  align-self: stretch;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 0.75rem;
@@ -352,12 +357,15 @@ body.sidebar-collapsed .sidebar-link-icon {
   grid-area: main;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   display: grid;
   align-self: stretch;
 }
 
 .footer {
   grid-area: footer;
+  width: 100%;
+  align-self: end;
 }
 
 .page-frame {

@@ -14,6 +14,7 @@ from app.modules.admin.services.webhook_event_scope import webhook_event_scope
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.schemas.fleet_event_read import FleetEventRead
 from app.modules.calendar.schemas.fleet_event_update import FleetEventUpdate
+from app.modules.raid_helper.services.raid_helper_service import RaidHelperError, sync_event
 from app.modules.calendar.services.fleet_event_service import (
     FleetEventPermissionError,
     FleetEventValidationError,
@@ -68,8 +69,10 @@ def post_event(
 ) -> FleetEventRead:
     try:
         event = create_fleet_event(db, payload, current_user)
-    except (FleetEventValidationError, FleetEventPermissionError) as exc:
+    except (FleetEventValidationError, FleetEventPermissionError, RaidHelperError) as exc:
         _raise_event_error(exc)
+    if event.raid_helper_enabled and event.raid_helper_links:
+        background_tasks.add_task(sync_event, event.id, "create")
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.created", resource_type="calendar_event", resource_id=event.id,
         resource_url=_event_resource_url(event), actor=current_user, data=event,
@@ -100,10 +103,12 @@ def put_event(
 ) -> FleetEventRead:
     try:
         event = update_fleet_event(db, event_id, payload, current_user)
-    except (FleetEventValidationError, FleetEventPermissionError) as exc:
+    except (FleetEventValidationError, FleetEventPermissionError, RaidHelperError) as exc:
         _raise_event_error(exc)
     if event is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+    if event.raid_helper_links:
+        background_tasks.add_task(sync_event, event.id, "update")
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.updated", resource_type="calendar_event", resource_id=event.id,
         resource_url=_event_resource_url(event), actor=current_user, data=event,
@@ -126,6 +131,7 @@ def delete_event(
         _raise_event_error(exc)
     if not cancelled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+    background_tasks.add_task(sync_event, event_id, "cancel")
     schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
         db, event_type="calendar.event.cancelled", resource_type="calendar_event", resource_id=event_id,
         resource_url=_event_resource_url(existing) if existing else "/calendar", actor=current_user,

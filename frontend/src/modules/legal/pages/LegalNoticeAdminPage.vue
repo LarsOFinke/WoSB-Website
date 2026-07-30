@@ -94,7 +94,7 @@ const {
         <div class="legal-notice-admin-actions">
           <button class="form-button primary-action" type="submit" :disabled="saving">{{ saving ? t('legalNotice.admin.saving') : t('legalNotice.admin.save') }}</button>
           <button class="small-action" type="button" :disabled="saving" @click="load">{{ t('legalNotice.admin.reload') }}</button>
-          <button class="danger-action" type="button" :disabled="saving" @click="resetToEnvironment">{{ t('legalNotice.admin.resetEnvironment') }}</button>
+          <button class="danger-action" type="button" :disabled="saving" @click.prevent="resetToEnvironment">{{ t('legalNotice.admin.resetEnvironment') }}</button>
         </div>
       </form>
     </section>

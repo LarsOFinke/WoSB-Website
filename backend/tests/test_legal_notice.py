@@ -137,6 +137,29 @@ def test_admin_can_publish_and_reset_legal_notice_while_regular_users_cannot() -
         assert audit.action in {"update", "restore"}
 
 
+def test_reset_rereads_current_environment_defaults(monkeypatch) -> None:
+    _reset_notice()
+    _ensure_admin()
+
+    with TestClient(app) as client:
+        _login(client)
+        update = client.put("/api/admin/legal-notice", json=_published_payload())
+        assert update.status_code == 200, update.text
+        assert update.json()["source"] == "admin"
+
+        monkeypatch.setenv("LEGAL_NOTICE_PUBLISHED", "false")
+        monkeypatch.setenv("LEGAL_NOTICE_PROVIDER_NAME", "Environment Reload Provider")
+        monkeypatch.setenv("LEGAL_NOTICE_EMAIL", "reload@example.invalid")
+
+        reset = client.post("/api/admin/legal-notice/reset-environment")
+        assert reset.status_code == 200, reset.text
+        payload = reset.json()
+        assert payload["source"] == "environment"
+        assert payload["published"] is False
+        assert payload["provider_name"] == "Environment Reload Provider"
+        assert payload["email"] == "reload@example.invalid"
+
+
 def test_publishing_requires_complete_provider_details() -> None:
     _reset_notice()
     _ensure_admin()

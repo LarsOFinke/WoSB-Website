@@ -2,7 +2,7 @@ const TEXT_PLACEHOLDER = '__WOSB_PLACEHOLDER_'
 
 const neutralValues = new Set([
   'Royal Blackwater Fleet', 'Royal Blackwater Fleet MVP', 'Royal Blackwater', 'Fleet', 'RBF', '12:00–02:00 CET', '18:00–23:00 CET', 'WoSB', 'MVP', 'API', 'PDF', 'GIF', 'MP4', 'JPEG', 'PNG', 'WebP', 'WebM', 'MOV', '-----BEGIN OPENSSH PRIVATE KEY-----',
-  'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
+  'Impressum', 'Forum', 'Guides', 'Admin', 'PvE', 'PvP', 'Support', 'Builds', 'Hold', 'Lanterns', 'Sails', 'Sources', 'Fleet', 'Profiles', 'Weapons',
 ])
 
 const localePrefixes = {

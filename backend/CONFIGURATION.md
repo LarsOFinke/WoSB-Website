@@ -50,8 +50,8 @@ Beim ersten Start nach Migration `0013` wird ein Singleton-Datensatz aus der gel
 erzeugt. Solange dieser Datensatz nicht im Staff-Panel angepasst wurde, können aktualisierte
 Umgebungswerte ihn beim Anwendungsstart auffrischen. Nach einer Admin-Änderung bleibt die
 Datenbankfassung maßgeblich und wird durch Updates nicht überschrieben. Die Aktion
-„Auf Umgebungswerte zurücksetzen“ übernimmt bewusst die beim letzten Prozessstart geladenen Werte;
-nach Änderungen an `.env` ist daher zuerst ein Neustart erforderlich.
+„Auf Umgebungswerte zurücksetzen“ übernimmt bewusst die aktuell über Prozessumgebung und konfigurierte Env-Datei lesbaren Werte;
+Die konfigurierte Env-Datei wird beim Zurücksetzen erneut gelesen. Bei Docker Compose werden Änderungen an der Host-`.env` erst nach einem Neustart beziehungsweise einer Neuerstellung des API-Containers als Prozessvariablen sichtbar.
 
 Die Konfiguration bildet keine Rechtsberatung ab. Ob und welche Angaben veröffentlicht werden
 müssen, ist für den konkreten Betreiber und das konkrete Angebot rechtlich zu prüfen.

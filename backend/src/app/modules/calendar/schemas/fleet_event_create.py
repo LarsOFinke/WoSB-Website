@@ -4,7 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.modules.calendar.schemas.constants import FLEET_EVENT_CATEGORY_VALUES
+from app.modules.calendar.constants import FLEET_EVENT_CATEGORY_VALUES
+from app.modules.raid_helper.schemas.raid_helper import RaidHelperDispatchSelection
 
 
 class FleetEventCreate(BaseModel):
@@ -16,6 +17,8 @@ class FleetEventCreate(BaseModel):
     end_at: datetime
     all_day: bool = False
     squad_id: int | None = None
+    raid_helper_enabled: bool = True
+    raid_helper_dispatches: list[RaidHelperDispatchSelection] = Field(default_factory=list, max_length=20)
 
     @model_validator(mode="after")
     def normalize(self) -> "FleetEventCreate":
@@ -27,6 +30,11 @@ class FleetEventCreate(BaseModel):
             self.description = self.description.strip() or None
         if isinstance(self.location, str):
             self.location = self.location.strip() or None
+        if not self.raid_helper_enabled:
+            self.raid_helper_dispatches = []
+        unique_destinations = {item.destination_id for item in self.raid_helper_dispatches}
+        if len(unique_destinations) != len(self.raid_helper_dispatches):
+            raise ValueError("Each Raid-Helper destination may only be selected once.")
         if self.end_at <= self.start_at:
             raise ValueError("Event end must be after event start.")
         return self

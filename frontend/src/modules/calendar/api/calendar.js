@@ -32,3 +32,10 @@ export function updateFleetEvent(id, payload) {
 export function deleteFleetEvent(id) {
   return deleteRequest(`/calendar/events/${id}`)
 }
+
+export function listRaidHelperOptions({ category, squadId = '' }) {
+  return get(withQuery('/calendar/raid-helper/options', {
+    category,
+    squad_id: squadId,
+  }))
+}

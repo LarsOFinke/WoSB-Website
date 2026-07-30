@@ -13,8 +13,7 @@ keine automatisch erfundenen Betreiberangaben.
    übernehmen.
 3. Nach einer Bearbeitung im Staff-Panel ist die Datenbankfassung maßgeblich und bleibt bei Updates
    erhalten.
-4. „Auf Umgebungswerte zurücksetzen“ verwirft die Adminfassung bewusst und übernimmt die beim
-   Prozessstart geladenen Werte.
+4. „Auf Umgebungswerte zurücksetzen“ verwirft die Adminfassung bewusst und übernimmt die aktuell aus der konfigurierten Env-Datei und der Prozessumgebung lesbaren Werte. Bei Docker Compose ist nach Änderungen an der Host-`.env` zuvor ein Neustart beziehungsweise eine Neuerstellung des API-Containers erforderlich.
 
 ## Entwurfsmodus
 

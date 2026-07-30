@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/raid-helper',
+    name: 'admin-raid-helper',
+    component: () => import('./pages/RaidHelperPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'raidHelper.title' },
+  },
+  {
     path: '/admin/legal-notice',
     name: 'admin-legal-notice',
     component: () => import('@/modules/legal/pages/LegalNoticeAdminPage.vue'),

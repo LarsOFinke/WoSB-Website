@@ -9,6 +9,7 @@ from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.schemas.fleet_event_read import CalendarSquadRead, FleetEventRead
 from app.modules.calendar.schemas.fleet_event_update import FleetEventUpdate
 from app.modules.fleet.services.fleet_service import can_manage_fleet, get_primary_fleet
+from app.modules.raid_helper.services.raid_helper_service import configure_event_links, serialize_event_links
 from app.modules.squads.models.squad import Squad
 from app.modules.squads.services.squad_service import (
     can_manage_squad,
@@ -37,6 +38,7 @@ def _serialize_event(
     squad = None
     if event.squad is not None:
         squad = CalendarSquadRead(id=event.squad.id, name=event.squad.name, slug=event.squad.slug)
+    manager = _can_manage_scope(db, user, event.squad_id) if can_manage is None else can_manage
     return FleetEventRead(
         id=event.id,
         title=event.title,
@@ -50,12 +52,16 @@ def _serialize_event(
         owner=event.owner,
         squad_id=event.squad_id,
         squad=squad,
-        can_manage=(
-            _can_manage_scope(db, user, event.squad_id)
-            if can_manage is None
-            else can_manage
-        ),
+        scope_type="squad" if event.squad_id is not None else "fleet",
+        scope_name=event.squad.name if event.squad is not None else "Fleet",
+        can_manage=manager,
         is_cancelled=event.is_cancelled,
+        raid_helper_enabled=getattr(event, "raid_helper_enabled", True),
+        raid_helper_links=(
+            serialize_event_links(list(getattr(event, "raid_helper_links", [])))
+            if manager
+            else []
+        ),
         created_at=event.created_at,
         updated_at=event.updated_at,
     )
@@ -148,9 +154,17 @@ def create_fleet_event(db: Session, payload: FleetEventCreate, owner: User) -> F
         all_day=payload.all_day,
         owner_id=owner.id,
         squad_id=payload.squad_id,
+        raid_helper_enabled=payload.raid_helper_enabled,
     )
     db.add(event)
-    db.commit()
+    try:
+        db.flush()
+        if payload.raid_helper_enabled:
+            configure_event_links(db, event, payload.raid_helper_dispatches, owner)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(event)
     return _serialize_event(db, event, owner)
 
@@ -167,9 +181,15 @@ def update_fleet_event(
     if not _can_manage_scope(db, user, event.squad_id):
         raise FleetEventPermissionError("Event management access required.")
     _validate_scope(db, user, payload.squad_id)
-    for field_name, value in payload.model_dump().items():
+    values = payload.model_dump(exclude={"raid_helper_dispatches"})
+    for field_name, value in values.items():
         setattr(event, field_name, value)
-    db.commit()
+    try:
+        configure_event_links(db, event, payload.raid_helper_dispatches if payload.raid_helper_enabled else [], user)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(event)
     return _serialize_event(db, event, user)
 

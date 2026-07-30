@@ -16,3 +16,6 @@
 | [DEPLOYMENT.md](DEPLOYMENT.md) | GitHub CI, Release und optionales CD |
 | [outbound-webhooks.md](outbound-webhooks.md) | Discord-Chat-Webhooks, signierte JSON-Integrationen und Zustellung |
 | [webhook-templates/](webhook-templates/) | direkt kopierbare Nachrichten-Templates für alle Webhook-Events |
+
+- [Raid-Helper calendar integration](RAID_HELPER_CALENDAR.md)
+- [Bot and crawler load policy](BOT_CRAWLER_POLICY.md)

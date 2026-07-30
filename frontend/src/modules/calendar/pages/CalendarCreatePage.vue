@@ -11,8 +11,12 @@ const {
   later,
   squads,
   loadingScopes,
+  loadingRaidHelper,
   saving,
   error,
+  raidHelperError,
+  raidHelperOptions,
+  raidHelperSelections,
   form,
   managedSquads,
   scopeOptions,
@@ -21,7 +25,12 @@ const {
   startAt,
   endAt,
   dateRangeInvalid,
+  selectedRaidHelperCount,
   loadScopes,
+  loadRaidHelperOptions,
+  destinationSelected,
+  toggleDestination,
+  setDestinationTemplate,
   submitEvent,
   dateInputValue,
   localDateFromInputs,
@@ -140,6 +149,59 @@ const {
               <textarea v-model="form.description" rows="7" maxlength="3000" :placeholder="t('calendar.create.descriptionPlaceholder')"></textarea>
             </span>
           </label>
+        </section>
+
+        <section class="wire-section form-section calendar-form-section raid-helper-event-section" :aria-label="t('raidHelper.calendar.sectionTitle')">
+          <div class="section-title">
+            <span>04</span>
+            <h2>{{ t('raidHelper.calendar.sectionTitle') }}</h2>
+          </div>
+          <p class="section-helper-text">{{ t('raidHelper.calendar.sectionText') }}</p>
+
+          <label class="toggle-card raid-helper-master-toggle">
+            <span>
+              <strong>{{ t('raidHelper.calendar.sendEvent') }}</strong>
+              <small>{{ t('raidHelper.calendar.sendEventHint') }}</small>
+            </span>
+            <input v-model="form.raidHelperEnabled" type="checkbox" />
+          </label>
+
+          <div v-if="form.raidHelperEnabled" class="raid-helper-event-options">
+            <p v-if="loadingRaidHelper" class="muted-text">{{ t('raidHelper.calendar.loading') }}</p>
+            <p v-else-if="raidHelperError" class="error-text">{{ raidHelperError }}</p>
+            <div v-else-if="raidHelperOptions.length" class="raid-helper-target-grid">
+              <article v-for="destination in raidHelperOptions" :key="destination.id" class="raid-helper-target-card">
+                <label class="raid-helper-target-toggle">
+                  <input
+                    type="checkbox"
+                    :checked="destinationSelected(destination.id)"
+                    @change="toggleDestination(destination)"
+                  />
+                  <span>
+                    <strong>{{ destination.name }}</strong>
+                    <small>{{ destination.profile_name }} · {{ destination.scope_type === 'squad' ? t('raidHelper.squad') : t('raidHelper.fleet') }}</small>
+                  </span>
+                </label>
+                <label v-if="destinationSelected(destination.id)" class="field-stack">
+                  <span class="field-label">{{ t('raidHelper.calendar.template') }}</span>
+                  <span class="select-shell full-select-shell">
+                    <select
+                      :value="raidHelperSelections[destination.id]"
+                      @change="setDestinationTemplate(destination.id, $event.target.value)"
+                    >
+                      <option v-for="template in destination.templates" :key="template.id" :value="template.id">
+                        {{ template.name }}
+                      </option>
+                    </select>
+                  </span>
+                </label>
+              </article>
+            </div>
+            <p v-else class="muted-text">{{ t('raidHelper.calendar.noTargets') }}</p>
+            <p v-if="raidHelperOptions.length" class="section-helper-text">
+              {{ t('raidHelper.calendar.selectedCount', { count: selectedRaidHelperCount }) }}
+            </p>
+          </div>
         </section>
 
         <p v-if="dateRangeInvalid" class="error-text form-message">{{ t('calendar.create.dateRangeInvalid') }}</p>

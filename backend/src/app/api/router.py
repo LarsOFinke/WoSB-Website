@@ -15,6 +15,7 @@ from app.modules.guides.routes import router as guides_router
 from app.modules.onboarding.routes import router as newcomer_guide_router
 from app.modules.legal.routes.router import router as legal_notice_router
 from app.modules.privacy.routes import router as privacy_router
+from app.modules.raid_helper.routes.calendar import router as raid_helper_calendar_router
 from app.modules.ships.routes import router as ships_router
 from app.modules.squads.routes import router as squads_router
 
@@ -24,6 +25,7 @@ router.include_router(groups_router)
 router.include_router(files_router)
 router.include_router(fleets_router)
 router.include_router(fleet_events_router)
+router.include_router(raid_helper_calendar_router)
 router.include_router(squads_router)
 router.include_router(forum_router)
 router.include_router(guides_router)

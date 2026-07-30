@@ -6,7 +6,7 @@ import re
 
 from app import create_app
 from app.core.config import settings
-from app.modules.calendar.schemas.constants import FLEET_EVENT_CATEGORY_VALUES
+from app.modules.calendar.constants import FLEET_EVENT_CATEGORY_VALUES
 from app.modules.files.services.file_service import ALLOWED_MIME_TYPES
 from app.modules.fleet.schemas.constants import (
     FLEET_FOCUS_VALUES,

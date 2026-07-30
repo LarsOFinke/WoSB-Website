@@ -29,6 +29,7 @@ _MODEL_MODULES = (
     "app.modules.squads.models.squad",
     "app.modules.squads.models.squad_member",
     "app.modules.calendar.models.fleet_event",
+    "app.modules.raid_helper.models.raid_helper",
     "app.modules.files.models.file_asset",
     "app.modules.fleet.models.fleet",
     "app.modules.fleet.models.fleet_membership",
