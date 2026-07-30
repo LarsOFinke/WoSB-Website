@@ -492,7 +492,7 @@ for retention_key in (
 # Route pages are composition-only: network and lifecycle workflows belong in
 # page-model composables, where they can be tested independently.
 route_pages = sorted((ROOT / "frontend/src/modules").glob("*/pages/*Page.vue"))
-require(len(route_pages) == 32, "route page inventory changed; update the architecture budget")
+require(len(route_pages) == 33, "route page inventory changed; update the architecture budget")
 for page_path in route_pages:
     page_source = page_path.read_text(encoding="utf-8")
     script_match = re.search(r"<script setup>([\s\S]*?)</script>", page_source)

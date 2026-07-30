@@ -94,6 +94,7 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 - [Architektur](docs/ARCHITECTURE.md)
 - [Entwicklung](docs/DEVELOPMENT.md)
 - [Datenbank und Seeds](docs/DATABASE.md)
+- [Kampf-DPM-Analyse](docs/COMBAT_DPM_ANALYSIS.md)
 - [Stammdaten-Go-Live-Review](docs/MASTER_DATA_GO_LIVE_REVIEW.md)
 - [Tests](docs/TESTING.md)
 - [Betrieb](docs/OPERATIONS.md)

@@ -12,6 +12,8 @@ export function createOptionForm() {
     option_kind: '',
     weapon_class: '',
     weapon_caliber_inches: '',
+    weapon_base_damage: '',
+    weapon_reload_seconds: '',
     allowed_slot_types: [],
     sort_order: 100,
     is_active: true,
@@ -74,6 +76,8 @@ export function optionFormValues(row = null, fallbackCategoryId = '') {
     option_kind: row?.option_kind || '',
     weapon_class: row?.weapon_class || '',
     weapon_caliber_inches: row?.weapon_caliber_inches ?? '',
+    weapon_base_damage: row?.weapon_performance?.base_damage ?? '',
+    weapon_reload_seconds: row?.weapon_performance?.reload_seconds ?? '',
     allowed_slot_types: [...(row?.allowed_slot_types || [])],
     sort_order: row?.sort_order ?? 100,
     is_active: row?.is_active ?? true,
@@ -137,6 +141,14 @@ export function optionPayload(form, statEffects) {
     option_kind: form.option_kind || null,
     weapon_class: ['cannon', 'bow_stern'].includes(form.option_kind) ? (form.weapon_class || null) : null,
     weapon_caliber_inches: form.weapon_caliber_inches === '' ? null : Number(form.weapon_caliber_inches),
+    weapon_performance: (!['cannon', 'bow_stern'].includes(form.option_kind)
+      || form.weapon_base_damage === ''
+      || form.weapon_reload_seconds === '')
+      ? null
+      : {
+          base_damage: Number(form.weapon_base_damage),
+          reload_seconds: Number(form.weapon_reload_seconds),
+        },
     stat_effects: statEffects,
     allowed_slot_types: [...form.allowed_slot_types],
     sort_order: Number(form.sort_order),

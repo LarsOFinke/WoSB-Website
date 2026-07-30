@@ -213,6 +213,17 @@ def validate_weapon_seed_data(rows: list[dict[str, object]]) -> None:
             )
         if option_kind == "mortar" and row.get("weapon_caliber_inches") in (None, ""):
             errors.append(f"{name}: mortar caliber is required")
+        performance = row.get("weapon_performance")
+        if performance is not None:
+            if not isinstance(performance, dict):
+                errors.append(f"{name}: weapon_performance must be an object")
+            else:
+                damage = performance.get("base_damage")
+                reload_seconds = performance.get("reload_seconds")
+                if not isinstance(damage, (int, float)) or damage < 0:
+                    errors.append(f"{name}: weapon_performance.base_damage must be non-negative")
+                if not isinstance(reload_seconds, (int, float)) or reload_seconds <= 0:
+                    errors.append(f"{name}: weapon_performance.reload_seconds must be positive")
     if errors:
         raise RuntimeError(
             "Weapon seed catalog failed quality checks:\n"

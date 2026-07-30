@@ -12,6 +12,7 @@ from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
+from app.modules.builds.models.weapon_performance import WeaponPerformanceProfile
 from app.bootstrap.catalog_sync import CUSTOM_MASTER_DATA_REVISION
 from app.bootstrap.manager import SeedManager
 
@@ -113,6 +114,9 @@ class OptionMasterDataService:
                 f"Unknown weapon slot types: {', '.join(sorted(unknown_slots))}"
             )
 
+        if category.key != "weapon" and payload.weapon_performance is not None:
+            raise MasterDataError("Weapon performance can only be assigned to weapon options.")
+
         if category.key == "weapon":
             expected_slots = {
                 "cannon": {"weapon_port", "weapon_starboard"},
@@ -149,7 +153,7 @@ class OptionMasterDataService:
                 )
 
         for field, value in payload.model_dump(
-            exclude={"stat_effects", "allowed_slot_types", "weapon_class"}
+            exclude={"stat_effects", "allowed_slot_types", "weapon_class", "weapon_performance"}
         ).items():
             setattr(row, field, value)
         row.weapon_class_id = (
@@ -157,6 +161,22 @@ class OptionMasterDataService:
         )
         self._replace_effects(row, payload.stat_effects)
         self._replace_slots(row, payload.allowed_slot_types, slot_types)
+        self._replace_weapon_performance(row, payload.weapon_performance)
+
+
+    @staticmethod
+    def _replace_weapon_performance(row: BuildItemOption, value) -> None:
+        if value is None:
+            row.weapon_performance = None
+            return
+        if row.weapon_performance is None:
+            row.weapon_performance = WeaponPerformanceProfile(
+                base_damage=float(value.base_damage),
+                reload_seconds=float(value.reload_seconds),
+            )
+        else:
+            row.weapon_performance.base_damage = float(value.base_damage)
+            row.weapon_performance.reload_seconds = float(value.reload_seconds)
 
     @staticmethod
     def _replace_effects(row: BuildItemOption, values: dict[str, float]) -> None:

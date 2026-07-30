@@ -51,6 +51,13 @@ class BuildItemOption(Base):
         lazy="selectin",
         order_by="BuildItemEffect.effect_key",
     )
+    weapon_performance: Mapped["WeaponPerformanceProfile | None"] = relationship(
+        "WeaponPerformanceProfile",
+        back_populates="option",
+        cascade="all, delete-orphan",
+        lazy="joined",
+        uselist=False,
+    )
     slot_type_links: Mapped[list["BuildItemOptionSlotType"]] = relationship(
         "BuildItemOptionSlotType",
         back_populates="option",

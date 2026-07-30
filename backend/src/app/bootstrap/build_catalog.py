@@ -7,6 +7,7 @@ from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_effect import BuildItemEffect
 from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.models.build_item_option_slot import BuildItemOptionSlotType
+from app.modules.builds.models.weapon_performance import WeaponPerformanceProfile
 from app.modules.builds.models.build_slot import BuildSlot
 from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.modules.ships.models.weapon_mount import WeaponClassDefinition, WeaponSlotType
@@ -167,6 +168,7 @@ def _seed_options(
                 "option_kind": option_data.get("option_kind"),
                 "weapon_class": option_data.get("weapon_class"),
                 "weapon_caliber_inches": option_data.get("weapon_caliber_inches"),
+                "weapon_performance": option_data.get("weapon_performance"),
                 "sort_order": sort_order * 10,
                 "is_active": option_data.get("is_active", True),
                 "stat_effects": effects,
@@ -186,6 +188,7 @@ def _seed_options(
                 setattr(existing, field_name, value)
             _sync_effects(existing, effects)
             _sync_slot_types(existing, allowed_codes, slot_types)
+            _sync_weapon_performance(existing, option_data.get("weapon_performance"))
             mark_seed_applied(existing, key=key, payload=canonical_payload)
 
     for option in db.scalars(
@@ -242,6 +245,26 @@ def _sync_effects(option: BuildItemOption, effects: dict[str, int | float]) -> N
     for key, effect in list(current.items()):
         if key not in effects:
             option.effects.remove(effect)
+
+
+
+def _sync_weapon_performance(option: BuildItemOption, raw: object) -> None:
+    if not isinstance(raw, dict):
+        option.weapon_performance = None
+        return
+    damage = raw.get("base_damage")
+    reload_seconds = raw.get("reload_seconds")
+    if not isinstance(damage, (int, float)) or not isinstance(reload_seconds, (int, float)):
+        option.weapon_performance = None
+        return
+    if option.weapon_performance is None:
+        option.weapon_performance = WeaponPerformanceProfile(
+            base_damage=float(damage),
+            reload_seconds=float(reload_seconds),
+        )
+    else:
+        option.weapon_performance.base_damage = float(damage)
+        option.weapon_performance.reload_seconds = float(reload_seconds)
 
 
 def _migrate_legacy_upgrade_names(

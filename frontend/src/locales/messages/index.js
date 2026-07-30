@@ -8,6 +8,7 @@ import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRul
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences.js'
 import { buildVotingRolesAndSearchMessages } from './buildVotingRolesAndSearch.js'
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats.js'
+import { combatAnalysisMessages } from './combatAnalysis.js'
 import { dateFieldFixMessages } from './dateFieldFixes.js'
 import { fleetCalendarMessages } from './fleetCalendar.js'
 import { fleetIdentityMessages } from './fleetIdentity.js'
@@ -43,6 +44,7 @@ const messageLayers = [
   newcomerGuideMessages,
   royalBlackwaterFleetMessages,
   contentModulesAndBuildStatsMessages,
+  combatAnalysisMessages,
   dateFieldFixMessages,
   buildDesignerEquipmentRulesMessages,
   buildEditingAndPreferencesMessages,

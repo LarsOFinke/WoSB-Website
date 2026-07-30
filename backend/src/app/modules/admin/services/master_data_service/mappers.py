@@ -47,6 +47,14 @@ class MasterDataMapper:
             option_kind=row.option_kind,
             weapon_class=row.weapon_class_code,
             weapon_caliber_inches=row.weapon_caliber_inches,
+            weapon_performance=(
+                {
+                    "base_damage": row.weapon_performance.base_damage,
+                    "reload_seconds": row.weapon_performance.reload_seconds,
+                }
+                if row.weapon_performance is not None
+                else None
+            ),
             stat_effects=row.stat_effects,
             allowed_slot_types=row.allowed_slots,
             sort_order=row.sort_order,

@@ -107,6 +107,7 @@ def list_build_options(db: Session, ship_id: int | None = None) -> BuildOptionsC
                 allowed_slot_types=allowed_slot_types,
                 weapon_class=option.weapon_class_code,
                 weapon_caliber_inches=option.weapon_caliber_inches,
+                weapon_performance=option.weapon_performance,
                 stat_effects=effective_upgrade_effects(option, ship),
                 base_stat_effects=option.stat_effects,
                 is_ship_specific=has_ship_upgrade_override(option, ship),

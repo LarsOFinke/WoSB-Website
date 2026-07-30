@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.modules.builds.schemas.weapon_performance import WeaponPerformanceRead
+
 
 class BuildItemOptionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -18,6 +20,7 @@ class BuildItemOptionRead(BaseModel):
     allowed_slot_types: list[str] = Field(default_factory=list)
     weapon_class: str | None = None
     weapon_caliber_inches: float | None = None
+    weapon_performance: WeaponPerformanceRead | None = None
     stat_effects: dict[str, int | float] = Field(default_factory=dict)
     base_stat_effects: dict[str, int | float] = Field(default_factory=dict)
     is_ship_specific: bool = False

@@ -8,6 +8,7 @@ import { accountRoutes } from '@/modules/accounts/routes'
 import { adminRoutes } from '@/modules/admin/routes'
 import { buildRoutes } from '@/modules/builds/routes'
 import { calendarRoutes } from '@/modules/calendar/routes'
+import { combatRoutes } from '@/modules/combat/routes'
 import { fleetRoutes } from '@/modules/fleet/routes'
 import { forumRoutes } from '@/modules/forum/routes'
 import { groupRoutes } from '@/modules/groups/routes'
@@ -19,6 +20,7 @@ const routes = [
   ...fleetRoutes,
   ...accountRoutes,
   ...buildRoutes,
+  ...combatRoutes,
   ...guideRoutes,
   ...onboardingRoutes,
   ...groupRoutes,

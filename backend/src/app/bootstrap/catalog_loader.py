@@ -230,6 +230,11 @@ class BuildCategoryDocument(StrictSeedModel):
         return self
 
 
+class WeaponPerformanceSeed(StrictSeedModel):
+    base_damage: float = Field(ge=0)
+    reload_seconds: float = Field(gt=0)
+
+
 class BuildOptionSeed(StrictSeedModel):
     category: str = Field(min_length=1, max_length=60)
     seed_id: str = Field(min_length=1, max_length=160)
@@ -242,6 +247,7 @@ class BuildOptionSeed(StrictSeedModel):
     allowed_slot_types: list[WeaponSlotCode] = Field(default_factory=list)
     weapon_class: WeaponClassCode | None = None
     weapon_caliber_inches: float | None = Field(default=None, ge=0)
+    weapon_performance: WeaponPerformanceSeed | None = None
     is_active: bool = True
 
 

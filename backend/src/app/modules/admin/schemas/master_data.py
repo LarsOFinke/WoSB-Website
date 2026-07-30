@@ -55,6 +55,11 @@ class MasterDataCategoryRead(MasterDataCategoryBase, SeedMetadataRead):
     updated_at: datetime
 
 
+class MasterDataWeaponPerformance(BaseModel):
+    base_damage: float = Field(ge=0)
+    reload_seconds: float = Field(gt=0)
+
+
 class MasterDataOptionBase(BaseModel):
     category_id: int = Field(ge=1)
     name: str = Field(min_length=1, max_length=160)
@@ -64,6 +69,7 @@ class MasterDataOptionBase(BaseModel):
     option_kind: str | None = Field(default=None, max_length=40)
     weapon_class: str | None = Field(default=None, max_length=24)
     weapon_caliber_inches: float | None = Field(default=None, ge=0)
+    weapon_performance: MasterDataWeaponPerformance | None = None
     stat_effects: dict[str, float] = Field(default_factory=dict)
     allowed_slot_types: list[str] = Field(default_factory=list)
     sort_order: int = Field(default=100, ge=0, le=100000)

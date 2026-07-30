@@ -13,7 +13,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "light",
-      "seed_id": "6-pdr-culverin"
+      "seed_id": "6-pdr-culverin",
+      "weapon_performance": {
+        "base_damage": 14,
+        "reload_seconds": 15.5
+      }
     },
     {
       "category": "weapon",
@@ -25,7 +29,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "light",
-      "seed_id": "6-pdr-rusty-cannon"
+      "seed_id": "6-pdr-rusty-cannon",
+      "weapon_performance": {
+        "base_damage": 13,
+        "reload_seconds": 10.5
+      }
     },
     {
       "category": "weapon",
@@ -37,7 +45,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "light",
-      "seed_id": "8-pdr-cannon"
+      "seed_id": "8-pdr-cannon",
+      "weapon_performance": {
+        "base_damage": 14,
+        "reload_seconds": 9
+      }
     },
     {
       "category": "weapon",
@@ -49,7 +61,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "light",
-      "seed_id": "8-pdr-culverin"
+      "seed_id": "8-pdr-culverin",
+      "weapon_performance": {
+        "base_damage": 15,
+        "reload_seconds": 13
+      }
     },
     {
       "category": "weapon",
@@ -61,7 +77,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "light",
-      "seed_id": "12-pdr-carronade"
+      "seed_id": "12-pdr-carronade",
+      "weapon_performance": {
+        "base_damage": 20,
+        "reload_seconds": 22
+      }
     },
     {
       "category": "weapon",
@@ -73,7 +93,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "16-pdr-cannon"
+      "seed_id": "16-pdr-cannon",
+      "weapon_performance": {
+        "base_damage": 14,
+        "reload_seconds": 12
+      }
     },
     {
       "category": "weapon",
@@ -85,7 +109,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "16-pdr-carronade"
+      "seed_id": "16-pdr-carronade",
+      "weapon_performance": {
+        "base_damage": 21.5,
+        "reload_seconds": 19.5
+      }
     },
     {
       "category": "weapon",
@@ -97,7 +125,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "16-pdr-culverin"
+      "seed_id": "16-pdr-culverin",
+      "weapon_performance": {
+        "base_damage": 15,
+        "reload_seconds": 17.5
+      }
     },
     {
       "category": "weapon",
@@ -109,7 +141,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "18-pdr-cannon"
+      "seed_id": "18-pdr-cannon",
+      "weapon_performance": {
+        "base_damage": 15,
+        "reload_seconds": 10.5
+      }
     },
     {
       "category": "weapon",
@@ -121,7 +157,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "18-pdr-long-cannon"
+      "seed_id": "18-pdr-long-cannon",
+      "weapon_performance": {
+        "base_damage": 16,
+        "reload_seconds": 15
+      }
     },
     {
       "category": "weapon",
@@ -133,7 +173,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "20-pdr-admiral"
+      "seed_id": "20-pdr-admiral",
+      "weapon_performance": {
+        "base_damage": 17,
+        "reload_seconds": 13.5
+      }
     },
     {
       "category": "weapon",
@@ -145,7 +189,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "22-pdr-scorcher"
+      "seed_id": "22-pdr-scorcher",
+      "weapon_performance": {
+        "base_damage": 19,
+        "reload_seconds": 26
+      }
     },
     {
       "category": "weapon",
@@ -157,7 +205,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "24-pdr-carronade"
+      "seed_id": "24-pdr-carronade",
+      "weapon_performance": {
+        "base_damage": 21.5,
+        "reload_seconds": 25.5
+      }
     },
     {
       "category": "weapon",
@@ -169,7 +221,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "medium",
-      "seed_id": "28-pdr-carronade"
+      "seed_id": "28-pdr-carronade",
+      "weapon_performance": {
+        "base_damage": 23,
+        "reload_seconds": 22.5
+      }
     },
     {
       "category": "weapon",
@@ -181,7 +237,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "32-pdr-cannon"
+      "seed_id": "32-pdr-cannon",
+      "weapon_performance": {
+        "base_damage": 17.5,
+        "reload_seconds": 12
+      }
     },
     {
       "category": "weapon",
@@ -193,7 +253,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "32-pdr-long-cannon"
+      "seed_id": "32-pdr-long-cannon",
+      "weapon_performance": {
+        "base_damage": 18.5,
+        "reload_seconds": 17.5
+      }
     },
     {
       "category": "weapon",
@@ -205,7 +269,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "32-pdr-stormbringer"
+      "seed_id": "32-pdr-stormbringer",
+      "weapon_performance": {
+        "base_damage": 25.5,
+        "reload_seconds": 27.5
+      }
     },
     {
       "category": "weapon",
@@ -217,7 +285,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "36-pdr-inrog"
+      "seed_id": "36-pdr-inrog",
+      "weapon_performance": {
+        "base_damage": 20,
+        "reload_seconds": 16
+      }
     },
     {
       "category": "weapon",
@@ -229,7 +301,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "38-pdr-jericho"
+      "seed_id": "38-pdr-jericho",
+      "weapon_performance": {
+        "base_damage": 22,
+        "reload_seconds": 30.5
+      }
     },
     {
       "category": "weapon",
@@ -241,7 +317,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "42-pdr-carronade"
+      "seed_id": "42-pdr-carronade",
+      "weapon_performance": {
+        "base_damage": 27,
+        "reload_seconds": 26
+      }
     },
     {
       "category": "weapon",
@@ -253,7 +333,11 @@
         "weapon_starboard"
       ],
       "weapon_class": "heavy",
-      "seed_id": "48-pdr-colossus"
+      "seed_id": "48-pdr-colossus",
+      "weapon_performance": {
+        "base_damage": 30,
+        "reload_seconds": 32
+      }
     },
     {
       "category": "weapon",
