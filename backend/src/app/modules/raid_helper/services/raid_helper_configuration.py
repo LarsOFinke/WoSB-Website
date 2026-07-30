@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.secret_box import webhook_secret_box
@@ -91,9 +92,12 @@ def create_profile(db: Session, payload: RaidHelperProfileCreate, actor: User) -
     db.add(row)
     try:
         db.commit()
-    except Exception as exc:
+    except IntegrityError as exc:
         db.rollback()
         raise RaidHelperError("A Raid-Helper profile with this name already exists.") from exc
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(row)
     return _profile_read(row)
 
@@ -114,9 +118,12 @@ def update_profile(db: Session, profile_id: int, payload: RaidHelperProfileWrite
         row.api_key_encrypted = webhook_secret_box.encrypt(payload.api_key)
     try:
         db.commit()
-    except Exception as exc:
+    except IntegrityError as exc:
         db.rollback()
         raise RaidHelperError("A Raid-Helper profile with this name already exists.") from exc
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(row)
     return _profile_read(row)
 
@@ -215,9 +222,12 @@ def save_destination(db: Session, payload: RaidHelperDestinationWrite, destinati
     _replace_categories(db, row.categories, RaidHelperDestinationCategory, "destination_id", row.id, payload.categories)
     try:
         db.commit()
-    except Exception as exc:
+    except IntegrityError as exc:
         db.rollback()
         raise RaidHelperError("This profile, channel and scope combination already exists.") from exc
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(row)
     return _destination_read(row)
 
@@ -274,9 +284,12 @@ def save_template(db: Session, payload: RaidHelperTemplateWrite, template_id: in
     _replace_categories(db, row.categories, RaidHelperTemplateCategory, "template_id", row.id, payload.categories)
     try:
         db.commit()
-    except Exception as exc:
+    except IntegrityError as exc:
         db.rollback()
         raise RaidHelperError("A template with this name already exists in the selected profile.") from exc
+    except Exception:
+        db.rollback()
+        raise
     db.refresh(row)
     return _template_read(row)
 

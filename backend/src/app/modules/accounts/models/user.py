@@ -23,6 +23,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     site_role_id: Mapped[int] = mapped_column(ForeignKey("site_roles.id", ondelete="RESTRICT"), nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_bootstrap_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
@@ -156,6 +157,10 @@ class User(Base):
     @property
     def can_manage_system(self) -> bool:
         return bool(self.site_role and self.site_role.can_manage_system)
+
+    @property
+    def can_grant_admin(self) -> bool:
+        return self.is_admin and self.is_bootstrap_admin
 
     def _ensure_profile(self) -> "UserProfile":
         from app.modules.accounts.models.user_profile import UserProfile

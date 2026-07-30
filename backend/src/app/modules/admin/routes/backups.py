@@ -81,7 +81,7 @@ def admin_configure_backup_host(
         entity_id="remote",
         action="configuration_requested",
         summary=(
-            "Remote database backup connection update requested for "
+            "Remote application backup connection update requested for "
             f"{payload.username}@{payload.host}:{payload.port}."
         ),
         changed_fields=["host", "port", "username", "remote_directory", "host_key", "private_key"],
@@ -105,7 +105,7 @@ def admin_delete_backup_configuration(
         entity_type="backup_connection",
         entity_id="remote",
         action="delete_requested",
-        summary="Remote database backup connection removal requested.",
+        summary="Remote application backup connection removal requested.",
         changed_fields=["configuration", "private_key", "known_hosts"],
     )
     return result
@@ -127,7 +127,7 @@ def admin_test_backup_connection(
         entity_type="backup_connection",
         entity_id="remote",
         action="test_requested",
-        summary="Remote database backup connection test requested.",
+        summary="Remote application backup connection test requested.",
     )
     return result
 
@@ -137,7 +137,7 @@ def admin_test_backup_connection(
     response_model=BackupControlRequestResult,
     status_code=status.HTTP_202_ACCEPTED,
 )
-def admin_run_database_backup(
+def admin_run_application_backup(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> BackupControlRequestResult:
@@ -148,6 +148,6 @@ def admin_run_database_backup(
         entity_type="database_backup",
         entity_id="remote",
         action="backup_requested",
-        summary="Database backup creation and remote transfer requested.",
+        summary="Database and uploaded-file backup creation and remote transfer requested.",
     )
     return result

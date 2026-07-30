@@ -7,6 +7,7 @@ from app.modules.accounts.models.user import User
 from app.modules.builds.schemas.build_create import BuildCreate
 from app.modules.builds.schemas.build_options_catalog import BuildOptionsCatalog
 from app.modules.builds.schemas.build_read import BuildRead
+from app.modules.builds.schemas.build_summary import BuildPage
 from app.modules.builds.schemas.build_role import BuildRoleRead
 from app.modules.builds.schemas.build_vote import BuildVoteState
 from app.modules.builds.schemas.build_update import BuildUpdate
@@ -24,28 +25,32 @@ from app.modules.builds.services.build_service import (
     create_build,
     delete_user_build,
     get_build,
-    list_builds,
-    list_user_builds,
+    list_build_page,
+    list_user_build_page,
     update_user_build,
 )
 
 router = APIRouter(prefix="/builds", tags=["builds"])
 
 
-@router.get("", response_model=list[BuildRead])
+@router.get("", response_model=BuildPage)
 def get_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
     classification: str | None = Query(default=None, max_length=40),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-) -> list[BuildRead]:
-    return list_builds(
+) -> BuildPage:
+    return list_build_page(
         db,
         search=search,
         build_type=build_type,
         classification=classification,
         viewer_id=current_user.id,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -115,20 +120,24 @@ def delete_build_upvote(
     return state
 
 
-@router.get("/mine", response_model=list[BuildRead])
+@router.get("/mine", response_model=BuildPage)
 def get_my_builds(
     search: str | None = Query(default=None, max_length=120),
     build_type: str | None = Query(default=None, max_length=32),
     classification: str | None = Query(default=None, max_length=40),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-) -> list[BuildRead]:
-    return list_user_builds(
+) -> BuildPage:
+    return list_user_build_page(
         db,
         current_user.id,
         search=search,
         build_type=build_type,
         classification=classification,
+        limit=limit,
+        offset=offset,
     )
 
 

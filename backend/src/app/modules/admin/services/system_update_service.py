@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import json
 import os
@@ -15,7 +16,6 @@ RUNNING_STALE_AFTER = timedelta(minutes=3)
 QUEUED_STALE_AFTER = timedelta(minutes=10)
 STATUS_FILE = "update-status.json"
 REQUEST_FILE = "update.request"
-LOG_FILE = "update.log"
 
 
 class SystemUpdateError(RuntimeError):
@@ -40,18 +40,6 @@ def _read_json(path: Path) -> dict:
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
-
-
-def _log_tail(path: Path, limit: int = 120) -> list[str]:
-    if not path.is_file():
-        return []
-    try:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return []
-    return lines[-limit:]
-
-
 
 
 def _parse_timestamp(value: object) -> datetime | None:
@@ -84,7 +72,32 @@ def _active_status_is_stale(
     return False
 
 
-def get_system_update_status() -> SystemUpdateStatus:
+@dataclass(frozen=True)
+class SystemUpdateInternalStatus:
+    state: str
+    operation: str
+    message: str
+    requested_by: str | None
+    requested_at: str | None
+    started_at: str | None
+    heartbeat_at: str | None
+    finished_at: str | None
+    commit_before: str | None
+    commit_after: str | None
+    request_available: bool
+
+
+def _public_message(state: str) -> str:
+    return {
+        "idle": "No update has been requested yet.",
+        "queued": "An update is queued for the host runner.",
+        "running": "The update is currently running.",
+        "succeeded": "The update completed successfully.",
+        "failed": "The update failed. Review the configured webhook or host logs.",
+    }.get(state, "Update status is available.")
+
+
+def _read_system_update_status() -> SystemUpdateInternalStatus:
     request_path = _request_dir() / REQUEST_FILE
     status_directory = _status_dir()
     payload = _read_json(status_directory / STATUS_FILE)
@@ -124,7 +137,7 @@ def get_system_update_status() -> SystemUpdateStatus:
         }
 
     message = str(payload.get("message") or "No update has been requested yet.")
-    return SystemUpdateStatus(
+    return SystemUpdateInternalStatus(
         state=state,
         operation=str(payload.get("operation") or "update"),
         message=message,
@@ -135,8 +148,24 @@ def get_system_update_status() -> SystemUpdateStatus:
         finished_at=payload.get("finished_at"),
         commit_before=payload.get("commit_before"),
         commit_after=payload.get("commit_after"),
-        log_tail=_log_tail(status_directory / LOG_FILE),
         request_available=not request_path.exists() and state not in ACTIVE_STATES,
+    )
+
+
+def get_system_update_internal_status() -> SystemUpdateInternalStatus:
+    return _read_system_update_status()
+
+
+def get_system_update_status() -> SystemUpdateStatus:
+    status = _read_system_update_status()
+    return SystemUpdateStatus(
+        state=status.state,
+        operation=status.operation,
+        message=_public_message(status.state),
+        requested_at=status.requested_at,
+        started_at=status.started_at,
+        finished_at=status.finished_at,
+        request_available=status.request_available,
     )
 
 

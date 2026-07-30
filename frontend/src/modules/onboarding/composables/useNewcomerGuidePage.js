@@ -50,9 +50,9 @@ export function useNewcomerGuidePage() {
     resourceOptionsLoading.value = true
     resourceOptionsError.value = ''
     try {
-      const [guideRows, buildRows] = await Promise.all([listGuides(), listBuilds()])
+      const [guideRows, buildRows] = await Promise.all([listGuides(), listBuilds('', '', '', 100, 0)])
       guides.value = guideRows
-      builds.value = buildRows
+      builds.value = buildRows.items || []
       resourceOptionsLoaded.value = true
     } catch (err) {
       resourceOptionsError.value = err.message || t('newcomerGuide.editor.resourceLoadError')

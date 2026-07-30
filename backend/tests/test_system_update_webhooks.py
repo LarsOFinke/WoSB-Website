@@ -24,7 +24,7 @@ def test_completed_update_result_is_queued_only_once(tmp_path, monkeypatch) -> N
         message="Update completed.",
     )
     monkeypatch.setattr(service, "_control_dir", lambda: tmp_path)
-    monkeypatch.setattr(service, "get_system_update_status", lambda: terminal)
+    monkeypatch.setattr(service, "get_system_update_internal_status", lambda: terminal)
     queued = []
 
     def fake_queue(_db, **payload):
@@ -51,7 +51,7 @@ def test_failed_result_queue_is_retried_without_writing_marker(tmp_path, monkeyp
         message="Update failed.",
     )
     monkeypatch.setattr(service, "_control_dir", lambda: tmp_path)
-    monkeypatch.setattr(service, "get_system_update_status", lambda: terminal)
+    monkeypatch.setattr(service, "get_system_update_internal_status", lambda: terminal)
 
     class FakeDb:
         rolled_back = False

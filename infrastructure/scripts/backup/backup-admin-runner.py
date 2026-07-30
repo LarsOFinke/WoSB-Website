@@ -286,7 +286,7 @@ class Runner:
             detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["unknown SFTP error"]
             raise RuntimeError(f"SFTP connection test failed: {detail[0]}")
 
-    def transfer(self, config: dict[str, Any], backup_file: Path) -> dict[str, Any]:
+    def transfer(self, config: dict[str, Any], backup_file: Path, artifact_type: str) -> dict[str, Any]:
         checksum_file = Path(str(backup_file) + ".sha256")
         if not backup_file.is_file() or not checksum_file.is_file():
             raise RuntimeError("The local backup or checksum file is missing.")
@@ -335,35 +335,69 @@ class Runner:
                 digest_builder.update(chunk)
         digest = digest_builder.hexdigest()
         return {
-            "backup_filename": filename,
-            "backup_size_bytes": backup_file.stat().st_size,
-            "backup_sha256": digest,
+            "artifact_type": artifact_type,
+            "filename": filename,
+            "size_bytes": backup_file.stat().st_size,
+            "sha256": digest,
             "remote_path": f"{config['remote_directory'].rstrip('/')}/{filename}",
         }
+
+    def create_backup_artifact(
+        self,
+        *,
+        config: dict[str, Any],
+        script_name: str,
+        artifact_type: str,
+        description: str,
+        timeout: int,
+    ) -> dict[str, Any]:
+        result_file = self.run_dir / f"backup-result-{artifact_type}.{os.getpid()}"
+        result_file.unlink(missing_ok=True)
+        env = os.environ.copy()
+        env["BACKUP_RESULT_FILE"] = str(result_file)
+        self.log(f"Creating a fresh {description} backup.")
+        try:
+            result = subprocess.run(
+                ["/usr/bin/env", "bash", str(self.infra_dir / f"scripts/backup/{script_name}")],
+                env=env,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=timeout,
+            )
+            for line in (result.stdout or "").splitlines():
+                self.log(line)
+            if result.returncode != 0 or not result_file.is_file():
+                raise RuntimeError(f"{description.capitalize()} backup creation failed.")
+            backup_path = result_file.read_text(encoding="utf-8").strip()
+            backup_file = Path(backup_path)
+            if not backup_file.is_absolute():
+                raise RuntimeError(f"{description.capitalize()} backup returned an invalid path.")
+            return self.transfer(config, backup_file, artifact_type)
+        finally:
+            result_file.unlink(missing_ok=True)
 
     def create_and_transfer_backup(self) -> dict[str, Any]:
         config = self.load_connection()
         self.test_connection(config)
-        result_file = self.run_dir / f"backup-result.{os.getpid()}"
-        env = os.environ.copy()
-        env["BACKUP_RESULT_FILE"] = str(result_file)
-        self.log("Creating a fresh PostgreSQL backup.")
-        result = subprocess.run(
-            ["/usr/bin/env", "bash", str(self.infra_dir / "scripts/backup/backup-postgres.sh")],
-            env=env,
-            check=False,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            timeout=1800,
-        )
-        for line in (result.stdout or "").splitlines():
-            self.log(line)
-        if result.returncode != 0 or not result_file.is_file():
-            raise RuntimeError("PostgreSQL backup creation failed.")
-        backup_file = Path(result_file.read_text(encoding="utf-8").strip())
-        result_file.unlink(missing_ok=True)
-        return self.transfer(config, backup_file)
+        artifacts = [
+            self.create_backup_artifact(
+                config=config,
+                script_name="backup-postgres.sh",
+                artifact_type="postgresql",
+                description="PostgreSQL database",
+                timeout=1800,
+            ),
+            self.create_backup_artifact(
+                config=config,
+                script_name="backup-data.sh",
+                artifact_type="files",
+                description="uploaded files and operational data",
+                timeout=1800,
+            ),
+        ]
+        return {"artifacts": artifacts}
 
     def delete_configuration(self) -> None:
         if self.secret_dir.exists():
@@ -394,7 +428,7 @@ class Runner:
                 message = "Remote backup connection test succeeded."
             elif operation == "backup":
                 updates = self.create_and_transfer_backup()
-                message = "Database backup created, transferred and verified successfully."
+                message = "Database and uploaded-file backups were created, transferred and verified successfully."
             elif operation == "delete_configuration":
                 self.delete_configuration()
                 message = "Remote backup connection removed."

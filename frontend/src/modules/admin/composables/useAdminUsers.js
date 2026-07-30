@@ -72,6 +72,10 @@ export function useAdminUsers({ isAdmin, user, t }) {
     return row.id !== user.value?.id && row.role !== 'admin'
   }
 
+  function canGrantAdmin() {
+    return Boolean(user.value?.can_grant_admin)
+  }
+
   function resetUserFilters() {
     userSearch.value = ''
     userRole.value = ''
@@ -82,6 +86,6 @@ export function useAdminUsers({ isAdmin, user, t }) {
     users, userSearch, userRole, userStatus, userLoading, userError,
     moderatorSuccess, moderatorForm, filteredUsers, userCountLabel,
     loadUsers, submitModerator, changeUserRole, toggleUserActive,
-    canManageUser, resetUserFilters,
+    canManageUser, canGrantAdmin, resetUserFilters,
   }
 }

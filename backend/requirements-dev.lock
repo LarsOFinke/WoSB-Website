@@ -47,8 +47,12 @@ markupsafe==3.0.3
     # via mako
 packaging==26.2
     # via pytest
+playwright==1.57.0
+    # via royal-blackwater-fleet-backend (pyproject.toml)
 pluggy==1.6.0
     # via pytest
+pyee==13.0.1
+    # via playwright
 psycopg==3.3.4
     # via royal-blackwater-fleet-backend (pyproject.toml)
 psycopg-binary==3.3.4

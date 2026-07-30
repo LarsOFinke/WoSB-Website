@@ -18,11 +18,16 @@ const {
   hasActiveDiscovery,
   buildTypeOptions,
   buildCountLabel,
+  pageNumber,
+  pageCount,
+  canGoPrevious,
+  canGoNext,
   selectedDiscoveryLabel,
   resultLabels,
   buildRows,
   resetDiscovery,
   showAllBuilds,
+  goToPage,
 } = useBuildListPage()
 </script>
 
@@ -70,6 +75,11 @@ const {
         <p v-else-if="error" class="error-text table-state">{{ error }}</p>
         <p v-else-if="buildRows.length === 0" class="muted table-state">{{ t('builds.list.empty') }}</p>
         <BuildResultTable v-else :rows="buildRows" :labels="resultLabels" />
+        <nav v-if="pageCount > 1" class="build-pagination" :aria-label="t('common.pagination')">
+          <button type="button" :disabled="loading || !canGoPrevious" @click="goToPage(-1)">{{ t('common.previous') }}</button>
+          <span>{{ t('common.pageOf', { page: pageNumber, pages: pageCount }) }}</span>
+          <button type="button" :disabled="loading || !canGoNext" @click="goToPage(1)">{{ t('common.next') }}</button>
+        </nav>
       </section>
     </div>
   </section>

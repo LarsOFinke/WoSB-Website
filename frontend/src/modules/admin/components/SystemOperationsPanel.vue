@@ -13,7 +13,7 @@ const props = defineProps({
 
 const emit = defineEmits(['refresh-api'])
 const { locale, t } = useLocale()
-const update = ref({ state: 'idle', operation: 'update', message: '', log_tail: [], request_available: false })
+const update = ref({ state: 'idle', operation: 'update', message: '', request_available: false })
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
@@ -116,10 +116,8 @@ onUnmounted(() => window.clearTimeout(pollTimer))
       <p>{{ update.message || t('admin.system.updateText') }}</p>
       <dl class="system-update-meta">
         <div><dt>{{ t('admin.system.operation') }}</dt><dd>{{ operationLabel }}</dd></div>
-        <div><dt>{{ t('admin.system.requestedBy') }}</dt><dd>{{ update.requested_by || '—' }}</dd></div>
         <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatDateTime(update.started_at) }}</dd></div>
         <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatDateTime(update.finished_at) }}</dd></div>
-        <div><dt>{{ t('admin.system.commit') }}</dt><dd>{{ update.commit_before || '—' }} → {{ update.commit_after || '—' }}</dd></div>
       </dl>
       <div v-if="isAdmin" class="system-update-actions">
         <button class="form-button primary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update')">
@@ -138,11 +136,5 @@ onUnmounted(() => window.clearTimeout(pollTimer))
 
   <p v-if="success" class="success-text table-state">{{ success }}</p>
   <p v-if="error" class="error-text table-state">{{ error }}</p>
-
-  <section class="system-update-log">
-    <div class="admin-panel-heading compact-heading"><div><h3>{{ t('admin.system.logTitle') }}</h3></div></div>
-    <pre v-if="update.log_tail?.length">{{ update.log_tail.join('\n') }}</pre>
-    <p v-else class="muted">{{ t('admin.system.logEmpty') }}</p>
-  </section>
 
 </template>

@@ -184,3 +184,77 @@ def test_backup_requests_are_published_atomically_under_concurrency() -> None:
     assert request_payload["requested_by"] == "backup-race-admin"
     assert not list(request_dir.glob(".backup.request.*.tmp"))
     _reset_control()
+
+
+def test_backup_status_reports_database_and_file_artifacts() -> None:
+    _, status_dir = _reset_control()
+    (status_dir / "backup-status.json").write_text(
+        json.dumps(
+            {
+                "state": "succeeded",
+                "operation": "backup",
+                "message": "verified",
+                "artifacts": [
+                    {
+                        "artifact_type": "postgresql",
+                        "filename": "rbf.sql.gz",
+                        "size_bytes": 123,
+                        "sha256": "a" * 64,
+                        "remote_path": "/srv/backups/rbf.sql.gz",
+                    },
+                    {
+                        "artifact_type": "files",
+                        "filename": "rbf-files.tar.gz",
+                        "size_bytes": 456,
+                        "sha256": "b" * 64,
+                        "remote_path": "/srv/backups/rbf-files.tar.gz",
+                    },
+                ],
+                "connection": {"configured": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+    from app.modules.admin.services.backup_control_service import get_backup_control_status
+
+    status = get_backup_control_status()
+    assert [artifact.artifact_type for artifact in status.artifacts] == ["postgresql", "files"]
+    assert status.artifacts[1].size_bytes == 456
+    _reset_control()
+
+
+def test_admin_backup_runner_creates_database_and_file_artifacts(tmp_path, monkeypatch) -> None:
+    import importlib.util
+
+    runner_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_admin_runner", runner_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    request_file = tmp_path / "request.json"
+    request_file.write_text("{}", encoding="utf-8")
+    runner = module.Runner(tmp_path, request_file)
+    monkeypatch.setattr(runner, "load_connection", lambda: {"remote_directory": "/remote"})
+    monkeypatch.setattr(runner, "test_connection", lambda _config: None)
+    calls = []
+
+    def fake_create(**kwargs):
+        calls.append(kwargs)
+        return {
+            "artifact_type": kwargs["artifact_type"],
+            "filename": f"{kwargs['artifact_type']}.archive",
+            "size_bytes": 1,
+            "sha256": "c" * 64,
+            "remote_path": f"/remote/{kwargs['artifact_type']}.archive",
+        }
+
+    monkeypatch.setattr(runner, "create_backup_artifact", fake_create)
+    result = runner.create_and_transfer_backup()
+
+    assert [call["script_name"] for call in calls] == ["backup-postgres.sh", "backup-data.sh"]
+    assert [row["artifact_type"] for row in result["artifacts"]] == ["postgresql", "files"]
+    data_script = (Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-data.sh").read_text(encoding="utf-8")
+    assert "backup_paths=(uploads)" in data_script
+    assert "for optional_path in certs uptime-kuma" in data_script
+    assert "BACKUP_RESULT_FILE" in data_script

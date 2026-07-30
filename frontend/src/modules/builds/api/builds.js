@@ -1,16 +1,16 @@
 import { deleteRequest, get, post, put } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
-function buildFilters(search = '', buildType = '', classification = '') {
-  return { search, build_type: buildType, classification }
+function buildFilters(search = '', buildType = '', classification = '', limit = 50, offset = 0) {
+  return { search, build_type: buildType, classification, limit, offset }
 }
 
-export function listBuilds(search = '', buildType = '', classification = '') {
-  return get(withQuery('/builds', buildFilters(search, buildType, classification)))
+export function listBuilds(search = '', buildType = '', classification = '', limit = 50, offset = 0) {
+  return get(withQuery('/builds', buildFilters(search, buildType, classification, limit, offset)))
 }
 
-export function listMyBuilds(search = '', buildType = '', classification = '') {
-  return get(withQuery('/builds/mine', buildFilters(search, buildType, classification)))
+export function listMyBuilds(search = '', buildType = '', classification = '', limit = 50, offset = 0) {
+  return get(withQuery('/builds/mine', buildFilters(search, buildType, classification, limit, offset)))
 }
 
 export function deleteMyBuild(id) {

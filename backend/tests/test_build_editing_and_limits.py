@@ -212,3 +212,44 @@ def test_anson_sailor_minimum_blocks_too_few_but_not_additional_sailors() -> Non
         assert accepted.json()["ship_stats"]["sailing_efficiency_pct"] == 100
         assert accepted.json()["ship_stats"]["crew_total"] == 160
 
+
+
+def test_build_collection_endpoints_are_paginated_and_use_lightweight_summaries() -> None:
+    ship_id = _prepare_catalog()
+    username = "build-page-owner"
+    password = "BuildPageOwner123!"
+    _ensure_user(username, password, "Build Page Owner")
+
+    with TestClient(app) as client:
+        _login(client, username, password)
+        for index in range(3):
+            response = client.post(
+                "/api/builds",
+                json=_anson_payload(ship_id, name=f"Pagination Regression {index}"),
+            )
+            assert response.status_code == 201, response.text
+
+        first = client.get(
+            "/api/builds",
+            params={"search": "Pagination Regression", "limit": 2, "offset": 0},
+        )
+        assert first.status_code == 200, first.text
+        first_page = first.json()
+        assert first_page["total"] == 3
+        assert first_page["limit"] == 2
+        assert first_page["offset"] == 0
+        assert len(first_page["items"]) == 2
+        assert "ship_stats" not in first_page["items"][0]
+        assert first_page["items"][0]["metrics"]["crew_total"] == 160
+
+        second = client.get(
+            "/api/builds/mine",
+            params={"search": "Pagination Regression", "limit": 2, "offset": 2},
+        )
+        assert second.status_code == 200, second.text
+        second_page = second.json()
+        assert second_page["total"] == 3
+        assert second_page["offset"] == 2
+        assert len(second_page["items"]) == 1
+
+        assert client.get("/api/builds", params={"limit": 101}).status_code == 422

@@ -21,7 +21,7 @@ test('database backup administration is isolated in an admin-only subpage', asyn
   assert.match(composable, /discoverBackupHost/)
   assert.match(composable, /configureBackupConnection/)
   assert.match(composable, /testBackupConnection/)
-  assert.match(composable, /runDatabaseBackup/)
+  assert.match(composable, /runApplicationBackup/)
   assert.match(composable, /window\.confirm\(t\('admin\.backups\.confirmRun'\)\)/)
   assert.match(composable, /private_key: form\.private_key\.trim\(\) \|\| null/)
 })

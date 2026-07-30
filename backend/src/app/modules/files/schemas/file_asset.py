@@ -15,4 +15,5 @@ class FileRead(BaseModel):
     mime_type: str
     size_bytes: int
     usage_context: str
+    is_public: bool = False
     created_at: datetime

@@ -75,7 +75,8 @@ export function useGuideCreatePage() {
   async function loadBuildCatalog() {
     loadingBuilds.value = true
     try {
-      availableBuilds.value = await listBuilds('', '')
+      const page = await listBuilds('', '', '', 100, 0)
+      availableBuilds.value = page.items || []
     } catch (err) {
       error.value = err.message || t('buildEmbeds.loadError')
     } finally {

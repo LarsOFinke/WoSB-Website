@@ -11,6 +11,9 @@ export function useMyBuildsPage() {
   const search = ref('')
   const buildType = ref('')
   const loading = ref(false)
+  const total = ref(0)
+  const limit = 50
+  const offset = ref(0)
   const error = ref('')
   const pendingDeleteId = ref(null)
   const sharedBuildId = ref(null)
@@ -24,12 +27,12 @@ export function useMyBuildsPage() {
   ])
 
   const buildCountLabel = computed(() =>
-    builds.value.length === 1 ? t('myBuilds.summaryOne') : t('myBuilds.summaryMany', { count: builds.value.length }),
+    total.value === 1 ? t('myBuilds.summaryOne') : t('myBuilds.summaryMany', { count: total.value }),
   )
-
-  function crewTotal(build) {
-    return build.sailors + build.soldiers + build.musketeers + build.mercenaries
-  }
+  const pageNumber = computed(() => Math.floor(offset.value / limit) + 1)
+  const pageCount = computed(() => Math.max(1, Math.ceil(total.value / limit)))
+  const canGoPrevious = computed(() => offset.value > 0)
+  const canGoNext = computed(() => offset.value + limit < total.value)
 
   function slotLabel(slot) {
     if (typeof slot === 'string') return optionLabel(slot)
@@ -48,10 +51,11 @@ export function useMyBuildsPage() {
     error.value = ''
     try {
       const [nextBuilds, nextRoles] = await Promise.all([
-        listMyBuilds(search.value, buildType.value),
+        listMyBuilds(search.value, buildType.value, '', limit, offset.value),
         buildRoles.value.length ? Promise.resolve(buildRoles.value) : listBuildRoles(),
       ])
-      builds.value = nextBuilds
+      builds.value = nextBuilds.items || []
+      total.value = Number(nextBuilds.total || 0)
       buildRoles.value = nextRoles
     } catch (err) {
       error.value = err.message || t('myBuilds.loadError')
@@ -60,15 +64,22 @@ export function useMyBuildsPage() {
     }
   }
 
+  async function goToPage(direction) {
+    const nextOffset = Math.max(0, offset.value + direction * limit)
+    if (nextOffset === offset.value || nextOffset >= total.value) return
+    offset.value = nextOffset
+    await loadMyBuilds()
+  }
+
   async function shareBuild(buildId) {
     shareError.value = ''
     try {
       await copyBuildShareLink(buildId)
       sharedBuildId.value = buildId
       window.clearTimeout(shareTimer)
-    shareTimer = window.setTimeout(() => {
-      if (sharedBuildId.value === buildId) sharedBuildId.value = null
-    }, 2200)
+      shareTimer = window.setTimeout(() => {
+        if (sharedBuildId.value === buildId) sharedBuildId.value = null
+      }, 2200)
     } catch {
       shareError.value = t('builds.share.error')
     }
@@ -86,6 +97,7 @@ export function useMyBuildsPage() {
   }
 
   watch([search, buildType], () => {
+    offset.value = 0
     window.clearTimeout(searchTimer)
     searchTimer = window.setTimeout(loadMyBuilds, 220)
   })
@@ -106,16 +118,22 @@ export function useMyBuildsPage() {
     buildType,
     loading,
     error,
+    total,
+    offset,
     pendingDeleteId,
     sharedBuildId,
     shareError,
     searchTimer,
     buildTypeOptions,
     buildCountLabel,
-    crewTotal,
+    pageNumber,
+    pageCount,
+    canGoPrevious,
+    canGoNext,
     slotLabel,
     previewItems,
     loadMyBuilds,
+    goToPage,
     shareBuild,
     confirmDelete,
     copyBuildShareLink,

@@ -6,7 +6,14 @@ from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.files.schemas.file_asset import FileRead
 from app.modules.files.routes.content import router as content_router
-from app.modules.files.services.file_service import FileValidationError, delete_file, get_file, list_files, upload_file
+from app.modules.files.services.file_service import (
+    FilePermissionError,
+    FileValidationError,
+    delete_file,
+    get_file,
+    list_files,
+    upload_file,
+)
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -29,6 +36,8 @@ def post_file(
 ) -> FileRead:
     try:
         return upload_file(db, file, owner=current_user, usage_context=usage_context)
+    except FilePermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
     except FileValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 

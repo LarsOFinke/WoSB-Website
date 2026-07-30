@@ -22,6 +22,10 @@ export const baseMessages = {
       primaryNavigation: 'Primary navigation',
       accountNavigation: 'Account navigation',
       admin: 'Admin',
+      pagination: 'Pagination',
+      previous: 'Previous',
+      next: 'Next',
+      pageOf: 'Page {page} of {pages}',
     },
     footer: { text: 'Royal Blackwater Fleet' },
     auth: {
@@ -208,7 +212,7 @@ export const baseMessages = {
   },
   de: {
     common: {
-      home: 'Start', builds: 'Builds', back: 'Zurück', cancel: 'Abbrechen', close: 'Schließen', delete: 'Löschen', empty: 'Leer', language: 'Sprache', rate: 'Rate', type: 'Typ', crew: 'Crew', free: 'Frei', upgrades: 'Upgrades', sailorMinimum: 'Matrosenminimum', quantity: 'Anzahl', slots: 'Slots', mainNavigation: 'Hauptnavigation', primaryNavigation: 'Primäre Navigation', accountNavigation: 'Account-Navigation',
+      home: 'Start', builds: 'Builds', back: 'Zurück', cancel: 'Abbrechen', close: 'Schließen', delete: 'Löschen', empty: 'Leer', language: 'Sprache', rate: 'Rate', type: 'Typ', crew: 'Crew', free: 'Frei', upgrades: 'Upgrades', sailorMinimum: 'Matrosenminimum', quantity: 'Anzahl', slots: 'Slots', mainNavigation: 'Hauptnavigation', primaryNavigation: 'Primäre Navigation', accountNavigation: 'Account-Navigation', pagination: 'Seitennavigation', previous: 'Zurück', next: 'Weiter', pageOf: 'Seite {page} von {pages}',
     },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
@@ -249,7 +253,7 @@ export const baseMessages = {
     },
   },
   fr: {
-    common: { home: 'Accueil', builds: 'Builds', back: 'Retour', cancel: 'Annuler', close: 'Fermer', delete: 'Supprimer', empty: 'Vide', language: 'Langue', rate: 'Rang', type: 'Type', crew: 'Équipage', free: 'Libre', upgrades: 'Améliorations', sailorMinimum: 'Minimum de marins', quantity: 'Quantité', slots: 'emplacements', mainNavigation: 'Navigation principale' },
+    common: { home: 'Accueil', builds: 'Builds', back: 'Retour', cancel: 'Annuler', close: 'Fermer', delete: 'Supprimer', empty: 'Vide', language: 'Langue', rate: 'Rang', type: 'Type', crew: 'Équipage', free: 'Libre', upgrades: 'Améliorations', sailorMinimum: 'Minimum de marins', quantity: 'Quantité', slots: 'emplacements', mainNavigation: 'Navigation principale', pagination: 'Pagination', previous: 'Précédent', next: 'Suivant', pageOf: 'Page {page} sur {pages}' },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Community Hub',
@@ -289,7 +293,7 @@ export const baseMessages = {
     },
   },
   es: {
-    common: { home: 'Inicio', builds: 'Builds', back: 'Volver', cancel: 'Cancelar', close: 'Cerrar', delete: 'Eliminar', empty: 'Vacío', language: 'Idioma', rate: 'Clase', type: 'Tipo', crew: 'Tripulación', free: 'Libre', upgrades: 'Mejoras', sailorMinimum: 'Mínimo de marineros', quantity: 'Cantidad', slots: 'ranuras', mainNavigation: 'Navegación principal' },
+    common: { home: 'Inicio', builds: 'Builds', back: 'Volver', cancel: 'Cancelar', close: 'Cerrar', delete: 'Eliminar', empty: 'Vacío', language: 'Idioma', rate: 'Clase', type: 'Tipo', crew: 'Tripulación', free: 'Libre', upgrades: 'Mejoras', sailorMinimum: 'Mínimo de marineros', quantity: 'Cantidad', slots: 'ranuras', mainNavigation: 'Navegación principal', pagination: 'Paginación', previous: 'Anterior', next: 'Siguiente', pageOf: 'Página {page} de {pages}' },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Community Hub',
@@ -329,7 +333,7 @@ export const baseMessages = {
     },
   },
   pt: {
-    common: { home: 'Início', builds: 'Builds', back: 'Voltar', cancel: 'Cancelar', close: 'Fechar', delete: 'Eliminar', empty: 'Vazio', language: 'Idioma', rate: 'Classe', type: 'Tipo', crew: 'Tripulação', free: 'Livre', upgrades: 'Upgrades', sailorMinimum: 'Mínimo de marinheiros', quantity: 'Quantidade', slots: 'slots', mainNavigation: 'Navegação principal' },
+    common: { home: 'Início', builds: 'Builds', back: 'Voltar', cancel: 'Cancelar', close: 'Fechar', delete: 'Eliminar', empty: 'Vazio', language: 'Idioma', rate: 'Classe', type: 'Tipo', crew: 'Tripulação', free: 'Livre', upgrades: 'Upgrades', sailorMinimum: 'Mínimo de marinheiros', quantity: 'Quantidade', slots: 'slots', mainNavigation: 'Navegação principal', pagination: 'Paginação', previous: 'Anterior', next: 'Seguinte', pageOf: 'Página {page} de {pages}' },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Community Hub',
@@ -369,7 +373,7 @@ export const baseMessages = {
     },
   },
   ru: {
-    common: { home: 'Главная', builds: 'Билды', back: 'Назад', cancel: 'Отмена', close: 'Закрыть', delete: 'Удалить', empty: 'Пусто', language: 'Язык', rate: 'Ранг', type: 'Тип', crew: 'Команда', free: 'Свободно', upgrades: 'Улучшения', sailorMinimum: 'Минимум матросов', quantity: 'Количество', slots: 'слоты', mainNavigation: 'Главная навигация' },
+    common: { home: 'Главная', builds: 'Билды', back: 'Назад', cancel: 'Отмена', close: 'Закрыть', delete: 'Удалить', empty: 'Пусто', language: 'Язык', rate: 'Ранг', type: 'Тип', crew: 'Команда', free: 'Свободно', upgrades: 'Улучшения', sailorMinimum: 'Минимум матросов', quantity: 'Количество', slots: 'слоты', mainNavigation: 'Главная навигация', pagination: 'Навигация по страницам', previous: 'Назад', next: 'Вперёд', pageOf: 'Страница {page} из {pages}' },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Community Hub',
@@ -409,7 +413,7 @@ export const baseMessages = {
     },
   },
   cn: {
-    common: { home: '首页', builds: '配置', back: '返回', cancel: '取消', close: '关闭', delete: '删除', empty: '空', language: '语言', rate: '等级', type: '类型', crew: '船员', free: '空余', upgrades: '升级', sailorMinimum: '水手最低值', quantity: '数量', slots: '槽位', mainNavigation: '主导航' },
+    common: { home: '首页', builds: '配置', back: '返回', cancel: '取消', close: '关闭', delete: '删除', empty: '空', language: '语言', rate: '等级', type: '类型', crew: '船员', free: '空余', upgrades: '升级', sailorMinimum: '水手最低值', quantity: '数量', slots: '槽位', mainNavigation: '主导航', pagination: '分页', previous: '上一页', next: '下一页', pageOf: '第 {page} / {pages} 页' },
     footer: { text: 'Royal Blackwater Fleet' },
     home: {
       eyebrow: 'Community Hub',

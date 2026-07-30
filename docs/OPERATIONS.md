@@ -41,7 +41,10 @@ abweichenden Datenbankrevision abgebrochen; ein inkompatibles API-Image wird nic
 Der Updater übernimmt Admin-Anforderungen erst nach dem exklusiven Lock, verweigert lokale
 Git-Änderungen, nutzt Fast-Forward, schreibt während des Laufs einen Heartbeat, sichert vor
 Datenbankarbeiten, hält die vorherigen Container-Images als Rollback-Punkt fest und führt nach
-Migration und Deployment einen Schema-, Readiness- und HTTPS-Smoke-Test aus.
+Migration und Deployment einen Schema-, Readiness- und HTTPS-Smoke-Test aus. Der Webbereich zeigt
+absichtlich nur Vorgang, Zustand und Zeitpunkte. Commit-IDs, anfordernde Konten und Log-Auszüge
+bleiben im Host-Protokoll beziehungsweise in den konfigurierten Webhook-Zustellungen und werden
+nicht an den Browser ausgeliefert.
 
 ## Backup
 
@@ -52,10 +55,12 @@ Migration und Deployment einen Schema-, Readiness- und HTTPS-Smoke-Test aus.
 Backups liegen unter `infrastructure/data/backups` und werden nach
 `BACKUP_RETENTION_DAYS` aufgeräumt. Mindestens eine regelmäßige externe Kopie ist erforderlich.
 
-### Remote-Datenbankbackup aus dem Adminbereich
+### Remote-Anwendungsbackup aus dem Adminbereich
 
-Administratoren können unter **Staff → Betrieb → Datenbank-Backups** ein dediziertes
-SSH-/SFTP-Ziel konfigurieren und ein frisches PostgreSQL-Backup manuell übertragen.
+Administratoren können unter **Staff → Betrieb → Anwendungs-Backups** ein dediziertes
+SSH-/SFTP-Ziel konfigurieren und ein frisches PostgreSQL-Backup sowie ein getrenntes Dateiarchiv
+manuell auf eine andere Maschine übertragen. Das Dateiarchiv enthält immer `data/uploads` und,
+sofern vorhanden, zusätzlich Zertifikate und Uptime-Kuma-Daten.
 Der Ablauf ist bewusst zweistufig:
 
 1. Host und Port erfassen, den öffentlichen SSH-Host-Key ermitteln und dessen Fingerprint
@@ -64,11 +69,12 @@ Der Ablauf ist bewusst zweistufig:
    und einen dedizierten privaten Schlüssel hinterlegen. Danach Verbindung testen und das
    Backup auslösen.
 
-Der Host-Runner erstellt mit `backup-postgres.sh` einen komprimierten Dump, überträgt Dump
-und `.sha256`-Datei zunächst als `.part`, benennt beide atomar um und führt auf dem Zielserver
-`sha256sum -c` aus. Das Zielkonto benötigt daher Schreibrechte im Zielverzeichnis sowie die
-Möglichkeit, `sha256sum` auszuführen. Es sollte keine interaktive Shell und keine Rechte außerhalb
-des Backup-Verzeichnisses besitzen.
+Der Host-Runner erstellt mit `backup-postgres.sh` einen komprimierten Dump und mit
+`backup-data.sh` ein separates Dateiarchiv. Für jedes Artefakt wird eine `.sha256`-Datei erzeugt.
+Archiv und Prüfsumme werden zunächst als `.part` übertragen, atomar umbenannt und anschließend auf
+dem Zielserver mit `sha256sum -c` verifiziert. Das Zielkonto benötigt daher Schreibrechte im
+Zielverzeichnis sowie die Möglichkeit, `sha256sum` auszuführen. Es sollte keine interaktive Shell
+und keine Rechte außerhalb des Backup-Verzeichnisses besitzen.
 
 Die API schreibt nur eine kurzlebige, mit Modus `0600` geschützte Anforderung. Der root-seitige
 systemd-Runner übernimmt sie, speichert Schlüssel und `known_hosts` unter
@@ -76,7 +82,7 @@ systemd-Runner übernimmt sie, speichert Schlüssel und `known_hosts` unter
 bereinigte Verbindungszusammenfassung zurück. Verbindungsänderungen und manuelle Backup-Anforderungen
 werden im Audit-Log protokolliert.
 
-Status und Fehler stehen im Adminbereich sowie auf dem Host unter:
+Status, Artefaktpfade und Fehler stehen im Adminbereich sowie auf dem Host unter:
 
 ```text
 infrastructure/data/control/status/backup-status.json

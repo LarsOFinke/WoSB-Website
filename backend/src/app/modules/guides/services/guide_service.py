@@ -14,7 +14,11 @@ from app.modules.guides.schemas.guide_read import GuideRead
 from app.modules.guides.schemas.guide_update import GuideUpdate
 from app.modules.guides.schemas.guide_summary import GuideSummary
 from app.modules.content.services.content_embed_service import ContentEmbedValidationError, validate_build_embeds, validate_content_embeds
-from app.modules.files.services.file_service import get_files_for_owner
+from app.modules.files.services.file_service import (
+    get_files_for_owner,
+    publish_files,
+    refresh_file_publication,
+)
 
 
 class GuideValidationError(ValueError):
@@ -137,6 +141,7 @@ def create_guide(db: Session, payload: GuideCreate, author: User) -> GuideRead:
         body=payload.body,
         owner_id=author.id,
     )
+    publish_files(files, "guide")
     for index, file in enumerate(files):
         guide.attachments.append(GuideAttachment(file_id=file.id, sort_order=index))
     for index, build in enumerate(builds):
@@ -158,17 +163,20 @@ def update_guide(db: Session, guide_id: int, payload: GuideUpdate, user: User) -
     builds = _load_linked_builds(db, payload.build_ids)
     _validate_guide_embeds(payload.body, files, builds)
 
+    previous_file_ids = {attachment.file_id for attachment in guide.attachments}
     guide.title = payload.title
     guide.category = payload.category
     guide.summary = payload.summary
     guide.body = payload.body
     guide.attachments.clear()
     guide.build_references.clear()
+    publish_files(files, "guide")
     for index, file in enumerate(files):
         guide.attachments.append(GuideAttachment(file_id=file.id, sort_order=index))
     for index, build in enumerate(builds):
         guide.build_references.append(GuideBuildReference(build_id=build.id, sort_order=index))
 
+    refresh_file_publication(db, previous_file_ids | {file.id for file in files})
     db.commit()
     updated = get_guide(db, guide.id)
     if updated is None:
@@ -180,6 +188,8 @@ def delete_guide(db: Session, guide_id: int, user: User) -> bool:
     guide = db.get(Guide, guide_id)
     if guide is None or (guide.owner_id != user.id and not user.can_moderate):
         return False
+    file_ids = {attachment.file_id for attachment in guide.attachments}
     guide.is_published = False
+    refresh_file_publication(db, file_ids)
     db.commit()
     return True

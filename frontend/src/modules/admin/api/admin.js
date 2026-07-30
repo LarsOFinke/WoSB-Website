@@ -271,7 +271,7 @@ export function testBackupConnection() {
   return post('/admin/backups/test', {})
 }
 
-export function runDatabaseBackup() {
+export function runApplicationBackup() {
   return post('/admin/backups/run', {})
 }
 

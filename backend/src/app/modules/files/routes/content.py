@@ -14,11 +14,8 @@ from app.modules.files.services.file_service import (
     resolve_stored_file_path,
 )
 
-PUBLIC_FILE_USAGE_CONTEXTS = frozenset({"forum", "guide", "master-data"})
-
-
 def _require_file_access(stored_file: StoredFile, current_user: User | None) -> None:
-    if stored_file.usage_context in PUBLIC_FILE_USAGE_CONTEXTS:
+    if stored_file.is_public:
         return
     if current_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required.")
@@ -38,7 +35,7 @@ def _file_response(stored_file: StoredFile, current_user: User | None) -> FileRe
         filename=stored_file.original_name,
         content_disposition_type="inline",
         headers={
-            "Cache-Control": "private, no-store",
+            "Cache-Control": "public, max-age=3600" if stored_file.is_public else "private, no-store",
             "X-Content-Type-Options": "nosniff",
         },
     )

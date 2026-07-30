@@ -239,6 +239,8 @@ require_pattern 'backup-from-admin.sh' "$INFRA_DIR/systemd/rbf-hub-backup-admin.
 require_pattern 'rbf-hub-backup-admin.path' "$INFRA_DIR/scripts/deployment/install-systemd.sh"
 require_pattern 'control/secrets' "$INFRA_DIR/scripts/lib/host/storage.sh"
 require_pattern 'BACKUP_RESULT_FILE' "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+require_pattern 'BACKUP_RESULT_FILE' "$INFRA_DIR/scripts/backup/backup-data.sh"
+require_pattern 'data/uploads' "$INFRA_DIR/scripts/backup/backup-data.sh"
 require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
 require_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
 require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
@@ -337,12 +339,13 @@ with tempfile.TemporaryDirectory() as temporary:
     original_run = module.subprocess.run
     module.subprocess.run = fake_run
     try:
-        transfer = runner.transfer(config, backup_file)
+        transfer = runner.transfer(config, backup_file, "postgresql")
     finally:
         module.subprocess.run = original_run
 
-    assert transfer["backup_filename"] == backup_file.name
-    assert transfer["backup_size_bytes"] == len(b"database-backup")
+    assert transfer["artifact_type"] == "postgresql"
+    assert transfer["filename"] == backup_file.name
+    assert transfer["size_bytes"] == len(b"database-backup")
     assert transfer["remote_path"] == f"/srv/backups/rbf/{backup_file.name}"
     assert len(calls) == 2
     assert calls[0][0][0] == "sftp"

@@ -17,7 +17,11 @@ from app.modules.forum.schemas.forum_thread_read import ForumThreadRead
 from app.modules.forum.schemas.forum_thread_summary import ForumThreadSummary
 from app.modules.forum.schemas.forum_thread_update import ForumThreadUpdate
 from app.modules.content.services.content_embed_service import ContentEmbedValidationError, validate_content_embeds
-from app.modules.files.services.file_service import get_files_for_owner
+from app.modules.files.services.file_service import (
+    get_files_for_owner,
+    publish_files,
+    refresh_file_publication,
+)
 
 
 class ForumValidationError(ValueError):
@@ -93,6 +97,7 @@ def create_thread(db: Session, payload: ForumThreadCreate, author: User) -> Foru
     _validate_post_embeds(payload.body, files)
     thread = ForumThread(title=payload.title, category=normalize_forum_category(payload.category), owner_id=author.id)
     first_post = ForumPost(body=payload.body, author_id=author.id)
+    publish_files(files, "forum")
     for index, file in enumerate(files):
         first_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
     thread.posts.append(first_post)
@@ -111,6 +116,7 @@ def add_post(db: Session, thread_id: int, payload: ForumPostCreate, author: User
     files = get_files_for_owner(db, payload.file_ids, author)
     _validate_post_embeds(payload.body, files)
     post = ForumPost(thread_id=thread.id, body=payload.body, author_id=author.id)
+    publish_files(files, "forum")
     for index, file in enumerate(files):
         post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
     db.add(post)
@@ -155,10 +161,13 @@ def update_thread(
     thread.updated_at = activity_at
     opening_post.body = payload.body
     opening_post.updated_at = activity_at
+    previous_file_ids = {attachment.file_id for attachment in opening_post.attachments}
     opening_post.attachments.clear()
+    publish_files(files, "forum")
     for index, file in enumerate(files):
         opening_post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
 
+    refresh_file_publication(db, previous_file_ids | {file.id for file in files})
     db.commit()
     updated = get_thread(db, thread.id)
     if updated is None:
@@ -185,13 +194,16 @@ def update_post(
     activity_at = utc_now()
     post.body = payload.body
     post.updated_at = activity_at
+    previous_file_ids = {attachment.file_id for attachment in post.attachments}
     post.attachments.clear()
+    publish_files(files, "forum")
     for index, file in enumerate(files):
         post.attachments.append(ForumPostAttachment(file_id=file.id, sort_order=index))
 
     thread = db.get(ForumThread, post.thread_id)
     if thread is not None:
         thread.updated_at = activity_at
+    refresh_file_publication(db, previous_file_ids | {file.id for file in files})
     db.commit()
 
     updated = db.scalar(
@@ -208,10 +220,20 @@ def update_post(
 
 
 def delete_thread(db: Session, thread_id: int, user: User) -> bool:
-    thread = db.get(ForumThread, thread_id)
+    thread = db.scalar(
+        select(ForumThread)
+        .options(selectinload(ForumThread.posts).selectinload(ForumPost.attachments))
+        .where(ForumThread.id == thread_id)
+    )
     if thread is None or (thread.owner_id != user.id and not user.can_moderate):
         return False
+    file_ids = {
+        attachment.file_id
+        for post in thread.posts
+        for attachment in post.attachments
+    }
     db.delete(thread)
+    refresh_file_publication(db, file_ids)
     db.commit()
     return True
 
@@ -239,7 +261,9 @@ def delete_post(db: Session, post_id: int, user: User) -> ForumPostRead | None:
             "The opening post belongs to the thread and must be removed by deleting the thread."
         )
     snapshot = _post_to_read(post)
+    file_ids = {attachment.file_id for attachment in post.attachments}
     thread.updated_at = utc_now()
     db.delete(post)
+    refresh_file_publication(db, file_ids)
     db.commit()
     return snapshot

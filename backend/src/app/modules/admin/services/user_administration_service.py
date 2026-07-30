@@ -53,6 +53,8 @@ def update_user_account(
     if payload.role is not None:
         if not actor.is_admin:
             raise UserAdministrationError("Only administrators can change site roles.")
+        if payload.role == ROLE_ADMIN and target.role != ROLE_ADMIN and not actor.can_grant_admin:
+            raise UserAdministrationError("Only the bootstrap administrator can grant administrator access.")
         if target.role == ROLE_ADMIN and payload.role != ROLE_ADMIN:
             raise UserAdministrationError("Administrator accounts cannot be demoted by another account.")
         if payload.role != target.role:

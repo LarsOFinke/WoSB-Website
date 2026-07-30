@@ -1371,6 +1371,28 @@ body.webhook-editor-open {
   margin-top: 1rem;
 }
 
+.backup-artifact-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.backup-artifact-card {
+  min-width: 0;
+}
+
+.backup-artifact-card .backup-result-meta {
+  display: grid;
+  gap: .65rem;
+}
+
+@media (max-width: 900px) {
+  .backup-artifact-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .backup-log-panel > summary {
   cursor: pointer;
   font-weight: 700;

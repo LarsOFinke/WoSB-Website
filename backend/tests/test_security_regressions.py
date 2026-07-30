@@ -186,8 +186,72 @@ def test_svg_and_mismatched_uploads_are_rejected_but_valid_png_is_accepted() -> 
         client.cookies.clear()
         assert client.get(private_content_path).status_code == 401
         assert client.get(private_legacy_path).status_code == 401
+        assert client.get(public_content_path).status_code == 401
+        assert client.get(public_legacy_path).status_code == 401
+
+        _login(client, username, password)
+        guide = client.post(
+            "/api/guides",
+            json={
+                "title": "Published attachment guide",
+                "category": "general",
+                "summary": "Attachment publication regression",
+                "body": "The attached image is now part of published content.",
+                "file_ids": [public_file["id"]],
+                "build_ids": [],
+            },
+        )
+        assert guide.status_code == 201, guide.text
+        guide_id = guide.json()["id"]
+        client.cookies.clear()
         assert client.get(public_content_path).status_code == 200
         assert client.get(public_legacy_path).status_code == 200
+
+        _login(client, username, password)
+        assert client.delete(f"/api/guides/{guide_id}").status_code == 204
+        client.cookies.clear()
+        assert client.get(public_content_path).status_code == 401
+        assert client.get(public_legacy_path).status_code == 401
+
+        _login(client, username, password)
+        forum_upload = client.post(
+            "/api/files?usage_context=forum",
+            files={"file": ("forum-pixel.png", BytesIO(png), "image/png")},
+        )
+        assert forum_upload.status_code == 201, forum_upload.text
+        forum_file = forum_upload.json()
+        forum_content_path = forum_file["public_url"]
+        client.cookies.clear()
+        assert client.get(forum_content_path).status_code == 401
+
+        _login(client, username, password)
+        thread = client.post(
+            "/api/forum/threads",
+            json={
+                "title": "Published attachment thread",
+                "category": "general",
+                "body": "The attached image is now part of a forum thread.",
+                "file_ids": [forum_file["id"]],
+            },
+        )
+        assert thread.status_code == 201, thread.text
+        thread_id = thread.json()["id"]
+        client.cookies.clear()
+        assert client.get(forum_content_path).status_code == 200
+
+        _login(client, username, password)
+        detached = client.put(
+            f"/api/forum/threads/{thread_id}",
+            json={
+                "title": "Published attachment thread",
+                "category": "general",
+                "body": "The forum attachment has been removed.",
+                "file_ids": [],
+            },
+        )
+        assert detached.status_code == 200, detached.text
+        client.cookies.clear()
+        assert client.get(forum_content_path).status_code == 401
 
         with SessionLocal() as db:
             create_user(
@@ -261,7 +325,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0014_raid_helper_calendar"})
+    assert heads == frozenset({"0015_bootstrap_admin_files"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(
@@ -278,3 +342,47 @@ def test_schema_readiness_rejects_database_without_current_alembic_head(tmp_path
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'stale.db'}")
     with engine.connect() as connection, pytest.raises(DatabaseSchemaMismatchError):
         verify_alembic_heads(connection)
+
+
+def test_master_data_uploads_require_admin_and_are_public_only_after_authorization() -> None:
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        b"\x00\x00\x00\rIHDR"
+        b"\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00"
+        b"\x1f\x15\xc4\x89"
+    )
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="master-data-upload-user",
+                password="BlackwaterMasterUploadUser123!",
+                display_name="Master Data Upload User",
+            )
+            create_user(
+                db,
+                username="master-data-upload-admin",
+                password="BlackwaterMasterUploadAdmin123!",
+                display_name="Master Data Upload Admin",
+                role=ROLE_ADMIN,
+            )
+
+        _login(client, "master-data-upload-user", "BlackwaterMasterUploadUser123!")
+        denied = client.post(
+            "/api/files?usage_context=master-data",
+            files={"file": ("catalog.png", BytesIO(png), "image/png")},
+        )
+        assert denied.status_code == 403, denied.text
+
+        _login(client, "master-data-upload-admin", "BlackwaterMasterUploadAdmin123!")
+        accepted = client.post(
+            "/api/files?usage_context=master-data",
+            files={"file": ("catalog.png", BytesIO(png), "image/png")},
+        )
+        assert accepted.status_code == 201, accepted.text
+        file_url = accepted.json()["public_url"]
+
+        client.cookies.clear()
+        public_response = client.get(file_url)
+        assert public_response.status_code == 200
+        assert public_response.headers["cache-control"] == "public, max-age=3600"

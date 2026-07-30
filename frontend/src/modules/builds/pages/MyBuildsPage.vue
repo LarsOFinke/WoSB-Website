@@ -15,10 +15,14 @@ const {
   searchTimer,
   buildTypeOptions,
   buildCountLabel,
-  crewTotal,
+  pageNumber,
+  pageCount,
+  canGoPrevious,
+  canGoNext,
   slotLabel,
   previewItems,
   loadMyBuilds,
+  goToPage,
   shareBuild,
   confirmDelete,
   copyBuildShareLink,
@@ -78,7 +82,7 @@ const {
                 {{ build.ship.name }} · {{ t('common.rate') }} {{ build.ship.rate }} ·
                 {{ build.build_role_label || build.build_type }} ·
                 ▲ {{ build.upvote_count || 0 }} ·
-                {{ t('builds.list.crew', { current: crewTotal(build), max: build.ship_stats?.crew_capacity || build.ship.crew_capacity }) }}
+                {{ t('builds.list.crew', { current: build.metrics?.crew_total || 0, max: build.metrics?.crew_capacity || build.ship.crew_capacity }) }}
               </span>
               <small>
                 {{ t('builds.list.ammunitionPreview', { items: previewItems(build.ammunition_slots) }) }} ·
@@ -108,6 +112,11 @@ const {
             </div>
           </article>
         </div>
+        <nav v-if="pageCount > 1" class="build-pagination" :aria-label="t('common.pagination')">
+          <button type="button" :disabled="loading || !canGoPrevious" @click="goToPage(-1)">{{ t('common.previous') }}</button>
+          <span>{{ t('common.pageOf', { page: pageNumber, pages: pageCount }) }}</span>
+          <button type="button" :disabled="loading || !canGoNext" @click="goToPage(1)">{{ t('common.next') }}</button>
+        </nav>
       </section>
     </div>
   </section>

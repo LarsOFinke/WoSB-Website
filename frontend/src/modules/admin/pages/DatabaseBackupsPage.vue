@@ -46,9 +46,9 @@ const {
             <small>{{ formatDateTime(status.finished_at || status.started_at || status.requested_at) }}</small>
           </article>
           <article class="home-status-card refined-status-card">
-            <span>{{ t('admin.backups.lastBackup') }}</span><strong>{{ status.backup_filename || '—' }}</strong>
-            <p>{{ formatBytes(status.backup_size_bytes) }}</p>
-            <small class="backup-checksum">{{ status.backup_sha256 || t('admin.backups.noBackup') }}</small>
+            <span>{{ t('admin.backups.lastBackup') }}</span><strong>{{ status.artifacts?.length || 0 }}</strong>
+            <p>{{ status.artifacts?.length ? t('admin.backups.artifactCount', { count: status.artifacts.length }) : t('admin.backups.noBackup') }}</p>
+            <small>{{ t('admin.backups.backupCoverage') }}</small>
           </article>
         </div>
         <p v-if="success" class="success-text table-state">{{ success }}</p>
@@ -96,10 +96,18 @@ const {
             {{ inProgress ? t('admin.backups.actions.running') : t('admin.backups.actions.run') }}
           </button>
         </div>
-        <dl class="system-update-meta backup-result-meta">
-          <div><dt>{{ t('admin.backups.remotePath') }}</dt><dd>{{ status.remote_path || '—' }}</dd></div>
-          <div><dt>{{ t('admin.backups.checksum') }}</dt><dd class="backup-checksum">{{ status.backup_sha256 || '—' }}</dd></div>
-        </dl>
+        <div v-if="status.artifacts?.length" class="backup-artifact-list">
+          <article v-for="artifact in status.artifacts" :key="artifact.remote_path" class="home-status-card refined-status-card backup-artifact-card">
+            <span>{{ t(`admin.backups.artifacts.${artifact.artifact_type}`) }}</span>
+            <strong>{{ artifact.filename }}</strong>
+            <p>{{ formatBytes(artifact.size_bytes) }}</p>
+            <dl class="system-update-meta backup-result-meta">
+              <div><dt>{{ t('admin.backups.remotePath') }}</dt><dd>{{ artifact.remote_path }}</dd></div>
+              <div><dt>{{ t('admin.backups.checksum') }}</dt><dd class="backup-checksum">{{ artifact.sha256 }}</dd></div>
+            </dl>
+          </article>
+        </div>
+        <p v-else class="muted">{{ t('admin.backups.noBackup') }}</p>
       </section>
 
       <details class="wire-section admin-panel backup-log-panel" :open="logOpen" @toggle="logOpen = $event.target.open">

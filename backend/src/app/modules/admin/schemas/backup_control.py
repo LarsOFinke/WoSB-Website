@@ -84,6 +84,14 @@ class BackupConnectionSummary(BaseModel):
     private_key_configured: bool = False
 
 
+class BackupArtifact(BaseModel):
+    artifact_type: Literal["postgresql", "files"]
+    filename: str
+    size_bytes: int = Field(ge=0)
+    sha256: str = Field(min_length=64, max_length=64)
+    remote_path: str
+
+
 class BackupControlStatus(BaseModel):
     state: str = "idle"
     operation: str = "idle"
@@ -98,10 +106,7 @@ class BackupControlStatus(BaseModel):
     discovered_port: int | None = None
     discovered_host_key: str | None = None
     discovered_fingerprint: str | None = None
-    backup_filename: str | None = None
-    backup_size_bytes: int | None = None
-    backup_sha256: str | None = None
-    remote_path: str | None = None
+    artifacts: list[BackupArtifact] = Field(default_factory=list)
     log_tail: list[str] = Field(default_factory=list)
     request_available: bool = False
 

@@ -62,7 +62,8 @@ export function useGroupDetailPage(props) {
       return
     }
     try {
-      builds.value = await listMyBuilds()
+      const page = await listMyBuilds('', '', '', 100, 0)
+      builds.value = page.items || []
     } catch {
       builds.value = []
     }

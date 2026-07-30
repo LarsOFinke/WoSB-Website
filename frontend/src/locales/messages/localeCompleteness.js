@@ -11,7 +11,7 @@ export const localeCompletenessMessages = {
   de: {
     auth: { password: 'Passwort' },
     markdown: { toolbar: { link: 'Verknüpfung' } },
-    common: { modules: 'Module', groups: 'Gruppensuche', myGroupSearches: 'Meine Gruppensuchen' },
+    common: { modules: 'Module', groups: 'Gruppensuche', myGroupSearches: 'Meine Gruppensuchen', pagination: 'Seitennavigation', previous: 'Zurück', next: 'Weiter', pageOf: 'Seite {page} von {pages}' },
     forum: { categories: { training: 'Training', logistics: 'Logistik', loistics: 'Logistik' } },
     groups: {
       fields: { schedule: 'Zeitraum' },
@@ -41,7 +41,7 @@ export const localeCompletenessMessages = {
     },
     forum: { detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
     guides: { edit: { title: 'Modifier le guide' }, detail: { edit: 'Modifier le guide' }, print: { action: 'Imprimer le guide', opening: 'Ouverture de la vue d’impression ...', windowOpened: 'La vue d’impression a été ouverte dans un nouvel onglet.', error: 'Impossible d’ouvrir la vue d’impression du guide.', fallbackTitle: 'Fiche guide', unknownAuthor: 'Auteur inconnu', attachmentFallback: 'Pièce jointe', linkedBuildEyebrow: 'Build lié', contentsTitle: 'Sommaire', linkedBuildsTitle: 'Builds liés', attachmentsTitle: 'Pièces jointes et références', brandMotto: 'Discipline · Honneur · Victoire', author: 'Auteur', updated: 'Mis à jour', source: 'Origine', footerHint: 'Préparé pour une utilisation hors ligne par la flotte.', preparedAt: 'Préparé le {value}' } },
-    common: { modules: 'Sections', groups: 'Recherche de groupe', myGroupSearches: 'Mes recherches de groupe' },
+    common: { modules: 'Sections', groups: 'Recherche de groupe', myGroupSearches: 'Mes recherches de groupe', pagination: 'Navigation des pages', previous: 'Précédent', next: 'Suivant', pageOf: 'Page {page} sur {pages}' },
     forum: { categories: { training: 'Entraînement', logistics: 'Logistique', loistics: 'Logistique' }, detail: { edited: 'Modifié : {value}', editPost: 'Modifier la publication' } },
     groups: {
       fields: { schedule: 'Créneau' },
@@ -73,7 +73,7 @@ export const localeCompletenessMessages = {
     },
     forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
     guides: { edit: { title: 'Editar guía' }, detail: { edit: 'Editar guía' }, print: { action: 'Imprimir guía', opening: 'Abriendo la vista de impresión ...', windowOpened: 'La vista de impresión se abrió en una pestaña nueva.', error: 'No se pudo abrir la vista de impresión de la guía.', fallbackTitle: 'Guía', unknownAuthor: 'Autor desconocido', attachmentFallback: 'Archivo adjunto', linkedBuildEyebrow: 'Build vinculado', contentsTitle: 'Contenido', linkedBuildsTitle: 'Builds vinculados', attachmentsTitle: 'Archivos adjuntos y referencias', brandMotto: 'Disciplina · Honor · Victoria', author: 'Autor', updated: 'Actualizado', source: 'Fuente', footerHint: 'Preparado para el uso sin conexión de la flota.', preparedAt: 'Preparado el {value}' } },
-    common: { modules: 'Módulos', groups: 'Búsqueda de grupo', myGroupSearches: 'Mis búsquedas de grupo' },
+    common: { modules: 'Módulos', groups: 'Búsqueda de grupo', myGroupSearches: 'Mis búsquedas de grupo', pagination: 'Paginación', previous: 'Anterior', next: 'Siguiente', pageOf: 'Página {page} de {pages}' },
     forum: { categories: { training: 'Entrenamiento', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicación' } },
     groups: {
       fields: { schedule: 'Horario' },
@@ -105,7 +105,7 @@ export const localeCompletenessMessages = {
     },
     forum: { detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
     guides: { edit: { title: 'Editar guia' }, detail: { edit: 'Editar guia' }, print: { action: 'Imprimir guia', opening: 'A abrir a vista de impressão ...', windowOpened: 'A vista de impressão foi aberta num novo separador.', error: 'Não foi possível abrir a vista de impressão do guia.', fallbackTitle: 'Guia', unknownAuthor: 'Autor desconhecido', attachmentFallback: 'Anexo', linkedBuildEyebrow: 'Build associado', contentsTitle: 'Conteúdo', linkedBuildsTitle: 'Builds associados', attachmentsTitle: 'Anexos e referências', brandMotto: 'Disciplina · Honra · Vitória', author: 'Autor', updated: 'Atualizado', source: 'Fonte', footerHint: 'Preparado para utilização offline pela frota.', preparedAt: 'Preparado em {value}' } },
-    common: { modules: 'Módulos', groups: 'Procura de grupo', myGroupSearches: 'As minhas procuras de grupo' },
+    common: { modules: 'Módulos', groups: 'Procura de grupo', myGroupSearches: 'As minhas procuras de grupo', pagination: 'Paginação', previous: 'Anterior', next: 'Seguinte', pageOf: 'Página {page} de {pages}' },
     forum: { categories: { training: 'Treino', logistics: 'Logística', loistics: 'Logística' }, detail: { edited: 'Editado: {value}', editPost: 'Editar publicação' } },
     groups: {
       fields: { schedule: 'Horário' },
@@ -137,7 +137,7 @@ export const localeCompletenessMessages = {
     },
     forum: { detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
     guides: { edit: { title: 'Редактировать гайд' }, detail: { edit: 'Редактировать гайд' }, print: { action: 'Печать гайда', opening: 'Открытие версии для печати ...', windowOpened: 'Версия для печати открыта в новой вкладке.', error: 'Не удалось открыть версию гайда для печати.', fallbackTitle: 'Гайд', unknownAuthor: 'Неизвестный автор', attachmentFallback: 'Вложение', linkedBuildEyebrow: 'Связанный билд', contentsTitle: 'Содержание', linkedBuildsTitle: 'Связанные билды', attachmentsTitle: 'Вложения и источники', brandMotto: 'Дисциплина · Честь · Победа', author: 'Автор', updated: 'Обновлено', source: 'Источник', footerHint: 'Подготовлено для автономного использования флотом.', preparedAt: 'Подготовлено {value}' } },
-    common: { modules: 'Модули', groups: 'Поиск группы', myGroupSearches: 'Мои поиски группы' },
+    common: { modules: 'Модули', groups: 'Поиск группы', myGroupSearches: 'Мои поиски группы', pagination: 'Навигация по страницам', previous: 'Назад', next: 'Вперёд', pageOf: 'Страница {page} из {pages}' },
     forum: { categories: { training: 'Тренировка', logistics: 'Логистика', loistics: 'Логистика' }, detail: { edited: 'Изменено: {value}', editPost: 'Редактировать сообщение' } },
     groups: {
       fields: { schedule: 'Время' },
@@ -169,7 +169,7 @@ export const localeCompletenessMessages = {
     },
     forum: { detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },
     guides: { edit: { title: '编辑指南' }, detail: { edit: '编辑指南' }, print: { action: '打印指南', opening: '正在打开打印视图…', windowOpened: '打印视图已在新标签页中打开。', error: '无法打开指南打印视图。', fallbackTitle: '指南', unknownAuthor: '未知作者', attachmentFallback: '附件', linkedBuildEyebrow: '关联配装', contentsTitle: '目录', linkedBuildsTitle: '关联配装', attachmentsTitle: '附件与参考资料', brandMotto: '纪律 · 荣誉 · 胜利', author: '作者', updated: '更新时间', source: '来源', footerHint: '为舰队离线使用而准备。', preparedAt: '生成于 {value}' } },
-    common: { modules: '模块', groups: '组队搜索', myGroupSearches: '我的组队搜索' },
+    common: { modules: '模块', groups: '组队搜索', myGroupSearches: '我的组队搜索', pagination: '分页', previous: '上一页', next: '下一页', pageOf: '第 {page} / {pages} 页' },
     forum: { categories: { training: '训练', logistics: '后勤', loistics: '后勤' }, detail: { edited: '已编辑：{value}', editPost: '编辑帖子' } },
     groups: {
       fields: { schedule: '时间段' },

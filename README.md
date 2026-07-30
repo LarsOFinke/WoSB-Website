@@ -49,7 +49,7 @@ make test          # schnelle, deterministische Tests
 make test-full     # Migration, Build und Infrastrukturchecks
 make validate      # vollständige Release-Prüfung
 make doctor        # Produktionsdiagnose auf dem Pi
-make infra-backup  # Datenbank und Uploads sichern
+make infra-backup  # Datenbank, Uploads und Betriebsdaten sichern
 ```
 
 Normales Update mit automatischem Vergleich zwischen Datenbankrevision und neuem API-Image:
@@ -74,7 +74,7 @@ sudo ./update.sh --restore-seed-defaults
 Eigene Stammdatensätze und Benutzerinhalte bleiben dabei erhalten. Dieselbe Funktion steht Admins
 in der Stammdatenverwaltung als bestätigter Button zur Verfügung.
 
-Im Admin-Panel stehen Standardupdate, explizite Migration und Migration mit Seed ebenfalls bereit.
+Im Admin-Panel stehen Standardupdate, explizite Migration und Migration mit Seed ebenfalls bereit. Die Website zeigt dabei nur einen datensparsamen Status; detaillierte Update-Ausgaben bleiben in Host-Logs und Webhooks.
 
 ## Projektstruktur
 

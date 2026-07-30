@@ -13,6 +13,8 @@ class UserRead(BaseModel):
     display_name: str
     role: str
     is_active: bool
+    is_bootstrap_admin: bool = False
+    can_grant_admin: bool = False
     fleet_name: str | None = None
     fleet_id: int | None = None
     fleet_membership_id: int | None = None

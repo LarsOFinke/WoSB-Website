@@ -17,7 +17,7 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
     queue_webhook_event_safely,
     schedule_webhook_deliveries,
 )
-from app.modules.admin.services.system_update_service import get_system_update_status
+from app.modules.admin.services.system_update_service import get_system_update_internal_status
 
 _RESULT_MARKER_FILE = "update-webhook-result.json"
 _TERMINAL_STATES = {"succeeded", "failed"}
@@ -77,7 +77,7 @@ def queue_system_update_started(
     actor: User,
     background_tasks: BackgroundTasks,
 ) -> list[int]:
-    status = get_system_update_status()
+    status = get_system_update_internal_status()
     delivery_ids = queue_webhook_event_safely(
         db,
         event_type="system.update.started",
@@ -101,7 +101,7 @@ def queue_system_update_started(
 def queue_pending_system_update_result(db: Session) -> list[int]:
     """Queue one terminal result event for the latest completed host update."""
 
-    status = get_system_update_status()
+    status = get_system_update_internal_status()
     if status.state not in _TERMINAL_STATES or not status.finished_at:
         return []
 

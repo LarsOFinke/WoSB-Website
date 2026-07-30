@@ -310,3 +310,28 @@
   color: var(--accent);
   background: rgba(241, 184, 91, .12);
 }
+
+
+.build-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+
+.build-pagination button {
+  min-width: 7rem;
+}
+
+.build-pagination span {
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .build-pagination {
+    flex-wrap: wrap;
+  }
+}

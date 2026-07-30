@@ -7,7 +7,7 @@ import {
   deleteBackupConnection,
   discoverBackupHost,
   getBackupControlStatus,
-  runDatabaseBackup,
+  runApplicationBackup,
   testBackupConnection,
 } from '@/modules/admin/api/admin'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
@@ -17,6 +17,7 @@ const EMPTY_STATUS = {
   operation: 'idle',
   message: '',
   connection: { configured: false, private_key_configured: false },
+  artifacts: [],
   log_tail: [],
   request_available: false,
 }
@@ -159,7 +160,7 @@ export function useDatabaseBackupsPage() {
 
   async function runBackup() {
     if (!window.confirm(t('admin.backups.confirmRun'))) return
-    await request(runDatabaseBackup, 'admin.backups.messages.backupQueued')
+    await request(runApplicationBackup, 'admin.backups.messages.backupQueued')
   }
 
   async function removeConfiguration() {

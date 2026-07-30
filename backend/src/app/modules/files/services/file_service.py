@@ -20,6 +20,10 @@ class FileValidationError(ValueError):
     pass
 
 
+class FilePermissionError(PermissionError):
+    pass
+
+
 EXTENSION_MIME_TYPES: dict[str, frozenset[str]] = {
     ".jpg": frozenset({"image/jpeg"}),
     ".jpeg": frozenset({"image/jpeg"}),
@@ -33,6 +37,7 @@ EXTENSION_MIME_TYPES: dict[str, frozenset[str]] = {
     ".txt": frozenset({"text/plain"}),
 }
 ALLOWED_EXTENSIONS = frozenset(EXTENSION_MIME_TYPES)
+ALLOWED_USAGE_CONTEXTS = frozenset({"general", "forum", "guide", "master-data"})
 ALLOWED_MIME_TYPES = frozenset(
     mime_type for mime_types in EXTENSION_MIME_TYPES.values() for mime_type in mime_types
 )
@@ -155,12 +160,22 @@ def _validate_content(path: Path, extension: str, declared_mime_type: str) -> st
     return detected
 
 
+def _normalized_usage_context(value: str) -> str:
+    normalized = (value or "general").strip().lower()
+    if normalized not in ALLOWED_USAGE_CONTEXTS:
+        raise FileValidationError("Unsupported upload usage context.")
+    return normalized
+
+
 def upload_file(
     db: Session,
     upload: UploadFile,
     owner: User,
     usage_context: str = "general",
 ) -> StoredFile:
+    normalized_context = _normalized_usage_context(usage_context)
+    if normalized_context == "master-data" and not owner.is_admin:
+        raise FilePermissionError("Only administrators can upload master-data assets.")
     extension = _safe_extension(upload.filename or "upload", upload.content_type)
     declared_mime_type = _declared_mime_type(upload, extension)
     if not extension or declared_mime_type not in ALLOWED_MIME_TYPES:
@@ -210,7 +225,8 @@ def upload_file(
         relative_path=relative_path,
         mime_type=mime_type,
         size_bytes=size,
-        usage_context=(usage_context or "general")[:40],
+        usage_context=normalized_context,
+        is_public=normalized_context == "master-data",
     )
     try:
         db.add(db_file)
@@ -275,6 +291,47 @@ def get_files_for_owner(
         if file.owner_id not in (None, owner.id) and not owner.can_moderate:
             raise FileValidationError("One or more selected files are not owned by you.")
     return [found[file_id] for file_id in file_ids]
+
+
+
+def publish_files(files: list[StoredFile], usage_context: str) -> None:
+    normalized_context = _normalized_usage_context(usage_context)
+    for stored_file in files:
+        stored_file.usage_context = normalized_context
+        stored_file.is_public = True
+
+
+def refresh_file_publication(db: Session, file_ids: list[int] | set[int]) -> None:
+    normalized_ids = {int(file_id) for file_id in file_ids if int(file_id) > 0}
+    if not normalized_ids:
+        return
+
+    # Import here to keep the files module independent during model bootstrap.
+    from app.modules.forum.models.forum_post_attachment import ForumPostAttachment
+    from app.modules.guides.models.guide import Guide
+    from app.modules.guides.models.guide_attachment import GuideAttachment
+
+    db.flush()
+    guide_file_ids = set(
+        db.scalars(
+            select(GuideAttachment.file_id)
+            .join(Guide, Guide.id == GuideAttachment.guide_id)
+            .where(GuideAttachment.file_id.in_(normalized_ids), Guide.is_published.is_(True))
+        ).all()
+    )
+    forum_file_ids = set(
+        db.scalars(
+            select(ForumPostAttachment.file_id).where(
+                ForumPostAttachment.file_id.in_(normalized_ids)
+            )
+        ).all()
+    )
+    public_ids = guide_file_ids | forum_file_ids
+    stored_files = db.scalars(select(StoredFile).where(StoredFile.id.in_(normalized_ids))).all()
+    for stored_file in stored_files:
+        stored_file.is_public = (
+            stored_file.usage_context == "master-data" or stored_file.id in public_ids
+        )
 
 
 def delete_file(db: Session, file: StoredFile) -> None:

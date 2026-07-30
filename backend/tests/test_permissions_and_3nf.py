@@ -36,6 +36,40 @@ def test_role_hierarchy_protects_administrators_and_allows_lower_account_managem
         assert promoted.role == "moderator"
 
 
+def test_only_bootstrap_admin_can_grant_administrator_role() -> None:
+    with _db() as db:
+        bootstrap = create_user(
+            db, username="bootstrap-admin", password="test-password-123", display_name="Bootstrap", role="admin"
+        )
+        bootstrap.is_bootstrap_admin = True
+        promoted_admin = create_user(
+            db, username="promoted-admin", password="test-password-123", display_name="Promoted", role="admin"
+        )
+        first_member = create_user(
+            db, username="first-member", password="test-password-123", display_name="First", role="user"
+        )
+        second_member = create_user(
+            db, username="second-member", password="test-password-123", display_name="Second", role="user"
+        )
+        db.commit()
+
+        promoted = update_user_account(
+            db, actor=bootstrap, target_id=first_member.id, payload=UserAdministrationUpdate(role="admin")
+        )
+        assert promoted.role == "admin"
+        assert promoted.is_bootstrap_admin is False
+        assert promoted.can_grant_admin is False
+
+        try:
+            update_user_account(
+                db, actor=promoted_admin, target_id=second_member.id, payload=UserAdministrationUpdate(role="admin")
+            )
+        except UserAdministrationError as exc:
+            assert "bootstrap administrator" in str(exc)
+        else:
+            raise AssertionError("A promoted administrator must not be able to grant administrator access.")
+
+
 def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> None:
     with _db() as db:
         inspector = inspect(db.bind)

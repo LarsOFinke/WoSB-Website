@@ -11,6 +11,14 @@
 
 ## Unreleased
 
+- Restricted administrator delegation to the configured bootstrap administrator: it may promote users to administrator, while promoted administrators cannot grant further administrator access. Migration `0015` selects an existing active administrator during upgrades, and normal seeding reconciles the capability with the configured default account.
+- Reworked upload publication so client-supplied usage context no longer makes guide or forum files public. Files remain private until linked to published server-authorized content; master-data uploads require an administrator and explicit public visibility is persisted.
+- Added paginated lightweight build collection responses, preserving full calculated statistics for detail views while bounding list payload and CPU cost.
+- Extended remote administration backups to create, checksum, transfer and remotely verify both PostgreSQL and file-data archives, including uploads and optional certificate/Uptime Kuma data.
+- Removed requester identities, commit hashes and log tails from the website update-status API and UI; detailed diagnostics remain in host logs and webhook notifications.
+- Limited Raid-Helper duplicate-name handling to integrity violations while rolling back and re-raising unexpected database failures.
+- Added a full-stack Chromium smoke workflow covering registration approval, login, privacy-minimal update status, and paginated build access.
+
 - Fixed the Raid-Helper production startup failure by replacing the accidental development-only `httpx` dependency with the existing hardened outbound HTTP transport. Raid-Helper requests now reuse DNS pinning, public-address validation, TLS hostname verification and redirect blocking without adding a new runtime package.
 - Added an admin-only Raid-Helper v4 calendar integration with multiple encrypted server profiles, fleet- and squad-specific channel destinations, category-filtered templates, default-on per-event delivery, create/update/cancel synchronization and visible per-target delivery status for event managers. Existing calendar webhook messages now expose normalized fleet/squad scope fields, and the Staff template editor includes matching fleet/squad presets. Migration `0014` creates the normalized profile, destination, template and event-link tables without requiring a seed.
 - Added crawler load protection for the Raspberry Pi deployment: a restrictive `robots.txt`, explicit denial of declared high-volume AI training crawlers, separate per-IP limits for public pages and API traffic, connection limits, and `X-Robots-Tag` on API and authenticated workspaces.
