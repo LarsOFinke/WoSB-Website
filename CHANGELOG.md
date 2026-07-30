@@ -11,6 +11,7 @@
 
 ## Unreleased
 
+- Fixed the Raid-Helper production startup failure by replacing the accidental development-only `httpx` dependency with the existing hardened outbound HTTP transport. Raid-Helper requests now reuse DNS pinning, public-address validation, TLS hostname verification and redirect blocking without adding a new runtime package.
 - Added an admin-only Raid-Helper v4 calendar integration with multiple encrypted server profiles, fleet- and squad-specific channel destinations, category-filtered templates, default-on per-event delivery, create/update/cancel synchronization and visible per-target delivery status for event managers. Existing calendar webhook messages now expose normalized fleet/squad scope fields, and the Staff template editor includes matching fleet/squad presets. Migration `0014` creates the normalized profile, destination, template and event-link tables without requiring a seed.
 - Added crawler load protection for the Raspberry Pi deployment: a restrictive `robots.txt`, explicit denial of declared high-volume AI training crawlers, separate per-IP limits for public pages and API traffic, connection limits, and `X-Robots-Tag` on API and authenticated workspaces.
 - Fixed the Impressum administration workflow: the `.env` reset action now rereads the configured environment source instead of using only the startup cache, the default English UI consistently labels the page “Impressum”, and the application shell keeps the footer at the bottom of short pages without a viewport overlay.

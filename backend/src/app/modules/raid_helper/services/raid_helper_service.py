@@ -4,8 +4,8 @@ import json
 from datetime import timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any
+from urllib.request import Request
 
-import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from app.core.time import utc_now
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import User
 from app.modules.admin.services.outbound_webhook_delivery_service.discord import render_message
+from app.modules.admin.services.outbound_webhook_delivery_service.transport import WebhookTransport
 from app.modules.calendar.models.fleet_event import FleetEvent
 from app.modules.calendar.constants import FLEET_EVENT_CATEGORY_VALUES
 from app.modules.fleet.services.fleet_service import can_manage_fleet
@@ -153,17 +154,41 @@ def _auth_headers(profile: RaidHelperProfile) -> dict[str, str]:
     return {"Authorization": key}
 
 
-def _request(profile: RaidHelperProfile, method: str, path: str, payload: dict[str, Any] | None = None) -> tuple[int, Any]:
+_RAID_HELPER_TRANSPORT = WebhookTransport(timeout_seconds=10)
+
+
+def _request(
+    profile: RaidHelperProfile,
+    method: str,
+    path: str,
+    payload: dict[str, Any] | None = None,
+) -> tuple[int, Any]:
     base = _validate_base_url(profile.api_base_url)
-    headers = {**_auth_headers(profile), "Accept": "application/json", "Content-Type": "application/json"}
-    with httpx.Client(timeout=10.0, follow_redirects=False) as client:
-        response = client.request(method, f"{base}{path}", headers=headers, json=payload)
+    headers = {
+        **_auth_headers(profile),
+        "Accept": "application/json",
+        "Content-Type": "application/json; charset=utf-8",
+        "User-Agent": "RoyalBlackwaterFleet-RaidHelper/1.0",
+    }
+    data = None
+    if payload is not None:
+        data = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    request = Request(
+        f"{base}{path}",
+        data=data,
+        headers=headers,
+        method=method.upper(),
+    )
+    status_code, response_text = _RAID_HELPER_TRANSPORT.send(request)
     body: Any
-    try:
-        body = response.json()
-    except ValueError:
-        body = response.text[:1000]
-    return response.status_code, body
+    if not response_text:
+        body = None
+    else:
+        try:
+            body = json.loads(response_text)
+        except ValueError:
+            body = response_text[:1000]
+    return status_code, body
 
 
 def test_profile(db: Session, profile_id: int) -> RaidHelperProfileTestResult | None:

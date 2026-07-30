@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -295,3 +296,67 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
         raid_helper_service.sync_event(event_id, "cancel")
         with SessionLocal() as db:
             assert db.get(RaidHelperEventLink, link_id) is None
+
+
+def test_raid_helper_requests_reuse_hardened_runtime_transport(monkeypatch) -> None:
+    class FakeTransport:
+        def __init__(self) -> None:
+            self.request = None
+
+        def send(self, request):
+            self.request = request
+            return 201, '{"eventId":"123456789012345678"}'
+
+    with TestClient(app):
+        with SessionLocal() as db:
+            user = create_user(
+                db,
+                username="raid-helper-transport-admin",
+                password="RaidHelperTransportPassword123!",
+                display_name="Transport Admin",
+                role=ROLE_ADMIN,
+            )
+            created = raid_helper_service.create_profile(
+                db,
+                RaidHelperProfileCreate(
+                    name="Raid Helper Transport Profile",
+                    server_id="723456789012345678",
+                    api_key="transport-secret-key",
+                    timezone="Europe/Berlin",
+                ),
+                user,
+            )
+            profile = db.get(RaidHelperProfile, created.id)
+            assert profile is not None
+
+            transport = FakeTransport()
+            monkeypatch.setattr(raid_helper_service, "_RAID_HELPER_TRANSPORT", transport)
+            status_code, body = raid_helper_service._request(
+                profile,
+                "POST",
+                "/servers/723456789012345678/channels/823456789012345678/event",
+                {"title": "Transport test"},
+            )
+
+            assert status_code == 201
+            assert body == {"eventId": "123456789012345678"}
+            assert transport.request is not None
+            assert transport.request.get_method() == "POST"
+            assert transport.request.full_url.endswith(
+                "/servers/723456789012345678/channels/823456789012345678/event"
+            )
+            assert transport.request.data == b'{"title":"Transport test"}'
+            assert transport.request.get_header("Authorization") == "transport-secret-key"
+            assert transport.request.get_header("User-agent") == (
+                "RoyalBlackwaterFleet-RaidHelper/1.0"
+            )
+
+
+def test_raid_helper_runtime_service_has_no_httpx_dependency() -> None:
+    service_path = (
+        Path(__file__).resolve().parents[1]
+        / "src/app/modules/raid_helper/services/raid_helper_service.py"
+    )
+    source = service_path.read_text(encoding="utf-8")
+    assert "import httpx" not in source
+    assert "WebhookTransport" in source
