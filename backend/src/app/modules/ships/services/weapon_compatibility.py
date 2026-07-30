@@ -13,8 +13,9 @@ def is_weapon_compatible(
 ) -> bool:
     """Return whether a catalog weapon fits one normalized ship mount.
 
-    Slot taxonomy is authoritative first. Regular weapons are constrained by
-    Light/Medium/Heavy rank; mortars use their dedicated caliber limit.
+    Slot taxonomy is authoritative first. Weapons that declare a size class
+    also respect the Light/Medium/Heavy ceiling. Positional weapons use their
+    normalized slot links, while mortars use the dedicated caliber limit.
     """
 
     capacity = mount.capacity if capacity_override is None else capacity_override
@@ -47,15 +48,11 @@ def is_weapon_compatible(
     if option.option_kind in {"mortar", "mortar_launcher"}:
         return False
 
-    # Audited named exceptions are normalized as mount/option associations.
-    # They intentionally bypass only the regular size ceiling; the slot taxonomy
-    # and the dedicated mortar/special-weapon rules above remain authoritative.
-    if any(
-        allowance.build_item_option_id == option.id
-        for allowance in mount.option_allowances
-    ):
+    # Normal positional weapons such as bow/stern assemblies are governed by
+    # their normalized slot-type links only. Light/Medium/Heavy ceilings apply
+    # only when the weapon itself references a class (currently broadsides).
+    if option.weapon_class is None:
         return True
-
-    if option.weapon_class is None or mount.max_weapon_class is None:
+    if mount.max_weapon_class is None:
         return False
     return option.weapon_class.rank <= mount.max_weapon_class.rank

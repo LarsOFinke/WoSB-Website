@@ -193,7 +193,7 @@ function setMortarModificationEnabled(enabled) {
 
           <fieldset class="editor-section"><legend>{{ t('masterData.fields.weaponMounts') }}</legend>
             <div class="form-grid two-columns">
-              <label><span>{{ t('masterData.fields.weaponClass') }}</span><select v-model="optionForm.weapon_class"><option value="">—</option><option v-for="row in taxonomy.weapon_classes" :key="row.code" :value="row.code">{{ row.label }}</option></select></label>
+              <label><span>{{ t('masterData.fields.weaponClass') }}</span><select v-model="optionForm.weapon_class" :disabled="optionForm.option_kind !== 'cannon'"><option value="">—</option><option v-for="row in taxonomy.weapon_classes" :key="row.code" :value="row.code">{{ row.label }}</option></select></label>
               <label><span>{{ t('masterData.fields.caliber') }}</span><input v-model="optionForm.weapon_caliber_inches" type="number" min="0" step="0.1" /></label>
             </div>
             <div class="choice-grid"><label v-for="row in taxonomy.weapon_slot_types" :key="row.code" class="choice-card"><input v-model="optionForm.allowed_slot_types" type="checkbox" :value="row.code" /><span>{{ row.label }}</span></label></div>

@@ -113,6 +113,37 @@ class OptionMasterDataService:
                 f"Unknown weapon slot types: {', '.join(sorted(unknown_slots))}"
             )
 
+        if category.key == "weapon":
+            expected_slots = {
+                "cannon": {"weapon_port", "weapon_starboard"},
+                "bow_stern": {"weapon_front", "weapon_rear"},
+                "mortar": {"weapon_mortar"},
+                "mortar_launcher": {"weapon_mortar"},
+                "special_weapon": {
+                    "weapon_front",
+                    "weapon_rear",
+                    "weapon_special",
+                },
+            }.get(payload.option_kind)
+            if expected_slots is not None and set(payload.allowed_slot_types) != expected_slots:
+                raise MasterDataError(
+                    f"{payload.option_kind} weapons require exactly these slot types: "
+                    f"{', '.join(sorted(expected_slots))}."
+                )
+            if payload.option_kind == "cannon" and not payload.weapon_class:
+                raise MasterDataError(
+                    "Broadside cannons require a Light, Medium or Heavy weapon class."
+                )
+            if payload.option_kind in {
+                "bow_stern",
+                "mortar",
+                "mortar_launcher",
+                "special_weapon",
+            } and payload.weapon_class:
+                raise MasterDataError(
+                    "This weapon family is compatible by slot type and must not define a weapon class."
+                )
+
         for field, value in payload.model_dump(
             exclude={"stat_effects", "allowed_slot_types", "weapon_class"}
         ).items():

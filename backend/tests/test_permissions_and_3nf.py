@@ -62,6 +62,7 @@ def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> 
             "fleet_timezone",
             "fleet_discord_handle",
         }.isdisjoint(columns("registration_requests"))
+        assert "ship_weapon_option_allowances" not in inspector.get_table_names()
         for table in (
             "site_roles",
             "fleet_roles",
@@ -71,7 +72,6 @@ def test_normalized_schema_has_no_transitive_role_or_compound_text_columns() -> 
             "weapon_classes",
             "weapon_slot_types",
             "ship_weapon_mounts",
-            "ship_weapon_option_allowances",
             "build_item_option_slot_types",
         ):
             assert table in inspector.get_table_names()

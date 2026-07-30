@@ -449,6 +449,10 @@ def test_weapon_catalog_uses_dedicated_ship_arcs() -> None:
     for row in WEAPON_OPTIONS:
         slots = set(row["allowed_slot_types"])
         assert slots == expected[row["option_kind"]], row["name"]
+        if row["option_kind"] == "cannon":
+            assert row["weapon_class"] in {"light", "medium", "heavy"}
+        else:
+            assert row["weapon_class"] is None
 
 
 def test_specialist_effects_apply_once_even_when_quantity_is_submitted() -> None:

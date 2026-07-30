@@ -22,7 +22,7 @@ def _catalog(db: Session, ship: Ship) -> dict[str, set[str]]:
     return by_slot
 
 
-def test_weapon_dropdown_is_scoped_to_ship_slot_and_weapon_class() -> None:
+def test_weapon_dropdown_uses_class_for_broadsides_and_slot_type_for_positional_weapons() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -41,7 +41,21 @@ def test_weapon_dropdown_is_scoped_to_ship_slot_and_weapon_class() -> None:
         cannon_32 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "32-pdr Cannon"))
         twin_6 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 6-pdr"))
         twin_14 = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Twin 14-pdr"))
-        assert all((russia, essex, poltava, victory, cannon_8, cannon_16, cannon_32, twin_6, twin_14))
+        zeus = db.scalar(select(BuildItemOption).where(BuildItemOption.name == "Zeus"))
+        assert all(
+            (
+                russia,
+                essex,
+                poltava,
+                victory,
+                cannon_8,
+                cannon_16,
+                cannon_32,
+                twin_6,
+                twin_14,
+                zeus,
+            )
+        )
 
         # The mount ceiling is audited per ship rather than inferred from rate.
         # Russia uses Light mounts, Essex and Poltava use Medium, Victory accepts Heavy.
@@ -67,11 +81,13 @@ def test_weapon_dropdown_is_scoped_to_ship_slot_and_weapon_class() -> None:
         assert is_weapon_compatible(cannon_8, russia_port)
         assert not is_weapon_compatible(cannon_16, russia_port)
         assert is_weapon_compatible(twin_6, russia_rear)
-        assert not is_weapon_compatible(twin_14, russia_rear)
+        assert is_weapon_compatible(twin_14, russia_rear)
+        assert is_weapon_compatible(zeus, russia_rear)
         assert not is_weapon_compatible(twin_6, russia_port)
+        assert not is_weapon_compatible(zeus, russia_port)
 
 
-def test_every_active_regular_weapon_has_a_normalized_size_class() -> None:
+def test_weapon_families_use_normalized_class_or_slot_compatibility() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -86,11 +102,17 @@ def test_every_active_regular_weapon_has_a_normalized_size_class() -> None:
             if option.option_kind == "mortar":
                 assert option.weapon_class is None
                 assert option.weapon_caliber_inches is not None
-            elif option.option_kind in {"mortar_launcher", "special_weapon"}:
+            elif option.option_kind == "cannon":
+                assert option.weapon_class_code in {"light", "medium", "heavy"}
+                assert set(option.allowed_slots) == {"weapon_port", "weapon_starboard"}
+            else:
+                assert option.option_kind in {
+                    "bow_stern",
+                    "mortar_launcher",
+                    "special_weapon",
+                }
                 assert option.weapon_class is None
                 assert option.weapon_caliber_inches is None
-            else:
-                assert option.weapon_class_code in {"light", "medium", "heavy"}
 
 
 def test_special_weapons_follow_audited_positional_mounts_and_launchers_use_mortar_slots() -> None:
@@ -251,7 +273,7 @@ def test_mortar_modification_exchanges_broadsides_for_mortar_capacity() -> None:
             )
 
 
-def test_audited_bow_stern_weapon_exceptions_are_ship_and_mount_specific() -> None:
+def test_bow_stern_weapons_are_available_to_every_compatible_ship_mount() -> None:
     register_all_models()
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -261,41 +283,62 @@ def test_audited_bow_stern_weapon_exceptions_are_ship_and_mount_specific() -> No
         manager.seed_ships()
         manager.seed_build_options()
 
-        azov = db.scalar(select(Ship).where(Ship.name == "Azov"))
-        deadfish = db.scalar(select(Ship).where(Ship.name == "Deadfish"))
+        positional_weapons = db.scalars(
+            select(BuildItemOption).where(
+                BuildItemOption.option_kind == "bow_stern",
+                BuildItemOption.is_active.is_(True),
+            )
+        ).unique().all()
+        positional_names = {option.name for option in positional_weapons}
+        assert {"Zeus", "Basilisk", "Poseidon"} <= positional_names
+        assert all(option.weapon_class is None for option in positional_weapons)
+        assert all(
+            set(option.allowed_slots) == {"weapon_front", "weapon_rear"}
+            for option in positional_weapons
+        )
+
+        ships = db.scalars(select(Ship).where(Ship.is_active.is_(True))).unique().all()
+        assert ships
+        for ship in ships:
+            catalog = _catalog(db, ship)
+            for slot_code in ("weapon_front", "weapon_rear"):
+                mount = ship._mount(slot_code)
+                assert mount is not None
+                available = catalog.get(slot_code, set())
+                if mount.capacity > 0:
+                    assert positional_names <= available, (ship.name, slot_code)
+                else:
+                    assert positional_names.isdisjoint(available), (ship.name, slot_code)
+            for slot_code in (
+                "weapon_port",
+                "weapon_starboard",
+                "weapon_mortar",
+                "weapon_special",
+            ):
+                assert positional_names.isdisjoint(catalog.get(slot_code, set())), (
+                    ship.name,
+                    slot_code,
+                )
+
+        russia = db.scalar(select(Ship).where(Ship.name == "Russia"))
         eagle = db.scalar(select(Ship).where(Ship.name == "Eagle"))
-        assert azov and deadfish and eagle
+        assert russia and eagle
 
-        azov_catalog = _catalog(db, azov)
-        deadfish_catalog = _catalog(db, deadfish)
-        eagle_catalog = _catalog(db, eagle)
-
-        assert "Zeus" in azov_catalog["weapon_front"]
-        assert "Zeus" in azov_catalog["weapon_rear"]
-        assert "Zeus" in deadfish_catalog["weapon_front"]
-        assert "Zeus" in deadfish_catalog["weapon_rear"]
-        assert {"Basilisk", "Poseidon"} <= eagle_catalog["weapon_rear"]
-
-        # Exact allowances do not leak bow/stern assemblies into broadsides.
-        assert "Basilisk" not in eagle_catalog.get("weapon_port", set())
-        assert "Zeus" not in azov_catalog.get("weapon_port", set())
-
-        azov_build = create_build(
+        russia_build = create_build(
             db,
             BuildCreate(
-                build_name="Azov audited Zeus",
-                ship_id=azov.id,
-                sailors=azov.sailor_minimum,
-                front_weapon_slots=[{"item": "Zeus", "quantity": 1}],
+                build_name="Russia positional Zeus",
+                ship_id=russia.id,
+                sailors=russia.sailor_minimum,
                 rear_weapon_slots=[{"item": "Zeus", "quantity": 1}],
             ),
         )
-        assert azov_build.front_weapon_slots == [{"item": "Zeus", "quantity": 1}]
+        assert russia_build.rear_weapon_slots == [{"item": "Zeus", "quantity": 1}]
 
         eagle_build = create_build(
             db,
             BuildCreate(
-                build_name="Eagle audited stern weapons",
+                build_name="Eagle standard stern weapons",
                 ship_id=eagle.id,
                 sailors=eagle.sailor_minimum,
                 rear_weapon_slots=[
@@ -308,3 +351,4 @@ def test_audited_bow_stern_weapon_exceptions_are_ship_and_mount_specific() -> No
             {"item": "Basilisk", "quantity": 1},
             {"item": "Poseidon", "quantity": 1},
         ]
+
