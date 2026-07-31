@@ -14,6 +14,9 @@ backup_finalize() {
     sha256sum "$filename" > "${filename}.sha256"
   )
   chmod 600 "$output" "$checksum"
+  local metadata="${output}.restore.json" metadata_checksum="${output}.restore.json.sha256"
+  [[ ! -f "$metadata" ]] || chmod 600 "$metadata"
+  [[ ! -f "$metadata_checksum" ]] || chmod 600 "$metadata_checksum"
 
   local offsite
   offsite="$(read_env BACKUP_OFFSITE_DIR)"
@@ -31,6 +34,8 @@ backup_finalize() {
   local destination="$resolved_offsite/$category"
   install -d -m 0700 "$destination"
   install -m 0600 "$output" "$checksum" "$destination/"
+  [[ ! -f "$metadata" ]] || install -m 0600 "$metadata" "$destination/"
+  [[ ! -f "$metadata_checksum" ]] || install -m 0600 "$metadata_checksum" "$destination/"
   (
     cd "$destination"
     sha256sum -c "${filename}.sha256" >/dev/null
@@ -45,10 +50,7 @@ backup_finalize() {
 
 verify_backup_checksum() {
   local backup_file="$1" checksum_file="${1}.sha256"
-  [[ -f "$checksum_file" ]] || {
-    warn "Keine Prüfsumme neben dem Backup gefunden: $checksum_file"
-    return 0
-  }
+  [[ -f "$checksum_file" ]] || die "Verpflichtende Backup-Prüfsumme fehlt: $checksum_file"
   (
     cd "$(dirname "$backup_file")"
     sha256sum -c "$(basename "$checksum_file")"

@@ -282,11 +282,22 @@ const {
               type="radio"
               name="database-backup"
               :value="backup.backup_id"
-              :disabled="!isBootstrapAdmin || inProgress"
+              :disabled="!isBootstrapAdmin || inProgress || backup.encryption_keys_compatible === false"
             />
             <span class="backup-local-entry-main">
               <strong>{{ backup.filename }}</strong>
               <small>{{ formatDateTime(backup.created_at) }} · {{ formatBytes(backup.size_bytes) }}</small>
+              <small v-if="backup.alembic_head">{{ t('admin.backups.restore.schemaRevision') }}: {{ backup.alembic_head }}</small>
+              <small
+                class="backup-compatibility"
+                :class="{ 'is-incompatible': backup.encryption_keys_compatible === false }"
+              >
+                {{ backup.encryption_keys_compatible === true
+                  ? t('admin.backups.restore.keysCompatible')
+                  : backup.encryption_keys_compatible === false
+                    ? t('admin.backups.restore.keysIncompatible')
+                    : t('admin.backups.restore.keysUnknown') }}
+              </small>
             </span>
             <span class="backup-checksum backup-local-checksum">{{ backup.sha256 }}</span>
           </label>

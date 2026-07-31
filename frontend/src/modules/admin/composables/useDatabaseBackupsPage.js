@@ -67,6 +67,7 @@ export function useDatabaseBackupsPage() {
     canSubmit.value
     && isBootstrapAdmin.value
     && Boolean(selectedBackup.value)
+    && selectedBackup.value?.encryption_keys_compatible !== false
     && APPROVAL_TOKEN_PATTERN.test(restoreForm.approval_token.trim())
     && restoreForm.confirmation === RESTORE_CONFIRMATION
   ))

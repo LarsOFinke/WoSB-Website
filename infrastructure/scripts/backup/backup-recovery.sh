@@ -36,6 +36,13 @@ files_backup="$(realpath "$files_backup")"
 [[ -f "$files_backup" ]] || die "Datei-Backup fehlt: $files_backup"
 verify_backup_checksum "$postgres_backup"
 verify_backup_checksum "$files_backup"
+key_fingerprints="$(python3 "$SCRIPT_DIR/backup_metadata.py" fingerprints "$ENV_FILE")"
+python3 - "$key_fingerprints" <<'PY'
+import json, sys
+values = json.loads(sys.argv[1])
+if not isinstance(values, list) or not values:
+    raise SystemExit("Recovery backup requires a valid WEBHOOK_ENCRYPTION_KEYS key ring.")
+PY
 
 recipient="$(read_env BACKUP_AGE_RECIPIENT)"
 [[ "$recipient" =~ ^age1[0-9a-z]{20,}$ ]] \
@@ -62,8 +69,25 @@ install -d -m 0700 \
   "$stage/system"
 
 install -m 0600 "$postgres_backup" "${postgres_backup}.sha256" "$stage/artifacts/postgres/"
+if [[ -f "${postgres_backup}.restore.json" && -f "${postgres_backup}.restore.json.sha256" ]]; then
+  install -m 0600 \
+    "${postgres_backup}.restore.json" \
+    "${postgres_backup}.restore.json.sha256" \
+    "$stage/artifacts/postgres/"
+fi
 install -m 0600 "$files_backup" "${files_backup}.sha256" "$stage/artifacts/files/"
 install -m 0600 "$ENV_FILE" "$stage/configuration/infrastructure.env"
+python3 - "$stage/configuration/secret-keyring.json" "$key_fingerprints" <<'PY'
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+fingerprints = json.loads(sys.argv[2])
+path.write_text(json.dumps({
+    "schema_version": 1,
+    "secret_key_fingerprints": fingerprints,
+}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+path.chmod(0o600)
+PY
 
 if [[ -f "$INFRA_DIR/first-run-credentials.txt" ]]; then
   install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$stage/configuration/first-run-credentials.txt"

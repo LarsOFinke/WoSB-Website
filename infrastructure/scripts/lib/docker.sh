@@ -90,8 +90,11 @@ ensure_postgres_service() {
 
 read_database_schema_state() {
   ensure_env_file
-  local output marker
-  output="$(bw_compose run --rm --no-deps -T migrate python -c '
+  local database_url="${1:-}" output marker
+  local run_args=(run --rm --no-deps -T)
+  [[ -z "$database_url" ]] || run_args+=(-e "DATABASE_URL=$database_url")
+  run_args+=(migrate python -c)
+  output="$(bw_compose "${run_args[@]}" '
 from app.db.schema_health import current_alembic_heads, expected_alembic_heads
 from app.db.session import engine
 with engine.connect() as connection:
@@ -106,7 +109,8 @@ print(f"RBF_SCHEMA_STATUS|{current}|{expected}|{str(current == expected).lower()
 }
 
 verify_database_schema_head() {
-  read_database_schema_state
+  local database_url="${1:-}"
+  read_database_schema_state "$database_url"
   if [[ "$SCHEMA_MATCHES" != true ]]; then
     die "Datenbankschema stimmt nicht mit dem API-Image überein (aktuell: ${SCHEMA_CURRENT_HEADS:-keine Revision}; erwartet: $SCHEMA_EXPECTED_HEADS)."
   fi

@@ -18,6 +18,7 @@ _BACKUP_ID_RE = re.compile(r"^[a-f0-9]{64}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 _MAX_CATALOG_ENTRIES = 200
 _MAX_CHECKSUM_BYTES = 4096
+_MAX_METADATA_BYTES = 16 * 1024
 
 
 class LocalBackupError(RuntimeError):
@@ -32,6 +33,9 @@ class LocalBackupRecord:
     size_bytes: int
     sha256: str
     created_at: str
+    restore_metadata_verified: bool = False
+    encryption_keys_compatible: bool | None = None
+    alembic_head: str | None = None
 
     def public_dict(self) -> dict[str, Any]:
         return {
@@ -41,6 +45,9 @@ class LocalBackupRecord:
             "sha256": self.sha256,
             "created_at": self.created_at,
             "checksum_verified": True,
+            "restore_metadata_verified": self.restore_metadata_verified,
+            "encryption_keys_compatible": self.encryption_keys_compatible,
+            "alembic_head": self.alembic_head,
         }
 
 
@@ -116,7 +123,96 @@ def _expected_checksum(checksum_path: Path, filename: str) -> str:
     return digest
 
 
-def _record_for(path: Path) -> LocalBackupRecord:
+
+
+def _read_env_values(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.is_file():
+        return values
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        normalized = value.strip()
+        if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in {'"', "'"}:
+            normalized = normalized[1:-1]
+        values[key.strip()] = normalized
+    return values
+
+
+def _fingerprint_key(value: str) -> str | None:
+    import base64
+
+    try:
+        decoded = base64.b64decode(value.encode("ascii"), altchars=b"-_", validate=True)
+    except (UnicodeEncodeError, ValueError):
+        return None
+    if len(decoded) != 32:
+        return None
+    return hashlib.sha256(decoded).hexdigest()
+
+
+def _current_key_fingerprints(infra_dir: Path) -> set[str]:
+    import base64
+
+    values = _read_env_values(infra_dir / ".env")
+    fingerprints: set[str] = set()
+    for key in (item.strip() for item in values.get("WEBHOOK_ENCRYPTION_KEYS", "").split(",")):
+        if fingerprint := _fingerprint_key(key):
+            fingerprints.add(fingerprint)
+    database_url = values.get("DATABASE_URL", "")
+    if database_url:
+        derived = base64.urlsafe_b64encode(
+            hashlib.sha256(
+                f"royal-blackwater-fleet:webhooks:v1:{database_url}".encode("utf-8")
+            ).digest()
+        ).decode("ascii")
+        if fingerprint := _fingerprint_key(derived):
+            fingerprints.add(fingerprint)
+    return fingerprints
+
+
+def _read_restore_metadata(path: Path, backup: Path, backup_sha256: str) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    checksum_path = path.with_name(f"{path.name}.sha256")
+    if path.is_symlink() or checksum_path.is_symlink():
+        raise LocalBackupError("Symlinked restore metadata is not accepted.")
+    expected_metadata_sha = _expected_checksum(checksum_path, path.name)
+    descriptor, before = _open_regular_nofollow(path)
+    try:
+        if before.st_size > _MAX_METADATA_BYTES:
+            raise LocalBackupError("Restore metadata is unexpectedly large.")
+        with os.fdopen(descriptor, "rb", closefd=False) as handle:
+            raw = handle.read(_MAX_METADATA_BYTES + 1)
+        after = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    if len(raw) > _MAX_METADATA_BYTES or _changed(before, after):
+        raise LocalBackupError("Restore metadata changed while it was read.")
+    actual_metadata_sha = hashlib.sha256(raw).hexdigest()
+    if not hmac.compare_digest(expected_metadata_sha, actual_metadata_sha):
+        raise LocalBackupError("Restore metadata checksum mismatch.")
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise LocalBackupError("Restore metadata is invalid.") from exc
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        raise LocalBackupError("Unsupported restore metadata.")
+    backup_data = payload.get("backup")
+    if not isinstance(backup_data, dict):
+        raise LocalBackupError("Restore metadata has no backup record.")
+    if backup_data.get("filename") != backup.name:
+        raise LocalBackupError("Restore metadata filename mismatch.")
+    if int(backup_data.get("size_bytes", -1)) != backup.stat().st_size:
+        raise LocalBackupError("Restore metadata size mismatch.")
+    if not hmac.compare_digest(str(backup_data.get("sha256") or ""), backup_sha256):
+        raise LocalBackupError("Restore metadata checksum mismatch.")
+    return payload
+
+
+def _record_for(path: Path, infra_dir: Path) -> LocalBackupRecord:
     if not _BACKUP_NAME_RE.fullmatch(path.name):
         raise LocalBackupError("Unsupported PostgreSQL backup filename.")
     checksum_path = path.with_name(f"{path.name}.sha256")
@@ -126,6 +222,25 @@ def _record_for(path: Path) -> LocalBackupRecord:
     actual, metadata = _hash_file(path)
     if not hmac.compare_digest(expected, actual):
         raise LocalBackupError(f"Backup checksum mismatch: {path.name}")
+    restore_metadata = _read_restore_metadata(
+        path.with_name(f"{path.name}.restore.json"), path, actual
+    )
+    metadata_verified = restore_metadata is not None
+    compatible: bool | None = None
+    alembic_head: str | None = None
+    if restore_metadata is not None:
+        security = restore_metadata.get("security")
+        backup_fingerprints = {
+            str(value)
+            for value in (security.get("secret_key_fingerprints", []) if isinstance(security, dict) else [])
+            if re.fullmatch(r"[a-f0-9]{64}", str(value))
+        }
+        current_fingerprints = _current_key_fingerprints(infra_dir)
+        compatible = bool(backup_fingerprints & current_fingerprints) if backup_fingerprints else None
+        application = restore_metadata.get("application")
+        if isinstance(application, dict):
+            alembic_head = str(application.get("alembic_head") or "") or None
+
     identifier = hashlib.sha256(
         f"rbf-local-backup-v1\0{path.name}\0{metadata.st_size}\0{actual}".encode("utf-8")
     ).hexdigest()
@@ -137,6 +252,9 @@ def _record_for(path: Path) -> LocalBackupRecord:
         size_bytes=metadata.st_size,
         sha256=actual,
         created_at=created_at,
+        restore_metadata_verified=metadata_verified,
+        encryption_keys_compatible=compatible,
+        alembic_head=alembic_head,
     )
 
 
@@ -153,12 +271,12 @@ def scan_local_postgres_backups(infra_dir: Path) -> tuple[list[LocalBackupRecord
             "The protected PostgreSQL backup directory could not be scanned."
         ) from exc
     for path in candidates:
-        if path.name.endswith(".sha256") or path.name.startswith("."):
+        if path.name.endswith((".sha256", ".restore.json")) or path.name.startswith("."):
             continue
         try:
             if path.parent.resolve() != root:
                 raise LocalBackupError("Backup path escaped the protected directory.")
-            records.append(_record_for(path))
+            records.append(_record_for(path, infra_dir))
         except (LocalBackupError, OSError):
             skipped += 1
     records.sort(key=lambda item: (item.created_at, item.filename), reverse=True)

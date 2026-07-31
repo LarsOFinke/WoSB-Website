@@ -12,6 +12,16 @@ database="$(read_env POSTGRES_DB)"
 
 log "PostgreSQL-Backup wird erstellt: $output"
 bw_compose exec -T postgres pg_dump --clean --if-exists --no-owner --no-privileges -U "$user" "$database" | gzip -9 > "$output"
+
+alembic_head="$(
+  {
+    bw_compose exec -T postgres psql -U "$user" -d "$database" -Atc \
+      "SELECT version_num FROM alembic_version ORDER BY version_num" 2>/dev/null \
+      || true
+  } | paste -sd, -
+)"
+python3 "$INFRA_DIR/scripts/backup/backup_metadata.py" create \
+  "$output" "$ENV_FILE" "$REPO_ROOT/VERSION" "$alembic_head" >/dev/null
 backup_finalize "$output" "postgres"
 if [[ -n "${BACKUP_RESULT_FILE:-}" ]]; then
   printf '%s\n' "$output" > "$BACKUP_RESULT_FILE"

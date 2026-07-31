@@ -144,7 +144,10 @@ def endpoint_url_for_delivery(row: OutboundWebhook) -> str:
 
 
 def _public_endpoint(row: OutboundWebhook) -> str:
-    parsed = urlparse(endpoint_url_for_delivery(row))
+    try:
+        parsed = urlparse(endpoint_url_for_delivery(row))
+    except OutboundWebhookError:
+        return "https://discord.com/api/webhooks/unavailable/••••••"
     path_match = DISCORD_WEBHOOK_PATH.fullmatch(parsed.path)
     webhook_id = path_match.group("webhook_id") if path_match else "configured"
     return f"{parsed.scheme}://{parsed.netloc}/api/webhooks/{webhook_id}/••••••"
@@ -292,10 +295,11 @@ def encrypt_legacy_webhook_endpoints(db: Session, *, commit: bool = True) -> int
                 replacement = webhook_secret_box.encrypt(
                     _validate_endpoint_url(row.endpoint_url)
                 )
-        except SecretBoxError as exc:
-            raise OutboundWebhookError(
-                f"Webhook {row.id} credential cannot be decrypted; re-enter its URL."
-            ) from exc
+        except SecretBoxError:
+            row.is_active = False
+            row.last_failure_at = utc_now()
+            changed += 1
+            continue
         if replacement != row.endpoint_url:
             row.endpoint_url = replacement
             changed += 1

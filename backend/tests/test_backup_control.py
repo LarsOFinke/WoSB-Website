@@ -583,3 +583,74 @@ def test_admin_restore_consumes_host_approval_before_backup_selection(tmp_path) 
         raise AssertionError("Unknown backup selections must be rejected")
     assert not approval.exists(), "Host approval must be consumed before backup selection"
     assert "approval_token_sha256" not in runner.request
+
+
+def test_postgres_backup_metadata_reports_encryption_key_compatibility(tmp_path) -> None:
+    import importlib.util
+    import hashlib
+    from cryptography.fernet import Fernet
+
+    scripts = Path(__file__).parents[2] / "infrastructure/scripts/backup"
+    metadata_spec = importlib.util.spec_from_file_location(
+        "backup_metadata_compatibility_test", scripts / "backup_metadata.py"
+    )
+    assert metadata_spec and metadata_spec.loader
+    metadata = importlib.util.module_from_spec(metadata_spec)
+    metadata_spec.loader.exec_module(metadata)
+
+    catalog_spec = importlib.util.spec_from_file_location(
+        "local_backup_catalog_compatibility_test", scripts / "local_backup_catalog.py"
+    )
+    assert catalog_spec and catalog_spec.loader
+    catalog = importlib.util.module_from_spec(catalog_spec)
+    import sys
+    sys.modules[catalog_spec.name] = catalog
+    catalog_spec.loader.exec_module(catalog)
+
+    infra = tmp_path / "infrastructure"
+    backup_dir = infra / "data/backups/postgres"
+    backup_dir.mkdir(parents=True)
+    backup = backup_dir / "rbf-20260731T140000Z.sql.gz"
+    backup.write_bytes(b"database-backup")
+    digest = hashlib.sha256(backup.read_bytes()).hexdigest()
+    Path(f"{backup}.sha256").write_text(f"{digest}  {backup.name}\n", encoding="ascii")
+    key = Fernet.generate_key().decode("ascii")
+    env = infra / ".env"
+    env.write_text(
+        "POSTGRES_USER=rbf\nPOSTGRES_DB=rbf\nPOSTGRES_PASSWORD=test\n"
+        "DATABASE_URL=postgresql+psycopg://rbf:test@postgres:5432/rbf\n"
+        f"WEBHOOK_ENCRYPTION_KEYS={key}\n",
+        encoding="utf-8",
+    )
+    version = tmp_path / "VERSION"
+    version.write_text("1.0.0\n", encoding="utf-8")
+    metadata.create_metadata(backup, env, version, "0020_raid_helper_premium")
+
+    records, skipped = catalog.scan_local_postgres_backups(infra)
+    assert skipped == 0
+    assert len(records) == 1
+    assert records[0].restore_metadata_verified is True
+    assert records[0].encryption_keys_compatible is True
+    assert records[0].alembic_head == "0020_raid_helper_premium"
+
+    env.write_text(
+        "POSTGRES_USER=rbf\nPOSTGRES_DB=rbf\nPOSTGRES_PASSWORD=other\n"
+        "DATABASE_URL=postgresql+psycopg://rbf:other@postgres:5432/rbf\n"
+        f"WEBHOOK_ENCRYPTION_KEYS={Fernet.generate_key().decode('ascii')}\n",
+        encoding="utf-8",
+    )
+    records, skipped = catalog.scan_local_postgres_backups(infra)
+    assert skipped == 0
+    assert records[0].encryption_keys_compatible is False
+
+
+def test_restore_script_uses_staging_preflight_and_automatic_rollback() -> None:
+    script = (
+        Path(__file__).parents[2]
+        / "infrastructure/scripts/backup/restore-postgres.sh"
+    ).read_text(encoding="utf-8")
+    assert "CREATE DATABASE %I OWNER %I TEMPLATE template0" in script
+    assert "python -m app.db.restore_preflight" in script
+    assert "ALTER DATABASE %I RENAME TO %I" in script
+    assert "rollback_database_swap" in script
+    assert "-c \"SELECT pg_terminate_backend" not in script

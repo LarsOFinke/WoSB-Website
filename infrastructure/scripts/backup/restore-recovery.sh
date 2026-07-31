@@ -85,6 +85,26 @@ if [[ -n "$backup_version" && -n "$current_version" && "$backup_version" != "$cu
 fi
 
 configuration="$extracted/configuration"
+
+verify_recovery_keyring() {
+  local keyring_file="$configuration/secret-keyring.json" current_fingerprints
+  if [[ ! -f "$keyring_file" ]]; then
+    warn "Älteres Recovery-Bundle ohne Schlüsselring-Metadaten; die Datenbank-Preflight-Prüfung übernimmt die Kompatibilitätskontrolle."
+    return 0
+  fi
+  current_fingerprints="$(python3 "$SCRIPT_DIR/backup_metadata.py" fingerprints "$ENV_FILE")"
+  python3 - "$keyring_file" "$current_fingerprints" <<'PY'
+import json, sys
+from pathlib import Path
+expected_payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+expected = set(expected_payload.get("secret_key_fingerprints") or [])
+current = set(json.loads(sys.argv[2]))
+if not expected or not expected.issubset(current):
+    raise SystemExit(
+        "The restored environment does not contain the encryption key ring recorded in the recovery bundle."
+    )
+PY
+}
 [[ -f "$configuration/infrastructure.env" ]] || die "Recovery-Bundle enthält keine infrastructure.env."
 if [[ -f "$ENV_FILE" ]]; then
   safety_env="$INFRA_DIR/.env.before-recovery-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -92,6 +112,7 @@ if [[ -f "$ENV_FILE" ]]; then
   warn "Vorhandene .env wurde gesichert: $safety_env"
 fi
 install -m 0600 "$configuration/infrastructure.env" "$ENV_FILE"
+verify_recovery_keyring
 
 if [[ -f "$configuration/first-run-credentials.txt" ]]; then
   install -m 0600 "$configuration/first-run-credentials.txt" "$INFRA_DIR/first-run-credentials.txt"
@@ -130,6 +151,7 @@ fi
 
 log "Provisioniere den frischen Host reproduzierbar, starte Container aber noch nicht."
 /usr/bin/env bash "$REPO_ROOT/setup.sh" --profile "$profile" --no-start
+verify_recovery_keyring
 
 files_backup="$extracted/$files_relative"
 postgres_backup="$extracted/$postgres_relative"

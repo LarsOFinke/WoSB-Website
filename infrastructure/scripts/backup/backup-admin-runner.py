@@ -302,15 +302,26 @@ class Runner:
             raise RuntimeError("The local backup or checksum file is missing.")
         filename = backup_file.name
         checksum_name = checksum_file.name
-        batch = "\n".join([
+        metadata_file = Path(str(backup_file) + ".restore.json")
+        metadata_checksum = Path(str(metadata_file) + ".sha256")
+        commands = [
             f"cd {config['remote_directory']}",
             f"put {backup_file} {filename}.part",
             f"rename {filename}.part {filename}",
             f"put {checksum_file} {checksum_name}.part",
             f"rename {checksum_name}.part {checksum_name}",
-            "quit",
-            "",
-        ])
+        ]
+        if metadata_file.is_file() and metadata_checksum.is_file():
+            metadata_name = metadata_file.name
+            metadata_checksum_name = metadata_checksum.name
+            commands.extend([
+                f"put {metadata_file} {metadata_name}.part",
+                f"rename {metadata_name}.part {metadata_name}",
+                f"put {metadata_checksum} {metadata_checksum_name}.part",
+                f"rename {metadata_checksum_name}.part {metadata_checksum_name}",
+            ])
+        commands.extend(["quit", ""])
+        batch = "\n".join(commands)
         self.log(f"Transferring {filename} and checksum to the configured backup server.")
         result = subprocess.run(
             ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
@@ -460,6 +471,12 @@ class Runner:
         consume_database_restore_approval(self.infra_dir, approval_token_sha256)
         self.request.pop("approval_token_sha256", None)
         record = resolve_local_postgres_backup(self.infra_dir, backup_id)
+        if record.encryption_keys_compatible is False:
+            raise RuntimeError(
+                "The selected database backup was created with a different secret-encryption "
+                "key ring. Restore the matching full recovery bundle or import the old "
+                "WEBHOOK_ENCRYPTION_KEYS before retrying."
+            )
         if record.filename.endswith(".gz"):
             preflight = subprocess.run(
                 ["gzip", "-t", str(record.path)],

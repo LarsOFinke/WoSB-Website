@@ -133,6 +133,9 @@ class LocalDatabaseBackup(BaseModel):
     sha256: str = Field(min_length=64, max_length=64)
     created_at: str
     checksum_verified: bool = True
+    restore_metadata_verified: bool = False
+    encryption_keys_compatible: bool | None = None
+    alembic_head: str | None = None
 
 
 class BackupControlStatus(BaseModel):

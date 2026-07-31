@@ -1652,3 +1652,13 @@ body.webhook-editor-open {
 .raid-helper-payload-actions .raid-helper-payload-preset {
   margin-top: 0;
 }
+
+.backup-compatibility {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-success, #76c893);
+}
+
+.backup-compatibility.is-incompatible {
+  color: var(--color-danger, #e57373);
+}

@@ -9,7 +9,8 @@ Dieses Verfahren ist für einen vollständigen Verlust des Raspberry Pi ausgeleg
 - optionale First-Run-Zugangsdaten;
 - root-seitige Remote-Backup-Secrets und `known_hosts`;
 - Betriebssystem-, Paket-, Docker-, Architektur-, Versions- und Commit-Metadaten;
-- ein Manifest mit Größe und SHA-256 für jede enthaltene Datei.
+- ein Manifest mit Größe und SHA-256 für jede enthaltene Datei;
+- einen nicht geheimen Fingerprint-Snapshot des Verschlüsselungsschlüsselrings, damit ein Restore vor Aktivierung auf Schlüsselkontinuität geprüft werden kann.
 
 Das Gesamtarchiv wird mit **age** für einen öffentlichen Empfänger verschlüsselt. Der private age-Schlüssel bleibt ausschließlich auf dem verschlüsselten Backup-Laptop (BitLocker oder LUKS) und einer zweiten sicheren Offline-Ablage. Ein Angreifer auf dem Pi kann vorhandene Bundles damit weder entschlüsseln noch neue gültige Empfänger ableiten.
 
@@ -196,9 +197,10 @@ Das Restore-Skript:
 5. provisioniert Docker, Firewall und systemd reproduzierbar;
 6. stellt Uploads, TLS/Let's Encrypt und Uptime Kuma wieder her;
 7. baut die API und das Gateway;
-8. importiert PostgreSQL transaktional;
-9. migriert auf den Alembic-Head des Checkouts;
-10. führt den idempotenten Seed, Readiness und HTTPS-Smoke-Test aus.
+8. importiert PostgreSQL zunächst in eine isolierte Staging-Datenbank;
+9. migriert und prüft dort Schema sowie verschlüsselte Webhook- und Raid-Helper-Zugangsdaten;
+10. schaltet die geprüfte Datenbank atomar aktiv und hält die vorherige Datenbank bis zum erfolgreichen Readiness-/HTTPS-Smoke-Test als automatischen Rollback bereit;
+11. führt anschließend den idempotenten Seed und die abschließenden Betriebsprüfungen aus.
 
 Nur wenn bewusst ein exakt gleicher alter Code-Checkout verwendet wird, können die gesicherten `.cfg` direkt zurückgespielt werden:
 
@@ -246,17 +248,37 @@ Der Befehl zeigt einen einmaligen, standardmäßig zehn Minuten gültigen Token.
 4. exakt `RESTORE DATABASE` bestätigen;
 5. die abschließende Browser-Bestätigung akzeptieren.
 
+Neue PostgreSQL-Backups besitzen zusätzlich eine checksummierte `.restore.json`-Sidecar-Datei. Sie enthält ausschließlich nicht geheime Metadaten wie Alembic-Revision und Fingerprints des beim Backup verfügbaren Schlüsselrings. Das Admin-Panel markiert bekannte Schlüsselkonflikte und lässt solche Dumps nicht auswählen. Bei älteren Dumps ohne Metadaten erfolgt dieselbe Prüfung verbindlich in der isolierten Staging-Datenbank.
+
 Der Klartext-Token wird weder in API-Antworten noch in Audit-Logs oder der Host-Warteschlange
 gespeichert. Die API persistiert lediglich seinen SHA-256-Wert. Der Host löscht die root-geschützte
 Freigabe vor der Auswertung, sodass auch ein falscher Versuch den Token verbraucht. Die kurzlebige
 Freigabedatei wird ausdrücklich nicht in Recovery-Bundles aufgenommen. Anschließend
-verwendet der bestehende Restore-Runner exklusiven Lock, Pre-Restore-Backup, Wartungsmodus,
-Verbindungsabbruch, Alembic-Migration, Seed, Readiness und HTTPS-Smoke-Test.
+verwendet der Restore-Runner exklusiven Lock und ein zusätzliches Pre-Restore-Backup. Import, Migration und Schlüsselprüfung geschehen zunächst ohne Downtime in einer Staging-Datenbank. Nur für den atomaren Datenbanktausch werden API und Gateway kurz gestoppt. Scheitert danach die Anwendung, wird die vorherige Datenbank automatisch zurückgeschaltet und erneut gestartet.
+
+Ein reiner Datenbank-Dump enthält bewusst keine geheimen Entschlüsselungsschlüssel. Wird ein Dump auf einem neu installierten Host verwendet, muss deshalb entweder das vollständige Recovery-Bundle eingesetzt oder der alte Schlüsselring vor dem Restore aus der gesicherten `infrastructure.env` zusammengeführt werden:
+
+```bash
+sudo ./infrastructure/scripts/backup/merge-encryption-keyring.sh \
+  /pfad/zur/alten-infrastructure.env
+```
+
+Das Werkzeug behält den neuen Primärschlüssel bei, ergänzt alte Schlüssel nur als Entschlüsselungs-Fallback, erzeugt vorher eine `.env`-Sicherung und gibt keine Schlüsselwerte aus. Nach erfolgreichem Start werden Webhooks auf den aktuellen Primärschlüssel rotiert; Raid-Helper-Zugangsdaten sollten anschließend im Staff-Panel neu gespeichert und getestet werden.
 
 Ein kompromittiertes normales Admin-Konto reicht damit weder für die Auswahl eines beliebigen
 Dateisystempfads noch zum Start eines Datenbank-Restores aus. Der Ablauf ersetzt dennoch keine
 Multi-Faktor-Authentifizierung und keinen sicheren SSH-/Hostbetrieb; er bildet eine zusätzliche
 physische beziehungsweise Host-seitige Freigabeschranke.
+
+
+## Aus dem realen Restore-Test abgeleitete Schutzregeln
+
+- `psql`-Variablen werden ausschließlich über Standardeingabe/Here-Documents verarbeitet; die fehleranfällige Kombination aus `-c` und `:'variable'` ist im Restore-Pfad verboten.
+- Ein optionales, nicht entschlüsselbares Integrationstoken darf den API-Start nicht blockieren. Betroffene Webhooks werden deaktiviert und müssen durch einen Administrator neu gespeichert werden.
+- Ein Datenbank-Restore wird niemals direkt über die aktive Datenbank geschrieben. Die aktive Datenbank bleibt bis zum erfolgreichen Anwendungs-Smoke-Test als Rollback erhalten.
+- Fehlende oder ungültige SHA-256-Sidecars werden bei jedem Restore abgelehnt.
+- Ein DB-only-Restore und ein vollständiger Bare-Metal-Restore sind unterschiedliche Vertrauenspfade: Nur das verschlüsselte Recovery-Bundle enthält `.env`, `.cfg`, Zertifikate und Host-Secrets.
+- Nach jedem Recovery-Test wird unmittelbar ein neues vollständiges Recovery-Bundle erstellt und extern verifiziert.
 
 
 ## Raspberry-Pi-Produktionsgrundlage

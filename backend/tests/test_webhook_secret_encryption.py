@@ -150,3 +150,22 @@ def test_avatar_override_is_rejected_at_the_api_boundary() -> None:
         assert "discord_avatar_url" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("obsolete avatar override was accepted")
+
+
+def test_maintenance_deactivates_undecryptable_webhook_without_blocking_startup() -> None:
+    with isolated_session() as db:
+        row = OutboundWebhook(
+            name="Restored hook with missing key",
+            endpoint_url="fernet:v1:invalid-ciphertext",
+            event_types_json='["integration.test"]',
+            scope_type="global",
+            created_by_username="restore-test",
+            is_active=True,
+        )
+        db.add(row)
+        db.commit()
+
+        assert encrypt_legacy_webhook_endpoints(db) == 1
+        db.refresh(row)
+        assert row.is_active is False
+        assert row.last_failure_at is not None
