@@ -306,3 +306,41 @@ Empfohlene Betriebsziele:
 - vierteljährlicher Restore-Test auf Ersatzmedium oder separatem Pi, ohne die Produktion zu überschreiben.
 
 Ein Backup gilt erst als belastbar, wenn es außerhalb des Quellsystems liegt, entschlüsselt werden kann, alle Manifest-Prüfsummen stimmen und ein Restore-Test erfolgreich war.
+
+## Linux-Backup-Laptop und lokales Restore-Labor
+
+Auf Ubuntu kann das gefrorene Recovery-Tool als benutzerlokale Anwendung installiert werden.
+Der Build erzeugt dafür ein Debian-Paket und zusätzlich ein portables Installer-Archiv:
+
+```bash
+cd tools/linux/recovery-tool
+./Build-RbfRecoveryTool.sh
+sudo apt install ./dist/rbf-recovery-tool_1.2.0_$(dpkg --print-architecture).deb
+```
+
+Das Debian-Paket ist der bevorzugte Weg, weil das optionale privilegierte Docker-Hilfsskript
+rootgeschützt installiert wird. Die portable Benutzerinstallation bleibt für Systeme ohne
+Paketinstallation verfügbar.
+
+Der Installer kann optional einen täglichen systemd-Benutzertimer und ein lokales
+PostgreSQL-Recovery-Labor einrichten. Der normale Client benötigt weiterhin weder Docker noch
+administrative Rechte.
+
+Das DB-Labor verwendet bevorzugt Docker Rootless Mode. Die administrative Vorstufe installiert
+Docker Engine und Compose aus dem offiziellen Ubuntu-Repository sowie die Rootless-
+Voraussetzungen; die eigentliche Docker-Instanz und alle Container laufen anschließend im
+Benutzer-Namespace. Der Benutzer wird ausdrücklich nicht in die root-äquivalente `docker`-Gruppe
+aufgenommen.
+
+PostgreSQL ist ausschließlich unter `127.0.0.1:55432` erreichbar. Es wird kein Port an eine
+LAN-/WAN-Adresse gebunden und keine Firewallregel erzeugt. Die Lab-Konfiguration und das zufällige
+Kennwort liegen mit Modus `0600` unter dem XDG-Benutzerdatenverzeichnis. Der Container nutzt ein
+read-only Root-Dateisystem, `no-new-privileges`, tmpfs für Laufzeitpfade, ein persistentes Volume
+und begrenzte lokale Docker-Logs.
+
+Ein Bundle-Restore im Labor führt zuerst dieselbe vollständige age-, Sidecar-, Archiv- und
+Manifestprüfung wie der normale Client aus. Nur der deklarierte PostgreSQL-Dump wird temporär
+extrahiert, die Lab-Datenbank kontrolliert neu erstellt und der Dump mit `ON_ERROR_STOP` importiert.
+Temporäre Klartextdaten werden anschließend entfernt. Damit kann regelmäßig geprüft werden, ob
+das externe Backup tatsächlich in eine frische PostgreSQL-Instanz eingespielt werden kann, ohne
+die Produktion oder den Pi zu berühren.

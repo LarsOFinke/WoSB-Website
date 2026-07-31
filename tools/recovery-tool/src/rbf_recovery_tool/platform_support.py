@@ -16,6 +16,15 @@ def application_config_root() -> Path:
     return Path(configured).expanduser() if configured else Path.home() / ".config"
 
 
+def application_data_root() -> Path:
+    """Return the per-user data root without requiring platformdirs."""
+    if os.name == "nt":
+        configured = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        return Path(configured) if configured else Path.home() / "AppData" / "Local"
+    configured = os.environ.get("XDG_DATA_HOME")
+    return Path(configured).expanduser() if configured else Path.home() / ".local" / "share"
+
+
 def open_directory(path: Path) -> None:
     """Open a directory in the native file manager without invoking a shell."""
     target = path.expanduser().resolve()

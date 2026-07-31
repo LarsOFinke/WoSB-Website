@@ -262,3 +262,45 @@ def verify_encrypted_bundle(bundle: Path, identity: Path) -> VerificationResult:
         archive = Path(temporary) / "recovery.tar.gz"
         decrypt_bundle(bundle, identity, archive)
         return verify_plain_archive(archive, bundle_sha256)
+
+
+def extract_postgres_artifact(bundle: Path, identity: Path, destination: Path) -> Path:
+    """Verify a bundle completely and extract only its PostgreSQL artifact."""
+    bundle = bundle.expanduser().resolve()
+    identity = identity.expanduser().resolve()
+    destination = destination.expanduser().resolve()
+    destination.mkdir(parents=True, exist_ok=True)
+    bundle_sha256 = verify_sidecar(bundle)
+    with tempfile.TemporaryDirectory(prefix="rbf-recovery-extract-") as temporary:
+        archive = Path(temporary) / "recovery.tar.gz"
+        decrypt_bundle(bundle, identity, archive)
+        verify_plain_archive(archive, bundle_sha256)
+        with tarfile.open(archive, mode="r:gz") as handle:
+            members = _validated_members(handle)
+            manifest_member = members.get("manifest.json")
+            if manifest_member is None:
+                raise RuntimeError("manifest.json fehlt.")
+            source = handle.extractfile(manifest_member)
+            if source is None:
+                raise RuntimeError("manifest.json konnte nicht gelesen werden.")
+            with source:
+                manifest = json.load(source)
+            artifacts = manifest.get("artifacts")
+            if not isinstance(artifacts, dict):
+                raise RuntimeError("Die Artefaktzuordnung fehlt im Manifest.")
+            relative = str(artifacts.get("postgres") or "")
+            member = members.get(relative)
+            if member is None or not member.isfile():
+                raise RuntimeError("Das PostgreSQL-Artefakt fehlt im Recovery-Bundle.")
+            filename = PurePosixPath(relative).name
+            if not (filename.endswith(".sql") or filename.endswith(".sql.gz")):
+                raise RuntimeError("Das PostgreSQL-Artefakt besitzt ein unerwartetes Format.")
+            target = destination / filename
+            extracted = handle.extractfile(member)
+            if extracted is None:
+                raise RuntimeError("Das PostgreSQL-Artefakt konnte nicht gelesen werden.")
+            with extracted, target.open("xb") as output:
+                shutil.copyfileobj(extracted, output)
+            if os.name != "nt":
+                os.chmod(target, 0o600)
+            return target

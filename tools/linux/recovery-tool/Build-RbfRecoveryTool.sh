@@ -42,6 +42,7 @@ PYTHON="$VENV/bin/python"
 export RBF_AGE_EXE="$(realpath "$AGE_EXECUTABLE")"
 export RBF_AGE_KEYGEN_EXE="$(realpath "$AGE_KEYGEN_EXECUTABLE")"
 export RBF_OUTPUT_NAME="$OUTPUT_NAME"
+export RBF_CONSOLE=1
 "$PYTHON" -m PyInstaller \
   --noconfirm \
   --clean \
@@ -57,3 +58,5 @@ OUTPUT="$SCRIPT_DIR/dist/$OUTPUT_NAME"
 HASH="$(sha256sum "$OUTPUT" | awk '{print $1}')"
 printf '\nFertig: %s\nSHA-256: %s\n' "$OUTPUT" "$HASH"
 printf 'Auf dem Ziel-Laptop werden nur dieses Binary und die private age-Identität benötigt.\n'
+"$SCRIPT_DIR/Build-RbfRecoveryInstaller.sh" "$OUTPUT"
+"$SCRIPT_DIR/Build-RbfRecoveryDeb.sh" "$OUTPUT"

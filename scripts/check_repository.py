@@ -602,9 +602,17 @@ backup_required_files = {
     "tools/recovery-tool/src/rbf_recovery_tool/app.py",
     "tools/recovery-tool/src/rbf_recovery_tool/platform_support.py",
     "tools/recovery-tool/src/rbf_recovery_tool/verification.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/docker_lab.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/automation.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/cli.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/linux_setup.py",
     "tools/windows/recovery-tool/Build-RbfRecoveryTool.ps1",
     "tools/linux/recovery-tool/Build-RbfRecoveryTool.sh",
     "tools/linux/recovery-tool/Install-RbfRecoveryTool.sh",
+    "tools/linux/recovery-tool/Provision-RbfRecoveryLab.sh",
+    "tools/linux/recovery-tool/Setup-RbfRecoveryLab.sh",
+    "tools/linux/recovery-tool/Build-RbfRecoveryInstaller.sh",
+    "tools/linux/recovery-tool/Build-RbfRecoveryDeb.sh",
     "infrastructure/systemd/rbf-hub-backup-admin.path",
     "infrastructure/systemd/rbf-hub-backup-admin.service",
 }
@@ -684,5 +692,18 @@ require("--noconfirm" in linux_build, "Linux recovery build must be reproducible
 linux_install = (ROOT / "tools/linux/recovery-tool/Install-RbfRecoveryTool.sh").read_text(encoding="utf-8")
 require(".local/bin" in linux_install and "rbf-recovery-tool" in linux_install, "Linux recovery installer must remain user-local")
 require("sudo" not in linux_install, "Linux recovery installer must not require root")
+recovery_lab = (ROOT / "tools/recovery-tool/src/rbf_recovery_tool/docker_lab.py").read_text(encoding="utf-8")
+for marker in ("127.0.0.1", "no-new-privileges:true", "read_only: true", "postgres:16.14-alpine3.24"):
+    require(marker in recovery_lab, f"local recovery database lab hardening is missing: {marker}")
+require("0.0.0.0" not in recovery_lab, "local recovery database lab must not bind publicly")
+rootless_setup = (ROOT / "tools/linux/recovery-tool/Setup-RbfRecoveryLab.sh").read_text(encoding="utf-8")
+require("rootless" in rootless_setup and "docker group" not in rootless_setup, "Linux DB lab must use rootless Docker")
+provisioner = (ROOT / "tools/linux/recovery-tool/Provision-RbfRecoveryLab.sh").read_text(encoding="utf-8")
+require("download.docker.com/linux/ubuntu" in provisioner, "Docker provisioning must use the official Ubuntu repository")
+require("usermod -aG docker" not in provisioner, "Recovery lab must not grant docker-group root privileges")
+deb_builder = (ROOT / "tools/linux/recovery-tool/Build-RbfRecoveryDeb.sh").read_text(encoding="utf-8")
+require("dpkg-deb" in deb_builder and "/usr/lib/rbf-recovery-tool" in deb_builder, "Linux recovery tool must produce an installable Debian package with root-owned helpers")
+linux_setup = (ROOT / "tools/recovery-tool/src/rbf_recovery_tool/linux_setup.py").read_text(encoding="utf-8")
+require("require_root_owned=True" in linux_setup and "pkexec" in linux_setup, "privileged Linux recovery setup must execute only a root-owned helper through PolicyKit")
 
 print(f"Repository invariants OK (v{VERSION}).")

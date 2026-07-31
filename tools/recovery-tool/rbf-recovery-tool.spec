@@ -7,6 +7,7 @@ root = Path(SPEC).resolve().parent
 age_executable = Path(os.environ["RBF_AGE_EXE"]).resolve()
 age_keygen_executable = Path(os.environ["RBF_AGE_KEYGEN_EXE"]).resolve()
 output_name = os.environ.get("RBF_OUTPUT_NAME", "RBF-Recovery-Tool")
+console_mode = os.environ.get("RBF_CONSOLE", "0") == "1"
 for executable, label in (
     (age_executable, "age"),
     (age_keygen_executable, "age-keygen"),
@@ -47,6 +48,6 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=False,
+    console=console_mode,
     disable_windowed_traceback=False,
 )

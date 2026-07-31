@@ -173,11 +173,18 @@ check(
 recovery_sftp = text("tools/recovery-tool/src/rbf_recovery_tool/sftp_client.py")
 recovery_config = text("tools/recovery-tool/src/rbf_recovery_tool/config.py")
 recovery_verification = text("tools/recovery-tool/src/rbf_recovery_tool/verification.py")
+recovery_lab = text("tools/recovery-tool/src/rbf_recovery_tool/docker_lab.py")
+recovery_linux_setup = text("tools/recovery-tool/src/rbf_recovery_tool/linux_setup.py")
 check("PinnedFingerprintPolicy" in recovery_sftp, "recovery client lost SSH host-key pinning")
 check("AutoAddPolicy" not in recovery_sftp, "recovery client must not auto-trust SSH host keys")
 check("password:" not in recovery_config, "recovery profile must not persist passwords")
 check("verify_sidecar" in recovery_verification, "recovery client must verify transport checksums")
 check("_validated_members" in recovery_verification, "recovery client must validate archive members")
+check("127.0.0.1" in recovery_lab and "0.0.0.0" not in recovery_lab, "local recovery database must remain loopback-only")
+check("no-new-privileges:true" in recovery_lab, "local recovery database must prevent privilege escalation")
+check("${{POSTGRES_PASSWORD}}" in recovery_lab, "local recovery compose must reference the protected env file for its password")
+check("require_root_owned=True" in recovery_linux_setup, "privileged recovery helper must be root-owned")
+check("shell=True" not in recovery_linux_setup, "Linux recovery setup must not invoke a shell")
 
 # Python code: no dynamic execution or shell=True in production/runtime modules.
 python_sources = [

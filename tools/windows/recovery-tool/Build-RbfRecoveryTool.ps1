@@ -43,6 +43,7 @@ $Python = Join-Path $Venv "Scripts\python.exe"
 $env:RBF_AGE_EXE = $AgeExecutable
 $env:RBF_AGE_KEYGEN_EXE = $AgeKeygenExecutable
 $env:RBF_OUTPUT_NAME = "RBF-Recovery-Tool-Windows"
+$env:RBF_CONSOLE = "0"
 & $Python -m PyInstaller `
     --noconfirm `
     --clean `

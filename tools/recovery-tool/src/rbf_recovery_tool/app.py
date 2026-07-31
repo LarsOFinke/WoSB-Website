@@ -6,7 +6,18 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from .automation import install_pull_timer, remove_pull_timer
 from .config import Profile, load_profile, save_profile
+from .docker_lab import (
+    connection as lab_connection,
+    docker_is_rootless,
+    initialize_lab,
+    lab_status,
+    restore_bundle as restore_bundle_to_lab,
+    start_lab,
+    stop_lab,
+)
+from .linux_setup import setup_rootless_lab
 from .platform_support import open_directory
 from .sftp_client import download_latest, fetch_host_fingerprint
 from .verification import VerificationResult, generate_identity, verify_encrypted_bundle
@@ -16,7 +27,7 @@ class RecoveryApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("RBF Recovery Tool")
-        self.root.minsize(820, 620)
+        self.root.minsize(920, 760)
         self.profile = load_profile()
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.busy = False
@@ -32,9 +43,11 @@ class RecoveryApp:
             "password": tk.StringVar(),
             "deep_verify": tk.BooleanVar(value=True),
             "status": tk.StringVar(value="Bereit"),
+            "lab_status": tk.StringVar(value="Lokales DB-Labor: wird geprüft …"),
         }
         self._build()
         self.root.after(100, self._drain_events)
+        self.root.after(250, self._refresh_lab_status)
 
     def _build(self) -> None:
         outer = ttk.Frame(self.root, padding=14)
@@ -97,6 +110,44 @@ class RecoveryApp:
             text="Nach dem Download vollständig entschlüsseln und Manifest prüfen",
             variable=self.vars["deep_verify"],
         ).pack(side="left")
+        ttk.Button(
+            options, text="Täglichen Linux-Abruf aktivieren", command=self._enable_timer
+        ).pack(side="right", padx=(6, 0))
+        ttk.Button(
+            options, text="Abruf-Timer entfernen", command=self._disable_timer
+        ).pack(side="right")
+
+        lab_frame = ttk.LabelFrame(
+            outer, text="Optionales lokales PostgreSQL-Recovery-Labor", padding=10
+        )
+        lab_frame.pack(fill="x", pady=(0, 10))
+        ttk.Label(lab_frame, textvariable=self.vars["lab_status"]).pack(anchor="w")
+        lab_actions = ttk.Frame(lab_frame)
+        lab_actions.pack(fill="x", pady=(8, 0))
+        self.lab_setup_button = ttk.Button(
+            lab_actions, text="Rootless Docker einrichten", command=self._lab_setup
+        )
+        self.lab_setup_button.pack(side="left")
+        self.lab_init_button = ttk.Button(
+            lab_actions, text="Initialisieren", command=self._lab_init
+        )
+        self.lab_init_button.pack(side="left", padx=(6, 0))
+        self.lab_start_button = ttk.Button(
+            lab_actions, text="Starten", command=self._lab_start
+        )
+        self.lab_start_button.pack(side="left", padx=(6, 0))
+        self.lab_stop_button = ttk.Button(
+            lab_actions, text="Stoppen", command=self._lab_stop
+        )
+        self.lab_stop_button.pack(side="left", padx=(6, 0))
+        self.lab_restore_button = ttk.Button(
+            lab_actions, text="Bundle in DB-Labor laden", command=self._lab_restore
+        )
+        self.lab_restore_button.pack(side="left", padx=(6, 0))
+        self.lab_credentials_button = ttk.Button(
+            lab_actions, text="Verbindungsdaten", command=self._lab_credentials
+        )
+        self.lab_credentials_button.pack(side="right")
 
         self.progress = ttk.Progressbar(outer, mode="determinate", maximum=100)
         self.progress.pack(fill="x", pady=(0, 5))
@@ -179,6 +230,12 @@ class RecoveryApp:
             self.download_button,
             self.verify_button,
             self.identity_button,
+            self.lab_setup_button,
+            self.lab_init_button,
+            self.lab_start_button,
+            self.lab_stop_button,
+            self.lab_restore_button,
+            self.lab_credentials_button,
         ):
             button.configure(state=state)
         if text:
@@ -249,6 +306,101 @@ class RecoveryApp:
             lambda: ("verified", Path(selected), verify_encrypted_bundle(Path(selected), identity)),
         )
 
+    def _enable_timer(self) -> None:
+        profile = self._save()
+        if not profile:
+            return
+        if not profile.ssh_key_path:
+            messagebox.showwarning(
+                "SSH-Schlüssel erforderlich",
+                "Der unbeaufsichtigte Linux-Abruf benötigt einen im Profil hinterlegten SSH-Schlüssel.",
+                parent=self.root,
+            )
+            return
+        try:
+            service, timer = install_pull_timer()
+            self._append_log(f"Automatischer Abruf aktiviert: {service}, {timer}")
+        except Exception as exc:
+            messagebox.showerror("Timer konnte nicht eingerichtet werden", str(exc), parent=self.root)
+
+    def _disable_timer(self) -> None:
+        try:
+            remove_pull_timer()
+            self._append_log("Automatischer Linux-Abruf wurde entfernt.")
+        except Exception as exc:
+            messagebox.showerror("Timer konnte nicht entfernt werden", str(exc), parent=self.root)
+
+    def _refresh_lab_status(self) -> None:
+        try:
+            status = lab_status()
+            docker_mode = (
+                "rootless" if status.docker_available and docker_is_rootless()
+                else ("rootful" if status.docker_available else "nicht verfügbar")
+            )
+            self.vars["lab_status"].set(
+                f"Lokales DB-Labor: {status.detail} · Docker {docker_mode}"
+            )
+        except Exception as exc:
+            self.vars["lab_status"].set(f"Lokales DB-Labor: Fehler ({exc})")
+
+    def _lab_setup(self) -> None:
+        from .automation import executable_path
+
+        self._worker(
+            "Rootless Docker und das DB-Labor werden eingerichtet …",
+            lambda: ("lab_setup", setup_rootless_lab(executable_path())),
+        )
+
+    def _lab_init(self) -> None:
+        try:
+            details = initialize_lab()
+            self._append_log(f"DB-Labor initialisiert: {details.host}:{details.port}")
+            self._refresh_lab_status()
+        except Exception as exc:
+            messagebox.showerror("DB-Labor", str(exc), parent=self.root)
+
+    def _lab_start(self) -> None:
+        self._worker(
+            "Lokales PostgreSQL-Labor wird gestartet …",
+            lambda: ("lab_started", start_lab()),
+        )
+
+    def _lab_stop(self) -> None:
+        self._worker(
+            "Lokales PostgreSQL-Labor wird gestoppt …",
+            lambda: ("lab_stopped", stop_lab()),
+        )
+
+    def _lab_credentials(self) -> None:
+        try:
+            details = lab_connection()
+        except Exception as exc:
+            messagebox.showerror("DB-Labor", str(exc), parent=self.root)
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(details.dsn)
+        messagebox.showinfo(
+            "Lokale PostgreSQL-Verbindungsdaten",
+            f"Host: {details.host}\nPort: {details.port}\n"
+            f"Datenbank: {details.database}\nBenutzer: {details.username}\n"
+            f"Kennwort: {details.password}\n\n"
+            "Die vollständige DSN wurde in die Zwischenablage kopiert.",
+            parent=self.root,
+        )
+
+    def _lab_restore(self) -> None:
+        selected = filedialog.askopenfilename(
+            title="Recovery-Bundle für lokales DB-Labor auswählen",
+            filetypes=[("RBF Recovery Bundle", "*.tar.gz.age"), ("Alle Dateien", "*.*")],
+        )
+        if not selected:
+            return
+        identity = Path(self.vars["age_identity_path"].get())
+        self._worker(
+            "Bundle wird geprüft und in das lokale DB-Labor eingespielt …",
+            lambda: ("lab_restored", restore_bundle_to_lab(Path(selected), identity)),
+        )
+
     def _open_destination(self) -> None:
         path = Path(self.vars["destination_directory"].get()).expanduser()
         path.mkdir(parents=True, exist_ok=True)
@@ -315,6 +467,26 @@ class RecoveryApp:
                 "BACKUP_AGE_RECIPIENT auf dem Pi auf diesen öffentlichen Schlüssel setzen.",
                 parent=self.root,
             )
+            return
+        if isinstance(payload, tuple) and payload and payload[0].startswith("lab_"):
+            self._refresh_lab_status()
+            if payload[0] in {"lab_started", "lab_restored"}:
+                details = payload[1]
+                self._append_log(
+                    f"DB-Labor bereit: {details.host}:{details.port}/{details.database} "
+                    f"als {details.username}"
+                )
+                messagebox.showinfo(
+                    "Lokales DB-Labor bereit",
+                    f"Host: {details.host}\nPort: {details.port}\n"
+                    f"Datenbank: {details.database}\nBenutzer: {details.username}\n\n"
+                    "Das Kennwort liegt ausschließlich in der lokalen geschützten Lab-Konfiguration.",
+                    parent=self.root,
+                )
+            elif payload[0] == "lab_setup":
+                self._append_log("Rootless Docker und das lokale DB-Labor wurden eingerichtet.")
+            else:
+                self._append_log("DB-Labor wurde gestoppt.")
             return
         if (
             isinstance(payload, tuple)
