@@ -4,8 +4,8 @@ This directory contains the original in-game screenshots used to verify ship sta
 
 The screenshots are intentionally versioned with the repository as source evidence. Do not remove or optimize them without preserving the original files and updating `SHA256SUMS.txt`.
 
-- Imported: 2026-07-28 and 2026-07-29
-- Scope: 230 owned-ship statistics and upgrade screenshots covering 38 ships
+- Imported: 2026-07-28, 2026-07-29 and 2026-07-31
+- Scope: 254 owned-ship statistics, upgrade, modification and reference screenshots covering 41 ships
 - Integrity manifest: `SHA256SUMS.txt`
 
 ## Derived website assets

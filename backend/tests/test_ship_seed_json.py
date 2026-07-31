@@ -90,6 +90,7 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "Adventure",
         "Azov",
         "Black Prince",
+        "Black Wind",
         "De Zeven Provincien",
         "Eagle",
         "Firestorm",
@@ -104,6 +105,7 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "Le Cerf",
         "Mercury",
         "Neptuno",
+        "Prins Willem",
         "Redoutable",
         "Russia",
         "San Martin",
@@ -112,6 +114,7 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
         "Savannah",
         "Shunsen",
         "Sovereign",
+        "Sparrow",
         "Vasa",
         "Victory",
     }
@@ -170,6 +173,27 @@ def test_owned_ship_upgrade_overrides_are_sparse_and_rate_specific() -> None:
     assert values("Sovereign", "reinforced-cannons") == {
         "bow_stern_weapon_damage_pct": 61,
     }
+    assert values("Sparrow", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 113,
+    }
+    assert values("Prins Willem", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 74,
+    }
+    assert values("Black Wind", "reinforced-cannons") == {
+        "bow_stern_weapon_damage_pct": 100,
+    }
+    assert values("Black Wind", "reinforced-masts") == {
+        "speed_knots": 0.6,
+        "sail_efficiency": 1.2,
+    }
+    assert values("Black Wind", "double-hold") == {"hold_capacity": 3000}
+    assert values("Black Wind", "cellars") == {"hold_capacity": 1500}
+    assert values("Black Wind", "extra-bunks") == {"crew_capacity": 10}
+    assert values("Black Wind", "repair-arsenal") == {"durability": 80}
+    assert values("Black Wind", "teak-frames") == {
+        "armor": 2.0,
+        "crew_capacity": 6,
+    }
 
 
 def test_owned_ship_screenshot_batches_have_audited_sources_and_expected_size() -> None:
@@ -182,17 +206,24 @@ def test_owned_ship_screenshot_batches_have_audited_sources_and_expected_size() 
         "Sans Pareil", "Savannah", "Shunsen", "Sovereign", "Vasa", "Victory",
     }
     second_batch = {"12 Apostolov", "Balloon", "Flying Cloud", "Huracan", "La Royale"}
+    third_batch = {"Black Wind", "Prins Willem", "Sparrow"}
     ships = {ship.name: ship for ship in load_ship_seed_document().ships}
 
-    assert len(first_batch | second_batch) == 38
-    assert first_batch | second_batch <= set(ships)
+    assert len(first_batch | second_batch | third_batch) == 41
+    assert first_batch | second_batch | third_batch <= set(ships)
     assert {ships[name].source for name in first_batch} == {
         "WoSB in-game owned-ship screenshot audit 2026-07-28"
     }
     assert {ships[name].source for name in second_batch} == {
         "WoSB in-game owned-ship screenshot audit 2026-07-29"
     }
+    assert {ships[name].source for name in third_batch} == {
+        "WoSB in-game owned-ship screenshot audit 2026-07-31"
+    }
     assert ships["Balloon"].upgrade_slots == 0
+    assert ships["Sparrow"].upgrade_slots == 5
+    assert ships["Black Wind"].upgrade_slots == 5
+    assert ships["Prins Willem"].upgrade_slots == 6
 
 
 def test_ship_seed_loader_rejects_special_capacity_above_mount_capacity(tmp_path) -> None:

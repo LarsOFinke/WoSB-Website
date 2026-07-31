@@ -523,14 +523,14 @@
       "ship_type": "Tartane",
       "durability": 1000,
       "speed_min_knots": 9.1,
-      "speed_knots": 9.1,
+      "speed_knots": 11.6,
       "maneuverability": 95,
       "armor": 1.5,
       "hold_capacity": 10000,
       "crew_capacity": 72,
       "sailor_minimum": 29,
       "displacement_tons": 1350,
-      "source": "WoSB in-game shipyard screenshot audit 2026-07",
+      "source": "WoSB in-game owned-ship screenshot audit 2026-07-31",
       "sail_slots": 1,
       "upgrade_slots": 5,
       "has_lantern": true,
@@ -576,6 +576,14 @@
           "max_weapon_class": null,
           "max_caliber_inches": null,
           "special_weapon_capacity": 0
+        }
+      ],
+      "upgrade_effect_overrides": [
+        {
+          "upgrade_seed_id": "reinforced-cannons",
+          "stat_effects": {
+            "bow_stern_weapon_damage_pct": 113
+          }
         }
       ]
     },

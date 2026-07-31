@@ -270,6 +270,7 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Balloon": 23.0,
     "Bellona": 10.5,
     "Black Prince": 12.2,
+    "Black Wind": 11.8,
     "Constitution": 10.9,
     "De Zeven Provincien": 10.6,
     "Devourer": 10.5,
@@ -290,6 +291,7 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Mordaunt": 11.6,
     "Neptuno": 11.0,
     "Poltava": 12.0,
+    "Prins Willem": 11.2,
     "Red Arrow": 11.3,
     "Redoutable": 10.0,
     "Russia": 12.5,
@@ -299,6 +301,7 @@ AUDITED_CRUISE_MAX_SPEEDS = {
     "Savannah": 12.8,
     "Shunsen": 11.2,
     "Sovereign": 10.4,
+    "Sparrow": 11.6,
     "Vasa": 9.6,
     "Victory": 10.1,
 }
@@ -322,6 +325,9 @@ def test_shipyard_speed_ranges_match_owned_ship_screenshots() -> None:
     assert rows["Santisima Trinidad"]["speed_knots"] == 9.4
     assert rows["Savannah"]["speed_knots"] == 12.8
     assert rows["Sovereign"]["speed_knots"] == 10.4
+    assert rows["Sparrow"]["speed_knots"] == 11.6
+    assert rows["Black Wind"]["speed_knots"] == 11.8
+    assert rows["Prins Willem"]["speed_knots"] == 11.2
 
 
 def test_in_game_screenshot_ship_stats_match_catalog() -> None:
@@ -433,6 +439,7 @@ def test_all_ship_seeds_use_current_panel_or_event_provenance() -> None:
         "WoSB in-game current-event tooltip screenshot audit 2026-07",
         "WoSB in-game owned-ship screenshot audit 2026-07-28",
         "WoSB in-game owned-ship screenshot audit 2026-07-29",
+        "WoSB in-game owned-ship screenshot audit 2026-07-31",
     }
     assert {str(row["source"]) for row in SHIP_SEED_DATA} <= allowed_sources
 

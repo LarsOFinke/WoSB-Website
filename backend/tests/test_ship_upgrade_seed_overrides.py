@@ -124,6 +124,47 @@ def test_seeded_combat_upgrade_values_follow_current_ship_screenshots() -> None:
         assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Savannah")) == {
             "bow_stern_weapon_damage_pct": 121,
         }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Sparrow")) == {
+            "bow_stern_weapon_damage_pct": 113,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Prins Willem")) == {
+            "bow_stern_weapon_damage_pct": 74,
+        }
+        assert effective_upgrade_effects(reinforced_cannons, _ship(db, "Black Wind")) == {
+            "bow_stern_weapon_damage_pct": 100,
+        }
+
+
+def test_black_wind_uses_the_verified_small_ship_upgrade_values() -> None:
+    with _seeded_db() as db:
+        expected = {
+            "Reinforced Masts": {"speed_knots": 0.6, "sail_efficiency": 1.2},
+            "Double Hold": {
+                "hold_capacity": 3000,
+                "item_loss_pct": -40,
+                "hull_hp_pct": -5,
+            },
+            "Cellars": {
+                "hold_capacity": 1500,
+                "perishable_goods_preserved_enabled": 1,
+            },
+            "Extra Bunks": {
+                "crew_capacity": 10,
+                "crew_count_hidden_enabled": 1,
+            },
+            "Repair Arsenal": {
+                "durability": 80,
+                "repair_item_efficiency_pct": 20,
+            },
+            "Teak Frames": {
+                "armor": 2,
+                "crew_capacity": 6,
+                "turn_rate_pct": -6,
+            },
+        }
+        ship = _ship(db, "Black Wind")
+        for option_name, effects in expected.items():
+            assert effective_upgrade_effects(_option(db, option_name), ship) == effects
 
 
 def test_admin_ship_override_survives_bootstrap_and_restore_reinstates_seed_values() -> None:

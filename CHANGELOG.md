@@ -11,6 +11,8 @@
 
 ## Unreleased
 
+- Added the newly supplied owned-ship audit data for Sparrow, Black Wind and Prins Willem. Their verified cruise maxima and sparse ship-specific upgrade values now replace shipyard placeholders; Black Wind's dedicated mortar-fitting panel is recorded as direct evidence. The screenshot audit and integrity manifest now cover 254 ship captures across 41 owned ships.
+
 - Split Raid-Helper payloads into a free-compatible default and an explicit Premium opt-in. Standard templates now send only the proven basic create-event fields, while custom template IDs and additional top-level kwargs require `uses_premium_features`; invalid free-mode templates are rejected locally before any API request. Migration `0020` converts the former application-recommended payload to the free-compatible preset and preserves intentional custom payloads as Premium templates.
 
 - Fixed the remaining Raid-Helper 401 false positive by making destination tests render the same selected application template and JSON payload as calendar delivery. Raid-Helper template IDs are now optional, the legacy application default `Standard` is omitted instead of sent as `templateId`, and the Staff panel can compare a selected template payload against a minimal payload. Migration `0019` clears legacy `Standard` values and changes the database default to an empty template ID.
