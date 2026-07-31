@@ -1,0 +1,286 @@
+# Disaster Recovery und Desktop-Backup
+
+Dieses Verfahren ist für einen vollständigen Verlust des Raspberry Pi ausgelegt. Ein Recovery-Bundle enthält:
+
+- einen konsistenten PostgreSQL-Dump;
+- Uploads, Zertifikate, Let's-Encrypt-Konfiguration und optional Uptime Kuma;
+- `infrastructure/.env` einschließlich der Datenbank- und Verschlüsselungsschlüssel;
+- die vier versionsverwalteten `backend/config/*.cfg` als überprüfbaren Snapshot;
+- optionale First-Run-Zugangsdaten;
+- root-seitige Remote-Backup-Secrets und `known_hosts`;
+- Betriebssystem-, Paket-, Docker-, Architektur-, Versions- und Commit-Metadaten;
+- ein Manifest mit Größe und SHA-256 für jede enthaltene Datei.
+
+Das Gesamtarchiv wird mit **age** für einen öffentlichen Empfänger verschlüsselt. Der private age-Schlüssel bleibt ausschließlich auf dem verschlüsselten Backup-Laptop (BitLocker oder LUKS) und einer zweiten sicheren Offline-Ablage. Ein Angreifer auf dem Pi kann vorhandene Bundles damit weder entschlüsseln noch neue gültige Empfänger ableiten.
+
+## 1. Recovery-Tool für Windows oder Linux vorbereiten
+
+Windows- und Linux-Client verwenden dieselben geprüften Python-Quellen unter
+`tools/recovery-tool`. Die nativen Build-Wrapper liegen unter `tools/windows/recovery-tool`
+und `tools/linux/recovery-tool`. Auf dem Backup-Laptop benötigt das fertige Programm weder
+Python noch OpenSSH, Docker, PostgreSQL oder eine eingehende Firewall-Regel. Paramiko, `age`
+und `age-keygen` sind im jeweiligen PyInstaller-Artefakt enthalten.
+
+### Windows-Build
+
+```powershell
+cd tools\windows\recovery-tool
+Set-ExecutionPolicy -Scope Process Bypass
+.\Build-RbfRecoveryTool.ps1
+```
+
+Ausgabe:
+
+```text
+tools\windows\recovery-tool\dist\RBF-Recovery-Tool-Windows.exe
+```
+
+### Linux-Build
+
+Der Linux-Build muss nativ für die gewünschte Architektur erzeugt werden. Auf Debian/Ubuntu:
+
+```bash
+sudo apt install -y python3 python3-venv python3-tk age build-essential
+cd tools/linux/recovery-tool
+./Build-RbfRecoveryTool.sh
+```
+
+Ausgabe beispielsweise:
+
+```text
+tools/linux/recovery-tool/dist/RBF-Recovery-Tool-Linux-x86_64
+tools/linux/recovery-tool/dist/RBF-Recovery-Tool-Linux-aarch64
+```
+
+Das Linux-Ziel benötigt nur eine normale grafische Sitzung und die üblichen Desktop-/glibc-
+Laufzeitbibliotheken. Es sollte auf derselben CPU-Architektur und mit einer nicht neueren
+glibc-Basis gebaut werden als das Zielsystem.
+
+Optional ohne Root-Rechte ins Linux-Anwendungsmenü installieren:
+
+```bash
+./Install-RbfRecoveryTool.sh
+```
+
+Das Skript installiert ausschließlich das Binary unter `~/.local/bin` und einen Desktop-Eintrag.
+Es richtet keinen Dienst ein, öffnet keinen Port und ändert keine Firewallregel.
+
+Beim ersten Start:
+
+1. neben **age-Identität** auf **Neu** klicken;
+2. den privaten Schlüssel in einem BitLocker- oder LUKS-geschützten Ordner speichern;
+3. den angezeigten öffentlichen `age1...`-Empfänger auf dem Pi konfigurieren;
+4. den SSH-Host-Key über einen zweiten Kanal prüfen und in der GUI fest pinnen;
+5. Zielordner und Serverprofil speichern.
+
+Die GUI speichert keine Kennwörter oder privaten Schlüssel, sondern nur deren lokale Pfade.
+Passwörter beziehungsweise Schlüssel-Passphrasen bleiben nur für den aktuellen Vorgang im
+Speicher. Der private age-Schlüssel verbleibt auf dem Backup-Laptop und in einer zweiten verschlüsselten
+Offline-Ablage.
+
+Die bisherigen PowerShell-Skripte bleiben als administrativer Fallback verfügbar:
+
+```powershell
+winget install FiloSottile.age
+winget install Python.Python.3.13
+.\tools\windows\New-RbfRecoveryKey.ps1
+```
+
+## 2. Pi konfigurieren
+
+Den öffentlichen Wert aus `rbf-recovery-recipient.txt` in `infrastructure/.env` eintragen:
+
+```dotenv
+BACKUP_RECOVERY_ENABLED=true
+BACKUP_AGE_RECIPIENT=age1...
+BACKUP_PULL_EXPORT_DIR=/home/smokenougat/rbf-backups
+BACKUP_PULL_EXPORT_USER=smokenougat
+```
+
+Danach die Host-Abhängigkeiten und systemd-Units aktualisieren:
+
+```bash
+sudo ./setup.sh --profile full --no-start
+sudo systemctl start rbf-hub-backup.service
+```
+
+Der normale tägliche Timer erstellt weiterhin getrennte Datenbank- und Datei-Backups. Zusätzlich entsteht unter `infrastructure/data/backups/recovery` ein einziges verschlüsseltes Bundle. Ist ein Pull-Export konfiguriert, wird eine für genau diesen SSH-Benutzer lesbare Kopie unter `/home/smokenougat/rbf-backups` bereitgestellt.
+
+Ein manueller Staff-Panel-Remote-Backup-Lauf überträgt bei aktivierter Recovery-Funktion zusätzlich das verschlüsselte Recovery-Bundle und verifiziert es auf dem Ziel per SHA-256.
+
+## 3. Vom Windows- oder Linux-Laptop abrufen und vollständig prüfen
+
+Im **RBF Recovery Tool**:
+
+1. **Host-Key prüfen** und den Fingerprint unabhängig vergleichen;
+2. **Neuestes Backup laden** auswählen;
+3. die standardmäßig aktive vollständige Prüfung eingeschaltet lassen.
+
+Das Tool:
+
+1. verbindet sich ausgehend per SFTP mit dem bestehenden SSH-Port;
+2. wählt nur korrekt benannte Recovery-Bundles mit passender `.sha256`-Datei;
+3. lädt über temporäre `.part`-Dateien und benennt erst nach Abschluss um;
+4. prüft die Transport-Prüfsumme;
+5. entschlüsselt das Bundle ausschließlich temporär auf dem lokalen Laptop;
+6. lehnt Pfad-Traversal, Links, Spezialdateien, Duplikate und unerwartete Archivwurzeln ab;
+7. verifiziert Größe und SHA-256 jeder Manifestdatei;
+8. entfernt anschließend alle temporären Klartextdaten.
+
+Die Verbindung akzeptiert keinen stillschweigend neuen SSH-Host-Key. Eine Änderung des
+gepinnten Fingerprints blockiert den Download, bis sie unabhängig untersucht wurde.
+
+PowerShell-Fallback im Repository-Checkout:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\tools\windows\Pull-RbfRecovery.ps1 `
+  -Server "smokenougat@server" `
+  -RemoteDirectory "/home/smokenougat/rbf-backups" `
+  -Destination "C:\Users\User\Desktop\DB-Backups\RBF"
+```
+
+Der Laptop muss für das serverseitige Backup nicht eingeschaltet sein. Er zieht die bereits
+verschlüsselte Exportkopie beim nächsten manuellen Lauf ab. Für unbeaufsichtigte Aufgabenplanung
+bleibt das PowerShell-Skript die vorgesehene Schnittstelle; die GUI ist bewusst interaktiv.
+
+## 4. Wiederherstellung auf einem frisch installierten Pi
+
+Voraussetzungen:
+
+- Raspberry Pi OS Lite oder Debian 64-bit;
+- Netzwerk und SSH;
+- Repository-Checkout, vorzugsweise derselbe Release oder ein neuerer kompatibler Stand;
+- Recovery-Bundle, `.sha256` und die private age-Identität temporär auf dem Pi.
+
+Minimale Vorbereitung:
+
+```bash
+sudo apt update
+sudo apt install -y age git
+
+git clone <REPOSITORY_URL> ~/WoSB-Website
+cd ~/WoSB-Website
+```
+
+Bundle und Identität beispielsweise vom Backup-Laptop übertragen:
+
+```powershell
+scp "C:\Users\User\Desktop\DB-Backups\RBF\rbf-recovery-....tar.gz.age*" smokenougat@server:/tmp/
+scp "$HOME\RBF-Recovery\rbf-recovery-identity.txt" smokenougat@server:/tmp/
+```
+
+Linux-Alternative:
+
+```bash
+scp ~/RBF-Recovery/Backups/rbf-recovery-....tar.gz.age* smokenougat@server:/tmp/
+scp ~/RBF-Recovery/rbf-recovery-identity.txt smokenougat@server:/tmp/
+```
+
+Dann auf dem Pi:
+
+```bash
+cd ~/WoSB-Website
+sudo ./infrastructure/scripts/backup/restore-recovery.sh \
+  --yes \
+  --identity /tmp/rbf-recovery-identity.txt \
+  --bundle /tmp/rbf-recovery-YYYYMMDDTHHMMSSZ.tar.gz.age
+```
+
+Das Restore-Skript:
+
+1. prüft die äußere SHA-256-Datei;
+2. entschlüsselt und verifiziert das vollständige Manifest;
+3. stellt `.env`, First-Run-Datei und root-seitige Backup-Secrets wieder her;
+4. legt die gesicherten `.cfg` standardmäßig nur unter `infrastructure/data/recovered-config` zur Prüfung ab;
+5. provisioniert Docker, Firewall und systemd reproduzierbar;
+6. stellt Uploads, TLS/Let's Encrypt und Uptime Kuma wieder her;
+7. baut die API und das Gateway;
+8. importiert PostgreSQL transaktional;
+9. migriert auf den Alembic-Head des Checkouts;
+10. führt den idempotenten Seed, Readiness und HTTPS-Smoke-Test aus.
+
+Nur wenn bewusst ein exakt gleicher alter Code-Checkout verwendet wird, können die gesicherten `.cfg` direkt zurückgespielt werden:
+
+```bash
+sudo ./infrastructure/scripts/backup/restore-recovery.sh \
+  --yes \
+  --restore-versioned-config \
+  --identity /tmp/rbf-recovery-identity.txt \
+  --bundle /tmp/rbf-recovery-YYYYMMDDTHHMMSSZ.tar.gz.age
+```
+
+Auf einem bereits initialisierten Ziel verweigert das Skript den Lauf standardmäßig. Eine bewusste In-Place-Wiederherstellung benötigt zusätzlich `--replace-existing`; für einen Hardwareausfall ist ein frischer Datenträger beziehungsweise eine frische OS-Installation vorzuziehen.
+
+Nach Erfolg den privaten Schlüssel unverzüglich vom Pi entfernen:
+
+```bash
+sudo shred -u /tmp/rbf-recovery-identity.txt 2>/dev/null || sudo rm -f /tmp/rbf-recovery-identity.txt
+```
+
+
+## 5. Geschützter PostgreSQL-Restore im Admin-Panel
+
+Das Admin-Panel kann den vorgesehenen lokalen Ordner
+`infrastructure/data/backups/postgres` katalogisieren. Der Browser kann weder einen Pfad noch
+einen freien Dateinamen übermitteln. Der root-seitige Runner akzeptiert ausschließlich:
+
+- reguläre `.sql`- oder `.sql.gz`-Dateien mit sicherem Namen;
+- eine passende `.sha256`-Sidecar-Datei;
+- Dateien, die ohne Symlink-Folge geöffnet und während der Prüfung nicht verändert wurden;
+- eine undurchsichtige, aus Name, Größe und Prüfsumme abgeleitete Backup-ID.
+
+Ein Restore ist ausschließlich für den Bootstrap-Admin freigeschaltet und benötigt zusätzlich
+eine bewusste Host-Freigabe:
+
+```bash
+cd ~/WoSB-Website
+sudo ./infrastructure/scripts/backup/arm-admin-restore.sh
+```
+
+Der Befehl zeigt einen einmaligen, standardmäßig zehn Minuten gültigen Token. Im Admin-Panel:
+
+1. **Lokale Backups prüfen**;
+2. den verifizierten Dump auswählen;
+3. den einmaligen Host-Token eingeben;
+4. exakt `RESTORE DATABASE` bestätigen;
+5. die abschließende Browser-Bestätigung akzeptieren.
+
+Der Klartext-Token wird weder in API-Antworten noch in Audit-Logs oder der Host-Warteschlange
+gespeichert. Die API persistiert lediglich seinen SHA-256-Wert. Der Host löscht die root-geschützte
+Freigabe vor der Auswertung, sodass auch ein falscher Versuch den Token verbraucht. Die kurzlebige
+Freigabedatei wird ausdrücklich nicht in Recovery-Bundles aufgenommen. Anschließend
+verwendet der bestehende Restore-Runner exklusiven Lock, Pre-Restore-Backup, Wartungsmodus,
+Verbindungsabbruch, Alembic-Migration, Seed, Readiness und HTTPS-Smoke-Test.
+
+Ein kompromittiertes normales Admin-Konto reicht damit weder für die Auswahl eines beliebigen
+Dateisystempfads noch zum Start eines Datenbank-Restores aus. Der Ablauf ersetzt dennoch keine
+Multi-Faktor-Authentifizierung und keinen sicheren SSH-/Hostbetrieb; er bildet eine zusätzliche
+physische beziehungsweise Host-seitige Freigabeschranke.
+
+
+## Raspberry-Pi-Produktionsgrundlage
+
+Ein Restore-Verfahren ersetzt keine stabile Hardwarebasis. Für einen produktiven Pi 4 gelten mindestens:
+
+- aktive Kühlung oder ein dauerhaft ausreichend dimensioniertes Lüftergehäuse;
+- offizielles beziehungsweise hochwertiges 5,1-V-Netzteil und kurzes geeignetes Kabel;
+- SSD statt verschleißanfälliger SD-Karte, sofern möglich;
+- freie Luftzufuhr und Temperatur-/Throttling-Alarmierung;
+- optional USV/HAT für kontrolliertes Herunterfahren bei Stromausfall;
+- ein vorbereitetes Ersatzmedium oder ein zweiter Pi für Restore-Übungen.
+
+Nach Hardware- oder Temperaturauffälligkeiten sind `vcgencmd get_throttled`, Kernel-Logs, Dateisystem und ein vollständiger Recovery-Test zu prüfen. Wiederholte `Illegal instruction`, I/O-Fehler oder unerklärliche Containerabstürze sind ein Grund für Hardware-/OS-Neuaufbau statt Weiterbetrieb auf Verdacht.
+
+## 6. Recovery-Ziele und Übungen
+
+Empfohlene Betriebsziele:
+
+- **RPO:** maximal 24 Stunden bei täglichem Timer; geringer, wenn der Timer häufiger konfiguriert wird.
+- **RTO:** 30–60 Minuten für frisches OS, Checkout, Restore und Smoke-Test.
+- mindestens zwei Kopien des privaten age-Schlüssels an getrennten, verschlüsselten Orten;
+- mindestens eine erfolgreich verifizierte Recovery-Kopie außerhalb des Pi;
+- monatliche Windows-Inhaltsprüfung;
+- vierteljährlicher Restore-Test auf Ersatzmedium oder separatem Pi, ohne die Produktion zu überschreiben.
+
+Ein Backup gilt erst als belastbar, wenn es außerhalb des Quellsystems liegt, entschlüsselt werden kann, alle Manifest-Prüfsummen stimmen und ein Restore-Test erfolgreich war.

@@ -42,3 +42,9 @@ backend/storage/uploads/*
 release/
 *.zip
 *.zip.sha256
+
+# Windows recovery-tool build environment
+tools/windows/recovery-tool/.venv-build/
+tools/windows/recovery-tool/build/
+tools/linux/recovery-tool/.venv-build/
+tools/linux/recovery-tool/build/

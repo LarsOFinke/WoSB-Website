@@ -26,7 +26,8 @@ logs:
 update:
 	sudo ../update.sh
 
-backup: backup-db backup-files
+backup:
+	sudo ./scripts/backup/backup-all.sh
 
 backup-db:
 	./scripts/backup/backup-postgres.sh

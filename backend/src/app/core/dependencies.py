@@ -49,6 +49,15 @@ def require_admin(current_user: User = Depends(require_user)) -> User:
     return current_user
 
 
+def require_bootstrap_admin(current_user: User = Depends(require_admin)) -> User:
+    if not current_user.is_bootstrap_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bootstrap administrator access required.",
+        )
+    return current_user
+
+
 def require_staff(current_user: User = Depends(require_user)) -> User:
     if not current_user.can_moderate:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Moderator access required.")

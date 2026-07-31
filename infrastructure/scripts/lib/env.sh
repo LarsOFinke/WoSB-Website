@@ -185,4 +185,25 @@ validate_env() {
   webhook_encryption_keys="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
   [[ -z "$webhook_encryption_keys" || "$webhook_encryption_keys" != CHANGE_ME* ]] || \
     die "WEBHOOK_ENCRYPTION_KEYS wurde noch nicht sicher erzeugt."
+
+  local retention_days recovery_enabled recovery_recipient export_dir export_user
+  retention_days="$(read_env BACKUP_RETENTION_DAYS)"
+  [[ -z "$retention_days" || "$retention_days" =~ ^[1-9][0-9]*$ ]] \
+    || die "BACKUP_RETENTION_DAYS muss eine positive ganze Zahl sein."
+  recovery_enabled="$(read_env BACKUP_RECOVERY_ENABLED)"
+  [[ -z "$recovery_enabled" || "$recovery_enabled" =~ ^(true|false)$ ]] \
+    || die "BACKUP_RECOVERY_ENABLED muss true oder false sein."
+  if is_true "$recovery_enabled"; then
+    recovery_recipient="$(read_env BACKUP_AGE_RECIPIENT)"
+    [[ "$recovery_recipient" =~ ^age1[0-9a-z]{20,}$ ]] \
+      || die "Aktiviertes Recovery-Backup benötigt einen gültigen BACKUP_AGE_RECIPIENT."
+    command -v age >/dev/null 2>&1 \
+      || die "Aktiviertes Recovery-Backup benötigt das Host-Paket age."
+  fi
+  export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
+  export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
+  [[ -z "$export_dir" && -z "$export_user" || -n "$export_dir" && -n "$export_user" ]] \
+    || die "BACKUP_PULL_EXPORT_DIR und BACKUP_PULL_EXPORT_USER müssen gemeinsam gesetzt sein."
+  [[ -z "$export_dir" || "$export_dir" == /* ]] \
+    || die "BACKUP_PULL_EXPORT_DIR muss ein absoluter Pfad sein."
 }

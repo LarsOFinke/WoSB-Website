@@ -5,10 +5,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_dir="$INFRA_DIR/data/backups/files"
 output="$backup_dir/rbf-files-${timestamp}.tar.gz"
-mkdir -p "$backup_dir" "$INFRA_DIR/data/uploads"
+install -d -m 0700 "$backup_dir"
+install -d -m 0750 "$INFRA_DIR/data/uploads"
 
 backup_paths=(uploads)
-for optional_path in certs uptime-kuma; do
+for optional_path in certs letsencrypt uptime-kuma; do
   if [[ -e "$INFRA_DIR/data/$optional_path" ]]; then
     backup_paths+=("$optional_path")
   else

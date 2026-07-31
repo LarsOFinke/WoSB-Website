@@ -5,7 +5,9 @@
 - `main` ist geschützt und CI vollständig grün.
 - Ein Release-Tag und das zugehörige SHA-256-Artefakt liegen vor.
 - DNS zeigt auf den Anschluss; TCP 80/443 werden an den Raspberry Pi weitergeleitet.
-- Ein extern gespeichertes PostgreSQL-/Upload-Backup ist aktuell und testweise lesbar.
+- Ein extern gespeichertes, entschlüsseltes und vollständig manifestgeprüftes Recovery-Bundle ist aktuell.
+- Der private age-Recovery-Schlüssel liegt auf zwei getrennten verschlüsselten Datenträgern und nicht auf dem Pi.
+- Aktive Kühlung, zuverlässiges 5,1-V-Netzteil, SSD/hochwertiger Datenträger und ausreichende Belüftung sind vorhanden.
 - GitHub-Deploy-Secrets und der dedizierte SSH-Schlüssel sind eingerichtet, falls CD genutzt wird.
 - Datenschutzerklärung, Impressum, Cookie-Kategorien und tatsächlich verwendete Drittanbieter sind geprüft.
 
@@ -61,5 +63,6 @@ Die alte Datenbank bleibt bis zur vollständigen Abnahme unverändert als Rollba
 
 - Health- und Readiness-Endpunkt beobachten.
 - Logs und freie Datenträgerkapazität kontrollieren.
-- Externes Backup und Uptime-Monitoring verifizieren.
+- Externes Recovery-Bundle auf dem Windows-Backupgerät abrufen und vollständig prüfen.
+- Uptime-Monitoring, Temperatur und `vcgencmd get_throttled` verifizieren.
 - Erst nach erfolgreicher Abnahme Wartungsseite/Ankündigung entfernen.

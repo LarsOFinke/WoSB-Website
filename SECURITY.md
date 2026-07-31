@@ -21,6 +21,8 @@ Version, Reproduktionsschritte, Auswirkung und einen möglichen Fix.
   `production`-Environment und einen dedizierten SSH-Schlüssel.
 - Vor Migration oder Seed erstellt der Updater ein vollständiges Sicherheitsbackup.
 - Manuelle Remote-Backups verwenden einen separaten root-seitigen systemd-Runner. Die API besitzt weder Docker-Socket- noch Lesezugriff auf den privaten Backup-Schlüssel; SSH-Host-Keys werden vor jeder Verbindung strikt aus einer dedizierten `known_hosts`-Datei geprüft.
+- Lokale PostgreSQL-Restores akzeptieren keine Browserpfade oder freien Dateinamen. Der Host katalogisiert nur reguläre, SHA-256-verifizierte Dumps; ein Restore erfordert den Bootstrap-Admin, eine exakte Bestätigung und einen einmaligen per `sudo` erzeugten Host-Token. Der Klartext-Token wird nicht in der Warteschlange, API-Antwort oder im Audit-Log persistiert. Kurzlebige Restore-Freigaben werden außerdem ausdrücklich aus Recovery-Bundles ausgeschlossen.
+- Das eingefrorene Recovery-Tool für Windows und Linux baut auf einer gemeinsamen Codebasis auf, pinnt SSH-Host-Keys, speichert keine Kennwörter und prüft Transport-SHA-256, age-Entschlüsselung, Archivstruktur, Manifestinventar sowie jede enthaltene Datei. Es öffnet keine eingehenden Ports und benötigt keine Firewall-Freigabe auf dem Backup-Laptop.
 
 Secrets nach einem Verdacht sofort rotieren: PostgreSQL, Seed-Admin,
 `WEBHOOK_ENCRYPTION_KEYS`, Discord-Webhooks, SSH-Deploy-Key und gegebenenfalls TLS-Zugangsdaten.

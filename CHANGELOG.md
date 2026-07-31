@@ -11,6 +11,10 @@
 
 ## Unreleased
 
+- Added one shared frozen recovery client for Windows and Linux with pinned SSH host keys, embedded native age tools, SFTP pull, atomic downloads and full encrypted-bundle verification. Native PyInstaller wrappers produce a Windows EXE or architecture-specific Linux binary from the same reviewed source. The Staff backup panel can catalog checksum-verified local PostgreSQL dumps and perform a bootstrap-admin-only restore after a short-lived, single-use approval generated with sudo on the host; browser input can never select arbitrary filesystem paths, and plaintext approval tokens are never queued.
+
+- Added production-grade Raspberry Pi disaster recovery: scheduled backups can now create one age-encrypted bundle containing PostgreSQL, uploads, TLS/Let's Encrypt, Uptime Kuma, `.env`, all `.cfg` snapshots, root-side backup secrets and a per-file SHA-256 manifest. A pull-only export supports Windows OpenSSH clients without exposing plaintext secrets; PowerShell key generation, pull and full-content verification scripts plus an automated bare-metal restore workflow are included.
+
 - Added the newly supplied owned-ship audit data for Sparrow, Black Wind and Prins Willem. Their verified cruise maxima and sparse ship-specific upgrade values now replace shipyard placeholders; Black Wind's dedicated mortar-fitting panel is recorded as direct evidence. The screenshot audit and integrity manifest now cover 254 ship captures across 41 owned ships.
 
 - Split Raid-Helper payloads into a free-compatible default and an explicit Premium opt-in. Standard templates now send only the proven basic create-event fields, while custom template IDs and additional top-level kwargs require `uses_premium_features`; invalid free-mode templates are rejected locally before any API request. Migration `0020` converts the former application-recommended payload to the free-compatible preset and preserves intentional custom payloads as Premium templates.

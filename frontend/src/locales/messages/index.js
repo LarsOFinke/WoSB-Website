@@ -4,6 +4,7 @@ import { appShellMessages } from './appShell.js'
 import { authAdminProfileMessages } from './authAdminProfile.js'
 import { baseMessages } from './base.js'
 import { backupManagementMessages } from './backupManagement.js'
+import { backupRecoveryExtensionMessages } from './backupRecoveryExtensions.js'
 import { buildDesignerEquipmentRulesMessages } from './buildDesignerEquipmentRules.js'
 import { buildEditingAndPreferencesMessages } from './buildEditingAndPreferences.js'
 import { buildVotingRolesAndSearchMessages } from './buildVotingRolesAndSearch.js'
@@ -53,6 +54,7 @@ const messageLayers = [
   buildEditingAndPreferencesMessages,
   buildVotingRolesAndSearchMessages,
   backupManagementMessages,
+  backupRecoveryExtensionMessages,
   fleetCalendarMessages,
   squadOrganizationMessages,
   mySquadsWorkspaceMessages,

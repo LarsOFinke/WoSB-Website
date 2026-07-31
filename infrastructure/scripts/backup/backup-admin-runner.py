@@ -14,6 +14,16 @@ import threading
 from datetime import datetime, timezone
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from local_backup_catalog import (  # noqa: E402
+    consume_database_restore_approval,
+    resolve_local_postgres_backup,
+    scan_local_postgres_backups,
+)
+
 
 HOST_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
 USER_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
@@ -342,23 +352,26 @@ class Runner:
             "remote_path": f"{config['remote_directory'].rstrip('/')}/{filename}",
         }
 
-    def create_backup_artifact(
+    def create_local_backup_artifact(
         self,
         *,
-        config: dict[str, Any],
         script_name: str,
         artifact_type: str,
         description: str,
         timeout: int,
-    ) -> dict[str, Any]:
+        arguments: list[str] | None = None,
+    ) -> Path:
         result_file = self.run_dir / f"backup-result-{artifact_type}.{os.getpid()}"
         result_file.unlink(missing_ok=True)
         env = os.environ.copy()
         env["BACKUP_RESULT_FILE"] = str(result_file)
         self.log(f"Creating a fresh {description} backup.")
         try:
+            command = ["/usr/bin/env", "bash", str(self.infra_dir / f"scripts/backup/{script_name}")]
+            if arguments:
+                command.extend(arguments)
             result = subprocess.run(
-                ["/usr/bin/env", "bash", str(self.infra_dir / f"scripts/backup/{script_name}")],
+                command,
                 env=env,
                 check=False,
                 text=True,
@@ -374,30 +387,127 @@ class Runner:
             backup_file = Path(backup_path)
             if not backup_file.is_absolute():
                 raise RuntimeError(f"{description.capitalize()} backup returned an invalid path.")
-            return self.transfer(config, backup_file, artifact_type)
+            return backup_file
         finally:
             result_file.unlink(missing_ok=True)
+
+    def recovery_enabled(self) -> bool:
+        env_file = self.infra_dir / ".env"
+        if not env_file.is_file():
+            return False
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip() == "BACKUP_RECOVERY_ENABLED":
+                return value.strip().strip("\"'").lower() in {"1", "true", "yes", "on"}
+        return False
 
     def create_and_transfer_backup(self) -> dict[str, Any]:
         config = self.load_connection()
         self.test_connection(config)
+        postgres_file = self.create_local_backup_artifact(
+            script_name="backup-postgres.sh",
+            artifact_type="postgresql",
+            description="PostgreSQL database",
+            timeout=1800,
+        )
+        files_file = self.create_local_backup_artifact(
+            script_name="backup-data.sh",
+            artifact_type="files",
+            description="uploaded files and operational data",
+            timeout=1800,
+        )
         artifacts = [
-            self.create_backup_artifact(
-                config=config,
-                script_name="backup-postgres.sh",
-                artifact_type="postgresql",
-                description="PostgreSQL database",
-                timeout=1800,
-            ),
-            self.create_backup_artifact(
-                config=config,
-                script_name="backup-data.sh",
-                artifact_type="files",
-                description="uploaded files and operational data",
-                timeout=1800,
-            ),
+            self.transfer(config, postgres_file, "postgresql"),
+            self.transfer(config, files_file, "files"),
         ]
+        if self.recovery_enabled():
+            recovery_file = self.create_local_backup_artifact(
+                script_name="backup-recovery.sh",
+                artifact_type="recovery",
+                description="encrypted disaster-recovery bundle",
+                timeout=3600,
+                arguments=["--postgres", str(postgres_file), "--files", str(files_file)],
+            )
+            artifacts.append(self.transfer(config, recovery_file, "recovery"))
         return {"artifacts": artifacts}
+
+    def local_catalog_updates(self) -> dict[str, Any]:
+        records, skipped = scan_local_postgres_backups(self.infra_dir)
+        return {
+            "local_database_backups": [record.public_dict() for record in records],
+            "local_catalog_updated_at": now(),
+            "local_catalog_skipped_count": skipped,
+        }
+
+    def scan_local_backups(self) -> dict[str, Any]:
+        self.log("Scanning the protected local PostgreSQL backup directory.")
+        updates = self.local_catalog_updates()
+        self.log(
+            "Verified "
+            f"{len(updates['local_database_backups'])} local PostgreSQL backup(s); "
+            f"skipped {updates['local_catalog_skipped_count']} invalid entry or entries."
+        )
+        return updates
+
+    def restore_postgresql(self) -> dict[str, Any]:
+        backup_id = str(self.request.get("backup_id") or "")
+        approval_token_sha256 = str(self.request.get("approval_token_sha256") or "")
+        # Consume host approval before any catalog hashing or gzip work. Every request,
+        # including a malformed selection, therefore needs a fresh physical-host action.
+        consume_database_restore_approval(self.infra_dir, approval_token_sha256)
+        self.request.pop("approval_token_sha256", None)
+        record = resolve_local_postgres_backup(self.infra_dir, backup_id)
+        if record.filename.endswith(".gz"):
+            preflight = subprocess.run(
+                ["gzip", "-t", str(record.path)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=1800,
+            )
+            if preflight.returncode != 0:
+                raise RuntimeError("The selected compressed database backup failed validation.")
+        self.log(f"Starting approved PostgreSQL restore from {record.filename}.")
+        env = os.environ.copy()
+        env["RBF_RESTORE_LOCK_HELD"] = "true"
+        result = subprocess.run(
+            [
+                "/usr/bin/env",
+                "bash",
+                str(self.infra_dir / "scripts/backup/restore-postgres.sh"),
+                str(record.path),
+            ],
+            env=env,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            timeout=7200,
+        )
+        for line in (result.stdout or "").splitlines():
+            self.log(line)
+        if result.returncode != 0:
+            raise RuntimeError("The controlled PostgreSQL restore failed; review host logs.")
+        return self.local_catalog_updates()
+
+    @staticmethod
+    def public_failure_message(operation: str) -> str:
+        messages = {
+            "discover": "SSH host-key discovery failed. Review the protected host log.",
+            "configure": "The remote backup connection could not be saved. Review the protected host log.",
+            "test": "The remote backup connection test failed. Review the protected host log.",
+            "backup": "The application backup failed. Review the protected host log.",
+            "delete_configuration": "The remote backup connection could not be removed.",
+            "scan_local_backups": "The protected local backup catalog could not be refreshed.",
+            "restore_postgresql": (
+                "The database restore was rejected or failed. Create a new host approval token "
+                "if needed and review the protected host log before retrying."
+            ),
+        }
+        return messages.get(operation, "The protected host operation failed.")
 
     def delete_configuration(self) -> None:
         if self.secret_dir.exists():
@@ -428,16 +538,28 @@ class Runner:
                 message = "Remote backup connection test succeeded."
             elif operation == "backup":
                 updates = self.create_and_transfer_backup()
-                message = "Database and uploaded-file backups were created, transferred and verified successfully."
+                message = "Database, uploaded-file and any enabled encrypted recovery backups were created, transferred and verified successfully."
             elif operation == "delete_configuration":
                 self.delete_configuration()
                 message = "Remote backup connection removed."
+            elif operation == "scan_local_backups":
+                updates = self.scan_local_backups()
+                message = "The protected local PostgreSQL backup catalog was refreshed."
+            elif operation == "restore_postgresql":
+                updates = self.restore_postgresql()
+                message = "The selected PostgreSQL backup was restored and the application passed its checks."
             else:
                 raise RuntimeError("Unsupported backup operation.")
             self.write_status("succeeded", message, started_at=started_at, finished_at=now(), **updates)
         except Exception as exc:
+            self.request.pop("approval_token_sha256", None)
             self.log(f"ERROR: {exc}")
-            self.write_status("failed", str(exc), started_at=started_at, finished_at=now())
+            self.write_status(
+                "failed",
+                self.public_failure_message(operation),
+                started_at=started_at,
+                finished_at=now(),
+            )
             raise
         finally:
             self.stop_heartbeat.set()

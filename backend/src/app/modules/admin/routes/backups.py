@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import require_admin
+from app.core.dependencies import require_admin, require_bootstrap_admin
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.backup_control import (
@@ -12,6 +14,7 @@ from app.modules.admin.schemas.backup_control import (
     BackupControlStatus,
     BackupDiscoveryRequest,
     BackupOperation,
+    DatabaseRestoreRequest,
 )
 from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.admin.services.backup_control_service import (
@@ -151,3 +154,56 @@ def admin_run_application_backup(
         summary="Database and uploaded-file backup creation and remote transfer requested.",
     )
     return result
+
+@router.post(
+    "/local/scan",
+    response_model=BackupControlRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_scan_local_database_backups(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BackupControlRequestResult:
+    result = _request(current_user, "scan_local_backups")
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="database_backup",
+        entity_id="local_catalog",
+        action="catalog_scan_requested",
+        summary="Protected local PostgreSQL backup catalog refresh requested.",
+    )
+    return result
+
+
+@router.post(
+    "/local/restore",
+    response_model=BackupControlRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_restore_local_database_backup(
+    payload: DatabaseRestoreRequest,
+    current_user: User = Depends(require_bootstrap_admin),
+    db: Session = Depends(get_db),
+) -> BackupControlRequestResult:
+    result = _request(
+        current_user,
+        "restore_postgresql",
+        {
+            "backup_id": payload.backup_id,
+            "approval_token_sha256": hashlib.sha256(
+                payload.approval_token.get_secret_value().encode("utf-8")
+            ).hexdigest(),
+        },
+    )
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="database_backup",
+        entity_id=payload.backup_id[:16],
+        action="restore_requested",
+        summary="Bootstrap administrator requested a host-approved PostgreSQL restore.",
+        changed_fields=["database"],
+    )
+    return result
+

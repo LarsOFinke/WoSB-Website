@@ -1,5 +1,5 @@
 [Unit]
-Description=Royal Blackwater Fleet Controlled Remote Database Backup
+Description=Royal Blackwater Fleet Controlled Backup and Database Restore Operations
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
@@ -18,4 +18,4 @@ ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/services/backup-from-admin.sh
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=6
-TimeoutStartSec=40min
+TimeoutStartSec=130min

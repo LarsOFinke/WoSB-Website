@@ -595,7 +595,16 @@ backup_required_files = {
     "frontend/src/modules/admin/pages/DatabaseBackupsPage.vue",
     "frontend/src/modules/admin/composables/useDatabaseBackupsPage.js",
     "infrastructure/scripts/backup/backup-admin-runner.py",
+    "infrastructure/scripts/backup/local_backup_catalog.py",
+    "infrastructure/scripts/backup/arm-admin-restore.sh",
     "infrastructure/scripts/services/backup-from-admin.sh",
+    "tools/recovery-tool/rbf-recovery-tool.spec",
+    "tools/recovery-tool/src/rbf_recovery_tool/app.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/platform_support.py",
+    "tools/recovery-tool/src/rbf_recovery_tool/verification.py",
+    "tools/windows/recovery-tool/Build-RbfRecoveryTool.ps1",
+    "tools/linux/recovery-tool/Build-RbfRecoveryTool.sh",
+    "tools/linux/recovery-tool/Install-RbfRecoveryTool.sh",
     "infrastructure/systemd/rbf-hub-backup-admin.path",
     "infrastructure/systemd/rbf-hub-backup-admin.service",
 }
@@ -604,9 +613,27 @@ for relative_path in backup_required_files:
 
 backup_route = (ROOT / "backend/src/app/modules/admin/routes/backups.py").read_text(encoding="utf-8")
 require("Depends(require_admin)" in backup_route, "backup routes must remain admin-only")
+require(
+    "Depends(require_bootstrap_admin)" in backup_route,
+    "database restores must require the bootstrap administrator",
+)
+require(
+    '"/local/restore"' in backup_route and '"restore_postgresql"' in backup_route,
+    "protected local database restore route is missing",
+)
+require(
+    "approval_token_sha256" in backup_route and '"approval_token":' not in backup_route,
+    "plaintext restore approval tokens must never be queued",
+)
 backup_runner = (ROOT / "infrastructure/scripts/backup/backup-admin-runner.py").read_text(encoding="utf-8")
 require("StrictHostKeyChecking=yes" in backup_runner, "remote backups must verify SSH host keys")
 require("sha256sum -c" in backup_runner, "remote backups must verify the uploaded checksum")
+restore_runner_block = backup_runner.split("def restore_postgresql", 1)[1].split("@staticmethod", 1)[0]
+require(
+    restore_runner_block.index("consume_database_restore_approval")
+    < restore_runner_block.index("resolve_local_postgres_backup"),
+    "database restore approval must be consumed before catalog or compression work",
+)
 backup_schema = (ROOT / "backend/src/app/modules/admin/schemas/backup_control.py").read_text(encoding="utf-8")
 backup_summary_block = backup_schema.split("class BackupConnectionSummary", 1)[1].split(
     "class BackupControlStatus", 1
@@ -615,5 +642,47 @@ require(
     "private_key:" not in backup_summary_block,
     "backup status schema must not expose private-key material",
 )
+require("SecretStr" in backup_schema, "database restore approval tokens must use secret schema fields")
+require("log_tail" not in backup_schema, "host backup logs must not be exposed through the website")
+local_catalog = (
+    ROOT / "infrastructure/scripts/backup/local_backup_catalog.py"
+).read_text(encoding="utf-8")
+for marker in ("O_NOFOLLOW", "compare_digest", "token_sha256", "backup_id"):
+    require(marker in local_catalog, f"local backup catalog hardening is missing: {marker}")
+recovery_backup_script = (
+    ROOT / "infrastructure/scripts/backup/backup-recovery.sh"
+).read_text(encoding="utf-8")
+require(
+    "! -name 'database-restore-approval.json'" in recovery_backup_script,
+    "ephemeral database-restore approvals must never enter recovery bundles",
+)
+recovery_gui = (
+    ROOT / "tools/recovery-tool/src/rbf_recovery_tool/sftp_client.py"
+).read_text(encoding="utf-8")
+require("PinnedFingerprintPolicy" in recovery_gui, "recovery tool must pin SSH host keys")
+require("AutoAddPolicy" not in recovery_gui, "recovery tool must not auto-trust SSH host keys")
+recovery_verification = (
+    ROOT / "tools/recovery-tool/src/rbf_recovery_tool/verification.py"
+).read_text(encoding="utf-8")
+recovery_spec = (ROOT / "tools/recovery-tool/rbf-recovery-tool.spec").read_text(
+    encoding="utf-8"
+)
+for marker in ("age.exe", '"age"', "age-keygen.exe", '"age-keygen"', "verify_sidecar", "_validated_members"):
+    require(
+        marker in recovery_verification or marker in recovery_spec,
+        f"cross-platform recovery tool frozen verification is missing: {marker}",
+    )
+linux_build = (ROOT / "tools/linux/recovery-tool/Build-RbfRecoveryTool.sh").read_text(
+    encoding="utf-8"
+)
+windows_build = (ROOT / "tools/windows/recovery-tool/Build-RbfRecoveryTool.ps1").read_text(
+    encoding="utf-8"
+)
+require("../../recovery-tool" in linux_build, "Linux recovery build must use shared source")
+require("recovery-tool" in windows_build, "Windows recovery build must use shared source")
+require("--noconfirm" in linux_build, "Linux recovery build must be reproducible and non-interactive")
+linux_install = (ROOT / "tools/linux/recovery-tool/Install-RbfRecoveryTool.sh").read_text(encoding="utf-8")
+require(".local/bin" in linux_install and "rbf-recovery-tool" in linux_install, "Linux recovery installer must remain user-local")
+require("sudo" not in linux_install, "Linux recovery installer must not require root")
 
 print(f"Repository invariants OK (v{VERSION}).")

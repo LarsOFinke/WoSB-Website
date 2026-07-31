@@ -5,5 +5,7 @@ After=docker.service rbf-hub.service
 
 [Service]
 Type=oneshot
+UMask=0077
+TimeoutStartSec=4h
 WorkingDirectory=@INFRA_DIR@
 ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/backup/backup-all.sh

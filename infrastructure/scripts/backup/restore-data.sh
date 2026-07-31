@@ -13,7 +13,7 @@ import sys
 import tarfile
 
 archive = sys.argv[1]
-allowed = {"uploads", "certs", "uptime-kuma"}
+allowed = {"uploads", "certs", "letsencrypt", "uptime-kuma"}
 with tarfile.open(archive, mode="r:gz") as handle:
     for member in handle.getmembers():
         path = PurePosixPath(member.name)
@@ -30,6 +30,6 @@ with tarfile.open(archive, mode="r:gz") as handle:
             )
 PY
 
-warn "Uploads, Zertifikate und Uptime-Kuma-Daten werden aus $backup_file wiederhergestellt."
+warn "Uploads, Zertifikate, Let's-Encrypt- und Uptime-Kuma-Daten werden aus $backup_file wiederhergestellt."
 tar -xzf "$backup_file" -C "$INFRA_DIR/data" --no-same-owner --no-same-permissions
 success "Datei-Wiederherstellung abgeschlossen. Führe anschließend setup/doctor und einen Smoke-Test aus."

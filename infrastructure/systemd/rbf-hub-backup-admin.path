@@ -1,5 +1,5 @@
 [Unit]
-Description=Royal Blackwater Fleet Admin Backup Request Watcher
+Description=Royal Blackwater Fleet Admin Backup and Restore Request Watcher
 After=local-fs.target
 
 [Path]

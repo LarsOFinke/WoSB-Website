@@ -6,7 +6,7 @@ install_host_dependencies() {
   export DEBIAN_FRONTEND=noninteractive
 
   apt-get update
-  apt-get install -y ca-certificates certbot curl git openssl ufw
+  apt-get install -y age ca-certificates certbot curl git openssl ufw
 
   if ! command -v docker >/dev/null 2>&1; then
     apt-get install -y docker.io

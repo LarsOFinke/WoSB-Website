@@ -246,8 +246,33 @@ require_pattern 'control/secrets' "$INFRA_DIR/scripts/lib/host/storage.sh"
 require_pattern 'BACKUP_RESULT_FILE' "$INFRA_DIR/scripts/backup/backup-postgres.sh"
 require_pattern 'BACKUP_RESULT_FILE' "$INFRA_DIR/scripts/backup/backup-data.sh"
 require_pattern 'data/uploads' "$INFRA_DIR/scripts/backup/backup-data.sh"
+require_pattern 'letsencrypt' "$INFRA_DIR/scripts/backup/backup-data.sh"
+require_file "$INFRA_DIR/scripts/backup/backup-recovery.sh"
+require_file "$INFRA_DIR/scripts/backup/restore-recovery.sh"
+require_file "$INFRA_DIR/scripts/backup/verify-recovery.sh"
+require_file "$INFRA_DIR/scripts/backup/recovery_bundle.py"
+require_file "$ROOT_DIR/tools/windows/New-RbfRecoveryKey.ps1"
+require_file "$ROOT_DIR/tools/windows/Pull-RbfRecovery.ps1"
+require_file "$ROOT_DIR/tools/windows/Test-RbfRecovery.ps1"
+require_file "$ROOT_DIR/docs/DISASTER_RECOVERY.md"
+require_pattern 'BACKUP_RECOVERY_ENABLED=false' "$INFRA_DIR/.env.example"
+require_pattern 'BACKUP_AGE_RECIPIENT=' "$INFRA_DIR/.env.example"
+require_pattern 'BACKUP_PULL_EXPORT_DIR=' "$INFRA_DIR/.env.example"
+require_pattern 'age ca-certificates' "$INFRA_DIR/scripts/lib/host/packages.sh"
+require_pattern 'backup-recovery.sh' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern 'infrastructure.env' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
+require_pattern 'backend-config' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
+require_pattern 'control-secrets' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
+require_pattern 'restore-postgres.sh' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
+require_pattern 'restore-data.sh' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
+require_pattern 'setup.sh.*--profile.*--no-start' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
 require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
 require_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_file "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
+require_file "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
+require_pattern 'O_NOFOLLOW' "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
+require_pattern 'token_sha256' "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
+require_pattern 'RBF_RESTORE_LOCK_HELD' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
 require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
 require_pattern '/proc/$$/fd/9' "$INFRA_DIR/scripts/backup/backup-all.sh"
@@ -269,6 +294,71 @@ assert scheduled_backup.index('exec 8>"$update_lock"') < scheduled_backup.index(
 assert scheduled_backup.index('flock 8') < scheduled_backup.index('exec 7>"$run_dir/backup.lock"')
 assert scheduled_backup.index('flock 7') < scheduled_backup.index('backup-postgres.sh')
 PY_BACKUP_LOCKS
+
+
+python3 - "$INFRA_DIR/scripts/backup/recovery_bundle.py" <<'PY_RECOVERY_BUNDLE'
+import importlib.util
+import json
+from pathlib import Path
+import tarfile
+import tempfile
+import sys
+
+script = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("rbf_recovery_bundle", script)
+module = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(module)
+
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary)
+    stage = root / "stage"
+    for directory in (
+        stage / "artifacts/postgres",
+        stage / "artifacts/files",
+        stage / "configuration/backend-config",
+        stage / "system",
+    ):
+        directory.mkdir(parents=True, exist_ok=True)
+    (stage / "artifacts/postgres/db.sql.gz").write_bytes(b"database")
+    (stage / "artifacts/files/files.tar.gz").write_bytes(b"files")
+    (stage / "configuration/infrastructure.env").write_text("SECRET=value\n", encoding="utf-8")
+    (stage / "configuration/backend-config/application.cfg").write_text("[app]\n", encoding="utf-8")
+    (stage / "system/backup-metadata.json").write_text(
+        json.dumps({"version": "1.0.0", "git_commit": "test"}), encoding="utf-8"
+    )
+    module.build_manifest(stage, "db.sql.gz", "files.tar.gz")
+    archive = root / "bundle.tar.gz"
+    with tarfile.open(archive, "w:gz") as handle:
+        for name in ("manifest.json", "artifacts", "configuration", "system"):
+            handle.add(stage / name, arcname=name)
+    extracted = root / "extracted"
+    module.extract_safely(archive, extracted)
+    manifest = module.verify_extracted(extracted)
+    assert manifest["artifacts"]["postgres"] == "artifacts/postgres/db.sql.gz"
+    assert len(manifest["files"]) == 5
+
+    (extracted / "configuration/infrastructure.env").write_text("tampered", encoding="utf-8")
+    try:
+        module.verify_extracted(extracted)
+    except RuntimeError as exc:
+        assert "checksum mismatch" in str(exc) or "size mismatch" in str(exc)
+    else:
+        raise AssertionError("Tampered recovery content must fail verification")
+
+    unsafe = root / "unsafe.tar.gz"
+    with tarfile.open(unsafe, "w:gz") as handle:
+        info = tarfile.TarInfo("../escape")
+        info.size = 0
+        import io
+        handle.addfile(info, io.BytesIO(b""))
+    try:
+        module.extract_safely(unsafe, root / "unsafe-output")
+    except RuntimeError as exc:
+        assert "Unsafe path" in str(exc)
+    else:
+        raise AssertionError("Path traversal must be rejected")
+PY_RECOVERY_BUNDLE
 
 python3 - "$INFRA_DIR/scripts/backup/backup-admin-runner.py" <<'PY_BACKUP_RUNNER'
 import importlib.util
@@ -359,5 +449,48 @@ with tempfile.TemporaryDirectory() as temporary:
     assert calls[1][0][0] == "ssh"
     assert "sha256sum -c" in calls[1][0][-1]
 PY_BACKUP_RUNNER
+
+
+python3 - "$INFRA_DIR/scripts/backup/local_backup_catalog.py" <<'PY_LOCAL_CATALOG'
+import hashlib
+import importlib.util
+import json
+import os
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+import sys
+import tempfile
+
+script = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("rbf_local_backup_catalog", script)
+module = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+
+with tempfile.TemporaryDirectory() as temporary:
+    infra = Path(temporary) / "infrastructure"
+    root = infra / "data/backups/postgres"
+    root.mkdir(parents=True)
+    backup = root / "rbf-20260731T120000Z.sql.gz"
+    backup.write_bytes(b"database")
+    digest = hashlib.sha256(backup.read_bytes()).hexdigest()
+    Path(f"{backup}.sha256").write_text(f"{digest}  {backup.name}\n", encoding="ascii")
+    records, skipped = module.scan_local_postgres_backups(infra)
+    assert skipped == 0 and len(records) == 1
+    assert records[0].path == backup
+
+    token = "host_approval_token_1234567890"
+    approval = infra / "data/control/secrets/database-restore-approval.json"
+    approval.parent.mkdir(parents=True)
+    approval.write_text(json.dumps({
+        "purpose": "database_restore",
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+        "token_sha256": hashlib.sha256(token.encode()).hexdigest(),
+    }), encoding="utf-8")
+    os.chmod(approval, 0o600)
+    module.consume_database_restore_approval(infra, hashlib.sha256(token.encode()).hexdigest())
+    assert not approval.exists()
+PY_LOCAL_CATALOG
 
 echo 'Infrastructure checks OK.'

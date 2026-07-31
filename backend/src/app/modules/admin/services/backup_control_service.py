@@ -17,7 +17,6 @@ RUNNING_STALE_AFTER = timedelta(minutes=5)
 QUEUED_STALE_AFTER = timedelta(minutes=10)
 STATUS_FILE = "backup-status.json"
 REQUEST_FILE = "backup.request"
-LOG_FILE = "backup.log"
 
 
 class BackupControlError(RuntimeError):
@@ -43,15 +42,6 @@ def _read_json(path: Path) -> dict[str, Any]:
         return {}
     return payload if isinstance(payload, dict) else {}
 
-
-def _log_tail(path: Path, limit: int = 120) -> list[str]:
-    if not path.is_file():
-        return []
-    try:
-        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return []
-    return lines[-limit:]
 
 
 def _parse_timestamp(value: object) -> datetime | None:
@@ -114,7 +104,6 @@ def get_backup_control_status() -> BackupControlStatus:
         **payload,
         "state": state,
         "connection": connection,
-        "log_tail": _log_tail(status_directory / LOG_FILE),
         "request_available": not request_path.exists() and state not in ACTIVE_STATES,
     }
     return BackupControlStatus.model_validate(safe_payload)

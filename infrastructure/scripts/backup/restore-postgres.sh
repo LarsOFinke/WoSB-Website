@@ -13,8 +13,10 @@ user="$(read_env POSTGRES_USER)"
 database="$(read_env POSTGRES_DB)"
 restore_lock="$INFRA_DIR/data/control/run/update.lock"
 mkdir -p "$(dirname "$restore_lock")"
-exec 9>"$restore_lock"
-flock -n 9 || die "Update, Restore oder eine andere exklusive Serveroperation läuft bereits."
+if [[ "${RBF_RESTORE_LOCK_HELD:-false}" != true ]]; then
+  exec 9>"$restore_lock"
+  flock -n 9 || die "Update, Restore oder eine andere exklusive Serveroperation läuft bereits."
+fi
 
 restore_completed=false
 maintenance_mode=false

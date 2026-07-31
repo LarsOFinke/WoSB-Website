@@ -7,7 +7,9 @@ import {
   deleteBackupConnection,
   discoverBackupHost,
   getBackupControlStatus,
+  restoreLocalDatabaseBackup,
   runApplicationBackup,
+  scanLocalDatabaseBackups,
   testBackupConnection,
 } from '@/modules/admin/api/admin'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
@@ -18,9 +20,14 @@ const EMPTY_STATUS = {
   message: '',
   connection: { configured: false, private_key_configured: false },
   artifacts: [],
-  log_tail: [],
+  local_database_backups: [],
+  local_catalog_updated_at: null,
+  local_catalog_skipped_count: 0,
   request_available: false,
 }
+
+const APPROVAL_TOKEN_PATTERN = /^[A-Za-z0-9_-]{24,128}$/
+const RESTORE_CONFIRMATION = 'RESTORE DATABASE'
 
 export function useDatabaseBackupsPage() {
   const { locale, t } = useLocale()
@@ -31,7 +38,6 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const privateKeyVisible = ref(false)
-  const logOpen = ref(false)
   const form = reactive({
     host: '',
     port: 22,
@@ -40,13 +46,34 @@ export function useDatabaseBackupsPage() {
     private_key: '',
     host_key: '',
   })
+  const restoreForm = reactive({
+    backup_id: '',
+    approval_token: '',
+    confirmation: '',
+  })
   let pollTimer = null
 
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
-  const canSubmit = computed(() => !loading.value && !inProgress.value && status.value.request_available !== false)
+  const canSubmit = computed(() => (
+    !loading.value && !inProgress.value && status.value.request_available !== false
+  ))
+  const isBootstrapAdmin = computed(() => Boolean(user.value?.is_bootstrap_admin))
+  const localBackups = computed(() => status.value.local_database_backups || [])
+  const selectedBackup = computed(() => (
+    localBackups.value.find((backup) => backup.backup_id === restoreForm.backup_id) || null
+  ))
+  const canRestore = computed(() => (
+    canSubmit.value
+    && isBootstrapAdmin.value
+    && Boolean(selectedBackup.value)
+    && APPROVAL_TOKEN_PATTERN.test(restoreForm.approval_token.trim())
+    && restoreForm.confirmation === RESTORE_CONFIRMATION
+  ))
   const stateLabel = computed(() => t(`admin.backups.states.${status.value.state || 'idle'}`))
-  const operationLabel = computed(() => t(`admin.backups.operations.${status.value.operation || 'idle'}`))
+  const operationLabel = computed(() => (
+    t(`admin.backups.operations.${status.value.operation || 'idle'}`)
+  ))
   const discoveredMatchesForm = computed(() => (
     status.value.discovered_host === form.host.trim()
     && Number(status.value.discovered_port) === Number(form.port)
@@ -55,7 +82,10 @@ export function useDatabaseBackupsPage() {
 
   function formatDateTime(value) {
     if (!value) return '—'
-    return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+    return new Intl.DateTimeFormat(locale.value, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value))
   }
 
   function formatBytes(value) {
@@ -90,18 +120,27 @@ export function useDatabaseBackupsPage() {
     if (!quiet) error.value = ''
     try {
       const previousState = status.value.state
+      const previousOperation = status.value.operation
       status.value = await getBackupControlStatus()
       hydrateForm()
       if (status.value.operation === 'discover' && status.value.state === 'succeeded') {
         form.host_key = status.value.discovered_host_key || ''
       }
-      if (previousState && ['queued', 'running'].includes(previousState) && status.value.state === 'succeeded') {
+      if (previousState && ['queued', 'running'].includes(previousState)
+        && status.value.state === 'succeeded') {
         success.value = status.value.message
         if (status.value.operation === 'configure') form.private_key = ''
+        if (previousOperation === 'restore_postgresql') {
+          restoreForm.approval_token = ''
+          restoreForm.confirmation = ''
+        }
       }
       if (status.value.state === 'failed') error.value = status.value.message
     } catch (err) {
-      error.value = err.message || t('admin.backups.errors.load')
+      const expectedRestoreRestart = quiet
+        && status.value.operation === 'restore_postgresql'
+        && inProgress.value
+      if (!expectedRestoreRestart) error.value = err.message || t('admin.backups.errors.load')
     } finally {
       if (!quiet) loading.value = false
     }
@@ -163,6 +202,24 @@ export function useDatabaseBackupsPage() {
     await request(runApplicationBackup, 'admin.backups.messages.backupQueued')
   }
 
+  async function scanLocalBackups() {
+    await request(scanLocalDatabaseBackups, 'admin.backups.messages.scanQueued')
+  }
+
+  async function restoreDatabase() {
+    if (!canRestore.value) return
+    const filename = selectedBackup.value?.filename || ''
+    if (!window.confirm(t('admin.backups.restore.finalConfirm', { filename }))) return
+    await request(
+      () => restoreLocalDatabaseBackup({
+        backup_id: restoreForm.backup_id,
+        approval_token: restoreForm.approval_token.trim(),
+        confirmation: restoreForm.confirmation,
+      }),
+      'admin.backups.messages.restoreQueued',
+    )
+  }
+
   async function removeConfiguration() {
     if (!window.confirm(t('admin.backups.confirmDelete'))) return
     await request(deleteBackupConnection, 'admin.backups.messages.deleteQueued')
@@ -184,11 +241,15 @@ export function useDatabaseBackupsPage() {
     error,
     success,
     form,
+    restoreForm,
     privateKeyVisible,
-    logOpen,
     inProgress,
     configured,
     canSubmit,
+    canRestore,
+    isBootstrapAdmin,
+    localBackups,
+    selectedBackup,
     stateLabel,
     operationLabel,
     discoveredMatchesForm,
@@ -199,6 +260,8 @@ export function useDatabaseBackupsPage() {
     saveConfiguration,
     testConnection,
     runBackup,
+    scanLocalBackups,
+    restoreDatabase,
     removeConfiguration,
   }
 }

@@ -124,6 +124,7 @@ scan_roots = [
     ROOT / "backend/src",
     ROOT / "frontend/src",
     ROOT / "infrastructure",
+    ROOT / "tools/recovery-tool",
     ROOT / ".github",
 ]
 secret_patterns = {
@@ -160,10 +161,29 @@ for root in scan_roots:
                 f"possible committed {label}: {path.relative_to(ROOT)}",
             )
 
+backup_admin_runner = text("infrastructure/scripts/backup/backup-admin-runner.py")
+restore_runner_block = backup_admin_runner.split("def restore_postgresql", 1)[1].split("@staticmethod", 1)[0]
+check(
+    restore_runner_block.index("consume_database_restore_approval")
+    < restore_runner_block.index("resolve_local_postgres_backup"),
+    "database restore host approval must precede local backup resolution",
+)
+
+# Frozen recovery client must retain explicit host-key pinning and secret-minimal profiles.
+recovery_sftp = text("tools/recovery-tool/src/rbf_recovery_tool/sftp_client.py")
+recovery_config = text("tools/recovery-tool/src/rbf_recovery_tool/config.py")
+recovery_verification = text("tools/recovery-tool/src/rbf_recovery_tool/verification.py")
+check("PinnedFingerprintPolicy" in recovery_sftp, "recovery client lost SSH host-key pinning")
+check("AutoAddPolicy" not in recovery_sftp, "recovery client must not auto-trust SSH host keys")
+check("password:" not in recovery_config, "recovery profile must not persist passwords")
+check("verify_sidecar" in recovery_verification, "recovery client must verify transport checksums")
+check("_validated_members" in recovery_verification, "recovery client must validate archive members")
+
 # Python code: no dynamic execution or shell=True in production/runtime modules.
 python_sources = [
     *(ROOT / "backend/src").rglob("*.py"),
     *(ROOT / "infrastructure/scripts").rglob("*.py"),
+    *(ROOT / "tools/recovery-tool/src").rglob("*.py"),
 ]
 for path in python_sources:
     try:

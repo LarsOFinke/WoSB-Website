@@ -275,6 +275,14 @@ export function runApplicationBackup() {
   return post('/admin/backups/run', {})
 }
 
+export function scanLocalDatabaseBackups() {
+  return post('/admin/backups/local/scan', {})
+}
+
+export function restoreLocalDatabaseBackup(payload) {
+  return post('/admin/backups/local/restore', payload)
+}
+
 export function deleteBackupConnection() {
   return deleteRequest('/admin/backups/configuration')
 }

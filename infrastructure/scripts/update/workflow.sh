@@ -99,10 +99,27 @@ update_run_backup_scripts() {
   (
     exec 8>"$RUN_DIR/backup.lock"
     flock 8
-    if [[ "$include_postgres" == true ]]; then
-      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+    local postgres_result="" files_result=""
+    local recovery_enabled=false
+    if [[ "$include_postgres" == true && -f "$ENV_FILE" ]]       && is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
+      recovery_enabled=true
+      postgres_result="$(mktemp "$RUN_DIR/update-postgres-result.XXXXXX")"
+      files_result="$(mktemp "$RUN_DIR/update-files-result.XXXXXX")"
+      trap 'rm -f "$postgres_result" "$files_result"' EXIT
     fi
-    /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+    if [[ "$include_postgres" == true ]]; then
+      if [[ "$recovery_enabled" == true ]]; then
+        BACKUP_RESULT_FILE="$postgres_result" /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+      else
+        /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+      fi
+    fi
+    if [[ "$recovery_enabled" == true ]]; then
+      BACKUP_RESULT_FILE="$files_result" /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-recovery.sh"         --postgres "$(cat "$postgres_result")"         --files "$(cat "$files_result")"
+    else
+      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
+    fi
   )
 }
 

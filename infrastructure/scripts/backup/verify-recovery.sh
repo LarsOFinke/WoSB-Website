@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+identity=""
+bundle=""
+while (($#)); do
+  case "$1" in
+    --identity) identity="${2:-}"; shift 2 ;;
+    --bundle) bundle="${2:-}"; shift 2 ;;
+    -h|--help)
+      echo "Usage: $0 --identity /path/age-key.txt --bundle /path/rbf-recovery-*.tar.gz.age"
+      exit 0
+      ;;
+    *) die "Unbekannte Option: $1" ;;
+  esac
+done
+
+require_command age
+require_command python3
+identity="$(realpath "$identity")"
+bundle="$(realpath "$bundle")"
+[[ -f "$identity" ]] || die "age-Identität fehlt: $identity"
+[[ -f "$bundle" ]] || die "Recovery-Bundle fehlt: $bundle"
+[[ -f "${bundle}.sha256" ]] || die "Recovery-Prüfsumme fehlt: ${bundle}.sha256"
+verify_backup_checksum "$bundle"
+
+temporary_dir="$(mktemp -d)"
+plain_bundle="$temporary_dir/recovery.tar.gz"
+extracted="$temporary_dir/extracted"
+cleanup() { rm -rf "$temporary_dir"; }
+trap cleanup EXIT
+chmod 700 "$temporary_dir"
+
+age -d -i "$identity" -o "$plain_bundle" "$bundle"
+manifest_json="$(python3 "$SCRIPT_DIR/recovery_bundle.py" extract-and-verify "$plain_bundle" "$extracted")"
+python3 - "$manifest_json" <<'PY'
+import json
+import sys
+payload = json.loads(sys.argv[1])
+application = payload.get("application") or {}
+print("Recovery-Bundle ist vollständig und kryptografisch lesbar.")
+print(f"Schema: {payload.get('schema_version')}")
+print(f"Erstellt: {payload.get('created_at')}")
+print(f"Anwendungsversion: {application.get('version') or 'unbekannt'}")
+print(f"Git-Commit: {application.get('git_commit') or 'unbekannt'}")
+print(f"Dateien im Manifest: {len(payload.get('files') or [])}")
+PY

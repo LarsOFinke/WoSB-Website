@@ -55,12 +55,23 @@ nicht an den Browser ausgeliefert.
 Backups liegen unter `infrastructure/data/backups` und werden nach
 `BACKUP_RETENTION_DAYS` aufgeräumt. Mindestens eine regelmäßige externe Kopie ist erforderlich.
 
+Mit `BACKUP_RECOVERY_ENABLED=true` erzeugt derselbe Lauf zusätzlich ein einziges age-verschlüsseltes
+Disaster-Recovery-Bundle. Es enthält Datenbank, Uploads/Betriebsdaten, `.env`, alle `.cfg`-Snapshots,
+Let's-Encrypt-Konfiguration, root-seitige Backup-Secrets und ein vollständiges SHA-256-Manifest.
+`BACKUP_AGE_RECIPIENT` ist ausschließlich der öffentliche Empfänger; der private Schlüssel darf nur
+auf dem externen Backup-Gerät liegen. `BACKUP_PULL_EXPORT_DIR` und `BACKUP_PULL_EXPORT_USER` stellen
+eine nur für den gewählten SSH-Benutzer lesbare verschlüsselte Kopie für SCP-Pull bereit.
+
+Das verbindliche Windows-Pull- und Bare-Metal-Restore-Verfahren steht in
+[`docs/DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md).
+
 ### Remote-Anwendungsbackup aus dem Adminbereich
 
 Administratoren können unter **Staff → Betrieb → Anwendungs-Backups** ein dediziertes
 SSH-/SFTP-Ziel konfigurieren und ein frisches PostgreSQL-Backup sowie ein getrenntes Dateiarchiv
-manuell auf eine andere Maschine übertragen. Das Dateiarchiv enthält immer `data/uploads` und,
-sofern vorhanden, zusätzlich Zertifikate und Uptime-Kuma-Daten.
+manuell auf eine andere Maschine übertragen. Bei aktivierter Recovery-Funktion wird zusätzlich das
+verschlüsselte vollständige Recovery-Bundle übertragen. Das Dateiarchiv enthält immer `data/uploads` und,
+sofern vorhanden, zusätzlich Zertifikate, Let's-Encrypt-Konfiguration und Uptime-Kuma-Daten.
 Der Ablauf ist bewusst zweistufig:
 
 1. Host und Port erfassen, den öffentlichen SSH-Host-Key ermitteln und dessen Fingerprint

@@ -4,7 +4,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 backup_dir="$INFRA_DIR/data/backups/postgres"
-mkdir -p "$backup_dir"
+install -d -m 0700 "$backup_dir"
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 output="$backup_dir/rbf-${timestamp}.sql.gz"
 user="$(read_env POSTGRES_USER)"

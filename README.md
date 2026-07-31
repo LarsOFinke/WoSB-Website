@@ -98,6 +98,8 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 - [Stammdaten-Go-Live-Review](docs/MASTER_DATA_GO_LIVE_REVIEW.md)
 - [Tests](docs/TESTING.md)
 - [Betrieb](docs/OPERATIONS.md)
+- [Disaster Recovery und Desktop-Backup](docs/DISASTER_RECOVERY.md)
+- Frozen Recovery Tool für Windows und Linux: gemeinsame Quellen unter `tools/recovery-tool`, native Build-Wrapper unter `tools/windows/recovery-tool` und `tools/linux/recovery-tool`
 - [GitHub CI/CD](docs/DEPLOYMENT.md)
 - [Webhook-Betrieb](docs/outbound-webhooks.md)
 - [Webhook-Nachrichten-Templates](docs/webhook-templates/README.md)
