@@ -8,8 +8,12 @@ from configparser import ConfigParser
 import json
 import re
 import runpy
+import subprocess
 import sys
 from pathlib import Path
+
+# Repository validation must not create bytecode in the tree it validates.
+sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend/src"))
@@ -18,7 +22,7 @@ parser = argparse.ArgumentParser(description="Validate repository invariants.")
 parser.add_argument(
     "--strict-tree",
     action="store_true",
-    help="also reject local/generated/runtime artifacts; use for clean checkouts and release archives",
+    help="reject tracked generated/runtime artifacts in Git, or every such artifact in exported source trees",
 )
 ARGS = parser.parse_args()
 
@@ -26,13 +30,66 @@ VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 SCAN_EXCLUDED_DIRS = {
     ".git",
     ".mypy_cache",
+    ".nox",
     ".pytest_cache",
     ".ruff_cache",
+    ".tox",
     ".venv",
+    ".venv-build",
+    ".vite",
     "__pycache__",
+    "build",
+    "coverage",
     "dist",
+    "htmlcov",
     "node_modules",
+    "release",
 }
+
+STRICT_FORBIDDEN_DIRS = {
+    ".mypy_cache",
+    ".nox",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    ".venv-build",
+    ".vite",
+    "__pycache__",
+    "build",
+    "coverage",
+    "dist",
+    "htmlcov",
+    "node_modules",
+    "release",
+}
+STRICT_FORBIDDEN_SUFFIXES = {
+    ".AppImage",
+    ".agekey",
+    ".db",
+    ".deb",
+    ".dll",
+    ".dylib",
+    ".exe",
+    ".jks",
+    ".key",
+    ".keystore",
+    ".msi",
+    ".p12",
+    ".pem",
+    ".pfx",
+    ".pyc",
+    ".pyo",
+    ".rpm",
+    ".sha256",
+    ".so",
+    ".sqlite",
+    ".sqlite3",
+    ".tar",
+    ".tgz",
+    ".zip",
+}
+STRICT_FORBIDDEN_NAME_SUFFIXES = (".tar.gz",)
 
 
 def fail(message: str) -> None:
@@ -46,6 +103,38 @@ def require(condition: bool, message: str) -> None:
 
 def line_count(path: Path) -> int:
     return len(path.read_text(encoding="utf-8", errors="ignore").splitlines())
+
+
+def git_tracked_files() -> set[Path] | None:
+    """Return tracked paths in a Git checkout, or None for exported source trees."""
+    try:
+        top_level = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        if Path(top_level.stdout.strip()).resolve() != ROOT.resolve():
+            return None
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return None
+    return {
+        Path(value.decode("utf-8", errors="surrogateescape"))
+        for value in result.stdout.split(b"\0")
+        if value
+    }
+
+
+STRICT_TRACKED_FILES = git_tracked_files() if ARGS.strict_tree else None
+
+
+def strict_relative_in_scope(relative: Path) -> bool:
+    return STRICT_TRACKED_FILES is None or relative in STRICT_TRACKED_FILES
 
 
 pyproject = (ROOT / "backend/pyproject.toml").read_text(encoding="utf-8")
@@ -97,6 +186,7 @@ required_files = {
     ".github/workflows/deploy.yml",
     ".github/workflows/security.yml",
     "scripts/security_audit.py",
+    "scripts/clean_repository.sh",
 }
 for relative in required_files:
     require((ROOT / relative).is_file(), f"missing {relative}")
@@ -124,26 +214,56 @@ require(
 )
 
 if ARGS.strict_tree:
-    for forbidden in (
-        "node_modules",
-        "dist",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".mypy_cache",
-        "__pycache__",
-    ):
-        found = [path for path in ROOT.rglob(forbidden) if ".git" not in path.parts]
-        require(not found, f"generated directory in release tree: {found[0] if found else forbidden}")
-    egg_info = [path for path in ROOT.rglob("*.egg-info") if ".git" not in path.parts]
+    for forbidden in sorted(STRICT_FORBIDDEN_DIRS):
+        if STRICT_TRACKED_FILES is None:
+            found = [path for path in ROOT.rglob(forbidden) if ".git" not in path.parts]
+            display = found[0] if found else forbidden
+        else:
+            found = [relative for relative in STRICT_TRACKED_FILES if forbidden in relative.parts]
+            display = found[0] if found else forbidden
+        require(not found, f"generated directory in release tree: {display}")
+
+    generated_locale_prefix = Path("frontend/src/locales/generated")
+    if STRICT_TRACKED_FILES is None:
+        generated_locales_found = (ROOT / generated_locale_prefix).exists()
+    else:
+        generated_locales_found = any(
+            relative == generated_locale_prefix or generated_locale_prefix in relative.parents
+            for relative in STRICT_TRACKED_FILES
+        )
+    require(
+        not generated_locales_found,
+        "generated locale modules must be rebuilt by npm scripts, not shipped as source",
+    )
+
+    if STRICT_TRACKED_FILES is None:
+        egg_info = [path for path in ROOT.rglob("*.egg-info") if ".git" not in path.parts]
+    else:
+        egg_info = [
+            relative
+            for relative in STRICT_TRACKED_FILES
+            if any(part.endswith(".egg-info") for part in relative.parts)
+        ]
     require(not egg_info, f"package metadata in release tree: {egg_info[0] if egg_info else '.egg-info'}")
 
 for path in ROOT.rglob("*"):
     if not path.is_file() or any(part in SCAN_EXCLUDED_DIRS for part in path.parts):
         continue
     relative = path.relative_to(ROOT)
-    if ARGS.strict_tree:
-        require(path.suffix not in {".pyc", ".pyo"}, f"compiled Python file in release tree: {relative}")
-        require(path.name != ".env", f"runtime environment in release tree: {relative}")
+    if ARGS.strict_tree and strict_relative_in_scope(relative):
+        require(
+            path.suffix not in STRICT_FORBIDDEN_SUFFIXES
+            and not path.name.endswith(STRICT_FORBIDDEN_NAME_SUFFIXES),
+            f"generated, packaged or sensitive file in release tree: {relative}",
+        )
+        require(
+            not (path.name.startswith(".env") and not path.name.endswith(".example")),
+            f"runtime environment in release tree: {relative}",
+        )
+        require(
+            path.name != "first-run-credentials.txt",
+            f"generated credentials in release tree: {relative}",
+        )
         require(not path.name.endswith(".egg-info"), f"package metadata in release tree: {relative}")
     if (
         path.suffix in {".json", ".js", ".mjs", ".md", ".toml", ".yml", ".yaml", ".txt"}
@@ -689,6 +809,18 @@ windows_build = (ROOT / "tools/windows/recovery-tool/Build-RbfRecoveryTool.ps1")
 require("../../recovery-tool" in linux_build, "Linux recovery build must use shared source")
 require("recovery-tool" in windows_build, "Windows recovery build must use shared source")
 require("--noconfirm" in linux_build, "Linux recovery build must be reproducible and non-interactive")
+require(
+    'rm -rf -- "$BUILD_DIR" "$DIST_DIR"' in linux_build
+    and linux_build.index('rm -rf -- "$BUILD_DIR" "$DIST_DIR"')
+    < linux_build.index('age wurde nicht gefunden'),
+    "Linux recovery build must clear stale output before prerequisite validation",
+)
+require(
+    "Remove-Item -LiteralPath $Dist -Recurse -Force" in windows_build
+    and windows_build.index("Remove-Item -LiteralPath $Dist -Recurse -Force")
+    < windows_build.index("age.exe wurde nicht gefunden"),
+    "Windows recovery build must clear stale output before prerequisite validation",
+)
 linux_install = (ROOT / "tools/linux/recovery-tool/Install-RbfRecoveryTool.sh").read_text(encoding="utf-8")
 require(".local/bin" in linux_install and "rbf-recovery-tool" in linux_install, "Linux recovery installer must remain user-local")
 require("sudo" not in linux_install, "Linux recovery installer must not require root")
@@ -703,6 +835,32 @@ require("download.docker.com/linux/ubuntu" in provisioner, "Docker provisioning 
 require("usermod -aG docker" not in provisioner, "Recovery lab must not grant docker-group root privileges")
 deb_builder = (ROOT / "tools/linux/recovery-tool/Build-RbfRecoveryDeb.sh").read_text(encoding="utf-8")
 require("dpkg-deb" in deb_builder and "/usr/lib/rbf-recovery-tool" in deb_builder, "Linux recovery tool must produce an installable Debian package with root-owned helpers")
+require("pkexec" in deb_builder, "Linux recovery Debian package must depend on pkexec")
+require(
+    re.search(r"^Depends:.*\bpolicykit-1\b", deb_builder, re.MULTILINE) is None,
+    "obsolete policykit-1 package dependency must not return",
+)
+require(
+    'cd "$DIST_DIR"' in deb_builder and 'sha256sum "$OUTPUT_NAME"' in deb_builder,
+    "Debian package checksum must contain a portable basename",
+)
+require(
+    'find "$DIST_DIR" -maxdepth 1 -type f' in deb_builder
+    and deb_builder.index('find "$DIST_DIR" -maxdepth 1 -type f')
+    < deb_builder.index('Binary fehlt oder ist nicht ausführbar'),
+    "standalone Debian packaging must remove stale packages before input validation",
+)
+installer_builder = (ROOT / "tools/linux/recovery-tool/Build-RbfRecoveryInstaller.sh").read_text(encoding="utf-8")
+require(
+    'cd "$DIST_DIR"' in installer_builder and 'sha256sum "$ARCHIVE_NAME"' in installer_builder,
+    "portable installer checksum must contain a portable basename",
+)
+require(
+    'rm -f -- "$ARCHIVE" "$ARCHIVE.sha256"' in installer_builder
+    and installer_builder.index('rm -f -- "$ARCHIVE" "$ARCHIVE.sha256"')
+    < installer_builder.index('Binary fehlt oder ist nicht ausführbar'),
+    "standalone installer packaging must remove stale archives before input validation",
+)
 linux_setup = (ROOT / "tools/recovery-tool/src/rbf_recovery_tool/linux_setup.py").read_text(encoding="utf-8")
 require("require_root_owned=True" in linux_setup and "pkexec" in linux_setup, "privileged Linux recovery setup must execute only a root-owned helper through PolicyKit")
 

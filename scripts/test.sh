@@ -8,12 +8,28 @@ MODE="${1:-quick}"
   exit 2
 }
 
+tmp_dir=""
+frontend_env_created=false
+cleanup() {
+  [[ "$frontend_env_created" == false ]] || rm -f "$ROOT_DIR/frontend/.env"
+  [[ -z "$tmp_dir" ]] || rm -rf "$tmp_dir"
+  rm -rf \
+    "$ROOT_DIR/frontend/dist" \
+    "$ROOT_DIR/frontend/src/locales/generated"
+  "$ROOT_DIR/backend/scripts/clear-pycache.sh" >/dev/null 2>&1 || true
+  find "$ROOT_DIR/tools/recovery-tool" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
+}
+trap cleanup EXIT
+
 printf '\n[backend] lint and isolated tests\n'
 (
   cd "$ROOT_DIR/backend"
   ruff check --no-cache src tests
   python "$ROOT_DIR/scripts/run_backend_tests.py"
 )
+
+printf '\n[recovery tool] unit tests\n'
+python -m pytest -q -p no:cacheprovider "$ROOT_DIR/tools/recovery-tool/tests"
 
 printf '\n[security] offline repository audit\n'
 python "$ROOT_DIR/scripts/security_audit.py"
@@ -28,12 +44,6 @@ printf '\n[frontend] deterministic checks\n'
 
 printf '\n[backend] baseline schema lifecycle\n'
 tmp_dir="$(mktemp -d)"
-frontend_env_created=false
-cleanup() {
-  [[ "$frontend_env_created" == false ]] || rm -f "$ROOT_DIR/frontend/.env"
-  rm -rf "$tmp_dir" "$ROOT_DIR/frontend/dist"
-}
-trap cleanup EXIT
 cat > "$tmp_dir/test.env" <<ENV
 APP_ENV=development
 DATABASE_URL=sqlite:///$tmp_dir/test.db

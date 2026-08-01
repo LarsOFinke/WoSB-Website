@@ -13,18 +13,43 @@ sudo apt install -y python3 python3-venv python3-tk age build-essential
 ./Build-RbfRecoveryTool.sh
 ```
 
-Der Build erzeugt das native Binary, ein portables Installer-Paket und ein Ubuntu/Debian-Paket:
+Der Build erzeugt das native Binary, ein portables Installer-Paket und ein Ubuntu/Debian-Paket.
+Zu Beginn werden `build/` und `dist/` vollständig zurückgesetzt. Dadurch kann ein abgebrochener
+Neubau kein älteres DEB oder Installer-Archiv als scheinbar aktuelles Ergebnis zurücklassen.
+Ein vorheriges `make clean` ist für einen normalen Build daher nicht erforderlich.
+Alle Ausgaben und ihre portablen SHA-256-Dateien liegen ausschließlich unter `dist/`:
 
 ```text
 dist/RBF-Recovery-Tool-Linux-<arch>
 dist/RBF-Recovery-Tool-Linux-<arch>-installer.tar.gz
-dist/rbf-recovery-tool_1.2.0_<deb-arch>.deb
+dist/rbf-recovery-tool_1.2.1_<deb-arch>.deb
 ```
 
-Bevorzugte Installation auf Ubuntu:
+Vor der Installation können die erzeugten Metadaten geprüft werden:
 
 ```bash
-sudo apt install ./dist/rbf-recovery-tool_1.2.0_$(dpkg --print-architecture).deb
+DEB=./dist/rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb
+dpkg-deb -f "$DEB" Package Version Architecture Depends
+```
+
+In `Depends` muss `pkexec` stehen; `policykit-1` darf nicht vorkommen.
+Bevorzugte Installation auf Ubuntu oder Debian:
+
+```bash
+sudo apt update
+sudo apt install "$DEB"
+```
+
+Das Paket hängt direkt von `pkexec` ab. Die veraltete Übergangsabhängigkeit `policykit-1` wird
+absichtlich nicht verwendet, damit der Build auch auf aktuellen Ubuntu-/Debian-Versionen
+installierbar bleibt.
+
+Prüfsummen lassen sich nach einem Verzeichniswechsel weiterhin prüfen, weil die Sidecar-Dateien
+nur den jeweiligen Dateinamen und keinen absoluten Build-Pfad enthalten:
+
+```bash
+cd dist
+sha256sum -c rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb.sha256
 ```
 
 Danach startet das Tool über das Anwendungsmenü. Das optionale DB-Labor kann dort über
@@ -121,3 +146,9 @@ rbf-recovery-tool lab restore \
 ```
 
 Die GUI bietet dieselben Funktionen über den Bereich **Lokales PostgreSQL-Recovery-Labor**.
+
+## Repository-Hygiene
+
+`build/`, `dist/` und `.venv-build/` sind lokale Builddaten und werden weder versioniert noch in
+Release-Archive aufgenommen. Vor einer manuellen Übergabe des Quellbaums kann vom Repository-Root
+`make clean-all && make check-tree` ausgeführt werden.

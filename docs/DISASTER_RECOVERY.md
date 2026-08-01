@@ -315,8 +315,14 @@ Der Build erzeugt dafür ein Debian-Paket und zusätzlich ein portables Installe
 ```bash
 cd tools/linux/recovery-tool
 ./Build-RbfRecoveryTool.sh
-sudo apt install ./dist/rbf-recovery-tool_1.2.0_$(dpkg --print-architecture).deb
+sudo apt update
+sudo apt install ./dist/rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb
 ```
+
+Das Paket verwendet `pkexec` als direkte PolicyKit-Laufzeitabhängigkeit und ist damit auch auf
+aktuellen Ubuntu-/Debian-Versionen installierbar, auf denen das alte Übergangspaket
+`policykit-1` nicht mehr angeboten wird. Buildausgaben bleiben unter `dist/`; ihre
+SHA-256-Sidecars enthalten portable Dateinamen statt absoluter Buildpfade.
 
 Das Debian-Paket ist der bevorzugte Weg, weil das optionale privilegierte Docker-Hilfsskript
 rootgeschützt installiert wird. Die portable Benutzerinstallation bleibt für Systeme ohne

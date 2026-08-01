@@ -34,11 +34,19 @@ separaten OSV-Workflow geprüft.
 ## Lokale Artefakte
 
 ```bash
-make clear-pycache
+make clean       # Buildausgaben, generierte Locale-Module und Caches entfernen
+make clean-all   # zusätzlich lokale Abhängigkeits- und Build-Umgebungen entfernen
+make check-tree  # denselben strengen Repository-Baum wie in CI prüfen
 ```
 
-Der Befehl entfernt `__pycache__`, Bytecode sowie Pytest-, Ruff- und Mypy-Caches im Backend.
-`node_modules`, Buildausgaben, virtuelle Umgebungen und `*.egg-info` dürfen nicht eingecheckt werden.
+Buildausgaben, virtuelle Umgebungen, Paketdateien, Prüfsummen, lokale Datenbanken,
+Laufzeit-`.env`-Dateien und private Schlüssel dürfen nicht eingecheckt werden. Das gilt insbesondere
+für `tools/*/recovery-tool/{build,dist,.venv-build}` und die von Vite erzeugten Locale-Module unter
+`frontend/src/locales/generated`. Die Root-`.gitignore`, die bereichsspezifischen Ignore-Dateien und
+`scripts/check_repository.py --strict-tree` bilden dafür bewusst drei unabhängige Schutzschichten.
+In einem Git-Checkout prüft das Gate die tatsächlich versionierten Dateien und toleriert ignorierte
+lokale Abhängigkeiten; in einem exportierten Quellbaum ohne `.git` prüft es dagegen jede enthaltene
+Datei.
 
 ## Schemaänderungen
 

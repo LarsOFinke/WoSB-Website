@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: dev-backend dev-frontend test test-full lint css-audit security-audit build validate clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
+.PHONY: dev-backend dev-frontend test test-full lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
 
 dev-backend:
 	cd backend && rbf-dev
@@ -28,6 +28,18 @@ validate:
 
 build:
 	cd frontend && npm run build
+
+clean:
+	bash ./scripts/clean_repository.sh
+
+clean-all:
+	bash ./scripts/clean_repository.sh --all
+
+check-tree:
+	python ./scripts/check_repository.py --strict-tree
+
+build-recovery-linux:
+	cd tools/linux/recovery-tool && ./Build-RbfRecoveryTool.sh
 
 clear-pycache:
 	bash ./backend/scripts/clear-pycache.sh

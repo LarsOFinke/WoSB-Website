@@ -51,6 +51,7 @@ jobs:
         run: |
           cd backend && ruff check --no-cache src tests
           cd .. && python scripts/run_backend_tests.py
+          python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests
       - name: PostgreSQL migration lifecycle
         working-directory: backend
         run: |

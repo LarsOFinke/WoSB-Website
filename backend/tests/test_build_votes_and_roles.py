@@ -75,7 +75,7 @@ def test_registered_users_have_exactly_one_upvote_per_build() -> None:
         second = client.post(f"/api/builds/{build_id}/upvote")
         assert second.json()["upvote_count"] == 2
         overview = client.get("/api/builds").json()
-        row = next(item for item in overview if item["id"] == build_id)
+        row = next(item for item in overview["items"] if item["id"] == build_id)
         assert row["upvote_count"] == 2
         assert row["has_upvoted"] is True
         removed = client.delete(f"/api/builds/{build_id}/upvote")

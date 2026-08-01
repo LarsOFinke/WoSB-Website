@@ -1,3 +1,11 @@
 .env
+.env.*
+!.env.example
 data/
 first-run-credentials.txt
+*.pem
+*.key
+*.p12
+*.pfx
+*.agekey
+*.log

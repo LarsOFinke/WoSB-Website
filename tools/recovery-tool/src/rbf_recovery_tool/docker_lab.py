@@ -195,7 +195,9 @@ def initialize_lab(port: int = _DEFAULT_PORT) -> LabConnection:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${{POSTGRES_USER}}\" -d \"$${{POSTGRES_DB}}\""]
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U "$${{POSTGRES_USER}}" -d "$${{POSTGRES_DB}}"'
       interval: 5s
       timeout: 5s
       retries: 24

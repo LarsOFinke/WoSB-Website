@@ -9,6 +9,8 @@ import stat
 import sys
 import tarfile
 
+import yaml
+
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -60,6 +62,11 @@ def test_lab_configuration_is_loopback_only_and_secret_minimal(tmp_path: Path, m
     assert "no-new-privileges:true" in compose
     assert "read_only: true" in compose
     assert "driver: local" in compose
+    parsed = yaml.safe_load(compose)
+    assert parsed["services"]["postgres"]["healthcheck"]["test"] == [
+        "CMD-SHELL",
+        'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+    ]
     assert first.password not in compose
     assert stat.S_IMODE(docker_lab.env_path().stat().st_mode) == 0o600
     second = docker_lab.initialize_lab(55432)

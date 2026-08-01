@@ -11,20 +11,79 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_PARTS = {
-    ".git", ".github-cache", ".pytest_cache", "__pycache__", "node_modules", "dist",
-    ".venv", "venv", "data",
+    ".git",
+    ".github-cache",
+    ".mypy_cache",
+    ".nox",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    ".venv-build",
+    ".vite",
+    "__pycache__",
+    "build",
+    "coverage",
+    "data",
+    "dist",
+    "htmlcov",
+    "node_modules",
+    "release",
+    "venv",
 }
-EXCLUDED_NAMES = {".env", "first-run-credentials.txt", ".DS_Store"}
-EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".db", ".sqlite", ".sqlite3", ".zip"}
+EXCLUDED_NAMES = {
+    ".coverage",
+    ".DS_Store",
+    ".env",
+    "first-run-credentials.txt",
+}
+EXCLUDED_SUFFIXES = {
+    ".AppImage",
+    ".agekey",
+    ".db",
+    ".deb",
+    ".dll",
+    ".dylib",
+    ".exe",
+    ".jks",
+    ".key",
+    ".keystore",
+    ".msi",
+    ".p12",
+    ".pem",
+    ".pfx",
+    ".pyc",
+    ".pyo",
+    ".rpm",
+    ".sha256",
+    ".so",
+    ".sqlite",
+    ".sqlite3",
+    ".tar",
+    ".tgz",
+    ".zip",
+}
+EXCLUDED_NAME_SUFFIXES = (".tar.gz",)
+EXCLUDED_RELATIVE_PREFIXES = (
+    Path("frontend/src/locales/generated"),
+    Path("backend/storage/uploads"),
+)
 
 
 def included(path: Path) -> bool:
     relative = path.relative_to(ROOT)
     if any(part in EXCLUDED_PARTS or part.endswith(".egg-info") for part in relative.parts):
         return False
+    if any(relative == prefix or prefix in relative.parents for prefix in EXCLUDED_RELATIVE_PREFIXES):
+        # The authored SVG demo uploads are the only release-safe upload fixtures.
+        if relative.parts[:3] == ("backend", "storage", "uploads"):
+            return relative.parts[:4] == ("backend", "storage", "uploads", "demo") and path.suffix == ".svg"
+        return False
     if path.name in EXCLUDED_NAMES or path.suffix in EXCLUDED_SUFFIXES:
         return False
-    if path.name.startswith("royal-blackwater-fleet-") and path.suffix == ".sha256":
+    if path.name.startswith(".env") and not path.name.endswith(".example"):
+        return False
+    if path.name.endswith(EXCLUDED_NAME_SUFFIXES):
         return False
     return True
 

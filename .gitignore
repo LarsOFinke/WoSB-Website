@@ -1,28 +1,73 @@
-# Python
+# Python caches, environments, build and test output
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+.eggs/
+build/
+dist/
+site/
 .venv/
+.venv-*/
+venv/
+ENV/
 .pytest_cache/
+.mypy_cache/
 .ruff_cache/
+.tox/
+.nox/
+.hypothesis/
 .coverage
+.coverage.*
+coverage.xml
 coverage/
 htmlcov/
 
-# Node
+# Node/Vite caches and generated output
 node_modules/
-dist/
 .vite/
-*.log
-*.tmp
-*.bak
-*.orig
+.npm/
+.eslintcache
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+frontend/src/locales/generated/
 
-# Env / local data
+# Environment files and local runtime data
 .env
+.env.*
+!.env.example
+!.env.*.example
+*.local
 *.db
 *.sqlite
 *.sqlite3
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.swp
+*.swo
+*~
+infrastructure/data/
+infrastructure/first-run-credentials.txt
+
+# Credentials, private keys and local trust stores
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.agekey
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+known_hosts.local
 
 # OS / IDE
 .DS_Store
@@ -38,13 +83,27 @@ backend/storage/uploads/*
 !backend/storage/uploads/demo/
 !backend/storage/uploads/demo/*.svg
 
-# Release artifacts
-release/
-*.zip
-*.zip.sha256
+# Recovery-tool build environments and outputs
+/tools/linux/recovery-tool/.venv-build/
+/tools/linux/recovery-tool/build/
+/tools/linux/recovery-tool/dist/
+/tools/windows/recovery-tool/.venv-build/
+/tools/windows/recovery-tool/build/
+/tools/windows/recovery-tool/dist/
 
-# Windows recovery-tool build environment
-tools/windows/recovery-tool/.venv-build/
-tools/windows/recovery-tool/build/
-tools/linux/recovery-tool/.venv-build/
-tools/linux/recovery-tool/build/
+# Packaged binaries, installers and release artifacts
+release/
+*.deb
+*.rpm
+*.msi
+*.exe
+*.dll
+*.so
+*.dylib
+*.AppImage
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.zip
+*.sha256
