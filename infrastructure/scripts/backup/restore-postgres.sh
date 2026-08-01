@@ -184,7 +184,10 @@ fi
 report_check postgres_import passed "PostgreSQL accepted the complete dump transactionally."
 
 staging_url="$(url_for_database "$staging_database")"
-runtime_env_args=()
+runtime_env_args=(
+  -e "CONTROL_REQUEST_DIR=/tmp/rbf-control/inbox"
+  -e "CONTROL_STATUS_DIR=/tmp/rbf-control/status"
+)
 if [[ -n "${RBF_RESTORE_WEBHOOK_KEYS:-}" ]]; then
   runtime_env_args+=(-e "WEBHOOK_ENCRYPTION_KEYS=$RBF_RESTORE_WEBHOOK_KEYS")
 fi
