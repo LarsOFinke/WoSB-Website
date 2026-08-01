@@ -265,8 +265,9 @@ else
   printf 'restrict %s\n' "$PUBLIC_KEY" > "$AUTHORIZED_UPLOAD"
 fi
 printf 'restrict,from="127.0.0.1,::1" %s\n' "$RECOVERY_PUBLIC_KEY" > "$AUTHORIZED_RECOVERY"
-chown root:root "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"
-chmod 0600 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"
+chown root:"$USERNAME" "$AUTHORIZED_UPLOAD"
+chown root:"$RECOVERY_USERNAME" "$AUTHORIZED_RECOVERY"
+chmod 0640 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"
 
 SSHD_DROPIN_DIR="/etc/ssh/sshd_config.d"
 SSHD_DROPIN="$SSHD_DROPIN_DIR/90-rbf-backup-managed.conf"

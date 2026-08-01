@@ -282,3 +282,7 @@ def test_linux_provisioner_keeps_key_only_accounts_ssh_accessible() -> None:
     assert 'set_unknown_password "$RECOVERY_USERNAME"' in script
     assert "PasswordAuthentication no" in script
     assert "KbdInteractiveAuthentication no" in script
+    assert 'chown root:"$USERNAME" "$AUTHORIZED_UPLOAD"' in script
+    assert 'chown root:"$RECOVERY_USERNAME" "$AUTHORIZED_RECOVERY"' in script
+    assert 'chmod 0640 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"' in script
+    assert 'chmod 0600 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"' not in script

@@ -22,13 +22,13 @@ Alle Ausgaben und ihre portablen SHA-256-Dateien liegen ausschließlich unter `d
 ```text
 dist/RBF-Recovery-Tool-Linux-<arch>
 dist/RBF-Recovery-Tool-Linux-<arch>-installer.tar.gz
-dist/rbf-recovery-tool_1.4.3_<deb-arch>.deb
+dist/rbf-recovery-tool_1.4.4_<deb-arch>.deb
 ```
 
 Vor der Installation können die erzeugten Metadaten geprüft werden:
 
 ```bash
-DEB=./dist/rbf-recovery-tool_1.4.3_$(dpkg --print-architecture).deb
+DEB=./dist/rbf-recovery-tool_1.4.4_$(dpkg --print-architecture).deb
 dpkg-deb -f "$DEB" Package Version Architecture Depends
 ```
 
@@ -49,7 +49,7 @@ nur den jeweiligen Dateinamen und keinen absoluten Build-Pfad enthalten:
 
 ```bash
 cd dist
-sha256sum -c rbf-recovery-tool_1.4.3_$(dpkg --print-architecture).deb.sha256
+sha256sum -c rbf-recovery-tool_1.4.4_$(dpkg --print-architecture).deb.sha256
 ```
 
 Danach startet das Tool über das Anwendungsmenü. Das optionale DB-Labor kann dort über
