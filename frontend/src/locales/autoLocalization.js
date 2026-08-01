@@ -393,6 +393,91 @@ const exactTranslations = {
 }
 
 
+Object.assign(exactTranslations.de, {
+  'SFTP write/read/delete verified: {date}': 'SFTP-Schreib-/Lese-/Löschtest erfolgreich: {date}',
+  'Recommended': 'Empfohlen',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'JSON-Antwort: { "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': 'Anfrage herunterladen',
+  'Prepare upload key': 'Upload-Schlüssel erzeugen',
+  'Copy public key': 'Öffentlichen Schlüssel kopieren',
+  'Run write test': 'Schreibtest ausführen',
+  'Apply enrollment response': 'Enrollment-Antwort anwenden',
+  'Upload-key preparation queued.': 'Erzeugung des Upload-Schlüssels wurde eingereiht.',
+  'Public upload key copied.': 'Öffentlicher Upload-Schlüssel wurde kopiert.',
+  'Enrollment request queued.': 'Enrollment-Anfrage wurde eingereiht.',
+})
+
+Object.assign(exactTranslations.fr, {
+  'SFTP write/read/delete verified: {date}': 'Test SFTP d’écriture/lecture/suppression réussi : {date}',
+  'Recommended': 'Recommandé',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'Réponse JSON : { "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': 'Télécharger la demande',
+  'Prepare upload key': 'Créer la clé de téléversement',
+  'Copy public key': 'Copier la clé publique',
+  'Run write test': 'Exécuter le test d’écriture',
+  'Apply enrollment response': 'Appliquer la réponse d’inscription',
+  'Upload-key preparation queued.': 'La création de la clé de téléversement a été mise en file d’attente.',
+  'Public upload key copied.': 'La clé publique de téléversement a été copiée.',
+  'Enrollment request queued.': 'La demande d’inscription a été mise en file d’attente.',
+})
+
+Object.assign(exactTranslations.es, {
+  'SFTP write/read/delete verified: {date}': 'Prueba SFTP de escritura/lectura/eliminación superada: {date}',
+  'Recommended': 'Recomendado',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'Respuesta JSON: { "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': 'Descargar solicitud',
+  'Prepare upload key': 'Crear clave de carga',
+  'Copy public key': 'Copiar clave pública',
+  'Run write test': 'Ejecutar prueba de escritura',
+  'Apply enrollment response': 'Aplicar respuesta de inscripción',
+  'Upload-key preparation queued.': 'La creación de la clave de carga se puso en cola.',
+  'Public upload key copied.': 'La clave pública de carga se copió.',
+  'Enrollment request queued.': 'La solicitud de inscripción se puso en cola.',
+})
+
+Object.assign(exactTranslations.pt, {
+  'SFTP write/read/delete verified: {date}': 'Teste SFTP de escrita/leitura/eliminação concluído: {date}',
+  'Recommended': 'Recomendado',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'Resposta JSON: { "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': 'Transferir pedido',
+  'Prepare upload key': 'Criar chave de envio',
+  'Copy public key': 'Copiar chave pública',
+  'Run write test': 'Executar teste de escrita',
+  'Apply enrollment response': 'Aplicar resposta de inscrição',
+  'Upload-key preparation queued.': 'A criação da chave de envio foi colocada em fila.',
+  'Public upload key copied.': 'A chave pública de envio foi copiada.',
+  'Enrollment request queued.': 'O pedido de inscrição foi colocado em fila.',
+})
+
+Object.assign(exactTranslations.ru, {
+  'SFTP write/read/delete verified: {date}': 'Проверка SFTP на запись, чтение и удаление пройдена: {date}',
+  'Recommended': 'Рекомендуется',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'Ответ JSON: { "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': 'Скачать запрос',
+  'Prepare upload key': 'Создать ключ загрузки',
+  'Copy public key': 'Копировать открытый ключ',
+  'Run write test': 'Запустить проверку записи',
+  'Apply enrollment response': 'Применить ответ регистрации',
+  'Upload-key preparation queued.': 'Создание ключа загрузки поставлено в очередь.',
+  'Public upload key copied.': 'Открытый ключ загрузки скопирован.',
+  'Enrollment request queued.': 'Запрос регистрации поставлен в очередь.',
+})
+
+Object.assign(exactTranslations.cn, {
+  'SFTP write/read/delete verified: {date}': 'SFTP 写入、读取和删除测试已通过：{date}',
+  'Recommended': '推荐',
+  '{ "kind": "rbf-backup-enrollment-response", ... }': 'JSON 响应：{ "kind": "rbf-backup-enrollment-response", ... }',
+  'Download request': '下载请求',
+  'Prepare upload key': '创建上传密钥',
+  'Copy public key': '复制公钥',
+  'Run write test': '运行写入测试',
+  'Apply enrollment response': '应用注册响应',
+  'Upload-key preparation queued.': '上传密钥创建任务已排队。',
+  'Public upload key copied.': '上传公钥已复制。',
+  'Enrollment request queued.': '注册请求已排队。',
+})
+
+
 const generatedPhraseTranslations = {
   de: {
     'Upgrade {index}': 'Upgrade {index}',
