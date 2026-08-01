@@ -267,3 +267,18 @@ def test_server_cli_prints_copy_safe_next_steps(tmp_path, monkeypatch, capsys) -
     assert str(response) in output
     assert "Antwort importieren und prüfen" in output
     assert "rbf-recovery-tool pull" in output
+
+
+def test_linux_provisioner_keeps_key_only_accounts_ssh_accessible() -> None:
+    script = (
+        Path(__file__).resolve().parents[2]
+        / "linux"
+        / "recovery-tool"
+        / "Provision-RbfBackupServer.sh"
+    ).read_text(encoding="utf-8")
+    assert 'passwd -l "$USERNAME"' not in script
+    assert 'passwd -l "$RECOVERY_USERNAME"' not in script
+    assert 'set_unknown_password "$USERNAME"' in script
+    assert 'set_unknown_password "$RECOVERY_USERNAME"' in script
+    assert "PasswordAuthentication no" in script
+    assert "KbdInteractiveAuthentication no" in script

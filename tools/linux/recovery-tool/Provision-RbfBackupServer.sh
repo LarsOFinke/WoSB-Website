@@ -130,7 +130,7 @@ if [[ "$SKIP_PACKAGE_INSTALL" != true ]] && ! command -v sshd >/dev/null 2>&1; t
   apt-get update
   apt-get install -y openssh-server
 fi
-for command_name in python3 sshd ssh-keygen useradd usermod passwd groupadd getent; do
+for command_name in python3 sshd ssh-keygen useradd usermod chpasswd groupadd getent; do
   command -v "$command_name" >/dev/null 2>&1 || { echo "Erforderliches Werkzeug fehlt: $command_name" >&2; exit 1; }
 done
 ssh-keygen -A
@@ -214,8 +214,21 @@ else
   usermod --home /data --shell /usr/sbin/nologin "$RECOVERY_USERNAME"
 fi
 usermod -a -G "$READ_GROUP" "$RECOVERY_USERNAME"
-passwd -l "$USERNAME" >/dev/null 2>&1 || true
-passwd -l "$RECOVERY_USERNAME" >/dev/null 2>&1 || true
+
+# OpenSSH rejects locked accounts before public-key authentication. Give both
+# key-only SFTP accounts an unknown high-entropy password instead. Password and
+# keyboard-interactive SSH authentication remain disabled in the Match blocks,
+# and both accounts keep /usr/sbin/nologin as their shell.
+set_unknown_password() {
+  local account="$1"
+  python3 - "$account" <<'PY' | chpasswd
+import secrets
+import sys
+print(f"{sys.argv[1]}:{secrets.token_urlsafe(48)}")
+PY
+}
+set_unknown_password "$USERNAME"
+set_unknown_password "$RECOVERY_USERNAME"
 
 # OpenSSH requires every chroot path component to be root-owned and not writable
 # by group or others. The setgid child keeps uploaded files in the read group.

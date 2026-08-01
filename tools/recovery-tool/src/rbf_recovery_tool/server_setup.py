@@ -214,14 +214,23 @@ def provision_backup_server(
             raise RuntimeError("Das Provisioning-Ergebnis ist ungültig.") from exc
 
     if configure_local_profile:
-        _configure_local_recovery_profile(
-            port=int(host_payload.get("port") or port),
-            username=str(host_payload.get("recovery_username") or recovery_username),
-            remote_directory=str(host_payload.get("remote_directory") or "/data"),
-            ssh_key=recovery_ssh_key,
-            identity=identity,
-            fingerprint=str(host_payload.get("host_key_fingerprint") or ""),
-        )
+        try:
+            _configure_local_recovery_profile(
+                port=int(host_payload.get("port") or port),
+                username=str(host_payload.get("recovery_username") or recovery_username),
+                remote_directory=str(host_payload.get("remote_directory") or "/data"),
+                ssh_key=recovery_ssh_key,
+                identity=identity,
+                fingerprint=str(host_payload.get("host_key_fingerprint") or ""),
+            )
+        except RuntimeError as exc:
+            raise RuntimeError(
+                "Die System-Provisionierung wurde abgeschlossen, aber der lokale read-only "
+                "Recovery-Zugang konnte nicht verifiziert werden. Prüfe 'sudo passwd -S "
+                f"{recovery_username}' und 'sudo journalctl -u ssh -n 50 --no-pager'. "
+                "Nach der Korrektur kann derselbe Provisioning-Befehl sicher erneut ausgeführt werden. "
+                f"Details: {exc}"
+            ) from exc
 
     response = {
         "schema_version": SCHEMA_VERSION,

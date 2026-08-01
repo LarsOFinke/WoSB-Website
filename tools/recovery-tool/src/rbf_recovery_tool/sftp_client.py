@@ -77,19 +77,25 @@ def connect(profile: Profile, password: str = ""):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(PinnedFingerprintPolicy(profile.host_fingerprint))
     key_filename = profile.ssh_key_path or None
-    client.connect(
-        hostname=profile.host,
-        port=profile.port,
-        username=profile.username,
-        password=password or None,
-        passphrase=password or None,
-        key_filename=key_filename,
-        allow_agent=not bool(key_filename),
-        look_for_keys=not bool(key_filename),
-        timeout=20,
-        banner_timeout=20,
-        auth_timeout=20,
-    )
+    try:
+        client.connect(
+            hostname=profile.host,
+            port=profile.port,
+            username=profile.username,
+            password=password or None,
+            passphrase=password or None,
+            key_filename=key_filename,
+            allow_agent=not bool(key_filename),
+            look_for_keys=not bool(key_filename),
+            timeout=20,
+            banner_timeout=20,
+            auth_timeout=20,
+        )
+    except Exception as exc:
+        client.close()
+        raise RuntimeError(
+            f"SSH-Anmeldung für {profile.username}@{profile.host}:{profile.port} fehlgeschlagen: {exc}"
+        ) from exc
     return client
 
 

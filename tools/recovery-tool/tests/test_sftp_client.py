@@ -115,3 +115,40 @@ def test_latest_bundle_rejects_legacy_sidecar_only_export() -> None:
         pass
     else:
         raise AssertionError("A sidecar-only legacy export must not be selected")
+
+
+def test_connect_wraps_paramiko_authentication_errors(monkeypatch, tmp_path) -> None:
+    from rbf_recovery_tool import sftp_client
+    from rbf_recovery_tool.config import Profile
+
+    class FakeClient:
+        closed = False
+
+        def set_missing_host_key_policy(self, _policy):
+            return None
+
+        def connect(self, **_kwargs):
+            raise RuntimeError("Authentication failed")
+
+        def close(self):
+            self.closed = True
+
+    client = FakeClient()
+    fake_paramiko = type("FakeParamiko", (), {"SSHClient": lambda: client})
+    monkeypatch.setattr(sftp_client, "_paramiko", lambda: fake_paramiko)
+    key = tmp_path / "key"
+    key.write_text("dummy", encoding="utf-8")
+    profile = Profile(
+        host="127.0.0.1",
+        port=22,
+        username="rbf-recovery",
+        remote_directory="/data",
+        destination_directory=str(tmp_path / "dest"),
+        ssh_key_path=str(key),
+        age_identity_path=str(tmp_path / "identity"),
+        host_fingerprint="SHA256:" + "A" * 43,
+    )
+    import pytest
+    with pytest.raises(RuntimeError, match="SSH-Anmeldung für rbf-recovery@127.0.0.1:22"):
+        sftp_client.connect(profile)
+    assert client.closed is True
