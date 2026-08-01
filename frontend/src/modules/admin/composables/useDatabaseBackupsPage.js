@@ -154,7 +154,6 @@ export function useDatabaseBackupsPage() {
     canSubmit.value
     && Boolean(enrollmentRequest.value)
     && Boolean(enrollmentResponse.value.trim())
-    && !enrollmentResponseResult.value.error
   ))
   const localBackups = computed(() => status.value.local_database_backups || [])
   const selectedBackup = computed(() => (
