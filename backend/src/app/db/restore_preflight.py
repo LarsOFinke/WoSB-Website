@@ -9,9 +9,11 @@ from app.db.schema_health import current_alembic_heads, expected_alembic_heads
 from app.db.session import SessionLocal
 from app.modules.admin.models.outbound_webhook import OutboundWebhook
 from app.modules.raid_helper.models.raid_helper import RaidHelperProfile
+from app.modules.registry import register_all_models
 
 
 def main() -> int:
+    register_all_models()
     failures = 0
     checked = 0
     with SessionLocal() as db:
