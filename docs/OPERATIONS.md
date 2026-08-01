@@ -106,9 +106,13 @@ werden Host-Key, SFTP und age-Empfänger automatisch geprüft beziehungsweise ko
 ### Remote-Anwendungsbackup aus dem Adminbereich
 
 Administratoren können unter **Staff → Betrieb → Anwendungs-Backups** ein dediziertes
-SSH-/SFTP-Ziel konfigurieren. Der root-seitige Runner erzeugt denselben koordinierten und vollständig
-verifizierten Backup-Punkt wie der Timer. Er überträgt Artefakte und Prüfsummen atomar, danach den
-Recovery-Bericht und **zuletzt** das Backup-Set-Manifest als Remote-Commit-Marker.
+SSH-/SFTP-Ziel konfigurieren. Das Webinterface zeigt den tatsächlich vom Host verwendeten
+öffentlichen Upload-Schlüssel und dessen Fingerprint an. Eine neue Konfiguration wird erst nach einem
+vollständigen SFTP-Schreib-/Lese-/Löschtest gespeichert; der Test prüft damit Schlüssel, Host-Key,
+Zielpfad und Schreibrechte gemeinsam. Der root-seitige Runner erzeugt anschließend denselben
+koordinierten und vollständig verifizierten Backup-Punkt wie der Timer. Er überträgt Artefakte und
+Prüfsummen atomar, verifiziert sie durch SFTP-Rückdownload, danach den Recovery-Bericht und
+**zuletzt** das Backup-Set-Manifest als Remote-Commit-Marker. Ein Remote-Shellzugang ist nicht nötig.
 
 Der geschützte Admin-Restore akzeptiert nur Datenbankdumps, die:
 

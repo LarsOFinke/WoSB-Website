@@ -18,6 +18,9 @@ test('database backup administration is isolated in an admin-only subpage', asyn
   assert.match(navigation, /key: 'backups'/)
   assert.match(page, /useDatabaseBackupsPage/)
   assert.doesNotMatch(page, /modules\/admin\/api\/admin/)
+  assert.match(composable, /prepareBackupUploadKey/)
+  assert.match(composable, /uploadPublicKey/)
+  assert.match(composable, /copyUploadPublicKey/)
   assert.match(composable, /discoverBackupHost/)
   assert.match(composable, /configureBackupConnection/)
   assert.match(composable, /testBackupConnection/)
@@ -26,6 +29,9 @@ test('database backup administration is isolated in an admin-only subpage', asyn
   assert.match(composable, /restoreLocalDatabaseBackup/)
   assert.match(composable, /window\.confirm\(t\('admin\.backups\.confirmRun'\)\)/)
   assert.match(composable, /private_key: form\.private_key\.trim\(\) \|\| null/)
+  assert.match(page, /saveAndTest/)
+  assert.match(page, /connectionReady/)
+  assert.match(page, /backup-public-key/)
 })
 
 test('backup connection API exposes no browser-side secret persistence', async () => {

@@ -259,6 +259,10 @@ export function getBackupControlStatus() {
   return get('/admin/backups/status')
 }
 
+export function prepareBackupUploadKey() {
+  return post('/admin/backups/key/prepare', {})
+}
+
 export function prepareBackupEnrollment() {
   return post('/admin/backups/enrollment/prepare', {})
 }

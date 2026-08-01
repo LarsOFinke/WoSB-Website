@@ -17,6 +17,9 @@ const {
   enrollmentResponse,
   inProgress,
   configured,
+  connectionReady,
+  uploadPublicKey,
+  uploadKeyFingerprint,
   canSubmit,
   canRestore,
   isBootstrapAdmin,
@@ -31,6 +34,8 @@ const {
   formatDateTime,
   formatBytes,
   loadStatus,
+  prepareUploadKey,
+  copyUploadPublicKey,
   prepareEnrollment,
   downloadEnrollmentRequest,
   loadEnrollmentResponse,
@@ -82,6 +87,11 @@ const {
             <p v-if="configured">
               {{ status.connection.username }}@{{ status.connection.host }}:{{ status.connection.port }}
             </p>
+            <small v-if="configured">
+              {{ connectionReady
+                ? t('admin.backups.connection.writeVerified', { date: formatDateTime(status.connection.write_tested_at) })
+                : t('admin.backups.connection.writeUnverified') }}
+            </small>
             <p v-else>{{ t('admin.backups.connection.missingHint') }}</p>
           </article>
           <article class="home-status-card refined-status-card">
@@ -174,6 +184,20 @@ const {
           <strong>{{ t('admin.backups.security.title') }}</strong>
           <p>{{ t('admin.backups.security.text') }}</p>
         </div>
+        <div class="backup-security-note backup-upload-key-note">
+          <strong>{{ t('admin.backups.uploadKey.title') }}</strong>
+          <p>{{ t('admin.backups.uploadKey.text') }}</p>
+          <div class="backup-form-actions">
+            <button class="form-button secondary-action" type="button" :disabled="!canSubmit" @click="prepareUploadKey">
+              {{ t('admin.backups.actions.prepareKey') }}
+            </button>
+            <button class="small-action" type="button" :disabled="!uploadPublicKey" @click="copyUploadPublicKey">
+              {{ t('admin.backups.actions.copyPublicKey') }}
+            </button>
+          </div>
+          <code v-if="uploadPublicKey" class="backup-public-key">{{ uploadPublicKey }}</code>
+          <small v-if="uploadKeyFingerprint">{{ t('admin.backups.uploadKey.fingerprint') }}: {{ uploadKeyFingerprint }}</small>
+        </div>
         <form class="backup-configuration-form" @submit.prevent="saveConfiguration">
           <label class="input-panel embedded-field">
             <span>{{ t('admin.backups.fields.host') }}</span>
@@ -193,8 +217,9 @@ const {
               v-model.trim="form.remote_directory"
               required
               maxlength="512"
-              placeholder="/backups/royal-blackwater-fleet"
+              placeholder="/data"
             />
+            <small>{{ t('admin.backups.remoteDirectoryHint') }}</small>
           </label>
           <div class="backup-host-key-panel">
             <div>
@@ -217,6 +242,7 @@ const {
           </div>
           <label class="input-panel embedded-field backup-private-key-field">
             <span>{{ t('admin.backups.fields.privateKey') }}</span>
+            <small>{{ t('admin.backups.privateKeyHint') }}</small>
             <textarea
               v-model="form.private_key"
               :class="{ 'is-concealed': !privateKeyVisible }"
@@ -243,7 +269,7 @@ const {
               type="submit"
               :disabled="!canSubmit || !discoveredMatchesForm"
             >
-              {{ t('admin.backups.actions.save') }}
+              {{ t('admin.backups.actions.saveAndTest') }}
             </button>
             <button
               class="form-button secondary-action"
@@ -274,7 +300,7 @@ const {
           <button
             class="form-button primary-action"
             type="button"
-            :disabled="!canSubmit || !configured"
+            :disabled="!canSubmit || !connectionReady"
             @click="runBackup"
           >
             {{ inProgress ? t('admin.backups.actions.running') : t('admin.backups.actions.run') }}

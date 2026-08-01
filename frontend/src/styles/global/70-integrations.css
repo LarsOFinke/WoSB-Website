@@ -1324,9 +1324,20 @@ body.webhook-editor-open {
 }
 
 .backup-host-key-panel strong,
-.backup-checksum {
+.backup-checksum,
+.backup-public-key {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.backup-public-key {
+  display: block;
+  margin: .75rem 0 .35rem;
+  padding: .75rem;
+  border-radius: .5rem;
+  background: rgba(0, 0, 0, .18);
+  white-space: pre-wrap;
+  user-select: text;
 }
 
 .backup-private-key-field {

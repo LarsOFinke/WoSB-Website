@@ -755,7 +755,9 @@ require(
 )
 backup_runner = (ROOT / "infrastructure/scripts/backup/backup-admin-runner.py").read_text(encoding="utf-8")
 require("StrictHostKeyChecking=yes" in backup_runner, "remote backups must verify SSH host keys")
-require("sha256sum -c" in backup_runner, "remote backups must verify the uploaded checksum")
+require("sftp-roundtrip" in backup_runner, "remote backups must record SFTP round-trip verification")
+require("get {source.name}" in backup_runner, "remote backups must re-download uploaded artifacts for verification")
+require("sha256sum -c" not in backup_runner, "SFTP-only backup accounts must not require a remote shell")
 restore_runner_block = backup_runner.split("def restore_postgresql", 1)[1].split("@staticmethod", 1)[0]
 require(
     restore_runner_block.index("consume_database_restore_approval")

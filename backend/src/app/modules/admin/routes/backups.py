@@ -45,6 +45,28 @@ def admin_backup_status(_: User = Depends(require_admin)) -> BackupControlStatus
 
 
 @router.post(
+    "/key/prepare",
+    response_model=BackupControlRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_prepare_backup_upload_key(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BackupControlRequestResult:
+    result = _request(current_user, "prepare_key")
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="backup_connection",
+        entity_id="upload_key",
+        action="upload_key_prepared",
+        summary="Dedicated SSH upload-key preparation requested.",
+        changed_fields=["ssh_key"],
+    )
+    return result
+
+
+@router.post(
     "/enrollment/prepare",
     response_model=BackupControlRequestResult,
     status_code=status.HTTP_202_ACCEPTED,

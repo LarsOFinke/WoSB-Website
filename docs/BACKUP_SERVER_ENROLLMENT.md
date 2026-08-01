@@ -80,3 +80,25 @@ rbf-recovery-tool pull
 ```
 
 Mit `--no-local-profile` kann diese automatische lokale Profilkonfiguration bewusst deaktiviert werden.
+
+
+## Manuelle Web-Konfiguration ohne Enrollment
+
+Falls der Backup-Server bereits manuell eingerichtet wurde, bleibt der Ablauf ebenfalls vollständig
+über den geschützten Host-Runner prüfbar:
+
+1. In **Staff → Betrieb → Anwendungs-Backups** auf **Upload-Schlüssel erzeugen** klicken.
+2. Nur den angezeigten öffentlichen Schlüssel beim Benutzer `rbf-backup` in `authorized_keys`
+   hinterlegen und den angezeigten Fingerprint dort mit `ssh-keygen -lf authorized_keys` vergleichen.
+3. IP/DNS, Port, Benutzer und den innerhalb von SFTP sichtbaren Zielpfad eintragen. Bei einem vom
+   Recovery-Tool verwalteten Chroot ist das `/data`; ohne Chroot kann es beispielsweise
+   `/srv/rbf-backups/wosb` sein.
+4. Den Host-Key ermitteln und den Fingerprint über einen zweiten Kanal prüfen.
+5. **Speichern und Schreibtest** ausführen. Die Konfiguration wird erst übernommen, wenn der Runner
+   eine zufällige Datei hochladen, atomar umbenennen, wieder herunterladen, bytegenau vergleichen
+   und anschließend löschen konnte.
+
+Der separate Button **Schreibtest ausführen** wiederholt genau diesen vollständigen Test. Ein reines
+`cd`/`pwd` gilt nicht als erfolgreiche Backup-Verbindung. Die Prüfung und die spätere
+Artefaktverifikation verwenden ausschließlich den gepinnten SFTP-Kanal; ein Shellzugang oder
+`sha256sum` auf dem Backup-Server ist nicht erforderlich.

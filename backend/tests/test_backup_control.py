@@ -744,6 +744,13 @@ def test_backup_enrollment_endpoints_publish_only_public_material() -> None:
                 role=ROLE_ADMIN,
             )
         _login(client, "backup-enrollment-admin", "BlackwaterEnrollmentAdmin123!")
+        key_prepared = client.post("/api/admin/backups/key/prepare")
+        assert key_prepared.status_code == 202, key_prepared.text
+        request_payload = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
+        assert request_payload["operation"] == "prepare_key"
+        assert "private_key" not in json.dumps(request_payload)
+
+        (request_dir / "backup.request").unlink()
         prepared = client.post("/api/admin/backups/enrollment/prepare")
         assert prepared.status_code == 202, prepared.text
         request_payload = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
@@ -813,6 +820,8 @@ def test_admin_backup_runner_prepares_and_applies_managed_enrollment(tmp_path, m
             return Result()
         if "-y" in command:
             return Result(stdout="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIProductKey=\n")
+        if "-lf" in command:
+            return Result(stdout="256 SHA256:ProductUploadFingerprint test (ED25519)\n")
         raise AssertionError(command)
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)

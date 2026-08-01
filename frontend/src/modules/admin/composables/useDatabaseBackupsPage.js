@@ -9,6 +9,7 @@ import {
   discoverBackupHost,
   getBackupControlStatus,
   prepareBackupEnrollment,
+  prepareBackupUploadKey,
   restoreLocalDatabaseBackup,
   runApplicationBackup,
   scanLocalDatabaseBackups,
@@ -45,7 +46,7 @@ export function useDatabaseBackupsPage() {
     host: '',
     port: 22,
     username: '',
-    remote_directory: '/backups/royal-blackwater-fleet',
+    remote_directory: '/data',
     private_key: '',
     host_key: '',
   })
@@ -58,6 +59,20 @@ export function useDatabaseBackupsPage() {
 
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
+  const connectionReady = computed(() => (
+    configured.value && Boolean(status.value.connection?.write_tested_at)
+  ))
+  const uploadPublicKey = computed(() => (
+    status.value.connection?.upload_public_key
+    || status.value.upload_public_key
+    || status.value.enrollment_public_key
+    || ''
+  ))
+  const uploadKeyFingerprint = computed(() => (
+    status.value.connection?.upload_key_fingerprint
+    || status.value.upload_key_fingerprint
+    || ''
+  ))
   const canSubmit = computed(() => (
     !loading.value && !inProgress.value && status.value.request_available !== false
   ))
@@ -180,6 +195,21 @@ export function useDatabaseBackupsPage() {
     }
   }
 
+  async function prepareUploadKey() {
+    await request(prepareBackupUploadKey, 'admin.backups.messages.keyPrepared')
+  }
+
+  async function copyUploadPublicKey() {
+    if (!uploadPublicKey.value) return
+    try {
+      await navigator.clipboard.writeText(uploadPublicKey.value)
+      success.value = t('admin.backups.messages.publicKeyCopied')
+      error.value = ''
+    } catch {
+      error.value = t('admin.backups.errors.copyPublicKey')
+    }
+  }
+
   async function prepareEnrollment() {
     await request(prepareBackupEnrollment, 'admin.backups.messages.enrollmentPrepared')
   }
@@ -296,6 +326,9 @@ export function useDatabaseBackupsPage() {
     enrollmentResponse,
     inProgress,
     configured,
+    connectionReady,
+    uploadPublicKey,
+    uploadKeyFingerprint,
     canSubmit,
     canRestore,
     isBootstrapAdmin,
@@ -310,6 +343,8 @@ export function useDatabaseBackupsPage() {
     formatDateTime,
     formatBytes,
     loadStatus,
+    prepareUploadKey,
+    copyUploadPublicKey,
     prepareEnrollment,
     downloadEnrollmentRequest,
     loadEnrollmentResponse,

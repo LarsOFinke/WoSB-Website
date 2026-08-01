@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 
 BackupOperation = Literal[
+    "prepare_key",
     "prepare_enrollment",
     "apply_enrollment",
     "discover",
@@ -132,6 +133,9 @@ class BackupConnectionSummary(BaseModel):
     remote_directory: str | None = None
     host_key_fingerprint: str | None = None
     private_key_configured: bool = False
+    upload_public_key: str | None = None
+    upload_key_fingerprint: str | None = None
+    write_tested_at: str | None = None
     managed_server: bool = False
 
 
@@ -177,6 +181,8 @@ class BackupControlStatus(BaseModel):
     enrollment_public_key: str | None = None
     enrollment_applied: bool = False
     age_recipient_configured: bool = False
+    upload_public_key: str | None = None
+    upload_key_fingerprint: str | None = None
     artifacts: list[BackupArtifact] = Field(default_factory=list)
     local_database_backups: list[LocalDatabaseBackup] = Field(default_factory=list)
     local_catalog_updated_at: str | None = None

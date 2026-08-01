@@ -282,7 +282,8 @@ require_pattern 'restore-postgres.sh' "$INFRA_DIR/scripts/backup/restore-recover
 require_pattern 'restore-data.sh' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
 require_pattern 'setup.sh.*--profile.*--no-start' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
 require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
-require_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'sftp-roundtrip' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+reject_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
 require_file "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
 require_file "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
 require_pattern 'O_NOFOLLOW' "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
@@ -417,6 +418,7 @@ with tempfile.TemporaryDirectory() as temporary:
 
     runner.fingerprint_for_line = fake_fingerprint
     runner.validate_private_key = fake_private_key
+    runner.test_connection = lambda *_args, **_kwargs: "2026-08-01T12:00:00+00:00"
     runner.request = {
         "operation": "configure",
         "host": "backup.example.net",
@@ -452,8 +454,18 @@ with tempfile.TemporaryDirectory() as temporary:
         stdout = ""
         stderr = ""
 
+    remote_payloads = {
+        backup_file.name: backup_file.read_bytes(),
+        checksum_file.name: checksum_file.read_bytes(),
+    }
+
     def fake_run(command, **kwargs):
         calls.append((command, kwargs))
+        batch = str(kwargs.get("input") or "")
+        for line in batch.splitlines():
+            if line.startswith("get "):
+                _, remote_name, destination = line.split(maxsplit=2)
+                Path(destination).write_bytes(remote_payloads[remote_name])
         return Result()
 
     original_run = module.subprocess.run
@@ -467,12 +479,12 @@ with tempfile.TemporaryDirectory() as temporary:
     assert transfer["filename"] == backup_file.name
     assert transfer["size_bytes"] == len(b"database-backup")
     assert transfer["remote_path"] == f"/srv/backups/rbf/{backup_file.name}"
-    assert len(calls) == 2
-    assert calls[0][0][0] == "sftp"
+    assert len(calls) == 3
+    assert all(call[0][0] == "sftp" for call in calls)
     assert "StrictHostKeyChecking=yes" in calls[0][0]
     assert f"put {backup_file} {backup_file.name}.part" in calls[0][1]["input"]
-    assert calls[1][0][0] == "ssh"
-    assert "sha256sum -c" in calls[1][0][-1]
+    assert f"get {backup_file.name}" in calls[1][1]["input"]
+    assert f"get {checksum_file.name}" in calls[2][1]["input"]
 PY_BACKUP_RUNNER
 
 

@@ -106,9 +106,19 @@ def test_backup_set_manifest_is_last_file_in_sftp_batch(tmp_path, monkeypatch) -
         stdout = ""
         stderr = ""
 
+    remote_payloads = {
+        artifact.name: artifact.read_bytes(),
+        checksum.name: checksum.read_bytes(),
+    }
+
     def fake_run(command, **kwargs):
         if command[0] == "sftp":
-            batches.append(str(kwargs.get("input") or ""))
+            batch = str(kwargs.get("input") or "")
+            batches.append(batch)
+            for line in batch.splitlines():
+                if line.startswith("get "):
+                    _, remote_name, destination = line.split(maxsplit=2)
+                    Path(destination).write_bytes(remote_payloads[remote_name])
         return Result()
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
@@ -129,3 +139,156 @@ def test_backup_set_manifest_is_last_file_in_sftp_batch(tmp_path, monkeypatch) -
     assert upload_lines.index(f"rename {checksum.name}.part {checksum.name}") < upload_lines.index(
         f"rename {artifact.name}.part {artifact.name}"
     )
+
+
+def test_connection_test_requires_sftp_write_read_delete_roundtrip(tmp_path, monkeypatch) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_write_test", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    infra.mkdir()
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request)
+    runner.prepare()
+    runner.key_file.write_text("PRIVATE", encoding="utf-8")
+    runner.known_hosts_file.write_text("host ssh-ed25519 AAAA\n", encoding="utf-8")
+
+    batches: list[str] = []
+
+    class Result:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        assert command[0] == "sftp"
+        batch = str(kwargs.get("input") or "")
+        batches.append(batch)
+        put_line = next(line for line in batch.splitlines() if line.startswith("put "))
+        get_line = next(line for line in batch.splitlines() if line.startswith("get "))
+        source = Path(put_line.split(maxsplit=2)[1])
+        destination = Path(get_line.split(maxsplit=2)[2])
+        destination.write_bytes(source.read_bytes())
+        return Result()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    tested_at = runner.test_connection(
+        {
+            "host": "backup.example.net",
+            "port": 22,
+            "username": "rbf-backup",
+            "remote_directory": "/data",
+        },
+        persist=False,
+    )
+    assert tested_at
+    assert batches
+    batch = batches[0]
+    assert "put " in batch
+    assert "rename " in batch
+    assert "get " in batch
+    assert "rm " in batch
+
+
+def test_transfer_verification_never_requires_remote_shell(tmp_path, monkeypatch) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_sftp_only", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    infra.mkdir()
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request)
+    runner.prepare()
+    artifact = tmp_path / "backup.sql.gz"
+    artifact.write_bytes(b"backup")
+    checksum = Path(f"{artifact}.sha256")
+    import hashlib
+    checksum.write_text(f"{hashlib.sha256(artifact.read_bytes()).hexdigest()}  {artifact.name}\n", encoding="ascii")
+    payloads = {artifact.name: artifact.read_bytes(), checksum.name: checksum.read_bytes()}
+    commands: list[str] = []
+
+    class Result:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        commands.append(str(command[0]))
+        assert command[0] == "sftp"
+        batch = str(kwargs.get("input") or "")
+        for line in batch.splitlines():
+            if line.startswith("get "):
+                _, remote_name, destination = line.split(maxsplit=2)
+                Path(destination).write_bytes(payloads[remote_name])
+        return Result()
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    runner.transfer(
+        {
+            "host": "backup.example.net",
+            "port": 22,
+            "username": "rbf-backup",
+            "remote_directory": "/data",
+            "managed_server": False,
+        },
+        artifact,
+        "postgresql",
+    )
+    assert commands
+    assert set(commands) == {"sftp"}
+
+
+def test_prepare_upload_key_exposes_only_public_identity(tmp_path, monkeypatch) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_key_identity", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    infra.mkdir()
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request)
+    runner.prepare()
+
+    class Result:
+        def __init__(self, returncode=0, stdout="", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    def fake_run(command, **_kwargs):
+        command = [str(part) for part in command]
+        if "-f" in command and "-t" in command:
+            target = Path(command[command.index("-f") + 1])
+            target.write_text("PRIVATE", encoding="utf-8")
+            target.with_suffix(".pub").write_text("PUBLIC", encoding="utf-8")
+            return Result()
+        if "-y" in command:
+            return Result(stdout="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestUploadKey=\n")
+        if "-lf" in command:
+            return Result(stdout="256 SHA256:TestUploadKeyFingerprint test (ED25519)\n")
+        raise AssertionError(command)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(module.socket, "gethostname", lambda: "wosb-prod")
+    prepared = runner.prepare_key()
+    assert prepared["upload_public_key"].startswith("ssh-ed25519 ")
+    assert prepared["upload_key_fingerprint"] == "SHA256:TestUploadKeyFingerprint"
+    assert "PRIVATE KEY" not in str(prepared)
+    assert runner.key_file.is_file()
+    assert runner.key_file.stat().st_mode & 0o077 == 0
+
+    summary = runner.connection_summary()
+    assert summary["private_key_configured"] is True
+    assert summary["upload_public_key"] == prepared["upload_public_key"]
+    assert summary["upload_key_fingerprint"] == prepared["upload_key_fingerprint"]

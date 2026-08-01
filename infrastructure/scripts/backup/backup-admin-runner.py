@@ -7,11 +7,11 @@ import os
 from pathlib import Path
 import re
 import secrets
-import shlex
 import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 from datetime import datetime, timezone
 from typing import Any
@@ -92,8 +92,15 @@ class Runner:
         return payload
 
     def connection_summary(self) -> dict[str, Any]:
+        public_key, key_fingerprint = self._key_identity()
         if not self.config_file.is_file():
-            return {"configured": False, "private_key_configured": self.key_file.is_file()}
+            return {
+                "configured": False,
+                "private_key_configured": self.key_file.is_file(),
+                "upload_public_key": public_key,
+                "upload_key_fingerprint": key_fingerprint,
+                "write_tested_at": None,
+            }
         config = self.read_json(self.config_file)
         return {
             "configured": True,
@@ -103,6 +110,9 @@ class Runner:
             "remote_directory": config.get("remote_directory"),
             "host_key_fingerprint": config.get("host_key_fingerprint"),
             "private_key_configured": self.key_file.is_file(),
+            "upload_public_key": public_key,
+            "upload_key_fingerprint": key_fingerprint,
+            "write_tested_at": config.get("write_tested_at"),
             "managed_server": config.get("managed_server") is True,
         }
 
@@ -219,6 +229,46 @@ class Runner:
         os.chmod(temporary, mode)
         os.replace(temporary, path)
 
+    def _key_identity(self, key_path: Path | None = None) -> tuple[str | None, str | None]:
+        path = key_path or self.key_file
+        if not path.is_file():
+            return None, None
+        result = subprocess.run(
+            ["ssh-keygen", "-y", "-f", str(path)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        public_key = result.stdout.strip()
+        if result.returncode != 0 or not public_key.startswith(("ssh-ed25519 ", "ssh-rsa ", "ecdsa-")):
+            raise RuntimeError("Could not derive the public SSH backup key.")
+        public_file = self.run_dir / f"public-key.{os.getpid()}.{secrets.token_hex(4)}"
+        public_file.write_text(public_key + "\n", encoding="utf-8")
+        try:
+            fingerprint_result = subprocess.run(
+                ["ssh-keygen", "-lf", str(public_file)],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        finally:
+            public_file.unlink(missing_ok=True)
+        parts = fingerprint_result.stdout.strip().split()
+        if fingerprint_result.returncode != 0 or len(parts) < 2:
+            raise RuntimeError("Could not calculate the SSH upload-key fingerprint.")
+        return f"{public_key} rbf-backup@{socket.gethostname()}", parts[1]
+
+    def prepare_key(self) -> dict[str, Any]:
+        self._public_key()
+        public_key, fingerprint = self._key_identity()
+        self.log("Prepared the protected SSH upload key for manual backup-server configuration.")
+        return {
+            "upload_public_key": public_key,
+            "upload_key_fingerprint": fingerprint,
+        }
+
     def _public_key(self) -> str:
         if not self.key_file.is_file():
             temporary = self.run_dir / f"generated-backup-key.{os.getpid()}"
@@ -237,17 +287,10 @@ class Runner:
             os.replace(temporary, self.key_file)
             Path(f"{temporary}.pub").unlink(missing_ok=True)
             os.chmod(self.key_file, 0o600)
-        result = subprocess.run(
-            ["ssh-keygen", "-y", "-f", str(self.key_file)],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        public_key = result.stdout.strip()
-        if result.returncode != 0 or not public_key.startswith(("ssh-ed25519 ", "ssh-rsa ", "ecdsa-")):
+        public_key, _ = self._key_identity()
+        if not public_key:
             raise RuntimeError("Could not derive the public SSH backup key.")
-        return f"{public_key} rbf-backup@{socket.gethostname()}"
+        return public_key
 
     def prepare_enrollment(self) -> dict[str, Any]:
         public_key = self._public_key()
@@ -321,6 +364,7 @@ class Runner:
         remote_directory: str,
         host_key: str,
         managed_server: bool = False,
+        write_tested_at: str | None = None,
     ) -> dict[str, Any]:
         token = self.known_hosts_token(host, port)
         known_hosts_line = f"{token} {host_key}"
@@ -332,6 +376,8 @@ class Runner:
             "remote_directory": remote_directory,
             "host_key_fingerprint": fingerprint,
             "managed_server": managed_server,
+            "verification_mode": "sftp-roundtrip",
+            "write_tested_at": write_tested_at,
         }
         self._atomic_write(self.config_file, json.dumps(config, ensure_ascii=False, indent=2) + "\n")
         self._atomic_write(self.known_hosts_file, known_hosts_line + "\n")
@@ -417,28 +463,67 @@ class Runner:
         host_key = " ".join(str(self.request.get("host_key") or "").split())
         if not HOST_KEY_RE.fullmatch(host_key):
             raise RuntimeError("Invalid SSH host key.")
-        token = self.known_hosts_token(host, port)
-        known_hosts_line = f"{token} {host_key}"
-        fingerprint = self.fingerprint_for_line(known_hosts_line)
 
         temporary_key: Path | None = None
         private_key = self.request.get("private_key")
         if isinstance(private_key, str) and private_key.strip():
             temporary_key = self.validate_private_key(private_key)
-        elif not self.key_file.is_file():
-            raise RuntimeError("A private key is required for the first backup connection setup.")
+            candidate_key = temporary_key
+        elif self.key_file.is_file():
+            candidate_key = self.key_file
+        else:
+            raise RuntimeError(
+                "A private key is required, or prepare the protected upload key in the web interface first."
+            )
 
-        if temporary_key is not None:
-            os.replace(temporary_key, self.key_file)
-        self._store_connection(
-            host=host,
-            port=port,
-            username=username,
-            remote_directory=remote_directory,
-            host_key=host_key,
-            managed_server=False,
+        token = self.known_hosts_token(host, port)
+        temporary_known_hosts = self.run_dir / f"known-hosts.{os.getpid()}.{secrets.token_hex(4)}"
+        temporary_known_hosts.write_text(f"{token} {host_key}\n", encoding="utf-8")
+        os.chmod(temporary_known_hosts, 0o600)
+        config = {
+            "host": host,
+            "port": port,
+            "username": username,
+            "remote_directory": remote_directory,
+            "managed_server": False,
+        }
+        protected_paths = [self.key_file, self.config_file, self.known_hosts_file]
+        previous = {path: path.read_bytes() if path.is_file() else None for path in protected_paths}
+        try:
+            tested_at = self.test_connection(
+                config,
+                key_path=candidate_key,
+                known_hosts_file=temporary_known_hosts,
+                persist=False,
+            )
+            try:
+                if temporary_key is not None:
+                    os.replace(temporary_key, self.key_file)
+                    temporary_key = None
+                self._store_connection(
+                    host=host,
+                    port=port,
+                    username=username,
+                    remote_directory=remote_directory,
+                    host_key=host_key,
+                    managed_server=False,
+                    write_tested_at=tested_at,
+                )
+            except Exception:
+                for path, content in previous.items():
+                    if content is None:
+                        path.unlink(missing_ok=True)
+                    else:
+                        self._atomic_write(path, content.decode("utf-8"))
+                raise
+        finally:
+            temporary_known_hosts.unlink(missing_ok=True)
+            if temporary_key is not None:
+                temporary_key.unlink(missing_ok=True)
+        self.log(
+            f"Stored and write-tested remote backup configuration for "
+            f"{username}@{host}:{port}{remote_directory}."
         )
-        self.log(f"Stored remote backup configuration for {username}@{host}:{port}{remote_directory}.")
 
     def load_connection(self) -> dict[str, Any]:
         if not self.config_file.is_file() or not self.key_file.is_file() or not self.known_hosts_file.is_file():
@@ -452,32 +537,112 @@ class Runner:
             raise RuntimeError("The stored backup configuration is invalid.")
         return config
 
-    def ssh_base(self, config: dict[str, Any]) -> list[str]:
+    def ssh_base(
+        self,
+        config: dict[str, Any],
+        *,
+        key_path: Path | None = None,
+        known_hosts_file: Path | None = None,
+    ) -> list[str]:
         return [
             "-P", str(config["port"]),
-            "-i", str(self.key_file),
+            "-i", str(key_path or self.key_file),
             "-o", "BatchMode=yes",
             "-o", "IdentitiesOnly=yes",
             "-o", "StrictHostKeyChecking=yes",
-            "-o", f"UserKnownHostsFile={self.known_hosts_file}",
+            "-o", f"UserKnownHostsFile={known_hosts_file or self.known_hosts_file}",
             "-o", "ConnectTimeout=15",
             f"{config['username']}@{config['host']}",
         ]
 
-    def test_connection(self, config: dict[str, Any] | None = None) -> None:
+    @staticmethod
+    def _sftp_error_detail(result: subprocess.CompletedProcess[str]) -> str:
+        lines = [
+            line.strip()
+            for line in f"{result.stderr or ''}\n{result.stdout or ''}".splitlines()
+            if line.strip() and not line.lstrip().startswith("sftp>")
+        ]
+        preferred = [
+            line for line in lines
+            if any(marker in line.lower() for marker in (
+                "permission denied", "no such file", "failure", "not found",
+                "host key verification", "connection refused", "connection closed",
+            ))
+        ]
+        return (preferred or lines or ["unknown SFTP error"])[-1]
+
+    def _sftp_roundtrip(
+        self,
+        config: dict[str, Any],
+        *,
+        key_path: Path | None = None,
+        known_hosts_file: Path | None = None,
+    ) -> None:
+        token = secrets.token_hex(12)
+        source = self.run_dir / f"sftp-write-test.{token}"
+        downloaded = self.run_dir / f"sftp-write-test.{token}.download"
+        remote_part = f".rbf-write-test-{token}.part"
+        remote_final = f".rbf-write-test-{token}"
+        payload = secrets.token_bytes(64)
+        source.write_bytes(payload)
+        os.chmod(source, 0o600)
+        batch = "\n".join([
+            f"cd {config['remote_directory']}",
+            f"put {source} {remote_part}",
+            f"rename {remote_part} {remote_final}",
+            f"get {remote_final} {downloaded}",
+            f"rm {remote_final}",
+            "quit",
+            "",
+        ])
+        try:
+            result = subprocess.run(
+                [
+                    "sftp", "-q", "-b", "-",
+                    *self.ssh_base(
+                        config,
+                        key_path=key_path,
+                        known_hosts_file=known_hosts_file,
+                    ),
+                ],
+                input=batch,
+                text=True,
+                capture_output=True,
+                timeout=60,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"SFTP write test failed: {self._sftp_error_detail(result)}")
+            if not downloaded.is_file() or downloaded.read_bytes() != payload:
+                raise RuntimeError("SFTP write test failed: the downloaded test payload did not match.")
+        finally:
+            source.unlink(missing_ok=True)
+            downloaded.unlink(missing_ok=True)
+
+    def test_connection(
+        self,
+        config: dict[str, Any] | None = None,
+        *,
+        key_path: Path | None = None,
+        known_hosts_file: Path | None = None,
+        persist: bool = True,
+    ) -> str:
         config = config or self.load_connection()
-        batch = f"cd {config['remote_directory']}\npwd\nquit\n"
-        self.log(f"Testing SFTP access to {config['host']}:{config['port']}{config['remote_directory']}.")
-        result = subprocess.run(
-            ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
-            input=batch,
-            text=True,
-            capture_output=True,
-            timeout=30,
+        self.log(
+            f"Testing SFTP write/read/delete access to "
+            f"{config['host']}:{config['port']}{config['remote_directory']}."
         )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["unknown SFTP error"]
-            raise RuntimeError(f"SFTP connection test failed: {detail[0]}")
+        self._sftp_roundtrip(
+            config,
+            key_path=key_path,
+            known_hosts_file=known_hosts_file,
+        )
+        tested_at = now()
+        if persist and self.config_file.is_file():
+            stored = self.read_json(self.config_file)
+            stored["verification_mode"] = "sftp-roundtrip"
+            stored["write_tested_at"] = tested_at
+            self._atomic_write(self.config_file, json.dumps(stored, ensure_ascii=False, indent=2) + "\n")
+        return tested_at
 
     def transfer(self, config: dict[str, Any], backup_file: Path, artifact_type: str) -> dict[str, Any]:
         checksum_file = Path(str(backup_file) + ".sha256")
@@ -527,45 +692,37 @@ class Runner:
             detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["unknown SFTP error"]
             raise RuntimeError(f"Backup transfer failed: {detail[0]}")
 
-        remote_checks = [checksum_name]
+        verification_sources = [backup_file, checksum_file]
         if metadata_file.is_file() and metadata_checksum.is_file():
-            remote_checks.append(metadata_checksum.name)
-        if config.get("managed_server") is True:
-            # The managed destination is chrooted and intentionally has no shell.
-            # Re-download each uploaded artifact to a protected temporary file and
-            # compare its digest locally instead of weakening the SSH account.
-            for source in [backup_file, checksum_file, *([metadata_file, metadata_checksum] if metadata_file.is_file() and metadata_checksum.is_file() else [])]:
-                with tempfile.NamedTemporaryFile(prefix="rbf-remote-verify-", dir=self.run_dir, delete=False) as handle:
-                    verification_copy = Path(handle.name)
-                try:
-                    batch = f"cd {config['remote_directory']}\nget {source.name} {verification_copy}\nquit\n"
-                    download = subprocess.run(
-                        ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
-                        input=batch,
-                        text=True,
-                        capture_output=True,
-                        timeout=900,
+            verification_sources.extend([metadata_file, metadata_checksum])
+        # All upload accounts may be SFTP-only. Verify every remote object by
+        # downloading it through the same pinned SFTP channel and comparing its
+        # digest locally; never require a remote shell merely for checksum work.
+        for source in verification_sources:
+            with tempfile.NamedTemporaryFile(
+                prefix="rbf-remote-verify-",
+                dir=self.run_dir,
+                delete=False,
+            ) as handle:
+                verification_copy = Path(handle.name)
+            try:
+                batch = f"cd {config['remote_directory']}\nget {source.name} {verification_copy}\nquit\n"
+                download = subprocess.run(
+                    ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
+                    input=batch,
+                    text=True,
+                    capture_output=True,
+                    timeout=900,
+                )
+                if download.returncode != 0:
+                    raise RuntimeError(
+                        "The remote SFTP verification failed after upload: "
+                        f"{self._sftp_error_detail(download)}"
                     )
-                    if download.returncode != 0 or hashlib.sha256(verification_copy.read_bytes()).hexdigest() != hashlib.sha256(source.read_bytes()).hexdigest():
-                        raise RuntimeError("The remote SFTP verification failed after upload.")
-                finally:
-                    verification_copy.unlink(missing_ok=True)
-        else:
-            remote_command = (
-                f"cd {shlex.quote(str(config['remote_directory']))} && "
-                + " && ".join(f"sha256sum -c {shlex.quote(name)}" for name in remote_checks)
-            )
-            ssh_args = self.ssh_base(config)
-            ssh_args[0] = "-p"
-            verify = subprocess.run(
-                ["ssh", *ssh_args, remote_command],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            if verify.returncode != 0:
-                raise RuntimeError("The remote checksum verification failed after upload.")
+                if hashlib.sha256(verification_copy.read_bytes()).hexdigest() != hashlib.sha256(source.read_bytes()).hexdigest():
+                    raise RuntimeError("The remote SFTP verification failed after upload: digest mismatch.")
+            finally:
+                verification_copy.unlink(missing_ok=True)
 
         digest_builder = hashlib.sha256()
         with backup_file.open("rb") as handle:
@@ -768,6 +925,7 @@ class Runner:
     @staticmethod
     def public_failure_message(operation: str) -> str:
         messages = {
+            "prepare_key": "The protected SSH upload key could not be prepared.",
             "discover": "SSH host-key discovery failed. Review the protected host log.",
             "configure": "The remote backup connection could not be saved. Review the protected host log.",
             "prepare_enrollment": "The enrollment request could not be created.",
@@ -807,7 +965,10 @@ class Runner:
         thread.start()
         try:
             updates: dict[str, Any] = {}
-            if operation == "prepare_enrollment":
+            if operation == "prepare_key":
+                updates = self.prepare_key()
+                message = "Protected SSH upload key prepared. Install the displayed public key on the backup server."
+            elif operation == "prepare_enrollment":
                 updates = self.prepare_enrollment()
                 message = "Enrollment request created. Provision the backup server with the Recovery Tool."
             elif operation == "apply_enrollment":
@@ -818,10 +979,10 @@ class Runner:
                 message = "SSH host key discovered. Verify its fingerprint before saving the connection."
             elif operation == "configure":
                 self.configure()
-                message = "Remote backup connection saved securely on the host."
+                message = "Remote backup connection saved after a successful SFTP write/read/delete test."
             elif operation == "test":
                 self.test_connection()
-                message = "Remote backup connection test succeeded."
+                message = "Remote SFTP write/read/delete test succeeded."
             elif operation == "backup":
                 updates = self.create_and_transfer_backup()
                 message = "Database, uploaded-file and any enabled encrypted recovery backups were created, transferred and verified successfully."
