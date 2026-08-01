@@ -22,13 +22,13 @@ Alle Ausgaben und ihre portablen SHA-256-Dateien liegen ausschließlich unter `d
 ```text
 dist/RBF-Recovery-Tool-Linux-<arch>
 dist/RBF-Recovery-Tool-Linux-<arch>-installer.tar.gz
-dist/rbf-recovery-tool_1.3.0_<deb-arch>.deb
+dist/rbf-recovery-tool_1.4.0_<deb-arch>.deb
 ```
 
 Vor der Installation können die erzeugten Metadaten geprüft werden:
 
 ```bash
-DEB=./dist/rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb
+DEB=./dist/rbf-recovery-tool_1.4.0_$(dpkg --print-architecture).deb
 dpkg-deb -f "$DEB" Package Version Architecture Depends
 ```
 
@@ -49,7 +49,7 @@ nur den jeweiligen Dateinamen und keinen absoluten Build-Pfad enthalten:
 
 ```bash
 cd dist
-sha256sum -c rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb.sha256
+sha256sum -c rbf-recovery-tool_1.4.0_$(dpkg --print-architecture).deb.sha256
 ```
 
 Danach startet das Tool über das Anwendungsmenü. Das optionale DB-Labor kann dort über
@@ -87,6 +87,38 @@ Optionen:
 
 Der Timer kann erst aktiviert werden, nachdem in der GUI ein SSH-Key, ein bestätigter Host-Key
 und die private age-Identität konfiguriert wurden.
+
+
+## Backup-Server mit minimalem Aufwand einrichten
+
+1. In **Staff → Anwendungs-Backups** auf **Anfrage erstellen** klicken und die JSON-Datei laden.
+2. Das Debian-Paket auf dem Ubuntu-/Debian-Backup-Server installieren.
+3. Einmalig ausführen:
+
+```bash
+rbf-recovery-tool server provision \
+  ~/Downloads/rbf-backup-enrollment-REQUEST.json \
+  --host backup.example.net \
+  --output ~/Downloads/rbf-backup-enrollment-RESPONSE.json \
+  --directory /srv/rbf-backups/wosb \
+  --retention-days 30
+```
+
+Optional kann eine aktive UFW-Konfiguration auf die Produktivquelle begrenzt werden:
+
+```bash
+  --allow-from 203.0.113.10/32
+```
+
+Das Tool richtet OpenSSH bei Bedarf, einen gesperrten dedizierten Benutzer, chroot-isoliertes
+SFTP, `/data` als sichtbares Ziel, Dateirechte, Host-Key-Ausgabe, eine lokale private age-Identität
+und einen täglichen Retention-Timer ein. Es verändert den globalen SSH-Port nicht; `--port` muss
+dem bereits konfigurierten sshd-Port entsprechen. Danach den angezeigten Fingerprint mit der
+Webseite vergleichen und die Antwortdatei dort importieren. Die Webseite übernimmt Host-Key-
+Pinning, age-Empfänger, Verbindungsdaten und Verbindungstest automatisch.
+
+Der portable Benutzerinstaller kann das rootgeschützte Server-Provisioning bewusst nicht
+ausführen; hierfür ist das Debian-Paket der unterstützte Weg.
 
 ## Linux-Linux-Automatisierung
 
@@ -163,3 +195,8 @@ Die GUI zeigt dafür getrennte Aktionen **Nur DB-Import prüfen** und
 `build/`, `dist/` und `.venv-build/` sind lokale Builddaten und werden weder versioniert noch in
 Release-Archive aufgenommen. Vor einer manuellen Übergabe des Quellbaums kann vom Repository-Root
 `make clean-all && make check-tree` ausgeführt werden.
+
+
+### Automatisch getrennter Recovery-Lesezugang
+
+Das Server-Provisioning erzeugt neben dem schreibenden Produktiv-Uploadkonto einen zweiten, nur lokal erreichbaren und durch `internal-sftp -R` read-only erzwungenen Recovery-Zugang. Der zugehörige private SSH-Schlüssel und die private age-Identität verbleiben auf dem Backup-/Recovery-Gerät. Das Tool testet diesen Zugang und speichert automatisch ein lokales Pull-Profil; anschließend genügt `rbf-recovery-tool pull`.

@@ -17,6 +17,7 @@ rbf-recovery-tool pull            neuestes Bundle laden und vollständig prüfen
 rbf-recovery-tool verify ...      lokales Bundle prüfen
 rbf-recovery-tool timer ...       Linux-systemd-Benutzertimer verwalten
 rbf-recovery-tool lab ...         lokales PostgreSQL-Recovery-Labor verwalten
+rbf-recovery-tool server provision ...  Ubuntu-Backup-Server sicher provisionieren
 ```
 
 Windows und Linux werden nativ auf dem jeweiligen Betriebssystem gebaut. `age`, `age-keygen`,
@@ -29,3 +30,35 @@ PostgreSQL-Recovery-Labor verwenden. Das Labor bevorzugt rootless Docker, bindet
 an Loopback und kann den verifizierten DB-Dump aus einem Recovery-Bundle direkt importieren.
 Die Docker-Paketinstallation ist bewusst ein getrenntes administratives Hilfsskript; die GUI und
 der normale Backup-Client benötigen keine Root-Rechte und verändern keine Firewall.
+
+## Assistierte Backup-Server-Einrichtung
+
+Die Staff-Webseite erzeugt eine öffentliche Enrollment-Anfrage und hält den zugehörigen privaten
+SSH-Schlüssel ausschließlich im rootgeschützten Produktivhost-Verzeichnis. Auf einem Ubuntu- oder
+Debian-Backup-Server kann das bevorzugt als DEB installierte Tool anschließend einmalig ausführen:
+
+```bash
+rbf-recovery-tool server provision \
+  rbf-backup-enrollment-REQUEST.json \
+  --host backup.example.net \
+  --output rbf-backup-enrollment-RESPONSE.json \
+  --directory /srv/rbf-backups/wosb \
+  --retention-days 30
+```
+
+`pkexec` fordert die administrative Freigabe an. Das Tool installiert bei Bedarf OpenSSH, richtet
+einen dedizierten kennwortlosen Benutzer mit chroot-isoliertem `internal-sftp`, ein rootgeschütztes
+`authorized_keys`, den Speicherpfad und einen täglichen Retention-Timer ein. Die private age-
+Identität wird im Benutzerkonto des Backup-Geräts erzeugt; nur der öffentliche Empfänger gelangt
+in die Antwortdatei. Optional begrenzt `--allow-from <IP/CIDR>` eine bereits aktive UFW-Regel auf
+die Produktivserver-Adresse.
+
+Nach dem Import der Antwortdatei prüft der Produktivhost den aktuell ausgelieferten SSH-Host-Key,
+pinnt ihn, aktiviert verschlüsselte Recovery-Bundles, testet SFTP und überträgt auch zeitgesteuerte
+Backup-Sets automatisch. Private SSH- oder age-Schlüssel werden nicht zwischen den Systemen
+ausgetauscht.
+
+
+### Automatisch getrennter Recovery-Lesezugang
+
+Das Server-Provisioning erzeugt neben dem schreibenden Produktiv-Uploadkonto einen zweiten, nur lokal erreichbaren und durch `internal-sftp -R` read-only erzwungenen Recovery-Zugang. Der zugehörige private SSH-Schlüssel und die private age-Identität verbleiben auf dem Backup-/Recovery-Gerät. Das Tool testet diesen Zugang und speichert automatisch ein lokales Pull-Profil; anschließend genügt `rbf-recovery-tool pull`.

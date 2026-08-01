@@ -327,7 +327,7 @@ Der Build erzeugt dafür ein Debian-Paket und zusätzlich ein portables Installe
 cd tools/linux/recovery-tool
 ./Build-RbfRecoveryTool.sh
 sudo apt update
-sudo apt install ./dist/rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb
+sudo apt install ./dist/rbf-recovery-tool_1.4.0_$(dpkg --print-architecture).deb
 ```
 
 Das Paket verwendet `pkexec` als direkte PolicyKit-Laufzeitabhängigkeit und ist damit auch auf

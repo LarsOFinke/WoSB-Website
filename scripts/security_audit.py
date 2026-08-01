@@ -169,6 +169,23 @@ check(
     "database restore host approval must precede local backup resolution",
 )
 
+# Assisted backup-server enrollment must separate write and recovery credentials.
+enrollment_contract = text("contracts/backup_enrollment.py")
+server_setup = text("tools/recovery-tool/src/rbf_recovery_tool/server_setup.py")
+server_provision = text("tools/linux/recovery-tool/Provision-RbfBackupServer.sh")
+remote_sync = text("infrastructure/scripts/backup/sync-backup-set-remote.py")
+check("PRIVATE KEY" not in enrollment_contract, "enrollment contract must not carry private keys")
+check("_ensure_recovery_ssh_key" in server_setup, "local recovery read key generation is missing")
+check("_configure_local_recovery_profile" in server_setup, "local recovery profile automation is missing")
+check("ForceCommand internal-sftp -u 0027 -d /data" in server_provision, "managed upload SFTP policy is missing")
+check("ForceCommand internal-sftp -R -d /data" in server_provision, "managed recovery account is not read-only")
+check('from="127.0.0.1,::1"' in server_provision, "recovery SSH key must be restricted to loopback")
+check("ChrootDirectory" in server_provision, "managed SFTP accounts must remain chrooted")
+check("Abbruch zum Schutz des bestehenden Kontos" in server_provision, "provisioner may overwrite unmanaged accounts")
+check("zurückgerollt" in server_provision, "invalid SSHD enrollment configuration lacks rollback")
+check("validate_manifest(infra, args.backup_set.resolve())" in remote_sync, "scheduled offsite sync must validate the committed set")
+check(remote_sync.index('runner.transfer(config, args.verification.resolve(), "verification")') < remote_sync.index('runner.transfer(config, args.backup_set.resolve(), "backup_set")'), "remote set commit marker must be published after verification")
+
 # Frozen recovery client must retain explicit host-key pinning and secret-minimal profiles.
 recovery_sftp = text("tools/recovery-tool/src/rbf_recovery_tool/sftp_client.py")
 recovery_config = text("tools/recovery-tool/src/rbf_recovery_tool/config.py")

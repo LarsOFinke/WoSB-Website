@@ -13,6 +13,7 @@ from app.modules.admin.schemas.backup_control import (
     BackupControlRequestResult,
     BackupControlStatus,
     BackupDiscoveryRequest,
+    BackupEnrollmentResponseRequest,
     BackupOperation,
     DatabaseRestoreRequest,
 )
@@ -41,6 +42,51 @@ def _request(
 @router.get("/status", response_model=BackupControlStatus)
 def admin_backup_status(_: User = Depends(require_admin)) -> BackupControlStatus:
     return get_backup_control_status()
+
+
+@router.post(
+    "/enrollment/prepare",
+    response_model=BackupControlRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_prepare_backup_enrollment(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BackupControlRequestResult:
+    result = _request(current_user, "prepare_enrollment")
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="backup_connection",
+        entity_id="enrollment",
+        action="enrollment_prepared",
+        summary="Dedicated backup-server enrollment request creation requested.",
+        changed_fields=["ssh_key"],
+    )
+    return result
+
+
+@router.post(
+    "/enrollment/apply",
+    response_model=BackupControlRequestResult,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def admin_apply_backup_enrollment(
+    payload: BackupEnrollmentResponseRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> BackupControlRequestResult:
+    result = _request(current_user, "apply_enrollment", payload.model_dump())
+    record_audit_safely(
+        db,
+        actor=current_user,
+        entity_type="backup_connection",
+        entity_id="enrollment",
+        action="enrollment_apply_requested",
+        summary="Managed backup-server enrollment response import requested.",
+        changed_fields=["connection", "host_key", "age_recipient"],
+    )
+    return result
 
 
 @router.post(

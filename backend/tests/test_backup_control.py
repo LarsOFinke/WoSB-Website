@@ -730,3 +730,121 @@ def test_restore_script_uses_staging_preflight_and_automatic_rollback() -> None:
     assert "ALTER DATABASE %I RENAME TO %I" in script
     assert "rollback_database_swap" in script
     assert "-c \"SELECT pg_terminate_backend" not in script
+
+
+def test_backup_enrollment_endpoints_publish_only_public_material() -> None:
+    request_dir, _ = _reset_control()
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="backup-enrollment-admin",
+                password="BlackwaterEnrollmentAdmin123!",
+                display_name="Backup Enrollment Admin",
+                role=ROLE_ADMIN,
+            )
+        _login(client, "backup-enrollment-admin", "BlackwaterEnrollmentAdmin123!")
+        prepared = client.post("/api/admin/backups/enrollment/prepare")
+        assert prepared.status_code == 202, prepared.text
+        request_payload = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
+        assert request_payload["operation"] == "prepare_enrollment"
+        assert "private_key" not in json.dumps(request_payload)
+
+        (request_dir / "backup.request").unlink()
+        response_json = json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "rbf-backup-enrollment-response",
+                "enrollment_id": "A" * 32,
+                "host": "backup.example.net",
+                "port": 22,
+                "username": "rbf-backup",
+                "remote_directory": "/data",
+                "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=",
+                "host_key_fingerprint": "SHA256:" + "A" * 43,
+                "age_recipient": "age1" + "a" * 58,
+                "managed_server": True,
+            }
+        )
+        applied = client.post(
+            "/api/admin/backups/enrollment/apply",
+            json={"response_json": response_json},
+        )
+        assert applied.status_code == 202, applied.text
+        request_payload = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
+        assert request_payload["operation"] == "apply_enrollment"
+        assert request_payload["response_json"] == response_json
+        assert "PRIVATE KEY" not in applied.text
+    _reset_control()
+
+
+def test_admin_backup_runner_prepares_and_applies_managed_enrollment(tmp_path, monkeypatch) -> None:
+    import importlib.util
+
+    runner_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_admin_runner_enrollment", runner_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    (infra / ".env").parent.mkdir(parents=True, exist_ok=True)
+    (infra / ".env").write_text(
+        "BACKUP_RECOVERY_ENABLED=false\nBACKUP_AGE_RECIPIENT=\n",
+        encoding="utf-8",
+    )
+    request_file = tmp_path / "request.json"
+    request_file.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request_file)
+    runner.prepare()
+
+    class Result:
+        def __init__(self, returncode=0, stdout="", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    def fake_run(command, **_kwargs):
+        command = [str(part) for part in command]
+        if "-f" in command and "-t" in command:
+            target = Path(command[command.index("-f") + 1])
+            target.write_text("PRIVATE", encoding="utf-8")
+            target.with_suffix(".pub").write_text("PUBLIC", encoding="utf-8")
+            return Result()
+        if "-y" in command:
+            return Result(stdout="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIProductKey=\n")
+        raise AssertionError(command)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(module.socket, "gethostname", lambda: "wosb-prod")
+    prepared = runner.prepare_enrollment()
+    enrollment_id = prepared["enrollment_id"]
+    assert runner.key_file.is_file()
+    assert "PRIVATE" not in json.dumps(prepared)
+
+    response = {
+        "schema_version": 1,
+        "kind": "rbf-backup-enrollment-response",
+        "enrollment_id": enrollment_id,
+        "host": "backup.example.net",
+        "port": 22,
+        "username": "rbf-backup",
+        "remote_directory": "/data",
+        "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=",
+        "host_key_fingerprint": "SHA256:" + "B" * 43,
+        "age_recipient": "age1" + "a" * 58,
+        "managed_server": True,
+    }
+    runner.request = {"response_json": json.dumps(response)}
+    monkeypatch.setattr(runner, "_scan_host_key", lambda *_args: None)
+    monkeypatch.setattr(runner, "fingerprint_for_line", lambda _line: response["host_key_fingerprint"])
+    monkeypatch.setattr(runner, "test_connection", lambda _config=None: None)
+    applied = runner.apply_enrollment()
+    assert applied["enrollment_applied"] is True
+    config = json.loads(runner.config_file.read_text(encoding="utf-8"))
+    assert config["managed_server"] is True
+    assert config["remote_directory"] == "/data"
+    env = (infra / ".env").read_text(encoding="utf-8")
+    assert "BACKUP_RECOVERY_ENABLED=true" in env
+    assert response["age_recipient"] in env
+    assert not runner.enrollment_request_file.exists()

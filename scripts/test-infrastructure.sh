@@ -518,4 +518,17 @@ with tempfile.TemporaryDirectory() as temporary:
     assert not approval.exists()
 PY_LOCAL_CATALOG
 
+# Assisted backup-server enrollment must preserve upload/recovery key separation.
+require_file "$ROOT_DIR/contracts/backup_enrollment.py"
+require_file "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_file "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py"
+require_pattern 'ForceCommand internal-sftp -u 0027 -d /data' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_pattern 'ForceCommand internal-sftp -R -d /data' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_pattern 'from="127.0.0.1,::1"' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_pattern 'Abbruch zum Schutz des bestehenden Kontos' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_pattern 'Die neue SSHD-Konfiguration ist ungültig und wurde zurückgerollt' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
+require_pattern 'validate_manifest(infra, args.backup_set.resolve())' "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py"
+require_pattern 'runner.transfer(config, args.backup_set.resolve(), "backup_set")' "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py"
+require_pattern 'artifact_type == "backup_set"' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+
 echo 'Infrastructure checks OK.'

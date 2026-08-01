@@ -107,3 +107,9 @@ release/
 *.7z
 *.zip
 *.sha256
+
+# Backup-server enrollment exchanges and private recovery identities
+rbf-backup-enrollment-*.json
+rbf-recovery-identity*.txt
+rbf-recovery-readonly-ed25519
+rbf-recovery-readonly-ed25519.pub

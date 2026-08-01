@@ -14,11 +14,15 @@ const {
   form,
   restoreForm,
   privateKeyVisible,
+  enrollmentResponse,
   inProgress,
   configured,
   canSubmit,
   canRestore,
   isBootstrapAdmin,
+  enrollmentRequest,
+  enrollmentResponsePreview,
+  canApplyEnrollment,
   localBackups,
   selectedBackup,
   stateLabel,
@@ -27,6 +31,10 @@ const {
   formatDateTime,
   formatBytes,
   loadStatus,
+  prepareEnrollment,
+  downloadEnrollmentRequest,
+  loadEnrollmentResponse,
+  applyEnrollment,
   discover,
   saveConfiguration,
   testConnection,
@@ -95,6 +103,64 @@ const {
         </div>
         <p v-if="success" class="success-text table-state">{{ success }}</p>
         <p v-if="error" class="error-text table-state">{{ error }}</p>
+      </section>
+
+
+      <section class="wire-section admin-panel backup-configuration-panel">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>{{ t('admin.backups.enrollment.title') }}</h2>
+            <p>{{ t('admin.backups.enrollment.subtitle') }}</p>
+          </div>
+          <span class="summary-pill">{{ t('admin.backups.enrollment.recommended') }}</span>
+        </div>
+        <div class="backup-security-note">
+          <strong>{{ t('admin.backups.enrollment.securityTitle') }}</strong>
+          <p>{{ t('admin.backups.enrollment.securityText') }}</p>
+        </div>
+        <div class="backup-configuration-form">
+          <div class="input-panel embedded-field backup-directory-field">
+            <span>{{ t('admin.backups.enrollment.stepOne') }}</span>
+            <p>{{ t('admin.backups.enrollment.stepOneText') }}</p>
+            <div class="backup-form-actions">
+              <button class="form-button primary-action" type="button" :disabled="!canSubmit" @click="prepareEnrollment">
+                {{ t('admin.backups.actions.prepareEnrollment') }}
+              </button>
+              <button class="form-button secondary-action" type="button" :disabled="!enrollmentRequest" @click="downloadEnrollmentRequest">
+                {{ t('admin.backups.actions.downloadEnrollment') }}
+              </button>
+            </div>
+            <code v-if="enrollmentRequest" class="backup-checksum">{{ enrollmentRequest.enrollment_id }}</code>
+          </div>
+          <div class="input-panel embedded-field backup-directory-field">
+            <span>{{ t('admin.backups.enrollment.stepTwo') }}</span>
+            <p>{{ t('admin.backups.enrollment.stepTwoText') }}</p>
+            <code>rbf-recovery-tool server provision REQUEST.json --host backup.example.net --output RESPONSE.json</code>
+          </div>
+          <label class="input-panel embedded-field backup-private-key-field">
+            <span>{{ t('admin.backups.enrollment.stepThree') }}</span>
+            <input type="file" accept="application/json,.json" :disabled="!canSubmit" @change="loadEnrollmentResponse" />
+            <textarea
+              v-model="enrollmentResponse"
+              rows="7"
+              spellcheck="false"
+              autocomplete="off"
+              :placeholder="t('admin.backups.enrollment.responsePlaceholder')"
+            />
+            <div v-if="enrollmentResponsePreview" class="backup-host-key-panel">
+              <div>
+                <span>{{ enrollmentResponsePreview.username }}@{{ enrollmentResponsePreview.host }}:{{ enrollmentResponsePreview.port }}</span>
+                <strong>{{ enrollmentResponsePreview.host_key_fingerprint }}</strong>
+                <small>{{ t('admin.backups.enrollment.compareFingerprint') }}</small>
+              </div>
+            </div>
+          </label>
+          <div class="backup-form-actions">
+            <button class="form-button primary-action" type="button" :disabled="!canApplyEnrollment" @click="applyEnrollment">
+              {{ t('admin.backups.actions.applyEnrollment') }}
+            </button>
+          </div>
+        </div>
       </section>
 
       <section class="wire-section admin-panel backup-configuration-panel">

@@ -76,7 +76,7 @@ infrastructure/data/backups/sets/       atomare Backup-Set-Commit-Marker
 `doctor.sh` bewertet Alter, Konsistenzmodus, Prüfsummen, Preflight-Bericht und Set-Manifest. Ein
 unkoordinierter Live-Snapshot oder ein Dump ohne erfolgreichen Recovery-Nachweis wird nicht als
 produktiver Wiederherstellungspunkt gemeldet. `BACKUP_RETENTION_DAYS` steuert die lokale Rotation;
-mindestens eine unabhängige, vorzugsweise unveränderliche Offsite-Kopie bleibt erforderlich.
+mindestens eine unabhängige, vorzugsweise unveränderliche Offsite-Kopie bleibt erforderlich. Sobald die assistierte SFTP-Verbindung eingerichtet ist, veröffentlicht auch der tägliche systemd-Timer jedes erfolgreiche Set automatisch offsite; bei einem Übertragungsfehler bleibt der lokale Commit erhalten, der Timer-Lauf wird aber als fehlgeschlagen gemeldet.
 
 Mit `BACKUP_RECOVERY_ENABLED=true` enthält derselbe koordinierte Lauf zusätzlich das
 age-verschlüsselte Bare-Metal-Bundle. `BACKUP_AGE_RECIPIENT` darf ausschließlich den öffentlichen
@@ -94,6 +94,14 @@ sudo ./infrastructure/scripts/backup/restore-postgres.sh \
 Dieser Modus verändert die aktive Datenbank nicht. Er importiert in Staging, prüft die
 Alembic-Kompatibilität, führt ausschließlich Vorwärtsmigrationen aus, testet verschlüsselte Daten
 und startet das aktuelle API-Image in einem internen Netz ohne veröffentlichte Ports.
+
+### Assistierte Backup-Server-Einrichtung
+
+Der empfohlene Ablauf tauscht nur öffentliche Enrollment-JSON-Dateien aus. Die Webseite erzeugt
+den privaten SSH-Schlüssel selbst; das Recovery-Tool 1.4.0 richtet auf dem Backup-Server chroot-
+isoliertes SFTP, Benutzer, Speicher, age-Identität und Retention ein. Nach dem Import der Antwort
+werden Host-Key, SFTP und age-Empfänger automatisch geprüft beziehungsweise konfiguriert. Siehe
+[Assistierte Backup-Server-Einrichtung](BACKUP_SERVER_ENROLLMENT.md).
 
 ### Remote-Anwendungsbackup aus dem Adminbereich
 
@@ -170,3 +178,8 @@ nie in Git aufnehmen.
 ## Curating the New Captain Guide
 
 Staff members can edit the New Captain Guide and add text sections, resource collections, direct guide links, and direct build links. Published guides and available builds are loaded when the editor opens, preventing stale session state from leaving the selectors empty. Linked resources remain database references, so renamed guides and builds automatically display their current titles.
+
+
+### Automatisch getrennter Recovery-Lesezugang
+
+Das Server-Provisioning erzeugt neben dem schreibenden Produktiv-Uploadkonto einen zweiten, nur lokal erreichbaren und durch `internal-sftp -R` read-only erzwungenen Recovery-Zugang. Der zugehörige private SSH-Schlüssel und die private age-Identität verbleiben auf dem Backup-/Recovery-Gerät. Das Tool testet diesen Zugang und speichert automatisch ein lokales Pull-Profil; anschließend genügt `rbf-recovery-tool pull`.

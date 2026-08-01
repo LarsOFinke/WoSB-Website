@@ -99,6 +99,7 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 - [Tests](docs/TESTING.md)
 - [Betrieb](docs/OPERATIONS.md)
 - [Disaster Recovery und Desktop-Backup](docs/DISASTER_RECOVERY.md)
+- [Assistierte Backup-Server-Einrichtung](docs/BACKUP_SERVER_ENROLLMENT.md)
 - PostgreSQL-Restores nutzen eine validierte Staging-Datenbank, atomaren Tausch und automatischen Rollback; vollständige Bare-Metal-Restores erhalten zusätzlich `.env`, `.cfg`, Uploads, Zertifikate und Host-Secrets im age-verschlüsselten Bundle.
 - Frozen Recovery Tool für Windows und Linux: gemeinsame Quellen unter `tools/recovery-tool`, native Build-Wrapper unter `tools/windows/recovery-tool` und `tools/linux/recovery-tool`; Ubuntu erhält zusätzlich ein installierbares `.deb`, systemd-Pull und ein optionales rootless-Docker-PostgreSQL-Restore-Labor
 - [GitHub CI/CD](docs/DEPLOYMENT.md)

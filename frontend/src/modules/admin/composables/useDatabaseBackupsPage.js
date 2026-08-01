@@ -3,10 +3,12 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import {
+  applyBackupEnrollment,
   configureBackupConnection,
   deleteBackupConnection,
   discoverBackupHost,
   getBackupControlStatus,
+  prepareBackupEnrollment,
   restoreLocalDatabaseBackup,
   runApplicationBackup,
   scanLocalDatabaseBackups,
@@ -38,6 +40,7 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const privateKeyVisible = ref(false)
+  const enrollmentResponse = ref('')
   const form = reactive({
     host: '',
     port: 22,
@@ -59,6 +62,16 @@ export function useDatabaseBackupsPage() {
     !loading.value && !inProgress.value && status.value.request_available !== false
   ))
   const isBootstrapAdmin = computed(() => Boolean(user.value?.is_bootstrap_admin))
+  const enrollmentRequest = computed(() => status.value.enrollment_request || null)
+  const enrollmentResponsePreview = computed(() => {
+    try {
+      const payload = JSON.parse(enrollmentResponse.value)
+      return payload?.kind === 'rbf-backup-enrollment-response' ? payload : null
+    } catch {
+      return null
+    }
+  })
+  const canApplyEnrollment = computed(() => canSubmit.value && Boolean(enrollmentResponsePreview.value))
   const localBackups = computed(() => status.value.local_database_backups || [])
   const selectedBackup = computed(() => (
     localBackups.value.find((backup) => backup.backup_id === restoreForm.backup_id) || null
@@ -167,6 +180,39 @@ export function useDatabaseBackupsPage() {
     }
   }
 
+  async function prepareEnrollment() {
+    await request(prepareBackupEnrollment, 'admin.backups.messages.enrollmentPrepared')
+  }
+
+  function downloadEnrollmentRequest() {
+    if (!enrollmentRequest.value) return
+    const content = `${JSON.stringify(enrollmentRequest.value, null, 2)}\n`
+    const blob = new Blob([content], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `rbf-backup-enrollment-${enrollmentRequest.value.enrollment_id}.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  async function loadEnrollmentResponse(event) {
+    const [file] = event.target.files || []
+    if (!file) return
+    enrollmentResponse.value = await file.text()
+  }
+
+  async function applyEnrollment() {
+    if (!enrollmentResponse.value.trim()) return
+    await request(
+      () => applyBackupEnrollment({ response_json: enrollmentResponse.value.trim() }),
+      'admin.backups.messages.enrollmentApplied',
+    )
+    enrollmentResponse.value = ''
+  }
+
   async function discover() {
     form.host_key = ''
     await request(
@@ -247,11 +293,15 @@ export function useDatabaseBackupsPage() {
     form,
     restoreForm,
     privateKeyVisible,
+    enrollmentResponse,
     inProgress,
     configured,
     canSubmit,
     canRestore,
     isBootstrapAdmin,
+    enrollmentRequest,
+    enrollmentResponsePreview,
+    canApplyEnrollment,
     localBackups,
     selectedBackup,
     stateLabel,
@@ -260,6 +310,10 @@ export function useDatabaseBackupsPage() {
     formatDateTime,
     formatBytes,
     loadStatus,
+    prepareEnrollment,
+    downloadEnrollmentRequest,
+    loadEnrollmentResponse,
+    applyEnrollment,
     discover,
     saveConfiguration,
     testConnection,

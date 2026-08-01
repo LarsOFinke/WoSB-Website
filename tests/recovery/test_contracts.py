@@ -136,3 +136,52 @@ def test_backup_set_requires_portable_successful_recovery_report(tmp_path: Path)
         assert "source binding mismatch" in str(exc) or "checksum mismatch" in str(exc)
     else:
         raise AssertionError("Tampered recovery proof must be rejected")
+
+from contracts.backup_enrollment import (  # noqa: E402
+    REQUEST_KIND,
+    RESPONSE_KIND,
+    validate_request,
+    validate_response,
+)
+
+
+def test_backup_enrollment_contract_binds_response_to_request() -> None:
+    request = validate_request(
+        {
+            "schema_version": 1,
+            "kind": REQUEST_KIND,
+            "enrollment_id": "A" * 32,
+            "ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host",
+            "requested_username": "rbf-backup",
+            "requested_directory": "/data",
+            "created_at": "2026-08-01T10:00:00+00:00",
+            "product_hostname": "wosb.example.net",
+        }
+    )
+    response = validate_response(
+        {
+            "schema_version": 1,
+            "kind": RESPONSE_KIND,
+            "enrollment_id": request["enrollment_id"],
+            "host": "backup.example.net",
+            "port": 22,
+            "username": "rbf-backup",
+            "remote_directory": "/data",
+            "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=",
+            "host_key_fingerprint": "SHA256:" + "A" * 43,
+            "age_recipient": "age1" + "a" * 58,
+            "managed_server": True,
+        },
+        expected_enrollment_id=str(request["enrollment_id"]),
+    )
+    assert response["managed_server"] is True
+    assert response["remote_directory"] == "/data"
+
+    tampered = dict(response)
+    tampered["enrollment_id"] = "B" * 32
+    try:
+        validate_response(tampered, expected_enrollment_id=str(request["enrollment_id"]))
+    except ValueError as exc:
+        assert "does not match" in str(exc)
+    else:
+        raise AssertionError("A response for another product host must be rejected")

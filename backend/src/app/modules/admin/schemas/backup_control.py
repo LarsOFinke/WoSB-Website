@@ -7,6 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 
 BackupOperation = Literal[
+    "prepare_enrollment",
+    "apply_enrollment",
     "discover",
     "configure",
     "test",
@@ -84,6 +86,20 @@ class BackupConfigurationRequest(BackupDiscoveryRequest):
         return normalized
 
 
+class BackupEnrollmentResponseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    response_json: str = Field(min_length=2, max_length=32768)
+
+    @field_validator("response_json")
+    @classmethod
+    def validate_response_json(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized.startswith("{") or not normalized.endswith("}"):
+            raise ValueError("Paste the complete enrollment response JSON object.")
+        return normalized
+
+
 class DatabaseRestoreRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -116,6 +132,7 @@ class BackupConnectionSummary(BaseModel):
     remote_directory: str | None = None
     host_key_fingerprint: str | None = None
     private_key_configured: bool = False
+    managed_server: bool = False
 
 
 class BackupArtifact(BaseModel):
@@ -155,6 +172,11 @@ class BackupControlStatus(BaseModel):
     discovered_port: int | None = None
     discovered_host_key: str | None = None
     discovered_fingerprint: str | None = None
+    enrollment_request: dict[str, object] | None = None
+    enrollment_id: str | None = None
+    enrollment_public_key: str | None = None
+    enrollment_applied: bool = False
+    age_recipient_configured: bool = False
     artifacts: list[BackupArtifact] = Field(default_factory=list)
     local_database_backups: list[LocalDatabaseBackup] = Field(default_factory=list)
     local_catalog_updated_at: str | None = None

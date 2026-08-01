@@ -6,8 +6,10 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -15,9 +17,19 @@ from datetime import datetime, timezone
 from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+REPOSITORY_ROOT = SCRIPT_DIR.parents[2]
+for import_root in (SCRIPT_DIR, REPOSITORY_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
+from contracts.backup_enrollment import (  # noqa: E402
+    REQUEST_KIND,
+    SCHEMA_VERSION,
+    canonical_json,
+    parse_json_document,
+    validate_request,
+    validate_response,
+)
 from local_backup_catalog import (  # noqa: E402
     consume_database_restore_approval,
     resolve_local_postgres_backup,
@@ -49,6 +61,7 @@ class Runner:
         self.config_file = self.secret_dir / "config.json"
         self.key_file = self.secret_dir / "id_backup"
         self.known_hosts_file = self.secret_dir / "known_hosts"
+        self.enrollment_request_file = self.secret_dir / "enrollment-request.json"
         self.stop_heartbeat = threading.Event()
         self.request: dict[str, Any] = {}
 
@@ -90,6 +103,7 @@ class Runner:
             "remote_directory": config.get("remote_directory"),
             "host_key_fingerprint": config.get("host_key_fingerprint"),
             "private_key_configured": self.key_file.is_file(),
+            "managed_server": config.get("managed_server") is True,
         }
 
     def old_status(self) -> dict[str, Any]:
@@ -198,6 +212,185 @@ class Runner:
             "discovered_fingerprint": fingerprint,
         }
 
+    def _atomic_write(self, path: Path, content: str, mode: int = 0o600) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text(content, encoding="utf-8")
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+
+    def _public_key(self) -> str:
+        if not self.key_file.is_file():
+            temporary = self.run_dir / f"generated-backup-key.{os.getpid()}"
+            result = subprocess.run(
+                [
+                    "ssh-keygen", "-q", "-t", "ed25519", "-N", "",
+                    "-C", f"rbf-backup@{socket.gethostname()}", "-f", str(temporary),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode != 0 or not temporary.is_file():
+                raise RuntimeError("Could not generate the dedicated SSH backup key.")
+            os.replace(temporary, self.key_file)
+            Path(f"{temporary}.pub").unlink(missing_ok=True)
+            os.chmod(self.key_file, 0o600)
+        result = subprocess.run(
+            ["ssh-keygen", "-y", "-f", str(self.key_file)],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        public_key = result.stdout.strip()
+        if result.returncode != 0 or not public_key.startswith(("ssh-ed25519 ", "ssh-rsa ", "ecdsa-")):
+            raise RuntimeError("Could not derive the public SSH backup key.")
+        return f"{public_key} rbf-backup@{socket.gethostname()}"
+
+    def prepare_enrollment(self) -> dict[str, Any]:
+        public_key = self._public_key()
+        payload = {
+            "schema_version": SCHEMA_VERSION,
+            "kind": REQUEST_KIND,
+            "enrollment_id": secrets.token_urlsafe(32),
+            "created_at": now(),
+            "product_hostname": socket.gethostname(),
+            "ssh_public_key": public_key,
+            "requested_username": "rbf-backup",
+            "requested_directory": "/data",
+        }
+        request = validate_request(payload)
+        self._atomic_write(self.enrollment_request_file, canonical_json(request))
+        self.log("Created a public backup-server enrollment request and a protected SSH key.")
+        return {
+            "enrollment_request": request,
+            "enrollment_id": request["enrollment_id"],
+            "enrollment_public_key": public_key,
+        }
+
+    def _scan_host_key(self, host: str, port: int, expected_host_key: str) -> None:
+        result = subprocess.run(
+            ["ssh-keyscan", "-T", "10", "-p", str(port), "-t", "ed25519,rsa,ecdsa", host],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        discovered = set()
+        for line in result.stdout.splitlines():
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.split()
+            if len(fields) >= 3:
+                discovered.add(f"{fields[-2]} {fields[-1]}")
+        if expected_host_key not in discovered:
+            raise RuntimeError("The live SSH host key does not match the enrollment response.")
+
+    @staticmethod
+    def _set_env_values(path: Path, updates: dict[str, str]) -> None:
+        if not path.is_file():
+            raise RuntimeError("The infrastructure .env file is missing.")
+        lines = path.read_text(encoding="utf-8").splitlines()
+        remaining = dict(updates)
+        rendered: list[str] = []
+        for line in lines:
+            if "=" not in line or line.lstrip().startswith("#"):
+                rendered.append(line)
+                continue
+            key = line.split("=", 1)[0].strip()
+            if key in remaining:
+                value = remaining.pop(key)
+                rendered.append(f"{key}={value}")
+            else:
+                rendered.append(line)
+        for key, value in remaining.items():
+            rendered.append(f"{key}={value}")
+        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary.write_text("\n".join(rendered) + "\n", encoding="utf-8")
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+
+    def _store_connection(
+        self,
+        *,
+        host: str,
+        port: int,
+        username: str,
+        remote_directory: str,
+        host_key: str,
+        managed_server: bool = False,
+    ) -> dict[str, Any]:
+        token = self.known_hosts_token(host, port)
+        known_hosts_line = f"{token} {host_key}"
+        fingerprint = self.fingerprint_for_line(known_hosts_line)
+        config = {
+            "host": host,
+            "port": port,
+            "username": username,
+            "remote_directory": remote_directory,
+            "host_key_fingerprint": fingerprint,
+            "managed_server": managed_server,
+        }
+        self._atomic_write(self.config_file, json.dumps(config, ensure_ascii=False, indent=2) + "\n")
+        self._atomic_write(self.known_hosts_file, known_hosts_line + "\n")
+        os.chmod(self.key_file, 0o600)
+        return config
+
+    def apply_enrollment(self) -> dict[str, Any]:
+        if not self.enrollment_request_file.is_file() or not self.key_file.is_file():
+            raise RuntimeError("Create an enrollment request before importing a response.")
+        request = validate_request(self.read_json(self.enrollment_request_file))
+        raw_response = str(self.request.get("response_json") or "")
+        response = validate_response(
+            parse_json_document(raw_response, "Enrollment response"),
+            expected_enrollment_id=str(request["enrollment_id"]),
+        )
+        if response["managed_server"] is not True:
+            raise RuntimeError("The automatic enrollment path accepts only Recovery-Tool managed backup servers.")
+        self._scan_host_key(str(response["host"]), int(response["port"]), str(response["host_key"]))
+        token = self.known_hosts_token(str(response["host"]), int(response["port"]))
+        fingerprint = self.fingerprint_for_line(f"{token} {response['host_key']}")
+        if fingerprint != response["host_key_fingerprint"]:
+            raise RuntimeError("The enrollment response contains a wrong SSH host-key fingerprint.")
+
+        protected_paths = [self.config_file, self.known_hosts_file, self.infra_dir / ".env"]
+        previous = {path: path.read_bytes() if path.is_file() else None for path in protected_paths}
+        try:
+            config = self._store_connection(
+                host=str(response["host"]),
+                port=int(response["port"]),
+                username=str(response["username"]),
+                remote_directory=str(response["remote_directory"]),
+                host_key=str(response["host_key"]),
+                managed_server=bool(response["managed_server"]),
+            )
+            self._set_env_values(
+                self.infra_dir / ".env",
+                {
+                    "BACKUP_RECOVERY_ENABLED": "true",
+                    "BACKUP_AGE_RECIPIENT": str(response["age_recipient"]),
+                },
+            )
+            self.test_connection(config)
+        except Exception:
+            for path, content in previous.items():
+                if content is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    self._atomic_write(path, content.decode("utf-8"))
+            raise
+        self.enrollment_request_file.unlink(missing_ok=True)
+        self.log("Applied the backup-server enrollment, enabled encrypted recovery backups and passed SFTP testing.")
+        return {
+            "enrollment_applied": True,
+            "enrollment_id": response["enrollment_id"],
+            "enrollment_request": None,
+            "enrollment_public_key": None,
+            "age_recipient_configured": True,
+        }
+
     def validate_private_key(self, content: str) -> Path:
         temporary = self.run_dir / f"private-key.{os.getpid()}"
         temporary.write_text(content.rstrip() + "\n", encoding="utf-8")
@@ -235,26 +428,16 @@ class Runner:
         elif not self.key_file.is_file():
             raise RuntimeError("A private key is required for the first backup connection setup.")
 
-        temporary_config = self.run_dir / f"backup-config.{os.getpid()}.json"
-        temporary_known_hosts = self.run_dir / f"known-hosts.{os.getpid()}"
-        config = {
-            "host": host,
-            "port": port,
-            "username": username,
-            "remote_directory": remote_directory,
-            "host_key_fingerprint": fingerprint,
-        }
-        temporary_config.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        temporary_known_hosts.write_text(known_hosts_line + "\n", encoding="utf-8")
-        os.chmod(temporary_config, 0o600)
-        os.chmod(temporary_known_hosts, 0o600)
-        os.replace(temporary_config, self.config_file)
-        os.replace(temporary_known_hosts, self.known_hosts_file)
         if temporary_key is not None:
             os.replace(temporary_key, self.key_file)
-        os.chmod(self.config_file, 0o600)
-        os.chmod(self.known_hosts_file, 0o600)
-        os.chmod(self.key_file, 0o600)
+        self._store_connection(
+            host=host,
+            port=port,
+            username=username,
+            remote_directory=remote_directory,
+            host_key=host_key,
+            managed_server=False,
+        )
         self.log(f"Stored remote backup configuration for {username}@{host}:{port}{remote_directory}.")
 
     def load_connection(self) -> dict[str, Any]:
@@ -304,13 +487,23 @@ class Runner:
         checksum_name = checksum_file.name
         metadata_file = Path(str(backup_file) + ".restore.json")
         metadata_checksum = Path(str(metadata_file) + ".sha256")
-        commands = [
-            f"cd {config['remote_directory']}",
-            f"put {backup_file} {filename}.part",
-            f"rename {filename}.part {filename}",
-            f"put {checksum_file} {checksum_name}.part",
-            f"rename {checksum_name}.part {checksum_name}",
-        ]
+        commands = [f"cd {config['remote_directory']}"]
+        if artifact_type == "backup_set":
+            # Publish the checksum first and the manifest itself last. Consumers
+            # can therefore use the manifest as the atomic remote commit marker.
+            commands.extend([
+                f"put {checksum_file} {checksum_name}.part",
+                f"rename {checksum_name}.part {checksum_name}",
+                f"put {backup_file} {filename}.part",
+                f"rename {filename}.part {filename}",
+            ])
+        else:
+            commands.extend([
+                f"put {backup_file} {filename}.part",
+                f"rename {filename}.part {filename}",
+                f"put {checksum_file} {checksum_name}.part",
+                f"rename {checksum_name}.part {checksum_name}",
+            ])
         if metadata_file.is_file() and metadata_checksum.is_file():
             metadata_name = metadata_file.name
             metadata_checksum_name = metadata_checksum.name
@@ -337,21 +530,42 @@ class Runner:
         remote_checks = [checksum_name]
         if metadata_file.is_file() and metadata_checksum.is_file():
             remote_checks.append(metadata_checksum.name)
-        remote_command = (
-            f"cd {shlex.quote(str(config['remote_directory']))} && "
-            + " && ".join(f"sha256sum -c {shlex.quote(name)}" for name in remote_checks)
-        )
-        ssh_args = self.ssh_base(config)
-        ssh_args[0] = "-p"
-        verify = subprocess.run(
-            ["ssh", *ssh_args, remote_command],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if verify.returncode != 0:
-            raise RuntimeError("The remote checksum verification failed after upload.")
+        if config.get("managed_server") is True:
+            # The managed destination is chrooted and intentionally has no shell.
+            # Re-download each uploaded artifact to a protected temporary file and
+            # compare its digest locally instead of weakening the SSH account.
+            for source in [backup_file, checksum_file, *([metadata_file, metadata_checksum] if metadata_file.is_file() and metadata_checksum.is_file() else [])]:
+                with tempfile.NamedTemporaryFile(prefix="rbf-remote-verify-", dir=self.run_dir, delete=False) as handle:
+                    verification_copy = Path(handle.name)
+                try:
+                    batch = f"cd {config['remote_directory']}\nget {source.name} {verification_copy}\nquit\n"
+                    download = subprocess.run(
+                        ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
+                        input=batch,
+                        text=True,
+                        capture_output=True,
+                        timeout=900,
+                    )
+                    if download.returncode != 0 or hashlib.sha256(verification_copy.read_bytes()).hexdigest() != hashlib.sha256(source.read_bytes()).hexdigest():
+                        raise RuntimeError("The remote SFTP verification failed after upload.")
+                finally:
+                    verification_copy.unlink(missing_ok=True)
+        else:
+            remote_command = (
+                f"cd {shlex.quote(str(config['remote_directory']))} && "
+                + " && ".join(f"sha256sum -c {shlex.quote(name)}" for name in remote_checks)
+            )
+            ssh_args = self.ssh_base(config)
+            ssh_args[0] = "-p"
+            verify = subprocess.run(
+                ["ssh", *ssh_args, remote_command],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if verify.returncode != 0:
+                raise RuntimeError("The remote checksum verification failed after upload.")
 
         digest_builder = hashlib.sha256()
         with backup_file.open("rb") as handle:
@@ -556,6 +770,8 @@ class Runner:
         messages = {
             "discover": "SSH host-key discovery failed. Review the protected host log.",
             "configure": "The remote backup connection could not be saved. Review the protected host log.",
+            "prepare_enrollment": "The enrollment request could not be created.",
+            "apply_enrollment": "The enrollment response could not be applied or verified.",
             "test": "The remote backup connection test failed. Review the protected host log.",
             "backup": "The application backup failed. Review the protected host log.",
             "delete_configuration": "The remote backup connection could not be removed.",
@@ -567,12 +783,18 @@ class Runner:
         }
         return messages.get(operation, "The protected host operation failed.")
 
-    def delete_configuration(self) -> None:
+    def delete_configuration(self) -> dict[str, Any]:
         if self.secret_dir.exists():
             shutil.rmtree(self.secret_dir)
         self.secret_dir.mkdir(parents=True, exist_ok=True)
         os.chmod(self.secret_dir, 0o700)
         self.log("Removed the remote backup connection and its private key.")
+        return {
+            "enrollment_request": None,
+            "enrollment_id": None,
+            "enrollment_public_key": None,
+            "enrollment_applied": False,
+        }
 
     def run(self) -> None:
         self.prepare()
@@ -585,7 +807,13 @@ class Runner:
         thread.start()
         try:
             updates: dict[str, Any] = {}
-            if operation == "discover":
+            if operation == "prepare_enrollment":
+                updates = self.prepare_enrollment()
+                message = "Enrollment request created. Provision the backup server with the Recovery Tool."
+            elif operation == "apply_enrollment":
+                updates = self.apply_enrollment()
+                message = "Backup server enrolled, encrypted recovery enabled and SFTP connection verified."
+            elif operation == "discover":
                 updates = self.discover()
                 message = "SSH host key discovered. Verify its fingerprint before saving the connection."
             elif operation == "configure":
@@ -598,7 +826,7 @@ class Runner:
                 updates = self.create_and_transfer_backup()
                 message = "Database, uploaded-file and any enabled encrypted recovery backups were created, transferred and verified successfully."
             elif operation == "delete_configuration":
-                self.delete_configuration()
+                updates = self.delete_configuration()
                 message = "Remote backup connection removed."
             elif operation == "scan_local_backups":
                 updates = self.scan_local_backups()

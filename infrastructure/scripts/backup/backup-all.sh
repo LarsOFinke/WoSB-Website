@@ -23,6 +23,18 @@ if ! /usr/bin/env bash "$SCRIPT_DIR/run-consistent-backup.sh" "${args[@]}"; then
   python3 "$SCRIPT_DIR/backup_status.py" "$health" --status failed --stage backup --reason scheduled --started-at "$started_at" --message "Coordinated backup or recovery verification failed."
   exit 1
 fi
+sync_args=(
+  --infra "$INFRA_DIR"
+  --postgres "$(cat "$postgres_result")"
+  --files "$(cat "$files_result")"
+  --verification "$(cat "$verification_result")"
+  --set "$(cat "$set_result")"
+)
+if [[ -s "$recovery_result" ]]; then sync_args+=(--recovery "$(cat "$recovery_result")"); fi
+if ! python3 "$SCRIPT_DIR/sync-backup-set-remote.py" "${sync_args[@]}"; then
+  python3 "$SCRIPT_DIR/backup_status.py" "$health" --status failed --stage remote-transfer --reason scheduled --started-at "$started_at" --message "Local backup set is committed, but automatic offsite transfer failed."
+  exit 1
+fi
 python3 "$SCRIPT_DIR/backup_status.py" "$health" --status succeeded --stage committed --reason scheduled --started-at "$started_at" \
   --postgres "$(cat "$postgres_result" 2>/dev/null || true)" \
   --files "$(cat "$files_result" 2>/dev/null || true)" \

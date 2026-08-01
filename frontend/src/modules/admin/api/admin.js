@@ -259,6 +259,14 @@ export function getBackupControlStatus() {
   return get('/admin/backups/status')
 }
 
+export function prepareBackupEnrollment() {
+  return post('/admin/backups/enrollment/prepare', {})
+}
+
+export function applyBackupEnrollment(payload) {
+  return post('/admin/backups/enrollment/apply', payload)
+}
+
 export function discoverBackupHost(payload) {
   return post('/admin/backups/discover', payload)
 }

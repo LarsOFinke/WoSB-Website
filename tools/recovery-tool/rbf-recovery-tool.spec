@@ -33,7 +33,7 @@ a = Analysis(
     pathex=[str(root / "src"), str(root.parents[1])],
     binaries=binaries,
     datas=datas,
-    hiddenimports=hiddenimports + ["contracts.recovery.contract"],
+    hiddenimports=hiddenimports + ["contracts.recovery.contract", "contracts.backup_enrollment"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

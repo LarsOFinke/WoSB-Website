@@ -56,6 +56,8 @@ install -m 0755 "$SCRIPT_DIR/Provision-RbfRecoveryLab.sh" \
   "$ROOT/usr/lib/rbf-recovery-tool/Provision-RbfRecoveryLab.sh"
 install -m 0755 "$SCRIPT_DIR/Setup-RbfRecoveryLab.sh" \
   "$ROOT/usr/lib/rbf-recovery-tool/Setup-RbfRecoveryLab.sh"
+install -m 0755 "$SCRIPT_DIR/Provision-RbfBackupServer.sh" \
+  "$ROOT/usr/lib/rbf-recovery-tool/Provision-RbfBackupServer.sh"
 install -m 0644 "$SCRIPT_DIR/README.md" \
   "$ROOT/usr/share/doc/rbf-recovery-tool/README.md"
 
@@ -78,10 +80,11 @@ Section: admin
 Priority: optional
 Architecture: $DEB_ARCH
 Maintainer: Royal Blackwater Fleet
-Depends: libc6, libgcc-s1, libstdc++6, libx11-6, libxext6, libxrender1, libxft2, libfontconfig1, libfreetype6, pkexec
+Depends: libc6, libgcc-s1, libstdc++6, libx11-6, libxext6, libxrender1, libxft2, libfontconfig1, libfreetype6, openssh-client, pkexec
 Description: Encrypted Royal Blackwater Fleet disaster-recovery client
  Downloads and verifies age-encrypted recovery bundles over pinned-host-key SFTP.
- Includes an optional rootless-Docker PostgreSQL restore lab for Ubuntu.
+ Includes an optional rootless-Docker PostgreSQL restore lab and a hardened
+ assisted SFTP backup-server provisioner for Ubuntu.
 EOF_CONTROL
 
 OUTPUT_NAME="rbf-recovery-tool_${VERSION}_${DEB_ARCH}.deb"
@@ -93,6 +96,10 @@ dpkg-deb --root-owner-group --build "$ROOT" "$OUTPUT" >/dev/null
 PACKAGE_DEPENDS="$(dpkg-deb -f "$OUTPUT" Depends)"
 [[ ",$PACKAGE_DEPENDS," == *", pkexec,"* || ",$PACKAGE_DEPENDS," == *",pkexec,"* ]] || {
   echo "Paketprüfung fehlgeschlagen: pkexec fehlt in Depends: $PACKAGE_DEPENDS" >&2
+  exit 1
+}
+[[ ",$PACKAGE_DEPENDS," == *", openssh-client,"* || ",$PACKAGE_DEPENDS," == *",openssh-client,"* ]] || {
+  echo "Paketprüfung fehlgeschlagen: openssh-client fehlt in Depends: $PACKAGE_DEPENDS" >&2
   exit 1
 }
 [[ "$PACKAGE_DEPENDS" != *"policykit-1"* ]] || {
