@@ -246,19 +246,34 @@ def test_admin_backup_runner_creates_complete_recovery_artifacts(tmp_path, monke
     request_file = tmp_path / "request.json"
     request_file.write_text("{}", encoding="utf-8")
     runner = module.Runner(tmp_path, request_file)
+    runner.prepare()
     monkeypatch.setattr(runner, "load_connection", lambda: {"remote_directory": "/remote"})
-    monkeypatch.setattr(runner, "test_connection", lambda _config: None)
     monkeypatch.setattr(runner, "recovery_enabled", lambda: True)
-    calls = []
+    transfers = []
 
-    def fake_create(**kwargs):
-        calls.append(kwargs)
-        artifact = tmp_path / f"{kwargs['artifact_type']}.archive"
-        artifact.write_bytes(kwargs["artifact_type"].encode())
-        Path(str(artifact) + ".sha256").write_text("checksum", encoding="utf-8")
-        return artifact
+    def fake_run(command, **kwargs):
+        class Result:
+            returncode = 0
+            stdout = "coordinated backup complete\n"
+            stderr = ""
+
+        arguments = list(command)
+        for flag, label in (
+            ("--postgres-result", "postgresql"),
+            ("--files-result", "files"),
+            ("--recovery-result", "recovery"),
+            ("--verification-result", "verification"),
+            ("--backup-set-result", "backup_set"),
+        ):
+            result_path = Path(arguments[arguments.index(flag) + 1])
+            artifact = tmp_path / f"{label}.archive"
+            artifact.write_bytes(label.encode())
+            Path(f"{artifact}.sha256").write_text("checksum", encoding="utf-8")
+            result_path.write_text(str(artifact), encoding="utf-8")
+        return Result()
 
     def fake_transfer(_config, artifact, artifact_type):
+        transfers.append(artifact_type)
         return {
             "artifact_type": artifact_type,
             "filename": artifact.name,
@@ -267,21 +282,11 @@ def test_admin_backup_runner_creates_complete_recovery_artifacts(tmp_path, monke
             "remote_path": f"/remote/{artifact.name}",
         }
 
-    monkeypatch.setattr(runner, "create_local_backup_artifact", fake_create)
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
     monkeypatch.setattr(runner, "transfer", fake_transfer)
     result = runner.create_and_transfer_backup()
 
-    assert [call["script_name"] for call in calls] == [
-        "backup-postgres.sh",
-        "backup-data.sh",
-        "backup-recovery.sh",
-    ]
-    assert calls[2]["arguments"] == [
-        "--postgres",
-        str(tmp_path / "postgresql.archive"),
-        "--files",
-        str(tmp_path / "files.archive"),
-    ]
+    assert transfers == ["postgresql", "files", "recovery", "verification", "backup_set"]
     assert [row["artifact_type"] for row in result["artifacts"]] == [
         "postgresql",
         "files",
@@ -489,6 +494,77 @@ def test_admin_runner_restore_uses_verified_catalog_and_hashed_one_time_approval
     backup.write_bytes(b"valid-gzip-placeholder")
     digest = hashlib.sha256(backup.read_bytes()).hexdigest()
     Path(f"{backup}.sha256").write_text(f"{digest}  {backup.name}\n", encoding="ascii")
+    metadata = Path(f"{backup}.restore.json")
+    metadata.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "backup": {
+                    "filename": backup.name,
+                    "size_bytes": backup.stat().st_size,
+                    "sha256": digest,
+                    "consistency": "application-quiesced",
+                },
+                "application": {"alembic_revisions": ["0020_raid_helper_premium"]},
+                "security": {"secret_key_fingerprints": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+    metadata_digest = hashlib.sha256(metadata.read_bytes()).hexdigest()
+    Path(f"{metadata}.sha256").write_text(
+        f"{metadata_digest}  {metadata.name}\n", encoding="ascii"
+    )
+    files = infra / "data/backups/files/rbf-files.tar.gz"
+    files.parent.mkdir(parents=True)
+    files.write_bytes(b"files")
+    files_digest = hashlib.sha256(files.read_bytes()).hexdigest()
+    Path(f"{files}.sha256").write_text(f"{files_digest}  {files.name}\n", encoding="ascii")
+    report = infra / "data/backups/reports/preflight.json"
+    report.parent.mkdir(parents=True)
+    report.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "mode": "preflight",
+                "status": "passed",
+                "recoverable": True,
+                "source_artifact": {
+                    "filename": backup.name,
+                    "size_bytes": backup.stat().st_size,
+                    "sha256": digest,
+                },
+                "checks": [
+                    {"name": name, "status": "passed"}
+                    for name in (
+                        "metadata_compatibility",
+                        "staging_database_creation",
+                        "postgres_import",
+                        "migration_and_schema_preflight",
+                        "secret_key_preflight",
+                        "application_readiness_preflight",
+                        "preflight_cleanup",
+                    )
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    report_digest = hashlib.sha256(report.read_bytes()).hexdigest()
+    Path(f"{report}.sha256").write_text(f"{report_digest}  {report.name}\n", encoding="ascii")
+    import backup_set_manifest
+    backup_set = infra / "data/backups/sets/rbf-backup-set-test.json"
+    backup_set_manifest.create_manifest(
+        infra,
+        backup_set,
+        files=files,
+        postgres=backup,
+        verification=report,
+    )
+    set_digest = hashlib.sha256(backup_set.read_bytes()).hexdigest()
+    Path(f"{backup_set}.sha256").write_text(
+        f"{set_digest}  {backup_set.name}\n", encoding="ascii"
+    )
 
     records, _ = module.scan_local_postgres_backups(infra)
     assert len(records) == 1

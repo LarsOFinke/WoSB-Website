@@ -9,8 +9,9 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit
 
-SCHEMA_VERSION = 1
-MAX_METADATA_BYTES = 16 * 1024
+SCHEMA_VERSION = 2
+SUPPORTED_SCHEMAS = frozenset({1, 2})
+MAX_METADATA_BYTES = 32 * 1024
 
 
 def sha256_file(path: Path) -> str:
@@ -85,11 +86,26 @@ def database_identity(env_path: Path) -> dict[str, str]:
     }
 
 
+def _revisions(value: str) -> list[str]:
+    result: list[str] = []
+    for item in value.split(","):
+        revision = item.strip()
+        if revision and revision not in result:
+            result.append(revision)
+    return result
+
+
 def create_metadata(
     backup: Path,
     env_file: Path,
     version_file: Path,
     alembic_head: str,
+    *,
+    postgres_version: str = "",
+    git_commit: str = "",
+    reason: str = "unspecified",
+    backup_format: str = "postgresql-plain-sql+gzip",
+    consistency: str = "uncoordinated",
 ) -> Path:
     if not backup.is_file():
         raise RuntimeError(f"Backup file does not exist: {backup}")
@@ -107,14 +123,21 @@ def create_metadata(
             "filename": backup.name,
             "size_bytes": backup.stat().st_size,
             "sha256": sha256_file(backup),
+            "reason": reason.strip() or "unspecified",
+            "format": backup_format.strip() or "unknown",
+            "consistency": consistency.strip() or "uncoordinated",
         },
         "application": {
             "version": version_file.read_text(encoding="utf-8").strip()
             if version_file.is_file()
             else "",
-            "alembic_head": alembic_head.strip(),
+            "git_commit": git_commit.strip(),
+            "alembic_revisions": _revisions(alembic_head),
         },
-        "database": database_identity(env_file),
+        "database": {
+            **database_identity(env_file),
+            "postgres_version": postgres_version.strip(),
+        },
         "security": {
             "secret_key_fingerprints": fingerprints,
             "secret_key_count": len(fingerprints),
@@ -133,10 +156,10 @@ def create_metadata(
 
 
 def validate_metadata(metadata_path: Path, backup: Path) -> dict[str, object]:
-    if metadata_path.stat().st_size > MAX_METADATA_BYTES:
-        raise RuntimeError("Restore metadata is unexpectedly large.")
+    if not metadata_path.is_file() or metadata_path.stat().st_size > MAX_METADATA_BYTES:
+        raise RuntimeError("Restore metadata is missing or unexpectedly large.")
     payload = json.loads(metadata_path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or payload.get("schema_version") != SCHEMA_VERSION:
+    if not isinstance(payload, dict) or int(payload.get("schema_version", -1)) not in SUPPORTED_SCHEMAS:
         raise RuntimeError("Unsupported restore-metadata schema.")
     backup_data = payload.get("backup")
     if not isinstance(backup_data, dict):
@@ -159,6 +182,11 @@ def main() -> None:
     create.add_argument("env_file", type=Path)
     create.add_argument("version_file", type=Path)
     create.add_argument("alembic_head")
+    create.add_argument("--postgres-version", default="")
+    create.add_argument("--git-commit", default="")
+    create.add_argument("--reason", default="unspecified")
+    create.add_argument("--format", dest="backup_format", default="postgresql-plain-sql+gzip")
+    create.add_argument("--consistency", default="uncoordinated")
 
     fingerprints = subparsers.add_parser("fingerprints")
     fingerprints.add_argument("env_file", type=Path)
@@ -169,7 +197,19 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.command == "create":
-        print(create_metadata(args.backup, args.env_file, args.version_file, args.alembic_head))
+        print(
+            create_metadata(
+                args.backup,
+                args.env_file,
+                args.version_file,
+                args.alembic_head,
+                postgres_version=args.postgres_version,
+                git_commit=args.git_commit,
+                reason=args.reason,
+                backup_format=args.backup_format,
+                consistency=args.consistency,
+            )
+        )
     elif args.command == "fingerprints":
         print(json.dumps(environment_key_fingerprints(args.env_file)))
     else:

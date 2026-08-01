@@ -827,7 +827,13 @@ require("sudo" not in linux_install, "Linux recovery installer must not require 
 recovery_lab = (ROOT / "tools/recovery-tool/src/rbf_recovery_tool/docker_lab.py").read_text(encoding="utf-8")
 for marker in ("127.0.0.1", "no-new-privileges:true", "read_only: true", "postgres:16.14-alpine3.24"):
     require(marker in recovery_lab, f"local recovery database lab hardening is missing: {marker}")
-require("0.0.0.0" not in recovery_lab, "local recovery database lab must not bind publicly")
+require(
+    '127.0.0.1:${{POSTGRES_LOCAL_PORT}}:5432' in recovery_lab,
+    "local recovery database lab must remain loopback-only",
+)
+preflight_override = recovery_lab.split("def _application_preflight_override", 1)[1].split("def verify_recovery", 1)[0]
+require("networks: [rbf_recovery_backend]" in preflight_override, "recovery application preflight must use the internal lab network")
+require("ports:" not in preflight_override, "recovery application preflight must not publish host ports")
 rootless_setup = (ROOT / "tools/linux/recovery-tool/Setup-RbfRecoveryLab.sh").read_text(encoding="utf-8")
 require("rootless" in rootless_setup and "docker group" not in rootless_setup, "Linux DB lab must use rootless Docker")
 provisioner = (ROOT / "tools/linux/recovery-tool/Provision-RbfRecoveryLab.sh").read_text(encoding="utf-8")

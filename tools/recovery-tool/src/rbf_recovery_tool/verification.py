@@ -304,3 +304,43 @@ def extract_postgres_artifact(bundle: Path, identity: Path, destination: Path) -
             if os.name != "nt":
                 os.chmod(target, 0o600)
             return target
+
+
+def extract_verified_bundle(bundle: Path, identity: Path, destination: Path) -> tuple[Path, dict]:
+    """Verify an encrypted bundle and safely extract its complete declared inventory."""
+    bundle = bundle.expanduser().resolve()
+    identity = identity.expanduser().resolve()
+    destination = destination.expanduser().resolve()
+    if destination.exists() and any(destination.iterdir()):
+        raise RuntimeError("Das Zielverzeichnis für die Bundle-Extraktion ist nicht leer.")
+    destination.mkdir(parents=True, exist_ok=True)
+    bundle_sha256 = verify_sidecar(bundle)
+    with tempfile.TemporaryDirectory(prefix="rbf-recovery-extract-") as temporary:
+        archive = Path(temporary) / "recovery.tar.gz"
+        decrypt_bundle(bundle, identity, archive)
+        verify_plain_archive(archive, bundle_sha256)
+        with tarfile.open(archive, mode="r:gz") as handle:
+            members = _validated_members(handle)
+            manifest_member = members.get("manifest.json")
+            if manifest_member is None:
+                raise RuntimeError("manifest.json fehlt.")
+            source = handle.extractfile(manifest_member)
+            if source is None:
+                raise RuntimeError("manifest.json konnte nicht gelesen werden.")
+            with source:
+                manifest = json.load(source)
+            for name, member in members.items():
+                target = destination / PurePosixPath(name)
+                target.resolve().relative_to(destination)
+                if member.isdir():
+                    target.mkdir(parents=True, exist_ok=True)
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                extracted = handle.extractfile(member)
+                if extracted is None:
+                    raise RuntimeError(f"Archivdatei konnte nicht gelesen werden: {name}")
+                with extracted, target.open("xb") as output:
+                    shutil.copyfileobj(extracted, output)
+                if os.name != "nt":
+                    os.chmod(target, 0o600)
+    return destination, manifest

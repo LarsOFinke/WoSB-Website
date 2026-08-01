@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files smoke doctor lint config
+.PHONY: setup setup-core up down restart status logs update backup backup-db backup-files backup-preflight smoke doctor lint config
 
 setup:
 	sudo ../setup.sh --profile full
@@ -34,6 +34,9 @@ backup-db:
 
 backup-files:
 	./scripts/backup/backup-data.sh
+
+backup-preflight:
+	sudo ./scripts/backup/run-consistent-backup.sh --reason manual-preflight
 
 smoke:
 	./scripts/checks/smoke-test.sh

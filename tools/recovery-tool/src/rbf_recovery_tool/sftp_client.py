@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 from pathlib import Path, PurePosixPath
 import re
 import socket
+import stat
 from typing import Callable
 
 from .config import Profile
@@ -13,6 +15,11 @@ from .verification import verify_sidecar
 
 
 _BUNDLE_RE = re.compile(r"^rbf-recovery-\d{8}T\d{6}Z\.tar\.gz\.age$")
+_SET_RE = re.compile(r"^rbf-backup-set-\d{8}T\d{6}Z-\d+\.json$")
+_REPORT_RE = re.compile(r"^rbf-postgres-preflight-\d{8}T\d{6}Z-\d+\.json$")
+_MAX_SET_BYTES = 128 * 1024
+_MAX_REPORT_BYTES = 128 * 1024
+_MAX_SIDECAR_BYTES = 4096
 
 
 def _paramiko():
@@ -86,22 +93,139 @@ def connect(profile: Profile, password: str = ""):
     return client
 
 
+def _remote_bytes(sftp, path: PurePosixPath, *, limit: int) -> bytes:
+    attributes = sftp.stat(path.as_posix())
+    if not stat.S_ISREG(attributes.st_mode) or attributes.st_size > limit:
+        raise RuntimeError(f"Remote-Nachweis ist keine zulässige reguläre Datei: {path.name}")
+    with sftp.open(path.as_posix(), "rb") as handle:
+        data = handle.read(limit + 1)
+    if len(data) > limit:
+        raise RuntimeError(f"Remote-Nachweis ist zu groß: {path.name}")
+    return data
+
+
+def _sidecar_digest(data: bytes, expected_filename: str) -> str:
+    try:
+        fields = data.decode("ascii").strip().split()
+    except UnicodeDecodeError as exc:
+        raise RuntimeError("Remote-Prüfsumme ist nicht ASCII-kodiert.") from exc
+    digest = fields[0].lower() if fields else ""
+    if not re.fullmatch(r"[a-f0-9]{64}", digest):
+        raise RuntimeError("Remote-Prüfsumme ist ungültig.")
+    if len(fields) > 1 and fields[-1].lstrip("*") != expected_filename:
+        raise RuntimeError("Remote-Prüfsumme nennt eine andere Datei.")
+    return digest
+
+
+def _verified_remote_file(sftp, root: PurePosixPath, filename: str, *, limit: int) -> bytes:
+    path = root / filename
+    data = _remote_bytes(sftp, path, limit=limit)
+    sidecar = _remote_bytes(sftp, root / f"{filename}.sha256", limit=_MAX_SIDECAR_BYTES)
+    expected = _sidecar_digest(sidecar, filename)
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != expected:
+        raise RuntimeError(f"Remote-Nachweis hat eine falsche Prüfsumme: {filename}")
+    return data
+
+
+def _record(artifacts: object, name: str) -> dict[str, object]:
+    if not isinstance(artifacts, dict) or not isinstance(artifacts.get(name), dict):
+        raise RuntimeError(f"Backup-Set enthält keinen {name}-Nachweis.")
+    return artifacts[name]
+
+
+def _validate_commit_payload(
+    set_payload: dict[str, object],
+    report_payload: dict[str, object],
+    *,
+    bundle_name: str,
+    bundle_size: int,
+    bundle_sha256: str | None = None,
+    report_name: str,
+    report_size: int,
+    report_sha256: str,
+) -> None:
+    if set_payload.get("schema_version") != 1 or set_payload.get("committed") is not True:
+        raise RuntimeError("Remote-Backup-Set ist nicht committed oder wird nicht unterstützt.")
+    artifacts = set_payload.get("artifacts")
+    recovery = _record(artifacts, "recovery")
+    verification = _record(artifacts, "verification")
+    if recovery.get("filename") != bundle_name or int(recovery.get("size_bytes", -1)) != bundle_size:
+        raise RuntimeError("Remote-Backup-Set bindet nicht das angebotene Recovery-Bundle.")
+    if bundle_sha256 is not None and recovery.get("sha256") != bundle_sha256:
+        raise RuntimeError("Recovery-Bundle stimmt nicht mit dem Remote-Commit-Marker überein.")
+    if (
+        verification.get("filename") != report_name
+        or int(verification.get("size_bytes", -1)) != report_size
+        or verification.get("sha256") != report_sha256
+    ):
+        raise RuntimeError("Recovery-Bericht stimmt nicht mit dem Remote-Commit-Marker überein.")
+    if (
+        report_payload.get("schema_version") != 1
+        or report_payload.get("mode") != "preflight"
+        or report_payload.get("status") != "passed"
+        or report_payload.get("recoverable") is not True
+    ):
+        raise RuntimeError("Remote-Backup besitzt keinen erfolgreichen vollständigen Recovery-Preflight.")
+
+
 def latest_remote_bundle(sftp, remote_directory: str):
     remote_directory = _remote_directory(remote_directory)
-    attributes = sftp.listdir_attr(remote_directory)
-    names = {item.filename for item in attributes}
-    candidates = [
-        item for item in attributes
-        if _BUNDLE_RE.fullmatch(item.filename) and f"{item.filename}.sha256" in names
-    ]
-    if not candidates:
-        raise RuntimeError(
-            "Im Remote-Verzeichnis wurde kein vollständiges Recovery-Bundle gefunden."
-        )
-    candidates.sort(key=lambda item: (item.st_mtime, item.filename), reverse=True)
-    selected = candidates[0]
     root = PurePosixPath(remote_directory)
-    return root / selected.filename, selected.st_size
+    attributes = sftp.listdir_attr(remote_directory)
+    by_name = {item.filename: item for item in attributes}
+    candidates = [
+        item
+        for item in attributes
+        if _SET_RE.fullmatch(item.filename) and f"{item.filename}.sha256" in by_name
+    ]
+    candidates.sort(key=lambda item: (item.st_mtime, item.filename), reverse=True)
+    for candidate in candidates:
+        try:
+            set_data = _verified_remote_file(sftp, root, candidate.filename, limit=_MAX_SET_BYTES)
+            set_payload = json.loads(set_data.decode("utf-8"))
+            if not isinstance(set_payload, dict):
+                raise RuntimeError("Remote-Backup-Set ist kein JSON-Objekt.")
+            artifacts = set_payload.get("artifacts")
+            recovery = _record(artifacts, "recovery")
+            verification = _record(artifacts, "verification")
+            bundle_name = str(recovery.get("filename") or "")
+            report_name = str(verification.get("filename") or "")
+            if not _BUNDLE_RE.fullmatch(bundle_name) or not _REPORT_RE.fullmatch(report_name):
+                raise RuntimeError("Remote-Backup-Set enthält unsichere Dateinamen.")
+            required = {
+                bundle_name,
+                f"{bundle_name}.sha256",
+                report_name,
+                f"{report_name}.sha256",
+            }
+            if not required.issubset(by_name):
+                raise RuntimeError("Remote-Backup-Set ist unvollständig.")
+            report_data = _verified_remote_file(sftp, root, report_name, limit=_MAX_REPORT_BYTES)
+            report_payload = json.loads(report_data.decode("utf-8"))
+            if not isinstance(report_payload, dict):
+                raise RuntimeError("Remote-Recovery-Bericht ist kein JSON-Objekt.")
+            bundle_attr = by_name[bundle_name]
+            _validate_commit_payload(
+                set_payload,
+                report_payload,
+                bundle_name=bundle_name,
+                bundle_size=bundle_attr.st_size,
+                report_name=report_name,
+                report_size=len(report_data),
+                report_sha256=hashlib.sha256(report_data).hexdigest(),
+            )
+            return (
+                root / bundle_name,
+                bundle_attr.st_size,
+                root / candidate.filename,
+                root / report_name,
+            )
+        except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError, OSError):
+            continue
+    raise RuntimeError(
+        "Im Remote-Verzeichnis wurde kein durch einen erfolgreichen Recovery-Preflight committedes Bundle gefunden."
+    )
 
 
 def download_latest(
@@ -118,27 +242,52 @@ def download_latest(
     try:
         sftp = client.open_sftp()
         try:
-            remote_bundle, total_size = latest_remote_bundle(sftp, profile.remote_directory)
-            filename = remote_bundle.name
-            local_bundle = destination / filename
-            local_checksum = destination / f"{filename}.sha256"
-            temporary_bundle = destination / f".{filename}.part"
-            temporary_checksum = destination / f".{filename}.sha256.part"
-            for temporary in (temporary_bundle, temporary_checksum):
-                temporary.unlink(missing_ok=True)
+            remote_bundle, total_size, remote_set, remote_report = latest_remote_bundle(
+                sftp, profile.remote_directory
+            )
+            remote_files = [
+                remote_bundle,
+                PurePosixPath(f"{remote_bundle.as_posix()}.sha256"),
+                remote_report,
+                PurePosixPath(f"{remote_report.as_posix()}.sha256"),
+                PurePosixPath(f"{remote_set.as_posix()}.sha256"),
+                remote_set,
+            ]
+            temporary: list[Path] = []
+            completed: list[Path] = []
             try:
-                callback = None
-                if progress:
-                    callback = lambda transferred, total: progress(transferred, total or total_size)
-                sftp.get(remote_bundle.as_posix(), str(temporary_bundle), callback=callback)
-                sftp.get(f"{remote_bundle.as_posix()}.sha256", str(temporary_checksum))
-                os.replace(temporary_bundle, local_bundle)
-                os.replace(temporary_checksum, local_checksum)
+                for remote in remote_files:
+                    local = destination / remote.name
+                    partial = destination / f".{remote.name}.part"
+                    partial.unlink(missing_ok=True)
+                    callback = None
+                    if progress and remote == remote_bundle:
+                        callback = lambda transferred, total: progress(transferred, total or total_size)
+                    sftp.get(remote.as_posix(), str(partial), callback=callback)
+                    temporary.append(partial)
+                    completed.append(local)
+                for partial, local in zip(temporary, completed, strict=True):
+                    os.replace(partial, local)
+                local_bundle, local_bundle_sidecar, local_report, _, _, local_set = completed
                 verify_sidecar(local_bundle)
+                verify_sidecar(local_report)
+                verify_sidecar(local_set)
+                set_payload = json.loads(local_set.read_text(encoding="utf-8"))
+                report_payload = json.loads(local_report.read_text(encoding="utf-8"))
+                _validate_commit_payload(
+                    set_payload,
+                    report_payload,
+                    bundle_name=local_bundle.name,
+                    bundle_size=local_bundle.stat().st_size,
+                    bundle_sha256=hashlib.sha256(local_bundle.read_bytes()).hexdigest(),
+                    report_name=local_report.name,
+                    report_size=local_report.stat().st_size,
+                    report_sha256=hashlib.sha256(local_report.read_bytes()).hexdigest(),
+                )
                 return local_bundle
             except Exception:
-                temporary_bundle.unlink(missing_ok=True)
-                temporary_checksum.unlink(missing_ok=True)
+                for partial in temporary:
+                    partial.unlink(missing_ok=True)
                 raise
         finally:
             sftp.close()

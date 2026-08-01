@@ -217,15 +217,22 @@ reject_pattern 'migration_files_changed' "$INFRA_DIR/scripts/update/repository.s
 require_pattern 'update_capture_running_images' "$INFRA_DIR/scripts/update/workflow.sh"
 require_pattern 'heartbeat_at' "$INFRA_DIR/scripts/update/status.sh"
 require_pattern 'update_run_backup_scripts true' "$INFRA_DIR/scripts/update/workflow.sh"
-require_pattern 'exec 8>"$RUN_DIR/backup.lock"' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'run-consistent-backup.sh' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern '--lock-held' "$INFRA_DIR/scripts/update/workflow.sh"
 reject_pattern 'backup/backup-all.sh' "$INFRA_DIR/scripts/update/workflow.sh"
 require_pattern 'bw_compose stop api gateway' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
-require_pattern 'backup-postgres.sh' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
+require_pattern 'run-consistent-backup.sh' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
+require_pattern '--preflight-only' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'CREATE DATABASE %I OWNER %I TEMPLATE template0' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'python -m app.db.restore_preflight' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
+require_pattern 'application_readiness_preflight' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'rollback_database_swap' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 reject_pattern '-c "SELECT pg_terminate_backend' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_file "$INFRA_DIR/scripts/backup/backup_metadata.py"
+require_file "$INFRA_DIR/scripts/backup/backup_set_manifest.py"
+require_file "$INFRA_DIR/scripts/backup/recovery_report.py"
+require_file "$INFRA_DIR/scripts/backup/recovery_preflight.py"
+require_file "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
 require_file "$INFRA_DIR/scripts/backup/merge-encryption-keyring.sh"
 require_pattern 'backup_metadata.py' "$INFRA_DIR/scripts/backup/backup-postgres.sh"
 require_pattern "-mindepth 2" "$INFRA_DIR/scripts/checks/doctor.sh"
@@ -266,7 +273,7 @@ require_pattern 'BACKUP_RECOVERY_ENABLED=false' "$INFRA_DIR/.env.example"
 require_pattern 'BACKUP_AGE_RECIPIENT=' "$INFRA_DIR/.env.example"
 require_pattern 'BACKUP_PULL_EXPORT_DIR=' "$INFRA_DIR/.env.example"
 require_pattern 'age ca-certificates' "$INFRA_DIR/scripts/lib/host/packages.sh"
-require_pattern 'backup-recovery.sh' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern 'run-consistent-backup.sh' "$INFRA_DIR/scripts/backup/backup-all.sh"
 require_pattern 'infrastructure.env' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
 require_pattern 'backend-config' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
 require_pattern 'control-secrets' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
@@ -283,24 +290,34 @@ require_pattern 'token_sha256' "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
 require_pattern 'RBF_RESTORE_LOCK_HELD' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
 require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
-require_pattern '/proc/$$/fd/9' "$INFRA_DIR/scripts/backup/backup-all.sh"
-require_pattern 'exec 7>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/backup-all.sh"
+require_pattern '--all-locks-held' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'exec 9>"$run_dir/update.lock"' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
+require_pattern 'exec 8>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
+require_pattern 'backup_set_manifest.py' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
+require_pattern 'export_verified_recovery_set' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
+require_pattern 'copy_atomic "$set_manifest"' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
+reject_pattern 'BACKUP_PULL_EXPORT_DIR' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
+require_pattern 'python -m uvicorn main:app --app-dir src' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 
 python3 - \
   "$INFRA_DIR/scripts/services/backup-from-admin.sh" \
-  "$INFRA_DIR/scripts/backup/backup-all.sh" <<'PY_BACKUP_LOCKS'
+  "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" \
+  "$INFRA_DIR/scripts/backup/backup-admin-runner.py" <<'PY_BACKUP_LOCKS'
 from pathlib import Path
 import sys
 
-admin_runner = Path(sys.argv[1]).read_text(encoding="utf-8")
-scheduled_backup = Path(sys.argv[2]).read_text(encoding="utf-8")
-assert admin_runner.index('exec 8>"$run_dir/update.lock"') < admin_runner.index('flock 8')
-assert admin_runner.index('flock 8') < admin_runner.index('exec 9>"$run_dir/backup.lock"')
-assert admin_runner.index('flock 9') < admin_runner.index('claim_control_request')
-assert scheduled_backup.index('/proc/$$/fd/9') < scheduled_backup.index('exec 8>"$update_lock"')
-assert scheduled_backup.index('exec 8>"$update_lock"') < scheduled_backup.index('flock 8')
-assert scheduled_backup.index('flock 8') < scheduled_backup.index('exec 7>"$run_dir/backup.lock"')
-assert scheduled_backup.index('flock 7') < scheduled_backup.index('backup-postgres.sh')
+admin_service = Path(sys.argv[1]).read_text(encoding="utf-8")
+coordinator = Path(sys.argv[2]).read_text(encoding="utf-8")
+admin_runner = Path(sys.argv[3]).read_text(encoding="utf-8")
+assert admin_service.index('exec 8>"$run_dir/update.lock"') < admin_service.index('flock 8')
+assert admin_service.index('flock 8') < admin_service.index('exec 9>"$run_dir/backup.lock"')
+assert admin_service.index('flock 9') < admin_service.index('claim_control_request')
+assert coordinator.index('exec 9>"$run_dir/update.lock"') < coordinator.index('flock 9')
+assert coordinator.index('flock 9') < coordinator.index('exec 8>"$run_dir/backup.lock"')
+assert coordinator.index('flock 8') < coordinator.index('backup-postgres.sh')
+assert 'if [[ "$lock_held" != true' in coordinator
+assert 'if [[ "$all_locks_held" != true' in coordinator
+assert '"--all-locks-held"' in admin_runner
 PY_BACKUP_LOCKS
 
 

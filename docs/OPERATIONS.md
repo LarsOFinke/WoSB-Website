@@ -49,60 +49,79 @@ nicht an den Browser ausgeliefert.
 ## Backup
 
 ```bash
-./infrastructure/scripts/backup/backup-all.sh
+sudo ./infrastructure/scripts/backup/backup-all.sh
 ```
 
-Backups liegen unter `infrastructure/data/backups` und werden nach
-`BACKUP_RETENTION_DAYS` aufgeräumt. Mindestens eine regelmäßige externe Kopie ist erforderlich.
+Der produktive Lauf erzeugt **einen koordinierten Recovery-Punkt**. Wenn die API läuft, wird sie
+standardmäßig kurz gestoppt, damit PostgreSQL und Laufzeitdateien dieselbe Anwendungsgrenze
+abbilden. Danach entstehen ein PostgreSQL-Dump, das Dateiarchiv und optional das verschlüsselte
+Recovery-Bundle. Die API wird unmittelbar wieder gestartet und auf Readiness geprüft.
 
-Mit `BACKUP_RECOVERY_ENABLED=true` erzeugt derselbe Lauf zusätzlich ein einziges age-verschlüsseltes
-Disaster-Recovery-Bundle. Es enthält Datenbank, Uploads/Betriebsdaten, `.env`, alle `.cfg`-Snapshots,
-Let's-Encrypt-Konfiguration, root-seitige Backup-Secrets und ein vollständiges SHA-256-Manifest.
-`BACKUP_AGE_RECIPIENT` ist ausschließlich der öffentliche Empfänger; der private Schlüssel darf nur
-auf dem externen Backup-Gerät liegen. `BACKUP_PULL_EXPORT_DIR` und `BACKUP_PULL_EXPORT_USER` stellen
-eine nur für den gewählten SSH-Benutzer lesbare verschlüsselte Kopie für SCP-Pull bereit.
+Ein Lauf gilt erst als erfolgreich, wenn der frisch erzeugte Dump zusätzlich in eine isolierte
+Staging-Datenbank importiert, mit dem aktuellen API-Image auf Alembic-Head migriert, hinsichtlich
+der Verschlüsselungsschlüssel geprüft und durch einen echten API-Readiness-Test bestätigt wurde.
+Der JSON-Nachweis wird zusammen mit allen Artefakten über Größe und SHA-256 in einem
+Backup-Set-Manifest gebunden. Dieses Manifest ist der abschließende Commit-Marker.
 
-Das verbindliche Windows-Pull- und Bare-Metal-Restore-Verfahren steht in
-[`docs/DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md).
+Wichtige Verzeichnisse:
+
+```text
+infrastructure/data/backups/postgres/   Datenbankdumps und Restore-Metadaten
+infrastructure/data/backups/files/      Laufzeitdateien
+infrastructure/data/backups/recovery/   optionale age-Bundles
+infrastructure/data/backups/reports/    vollständige Recovery-Preflight-Berichte
+infrastructure/data/backups/sets/       atomare Backup-Set-Commit-Marker
+```
+
+`doctor.sh` bewertet Alter, Konsistenzmodus, Prüfsummen, Preflight-Bericht und Set-Manifest. Ein
+unkoordinierter Live-Snapshot oder ein Dump ohne erfolgreichen Recovery-Nachweis wird nicht als
+produktiver Wiederherstellungspunkt gemeldet. `BACKUP_RETENTION_DAYS` steuert die lokale Rotation;
+mindestens eine unabhängige, vorzugsweise unveränderliche Offsite-Kopie bleibt erforderlich.
+
+Mit `BACKUP_RECOVERY_ENABLED=true` enthält derselbe koordinierte Lauf zusätzlich das
+age-verschlüsselte Bare-Metal-Bundle. `BACKUP_AGE_RECIPIENT` darf ausschließlich den öffentlichen
+Empfänger enthalten; der private Schlüssel bleibt auf dem externen Recovery-Gerät.
+
+### Manuelle Recovery-Vorprüfung ohne Aktivierung
+
+```bash
+sudo ./infrastructure/scripts/backup/restore-postgres.sh \
+  --preflight-only \
+  --report /root/rbf-recovery-preflight.json \
+  infrastructure/data/backups/postgres/<backup>.sql.gz
+```
+
+Dieser Modus verändert die aktive Datenbank nicht. Er importiert in Staging, prüft die
+Alembic-Kompatibilität, führt ausschließlich Vorwärtsmigrationen aus, testet verschlüsselte Daten
+und startet das aktuelle API-Image in einem internen Netz ohne veröffentlichte Ports.
 
 ### Remote-Anwendungsbackup aus dem Adminbereich
 
 Administratoren können unter **Staff → Betrieb → Anwendungs-Backups** ein dediziertes
-SSH-/SFTP-Ziel konfigurieren und ein frisches PostgreSQL-Backup sowie ein getrenntes Dateiarchiv
-manuell auf eine andere Maschine übertragen. Bei aktivierter Recovery-Funktion wird zusätzlich das
-verschlüsselte vollständige Recovery-Bundle übertragen. Das Dateiarchiv enthält immer `data/uploads` und,
-sofern vorhanden, zusätzlich Zertifikate, Let's-Encrypt-Konfiguration und Uptime-Kuma-Daten.
-Der Ablauf ist bewusst zweistufig:
+SSH-/SFTP-Ziel konfigurieren. Der root-seitige Runner erzeugt denselben koordinierten und vollständig
+verifizierten Backup-Punkt wie der Timer. Er überträgt Artefakte und Prüfsummen atomar, danach den
+Recovery-Bericht und **zuletzt** das Backup-Set-Manifest als Remote-Commit-Marker.
 
-1. Host und Port erfassen, den öffentlichen SSH-Host-Key ermitteln und dessen Fingerprint
-   über einen zweiten vertrauenswürdigen Kanal prüfen.
-2. Einen eingeschränkten SSH-Benutzer, ein bereits vorhandenes absolutes Zielverzeichnis
-   und einen dedizierten privaten Schlüssel hinterlegen. Danach Verbindung testen und das
-   Backup auslösen.
+Der geschützte Admin-Restore akzeptiert nur Datenbankdumps, die:
 
-Der Host-Runner erstellt mit `backup-postgres.sh` einen komprimierten Dump und mit
-`backup-data.sh` ein separates Dateiarchiv. Für jedes Artefakt wird eine `.sha256`-Datei erzeugt.
-Archiv und Prüfsumme werden zunächst als `.part` übertragen, atomar umbenannt und anschließend auf
-dem Zielserver mit `sha256sum -c` verifiziert. Das Zielkonto benötigt daher Schreibrechte im
-Zielverzeichnis sowie die Möglichkeit, `sha256sum` auszuführen. Es sollte keine interaktive Shell
-und keine Rechte außerhalb des Backup-Verzeichnisses besitzen.
+- gültige schema-2-Restore-Metadaten besitzen;
+- als `application-quiesced` oder `no-running-api` gekennzeichnet sind;
+- Mitglied eines lokal vollständig validierten Backup-Sets sind;
+- mit dem aktiven Schlüsselring kompatibel sind.
 
-Die API schreibt nur eine kurzlebige, mit Modus `0600` geschützte Anforderung. Der root-seitige
-systemd-Runner übernimmt sie, speichert Schlüssel und `known_hosts` unter
-`infrastructure/data/control/secrets/backup-remote/` und gibt an den Browser ausschließlich eine
-bereinigte Verbindungszusammenfassung zurück. Verbindungsänderungen und manuelle Backup-Anforderungen
-werden im Audit-Log protokolliert.
+Legacy-Backups oder bewusst unkoordinierte Snapshots bleiben ausschließlich über getrennte,
+explizite Root-CLI-Ausnahmen erreichbar. Der Browser kann keine Dateipfade oder Ausnahmen vorgeben.
 
-Status, Artefaktpfade und Fehler stehen im Adminbereich sowie auf dem Host unter:
+Status und Protokoll:
 
 ```text
+infrastructure/data/control/status/backup-health.json
 infrastructure/data/control/status/backup-status.json
 infrastructure/data/control/status/backup.log
 ```
 
-Für die Funktion müssen `rbf-hub-backup-admin.path` und
-`rbf-hub-backup-admin.service` installiert sein. Ein erfolgreiches `sudo ./update.sh` installiert
-und aktiviert beide Units automatisch.
+Das verbindliche externe Pull- und Bare-Metal-Verfahren steht in
+[`docs/DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md).
 
 ## Discord-Webhook-Schlüssel
 

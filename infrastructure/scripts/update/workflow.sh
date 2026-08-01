@@ -91,36 +91,14 @@ update_restore_captured_images() {
 
 update_run_backup_scripts() {
   local include_postgres="$1"
-
-  # update_run already owns update.lock. Calling backup-all.sh here would try
-  # to acquire the same lock in a child process and deadlock the deployment.
-  # Acquire only the secondary backup lock and execute the concrete backup
-  # steps while the update lock remains held by the parent process.
-  (
-    exec 8>"$RUN_DIR/backup.lock"
-    flock 8
-    local postgres_result="" files_result=""
-    local recovery_enabled=false
-    if [[ "$include_postgres" == true && -f "$ENV_FILE" ]]       && is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
-      recovery_enabled=true
-      postgres_result="$(mktemp "$RUN_DIR/update-postgres-result.XXXXXX")"
-      files_result="$(mktemp "$RUN_DIR/update-files-result.XXXXXX")"
-      trap 'rm -f "$postgres_result" "$files_result"' EXIT
-    fi
-    if [[ "$include_postgres" == true ]]; then
-      if [[ "$recovery_enabled" == true ]]; then
-        BACKUP_RESULT_FILE="$postgres_result" /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
-      else
-        /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
-      fi
-    fi
-    if [[ "$recovery_enabled" == true ]]; then
-      BACKUP_RESULT_FILE="$files_result" /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
-      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-recovery.sh"         --postgres "$(cat "$postgres_result")"         --files "$(cat "$files_result")"
-    else
-      /usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-data.sh"
-    fi
-  )
+  local args=(--lock-held --reason pre-update)
+  [[ "$include_postgres" == true ]] || args+=(--skip-postgres)
+  if [[ "$include_postgres" == true && -f "$ENV_FILE" ]] \
+    && is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
+    args+=(--include-recovery)
+  fi
+  RBF_BACKUP_LOCK_HELD=true /usr/bin/env bash \
+    "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" "${args[@]}"
 }
 
 update_create_backup() {

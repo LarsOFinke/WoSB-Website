@@ -334,9 +334,12 @@ class Runner:
             detail = (result.stderr or result.stdout).strip().splitlines()[-1:] or ["unknown SFTP error"]
             raise RuntimeError(f"Backup transfer failed: {detail[0]}")
 
+        remote_checks = [checksum_name]
+        if metadata_file.is_file() and metadata_checksum.is_file():
+            remote_checks.append(metadata_checksum.name)
         remote_command = (
             f"cd {shlex.quote(str(config['remote_directory']))} && "
-            f"sha256sum -c {shlex.quote(checksum_name)}"
+            + " && ".join(f"sha256sum -c {shlex.quote(name)}" for name in remote_checks)
         )
         ssh_args = self.ssh_base(config)
         ssh_args[0] = "-p"
@@ -417,33 +420,65 @@ class Runner:
 
     def create_and_transfer_backup(self) -> dict[str, Any]:
         config = self.load_connection()
-        self.test_connection(config)
-        postgres_file = self.create_local_backup_artifact(
-            script_name="backup-postgres.sh",
-            artifact_type="postgresql",
-            description="PostgreSQL database",
-            timeout=1800,
-        )
-        files_file = self.create_local_backup_artifact(
-            script_name="backup-data.sh",
-            artifact_type="files",
-            description="uploaded files and operational data",
-            timeout=1800,
-        )
-        artifacts = [
-            self.transfer(config, postgres_file, "postgresql"),
-            self.transfer(config, files_file, "files"),
+        result_files = {
+            name: self.run_dir / f"backup-result-{name}.{os.getpid()}"
+            for name in ("postgres", "files", "recovery", "verification", "set")
+        }
+        for path in result_files.values():
+            path.unlink(missing_ok=True)
+        command = [
+            "/usr/bin/env",
+            "bash",
+            str(self.infra_dir / "scripts/backup/run-consistent-backup.sh"),
+            "--all-locks-held",
+            "--reason", "admin-requested",
+            "--postgres-result", str(result_files["postgres"]),
+            "--files-result", str(result_files["files"]),
+            "--recovery-result", str(result_files["recovery"]),
+            "--verification-result", str(result_files["verification"]),
+            "--backup-set-result", str(result_files["set"]),
         ]
         if self.recovery_enabled():
-            recovery_file = self.create_local_backup_artifact(
-                script_name="backup-recovery.sh",
-                artifact_type="recovery",
-                description="encrypted disaster-recovery bundle",
-                timeout=3600,
-                arguments=["--postgres", str(postgres_file), "--files", str(files_file)],
+            command.append("--include-recovery")
+        self.log("Creating one coordinated backup set and proving full recoverability before transfer.")
+        try:
+            result = subprocess.run(
+                command,
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=10800,
             )
-            artifacts.append(self.transfer(config, recovery_file, "recovery"))
-        return {"artifacts": artifacts}
+            for line in (result.stdout or "").splitlines():
+                self.log(line)
+            if result.returncode != 0:
+                raise RuntimeError("Coordinated backup or recovery verification failed.")
+            required = ("postgres", "files", "verification", "set")
+            if any(not result_files[name].is_file() for name in required):
+                raise RuntimeError("The coordinated backup did not return every required artifact.")
+            paths = {
+                name: Path(result_files[name].read_text(encoding="utf-8").strip())
+                for name in required
+            }
+            if self.recovery_enabled():
+                if not result_files["recovery"].is_file():
+                    raise RuntimeError("Encrypted recovery bundle was enabled but not returned.")
+                paths["recovery"] = Path(result_files["recovery"].read_text(encoding="utf-8").strip())
+            artifacts = [
+                self.transfer(config, paths["postgres"], "postgresql"),
+                self.transfer(config, paths["files"], "files"),
+            ]
+            if "recovery" in paths:
+                artifacts.append(self.transfer(config, paths["recovery"], "recovery"))
+            # The verification report is uploaded before the manifest. The manifest is
+            # the remote commit marker and is deliberately transferred last.
+            self.transfer(config, paths["verification"], "verification")
+            self.transfer(config, paths["set"], "backup_set")
+            return {"artifacts": artifacts}
+        finally:
+            for path in result_files.values():
+                path.unlink(missing_ok=True)
 
     def local_catalog_updates(self) -> dict[str, Any]:
         records, skipped = scan_local_postgres_backups(self.infra_dir)
@@ -471,6 +506,12 @@ class Runner:
         consume_database_restore_approval(self.infra_dir, approval_token_sha256)
         self.request.pop("approval_token_sha256", None)
         record = resolve_local_postgres_backup(self.infra_dir, backup_id)
+        if not record.restore_metadata_verified:
+            raise RuntimeError("The admin restore path rejects backups without verified restore metadata.")
+        if not record.production_consistent:
+            raise RuntimeError("The admin restore path rejects uncoordinated live snapshots.")
+        if not record.backup_set_verified:
+            raise RuntimeError("The backup is not bound to a validated recovery-tested backup set.")
         if record.encryption_keys_compatible is False:
             raise RuntimeError(
                 "The selected database backup was created with a different secret-encryption "

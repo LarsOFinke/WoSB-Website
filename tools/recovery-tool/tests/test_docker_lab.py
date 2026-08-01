@@ -124,3 +124,56 @@ def test_systemd_timer_uses_xdg_config_and_requires_key(tmp_path: Path, monkeypa
     assert 'ExecStart="/opt/rbf recovery/tool" pull --quiet' in service.read_text()
     assert "RandomizedDelaySec=15m" in timer.read_text()
     assert calls[-1][-2:] == ["--now", "rbf-recovery-pull.timer"]
+
+
+def test_full_recovery_override_is_internal_and_has_no_published_ports(tmp_path: Path) -> None:
+    details = docker_lab.LabConnection(
+        host="127.0.0.1",
+        port=55432,
+        database="rbf_recovery",
+        username="rbf_recovery",
+        password="secret-value",
+    )
+    recovered_env = tmp_path / "infrastructure.env"
+    recovered_env.write_text("APP_ENV=production\n", encoding="utf-8")
+    payload = docker_lab._application_preflight_override(
+        "rbf-preflight:test", recovered_env, details
+    )
+    parsed = yaml.safe_load(payload)
+    assert set(parsed["services"]) == {"recovery-migrate", "recovery-api"}
+    for service in parsed["services"].values():
+        assert service["networks"] == ["rbf_recovery_backend"]
+        assert "ports" not in service
+        assert service["read_only"] is True
+    assert "alembic upgrade head" in parsed["services"]["recovery-migrate"]["command"][-1]
+    assert "restore_preflight" in parsed["services"]["recovery-migrate"]["command"][-1]
+
+
+def test_import_check_report_never_claims_recoverable(tmp_path: Path, monkeypatch) -> None:
+    bundle = tmp_path / "bundle.age"
+    bundle.write_bytes(b"bundle")
+    Path(f"{bundle}.sha256").write_text(
+        f"{hashlib.sha256(bundle.read_bytes()).hexdigest()}  {bundle.name}\n",
+        encoding="ascii",
+    )
+    identity = tmp_path / "identity.txt"
+    identity.write_text("key", encoding="utf-8")
+    report = tmp_path / "report.json"
+    dump = tmp_path / "dump.sql.gz"
+    dump.write_bytes(b"dump")
+    monkeypatch.setattr(docker_lab, "verify_sidecar", lambda _bundle: "a" * 64)
+    monkeypatch.setattr(docker_lab, "extract_postgres_artifact", lambda *_args: dump)
+    monkeypatch.setattr(
+        docker_lab,
+        "restore_dump",
+        lambda _dump: docker_lab.LabConnection("127.0.0.1", 55432, "db", "user", "pw"),
+    )
+    result = docker_lab.import_check_bundle(bundle, identity, report)
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    assert result.recoverable is False
+    assert payload["status"] == "passed"
+    assert payload["recoverable"] is False
+    assert any(
+        row["name"] == "runtime_recovery" and row["status"] == "skipped"
+        for row in payload["checks"]
+    )

@@ -11,6 +11,8 @@
 
 ## Unreleased
 
+- Hardened backup and recovery as separate production contracts. Coordinated backup runs now quiesce the API when necessary, create PostgreSQL and runtime-file artifacts at one application boundary, restore the fresh dump into staging, migrate it to the current Alembic head, verify encryption keys and API readiness, and commit the set only through a checksummed manifest that binds the artifacts to a successful recovery report. Production restores and the desktop recovery client share migration-compatibility semantics, distinguish import-only checks from full recoverability, support fail-closed preflight-only operation, and CI exercises a historical-schema dump/restore/migration/readiness matrix. The recovery-tool package version is now 1.3.0.
+
 - Fixed recovery-lab Compose generation: the PostgreSQL healthcheck now uses a YAML block sequence with safely nested shell quoting, generated files are parsed in a regression test, and recovery-tool tests now run in both local validation and CI. The recovery-tool package version is now 1.2.1.
 
 - Fixed and hardened recovery-tool packaging: Linux DEB builds now depend on `pkexec` instead of the obsolete `policykit-1` transition package, all checksum sidecars use portable basenames, every Linux/Windows build clears generated output before prerequisite validation so failed rebuilds cannot expose stale packages, standalone DEB/installer builders remove their old outputs before validating input, and repository/CI gates reject regressions, compiled packages, build environments, generated locales and sensitive local files.

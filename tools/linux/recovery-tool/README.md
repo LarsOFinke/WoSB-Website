@@ -22,13 +22,13 @@ Alle Ausgaben und ihre portablen SHA-256-Dateien liegen ausschließlich unter `d
 ```text
 dist/RBF-Recovery-Tool-Linux-<arch>
 dist/RBF-Recovery-Tool-Linux-<arch>-installer.tar.gz
-dist/rbf-recovery-tool_1.2.1_<deb-arch>.deb
+dist/rbf-recovery-tool_1.3.0_<deb-arch>.deb
 ```
 
 Vor der Installation können die erzeugten Metadaten geprüft werden:
 
 ```bash
-DEB=./dist/rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb
+DEB=./dist/rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb
 dpkg-deb -f "$DEB" Package Version Architecture Depends
 ```
 
@@ -49,7 +49,7 @@ nur den jeweiligen Dateinamen und keinen absoluten Build-Pfad enthalten:
 
 ```bash
 cd dist
-sha256sum -c rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb.sha256
+sha256sum -c rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb.sha256
 ```
 
 Danach startet das Tool über das Anwendungsmenü. Das optionale DB-Labor kann dort über
@@ -140,12 +140,23 @@ CLI:
 rbf-recovery-tool lab status
 rbf-recovery-tool lab start
 rbf-recovery-tool lab stop
-rbf-recovery-tool lab restore \
+
+# Reine technische Importprüfung; niemals ein vollständiger Recovery-Nachweis:
+rbf-recovery-tool lab import-check \
   --bundle ~/RBF-Recovery/Backups/rbf-recovery-....tar.gz.age \
-  --identity ~/RBF-Recovery/rbf-recovery-identity.txt
+  --identity ~/RBF-Recovery/rbf-recovery-identity.txt \
+  --report ~/RBF-Recovery/import-check.json
+
+# Vollständiger Import-, Migrations-, Schlüssel- und API-Preflight:
+rbf-recovery-tool recovery verify \
+  ~/RBF-Recovery/Backups/rbf-recovery-....tar.gz.age \
+  --identity ~/RBF-Recovery/rbf-recovery-identity.txt \
+  --repository ~/Projekte/WoSB-Website \
+  --report ~/RBF-Recovery/recovery-preflight.json
 ```
 
-Die GUI bietet dieselben Funktionen über den Bereich **Lokales PostgreSQL-Recovery-Labor**.
+Die GUI zeigt dafür getrennte Aktionen **Nur DB-Import prüfen** und
+**Recovery vollständig prüfen**. Nur der zweite Bericht darf `recoverable=true` enthalten.
 
 ## Repository-Hygiene
 

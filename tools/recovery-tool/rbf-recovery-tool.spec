@@ -30,10 +30,10 @@ for package in ("paramiko", "cryptography", "bcrypt", "nacl"):
 
 a = Analysis(
     [str(root / "src/launcher.py")],
-    pathex=[str(root / "src")],
+    pathex=[str(root / "src"), str(root.parents[1])],
     binaries=binaries,
     datas=datas,
-    hiddenimports=hiddenimports,
+    hiddenimports=hiddenimports + ["contracts.recovery.contract"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -173,17 +173,12 @@ PY
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
   mkdir -p "$tmp/infrastructure/scripts/backup" "$tmp/control/run"
-  cat > "$tmp/infrastructure/scripts/backup/backup-postgres.sh" <<'SH'
+  cat > "$tmp/infrastructure/scripts/backup/run-consistent-backup.sh" <<'SH'
 #!/usr/bin/env bash
 set -Eeuo pipefail
-printf 'postgres\n' >> "$BACKUP_TEST_RESULT"
+printf '%s\n' "$*" > "$BACKUP_TEST_RESULT"
 SH
-  cat > "$tmp/infrastructure/scripts/backup/backup-data.sh" <<'SH'
-#!/usr/bin/env bash
-set -Eeuo pipefail
-printf 'files\n' >> "$BACKUP_TEST_RESULT"
-SH
-  chmod +x "$tmp/infrastructure/scripts/backup/backup-postgres.sh" "$tmp/infrastructure/scripts/backup/backup-data.sh"
+  chmod +x "$tmp/infrastructure/scripts/backup/run-consistent-backup.sh"
 
   if ! timeout 5 bash -c '
     set -Eeuo pipefail
@@ -203,49 +198,8 @@ SH
   ' _ "$ROOT_DIR" "$tmp"; then
     fail "database backup deadlocked while the updater already owned update.lock"
   fi
-  [[ "$(cat "$tmp/result.txt")" == $'postgres\nfiles' ]] \
-    || fail "database update backup did not run PostgreSQL and file backup in order"
-)
-
-
-(
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' EXIT
-  mkdir -p \
-    "$tmp/infrastructure/scripts/backup" \
-    "$tmp/infrastructure/scripts/lib" \
-    "$tmp/infrastructure/data/control/run"
-  cp "$ROOT_DIR/infrastructure/scripts/backup/backup-all.sh" \
-    "$tmp/infrastructure/scripts/backup/backup-all.sh"
-  cat > "$tmp/infrastructure/scripts/lib/common.sh" <<'SH'
-#!/usr/bin/env bash
-set -Eeuo pipefail
-require_command() { command -v "$1" >/dev/null 2>&1; }
-SH
-  cat > "$tmp/infrastructure/scripts/backup/backup-postgres.sh" <<'SH'
-#!/usr/bin/env bash
-set -Eeuo pipefail
-printf 'postgres\n' >> "$BACKUP_TEST_RESULT"
-SH
-  cat > "$tmp/infrastructure/scripts/backup/backup-data.sh" <<'SH'
-#!/usr/bin/env bash
-set -Eeuo pipefail
-printf 'files\n' >> "$BACKUP_TEST_RESULT"
-SH
-  chmod +x "$tmp/infrastructure/scripts/backup/"*.sh
-
-  if ! timeout 5 bash -c '
-    set -Eeuo pipefail
-    BACKUP_TEST_RESULT="$1/result.txt"
-    export BACKUP_TEST_RESULT
-    exec 9>"$1/infrastructure/data/control/run/update.lock"
-    flock 9
-    /usr/bin/env bash "$1/infrastructure/scripts/backup/backup-all.sh"
-  ' _ "$tmp"; then
-    fail "backup-all did not reuse the inherited update lock during a self-update"
-  fi
-  [[ "$(cat "$tmp/result.txt")" == $'postgres\nfiles' ]] \
-    || fail "self-update backup did not run PostgreSQL and file backup in order"
+  grep -q -- '--lock-held --reason pre-update' "$tmp/result.txt" \
+    || fail "database update did not invoke the coordinated runner with inherited update-lock semantics"
 )
 
 printf 'Update-management checks OK.\n'

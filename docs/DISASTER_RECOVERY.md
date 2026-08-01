@@ -105,9 +105,17 @@ sudo ./setup.sh --profile full --no-start
 sudo systemctl start rbf-hub-backup.service
 ```
 
-Der normale tägliche Timer erstellt weiterhin getrennte Datenbank- und Datei-Backups. Zusätzlich entsteht unter `infrastructure/data/backups/recovery` ein einziges verschlüsseltes Bundle. Ist ein Pull-Export konfiguriert, wird eine für genau diesen SSH-Benutzer lesbare Kopie unter `/home/smokenougat/rbf-backups` bereitgestellt.
+Der tägliche Timer erzeugt einen koordinierten Backup-Satz aus Datenbank und Laufzeitdateien.
+Wenn die API aktiv ist, wird sie standardmäßig kurz angehalten, damit beide Artefakte dieselbe
+Anwendungsgrenze repräsentieren. Anschließend wird der neue Dump in einer isolierten Datenbank
+importiert, auf den aktuellen Alembic-Head migriert und mit Schlüssel- sowie API-Readiness-Test
+verifiziert. Erst der danach erzeugte Backup-Set-Commit-Marker macht den Lauf zu einem gültigen
+Produktions-Recovery-Punkt.
 
-Ein manueller Staff-Panel-Remote-Backup-Lauf überträgt bei aktivierter Recovery-Funktion zusätzlich das verschlüsselte Recovery-Bundle und verifiziert es auf dem Ziel per SHA-256.
+Bei aktivierter Recovery-Funktion entsteht zusätzlich unter
+`infrastructure/data/backups/recovery` ein age-verschlüsseltes Bundle. Ein manueller
+Staff-Panel-Lauf überträgt Artefakte und Prüfsummen atomar, anschließend den Recovery-Bericht und
+zuletzt das Backup-Set-Manifest als Remote-Commit-Marker.
 
 ## 3. Vom Windows- oder Linux-Laptop abrufen und vollständig prüfen
 
@@ -120,13 +128,16 @@ Im **RBF Recovery Tool**:
 Das Tool:
 
 1. verbindet sich ausgehend per SFTP mit dem bestehenden SSH-Port;
-2. wählt nur korrekt benannte Recovery-Bundles mit passender `.sha256`-Datei;
-3. lädt über temporäre `.part`-Dateien und benennt erst nach Abschluss um;
-4. prüft die Transport-Prüfsumme;
-5. entschlüsselt das Bundle ausschließlich temporär auf dem lokalen Laptop;
-6. lehnt Pfad-Traversal, Links, Spezialdateien, Duplikate und unerwartete Archivwurzeln ab;
-7. verifiziert Größe und SHA-256 jeder Manifestdatei;
-8. entfernt anschließend alle temporären Klartextdaten.
+2. berücksichtigt nur einen zuletzt veröffentlichten Backup-Set-Commit-Marker mit gültiger Prüfsumme;
+3. verlangt darin ein gebundenes Recovery-Bundle und einen erfolgreichen vollständigen Preflight-Bericht mit `recoverable=true`;
+4. lädt Set, Bericht, Bundle und sämtliche Sidecars über temporäre `.part`-Dateien und benennt sie erst nach Abschluss um;
+5. prüft die Transport-Prüfsummen und die Bindung von Dateiname, Größe und SHA-256 im Backup-Set;
+6. entschlüsselt das Bundle ausschließlich temporär auf dem lokalen Laptop;
+7. lehnt Pfad-Traversal, Links, Spezialdateien, Duplikate und unerwartete Archivwurzeln ab;
+8. verifiziert Größe und SHA-256 jeder Manifestdatei;
+9. entfernt anschließend alle temporären Klartextdaten.
+
+Alte Sidecar-only-Exporte ohne Recovery-Bericht und Backup-Set-Commit werden bewusst nicht mehr automatisch ausgewählt.
 
 Die Verbindung akzeptiert keinen stillschweigend neuen SSH-Host-Key. Eine Änderung des
 gepinnten Fingerprints blockiert den Download, bis sie unabhängig untersucht wurde.
@@ -316,7 +327,7 @@ Der Build erzeugt dafür ein Debian-Paket und zusätzlich ein portables Installe
 cd tools/linux/recovery-tool
 ./Build-RbfRecoveryTool.sh
 sudo apt update
-sudo apt install ./dist/rbf-recovery-tool_1.2.1_$(dpkg --print-architecture).deb
+sudo apt install ./dist/rbf-recovery-tool_1.3.0_$(dpkg --print-architecture).deb
 ```
 
 Das Paket verwendet `pkexec` als direkte PolicyKit-Laufzeitabhängigkeit und ist damit auch auf
@@ -344,9 +355,16 @@ Kennwort liegen mit Modus `0600` unter dem XDG-Benutzerdatenverzeichnis. Der Con
 read-only Root-Dateisystem, `no-new-privileges`, tmpfs für Laufzeitpfade, ein persistentes Volume
 und begrenzte lokale Docker-Logs.
 
-Ein Bundle-Restore im Labor führt zuerst dieselbe vollständige age-, Sidecar-, Archiv- und
-Manifestprüfung wie der normale Client aus. Nur der deklarierte PostgreSQL-Dump wird temporär
-extrahiert, die Lab-Datenbank kontrolliert neu erstellt und der Dump mit `ON_ERROR_STOP` importiert.
-Temporäre Klartextdaten werden anschließend entfernt. Damit kann regelmäßig geprüft werden, ob
-das externe Backup tatsächlich in eine frische PostgreSQL-Instanz eingespielt werden kann, ohne
-die Produktion oder den Pi zu berühren.
+Das Recovery-Tool trennt zwei Nachweisstufen sichtbar:
+
+1. **Nur DB-Import prüfen** validiert Verschlüsselung, Sidecar und Bundle-Manifest, importiert den
+   Dump mit `ON_ERROR_STOP` und führt eine SQL-Probe aus. Der Bericht setzt immer
+   `recoverable=false`, weil weder Migrationen noch die Anwendung geprüft wurden.
+2. **Recovery vollständig prüfen** baut das aktuelle Backend aus einem ausgewählten Repository,
+   importiert den Dump in das rootless Labor, bewertet den Alembic-Graphen, führt
+   `alembic upgrade head` und `alembic check` aus, prüft den Schlüsselring und startet die API in
+   einem internen Docker-Netz ohne veröffentlichte Ports. Nur dieser vollständige Lauf darf
+   `recoverable=true` melden.
+
+Temporäre Klartextdaten werden anschließend entfernt. Die JSON-Berichte dokumentieren Quelle,
+Kompatibilitätsstatus und jeden einzelnen Prüfschritt.

@@ -136,6 +136,9 @@ class LocalDatabaseBackup(BaseModel):
     restore_metadata_verified: bool = False
     encryption_keys_compatible: bool | None = None
     alembic_head: str | None = None
+    backup_consistency: str = "unrecorded"
+    production_consistent: bool = False
+    backup_set_verified: bool = False
 
 
 class BackupControlStatus(BaseModel):

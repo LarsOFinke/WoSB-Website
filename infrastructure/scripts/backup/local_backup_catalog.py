@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import hmac
+import importlib.util
 import json
 import os
 from pathlib import Path
 import re
 import stat
+import sys
 from typing import Any
 
 
@@ -18,7 +20,7 @@ _BACKUP_ID_RE = re.compile(r"^[a-f0-9]{64}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 _MAX_CATALOG_ENTRIES = 200
 _MAX_CHECKSUM_BYTES = 4096
-_MAX_METADATA_BYTES = 16 * 1024
+_MAX_METADATA_BYTES = 32 * 1024
 
 
 class LocalBackupError(RuntimeError):
@@ -36,6 +38,9 @@ class LocalBackupRecord:
     restore_metadata_verified: bool = False
     encryption_keys_compatible: bool | None = None
     alembic_head: str | None = None
+    backup_consistency: str = "unrecorded"
+    production_consistent: bool = False
+    backup_set_verified: bool = False
 
     def public_dict(self) -> dict[str, Any]:
         return {
@@ -48,6 +53,9 @@ class LocalBackupRecord:
             "restore_metadata_verified": self.restore_metadata_verified,
             "encryption_keys_compatible": self.encryption_keys_compatible,
             "alembic_head": self.alembic_head,
+            "backup_consistency": self.backup_consistency,
+            "production_consistent": self.production_consistent,
+            "backup_set_verified": self.backup_set_verified,
         }
 
 
@@ -198,7 +206,7 @@ def _read_restore_metadata(path: Path, backup: Path, backup_sha256: str) -> dict
         payload = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise LocalBackupError("Restore metadata is invalid.") from exc
-    if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+    if not isinstance(payload, dict) or int(payload.get("schema_version", -1)) not in {1, 2}:
         raise LocalBackupError("Unsupported restore metadata.")
     backup_data = payload.get("backup")
     if not isinstance(backup_data, dict):
@@ -212,7 +220,36 @@ def _read_restore_metadata(path: Path, backup: Path, backup_sha256: str) -> dict
     return payload
 
 
-def _record_for(path: Path, infra_dir: Path) -> LocalBackupRecord:
+def _verified_backup_set_members(infra_dir: Path) -> set[Path]:
+    module_name = "rbf_backup_set_manifest"
+    module = sys.modules.get(module_name)
+    if module is None:
+        script = Path(__file__).with_name("backup_set_manifest.py")
+        spec = importlib.util.spec_from_file_location(module_name, script)
+        if spec is None or spec.loader is None:
+            raise LocalBackupError("Backup-set validator could not be loaded.")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+    validate_manifest = module.validate_manifest
+
+    result: set[Path] = set()
+    sets_dir = infra_dir / "data/backups/sets"
+    if not sets_dir.is_dir():
+        return result
+    for manifest in sets_dir.glob("rbf-backup-set-*.json"):
+        try:
+            payload = validate_manifest(infra_dir, manifest)
+            artifacts = payload.get("artifacts")
+            postgres = artifacts.get("postgres") if isinstance(artifacts, dict) else None
+            if isinstance(postgres, dict):
+                result.add((infra_dir / str(postgres.get("path") or "")).resolve())
+        except (RuntimeError, OSError, ValueError, json.JSONDecodeError):
+            continue
+    return result
+
+
+def _record_for(path: Path, infra_dir: Path, verified_set_members: set[Path]) -> LocalBackupRecord:
     if not _BACKUP_NAME_RE.fullmatch(path.name):
         raise LocalBackupError("Unsupported PostgreSQL backup filename.")
     checksum_path = path.with_name(f"{path.name}.sha256")
@@ -228,6 +265,8 @@ def _record_for(path: Path, infra_dir: Path) -> LocalBackupRecord:
     metadata_verified = restore_metadata is not None
     compatible: bool | None = None
     alembic_head: str | None = None
+    consistency = "unrecorded"
+    production_consistent = False
     if restore_metadata is not None:
         security = restore_metadata.get("security")
         backup_fingerprints = {
@@ -239,10 +278,18 @@ def _record_for(path: Path, infra_dir: Path) -> LocalBackupRecord:
         compatible = bool(backup_fingerprints & current_fingerprints) if backup_fingerprints else None
         application = restore_metadata.get("application")
         if isinstance(application, dict):
-            alembic_head = str(application.get("alembic_head") or "") or None
+            revisions = application.get("alembic_revisions") or application.get("alembic_head")
+            if isinstance(revisions, list):
+                alembic_head = ",".join(str(value) for value in revisions if value) or None
+            else:
+                alembic_head = str(revisions or "") or None
+        backup = restore_metadata.get("backup")
+        if isinstance(backup, dict):
+            consistency = str(backup.get("consistency") or "unrecorded")
+            production_consistent = consistency in {"application-quiesced", "no-running-api"}
 
     identifier = hashlib.sha256(
-        f"rbf-local-backup-v1\0{path.name}\0{metadata.st_size}\0{actual}".encode("utf-8")
+        f"rbf-local-backup-v2\0{path.name}\0{metadata.st_size}\0{actual}".encode("utf-8")
     ).hexdigest()
     created_at = datetime.fromtimestamp(metadata.st_mtime, tz=timezone.utc).isoformat()
     return LocalBackupRecord(
@@ -255,6 +302,9 @@ def _record_for(path: Path, infra_dir: Path) -> LocalBackupRecord:
         restore_metadata_verified=metadata_verified,
         encryption_keys_compatible=compatible,
         alembic_head=alembic_head,
+        backup_consistency=consistency,
+        production_consistent=production_consistent,
+        backup_set_verified=path.resolve() in verified_set_members,
     )
 
 
@@ -262,6 +312,7 @@ def scan_local_postgres_backups(infra_dir: Path) -> tuple[list[LocalBackupRecord
     root = (infra_dir / "data/backups/postgres").resolve()
     root.mkdir(parents=True, exist_ok=True)
     os.chmod(root, 0o700)
+    verified_set_members = _verified_backup_set_members(infra_dir)
     records: list[LocalBackupRecord] = []
     skipped = 0
     try:
@@ -276,7 +327,7 @@ def scan_local_postgres_backups(infra_dir: Path) -> tuple[list[LocalBackupRecord
         try:
             if path.parent.resolve() != root:
                 raise LocalBackupError("Backup path escaped the protected directory.")
-            records.append(_record_for(path, infra_dir))
+            records.append(_record_for(path, infra_dir, verified_set_members))
         except (LocalBackupError, OSError):
             skipped += 1
     records.sort(key=lambda item: (item.created_at, item.filename), reverse=True)

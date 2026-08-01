@@ -180,6 +180,10 @@ temporary_output="${output}.part"
 rm -f "$temporary_output"
 age -r "$recipient" -o "$temporary_output" "$plain_bundle"
 chmod 600 "$temporary_output"
+minimum_bytes="${BACKUP_MIN_RECOVERY_BYTES:-$(read_env BACKUP_MIN_RECOVERY_BYTES)}"
+minimum_bytes="${minimum_bytes:-1024}"
+[[ "$(stat -c %s "$temporary_output")" -ge "$minimum_bytes" ]] \
+  || die "Recovery-Bundle ist ungewöhnlich klein."
 mv "$temporary_output" "$output"
 backup_finalize "$output" "recovery"
 
@@ -187,25 +191,10 @@ retention_days="$(read_env BACKUP_RETENTION_DAYS)"
 retention_days="${retention_days:-14}"
 find "$backup_dir" -type f -mtime "+$retention_days" -delete
 
-export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
-export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
-if [[ -n "$export_dir" || -n "$export_user" ]]; then
-  [[ -n "$export_dir" && -n "$export_user" ]] \
-    || die "BACKUP_PULL_EXPORT_DIR und BACKUP_PULL_EXPORT_USER müssen gemeinsam gesetzt sein."
-  [[ "$export_dir" == /* ]] || die "BACKUP_PULL_EXPORT_DIR muss absolut sein."
-  id "$export_user" >/dev/null 2>&1 || die "BACKUP_PULL_EXPORT_USER existiert nicht: $export_user"
-  export_group="$(id -gn "$export_user")"
-  install -d -m 0700 -o "$export_user" -g "$export_group" "$export_dir"
-  install -m 0600 -o "$export_user" -g "$export_group" "$output" "${output}.sha256" "$export_dir/"
-  (
-    cd "$export_dir"
-    sha256sum -c "$(basename "${output}.sha256")" >/dev/null
-  )
-  find "$export_dir" -maxdepth 1 -type f \
-    \( -name 'rbf-recovery-*.tar.gz.age' -o -name 'rbf-recovery-*.tar.gz.age.sha256' \) \
-    -mtime "+$retention_days" -delete
-  success "Verschlüsseltes Pull-Export wurde bereitgestellt: $export_dir/$(basename "$output")"
-fi
+# Pull exports are committed only by run-consistent-backup.sh after the freshly
+# created database backup has passed the full recovery preflight and the
+# backup-set manifest has been finalized. Exporting here would expose an
+# encrypted bundle before its database recoverability had been proven.
 
 if [[ -n "${BACKUP_RESULT_FILE:-}" ]]; then
   printf '%s\n' "$output" > "$BACKUP_RESULT_FILE"

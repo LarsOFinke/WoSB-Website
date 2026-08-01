@@ -3,13 +3,69 @@ set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-[[ $# -eq 1 ]] || die "Aufruf: sudo $0 /pfad/backup.sql[.gz]"
-[[ "$EUID" -eq 0 ]] || die "PostgreSQL-Restores benötigen root-Rechte. Verwende sudo $0 /pfad/backup.sql[.gz]."
+usage() {
+  cat <<'USAGE'
+Usage:
+  sudo restore-postgres.sh [--preflight-only] [--report FILE]
+    [--allow-legacy-metadata] [--allow-uncoordinated] BACKUP.sql[.gz]
+
+A full preflight imports into an isolated staging database, assesses Alembic
+compatibility, migrates to the current head, validates encrypted data and starts
+the current API image for a real readiness check. --preflight-only never changes
+the active database.
+USAGE
+}
+
+preflight_only=false
+allow_legacy=false
+allow_uncoordinated=false
+report_path=""
+backup_argument=""
+while (($#)); do
+  case "$1" in
+    --preflight-only) preflight_only=true; shift ;;
+    --allow-legacy-metadata) allow_legacy=true; shift ;;
+    --allow-uncoordinated) allow_uncoordinated=true; shift ;;
+    --report) report_path="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    --*) die "Unbekannte Restore-Option: $1" ;;
+    *) [[ -z "$backup_argument" ]] || die "Nur ein PostgreSQL-Backup darf angegeben werden."; backup_argument="$1"; shift ;;
+  esac
+done
+
+[[ -n "$backup_argument" ]] || die "PostgreSQL-Backup fehlt."
+[[ "$EUID" -eq 0 ]] || die "PostgreSQL-Restores benötigen root-Rechte."
 require_command flock
 require_command python3
-backup_file="$(realpath "$1")"
+backup_file="$(realpath "$backup_argument")"
 [[ -f "$backup_file" ]] || die "Backup nicht gefunden: $backup_file"
 verify_backup_checksum "$backup_file"
+metadata_file="${backup_file}.restore.json"
+report_script="$INFRA_DIR/scripts/backup/recovery_report.py"
+preflight_script="$INFRA_DIR/scripts/backup/recovery_preflight.py"
+metadata_script="$INFRA_DIR/scripts/backup/backup_metadata.py"
+if [[ -z "$report_path" ]]; then
+  install -d -m 0700 "$INFRA_DIR/data/backups/reports"
+  report_path="$INFRA_DIR/data/backups/reports/rbf-postgres-$([[ "$preflight_only" == true ]] && printf preflight || printf restore)-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
+fi
+report_path="$(realpath -m "$report_path")"
+python3 "$report_script" create "$report_path" \
+  --mode "$([[ "$preflight_only" == true ]] && printf preflight || printf restore)" \
+  --source "$backup_file" --source-file "$backup_file" >/dev/null
+report_finished=false
+report_check() {
+  local name="$1" status="$2" detail="$3" data="${4:-}"
+  local args=(add "$report_path" --name "$name" --status "$status" --detail "$detail")
+  [[ -z "$data" ]] || args+=(--data-json "$data")
+  python3 "$report_script" "${args[@]}" >/dev/null
+}
+finish_report() {
+  local status="$1" recoverable="$2"
+  python3 "$report_script" finish "$report_path" --status "$status" --recoverable "$recoverable" >/dev/null
+  backup_finalize "$report_path" "reports"
+  report_finished=true
+}
+
 user="$(read_env POSTGRES_USER)"
 database="$(read_env POSTGRES_DB)"
 database_url="$(read_env DATABASE_URL)"
@@ -24,16 +80,13 @@ if [[ "${RBF_RESTORE_LOCK_HELD:-false}" != true ]]; then
 fi
 
 suffix="$(date -u +%m%d%H%M%S)-$$"
-staging_database="${database}_restore_${suffix}"
-rollback_database="${database}_rollback_${suffix}"
-failed_database="${database}_failed_${suffix}"
-staging_database="${staging_database:0:63}"
-rollback_database="${rollback_database:0:63}"
-failed_database="${failed_database:0:63}"
-
+staging_database="${database}_restore_${suffix}"; staging_database="${staging_database:0:63}"
+rollback_database="${database}_rollback_${suffix}"; rollback_database="${rollback_database:0:63}"
+failed_database="${database}_failed_${suffix}"; failed_database="${failed_database:0:63}"
 restore_completed=false
 maintenance_mode=false
 swap_completed=false
+staging_created=false
 
 url_for_database() {
   python3 - "$database_url" "$1" <<'PY'
@@ -44,18 +97,13 @@ parts = urlsplit(url)
 print(urlunsplit((parts.scheme, parts.netloc, f"/{database}", parts.query, parts.fragment)))
 PY
 }
-
-postgres_admin() {
-  bw_compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "$user" -d postgres "$@"
-}
-
+postgres_admin() { bw_compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "$user" -d postgres "$@"; }
 drop_database_if_exists() {
   local name="$1"
   postgres_admin -v database_name="$name" <<'SQL'
 SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', :'database_name') \gexec
 SQL
 }
-
 start_application_best_effort() {
   bw_compose up -d --no-deps api || return 1
   wait_for_api || return 1
@@ -63,18 +111,12 @@ start_application_best_effort() {
   ensure_monitoring_services || return 1
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" || return 1
 }
-
 rollback_database_swap() {
   warn "Die neue Datenbank bestand den Anwendungstest nicht; stelle die vorherige Datenbank atomar wieder her."
   bw_compose stop api gateway >/dev/null 2>&1 || true
-  postgres_admin \
-    -v target_db="$database" \
-    -v rollback_db="$rollback_database" \
-    -v failed_db="$failed_database" <<'SQL'
-SELECT pg_terminate_backend(pid)
-FROM pg_stat_activity
-WHERE datname IN (:'target_db', :'rollback_db')
-  AND pid <> pg_backend_pid();
+  postgres_admin -v target_db="$database" -v rollback_db="$rollback_database" -v failed_db="$failed_database" <<'SQL'
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+WHERE datname IN (:'target_db', :'rollback_db') AND pid <> pg_backend_pid();
 SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', :'failed_db') \gexec
 SELECT format('ALTER DATABASE %I RENAME TO %I', :'target_db', :'failed_db') \gexec
 SELECT format('ALTER DATABASE %I RENAME TO %I', :'rollback_db', :'target_db') \gexec
@@ -83,91 +125,131 @@ SQL
   swap_completed=false
   start_application_best_effort
 }
-
-restore_on_exit() {
+cleanup_on_exit() {
   local exit_code=$?
-  [[ "$restore_completed" == true || "$exit_code" -eq 0 ]] && return 0
   set +e
-  if [[ "$swap_completed" == true ]]; then
-    if rollback_database_swap; then
-      warn "Restore fehlgeschlagen; die vorherige Datenbank wurde automatisch zurückgeschaltet und die Anwendung wieder gestartet."
-    else
-      warn "Automatischer Datenbank-Rollback ist fehlgeschlagen. API und Gateway bleiben zum Schutz gestoppt."
+  if [[ "$exit_code" -ne 0 && "$restore_completed" != true ]]; then
+    if [[ "$swap_completed" == true ]]; then rollback_database_swap || true
+    elif [[ "$maintenance_mode" == true ]]; then start_application_best_effort || true
     fi
-  elif [[ "$maintenance_mode" == true ]]; then
-    if start_application_best_effort; then
-      warn "Restore wurde vor dem Datenbanktausch abgebrochen; die unveränderte Anwendung wurde wieder gestartet."
-    else
-      warn "Restore wurde vor dem Datenbanktausch abgebrochen, aber die Anwendung konnte nicht automatisch wieder gestartet werden."
-    fi
-  else
-    warn "PostgreSQL-Wiederherstellung wurde vor dem Wartungsmodus abgebrochen; laufende Anwendungsdienste wurden nicht verändert."
   fi
-  drop_database_if_exists "$staging_database" >/dev/null 2>&1 || true
+  if [[ "$staging_created" == true ]]; then
+    drop_database_if_exists "$staging_database" >/dev/null 2>&1 || true
+    report_check preflight_cleanup passed "Temporary staging database was removed." >/dev/null 2>&1 || true
+  fi
+  if [[ "$report_finished" != true ]]; then
+    report_check preflight_cleanup "$([[ "$staging_created" == true ]] && printf passed || printf skipped)" "Preflight cleanup completed during error handling." >/dev/null 2>&1 || true
+    python3 "$report_script" finish "$report_path" --status failed --recoverable false >/dev/null 2>&1 || true
+    backup_finalize "$report_path" "reports" >/dev/null 2>&1 || true
+  fi
+  exit "$exit_code"
 }
-trap restore_on_exit EXIT
+trap cleanup_on_exit EXIT
 
-warn "Die aktuelle Datenbank wird kontrolliert mit $backup_file ersetzt."
+if [[ -f "$metadata_file" ]]; then
+  verify_backup_checksum "$metadata_file"
+  python3 "$metadata_script" validate "$metadata_file" "$backup_file" >/dev/null
+  preflight_args=(--metadata "$metadata_file" --migrations-dir "$REPO_ROOT/backend/migrations/versions")
+  [[ "$allow_legacy" == true ]] && preflight_args+=(--allow-unrecorded)
+  [[ "$allow_uncoordinated" == true ]] && preflight_args+=(--allow-uncoordinated)
+  compatibility_json="$(python3 "$preflight_script" "${preflight_args[@]}")" \
+    || die "Restore-Metadaten oder Alembic-Kompatibilität wurden abgelehnt."
+  report_check metadata_compatibility passed "Restore metadata, consistency mode and Alembic graph are compatible." "$compatibility_json"
+else
+  [[ "$allow_legacy" == true ]] || die "Restore-Metadaten fehlen. Nur Root-CLI darf dies bewusst mit --allow-legacy-metadata übersteuern."
+  report_check metadata_compatibility warning "Legacy backup without restore metadata was explicitly accepted; full staging validation remains mandatory."
+fi
+
 ensure_postgres_service
-log "Erstelle vor dem Restore ein zusätzliches PostgreSQL-Sicherheitsbackup."
-/usr/bin/env bash "$INFRA_DIR/scripts/backup/backup-postgres.sh"
+if [[ "$preflight_only" != true ]]; then
+  log "Erzeuge vor dem Restore einen koordinierten Sicherheits-Wiederherstellungspunkt."
+  RBF_BACKUP_LOCK_HELD=true /usr/bin/env bash "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" \
+    --lock-held --reason pre-restore
+fi
 
-log "Erzeuge eine isolierte Staging-Datenbank; die laufende Anwendung bleibt während Import und Prüfung erreichbar."
-postgres_admin \
-  -v staging_db="$staging_database" \
-  -v database_owner="$user" <<'SQL'
+log "Erzeuge eine isolierte Staging-Datenbank."
+postgres_admin -v staging_db="$staging_database" -v database_owner="$user" <<'SQL'
 SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', :'staging_db') \gexec
 SELECT format('CREATE DATABASE %I OWNER %I TEMPLATE template0', :'staging_db', :'database_owner') \gexec
 SQL
+staging_created=true
+report_check staging_database_creation passed "Isolated staging database was created without changing production."
 
-log "Spiele PostgreSQL-Backup transaktional in die Staging-Datenbank ein."
+log "Importiere PostgreSQL-Backup transaktional in die Staging-Datenbank."
 if [[ "$backup_file" == *.gz ]]; then
-  gzip -dc "$backup_file" | bw_compose exec -T postgres psql \
-    -1 -v ON_ERROR_STOP=1 -U "$user" "$staging_database"
+  gzip -dc "$backup_file" | bw_compose exec -T postgres psql -1 -v ON_ERROR_STOP=1 -U "$user" "$staging_database"
 else
-  bw_compose exec -T postgres psql \
-    -1 -v ON_ERROR_STOP=1 -U "$user" "$staging_database" < "$backup_file"
+  bw_compose exec -T postgres psql -1 -v ON_ERROR_STOP=1 -U "$user" "$staging_database" < "$backup_file"
 fi
+report_check postgres_import passed "PostgreSQL accepted the complete dump transactionally."
 
 staging_url="$(url_for_database "$staging_database")"
+runtime_env_args=()
+if [[ -n "${RBF_RESTORE_WEBHOOK_KEYS:-}" ]]; then
+  runtime_env_args+=(-e "WEBHOOK_ENCRYPTION_KEYS=$RBF_RESTORE_WEBHOOK_KEYS")
+fi
 log "Migriere und prüfe die Staging-Datenbank gegen den aktuellen Anwendungscode."
-bw_compose run --rm --no-deps -e "DATABASE_URL=$staging_url" migrate
+bw_compose run --rm --no-deps -T "${runtime_env_args[@]}" -e "DATABASE_URL=$staging_url" migrate
 verify_database_schema_head "$staging_url"
+report_check migration_and_schema_preflight passed "Alembic upgrade and exact head verification succeeded."
 
-log "Prüfe verschlüsselte Webhook- und Raid-Helper-Zugangsdaten mit dem aktuellen Schlüsselring."
-if ! bw_compose run --rm --no-deps -T -e "DATABASE_URL=$staging_url" \
-  migrate python -m app.db.restore_preflight; then
-  die "Das Backup benötigt einen anderen WEBHOOK_ENCRYPTION_KEYS-Schlüsselring. Verwende das vollständige Recovery-Bundle oder stelle die alten Schlüssel vor dem Datenbank-Restore wieder her."
+log "Prüfe verschlüsselte Anwendungsdaten mit dem aktuellen Schlüsselring."
+bw_compose run --rm --no-deps -T "${runtime_env_args[@]}" -e "DATABASE_URL=$staging_url" migrate python -m app.db.restore_preflight \
+  || die "Das Backup benötigt einen anderen WEBHOOK_ENCRYPTION_KEYS-Schlüsselring."
+report_check secret_key_preflight passed "Encrypted application records are readable with the current key ring."
+
+log "Starte das aktuelle API-Image isoliert gegen die Staging-Datenbank."
+bw_compose run --rm --no-deps -T "${runtime_env_args[@]}" -e "DATABASE_URL=$staging_url" migrate sh -euc '
+python -m uvicorn main:app --app-dir src --host 127.0.0.1 --port 8000 >/tmp/rbf-preflight-api.log 2>&1 &
+pid=$!
+cleanup() { kill "$pid" >/dev/null 2>&1 || true; wait "$pid" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+for _ in $(seq 1 60); do
+  if python -c "import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:8000/api/health/ready\", timeout=3)" >/dev/null 2>&1; then
+    exit 0
+  fi
+  if ! kill -0 "$pid" >/dev/null 2>&1; then cat /tmp/rbf-preflight-api.log >&2; exit 1; fi
+  sleep 2
+done
+cat /tmp/rbf-preflight-api.log >&2
+exit 1
+'
+report_check application_readiness_preflight passed "Current API image reached readiness against the migrated staging database on the backend-only network."
+
+if [[ "$preflight_only" == true ]]; then
+  drop_database_if_exists "$staging_database"
+  staging_created=false
+  report_check preflight_cleanup passed "Temporary staging database was removed; active database was untouched."
+  finish_report passed true
+  restore_completed=true
+  success "Recovery-Preflight bestanden; die aktive Datenbank wurde nicht verändert. Bericht: $report_path"
+  exit 0
 fi
 
 log "Aktiviere den kurzen Wartungsmodus für den atomaren Datenbanktausch."
 bw_compose stop api gateway
 maintenance_mode=true
-
-postgres_admin \
-  -v target_db="$database" \
-  -v staging_db="$staging_database" \
-  -v rollback_db="$rollback_database" <<'SQL'
-SELECT pg_terminate_backend(pid)
-FROM pg_stat_activity
-WHERE datname IN (:'target_db', :'staging_db', :'rollback_db')
-  AND pid <> pg_backend_pid();
+postgres_admin -v target_db="$database" -v staging_db="$staging_database" -v rollback_db="$rollback_database" <<'SQL'
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity
+WHERE datname IN (:'target_db', :'staging_db', :'rollback_db') AND pid <> pg_backend_pid();
 SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', :'rollback_db') \gexec
 SELECT format('ALTER DATABASE %I RENAME TO %I', :'target_db', :'rollback_db') \gexec
 SELECT format('ALTER DATABASE %I RENAME TO %I', :'staging_db', :'target_db') \gexec
 SQL
+staging_created=false
 swap_completed=true
+report_check production_activation passed "Validated staging database was atomically activated while retaining rollback database."
 
-log "Starte Anwendung gegen die wiederhergestellte Datenbank und führe Readiness- sowie HTTPS-Smoke-Tests aus."
 bw_compose up -d --no-deps api
 wait_for_api
 bw_compose up -d --no-deps gateway
 ensure_monitoring_services
 /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
-
-log "Anwendungstest erfolgreich; entferne die nur für den automatischen Rollback gehaltene Alt-Datenbank."
+report_check production_smoke_test passed "Readiness and HTTPS smoke tests succeeded after activation."
 drop_database_if_exists "$rollback_database"
 maintenance_mode=false
 swap_completed=false
 restore_completed=true
-success "PostgreSQL-Wiederherstellung wurde in einer Staging-Datenbank validiert, atomar aktiviert und vollständig geprüft."
+report_check preflight_cleanup passed "Rollback database was removed after successful production validation."
+finish_report passed true
+success "PostgreSQL-Wiederherstellung validiert, atomar aktiviert und vollständig geprüft. Bericht: $report_path"

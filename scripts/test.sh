@@ -29,7 +29,7 @@ printf '\n[backend] lint and isolated tests\n'
 )
 
 printf '\n[recovery tool] unit tests\n'
-python -m pytest -q -p no:cacheprovider "$ROOT_DIR/tools/recovery-tool/tests"
+python -m pytest -q -p no:cacheprovider "$ROOT_DIR/tools/recovery-tool/tests" "$ROOT_DIR/tests/recovery"
 
 printf '\n[security] offline repository audit\n'
 python "$ROOT_DIR/scripts/security_audit.py"

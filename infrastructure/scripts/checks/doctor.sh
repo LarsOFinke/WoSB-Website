@@ -17,6 +17,37 @@ df -h "$INFRA_DIR"
 backup_count="$(find "$INFRA_DIR/data/backups" -mindepth 2 -type f ! -name '*.sha256' 2>/dev/null | wc -l | tr -d ' ')"
 log "Lokale Backup-Dateien: ${backup_count:-0}"
 
+backup_health="$INFRA_DIR/data/control/status/backup-health.json"
+if [[ -f "$backup_health" ]]; then
+  backup_set="$(python3 - "$backup_health" "${BACKUP_MAX_AGE_HOURS:-$(read_env BACKUP_MAX_AGE_HOURS)}" <<'PYHEALTH'
+from datetime import datetime, timezone
+import json, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+max_age = float(sys.argv[2] or 36)
+payload = json.loads(path.read_text(encoding="utf-8"))
+if payload.get("schema_version") != 2 or payload.get("status") != "succeeded":
+    raise SystemExit("Latest coordinated backup did not finish successfully.")
+finished = datetime.fromisoformat(str(payload.get("finished_at") or "").replace("Z", "+00:00"))
+if finished.tzinfo is None:
+    finished = finished.replace(tzinfo=timezone.utc)
+age = (datetime.now(timezone.utc) - finished.astimezone(timezone.utc)).total_seconds() / 3600
+if age > max_age:
+    raise SystemExit(f"Latest committed backup set is stale ({age:.1f}h > {max_age:.1f}h).")
+artifacts = payload.get("artifacts")
+backup_set = artifacts.get("backup_set") if isinstance(artifacts, dict) else ""
+if not backup_set:
+    raise SystemExit("Backup health record has no committed backup set.")
+print(backup_set)
+PYHEALTH
+  )" || die "Backup-Health-Status ist ungültig oder veraltet."
+  [[ -f "$backup_set" ]] || die "Vom Backup-Health-Status referenziertes Set fehlt: $backup_set"
+  python3 "$INFRA_DIR/scripts/backup/backup_set_manifest.py" validate     --root "$INFRA_DIR" "$backup_set" >/dev/null     || die "Neuestes Backup-Set ist nicht vollständig oder nicht recovery-verifiziert."
+  success "Neuestes koordiniertes Backup-Set ist aktuell, vollständig und recovery-verifiziert."
+else
+  warn "Es existiert noch kein maschinenlesbarer Backup-Health-Status. Führe sudo make -C infrastructure backup aus."
+fi
+
 if is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
   recipient="$(read_env BACKUP_AGE_RECIPIENT)"
   [[ "$recipient" =~ ^age1[0-9a-z]{20,}$ ]]     || die "Recovery-Backup ist aktiviert, aber BACKUP_AGE_RECIPIENT ist ungültig."

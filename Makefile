@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: dev-backend dev-frontend test test-full lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
+.PHONY: dev-backend dev-frontend test test-full test-recovery test-recovery-matrix lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
 
 dev-backend:
 	cd backend && rbf-dev
@@ -13,6 +13,13 @@ test:
 
 test-full:
 	bash ./scripts/test.sh full
+
+test-recovery:
+	python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests tests/recovery
+
+test-recovery-matrix:
+	@test -n "$$RECOVERY_MATRIX_DATABASE_URL" || { echo "RECOVERY_MATRIX_DATABASE_URL fehlt" >&2; exit 2; }
+	python scripts/test_recovery_matrix.py
 
 lint:
 	cd backend && ruff check --no-cache src tests

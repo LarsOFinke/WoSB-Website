@@ -180,7 +180,13 @@ check("AutoAddPolicy" not in recovery_sftp, "recovery client must not auto-trust
 check("password:" not in recovery_config, "recovery profile must not persist passwords")
 check("verify_sidecar" in recovery_verification, "recovery client must verify transport checksums")
 check("_validated_members" in recovery_verification, "recovery client must validate archive members")
-check("127.0.0.1" in recovery_lab and "0.0.0.0" not in recovery_lab, "local recovery database must remain loopback-only")
+check(
+    '127.0.0.1:${{POSTGRES_LOCAL_PORT}}:5432' in recovery_lab,
+    "local recovery database must remain loopback-only",
+)
+preflight_override = recovery_lab.split("def _application_preflight_override", 1)[1].split("def verify_recovery", 1)[0]
+check("networks: [rbf_recovery_backend]" in preflight_override, "recovery API preflight must use the internal lab network")
+check("ports:" not in preflight_override, "recovery API preflight must not publish host ports")
 check("no-new-privileges:true" in recovery_lab, "local recovery database must prevent privilege escalation")
 check("${{POSTGRES_PASSWORD}}" in recovery_lab, "local recovery compose must reference the protected env file for its password")
 check("require_root_owned=True" in recovery_linux_setup, "privileged recovery helper must be root-owned")

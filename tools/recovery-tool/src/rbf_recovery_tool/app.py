@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 import queue
 import threading
@@ -11,10 +12,11 @@ from .config import Profile, load_profile, save_profile
 from .docker_lab import (
     connection as lab_connection,
     docker_is_rootless,
+    import_check_bundle,
     initialize_lab,
     lab_status,
-    restore_bundle as restore_bundle_to_lab,
     start_lab,
+    verify_recovery,
     stop_lab,
 )
 from .linux_setup import setup_rootless_lab
@@ -27,7 +29,7 @@ class RecoveryApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("RBF Recovery Tool")
-        self.root.minsize(920, 760)
+        self.root.minsize(1120, 760)
         self.profile = load_profile()
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.busy = False
@@ -141,9 +143,13 @@ class RecoveryApp:
         )
         self.lab_stop_button.pack(side="left", padx=(6, 0))
         self.lab_restore_button = ttk.Button(
-            lab_actions, text="Bundle in DB-Labor laden", command=self._lab_restore
+            lab_actions, text="Nur DB-Import prüfen", command=self._lab_import_check
         )
         self.lab_restore_button.pack(side="left", padx=(6, 0))
+        self.recovery_verify_button = ttk.Button(
+            lab_actions, text="Recovery vollständig prüfen", command=self._recovery_verify
+        )
+        self.recovery_verify_button.pack(side="left", padx=(6, 0))
         self.lab_credentials_button = ttk.Button(
             lab_actions, text="Verbindungsdaten", command=self._lab_credentials
         )
@@ -235,6 +241,7 @@ class RecoveryApp:
             self.lab_start_button,
             self.lab_stop_button,
             self.lab_restore_button,
+            self.recovery_verify_button,
             self.lab_credentials_button,
         ):
             button.configure(state=state)
@@ -388,17 +395,48 @@ class RecoveryApp:
             parent=self.root,
         )
 
-    def _lab_restore(self) -> None:
+    def _report_path(self, prefix: str) -> Path:
+        root = Path(self.vars["destination_directory"].get()).expanduser() / "recovery-reports"
+        root.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        return root / f"{prefix}-{timestamp}.json"
+
+    def _select_bundle(self, title: str) -> Path | None:
         selected = filedialog.askopenfilename(
-            title="Recovery-Bundle für lokales DB-Labor auswählen",
+            title=title,
             filetypes=[("RBF Recovery Bundle", "*.tar.gz.age"), ("Alle Dateien", "*.*")],
         )
-        if not selected:
+        return Path(selected) if selected else None
+
+    def _lab_import_check(self) -> None:
+        bundle = self._select_bundle("Recovery-Bundle für reine DB-Importprüfung auswählen")
+        if bundle is None:
             return
         identity = Path(self.vars["age_identity_path"].get())
+        report = self._report_path("import-check")
         self._worker(
-            "Bundle wird geprüft und in das lokale DB-Labor eingespielt …",
-            lambda: ("lab_restored", restore_bundle_to_lab(Path(selected), identity)),
+            "Bundle wird technisch importiert; Migration und API werden dabei nicht geprüft …",
+            lambda: ("lab_import_checked", import_check_bundle(bundle, identity, report)),
+        )
+
+    def _recovery_verify(self) -> None:
+        bundle = self._select_bundle("Recovery-Bundle für vollständigen Recovery-Preflight auswählen")
+        if bundle is None:
+            return
+        repository = filedialog.askdirectory(
+            title="WoSB-Repository mit aktuellem Backend auswählen",
+            mustexist=True,
+        )
+        if not repository:
+            return
+        identity = Path(self.vars["age_identity_path"].get())
+        report = self._report_path("recovery-preflight")
+        self._worker(
+            "Dump wird importiert, migriert und mit dem aktuellen API-Image auf Readiness geprüft …",
+            lambda: (
+                "recovery_verified",
+                verify_recovery(bundle, identity, Path(repository), report),
+            ),
         )
 
     def _open_destination(self) -> None:
@@ -467,6 +505,32 @@ class RecoveryApp:
                 "BACKUP_AGE_RECIPIENT auf dem Pi auf diesen öffentlichen Schlüssel setzen.",
                 parent=self.root,
             )
+            return
+        if isinstance(payload, tuple) and payload and payload[0] in {"lab_import_checked", "recovery_verified"}:
+            result = payload[1]
+            self._refresh_lab_status()
+            if payload[0] == "lab_import_checked":
+                self._append_log(
+                    f"DB-Importprüfung bestanden; dies ist kein vollständiger Recovery-Nachweis. Bericht: {result.report}"
+                )
+                messagebox.showinfo(
+                    "DB-Importprüfung bestanden",
+                    "Der Dump ist technisch importierbar. Migrationen, Schlüssel und "
+                    "API-Readiness wurden nicht geprüft.\n\n"
+                    f"Bericht: {result.report}",
+                    parent=self.root,
+                )
+            else:
+                self._append_log(
+                    f"Vollständiger Recovery-Preflight bestanden ({result.compatibility}); Bericht: {result.report}"
+                )
+                messagebox.showinfo(
+                    "Recovery vollständig verifiziert",
+                    "Import, Migration, Schlüsselprüfung und API-Readiness waren "
+                    "erfolgreich.\n\n"
+                    f"Bericht: {result.report}",
+                    parent=self.root,
+                )
             return
         if isinstance(payload, tuple) and payload and payload[0].startswith("lab_"):
             self._refresh_lab_status()

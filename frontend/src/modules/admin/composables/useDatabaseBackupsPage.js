@@ -67,6 +67,9 @@ export function useDatabaseBackupsPage() {
     canSubmit.value
     && isBootstrapAdmin.value
     && Boolean(selectedBackup.value)
+    && selectedBackup.value?.restore_metadata_verified === true
+    && selectedBackup.value?.production_consistent === true
+    && selectedBackup.value?.backup_set_verified === true
     && selectedBackup.value?.encryption_keys_compatible !== false
     && APPROVAL_TOKEN_PATTERN.test(restoreForm.approval_token.trim())
     && restoreForm.confirmation === RESTORE_CONFIRMATION

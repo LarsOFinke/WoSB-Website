@@ -282,12 +282,24 @@ const {
               type="radio"
               name="database-backup"
               :value="backup.backup_id"
-              :disabled="!isBootstrapAdmin || inProgress || backup.encryption_keys_compatible === false"
+              :disabled="!isBootstrapAdmin || inProgress || !backup.restore_metadata_verified || !backup.production_consistent || !backup.backup_set_verified || backup.encryption_keys_compatible === false"
             />
             <span class="backup-local-entry-main">
               <strong>{{ backup.filename }}</strong>
               <small>{{ formatDateTime(backup.created_at) }} · {{ formatBytes(backup.size_bytes) }}</small>
               <small v-if="backup.alembic_head">{{ t('admin.backups.restore.schemaRevision') }}: {{ backup.alembic_head }}</small>
+              <small v-if="!backup.restore_metadata_verified" class="backup-compatibility is-incompatible">
+                {{ t('admin.backups.restore.metadataMissing') }}
+              </small>
+              <small v-else-if="!backup.production_consistent" class="backup-compatibility is-incompatible">
+                {{ t('admin.backups.restore.uncoordinated') }}
+              </small>
+              <small v-else-if="!backup.backup_set_verified" class="backup-compatibility is-incompatible">
+                {{ t('admin.backups.restore.backupSetMissing') }}
+              </small>
+              <small v-else class="backup-compatibility">
+                {{ t('admin.backups.restore.recoveryVerified') }}
+              </small>
               <small
                 class="backup-compatibility"
                 :class="{ 'is-incompatible': backup.encryption_keys_compatible === false }"

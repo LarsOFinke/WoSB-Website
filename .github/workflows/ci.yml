@@ -45,13 +45,15 @@ jobs:
             backend/requirements-dev.lock
       - name: Install
         run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
           python -m pip install -r backend/requirements-dev.lock
           python -m pip install --no-deps -e backend
       - name: Lint and isolated tests
         run: |
           cd backend && ruff check --no-cache src tests
           cd .. && python scripts/run_backend_tests.py
-          python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests
+          python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests tests/recovery
       - name: PostgreSQL migration lifecycle
         working-directory: backend
         run: |
@@ -73,6 +75,10 @@ jobs:
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src python -c "from app.db.init_db import verify_database_ready; verify_database_ready()"
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic downgrade base
           RBF_ENV_FILE="$tmp_dir/ci.env" PYTHONPATH=src alembic upgrade head
+      - name: Historical backup recovery matrix
+        env:
+          RECOVERY_MATRIX_DATABASE_URL: postgresql+psycopg://rbf_ci:rbf_ci_password@127.0.0.1:5432/rbf_ci
+        run: python scripts/test_recovery_matrix.py
 
   frontend:
     name: Frontend
