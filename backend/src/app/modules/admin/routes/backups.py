@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -98,6 +99,20 @@ def admin_apply_backup_enrollment(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> BackupControlRequestResult:
+    current = get_backup_control_status()
+    enrollment_request = current.enrollment_request or {}
+    expected_enrollment_id = str(enrollment_request.get("enrollment_id") or "")
+    if not expected_enrollment_id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Create and download a fresh enrollment request before importing a response.",
+        )
+    response_payload = json.loads(payload.response_json)
+    if str(response_payload.get("enrollment_id") or "") != expected_enrollment_id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The enrollment response does not belong to the active request.",
+        )
     result = _request(current_user, "apply_enrollment", payload.model_dump())
     record_audit_safely(
         db,

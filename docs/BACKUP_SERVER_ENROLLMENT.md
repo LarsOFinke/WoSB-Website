@@ -1,5 +1,7 @@
 # Assistierte Backup-Server-Einrichtung
 
+> **Schnellstart:** Für die konkrete Einrichtung mit Copy-&-Paste-Befehlen siehe [BACKUP_SETUP_QUICKSTART.md](BACKUP_SETUP_QUICKSTART.md). Dieser Text beschreibt die Sicherheits- und Architekturdetails.
+
 Dieser Ablauf reduziert die manuelle Einrichtung auf den extern erreichbaren Hostnamen, optional
 die Quell-IP für UFW und den sichtbaren Vergleich eines SSH-Host-Key-Fingerprints. Es werden nur
 öffentliche Enrollment-Dateien ausgetauscht.
@@ -20,8 +22,9 @@ die Quell-IP für UFW und den sichtbaren Vergleich eines SSH-Host-Key-Fingerprin
 
 1. Staff → Anwendungs-Backups → **Anfrage erstellen**.
 2. Anfrage herunterladen und zum Backup-Server übertragen.
-3. Recovery-Tool 1.4.0 als Debian-Paket installieren.
-4. Provisionierung ausführen:
+3. Recovery-Tool 1.4.2 als Debian-Paket installieren.
+4. Keine Linux-Benutzer vorab anlegen: Das Recovery-Tool erzeugt `rbf-backup` und `rbf-recovery` selbst. Bereits vorhandene, nicht vom Tool registrierte Konten werden aus Sicherheitsgründen nicht übernommen.
+5. Provisionierung ausführen:
 
 ```bash
 rbf-recovery-tool server provision REQUEST.json \
@@ -32,12 +35,12 @@ rbf-recovery-tool server provision REQUEST.json \
   --allow-from 203.0.113.10/32
 ```
 
-5. Das Tool prüft den lokalen read-only Recovery-Zugang und schreibt automatisch sein Pull-Profil.
-6. Fingerprint in Terminal und Webseite vergleichen.
-7. Antwortdatei in Staff importieren.
-8. Die Webseite prüft live den Host-Key, speichert die Verbindung rootgeschützt, setzt
+6. Das Tool prüft den lokalen read-only Recovery-Zugang und schreibt automatisch sein Pull-Profil.
+7. Fingerprint in Terminal und Webseite vergleichen.
+8. Antwortdatei in Staff auswählen; die Oberfläche validiert Dateiart, Enrollment-ID und alle Verbindungsfelder sichtbar, bevor der Import freigeschaltet wird.
+9. Die Webseite prüft live den Host-Key, speichert die Verbindung rootgeschützt, setzt
    `BACKUP_RECOVERY_ENABLED=true`, trägt `BACKUP_AGE_RECIPIENT` ein und führt einen SFTP-Test aus.
-9. Ein manuelles Testbackup starten. Danach überträgt auch der tägliche systemd-Backup-Timer
+10. Ein manuelles Testbackup starten. Danach überträgt auch der tägliche systemd-Backup-Timer
    automatisch vollständige, recovery-verifizierte Sets. Das Set-Manifest wird stets zuletzt als
    Remote-Commit-Marker veröffentlicht.
 
@@ -102,3 +105,11 @@ Der separate Button **Schreibtest ausführen** wiederholt genau diesen vollstän
 `cd`/`pwd` gilt nicht als erfolgreiche Backup-Verbindung. Die Prüfung und die spätere
 Artefaktverifikation verwenden ausschließlich den gepinnten SFTP-Kanal; ein Shellzugang oder
 `sha256sum` auf dem Backup-Server ist nicht erforderlich.
+
+## Häufige Abgrenzungen
+
+- `REQUEST.json` ist die von der Webseite heruntergeladene öffentliche Anfrage.
+- `RESPONSE.json` ist ausschließlich die Ausgabe von `rbf-recovery-tool server provision`.
+- Der private Upload-Schlüssel wird beim Erstellen der Anfrage auf dem Produktivhost erzeugt und niemals exportiert. Beim automatischen Enrollment gibt es daher kein Feld, in das er kopiert werden muss.
+- Der in der Oberfläche sichtbare `SHA256:...`-Wert ist der Host-Key-Fingerprint; er ist weder der öffentliche Upload-Schlüssel noch ein privater Schlüssel.
+- `--directory` bezeichnet den root-eigenen Speicher-/Chroot-Pfad auf dem Backup-Server. In der Enrollment-Antwort und innerhalb von SFTP bleibt der sichtbare Pfad immer `/data`.

@@ -161,3 +161,109 @@ def test_recovery_read_key_is_created_once_with_private_permissions(tmp_path) ->
     assert key.read_bytes() == first_bytes
     assert key.stat().st_mode & 0o077 == 0
     assert first.startswith("ssh-ed25519 ")
+
+
+def test_enrollment_request_loader_accepts_bom_and_reports_actionable_paths(tmp_path) -> None:
+    import pytest
+
+    missing = tmp_path / "missing.json"
+    with pytest.raises(RuntimeError, match="nicht gefunden") as missing_error:
+        server_setup._load_request(missing)
+    assert str(missing.resolve()) in str(missing_error.value)
+
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text("{broken", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="Zeile 1"):
+        server_setup._load_request(invalid)
+
+    valid = tmp_path / "request.json"
+    valid.write_text(
+        "\ufeff" + json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "rbf-backup-enrollment-request",
+                "enrollment_id": "C" * 32,
+                "ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIProductKey= product",
+                "requested_username": "rbf-backup",
+                "requested_directory": "/data",
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert server_setup._load_request(valid)["enrollment_id"] == "C" * 32
+
+
+def test_server_provisioning_rejects_cli_user_that_differs_from_request(tmp_path, monkeypatch) -> None:
+    import pytest
+
+    request = tmp_path / "request.json"
+    request.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "kind": "rbf-backup-enrollment-request",
+                "enrollment_id": "D" * 32,
+                "ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIProductKey= product",
+                "requested_username": "rbf-backup",
+                "requested_directory": "/data",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        server_setup,
+        "generate_identity",
+        lambda target: (_ for _ in ()).throw(AssertionError("must fail before generating keys")),
+    )
+    with pytest.raises(RuntimeError, match="stimmt nicht mit der Enrollment-Anfrage"):
+        server_setup.provision_backup_server(
+            request,
+            host="backup.example.net",
+            output=tmp_path / "response.json",
+            identity=tmp_path / "identity.txt",
+            username="other-backup",
+        )
+
+
+def test_server_cli_prints_copy_safe_next_steps(tmp_path, monkeypatch, capsys) -> None:
+    from rbf_recovery_tool import cli
+
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    response = tmp_path / "response.json"
+
+    def fake_provision(_request, **kwargs):
+        output = Path(kwargs["output"])
+        output.write_text(
+            json.dumps(
+                {
+                    "host_key_fingerprint": "SHA256:" + "A" * 43,
+                }
+            ),
+            encoding="utf-8",
+        )
+        return output
+
+    monkeypatch.setattr(cli, "provision_backup_server", fake_provision)
+    monkeypatch.setattr(cli, "profile_path", lambda: tmp_path / "profile.json")
+    result = cli.main(
+        [
+            "server",
+            "provision",
+            str(request),
+            "--host",
+            "192.168.2.107",
+            "--output",
+            str(response),
+            "--identity",
+            str(tmp_path / "identity.txt"),
+            "--recovery-key",
+            str(tmp_path / "recovery-key"),
+        ]
+    )
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "FERTIG: Der Backup-Server wurde provisioniert." in output
+    assert str(response) in output
+    assert "Antwort importieren und prüfen" in output
+    assert "rbf-recovery-tool pull" in output

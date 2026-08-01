@@ -98,7 +98,7 @@ und startet das aktuelle API-Image in einem internen Netz ohne veröffentlichte 
 ### Assistierte Backup-Server-Einrichtung
 
 Der empfohlene Ablauf tauscht nur öffentliche Enrollment-JSON-Dateien aus. Die Webseite erzeugt
-den privaten SSH-Schlüssel selbst; das Recovery-Tool 1.4.0 richtet auf dem Backup-Server chroot-
+den privaten SSH-Schlüssel selbst; das Recovery-Tool 1.4.1 richtet auf dem Backup-Server chroot-
 isoliertes SFTP, Benutzer, Speicher, age-Identität und Retention ein. Nach dem Import der Antwort
 werden Host-Key, SFTP und age-Empfänger automatisch geprüft beziehungsweise konfiguriert. Siehe
 [Assistierte Backup-Server-Einrichtung](BACKUP_SERVER_ENROLLMENT.md).

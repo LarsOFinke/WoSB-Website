@@ -1673,3 +1673,138 @@ body.webhook-editor-open {
 .backup-compatibility.is-incompatible {
   color: var(--color-danger, #e57373);
 }
+
+.backup-manual-setup > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.backup-manual-setup > summary::-webkit-details-marker {
+  display: none;
+}
+
+.backup-manual-setup[open] > .backup-manual-summary {
+  margin-bottom: 1rem;
+}
+
+.backup-enrollment-validation {
+  margin: .5rem 0 0;
+}
+
+.backup-enrollment-wizard {
+  display: grid;
+  gap: 1rem;
+}
+
+.backup-setup-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.backup-setup-progress li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid var(--color-border-soft);
+  background: var(--panel-soft);
+}
+
+.backup-setup-progress li > span {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.backup-setup-progress li.is-complete {
+  color: var(--color-success, #76c893);
+  border-color: currentColor;
+}
+
+.backup-enrollment-steps,
+.backup-setup-step {
+  gap: 0.85rem;
+}
+
+.backup-setup-result,
+.backup-setup-complete {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-success, #76c893);
+  background: var(--panel-soft);
+}
+
+.backup-enrollment-command-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.backup-enrollment-command-fields label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.backup-enrollment-wide-field {
+  grid-column: 1 / -1;
+}
+
+.backup-command-panel {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.backup-command-panel pre {
+  max-height: 28rem;
+  margin: 0;
+  padding: 0.85rem;
+  overflow: auto;
+  border: 1px solid var(--color-border-soft);
+  background: var(--panel-strong, rgba(0, 0, 0, 0.18));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.backup-command-panel .small-action {
+  justify-self: start;
+}
+
+.backup-response-paste {
+  border-top: 1px solid var(--color-border-soft);
+  padding-top: 0.65rem;
+}
+
+.backup-response-paste > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.backup-response-paste textarea {
+  width: 100%;
+  margin-top: 0.65rem;
+}
+
+.backup-enrollment-preview {
+  border-color: var(--color-success, #76c893);
+}
+
+@media (max-width: 850px) {
+  .backup-setup-progress,
+  .backup-enrollment-command-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .backup-enrollment-wide-field {
+    grid-column: auto;
+  }
+}

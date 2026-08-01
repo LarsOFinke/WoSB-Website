@@ -15,6 +15,8 @@ const {
   restoreForm,
   privateKeyVisible,
   enrollmentResponse,
+  enrollmentFileName,
+  enrollmentSetup,
   inProgress,
   configured,
   connectionReady,
@@ -25,6 +27,11 @@ const {
   isBootstrapAdmin,
   enrollmentRequest,
   enrollmentResponsePreview,
+  enrollmentSetupError,
+  enrollmentProgress,
+  enrollmentResponseError,
+  enrollmentCommand,
+  canCopyEnrollmentCommand,
   canApplyEnrollment,
   localBackups,
   selectedBackup,
@@ -36,6 +43,7 @@ const {
   loadStatus,
   prepareUploadKey,
   copyUploadPublicKey,
+  copyEnrollmentCommand,
   prepareEnrollment,
   downloadEnrollmentRequest,
   loadEnrollmentResponse,
@@ -116,7 +124,7 @@ const {
       </section>
 
 
-      <section class="wire-section admin-panel backup-configuration-panel">
+      <section class="wire-section admin-panel backup-configuration-panel backup-enrollment-wizard">
         <div class="admin-panel-heading">
           <div>
             <h2>{{ t('admin.backups.enrollment.title') }}</h2>
@@ -124,12 +132,34 @@ const {
           </div>
           <span class="summary-pill">{{ t('admin.backups.enrollment.recommended') }}</span>
         </div>
+
+        <ol class="backup-setup-progress" :aria-label="t('admin.backups.enrollment.progressTitle')">
+          <li :class="{ 'is-complete': enrollmentProgress.requestCreated }">
+            <span>1</span>
+            <strong>{{ t('admin.backups.enrollment.progress.request') }}</strong>
+          </li>
+          <li :class="{ 'is-complete': enrollmentProgress.responseSelected }">
+            <span>2</span>
+            <strong>{{ t('admin.backups.enrollment.progress.provision') }}</strong>
+          </li>
+          <li :class="{ 'is-complete': enrollmentProgress.responseValid }">
+            <span>3</span>
+            <strong>{{ t('admin.backups.enrollment.progress.response') }}</strong>
+          </li>
+          <li :class="{ 'is-complete': enrollmentProgress.connectionVerified }">
+            <span>4</span>
+            <strong>{{ t('admin.backups.enrollment.progress.verified') }}</strong>
+          </li>
+        </ol>
+
         <div class="backup-security-note">
           <strong>{{ t('admin.backups.enrollment.securityTitle') }}</strong>
           <p>{{ t('admin.backups.enrollment.securityText') }}</p>
+          <small>{{ t('admin.backups.enrollment.noPrivateKey') }}</small>
         </div>
-        <div class="backup-configuration-form">
-          <div class="input-panel embedded-field backup-directory-field">
+
+        <div class="backup-configuration-form backup-enrollment-steps">
+          <section class="input-panel embedded-field backup-directory-field backup-setup-step">
             <span>{{ t('admin.backups.enrollment.stepOne') }}</span>
             <p>{{ t('admin.backups.enrollment.stepOneText') }}</p>
             <div class="backup-form-actions">
@@ -140,46 +170,110 @@ const {
                 {{ t('admin.backups.actions.downloadEnrollment') }}
               </button>
             </div>
-            <code v-if="enrollmentRequest" class="backup-checksum">{{ enrollmentRequest.enrollment_id }}</code>
-          </div>
-          <div class="input-panel embedded-field backup-directory-field">
+            <div v-if="enrollmentRequest" class="backup-setup-result">
+              <strong>{{ t('admin.backups.enrollment.requestReady') }}</strong>
+              <code class="backup-checksum">{{ enrollmentRequest.enrollment_id }}</code>
+              <small>{{ t('admin.backups.enrollment.requestFilenameHint') }}</small>
+            </div>
+          </section>
+
+          <section class="input-panel embedded-field backup-directory-field backup-setup-step">
             <span>{{ t('admin.backups.enrollment.stepTwo') }}</span>
             <p>{{ t('admin.backups.enrollment.stepTwoText') }}</p>
-            <code>rbf-recovery-tool server provision REQUEST.json --host backup.example.net --output RESPONSE.json</code>
-          </div>
-          <label class="input-panel embedded-field backup-private-key-field">
+            <div class="backup-enrollment-command-fields">
+              <label>
+                <span>{{ t('admin.backups.enrollment.commandFields.host') }}</span>
+                <input v-model.trim="enrollmentSetup.host" placeholder="192.168.2.107" maxlength="253" />
+              </label>
+              <label>
+                <span>{{ t('admin.backups.enrollment.commandFields.port') }}</span>
+                <input v-model.number="enrollmentSetup.port" type="number" min="1" max="65535" />
+              </label>
+              <label>
+                <span>{{ t('admin.backups.enrollment.commandFields.directory') }}</span>
+                <input v-model.trim="enrollmentSetup.directory" placeholder="/srv/rbf-backups/wosb" maxlength="512" />
+              </label>
+              <label>
+                <span>{{ t('admin.backups.enrollment.commandFields.retention') }}</span>
+                <input v-model.number="enrollmentSetup.retentionDays" type="number" min="1" max="3650" />
+              </label>
+              <label class="backup-enrollment-wide-field">
+                <span>{{ t('admin.backups.enrollment.commandFields.allowFrom') }}</span>
+                <input v-model.trim="enrollmentSetup.allowFrom" placeholder="192.168.2.36/32" maxlength="64" />
+                <small>{{ t('admin.backups.enrollment.commandFields.allowFromHint') }}</small>
+              </label>
+            </div>
+            <p v-if="enrollmentSetupError" class="error-text backup-enrollment-validation">
+              {{ enrollmentSetupError }}
+            </p>
+            <div class="backup-command-panel">
+              <pre><code>{{ enrollmentCommand || t('admin.backups.enrollment.commandPlaceholder') }}</code></pre>
+              <button
+                class="small-action"
+                type="button"
+                :disabled="!canCopyEnrollmentCommand"
+                @click="copyEnrollmentCommand"
+              >
+                {{ t('admin.backups.actions.copyEnrollmentCommand') }}
+              </button>
+            </div>
+            <small>{{ t('admin.backups.enrollment.commandHint') }}</small>
+          </section>
+
+          <section class="input-panel embedded-field backup-private-key-field backup-setup-step">
             <span>{{ t('admin.backups.enrollment.stepThree') }}</span>
+            <p>{{ t('admin.backups.enrollment.stepThreeText') }}</p>
             <input type="file" accept="application/json,.json" :disabled="!canSubmit" @change="loadEnrollmentResponse" />
-            <textarea
-              v-model="enrollmentResponse"
-              rows="7"
-              spellcheck="false"
-              autocomplete="off"
-              :placeholder="t('admin.backups.enrollment.responsePlaceholder')"
-            />
-            <div v-if="enrollmentResponsePreview" class="backup-host-key-panel">
+            <small v-if="enrollmentFileName">{{ t('admin.backups.enrollment.selectedFile', { filename: enrollmentFileName }) }}</small>
+            <details class="backup-response-paste">
+              <summary>{{ t('admin.backups.enrollment.pasteFallback') }}</summary>
+              <textarea
+                v-model="enrollmentResponse"
+                rows="7"
+                spellcheck="false"
+                autocomplete="off"
+                :placeholder="t('admin.backups.enrollment.responsePlaceholder')"
+              />
+            </details>
+            <p v-if="enrollmentResponseError" class="error-text backup-enrollment-validation">
+              {{ enrollmentResponseError }}
+            </p>
+            <div v-else-if="enrollmentResponsePreview" class="backup-host-key-panel backup-enrollment-preview">
               <div>
                 <span>{{ enrollmentResponsePreview.username }}@{{ enrollmentResponsePreview.host }}:{{ enrollmentResponsePreview.port }}</span>
                 <strong>{{ enrollmentResponsePreview.host_key_fingerprint }}</strong>
                 <small>{{ t('admin.backups.enrollment.compareFingerprint') }}</small>
               </div>
             </div>
-          </label>
-          <div class="backup-form-actions">
-            <button class="form-button primary-action" type="button" :disabled="!canApplyEnrollment" @click="applyEnrollment">
-              {{ t('admin.backups.actions.applyEnrollment') }}
-            </button>
-          </div>
+            <div class="backup-form-actions">
+              <button class="form-button primary-action" type="button" :disabled="!canApplyEnrollment" @click="applyEnrollment">
+                {{ t('admin.backups.actions.applyEnrollment') }}
+              </button>
+              <small v-if="!enrollmentRequest">{{ t('admin.backups.enrollment.errors.noActiveRequest') }}</small>
+              <small v-else-if="!enrollmentResponse.trim()">{{ t('admin.backups.enrollment.errors.selectResponse') }}</small>
+              <small v-else-if="enrollmentResponseError">{{ enrollmentResponseError }}</small>
+              <small v-else>{{ t('admin.backups.enrollment.responseReady') }}</small>
+            </div>
+          </section>
+
+          <section v-if="enrollmentProgress.connectionVerified" class="backup-setup-complete">
+            <strong>{{ t('admin.backups.enrollment.completeTitle') }}</strong>
+            <p>{{ t('admin.backups.enrollment.completeText') }}</p>
+          </section>
         </div>
       </section>
 
-      <section class="wire-section admin-panel backup-configuration-panel">
-        <div class="admin-panel-heading">
+      <details
+        class="wire-section admin-panel backup-configuration-panel backup-manual-setup"
+        :open="configured && !status.connection?.managed_server"
+      >
+        <summary class="admin-panel-heading backup-manual-summary">
           <div>
             <h2>{{ t('admin.backups.configuration.title') }}</h2>
             <p>{{ t('admin.backups.configuration.subtitle') }}</p>
           </div>
-        </div>
+          <span class="summary-pill">{{ t('admin.backups.configuration.advanced') }}</span>
+        </summary>
         <div class="backup-security-note">
           <strong>{{ t('admin.backups.security.title') }}</strong>
           <p>{{ t('admin.backups.security.text') }}</p>
@@ -289,7 +383,7 @@ const {
             </button>
           </div>
         </form>
-      </section>
+      </details>
 
       <section class="wire-section admin-panel backup-run-panel">
         <div class="admin-panel-heading">

@@ -111,3 +111,7 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 ## Lizenz und Hinweise
 
 Siehe [NOTICE.md](NOTICE.md).
+
+## Backup und Recovery
+
+- [Backup-Server einrichten – Kurzleitfaden](docs/BACKUP_SETUP_QUICKSTART.md)

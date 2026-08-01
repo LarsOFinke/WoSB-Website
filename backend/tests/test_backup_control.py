@@ -733,7 +733,7 @@ def test_restore_script_uses_staging_preflight_and_automatic_rollback() -> None:
 
 
 def test_backup_enrollment_endpoints_publish_only_public_material() -> None:
-    request_dir, _ = _reset_control()
+    request_dir, status_dir = _reset_control()
     with TestClient(app) as client:
         with SessionLocal() as db:
             create_user(
@@ -758,11 +758,24 @@ def test_backup_enrollment_endpoints_publish_only_public_material() -> None:
         assert "private_key" not in json.dumps(request_payload)
 
         (request_dir / "backup.request").unlink()
+        (status_dir / "backup-status.json").write_text(
+            json.dumps(
+                {
+                    "state": "succeeded",
+                    "operation": "prepare_enrollment",
+                    "message": "prepared",
+                    "enrollment_request": {"enrollment_id": "A" * 32},
+                    "connection": {"configured": False},
+                }
+            ),
+            encoding="utf-8",
+        )
         response_json = json.dumps(
             {
                 "schema_version": 1,
                 "kind": "rbf-backup-enrollment-response",
                 "enrollment_id": "A" * 32,
+                "created_at": "2026-08-01T10:00:00+00:00",
                 "host": "backup.example.net",
                 "port": 22,
                 "username": "rbf-backup",
@@ -780,8 +793,79 @@ def test_backup_enrollment_endpoints_publish_only_public_material() -> None:
         assert applied.status_code == 202, applied.text
         request_payload = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
         assert request_payload["operation"] == "apply_enrollment"
-        assert request_payload["response_json"] == response_json
+        assert json.loads(request_payload["response_json"]) == json.loads(response_json)
         assert "PRIVATE KEY" not in applied.text
+    _reset_control()
+
+
+def test_backup_enrollment_apply_validates_file_before_queueing() -> None:
+    request_dir, status_dir = _reset_control()
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="backup-enrollment-validation-admin",
+                password="BlackwaterEnrollmentValidation123!",
+                display_name="Backup Enrollment Validation Admin",
+                role=ROLE_ADMIN,
+            )
+        _login(client, "backup-enrollment-validation-admin", "BlackwaterEnrollmentValidation123!")
+        (status_dir / "backup-status.json").write_text(
+            json.dumps(
+                {
+                    "state": "succeeded",
+                    "operation": "prepare_enrollment",
+                    "enrollment_request": {"enrollment_id": "A" * 32},
+                    "connection": {"configured": False},
+                }
+            ),
+            encoding="utf-8",
+        )
+        invalid = client.post(
+            "/api/admin/backups/enrollment/apply",
+            json={"response_json": json.dumps({"kind": "rbf-backup-server-provisioning-result"})},
+        )
+        assert invalid.status_code == 422
+        assert not (request_dir / "backup.request").exists()
+
+        incomplete = client.post(
+            "/api/admin/backups/enrollment/apply",
+            json={
+                "response_json": json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "rbf-backup-enrollment-response",
+                        "enrollment_id": "A" * 32,
+                        "managed_server": True,
+                    }
+                )
+            },
+        )
+        assert incomplete.status_code == 422
+        assert not (request_dir / "backup.request").exists()
+
+        response = {
+            "schema_version": 1,
+            "kind": "rbf-backup-enrollment-response",
+            "enrollment_id": "A" * 32,
+            "created_at": "2026-08-01T10:00:00+00:00",
+            "host": "backup.example.net",
+            "port": 22,
+            "username": "rbf-backup",
+            "remote_directory": "/data",
+            "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=",
+            "host_key_fingerprint": "SHA256:" + "A" * 43,
+            "age_recipient": "age1" + "a" * 58,
+            "managed_server": True,
+        }
+        accepted = client.post(
+            "/api/admin/backups/enrollment/apply",
+            json={"response_json": "\ufeff" + json.dumps(response)},
+        )
+        assert accepted.status_code == 202, accepted.text
+        queued = json.loads((request_dir / "backup.request").read_text(encoding="utf-8"))
+        assert json.loads(queued["response_json"])["enrollment_id"] == "A" * 32
+
     _reset_control()
 
 

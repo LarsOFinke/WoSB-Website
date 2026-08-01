@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from typing import Literal
 
@@ -26,6 +27,9 @@ _HOST_KEY_PATTERN = re.compile(
 )
 _BACKUP_ID_PATTERN = re.compile(r"^[a-f0-9]{64}$")
 _APPROVAL_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{24,128}$")
+_ENROLLMENT_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{24,128}$")
+_HOST_FINGERPRINT_PATTERN = re.compile(r"^SHA256:[A-Za-z0-9+/]{40,64}$")
+_AGE_RECIPIENT_PATTERN = re.compile(r"^age1[0-9a-z]{20,}$")
 
 
 class BackupDiscoveryRequest(BaseModel):
@@ -95,10 +99,66 @@ class BackupEnrollmentResponseRequest(BaseModel):
     @field_validator("response_json")
     @classmethod
     def validate_response_json(cls, value: str) -> str:
-        normalized = value.strip()
-        if not normalized.startswith("{") or not normalized.endswith("}"):
-            raise ValueError("Paste the complete enrollment response JSON object.")
-        return normalized
+        normalized = value.lstrip("\ufeff").strip()
+        try:
+            payload = json.loads(normalized)
+        except json.JSONDecodeError as exc:
+            raise ValueError("The enrollment response is not valid JSON.") from exc
+        if not isinstance(payload, dict):
+            raise ValueError("The enrollment response must be a JSON object.")
+        if payload.get("schema_version") != 1:
+            raise ValueError("The enrollment response uses an unsupported schema version.")
+        if payload.get("kind") != "rbf-backup-enrollment-response":
+            raise ValueError("Select the RESPONSE.json created by 'rbf-recovery-tool server provision'.")
+
+        enrollment_id = str(payload.get("enrollment_id") or "").strip()
+        if not _ENROLLMENT_ID_PATTERN.fullmatch(enrollment_id):
+            raise ValueError("The enrollment response contains an invalid enrollment ID.")
+        host = str(payload.get("host") or "").strip().rstrip(".")
+        if not _HOST_PATTERN.fullmatch(host):
+            raise ValueError("The enrollment response contains an invalid backup host.")
+        try:
+            port = int(payload.get("port") or 22)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("The enrollment response contains an invalid SSH port.") from exc
+        if not 1 <= port <= 65535:
+            raise ValueError("The enrollment response contains an invalid SSH port.")
+        username = str(payload.get("username") or "").strip()
+        if not _USERNAME_PATTERN.fullmatch(username):
+            raise ValueError("The enrollment response contains an invalid SSH username.")
+        remote_directory = str(payload.get("remote_directory") or "").strip().rstrip("/") or "/"
+        if not _REMOTE_DIRECTORY_PATTERN.fullmatch(remote_directory) or any(
+            part in {"", ".", ".."} for part in remote_directory.split("/")[1:]
+        ):
+            raise ValueError("The enrollment response contains an invalid SFTP directory.")
+        host_key = " ".join(str(payload.get("host_key") or "").split())
+        if not _HOST_KEY_PATTERN.fullmatch(host_key):
+            raise ValueError("The enrollment response contains an invalid SSH host key.")
+        fingerprint = str(payload.get("host_key_fingerprint") or "").strip()
+        if not _HOST_FINGERPRINT_PATTERN.fullmatch(fingerprint):
+            raise ValueError("The enrollment response contains an invalid SSH host-key fingerprint.")
+        age_recipient = str(payload.get("age_recipient") or "").strip()
+        if not _AGE_RECIPIENT_PATTERN.fullmatch(age_recipient):
+            raise ValueError("The enrollment response contains an invalid age recipient.")
+        if payload.get("managed_server") is not True:
+            raise ValueError("The automatic enrollment accepts only Recovery-Tool managed servers.")
+
+        canonical = {
+            "schema_version": 1,
+            "kind": "rbf-backup-enrollment-response",
+            "enrollment_id": enrollment_id,
+            "created_at": str(payload.get("created_at") or "").strip(),
+            "host": host,
+            "port": port,
+            "username": username,
+            "remote_directory": remote_directory,
+            "host_key": host_key,
+            "host_key_fingerprint": fingerprint,
+            "age_recipient": age_recipient,
+            "managed_server": True,
+        }
+        return json.dumps(canonical, ensure_ascii=False, separators=(",", ":"))
+
 
 
 class DatabaseRestoreRequest(BaseModel):

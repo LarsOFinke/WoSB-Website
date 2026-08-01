@@ -46,7 +46,7 @@ rbf-recovery-tool server provision \
   --retention-days 30
 ```
 
-`pkexec` fordert die administrative Freigabe an. Das Tool installiert bei Bedarf OpenSSH, richtet
+`pkexec` fordert die administrative Freigabe an. Die Benutzer `rbf-backup` und `rbf-recovery` müssen nicht vorab angelegt werden; vorhandene, nicht vom Tool registrierte Konten werden zum Schutz bestehender Zugänge abgelehnt. Das Tool installiert bei Bedarf OpenSSH, richtet
 einen dedizierten kennwortlosen Benutzer mit chroot-isoliertem `internal-sftp`, ein rootgeschütztes
 `authorized_keys`, den Speicherpfad und einen täglichen Retention-Timer ein. Die private age-
 Identität wird im Benutzerkonto des Backup-Geräts erzeugt; nur der öffentliche Empfänger gelangt

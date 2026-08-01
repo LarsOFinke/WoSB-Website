@@ -23,14 +23,25 @@ from .verification import generate_identity
 
 
 def _load_request(path: Path) -> dict[str, object]:
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise RuntimeError(f"Enrollment-Anfrage nicht gefunden: {resolved}")
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError("Die Enrollment-Anfrage konnte nicht gelesen werden.") from exc
+        content = resolved.read_text(encoding="utf-8-sig")
+    except PermissionError as exc:
+        raise RuntimeError(f"Keine Leseberechtigung für die Enrollment-Anfrage: {resolved}") from exc
+    except OSError as exc:
+        raise RuntimeError(f"Enrollment-Anfrage konnte nicht gelesen werden: {resolved}") from exc
+    try:
+        payload = json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"Enrollment-Anfrage ist kein gültiges JSON (Zeile {exc.lineno}, Spalte {exc.colno}): {resolved}"
+        ) from exc
     try:
         return validate_request(payload)
     except ValueError as exc:
-        raise RuntimeError(str(exc)) from exc
+        raise RuntimeError(f"Ungültige Enrollment-Anfrage in {resolved}: {exc}") from exc
 
 
 def _public_recipient(identity: Path) -> str:
@@ -138,7 +149,7 @@ def provision_backup_server(
     identity: Path,
     port: int = 22,
     username: str = "rbf-backup",
-    remote_directory: str = "/srv/rbf-backups/wosb",
+    storage_directory: str = "/srv/rbf-backups/wosb",
     allow_from: str = "",
     skip_package_install: bool = False,
     retention_days: int = 30,
@@ -149,6 +160,17 @@ def provision_backup_server(
     if os.name == "nt" or sys.platform == "darwin":
         raise RuntimeError("Die automatische Backup-Server-Provisionierung wird nur unter Linux unterstützt.")
     request = _load_request(request_path.expanduser().resolve())
+    requested_username = str(request["requested_username"])
+    requested_directory = str(request["requested_directory"])
+    if username != requested_username:
+        raise RuntimeError(
+            f"Der angegebene Upload-Benutzer '{username}' stimmt nicht mit der Enrollment-Anfrage "
+            f"'{requested_username}' überein."
+        )
+    if requested_directory != "/data":
+        raise RuntimeError(
+            f"Die Enrollment-Anfrage erwartet den nicht unterstützten SFTP-Pfad '{requested_directory}'."
+        )
     identity = identity.expanduser().resolve()
     if identity.exists():
         age_recipient = _public_recipient(identity)
@@ -168,7 +190,7 @@ def provision_backup_server(
             "--host", host,
             "--port", str(port),
             "--user", username,
-            "--directory", remote_directory,
+            "--directory", storage_directory,
             "--recovery-user", recovery_username,
             "--recovery-public-key", recovery_public_key,
             "--retention-days", str(retention_days),

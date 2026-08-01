@@ -78,11 +78,22 @@ import re
 import sys
 from pathlib import Path
 path = Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8"))
+try:
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
+except FileNotFoundError as exc:
+    raise SystemExit(f"Enrollment-Anfrage nicht gefunden: {path.resolve()}") from exc
+except PermissionError as exc:
+    raise SystemExit(f"Keine Leseberechtigung für die Enrollment-Anfrage: {path.resolve()}") from exc
+except json.JSONDecodeError as exc:
+    raise SystemExit(
+        f"Enrollment-Anfrage ist kein gültiges JSON (Zeile {exc.lineno}, Spalte {exc.colno}): {path.resolve()}"
+    ) from exc
 if payload.get("schema_version") != 1 or payload.get("kind") != "rbf-backup-enrollment-request":
-    raise SystemExit("Ungültige Enrollment-Anfrage.")
+    raise SystemExit("Ungültige oder nicht unterstützte Enrollment-Anfrage.")
 enrollment_id = str(payload.get("enrollment_id") or "").strip()
 public_key = str(payload.get("ssh_public_key") or "").strip()
+requested_username = str(payload.get("requested_username") or "").strip()
+requested_directory = str(payload.get("requested_directory") or "").strip().rstrip("/") or "/"
 if not re.fullmatch(r"[A-Za-z0-9_-]{24,128}", enrollment_id):
     raise SystemExit("Ungültige Enrollment-ID.")
 if not re.fullmatch(
@@ -90,13 +101,29 @@ if not re.fullmatch(
     public_key,
 ):
     raise SystemExit("Ungültiger SSH-Public-Key.")
+if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_username):
+    raise SystemExit("Ungültiger angeforderter SSH-Benutzer.")
+if requested_directory != "/data":
+    raise SystemExit("Nicht unterstützter angeforderter SFTP-Pfad; erwartet wird /data.")
 print(enrollment_id)
 print(public_key)
+print(requested_username)
+print(requested_directory)
 PY
 )
-(( ${#request_fields[@]} == 2 )) || { echo "Enrollment-Anfrage konnte nicht gelesen werden." >&2; exit 1; }
+(( ${#request_fields[@]} == 4 )) || { echo "Enrollment-Anfrage konnte nicht vollständig gelesen werden." >&2; exit 1; }
 ENROLLMENT_ID="${request_fields[0]}"
 PUBLIC_KEY="${request_fields[1]}"
+REQUESTED_USERNAME="${request_fields[2]}"
+REQUESTED_DIRECTORY="${request_fields[3]}"
+[[ "$USERNAME" == "$REQUESTED_USERNAME" ]] || {
+  echo "Der CLI-Benutzer '$USERNAME' stimmt nicht mit der Enrollment-Anfrage '$REQUESTED_USERNAME' überein." >&2
+  exit 1
+}
+[[ "$REQUESTED_DIRECTORY" == "/data" ]] || {
+  echo "Die Enrollment-Anfrage erwartet einen nicht unterstützten SFTP-Pfad: $REQUESTED_DIRECTORY" >&2
+  exit 1
+}
 
 if [[ "$SKIP_PACKAGE_INSTALL" != true ]] && ! command -v sshd >/dev/null 2>&1; then
   export DEBIAN_FRONTEND=noninteractive
@@ -136,6 +163,7 @@ else
   for account in "$USERNAME" "$RECOVERY_USERNAME"; do
     if id "$account" >/dev/null 2>&1; then
       echo "Der Benutzer $account existiert bereits, wurde aber nicht durch dieses Tool registriert. Abbruch zum Schutz des bestehenden Kontos." >&2
+      echo "Das Recovery-Tool legt die Konten selbst an. Entferne ein nur testweise angelegtes, unbenutztes Konto bewusst vor dem erneuten Provisioning oder verwende den manuellen Web-Fallback." >&2
       exit 1
     fi
   done

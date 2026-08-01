@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import sys
 
@@ -47,8 +48,37 @@ def main(argv: list[str] | None = None) -> int:
     setup = sub.add_parser("setup", help="Optionale Linux-Komponenten einrichten"); setup.add_argument("--with-db-lab", action="store_true"); setup.add_argument("--with-timer", action="store_true")
     server = sub.add_parser("server", help="Dedizierten Backup-Server automatisch provisionieren")
     server_sub = server.add_subparsers(dest="server_action", required=True)
-    provision = server_sub.add_parser("provision", help="SSH/SFTP-Konto, Verzeichnis und age-Schlüssel einrichten")
-    provision.add_argument("request", type=Path); provision.add_argument("--host", required=True); provision.add_argument("--output", type=Path, required=True); provision.add_argument("--identity", type=Path, default=Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt"); provision.add_argument("--port", type=int, default=22); provision.add_argument("--user", default="rbf-backup"); provision.add_argument("--recovery-user", default="rbf-recovery"); provision.add_argument("--recovery-key", type=Path, default=Path.home() / "RBF-Recovery" / "rbf-recovery-readonly-ed25519"); provision.add_argument("--directory", default="/srv/rbf-backups/wosb"); provision.add_argument("--retention-days", type=int, default=30); provision.add_argument("--allow-from", default=""); provision.add_argument("--skip-package-install", action="store_true"); provision.add_argument("--no-local-profile", action="store_true")
+    provision = server_sub.add_parser(
+        "provision",
+        help="Backup-Server samt getrenntem Upload- und Recovery-Zugang einrichten",
+    )
+    provision.add_argument("request", type=Path, help="Von der WoSB-Webseite geladene Enrollment-Anfrage")
+    provision.add_argument("--host", required=True, help="Vom Produktivserver erreichbare IP oder DNS-Adresse")
+    provision.add_argument("--output", type=Path, required=True, help="Zu erzeugende RESPONSE.json")
+    provision.add_argument(
+        "--identity",
+        type=Path,
+        default=Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt",
+        help="Lokaler Speicherort der privaten age-Identität",
+    )
+    provision.add_argument("--port", type=int, default=22, help="Bereits konfigurierter SSH-Port")
+    provision.add_argument("--user", default="rbf-backup", help="Upload-Konto aus der Enrollment-Anfrage")
+    provision.add_argument("--recovery-user", default="rbf-recovery", help="Lokales read-only Recovery-Konto")
+    provision.add_argument(
+        "--recovery-key",
+        type=Path,
+        default=Path.home() / "RBF-Recovery" / "rbf-recovery-readonly-ed25519",
+        help="Lokaler Speicherort des privaten Recovery-Leseschlüssels",
+    )
+    provision.add_argument(
+        "--directory",
+        default="/srv/rbf-backups/wosb",
+        help="Root-eigener Speicher-/Chroot-Pfad; innerhalb von SFTP ist /data sichtbar",
+    )
+    provision.add_argument("--retention-days", type=int, default=30)
+    provision.add_argument("--allow-from", default="", help="Optionale Produktivserver-IP/CIDR")
+    provision.add_argument("--skip-package-install", action="store_true")
+    provision.add_argument("--no-local-profile", action="store_true")
     lab = sub.add_parser("lab", help="Lokales PostgreSQL-Recovery-Labor verwalten")
     lab.add_argument("action", choices=("init", "start", "stop", "status", "restore", "import-check", "remove")); lab.add_argument("--port", type=int, default=55432); lab.add_argument("--bundle", type=Path); lab.add_argument("--identity", type=Path); lab.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -73,19 +103,28 @@ def main(argv: list[str] | None = None) -> int:
             username=args.user,
             recovery_username=args.recovery_user,
             recovery_ssh_key=args.recovery_key,
-            remote_directory=args.directory,
+            storage_directory=args.directory,
             allow_from=args.allow_from,
             skip_package_install=args.skip_package_install,
             retention_days=args.retention_days,
             configure_local_profile=not args.no_local_profile,
         )
-        print(f"Enrollment-Antwort: {result}")
+        response = json.loads(result.read_text(encoding="utf-8"))
+        print("\nFERTIG: Der Backup-Server wurde provisioniert.")
+        print(f"Antwortdatei: {result}")
+        print(f"SSH-Host-Key-Fingerprint: {response.get('host_key_fingerprint', 'unbekannt')}")
         print(f"Private age-Identität: {args.identity.expanduser().resolve()}")
         print(f"Lokaler Recovery-Leseschlüssel: {args.recovery_key.expanduser().resolve()}")
         if not args.no_local_profile:
             print(f"Recovery-Profil: {profile_path()}")
-            print("Der spätere Abruf funktioniert lokal mit: rbf-recovery-tool pull")
-        print("WICHTIG: age-Identität und Recovery-Leseschlüssel zusätzlich verschlüsselt offline sichern.")
+        print("\nNÄCHSTE SCHRITTE:")
+        print("1. Vergleiche den Fingerprint oben mit der Webseite.")
+        print(f"2. Wähle in WoSB diese Datei aus: {result}")
+        print("3. Klicke auf 'Antwort importieren und prüfen'.")
+        print("4. Starte danach in WoSB ein manuelles Testbackup.")
+        if not args.no_local_profile:
+            print("5. Prüfe auf diesem Gerät den Abruf mit: rbf-recovery-tool pull")
+        print("\nWICHTIG: age-Identität und Recovery-Leseschlüssel zusätzlich verschlüsselt offline sichern.")
         return 0
     if args.command == "setup":
         if not args.with_db_lab and not args.with_timer: raise RuntimeError("Mindestens --with-db-lab oder --with-timer angeben.")
