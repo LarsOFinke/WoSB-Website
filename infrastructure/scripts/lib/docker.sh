@@ -124,6 +124,15 @@ verify_database_schema_head() {
   success "Datenbankschema entspricht Alembic-Head $SCHEMA_EXPECTED_HEADS."
 }
 
+quiesce_api_for_database_update() {
+  [[ "${API_QUIESCED_FOR_DATABASE_UPDATE:-false}" != true ]] || return 0
+  if bw_compose ps --status running -q api 2>/dev/null | grep -q .; then
+    log "Stoppe die API vor Datenbankarbeiten; sie bleibt bis zum geprüften Deployment angehalten."
+    bw_compose stop api
+    API_QUIESCED_FOR_DATABASE_UPDATE=true
+  fi
+}
+
 deploy_application_update() {
   local run_migrations="${1:-false}"
   local run_seed="${2:-false}"
@@ -132,6 +141,7 @@ deploy_application_update() {
   ensure_env_file
 
   if [[ "$run_migrations" == true || "$run_seed" == true ]]; then
+    quiesce_api_for_database_update
     log "Stelle PostgreSQL für beabsichtigte Datenbankarbeiten sicher."
     ensure_postgres_service
   else
@@ -140,12 +150,16 @@ deploy_application_update() {
 
   if [[ "$run_migrations" == true ]]; then
     log "Führe beabsichtigte Alembic-Migrationen aus."
+    # From this point on, reverting only the application image could make code
+    # and schema incompatible even if the migration command later fails.
+    DATABASE_ACTIONS_EXECUTED=true
     bw_compose run --rm migrate
   else
     log "Alembic-Migrationen werden übersprungen."
   fi
 
   if [[ "$run_seed" == true ]]; then
+    DATABASE_ACTIONS_EXECUTED=true
     if [[ "$restore_seed_defaults" == true ]]; then
       log "Stelle repository-eigene Seed-Defaults wieder her und führe das Seed aus."
       bw_compose run --rm seed rbf-seed --restore-seed-defaults

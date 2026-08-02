@@ -46,6 +46,13 @@ absichtlich nur Vorgang, Zustand und Zeitpunkte. Commit-IDs, anfordernde Konten 
 bleiben im Host-Protokoll beziehungsweise in den konfigurierten Webhook-Zustellungen und werden
 nicht an den Browser ausgeliefert.
 
+Bei einer Migration hält der Updater die laufende API bereits vor dem konsistenten Backup an und
+lässt sie bis nach `alembic upgrade head` sowie der exakten Schemaprüfung gestoppt. Dadurch kann ein
+unter demselben Compose-Tag neu gebautes API-Image nicht zwischen Backup und Migration vorzeitig
+starten. Solange noch kein Datenbankbefehl begonnen wurde, bleibt der automatische Image- und
+Code-Rollback zulässig; erst ab dem tatsächlichen Start von Migration oder Seed wird ein reiner
+Code-Rollback wegen möglicher Schema-Inkompatibilität konservativ gesperrt.
+
 ## Backup
 
 ```bash

@@ -137,6 +137,7 @@ update_create_backup() {
   [[ "$CREATE_BACKUP" == true ]] || return 0
 
   if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
+    quiesce_api_for_database_update
     log "Erstelle Sicherheitsbackup inklusive PostgreSQL vor beabsichtigten Datenbankarbeiten."
     update_run_backup_scripts true
   else
@@ -203,13 +204,17 @@ update_execute_restart() {
   /usr/bin/env bash "$INFRA_DIR/scripts/services/restart-application.sh"
 }
 
+update_code_rollback_is_schema_safe() {
+  [[ "${DATABASE_ACTIONS_EXECUTED:-false}" != true ]]
+}
+
 update_attempt_rollback() {
   if [[ "$RESTART_ONLY" == true ]]; then
     warn "Ein fehlgeschlagener Neustart wird nicht durch einen Code-Rollback behandelt."
     return 1
   fi
-  if [[ "$RUN_MIGRATIONS" == true || "$RUN_SEED" == true ]]; then
-    warn "Automatischer Code-Rollback wird nach Datenbankaktionen konservativ übersprungen."
+  if ! update_code_rollback_is_schema_safe; then
+    warn "Automatischer Code-Rollback wird nach tatsächlich gestarteten Datenbankaktionen konservativ übersprungen."
     return 1
   fi
 

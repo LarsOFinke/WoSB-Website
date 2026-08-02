@@ -218,6 +218,20 @@ PY
     SYNC_TEST_RESULT="$2/sync-result.txt"
     export BACKUP_TEST_RESULT SYNC_TEST_RESULT
     log() { :; }
+    quiesce_api_for_database_update() {
+      bw_compose ps --status running -q api >/dev/null
+      bw_compose stop api
+      API_QUIESCED_FOR_DATABASE_UPDATE=true
+    }
+    bw_compose() {
+      if [[ "$1" == ps ]]; then
+        printf "%s\n" "api-container"
+      elif [[ "$1" == stop && "$2" == api ]]; then
+        printf "%s\n" "stopped" > "$api_stop_result"
+      fi
+    }
+    api_stop_result="$2/api-stop.txt"
+    export api_stop_result
     exec 9>"$RUN_DIR/update.lock"
     flock 9
     update_create_backup
@@ -226,8 +240,27 @@ PY
   fi
   grep -q -- '--lock-held --reason pre-update' "$tmp/result.txt" \
     || fail "database update did not invoke the coordinated runner with inherited update-lock semantics"
+  [[ -f "$tmp/api-stop.txt" ]] \
+    || fail "database update did not keep the API stopped between backup and migration"
   [[ -f "$tmp/sync-result.txt" ]] \
     || fail "database update did not transfer the committed backup set to the configured remote target"
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/workflow.sh"
+  RESTART_ONLY=false
+  RUN_MIGRATIONS=true
+  RUN_SEED=false
+  DATABASE_ACTIONS_EXECUTED=false
+  if ! update_code_rollback_is_schema_safe; then
+    fail "rollback must remain available before a requested migration actually starts"
+  fi
+
+  DATABASE_ACTIONS_EXECUTED=true
+  if update_code_rollback_is_schema_safe; then
+    fail "code-only rollback must be blocked after a database action starts"
+  fi
 )
 
 printf 'Update-management checks OK.\n'
