@@ -244,9 +244,7 @@ def list_files(
     owner_id: int | None = None,
     usage_context: str | None = None,
 ) -> list[StoredFile]:
-    statement = select(StoredFile).order_by(
-        StoredFile.created_at.desc(), StoredFile.id.desc()
-    )
+    statement = select(StoredFile).order_by(StoredFile.created_at.desc(), StoredFile.id.desc())
     if owner_id is not None:
         statement = statement.where(StoredFile.owner_id == owner_id)
     if usage_context:
@@ -275,14 +273,10 @@ def resolve_stored_file_path(stored_file: StoredFile) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
-def get_files_for_owner(
-    db: Session, file_ids: list[int], owner: User
-) -> list[StoredFile]:
+def get_files_for_owner(db: Session, file_ids: list[int], owner: User) -> list[StoredFile]:
     if not file_ids:
         return []
-    files = list(
-        db.scalars(select(StoredFile).where(StoredFile.id.in_(file_ids))).all()
-    )
+    files = list(db.scalars(select(StoredFile).where(StoredFile.id.in_(file_ids))).all())
     found = {file.id: file for file in files}
     missing = [file_id for file_id in file_ids if file_id not in found]
     if missing:
@@ -291,7 +285,6 @@ def get_files_for_owner(
         if file.owner_id not in (None, owner.id) and not owner.can_moderate:
             raise FileValidationError("One or more selected files are not owned by you.")
     return [found[file_id] for file_id in file_ids]
-
 
 
 def publish_files(files: list[StoredFile], usage_context: str) -> None:

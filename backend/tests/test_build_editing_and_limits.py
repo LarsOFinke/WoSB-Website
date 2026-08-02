@@ -7,6 +7,8 @@ from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.modules.accounts.models.user import ROLE_USER, User
 from app.modules.accounts.services.auth_service import create_user
+from app.modules.builds.models.build_file_attachment import BuildFileAttachment
+from app.modules.files.models.file_asset import StoredFile
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
 from app.bootstrap.manager import SeedManager
@@ -153,9 +155,62 @@ def test_build_printout_is_public_deduplicated_and_replaced_in_place() -> None:
             f"build-{build_id}.png"
         ]
 
+        attached_path = Path(settings.upload_dir) / "build-files" / str(build_id) / "notes.txt"
+        attached_path.parent.mkdir(parents=True, exist_ok=True)
+        attached_path.write_text("build-owned attachment", encoding="utf-8")
+        with SessionLocal() as db:
+            stored_file = StoredFile(
+                owner_id=None,
+                original_name="notes.txt",
+                stored_name=f"build-{build_id}-notes.txt",
+                relative_path=str(attached_path.relative_to(Path(settings.upload_dir))),
+                mime_type="text/plain",
+                size_bytes=attached_path.stat().st_size,
+                usage_context="general",
+                is_public=False,
+            )
+            db.add(stored_file)
+            db.flush()
+            file_id = stored_file.id
+            db.add(BuildFileAttachment(build_id=build_id, file_id=file_id))
+            db.commit()
+
+        second_build = client.post(
+            "/api/builds", json=_anson_payload(ship_id, name="Shared file owner")
+        )
+        second_build_id = second_build.json()["id"]
+        shared_path = attached_path.with_name("shared.txt")
+        shared_path.write_text("shared build attachment", encoding="utf-8")
+        with SessionLocal() as db:
+            shared_file = StoredFile(
+                owner_id=None,
+                original_name="shared.txt",
+                stored_name=f"build-{build_id}-shared.txt",
+                relative_path=str(shared_path.relative_to(Path(settings.upload_dir))),
+                mime_type="text/plain",
+                size_bytes=shared_path.stat().st_size,
+                usage_context="general",
+                is_public=False,
+            )
+            db.add(shared_file)
+            db.flush()
+            shared_file_id = shared_file.id
+            db.add_all(
+                [
+                    BuildFileAttachment(build_id=build_id, file_id=shared_file_id),
+                    BuildFileAttachment(build_id=second_build_id, file_id=shared_file_id),
+                ]
+            )
+            db.commit()
+
         deleted = client.delete(f"/api/builds/mine/{build_id}")
         assert deleted.status_code == 204
         assert client.get(endpoint).status_code == 404
+        assert not attached_path.exists()
+        with SessionLocal() as db:
+            assert db.get(StoredFile, file_id) is None
+            assert db.get(StoredFile, shared_file_id) is not None
+        assert shared_path.exists()
 
 
 def test_doctor_does_not_create_six_extra_crew_places() -> None:

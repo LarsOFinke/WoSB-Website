@@ -17,6 +17,7 @@ _MODEL_MODULES = (
     "app.modules.admin.models.ip_block",
     "app.modules.admin.models.outbound_webhook",
     "app.modules.builds.models.build",
+    "app.modules.builds.models.build_file_attachment",
     "app.modules.builds.models.build_feature",
     "app.modules.builds.models.build_role",
     "app.modules.builds.models.build_vote",

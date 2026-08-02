@@ -90,7 +90,3 @@ def save_build_printout(db: Session, build: Build, upload: UploadFile) -> tuple[
         if not target.is_file() and previous_path.is_file():
             os.replace(previous_path, target)
         raise
-
-
-def delete_build_printout(build_id: int) -> None:
-    printout_path(build_id).unlink(missing_ok=True)

@@ -1,8 +1,13 @@
+from io import BytesIO
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
+from app.core.config import settings
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_MODERATOR, ROLE_USER
 from app.modules.accounts.services.auth_service import create_user
+from app.modules.files.models.file_asset import StoredFile
 from main import app
 
 
@@ -260,3 +265,85 @@ def test_forum_replies_can_be_deleted_by_author_or_moderator_but_not_as_opening_
         detail = client.get(f"/api/forum/threads/{thread_id}")
         assert detail.status_code == 200, detail.text
         assert [post["id"] for post in detail.json()["posts"]] == [opening_post_id]
+
+
+def test_content_deletion_removes_orphaned_files_but_preserves_shared_files() -> None:
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        b"\x00\x00\x00\rIHDR"
+        b"\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00"
+        b"\x1f\x15\xc4\x89"
+    )
+    with TestClient(app) as client:
+        with SessionLocal() as db:
+            create_user(
+                db,
+                username="content-file-delete-owner",
+                password="ContentFileDeleteOwner123!",
+                display_name="Content File Delete Owner",
+                role=ROLE_USER,
+            )
+
+        _login(client, "content-file-delete-owner", "ContentFileDeleteOwner123!")
+
+        def upload(name: str, context: str) -> dict:
+            response = client.post(
+                f"/api/files?usage_context={context}",
+                files={"file": (name, BytesIO(png), "image/png")},
+            )
+            assert response.status_code == 201, response.text
+            return response.json()
+
+        guide_only = upload("guide-only.png", "guide")
+        shared = upload("shared.png", "guide")
+        forum_only = upload("forum-only.png", "forum")
+        upload_root = Path(settings.upload_dir)
+        paths = {
+            item["id"]: upload_root / item["relative_path"]
+            for item in (guide_only, shared, forum_only)
+        }
+
+        thread = client.post(
+            "/api/forum/threads",
+            json={
+                "title": "Shared attachment thread",
+                "category": "general",
+                "body": "The shared attachment remains in use.",
+                "file_ids": [shared["id"]],
+            },
+        )
+        assert thread.status_code == 201, thread.text
+        thread_id = thread.json()["id"]
+
+        guide = client.post(
+            "/api/guides",
+            json={
+                "title": "Guide file cleanup",
+                "category": "general",
+                "summary": "Deletion cleanup regression",
+                "body": "One private and one shared attachment.",
+                "file_ids": [guide_only["id"], shared["id"]],
+                "build_ids": [],
+            },
+        )
+        assert guide.status_code == 201, guide.text
+        assert client.delete(f"/api/guides/{guide.json()['id']}").status_code == 204
+
+        with SessionLocal() as db:
+            assert db.get(StoredFile, guide_only["id"]) is None
+            assert db.get(StoredFile, shared["id"]) is not None
+        assert not paths[guide_only["id"]].exists()
+        assert paths[shared["id"]].exists()
+
+        reply = client.post(
+            f"/api/forum/threads/{thread_id}/posts",
+            json={"body": "Removable attachment", "file_ids": [forum_only["id"]]},
+        )
+        assert reply.status_code == 201, reply.text
+        assert client.delete(f"/api/forum/posts/{reply.json()['id']}").status_code == 204
+
+        with SessionLocal() as db:
+            assert db.get(StoredFile, forum_only["id"]) is None
+            assert db.get(StoredFile, shared["id"]) is not None
+        assert not paths[forum_only["id"]].exists()
+        assert paths[shared["id"]].exists()

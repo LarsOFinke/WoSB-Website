@@ -9,6 +9,10 @@ from app.modules.forum.models.forum import ForumThread
 from app.modules.forum.models.forum_post import ForumPost
 from app.modules.forum.models.forum_post_attachment import ForumPostAttachment
 from app.modules.files.schemas.file_asset import FileRead
+from app.modules.files.services.file_cleanup_service import (
+    remove_stored_file_paths,
+    stage_unreferenced_files_for_deletion,
+)
 from app.modules.forum.schemas.forum_post_create import ForumPostCreate
 from app.modules.forum.schemas.forum_post_read import ForumPostRead
 from app.modules.forum.schemas.forum_post_update import ForumPostUpdate
@@ -233,8 +237,11 @@ def delete_thread(db: Session, thread_id: int, user: User) -> bool:
         for attachment in post.attachments
     }
     db.delete(thread)
+    db.flush()
     refresh_file_publication(db, file_ids)
+    paths = stage_unreferenced_files_for_deletion(db, file_ids)
     db.commit()
+    remove_stored_file_paths(paths)
     return True
 
 
@@ -264,6 +271,9 @@ def delete_post(db: Session, post_id: int, user: User) -> ForumPostRead | None:
     file_ids = {attachment.file_id for attachment in post.attachments}
     thread.updated_at = utc_now()
     db.delete(post)
+    db.flush()
     refresh_file_publication(db, file_ids)
+    paths = stage_unreferenced_files_for_deletion(db, file_ids)
     db.commit()
+    remove_stored_file_paths(paths)
     return snapshot

@@ -22,19 +22,30 @@ from app.modules.ships.models.ship import Ship
 from app.modules.ships.schemas.ship import ShipRead
 from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
-from app.modules.builds.services.build_printout_service import delete_build_printout, public_printout_url
+from app.modules.builds.services.build_printout_service import public_printout_url
+from app.modules.builds.services.build_deletion_service import delete_build_and_files
 
-__all__ = ["BuildValidationError", "create_build", "delete_build", "delete_user_build", "get_build", "list_build_page", "list_builds", "list_user_build_page", "list_user_builds", "update_user_build"]
+__all__ = [
+    "BuildValidationError",
+    "create_build",
+    "delete_build",
+    "delete_user_build",
+    "get_build",
+    "list_build_page",
+    "list_builds",
+    "list_user_build_page",
+    "list_user_builds",
+    "update_user_build",
+]
 
 
 def _build_query():
     return select(Build).options(
         selectinload(Build.slots).selectinload(BuildSlot.option),
         selectinload(Build.classifications),
-        selectinload(Build.research_upgrade_feature).selectinload(
-            BuildFeatureDefinition.effects
-        ),
+        selectinload(Build.research_upgrade_feature).selectinload(BuildFeatureDefinition.effects),
     )
+
 
 def _decorate_builds(
     db: Session,
@@ -43,10 +54,7 @@ def _decorate_builds(
 ) -> list[Build]:
     if not builds:
         return builds
-    role_labels = {
-        row.slug: row.label
-        for row in db.scalars(select(BuildRole)).all()
-    }
+    role_labels = {row.slug: row.label for row in db.scalars(select(BuildRole)).all()}
     vote_counts = dict(
         db.execute(
             select(BuildVote.build_id, func.count(BuildVote.id))
@@ -85,9 +93,7 @@ def _apply_build_filters(
     if search:
         like = f"%{search.strip()}%"
         statement = statement.where(
-            Build.build_name.ilike(like)
-            | Ship.name.ilike(like)
-            | Build.build_type.ilike(like)
+            Build.build_name.ilike(like) | Ship.name.ilike(like) | Build.build_type.ilike(like)
         )
     if build_type:
         statement = statement.where(Build.build_type == build_type.strip().lower())
@@ -105,7 +111,13 @@ def _apply_build_filters(
 def _summary_for_build(build: Build) -> BuildSummaryRead:
     upgrade_slots = [slot for slot in build.slots if slot.slot_type == "upgrade"]
     unlock_effect_slots = sum(
-        max(0, int(effective_upgrade_effects(slot.option, build.ship).get("extra_upgrade_slots", 0) or 0))
+        max(
+            0,
+            int(
+                effective_upgrade_effects(slot.option, build.ship).get("extra_upgrade_slots", 0)
+                or 0
+            ),
+        )
         for slot in upgrade_slots
     )
     access = calculate_upgrade_slot_access(
@@ -114,9 +126,7 @@ def _summary_for_build(build: Build) -> BuildSummaryRead:
         research_upgrade_slots=build.research_upgrade_slots,
     )
     weapon_total = sum(
-        int(slot.quantity or 1)
-        for slot in build.slots
-        if slot.slot_type.startswith("weapon_")
+        int(slot.quantity or 1) for slot in build.slots if slot.slot_type.startswith("weapon_")
     )
     metrics = BuildListMetrics(
         crew_total=build.sailors + build.soldiers + build.musketeers + build.mercenaries,
@@ -206,6 +216,7 @@ def list_user_build_page(
         offset=offset,
     )
 
+
 def list_builds(
     db: Session,
     search: str | None = None,
@@ -222,10 +233,14 @@ def list_builds(
         .correlate(Build)
         .scalar_subquery()
     )
-    statement = _build_query().join(Build.ship).order_by(
-        vote_count.desc(),
-        Build.created_at.desc(),
-        Build.id.desc(),
+    statement = (
+        _build_query()
+        .join(Build.ship)
+        .order_by(
+            vote_count.desc(),
+            Build.created_at.desc(),
+            Build.id.desc(),
+        )
     )
     statement = _apply_build_filters(
         statement,
@@ -249,6 +264,7 @@ def get_build(db: Session, build_id: int, viewer_id: int | None = None) -> Build
     build.printout_url = public_printout_url(build.id) if build.printout_checksum else None
     return _decorate_builds(db, [build], viewer_id)[0]
 
+
 def _apply_build_payload(
     db_build: Build,
     build: BuildCreate,
@@ -268,6 +284,7 @@ def _apply_build_payload(
     db_build.slots = slots
     db_build.classifications = [BuildClassification(tag=tag) for tag in build.classification_tags]
 
+
 def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -> Build:
     _, slots, research_feature = validate_and_prepare_build(db, build)
     db_build = Build(owner_id=owner_id)
@@ -276,9 +293,8 @@ def create_build(db: Session, build: BuildCreate, owner_id: int | None = None) -
     db.commit()
     return get_build(db, db_build.id, viewer_id=owner_id) or db_build
 
-def update_user_build(
-    db: Session, build_id: int, user_id: int, build: BuildCreate
-) -> Build | None:
+
+def update_user_build(db: Session, build_id: int, user_id: int, build: BuildCreate) -> Build | None:
     db_build = get_build(db, build_id)
     if db_build is None or db_build.owner_id != user_id or db_build.is_official_template:
         return None
@@ -291,14 +307,14 @@ def update_user_build(
     db.commit()
     return get_build(db, db_build.id, viewer_id=user_id) or db_build
 
+
 def delete_build(db: Session, build_id: int) -> bool:
     build = get_build(db, build_id)
     if build is None:
         return False
-    delete_build_printout(build.id)
-    db.delete(build)
-    db.commit()
+    delete_build_and_files(db, build)
     return True
+
 
 def list_user_builds(
     db: Session,
@@ -316,11 +332,10 @@ def list_user_builds(
         viewer_id=user_id,
     )
 
+
 def delete_user_build(db: Session, build_id: int, user_id: int) -> bool:
     build = get_build(db, build_id)
     if build is None or build.owner_id != user_id:
         return False
-    delete_build_printout(build.id)
-    db.delete(build)
-    db.commit()
+    delete_build_and_files(db, build)
     return True

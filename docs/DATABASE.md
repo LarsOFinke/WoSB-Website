@@ -111,6 +111,20 @@ Inhaltswechsel. Ein identischer erneuter Upload schreibt die Datei nicht neu. Ei
 geändertes Printout ersetzt dieselbe Datei atomar; beim Löschen des Builds wird sie
 entfernt. Migration `0023_build_printouts` ergänzt ausschließlich diese Metadaten.
 
+Weitere build-eigene Dateien werden über `build_file_attachments` eindeutig einem Build
+zugeordnet. Beim Löschen prüft der Build-Service diese Zuordnungen und entfernt nach dem
+erfolgreichen Datenbank-Commit sowohl die `stored_files`-Datensätze als auch die konkreten
+Dateien. Gemeinsam genutzte Stammdaten- und Katalogbilder besitzen keine solche Zuordnung und
+bleiben unberührt. Ist eine zugeordnete Datei zusätzlich mit einem anderen Build, einem Guide
+oder einem Forumbeitrag verbunden, wird nur die Build-Zuordnung entfernt und die gemeinsam
+genutzte Datei bleibt erhalten. Migration `0024_build_file_attachments` führt diesen Löschvertrag ein.
+
+Der gleiche Löschvertrag gilt für Guide-Anhänge und Dateien an Forumbeiträgen: Beim Löschen
+eines Guides werden seine Datei- und Build-Zuordnungen entfernt; beim Löschen eines Beitrags
+oder eines vollständigen Threads werden dessen Dateizuordnungen entfernt. Eine Datei ohne
+verbleibende Build-, Guide- oder Forum-Zuordnung wird anschließend aus `stored_files` und vom
+Datenträger gelöscht. Bereichsübergreifend gemeinsam verwendete Dateien bleiben bestehen.
+
 Die Veröffentlichung ist eine bewusste Aktion des Build-Eigentümers oder der
 Moderation. Das Bild ist danach ohne Anmeldung lesbar und kann deshalb auch von
 Discord abgerufen werden; Freitext im Build darf folglich keine vertraulichen oder

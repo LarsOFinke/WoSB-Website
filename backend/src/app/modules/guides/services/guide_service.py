@@ -9,6 +9,10 @@ from app.modules.guides.models.guide_attachment import GuideAttachment
 from app.modules.guides.models.guide_build_reference import GuideBuildReference
 from app.modules.builds.schemas.build_read import BuildRead
 from app.modules.files.schemas.file_asset import FileRead
+from app.modules.files.services.file_cleanup_service import (
+    remove_stored_file_paths,
+    stage_unreferenced_files_for_deletion,
+)
 from app.modules.guides.schemas.guide_create import GuideCreate
 from app.modules.guides.schemas.guide_read import GuideRead
 from app.modules.guides.schemas.guide_update import GuideUpdate
@@ -189,7 +193,12 @@ def delete_guide(db: Session, guide_id: int, user: User) -> bool:
     if guide is None or (guide.owner_id != user.id and not user.can_moderate):
         return False
     file_ids = {attachment.file_id for attachment in guide.attachments}
+    guide.attachments.clear()
+    guide.build_references.clear()
     guide.is_published = False
+    db.flush()
     refresh_file_publication(db, file_ids)
+    paths = stage_unreferenced_files_for_deletion(db, file_ids)
     db.commit()
+    remove_stored_file_paths(paths)
     return True

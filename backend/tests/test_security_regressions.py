@@ -210,8 +210,8 @@ def test_svg_and_mismatched_uploads_are_rejected_but_valid_png_is_accepted() -> 
         _login(client, username, password)
         assert client.delete(f"/api/guides/{guide_id}").status_code == 204
         client.cookies.clear()
-        assert client.get(public_content_path).status_code == 401
-        assert client.get(public_legacy_path).status_code == 401
+        assert client.get(public_content_path).status_code == 404
+        assert client.get(public_legacy_path).status_code == 404
 
         _login(client, username, password)
         forum_upload = client.post(
@@ -325,7 +325,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0023_build_printouts"})
+    assert heads == frozenset({"0024_build_file_attachments"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(
