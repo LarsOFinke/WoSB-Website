@@ -70,9 +70,16 @@ if [[ ! -f "$ROOT_DIR/frontend/.env" ]]; then
 fi
 (cd "$ROOT_DIR/frontend" && npm run build)
 
+# The infrastructure audit deliberately rejects local runtime env files. Remove
+# the temporary build-only copy before handing the tree to that audit.
+if [[ "$frontend_env_created" == true ]]; then
+  rm -f "$ROOT_DIR/frontend/.env"
+  frontend_env_created=false
+fi
+
 printf '\n[infrastructure] static and Compose checks\n'
 bash "$ROOT_DIR/scripts/test-infrastructure.sh"
 
-"$ROOT_DIR/backend/scripts/clear-pycache.sh"
+bash "$ROOT_DIR/backend/scripts/clear-pycache.sh"
 python "$ROOT_DIR/scripts/check_repository.py" --strict-tree
 printf '\nValidation completed successfully.\n'

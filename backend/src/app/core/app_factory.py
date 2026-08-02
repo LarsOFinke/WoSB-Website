@@ -16,7 +16,6 @@ from app.core.errors import AppError, app_error_handler, http_error_handler
 from app.core.logging import LoggingConfigurator
 from app.core.maintenance import (
     maintenance_loop,
-    run_maintenance_once,
     webhook_delivery_recovery_loop,
 )
 from app.core.middleware import CsrfOriginMiddleware, IpBlockMiddleware, RequestLoggingMiddleware
@@ -62,7 +61,8 @@ class ApplicationFactory:
         else:
             verify_database_ready()
         ensure_legal_notice_from_environment()
-        run_maintenance_once()
+        # Retention work and outbound webhook delivery must not delay API
+        # readiness. The maintenance loop owns the deferred and scheduled work.
         maintenance_task = asyncio.create_task(maintenance_loop())
         webhook_recovery_task = (
             asyncio.create_task(webhook_delivery_recovery_loop())

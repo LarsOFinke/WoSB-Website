@@ -63,10 +63,37 @@ Die alte Datenbank bleibt bis zur vollständigen Abnahme unverändert als Rollba
 - Cookie-Einwilligung akzeptieren, ablehnen und erneut öffnen
 - Upload-Auslieferung über `/api/files/{id}/content`: Guide-/Forum-/Master-Data-Dateien anonym lesbar, private Uploads anonym mit 401; Legacy-Links verhalten sich identisch
 
+## Kontrollierter 503-Wartungsmodus
+
+Server-Updates, kontrollierte API-Neustarts und die produktive Aktivierungsphase eines
+PostgreSQL-Restores schalten automatisch den statischen Wartungsmodus ein. NGINX bleibt dabei
+erreichbar und liefert für Website und API HTTP `503 Service Unavailable`, `Retry-After: 120`,
+`Cache-Control: no-store` sowie die eigenständige RBF-Wartungsseite aus. Normale Backups laufen
+ohne Wartungsmodus, weil sie die Website nicht absichtlich abschalten.
+
+Für ein manuelles Wartungsfenster kann der Host-Administrator denselben atomaren Mechanismus nutzen:
+
+```bash
+sudo env PYTHONPATH="$PWD/backend/src" python3 -m app.cli.maintenance_mode \
+  enable --status-dir infrastructure/data/control/status --reason manual
+sudo env PYTHONPATH="$PWD/backend/src" python3 -m app.cli.maintenance_mode \
+  disable --status-dir infrastructure/data/control/status
+```
+
+Die Datei `maintenance-mode.json` ist der einzige Schalter. Fehlerpfade und Rollbacks entfernen
+sie defensiv; falls ein Host hart ausfällt, kann der Administrator sie mit dem zweiten Befehl oder
+direkt aus `infrastructure/data/control/status/` entfernen.
+
+Die API veröffentlicht ihre Readiness vor zeitaufwendigen Aufräumarbeiten und
+Webhook-Nachlieferungen. Der Update-Runner wartet bis zu drei Minuten und hält
+bei einem Fehlschlag automatisch Containerstatus sowie die letzten API-Logs im
+`update.log` fest. Damit ist ein echter Startfehler von einem langsamen Start
+ohne zusätzliche Diagnosebefehle unterscheidbar.
+
 ## Nach dem Start
 
 - Health- und Readiness-Endpunkt beobachten.
 - Logs und freie Datenträgerkapazität kontrollieren.
 - Externes Recovery-Bundle auf dem Windows-Backupgerät abrufen und vollständig prüfen.
 - Uptime-Monitoring, Temperatur und `vcgencmd get_throttled` verifizieren.
-- Erst nach erfolgreicher Abnahme Wartungsseite/Ankündigung entfernen.
+- Prüfen, dass `infrastructure/data/control/status/maintenance-mode.json` nicht mehr vorhanden ist.

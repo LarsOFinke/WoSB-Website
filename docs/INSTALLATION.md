@@ -39,6 +39,11 @@ aktiviert. Der aufrufende Benutzer erhält keine root-äquivalenten Docker-Grupp
 `--regenerate-secrets` ist aus Sicherheitsgründen nur vor der ersten
 PostgreSQL-Initialisierung erlaubt.
 
+Der Gateway bindet das Statusverzeichnis schreibgeschützt ein. Während dedizierter Updates,
+Neustarts und produktiver Restores liefert er dadurch eine eigenständige statische RBF-503-Seite,
+selbst wenn API oder Datenbank gerade nicht erreichbar sind. Reguläre Backups verursachen keine
+Wartungsseite.
+
 ## 3. Abschluss
 
 ```bash

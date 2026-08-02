@@ -7,6 +7,7 @@ INFRA_DIR="$(cd "$UPDATE_LIB_DIR/../.." && pwd)"
 source "$INFRA_DIR/scripts/lib/docker.sh"
 source "$INFRA_DIR/scripts/lib/json.sh"
 source "$INFRA_DIR/scripts/lib/host/control.sh"
+source "$INFRA_DIR/scripts/lib/maintenance.sh"
 source "$UPDATE_LIB_DIR/options.sh"
 source "$UPDATE_LIB_DIR/request.sh"
 source "$UPDATE_LIB_DIR/status.sh"
@@ -38,6 +39,7 @@ GATEWAY_IMAGE_TAG_BEFORE=""
 SCHEMA_CURRENT_HEADS=""
 SCHEMA_EXPECTED_HEADS=""
 SCHEMA_MATCHES=false
+MAINTENANCE_ACTIVE=false
 
 update_main() {
   update_options_reset

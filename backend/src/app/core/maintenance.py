@@ -43,14 +43,17 @@ def run_maintenance_once() -> dict[str, int]:
 
 async def maintenance_loop() -> None:
     interval_seconds = max(1, settings.maintenance.interval_hours) * 60 * 60
+    # Let the server publish readiness before potentially expensive retention
+    # queries or outbound webhook attempts start.
+    await asyncio.sleep(60)
     while True:
-        await asyncio.sleep(interval_seconds)
         try:
             await asyncio.to_thread(run_maintenance_once)
         except asyncio.CancelledError:
             raise
         except Exception:
             logger.exception("periodic maintenance failed")
+        await asyncio.sleep(interval_seconds)
 
 
 async def _recover_webhook_deliveries(*, stale_after_seconds: int) -> None:

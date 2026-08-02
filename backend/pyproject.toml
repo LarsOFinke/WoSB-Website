@@ -30,6 +30,7 @@ dev = [
 [project.scripts]
 rbf-dev = "app.cli.dev:main"
 rbf-seed = "app.cli.seed:main"
+rbf-maintenance = "app.cli.maintenance_mode:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

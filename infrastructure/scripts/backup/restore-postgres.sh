@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
+source "$INFRA_DIR/scripts/lib/maintenance.sh"
 
 usage() {
   cat <<'USAGE'
@@ -85,6 +86,7 @@ rollback_database="${database}_rollback_${suffix}"; rollback_database="${rollbac
 failed_database="${database}_failed_${suffix}"; failed_database="${failed_database:0:63}"
 restore_completed=false
 maintenance_mode=false
+MAINTENANCE_ACTIVE=false
 swap_completed=false
 staging_created=false
 
@@ -109,11 +111,12 @@ start_application_best_effort() {
   wait_for_api || return 1
   bw_compose up -d --no-deps gateway || return 1
   ensure_monitoring_services || return 1
+  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" || return 1
 }
 rollback_database_swap() {
   warn "Die neue Datenbank bestand den Anwendungstest nicht; stelle die vorherige Datenbank atomar wieder her."
-  bw_compose stop api gateway >/dev/null 2>&1 || true
+  bw_compose stop api >/dev/null 2>&1 || true
   postgres_admin -v target_db="$database" -v rollback_db="$rollback_database" -v failed_db="$failed_database" <<'SQL'
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity
 WHERE datname IN (:'target_db', :'rollback_db') AND pid <> pg_backend_pid();
@@ -142,6 +145,7 @@ cleanup_on_exit() {
     python3 "$report_script" finish "$report_path" --status failed --recoverable false >/dev/null 2>&1 || true
     backup_finalize "$report_path" "reports" >/dev/null 2>&1 || true
   fi
+  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
   exit "$exit_code"
 }
 trap cleanup_on_exit EXIT
@@ -230,7 +234,8 @@ if [[ "$preflight_only" == true ]]; then
 fi
 
 log "Aktiviere den kurzen Wartungsmodus für den atomaren Datenbanktausch."
-bw_compose stop api gateway
+maintenance_enable restore 300
+bw_compose stop api
 maintenance_mode=true
 postgres_admin -v target_db="$database" -v staging_db="$staging_database" -v rollback_db="$rollback_database" <<'SQL'
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity
@@ -247,6 +252,7 @@ bw_compose up -d --no-deps api
 wait_for_api
 bw_compose up -d --no-deps gateway
 ensure_monitoring_services
+maintenance_disable
 /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 report_check production_smoke_test passed "Readiness and HTTPS smoke tests succeeded after activation."
 drop_database_if_exists "$rollback_database"

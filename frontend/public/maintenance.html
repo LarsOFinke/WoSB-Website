@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="theme-color" content="#07111d" />
+    <title>Royal Blackwater Fleet · Kurze Wartung</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; color: #edf4fb; background: radial-gradient(circle at 18% 10%, rgba(207,151,62,.2), transparent 34rem), radial-gradient(circle at 85% 90%, rgba(32,103,139,.2), transparent 38rem), #07111d; }
+      main { width: min(100%, 46rem); padding: clamp(1.5rem, 5vw, 3.5rem); border: 1px solid rgba(226,190,119,.25); border-radius: 1.5rem; background: linear-gradient(145deg, rgba(15,30,45,.96), rgba(8,19,31,.98)); box-shadow: 0 2rem 6rem rgba(0,0,0,.42); }
+      .brand { display: flex; align-items: center; gap: .9rem; color: #e7c784; font-size: .78rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+      .mark { display: grid; place-items: center; width: 2.7rem; height: 2.7rem; border: 1px solid rgba(231,199,132,.45); border-radius: .85rem; background: rgba(231,199,132,.08); font-size: 1.35rem; }
+      .status { display: inline-flex; align-items: center; gap: .5rem; margin-top: 2.5rem; padding: .45rem .7rem; border-radius: 999px; color: #f5d998; background: rgba(207,151,62,.12); font-size: .76rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+      .status::before { content: ''; width: .5rem; height: .5rem; border-radius: 50%; background: #e7b95f; box-shadow: 0 0 0 .3rem rgba(231,185,95,.12); }
+      h1 { max-width: 13ch; margin: 1.25rem 0 .9rem; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(2.35rem, 8vw, 4.8rem); font-weight: 500; line-height: .98; letter-spacing: -.035em; }
+      p { max-width: 38rem; margin: 0; color: #aebdca; font-size: clamp(1rem, 2.5vw, 1.15rem); line-height: 1.7; }
+      .details { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .8rem; margin-top: 2rem; }
+      .details div { padding: 1rem; border: 1px solid rgba(174,189,202,.12); border-radius: 1rem; background: rgba(255,255,255,.025); }
+      .details span { display: block; margin-bottom: .3rem; color: #71879a; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .details strong { font-size: .95rem; }
+      footer { margin-top: 2.25rem; padding-top: 1rem; border-top: 1px solid rgba(174,189,202,.12); color: #71879a; font-size: .8rem; }
+      @media (max-width: 34rem) { body { padding: .75rem; } main { border-radius: 1.1rem; } .details { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: no-preference) { .status::before { animation: pulse 2s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .45; transform: scale(.85); } } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand"><span class="mark" aria-hidden="true">⚓</span><span>Royal Blackwater Fleet</span></div>
+      <div class="status">HTTP 503 · Geplante Wartung</div>
+      <h1>Wir sind gleich wieder auf Kurs.</h1>
+      <p>Die Plattform wird gerade kontrolliert aktualisiert oder gesichert. Deine Anfrage ist nicht verloren gegangen – bitte versuche es in wenigen Minuten erneut.</p>
+      <section class="details" aria-label="Statusdetails">
+        <div><span>Status</span><strong>Vorübergehend nicht erreichbar</strong></div>
+        <div><span>Nächster Schritt</span><strong>Seite in Kürze neu laden</strong></div>
+      </section>
+      <footer>Geplante Arbeiten · Keine Aktion durch Mitglieder erforderlich</footer>
+    </main>
+  </body>
+</html>

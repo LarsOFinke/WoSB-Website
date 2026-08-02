@@ -86,7 +86,6 @@ update_restore_captured_images() {
   wait_for_api
   bw_compose up -d --no-deps gateway
   ensure_monitoring_services
-  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
 update_run_backup_scripts() {
@@ -157,7 +156,9 @@ update_execute_deployment() {
   log "Aktualisiere systemd-Units und Host-Runner."
   /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
 
+  maintenance_enable update 180
   deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED" "$RESTORE_SEED_DEFAULTS"
+  maintenance_disable
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
@@ -190,12 +191,15 @@ update_attempt_rollback() {
   if [[ "$reset_code" -eq 0 ]]; then
     if /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"; then
       if ( update_restore_captured_images ); then
-        rollback_code=0
+        maintenance_disable
+        /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
+        rollback_code=$?
       else
         warn "Exakte frühere Images sind nicht verfügbar; versuche Rebuild des vorherigen Commits."
         (
           bw_compose build api gateway \
             && deploy_application_update false false \
+            && maintenance_disable \
             && /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
         )
         rollback_code=$?
@@ -238,6 +242,7 @@ update_on_exit() {
       "$STARTED_AT" "$finished" "$COMMIT_BEFORE" "$COMMIT_AFTER" || true
     warn "Server-Aktion fehlgeschlagen. Details: $LOG_FILE"
   fi
+  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
 }
 
 update_run() {

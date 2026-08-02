@@ -58,16 +58,23 @@ wait_for_postgres() {
 }
 
 wait_for_api() {
+  local attempt
   log "Warte auf die API-Readiness."
-  for _ in $(seq 1 60); do
+  for attempt in $(seq 1 90); do
     if bw_compose exec -T api python -c \
       "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=4)" \
       >/dev/null 2>&1; then
       success "API und Datenbank sind bereit."
       return 0
     fi
+    if (( attempt % 15 == 0 )); then
+      log "API startet noch (${attempt}/90 Readiness-Prüfungen)."
+    fi
     sleep 2
   done
+  warn "API-Readiness blieb aus; Containerstatus und letzte API-Logs folgen."
+  bw_compose ps api >&2 || true
+  bw_compose logs --tail=120 api >&2 || true
   die "API wurde nicht rechtzeitig bereit. Logs: infrastructure/scripts/services/logs.sh api"
 }
 
