@@ -108,6 +108,10 @@ test('webhook editor offers compact subscriptions and repository template autofi
   assert.ok(webhookSource.includes('webhook-editor-backdrop'))
   assert.ok(webhookSource.includes('role="dialog"'))
   assert.ok(webhookSource.includes('openCreateWebhook'))
+  assert.ok(webhookSource.includes('Moderation inbox'))
+  assert.ok(webhookSource.includes('Operations audit'))
+  assert.ok(webhookSource.includes('Calendar shoutouts'))
+  assert.ok(webhookSource.includes('applyChannelPreset'))
   assert.ok(stylesSource.includes('.webhook-editor-backdrop'))
 })
 

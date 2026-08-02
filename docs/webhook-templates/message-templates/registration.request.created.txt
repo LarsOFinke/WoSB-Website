@@ -1,9 +1,7 @@
-🆕 **New Registration Request**
+🔔 **Registration Needs Review**
 Name: **{data.display_name}**
 Username: `{data.username}`
 Request ID: `{data.id}`
 Fleet application: `{data.wants_fleet_membership}`
-Fleet ID: `{data.fleet_id}`
-Application note: {data.fleet_application_note}
 Received at: `{occurred_at}`
-🔗 [Review registration]({resource.url})
+👉 **Please review promptly:** [Open moderation queue]({resource.url})

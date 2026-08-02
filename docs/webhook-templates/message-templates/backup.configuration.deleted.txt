@@ -1,0 +1,5 @@
+🔐 **Backup Configuration Removed**
+Requested by: **{actor.display_name}**
+Status: queued for the protected host runner
+Reference: `{resource.id}`
+🔗 [Open backup administration]({resource.url})

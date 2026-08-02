@@ -1,0 +1,5 @@
+💾 **Application Backup Requested**
+Requested by: **{actor.display_name}**
+Status: queued for the protected host runner
+Includes: database, uploads and encrypted recovery bundle
+🔗 [Review backup status]({resource.url})

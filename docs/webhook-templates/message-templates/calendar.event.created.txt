@@ -1,12 +1,6 @@
-📅 **New Event Created**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-All day: `{data.all_day}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Organizer: **{data.owner.display_name}**
-Description: {data.description}
-Created by: **{actor.display_name}**
-🔗 [Open calendar]({resource.url})
+🏴‍☠️ **Fleet shoutout: {data.title}**
+🗓️ Starts: `{data.start_at}`
+⏱️ Ends: `{data.end_at}`
+📍 {data.location}
+👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
+🔗 [Open event and join in]({resource.url})

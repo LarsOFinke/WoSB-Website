@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from app.modules.admin.services.webhook_operation_templates import OPERATION_MESSAGES
+
+
 def _message(value: str) -> str:
     return value.strip()
 
 
 DEFAULT_MESSAGES = {
-    'build.created': _message(
+    "build.created": _message(
         """
 ⚓ **New Build Created**
 Build: **{data.build_name}**
@@ -19,7 +22,7 @@ Created at: `{data.created_at}`
 🔗 [Open build]({resource.url})
         """
     ),
-    'build.removed': _message(
+    "build.removed": _message(
         """
 🗑️ **Build Removed**
 Build: **{data.build_name}**
@@ -29,7 +32,7 @@ Removed at: `{occurred_at}`
 🔗 [Browse remaining builds]({resource.url})
         """
     ),
-    'build.updated': _message(
+    "build.updated": _message(
         """
 🔧 **Build Updated**
 Build: **{data.build_name}**
@@ -43,53 +46,34 @@ Updated at: `{data.updated_at}`
 🔗 [Open build]({resource.url})
         """
     ),
-    'calendar.event.cancelled': _message(
+    "calendar.event.cancelled": _message(
         """
-❌ **Event Cancelled**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Cancelled by: **{actor.display_name}**
-Cancelled at: `{occurred_at}`
-🔗 [Open calendar]({resource.url})
+❌ **Shoutout cancelled: {data.title}**
+The calendar event scheduled for `{data.start_at}` will not take place.
+📍 {data.location}
+🔗 [See the current calendar]({resource.url})
         """
     ),
-    'calendar.event.created': _message(
+    "calendar.event.created": _message(
         """
-📅 **New Event Created**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-All day: `{data.all_day}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Organizer: **{data.owner.display_name}**
-Description: {data.description}
-Created by: **{actor.display_name}**
-🔗 [Open calendar]({resource.url})
+🏴‍☠️ **Fleet shoutout: {data.title}**
+🗓️ Starts: `{data.start_at}`
+⏱️ Ends: `{data.end_at}`
+📍 {data.location}
+👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
+🔗 [Open event and join in]({resource.url})
         """
     ),
-    'calendar.event.updated': _message(
+    "calendar.event.updated": _message(
         """
-🗓️ **Event Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-All day: `{data.all_day}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Organizer: **{data.owner.display_name}**
-Description: {data.description}
-Updated by: **{actor.display_name}**
-🔗 [Open calendar]({resource.url})
+📣 **Shoutout updated: {data.title}**
+🗓️ Starts: `{data.start_at}` · Ends: `{data.end_at}`
+📍 {data.location}
+👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
+🔗 [Check the latest event details]({resource.url})
         """
     ),
-    'forum.thread.created': _message(
+    "forum.thread.created": _message(
         """
 💬 **New Forum Thread**
 Title: **{data.title}**
@@ -102,7 +86,7 @@ Created by: **{actor.display_name}**
 🔗 [Open thread]({resource.url})
         """
     ),
-    'forum.thread.updated': _message(
+    "forum.thread.updated": _message(
         """
 ✏️ **Forum Thread Updated**
 Title: **{data.title}**
@@ -115,7 +99,7 @@ Updated at: `{data.updated_at}`
 🔗 [Open thread]({resource.url})
         """
     ),
-    'group.closed': _message(
+    "group.closed": _message(
         """
 🔒 **Group Search Closed**
 Group: **{data.title}**
@@ -126,7 +110,7 @@ Closed at: `{occurred_at}`
 🔗 [Open group record]({resource.url})
         """
     ),
-    'group.created': _message(
+    "group.created": _message(
         """
 🔎 **New Group Search**
 Group: **{data.title}**
@@ -141,7 +125,7 @@ Created by: **{actor.display_name}**
 🔗 [Open group search]({resource.url})
         """
     ),
-    'group.member.joined': _message(
+    "group.member.joined": _message(
         """
 🙋 **Member Joined Group Search**
 Group: **{data.title}**
@@ -154,7 +138,7 @@ Joined at: `{occurred_at}`
 🔗 [Open group search]({resource.url})
         """
     ),
-    'guide.created': _message(
+    "guide.created": _message(
         """
 📘 **New Guide Published**
 Title: **{data.title}**
@@ -168,7 +152,7 @@ Created by: **{actor.display_name}**
 🔗 [Open guide]({resource.url})
         """
     ),
-    'guide.removed': _message(
+    "guide.removed": _message(
         """
 🗑️ **Guide Removed**
 Title: **{data.title}**
@@ -178,7 +162,7 @@ Removed at: `{occurred_at}`
 🔗 [Browse remaining guides]({resource.url})
         """
     ),
-    'guide.updated': _message(
+    "guide.updated": _message(
         """
 📝 **Guide Updated**
 Title: **{data.title}**
@@ -192,7 +176,7 @@ Updated by: **{actor.display_name}**
 🔗 [Open guide]({resource.url})
         """
     ),
-    'integration.test': _message(
+    "integration.test": _message(
         """
 🧪 **RBF Webhook Test**
 Destination: **{destination.name}**
@@ -202,7 +186,7 @@ Occurred at: `{occurred_at}`
 Message: {data.message}
         """
     ),
-    'newcomer_guide.updated': _message(
+    "newcomer_guide.updated": _message(
         """
 🧭 **Newcomer Guide Updated**
 Title: **{data.title}**
@@ -212,7 +196,7 @@ Changed by: **{actor.display_name}**
 🔗 [Open newcomer guide]({resource.url})
         """
     ),
-    'registration.request.approved': _message(
+    "registration.request.approved": _message(
         """
 ✅ **Registration Approved**
 Name: **{data.display_name}**
@@ -225,20 +209,39 @@ Processed at: `{occurred_at}`
 🔗 [Open registration management]({resource.url})
         """
     ),
-    'registration.request.created': _message(
+    "registration.request.created": _message(
         """
-🆕 **New Registration Request**
+🔔 **Registration Needs Review**
 Name: **{data.display_name}**
 Username: `{data.username}`
 Request ID: `{data.id}`
 Fleet application: `{data.wants_fleet_membership}`
-Fleet ID: `{data.fleet_id}`
-Application note: {data.fleet_application_note}
 Received at: `{occurred_at}`
-🔗 [Review registration]({resource.url})
+👉 **Please review promptly:** [Open moderation queue]({resource.url})
         """
     ),
-    'registration.request.rejected': _message(
+    "privacy.request.created": _message(
+        """
+🛡️ **Data-Subject Request Needs Review**
+Type: `{data.request_type}`
+Request ID: `{data.id}`
+Submitted at: `{occurred_at}`
+No request details are sent to Discord.
+👉 [Open the protected privacy queue]({resource.url})
+        """
+    ),
+    "privacy.request.resolved": _message(
+        """
+✅ **Data-Subject Request Resolved**
+Type: `{data.request_type}`
+Request ID: `{data.id}`
+Decision: `{data.decision}`
+Resolved by: **{actor.display_name}**
+No resolution details are sent to Discord.
+🔗 [Open privacy administration]({resource.url})
+        """
+    ),
+    "registration.request.rejected": _message(
         """
 ⛔ **Registration Rejected**
 Name: **{data.display_name}**
@@ -250,7 +253,7 @@ Processed at: `{occurred_at}`
 🔗 [Open registration management]({resource.url})
         """
     ),
-    'squad.archived': _message(
+    "squad.archived": _message(
         """
 📦 **Squad Archived**
 Name: **{data.name}**
@@ -263,7 +266,7 @@ Archived at: `{occurred_at}`
 🔗 [Open squad record]({resource.url})
         """
     ),
-    'squad.created': _message(
+    "squad.created": _message(
         """
 🛡️ **Squad Created**
 Name: **{data.name}**
@@ -276,7 +279,7 @@ Created at: `{occurred_at}`
 🔗 [Open squad]({resource.url})
         """
     ),
-    'squad.member.added': _message(
+    "squad.member.added": _message(
         """
 ➕ **Squad Member Added**
 Squad: **{data.squad_name}**
@@ -289,7 +292,7 @@ Added at: `{occurred_at}`
 🔗 [Open squad roster]({resource.url})
         """
     ),
-    'squad.member.removed': _message(
+    "squad.member.removed": _message(
         """
 ➖ **Squad Member Removed**
 Squad: **{data.squad_name}**
@@ -301,7 +304,7 @@ Removed at: `{occurred_at}`
 🔗 [Open squad roster]({resource.url})
         """
     ),
-    'squad.member.updated': _message(
+    "squad.member.updated": _message(
         """
 🔄 **Squad Membership Updated**
 Squad: **{data.squad_name}**
@@ -313,7 +316,7 @@ Updated at: `{occurred_at}`
 🔗 [Open squad roster]({resource.url})
         """
     ),
-    'squad.updated': _message(
+    "squad.updated": _message(
         """
 🛠️ **Squad Updated**
 Name: **{data.name}**
@@ -328,10 +331,13 @@ Updated at: `{occurred_at}`
     ),
 }
 
+DEFAULT_MESSAGES.update(OPERATION_MESSAGES)
 
-DEFAULT_MESSAGES.update({
-    'system.update.started': _message(
-        """
+
+DEFAULT_MESSAGES.update(
+    {
+        "system.update.started": _message(
+            """
 🚀 **Server Operation Started**
 Mode: `{data.operation}`
 Requested by: **{data.requested_by}**
@@ -340,9 +346,9 @@ Status: `{data.state}`
 {data.message}
 🔗 [Open system status]({resource.url})
         """
-    ),
-    'system.update.result': _message(
-        """
+        ),
+        "system.update.result": _message(
+            """
 {data.state} **Server Operation Result**
 Mode: `{data.operation}`
 Result: `{data.state}`
@@ -353,13 +359,15 @@ Revision: `{data.commit_before}` → `{data.commit_after}`
 {data.message}
 🔗 [Open system status]({resource.url})
         """
-    ),
-})
+        ),
+    }
+)
 
 
-DEFAULT_MESSAGES.update({
-    'forum.thread.removed': _message(
-        """
+DEFAULT_MESSAGES.update(
+    {
+        "forum.thread.removed": _message(
+            """
 🗑️ **Forum Thread Removed**
 Title: **{data.title}**
 Thread ID: `{data.id}`
@@ -367,9 +375,9 @@ Removed by: **{actor.display_name}**
 Removed at: `{occurred_at}`
 🔗 [Browse forum]({resource.url})
         """
-    ),
-    'forum.post.created': _message(
-        """
+        ),
+        "forum.post.created": _message(
+            """
 💬 **New Forum Reply**
 Thread ID: `{data.thread_id}`
 Author: **{data.author.display_name}**
@@ -378,9 +386,9 @@ Posted at: `{data.created_at}`
 Message: {data.body}
 🔗 [Open discussion]({resource.url})
         """
-    ),
-    'forum.post.updated': _message(
-        """
+        ),
+        "forum.post.updated": _message(
+            """
 ✏️ **Forum Reply Updated**
 Thread ID: `{data.thread_id}`
 Author: **{data.author.display_name}**
@@ -390,9 +398,9 @@ Updated at: `{data.updated_at}`
 Message: {data.body}
 🔗 [Open discussion]({resource.url})
         """
-    ),
-    'forum.post.removed': _message(
-        """
+        ),
+        "forum.post.removed": _message(
+            """
 🗑️ **Forum Reply Removed**
 Thread ID: `{data.thread_id}`
 Reply ID: `{data.id}`
@@ -401,9 +409,9 @@ Removed by: **{actor.display_name}**
 Removed at: `{occurred_at}`
 🔗 [Open discussion]({resource.url})
         """
-    ),
-    'fleet.created': _message(
-        """
+        ),
+        "fleet.created": _message(
+            """
 ⚓ **Fleet Created**
 Fleet: **{data.name}**
 Focus: `{data.focus}`
@@ -411,9 +419,9 @@ Members: `{data.active_members_count}`
 Created by: **{actor.display_name}**
 🔗 [Open fleet]({resource.url})
         """
-    ),
-    'fleet.updated': _message(
-        """
+        ),
+        "fleet.updated": _message(
+            """
 🛠️ **Fleet Profile Updated**
 Fleet: **{data.name}**
 Focus: `{data.focus}`
@@ -422,9 +430,9 @@ Description: {data.description}
 Updated by: **{actor.display_name}**
 🔗 [Open fleet]({resource.url})
         """
-    ),
-    'fleet.application.created': _message(
-        """
+        ),
+        "fleet.application.created": _message(
+            """
 📨 **New Fleet Application**
 Applicant: **{data.user.display_name}** (`{data.user.username}`)
 Fleet ID: `{data.fleet_id}`
@@ -432,9 +440,9 @@ Status: `{data.status}`
 Application note: {data.note}
 🔗 [Open fleet management]({resource.url})
         """
-    ),
-    'fleet.membership.updated': _message(
-        """
+        ),
+        "fleet.membership.updated": _message(
+            """
 🧭 **Fleet Membership Updated**
 Member: **{data.user.display_name}** (`{data.user.username}`)
 Fleet ID: `{data.fleet_id}`
@@ -444,9 +452,9 @@ Assignment: {data.assignment}
 Updated by: **{actor.display_name}**
 🔗 [Open fleet management]({resource.url})
         """
-    ),
-    'fleet.leader.assigned': _message(
-        """
+        ),
+        "fleet.leader.assigned": _message(
+            """
 🧭 **Fleet Leadership Assigned**
 Member: **{data.user.display_name}** (`{data.user.username}`)
 Fleet ID: `{data.fleet_id}`
@@ -454,18 +462,18 @@ Role: `{data.role}`
 Assigned by: **{actor.display_name}**
 🔗 [Open fleet management]({resource.url})
         """
-    ),
-    'fleet.role.created': _message(
-        """
+        ),
+        "fleet.role.created": _message(
+            """
 ➕ **Fleet Role Created**
 Role: **{data.label}** (`{data.code}`)
 Rank: `{data.rank}`
 Created by: **{actor.display_name}**
 🔗 [Open fleet roles]({resource.url})
         """
-    ),
-    'fleet.role.updated': _message(
-        """
+        ),
+        "fleet.role.updated": _message(
+            """
 🔄 **Fleet Role Updated**
 Role: **{data.label}** (`{data.code}`)
 Rank: `{data.rank}`
@@ -473,17 +481,18 @@ Active: `{data.is_active}`
 Updated by: **{actor.display_name}**
 🔗 [Open fleet roles]({resource.url})
         """
-    ),
-    'fleet.role.removed': _message(
-        """
+        ),
+        "fleet.role.removed": _message(
+            """
 ➖ **Fleet Role Removed**
 Role: **{data.label}** (`{data.code}`)
 Role ID: `{data.id}`
 Removed by: **{actor.display_name}**
 🔗 [Open fleet roles]({resource.url})
         """
-    ),
-})
+        ),
+    }
+)
 
 
 __all__ = ["DEFAULT_MESSAGES"]

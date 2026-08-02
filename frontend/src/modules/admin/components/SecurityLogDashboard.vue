@@ -46,6 +46,15 @@ const topIpRows = computed(() => ipOptions.value.slice(0, 5))
 const maxDayEvents = computed(() => Math.max(1, ...(dashboard.value.days || []).map((day) => Number(day.total_events || 0))))
 const threatCountTotal = computed(() => threatLevels.reduce((total, level) => total + Number(dashboard.value.threat_counts?.[level] || 0), 0))
 const activeFilterCount = computed(() => [props.fromDate || props.toDate, props.threatLevel, props.selectedIp].filter(Boolean).length)
+const scoreCopy = computed(() => ({
+  de: ['Warum diese IP gelistet wird', 'Bonus für wiederholte Signale', 'Der Score ist auf 100 begrenzt, unterstützt nur die Prüfung und sperrt niemals automatisch.'],
+  fr: ['Pourquoi cette IP est listée', 'Bonus de signaux répétés', 'Le score est plafonné à 100, facilite uniquement l’examen et ne bloque jamais automatiquement.'],
+  es: ['Por qué aparece esta IP', 'Bonificación por señales repetidas', 'La puntuación está limitada a 100, solo ayuda a revisar y nunca bloquea automáticamente.'],
+  pt: ['Por que este IP está listado', 'Bónus de sinais repetidos', 'A pontuação é limitada a 100, apenas apoia a revisão e nunca bloqueia automaticamente.'],
+  ru: ['Почему этот IP в списке', 'Бонус за повторные сигналы', 'Оценка ограничена 100, служит только для проверки и никогда не блокирует автоматически.'],
+  cn: ['此 IP 被列出的原因', '重复信号加分', '评分上限为 100，仅供审核参考，绝不会自动封禁。'],
+  en: ['Why this IP is listed', 'Repeated-signal bonus', 'The score is capped at 100, supports review only and never triggers an automatic ban.'],
+})[locale.value] || ['Why this IP is listed', 'Repeated-signal bonus', 'The score is capped at 100, supports review only and never triggers an automatic ban.'])
 
 function isoDate(value) {
   return value.toISOString().slice(0, 10)
@@ -236,6 +245,16 @@ watch(
               <div><span>{{ t('admin.security.reconnaissance') }}</span><strong>{{ focusedIpRow.reconnaissance }}</strong></div>
               <div><span>{{ t('admin.security.loginFailures') }}</span><strong>{{ focusedIpRow.login_failures }}</strong></div>
               <div><span>{{ t('admin.security.rateLimits') }}</span><strong>{{ focusedIpRow.rate_limits }}</strong></div>
+            </div>
+            <div class="security-score-explanation">
+              <strong>{{ scoreCopy[0] }}</strong>
+              <ul>
+                <li v-if="focusedIpRow.reconnaissance"><span>{{ t('admin.security.reconnaissance') }}</span><code>{{ focusedIpRow.reconnaissance }} × 25 = {{ focusedIpRow.reconnaissance_points }}</code></li>
+                <li v-if="focusedIpRow.login_failures"><span>{{ t('admin.security.loginFailures') }}</span><code>{{ focusedIpRow.login_failures }} × 6 = {{ focusedIpRow.login_failure_points }}</code></li>
+                <li v-if="focusedIpRow.rate_limits"><span>{{ t('admin.security.rateLimits') }}</span><code>{{ focusedIpRow.rate_limits }} × 15 = {{ focusedIpRow.rate_limit_points }}</code></li>
+                <li v-if="focusedIpRow.volume_bonus"><span>{{ scoreCopy[1] }}</span><code>+{{ focusedIpRow.volume_bonus }}</code></li>
+              </ul>
+              <small>{{ scoreCopy[2] }}</small>
             </div>
           </div>
 

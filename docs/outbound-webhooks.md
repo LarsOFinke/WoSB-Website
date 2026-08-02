@@ -26,6 +26,23 @@ Webhook subscriptions are independent. The same event may be selected on any num
 
 There is intentionally no uniqueness constraint on event and scope combinations.
 
+## Recommended channel profiles
+
+The editor provides three presets. They select events only; the destination URL and final
+channel choice always remain an administrator decision:
+
+- **Moderation inbox:** new registrations, fleet applications and new data-subject requests
+  that need a timely response.
+- **Operations audit:** controlled update, backup, restore, backup-configuration and resolved
+  privacy workflow events useful for diagnosing operational problems.
+- **Calendar shoutouts:** created, changed and cancelled calendar events, phrased for public
+  community channels rather than as an internal audit message.
+
+These notifications complement the database audit history. They do not report logins, page
+views, user activity or message contents and must not be used for member monitoring. Privacy
+request details, resolution notes, backup credentials and restore approval secrets never enter
+Discord payloads.
+
 ## Broadcast workspace
 
 External fleet communication is managed separately under **Staff Panel → Discord Broadcasts**. Administrators maintain broadcast-only destinations for partner fleets, diplomacy channels and cross-server coordination, then send one manual Discord Markdown message to several selected channels. Automatic website-event subscriptions remain under **Discord Webhooks**.
@@ -67,6 +84,9 @@ docs/webhook-templates/message-templates/
 Templates support Discord Markdown and event-specific placeholders such as `{data.build_name}` or `{resource.url}`. The repository check validates that every automatic event has a template and that all referenced placeholders exist in the event preview payload.
 
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
+
+Run `python scripts/sync_webhook_templates.py` after changing runtime defaults; the repository
+check enforces an exact match between the event catalog, preview payloads and documentation.
 
 ## Webhook avatar
 

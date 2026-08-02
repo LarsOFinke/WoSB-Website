@@ -22,6 +22,10 @@ class SecurityIpRow(BaseModel):
     reconnaissance: int
     login_failures: int
     rate_limits: int
+    reconnaissance_points: int
+    login_failure_points: int
+    rate_limit_points: int
+    volume_bonus: int
     first_seen: date
     last_seen: date
 

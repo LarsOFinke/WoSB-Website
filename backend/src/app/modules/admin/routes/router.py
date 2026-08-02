@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.modules.admin.routes.backups import router as backups_router
+from app.modules.admin.routes.backup_status import router as backup_status_router
 from app.modules.admin.routes.content import router as content_router
 from app.modules.admin.routes.ip_blocks import router as ip_blocks_router
 from app.modules.admin.routes.legal_notice import router as legal_notice_router
@@ -16,6 +17,7 @@ from app.modules.raid_helper.routes.admin import router as raid_helper_router
 router = APIRouter(prefix="/admin", tags=["admin"])
 router.include_router(system_router)
 router.include_router(backups_router)
+router.include_router(backup_status_router)
 router.include_router(registrations_router)
 router.include_router(logs_router)
 router.include_router(ip_blocks_router)

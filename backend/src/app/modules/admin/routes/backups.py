@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_admin, require_bootstrap_admin
@@ -12,12 +12,16 @@ from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.backup_control import (
     BackupConfigurationRequest,
     BackupControlRequestResult,
-    BackupControlStatus,
     BackupDiscoveryRequest,
     BackupEnrollmentResponseRequest,
     DatabaseRestoreRequest,
 )
-from app.modules.admin.routes.backup_route_support import request_backup_operation
+from app.modules.admin.routes.backup_route_support import (
+    notify_backup_configuration,
+    notify_backup_restore,
+    notify_backup_run,
+    request_backup_operation,
+)
 from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.admin.services.backup_control_service import (
     BackupControlService,
@@ -25,14 +29,6 @@ from app.modules.admin.services.backup_control_service import (
 )
 
 router = APIRouter(prefix="/backups", tags=["admin-backups"])
-
-
-@router.get("/status", response_model=BackupControlStatus)
-def admin_backup_status(
-    _: User = Depends(require_admin),
-    service: BackupControlService = Depends(get_backup_control_service),
-) -> BackupControlStatus:
-    return service.get_status()
 
 
 @router.post(
@@ -152,6 +148,7 @@ def admin_discover_backup_host(
 )
 def admin_configure_backup_host(
     payload: BackupConfigurationRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     service: BackupControlService = Depends(get_backup_control_service),
@@ -169,6 +166,7 @@ def admin_configure_backup_host(
         ),
         changed_fields=["host", "port", "username", "remote_directory", "host_key", "private_key"],
     )
+    notify_backup_configuration(db, background_tasks, current_user, deleted=False)
     return result
 
 
@@ -178,6 +176,7 @@ def admin_configure_backup_host(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def admin_delete_backup_configuration(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     service: BackupControlService = Depends(get_backup_control_service),
@@ -192,6 +191,7 @@ def admin_delete_backup_configuration(
         summary="Remote application backup connection removal requested.",
         changed_fields=["configuration", "private_key", "known_hosts"],
     )
+    notify_backup_configuration(db, background_tasks, current_user, deleted=True)
     return result
 
 
@@ -223,6 +223,7 @@ def admin_test_backup_connection(
     status_code=status.HTTP_202_ACCEPTED,
 )
 def admin_run_application_backup(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
     service: BackupControlService = Depends(get_backup_control_service),
@@ -236,6 +237,7 @@ def admin_run_application_backup(
         action="backup_requested",
         summary="Database and uploaded-file backup creation and remote transfer requested.",
     )
+    notify_backup_run(db, background_tasks, current_user)
     return result
 
 
@@ -268,6 +270,7 @@ def admin_scan_local_database_backups(
 )
 def admin_restore_local_database_backup(
     payload: DatabaseRestoreRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_bootstrap_admin),
     db: Session = Depends(get_db),
     service: BackupControlService = Depends(get_backup_control_service),
@@ -292,4 +295,5 @@ def admin_restore_local_database_backup(
         summary="Bootstrap administrator requested a host-approved PostgreSQL restore.",
         changed_fields=["database"],
     )
+    notify_backup_restore(db, background_tasks, current_user, payload.backup_id)
     return result

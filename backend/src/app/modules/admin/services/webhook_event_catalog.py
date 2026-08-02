@@ -4,6 +4,36 @@ EVENT_CATALOG = (
     ("integration.test", "integration", "Manual connectivity and payload test."),
     ("system.update.started", "system", "A controlled server operation was requested and queued."),
     ("system.update.result", "system", "A controlled server operation completed or failed."),
+    (
+        "backup.run.requested",
+        "operations",
+        "An administrator requested a protected application backup.",
+    ),
+    (
+        "backup.restore.requested",
+        "operations",
+        "A bootstrap administrator requested a database restore.",
+    ),
+    (
+        "backup.configuration.updated",
+        "operations",
+        "The protected backup connection configuration changed.",
+    ),
+    (
+        "backup.configuration.deleted",
+        "operations",
+        "The protected backup connection configuration was removed.",
+    ),
+    (
+        "privacy.request.created",
+        "moderation",
+        "A data-subject request requires an administrator response.",
+    ),
+    (
+        "privacy.request.resolved",
+        "moderation",
+        "A data-subject request was resolved by an administrator.",
+    ),
     ("registration.request.created", "registrations", "A new access request was submitted."),
     ("registration.request.approved", "registrations", "An access request was approved."),
     ("registration.request.rejected", "registrations", "An access request was rejected."),

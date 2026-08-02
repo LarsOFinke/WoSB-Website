@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -6,6 +6,10 @@ from app.core.dependencies import get_current_user
 from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
+from app.modules.admin.services.outbound_webhook_delivery_service import (
+    queue_webhook_event_safely,
+    schedule_webhook_deliveries,
+)
 from app.modules.privacy.schemas.cookie_consent import (
     CookieConsentChoice,
     CookieConsentPolicy,
@@ -109,6 +113,7 @@ def list_my_data_subject_requests(
 )
 def create_data_subject_request(
     payload: DataSubjectRequestCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ) -> DataSubjectRequestRead:
@@ -116,4 +121,18 @@ def create_data_subject_request(
         request = DataSubjectRequestService(db).create(current_user, payload)
     except DataSubjectRequestError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    delivery_ids = queue_webhook_event_safely(
+        db,
+        event_type="privacy.request.created",
+        resource_type="privacy_request",
+        resource_id=request.id,
+        resource_url="/admin?tab=privacy-requests",
+        actor=None,
+        data={"id": request.id, "request_type": request.request_type},
+        scope_type="global",
+        scope_id=None,
+        fleet_id=None,
+        squad_id=None,
+    )
+    schedule_webhook_deliveries(background_tasks, delivery_ids)
     return _request_read(request)

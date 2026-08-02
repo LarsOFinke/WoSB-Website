@@ -43,8 +43,12 @@ class ThreatScorer:
     @staticmethod
     def score(signals: Counter[str]) -> int:
         weighted = sum(SIGNAL_WEIGHTS.get(signal, 0) * count for signal, count in signals.items())
-        volume_bonus = min(max(sum(signals.values()) - 3, 0) * 2, 20)
+        volume_bonus = ThreatScorer.volume_bonus(signals)
         return min(100, weighted + volume_bonus)
+
+    @staticmethod
+    def volume_bonus(signals: Counter[str]) -> int:
+        return min(max(sum(signals.values()) - 3, 0) * 2, 20)
 
 
 class SecurityDashboardService:
@@ -154,6 +158,19 @@ class SecurityDashboardService:
                     reconnaissance=signals[SECURITY_SIGNAL_RECONNAISSANCE],
                     login_failures=signals[SECURITY_SIGNAL_LOGIN_FAILURE],
                     rate_limits=signals[SECURITY_SIGNAL_RATE_LIMIT],
+                    reconnaissance_points=(
+                        signals[SECURITY_SIGNAL_RECONNAISSANCE]
+                        * SIGNAL_WEIGHTS[SECURITY_SIGNAL_RECONNAISSANCE]
+                    ),
+                    login_failure_points=(
+                        signals[SECURITY_SIGNAL_LOGIN_FAILURE]
+                        * SIGNAL_WEIGHTS[SECURITY_SIGNAL_LOGIN_FAILURE]
+                    ),
+                    rate_limit_points=(
+                        signals[SECURITY_SIGNAL_RATE_LIMIT]
+                        * SIGNAL_WEIGHTS[SECURITY_SIGNAL_RATE_LIMIT]
+                    ),
+                    volume_bonus=self.scorer.volume_bonus(signals),
                     first_seen=item["first_seen"],
                     last_seen=item["last_seen"],
                 )
@@ -192,9 +209,7 @@ class SecurityDashboardService:
         return days
 
     @staticmethod
-    def _effective_range(
-        from_date: date | None, to_date: date | None
-    ) -> tuple[date, date]:
+    def _effective_range(from_date: date | None, to_date: date | None) -> tuple[date, date]:
         today = utc_now().date()
         effective_to = min(to_date or today, today)
         effective_from = from_date or (effective_to - timedelta(days=6))

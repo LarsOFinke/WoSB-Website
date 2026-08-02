@@ -1,6 +1,48 @@
-# RBF English Webhook Message Templates
+# Discord webhook message templates
 
-Copy-ready versions are stored individually under `message-templates/`.
+Generated from the versioned backend defaults. Use the Staff Panel presets for
+moderation, operations or public calendar channels and customize only when needed.
+
+## `backup.configuration.deleted`
+
+```text
+🔐 **Backup Configuration Removed**
+Requested by: **{actor.display_name}**
+Status: queued for the protected host runner
+Reference: `{resource.id}`
+🔗 [Open backup administration]({resource.url})
+```
+
+## `backup.configuration.updated`
+
+```text
+🔐 **Backup Configuration Changed**
+Action: `{data.action}`
+Requested by: **{actor.display_name}**
+Status: queued for the protected host runner
+Reference: `{resource.id}`
+🔗 [Open backup administration]({resource.url})
+```
+
+## `backup.restore.requested`
+
+```text
+🚨 **Database Restore Requested**
+Backup reference: `{data.backup_id}`
+Requested by: **{actor.display_name}**
+Status: awaiting protected host approval
+🔗 [Review backup status]({resource.url})
+```
+
+## `backup.run.requested`
+
+```text
+💾 **Application Backup Requested**
+Requested by: **{actor.display_name}**
+Status: queued for the protected host runner
+Includes: database, uploads and encrypted recovery bundle
+🔗 [Review backup status]({resource.url})
+```
 
 ## `build.created`
 
@@ -46,50 +88,31 @@ Updated at: `{data.updated_at}`
 ## `calendar.event.cancelled`
 
 ```text
-❌ **Event Cancelled**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Cancelled by: **{actor.display_name}**
-Cancelled at: `{occurred_at}`
-🔗 [Open calendar]({resource.url})
+❌ **Shoutout cancelled: {data.title}**
+The calendar event scheduled for `{data.start_at}` will not take place.
+📍 {data.location}
+🔗 [See the current calendar]({resource.url})
 ```
 
 ## `calendar.event.created`
 
 ```text
-📅 **New Event Created**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-All day: `{data.all_day}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Organizer: **{data.owner.display_name}**
-Description: {data.description}
-Created by: **{actor.display_name}**
-🔗 [Open calendar]({resource.url})
+🏴‍☠️ **Fleet shoutout: {data.title}**
+🗓️ Starts: `{data.start_at}`
+⏱️ Ends: `{data.end_at}`
+📍 {data.location}
+👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
+🔗 [Open event and join in]({resource.url})
 ```
 
 ## `calendar.event.updated`
 
 ```text
-🗓️ **Event Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Starts: `{data.start_at}`
-Ends: `{data.end_at}`
-All day: `{data.all_day}`
-Location: {data.location}
-Scope: **{data.scope_name}** (`{data.scope_type}`)
-Organizer: **{data.owner.display_name}**
-Description: {data.description}
-Updated by: **{actor.display_name}**
-🔗 [Open calendar]({resource.url})
+📣 **Shoutout updated: {data.title}**
+🗓️ Starts: `{data.start_at}` · Ends: `{data.end_at}`
+📍 {data.location}
+👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
+🔗 [Check the latest event details]({resource.url})
 ```
 
 ## `fleet.application.created`
@@ -362,6 +385,29 @@ Changed by: **{actor.display_name}**
 🔗 [Open newcomer guide]({resource.url})
 ```
 
+## `privacy.request.created`
+
+```text
+🛡️ **Data-Subject Request Needs Review**
+Type: `{data.request_type}`
+Request ID: `{data.id}`
+Submitted at: `{occurred_at}`
+No request details are sent to Discord.
+👉 [Open the protected privacy queue]({resource.url})
+```
+
+## `privacy.request.resolved`
+
+```text
+✅ **Data-Subject Request Resolved**
+Type: `{data.request_type}`
+Request ID: `{data.id}`
+Decision: `{data.decision}`
+Resolved by: **{actor.display_name}**
+No resolution details are sent to Discord.
+🔗 [Open privacy administration]({resource.url})
+```
+
 ## `registration.request.approved`
 
 ```text
@@ -379,15 +425,13 @@ Processed at: `{occurred_at}`
 ## `registration.request.created`
 
 ```text
-🆕 **New Registration Request**
+🔔 **Registration Needs Review**
 Name: **{data.display_name}**
 Username: `{data.username}`
 Request ID: `{data.id}`
 Fleet application: `{data.wants_fleet_membership}`
-Fleet ID: `{data.fleet_id}`
-Application note: {data.fleet_application_note}
 Received at: `{occurred_at}`
-🔗 [Review registration]({resource.url})
+👉 **Please review promptly:** [Open moderation queue]({resource.url})
 ```
 
 ## `registration.request.rejected`
@@ -483,4 +527,30 @@ Members: `{data.member_count}`
 Updated by: **{actor.display_name}**
 Updated at: `{occurred_at}`
 🔗 [Open squad]({resource.url})
+```
+
+## `system.update.result`
+
+```text
+{data.state} **Server Operation Result**
+Mode: `{data.operation}`
+Result: `{data.state}`
+Requested by: **{data.requested_by}**
+Started: `{data.started_at}`
+Finished: `{data.finished_at}`
+Revision: `{data.commit_before}` → `{data.commit_after}`
+{data.message}
+🔗 [Open system status]({resource.url})
+```
+
+## `system.update.started`
+
+```text
+🚀 **Server Operation Started**
+Mode: `{data.operation}`
+Requested by: **{data.requested_by}**
+Requested at: `{data.requested_at}`
+Status: `{data.state}`
+{data.message}
+🔗 [Open system status]({resource.url})
 ```

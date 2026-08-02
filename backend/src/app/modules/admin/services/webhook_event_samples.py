@@ -3,6 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
+from app.modules.admin.services.webhook_event_samples_forum_fleet import forum_and_fleet_samples
+
 _COMMON_USER = {
     "id": 42,
     "username": "test-captain",
@@ -24,6 +26,66 @@ _COMMON_EVENT = {
 }
 
 EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
+    "backup.configuration.deleted": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "backup_connection",
+        "resource_id": "remote",
+        "resource_url": "/admin?tab=database-backups",
+        "data": {},
+    },
+    "backup.configuration.updated": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "backup_connection",
+        "resource_id": "remote",
+        "resource_url": "/admin?tab=database-backups",
+        "data": {"action": "updated"},
+    },
+    "backup.restore.requested": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "database_backup",
+        "resource_id": "backup-20260815",
+        "resource_url": "/admin?tab=database-backups",
+        "data": {"backup_id": "backup-20260815"},
+    },
+    "backup.run.requested": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "database_backup",
+        "resource_id": "remote",
+        "resource_url": "/admin?tab=database-backups",
+        "data": {},
+    },
+    "privacy.request.created": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "privacy_request",
+        "resource_id": 301,
+        "resource_url": "/admin?tab=privacy-requests",
+        "data": {"id": 301, "request_type": "erasure"},
+    },
+    "privacy.request.resolved": {
+        **_COMMON_EVENT,
+        "scope_type": "global",
+        "scope_id": None,
+        "fleet_id": None,
+        "resource_type": "privacy_request",
+        "resource_id": 301,
+        "resource_url": "/admin?tab=privacy-requests",
+        "data": {"id": 301, "request_type": "erasure", "decision": "completed"},
+    },
     "system.update.started": {
         **_COMMON_EVENT,
         "scope_type": "global",
@@ -454,59 +516,8 @@ EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
 }
 
 
-EVENT_TEST_SAMPLES.update({
-    "forum.thread.removed": {
-        **_COMMON_EVENT, "resource_type": "forum_thread", "resource_id": 501, "resource_url": "/forum",
-        "data": {"id": 501, "title": "Fleet formation questions"},
-    },
-    "forum.post.created": {
-        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
-        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER, "body": "Formation reply", "created_at": "2026-08-16T12:00:00+00:00"},
-    },
-    "forum.post.updated": {
-        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
-        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER, "body": "Updated formation reply", "updated_at": "2026-08-16T13:00:00+00:00"},
-    },
-    "forum.post.removed": {
-        **_COMMON_EVENT, "resource_type": "forum_post", "resource_id": 502, "resource_url": "/forum/501",
-        "data": {"id": 502, "thread_id": 501, "author": _COMMON_USER},
-    },
-    "fleet.created": {
-        **_COMMON_EVENT, "resource_type": "fleet", "resource_id": 1, "resource_url": "/fleet",
-        "data": {"id": 1, "name": "Royal Blackwater Fleet", "focus": "mixed", "description": "Official fleet", "active_members_count": 1},
-    },
-    "fleet.updated": {
-        **_COMMON_EVENT, "resource_type": "fleet", "resource_id": 1, "resource_url": "/fleet",
-        "data": {"id": 1, "name": "Royal Blackwater Fleet", "focus": "mixed", "description": "Updated official fleet", "active_members_count": 12},
-    },
-    "fleet.application.created": {
-        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 701, "resource_url": "/fleets",
-        "data": {"id": 701, "fleet_id": 1, "user": _COMMON_USER, "status": "pending", "note": "Ready to sail"},
-    },
-    "fleet.membership.updated": {
-        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 701, "resource_url": "/fleets",
-        "data": {"id": 701, "fleet_id": 1, "user": _COMMON_USER, "status": "active", "role": "member", "assignment": "Line squadron"},
-    },
-    "fleet.leader.assigned": {
-        **_COMMON_EVENT, "resource_type": "fleet_membership", "resource_id": 702, "resource_url": "/fleets",
-        "data": {"id": 702, "fleet_id": 1, "user": _COMMON_USER, "status": "active", "role": "fleet_admiral", "assignment": "Fleet command"},
-    },
-    "fleet.role.created": {
-        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
-        "data": {"id": 801, "code": "quartermaster", "label": "Quartermaster", "rank": 20, "is_active": True},
-    },
-    "fleet.role.updated": {
-        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
-        "data": {"id": 801, "code": "quartermaster", "label": "Senior Quartermaster", "rank": 22, "is_active": True},
-    },
-    "fleet.role.removed": {
-        **_COMMON_EVENT, "resource_type": "fleet_role", "resource_id": 801, "resource_url": "/fleets",
-        "data": {"id": 801, "code": "quartermaster", "label": "Quartermaster"},
-    },
-})
+EVENT_TEST_SAMPLES.update(forum_and_fleet_samples(_COMMON_EVENT, _COMMON_USER))
 
 
 def event_test_sample(event_type: str) -> dict[str, Any]:
     return deepcopy(EVENT_TEST_SAMPLES.get(event_type, EVENT_TEST_SAMPLES["integration.test"]))
-
-__all__ = ["EVENT_TEST_SAMPLES", "event_test_sample"]

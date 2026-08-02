@@ -70,6 +70,11 @@ Die Anwendung unterstützt Datenminimierung und Speicherbegrenzung technisch:
 - NGINX-Access-Logs sind deaktiviert.
 - Es existiert keine allgemeine Request-Telemetrie in PostgreSQL.
 - Sicherheitsrelevante IP-Signale werden tagesaggregiert und standardmäßig sieben Tage gehalten.
+  Die Kandidatenansicht erklärt den Score pro IP vollständig: Scan-Versuche zählen 25 Punkte,
+  Login-Fehlschläge 6 Punkte und Rate-Limit-Treffer 15 Punkte; ab dem vierten Signal kommen je
+  2 Punkte Wiederholungsbonus bis maximal 20 hinzu. Der Gesamtscore ist auf 100 begrenzt und
+  löst niemals automatisch eine Sperre aus. Damit bleibt die Entscheidung überprüfbar, ohne
+  detaillierte Request- oder Nutzungsprofile zu speichern.
 - Audit-, Webhook-, Consent-, Registrierungs- und Sessiondaten besitzen automatisierte Fristen.
 - Sessiontokens werden serverseitig nur gehasht gespeichert; Cookies sind HttpOnly, Secure und
   SameSite-geschützt.

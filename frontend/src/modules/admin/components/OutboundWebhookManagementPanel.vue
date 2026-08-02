@@ -32,6 +32,11 @@ const eventSearch = ref('')
 const templateEventKey = ref('')
 const editorOpen = ref(false)
 const validationIssues = ref([])
+const channelPresets = [
+  { key: 'moderation', label: '🔔 Moderation inbox', events: ['registration.request.created', 'fleet.application.created', 'privacy.request.created'] },
+  { key: 'operations', label: '🛠️ Operations audit', events: ['system.update.started', 'system.update.result', 'backup.run.requested', 'backup.restore.requested', 'backup.configuration.updated', 'backup.configuration.deleted', 'privacy.request.resolved'] },
+  { key: 'calendar', label: '📣 Calendar shoutouts', events: ['calendar.event.created', 'calendar.event.updated', 'calendar.event.cancelled'] },
+]
 
 const form = reactive({
   id: null,
@@ -157,6 +162,13 @@ function selectVisibleEvents() {
 
 function clearEvents() {
   form.event_types = []
+}
+
+function applyChannelPreset(preset) {
+  form.event_types = preset.events.filter((key) => events.value.some((event) => event.key === key))
+  form.message_template = ''
+  templateEventKey.value = ''
+  if (!form.discord_username) form.discord_username = preset.label.replace(/^\S+\s/, '')
 }
 
 function applyTemplatePreset() {
@@ -322,6 +334,9 @@ onMounted(load)
           <fieldset class="webhook-event-fieldset">
           <legend>{{ t('admin.webhooks.fields.events') }}</legend>
           <p class="muted">{{ t('admin.webhooks.eventsHint') }}</p>
+          <div class="webhook-channel-presets" aria-label="Recommended Discord channel presets">
+          <button v-for="preset in channelPresets" :key="preset.key" class="small-action" type="button" @click="applyChannelPreset(preset)">{{ preset.label }}</button>
+          </div>
           <details class="webhook-event-dropdown">
           <summary>
           <span><strong>{{ selectedEventsLabel }}</strong><small>{{ t('admin.webhooks.eventPicker.summaryHint') }}</small></span>
