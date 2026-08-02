@@ -27,17 +27,21 @@ def _load_manifest_validator(infra: Path):
     return module.validate_manifest
 
 
-def _require_manifest_members(infra: Path, payload: dict, supplied: dict[str, Path]) -> None:
+def _require_manifest_members(
+    infra: Path, payload: dict, supplied: dict[str, Path | None]
+) -> None:
     records = payload.get("artifacts")
     if not isinstance(records, dict):
         raise RuntimeError("Backup-set manifest contains no artifacts.")
     for name, path in supplied.items():
         record = records.get(name)
-        if name == "recovery" and path is None:
+        if path is None:
             if record is not None:
-                raise RuntimeError("Recovery artifact exists in the set but was not supplied for transfer.")
+                raise RuntimeError(
+                    f"Backup-set artifact exists but was not supplied for transfer: {name}"
+                )
             continue
-        if path is None or not isinstance(record, dict):
+        if not isinstance(record, dict):
             raise RuntimeError(f"Backup-set artifact is missing: {name}")
         expected = (infra / str(record.get("path") or "")).resolve()
         if expected != path.resolve():
@@ -47,9 +51,9 @@ def _require_manifest_members(infra: Path, payload: dict, supplied: dict[str, Pa
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--infra", type=Path, required=True)
-    parser.add_argument("--postgres", type=Path, required=True)
+    parser.add_argument("--postgres", type=Path)
     parser.add_argument("--files", type=Path, required=True)
-    parser.add_argument("--verification", type=Path, required=True)
+    parser.add_argument("--verification", type=Path)
     parser.add_argument("--set", dest="backup_set", type=Path, required=True)
     parser.add_argument("--recovery", type=Path)
     args = parser.parse_args()
@@ -61,9 +65,9 @@ def main() -> int:
         infra,
         manifest_payload,
         {
-            "postgres": args.postgres.resolve(),
+            "postgres": args.postgres.resolve() if args.postgres else None,
             "files": args.files.resolve(),
-            "verification": args.verification.resolve(),
+            "verification": args.verification.resolve() if args.verification else None,
             "recovery": args.recovery.resolve() if args.recovery else None,
         },
     )
@@ -75,13 +79,14 @@ def main() -> int:
         return 0
     config = runner.load_connection()
     runner.test_connection(config)
-    artifacts = [
-        runner.transfer(config, args.postgres.resolve(), "postgresql"),
-        runner.transfer(config, args.files.resolve(), "files"),
-    ]
+    artifacts = []
+    if args.postgres and args.postgres.is_file():
+        artifacts.append(runner.transfer(config, args.postgres.resolve(), "postgresql"))
+    artifacts.append(runner.transfer(config, args.files.resolve(), "files"))
     if args.recovery and args.recovery.is_file():
         artifacts.append(runner.transfer(config, args.recovery.resolve(), "recovery"))
-    runner.transfer(config, args.verification.resolve(), "verification")
+    if args.verification and args.verification.is_file():
+        runner.transfer(config, args.verification.resolve(), "verification")
     # The set manifest is deliberately published last as the remote commit marker.
     runner.transfer(config, args.backup_set.resolve(), "backup_set")
     print(json.dumps({"transferred": artifacts}, ensure_ascii=False))

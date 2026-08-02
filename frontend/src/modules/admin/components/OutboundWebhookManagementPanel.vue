@@ -34,7 +34,7 @@ const editorOpen = ref(false)
 const validationIssues = ref([])
 const channelPresets = [
   { key: 'moderation', label: '🔔 Moderation inbox', events: ['registration.request.created', 'fleet.application.created', 'privacy.request.created'] },
-  { key: 'operations', label: '🛠️ Operations audit', events: ['system.update.started', 'system.update.result', 'backup.run.requested', 'backup.restore.requested', 'backup.configuration.updated', 'backup.configuration.deleted', 'privacy.request.resolved'] },
+  { key: 'operations', label: '🛠️ Operations audit', events: ['system.update.started', 'system.update.result', 'system.maintenance.started', 'system.maintenance.ended', 'backup.run.requested', 'backup.restore.requested', 'backup.configuration.updated', 'backup.configuration.deleted', 'privacy.request.resolved'] },
   { key: 'calendar', label: '📣 Calendar shoutouts', events: ['calendar.event.created', 'calendar.event.updated', 'calendar.event.cancelled'] },
 ]
 

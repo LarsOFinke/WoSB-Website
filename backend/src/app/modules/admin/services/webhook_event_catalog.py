@@ -4,6 +4,8 @@ EVENT_CATALOG = (
     ("integration.test", "integration", "Manual connectivity and payload test."),
     ("system.update.started", "system", "A controlled server operation was requested and queued."),
     ("system.update.result", "system", "A controlled server operation completed or failed."),
+    ("system.maintenance.started", "system", "A maintenance window was activated."),
+    ("system.maintenance.ended", "system", "A maintenance window ended or failed."),
     (
         "backup.run.requested",
         "operations",

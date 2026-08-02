@@ -360,6 +360,27 @@ Revision: `{data.commit_before}` → `{data.commit_after}`
 🔗 [Open system status]({resource.url})
         """
         ),
+        "system.maintenance.started": _message(
+            """
+🛠️ **Maintenance Started**
+Reason: `{data.reason}`
+Started: `{data.started_at}`
+Status: `{data.outcome}`
+{data.message}
+🔗 [Open system status]({resource.url})
+        """
+        ),
+        "system.maintenance.ended": _message(
+            """
+{data.outcome} **Maintenance Ended**
+Reason: `{data.reason}`
+Started: `{data.started_at}`
+Finished: `{data.occurred_at}`
+Result: `{data.outcome}`
+{data.message}
+🔗 [Open system status]({resource.url})
+        """
+        ),
     }
 )
 

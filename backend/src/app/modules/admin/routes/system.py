@@ -25,7 +25,12 @@ from app.modules.admin.services.system_update_webhook_service import (
 router = APIRouter(prefix="/system", tags=["admin-system"])
 
 # Declared here so repository invariants can verify one route publisher per event.
-_SYSTEM_UPDATE_WEBHOOK_EVENTS = ("system.update.started", "system.update.result")
+_SYSTEM_UPDATE_WEBHOOK_EVENTS = (
+    "system.update.started",
+    "system.update.result",
+    "system.maintenance.started",
+    "system.maintenance.ended",
+)
 
 
 @router.get("/update", response_model=SystemUpdateStatus)

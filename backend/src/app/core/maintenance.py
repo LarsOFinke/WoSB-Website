@@ -14,6 +14,9 @@ from app.modules.admin.services.outbound_webhook_delivery_service import (
 from app.modules.admin.services.outbound_webhook_service import (
     encrypt_legacy_webhook_endpoints,
 )
+from app.modules.admin.services.maintenance_webhook_service import (
+    deliver_pending_maintenance_events,
+)
 from app.modules.admin.services.system_update_webhook_service import (
     deliver_pending_system_update_result,
 )
@@ -74,8 +77,19 @@ async def _recover_webhook_deliveries(*, stale_after_seconds: int) -> None:
 
 
 async def webhook_delivery_recovery_loop() -> None:
-    await _recover_webhook_deliveries(stale_after_seconds=0)
+    # Keep network delivery and stale-row recovery outside the readiness path.
+    await asyncio.sleep(15)
+    maintenance_passes = 0
     while True:
-        await asyncio.sleep(5 * 60)
-        await asyncio.to_thread(deliver_pending_system_update_result)
+        try:
+            await asyncio.to_thread(deliver_pending_maintenance_events)
+            maintenance_passes += 1
+            if maintenance_passes >= 20:
+                await asyncio.to_thread(deliver_pending_system_update_result)
+                maintenance_passes = 0
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("system webhook outbox delivery failed")
+        await asyncio.sleep(15)
         await _recover_webhook_deliveries(stale_after_seconds=5 * 60)

@@ -90,6 +90,24 @@ bei einem Fehlschlag automatisch Containerstatus sowie die letzten API-Logs im
 `update.log` fest. Damit ist ein echter Startfehler von einem langsamen Start
 ohne zusätzliche Diagnosebefehle unterscheidbar.
 
+Jedes Wartungsfenster erzeugt die abonnierbaren Webhook-Ereignisse
+`system.maintenance.started` und `system.maintenance.ended`. Das gilt auch für
+manuelle CLI-Wartungen, Restores, Neustarts sowie fehlgeschlagene Updates und
+Rollbacks. Die Host-Seite legt diese Ereignisse atomar in einer Outbox ab; die
+API übernimmt sie spätestens nach 15 Sekunden. Bei einer vorübergehend nicht
+verfügbaren Datenbank bleibt das Ereignis für den nächsten Versuch erhalten.
+
+`BACKUP_OFFSITE_DIR` bezeichnet ausschließlich ein optional lokal eingehängtes
+Offsite-Dateisystem. Ein über die Administration eingerichtetes Backup-Ziel ist
+eine separate SFTP-Konfiguration. Pre-Update-Backups übertragen ihr vollständig
+committetes und verifiziertes Backup-Set nun ebenfalls über diese SFTP-Verbindung;
+der Set-Manifest wird dabei zuletzt als Remote-Commit-Marker veröffentlicht.
+
+Nach dem Git-Fast-Forward lädt der laufende Host-Runner seine Migrations-,
+Backup-, Wartungs- und Rollback-Funktionen aus der neuen Revision erneut. Damit
+werden neue Alembic-Revisionen bereits im selben Update erkannt und angewendet;
+ein zweiter Update-Lauf ist nicht erforderlich.
+
 ## Nach dem Start
 
 - Health- und Readiness-Endpunkt beobachten.

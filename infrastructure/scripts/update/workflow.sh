@@ -90,14 +90,47 @@ update_restore_captured_images() {
 
 update_run_backup_scripts() {
   local include_postgres="$1"
-  local args=(--lock-held --reason pre-update)
+  local run_dir="$INFRA_DIR/data/control/run"
+  local postgres_result files_result recovery_result verification_result set_result
+  install -d -m 0700 "$run_dir"
+  postgres_result="$(mktemp "$run_dir/update-postgres-result.XXXXXX")"
+  files_result="$(mktemp "$run_dir/update-files-result.XXXXXX")"
+  recovery_result="$(mktemp "$run_dir/update-recovery-result.XXXXXX")"
+  verification_result="$(mktemp "$run_dir/update-verification-result.XXXXXX")"
+  set_result="$(mktemp "$run_dir/update-set-result.XXXXXX")"
+  local args=(
+    --lock-held --reason pre-update
+    --postgres-result "$postgres_result"
+    --files-result "$files_result"
+    --recovery-result "$recovery_result"
+    --verification-result "$verification_result"
+    --backup-set-result "$set_result"
+  )
   [[ "$include_postgres" == true ]] || args+=(--skip-postgres)
   if [[ "$include_postgres" == true && -f "$ENV_FILE" ]] \
     && is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
     args+=(--include-recovery)
   fi
-  RBF_BACKUP_LOCK_HELD=true /usr/bin/env bash \
-    "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" "${args[@]}"
+  if ! RBF_BACKUP_LOCK_HELD=true /usr/bin/env bash \
+    "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" "${args[@]}"; then
+    rm -f "$postgres_result" "$files_result" "$recovery_result" \
+      "$verification_result" "$set_result"
+    return 1
+  fi
+
+  local sync_args=(
+    --infra "$INFRA_DIR"
+    --files "$(cat "$files_result")"
+    --set "$(cat "$set_result")"
+  )
+  [[ ! -s "$postgres_result" ]] || sync_args+=(--postgres "$(cat "$postgres_result")")
+  [[ ! -s "$verification_result" ]] || sync_args+=(--verification "$(cat "$verification_result")")
+  [[ ! -s "$recovery_result" ]] || sync_args+=(--recovery "$(cat "$recovery_result")")
+  local sync_code=0
+  python3 "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py" "${sync_args[@]}" || sync_code=$?
+  rm -f "$postgres_result" "$files_result" "$recovery_result" \
+    "$verification_result" "$set_result"
+  return "$sync_code"
 }
 
 update_create_backup() {
@@ -158,7 +191,7 @@ update_execute_deployment() {
 
   maintenance_enable update 180
   deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED" "$RESTORE_SEED_DEFAULTS"
-  maintenance_disable
+  maintenance_disable succeeded "Server update completed successfully."
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
@@ -191,7 +224,7 @@ update_attempt_rollback() {
   if [[ "$reset_code" -eq 0 ]]; then
     if /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"; then
       if ( update_restore_captured_images ); then
-        maintenance_disable
+        maintenance_disable failed "Server update failed; the previous images were restored."
         /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
         rollback_code=$?
       else
@@ -199,7 +232,7 @@ update_attempt_rollback() {
         (
           bw_compose build api gateway \
             && deploy_application_update false false \
-            && maintenance_disable \
+            && maintenance_disable failed "Server update failed; the previous revision was rebuilt and restored." \
             && /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
         )
         rollback_code=$?
@@ -242,7 +275,8 @@ update_on_exit() {
       "$STARTED_AT" "$finished" "$COMMIT_BEFORE" "$COMMIT_AFTER" || true
     warn "Server-Aktion fehlgeschlagen. Details: $LOG_FILE"
   fi
-  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
+  [[ "$MAINTENANCE_ACTIVE" != true ]] \
+    || maintenance_disable failed "${message:-Server operation failed (exit ${exit_code}).}"
 }
 
 update_run() {
@@ -273,9 +307,14 @@ update_run() {
   else
     update_capture_running_images
     update_repository
-    # Source the just-updated helper so old installations receive newly required
-    # generated secrets before images are built.
+    # Continue with the freshly pulled deployment logic. Otherwise an older
+    # host runner can build a new API image while still using stale migration,
+    # backup or rollback functions from before the pull.
     source "$INFRA_DIR/scripts/lib/env.sh"
+    source "$INFRA_DIR/scripts/lib/docker.sh"
+    source "$INFRA_DIR/scripts/lib/maintenance.sh"
+    source "$UPDATE_LIB_DIR/status.sh"
+    source "$UPDATE_LIB_DIR/workflow.sh"
     ensure_runtime_secrets
     update_execute_deployment
   fi

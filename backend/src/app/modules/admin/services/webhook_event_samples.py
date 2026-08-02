@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any
 
 from app.modules.admin.services.webhook_event_samples_forum_fleet import forum_and_fleet_samples
+from app.modules.admin.services.webhook_event_samples_maintenance import maintenance_samples
 
 _COMMON_USER = {
     "id": 42,
@@ -517,6 +518,7 @@ EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
 
 
 EVENT_TEST_SAMPLES.update(forum_and_fleet_samples(_COMMON_EVENT, _COMMON_USER))
+EVENT_TEST_SAMPLES.update(maintenance_samples(_COMMON_EVENT))
 
 
 def event_test_sample(event_type: str) -> dict[str, Any]:

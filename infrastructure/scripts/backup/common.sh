@@ -28,7 +28,11 @@ backup_finalize() {
   local offsite
   offsite="$(read_env BACKUP_OFFSITE_DIR)"
   if [[ -z "$offsite" ]]; then
-    warn "Kein BACKUP_OFFSITE_DIR konfiguriert; Backup bleibt ausschließlich lokal."
+    if [[ -f "$INFRA_DIR/data/control/secrets/backup-remote/config.json" ]]; then
+      log "Kein lokales BACKUP_OFFSITE_DIR konfiguriert; der konfigurierte SFTP-Transfer erfolgt atomar auf Backup-Set-Ebene."
+    else
+      warn "Weder BACKUP_OFFSITE_DIR noch ein SFTP-Backupziel ist konfiguriert; Backup bleibt ausschließlich lokal."
+    fi
     return 0
   fi
   [[ "$offsite" == /* ]] || die "BACKUP_OFFSITE_DIR muss ein absoluter Pfad sein."

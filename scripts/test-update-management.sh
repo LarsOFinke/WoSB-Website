@@ -19,6 +19,18 @@ fail() {
   [[ "$OPERATION" == update_migrate_seed ]] || fail "--seed operation must expose migrate+seed"
 )
 
+python3 - "$UPDATE_DIR/workflow.sh" <<'PY_RELOAD'
+from pathlib import Path
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+run = workflow.split("update_run() {", 1)[1]
+pull = run.index("update_repository")
+reload = run.index('source "$UPDATE_LIB_DIR/workflow.sh"')
+deploy = run.index("update_execute_deployment")
+assert pull < reload < deploy, "fresh migration/deployment logic must be loaded after pull"
+PY_RELOAD
+
 (
   source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
   source "$ROOT_DIR/infrastructure/scripts/lib/json.sh"
@@ -177,8 +189,21 @@ PY
 #!/usr/bin/env bash
 set -Eeuo pipefail
 printf '%s\n' "$*" > "$BACKUP_TEST_RESULT"
+while (($#)); do
+  case "$1" in
+    --postgres-result|--files-result|--verification-result|--backup-set-result)
+      printf '/tmp/test-artifact\n' > "$2"; shift 2 ;;
+    --recovery-result) : > "$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
 SH
   chmod +x "$tmp/infrastructure/scripts/backup/run-consistent-backup.sh"
+  cat > "$tmp/infrastructure/scripts/backup/sync-backup-set-remote.py" <<'PY'
+from pathlib import Path
+import os
+Path(os.environ["SYNC_TEST_RESULT"]).write_text("called\n", encoding="utf-8")
+PY
 
   if ! timeout 5 bash -c '
     set -Eeuo pipefail
@@ -190,7 +215,8 @@ SH
     RUN_MIGRATIONS=true
     RUN_SEED=true
     BACKUP_TEST_RESULT="$2/result.txt"
-    export BACKUP_TEST_RESULT
+    SYNC_TEST_RESULT="$2/sync-result.txt"
+    export BACKUP_TEST_RESULT SYNC_TEST_RESULT
     log() { :; }
     exec 9>"$RUN_DIR/update.lock"
     flock 9
@@ -200,6 +226,8 @@ SH
   fi
   grep -q -- '--lock-held --reason pre-update' "$tmp/result.txt" \
     || fail "database update did not invoke the coordinated runner with inherited update-lock semantics"
+  [[ -f "$tmp/sync-result.txt" ]] \
+    || fail "database update did not transfer the committed backup set to the configured remote target"
 )
 
 printf 'Update-management checks OK.\n'

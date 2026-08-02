@@ -111,7 +111,6 @@ start_application_best_effort() {
   wait_for_api || return 1
   bw_compose up -d --no-deps gateway || return 1
   ensure_monitoring_services || return 1
-  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" || return 1
 }
 rollback_database_swap() {
@@ -145,7 +144,8 @@ cleanup_on_exit() {
     python3 "$report_script" finish "$report_path" --status failed --recoverable false >/dev/null 2>&1 || true
     backup_finalize "$report_path" "reports" >/dev/null 2>&1 || true
   fi
-  [[ "$MAINTENANCE_ACTIVE" != true ]] || maintenance_disable
+  [[ "$MAINTENANCE_ACTIVE" != true ]] \
+    || maintenance_disable failed "Database restore failed (exit ${exit_code}); the previous database was restored where possible."
   exit "$exit_code"
 }
 trap cleanup_on_exit EXIT
@@ -252,7 +252,7 @@ bw_compose up -d --no-deps api
 wait_for_api
 bw_compose up -d --no-deps gateway
 ensure_monitoring_services
-maintenance_disable
+maintenance_disable succeeded "Database restore completed successfully."
 /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 report_check production_smoke_test passed "Readiness and HTTPS smoke tests succeeded after activation."
 drop_database_if_exists "$rollback_database"

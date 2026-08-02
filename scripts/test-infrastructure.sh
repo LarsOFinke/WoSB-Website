@@ -213,6 +213,7 @@ require_pattern 'maintenance_enable update' "$INFRA_DIR/scripts/update/workflow.
 require_pattern 'maintenance_enable restore' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'maintenance_disable' "$INFRA_DIR/scripts/services/restart-application.sh"
 require_file "$INFRA_DIR/scripts/lib/maintenance.sh"
+require_pattern 'PY_MAINTENANCE_FALLBACK' "$INFRA_DIR/scripts/lib/maintenance.sh"
 require_file "$ROOT_DIR/frontend/public/maintenance.html"
 require_pattern 'maintenance-mode.json' "$INFRA_DIR/nginx/default.conf"
 require_pattern 'error_page 503 /maintenance.html' "$INFRA_DIR/nginx/default.conf"
