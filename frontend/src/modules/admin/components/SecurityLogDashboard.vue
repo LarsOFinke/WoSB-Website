@@ -99,6 +99,15 @@ function dayBarStyle(day) {
   return { width: `${Math.max(2, (Number(day.total_events || 0) / maxDayEvents.value) * 100)}%` }
 }
 
+function reasonLabel(reason) {
+  return t(`admin.securityDetails.reasons.${reason}`)
+}
+
+function targetLabel(target) {
+  if (!target?.startsWith('probe:')) return target || t('admin.securityDetails.targets.unknown')
+  return t(`admin.securityDetails.targets.${target.slice(6).replaceAll('-', '_')}`)
+}
+
 async function load() {
   const sequence = ++loadSequence
   loading.value = true
@@ -246,6 +255,21 @@ watch(
               <div><span>{{ t('admin.security.loginFailures') }}</span><strong>{{ focusedIpRow.login_failures }}</strong></div>
               <div><span>{{ t('admin.security.rateLimits') }}</span><strong>{{ focusedIpRow.rate_limits }}</strong></div>
             </div>
+            <section v-if="focusedIpRow.reasons?.length" class="security-reason-breakdown">
+              <h5>{{ t('admin.securityDetails.title') }}</h5>
+              <div class="responsive-table-shell">
+                <table class="security-table compact-security-table">
+                  <thead><tr><th>{{ t('admin.securityDetails.reason') }}</th><th>{{ t('admin.securityDetails.target') }}</th><th>{{ t('admin.securityDetails.count') }}</th></tr></thead>
+                  <tbody>
+                    <tr v-for="entry in focusedIpRow.reasons" :key="`${entry.signal}:${entry.reason}:${entry.request_target}`">
+                      <td>{{ reasonLabel(entry.reason) }}</td>
+                      <td><code>{{ targetLabel(entry.request_target) }}</code></td>
+                      <td><strong>{{ entry.event_count }}</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
             <div class="security-score-explanation">
               <strong>{{ scoreCopy[0] }}</strong>
               <ul>
@@ -269,7 +293,7 @@ watch(
         </section>
       </div>
 
-      <p class="muted security-method-note">{{ t('admin.security.methodNote') }}</p>
+      <p class="muted security-method-note">{{ t('admin.logs.privacyText') }}</p>
     </article>
   </section>
 </template>

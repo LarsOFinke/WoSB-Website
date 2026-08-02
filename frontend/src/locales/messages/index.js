@@ -28,6 +28,7 @@ import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul.js'
 import { systemOperationsMessages } from './systemOperations.js'
 import { systemLogManagementMessages } from './systemLogManagement.js'
 import { securityAuditDashboardMessages } from './securityAuditDashboard.js'
+import { securitySignalReasonsMessages } from './securitySignalReasons.js'
 import { ipBlockManagementMessages } from './ipBlockManagement.js'
 import { outboundWebhookManagementMessages } from './outboundWebhookManagement.js'
 import { discordWebhooksMessages } from './discordWebhooks.js'
@@ -68,6 +69,7 @@ const messageLayers = [
   systemOperationsMessages,
   systemLogManagementMessages,
   securityAuditDashboardMessages,
+  securitySignalReasonsMessages,
   ipBlockManagementMessages,
   outboundWebhookManagementMessages,
   discordWebhooksMessages,

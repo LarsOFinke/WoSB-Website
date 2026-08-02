@@ -14,6 +14,13 @@ class SecurityDayBucket(BaseModel):
     rate_limits: int
 
 
+class SecurityReasonBreakdown(BaseModel):
+    signal: str
+    reason: str
+    request_target: str
+    event_count: int
+
+
 class SecurityIpRow(BaseModel):
     client_ip: str
     threat_score: int = Field(ge=0, le=100)
@@ -28,6 +35,7 @@ class SecurityIpRow(BaseModel):
     volume_bonus: int
     first_seen: date
     last_seen: date
+    reasons: list[SecurityReasonBreakdown] = Field(default_factory=list)
 
 
 class SecurityDashboard(BaseModel):

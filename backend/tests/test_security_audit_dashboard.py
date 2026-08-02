@@ -40,6 +40,8 @@ def test_security_dashboard_scores_only_coarse_ban_signals() -> None:
                     signal=SECURITY_SIGNAL_RECONNAISSANCE,
                     client_ip="198.51.100.44",
                     event_count=2,
+                    reason="suspicious_probe",
+                    request_target="probe:git-metadata",
                 ),
             ]
         )
@@ -56,6 +58,12 @@ def test_security_dashboard_scores_only_coarse_ban_signals() -> None:
         assert dashboard.ips[0].login_failure_points == 0
         assert dashboard.ips[0].volume_bonus == 0
         assert dashboard.ips[0].threat_level == "elevated"
+        assert dashboard.ips[0].reasons[0].model_dump() == {
+            "signal": SECURITY_SIGNAL_RECONNAISSANCE,
+            "reason": "suspicious_probe",
+            "request_target": "probe:git-metadata",
+            "event_count": 2,
+        }
         assert dashboard.ips[1].login_failures == 1
         assert not hasattr(dashboard.ips[0], "top_paths")
         assert not hasattr(dashboard.ips[0], "user_agent")

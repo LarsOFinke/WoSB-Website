@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import dataclass
 from ipaddress import ip_address
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -16,6 +17,9 @@ from app.modules.admin.models.security_event import (
     SECURITY_SIGNAL_LOGIN_FAILURE,
     SECURITY_SIGNAL_RATE_LIMIT,
     SECURITY_SIGNAL_RECONNAISSANCE,
+    SECURITY_REASON_LOGIN_REJECTED,
+    SECURITY_REASON_RATE_LIMIT_EXCEEDED,
+    SECURITY_REASON_SUSPICIOUS_PROBE,
 )
 
 logger = logging.getLogger("app.request")
@@ -37,6 +41,27 @@ SUSPICIOUS_PATH_PARTS = (
     "/actuator",
     ".php",
 )
+SUSPICIOUS_TARGETS = (
+    ("/.env", "probe:environment-file"),
+    ("/.git", "probe:git-metadata"),
+    ("/wp-admin", "probe:wordpress-admin"),
+    ("/wp-login", "probe:wordpress-login"),
+    ("/vendor/phpunit", "probe:phpunit"),
+    ("/phpunit", "probe:phpunit"),
+    ("/cgi-bin", "probe:cgi"),
+    ("/adminer", "probe:adminer"),
+    ("/server-status", "probe:server-status"),
+    ("/etc/passwd", "probe:system-file"),
+    ("/actuator", "probe:actuator"),
+    (".php", "probe:php-file"),
+)
+
+
+@dataclass(frozen=True)
+class SecuritySignalContext:
+    signal: str
+    reason: str
+    request_target: str
 
 
 def _normalized_ip(value: str | None) -> str | None:
@@ -78,6 +103,47 @@ class SecuritySignalClassifier:
         if status_code >= 400 and any(part in normalized_path for part in SUSPICIOUS_PATH_PARTS):
             return SECURITY_SIGNAL_RECONNAISSANCE
         return None
+
+    @staticmethod
+    def context(
+        path: str, status_code: int, route_template: str | None = None
+    ) -> SecuritySignalContext | None:
+        signal = SecuritySignalClassifier.classify(path, status_code)
+        if signal is None:
+            return None
+        normalized_path = (path or "").casefold()
+        if signal == SECURITY_SIGNAL_LOGIN_FAILURE:
+            return SecuritySignalContext(
+                signal=signal,
+                reason=SECURITY_REASON_LOGIN_REJECTED,
+                request_target="/api/auth/login",
+            )
+        if signal == SECURITY_SIGNAL_RECONNAISSANCE:
+            target = next(
+                (
+                    label
+                    for path_part, label in SUSPICIOUS_TARGETS
+                    if path_part in normalized_path
+                ),
+                "probe:other",
+            )
+            return SecuritySignalContext(
+                signal=signal,
+                reason=SECURITY_REASON_SUSPICIOUS_PROBE,
+                request_target=target,
+            )
+        return SecuritySignalContext(
+            signal=signal,
+            reason=SECURITY_REASON_RATE_LIMIT_EXCEEDED,
+            request_target=_safe_route_template(route_template),
+        )
+
+
+def _safe_route_template(value: str | None) -> str:
+    candidate = (value or "").strip()
+    if not candidate.startswith("/") or len(candidate) > 180:
+        return "unmatched"
+    return candidate
 
 
 class RequestLogPolicy:
@@ -151,6 +217,12 @@ def should_log_request(
 
 def security_signal_for_request(path: str, status_code: int) -> str | None:
     return _request_log_policy.signal_for(path, status_code)
+
+
+def security_context_for_request(
+    path: str, status_code: int, route_template: str | None = None
+) -> SecuritySignalContext | None:
+    return SecuritySignalClassifier.context(path, status_code, route_template)
 
 
 def client_ip_from_request(request: Request) -> str | None:
@@ -270,10 +342,19 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     extra=_request_log_context(request, request_id, status_code, duration_ms),
                 )
             else:
-                signal = security_signal_for_request(request.url.path, status_code)
-                client_ip = client_ip_from_request(request) if signal else None
-                if signal and client_ip:
+                route = request.scope.get("route")
+                route_template = getattr(route, "path", None)
+                context = security_context_for_request(
+                    request.url.path, status_code, route_template
+                )
+                client_ip = client_ip_from_request(request) if context else None
+                if context and client_ip:
                     security_logger.warning(
                         "security event",
-                        extra={"security_signal": signal, "client_ip": client_ip},
+                        extra={
+                            "security_signal": context.signal,
+                            "security_reason": context.reason,
+                            "security_request_target": context.request_target,
+                            "client_ip": client_ip,
+                        },
                     )

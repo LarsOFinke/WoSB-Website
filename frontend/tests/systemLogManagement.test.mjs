@@ -31,12 +31,12 @@ test('the admin UI exposes only aggregated IP-ban candidates', () => {
 })
 
 
-test('routes, user agents and raw request details are absent from the candidate view', () => {
-  for (const forbidden of ['top_paths', 'distinct_paths', 'user_agent', 'query_string', 'request_id', 'entry.path', 'entry.exception']) {
+test('candidate reasons expose safe route aggregates without raw request details', () => {
+  for (const forbidden of ['user_agent', 'query_string', 'request_id', 'entry.path', 'entry.exception']) {
     assert.ok(!dashboardSource.includes(forbidden), forbidden)
     assert.ok(!panelSource.includes(forbidden), forbidden)
   }
-  for (const required of ['reconnaissance', 'login_failures', 'rate_limits', 'event_count', 'block-ip']) {
+  for (const required of ['reconnaissance', 'login_failures', 'rate_limits', 'event_count', 'request_target', 'reasonLabel', 'targetLabel', 'block-ip']) {
     assert.ok(dashboardSource.includes(required), required)
   }
   assert.ok(!logsSource.includes('logPath'))

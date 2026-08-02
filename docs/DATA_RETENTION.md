@@ -30,16 +30,22 @@ relevant sind:
 - fehlgeschlagene Anmeldungen,
 - Rate-Limit-Treffer.
 
-Die Ereignisse werden bereits beim Schreiben auf **Tagesebene aggregiert**. Pro IP, Signalkategorie und UTC-Tag existiert höchstens ein Datensatz mit:
+Die Ereignisse werden bereits beim Schreiben auf **Tagesebene aggregiert**. Pro IP,
+Signalkategorie, Begründung, sicherem Ziel und UTC-Tag existiert höchstens ein Datensatz mit:
 
 - normalisierter einzelner IP-Adresse,
 - UTC-Kalendertag,
 - einer der oben genannten groben Signalkategorien,
+- einer festen Begründung wie abgelehnte Anmeldung, überschrittenes Rate-Limit oder verdächtiger Scan,
+- bei bekannten API-Endpunkten dem FastAPI-Routen-Template ohne konkrete Objekt-IDs oder bei
+  Scans einer festen Zielkategorie wie „Git-Metadaten“ oder „Umgebungsdatei“,
 - Tageszähler der Signale.
 
-Nicht gespeichert werden Route, Query-String, User-Agent, Referrer, Request-ID, HTTP-Methode,
+Nicht gespeichert werden freie oder nicht zugeordnete Request-Pfade, Query-String, User-Agent,
+Referrer, Request-ID, HTTP-Methode,
 Request-/Response-Inhalt, Statusdetails, Laufzeit, Accountname, genauer Request-Zeitpunkt, Exception
-oder Stacktrace. Die Admin-Webseite liefert ausschließlich diese Aggregationen pro IP und Tag.
+oder Stacktrace. Die Admin-Webseite liefert ausschließlich diese Aggregationen pro IP und Tag
+einschließlich Begründung und sicherem Routen-/Scan-Ziel.
 Einzelereignisse oder Rohlogs existieren weder in der Datenbank noch über eine API.
 
 Wird eine IP gesperrt, werden ihre temporären Sperrsignale in derselben Datenbanktransaktion sofort

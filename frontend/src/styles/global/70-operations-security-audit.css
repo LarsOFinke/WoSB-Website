@@ -241,6 +241,20 @@
   background: var(--surface-soft);
 }
 
+.security-reason-breakdown {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.security-reason-breakdown h5 {
+  margin: 0;
+}
+
+.security-reason-breakdown code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .security-score-explanation ul {
   display: grid;
   gap: 0.35rem;

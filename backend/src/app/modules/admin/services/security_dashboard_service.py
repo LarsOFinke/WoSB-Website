@@ -18,6 +18,7 @@ from app.modules.admin.schemas.security_dashboard import (
     SecurityDashboard,
     SecurityDayBucket,
     SecurityIpRow,
+    SecurityReasonBreakdown,
 )
 from app.modules.admin.services.ip_block_service import active_blocked_ip_addresses
 
@@ -138,6 +139,9 @@ class SecurityDashboardService:
         for row in rows:
             item = data[row.client_ip]
             item["signals"][row.signal] += row.event_count
+            item["reasons"][(row.signal, row.reason, row.request_target)] += (
+                row.event_count
+            )
             item["first_seen"] = (
                 row.day if item["first_seen"] is None else min(item["first_seen"], row.day)
             )
@@ -173,6 +177,18 @@ class SecurityDashboardService:
                     volume_bonus=self.scorer.volume_bonus(signals),
                     first_seen=item["first_seen"],
                     last_seen=item["last_seen"],
+                    reasons=[
+                        SecurityReasonBreakdown(
+                            signal=signal,
+                            reason=reason,
+                            request_target=request_target,
+                            event_count=count,
+                        )
+                        for (signal, reason, request_target), count in sorted(
+                            item["reasons"].items(),
+                            key=lambda entry: (-entry[1], entry[0]),
+                        )
+                    ],
                 )
             )
         return result
@@ -223,7 +239,12 @@ class SecurityDashboardService:
 
     @staticmethod
     def _empty_ip_bucket() -> dict[str, Any]:
-        return {"signals": Counter(), "first_seen": None, "last_seen": None}
+        return {
+            "signals": Counter(),
+            "reasons": Counter(),
+            "first_seen": None,
+            "last_seen": None,
+        }
 
     @staticmethod
     def _empty_day_bucket() -> dict[str, Any]:

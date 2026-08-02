@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.core.middleware import should_log_request
+from app.core.middleware import security_context_for_request, should_log_request
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_MODERATOR
 from app.modules.accounts.services.auth_service import create_user
@@ -60,12 +60,40 @@ def test_only_ban_relevant_signals_are_persisted_without_request_metadata() -> N
         rows = list(db.scalars(select(SecuritySignalBucket).where(
             SecuritySignalBucket.client_ip.in_(['198.51.100.10', '198.51.100.11', '198.51.100.12', '198.51.100.13'])
         )).all())
-        assert {(row.client_ip, row.signal, row.event_count) for row in rows} == {
-            ('198.51.100.12', SECURITY_SIGNAL_RECONNAISSANCE, 2),
-            ('198.51.100.13', SECURITY_SIGNAL_LOGIN_FAILURE, 1),
+        assert {
+            (
+                row.client_ip,
+                row.signal,
+                row.reason,
+                row.request_target,
+                row.event_count,
+            )
+            for row in rows
+        } == {
+            (
+                '198.51.100.12',
+                SECURITY_SIGNAL_RECONNAISSANCE,
+                'suspicious_probe',
+                'probe:environment-file',
+                1,
+            ),
+            (
+                '198.51.100.12',
+                SECURITY_SIGNAL_RECONNAISSANCE,
+                'suspicious_probe',
+                'probe:git-metadata',
+                1,
+            ),
+            (
+                '198.51.100.13',
+                SECURITY_SIGNAL_LOGIN_FAILURE,
+                'login_rejected',
+                '/api/auth/login',
+                1,
+            ),
         }
         assert set(SecuritySignalBucket.__table__.columns.keys()) == {
-            'id', 'day', 'client_ip', 'signal', 'event_count',
+            'id', 'day', 'client_ip', 'signal', 'reason', 'request_target', 'event_count',
         }
 
 
@@ -137,3 +165,29 @@ def test_request_log_policy_is_strictly_limited_to_ban_signals() -> None:
     assert should_log_request('/api/auth/login', 401) is True
     assert should_log_request('/api/anything', 429) is True
     assert should_log_request('/.env', 500, RuntimeError('boom')) is False
+
+
+def test_security_signal_context_keeps_only_safe_aggregated_targets() -> None:
+    login = security_context_for_request('/api/auth/login', 401, '/api/auth/login')
+    assert login is not None
+    assert (login.reason, login.request_target) == ('login_rejected', '/api/auth/login')
+
+    limited = security_context_for_request(
+        '/api/builds/42', 429, '/api/builds/{build_id}'
+    )
+    assert limited is not None
+    assert (limited.reason, limited.request_target) == (
+        'rate_limit_exceeded',
+        '/api/builds/{build_id}',
+    )
+
+    probe = security_context_for_request('/.env?secret=value', 404)
+    assert probe is not None
+    assert (probe.reason, probe.request_target) == (
+        'suspicious_probe',
+        'probe:environment-file',
+    )
+
+    unmatched = security_context_for_request('/visitor-provided/value', 429)
+    assert unmatched is not None
+    assert unmatched.request_target == 'unmatched'

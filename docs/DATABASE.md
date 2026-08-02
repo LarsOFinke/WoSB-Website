@@ -125,6 +125,11 @@ oder eines vollständigen Threads werden dessen Dateizuordnungen entfernt. Eine 
 verbleibende Build-, Guide- oder Forum-Zuordnung wird anschließend aus `stored_files` und vom
 Datenträger gelöscht. Bereichsübergreifend gemeinsam verwendete Dateien bleiben bestehen.
 
+Migration `0025_security_signal_reasons` ergänzt die kurzlebigen IP-Sperrsignal-Aggregate um
+eine feste Begründung und ein datensparsames Request-Ziel. Bestehende Zähler werden als historische
+Aggregate ohne Detailziel markiert; neue Einträge unterscheiden sichere Routen-Templates und feste
+Scan-Kategorien.
+
 Die Veröffentlichung ist eine bewusste Aktion des Build-Eigentümers oder der
 Moderation. Das Bild ist danach ohne Anmeldung lesbar und kann deshalb auch von
 Discord abgerufen werden; Freitext im Build darf folglich keine vertraulichen oder
