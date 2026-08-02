@@ -52,7 +52,8 @@ jobs:
       - name: Lint and isolated tests
         run: |
           cd backend && ruff check --no-cache src tests
-          cd .. && python scripts/run_backend_tests.py
+          cd .. && ruff check --no-cache tools/recovery-tool/src scripts/test_recovery_matrix.py tests/recovery/test_recovery_matrix_urls.py
+          python scripts/run_backend_tests.py
           python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests tests/recovery
       - name: PostgreSQL migration lifecycle
         working-directory: backend

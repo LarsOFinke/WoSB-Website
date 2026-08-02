@@ -13,6 +13,22 @@ def test_maintenance_events_are_configurable() -> None:
     assert expected.issubset(DEFAULT_MESSAGES)
 
 
+def test_pending_events_preserve_publication_order(tmp_path) -> None:
+    outbox = MaintenanceEventOutbox(tmp_path)
+    for action in ("started", "ended"):
+        outbox.publish(
+            action=action,
+            reason="update",
+            message=action,
+            started_at="2026-08-02T08:00:00+00:00",
+            outcome="succeeded" if action == "ended" else None,
+        )
+
+    events = [outbox.read(path) for path in outbox.pending_paths()]
+
+    assert [event.action for event in events] == ["started", "ended"]
+
+
 def test_pending_event_is_acknowledged_only_after_successful_queue(tmp_path, monkeypatch) -> None:
     outbox = MaintenanceEventOutbox(tmp_path)
     outbox.publish(

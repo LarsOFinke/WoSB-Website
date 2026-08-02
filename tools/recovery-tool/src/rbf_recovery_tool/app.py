@@ -7,15 +7,15 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from .automation import install_pull_timer, remove_pull_timer
-from .backup_catalog import fetch_backup_catalog
 from .config import Profile, load_profile, save_profile
 from .sftp_client import download_latest, fetch_host_fingerprint
 from .verification import generate_identity, verify_encrypted_bundle
 from .app_events import RecoveryEventMixin
+from .app_catalog import RecoveryCatalogMixin
 from .app_lab import RecoveryLabMixin
 
 
-class RecoveryApp(RecoveryLabMixin, RecoveryEventMixin):
+class RecoveryApp(RecoveryCatalogMixin, RecoveryLabMixin, RecoveryEventMixin):
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("RBF Recovery Tool")
@@ -115,37 +115,7 @@ class RecoveryApp(RecoveryLabMixin, RecoveryEventMixin):
             options, text="Abruf-Timer entfernen", command=self._disable_timer
         ).pack(side="right")
 
-        catalog_frame = ttk.LabelFrame(
-            outer, text="Backups auf dem Backup-Server", padding=8
-        )
-        catalog_frame.pack(fill="both", pady=(0, 10))
-        catalog_actions = ttk.Frame(catalog_frame)
-        catalog_actions.pack(fill="x", pady=(0, 6))
-        self.catalog_button = ttk.Button(
-            catalog_actions, text="Katalog aktualisieren", command=self._refresh_catalog
-        )
-        self.catalog_button.pack(side="left")
-        ttk.Label(
-            catalog_actions,
-            text="Erfolgreich = Commit-Manifest, Artefakte und Prüfsummen vollständig",
-        ).pack(side="left", padx=(10, 0))
-        columns = ("created", "status", "reason", "size", "recovery", "artifacts")
-        self.catalog = ttk.Treeview(
-            catalog_frame, columns=columns, show="headings", height=5
-        )
-        headings = {
-            "created": "Zeitpunkt (UTC)",
-            "status": "Status",
-            "reason": "Anlass",
-            "size": "Größe",
-            "recovery": "Recovery",
-            "artifacts": "Bestandteile",
-        }
-        widths = {"created": 190, "status": 100, "reason": 100, "size": 90, "recovery": 85, "artifacts": 360}
-        for column in columns:
-            self.catalog.heading(column, text=headings[column])
-            self.catalog.column(column, width=widths[column], anchor="w")
-        self.catalog.pack(fill="both", expand=True)
+        self._build_catalog(outer)
 
         lab_frame = ttk.LabelFrame(
             outer, text="Optionales lokales PostgreSQL-Recovery-Labor", padding=10
@@ -332,21 +302,6 @@ class RecoveryApp(RecoveryLabMixin, RecoveryEventMixin):
             return ("download", bundle)
 
         self._worker("Recovery-Bundle wird geladen …", operation)
-
-    def _refresh_catalog(self) -> None:
-        profile = self._save()
-        if not profile:
-            return
-        try:
-            profile.validate(require_fingerprint=True)
-        except ValueError as exc:
-            messagebox.showwarning("Host-Key fehlt", str(exc), parent=self.root)
-            return
-        password = self.vars["password"].get()
-        self._worker(
-            "Backup-Katalog wird gelesen …",
-            lambda: ("catalog", fetch_backup_catalog(profile, password=password)),
-        )
 
     def _verify_selected(self) -> None:
         selected = filedialog.askopenfilename(

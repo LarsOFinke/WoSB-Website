@@ -35,6 +35,7 @@ approved_actions = {
     "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
     "actions/setup-node": "249970729cb0ef3589644e2896645e5dc5ba9c38",
     "actions/upload-artifact": "b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+    "aquasecurity/trivy-action": "a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8",
     "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml": (
         "3adb4b14a2b0623876d18d863a498b785fb3752d"
     ),
@@ -69,6 +70,9 @@ for path in workflow_paths:
             )
 check(action_references > 0, "no external GitHub Actions were inspected")
 check("osv-scanner-reusable" in workflow_sources, "OSV dependency scanning workflow is missing")
+check("aquasecurity/trivy-action@" in workflow_sources, "container image scanning is missing")
+check("severity: HIGH,CRITICAL" in workflow_sources, "container scan severity gate is missing")
+check("ignore-unfixed: true" in workflow_sources, "container scan fix policy is missing")
 
 # Container and edge hardening.
 compose = text("infrastructure/compose.yml")

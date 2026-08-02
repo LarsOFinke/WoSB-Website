@@ -115,7 +115,10 @@ Angemessenheit und Rechtsgrundlage muss der Verantwortliche für den tatsächlic
   aktuelle Produktlinie. Das optionale Monitoring sollte bis dahin nicht öffentlich exponiert
   werden.
 - Gateway- und Runtime-Images benötigen regelmäßig einen Image-/SBOM-Scan zusätzlich zum
-  Lockfile-basierten OSV-Scan.
+  Lockfile-basierten OSV-Scan. Der Trivy-Scan ist nun als wöchentliches und Push-basiertes
+  High-/Critical-Gate umgesetzt; die Administratoren müssen weiterhin Host-Kernel,
+  Docker Engine, containerd und runc gemäß [CONTAINER_SECURITY.md](CONTAINER_SECURITY.md)
+  aktuell halten.
 - Der technische Export-, Berichtigungs- und Löschworkflow ist umgesetzt. Der Verantwortliche muss
   weiterhin Identitätsprüfung, gesetzliche Fristen und mögliche Aufbewahrungspflichten organisatorisch
   festlegen und dokumentieren.

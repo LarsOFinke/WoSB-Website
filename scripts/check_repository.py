@@ -169,6 +169,7 @@ require(
 )
 
 required_files = {
+    "AGENTS.md",
     "README.md",
     "VERSION",
     "CHANGELOG.md",
@@ -179,6 +180,9 @@ required_files = {
     "docs/GO_LIVE.md",
     "docs/INSTALLATION.md",
     "docs/ARCHITECTURE.md",
+    "docs/QUALITY_STANDARDS.md",
+    "docs/QUALITY_AUDIT_2026-08.md",
+    "docs/CONTAINER_SECURITY.md",
     "docs/DEVELOPMENT.md",
     "docs/OPERATIONS.md",
     "docs/DATABASE.md",
@@ -742,6 +746,7 @@ for supported_action in (
     "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1",
     "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
     "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f",
+    "aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8",
     "google/osv-scanner-action/.github/workflows/osv-scanner-reusable",
     "@3adb4b14a2b0623876d18d863a498b785fb3752d",
 ):

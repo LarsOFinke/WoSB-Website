@@ -1,5 +1,8 @@
 # Beitragen
 
+Für alle Beiträge gelten [die Qualitätsstandards](docs/QUALITY_STANDARDS.md) und der
+[Repository-Arbeitsleitfaden](AGENTS.md).
+
 1. Kleine, fachlich abgeschlossene Änderungen bevorzugen.
 2. Datenbankschema ausschließlich über Alembic ändern.
 3. Stammdaten über stabile `seed_id`, Revision und Checksumme pflegen.
@@ -9,7 +12,7 @@
 6. Vor dem Pull Request ausführen:
 
 ```bash
-make test-full
+make validate
 ```
 
 Commits und Pull Requests sollen Problem, Lösung, Migration/Seed-Auswirkung und Testnachweis nennen.

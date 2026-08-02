@@ -51,7 +51,8 @@ class MaintenanceEventOutbox:
             outcome=outcome,
         )
         self.directory.mkdir(parents=True, exist_ok=True)
-        path = self.directory / f"{EVENT_PREFIX}{event.event_id}.json"
+        ordering_key = event.occurred_at.replace("-", "").replace(":", "").replace("+00:00", "Z")
+        path = self.directory / f"{EVENT_PREFIX}{ordering_key}-{event.event_id}.json"
         temporary = self.directory / f".{path.name}.{os.getpid()}.tmp"
         temporary.write_text(
             json.dumps(asdict(event), ensure_ascii=False, indent=2) + "\n",

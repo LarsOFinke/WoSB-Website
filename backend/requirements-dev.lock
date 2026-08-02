@@ -11,20 +11,22 @@ anyio==4.14.1
     #   httpx
     #   starlette
     #   watchfiles
-cffi==2.0.0
-    # via cryptography
 certifi==2026.6.17
     # via
     #   httpcore
     #   httpx
+cffi==2.0.0
+    # via cryptography
 click==8.4.2
     # via uvicorn
-cryptography==46.0.4
+cryptography==48.0.1
     # via royal-blackwater-fleet-backend (pyproject.toml)
 fastapi==0.139.0
     # via royal-blackwater-fleet-backend (pyproject.toml)
 greenlet==3.5.3
-    # via sqlalchemy
+    # via
+    #   playwright
+    #   sqlalchemy
 h11==0.16.0
     # via
     #   httpcore
@@ -51,8 +53,6 @@ playwright==1.57.0
     # via royal-blackwater-fleet-backend (pyproject.toml)
 pluggy==1.6.0
     # via pytest
-pyee==13.0.1
-    # via playwright
 psycopg==3.3.4
     # via royal-blackwater-fleet-backend (pyproject.toml)
 psycopg-binary==3.3.4
@@ -63,9 +63,11 @@ pydantic==2.13.4
     # via fastapi
 pydantic-core==2.46.4
     # via pydantic
+pyee==13.0.1
+    # via playwright
 pygments==2.20.0
     # via pytest
-pytest==8.4.2
+pytest==9.1.1
     # via royal-blackwater-fleet-backend (pyproject.toml)
 python-dotenv==1.2.2
     # via uvicorn
@@ -89,6 +91,7 @@ typing-extensions==4.16.0
     #   psycopg
     #   pydantic
     #   pydantic-core
+    #   pyee
     #   sqlalchemy
     #   starlette
     #   typing-inspection

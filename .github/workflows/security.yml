@@ -17,6 +17,36 @@ permissions:
   security-events: write
 
 jobs:
+  container-images:
+    name: Container image vulnerabilities
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Build production images
+        run: |
+          cp infrastructure/.env.example infrastructure/.env
+          docker compose --env-file infrastructure/.env -f infrastructure/compose.yml build api gateway
+      - name: Scan API image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: rbf-hub-api:local
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+      - name: Scan gateway image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: rbf-hub-gateway:local
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
   osv-pr:
     name: Dependency delta scan
     if: github.event_name == 'pull_request'

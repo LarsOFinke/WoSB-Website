@@ -89,6 +89,8 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 
 ## Dokumentation
 
+- [Qualitätsstandards und Definition of Done](docs/QUALITY_STANDARDS.md)
+- [Vollständiger Dokumentationsindex](docs/README.md)
 - [Go-Live-Checkliste](docs/GO_LIVE.md)
 - [Installation](docs/INSTALLATION.md)
 - [Architektur](docs/ARCHITECTURE.md)

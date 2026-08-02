@@ -1,24 +1,43 @@
-# v1.0-Dokumentation
+# Projektdokumentation
 
-| Dokument | Zweck |
-|---|---|
-| [GO_LIVE.md](GO_LIVE.md) | konkrete Abnahme für den Produktionsstart |
-| [INSTALLATION.md](INSTALLATION.md) | neuer Raspberry Pi bis erste Anmeldung |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Systemgrenzen und Modulregeln |
-| [CSS_ARCHITECTURE.md](CSS_ARCHITECTURE.md) | verbindlicher Frontend-Design-, Responsive- und CSS-Qualitätsstandard |
-| [BACKUP_ARCHITECTURE.md](BACKUP_ARCHITECTURE.md) | Modulgrenzen und Qualitätsstandard für Backup, Enrollment und Recovery Tool |
-| [SECURITY_PRIVACY_AUDIT.md](SECURITY_PRIVACY_AUDIT.md) | aktuelles Security-/Datenschutz-Audit und produktive Administrator-Gates |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | lokale Entwicklung und Konfiguration |
-| [DATABASE.md](DATABASE.md) | 3NF, Alembic, Seeds und Backups |
-| [SHIP_SEED_SCREENSHOT_AUDIT.md](SHIP_SEED_SCREENSHOT_AUDIT.md) | Audit der Build-Designer-Schiffs- und Eventdaten |
-| [BUILD_OPTION_ICONS.md](BUILD_OPTION_ICONS.md) | Herkunft, Zuordnung und UI-Vertrag der Build-Option-Icons |
-| [COMBAT_DPM_ANALYSIS.md](COMBAT_DPM_ANALYSIS.md) | Formel, 3NF-Datenmodell und Datenumfang der Kampf-DPM-Analyse |
-| [MASTER_DATA_GO_LIVE_REVIEW.md](MASTER_DATA_GO_LIVE_REVIEW.md) | Datenqualität, Wartbarkeit und Freigabeempfehlung |
-| [TESTING.md](TESTING.md) | minimale Testbasis und Release-Gates |
-| [OPERATIONS.md](OPERATIONS.md) | Updates, Diagnose, Backup und Restore |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | GitHub CI, Release und optionales CD |
-| [outbound-webhooks.md](outbound-webhooks.md) | Discord-Chat-Webhooks, signierte JSON-Integrationen und Zustellung |
-| [webhook-templates/](webhook-templates/) | direkt kopierbare Nachrichten-Templates für alle Webhook-Events |
+## Verbindliche Standards
 
-- [Raid-Helper calendar integration](RAID_HELPER_CALENDAR.md)
-- [Bot and crawler load policy](BOT_CRAWLER_POLICY.md)
+- [Qualitätsstandards](QUALITY_STANDARDS.md) – zentraler Qualitätsvertrag und Definition of Done
+- [Architektur](ARCHITECTURE.md) – Systemgrenzen und Modulregeln
+- [Frontend- und CSS-Architektur](CSS_ARCHITECTURE.md) – Design, Responsive-Verhalten und CSS-Budgets
+- [Backup-Architektur](BACKUP_ARCHITECTURE.md) – Backup, Enrollment und Recovery Tool
+- [Tests](TESTING.md) – Testpyramide und Release-Gates
+- [Datenbank](DATABASE.md) – 3NF, Alembic, Seeds und Backups
+- [Security- und Datenschutz-Audit](SECURITY_PRIVACY_AUDIT.md) – Risiken und Administrator-Gates
+- [Docker- und Container-Sicherheit](CONTAINER_SECURITY.md) – Runtime-, Image- und Incident-Standard
+- [Repository-Qualitätsaudit August 2026](QUALITY_AUDIT_2026-08.md) – aktueller Erfüllungsstand
+
+## Entwicklung und Lieferung
+
+- [Lokale Entwicklung](DEVELOPMENT.md)
+- [Repository-Aufräumstandard](REPOSITORY_CLEANUP.md)
+- [Deployment und CI/CD](DEPLOYMENT.md)
+- [Go-Live-Checkliste](GO_LIVE.md)
+
+## Installation und Betrieb
+
+- [Installation](INSTALLATION.md)
+- [Betrieb](OPERATIONS.md)
+- [Disaster Recovery](DISASTER_RECOVERY.md)
+- [Backup-Server-Enrollment](BACKUP_SERVER_ENROLLMENT.md)
+- [Backup-Kurzleitfaden](BACKUP_SETUP_QUICKSTART.md)
+- [Uptime-Kuma-2-Migration](UPTIME_KUMA_2_MIGRATION.md)
+- [Bot- und Crawler-Lastregeln](BOT_CRAWLER_POLICY.md)
+
+## Fachliche Daten und Audits
+
+- [Schiffs- und Eventdaten-Audit](SHIP_SEED_SCREENSHOT_AUDIT.md)
+- [Build-Option-Icons](BUILD_OPTION_ICONS.md)
+- [Kampf-DPM-Analyse](COMBAT_DPM_ANALYSIS.md)
+- [Stammdaten-Go-Live-Review](MASTER_DATA_GO_LIVE_REVIEW.md)
+
+## Integrationen und Benachrichtigungen
+
+- [Outbound-Webhooks](outbound-webhooks.md)
+- [Webhook-Nachrichten-Templates](webhook-templates/)
+- [Raid-Helper-Kalenderintegration](RAID_HELPER_CALENDAR.md)
