@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.modules.admin.services.webhook_operation_templates import OPERATION_MESSAGES
+from app.modules.admin.services.webhook_message_templates_builds import BUILD_PRINTOUT_MESSAGE
 
 
 def _message(value: str) -> str:
@@ -8,6 +9,7 @@ def _message(value: str) -> str:
 
 
 DEFAULT_MESSAGES = {
+    "build.printout.published": BUILD_PRINTOUT_MESSAGE,
     "build.created": _message(
         """
 ⚓ **New Build Created**

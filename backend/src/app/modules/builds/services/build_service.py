@@ -22,6 +22,7 @@ from app.modules.ships.models.ship import Ship
 from app.modules.ships.schemas.ship import ShipRead
 from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 from app.modules.builds.services.upgrade_slot_service import calculate_upgrade_slot_access
+from app.modules.builds.services.build_printout_service import delete_build_printout, public_printout_url
 
 __all__ = ["BuildValidationError", "create_build", "delete_build", "delete_user_build", "get_build", "list_build_page", "list_builds", "list_user_build_page", "list_user_builds", "update_user_build"]
 
@@ -245,6 +246,7 @@ def get_build(db: Session, build_id: int, viewer_id: int | None = None) -> Build
     build = db.scalar(_build_query().where(Build.id == build_id))
     if build is None:
         return None
+    build.printout_url = public_printout_url(build.id) if build.printout_checksum else None
     return _decorate_builds(db, [build], viewer_id)[0]
 
 def _apply_build_payload(
@@ -293,6 +295,7 @@ def delete_build(db: Session, build_id: int) -> bool:
     build = get_build(db, build_id)
     if build is None:
         return False
+    delete_build_printout(build.id)
     db.delete(build)
     db.commit()
     return True
@@ -317,6 +320,7 @@ def delete_user_build(db: Session, build_id: int, user_id: int) -> bool:
     build = get_build(db, build_id)
     if build is None or build.owner_id != user_id:
         return False
+    delete_build_printout(build.id)
     db.delete(build)
     db.commit()
     return True

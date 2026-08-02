@@ -2,7 +2,7 @@ from app.core.time import utc_now
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -54,6 +54,9 @@ class Build(BuildStatisticsMixin, Base):
     mercenaries: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    printout_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    printout_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    printout_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(

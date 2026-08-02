@@ -1,4 +1,4 @@
-import { deleteRequest, get, post, put } from '@/shared/api/client'
+import { deleteRequest, get, post, put, putForm } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
 function buildFilters(search = '', buildType = '', classification = '', limit = 50, offset = 0) {
@@ -43,4 +43,10 @@ export function createBuild(payload) {
 
 export function updateMyBuild(id, payload) {
   return put(`/builds/mine/${id}`, payload)
+}
+
+export function publishBuildPrintout(id, image, notifyDiscord = false) {
+  const form = new FormData()
+  form.append('image', image, `build-${id}.png`)
+  return putForm(withQuery(`/builds/${id}/printout`, { notify_discord: notifyDiscord }), form)
 }

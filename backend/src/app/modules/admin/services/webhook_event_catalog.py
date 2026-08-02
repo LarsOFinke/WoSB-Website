@@ -58,6 +58,7 @@ EVENT_CATALOG = (
     ("build.created", "builds", "A new build was created."),
     ("build.updated", "builds", "A build was updated."),
     ("build.removed", "builds", "A build was removed."),
+    ("build.printout.published", "builds", "A public build printout was published to Discord."),
     ("forum.thread.created", "forum", "A new forum thread was created."),
     ("forum.thread.updated", "forum", "A forum thread was updated."),
     ("forum.thread.removed", "forum", "A forum thread was removed."),

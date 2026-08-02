@@ -524,6 +524,25 @@ def test_default_build_messages_are_full_english_templates_with_deep_links() -> 
     assert "data.build_name" in DEFAULT_MESSAGES["build.removed"]
 
 
+def test_build_printout_discord_payload_embeds_the_public_image() -> None:
+    from app.modules.admin.models.outbound_webhook import OutboundWebhook
+    from app.modules.admin.services.outbound_webhook_delivery_service.discord import discord_payload
+
+    image_url = "https://royal-blackwater-fleet.eu/api/builds/401/printout"
+    payload = discord_payload(
+        OutboundWebhook(name="Build images", event_types_json="[]"),
+        {
+            "event": "build.printout.published",
+            "actor": {"display_name": "Build Captain"},
+            "resource": {"url": image_url},
+            "data": {"build_name": "Heavy Broadside"},
+        },
+    )
+
+    assert payload["embeds"] == [{"image": {"url": image_url}}]
+    assert payload["allowed_mentions"] == {"parse": []}
+
+
 def test_every_catalog_event_has_a_serializable_preview_payload() -> None:
     from app.modules.admin.schemas.outbound_webhook import OutboundWebhookCreate
     from app.modules.admin.services.webhook_events import EVENT_TEST_SAMPLES, event_test_sample

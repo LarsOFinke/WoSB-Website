@@ -1,10 +1,13 @@
 import { onBeforeUnmount, ref } from 'vue'
 import {
+  createBuildPrintPngBlob,
   createBuildPrintPreviewUrl,
   downloadBuildPrintPng,
   downloadBuildPrintSvg,
   openBuildPrintWindow,
 } from '@/modules/builds/buildPrintExport'
+import { publishBuildPrintout } from '@/modules/builds/api/builds'
+import { absoluteFileUrl } from '@/modules/files/api/files'
 
 export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
   const printStatus = ref('')
@@ -75,6 +78,30 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     }
   }
 
+  async function publishBuildImage(notifyDiscord = false) {
+    if (!build.value) return
+    printStatus.value = ''
+    printBusy.value = true
+    try {
+      const image = await createBuildPrintPngBlob(build.value, { t, optionLabel, optionImage })
+      const published = await publishBuildPrintout(build.value.id, image, notifyDiscord)
+      build.value.printout_url = published.url
+      build.value.printout_checksum = published.checksum
+      if (notifyDiscord) {
+        printStatus.value = t('builds.print.discordQueued')
+      } else {
+        await navigator.clipboard.writeText(absoluteFileUrl(published.url) || published.url)
+        printStatus.value = published.changed
+          ? t('builds.print.publicLinkPublished')
+          : t('builds.print.publicLinkCopied')
+      }
+    } catch {
+      printStatus.value = t('builds.print.publishError')
+    } finally {
+      printBusy.value = false
+    }
+  }
+
   function closePrintPreview() {
     printPreviewOpen.value = false
     revokePrintPreview()
@@ -93,6 +120,7 @@ export function useBuildPrintActions(build, { optionImage, optionLabel, t }) {
     downloadBuildImagePng,
     downloadBuildImageSvg,
     printBuildSheet,
+    publishBuildImage,
     closePrintPreview,
   }
 }

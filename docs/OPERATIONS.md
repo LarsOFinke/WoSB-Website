@@ -153,6 +153,14 @@ Rotation in einem Wartungsfenster:
 Ein Datenbankbackup ohne mindestens einen gültigen Schlüssel kann die gespeicherten Discord-Ziele
 nicht wiederherstellen.
 
+Build-Printouts verwenden die vorhandenen, verschlüsselt gespeicherten Discord-Ziele. In der
+Webhook-Verwaltung kann dafür das Ereignis `build.printout.published` zusätzlich zu
+`build.created`, `build.updated` und `build.removed` abonniert werden. Die Build-Ansicht rendert
+das PNG im Browser, speichert serverseitig pro Build genau eine öffentliche Datei und übergibt
+Discord deren URL als Bild-Embed. Der SHA-256-Wert verhindert unnötige Neuschreibvorgänge;
+nach einer Build-Bearbeitung ersetzt das neu gerenderte Bild den bisherigen Inhalt unter derselben
+URL.
+
 ## Monitoring-Major-Upgrade
 
 Uptime Kuma bleibt bis zur kontrollierten Datenmigration auf 1.23.16. Das verbindliche Verfahren

@@ -369,6 +369,9 @@ expected_build_columns = {
     "musketeers",
     "mercenaries",
     "details",
+    "printout_checksum",
+    "printout_size_bytes",
+    "printout_updated_at",
     "created_at",
     "updated_at",
 }

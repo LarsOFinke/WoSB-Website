@@ -64,6 +64,13 @@ export function put(path, payload) {
   })
 }
 
+export function putForm(path, formData) {
+  return request(path, {
+    method: 'PUT',
+    body: formData,
+  })
+}
+
 export function deleteRequest(path) {
   return request(path, { method: 'DELETE' })
 }

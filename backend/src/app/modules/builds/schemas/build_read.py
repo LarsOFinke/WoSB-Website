@@ -22,3 +22,5 @@ class BuildRead(BuildBase):
     ship_stats: ShipStats
     created_at: datetime
     updated_at: datetime
+    printout_url: str | None = None
+    printout_checksum: str | None = None

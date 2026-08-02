@@ -64,4 +64,8 @@ def discord_payload(webhook: OutboundWebhook, envelope: dict[str, Any]) -> dict[
     }
     if username:
         payload["username"] = username
+    if event_type == "build.printout.published":
+        image_url = _lookup(envelope, "resource.url")
+        if image_url:
+            payload["embeds"] = [{"image": {"url": image_url}}]
     return payload

@@ -1,0 +1,7 @@
+BUILD_PRINTOUT_MESSAGE = """
+🖼️ **Build Printout Published**
+Build: **{data.build_name}**
+Published by: **{actor.display_name}**
+The public image is attached below.
+🔗 [Open image]({resource.url})
+""".strip()

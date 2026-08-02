@@ -86,7 +86,7 @@ from app.core.config import BACKEND_ROOT
 from app.db.schema_health import expected_alembic_heads
 
 assert not (BACKEND_ROOT / "alembic.ini").exists(), BACKEND_ROOT
-assert expected_alembic_heads() == frozenset({"0022_privacy_contact_requests"})
+assert expected_alembic_heads() == frozenset({"0023_build_printouts"})
 PY_SCHEMA_HEAD
   )
 )

@@ -66,16 +66,27 @@ def post_build(
     except BuildValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     record_audit_safely(
-        db, actor=current_user, entity_type="build", entity_id=created.id, action="create",
-        summary=f'Build “{created.build_name}” created.',
+        db,
+        actor=current_user,
+        entity_type="build",
+        entity_id=created.id,
+        action="create",
+        summary=f"Build “{created.build_name}” created.",
         changed_fields=list(build.model_dump(exclude_unset=True).keys()),
     )
-    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
-        db, event_type="build.created", resource_type="build", resource_id=created.id,
-        resource_url=f"/builds/{created.id}", actor=current_user,
-        data=BuildRead.model_validate(created),
-        **webhook_event_scope(db, use_primary_fleet=True),
-    ))
+    schedule_webhook_deliveries(
+        background_tasks,
+        queue_webhook_event_safely(
+            db,
+            event_type="build.created",
+            resource_type="build",
+            resource_id=created.id,
+            resource_url=f"/builds/{created.id}",
+            actor=current_user,
+            data=BuildRead.model_validate(created),
+            **webhook_event_scope(db, use_primary_fleet=True),
+        ),
+    )
     return created
 
 
@@ -156,16 +167,27 @@ def put_my_build(
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
     record_audit_safely(
-        db, actor=current_user, entity_type="build", entity_id=build_id, action="update",
-        summary=f'Build “{updated.build_name}” updated.',
+        db,
+        actor=current_user,
+        entity_type="build",
+        entity_id=build_id,
+        action="update",
+        summary=f"Build “{updated.build_name}” updated.",
         changed_fields=list(build.model_dump(exclude_unset=True).keys()),
     )
-    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
-        db, event_type="build.updated", resource_type="build", resource_id=build_id,
-        resource_url=f"/builds/{build_id}", actor=current_user,
-        data=BuildRead.model_validate(updated),
-        **webhook_event_scope(db, use_primary_fleet=True),
-    ))
+    schedule_webhook_deliveries(
+        background_tasks,
+        queue_webhook_event_safely(
+            db,
+            event_type="build.updated",
+            resource_type="build",
+            resource_id=build_id,
+            resource_url=f"/builds/{build_id}",
+            actor=current_user,
+            data=BuildRead.model_validate(updated),
+            **webhook_event_scope(db, use_primary_fleet=True),
+        ),
+    )
     return updated
 
 
@@ -181,15 +203,26 @@ def delete_my_build(
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found.")
     record_audit_safely(
-        db, actor=current_user, entity_type="build", entity_id=build_id, action="delete",
-        summary=f'Build “{getattr(existing, "build_name", build_id)}” deleted.',
+        db,
+        actor=current_user,
+        entity_type="build",
+        entity_id=build_id,
+        action="delete",
+        summary=f"Build “{getattr(existing, 'build_name', build_id)}” deleted.",
     )
-    schedule_webhook_deliveries(background_tasks, queue_webhook_event_safely(
-        db, event_type="build.removed", resource_type="build", resource_id=build_id,
-        resource_url="/builds", actor=current_user,
-        data={"id": build_id, "build_name": getattr(existing, "build_name", str(build_id))},
-        **webhook_event_scope(db, use_primary_fleet=True),
-    ))
+    schedule_webhook_deliveries(
+        background_tasks,
+        queue_webhook_event_safely(
+            db,
+            event_type="build.removed",
+            resource_type="build",
+            resource_id=build_id,
+            resource_url="/builds",
+            actor=current_user,
+            data={"id": build_id, "build_name": getattr(existing, "build_name", str(build_id))},
+            **webhook_event_scope(db, use_primary_fleet=True),
+        ),
+    )
 
 
 @router.get("/{build_id}", response_model=BuildRead)

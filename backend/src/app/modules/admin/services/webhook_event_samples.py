@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any
 
 from app.modules.admin.services.webhook_event_samples_forum_fleet import forum_and_fleet_samples
+from app.modules.admin.services.webhook_event_samples_builds import build_samples
 from app.modules.admin.services.webhook_event_samples_maintenance import maintenance_samples
 
 _COMMON_USER = {
@@ -435,53 +436,6 @@ EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
             "updated_at": "2026-08-16T12:00:00+00:00",
         },
     },
-    "build.created": {
-        **_COMMON_EVENT,
-        "resource_type": "build",
-        "resource_id": 401,
-        "resource_url": "/builds/401",
-        "data": {
-            "id": 401,
-            "build_name": "Heavy Broadside",
-            "build_type": "balanced",
-            "ship": {"id": 12, "name": "Anson", "rate": 3},
-            "is_official_template": False,
-            "sailors": 80,
-            "soldiers": 80,
-            "musketeers": 0,
-            "mercenaries": 0,
-            "owner_id": 42,
-            "created_at": "2026-08-15T12:00:00+00:00",
-            "updated_at": "2026-08-15T12:00:00+00:00",
-        },
-    },
-    "build.updated": {
-        **_COMMON_EVENT,
-        "resource_type": "build",
-        "resource_id": 401,
-        "resource_url": "/builds/401",
-        "data": {
-            "id": 401,
-            "build_name": "Heavy Broadside Mk II",
-            "build_type": "balanced",
-            "ship": {"id": 12, "name": "Anson", "rate": 3},
-            "is_official_template": False,
-            "sailors": 90,
-            "soldiers": 70,
-            "musketeers": 0,
-            "mercenaries": 0,
-            "owner_id": 42,
-            "created_at": "2026-08-15T12:00:00+00:00",
-            "updated_at": "2026-08-16T12:00:00+00:00",
-        },
-    },
-    "build.removed": {
-        **_COMMON_EVENT,
-        "resource_type": "build",
-        "resource_id": 401,
-        "resource_url": "/builds",
-        "data": {"id": 401, "build_name": "Heavy Broadside Mk II"},
-    },
     "forum.thread.created": {
         **_COMMON_EVENT,
         "resource_type": "forum_thread",
@@ -518,6 +472,7 @@ EVENT_TEST_SAMPLES: dict[str, dict[str, Any]] = {
 
 
 EVENT_TEST_SAMPLES.update(forum_and_fleet_samples(_COMMON_EVENT, _COMMON_USER))
+EVENT_TEST_SAMPLES.update(build_samples(_COMMON_EVENT))
 EVENT_TEST_SAMPLES.update(maintenance_samples(_COMMON_EVENT))
 
 

@@ -102,3 +102,16 @@ Produktions-Restore erstellt zusätzlich ein Pre-Restore-Backup, sperrt parallel
 und Gateway, beendet aktive Datenbankverbindungen, spielt den Dump ein, migriert auf den aktuellen
 Alembic-Head und startet die Anwendung erst nach erfolgreicher Readiness-Prüfung wieder. Ein Restore
 wird trotzdem zuerst auf einer separaten Instanz geprüft.
+# Öffentliche Build-Printouts
+
+Ein Build speichert höchstens ein veröffentlichtes PNG unter der stabilen URL
+`/api/builds/<id>/printout`. `builds.printout_checksum` hält den SHA-256-Wert,
+`printout_size_bytes` die Größe und `printout_updated_at` den letzten tatsächlichen
+Inhaltswechsel. Ein identischer erneuter Upload schreibt die Datei nicht neu. Ein
+geändertes Printout ersetzt dieselbe Datei atomar; beim Löschen des Builds wird sie
+entfernt. Migration `0023_build_printouts` ergänzt ausschließlich diese Metadaten.
+
+Die Veröffentlichung ist eine bewusste Aktion des Build-Eigentümers oder der
+Moderation. Das Bild ist danach ohne Anmeldung lesbar und kann deshalb auch von
+Discord abgerufen werden; Freitext im Build darf folglich keine vertraulichen oder
+personenbezogenen Inhalte enthalten.

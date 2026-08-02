@@ -18,6 +18,7 @@ const {
   crewDistributionRows, optionMeta, optionImage, slotItem, slotLabel, slotQuantity,
   inventoryImage, specialistLabel, shareLinkMeta, shareBuild, prepareBuildImage,
   downloadBuildImagePng, downloadBuildImageSvg, printBuildSheet, closePrintPreview,
+  publishBuildImage,
   buildTypeLabel, toggleUpvote, statRows, activeEffectRows,
 } = useBuildDetailPage(props)
 
@@ -85,6 +86,8 @@ function crewCapacity() {
             <div class="build-print-export-actions">
               <button class="small-action" type="button" @click="downloadBuildImagePng">{{ t('builds.print.downloadPng') }}</button>
               <button class="small-action" type="button" @click="downloadBuildImageSvg">{{ t('builds.print.downloadSvg') }}</button>
+              <button v-if="canEdit" class="small-action" type="button" :disabled="printBusy" @click="publishBuildImage(false)">{{ t('builds.print.publicLink') }}</button>
+              <button v-if="canEdit" class="small-action" type="button" :disabled="printBusy" @click="publishBuildImage(true)">{{ t('builds.print.discord') }}</button>
               <button class="small-action primary-action" type="button" @click="printBuildSheet">{{ t('builds.print.printAction') }}</button>
               <button class="small-action" type="button" @click="closePrintPreview">{{ t('common.cancel') }}</button>
             </div>

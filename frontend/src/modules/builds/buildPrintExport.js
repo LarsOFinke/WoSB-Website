@@ -544,7 +544,11 @@ function createBuildPrintModel(build, helpers = {}) {
     shipName: build?.ship?.name || '—',
     shipRate: build?.ship?.rate || '—',
     shipType: build?.ship?.ship_type || '—',
-    generatedAt: new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date()),
+    // A saved build must render byte-identically until the build itself changes;
+    // otherwise the server-side checksum cache would miss on every publication.
+    generatedAt: new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
+      new Date(build?.updated_at || build?.created_at || 0),
+    ),
     classificationLabels,
     summaryCards: makeSummaryCards(build, t),
     headlineStats: headlineStatsForBuild(build, statRows, t),
@@ -695,7 +699,7 @@ export async function downloadBuildPrintSvg(build, helpers = {}) {
   triggerPrintDownload(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), buildPrintFileName(build, 'svg'))
 }
 
-export async function downloadBuildPrintPng(build, helpers = {}) {
+export async function createBuildPrintPngBlob(build, helpers = {}) {
   const { svg, width, height } = await createEmbeddedBuildPrintDocument(build, helpers)
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }))
   try {
@@ -711,11 +715,15 @@ export async function downloadBuildPrintPng(build, helpers = {}) {
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Canvas context is unavailable.')
     context.drawImage(image, 0, 0, width, height)
-    const pngBlob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Build image could not be encoded.')), 'image/png'))
-    triggerPrintDownload(pngBlob, buildPrintFileName(build, 'png'))
+    return await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Build image could not be encoded.')), 'image/png'))
   } finally {
     URL.revokeObjectURL(url)
   }
+}
+
+export async function downloadBuildPrintPng(build, helpers = {}) {
+  const pngBlob = await createBuildPrintPngBlob(build, helpers)
+  triggerPrintDownload(pngBlob, buildPrintFileName(build, 'png'))
 }
 
 export async function createBuildPrintHtml(build, helpers = {}) {
