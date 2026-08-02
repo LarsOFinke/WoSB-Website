@@ -191,6 +191,7 @@ def test_retention_policy_removes_only_expired_operational_and_personal_records(
             "webhook_deliveries": 1,
             "cookie_consents": 1,
             "resolved_privacy_requests": 0,
+            "resolved_privacy_contacts": 0,
             "registration_requests": 2,
         }
         assert db.get(SecuritySignalBucket, ids["old_log"]) is None

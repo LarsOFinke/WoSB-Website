@@ -163,10 +163,25 @@ werden.
 ## Automatische Datenbereinigung
 
 Der Maintenance-Lauf entfernt abgelaufene Sessions und wendet die in `backend/config/uploads.cfg`
-konfigurierten Fristen auf Anwendungslogs, Audit-Historie, Webhook-Deliveries, Cookie-Einwilligungen
-und Registrierungsanträge an. Die Standardwerte und betrieblichen Auswirkungen sind in
-`docs/DATA_RETENTION.md` dokumentiert. Nach Änderungen an Fristen sollte der nächste Lauf beobachtet
-und das Ergebnis über die Systemlogs geprüft werden.
+konfigurierten Fristen auf Sicherheitsaggregationen, Audit-Historie, Webhook-Deliveries,
+Cookie-Einwilligungen, Registrierungsanträge sowie abgeschlossene Datenschutzanträge und
+-kontakte an. Die Standardwerte und betrieblichen Auswirkungen sind in
+[DATA_RETENTION.md](DATA_RETENTION.md) dokumentiert. Nach Änderungen an Fristen sollte der nächste
+Lauf beobachtet und das Ergebnis über die Systemlogs geprüft werden.
+
+## Datenschutzvorgänge
+
+Die öffentliche Seite `/privacy` bietet Cookie-Einstellungen, den Self-Service für angemeldete
+Nutzer und ein datensparsames Kontaktformular. Administratoren bearbeiten formale Anträge und
+Kontakte unter `/admin/privacy-requests`. Vor einer Löschfreigabe sind Identität, gesetzliche
+Aufbewahrungspflichten und mögliche Rechte an Community-Inhalten zu prüfen; die anschließende
+relationale Bereinigung, Pseudonymisierung und der Sessionwiderruf laufen automatisiert.
+
+Datenschutzkontakte dürfen nicht in Discord kopiert werden. Die Anwendung versendet deren Adresse,
+Betreff und Nachricht bewusst nicht über Webhooks. Nach einer Test- oder Fehlanfrage ist sie über
+die Admin-Inbox abzuschließen; der tägliche Maintenance-Lauf entfernt abgeschlossene Vorgänge nach
+der dokumentierten Frist. Der vollständige technische und organisatorische Prüfstand steht in
+[PRIVACY_COMPLIANCE_AUDIT.md](PRIVACY_COMPLIANCE_AUDIT.md).
 
 ## TLS
 
@@ -179,9 +194,12 @@ systemd-Timer übernehmen Erneuerung und Backups. Änderungen an `.env` mit `chm
 nie in Git aufnehmen.
 
 
-## Curating the New Captain Guide
+## New-Captain-Guide pflegen
 
-Staff members can edit the New Captain Guide and add text sections, resource collections, direct guide links, and direct build links. Published guides and available builds are loaded when the editor opens, preventing stale session state from leaving the selectors empty. Linked resources remain database references, so renamed guides and builds automatically display their current titles.
+Staff-Mitglieder können Textabschnitte, Ressourcensammlungen sowie direkte Guide- und Build-Links
+ergänzen. Veröffentlichte Guides und verfügbare Builds werden beim Öffnen des Editors geladen.
+Verknüpfungen bleiben Datenbankreferenzen, sodass umbenannte Inhalte automatisch ihren aktuellen
+Titel anzeigen.
 
 
 ### Automatisch getrennter Recovery-Lesezugang

@@ -1,0 +1,48 @@
+.privacy-center {
+  width: min(76rem, 100%);
+  margin-inline: auto;
+}
+
+.privacy-center__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.privacy-center__grid article {
+  padding: 1rem;
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.12));
+  background: var(--panel-soft, rgba(255, 255, 255, 0.035));
+}
+
+.privacy-center__grid h2,
+.privacy-center__contact h2 {
+  margin-top: 0;
+}
+
+.privacy-center__contact {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(18rem, 1.3fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.privacy-center__contact form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.privacy-center__honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 720px) {
+  .privacy-center__grid,
+  .privacy-center__contact {
+    grid-template-columns: 1fr;
+  }
+}

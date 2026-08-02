@@ -325,7 +325,7 @@ def test_schema_head_resolution_uses_explicit_config_in_installed_layout(
 
     heads = expected_alembic_heads(tmp_path / "site-packages")
 
-    assert heads == frozenset({"0021_data_subject_requests"})
+    assert heads == frozenset({"0022_privacy_contact_requests"})
 
 
 def test_schema_head_resolution_rejects_missing_explicit_config(

@@ -16,6 +16,7 @@ from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 from app.modules.admin.models.security_event import SecuritySignalBucket
 from app.modules.privacy.models.cookie_consent import CookieConsentDecision
 from app.modules.privacy.models.data_subject_request import DataSubjectRequest
+from app.modules.privacy.models.privacy_contact_request import PrivacyContactRequest
 
 
 def _deleted(rowcount: int | None) -> int:
@@ -92,6 +93,15 @@ def purge_expired_records(
                     DataSubjectRequest.status != "pending",
                     DataSubjectRequest.resolved_at.is_not(None),
                     DataSubjectRequest.resolved_at < privacy_request_cutoff,
+                )
+            ).rowcount
+        ),
+        "resolved_privacy_contacts": _deleted(
+            db.execute(
+                delete(PrivacyContactRequest).where(
+                    PrivacyContactRequest.status != "pending",
+                    PrivacyContactRequest.resolved_at.is_not(None),
+                    PrivacyContactRequest.resolved_at < privacy_request_cutoff,
                 )
             ).rowcount
         ),

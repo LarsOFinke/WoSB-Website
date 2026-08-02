@@ -12,6 +12,7 @@ und über `backend/config/uploads.cfg` konfiguriert werden.
 | Discord-Webhook-Deliveries | 30 Tage | Zustellfehler, Wiederholung und Support | täglicher Maintenance-Lauf |
 | Cookie-Einwilligungsentscheidungen | 400 Tage | Nachweis und Wiederherstellung der Auswahl | täglicher Maintenance-Lauf |
 | Abgeschlossene Datenschutzanträge | 400 Tage | Nachweis von Export-, Berichtigungs- und Löschbearbeitung | täglicher Maintenance-Lauf; offene Anträge bleiben erhalten |
+| Abgeschlossene Datenschutz-Kontakte | 400 Tage | Rückfragen und Nachweis der Bearbeitung | täglicher Maintenance-Lauf; offene Nachrichten bleiben bis zur Bearbeitung erhalten |
 | Offene Registrierungsanträge | 30 Tage | Accountprüfung | täglicher Maintenance-Lauf |
 | Geprüfte Registrierungsanträge | 90 Tage | Nachvollziehbarkeit der Entscheidung | täglicher Maintenance-Lauf |
 | Abgelaufene Sessions | bis Ablaufzeitpunkt | Anmeldung und Sicherheit | täglicher Maintenance-Lauf |
@@ -94,3 +95,8 @@ Accountlöschung ausgeschlossen.
 
 Admins bearbeiten offene Vorgänge unter `/admin/privacy-requests`. Entscheidung, Bearbeiter,
 Zeitpunkt und Begründung werden am Antrag gespeichert und zusätzlich im Audit-Log protokolliert.
+
+Die öffentliche Route `/privacy` stellt die Cookie-Einstellungen, eine verständliche Übersicht der
+Verarbeitung und ein datensparsames Kontaktformular bereit. Das Formular speichert keine IP-Adresse
+und keinen User-Agent. E-Mail-Adresse und Nachrichteninhalt verbleiben in der Anwendung und werden
+nicht über Discord-Webhooks versendet; Administratoren bearbeiten sie im Datenschutz-Postfach.

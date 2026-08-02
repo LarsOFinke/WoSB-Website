@@ -80,6 +80,12 @@ Die Anwendung unterstützt Datenminimierung und Speicherbegrenzung technisch:
   SameSite-geschützt.
 - Discord-Webhook-Zugangsdaten werden authentifiziert verschlüsselt und API-seitig maskiert.
 - Uploads werden anhand tatsächlicher Dateisignaturen geprüft und privat ausgeliefert.
+- Das sichtbare Datenschutzcenter unter `/privacy` bündelt Cookie-Einstellungen, Self-Service für
+  Export/Berichtigung/Löschung und eine datensparsame Kontaktmöglichkeit. Datenschutzkontakte
+  speichern weder IP noch User-Agent und werden nicht an Discord-Webhooks weitergegeben; die
+  Bearbeitung erfolgt in der geschützten Administrator-Inbox.
+- Exporttabellen werden gegen die aktuelle SQLAlchemy-Metadatenstruktur validiert. Veraltete oder
+  umbenannte Tabellen können dadurch nicht mehr unbemerkt aus einem Export herausfallen.
 
 Die konkreten Fristen stehen in [DATA_RETENTION.md](DATA_RETENTION.md). Ihre rechtliche
 Angemessenheit und Rechtsgrundlage muss der Verantwortliche für den tatsächlichen Betrieb prüfen.
@@ -121,7 +127,9 @@ Angemessenheit und Rechtsgrundlage muss der Verantwortliche für den tatsächlic
   aktuell halten.
 - Der technische Export-, Berichtigungs- und Löschworkflow ist umgesetzt. Der Verantwortliche muss
   weiterhin Identitätsprüfung, gesetzliche Fristen und mögliche Aufbewahrungspflichten organisatorisch
-  festlegen und dokumentieren.
+  festlegen und dokumentieren. Die Löschung ist deshalb bewusst hybrid: relationale Bereinigung,
+  Sessionwiderruf und Pseudonymisierung sind automatisiert, die irreversible Freigabe und die Prüfung
+  möglicherweise erhaltenswerter Community-Inhalte bleiben ein menschliches Gate.
 - Discord ist ein externer Empfänger. Aktivierte Ereignisse und Templates müssen auf
   Datenminimierung und den konkreten Rechtsrahmen geprüft werden.
 - Ein externer Penetrationstest gegen Produktivdomain, API und tatsächlich erreichbare Ports bleibt

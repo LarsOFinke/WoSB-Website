@@ -28,13 +28,36 @@ from app.modules.privacy.schemas.data_subject_request import (
     DataSubjectRequestCreate,
     DataSubjectRequestRead,
 )
+from app.modules.privacy.schemas.privacy_contact_request import (
+    PrivacyContactCreate,
+    PrivacyContactRead,
+)
 from app.modules.privacy.services.data_export_service import PersonalDataExportService
 from app.modules.privacy.services.data_subject_request_service import (
     DataSubjectRequestError,
     DataSubjectRequestService,
 )
+from app.modules.privacy.services.privacy_contact_service import (
+    PrivacyContactError,
+    PrivacyContactService,
+)
 
 router = APIRouter(prefix="/privacy", tags=["privacy"])
+
+
+def _contact_read(request) -> PrivacyContactRead:
+    return PrivacyContactRead(
+        id=request.id,
+        user_id=request.user_id,
+        reply_email=request.reply_email,
+        subject=request.subject,
+        message=request.message,
+        status=request.status,
+        resolution_note=request.resolution_note,
+        handled_by_user_id=request.handled_by_user_id,
+        created_at=request.created_at,
+        resolved_at=request.resolved_at,
+    )
 
 
 def _request_read(request) -> DataSubjectRequestRead:
@@ -93,6 +116,19 @@ def export_personal_data(
     current_user: User = Depends(require_user),
 ) -> dict:
     return PersonalDataExportService(db).build(current_user)
+
+
+@router.post("/contact", status_code=status.HTTP_201_CREATED)
+def create_privacy_contact(
+    payload: PrivacyContactCreate,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
+) -> dict[str, int | str]:
+    try:
+        request = PrivacyContactService(db).create(payload, current_user)
+    except PrivacyContactError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
+    return {"id": request.id, "status": request.status}
 
 
 @router.get("/requests", response_model=list[DataSubjectRequestRead])

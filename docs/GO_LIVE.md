@@ -61,6 +61,9 @@ Die alte Datenbank bleibt bis zur vollständigen Abnahme unverändert als Rollba
 - Squad-Events unter „My Squads → Upcoming Events“
 - Admin-Stammdaten, Standard-Update sowie Update + Migration + Seed
 - Cookie-Einwilligung akzeptieren, ablehnen und erneut öffnen
+- `/privacy` anonym öffnen, Cookie-Einstellungen aufrufen und eine Testnachricht absenden
+- Datenschutz-Testnachricht unter `/admin/privacy-requests` mit eindeutiger Testnotiz abschließen
+- Als Testnutzer Datenexport, Berichtigungsantrag und Löschantrag einschließlich Identitätsbestätigung prüfen
 - Upload-Auslieferung über `/api/files/{id}/content`: Guide-/Forum-/Master-Data-Dateien anonym lesbar, private Uploads anonym mit 401; Legacy-Links verhalten sich identisch
 
 ## Kontrollierter 503-Wartungsmodus
@@ -115,3 +118,4 @@ ein zweiter Update-Lauf ist nicht erforderlich.
 - Externes Recovery-Bundle auf dem Windows-Backupgerät abrufen und vollständig prüfen.
 - Uptime-Monitoring, Temperatur und `vcgencmd get_throttled` verifizieren.
 - Prüfen, dass `infrastructure/data/control/status/maintenance-mode.json` nicht mehr vorhanden ist.
+- Datenschutz-Testdaten und Testkonten nach dokumentierter Abnahme wieder löschen.

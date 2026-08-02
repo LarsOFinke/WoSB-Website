@@ -183,6 +183,7 @@ required_files = {
     "docs/QUALITY_STANDARDS.md",
     "docs/QUALITY_AUDIT_2026-08.md",
     "docs/CONTAINER_SECURITY.md",
+    "docs/PRIVACY_COMPLIANCE_AUDIT.md",
     "docs/DEVELOPMENT.md",
     "docs/OPERATIONS.md",
     "docs/DATABASE.md",
@@ -794,7 +795,7 @@ for retention_key in (
 # page-model composables, where they can be tested independently.
 route_pages = sorted((ROOT / "frontend/src/modules").glob("*/pages/*Page.vue"))
 require(
-    len(route_pages) == 37,
+    len(route_pages) == 38,
     "route page inventory changed; update the architecture budget",
 )
 for page_path in route_pages:

@@ -12,6 +12,10 @@
 Workflow-Rechte sind standardmäßig auf `contents: read` beschränkt; Concurrency bricht veraltete
 CI-Läufe derselben Referenz ab.
 
+`.github/workflows/security.yml` ergänzt dies um OSV-Scans der Lockfiles sowie Trivy-Scans der API-
+und Gateway-Images. High-/Critical-Befunde sind ein Release-Gate. Actions sind auf vollständige
+Commit-SHAs gepinnt; Abhängigkeits- oder Image-Updates dürfen diese Prüfungen nicht umgehen.
+
 Empfohlene Branch Protection für `main`: Pull Request, mindestens eine Freigabe und die drei
 Pflichtchecks Backend, Frontend sowie Repository/Infrastruktur.
 

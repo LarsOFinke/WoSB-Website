@@ -2,13 +2,18 @@
 
 Date: 2026-07-12
 
+> Historische Momentaufnahme. Spätere Screenshot-Audits präzisieren einzelne Werte und haben bei
+> Widersprüchen Vorrang; insbesondere gilt für Geschwindigkeitsfelder
+> [SHIP_SPEED_CONVERSION_AUDIT.md](SHIP_SPEED_CONVERSION_AUDIT.md).
+
 ## Decision
 
 **Ready for a staged production release.** The seed structure, API and Build Designer calculation path are internally consistent, repeatable and protected against accidental overwrite of administrator changes.
 
 The data basis is solid for the current Build Designer scope. All 67 ship records in the supplied catalog are now backed by in-game screenshots or current-event tooltips. An absolute claim that no additional game ship exists still requires an official export or a complete in-game catalog comparison.
 
-Shipyard-panel speed values are normalized from the raw metres-per-second display to knots before they enter the master-data catalog. This keeps base ship speed in the same unit as flat sail and upgrade bonuses.
+Shipyard-panel speed values preserve the displayed minimum/base and cruise-maximum values directly.
+The earlier conversion assumption from this review was corrected by the later dedicated audit.
 
 ## Catalog state
 

@@ -5,6 +5,8 @@ from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN, ROLE_USER, User
 from app.modules.accounts.services.auth_service import create_user
 from app.modules.privacy.models.data_subject_request import DataSubjectRequest
+from app.modules.privacy.services.data_export_service import _RELATED_TABLES
+from app.db.base import Base
 from main import app
 
 
@@ -35,6 +37,13 @@ def test_personal_export_omits_authentication_secrets() -> None:
         assert "password_hash" not in serialized
         assert "token_hash" not in serialized
         assert "consent_key" not in serialized
+
+
+def test_personal_export_mapping_references_real_tables_and_columns() -> None:
+    for table_name, owner_column in _RELATED_TABLES:
+        table = Base.metadata.tables.get(table_name)
+        assert table is not None, table_name
+        assert owner_column in table.c, f"{table_name}.{owner_column}"
 
 
 def test_deletion_request_requires_username_and_admin_pseudonymizes_account() -> None:

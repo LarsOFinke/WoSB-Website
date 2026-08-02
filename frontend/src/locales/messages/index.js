@@ -21,6 +21,7 @@ import { legalNoticeMessages } from './legalNotice.js'
 import { newcomerGuideMessages } from './newcomerGuide.js'
 import { mySquadsWorkspaceMessages } from './mySquadsWorkspace.js'
 import { privacyMessages } from './privacy.js'
+import { privacyCenterMessages } from './privacyCenter.js'
 import { masterDataMessages } from './masterData.js'
 import { staffPanelMessages } from './staffPanel.js'
 import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul.js'
@@ -42,6 +43,7 @@ import { userBuildsAndPasswordMessages } from './userBuildsAndPassword.js'
 const messageLayers = [
   appShellMessages,
   privacyMessages,
+  privacyCenterMessages,
   dataRightsMessages,
   legalNoticeMessages,
   authAdminProfileMessages,

@@ -1,5 +1,7 @@
 # Repository-Qualitätsaudit – August 2026
 
+Stand: 2. August 2026
+
 ## Ergebnis
 
 Das Repository erfüllt die etablierten Architektur-, Struktur-, Security-,
@@ -38,6 +40,11 @@ repository-weiten `AGENTS.md` ist der Qualitätsvertrag nun zentral auffindbar.
   benannte Verantwortung `app_catalog.py` ausgelagert.
 - Recovery-Tool, Recovery-Matrix und ihre Regressionstests werden explizit gelintet.
 - Repository-Prüfungen verlangen nun die zentralen Qualitätsdokumente.
+- Der Dokumentationsindex trennt führende Standards und Betriebsanweisungen von zeitgebundenen
+  Audits, listet sämtliche Fachprüfungen und definiert Pflege- und Linkregeln.
+- Das eigenständige Privacy-Modul bündelt Kontakt, Self-Service und Admin-Inbox. Exporttabellen
+  werden gegen die SQLAlchemy-Metadaten validiert, damit Umbenennungen nicht still zu
+  unvollständigen Auskünften führen.
 - Der OSV-Befund wurde behoben: `cryptography` wurde von 46.0.4 auf 48.0.1 und
   `pytest` von 8.4.2 auf 9.1.1 angehoben; Produktions- und Dev-Lockfile wurden mit
   `uv` für Python 3.12 neu erzeugt. `pip-audit` meldet anschließend für beide

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import case, delete, select, update
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -56,6 +56,7 @@ class DataSubjectRequestService:
                 select(DataSubjectRequest)
                 .where(DataSubjectRequest.subject_user_id == user_id)
                 .order_by(DataSubjectRequest.created_at.desc())
+                .limit(100)
             ).all()
         )
 
@@ -63,9 +64,9 @@ class DataSubjectRequestService:
         return list(
             self.db.scalars(
                 select(DataSubjectRequest).order_by(
-                    DataSubjectRequest.status.desc(),
+                    case((DataSubjectRequest.status == "pending", 0), else_=1),
                     DataSubjectRequest.created_at.asc(),
-                )
+                ).limit(250)
             ).all()
         )
 
@@ -130,5 +131,16 @@ class DataSubjectRequestService:
                 update(audit_logs)
                 .where(audit_logs.c.actor_username == previous_username)
                 .values(actor_username="[deleted user]")
+            )
+        privacy_contacts = Base.metadata.tables.get("privacy_contact_requests")
+        if privacy_contacts is not None:
+            self.db.execute(
+                update(privacy_contacts)
+                .where(privacy_contacts.c.user_id == user.id)
+                .values(
+                    user_id=None,
+                    reply_email="deleted@example.invalid",
+                    message="[removed with account deletion]",
+                )
             )
         self.db.add(user)

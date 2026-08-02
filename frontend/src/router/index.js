@@ -14,6 +14,7 @@ import { forumRoutes } from '@/modules/forum/routes'
 import { groupRoutes } from '@/modules/groups/routes'
 import { guideRoutes } from '@/modules/guides/routes'
 import { onboardingRoutes } from '@/modules/onboarding/routes'
+import { privacyRoutes } from '@/modules/privacy/routes'
 import { legalRoutes } from '@/modules/legal/routes'
 import { squadRoutes } from '@/modules/squads/routes'
 
@@ -24,6 +25,7 @@ const routes = [
   ...combatRoutes,
   ...guideRoutes,
   ...onboardingRoutes,
+  ...privacyRoutes,
   ...legalRoutes,
   ...groupRoutes,
   ...squadRoutes,

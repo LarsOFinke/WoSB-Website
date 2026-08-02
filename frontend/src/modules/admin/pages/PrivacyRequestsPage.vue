@@ -34,5 +34,26 @@ const workspace = usePrivacyRequestsPage({ t })
         </article>
       </div>
     </section>
+    <section class="wire-section admin-panel staff-management-panel">
+      <h2>{{ t('privacy.center.adminContactsTitle') }}</h2>
+      <p v-if="!workspace.loading.value && !workspace.contacts.value.length" class="muted table-state">{{ t('privacy.center.adminContactsEmpty') }}</p>
+      <div class="admin-build-list">
+        <article v-for="request in workspace.contacts.value" :key="request.id" class="admin-build-row">
+          <div class="admin-build-main">
+            <strong>{{ request.subject }}</strong>
+            <span>{{ request.reply_email }} · {{ t(`privacy.data.status.${request.status}`) }} · {{ request.created_at }}</span>
+            <p>{{ request.message }}</p>
+            <p v-if="request.resolution_note" class="muted">{{ request.resolution_note }}</p>
+          </div>
+          <div v-if="request.status === 'pending'" class="registration-actions">
+            <label class="input-panel embedded-field"><span>{{ t('privacy.data.resolutionNote') }}</span><input v-model="workspace.notes[`contact-${request.id}`]" maxlength="4000" required /></label>
+            <div class="compact-actions">
+              <button class="form-button primary-action" type="button" :disabled="workspace.busy.value === `contact-${request.id}`" @click="workspace.resolveContact(request, 'complete')">{{ t('privacy.data.complete') }}</button>
+              <button class="danger-action" type="button" :disabled="workspace.busy.value === `contact-${request.id}`" @click="workspace.resolveContact(request, 'reject')">{{ t('privacy.data.reject') }}</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </StaffWorkspaceShell>
 </template>

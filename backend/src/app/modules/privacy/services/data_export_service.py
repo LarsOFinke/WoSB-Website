@@ -19,11 +19,11 @@ _RELATED_TABLES: tuple[tuple[str, str], ...] = (
     ("registration_requests", "created_user_id"),
     ("cookie_consent_decisions", "user_id"),
     ("fleet_memberships", "user_id"),
-    ("file_assets", "owner_id"),
+    ("stored_files", "owner_id"),
     ("builds", "owner_id"),
     ("build_votes", "user_id"),
     ("guides", "owner_id"),
-    ("forums", "owner_id"),
+    ("forum_threads", "owner_id"),
     ("forum_posts", "author_id"),
     ("fleet_events", "owner_id"),
     ("squads", "created_by_id"),
@@ -31,6 +31,7 @@ _RELATED_TABLES: tuple[tuple[str, str], ...] = (
     ("group_members", "user_id"),
     ("audit_logs", "actor_user_id"),
     ("data_subject_requests", "subject_user_id"),
+    ("privacy_contact_requests", "user_id"),
 )
 _SECRET_COLUMNS = {"password_hash", "token_hash", "consent_key"}
 
@@ -65,7 +66,9 @@ class PersonalDataExportService:
         for table_name, owner_column in _RELATED_TABLES:
             table = metadata.tables.get(table_name)
             if table is None or owner_column not in table.c:
-                continue
+                raise RuntimeError(
+                    f"Personal data export mapping is stale: {table_name}.{owner_column}"
+                )
             rows = self.db.execute(select(table).where(table.c[owner_column] == user.id)).mappings()
             categories[table_name] = [_safe_row(dict(row)) for row in rows]
         return {

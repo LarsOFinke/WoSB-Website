@@ -18,6 +18,9 @@ const { openSettings } = useCookieConsent()
       <RouterLink class="app-footer-link" to="/impressum">
         {{ t('legalNotice.public.footerLink') }}
       </RouterLink>
+      <RouterLink class="app-footer-link" to="/privacy">
+        {{ t('privacy.center.footerLink') }}
+      </RouterLink>
       <button type="button" class="app-footer-link app-footer-button" @click="openSettings">
         {{ t('privacy.cookies.footerSettings') }}
       </button>

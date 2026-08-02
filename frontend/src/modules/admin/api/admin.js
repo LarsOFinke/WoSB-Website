@@ -91,6 +91,14 @@ export function resolvePrivacyRequest(id, payload) {
   return put(`/admin/privacy-requests/${id}`, payload)
 }
 
+export function listPrivacyContacts() {
+  return get('/admin/privacy-requests/contacts')
+}
+
+export function resolvePrivacyContact(id, payload) {
+  return put(`/admin/privacy-requests/contacts/${id}`, payload)
+}
+
 export function getMasterDataOverview() {
   return get('/admin/master-data/overview')
 }

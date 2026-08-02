@@ -23,6 +23,11 @@ Payload-Validierung getrennt; Webhook-Konfiguration und externer Transport sind 
 Services. Die Seed-Orchestrierung ist klein; System-, Schiff- und Build-Option-Katalog werden in getrennten
 Modulen synchronisiert. Produktions-Seeds enthalten keine Nutzerinhalte.
 
+Das Privacy-Modul kapselt Consent, Datenexport, Berichtigungs-/Löschanträge und datensparsame
+Kontakte. Öffentliche und nutzereigene Routen delegieren an fachliche Services; die Admin-Routen
+bilden ausschließlich Prüfung und Freigabe ab. Die irreversible Löschung bleibt damit ein
+menschlich freigegebener, technisch deterministischer Vorgang.
+
 ## Frontend
 
 `frontend/src/modules/<domain>` kapselt API, Domainlogik, Composables, Seiten und Komponenten. `core` enthält Shell und

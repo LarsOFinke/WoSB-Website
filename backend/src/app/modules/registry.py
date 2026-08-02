@@ -10,6 +10,7 @@ _MODEL_MODULES = (
     "app.modules.permissions.models.role",
     "app.modules.privacy.models.cookie_consent",
     "app.modules.privacy.models.data_subject_request",
+    "app.modules.privacy.models.privacy_contact_request",
     "app.modules.legal.models.legal_notice",
     "app.modules.admin.models.security_event",
     "app.modules.admin.models.audit_log",
