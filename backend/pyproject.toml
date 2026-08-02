@@ -13,7 +13,7 @@ dependencies = [
   "SQLAlchemy>=2.0,<3.0",
   "python-multipart>=0.0.9,<1.0",
   "alembic>=1.14,<2.0",
-  "cryptography>=48,<49",
+  "cryptography>=48,<50",
 ]
 
 [project.optional-dependencies]
