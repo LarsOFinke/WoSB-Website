@@ -3,7 +3,18 @@ import { onBeforeUnmount, onMounted } from 'vue'
 
 import PageHeader from '@/core/components/PageHeader.vue'
 import StaffWorkspaceNavigation from '@/modules/admin/components/StaffWorkspaceNavigation.vue'
-import '@/modules/admin/styles/staffWorkspace.css'
+import '@/modules/admin/styles/adminWebhookConfiguration.css'
+import '@/modules/admin/styles/adminWebhookDelivery.css'
+import '@/modules/admin/styles/adminWebhookEditorDrawer.css'
+import '@/modules/admin/styles/adminDiscordWebhooks.css'
+import '@/modules/admin/styles/adminDiscordBroadcasts.css'
+import '@/modules/admin/styles/adminWebhookHistory.css'
+import '@/modules/admin/styles/adminDatabaseBackups.css'
+import '@/modules/admin/styles/adminRaidHelper.css'
+import '@/modules/admin/styles/staffWorkspaceShell.css'
+import '@/modules/admin/styles/staffWorkspaceOverview.css'
+import '@/modules/admin/styles/staffWorkspaceResponsive.css'
+import '@/modules/admin/styles/staffSecurityWorkspace.css'
 
 defineProps({
   eyebrow: { type: String, default: '' },

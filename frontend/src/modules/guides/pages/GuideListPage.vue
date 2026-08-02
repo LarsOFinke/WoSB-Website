@@ -2,7 +2,10 @@
 import AppIcon from '@/core/components/AppIcon.vue'
 import GuideResultList from '@/modules/guides/components/GuideResultList.vue'
 import GuideTopicRail from '@/modules/guides/components/GuideTopicRail.vue'
-import '@/modules/guides/styles/guides.css'
+import '@/modules/guides/styles/guideFoundation.css'
+import '@/modules/guides/styles/guideLibraryListing.css'
+import '@/modules/guides/styles/guideResponsive.css'
+import '@/shared/styles/discovery.css'
 import { useGuideListPage } from '@/modules/guides/composables/useGuideListPage'
 
 const {

@@ -212,7 +212,7 @@ watch(
             <table class="security-table compact-security-table security-day-table">
               <thead><tr><th>{{ t('admin.security.day') }}</th><th>{{ t('admin.security.events') }}</th><th>IPs</th><th>{{ t('admin.security.reconnaissance') }}</th><th>{{ t('admin.security.loginFailures') }}</th><th>{{ t('admin.security.rateLimits') }}</th></tr></thead>
               <tbody>
-                <tr v-for="day in dashboard.days" :key="day.day" tabindex="0" @click="setExactDay(day.day)" @keydown.enter="setExactDay(day.day)">
+                <tr v-for="day in dashboard.days" :key="day.day" role="button" tabindex="0" @click="setExactDay(day.day)" @keydown.enter="setExactDay(day.day)" @keydown.space.prevent="setExactDay(day.day)">
                   <td>{{ formatDate(day.day) }}</td>
                   <td><strong>{{ day.total_events }}</strong><span class="security-day-bar"><i :style="dayBarStyle(day)"></i></span></td>
                   <td>{{ day.unique_ips }}</td><td>{{ day.reconnaissance }}</td><td>{{ day.login_failures }}</td><td>{{ day.rate_limits }}</td>

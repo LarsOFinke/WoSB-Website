@@ -1,0 +1,243 @@
+/* Staff overview dashboard */
+.staff-overview-shell {
+  overflow: hidden;
+}
+
+.staff-overview-panel {
+  display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.staff-overview-heading {
+  align-items: flex-start;
+  padding-bottom: 0.15rem;
+}
+
+.staff-overview-heading h2,
+.staff-overview-heading p {
+  margin: 0;
+}
+
+.staff-overview-heading > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.staff-overview-heading .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.staff-overview-heading .summary-pill {
+  gap: 0.4rem;
+}
+
+.staff-overview-section {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.staff-overview-section + .staff-overview-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-faint);
+}
+
+.staff-overview-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.staff-overview-section-head > div {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.staff-overview-section-head > div > span {
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.staff-overview-section-head > div > strong {
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.staff-overview-section-head > small {
+  max-width: 36rem;
+  color: var(--muted);
+  line-height: 1.4;
+  text-align: right;
+}
+
+.staff-role-scope-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(159, 201, 223, 0.18);
+  border-radius: 1rem;
+  background: rgba(39, 75, 96, 0.1);
+  color: var(--muted);
+}
+
+.staff-role-scope-note.is-admin {
+  border-color: rgba(241, 184, 91, 0.2);
+  background: rgba(90, 62, 21, 0.12);
+}
+
+.staff-role-scope-note > svg {
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+}
+
+.staff-role-scope-note > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.staff-role-scope-note strong {
+  color: var(--text);
+}
+
+.staff-role-scope-note span {
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .staff-overview-heading,
+  .staff-overview-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .staff-overview-heading .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .staff-overview-section-head > small {
+    max-width: none;
+    text-align: left;
+  }
+
+}
+
+.admin-build-row,
+.admin-user-row,
+.registration-review-row,
+.admin-log-row {
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.026);
+}
+
+.admin-build-row:hover,
+.admin-user-row:hover,
+.registration-review-row:hover,
+.admin-log-row:hover {
+  border-color: rgba(241, 184, 91, 0.2);
+  background: rgba(241, 184, 91, 0.045);
+}
+
+@media (max-width: 1320px) {
+  .workspace-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar-account-summary .account-copy {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .profile-workspace-grid,
+  .fleet-portal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-editor-panel,
+  .fleet-portal-side {
+    position: static;
+  }
+
+}
+
+@media (max-width: 900px) {
+  .workspace-page-header {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .workspace-page-actions {
+    justify-content: flex-start;
+  }
+
+  .profile-field-grid,
+  .password-field-grid,
+  .fleet-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-field-wide {
+    grid-column: auto;
+  }
+
+  .fleet-management-tabs.workspace-tab-rail {
+    position: static;
+  }
+}
+
+@media (max-width: 620px) {
+  .workspace-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-metric-card {
+    min-height: 7.2rem;
+  }
+
+  .workspace-page-header h1 {
+    font-size: clamp(1.85rem, 11vw, 3rem);
+  }
+
+  .workspace-page-actions,
+  .workspace-page-actions .button-box,
+  .profile-save-bar,
+  .polished-membership-card,
+  .fleet-membership-summary,
+  .polished-command-bar {
+    width: 100%;
+  }
+
+  .workspace-page-actions .button-box {
+    justify-content: center;
+  }
+
+  .profile-save-bar,
+  .polished-membership-card,
+  .fleet-membership-summary,
+  .polished-command-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fleet-membership-summary .summary-pill {
+    margin-left: 0;
+  }
+
+  .fleet-orders-briefing {
+    grid-template-columns: 1fr;
+  }
+}

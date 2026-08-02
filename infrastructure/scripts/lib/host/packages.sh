@@ -6,7 +6,7 @@ install_host_dependencies() {
   export DEBIAN_FRONTEND=noninteractive
 
   apt-get update
-  apt-get install -y age ca-certificates certbot curl git openssh-client openssl ufw
+  apt-get install -y age ca-certificates certbot curl git openssh-client openssl ufw unattended-upgrades
 
   if ! command -v docker >/dev/null 2>&1; then
     apt-get install -y docker.io
@@ -19,12 +19,8 @@ install_host_dependencies() {
   fi
 
   systemctl enable --now docker
-  add_invoking_user_to_docker_group
-}
-
-add_invoking_user_to_docker_group() {
-  local target_user="${SUDO_USER:-}"
-  if [[ -n "$target_user" && "$target_user" != root ]]; then
-    usermod -aG docker "$target_user"
-  fi
+  install -m 0644 "$INFRA_DIR/config/host/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
+  install -m 0644 "$INFRA_DIR/config/host/52rbf-unattended-upgrades" /etc/apt/apt.conf.d/52rbf-unattended-upgrades
+  systemctl enable --now apt-daily.timer apt-daily-upgrade.timer
+  success "Automatische Security-Updates sind aktiv; notwendige Neustarts bleiben administrativ kontrolliert."
 }

@@ -1,0 +1,163 @@
+/* Detail pages */
+.detail-grid,
+.group-overview-grid,
+.announcement-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.detail-grid.two-cols,
+.two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-card,
+.group-stat-card {
+  min-height: 5.5rem;
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 0.9rem;
+}
+
+.detail-card span,
+.group-stat-card span {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-card strong,
+.group-stat-card strong {
+  font-size: 1.02rem;
+}
+
+.readonly-bars,
+.simple-list {
+  margin: 0;
+}
+
+.simple-list {
+  padding-left: 1.15rem;
+}
+
+.simple-list li + li,
+.readonly-bars p + p {
+  margin-top: 0.45rem;
+}
+
+.preserve-lines {
+  white-space: pre-wrap;
+}
+
+.build-detail-visual-grid,
+.build-detail-section-grid {
+  align-items: start;
+}
+
+.detail-visual-card {
+  gap: 0.75rem;
+}
+
+.detail-visual-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.detail-icon-cell {
+  flex: 0 0 auto;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 0.95rem;
+  background: rgba(6, 14, 24, 0.5);
+}
+
+.detail-icon-cell img {
+  opacity: 0.96;
+  object-fit: cover;
+  padding: 0;
+}
+
+.build-visual-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.build-visual-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(221, 231, 244, 0.08);
+  border-radius: 0.95rem;
+  background: rgba(4, 11, 19, 0.3);
+}
+
+.build-visual-list li > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.build-visual-list li strong,
+.build-visual-list li small {
+  overflow-wrap: anywhere;
+}
+
+.detail-crew-grid,
+.detail-inventory-overview {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.detail-crew-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-crew-row,
+.detail-inventory-overview > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.65rem;
+  border: 1px solid rgba(221, 231, 244, 0.08);
+  border-radius: 0.95rem;
+  background: rgba(4, 11, 19, 0.3);
+}
+
+.detail-crew-row > div,
+.detail-inventory-overview > div {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.detail-inventory-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.build-command-deck.is-detail .ship-visual {
+  background:
+    radial-gradient(circle at top, rgba(214, 167, 87, 0.12), transparent 40%),
+    linear-gradient(var(--surface-faint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--surface-faint) 1px, transparent 1px),
+    rgba(2, 9, 17, 0.38);
+  background-size: auto, 22px 22px, 22px 22px, auto;
+}
+
+.build-command-deck.is-detail .ship-catalog-image {
+  width: 108%;
+  height: 108%;
+  min-height: 0;
+  object-fit: cover;
+  object-position: center 62%;
+  padding: 0;
+  transform: scale(1.04);
+}

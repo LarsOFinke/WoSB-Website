@@ -1,0 +1,139 @@
+/* Profile workspace */
+.profile-workspace-frame {
+  gap: clamp(0.85rem, 1.4vw, 1.25rem);
+}
+
+.profile-identity-chip {
+  gap: 0.65rem;
+}
+
+.profile-identity-chip > span:last-child {
+  min-width: 0;
+  align-items: flex-start;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.profile-identity-chip strong {
+  color: var(--text);
+}
+
+.profile-identity-chip small {
+  margin-top: 0.2rem;
+  color: var(--muted-soft);
+}
+
+.profile-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
+  gap: var(--content-gap);
+  align-items: start;
+}
+
+.profile-editor-panel,
+.profile-command-card {
+  background:
+    linear-gradient(180deg, var(--surface-highlight), rgba(255,255,255,0.016)),
+    rgba(9, 19, 30, 0.76);
+}
+
+.profile-editor-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-field-grid,
+.password-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.profile-field-wide {
+  grid-column: 1 / -1;
+}
+
+.profile-note-field textarea {
+  resize: vertical;
+}
+
+.profile-save-bar {
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-faint);
+}
+
+.profile-command-stack {
+  display: grid;
+  gap: var(--content-gap);
+}
+
+.profile-command-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.polished-membership-card,
+.fleet-membership-summary {
+  padding: 0.85rem;
+  border: 1px solid var(--accent-line);
+  border-radius: 1rem;
+  background: rgba(241, 184, 91, 0.065);
+}
+
+.polished-membership-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-tool-link {
+  min-width: 0;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 0.9rem;
+  background: var(--surface-faint);
+  text-decoration: none;
+}
+
+.profile-tool-link:hover {
+  border-color: rgba(241, 184, 91, 0.32);
+  background: rgba(241, 184, 91, 0.07);
+  transform: translateY(-1px);
+}
+
+.profile-tool-link > span:first-child {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 0.75rem;
+  color: var(--accent-strong);
+  background: var(--accent-glow);
+}
+
+.profile-tool-link > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.profile-tool-link strong,
+.profile-tool-link small {
+  min-width: 0;
+}
+
+.profile-tool-link small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.profile-tool-link b {
+  margin-left: auto;
+  color: var(--accent);
+}

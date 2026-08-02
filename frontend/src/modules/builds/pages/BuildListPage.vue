@@ -33,7 +33,7 @@ const {
 
 <template>
   <section class="build-library-page" aria-labelledby="builds-title">
-    <div class="wire-frame page-frame build-library-frame">
+    <div class="wire-frame page-frame workspace-refresh-frame build-library-frame">
       <header class="workspace-command-header">
         <div>
           <h1 id="builds-title">{{ t('builds.list.title') }}</h1>

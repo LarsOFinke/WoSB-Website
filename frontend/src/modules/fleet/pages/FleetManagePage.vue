@@ -7,7 +7,9 @@ import FleetMemberFilters from '@/modules/fleet/components/FleetMemberFilters.vu
 import FleetMemberRow from '@/modules/fleet/components/FleetMemberRow.vue'
 import { useFleetManagePage } from '@/modules/fleet/composables/useFleetManagePage.js'
 import '@/styles/workspaceRefresh.css'
-import '@/modules/fleet/styles/fleetManagementRefresh.css'
+import '@/modules/fleet/styles/fleetHierarchy.css'
+import '@/modules/fleet/styles/fleetManagementWorkspace.css'
+import '@/modules/fleet/styles/fleetManagementResponsive.css'
 
 const {
   t, user, selectedFleet, fleetRoles, activeRoleOptions, canManageRoles, activeTab, loading,
@@ -36,7 +38,7 @@ const visibleMembers = computed(() => activeTab.value === 'directory' ? activeDi
 
 <template>
   <section class="fleet-refresh-page" aria-labelledby="fleet-manage-title">
-    <div class="wire-frame page-frame fleet-refresh-frame">
+    <div class="wire-frame page-frame workspace-refresh-frame fleet-refresh-frame">
       <header class="workspace-command-header fleet-refresh-header">
         <div>
           <h1 id="fleet-manage-title">{{ selectedFleet?.name || t('fleets.manage.title') }}</h1>

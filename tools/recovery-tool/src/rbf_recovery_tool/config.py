@@ -22,7 +22,9 @@ class Profile:
     remote_directory: str = "/home/smokenougat/rbf-backups"
     destination_directory: str = str(Path.home() / "RBF-Recovery" / "Backups")
     ssh_key_path: str = ""
-    age_identity_path: str = str(Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt")
+    age_identity_path: str = str(
+        Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt"
+    )
     host_fingerprint: str = ""
 
     def normalized(self) -> "Profile":
@@ -30,7 +32,9 @@ class Profile:
         profile.host = profile.host.strip().rstrip(".")
         profile.username = profile.username.strip()
         profile.remote_directory = profile.remote_directory.strip().rstrip("/") or "/"
-        profile.destination_directory = str(Path(profile.destination_directory).expanduser())
+        profile.destination_directory = str(
+            Path(profile.destination_directory).expanduser()
+        )
         profile.ssh_key_path = (
             str(Path(profile.ssh_key_path).expanduser()) if profile.ssh_key_path else ""
         )
@@ -42,20 +46,30 @@ class Profile:
     def validate(self, *, require_fingerprint: bool = False) -> None:
         profile = self.normalized()
         if not _HOST_RE.fullmatch(profile.host):
-            raise ValueError("Bitte einen gültigen Hostnamen oder eine IP-Adresse eingeben.")
+            raise ValueError(
+                "Bitte einen gültigen Hostnamen oder eine IP-Adresse eingeben."
+            )
         if not 1 <= profile.port <= 65535:
             raise ValueError("Der SSH-Port muss zwischen 1 und 65535 liegen.")
         if not _USERNAME_RE.fullmatch(profile.username):
             raise ValueError("Der SSH-Benutzername enthält ungültige Zeichen.")
         remote = PurePosixPath(profile.remote_directory)
-        if not remote.is_absolute() or any(part in {"", ".", ".."} for part in remote.parts[1:]):
-            raise ValueError("Das Remote-Verzeichnis muss ein sicherer absoluter Linux-Pfad sein.")
+        if not remote.is_absolute() or any(
+            part in {"", ".", ".."} for part in remote.parts[1:]
+        ):
+            raise ValueError(
+                "Das Remote-Verzeichnis muss ein sicherer absoluter Linux-Pfad sein."
+            )
         if not profile.destination_directory:
             raise ValueError("Bitte einen lokalen Zielordner auswählen.")
         if profile.ssh_key_path and not Path(profile.ssh_key_path).is_file():
             raise ValueError("Die ausgewählte SSH-Schlüsseldatei wurde nicht gefunden.")
-        if require_fingerprint and not _FINGERPRINT_RE.fullmatch(profile.host_fingerprint):
-            raise ValueError("Der SSH-Host-Key wurde noch nicht vertrauenswürdig bestätigt.")
+        if require_fingerprint and not _FINGERPRINT_RE.fullmatch(
+            profile.host_fingerprint
+        ):
+            raise ValueError(
+                "Der SSH-Host-Key wurde noch nicht vertrauenswürdig bestätigt."
+            )
 
 
 def application_directory() -> Path:

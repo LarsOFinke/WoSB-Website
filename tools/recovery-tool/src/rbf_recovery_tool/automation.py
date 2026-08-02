@@ -19,7 +19,9 @@ def _systemd_user_directory() -> Path:
 
 
 def executable_path() -> Path:
-    return Path(sys.executable if getattr(sys, "frozen", False) else sys.argv[0]).resolve()
+    return Path(
+        sys.executable if getattr(sys, "frozen", False) else sys.argv[0]
+    ).resolve()
 
 
 def _systemd_quote(value: Path) -> str:
@@ -28,11 +30,15 @@ def _systemd_quote(value: Path) -> str:
 
 def install_pull_timer(calendar: str = "daily") -> tuple[Path, Path]:
     if os.name == "nt" or not shutil.which("systemctl"):
-        raise RuntimeError("Automatische Abrufe werden nur unter Linux mit systemd unterstützt.")
+        raise RuntimeError(
+            "Automatische Abrufe werden nur unter Linux mit systemd unterstützt."
+        )
     profile = load_profile().normalized()
     profile.validate(require_fingerprint=True)
     if not profile.ssh_key_path:
-        raise RuntimeError("Für den automatischen Abruf muss ein SSH-Schlüssel im Profil liegen.")
+        raise RuntimeError(
+            "Für den automatischen Abruf muss ein SSH-Schlüssel im Profil liegen."
+        )
     if not Path(profile.age_identity_path).is_file():
         raise RuntimeError("Die konfigurierte age-Identität wurde nicht gefunden.")
 
@@ -66,9 +72,7 @@ def install_pull_timer(calendar: str = "daily") -> tuple[Path, Path]:
         encoding="utf-8",
     )
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
-    subprocess.run(
-        ["systemctl", "--user", "enable", "--now", _TIMER_NAME], check=True
-    )
+    subprocess.run(["systemctl", "--user", "enable", "--now", _TIMER_NAME], check=True)
     return service, timer
 
 

@@ -113,7 +113,7 @@
 .build-option-picker-group-label {
   margin: .15rem .4rem .3rem;
   color: #d7a957;
-  font-size: .72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -175,7 +175,7 @@
   opacity: .58;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .build-option-picker-menu {
     z-index: var(--z-popover);
     top: auto;

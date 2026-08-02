@@ -24,6 +24,8 @@ Funktionen bleiben Funktionen.
 - Squads: Repository, Zugriffspolitik, Mapper und `SquadService`
 - Webhooks: Envelope-Factory, Encoder, Signer, Transport und Delivery-Service
 - Security-Dashboard: separater Threat-Scorer und koordinierender Service
+- Raid Helper: Konfigurations-CRUD, Ziel-Probes und Kalender-Synchronisation sind getrennte
+  Services; Routen importieren jeweils direkt den zuständigen Service
 
-Kompatibilitätsfassaden behalten bestehende Funktionsimporte für Router, Tests und andere
-Module bei. Neue Logik sollte direkt gegen die Klassen getestet werden.
+Bestehende Kompatibilitätsfassaden bleiben nur dort erhalten, wo sie noch echte Aufrufer haben.
+Neue Routen und Tests importieren den fachlich zuständigen Service direkt.

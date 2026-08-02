@@ -91,23 +91,23 @@ class RuntimeSettingsReader:
         try:
             return int(raw)
         except ValueError as exc:
-            raise ConfigError(
-                f"Config value [{section.name}].{key} must be an integer."
-            ) from exc
+            raise ConfigError(f"Config value [{section.name}].{key} must be an integer.") from exc
 
     @classmethod
     def _positive_integer_or_default(cls, section, key: str, default: int) -> int:
         value = cls._integer_or_default(section, key, default)
         if value < 1:
-            raise ConfigError(
-                f"Config value [{section.name}].{key} must be greater than zero."
-            )
+            raise ConfigError(f"Config value [{section.name}].{key} must be greater than zero.")
         return value
 
     def _optional_section(self, name: str):
         target = name.casefold()
         return next(
-            (section for key, section in self._config.sections().items() if key.casefold() == target),
+            (
+                section
+                for key, section in self._config.sections().items()
+                if key.casefold() == target
+            ),
             None,
         )
 
@@ -131,6 +131,7 @@ class RuntimeSettingsReader:
                 audit_log_retention_days=365,
                 webhook_delivery_retention_days=30,
                 cookie_consent_retention_days=400,
+                resolved_privacy_request_retention_days=400,
                 pending_registration_retention_days=30,
                 reviewed_registration_retention_days=90,
                 interval_hours=24,
@@ -151,6 +152,9 @@ class RuntimeSettingsReader:
             cookie_consent_retention_days=self._positive_integer_or_default(
                 section, "cookie_consent_retention_days", 400
             ),
+            resolved_privacy_request_retention_days=self._positive_integer_or_default(
+                section, "resolved_privacy_request_retention_days", 400
+            ),
             pending_registration_retention_days=self._positive_integer_or_default(
                 section, "pending_registration_retention_days", 30
             ),
@@ -159,7 +163,6 @@ class RuntimeSettingsReader:
             ),
             interval_hours=self._positive_integer_or_default(section, "interval_hours", 24),
         )
-
 
     def read_legal_notice(self) -> LegalNoticeSettings:
         get = self._environment.get
@@ -243,9 +246,7 @@ class RuntimeSettingsReader:
         return legal_notice
 
     def read_security(self) -> SecuritySettings:
-        raw = self._environment.get(
-            "WEBHOOK_ENCRYPTION_KEYS", required=False, default=""
-        )
+        raw = self._environment.get("WEBHOOK_ENCRYPTION_KEYS", required=False, default="")
         if not raw:
             return SecuritySettings(webhook_encryption_keys=())
         keys = ConfigValueParser.csv(raw, name="WEBHOOK_ENCRYPTION_KEYS")
@@ -263,9 +264,7 @@ class RuntimeSettingsReader:
         return SecuritySettings(webhook_encryption_keys=keys)
 
     def read_cors_origins(self) -> tuple[str, ...]:
-        return ConfigValueParser.csv(
-            self._environment.get("CORS_ORIGINS"), name="CORS_ORIGINS"
-        )
+        return ConfigValueParser.csv(self._environment.get("CORS_ORIGINS"), name="CORS_ORIGINS")
 
     @classmethod
     def _weak_password(cls, password: str) -> bool:

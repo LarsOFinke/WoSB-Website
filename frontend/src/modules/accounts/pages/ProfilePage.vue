@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import AppIcon from '@/core/components/AppIcon.vue'
 import WorkspaceStatRail from '@/core/components/WorkspaceStatRail.vue'
 import PreferenceTransferList from '@/modules/accounts/components/PreferenceTransferList.vue'
+import PrivacySelfService from '@/modules/accounts/components/PrivacySelfService.vue'
 import { useProfilePage } from '@/modules/accounts/composables/useProfilePage.js'
 import '@/styles/workspaceRefresh.css'
 import '@/modules/accounts/styles/profileWorkspace.css'
@@ -27,7 +28,7 @@ const profileStats = computed(() => [
 
 <template>
   <section class="profile-refresh-page" aria-labelledby="profile-title">
-    <div class="wire-frame page-frame profile-refresh-frame">
+    <div class="wire-frame page-frame workspace-refresh-frame profile-refresh-frame">
       <header class="workspace-command-header profile-refresh-header">
         <div class="profile-refresh-identity">
           <span class="profile-refresh-avatar" aria-hidden="true">{{ displayInitials }}</span>
@@ -158,6 +159,7 @@ const profileStats = computed(() => [
                 <button class="form-button" type="submit" :disabled="changingPassword">{{ changingPassword ? t('profile.password.saving') : t('profile.password.save') }}</button>
               </form>
             </details>
+            <PrivacySelfService v-if="form.username" :username="form.username" />
           </aside>
         </div>
       </template>

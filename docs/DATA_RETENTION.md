@@ -11,6 +11,7 @@ und über `backend/config/uploads.cfg` konfiguriert werden.
 | Audit-Historie | 365 Tage | Nachvollziehbarkeit administrativer Änderungen | täglicher Maintenance-Lauf |
 | Discord-Webhook-Deliveries | 30 Tage | Zustellfehler, Wiederholung und Support | täglicher Maintenance-Lauf |
 | Cookie-Einwilligungsentscheidungen | 400 Tage | Nachweis und Wiederherstellung der Auswahl | täglicher Maintenance-Lauf |
+| Abgeschlossene Datenschutzanträge | 400 Tage | Nachweis von Export-, Berichtigungs- und Löschbearbeitung | täglicher Maintenance-Lauf; offene Anträge bleiben erhalten |
 | Offene Registrierungsanträge | 30 Tage | Accountprüfung | täglicher Maintenance-Lauf |
 | Geprüfte Registrierungsanträge | 90 Tage | Nachvollziehbarkeit der Entscheidung | täglicher Maintenance-Lauf |
 | Abgelaufene Sessions | bis Ablaufzeitpunkt | Anmeldung und Sicherheit | täglicher Maintenance-Lauf |
@@ -61,6 +62,7 @@ inactive_ip_block_retention_days = 90
 audit_log_retention_days = 365
 webhook_delivery_retention_days = 30
 cookie_consent_retention_days = 400
+resolved_privacy_request_retention_days = 400
 pending_registration_retention_days = 30
 reviewed_registration_retention_days = 90
 interval_hours = 24
@@ -72,8 +74,23 @@ Maintenance-Lauf; vor einer deutlichen Verkürzung ist ein kontrolliertes Backup
 
 ## Nicht automatisch gelöschte Inhalte
 
-Benutzerkonten, Flottenmitgliedschaften, Forumbeiträge, Guides, Builds und Uploads sind fachliche
-Inhalte. Ihre Löschung erfordert eine bewusste Moderations- oder Betroffenenanfrage, damit Referenzen,
-Urheberschaft und öffentliche Inhalte korrekt behandelt werden. Bis ein Self-Service-Verfahren
-existiert, werden Auskunft, Export, Berichtigung und Löschung organisatorisch durch Administratoren
-bearbeitet und im Audit-Log dokumentiert.
+Forumbeiträge, Guides, Builds und andere veröffentlichte fachliche Inhalte können Referenzen und
+berechtigte Interessen weiterer Community-Mitglieder berühren. Bei einer bestätigten Accountlöschung
+bleiben solche Inhalte deshalb unter einer neutralen, nicht mehr anmeldbaren Identität erhalten.
+Profil, Präferenzen, Sessions, Flotten- und Gruppenmitgliedschaften sowie Abstimmungen werden
+entfernt; nullable Erstellerbezüge werden entkoppelt.
+
+## Betroffenenworkflow
+
+Im Profil steht ein maschinenlesbarer JSON-Export bereit. Er enthält Account- und Profildaten,
+Einwilligungen, Mitgliedschaften und selbst erstellte Inhalte, aber keine Passwort-, Session- oder
+Consent-Schlüssel und keine Daten anderer Nutzer.
+
+Direkt änderbare Profildaten werden ohne Antrag über den Profileditor berichtigt. Für nicht direkt
+änderbare Daten kann ein formaler Berichtigungsantrag gestellt werden. Löschanträge erfordern die
+erneute Eingabe des Benutzernamens und werden erst nach administrativer Identitäts- und
+Folgenprüfung ausgeführt. Bootstrap-Administratoren sind aus Gründen der Betriebsfähigkeit von der
+Accountlöschung ausgeschlossen.
+
+Admins bearbeiten offene Vorgänge unter `/admin/privacy-requests`. Entscheidung, Bearbeiter,
+Zeitpunkt und Begründung werden am Antrag gespeichert und zusätzlich im Audit-Log protokolliert.

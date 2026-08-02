@@ -1,0 +1,375 @@
+/* Purpose-limited IP-ban candidates and audit history */
+.security-dashboard,
+.audit-log-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.security-dashboard {
+  margin-top: 1rem;
+}
+
+.security-surface {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line-domain);
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(11, 22, 35, 0.92), rgba(7, 15, 24, 0.96)),
+    radial-gradient(circle at top right, var(--accent-tint), transparent 38%);
+  box-shadow: 0 14px 36px rgba(3, 8, 14, 0.24);
+}
+
+.security-surface-head,
+.security-dashboard-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.security-surface-head h3,
+.security-dashboard-heading h3 {
+  margin: 0;
+}
+
+.security-surface-head p,
+.security-dashboard-heading p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted, var(--muted));
+}
+
+.security-toolbar-field,
+.security-filter-row label,
+.security-ip-picker {
+  display: grid;
+  gap: 0.32rem;
+  min-width: min(100%, 15rem);
+  color: var(--text-muted, var(--muted));
+  font-size: 0.76rem;
+}
+
+.security-toolbar-field select,
+.security-filter-row input,
+.security-filter-row select,
+.audit-filter-row input,
+.audit-filter-row select,
+.security-ip-picker select {
+  min-height: 2.8rem;
+}
+
+.security-dashboard-grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+.security-overview-surface {
+  gap: 0.85rem;
+}
+
+.security-full-width-card {
+  width: 100%;
+}
+
+.security-card-head-with-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.security-date-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.security-date-controls label {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 9.5rem;
+  color: var(--text-muted, var(--muted));
+  font-size: 0.76rem;
+}
+
+.security-date-controls input {
+  min-height: 2.65rem;
+}
+
+.security-filter-row,
+.audit-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.security-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.security-metric-grid > article {
+  display: grid;
+  gap: 0.22rem;
+  min-height: 5.6rem;
+  padding: 0.82rem 0.9rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1rem;
+  background: rgba(18, 33, 49, 0.72);
+}
+
+.security-metric-grid span,
+.security-metric-grid small {
+  color: var(--text-muted, var(--muted));
+}
+
+.security-metric-grid strong {
+  font-size: 1.55rem;
+}
+
+.security-threat-card {
+  border-color: rgba(159, 230, 178, 0.35) !important;
+}
+
+.threat-guarded { border-color: rgba(255, 210, 122, 0.5) !important; }
+.threat-elevated { border-color: rgba(255, 157, 93, 0.58) !important; }
+.threat-critical { border-color: rgba(255, 100, 100, 0.7) !important; }
+
+.security-table-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 1rem;
+  background: rgba(13, 25, 39, 0.72);
+}
+
+.security-card-head h4,
+.security-table-card h4 {
+  margin: 0 0 0.2rem;
+}
+
+.security-day-card .muted,
+.security-ip-card .muted,
+.log-storage-note {
+  margin: 0;
+}
+
+.security-ip-card {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.security-ip-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.security-ip-focus-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.95rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 1rem;
+  background: rgba(8, 17, 27, 0.55);
+}
+
+.security-ip-focus-card-compact {
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.3fr);
+  align-items: center;
+  padding: 0.8rem;
+}
+
+.security-ip-empty-focus {
+  padding: 0.75rem 0.85rem;
+  border: 1px dashed var(--line-subtle);
+  border-radius: 0.9rem;
+  background: rgba(8, 17, 27, 0.35);
+}
+
+.security-ip-focus-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.security-ip-focus-copy {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.security-ip-focus-copy small {
+  color: var(--text-muted, var(--muted));
+}
+
+.security-ip-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.security-ip-metrics > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.85rem;
+  background: rgba(19, 34, 50, 0.72);
+  border: 1px solid rgba(221, 231, 244, 0.08);
+}
+
+.security-ip-metrics span {
+  color: var(--text-muted, var(--muted));
+  font-size: 0.75rem;
+}
+
+.compact-security-table {
+  font-size: 0.78rem;
+}
+
+.security-ip-overview-shell .security-table tbody tr {
+  cursor: pointer;
+}
+
+.security-ip-overview-shell .security-table tbody tr.is-active td,
+.security-ip-overview-shell .security-table tbody tr:hover td {
+  background: var(--accent-tint);
+}
+
+.responsive-table-shell {
+  overflow-x: auto;
+}
+
+.security-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.security-table th,
+.security-table td {
+  padding: 0.7rem 0.55rem;
+  border-bottom: 1px solid rgba(221, 231, 244, 0.09);
+  text-align: left;
+  vertical-align: top;
+}
+
+.security-table th {
+  color: rgba(232, 238, 247, 0.8);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.threat-badge {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgba(159, 230, 178, 0.4);
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.security-method-note {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.audit-day-groups {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.audit-day-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.audit-day-group > h3 {
+  margin: 0.5rem 0 0;
+  color: var(--text-muted, var(--muted));
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audit-row {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 0.9rem;
+  background: rgba(16, 29, 43, 0.68);
+}
+
+.audit-row > div {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.audit-row small {
+  color: var(--text-muted, var(--muted));
+}
+
+.audit-action {
+  align-self: start;
+  padding: 0.34rem 0.58rem;
+  border: 1px solid rgba(159, 230, 178, 0.32);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.audit-update { border-color: rgba(255, 210, 122, 0.38); }
+.audit-delete { border-color: rgba(255, 120, 120, 0.48); }
+
+@media (max-width: 1180px) {
+  .security-metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .security-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .security-ip-focus-card-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .security-ip-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .security-metric-grid,
+  .security-ip-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .security-surface-head,
+  .security-dashboard-heading,
+  .security-ip-card-header,
+  .security-card-head-with-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .audit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-action { justify-self: start; }
+}

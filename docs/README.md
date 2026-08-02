@@ -5,6 +5,9 @@
 | [GO_LIVE.md](GO_LIVE.md) | konkrete Abnahme für den Produktionsstart |
 | [INSTALLATION.md](INSTALLATION.md) | neuer Raspberry Pi bis erste Anmeldung |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Systemgrenzen und Modulregeln |
+| [CSS_ARCHITECTURE.md](CSS_ARCHITECTURE.md) | verbindlicher Frontend-Design-, Responsive- und CSS-Qualitätsstandard |
+| [BACKUP_ARCHITECTURE.md](BACKUP_ARCHITECTURE.md) | Modulgrenzen und Qualitätsstandard für Backup, Enrollment und Recovery Tool |
+| [SECURITY_PRIVACY_AUDIT.md](SECURITY_PRIVACY_AUDIT.md) | aktuelles Security-/Datenschutz-Audit und produktive Administrator-Gates |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | lokale Entwicklung und Konfiguration |
 | [DATABASE.md](DATABASE.md) | 3NF, Alembic, Seeds und Backups |
 | [SHIP_SEED_SCREENSHOT_AUDIT.md](SHIP_SEED_SCREENSHOT_AUDIT.md) | Audit der Build-Designer-Schiffs- und Eventdaten |

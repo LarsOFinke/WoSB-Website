@@ -24,6 +24,15 @@ ADMIN_USERNAME = "browser-smoke-admin"
 ADMIN_PASSWORD = "BrowserSmokeAdmin-2026!"
 MEMBER_USERNAME = "browser-smoke-member"
 MEMBER_PASSWORD = "BrowserSmokeMember-2026!"
+RESPONSIVE_VIEWPORTS = (
+    {"width": 320, "height": 568},
+    {"width": 375, "height": 667},
+    {"width": 430, "height": 932},
+    {"width": 720, "height": 900},
+    {"width": 768, "height": 1024},
+    {"width": 1024, "height": 768},
+    {"width": 1440, "height": 900},
+)
 
 
 def wait_for_url(url: str, process: subprocess.Popen[str], timeout: float = 90) -> None:
@@ -57,6 +66,42 @@ def login(page: Page, username: str, password: str) -> None:
     page.locator('input[autocomplete="current-password"]').fill(password)
     page.locator('button[type="submit"]').click()
     page.wait_for_url("**/profile")
+
+
+def assert_responsive_layout(page: Page, paths: tuple[str, ...]) -> None:
+    """Reject root-level clipping at the viewports covered by the design contract."""
+    for viewport in RESPONSIVE_VIEWPORTS:
+        page.set_viewport_size(viewport)
+        for path in paths:
+            page.goto(f"{FRONTEND_URL}{path}", wait_until="domcontentloaded")
+            page.locator("#app").wait_for()
+            overflow = page.evaluate(
+                """
+                () => {
+                  const root = document.documentElement
+                  const excess = root.scrollWidth - root.clientWidth
+                  if (excess <= 1) return null
+                  const offenders = [...document.querySelectorAll('body *')]
+                    .filter((element) => {
+                      const style = getComputedStyle(element)
+                      if (style.position === 'fixed' || style.position === 'absolute') return false
+                      const box = element.getBoundingClientRect()
+                      return box.right > root.clientWidth + 1 || box.left < -1
+                    })
+                    .slice(0, 5)
+                    .map((element) => ({
+                      tag: element.tagName.toLowerCase(),
+                      className: String(element.className || ''),
+                      right: Math.round(element.getBoundingClientRect().right),
+                    }))
+                  return { excess, offenders }
+                }
+                """
+            )
+            assert overflow is None, (
+                f"Horizontal overflow at {viewport['width']}x{viewport['height']} on {path}: "
+                f"{json.dumps(overflow, ensure_ascii=False)}"
+            )
 
 
 def run_smoke() -> None:
@@ -118,6 +163,8 @@ def run_smoke() -> None:
                 context = browser.new_context(base_url=FRONTEND_URL)
                 page = context.new_page()
 
+                assert_responsive_layout(page, ("/", "/builds", "/guides", "/login", "/register"))
+
                 page.goto(f"{FRONTEND_URL}/register")
                 page.locator('input[autocomplete="username"]').fill(MEMBER_USERNAME)
                 page.locator('input[autocomplete="nickname"]').fill("Browser Smoke Member")
@@ -126,6 +173,10 @@ def run_smoke() -> None:
                 page.locator(".registration-review-panel").wait_for()
 
                 login(page, ADMIN_USERNAME, ADMIN_PASSWORD)
+                assert_responsive_layout(
+                    page,
+                    ("/admin", "/admin/discord-webhooks", "/admin/database-backups"),
+                )
                 status_response = context.request.get(f"{FRONTEND_URL}/api/admin/system/update")
                 assert status_response.ok, status_response.text()
                 status_payload = status_response.json()
@@ -147,6 +198,7 @@ def run_smoke() -> None:
                 assert logout_response.ok, logout_response.text()
 
                 login(page, MEMBER_USERNAME, MEMBER_PASSWORD)
+                assert_responsive_layout(page, ("/profile", "/builds", "/guides", "/calendar"))
                 page.goto(f"{FRONTEND_URL}/builds")
                 page.locator("#builds-title").wait_for()
                 build_response = context.request.get(f"{FRONTEND_URL}/api/builds?limit=1&offset=0")

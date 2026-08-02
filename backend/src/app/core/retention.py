@@ -15,6 +15,7 @@ from app.modules.admin.models.ip_block import IpBlock
 from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
 from app.modules.admin.models.security_event import SecuritySignalBucket
 from app.modules.privacy.models.cookie_consent import CookieConsentDecision
+from app.modules.privacy.models.data_subject_request import DataSubjectRequest
 
 
 def _deleted(rowcount: int | None) -> int:
@@ -34,13 +35,12 @@ def purge_expired_records(
 ) -> dict[str, int]:
     """Apply the centrally documented data-retention policy."""
 
-    security_cutoff_day = now.date() - timedelta(
-        days=policy.security_event_retention_days - 1
-    )
+    security_cutoff_day = now.date() - timedelta(days=policy.security_event_retention_days - 1)
     inactive_block_cutoff = now - timedelta(days=policy.inactive_ip_block_retention_days)
     audit_log_cutoff = now - timedelta(days=policy.audit_log_retention_days)
     webhook_cutoff = now - timedelta(days=policy.webhook_delivery_retention_days)
     consent_cutoff = now - timedelta(days=policy.cookie_consent_retention_days)
+    privacy_request_cutoff = now - timedelta(days=policy.resolved_privacy_request_retention_days)
     pending_cutoff = now - timedelta(days=policy.pending_registration_retention_days)
     reviewed_cutoff = now - timedelta(days=policy.reviewed_registration_retention_days)
 
@@ -85,6 +85,15 @@ def purge_expired_records(
             CookieConsentDecision,
             CookieConsentDecision.created_at,
             consent_cutoff,
+        ),
+        "resolved_privacy_requests": _deleted(
+            db.execute(
+                delete(DataSubjectRequest).where(
+                    DataSubjectRequest.status != "pending",
+                    DataSubjectRequest.resolved_at.is_not(None),
+                    DataSubjectRequest.resolved_at < privacy_request_cutoff,
+                )
+            ).rowcount
         ),
         "registration_requests": _deleted(registration_result.rowcount),
     }

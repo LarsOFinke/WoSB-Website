@@ -4,6 +4,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 source "$INFRA_DIR/scripts/backup/common.sh"
 
 "$INFRA_DIR/scripts/checks/preflight.sh" runtime
+if [[ "$EUID" -eq 0 ]]; then
+  "$INFRA_DIR/scripts/checks/host-security.sh"
+else
+  warn "Host-Security-Check übersprungen; für die vollständige Prüfung sudo verwenden."
+fi
 validate_env
 bw_compose_with_profiles config >/dev/null
 success "Compose- und Umgebungs-Konfiguration sind gültig."

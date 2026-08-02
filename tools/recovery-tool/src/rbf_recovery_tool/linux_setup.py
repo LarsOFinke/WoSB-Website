@@ -39,7 +39,9 @@ def support_script(name: str, *, require_root_owned: bool = False) -> Path:
 
 def setup_rootless_lab(executable: Path) -> None:
     if os.name == "nt" or sys.platform == "darwin":
-        raise RuntimeError("Das automatische Rootless-Docker-Setup ist nur für Linux vorgesehen.")
+        raise RuntimeError(
+            "Das automatische Rootless-Docker-Setup ist nur für Linux vorgesehen."
+        )
     if docker_is_rootless():
         setup = support_script("Setup-RbfRecoveryLab.sh")
         subprocess.run([str(setup), str(executable)], check=True)

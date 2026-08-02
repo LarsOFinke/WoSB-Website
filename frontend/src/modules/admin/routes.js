@@ -1,5 +1,11 @@
 export const adminRoutes = [
   {
+    path: '/admin/privacy-requests',
+    name: 'admin-privacy-requests',
+    component: () => import('./pages/PrivacyRequestsPage.vue'),
+    meta: { requiresAdmin: true, titleKey: 'privacy.data.adminTitle' },
+  },
+  {
     path: '/admin/raid-helper',
     name: 'admin-raid-helper',
     component: () => import('./pages/RaidHelperPage.vue'),

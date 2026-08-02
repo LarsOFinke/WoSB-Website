@@ -1,0 +1,73 @@
+/* Admin dashboard: access review and DB-backed logs */
+.admin-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-4, 1rem);
+}
+
+.registration-review-list,
+.admin-log-list {
+  gap: var(--space-3, 0.75rem);
+}
+
+.registration-review-row,
+.admin-log-row {
+  align-items: flex-start;
+}
+
+.registration-review-row .admin-build-main,
+.admin-log-row .admin-build-main {
+  gap: var(--space-2, 0.5rem);
+}
+
+.registration-fleet-request {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 3px solid rgba(117, 255, 214, 0.45);
+  background: rgba(29, 78, 89, 0.16);
+}
+
+.registration-actions {
+  display: grid;
+  gap: var(--space-3, 0.75rem);
+  min-width: min(100%, 340px);
+}
+
+.registration-actions .hero-actions {
+  justify-content: flex-end;
+}
+
+.log-summary-grid {
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.admin-log-row strong {
+  letter-spacing: 0.01em;
+}
+
+.registration-review-panel {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid rgba(117, 255, 214, 0.22);
+  border-radius: var(--radius-lg, 1rem);
+  background: rgba(29, 78, 89, 0.22);
+}
+
+@media (max-width: 720px) {
+  .registration-review-row,
+  .admin-log-row {
+    grid-template-columns: 1fr;
+  }
+
+  .registration-actions,
+  .registration-actions .hero-actions {
+    width: 100%;
+  }
+
+  .registration-actions .hero-actions {
+    justify-content: stretch;
+  }
+}

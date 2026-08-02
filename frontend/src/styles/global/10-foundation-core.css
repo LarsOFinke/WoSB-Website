@@ -1,0 +1,120 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--bg);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(241, 184, 91, 0.13), transparent 28rem),
+    radial-gradient(circle at 88% 8%, rgba(87, 136, 187, 0.16), transparent 30rem),
+    linear-gradient(180deg, #08111b 0%, #0b1420 48%, #09111a 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-behind);
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), transparent 72%);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+select,
+input,
+textarea {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  border: 0;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  button,
+  summary,
+  select,
+  input:not([type="checkbox"]):not([type="radio"]),
+  .topbar-link,
+  .sidebar-link {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+}
+
+:focus-visible {
+  outline: 3px solid rgba(241, 184, 91, 0.42);
+  outline-offset: 3px;
+}
+
+.wire-frame,
+.wire-section {
+  border: 1px solid var(--line);
+  background: rgba(16, 29, 43, 0.76);
+  box-shadow: inset 0 1px 0 var(--surface-soft);
+}
+
+.wire-section {
+  border-radius: var(--radius-md);
+  padding: clamp(1rem, 1.65vw, 1.45rem);
+}
+
+.page-frame {
+  min-height: 100%;
+  display: grid;
+  align-content: start;
+  gap: var(--content-gap);
+  padding: clamp(0.85rem, 1.45vw, 1.25rem);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.048), var(--surface-sheen)),
+    rgba(8, 17, 27, 0.64);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.compact-frame,
+.detail-frame,
+.create-frame,
+.admin-frame,
+.auth-frame,
+.profile-frame,
+.home-frame {
+  align-content: start;
+}

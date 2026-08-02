@@ -1,0 +1,121 @@
+/* ========================================================================== */
+/* System operations and staff observability                                */
+/* ========================================================================== */
+
+.system-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.system-operation-card {
+  display: grid;
+  align-content: start;
+  gap: 0.72rem;
+  min-height: 15rem;
+}
+
+.system-operation-card > span,
+.system-update-log h3 {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.system-operation-card > strong {
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+}
+
+.system-operation-card > p,
+.system-operation-card > small {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.system-operation-card .button-box,
+.system-operation-card .form-button {
+  align-self: end;
+  justify-self: start;
+}
+
+.system-update-meta {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.system-update-meta > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.6rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(213, 228, 240, 0.08);
+}
+
+.system-update-meta dt {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.system-update-meta dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.system-update-log {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(213, 228, 240, 0.1);
+  border-radius: 1rem;
+  background: rgba(3, 10, 18, 0.72);
+}
+
+.system-update-log pre {
+  max-height: 23rem;
+  margin: 0;
+  padding: 0.9rem;
+  overflow: auto;
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.28);
+  color: #d7e5ef;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+  .system-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .system-update-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .system-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-update-card {
+    grid-column: auto;
+  }
+
+  .system-update-meta > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}

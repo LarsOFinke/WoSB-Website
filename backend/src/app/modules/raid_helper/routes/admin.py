@@ -16,8 +16,8 @@ from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperTemplateRead,
     RaidHelperTemplateWrite,
 )
-from app.modules.raid_helper.services.raid_helper_service import (
-    RaidHelperError,
+from app.modules.raid_helper.services.errors import RaidHelperError
+from app.modules.raid_helper.services.raid_helper_configuration import (
     create_profile,
     delete_destination,
     delete_profile,
@@ -27,10 +27,12 @@ from app.modules.raid_helper.services.raid_helper_service import (
     list_templates,
     save_destination,
     save_template,
-    test_destination,
-    test_profile,
     update_profile,
 )
+from app.modules.raid_helper.services.raid_helper_probe_service import (
+    test_destination,
+)
+from app.modules.raid_helper.services.raid_helper_service import test_profile
 
 router = APIRouter(prefix="/raid-helper", tags=["admin-raid-helper"])
 

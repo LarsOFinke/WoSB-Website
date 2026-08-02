@@ -11,7 +11,6 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.modules.accounts.models.user import ROLE_ADMIN
 from app.modules.accounts.services.auth_service import create_user
-from app.modules.calendar.models.fleet_event import FleetEvent
 from app.modules.calendar.schemas.fleet_event_create import FleetEventCreate
 from app.modules.calendar.services.fleet_event_service import create_fleet_event
 from app.modules.fleet.models.fleet import Fleet
@@ -24,12 +23,13 @@ from app.modules.raid_helper.schemas.raid_helper import (
     RaidHelperTemplateWrite,
 )
 from app.modules.raid_helper.services import raid_helper_service
+from app.modules.raid_helper.services import raid_helper_configuration
 from app.modules.squads.models.squad import Squad
 from main import app
 
 
 def _profile(db, admin):
-    return raid_helper_service.create_profile(
+    return raid_helper_configuration.create_profile(
         db,
         RaidHelperProfileCreate(
             name="Raid Helper Test Profile",
@@ -76,7 +76,6 @@ def test_raid_helper_profiles_are_admin_only_and_keys_are_encrypted() -> None:
 def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
     with TestClient(app):
         with SessionLocal() as db:
-            admin = db.scalar(select(RaidHelperProfile).limit(1))
             # The first test may not run before this one, so create an independent administrator/profile.
             user = create_user(
                 db,
@@ -85,7 +84,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                 display_name="Routing Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Routing Profile",
@@ -117,7 +116,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
             db.commit()
             db.refresh(squad)
 
-            fleet_destination = raid_helper_service.save_destination(
+            fleet_destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -128,7 +127,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                     is_default=True,
                 ),
             )
-            squad_destination = raid_helper_service.save_destination(
+            squad_destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -140,7 +139,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                     is_default=True,
                 ),
             )
-            fleet_template = raid_helper_service.save_template(
+            fleet_template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -153,7 +152,7 @@ def test_scope_category_filter_and_delivery_payload(monkeypatch) -> None:
                     is_default=True,
                 ),
             )
-            raid_helper_service.save_template(
+            raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -241,7 +240,7 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
                 display_name="Cancel Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Cancellation Profile",
@@ -252,7 +251,7 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -263,7 +262,7 @@ def test_cancelled_unsent_event_is_not_created_remotely(monkeypatch) -> None:
                     is_default=True,
                 ),
             )
-            template = raid_helper_service.save_template(
+            template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -326,7 +325,7 @@ def test_raid_helper_requests_reuse_hardened_runtime_transport(monkeypatch) -> N
                 display_name="Transport Admin",
                 role=ROLE_ADMIN,
             )
-            created = raid_helper_service.create_profile(
+            created = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Transport Profile",
@@ -440,7 +439,7 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                 display_name="Retry Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Retry Profile",
@@ -451,7 +450,7 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -462,7 +461,7 @@ def test_failed_raid_helper_delivery_can_be_retried(monkeypatch) -> None:
                     is_default=True,
                 ),
             )
-            template = raid_helper_service.save_template(
+            template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -565,7 +564,7 @@ def test_profile_test_does_not_claim_create_authorization(monkeypatch) -> None:
                 display_name="Profile Probe Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Read Probe Profile",
@@ -598,7 +597,7 @@ def test_destination_test_uses_exact_create_and_delete_paths(monkeypatch) -> Non
                 display_name="Destination Probe Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Destination Probe Profile",
@@ -609,7 +608,7 @@ def test_destination_test_uses_exact_create_and_delete_paths(monkeypatch) -> Non
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -652,7 +651,7 @@ def test_destination_test_reports_actionable_401(monkeypatch) -> None:
                 display_name="Destination 401 Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Destination 401 Profile",
@@ -663,7 +662,7 @@ def test_destination_test_reports_actionable_401(monkeypatch) -> None:
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -737,7 +736,7 @@ def test_destination_test_uses_selected_application_template(monkeypatch) -> Non
                 display_name="Template Probe Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Template Probe Profile",
@@ -748,7 +747,7 @@ def test_destination_test_uses_selected_application_template(monkeypatch) -> Non
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -759,7 +758,7 @@ def test_destination_test_uses_selected_application_template(monkeypatch) -> Non
                     is_default=True,
                 ),
             )
-            template = raid_helper_service.save_template(
+            template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -805,7 +804,7 @@ def test_destination_template_401_identifies_template_authorization(monkeypatch)
                 display_name="Template 401 Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Template 401 Profile",
@@ -816,7 +815,7 @@ def test_destination_template_401_identifies_template_authorization(monkeypatch)
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -827,7 +826,7 @@ def test_destination_template_401_identifies_template_authorization(monkeypatch)
                     is_default=True,
                 ),
             )
-            template = raid_helper_service.save_template(
+            template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,
@@ -896,7 +895,7 @@ def test_destination_probe_reports_local_premium_policy_errors(monkeypatch) -> N
                 display_name="Free Policy Admin",
                 role=ROLE_ADMIN,
             )
-            profile = raid_helper_service.create_profile(
+            profile = raid_helper_configuration.create_profile(
                 db,
                 RaidHelperProfileCreate(
                     name="Raid Helper Free Policy Profile",
@@ -907,7 +906,7 @@ def test_destination_probe_reports_local_premium_policy_errors(monkeypatch) -> N
                 ),
                 user,
             )
-            destination = raid_helper_service.save_destination(
+            destination = raid_helper_configuration.save_destination(
                 db,
                 RaidHelperDestinationWrite(
                     profile_id=profile.id,
@@ -918,7 +917,7 @@ def test_destination_probe_reports_local_premium_policy_errors(monkeypatch) -> N
                     is_default=True,
                 ),
             )
-            template = raid_helper_service.save_template(
+            template = raid_helper_configuration.save_template(
                 db,
                 RaidHelperTemplateWrite(
                     profile_id=profile.id,

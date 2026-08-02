@@ -9,6 +9,8 @@ services:
     image: postgres:16.14-alpine3.24
     logging: *default-logging
     restart: unless-stopped
+    init: true
+    pids_limit: 256
     env_file:
       - .env
     volumes:
@@ -40,6 +42,8 @@ services:
     depends_on:
       - postgres
     restart: "no"
+    init: true
+    pids_limit: 128
     networks:
       - backend
     read_only: true
@@ -47,6 +51,8 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   seed:
     image: ${RBF_API_IMAGE:-rbf-hub-api:local}
@@ -62,6 +68,8 @@ services:
     volumes:
       - ./data/uploads:/data/uploads
     restart: "no"
+    init: true
+    pids_limit: 128
     networks:
       - backend
     read_only: true
@@ -69,6 +77,8 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   api:
     image: ${RBF_API_IMAGE:-rbf-hub-api:local}
@@ -77,6 +87,8 @@ services:
       context: ../backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    init: true
+    pids_limit: 256
     env_file:
       - .env
     environment:
@@ -105,6 +117,8 @@ services:
       start_period: 20s
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   gateway:
     image: ${RBF_GATEWAY_IMAGE:-rbf-hub-gateway:local}
@@ -116,6 +130,8 @@ services:
         VITE_API_BASE_URL: /api
         VITE_MONITORING_HTTPS_PORT: ${MONITORING_HTTPS_PORT:-8443}
     restart: unless-stopped
+    init: true
+    pids_limit: 128
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
@@ -146,6 +162,8 @@ services:
     image: louislam/uptime-kuma:1.23.16
     logging: *default-logging
     restart: unless-stopped
+    init: true
+    pids_limit: 256
     profiles: ["monitoring"]
     volumes:
       - ./data/uptime-kuma:/app/data
@@ -160,6 +178,8 @@ services:
     image: ${RBF_GATEWAY_IMAGE:-rbf-hub-gateway:local}
     logging: *default-logging
     restart: unless-stopped
+    init: true
+    pids_limit: 128
     profiles: ["monitoring"]
     ports:
       - "${MONITORING_HTTPS_PORT:-8443}:443"

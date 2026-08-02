@@ -4,7 +4,9 @@ import AttachmentGallery from '@/core/components/AttachmentGallery.vue'
 import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import GuideTableOfContents from '@/modules/guides/components/GuideTableOfContents.vue'
-import '@/modules/guides/styles/guides.css'
+import '@/modules/guides/styles/guideFoundation.css'
+import '@/modules/guides/styles/guideReader.css'
+import '@/modules/guides/styles/guideResponsive.css'
 import { useGuideDetailPage } from '@/modules/guides/composables/useGuideDetailPage'
 
 const props = defineProps({ id: { type: String, required: true } })

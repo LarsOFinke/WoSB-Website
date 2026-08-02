@@ -273,6 +273,11 @@ require_pattern 'BACKUP_RECOVERY_ENABLED=false' "$INFRA_DIR/.env.example"
 require_pattern 'BACKUP_AGE_RECIPIENT=' "$INFRA_DIR/.env.example"
 require_pattern 'BACKUP_PULL_EXPORT_DIR=' "$INFRA_DIR/.env.example"
 require_pattern 'age ca-certificates' "$INFRA_DIR/scripts/lib/host/packages.sh"
+require_pattern 'unattended-upgrades' "$INFRA_DIR/scripts/lib/host/packages.sh"
+require_pattern 'apt-daily-upgrade.timer' "$INFRA_DIR/scripts/lib/host/packages.sh"
+reject_pattern 'usermod -aG docker' "$INFRA_DIR/scripts/lib/host/packages.sh"
+require_pattern 'ufw default deny incoming' "$INFRA_DIR/scripts/lib/host/firewall.sh"
+require_file "$INFRA_DIR/scripts/checks/host-security.sh"
 require_pattern 'run-consistent-backup.sh' "$INFRA_DIR/scripts/backup/backup-all.sh"
 require_pattern 'infrastructure.env' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
 require_pattern 'backend-config' "$INFRA_DIR/scripts/backup/backup-recovery.sh"
@@ -281,9 +286,9 @@ require_pattern 'secret-keyring.json' "$INFRA_DIR/scripts/backup/backup-recovery
 require_pattern 'restore-postgres.sh' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
 require_pattern 'restore-data.sh' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
 require_pattern 'setup.sh.*--profile.*--no-start' "$INFRA_DIR/scripts/backup/restore-recovery.sh"
-require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
-require_pattern 'sftp-roundtrip' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
-reject_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'StrictHostKeyChecking=yes' "$INFRA_DIR/scripts/backup/backup_runner_transfer.py"
+require_pattern 'sftp-roundtrip' "$INFRA_DIR/scripts/backup/backup_runner_transfer.py"
+reject_pattern 'sha256sum -c' "$INFRA_DIR/scripts/backup/backup_runner_transfer.py"
 require_file "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
 require_file "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
 require_pattern 'O_NOFOLLOW' "$INFRA_DIR/scripts/backup/local_backup_catalog.py"
@@ -291,7 +296,7 @@ require_pattern 'token_sha256' "$INFRA_DIR/scripts/backup/arm-admin-restore.sh"
 require_pattern 'RBF_RESTORE_LOCK_HELD' "$INFRA_DIR/scripts/backup/restore-postgres.sh"
 require_pattern 'exec 8>"$run_dir/update.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
 require_pattern 'exec 9>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/services/backup-from-admin.sh"
-require_pattern '--all-locks-held' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern '--all-locks-held' "$INFRA_DIR/scripts/backup/backup_runner_transfer.py"
 require_pattern 'exec 9>"$run_dir/update.lock"' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
 require_pattern 'exec 8>"$run_dir/backup.lock"' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
 require_pattern 'backup_set_manifest.py' "$INFRA_DIR/scripts/backup/run-consistent-backup.sh"
@@ -303,7 +308,7 @@ require_pattern 'python -m uvicorn main:app --app-dir src' "$INFRA_DIR/scripts/b
 python3 - \
   "$INFRA_DIR/scripts/services/backup-from-admin.sh" \
   "$INFRA_DIR/scripts/backup/run-consistent-backup.sh" \
-  "$INFRA_DIR/scripts/backup/backup-admin-runner.py" <<'PY_BACKUP_LOCKS'
+  "$INFRA_DIR/scripts/backup/backup_runner_transfer.py" <<'PY_BACKUP_LOCKS'
 from pathlib import Path
 import sys
 
@@ -541,6 +546,6 @@ require_pattern 'Abbruch zum Schutz des bestehenden Kontos' "$ROOT_DIR/tools/lin
 require_pattern 'Die neue SSHD-Konfiguration ist ungültig und wurde zurückgerollt' "$ROOT_DIR/tools/linux/recovery-tool/Provision-RbfBackupServer.sh"
 require_pattern 'validate_manifest(infra, args.backup_set.resolve())' "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py"
 require_pattern 'runner.transfer(config, args.backup_set.resolve(), "backup_set")' "$INFRA_DIR/scripts/backup/sync-backup-set-remote.py"
-require_pattern 'artifact_type == "backup_set"' "$INFRA_DIR/scripts/backup/backup-admin-runner.py"
+require_pattern 'artifact_type == "backup_set"' "$INFRA_DIR/scripts/backup/backup_runner_transfer.py"
 
 echo 'Infrastructure checks OK.'

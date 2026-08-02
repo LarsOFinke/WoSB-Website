@@ -17,7 +17,7 @@ const {
 
 <template>
   <section class="landing-refresh-page" aria-labelledby="landing-title">
-    <div class="wire-frame page-frame landing-refresh-frame">
+    <div class="wire-frame page-frame workspace-refresh-frame landing-refresh-frame">
       <header class="landing-refresh-hero">
         <figure class="landing-refresh-crest">
           <img :src="fleetIconUrl" :alt="t('common.projectName')" loading="eager" decoding="async" />

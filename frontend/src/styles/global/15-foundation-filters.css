@@ -1,0 +1,124 @@
+/* Filters */
+.build-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(320px, 1.28fr);
+  gap: clamp(0.9rem, 1.8vw, 1.35rem);
+  align-items: start;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.048), rgba(255, 255, 255, 0.02)),
+    rgba(16, 29, 43, 0.86);
+}
+
+.build-filter-panel h2,
+.home-card h2,
+.admin-panel h2,
+.profile-builds-panel h2,
+.password-panel h2,
+.form-section h2,
+.section-heading-row h2,
+.group-join-panel h2,
+.empty-state-block h2 {
+  margin: 0;
+}
+
+.build-filter-panel p {
+  max-width: 58ch;
+  margin-top: 0.45rem;
+  line-height: 1.6;
+}
+
+.list-toolbar {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 0.45fr);
+  gap: 0.75rem;
+}
+
+.list-toolbar.has-type-filter,
+.refined-toolbar {
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 0.45fr);
+}
+
+.group-filter-toolbar {
+  grid-template-columns: minmax(220px, 1.55fr) minmax(170px, 0.9fr) minmax(150px, 0.75fr) minmax(150px, 0.75fr);
+}
+
+.filter-box,
+.input-panel,
+.select-shell,
+.file-drop-box {
+  min-width: 0;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line-ui);
+  border-radius: var(--radius-sm);
+  background: rgba(5, 12, 20, 0.36);
+}
+
+.filter-box,
+.input-panel {
+  padding: 0.35rem 0.8rem;
+}
+
+.filter-box:focus-within,
+.input-panel:focus-within,
+.select-shell:focus-within,
+.file-drop-box:focus-within {
+  border-color: rgba(241, 184, 91, 0.58);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.search-filter-box::before,
+.admin-search::before {
+  content: "⌕";
+  margin-right: 0.55rem;
+  color: var(--accent-strong);
+  font-size: 0.95rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(184, 196, 210, 0.64);
+}
+
+select {
+  cursor: pointer;
+}
+
+select option {
+  color: var(--text);
+  background: #101d2b;
+}
+
+.select-shell,
+.toolbar-select-shell,
+.full-select-shell {
+  padding: 0 0.85rem;
+}
+
+.toolbar-select-shell select,
+.full-select-shell select,
+.type-filter-box select,
+.rate-filter-box select {
+  min-height: 2.8rem;
+}
+
+.filter-hint,
+.rate-check-message {
+  grid-column: 1 / -1;
+  margin: -0.35rem 0 0;
+  color: var(--muted-soft);
+  font-size: 0.88rem;
+}

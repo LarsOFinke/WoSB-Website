@@ -7,6 +7,7 @@ from app.modules.admin.routes.legal_notice import router as legal_notice_router
 from app.modules.admin.routes.logs import router as logs_router
 from app.modules.admin.routes.master_data import router as master_data_router
 from app.modules.admin.routes.outbound_webhooks import router as outbound_webhooks_router
+from app.modules.admin.routes.privacy_requests import router as privacy_requests_router
 from app.modules.admin.routes.registrations import router as registrations_router
 from app.modules.admin.routes.system import router as system_router
 from app.modules.admin.routes.users import router as users_router
@@ -23,5 +24,6 @@ router.include_router(content_router)
 router.include_router(users_router)
 router.include_router(master_data_router)
 router.include_router(outbound_webhooks_router)
+router.include_router(privacy_requests_router)
 
 router.include_router(raid_helper_router)

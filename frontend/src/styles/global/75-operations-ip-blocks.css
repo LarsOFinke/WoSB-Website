@@ -1,0 +1,178 @@
+/* Staff IP block management */
+.ip-block-management {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.ip-block-heading {
+  margin-bottom: 0;
+}
+
+.ip-block-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.ip-block-summary-grid > article {
+  display: grid;
+  gap: 0.24rem;
+  min-height: 6.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, rgba(23, 39, 57, 0.82), rgba(10, 20, 31, 0.86));
+}
+
+.ip-block-summary-grid span,
+.ip-block-summary-grid small {
+  color: var(--text-muted, var(--muted));
+}
+
+.ip-block-summary-grid strong {
+  font-size: 1.55rem;
+}
+
+.ip-block-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.78fr) minmax(0, 1.42fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.ip-block-form,
+.ip-block-list-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.15rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1.15rem;
+  background: rgba(10, 20, 31, 0.72);
+}
+
+.ip-block-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ip-block-section-head h3 {
+  margin: 0.15rem 0 0;
+}
+
+.ip-block-duration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ip-block-safety-note {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid rgba(241, 184, 91, 0.62);
+  background: rgba(241, 184, 91, 0.06);
+  font-size: 0.8rem;
+}
+
+.ip-block-filter-row > label {
+  flex: 1 1 12rem;
+}
+
+.ip-block-card-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ip-block-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 1rem;
+  background: linear-gradient(150deg, rgba(18, 33, 49, 0.8), rgba(7, 16, 26, 0.78));
+}
+
+.ip-block-card.is-inactive {
+  opacity: 0.72;
+}
+
+.ip-block-card-main {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.ip-block-card-main p,
+.ip-block-card-main small {
+  margin: 0;
+}
+
+.ip-block-card-main small {
+  color: var(--text-muted, var(--muted));
+}
+
+.ip-block-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ip-block-card-title strong {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.ip-block-status-pill {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line-ui);
+  border-radius: 999px;
+  color: var(--text-muted, var(--muted));
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ip-block-status-pill.is-active {
+  border-color: rgba(255, 116, 116, 0.48);
+  color: #ffc0c0;
+  background: rgba(255, 96, 96, 0.08);
+}
+
+.ip-block-status-pill.is-expired {
+  border-color: rgba(255, 210, 122, 0.42);
+}
+
+.ip-block-notes {
+  margin-top: 0.2rem !important;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(221, 231, 244, 0.08);
+  white-space: pre-wrap;
+}
+
+.ip-block-card-actions {
+  min-width: 13rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ip-unblock-confirmation {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ip-unblock-confirmation input {
+  min-width: 13rem;
+}
+
+.security-block-ip-action {
+  margin-left: auto;
+  border-color: rgba(255, 116, 116, 0.42);
+}

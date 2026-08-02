@@ -1,0 +1,97 @@
+/* Page heroes */
+.home-hero,
+.build-list-hero,
+.profile-hero,
+.admin-hero,
+.detail-header,
+.create-topline,
+.group-create-topline-clean {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(1rem, 2vw, 1.6rem);
+  align-items: end;
+  padding: clamp(1.15rem, 2.2vw, 2rem);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(241, 184, 91, 0.14), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), var(--surface-sheen)),
+    var(--panel);
+}
+
+.home-hero h1,
+.build-list-hero h1,
+.profile-hero h1,
+.admin-hero h1,
+.auth-copy h1,
+.create-topline h1,
+.detail-header h1 {
+  margin: 0;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.home-hero h1,
+.build-list-hero h1,
+.profile-hero h1 {
+  font-size: clamp(2.2rem, 4.3vw, 5rem);
+}
+
+.admin-hero h1,
+.auth-copy h1,
+.create-topline h1,
+.detail-header h1 {
+  font-size: clamp(1.7rem, 3vw, 3.3rem);
+}
+
+.home-hero p,
+.build-list-hero p,
+.profile-hero p,
+.admin-hero p,
+.create-topline p,
+.detail-header p {
+  max-width: 78ch;
+  margin-top: 0.65rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.home-hero-copy,
+.build-list-hero > div:first-child,
+.admin-hero > div:first-child,
+.profile-hero > div:first-child,
+.create-topline > div,
+.detail-header > div {
+  display: grid;
+  align-content: center;
+  gap: 0.35rem;
+}
+
+.hero-actions,
+.home-status-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.home-status-card,
+.refined-status-card,
+.admin-status-card {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 0.55rem;
+  min-width: min(22rem, 100%);
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.home-status-card span,
+.home-status-card strong {
+  border: 0;
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}

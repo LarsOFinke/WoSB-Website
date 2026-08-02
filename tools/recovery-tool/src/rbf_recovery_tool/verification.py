@@ -52,12 +52,16 @@ def verify_sidecar(bundle: Path) -> str:
     fields = lines[0].split()
     expected = fields[0].lower() if fields else ""
     if not _SHA256_RE.fullmatch(expected):
-        raise RuntimeError("Die Prüfsummendatei enthält keine gültige SHA-256-Prüfsumme.")
+        raise RuntimeError(
+            "Die Prüfsummendatei enthält keine gültige SHA-256-Prüfsumme."
+        )
     if len(fields) > 1 and fields[-1].lstrip("*") != bundle.name:
         raise RuntimeError("Der Dateiname in der Prüfsummendatei stimmt nicht überein.")
     actual = sha256_file(bundle)
     if expected != actual:
-        raise RuntimeError("Die SHA-256-Prüfsumme des Recovery-Bundles stimmt nicht überein.")
+        raise RuntimeError(
+            "Die SHA-256-Prüfsumme des Recovery-Bundles stimmt nicht überein."
+        )
     return actual
 
 
@@ -124,7 +128,9 @@ def generate_identity(target: Path) -> str:
                 break
     if not public_key.startswith("age1"):
         target.unlink(missing_ok=True)
-        raise RuntimeError("Der öffentliche age-Schlüssel konnte nicht ermittelt werden.")
+        raise RuntimeError(
+            "Der öffentliche age-Schlüssel konnte nicht ermittelt werden."
+        )
     if os.name != "nt":
         os.chmod(target, 0o600)
     return public_key
@@ -145,7 +151,9 @@ def decrypt_bundle(bundle: Path, identity: Path, output: Path) -> None:
     if result.returncode != 0:
         detail = (result.stderr or "").strip().splitlines()
         suffix = f" ({detail[-1]})" if detail else ""
-        raise RuntimeError(f"Das Recovery-Bundle konnte nicht entschlüsselt werden{suffix}.")
+        raise RuntimeError(
+            f"Das Recovery-Bundle konnte nicht entschlüsselt werden{suffix}."
+        )
 
 
 def _validated_members(handle: tarfile.TarFile) -> dict[str, tarfile.TarInfo]:
@@ -159,9 +167,13 @@ def _validated_members(handle: tarfile.TarFile) -> dict[str, tarfile.TarInfo]:
         if path.is_absolute() or not path.parts or ".." in path.parts:
             raise RuntimeError(f"Unsicherer Pfad im Recovery-Archiv: {member.name}")
         if path.parts[0] not in _ALLOWED_ROOTS:
-            raise RuntimeError(f"Unerwarteter Wurzelpfad im Recovery-Archiv: {member.name}")
+            raise RuntimeError(
+                f"Unerwarteter Wurzelpfad im Recovery-Archiv: {member.name}"
+            )
         if not (member.isdir() or member.isfile()):
-            raise RuntimeError(f"Links und Spezialdateien sind nicht erlaubt: {member.name}")
+            raise RuntimeError(
+                f"Links und Spezialdateien sind nicht erlaubt: {member.name}"
+            )
         normalized = path.as_posix()
         if normalized in result:
             raise RuntimeError(f"Doppelter Archivpfad: {normalized}")
@@ -169,7 +181,9 @@ def _validated_members(handle: tarfile.TarFile) -> dict[str, tarfile.TarInfo]:
         if member.isfile():
             total += member.size
             if total > _MAX_UNCOMPRESSED_BYTES:
-                raise RuntimeError("Das Recovery-Archiv überschreitet die Sicherheitsgrenze.")
+                raise RuntimeError(
+                    "Das Recovery-Archiv überschreitet die Sicherheitsgrenze."
+                )
     return result
 
 
@@ -203,11 +217,15 @@ def verify_plain_archive(archive: Path, bundle_sha256: str = "") -> Verification
                 raise RuntimeError(f"Unsicherer Manifestpfad: {relative}")
             digest = str(entry.get("sha256") or "").lower()
             if not _SHA256_RE.fullmatch(digest) or relative in expected:
-                raise RuntimeError(f"Ungültiger oder doppelter Manifestpfad: {relative}")
+                raise RuntimeError(
+                    f"Ungültiger oder doppelter Manifestpfad: {relative}"
+                )
             expected[relative] = entry
 
         actual_files = {
-            name for name, member in members.items() if member.isfile() and name != "manifest.json"
+            name
+            for name, member in members.items()
+            if member.isfile() and name != "manifest.json"
         }
         if actual_files != set(expected):
             raise RuntimeError("Archiv- und Manifestinventar stimmen nicht überein.")
@@ -219,7 +237,9 @@ def verify_plain_archive(archive: Path, bundle_sha256: str = "") -> Verification
                 raise RuntimeError(f"Dateigröße stimmt nicht: {relative}")
             source = handle.extractfile(member)
             if source is None:
-                raise RuntimeError(f"Archivdatei konnte nicht gelesen werden: {relative}")
+                raise RuntimeError(
+                    f"Archivdatei konnte nicht gelesen werden: {relative}"
+                )
             digest = hashlib.sha256()
             size = 0
             with source:
@@ -294,11 +314,15 @@ def extract_postgres_artifact(bundle: Path, identity: Path, destination: Path) -
                 raise RuntimeError("Das PostgreSQL-Artefakt fehlt im Recovery-Bundle.")
             filename = PurePosixPath(relative).name
             if not (filename.endswith(".sql") or filename.endswith(".sql.gz")):
-                raise RuntimeError("Das PostgreSQL-Artefakt besitzt ein unerwartetes Format.")
+                raise RuntimeError(
+                    "Das PostgreSQL-Artefakt besitzt ein unerwartetes Format."
+                )
             target = destination / filename
             extracted = handle.extractfile(member)
             if extracted is None:
-                raise RuntimeError("Das PostgreSQL-Artefakt konnte nicht gelesen werden.")
+                raise RuntimeError(
+                    "Das PostgreSQL-Artefakt konnte nicht gelesen werden."
+                )
             with extracted, target.open("xb") as output:
                 shutil.copyfileobj(extracted, output)
             if os.name != "nt":
@@ -306,13 +330,17 @@ def extract_postgres_artifact(bundle: Path, identity: Path, destination: Path) -
             return target
 
 
-def extract_verified_bundle(bundle: Path, identity: Path, destination: Path) -> tuple[Path, dict]:
+def extract_verified_bundle(
+    bundle: Path, identity: Path, destination: Path
+) -> tuple[Path, dict]:
     """Verify an encrypted bundle and safely extract its complete declared inventory."""
     bundle = bundle.expanduser().resolve()
     identity = identity.expanduser().resolve()
     destination = destination.expanduser().resolve()
     if destination.exists() and any(destination.iterdir()):
-        raise RuntimeError("Das Zielverzeichnis für die Bundle-Extraktion ist nicht leer.")
+        raise RuntimeError(
+            "Das Zielverzeichnis für die Bundle-Extraktion ist nicht leer."
+        )
     destination.mkdir(parents=True, exist_ok=True)
     bundle_sha256 = verify_sidecar(bundle)
     with tempfile.TemporaryDirectory(prefix="rbf-recovery-extract-") as temporary:
@@ -338,7 +366,9 @@ def extract_verified_bundle(bundle: Path, identity: Path, destination: Path) -> 
                 target.parent.mkdir(parents=True, exist_ok=True)
                 extracted = handle.extractfile(member)
                 if extracted is None:
-                    raise RuntimeError(f"Archivdatei konnte nicht gelesen werden: {name}")
+                    raise RuntimeError(
+                        f"Archivdatei konnte nicht gelesen werden: {name}"
+                    )
                 with extracted, target.open("xb") as output:
                     shutil.copyfileobj(extracted, output)
                 if os.name != "nt":

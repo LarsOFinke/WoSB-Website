@@ -8,7 +8,6 @@ from app.modules.builds.models.build_item_option import BuildItemOption
 from app.modules.builds.services.ship_upgrade_effect_service import effective_upgrade_effects
 from app.modules.registry import register_all_models
 from app.modules.ships.models.ship import Ship
-from app.modules.ships.models.ship_upgrade_effect import ShipUpgradeEffectOverride
 from app.bootstrap.manager import SeedManager
 
 

@@ -77,8 +77,6 @@ class UploadLimitSettings:
     minimum_free_mb: int
 
 
-
-
 @dataclass(frozen=True, slots=True)
 class LegalNoticeSettings:
     published: bool
@@ -113,6 +111,7 @@ class MaintenanceSettings:
     audit_log_retention_days: int
     webhook_delivery_retention_days: int
     cookie_consent_retention_days: int
+    resolved_privacy_request_retention_days: int
     pending_registration_retention_days: int
     reviewed_registration_retention_days: int
     interval_hours: int

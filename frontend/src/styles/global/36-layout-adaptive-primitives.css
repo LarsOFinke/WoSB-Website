@@ -1,0 +1,265 @@
+/* Shared UI tokens, adaptive spacing and resilient mobile layouts */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 6rem;
+}
+
+body {
+  accent-color: var(--accent);
+}
+
+img,
+video,
+iframe,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea,
+.button-box,
+.form-button,
+.small-action,
+.tab-button {
+  min-height: var(--touch-target);
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--accent-strong);
+}
+
+::selection {
+  color: #08111b;
+  background: rgba(241, 184, 91, 0.92);
+}
+
+.page-frame {
+  overflow: clip;
+}
+
+.wire-section,
+.auth-form,
+.register-form-section,
+.home-card,
+.build-card,
+.thread-card,
+.calendar-day,
+.calendar-agenda-card,
+.profile-fleet-card {
+  box-shadow:
+    inset 0 1px 0 var(--surface-highlight),
+    0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.home-hero p,
+.build-list-hero p,
+.profile-hero p,
+.admin-hero p,
+.create-topline p,
+.detail-header p,
+.auth-copy p,
+.content-post-card p {
+  max-width: var(--reading-width);
+}
+
+.tab-button.is-active,
+.fleet-tab-button.is-active {
+  border-color: rgba(241, 184, 91, 0.34);
+  background:
+    linear-gradient(135deg, rgba(241, 184, 91, 0.18), var(--surface-highlight));
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.auth-page,
+.auth-frame {
+  min-width: 0;
+}
+
+.auth-card,
+.refined-auth-card,
+.polished-auth-card,
+.register-card {
+  container-type: inline-size;
+}
+
+.auth-card,
+.register-card {
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.register-copy h1 {
+  font-size: clamp(2rem, 4vw, 3.8rem);
+}
+
+.register-form-section::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(241, 184, 91, 0.74), var(--accent-tint));
+}
+
+.elevated-input-panel,
+.input-panel,
+.filter-box,
+.select-shell,
+.file-drop-box {
+  backdrop-filter: blur(10px);
+}
+
+.elevated-input-panel span,
+.auth-form label > span,
+.input-panel > span,
+.filter-box > span,
+.compact-select span {
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.elevated-input-panel input,
+.elevated-input-panel select,
+.elevated-input-panel textarea,
+.auth-form input,
+.auth-form select,
+.auth-form textarea,
+.profile-form input,
+.profile-form select,
+.profile-form textarea,
+.password-form input,
+.moderator-form input,
+.filter-box input,
+.filter-box select,
+.select-shell select {
+  min-height: var(--control-height);
+  border-radius: 0.95rem;
+}
+
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+  border: 1px solid rgba(221, 231, 244, 0.22);
+  padding: 0.68rem 0.8rem;
+  background: rgba(5, 12, 20, 0.78);
+}
+
+.auth-form input:focus,
+.auth-form select:focus,
+.auth-form textarea:focus,
+.filter-box:focus-within,
+.select-shell:focus-within,
+.input-panel:focus-within,
+.file-drop-box:focus-within {
+  border-color: rgba(241, 184, 91, 0.64);
+  box-shadow:
+    0 0 0 4px rgba(241, 184, 91, 0.11),
+    0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.form-button.primary-action,
+.button-box.primary-action,
+.nav-action-strong {
+  background:
+    linear-gradient(135deg, rgba(255, 210, 122, 0.28), rgba(241, 184, 91, 0.13));
+  color: var(--text);
+}
+
+.build-filter-panel,
+.fleet-filter-panel,
+.fleet-member-filters,
+.staff-filter-row,
+.calendar-filter-panel {
+  border-color: rgba(221, 231, 244, 0.20);
+}
+
+.filter-box,
+.select-shell,
+.input-panel {
+  border-color: rgba(221, 231, 244, 0.22);
+  background: rgba(5, 12, 20, 0.46);
+}
+
+.list-toolbar,
+.refined-toolbar,
+.group-filter-toolbar,
+.fleet-filter-panel,
+.fleet-member-filters,
+.calendar-toolbar {
+  min-width: 0;
+}
+
+.profile-fleet-card,
+.calendar-agenda-card,
+.fleet-member-row,
+.profile-membership-row {
+  border-color: var(--line-ui);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.024)),
+    rgba(11, 22, 34, 0.88);
+}
+
+.staff-content-grid,
+.fleet-member-board,
+.fleet-management-summary,
+.home-content-grid,
+.hub-module-grid,
+.enduser-module-grid,
+.refined-module-grid {
+  container-type: inline-size;
+}
+
+.admin-tabs,
+.fleet-management-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.admin-tabs .tab-button,
+.fleet-management-tabs .tab-button,
+.fleet-tab-button {
+  min-width: max-content;
+}
+
+.filter-table,
+.build-results-panel,
+.group-results-panel,
+.forum-results-panel,
+.staff-content-column,
+.fleet-member-directory,
+.fleet-request-board {
+  min-width: 0;
+}
+
+.admin-build-row,
+.my-build-row,
+.my-group-row,
+.fleet-request-row,
+.fleet-directory-row,
+.profile-membership-row {
+  gap: var(--space-3);
+}
+
+.calendar-event-chip,
+.calendar-more-chip,
+.summary-pill,
+.type-pill,
+.fleet-status-pill,
+.tab-count {
+  text-wrap: nowrap;
+}
+
+.attachment-gallery,
+.fleet-calendar-grid,
+.staff-content-grid,
+.inventory-grid,
+.equipment-unified-grid {
+  min-width: 0;
+}

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Cookie, Depends, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core.dependencies import require_user
 from app.db.session import get_db
 from app.modules.accounts.models.user import User
 from app.modules.privacy.schemas.cookie_consent import (
@@ -19,8 +20,32 @@ from app.modules.privacy.services.cookie_consent_service import (
     record_decision,
     valid_consent_key,
 )
+from app.modules.privacy.schemas.data_subject_request import (
+    DataSubjectRequestCreate,
+    DataSubjectRequestRead,
+)
+from app.modules.privacy.services.data_export_service import PersonalDataExportService
+from app.modules.privacy.services.data_subject_request_service import (
+    DataSubjectRequestError,
+    DataSubjectRequestService,
+)
 
 router = APIRouter(prefix="/privacy", tags=["privacy"])
+
+
+def _request_read(request) -> DataSubjectRequestRead:
+    return DataSubjectRequestRead(
+        id=request.id,
+        subject_user_id=request.subject_user_id,
+        subject_username=request.subject.username,
+        request_type=request.request_type,
+        status=request.status,
+        details=request.details,
+        resolution_note=request.resolution_note,
+        handled_by_user_id=request.handled_by_user_id,
+        created_at=request.created_at,
+        resolved_at=request.resolved_at,
+    )
 
 
 @router.get("/cookie-consent", response_model=CookieConsentRead)
@@ -56,3 +81,39 @@ def save_cookie_consent(
         path="/",
     )
     return state
+
+
+@router.get("/data-export")
+def export_personal_data(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> dict:
+    return PersonalDataExportService(db).build(current_user)
+
+
+@router.get("/requests", response_model=list[DataSubjectRequestRead])
+def list_my_data_subject_requests(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> list[DataSubjectRequestRead]:
+    return [
+        _request_read(request)
+        for request in DataSubjectRequestService(db).list_for_user(current_user.id)
+    ]
+
+
+@router.post(
+    "/requests",
+    response_model=DataSubjectRequestRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_data_subject_request(
+    payload: DataSubjectRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+) -> DataSubjectRequestRead:
+    try:
+        request = DataSubjectRequestService(db).create(current_user, payload)
+    except DataSubjectRequestError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _request_read(request)

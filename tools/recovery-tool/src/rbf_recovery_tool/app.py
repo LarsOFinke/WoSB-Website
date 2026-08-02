@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 import queue
 import threading
@@ -9,23 +8,13 @@ from tkinter import filedialog, messagebox, ttk
 
 from .automation import install_pull_timer, remove_pull_timer
 from .config import Profile, load_profile, save_profile
-from .docker_lab import (
-    connection as lab_connection,
-    docker_is_rootless,
-    import_check_bundle,
-    initialize_lab,
-    lab_status,
-    start_lab,
-    verify_recovery,
-    stop_lab,
-)
-from .linux_setup import setup_rootless_lab
-from .platform_support import open_directory
 from .sftp_client import download_latest, fetch_host_fingerprint
-from .verification import VerificationResult, generate_identity, verify_encrypted_bundle
+from .verification import generate_identity, verify_encrypted_bundle
+from .app_events import RecoveryEventMixin
+from .app_lab import RecoveryLabMixin
 
 
-class RecoveryApp:
+class RecoveryApp(RecoveryLabMixin, RecoveryEventMixin):
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("RBF Recovery Tool")
@@ -38,7 +27,9 @@ class RecoveryApp:
             "port": tk.StringVar(value=str(self.profile.port)),
             "username": tk.StringVar(value=self.profile.username),
             "remote_directory": tk.StringVar(value=self.profile.remote_directory),
-            "destination_directory": tk.StringVar(value=self.profile.destination_directory),
+            "destination_directory": tk.StringVar(
+                value=self.profile.destination_directory
+            ),
             "ssh_key_path": tk.StringVar(value=self.profile.ssh_key_path),
             "age_identity_path": tk.StringVar(value=self.profile.age_identity_path),
             "host_fingerprint": tk.StringVar(value=self.profile.host_fingerprint),
@@ -89,9 +80,13 @@ class RecoveryApp:
 
         actions = ttk.Frame(outer, padding=(0, 12, 0, 8))
         actions.pack(fill="x")
-        self.save_button = ttk.Button(actions, text="Profil speichern", command=self._save)
+        self.save_button = ttk.Button(
+            actions, text="Profil speichern", command=self._save
+        )
         self.save_button.pack(side="left")
-        self.host_button = ttk.Button(actions, text="Host-Key prüfen", command=self._check_host)
+        self.host_button = ttk.Button(
+            actions, text="Host-Key prüfen", command=self._check_host
+        )
         self.host_button.pack(side="left", padx=6)
         self.download_button = ttk.Button(
             actions, text="Neuestes Backup laden", command=self._download
@@ -147,7 +142,9 @@ class RecoveryApp:
         )
         self.lab_restore_button.pack(side="left", padx=(6, 0))
         self.recovery_verify_button = ttk.Button(
-            lab_actions, text="Recovery vollständig prüfen", command=self._recovery_verify
+            lab_actions,
+            text="Recovery vollständig prüfen",
+            command=self._recovery_verify,
         )
         self.recovery_verify_button.pack(side="left", padx=(6, 0))
         self.lab_credentials_button = ttk.Button(
@@ -294,7 +291,9 @@ class RecoveryApp:
         def operation():
             bundle = download_latest(profile, password=password, progress=progress)
             if deep_verify:
-                result = verify_encrypted_bundle(bundle, Path(profile.age_identity_path))
+                result = verify_encrypted_bundle(
+                    bundle, Path(profile.age_identity_path)
+                )
                 return ("download_verified", bundle, result)
             return ("download", bundle)
 
@@ -303,14 +302,21 @@ class RecoveryApp:
     def _verify_selected(self) -> None:
         selected = filedialog.askopenfilename(
             title="Recovery-Bundle auswählen",
-            filetypes=[("RBF Recovery Bundle", "*.tar.gz.age"), ("Alle Dateien", "*.*")],
+            filetypes=[
+                ("RBF Recovery Bundle", "*.tar.gz.age"),
+                ("Alle Dateien", "*.*"),
+            ],
         )
         if not selected:
             return
         identity = Path(self.vars["age_identity_path"].get())
         self._worker(
             "Recovery-Bundle wird vollständig geprüft …",
-            lambda: ("verified", Path(selected), verify_encrypted_bundle(Path(selected), identity)),
+            lambda: (
+                "verified",
+                Path(selected),
+                verify_encrypted_bundle(Path(selected), identity),
+            ),
         )
 
     def _enable_timer(self) -> None:
@@ -328,250 +334,18 @@ class RecoveryApp:
             service, timer = install_pull_timer()
             self._append_log(f"Automatischer Abruf aktiviert: {service}, {timer}")
         except Exception as exc:
-            messagebox.showerror("Timer konnte nicht eingerichtet werden", str(exc), parent=self.root)
+            messagebox.showerror(
+                "Timer konnte nicht eingerichtet werden", str(exc), parent=self.root
+            )
 
     def _disable_timer(self) -> None:
         try:
             remove_pull_timer()
             self._append_log("Automatischer Linux-Abruf wurde entfernt.")
         except Exception as exc:
-            messagebox.showerror("Timer konnte nicht entfernt werden", str(exc), parent=self.root)
-
-    def _refresh_lab_status(self) -> None:
-        try:
-            status = lab_status()
-            docker_mode = (
-                "rootless" if status.docker_available and docker_is_rootless()
-                else ("rootful" if status.docker_available else "nicht verfügbar")
+            messagebox.showerror(
+                "Timer konnte nicht entfernt werden", str(exc), parent=self.root
             )
-            self.vars["lab_status"].set(
-                f"Lokales DB-Labor: {status.detail} · Docker {docker_mode}"
-            )
-        except Exception as exc:
-            self.vars["lab_status"].set(f"Lokales DB-Labor: Fehler ({exc})")
-
-    def _lab_setup(self) -> None:
-        from .automation import executable_path
-
-        self._worker(
-            "Rootless Docker und das DB-Labor werden eingerichtet …",
-            lambda: ("lab_setup", setup_rootless_lab(executable_path())),
-        )
-
-    def _lab_init(self) -> None:
-        try:
-            details = initialize_lab()
-            self._append_log(f"DB-Labor initialisiert: {details.host}:{details.port}")
-            self._refresh_lab_status()
-        except Exception as exc:
-            messagebox.showerror("DB-Labor", str(exc), parent=self.root)
-
-    def _lab_start(self) -> None:
-        self._worker(
-            "Lokales PostgreSQL-Labor wird gestartet …",
-            lambda: ("lab_started", start_lab()),
-        )
-
-    def _lab_stop(self) -> None:
-        self._worker(
-            "Lokales PostgreSQL-Labor wird gestoppt …",
-            lambda: ("lab_stopped", stop_lab()),
-        )
-
-    def _lab_credentials(self) -> None:
-        try:
-            details = lab_connection()
-        except Exception as exc:
-            messagebox.showerror("DB-Labor", str(exc), parent=self.root)
-            return
-        self.root.clipboard_clear()
-        self.root.clipboard_append(details.dsn)
-        messagebox.showinfo(
-            "Lokale PostgreSQL-Verbindungsdaten",
-            f"Host: {details.host}\nPort: {details.port}\n"
-            f"Datenbank: {details.database}\nBenutzer: {details.username}\n"
-            f"Kennwort: {details.password}\n\n"
-            "Die vollständige DSN wurde in die Zwischenablage kopiert.",
-            parent=self.root,
-        )
-
-    def _report_path(self, prefix: str) -> Path:
-        root = Path(self.vars["destination_directory"].get()).expanduser() / "recovery-reports"
-        root.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        return root / f"{prefix}-{timestamp}.json"
-
-    def _select_bundle(self, title: str) -> Path | None:
-        selected = filedialog.askopenfilename(
-            title=title,
-            filetypes=[("RBF Recovery Bundle", "*.tar.gz.age"), ("Alle Dateien", "*.*")],
-        )
-        return Path(selected) if selected else None
-
-    def _lab_import_check(self) -> None:
-        bundle = self._select_bundle("Recovery-Bundle für reine DB-Importprüfung auswählen")
-        if bundle is None:
-            return
-        identity = Path(self.vars["age_identity_path"].get())
-        report = self._report_path("import-check")
-        self._worker(
-            "Bundle wird technisch importiert; Migration und API werden dabei nicht geprüft …",
-            lambda: ("lab_import_checked", import_check_bundle(bundle, identity, report)),
-        )
-
-    def _recovery_verify(self) -> None:
-        bundle = self._select_bundle("Recovery-Bundle für vollständigen Recovery-Preflight auswählen")
-        if bundle is None:
-            return
-        repository = filedialog.askdirectory(
-            title="WoSB-Repository mit aktuellem Backend auswählen",
-            mustexist=True,
-        )
-        if not repository:
-            return
-        identity = Path(self.vars["age_identity_path"].get())
-        report = self._report_path("recovery-preflight")
-        self._worker(
-            "Dump wird importiert, migriert und mit dem aktuellen API-Image auf Readiness geprüft …",
-            lambda: (
-                "recovery_verified",
-                verify_recovery(bundle, identity, Path(repository), report),
-            ),
-        )
-
-    def _open_destination(self) -> None:
-        path = Path(self.vars["destination_directory"].get()).expanduser()
-        path.mkdir(parents=True, exist_ok=True)
-        try:
-            open_directory(path)
-        except RuntimeError as exc:
-            messagebox.showinfo("Zielordner", f"{path}\n\n{exc}", parent=self.root)
-
-    def _drain_events(self) -> None:
-        try:
-            while True:
-                kind, payload = self.events.get_nowait()
-                if kind == "progress":
-                    self.progress["value"] = int(payload)
-                    continue
-                if kind == "error":
-                    self._set_busy(False, "Fehlgeschlagen")
-                    self._append_log(f"FEHLER: {payload}")
-                    messagebox.showerror("Vorgang fehlgeschlagen", str(payload), parent=self.root)
-                    continue
-                self._handle_success(payload)
-        except queue.Empty:
-            pass
-        self.root.after(100, self._drain_events)
-
-    def _handle_success(self, payload: object) -> None:
-        self._set_busy(False, "Erfolgreich")
-        self.progress["value"] = 100
-        if isinstance(payload, tuple) and payload and payload[0] == "host":
-            fingerprint = str(payload[1])
-            current = self.vars["host_fingerprint"].get()
-            if current and current != fingerprint:
-                self.vars["status"].set("Host-Key abgelehnt")
-                messagebox.showerror(
-                    "SSH-Host-Key geändert",
-                    f"Gespeichert: {current}\nAktuell: {fingerprint}\n\n"
-                    "Nicht verbinden, bevor die Änderung unabhängig geprüft wurde.",
-                    parent=self.root,
-                )
-                return
-            if not current:
-                trusted = messagebox.askyesno(
-                    "SSH-Host-Key vertrauen?",
-                    f"Fingerprint:\n{fingerprint}\n\n"
-                    "Über einen zweiten Kanal prüfen und nur dann bestätigen.",
-                    parent=self.root,
-                )
-                if not trusted:
-                    return
-                self.vars["host_fingerprint"].set(fingerprint)
-                self._save()
-            self._append_log(f"SSH-Host-Key bestätigt: {fingerprint}")
-            return
-        if isinstance(payload, tuple) and payload and payload[0] == "identity":
-            identity_path = Path(payload[1])
-            public_key = str(payload[2])
-            self.vars["age_identity_path"].set(str(identity_path))
-            self._save()
-            self._append_log(f"Neue age-Identität erstellt: {identity_path}")
-            messagebox.showinfo(
-                "Öffentlichen Schlüssel auf dem Pi eintragen",
-                f"Privater Schlüssel:\n{identity_path}\n\n"
-                f"Öffentlicher Schlüssel:\n{public_key}\n\n"
-                "BACKUP_AGE_RECIPIENT auf dem Pi auf diesen öffentlichen Schlüssel setzen.",
-                parent=self.root,
-            )
-            return
-        if isinstance(payload, tuple) and payload and payload[0] in {"lab_import_checked", "recovery_verified"}:
-            result = payload[1]
-            self._refresh_lab_status()
-            if payload[0] == "lab_import_checked":
-                self._append_log(
-                    f"DB-Importprüfung bestanden; dies ist kein vollständiger Recovery-Nachweis. Bericht: {result.report}"
-                )
-                messagebox.showinfo(
-                    "DB-Importprüfung bestanden",
-                    "Der Dump ist technisch importierbar. Migrationen, Schlüssel und "
-                    "API-Readiness wurden nicht geprüft.\n\n"
-                    f"Bericht: {result.report}",
-                    parent=self.root,
-                )
-            else:
-                self._append_log(
-                    f"Vollständiger Recovery-Preflight bestanden ({result.compatibility}); Bericht: {result.report}"
-                )
-                messagebox.showinfo(
-                    "Recovery vollständig verifiziert",
-                    "Import, Migration, Schlüsselprüfung und API-Readiness waren "
-                    "erfolgreich.\n\n"
-                    f"Bericht: {result.report}",
-                    parent=self.root,
-                )
-            return
-        if isinstance(payload, tuple) and payload and payload[0].startswith("lab_"):
-            self._refresh_lab_status()
-            if payload[0] in {"lab_started", "lab_restored"}:
-                details = payload[1]
-                self._append_log(
-                    f"DB-Labor bereit: {details.host}:{details.port}/{details.database} "
-                    f"als {details.username}"
-                )
-                messagebox.showinfo(
-                    "Lokales DB-Labor bereit",
-                    f"Host: {details.host}\nPort: {details.port}\n"
-                    f"Datenbank: {details.database}\nBenutzer: {details.username}\n\n"
-                    "Das Kennwort liegt ausschließlich in der lokalen geschützten Lab-Konfiguration.",
-                    parent=self.root,
-                )
-            elif payload[0] == "lab_setup":
-                self._append_log("Rootless Docker und das lokale DB-Labor wurden eingerichtet.")
-            else:
-                self._append_log("DB-Labor wurde gestoppt.")
-            return
-        if (
-            isinstance(payload, tuple)
-            and payload
-            and payload[0] in {"download", "download_verified", "verified"}
-        ):
-            bundle = payload[1]
-            self._append_log(f"Bundle: {bundle}")
-            if len(payload) > 2 and isinstance(payload[2], VerificationResult):
-                result = payload[2]
-                self._append_log(
-                    f"Vollständig geprüft: Version {result.version or 'unbekannt'}, "
-                    f"{result.file_count} Dateien, SHA-256 {result.bundle_sha256}"
-                )
-            messagebox.showinfo("Recovery-Bundle bereit", str(bundle), parent=self.root)
-
-    def _append_log(self, message: str) -> None:
-        self.log.configure(state="normal")
-        self.log.insert("end", message + "\n")
-        self.log.see("end")
-        self.log.configure(state="disabled")
 
 
 def main() -> None:

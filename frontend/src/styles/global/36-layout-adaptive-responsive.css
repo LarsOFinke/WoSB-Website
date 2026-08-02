@@ -1,0 +1,270 @@
+@media (max-width: 1320px) {
+
+  .calendar-layout,
+  .detail-grid,
+  .profile-dashboard-grid,
+  .group-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-agenda-panel {
+    position: static;
+  }
+}
+
+@media (max-width: 1050px) {
+  :root {
+    --page-width: min(100vw - 1.25rem, 1500px);
+    --content-gap: 0.9rem;
+  }
+
+  .page-frame {
+    padding: 0.85rem;
+  }
+
+  .home-hero,
+  .build-list-hero,
+  .profile-hero,
+  .admin-hero,
+  .detail-header,
+  .create-topline,
+  .group-create-topline-clean {
+    align-items: start;
+  }
+
+  .hero-actions,
+  .calendar-toolbar,
+  .calendar-navigation,
+  .form-actions,
+  .profile-actions,
+  .group-create-actions {
+    justify-content: flex-start;
+  }
+
+  .register-card,
+  .auth-card,
+  .build-filter-panel,
+  .calendar-basic-grid,
+  .calendar-time-grid,
+  .fleet-management-summary,
+  .staff-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --page-width: min(100vw - 0.9rem, 1500px);
+    --touch-target: 2.85rem;
+  }
+
+  .page-frame,
+  .wire-section,
+  .register-form-section {
+    border-radius: 1rem;
+  }
+
+  .wire-section {
+    padding: 0.85rem;
+  }
+
+  .home-hero h1,
+  .build-list-hero h1,
+  .profile-hero h1,
+  .admin-hero h1,
+  .auth-copy h1,
+  .create-topline h1,
+  .detail-header h1 {
+    line-height: 1.05;
+  }
+
+  .list-toolbar,
+  .list-toolbar.has-type-filter,
+  .refined-toolbar,
+  .group-filter-toolbar,
+  .fleet-filter-panel,
+  .fleet-member-filters,
+  .calendar-toolbar,
+  .staff-filter-row,
+  .member-admin-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .filter-box,
+  .select-shell,
+  .input-panel,
+  .file-drop-box,
+  .button-box,
+  .form-button,
+  .small-action,
+  .danger-action {
+    width: 100%;
+  }
+
+  .calendar-weekday {
+    display: block;
+    padding-inline: 0.15rem;
+    font-size: 0.75rem;
+  }
+
+  .fleet-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .calendar-day {
+    min-height: 4.9rem;
+    padding: 0.35rem;
+    border-radius: 0.75rem;
+  }
+
+  .calendar-day-number {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: 0.82rem;
+  }
+
+  .calendar-event-chip {
+    display: none;
+  }
+
+  .calendar-more-chip {
+    padding: 0.1rem 0.25rem;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .attachment-document-frame {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 620px) {
+  :root {
+    --page-width: min(100vw - 0.6rem, 1500px);
+    --control-height: 2.95rem;
+  }
+
+  .page-frame {
+    padding: 0.55rem;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+  }
+
+  .brand-copy {
+    max-width: 19ch;
+  }
+
+  .home-status-card,
+  .refined-status-card,
+  .admin-status-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .register-form {
+    padding: 0.75rem;
+  }
+
+  .compact-form-heading {
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+
+  .elevated-input-panel,
+  .auth-form label.elevated-input-panel,
+  .profile-form .input-panel,
+  .password-form .input-panel,
+  .moderator-form .input-panel {
+    padding: 0.7rem;
+  }
+
+  .profile-fleet-card,
+  .calendar-agenda-card {
+    padding: 0.85rem;
+  }
+
+  .fleet-calendar-grid {
+    gap: 0.18rem;
+  }
+
+  .calendar-day {
+    min-height: 4.2rem;
+    padding: 0.25rem;
+  }
+
+  .calendar-day-number {
+    width: 1.55rem;
+    height: 1.55rem;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .page-frame {
+    border-radius: 0.95rem;
+  }
+
+  .brand-mark {
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .brand-copy {
+    max-width: 16ch;
+  }
+
+  .register-benefits span,
+  .summary-pill,
+  .type-pill {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .fleet-calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-weekday {
+    font-size: 0.75rem;
+  }
+
+  .calendar-day {
+    min-height: 3.7rem;
+  }
+
+  .calendar-more-chip {
+    display: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .button-box,
+  .form-button,
+  .small-action,
+  .danger-action,
+  .tab-button,
+  .calendar-day {
+    min-height: 44px;
+  }
+
+  .calendar-day:hover,
+  .button-box:hover,
+  .form-button:hover,
+  .small-action:hover,
+  .tab-button:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

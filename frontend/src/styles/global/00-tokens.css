@@ -7,6 +7,8 @@
   font-size: 16px;
   line-height: 1.5;
   --font-display: inherit;
+  --font-editorial: var(--font-editorial);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Core palette */
   --bg: #08111b;
@@ -28,6 +30,17 @@
   --line: rgba(188, 202, 220, 0.18);
   --line-strong: rgba(221, 231, 244, 0.32);
   --line-bright: rgba(241, 184, 91, 0.46);
+  --line-faint: rgba(221, 231, 244, 0.10);
+  --line-subtle: rgba(221, 231, 244, 0.12);
+  --line-domain: rgba(221, 231, 244, 0.14);
+  --line-ui: rgba(221, 231, 244, 0.18);
+  --accent-line: rgba(241, 184, 91, 0.22);
+  --accent-glow: rgba(241, 184, 91, 0.10);
+  --surface-sheen: rgba(255, 255, 255, 0.018);
+  --surface-faint: rgba(255, 255, 255, 0.025);
+  --surface-soft: rgba(255, 255, 255, 0.035);
+  --surface-highlight: rgba(255, 255, 255, 0.045);
+  --accent-tint: rgba(241, 184, 91, 0.08);
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
   --shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.22);
   --radius-xl: 28px;

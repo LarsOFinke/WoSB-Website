@@ -1,0 +1,264 @@
+/* Personal squad workspace */
+.my-squads-frame {
+  gap: 1rem;
+}
+
+.my-squads-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.my-squads-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.35rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 0.9rem;
+  background: var(--surface-faint);
+}
+
+.my-squads-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.7rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.72rem;
+  color: var(--muted-soft);
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.my-squads-tab:hover,
+.my-squads-tab:focus-visible {
+  border-color: rgba(213, 228, 240, 0.18);
+  color: var(--text);
+}
+
+.my-squads-tab.is-active {
+  border-color: rgba(241, 184, 91, 0.32);
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+}
+
+.my-squads-tab b {
+  display: inline-grid;
+  min-width: 1.65rem;
+  min-height: 1.65rem;
+  place-items: center;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba(213, 228, 240, 0.08);
+  color: inherit;
+  font-size: 0.75rem;
+}
+
+.my-squads-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.my-squads-section-heading {
+  padding: 0 0.15rem;
+}
+
+.my-squads-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.my-squad-card {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  min-height: 21rem;
+}
+
+.my-squad-card.is-command {
+  border-color: rgba(241, 184, 91, 0.28);
+  background:
+    linear-gradient(145deg, rgba(241, 184, 91, 0.055), transparent 48%),
+    var(--panel);
+}
+
+.my-squad-card-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.my-squad-card-heading h3,
+.my-squad-card-heading p {
+  margin: 0;
+}
+
+.my-squad-card-heading h3 {
+  font-size: 1.12rem;
+}
+
+.my-squad-card > p {
+  margin: 0;
+  color: var(--muted-soft);
+  line-height: 1.65;
+}
+
+.my-squad-facts {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.my-squad-facts > div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.9fr) minmax(0, 1.4fr);
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid rgba(213, 228, 240, 0.09);
+}
+
+.my-squad-facts dt,
+.my-squad-facts dd {
+  margin: 0;
+}
+
+.my-squad-facts dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.my-squad-facts dd {
+  color: var(--text);
+  font-size: 0.86rem;
+}
+
+.my-squad-next-date {
+  margin-top: -0.45rem !important;
+  color: var(--accent-strong) !important;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.my-squad-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: auto;
+}
+
+.my-squads-empty {
+  justify-items: start;
+  gap: 0.8rem;
+}
+
+.my-squads-empty h2,
+.my-squads-empty p {
+  margin: 0;
+}
+
+.my-squads-agenda {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.my-squads-agenda-list {
+  display: grid;
+}
+
+.my-squads-agenda-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid rgba(213, 228, 240, 0.09);
+  color: inherit;
+  text-decoration: none;
+}
+
+.my-squads-agenda-row:first-child {
+  border-top: 0;
+}
+
+.my-squads-agenda-row > span:nth-child(2) {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.my-squads-agenda-row small {
+  color: var(--muted);
+}
+
+.my-squads-agenda-row b {
+  color: var(--accent-strong);
+}
+
+.my-squads-events-view {
+  min-height: 18rem;
+}
+
+.my-squads-event-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.my-squads-event-row .small-action {
+  white-space: nowrap;
+}
+
+.my-squads-events-empty {
+  justify-items: start;
+  gap: 0.7rem;
+  padding: 1.25rem 0.2rem 0.25rem;
+  border-top: 1px solid rgba(213, 228, 240, 0.09);
+}
+
+.my-squads-events-empty h3,
+.my-squads-events-empty p {
+  margin: 0;
+}
+
+@media (max-width: 1050px) {
+  .my-squads-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .my-squads-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .my-squad-card-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .my-squad-card-heading .type-pill {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .my-squad-facts > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .my-squads-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .my-squads-event-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .my-squads-event-row .small-action {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

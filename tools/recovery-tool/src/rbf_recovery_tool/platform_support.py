@@ -22,7 +22,11 @@ def application_data_root() -> Path:
         configured = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
         return Path(configured) if configured else Path.home() / "AppData" / "Local"
     configured = os.environ.get("XDG_DATA_HOME")
-    return Path(configured).expanduser() if configured else Path.home() / ".local" / "share"
+    return (
+        Path(configured).expanduser()
+        if configured
+        else Path.home() / ".local" / "share"
+    )
 
 
 def open_directory(path: Path) -> None:

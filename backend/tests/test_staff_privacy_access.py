@@ -99,6 +99,7 @@ def test_moderator_cannot_access_admin_privacy_and_integration_endpoints() -> No
             '/api/admin/ip-blocks',
             '/api/admin/ip-blocks/summary',
             '/api/admin/audit-logs',
+            '/api/admin/privacy-requests',
             '/api/admin/discord-webhooks',
             '/api/admin/discord-webhooks/events',
             '/api/admin/discord-webhooks/summary',

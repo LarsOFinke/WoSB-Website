@@ -1,0 +1,104 @@
+/* Collapsible Discord delivery history and separated broadcast administration */
+.discord-broadcasts-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.broadcast-webhook-management,
+.broadcast-target-management-list {
+  min-width: 0;
+}
+
+.broadcast-target-editor {
+  grid-auto-rows: max-content;
+}
+
+.webhook-delivery-disclosure {
+  overflow: hidden;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1.05rem;
+  background: rgba(8, 18, 30, 0.74);
+}
+
+.webhook-delivery-disclosure > summary {
+  list-style: none;
+}
+
+.webhook-delivery-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.webhook-delivery-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 5rem;
+  padding: 1rem 1.1rem;
+  cursor: pointer;
+}
+
+.webhook-delivery-summary > span:first-child {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.webhook-delivery-summary strong {
+  font-size: 1.05rem;
+}
+
+.webhook-delivery-summary small {
+  color: var(--text-muted, #9caabd);
+  line-height: 1.45;
+}
+
+.webhook-delivery-disclosure[open] .webhook-delivery-summary {
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.webhook-delivery-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+
+.webhook-delivery-header-actions,
+.webhook-history-delete-confirmation,
+.webhook-delivery-row-confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.webhook-delivery-header-actions {
+  justify-content: flex-end;
+}
+
+.webhook-history-delete-confirmation {
+  justify-content: space-between;
+  padding: 0.9rem;
+  border: 1px solid rgba(255, 116, 116, 0.34);
+  border-radius: 0.85rem;
+  background: rgba(91, 23, 28, 0.22);
+}
+
+.webhook-history-delete-confirmation > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.webhook-history-delete-confirmation span,
+.webhook-delivery-row-confirmation > span {
+  color: var(--text-muted, var(--muted));
+  font-size: 0.82rem;
+}
+
+.webhook-delivery-row-confirmation {
+  min-width: 14rem;
+}
+
+.webhook-delivery-table-shell {
+  min-width: 0;
+}

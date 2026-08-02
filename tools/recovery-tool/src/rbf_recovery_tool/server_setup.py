@@ -29,9 +29,13 @@ def _load_request(path: Path) -> dict[str, object]:
     try:
         content = resolved.read_text(encoding="utf-8-sig")
     except PermissionError as exc:
-        raise RuntimeError(f"Keine Leseberechtigung für die Enrollment-Anfrage: {resolved}") from exc
+        raise RuntimeError(
+            f"Keine Leseberechtigung für die Enrollment-Anfrage: {resolved}"
+        ) from exc
     except OSError as exc:
-        raise RuntimeError(f"Enrollment-Anfrage konnte nicht gelesen werden: {resolved}") from exc
+        raise RuntimeError(
+            f"Enrollment-Anfrage konnte nicht gelesen werden: {resolved}"
+        ) from exc
     try:
         payload = json.loads(content)
     except json.JSONDecodeError as exc:
@@ -41,7 +45,9 @@ def _load_request(path: Path) -> dict[str, object]:
     try:
         return validate_request(payload)
     except ValueError as exc:
-        raise RuntimeError(f"Ungültige Enrollment-Anfrage in {resolved}: {exc}") from exc
+        raise RuntimeError(
+            f"Ungültige Enrollment-Anfrage in {resolved}: {exc}"
+        ) from exc
 
 
 def _public_recipient(identity: Path) -> str:
@@ -78,7 +84,9 @@ def _ensure_recovery_ssh_key(path: Path) -> str:
             timeout=30,
         )
         if completed.returncode != 0 or not path.is_file():
-            raise RuntimeError("Der lokale Recovery-Leseschlüssel konnte nicht erzeugt werden.")
+            raise RuntimeError(
+                "Der lokale Recovery-Leseschlüssel konnte nicht erzeugt werden."
+            )
     os.chmod(path, 0o600)
     completed = subprocess.run(
         ["ssh-keygen", "-y", "-f", str(path)],
@@ -154,11 +162,15 @@ def provision_backup_server(
     skip_package_install: bool = False,
     retention_days: int = 30,
     recovery_username: str = "rbf-recovery",
-    recovery_ssh_key: Path = Path.home() / "RBF-Recovery" / "rbf-recovery-readonly-ed25519",
+    recovery_ssh_key: Path = Path.home()
+    / "RBF-Recovery"
+    / "rbf-recovery-readonly-ed25519",
     configure_local_profile: bool = True,
 ) -> Path:
     if os.name == "nt" or sys.platform == "darwin":
-        raise RuntimeError("Die automatische Backup-Server-Provisionierung wird nur unter Linux unterstützt.")
+        raise RuntimeError(
+            "Die automatische Backup-Server-Provisionierung wird nur unter Linux unterstützt."
+        )
     request = _load_request(request_path.expanduser().resolve())
     requested_username = str(request["requested_username"])
     requested_directory = str(request["requested_directory"])
@@ -183,18 +195,29 @@ def provision_backup_server(
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="rbf-backup-server-") as directory:
         result_path = Path(directory) / "provisioning-result.json"
-        provisioner = support_script("Provision-RbfBackupServer.sh", require_root_owned=True)
+        provisioner = support_script(
+            "Provision-RbfBackupServer.sh", require_root_owned=True
+        )
         command = [
             str(provisioner),
-            "--request", str(request_path.expanduser().resolve()),
-            "--host", host,
-            "--port", str(port),
-            "--user", username,
-            "--directory", storage_directory,
-            "--recovery-user", recovery_username,
-            "--recovery-public-key", recovery_public_key,
-            "--retention-days", str(retention_days),
-            "--result", str(result_path),
+            "--request",
+            str(request_path.expanduser().resolve()),
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--user",
+            username,
+            "--directory",
+            storage_directory,
+            "--recovery-user",
+            recovery_username,
+            "--recovery-public-key",
+            recovery_public_key,
+            "--retention-days",
+            str(retention_days),
+            "--result",
+            str(result_path),
         ]
         if allow_from:
             command.extend(["--allow-from", allow_from])
@@ -203,7 +226,9 @@ def provision_backup_server(
         if os.geteuid() != 0:
             pkexec = shutil.which("pkexec")
             if not pkexec:
-                raise RuntimeError("pkexec fehlt; führe den Provisioning-Befehl einmalig mit sudo aus.")
+                raise RuntimeError(
+                    "pkexec fehlt; führe den Provisioning-Befehl einmalig mit sudo aus."
+                )
             command.insert(0, pkexec)
         completed = subprocess.run(command, check=False, text=True, timeout=1800)
         if completed.returncode != 0 or not result_path.is_file():
@@ -217,7 +242,9 @@ def provision_backup_server(
         try:
             _configure_local_recovery_profile(
                 port=int(host_payload.get("port") or port),
-                username=str(host_payload.get("recovery_username") or recovery_username),
+                username=str(
+                    host_payload.get("recovery_username") or recovery_username
+                ),
                 remote_directory=str(host_payload.get("remote_directory") or "/data"),
                 ssh_key=recovery_ssh_key,
                 identity=identity,
@@ -247,7 +274,9 @@ def provision_backup_server(
         "managed_server": True,
     }
     try:
-        response = validate_response(response, expected_enrollment_id=str(request["enrollment_id"]))
+        response = validate_response(
+            response, expected_enrollment_id=str(request["enrollment_id"])
+        )
     except ValueError as exc:
         raise RuntimeError(str(exc)) from exc
     temporary = output.with_name(f".{output.name}.{os.getpid()}.tmp")

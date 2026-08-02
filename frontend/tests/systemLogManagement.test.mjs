@@ -14,7 +14,7 @@ const logsSource = await source('../src/modules/admin/composables/useAdminLogs.j
 const dashboardSource = await source('../src/modules/admin/components/SecurityLogDashboard.vue')
 const pageSource = await source('../src/modules/admin/pages/AdminPage.vue')
 const blockPanelSource = await source('../src/modules/admin/components/IpBlockManagementPanel.vue')
-const styleSource = await source('../src/modules/admin/styles/staffWorkspace.css')
+const styleSource = await source('../src/modules/admin/styles/staffSecurityWorkspace.css')
 
 
 test('the admin UI exposes only aggregated IP-ban candidates', () => {
@@ -48,7 +48,7 @@ test('routes, user agents and raw request details are absent from the candidate 
 
 test('the privacy notice is present and responsive', () => {
   assert.ok(styleSource.includes('.security-privacy-notice'))
-  assert.ok(styleSource.includes('@media (max-width: 760px)'))
+  assert.ok(styleSource.includes('@media (max-width: 900px)'))
 })
 
 

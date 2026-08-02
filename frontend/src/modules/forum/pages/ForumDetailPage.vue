@@ -5,6 +5,7 @@ import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import MarkdownEditor from '@/core/components/MarkdownEditor.vue'
 import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
 import { useForumDetailPage } from '@/modules/forum/composables/useForumDetailPage'
+import '@/modules/forum/styles/forumReplies.css'
 
 const props = defineProps({ id: { type: String, required: true } })
 const {

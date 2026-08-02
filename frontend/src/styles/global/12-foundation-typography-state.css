@@ -1,0 +1,98 @@
+/* Shared typography and state */
+h1,
+h2,
+h3,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text);
+}
+
+p {
+  margin: 0;
+}
+
+.muted,
+.table-state,
+.build-filter-panel p,
+.home-card p,
+.group-card-description,
+.section-helper-text,
+.auth-copy p,
+.admin-hero p,
+.admin-panel-heading p,
+.profile-hero p,
+.profile-builds-panel p,
+.password-panel p,
+.group-join-panel p,
+.form-chapter-heading p,
+.section-heading-row p,
+.announcement-copy-panel p,
+.announcement-mode-panel p,
+.announcement-info-card p {
+  color: var(--muted);
+}
+
+.error-text {
+  color: var(--danger);
+}
+
+.success-text,
+.rate-check-message.is-ok {
+  color: var(--success);
+}
+
+.eyebrow,
+.module-card-topline > span {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.summary-pill,
+.type-pill,
+.ship-stat-row span,
+.build-card-meta span,
+.refined-meta span,
+.module-meta-row span,
+.home-status-card span,
+.home-status-card strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  border: 1px solid rgba(221, 231, 244, 0.16);
+  border-radius: var(--radius-pill);
+  padding: 0.42rem 0.72rem;
+  background: var(--surface-highlight);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.summary-pill,
+.type-pill {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.type-pill {
+  border-color: rgba(241, 184, 91, 0.24);
+}
+
+.status-open {
+  border-color: rgba(159, 230, 178, 0.45);
+  color: var(--success);
+}
+
+.status-full,
+.status-closed {
+  opacity: 0.78;
+}

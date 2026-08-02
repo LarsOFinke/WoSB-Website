@@ -75,6 +75,14 @@ compose = text("infrastructure/compose.yml")
 check("privileged: true" not in compose, "privileged container found")
 check("/var/run/docker.sock" not in compose, "Docker socket must not be mounted")
 check(compose.count("no-new-privileges:true") >= 7, "services must retain no-new-privileges")
+check(compose.count("pids_limit:") >= 7, "every service must retain a process limit")
+check(compose.count("cap_drop:") >= 3, "non-root application jobs must drop Linux capabilities")
+host_packages = text("infrastructure/scripts/lib/host/packages.sh")
+host_firewall = text("infrastructure/scripts/lib/host/firewall.sh")
+check("unattended-upgrades" in host_packages, "host security updates must be installed")
+check("apt-daily-upgrade.timer" in host_packages, "host security update timer must be enabled")
+check("usermod -aG docker" not in host_packages, "setup must not grant root-equivalent Docker group access")
+check("ufw default deny incoming" in host_firewall, "host firewall must default-deny inbound traffic")
 headers = text("infrastructure/nginx/security-headers.conf")
 for header in (
     "Strict-Transport-Security",
@@ -103,6 +111,18 @@ check(
 )
 auth_routes = text("backend/src/app/modules/accounts/routes/auth.py")
 check("httponly=True" in auth_routes, "session cookie must remain HttpOnly")
+privacy_export = text("backend/src/app/modules/privacy/services/data_export_service.py")
+privacy_requests = text(
+    "backend/src/app/modules/privacy/services/data_subject_request_service.py"
+)
+for secret_column in ("password_hash", "token_hash", "consent_key"):
+    check(
+        secret_column in privacy_export,
+        f"personal export does not explicitly exclude {secret_column}",
+    )
+check("auth_sessions" in privacy_requests, "account deletion must revoke sessions")
+check("is_active = False" in privacy_requests, "account deletion must deactivate login")
+check("is_bootstrap_admin" in privacy_requests, "bootstrap administrator deletion must remain blocked")
 
 # Secret handling and Discord webhook invariants.
 webhook_model = text("backend/src/app/modules/admin/models/outbound_webhook.py")
@@ -161,8 +181,17 @@ for root in scan_roots:
                 f"possible committed {label}: {path.relative_to(ROOT)}",
             )
 
-backup_admin_runner = text("infrastructure/scripts/backup/backup-admin-runner.py")
-restore_runner_block = backup_admin_runner.split("def restore_postgresql", 1)[1].split("@staticmethod", 1)[0]
+backup_admin_runner = "\n".join(
+    text(f"infrastructure/scripts/backup/{name}")
+    for name in (
+        "backup-admin-runner.py",
+        "backup_runner_core.py",
+        "backup_runner_enrollment.py",
+        "backup_runner_transfer.py",
+        "backup_runner_restore.py",
+    )
+)
+restore_runner_block = text("infrastructure/scripts/backup/backup_runner_restore.py")
 check(
     restore_runner_block.index("consume_database_restore_approval")
     < restore_runner_block.index("resolve_local_postgres_backup"),

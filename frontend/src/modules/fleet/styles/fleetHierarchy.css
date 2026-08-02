@@ -1,0 +1,146 @@
+/* Fleet management hierarchy and protected-role UX */
+.fleet-hierarchy-policy {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid rgba(241, 184, 91, 0.2);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 8% 0%, var(--accent-glow), transparent 32%),
+    rgba(9, 18, 29, 0.72);
+}
+
+.fleet-hierarchy-policy-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.fleet-hierarchy-policy-head h2,
+.fleet-hierarchy-policy-head p {
+  margin: 0;
+}
+
+.fleet-hierarchy-policy-head > div {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.fleet-hierarchy-policy-head > div > p:last-child {
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.fleet-protection-summary {
+  flex: 0 0 auto;
+  border-color: rgba(241, 184, 91, 0.3);
+  background: rgba(241, 184, 91, 0.09);
+}
+
+.fleet-hierarchy-levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.fleet-hierarchy-levels article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  gap: 0.2rem 0.65rem;
+  align-content: start;
+  padding: 0.8rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.fleet-hierarchy-levels article > span {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.65rem;
+  background: rgba(241, 184, 91, 0.11);
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.fleet-hierarchy-levels small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.fleet-protected-pill {
+  border-color: rgba(255, 210, 122, 0.32);
+  background: rgba(255, 210, 122, 0.08);
+  color: #f5d58d;
+}
+
+.fleet-site-role-pill {
+  border-color: rgba(138, 186, 255, 0.28);
+  background: rgba(138, 186, 255, 0.07);
+}
+
+.fleet-request-actions {
+  min-width: min(24rem, 100%);
+  display: grid;
+  justify-items: end;
+  gap: 0.65rem;
+}
+
+.fleet-protection-notice {
+  min-width: min(24rem, 100%);
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid rgba(255, 210, 122, 0.2);
+  border-radius: 0.8rem;
+  background: rgba(255, 210, 122, 0.055);
+}
+
+.fleet-protection-notice strong {
+  color: #f5d58d;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fleet-protection-notice small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.extended-directory-controls.is-read-only {
+  min-width: min(25rem, 100%);
+  justify-content: stretch;
+}
+
+.extended-directory-controls.is-read-only .fleet-protection-notice {
+  width: 100%;
+}
+
+@media (max-width: 1050px) {
+  .fleet-hierarchy-levels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .fleet-hierarchy-policy-head {
+    flex-direction: column;
+  }
+
+  .fleet-request-actions {
+    justify-items: stretch;
+    min-width: 100%;
+  }
+
+  .fleet-request-actions .compact-actions {
+    justify-content: flex-start;
+  }
+}

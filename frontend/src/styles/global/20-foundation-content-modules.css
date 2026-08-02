@@ -1,0 +1,53 @@
+/* Home and content modules */
+.home-page,
+.hub-home-frame,
+.enduser-home-frame,
+.polished-home-frame {
+  display: grid;
+  gap: var(--content-gap);
+}
+
+.home-content-grid,
+.hub-module-grid,
+.enduser-module-grid,
+.refined-module-grid,
+.profile-dashboard-grid,
+.group-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.75fr);
+  gap: var(--content-gap);
+  align-items: stretch;
+}
+
+.hub-intro-card,
+.refined-intro-card,
+.enduser-intro-card,
+.hub-showcase,
+.refined-showcase,
+.enduser-showcase {
+  display: grid;
+  gap: 1rem;
+}
+
+.hub-intro-card,
+.hub-showcase-header {
+  grid-template-columns: minmax(220px, 0.55fr) minmax(0, 1.45fr);
+}
+
+.hub-showcase-header,
+.hub-intro-card {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.hub-module-card,
+.home-card {
+  display: grid;
+  align-content: start;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.hub-module-card.is-placeholder {
+  opacity: 0.74;
+}

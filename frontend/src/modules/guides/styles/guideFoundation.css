@@ -1,0 +1,98 @@
+.guide-library-page,
+.guide-reader-page,
+.guide-editor-page {
+  min-width: 0;
+  color: var(--text);
+}
+
+.guide-module-frame {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(20, 38, 57, 0.7), rgba(7, 20, 33, 0.92)),
+    var(--bg-elevated);
+  box-shadow: var(--shadow);
+}
+
+.guide-library-header,
+.guide-reader-masthead {
+  position: relative;
+  padding: clamp(1.4rem, 2.8vw, 2.4rem);
+}
+
+.guide-library-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.guide-library-header::after,
+.guide-reader-masthead::after {
+  content: '';
+  position: absolute;
+  right: clamp(1.4rem, 2.8vw, 2.4rem);
+  bottom: 0;
+  left: clamp(1.4rem, 2.8vw, 2.4rem);
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-tint));
+}
+
+.guide-library-header h1,
+.guide-reader-masthead h1,
+.guide-editor-commandbar h1 {
+  margin: 0;
+  font-family: var(--font-editorial);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.guide-library-header h1 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.04;
+}
+
+.guide-library-header p {
+  max-width: 48rem;
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 1.35vw, 1.08rem);
+}
+
+.guide-primary-action,
+.guide-toolbar-action,
+.guide-back-action {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.guide-primary-action {
+  flex: none;
+  padding: 0.8rem 1.1rem;
+  background: var(--accent);
+  color: #101722;
+  box-shadow: 0 0.7rem 1.6rem rgba(0, 0, 0, 0.2);
+}
+
+.guide-primary-action:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.guide-primary-action.is-compact {
+  min-height: 2.55rem;
+  padding: 0.7rem 0.95rem;
+}

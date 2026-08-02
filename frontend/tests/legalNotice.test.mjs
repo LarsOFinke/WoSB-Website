@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { readCssBundle } from './helpers/readCssBundle.mjs'
 
 import { legalNoticeMessages } from '../src/locales/messages/legalNotice.js'
 
@@ -13,7 +14,10 @@ const publicPage = readFileSync(new URL('../src/modules/legal/pages/LegalNoticeP
 const adminPage = readFileSync(new URL('../src/modules/legal/pages/LegalNoticeAdminPage.vue', import.meta.url), 'utf8')
 const api = readFileSync(new URL('../src/modules/legal/api/legalNotice.js', import.meta.url), 'utf8')
 
-const shellStyles = readFileSync(new URL('../src/styles/global/30-shell.css', import.meta.url), 'utf8')
+const shellStyles = readCssBundle([
+  '../src/styles/global/40-shell-navigation.css',
+  '../src/styles/global/40-shell-content-footer.css',
+], import.meta.url)
 const adminComposable = readFileSync(new URL('../src/modules/legal/composables/useLegalNoticeAdminPage.js', import.meta.url), 'utf8')
 const generatedEnglish = readFileSync(new URL('../src/locales/generated/en.js', import.meta.url), 'utf8')
 

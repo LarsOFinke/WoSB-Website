@@ -1,0 +1,59 @@
+/* Forum reply moderation */
+.forum-post-management-actions {
+  align-items: stretch;
+}
+
+.forum-post-delete-confirmation {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 116, 116, 0.34);
+  border-radius: 0.8rem;
+  background: rgba(91, 23, 28, 0.2);
+}
+
+.forum-post-delete-confirmation > div:first-child {
+  display: grid;
+  gap: 0.18rem;
+  min-width: min(100%, 22rem);
+}
+
+.forum-post-delete-confirmation span {
+  color: var(--text-muted, var(--muted));
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .webhook-delivery-summary,
+  .webhook-section-head,
+  .webhook-history-delete-confirmation,
+  .forum-post-delete-confirmation {
+    align-items: stretch;
+  }
+
+  .webhook-delivery-summary,
+  .webhook-history-delete-confirmation,
+  .forum-post-delete-confirmation {
+    flex-direction: column;
+  }
+
+  .webhook-delivery-summary .summary-pill {
+    align-self: flex-start;
+  }
+
+  .webhook-delivery-header-actions,
+  .webhook-history-delete-confirmation .compact-actions,
+  .forum-post-delete-confirmation .compact-actions {
+    justify-content: flex-start;
+  }
+
+  .webhook-delivery-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

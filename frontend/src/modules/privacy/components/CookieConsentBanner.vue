@@ -201,7 +201,7 @@ onMounted(initialize)
   color: var(--danger, #ff8a8a);
 }
 
-@media (max-width: 42rem) {
+@media (max-width: 720px) {
   .cookie-consent {
     right: 0.5rem;
     bottom: 0.5rem;

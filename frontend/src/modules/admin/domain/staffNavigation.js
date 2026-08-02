@@ -37,6 +37,7 @@ export function createStaffNavigationGroups(t, { isAdmin = false } = {}) {
       label: t('admin.workspace.navigation.administration'),
       items: isAdmin ? [
         workspaceItem('users', 'users', t('admin.tabs.users')),
+        { key: 'privacy-requests', icon: 'lock', label: t('privacy.data.adminTitle'), to: '/admin/privacy-requests', protected: true },
         { key: 'master-data', icon: 'builds', label: t('masterData.title'), to: '/admin/master-data', protected: true },
         { key: 'legal-notice', icon: 'inbox', label: t('legalNotice.admin.navigation'), to: '/admin/legal-notice', protected: true },
         { key: 'webhooks', icon: 'webhook', label: t('webhookSetup.title'), to: '/admin/discord-webhooks', protected: true },

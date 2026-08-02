@@ -1,0 +1,154 @@
+/* Capacity-aware crew console */
+.crew-allocation-console {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgba(213, 226, 244, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(7, 16, 28, 0.72), rgba(12, 24, 38, 0.62));
+}
+
+.crew-allocation-total {
+  display: grid;
+  justify-items: end;
+  gap: 0.08rem;
+}
+
+.crew-allocation-total strong {
+  font-size: 1.15rem;
+}
+
+.crew-allocation-total span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.crew-allocation-meter {
+  height: 0.72rem;
+}
+
+.crew-allocation-meter > span {
+  height: 100%;
+  transition: width 160ms ease;
+}
+
+.crew-meter-sailors { background: rgba(214, 167, 87, 0.92); }
+.crew-meter-musketeers { background: rgba(117, 177, 232, 0.9); }
+.crew-meter-soldiers { background: rgba(109, 222, 159, 0.86); }
+.crew-meter-mercenaries { background: rgba(190, 131, 231, 0.84); }
+
+.crew-allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  font-size: 0.78rem;
+}
+
+.crew-warning {
+  color: var(--danger);
+}
+
+.crew-slider-card {
+  display: grid;
+  gap: 0.55rem;
+  min-height: 6rem;
+  padding: 0.82rem;
+  border: 1px solid rgba(213, 226, 244, 0.1);
+  border-radius: 12px;
+  background: rgba(2, 9, 17, 0.28);
+}
+
+.crew-slider-card > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.crew-slider-card > span small,
+.crew-slider-card > small {
+  color: var(--muted);
+}
+
+.crew-slider-card > span strong {
+  font-size: 1.18rem;
+}
+
+.crew-slider-card input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent, #d6a757);
+}
+
+.crew-allocation-console.is-invalid {
+  border-color: rgba(244, 125, 125, 0.42);
+}
+
+@media (max-width: 1180px) {
+  .command-deck-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .ship-identity-panel {
+    grid-template-columns: minmax(210px, 0.7fr) minmax(0, 1fr);
+  }
+
+  .ship-visual {
+    grid-row: span 4;
+  }
+
+  .effective-stat-grid {
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .effective-stat-grid,
+  .upgrade-rack-grid,
+  .command-deck-meta-grid,
+  .detail-crew-grid,
+  .detail-inventory-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modifier-intelligence-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .build-command-deck {
+    padding: 0.72rem;
+    border-radius: 18px;
+  }
+
+  .command-deck-header,
+  .command-panel-title,
+  .crew-allocation-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .command-panel-title small {
+    text-align: left;
+  }
+
+  .ship-identity-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-crew-grid,
+  .detail-inventory-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .ship-visual {
+    grid-row: auto;
+  }
+
+  .effective-stat-grid,
+  .upgrade-rack-grid,
+  .command-deck-meta-grid,
+  .ship-operational-summary {
+    grid-template-columns: 1fr;
+  }
+}

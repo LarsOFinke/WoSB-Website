@@ -1,0 +1,215 @@
+/* Markdown authoring and rendered user content */
+.markdown-editor {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.markdown-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding: 0.55rem;
+  border: 1px solid var(--line-domain);
+  border-radius: var(--radius-sm);
+  background: rgba(4, 12, 20, 0.72);
+}
+
+.markdown-tool-button {
+  min-width: 2.2rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgba(221, 231, 244, 0.16);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.markdown-tool-button:hover,
+.markdown-tool-button:focus-visible {
+  border-color: rgba(241, 184, 91, 0.55);
+  background: var(--accent-glow);
+}
+
+.markdown-toolbar-hint {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.markdown-textarea-shell {
+  margin: 0;
+}
+
+.markdown-content {
+  min-width: 0;
+}
+
+.markdown-content > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin: 1.25em 0 0.5em;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.markdown-content h1 { font-size: clamp(1.55rem, 3vw, 2.2rem); }
+.markdown-content h2 { font-size: clamp(1.35rem, 2.5vw, 1.8rem); }
+.markdown-content h3 { font-size: clamp(1.15rem, 2vw, 1.45rem); }
+
+.markdown-content p,
+.markdown-content ul,
+.markdown-content ol,
+.markdown-content blockquote,
+.markdown-content pre,
+.markdown-content table {
+  margin: 0 0 0.95rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5rem;
+}
+
+.markdown-content li + li {
+  margin-top: 0.25rem;
+}
+
+.markdown-content a {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.markdown-content blockquote {
+  padding: 0.65rem 0.9rem;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.markdown-content code {
+  padding: 0.12rem 0.32rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.28);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.markdown-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.9rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.markdown-content pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
+
+.markdown-content th,
+.markdown-content td {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line-domain);
+  text-align: left;
+}
+
+.markdown-content th {
+  background: var(--surface-highlight);
+}
+
+.markdown-content hr {
+  margin: 1.2rem 0;
+  border: 0;
+  border-top: 1px solid var(--line-ui);
+}
+
+.content-management-actions,
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.content-management-actions {
+  justify-content: flex-end;
+}
+
+.post-actions {
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.post-heading > div,
+.post-heading-meta {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.post-heading-meta {
+  justify-items: end;
+  color: var(--muted);
+}
+
+.post-heading small {
+  color: var(--muted);
+}
+
+.inline-post-editor {
+  display: grid;
+  gap: 0.8rem;
+}
+
+@media (max-width: 620px) {
+  .markdown-toolbar-hint {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .post-heading-meta {
+    justify-items: start;
+  }
+}
+
+.profile-preference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.55rem 1rem;
+  max-height: 18rem;
+  overflow: auto;
+  padding: 0.35rem 0;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}

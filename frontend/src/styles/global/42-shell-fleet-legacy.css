@@ -1,0 +1,98 @@
+/* Single fleet refactor */
+.single-fleet-frame .single-fleet-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.8fr);
+  gap: var(--space-5, 1.25rem);
+  align-items: start;
+}
+
+.single-fleet-card,
+.fleet-join-panel {
+  min-height: 100%;
+}
+
+.fleet-orders-block {
+  margin-top: var(--space-4, 1rem);
+  padding: var(--space-4, 1rem);
+  border: 1px solid var(--border-soft, rgba(255,255,255,.12));
+  border-radius: var(--radius-lg, 18px);
+  background: var(--surface-soft);
+}
+
+.fleet-status-stack,
+.member-directory-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem .65rem;
+  margin: .75rem 0;
+}
+
+.member-directory-meta span {
+  color: var(--text-muted, #9fb0c8);
+  font-size: .88rem;
+}
+
+.directory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3, .75rem);
+}
+
+.register-directory-grid .directory-note-field {
+  grid-column: 1 / -1;
+}
+
+.checkbox-card-control {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .75rem .85rem;
+  border: 1px solid var(--border-soft, rgba(255,255,255,.14));
+  border-radius: var(--radius-md, 14px);
+  background: rgba(255,255,255,.04);
+}
+
+.checkbox-card-control input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--accent, #d6a757);
+}
+
+.extended-member-row {
+  align-items: start;
+}
+
+.extended-directory-controls {
+  min-width: min(520px, 100%);
+}
+
+.member-directory-edit-grid {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  margin: .65rem 0;
+}
+
+.compact-directory-field {
+  padding: .65rem;
+}
+
+.compact-directory-field input {
+  min-height: 2.2rem;
+}
+
+.internal-note {
+  border-left: 2px solid var(--accent, #d6a757);
+  padding-left: .75rem;
+}
+
+@media (max-width: 1050px) {
+  .single-fleet-frame .single-fleet-layout {
+    grid-template-columns: 1fr;
+  }
+  .directory-form-grid,
+  .member-directory-edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .extended-directory-controls {
+    min-width: 100%;
+  }
+}

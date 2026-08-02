@@ -67,6 +67,10 @@ setup_prepare_runtime() {
     /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
   fi
 
+  if [[ "$SKIP_HOST" == false ]]; then
+    /usr/bin/env bash "$INFRA_DIR/scripts/checks/host-security.sh"
+  fi
+
   bw_compose_with_profiles config >/dev/null
   success "Compose-Konfiguration ist gültig."
 }
@@ -112,7 +116,15 @@ setup_print_summary() {
  Credentials:     $INFRA_DIR/first-run-credentials.txt
 
  Für Let's Encrypt müssen DNS sowie TCP-Port 80 und 443 auf diesen Pi zeigen.
- Ohne erfolgreiche Domainvalidierung bleibt das Bootstrap-Zertifikat aktiv.
+ Ohne erfolgreiche Domainvalidierung bleibt das Bootstrap-Zertifikat aktiv und
+ die Installation ist nicht für einen öffentlichen Produktivbetrieb freigegeben.
+
+ Verbleibende Administrator-Gates:
+ - Erstanmeldung durchführen und Bootstrap-Zugangsdaten sicher entfernen
+ - Impressum und Datenschutzerklärung rechtlich prüfen und veröffentlichen
+ - DNS, öffentliches TLS und extern erreichbare Ports unabhängig verifizieren
+ - SSH-Schlüsselzugang testen; erst danach Passwort-/Root-Login deaktivieren
+ - Backup-System enrollen und einen vollständigen Restore-Test protokollieren
 ============================================================
 SUMMARY
 }

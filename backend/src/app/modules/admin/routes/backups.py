@@ -15,34 +15,24 @@ from app.modules.admin.schemas.backup_control import (
     BackupControlStatus,
     BackupDiscoveryRequest,
     BackupEnrollmentResponseRequest,
-    BackupOperation,
     DatabaseRestoreRequest,
 )
+from app.modules.admin.routes.backup_route_support import request_backup_operation
 from app.modules.admin.services.audit_log_service import record_audit_safely
 from app.modules.admin.services.backup_control_service import (
-    BackupControlError,
-    get_backup_control_status,
-    request_backup_operation,
+    BackupControlService,
+    get_backup_control_service,
 )
 
 router = APIRouter(prefix="/backups", tags=["admin-backups"])
 
 
-def _request(
-    current_user: User,
-    operation: BackupOperation,
-    payload: dict | None = None,
-) -> BackupControlRequestResult:
-    try:
-        backup_status = request_backup_operation(current_user, operation, payload)
-    except BackupControlError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    return BackupControlRequestResult(accepted=True, status=backup_status)
-
-
 @router.get("/status", response_model=BackupControlStatus)
-def admin_backup_status(_: User = Depends(require_admin)) -> BackupControlStatus:
-    return get_backup_control_status()
+def admin_backup_status(
+    _: User = Depends(require_admin),
+    service: BackupControlService = Depends(get_backup_control_service),
+) -> BackupControlStatus:
+    return service.get_status()
 
 
 @router.post(
@@ -53,8 +43,9 @@ def admin_backup_status(_: User = Depends(require_admin)) -> BackupControlStatus
 def admin_prepare_backup_upload_key(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "prepare_key")
+    result = request_backup_operation(service, current_user, "prepare_key")
     record_audit_safely(
         db,
         actor=current_user,
@@ -75,8 +66,9 @@ def admin_prepare_backup_upload_key(
 def admin_prepare_backup_enrollment(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "prepare_enrollment")
+    result = request_backup_operation(service, current_user, "prepare_enrollment")
     record_audit_safely(
         db,
         actor=current_user,
@@ -98,8 +90,9 @@ def admin_apply_backup_enrollment(
     payload: BackupEnrollmentResponseRequest,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    current = get_backup_control_status()
+    current = service.get_status()
     enrollment_request = current.enrollment_request or {}
     expected_enrollment_id = str(enrollment_request.get("enrollment_id") or "")
     if not expected_enrollment_id:
@@ -113,7 +106,9 @@ def admin_apply_backup_enrollment(
             status_code=status.HTTP_409_CONFLICT,
             detail="The enrollment response does not belong to the active request.",
         )
-    result = _request(current_user, "apply_enrollment", payload.model_dump())
+    result = request_backup_operation(
+        service, current_user, "apply_enrollment", payload.model_dump()
+    )
     record_audit_safely(
         db,
         actor=current_user,
@@ -135,8 +130,9 @@ def admin_discover_backup_host(
     payload: BackupDiscoveryRequest,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "discover", payload.model_dump())
+    result = request_backup_operation(service, current_user, "discover", payload.model_dump())
     record_audit_safely(
         db,
         actor=current_user,
@@ -158,8 +154,9 @@ def admin_configure_backup_host(
     payload: BackupConfigurationRequest,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "configure", payload.model_dump())
+    result = request_backup_operation(service, current_user, "configure", payload.model_dump())
     record_audit_safely(
         db,
         actor=current_user,
@@ -183,8 +180,9 @@ def admin_configure_backup_host(
 def admin_delete_backup_configuration(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "delete_configuration")
+    result = request_backup_operation(service, current_user, "delete_configuration")
     record_audit_safely(
         db,
         actor=current_user,
@@ -205,8 +203,9 @@ def admin_delete_backup_configuration(
 def admin_test_backup_connection(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "test")
+    result = request_backup_operation(service, current_user, "test")
     record_audit_safely(
         db,
         actor=current_user,
@@ -226,8 +225,9 @@ def admin_test_backup_connection(
 def admin_run_application_backup(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "backup")
+    result = request_backup_operation(service, current_user, "backup")
     record_audit_safely(
         db,
         actor=current_user,
@@ -238,6 +238,7 @@ def admin_run_application_backup(
     )
     return result
 
+
 @router.post(
     "/local/scan",
     response_model=BackupControlRequestResult,
@@ -246,8 +247,9 @@ def admin_run_application_backup(
 def admin_scan_local_database_backups(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(current_user, "scan_local_backups")
+    result = request_backup_operation(service, current_user, "scan_local_backups")
     record_audit_safely(
         db,
         actor=current_user,
@@ -268,8 +270,10 @@ def admin_restore_local_database_backup(
     payload: DatabaseRestoreRequest,
     current_user: User = Depends(require_bootstrap_admin),
     db: Session = Depends(get_db),
+    service: BackupControlService = Depends(get_backup_control_service),
 ) -> BackupControlRequestResult:
-    result = _request(
+    result = request_backup_operation(
+        service,
         current_user,
         "restore_postgresql",
         {
@@ -289,4 +293,3 @@ def admin_restore_local_database_backup(
         changed_fields=["database"],
     )
     return result
-

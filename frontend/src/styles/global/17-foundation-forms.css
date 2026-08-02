@@ -1,0 +1,166 @@
+/* Forms */
+.create-frame,
+.create-frame-clean,
+.group-create-frame-clean,
+.forum-create-frame {
+  grid-template-columns: 1fr;
+  gap: var(--content-gap);
+}
+
+.form-section,
+.profile-panel,
+.admin-panel,
+.admin-locked,
+.group-members-panel,
+.group-join-panel,
+.reply-panel,
+.content-post-card,
+.stat-warning-panel,
+.announcement-copy-panel,
+.announcement-mode-panel,
+.announcement-info-card {
+  display: grid;
+  gap: 1rem;
+  background: rgba(16, 29, 43, 0.82);
+}
+
+.section-title,
+.form-chapter-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.section-title span {
+  min-width: 2.2rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(241, 184, 91, 0.38);
+  border-radius: var(--radius-pill);
+  color: var(--accent-strong);
+  background: rgba(241, 184, 91, 0.09);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.section-title h2 {
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-fields,
+.form-grid,
+.two-fields,
+.crew-grid,
+.profile-form,
+.password-form,
+.moderator-form,
+.announcement-copy-grid,
+.announcement-info-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.two-fields,
+.form-grid.two-columns,
+.crew-grid,
+.announcement-copy-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.group-basic-grid {
+  grid-template-columns: minmax(260px, 1.4fr) minmax(180px, 0.7fr) minmax(130px, 0.35fr);
+}
+
+.group-requirement-grid,
+.announcement-overview-grid,
+.weapon-detail-grid,
+.announcement-info-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.announcement-basic-grid,
+.announcement-requirement-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+}
+
+.field-stack {
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field-label,
+.field-caption,
+.moderator-form .input-panel span,
+.profile-form .input-panel span {
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.embedded-field {
+  background: rgba(5, 12, 20, 0.28);
+}
+
+.textarea-shell {
+  align-items: stretch;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+}
+
+textarea {
+  min-height: 8rem;
+  resize: vertical;
+  line-height: 1.65;
+}
+
+.form-message,
+.form-error,
+.profile-message {
+  margin: 0;
+}
+
+.toggle-field,
+.toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toggle-card {
+  min-height: 4.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(221, 231, 244, 0.15);
+  border-radius: var(--radius-sm);
+  background: rgba(5, 12, 20, 0.25);
+}
+
+.toggle-card span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.toggle-card small {
+  color: var(--muted);
+}
+
+input[type="checkbox"] {
+  width: 1.2rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--accent);
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}

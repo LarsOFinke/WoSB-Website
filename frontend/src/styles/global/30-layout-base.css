@@ -1,0 +1,135 @@
+/* Inventory utility coverage */
+.ammunition-panel,
+.consumable-panel,
+.hold-panel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.login-callout {
+  justify-self: start;
+}
+
+/* Responsive */
+@media (max-width: 1180px) {
+
+  .equipment-unified-grid,
+  .equipment-row,
+  .equipment-section .slot-row,
+  .weapon-arc-grid.four-columns,
+  .four-columns,
+  .detail-grid,
+  .weapon-detail-grid,
+  .announcement-overview-grid,
+  .announcement-info-grid,
+  .group-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .group-filter-toolbar,
+  .group-basic-grid,
+  .group-requirement-grid,
+  .moderator-form,
+  .profile-form,
+  .profile-dashboard-grid,
+  .group-detail-grid,
+  .home-content-grid,
+  .hub-module-grid,
+  .enduser-module-grid,
+  .refined-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-summary-card,
+  .profile-note-field,
+  .profile-message,
+  .profile-actions {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-hero,
+  .build-list-hero,
+  .profile-hero,
+  .admin-hero,
+  .detail-header,
+  .create-topline,
+  .group-create-topline-clean,
+  .auth-card,
+  .polished-auth-card,
+  .build-filter-panel,
+  .hub-intro-card,
+  .hub-showcase-header,
+  .two-fields,
+  .form-grid.two-columns,
+  .crew-grid,
+  .announcement-copy-grid,
+  .announcement-basic-grid,
+  .announcement-requirement-grid,
+  .admin-build-row,
+  .my-build-row,
+  .my-group-row,
+  .build-card-preview,
+  .refined-preview,
+  .detail-grid.two-cols,
+  .two-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .list-toolbar,
+  .list-toolbar.has-type-filter,
+  .refined-toolbar,
+  .group-filter-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .build-card-main,
+  .post-heading,
+  .section-heading-row,
+  .admin-panel-heading,
+  .module-card-topline,
+  .delete-confirmation {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-frame {
+    border-radius: var(--radius-lg);
+  }
+
+  .wire-section {
+    padding: 0.9rem;
+  }
+
+  .equipment-unified-grid,
+  .equipment-row,
+  .equipment-section .slot-row,
+  .inventory-grid,
+  .weapon-arc-grid,
+  .special-crew-grid,
+  .weapon-arc-grid.four-columns,
+  .four-columns,
+  .detail-grid,
+  .weapon-detail-grid,
+  .announcement-overview-grid,
+  .announcement-info-grid,
+  .group-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attachment-card--embedded {
+    grid-column: span 1;
+  }
+
+  .attachment-document-frame {
+    min-height: 320px;
+  }
+}

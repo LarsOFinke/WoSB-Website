@@ -1,112 +1,156 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-import json
-import os
+from functools import lru_cache
 from pathlib import Path
-import tempfile
-from typing import Any
+from typing import Any, Protocol
 
 from app.core.config import settings
 from app.modules.accounts.models.user import User
 from app.modules.admin.schemas.backup_control import BackupControlStatus, BackupOperation
+from app.modules.admin.services.backup_control_repository import BackupControlRepository
 
 
 ACTIVE_STATES = {"queued", "running"}
 RUNNING_STALE_AFTER = timedelta(minutes=5)
 QUEUED_STALE_AFTER = timedelta(minutes=10)
-STATUS_FILE = "backup-status.json"
-REQUEST_FILE = "backup.request"
+UtcClock = Callable[[], datetime]
+
+
+class BackupControlStore(Protocol):
+    def read_status(self) -> dict[str, Any]: ...
+
+    def read_request(self) -> dict[str, Any]: ...
+
+    def request_exists(self) -> bool: ...
+
+    def publish_request(self, payload: dict[str, Any]) -> None: ...
 
 
 class BackupControlError(RuntimeError):
     pass
 
 
-def _request_dir() -> Path:
-    path = Path(settings.control_request_dir)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-def _status_dir() -> Path:
-    return Path(settings.control_status_dir)
+class BackupControlService:
+    """Coordinates the API side of the asynchronous host-runner contract."""
 
+    def __init__(
+        self,
+        repository: BackupControlStore,
+        *,
+        clock: UtcClock = _utc_now,
+    ) -> None:
+        self.repository = repository
+        self.clock = clock
 
-def _read_json(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return payload if isinstance(payload, dict) else {}
+    @staticmethod
+    def _parse_timestamp(value: object) -> datetime | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
 
+    def _active_status_is_stale(
+        self, state: str, payload: dict[str, Any], *, request_exists: bool
+    ) -> bool:
+        now = self.clock()
+        if state == "running":
+            reference = self._parse_timestamp(payload.get("heartbeat_at")) or self._parse_timestamp(
+                payload.get("started_at")
+            )
+            return reference is None or now - reference > RUNNING_STALE_AFTER
+        if state == "queued" and not request_exists:
+            reference = self._parse_timestamp(payload.get("requested_at"))
+            return reference is None or now - reference > QUEUED_STALE_AFTER
+        return False
 
+    def get_status(self) -> BackupControlStatus:
+        payload = self.repository.read_status()
+        request_payload = self.repository.read_request()
+        request_exists = self.repository.request_exists()
+        state = str(payload.get("state") or "idle")
 
-def _parse_timestamp(value: object) -> datetime | None:
-    if not isinstance(value, str) or not value.strip():
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+        if self._active_status_is_stale(state, payload, request_exists=request_exists):
+            payload = {
+                **payload,
+                "state": "failed",
+                "message": "The previous backup operation stopped reporting a host-runner heartbeat.",
+                "finished_at": self.clock().isoformat(),
+            }
+            state = "failed"
 
+        if request_payload and state not in ACTIVE_STATES:
+            state = "queued"
+            payload = {
+                **payload,
+                "state": state,
+                "operation": request_payload.get("operation") or "backup",
+                "message": "Backup request accepted and waiting for the host runner.",
+                "requested_by": request_payload.get("requested_by"),
+                "requested_at": request_payload.get("requested_at"),
+                "started_at": None,
+                "finished_at": None,
+            }
 
-def _active_status_is_stale(state: str, payload: dict[str, Any], *, request_exists: bool) -> bool:
-    now = datetime.now(timezone.utc)
-    if state == "running":
-        reference = _parse_timestamp(payload.get("heartbeat_at")) or _parse_timestamp(
-            payload.get("started_at")
+        connection = (
+            payload.get("connection") if isinstance(payload.get("connection"), dict) else {}
         )
-        return reference is None or now - reference > RUNNING_STALE_AFTER
-    if state == "queued" and not request_exists:
-        reference = _parse_timestamp(payload.get("requested_at"))
-        return reference is None or now - reference > QUEUED_STALE_AFTER
-    return False
+        return BackupControlStatus.model_validate(
+            {
+                **payload,
+                "state": state,
+                "connection": connection,
+                "request_available": not request_exists and state not in ACTIVE_STATES,
+            }
+        )
+
+    def request_operation(
+        self,
+        user: User,
+        operation: BackupOperation,
+        payload: dict[str, Any] | None = None,
+    ) -> BackupControlStatus:
+        current = self.get_status()
+        if self.repository.request_exists() or current.state in ACTIVE_STATES:
+            raise BackupControlError("A backup operation is already queued or running.")
+
+        request_payload: dict[str, Any] = {
+            "requested_by": user.username,
+            "requested_at": self.clock().isoformat(),
+            "operation": operation,
+        }
+        if payload:
+            request_payload.update(payload)
+        try:
+            self.repository.publish_request(request_payload)
+        except FileExistsError as exc:
+            raise BackupControlError("A backup operation is already queued or running.") from exc
+        return self.get_status()
 
 
+@lru_cache(maxsize=1)
+def get_backup_control_service() -> BackupControlService:
+    """Return one immutable-path service per API worker."""
+    repository = BackupControlRepository(
+        Path(settings.control_request_dir),
+        Path(settings.control_status_dir),
+    )
+    return BackupControlService(repository)
+
+
+# Stable functional facade for callers outside FastAPI and existing integrations.
 def get_backup_control_status() -> BackupControlStatus:
-    request_path = _request_dir() / REQUEST_FILE
-    status_directory = _status_dir()
-    payload = _read_json(status_directory / STATUS_FILE)
-    request_payload = _read_json(request_path)
-    state = str(payload.get("state") or "idle")
-
-    if _active_status_is_stale(state, payload, request_exists=request_path.exists()):
-        now = datetime.now(timezone.utc).isoformat()
-        payload = {
-            **payload,
-            "state": "failed",
-            "message": "The previous backup operation stopped reporting a host-runner heartbeat.",
-            "finished_at": now,
-        }
-        state = "failed"
-
-    if request_payload and state not in ACTIVE_STATES:
-        state = "queued"
-        payload = {
-            **payload,
-            "state": state,
-            "operation": request_payload.get("operation") or "backup",
-            "message": "Backup request accepted and waiting for the host runner.",
-            "requested_by": request_payload.get("requested_by"),
-            "requested_at": request_payload.get("requested_at"),
-            "started_at": None,
-            "finished_at": None,
-        }
-
-    connection = payload.get("connection") if isinstance(payload.get("connection"), dict) else {}
-    safe_payload = {
-        **payload,
-        "state": state,
-        "connection": connection,
-        "request_available": not request_path.exists() and state not in ACTIVE_STATES,
-    }
-    return BackupControlStatus.model_validate(safe_payload)
+    return get_backup_control_service().get_status()
 
 
 def request_backup_operation(
@@ -114,44 +158,4 @@ def request_backup_operation(
     operation: BackupOperation,
     payload: dict[str, Any] | None = None,
 ) -> BackupControlStatus:
-    directory = _request_dir()
-    request_path = directory / REQUEST_FILE
-    current = get_backup_control_status()
-    if request_path.exists() or current.state in ACTIVE_STATES:
-        raise BackupControlError("A backup operation is already queued or running.")
-
-    now = datetime.now(timezone.utc).isoformat()
-    request_payload: dict[str, Any] = {
-        "requested_by": user.username,
-        "requested_at": now,
-        "operation": operation,
-    }
-    if payload:
-        request_payload.update(payload)
-
-    file_descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{REQUEST_FILE}.",
-        suffix=".tmp",
-        dir=directory,
-        text=True,
-    )
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(file_descriptor, "w", encoding="utf-8") as handle:
-            handle.write(json.dumps(request_payload, ensure_ascii=False, indent=2) + "\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        temporary.chmod(0o600)
-        try:
-            os.link(temporary, request_path)
-        except FileExistsError as exc:
-            raise BackupControlError("A backup operation is already queued or running.") from exc
-        request_path.chmod(0o600)
-        directory_descriptor = os.open(directory, os.O_RDONLY)
-        try:
-            os.fsync(directory_descriptor)
-        finally:
-            os.close(directory_descriptor)
-    finally:
-        temporary.unlink(missing_ok=True)
-    return get_backup_control_status()
+    return get_backup_control_service().request_operation(user, operation, payload)

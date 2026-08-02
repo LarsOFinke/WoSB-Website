@@ -7,7 +7,9 @@ import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import LinkedBuildList from '@/core/components/LinkedBuildList.vue'
 import MarkdownEditor from '@/core/components/MarkdownEditor.vue'
 import RichTextRenderer from '@/core/components/RichTextRenderer.vue'
-import '@/modules/guides/styles/guides.css'
+import '@/modules/guides/styles/guideFoundation.css'
+import '@/modules/guides/styles/guideEditor.css'
+import '@/modules/guides/styles/guideResponsive.css'
 import { useGuideCreatePage } from '@/modules/guides/composables/useGuideCreatePage'
 
 const {

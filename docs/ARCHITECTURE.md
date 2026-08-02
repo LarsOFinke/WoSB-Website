@@ -47,7 +47,10 @@ Kategorien, Rollen, Statuswerte, MIME-Typen sowie Upload-Limits vor Drift.
 - Soft-Delete für historisch referenzierte Stammdaten
 - große Dateien werden nach Verantwortung geteilt; Datenkataloge und Übersetzungen zählen nicht als
   Anwendungslogik
-- Repository-Checks begrenzen Wachstum von Python-Services und Vue-Seiten
+- ausführbare Klassen, Funktionen, Vue-Controller und Stylesheets bleiben nach Möglichkeit im
+  Bereich von 300–400 Zeilen; 420 Zeilen sind die technische Obergrenze mit Übergangspuffer
+- Repository-Checks begrenzen Python-Klassen/-Funktionen, Vue-Scriptblöcke und sämtliche
+  Stylesheets; längere deklarative Datenmodule werden anhand ihrer fachlichen Kohäsion bewertet
 
 ## Runtime-Grenzen
 

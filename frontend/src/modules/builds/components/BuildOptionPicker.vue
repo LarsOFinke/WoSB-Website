@@ -40,7 +40,7 @@ const enabledOptions = computed(() => filteredOptions.value.filter((option) => !
 
 function updateMenuPosition() {
   if (!open.value || !root.value) return
-  if (window.matchMedia('(max-width: 640px)').matches) {
+  if (window.matchMedia('(max-width: 720px)').matches) {
     menuStyle.value = {}
     return
   }

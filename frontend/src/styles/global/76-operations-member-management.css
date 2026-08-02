@@ -1,0 +1,80 @@
+/* Member management visual alignment with the security administration cards. */
+.admin-users-panel .moderator-form {
+  padding: 1rem;
+  border: 1px solid var(--line-faint);
+  border-radius: 1rem;
+  background: rgba(10, 20, 31, 0.62);
+}
+
+.admin-users-panel .admin-user-list {
+  gap: 0.7rem;
+}
+
+.admin-users-panel .admin-user-row {
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(150deg, rgba(18, 33, 49, 0.78), rgba(7, 16, 26, 0.72));
+}
+
+@media (max-width: 1050px) {
+  .ip-block-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ip-block-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .ip-block-summary-grid,
+  .ip-block-duration-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ip-block-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ip-block-card-actions,
+  .ip-unblock-confirmation input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .security-block-ip-action {
+    margin-left: 0;
+  }
+}
+
+.ip-block-card-actions .ip-unblock-confirmation {
+  flex: 1 1 100%;
+}
+
+.ip-block-workspace-grid.is-read-only {
+  grid-template-columns: minmax(16rem, 0.55fr) minmax(0, 1.45fr);
+}
+
+.ip-block-read-only-note {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.15rem;
+  border: 1px solid rgba(241, 184, 91, 0.2);
+  border-radius: 1.15rem;
+  background: linear-gradient(160deg, rgba(241, 184, 91, 0.07), rgba(10, 20, 31, 0.72));
+}
+
+.ip-block-read-only-note h3,
+.ip-block-read-only-note p {
+  margin: 0;
+}
+
+.ip-block-read-only-note p {
+  color: var(--text-muted, var(--muted));
+}
+
+@media (max-width: 1050px) {
+  .ip-block-workspace-grid.is-read-only {
+    grid-template-columns: 1fr;
+  }
+}

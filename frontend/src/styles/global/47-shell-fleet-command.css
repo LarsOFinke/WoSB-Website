@@ -1,0 +1,43 @@
+/* Fleet command */
+.fleet-command-workspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.polished-command-bar {
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.polished-command-bar h2,
+.polished-command-bar p {
+  margin: 0;
+}
+
+.fleet-management-tabs.workspace-tab-rail {
+  position: sticky;
+  top: calc(var(--topbar-min-height) + (var(--shell-gutter) * 2));
+  z-index: var(--z-sticky-content);
+  padding: 0.45rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1rem;
+  background: rgba(8, 17, 27, 0.92);
+  backdrop-filter: blur(16px);
+}
+
+.fleet-profile-editor .form-section-card {
+  max-width: none;
+}
+
+.fleet-request-row,
+.fleet-directory-row {
+  border-radius: 1rem;
+  background: var(--surface-faint);
+}
+
+.fleet-directory-row:hover,
+.fleet-request-row:hover {
+  border-color: var(--accent-line);
+}

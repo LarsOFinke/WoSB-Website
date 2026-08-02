@@ -1,0 +1,12 @@
+/* Staff workspace */
+.admin-status-panel .home-status-card {
+  min-height: auto;
+  border-radius: 1rem;
+}
+
+.admin-panel {
+  border-color: var(--line-domain);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.043), rgba(255,255,255,0.014)),
+    rgba(9, 19, 30, 0.76);
+}

@@ -7,6 +7,8 @@ import BuildOptionPicker from '@/modules/builds/components/BuildOptionPicker.vue
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { useBuildDesigner } from '@/modules/builds/composables/useBuildDesigner'
 import '@/modules/builds/styles/buildOptionPicker.css'
+import '@/modules/builds/styles/buildWorkspace.css'
+import '@/shared/styles/discovery.css'
 import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
 import {
   composeSpecialistSelection,

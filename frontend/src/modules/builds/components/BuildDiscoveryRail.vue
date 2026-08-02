@@ -1,5 +1,6 @@
 <script setup>
 import AppIcon from '@/core/components/AppIcon.vue'
+import '@/shared/styles/discovery.css'
 
 const props = defineProps({
   groups: { type: Array, required: true },

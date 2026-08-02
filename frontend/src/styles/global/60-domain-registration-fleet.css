@@ -1,0 +1,60 @@
+/* Registration and fleet application */
+.fleet-registration-option {
+  align-content: start;
+  gap: 1rem;
+}
+
+.fleet-registration-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid rgba(213, 228, 240, 0.14);
+  border-radius: 0.95rem;
+  background: var(--surface-faint);
+}
+
+.fleet-registration-card > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.fleet-registration-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  cursor: pointer;
+}
+
+.fleet-registration-toggle input {
+  margin-top: 0.25rem;
+}
+
+.fleet-registration-toggle span {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.fleet-registration-unavailable {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
+.fleet-application-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.fleet-application-form .button-box {
+  justify-self: start;
+}
+
+.fleet-membership-status-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(213, 228, 240, 0.12);
+  border-radius: 0.9rem;
+  background: var(--surface-faint);
+}

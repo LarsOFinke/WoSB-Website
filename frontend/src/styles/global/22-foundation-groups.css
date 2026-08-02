@@ -1,0 +1,23 @@
+/* Groups */
+.group-detail-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.75fr);
+}
+
+.group-overview-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.group-title-field,
+.group-fleet-field,
+.group-form-section .details-field {
+  grid-column: 1 / -1;
+}
+
+.group-management-actions {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line-subtle);
+}
+
+.group-management-actions .danger-action {
+  width: 100%;
+}

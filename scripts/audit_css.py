@@ -9,16 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CSS_ROOT = ROOT / "frontend/src"
 GLOBAL_ROOT = CSS_ROOT / "styles/global"
-EXPECTED_GLOBAL_LAYERS = (
-    "00-tokens.css",
-    "10-foundation.css",
-    "20-layout.css",
-    "30-shell.css",
-    "40-navigation-and-portal.css",
-    "50-domain-workspaces.css",
-    "60-operations.css",
-    "70-integrations.css",
-)
+MAX_CSS_LINES = 420
 STACKING_TOKENS = (
     "--z-behind",
     "--z-base",
@@ -73,17 +64,24 @@ def main() -> None:
 
     manifest = (GLOBAL_ROOT / "index.js").read_text(encoding="utf-8")
     actual_layers = tuple(re.findall(r"import './(\d{2}-[^']+\.css)'", manifest))
-    if actual_layers != EXPECTED_GLOBAL_LAYERS:
-        fail(f"global layer order changed: {actual_layers!r}")
+    if not actual_layers or actual_layers[0] != "00-tokens.css":
+        fail("global cascade must start with 00-tokens.css")
+    if len(actual_layers) != len(set(actual_layers)):
+        fail("global cascade contains duplicate imports")
+    if any(not (GLOBAL_ROOT / layer).is_file() for layer in actual_layers):
+        fail("global cascade references a missing stylesheet")
+    manifest_numbers = [int(layer[:2]) for layer in actual_layers]
+    if manifest_numbers != sorted(manifest_numbers):
+        fail("global cascade numeric order changed")
 
     sources = {path: path.read_text(encoding="utf-8") for path in css_files}
     combined = "\n".join(sources.values())
 
-    shell_path = GLOBAL_ROOT / "30-shell.css"
-    shell_source = sources[shell_path]
+    shell_paths = {GLOBAL_ROOT / layer for layer in actual_layers if "-shell-" in layer}
+    shell_source = "\n".join(sources[path] for path in shell_paths)
     for path, source in sources.items():
-        if path != shell_path and SHELL_SELECTOR_PATTERN.search(source):
-            fail(f"application-shell styles must be owned by 30-shell.css: {path.relative_to(ROOT)}")
+        if path not in shell_paths and SHELL_SELECTOR_PATTERN.search(source):
+            fail(f"application-shell styles must stay in named shell files: {path.relative_to(ROOT)}")
 
     for selector in LEGACY_CLASS_SELECTORS:
         pattern = re.compile(
@@ -140,6 +138,8 @@ def main() -> None:
 
     for path, source in sources.items():
         relative = path.relative_to(ROOT)
+        if len(source.splitlines()) > MAX_CSS_LINES:
+            fail(f"stylesheet exceeds {MAX_CSS_LINES} lines: {relative}")
         if "@import" in source:
             fail(f"CSS @import is forbidden: {relative}")
         if ";base64," in source:

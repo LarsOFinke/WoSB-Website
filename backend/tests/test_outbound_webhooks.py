@@ -915,7 +915,7 @@ def test_stale_processing_webhook_delivery_is_recovered_once(tmp_path) -> None:
     from sqlalchemy.orm import sessionmaker
 
     from app.core.time import utc_now
-    from app.modules.admin.models.outbound_webhook import OutboundWebhook, OutboundWebhookDelivery
+    from app.modules.admin.models.outbound_webhook import OutboundWebhookDelivery
     from app.modules.admin.services.outbound_webhook_delivery_service.service import (
         WebhookDeliveryService,
     )

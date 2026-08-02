@@ -275,18 +275,18 @@
 
 .combat-breakdown-row.is-heading {
   color: var(--text-muted);
-  font-size: .7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1050px) {
   .combat-weapon-grid,
   .combat-modifier-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .combat-analysis-hero,
   .combat-result-card > header {
     align-items: stretch;

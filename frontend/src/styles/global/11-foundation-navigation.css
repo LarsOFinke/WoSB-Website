@@ -1,0 +1,53 @@
+/* Navigation */
+
+.brand-mark {
+  width: 2.35rem;
+  height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(241, 184, 91, 0.55);
+  border-radius: 50%;
+  color: var(--accent-strong);
+  background: radial-gradient(circle at 35% 25%, var(--accent-line), rgba(241, 184, 91, 0.06));
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.brand-copy {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.small-action,
+.button-box,
+.form-button,
+.danger-action,
+.tab-button,
+.chip-remove {
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  background: transparent;
+  text-decoration: none;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nav-action-strong,
+.primary-action,
+.form-button.primary {
+  border-color: rgba(241, 184, 91, 0.48);
+  background: var(--accent-soft);
+  color: var(--text);
+}

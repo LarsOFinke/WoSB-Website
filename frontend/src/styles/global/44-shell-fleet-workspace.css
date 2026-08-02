@@ -1,0 +1,341 @@
+/* Royal Blackwater Fleet workspace refactor */
+.workspace-page-header {
+  position: relative;
+  isolation: isolate;
+  min-height: 12rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(1rem, 2vw, 2rem);
+  overflow: hidden;
+  padding: clamp(1.35rem, 2.4vw, 2.25rem);
+  border-color: rgba(241, 184, 91, 0.24);
+  background:
+    linear-gradient(115deg, rgba(241, 184, 91, 0.13), transparent 38%),
+    radial-gradient(circle at 90% 10%, rgba(87, 136, 187, 0.18), transparent 24rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02)),
+    rgba(9, 19, 30, 0.92);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.workspace-page-header::after {
+  content: "";
+  position: absolute;
+  inset: auto -6rem -8rem auto;
+  z-index: var(--z-behind);
+  width: 22rem;
+  height: 22rem;
+  border: 1px solid rgba(241, 184, 91, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2.8rem rgba(241, 184, 91, 0.025),
+    0 0 0 5.8rem rgba(241, 184, 91, 0.018);
+}
+
+.workspace-page-header.is-compact {
+  min-height: auto;
+}
+
+.workspace-page-header-copy {
+  min-width: 0;
+  max-width: 76rem;
+}
+
+.workspace-page-header h1 {
+  max-width: 22ch;
+  margin: 0.25rem 0 0;
+  font-size: clamp(2rem, 4.1vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.workspace-page-description {
+  max-width: 72ch;
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: clamp(0.98rem, 1.3vw, 1.12rem);
+}
+
+.workspace-page-meta,
+.workspace-page-actions,
+.workspace-section-heading,
+.workspace-section-heading > div,
+.profile-identity-chip,
+.profile-identity-chip > span:last-child,
+.profile-save-bar,
+.fleet-leadership-block,
+.fleet-leader-card,
+.fleet-membership-summary,
+.fleet-module-card,
+.profile-tool-link,
+.polished-command-bar {
+  display: flex;
+  align-items: center;
+}
+
+.workspace-page-meta {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+.workspace-page-actions {
+  align-self: end;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.workspace-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--content-gap);
+}
+
+.workspace-metric-card {
+  min-width: 0;
+  min-height: 8.8rem;
+  display: grid;
+  align-content: space-between;
+  gap: 0.45rem;
+  padding: 1.15rem;
+  border: 1px solid var(--line-domain);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055), var(--surface-sheen)),
+    rgba(9, 19, 30, 0.78);
+  box-shadow: inset 0 1px 0 var(--surface-highlight), 0 14px 36px rgba(0,0,0,0.18);
+}
+
+.workspace-metric-card span {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.workspace-metric-card strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: clamp(1.35rem, 2vw, 2.15rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+.workspace-metric-card small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.workspace-metric-card.tone-accent {
+  border-color: rgba(241, 184, 91, 0.36);
+  background:
+    linear-gradient(135deg, rgba(241,184,91,0.16), transparent 60%),
+    rgba(12, 23, 35, 0.86);
+}
+
+.workspace-metric-card.tone-danger {
+  border-color: rgba(255, 140, 140, 0.3);
+  background:
+    linear-gradient(135deg, rgba(255,140,140,0.11), transparent 60%),
+    rgba(12, 23, 35, 0.86);
+}
+
+.workspace-section-heading {
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.workspace-section-heading > div {
+  min-width: 0;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.workspace-section-heading h2,
+.workspace-section-heading h3,
+.workspace-section-heading p {
+  margin: 0;
+}
+
+.workspace-section-heading h2 {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  letter-spacing: -0.025em;
+}
+
+.workspace-section-heading h3 {
+  font-size: 1.05rem;
+}
+
+.workspace-section-heading p:not(.eyebrow) {
+  max-width: 65ch;
+  margin-top: 0.3rem;
+  color: var(--muted);
+}
+
+.workspace-section-heading.compact-heading {
+  align-items: flex-start;
+  margin-bottom: 0.9rem;
+}
+
+.workspace-tab-rail {
+  border-color: var(--line-domain);
+  background: rgba(8, 17, 27, 0.66);
+}
+
+.brand-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.02rem;
+}
+
+.brand-copy strong,
+.brand-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-copy strong {
+  font-size: 0.91rem;
+}
+
+.brand-copy small {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.topbar-account-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0.55rem 0.3rem 0.3rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface-soft);
+  text-decoration: none;
+}
+
+.topbar-account-summary:hover {
+  border-color: rgba(241, 184, 91, 0.4);
+  background: var(--accent-glow);
+}
+
+.account-avatar,
+.profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid rgba(241, 184, 91, 0.38);
+  border-radius: 0.85rem;
+  color: var(--accent-strong);
+  background:
+    linear-gradient(145deg, rgba(241,184,91,0.2), rgba(241,184,91,0.05)),
+    rgba(9,19,30,0.88);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.account-avatar {
+  width: 2.15rem;
+  height: 2.15rem;
+  font-size: 0.75rem;
+}
+
+.profile-avatar {
+  width: 3rem;
+  height: 3rem;
+  font-size: 0.92rem;
+}
+
+.account-copy {
+  min-width: 0;
+  display: grid;
+  line-height: 1.1;
+}
+
+.account-copy strong,
+.account-copy small {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-copy strong {
+  font-size: 0.8rem;
+}
+
+.account-copy small {
+  margin-top: 0.18rem;
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sidebar-access-card {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 1rem;
+  background: var(--surface-soft);
+}
+
+.sidebar-access-card > span {
+  color: var(--muted-soft);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sidebar-access-card > strong {
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.sidebar-account-link {
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(241, 184, 91, 0.25);
+  border-radius: 0.75rem;
+  color: var(--text);
+  background: var(--accent-tint);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+body.sidebar-collapsed .sidebar-access-card {
+  padding: 0.45rem;
+}
+
+body.sidebar-collapsed .sidebar-access-card > span,
+body.sidebar-collapsed .sidebar-access-card > strong {
+  display: none;
+}
+
+body.sidebar-collapsed .sidebar-account-link {
+  overflow: hidden;
+  padding-inline: 0.2rem;
+  font-size: 0;
+}
+
+body.sidebar-collapsed .sidebar-account-link::before {
+  content: "●";
+  color: var(--accent);
+  font-size: 0.9rem;
+}

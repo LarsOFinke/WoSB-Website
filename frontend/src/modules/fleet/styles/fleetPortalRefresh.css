@@ -1,9 +1,3 @@
-.landing-refresh-frame {
-  overflow: hidden;
-  padding: 0;
-  gap: 0;
-}
-
 .landing-refresh-hero {
   min-height: 380px;
   display: grid;
@@ -32,9 +26,9 @@
 }
 
 .landing-refresh-copy h1 {
-  max-width: 760px;
+  max-width: 900px;
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: clamp(3rem, 6.4vw, 5.7rem);
   line-height: 0.93;
   letter-spacing: -0.045em;
@@ -43,7 +37,7 @@
 .landing-refresh-copy > p:first-of-type {
   margin: 1rem 0 0;
   color: var(--accent);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: clamp(1.15rem, 2vw, 1.5rem);
 }
 
@@ -69,7 +63,7 @@
 .landing-refresh-modules h2 {
   margin: 0;
   color: var(--accent);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: 1rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -110,7 +104,7 @@
   border: 1px solid var(--line-bright);
   border-radius: 50%;
   color: var(--accent-strong);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
 }
 
 .landing-refresh-step > span:last-child {
@@ -120,7 +114,7 @@
 
 .landing-refresh-step strong {
   color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: 1rem;
 }
 
@@ -204,7 +198,7 @@
 
 .landing-refresh-operations dt {
   color: var(--muted-soft);
-  font-size: 0.67rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -213,7 +207,7 @@
 .landing-refresh-operations dd {
   margin: 0;
   color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
 }
 
 .landing-refresh-modules {
@@ -253,7 +247,7 @@
 
 .landing-refresh-module strong {
   color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
 }
 
 .landing-refresh-module small {
@@ -290,7 +284,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .landing-refresh-hero {
     min-height: 0;
     grid-template-columns: 1fr;
@@ -326,7 +320,7 @@
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 620px) {
   .landing-refresh-hero {
     padding: 1.5rem 1rem;
   }

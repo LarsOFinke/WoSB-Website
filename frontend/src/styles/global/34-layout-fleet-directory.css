@@ -1,0 +1,216 @@
+/* Fleet management: connected applications and member directory */
+.hero-action-stack,
+.compact-actions,
+.member-pill-row,
+.application-status-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hero-action-stack {
+  justify-content: flex-end;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.fleet-filter-panel,
+.fleet-application-strip,
+.fleet-member-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.fleet-application-strip {
+  align-items: center;
+  border-color: var(--accent-line);
+  background: linear-gradient(135deg, rgba(241, 184, 91, 0.10), var(--surface-soft));
+}
+
+.fleet-application-card {
+  align-content: start;
+}
+
+.fleet-application-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.fleet-inline-application {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(241, 184, 91, 0.24);
+  border-radius: var(--radius-lg);
+  background: rgba(241, 184, 91, 0.07);
+}
+
+.fleet-status-pill {
+  border-color: rgba(118, 202, 153, 0.28);
+  background: rgba(118, 202, 153, 0.10);
+}
+
+.profile-fleet-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(241, 184, 91, 0.20);
+  border-radius: var(--radius-lg);
+  background: rgba(241, 184, 91, 0.06);
+}
+
+.profile-fleet-card h2,
+.fleet-section-heading h2 {
+  margin: 0;
+}
+
+.profile-membership-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.profile-membership-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-highlight);
+}
+
+.profile-membership-row div:first-child,
+.fleet-section-heading,
+.fleet-management-panel,
+.fleet-member-directory,
+.fleet-request-board {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.profile-membership-row span {
+  color: var(--muted);
+}
+
+.fleet-command-bar {
+  align-items: end;
+}
+
+.fleet-management-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.compact-summary-card {
+  min-height: auto;
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+
+.compact-summary-card span {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.compact-summary-card strong {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.fleet-management-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+}
+
+.fleet-tab-button {
+  flex: 1 1 12rem;
+}
+
+.tab-count {
+  min-width: 1.5rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.20);
+  color: var(--text);
+  font-size: 0.75rem;
+}
+
+.fleet-request-board,
+.fleet-member-directory {
+  padding-top: var(--space-2);
+}
+
+.fleet-request-row,
+.fleet-directory-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.member-note {
+  margin: 0.35rem 0 0;
+  max-width: 70ch;
+}
+
+.member-admin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.compact-select {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .hero-action-stack,
+  .fleet-application-actions,
+  .member-admin-controls {
+    justify-content: flex-start;
+  }
+
+  .fleet-management-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .fleet-request-row,
+  .fleet-directory-row,
+  .profile-membership-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+}

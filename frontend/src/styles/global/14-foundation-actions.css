@@ -1,0 +1,53 @@
+/* Buttons and actions */
+.button-box,
+.form-button,
+.small-action,
+.danger-action,
+.tab-button,
+.chip-remove {
+  padding: 0.72rem 1rem;
+  color: var(--text);
+}
+
+.button-box,
+.form-button,
+.small-action,
+.tab-button,
+.chip-remove {
+  border-color: var(--line-ui);
+  background: var(--surface-highlight);
+}
+
+.button-box:hover,
+.form-button:hover,
+.small-action:hover,
+.tab-button:hover,
+.chip-remove:hover {
+  border-color: rgba(241, 184, 91, 0.4);
+  background: rgba(241, 184, 91, 0.11);
+  transform: translateY(-1px);
+}
+
+.danger-action {
+  border-color: rgba(255, 140, 140, 0.36);
+  background: rgba(255, 140, 140, 0.09);
+  color: #ffd0d0;
+}
+
+.danger-action:hover {
+  border-color: rgba(255, 140, 140, 0.68);
+  background: rgba(255, 140, 140, 0.15);
+}
+
+.form-actions,
+.profile-actions,
+.group-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.build-editor-delete-action {
+  margin-right: auto;
+}

@@ -1,0 +1,77 @@
+/* Build Designer: account-wide upgrade add-on slot and variable weapon positions. */
+.research-slot-toggle {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.15rem 0.7rem;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line-ui);
+  border-radius: var(--radius-sm);
+  background: rgba(5, 12, 20, 0.32);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.research-slot-toggle > span {
+  grid-row: 1 / span 3;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(221, 231, 244, 0.22);
+  border-radius: 999px;
+  font-size: 1.15rem;
+}
+
+.research-slot-toggle small {
+  color: var(--muted-soft);
+  line-height: 1.35;
+}
+
+.research-slot-effects {
+  font-weight: 700;
+  color: var(--muted-soft);
+}
+
+.research-slot-toggle:hover,
+.research-slot-toggle:focus-visible,
+.research-slot-toggle.is-active {
+  border-color: rgba(221, 231, 244, 0.42);
+  background: rgba(221, 231, 244, 0.08);
+}
+
+.weapon-arc-grid--adaptive {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.system-update-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-self: end;
+  gap: 0.65rem;
+}
+
+.system-update-actions .form-button {
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
+}
+
+.system-update-actions .primary-action,
+.system-update-actions .system-restart-action {
+  grid-column: 1 / -1;
+}
+
+.system-update-actions .secondary-action {
+  border-color: rgba(221, 231, 244, 0.2);
+  background: var(--surface-highlight);
+  color: var(--text);
+}
+
+.system-update-actions .secondary-action:hover:not(:disabled) {
+  border-color: rgba(159, 201, 223, 0.45);
+  background: rgba(159, 201, 223, 0.09);
+}

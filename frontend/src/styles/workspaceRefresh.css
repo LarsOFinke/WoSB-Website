@@ -1,3 +1,9 @@
+.workspace-refresh-frame {
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+}
+
 .workspace-stat-rail {
   display: grid;
   grid-template-columns: repeat(var(--workspace-stat-columns, 4), minmax(0, 1fr));
@@ -32,7 +38,7 @@
 
 .workspace-stat-item dt {
   color: var(--muted-soft);
-  font-size: 0.69rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -42,7 +48,7 @@
   min-width: 0;
   margin: 0;
   color: var(--text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: clamp(1.05rem, 1.5vw, 1.32rem);
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -64,7 +70,7 @@
 
 .workspace-command-header h1 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
   font-size: clamp(2.1rem, 4vw, 3.6rem);
   line-height: 0.98;
   letter-spacing: -0.035em;
@@ -93,7 +99,7 @@
 .workspace-section-title h2,
 .workspace-section-title h3 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-editorial);
 }
 
 .workspace-section-title p {

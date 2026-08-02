@@ -1,6 +1,7 @@
 <script setup>
 import BuildStatCommandDeck from '@/modules/builds/components/BuildStatCommandDeck.vue'
 import { useBuildDetailPage } from '@/modules/builds/composables/useBuildDetailPage.js'
+import '@/modules/builds/styles/buildWorkspace.css'
 
 const props = defineProps({
   id: {

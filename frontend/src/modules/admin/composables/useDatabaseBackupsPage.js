@@ -3,25 +3,19 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import {
-  applyBackupEnrollment,
   configureBackupConnection,
   deleteBackupConnection,
   discoverBackupHost,
   getBackupControlStatus,
-  prepareBackupEnrollment,
   prepareBackupUploadKey,
   restoreLocalDatabaseBackup,
   runApplicationBackup,
   scanLocalDatabaseBackups,
   testBackupConnection,
 } from '@/modules/admin/api/admin'
-import {
-  buildBackupEnrollmentCommand,
-  normalizeBackupEnrollmentFile,
-  parseBackupEnrollmentResponse,
-  validateBackupEnrollmentSetup,
-} from '@/modules/admin/domain/backupEnrollment'
+import { formatBackupBytes, formatBackupDateTime } from '@/modules/admin/domain/backupPresentation'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
+import { useBackupEnrollment } from './useBackupEnrollment'
 
 const EMPTY_STATUS = {
   state: 'idle',
@@ -47,15 +41,6 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const privateKeyVisible = ref(false)
-  const enrollmentResponse = ref('')
-  const enrollmentFileName = ref('')
-  const enrollmentSetup = reactive({
-    host: '',
-    port: 22,
-    directory: '/srv/rbf-backups/wosb',
-    retentionDays: 30,
-    allowFrom: '',
-  })
   const form = reactive({
     host: '',
     port: 22,
@@ -70,7 +55,6 @@ export function useDatabaseBackupsPage() {
     confirmation: '',
   })
   let pollTimer = null
-
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
   const connectionReady = computed(() => (
@@ -91,70 +75,6 @@ export function useDatabaseBackupsPage() {
     !loading.value && !inProgress.value && status.value.request_available !== false
   ))
   const isBootstrapAdmin = computed(() => Boolean(user.value?.is_bootstrap_admin))
-  const enrollmentRequest = computed(() => status.value.enrollment_request || null)
-  const enrollmentResponseResult = computed(() => parseBackupEnrollmentResponse(
-    enrollmentResponse.value,
-    String(enrollmentRequest.value?.enrollment_id || ''),
-  ))
-  const enrollmentResponsePreview = computed(() => enrollmentResponseResult.value.payload)
-  const enrollmentResponseError = computed(() => {
-    if (!enrollmentResponse.value.trim()) return ''
-    const code = enrollmentResponseResult.value.error
-    if (!code) return ''
-    const messageKey = {
-      empty: 'empty',
-      invalidJson: 'invalidJson',
-      invalidObject: 'invalidJson',
-      unsupportedSchema: 'wrongFile',
-      wrongKind: 'wrongFile',
-      invalidEnrollmentId: 'invalidContent',
-      enrollmentMismatch: 'enrollmentMismatch',
-      invalidHost: 'invalidContent',
-      invalidPort: 'invalidContent',
-      invalidUsername: 'invalidContent',
-      invalidRemoteDirectory: 'invalidContent',
-      invalidHostKey: 'invalidContent',
-      invalidFingerprint: 'invalidContent',
-      invalidAgeRecipient: 'invalidContent',
-      unmanagedServer: 'unmanagedServer',
-    }[code] || 'invalidContent'
-    return t(`admin.backups.enrollment.errors.${messageKey}`)
-  })
-  const enrollmentRequestFilename = computed(() => (
-    enrollmentRequest.value
-      ? `rbf-backup-enrollment-${enrollmentRequest.value.enrollment_id}.json`
-      : 'REQUEST.json'
-  ))
-  const enrollmentSetupResult = computed(() => validateBackupEnrollmentSetup({
-    ...enrollmentSetup,
-    requestFilename: enrollmentRequestFilename.value,
-  }))
-  const enrollmentSetupError = computed(() => {
-    if (!enrollmentSetup.host.trim()) return t('admin.backups.enrollment.errors.hostRequired')
-    const code = enrollmentSetupResult.value.error
-    if (!code) return ''
-    return t(`admin.backups.enrollment.errors.${code}`)
-  })
-  const enrollmentCommand = computed(() => buildBackupEnrollmentCommand({
-    ...enrollmentSetup,
-    requestFilename: enrollmentRequestFilename.value,
-  }).command)
-  const canCopyEnrollmentCommand = computed(() => (
-    Boolean(enrollmentRequest.value)
-    && !enrollmentSetupResult.value.error
-    && Boolean(enrollmentCommand.value)
-  ))
-  const enrollmentProgress = computed(() => ({
-    requestCreated: Boolean(enrollmentRequest.value),
-    responseSelected: Boolean(enrollmentResponse.value.trim()),
-    responseValid: Boolean(enrollmentResponsePreview.value),
-    connectionVerified: connectionReady.value && Boolean(status.value.connection?.managed_server),
-  }))
-  const canApplyEnrollment = computed(() => (
-    canSubmit.value
-    && Boolean(enrollmentRequest.value)
-    && Boolean(enrollmentResponse.value.trim())
-  ))
   const localBackups = computed(() => status.value.local_database_backups || [])
   const selectedBackup = computed(() => (
     localBackups.value.find((backup) => backup.backup_id === restoreForm.backup_id) || null
@@ -181,22 +101,8 @@ export function useDatabaseBackupsPage() {
     && form.host_key.trim() === status.value.discovered_host_key
   ))
 
-  function formatDateTime(value) {
-    if (!value) return '—'
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value))
-  }
-
-  function formatBytes(value) {
-    const size = Number(value || 0)
-    if (!size) return '—'
-    if (size < 1024) return `${size} B`
-    if (size < 1024 ** 2) return `${(size / 1024).toFixed(1)} KB`
-    if (size < 1024 ** 3) return `${(size / 1024 ** 2).toFixed(1)} MB`
-    return `${(size / 1024 ** 3).toFixed(2)} GB`
-  }
+  const formatDateTime = (value) => formatBackupDateTime(value, locale.value)
+  const formatBytes = formatBackupBytes
 
   function hydrateForm() {
     const connection = status.value.connection || {}
@@ -268,6 +174,26 @@ export function useDatabaseBackupsPage() {
     }
   }
 
+  const {
+    response: enrollmentResponse,
+    responseFileName: enrollmentFileName,
+    setup: enrollmentSetup,
+    enrollmentRequest,
+    responsePreview: enrollmentResponsePreview,
+    setupError: enrollmentSetupError,
+    progress: enrollmentProgress,
+    responseError: enrollmentResponseError,
+    requestFilename: enrollmentRequestFilename,
+    command: enrollmentCommand,
+    canCopyCommand: canCopyEnrollmentCommand,
+    canApply: canApplyEnrollment,
+    copyCommand: copyEnrollmentCommand,
+    prepare: prepareEnrollment,
+    downloadRequest: downloadEnrollmentRequest,
+    loadResponse: loadEnrollmentResponse,
+    apply: applyEnrollment,
+  } = useBackupEnrollment({ status, canSubmit, error, success, request, t })
+
   async function prepareUploadKey() {
     await request(prepareBackupUploadKey, 'admin.backups.messages.keyPrepared')
   }
@@ -281,72 +207,6 @@ export function useDatabaseBackupsPage() {
     } catch {
       error.value = t('admin.backups.errors.copyPublicKey')
     }
-  }
-
-  async function copyEnrollmentCommand() {
-    if (!canCopyEnrollmentCommand.value) {
-      error.value = enrollmentSetupError.value || t('admin.backups.enrollment.errors.createRequestFirst')
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(enrollmentCommand.value)
-      success.value = t('admin.backups.messages.enrollmentCommandCopied')
-      error.value = ''
-    } catch {
-      error.value = t('admin.backups.errors.copyEnrollmentCommand')
-    }
-  }
-
-  async function prepareEnrollment() {
-    enrollmentResponse.value = ''
-    enrollmentFileName.value = ''
-    await request(prepareBackupEnrollment, 'admin.backups.messages.enrollmentPrepared')
-  }
-
-  function downloadEnrollmentRequest() {
-    if (!enrollmentRequest.value) return
-    const content = `${JSON.stringify(enrollmentRequest.value, null, 2)}\n`
-    const blob = new Blob([content], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `rbf-backup-enrollment-${enrollmentRequest.value.enrollment_id}.json`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-  }
-
-  async function loadEnrollmentResponse(event) {
-    const input = event.target
-    const [file] = input.files || []
-    if (!file) return
-    try {
-      enrollmentResponse.value = normalizeBackupEnrollmentFile(await file.text())
-      enrollmentFileName.value = file.name
-      error.value = ''
-    } catch {
-      enrollmentResponse.value = ''
-      enrollmentFileName.value = ''
-      error.value = t('admin.backups.enrollment.errors.readFailed')
-    } finally {
-      input.value = ''
-    }
-  }
-
-  async function applyEnrollment() {
-    if (!enrollmentRequest.value) {
-      error.value = t('admin.backups.enrollment.errors.noActiveRequest')
-      return
-    }
-    if (enrollmentResponseResult.value.error) {
-      error.value = enrollmentResponseError.value
-      return
-    }
-    await request(
-      () => applyBackupEnrollment({ response_json: enrollmentResponse.value.trim() }),
-      'admin.backups.messages.enrollmentApplied',
-    )
   }
 
   async function discover() {

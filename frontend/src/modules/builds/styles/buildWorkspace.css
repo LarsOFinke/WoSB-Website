@@ -1,0 +1,131 @@
+/* Compact Build Designer: calculated result first, inputs second */
+.build-designer-compact { gap: .85rem; }
+.build-designer-compact .create-topline { min-height: 0; padding: .9rem 1.1rem; }
+.build-designer-compact .create-topline h1 { font-size: clamp(1.65rem,3vw,2.3rem); }
+.build-designer-compact .create-topline p { margin-bottom: 0; }
+.build-result-summary { padding: .85rem; }
+.compact-workspace-heading, .build-config-heading { display: flex; align-items: flex-start; gap: .75rem; }
+.compact-workspace-heading { margin-bottom: .65rem; }.compact-workspace-heading > span, .build-config-heading > span { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; flex: 0 0 auto; border: 1px solid rgba(214,167,87,.48); color: #d6a757; font-size: .75rem; font-weight: 800; }
+.compact-workspace-heading h2, .build-config-heading h2 { margin: .1rem 0 0; font-size: clamp(1.25rem,2vw,1.65rem); }.build-config-heading { margin: .35rem .1rem 0; }.build-config-heading p:last-child { margin: .2rem 0 0; }
+.build-result-summary .build-command-deck { grid-template-columns: minmax(0,1.2fr) minmax(18rem,.8fr); gap: .65rem; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.build-result-summary .command-deck-header { display: none; }
+.build-result-summary .command-deck-overview { grid-column: 1 / -1; grid-template-columns: minmax(14rem,.58fr) minmax(0,1.42fr); gap: .65rem; }
+.build-result-summary .command-deck-panel { padding: .7rem; border-radius: .65rem; }
+.build-result-summary .ship-identity-panel { grid-template-columns: 5.5rem minmax(0,1fr); gap: .45rem .75rem; align-items: center; }
+.build-result-summary .ship-visual { grid-row: 1 / span 3; width: 5.5rem; min-height: 5rem; height: 5rem; }
+.build-result-summary .ship-catalog-image { min-height: 5rem; }
+.build-result-summary .ship-operational-summary { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .25rem; }
+.build-result-summary .ship-operational-summary span { padding: .3rem .4rem; }
+.build-result-summary .crew-capacity-meter, .build-result-summary .crew-capacity-caption { grid-column: 1 / -1; }
+.build-result-summary .effective-stat-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: .35rem; margin-top: .5rem; }
+.build-result-summary .effective-stat-cell { min-height: 3.7rem; padding: .45rem; }
+.build-result-summary .command-panel-title small { display: none; }
+.build-result-summary .upgrade-rack-panel { grid-column: 1; }
+.build-result-summary .upgrade-rack-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: .35rem; margin-top: .5rem; }
+.build-result-summary .upgrade-rack-slot { grid-template-columns: 1.6rem minmax(0,1fr); min-height: 3.25rem; gap: .35rem; padding: .4rem; }
+.build-result-summary .upgrade-rack-index { width: 1.5rem; height: 1.5rem; }
+.build-result-summary .upgrade-rack-slot small { display: none; }.build-result-summary .upgrade-rack-slot strong { font-size: 0.75rem; }
+.build-result-summary .modifier-intelligence-panel { grid-column: 2; }
+.build-result-summary .modifier-intelligence-grid { gap: .4rem; margin-top: .5rem; }.build-result-summary .modifier-column { padding: .5rem; }.build-result-summary .modifier-chip { padding: .32rem .42rem; }
+.build-config-grid { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(22rem,.75fr); grid-template-areas: 'basics basics' 'equipment specialists' 'weapons crew' 'inventory inventory' 'details details'; gap: .75rem; align-items: start; }
+.build-config-grid > .form-section { margin: 0; padding: .85rem; }
+.compact-basics-panel { grid-area: basics; }.compact-equipment-panel { grid-area: equipment; }.compact-weapons-panel { grid-area: weapons; }.compact-specialists-panel { grid-area: specialists; }.compact-crew-panel { grid-area: crew; }.compact-inventory-panel { grid-area: inventory; }.compact-details-panel { grid-area: details; }
+.build-designer-compact .section-title { margin-bottom: .65rem; }.build-designer-compact .section-helper-text { margin: -.2rem 0 .55rem; }
+.build-designer-compact .build-classification-editor { margin-top: .65rem; padding-top: .65rem; }.build-designer-compact .classification-editor-heading { margin-bottom: .5rem; }.build-designer-compact .classification-editor-heading p { display: none; }
+.build-designer-compact .build-classification-editor .discovery-group + .discovery-group { margin-top: .6rem; }
+.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(7,minmax(0,1fr)); gap: .35rem; }
+.build-designer-compact .build-classification-editor .discovery-tile { min-height: 3.8rem; grid-template-columns: auto 1fr; gap: .4rem; padding: .45rem; }.build-designer-compact .build-classification-editor .discovery-tile-icon { width: 1.8rem; }.build-designer-compact .build-classification-editor .discovery-tile-copy small { display: none; }.build-designer-compact .build-classification-editor .discovery-tile-copy strong { font-size: .78rem; }.build-designer-compact .build-classification-editor .discovery-tile-check { position: absolute; top: .2rem; right: .35rem; }
+.build-designer-compact .equipment-unified-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: .45rem; }.build-designer-compact .equipment-slot { min-height: 7.1rem; gap: .35rem; padding: .5rem; }.build-designer-compact .equipment-slot .slot-visual { width: 2.6rem; height: 2.6rem; }.build-designer-compact .equipment-slot .field-caption { min-height: auto; font-size: 0.75rem; }.build-designer-compact .equipment-slot .slot-effect-text { display: none; }
+.build-designer-compact .research-slot-toggle { margin-top: .5rem; }
+.build-designer-compact .weapon-arc-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; }.build-designer-compact .inventory-panel { gap: .4rem; padding: .6rem; }.build-designer-compact .inventory-slot-select { padding: .4rem; }
+.build-designer-compact .crew-allocation-console { gap: .55rem; padding: .65rem; }.build-designer-compact .crew-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: .45rem; }.build-designer-compact .crew-slider-card { min-height: 7rem; padding: .55rem; }.build-designer-compact .crew-role-image { width: 2.7rem; height: 2.2rem; margin: 0; }
+.build-designer-compact .compact-inventory-panel .inventory-grid { gap: .55rem; }.build-designer-compact .compact-inventory-panel .slot-hint { display: none; }.build-designer-compact .details-field textarea { min-height: 5rem; }
+@media (max-width: 1180px) { .build-result-summary .build-command-deck { grid-template-columns: 1fr; }.build-result-summary .upgrade-rack-panel,.build-result-summary .modifier-intelligence-panel { grid-column: 1; }.build-config-grid { grid-template-columns: 1fr; grid-template-areas: 'basics' 'equipment' 'weapons' 'crew' 'specialists' 'inventory' 'details'; }.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 720px) { .build-result-summary .command-deck-overview { grid-template-columns: 1fr; }.build-result-summary .effective-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-result-summary .upgrade-rack-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .section-fields.three-fields { grid-template-columns: 1fr; }.build-designer-compact .build-classification-editor .discovery-tile-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .equipment-unified-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-designer-compact .weapon-arc-grid,.build-designer-compact .compact-inventory-panel .inventory-grid { grid-template-columns: 1fr; }.build-designer-compact .classification-editor-heading p,.build-designer-compact .equipment-slot .slot-effect-text,.build-designer-compact .compact-inventory-panel .slot-hint { display: block; } }
+
+/* Build detail command view ------------------------------------------------ */
+.build-detail-command-frame { display: grid; gap: .85rem; }
+.build-detail-state { min-height: 16rem; display: grid; place-items: center; }
+.build-detail-command-header { position: relative; overflow: hidden; padding: 1.1rem 1.25rem 1.2rem; border: 1px solid rgba(230,181,92,.32); border-radius: .9rem; background: linear-gradient(115deg,rgba(19,36,54,.96),rgba(8,19,30,.98)); box-shadow: 0 16px 42px rgba(0,0,0,.2); }
+.build-detail-command-header::after { content: ''; position: absolute; inset: 0 0 0 auto; width: min(34rem,46%); pointer-events: none; opacity: .36; background: radial-gradient(circle at 75% 40%,rgba(230,181,92,.2),transparent 48%),linear-gradient(115deg,transparent,rgba(77,124,157,.12)); }
+.build-detail-back-link { position: relative; z-index: var(--z-raised); display: inline-flex; margin-bottom: .75rem; color: #b9c7d5; font-size: .76rem; font-weight: 700; letter-spacing: .08em; text-decoration: none; text-transform: uppercase; }
+.build-detail-back-link:hover { color: #f0c878; }
+.build-detail-command-heading { position: relative; z-index: var(--z-raised); display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.build-detail-command-heading > div:first-child { min-width: 0; flex: 1 1 auto; }
+.build-detail-command-heading h1 { margin: .16rem 0 .28rem; max-width: 24ch; font-family: var(--font-editorial); font-size: clamp(1.8rem,4vw,3.15rem); font-weight: 500; line-height: .98; letter-spacing: -.035em; }
+.build-detail-ship-line { margin: 0; color: #bac8d6; font-size: .85rem; }
+.build-detail-tag-row { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .7rem; }
+.build-detail-tag { padding: .3rem .56rem; border: 1px solid rgba(230,181,92,.26); border-radius: 999px; background: rgba(230,181,92,.08); color: #eed098; font-size: 0.75rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.build-detail-command-actions { flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; }
+.build-detail-command-actions .small-action,.build-print-export-actions .small-action { min-height: 2.45rem; border-radius: .45rem; }
+.build-detail-command-page .share-status { margin: 0; }
+.build-detail-command-page .build-command-deck { margin: 0; }
+.build-detail-result-summary .build-command-deck { padding: .85rem; }
+.build-detail-result-summary .command-deck-heading { display: none; }
+.build-detail-result-summary .command-deck-overview { gap: .6rem; }
+.build-detail-result-summary .ship-profile-card { min-height: 11rem; grid-template-columns: 8.5rem minmax(0,1fr); gap: .65rem; padding: .65rem; }
+.build-detail-result-summary .ship-profile-image-wrap { min-height: 8.5rem; }
+.build-detail-result-summary .effective-stat-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.build-detail-result-summary .upgrade-rack-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.build-detail-result-summary .upgrade-rack-panel,.build-detail-result-summary .modifier-intelligence-panel { display: none; }
+.build-detail-warning-panel { margin: 0; border-radius: .7rem; }
+.build-detail-command-layout { display: grid; grid-template-columns: minmax(0,1.08fr) minmax(21rem,.92fr); gap: .85rem; align-items: start; }
+.build-detail-command-column { display: grid; gap: .85rem; min-width: 0; }
+.build-readout-panel { overflow: hidden; border: 1px solid rgba(189,207,224,.14); border-radius: .85rem; background: rgba(10,22,34,.84); box-shadow: 0 13px 34px rgba(0,0,0,.13); }
+.build-readout-panel-header { min-height: 4.25rem; display: flex; align-items: center; gap: .72rem; padding: .72rem .85rem; border-bottom: 1px solid rgba(189,207,224,.12); background: linear-gradient(90deg,rgba(22,42,60,.78),rgba(12,27,41,.72)); }
+.build-readout-index { flex: 0 0 auto; display: grid; width: 2rem; height: 2rem; place-items: center; border: 1px solid rgba(230,181,92,.3); border-radius: 50%; color: #e8bf72; font-family: var(--font-editorial); font-size: 0.75rem; }
+.build-readout-panel-header > div { min-width: 0; }
+.build-readout-panel-header h2 { margin: .1rem 0 0; color: #f5f7fa; font-family: var(--font-editorial); font-size: 1.18rem; font-weight: 500; line-height: 1.05; }
+.build-readout-total { margin-left: auto; color: #f0c878; font-family: var(--font-editorial); font-size: 1.35rem; font-weight: 500; }
+.build-configuration-strip { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.build-configuration-item { min-width: 0; display: grid; grid-template-columns: 2.65rem minmax(0,1fr); align-items: center; gap: .6rem; padding: .8rem; }
+.build-configuration-item + .build-configuration-item { border-left: 1px solid rgba(189,207,224,.11); }
+.build-configuration-item > span:last-child { min-width: 0; display: grid; gap: .16rem; }
+.build-configuration-item small { color: #8497aa; font-size: 0.75rem; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.build-configuration-item strong { overflow: hidden; font-size: .83rem; text-overflow: ellipsis; white-space: nowrap; }
+.build-configuration-marker { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid rgba(230,181,92,.32); border-radius: .45rem; background: rgba(230,181,92,.08); color: #efca83; font-family: var(--font-editorial); font-size: 1.1rem; }
+.build-readout-list { margin: 0; padding: 0; list-style: none; }
+.build-readout-list > li { min-height: 3.7rem; display: flex; align-items: center; gap: .6rem; padding: .54rem .85rem; }
+.build-readout-list > li + li { border-top: 1px solid rgba(189,207,224,.1); }
+.build-readout-number { width: 1.55rem; color: #6f8296; font-family: var(--font-mono); font-size: 0.75rem; }
+.build-readout-copy { min-width: 0; display: grid; gap: .12rem; }
+.build-readout-copy strong { color: #eef3f8; font-size: .86rem; }
+.build-readout-copy small,.build-readout-copy > span { overflow: hidden; color: #8296a9; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
+.build-readout-empty { margin: 0; padding: .75rem .85rem; color: #64788c; }
+.build-weapon-readout { display: grid; }
+.build-weapon-arc-row { min-width: 0; display: grid; grid-template-columns: 7rem minmax(0,1fr); align-items: center; gap: .65rem; padding: .58rem .85rem; }
+.build-weapon-arc-row + .build-weapon-arc-row { border-top: 1px solid rgba(189,207,224,.1); }
+.build-weapon-arc-row.is-empty { opacity: .56; }
+.build-weapon-arc-label { color: #9db0c2; font-size: 0.75rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.build-weapon-arc-row ul { min-width: 0; display: flex; flex-wrap: wrap; gap: .38rem; margin: 0; padding: 0; list-style: none; }
+.build-weapon-arc-row li,.build-inventory-readout li { min-width: 0; display: inline-flex; align-items: center; gap: .35rem; padding: .28rem .42rem; border: 1px solid rgba(189,207,224,.12); border-radius: .38rem; background: rgba(30,50,68,.42); color: #e9f0f6; font-size: 0.75rem; }
+.build-weapon-arc-row li img,.build-inventory-readout li img { width: 1.45rem; height: 1.45rem; object-fit: cover; border-radius: .25rem; }
+.build-weapon-arc-row li small,.build-inventory-readout li small { color: #e9c77f; }
+.build-crew-readout { display: grid; padding: .25rem .85rem; }
+.build-crew-meter-row { display: grid; grid-template-columns: 2rem 6.6rem minmax(3rem,1fr) 2.8rem; align-items: center; gap: .55rem; min-height: 3rem; }
+.build-crew-meter-row + .build-crew-meter-row { border-top: 1px solid rgba(189,207,224,.1); }
+.build-crew-meter-row img { width: 1.75rem; height: 1.75rem; object-fit: contain; }
+.build-crew-meter-row span { color: #aebdca; font-size: .75rem; }
+.build-crew-meter-row strong { text-align: right; font-size: .83rem; }
+.build-crew-meter-row progress { width: 100%; height: .34rem; overflow: hidden; border: 0; border-radius: 999px; background: rgba(189,207,224,.12); }
+.build-crew-meter-row progress::-webkit-progress-bar { background: rgba(189,207,224,.12); }
+.build-crew-meter-row progress::-webkit-progress-value { border-radius: 999px; background: linear-gradient(90deg,#b98a3d,#f0cb7c); }
+.build-crew-meter-row progress::-moz-progress-bar { border-radius: 999px; background: linear-gradient(90deg,#b98a3d,#f0cb7c); }
+.build-readout-footnote { margin: 0; padding: .55rem .85rem; border-top: 1px solid rgba(189,207,224,.1); color: #73879a; font-size: 0.75rem; }
+.build-ginger-readout { display: flex; align-items: center; gap: .65rem; margin: .65rem .85rem .8rem; padding: .65rem; border: 1px dashed rgba(230,181,92,.48); border-radius: .55rem; background: linear-gradient(100deg,rgba(230,181,92,.1),rgba(230,181,92,.025)); }
+.build-ginger-readout .build-readout-copy small { color: #e5bb6c; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.build-inventory-readout { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.build-inventory-readout > section { min-width: 0; padding: .7rem .65rem .8rem; }
+.build-inventory-readout > section + section { border-left: 1px solid rgba(189,207,224,.1); }
+.build-inventory-readout h3 { display: flex; align-items: center; justify-content: space-between; gap: .35rem; margin: 0 0 .5rem; color: #aebfce; font-size: 0.75rem; letter-spacing: .05em; text-transform: uppercase; }
+.build-inventory-readout h3 span { color: #e6bd73; }
+.build-inventory-readout ul { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.build-inventory-readout li { width: 100%; }
+.build-inventory-readout li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.build-notes-readout > p { margin: 0; padding: .85rem; color: #b8c5d1; font-size: .78rem; line-height: 1.62; }
+.build-print-sheet-preview { margin: 0; overflow: hidden; border: 1px solid rgba(230,181,92,.3); border-radius: .9rem; background: #09131e; }
+.build-print-sheet-preview .build-print-export-header { padding: .85rem 1rem; border-bottom: 1px solid rgba(189,207,224,.12); }
+.build-print-sheet-preview .build-print-export-preview { display: grid; place-items: center; max-height: 72rem; padding: 1.15rem; overflow: auto; background: radial-gradient(circle at 50% 12%,rgba(230,181,92,.08),transparent 42%),#050c13; }
+.build-print-sheet-preview .build-print-export-preview img { width: min(100%,48rem); border: 1px solid rgba(230,181,92,.24); border-radius: .15rem; box-shadow: 0 24px 70px rgba(0,0,0,.45); }
+@media (max-width: 1050px) { .build-detail-command-layout { grid-template-columns: 1fr; }.build-detail-command-column { display: contents; }.build-detail-command-column:first-child .build-readout-panel:nth-child(1) { order: 1; }.build-detail-command-column:first-child .build-readout-panel:nth-child(2) { order: 2; }.build-detail-command-column:first-child .build-readout-panel:nth-child(3) { order: 3; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(1) { order: 4; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(2) { order: 5; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(3) { order: 6; }.build-detail-command-column:nth-child(2) .build-readout-panel:nth-child(4) { order: 7; } }
+@media (max-width: 720px) { .build-detail-command-header { padding: .9rem; }.build-detail-command-heading { align-items: stretch; flex-direction: column; }.build-detail-command-actions { justify-content: stretch; }.build-detail-command-actions > * { flex: 1 1 auto; text-align: center; }.build-detail-result-summary .effective-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.build-configuration-strip,.build-inventory-readout { grid-template-columns: 1fr; }.build-configuration-item + .build-configuration-item,.build-inventory-readout > section + section { border-top: 1px solid rgba(189,207,224,.1); border-left: 0; }.build-weapon-arc-row { grid-template-columns: 5.2rem minmax(0,1fr); }.build-crew-meter-row { grid-template-columns: 1.75rem 5rem minmax(2rem,1fr) 2.2rem; gap: .38rem; }.build-readout-panel-header { padding-inline: .7rem; }.build-print-sheet-preview .build-print-export-header { align-items: stretch; flex-direction: column; }.build-print-export-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }.build-print-sheet-preview .build-print-export-preview { padding: .55rem; } }

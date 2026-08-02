@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import timedelta, timezone
+from datetime import timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Any
 from urllib.request import Request
@@ -36,16 +36,6 @@ from app.modules.raid_helper.services.errors import RaidHelperError
 from app.modules.raid_helper.payload_policy import validate_payload_capability
 from app.modules.raid_helper.services.raid_helper_configuration import (
     _validate_base_url,
-    create_profile,
-    delete_destination,
-    delete_profile,
-    delete_template,
-    list_destinations,
-    list_profiles,
-    list_templates,
-    save_destination,
-    save_template,
-    update_profile,
 )
 from app.modules.squads.services.squad_service import can_manage_squad, get_squad_model
 
@@ -479,4 +469,3 @@ def queue_existing_links_for_update(db: Session, event_id: int) -> None:
         row.last_operation = "update" if row.external_event_id else "create"
         row.error_message = None
     db.commit()
-

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { readGlobalStyles } from './helpers/readGlobalStyles.mjs'
+import { readCssBundle } from './helpers/readCssBundle.mjs'
 
 const adminSource = await readFile(new URL('../src/modules/admin/pages/AdminPage.vue', import.meta.url), 'utf8')
 const systemLogSource = await readFile(new URL('../src/modules/admin/components/SystemLogPanel.vue', import.meta.url), 'utf8')
@@ -17,9 +18,18 @@ const filterSurfaceSource = await readFile(new URL('../src/modules/admin/compone
 const staffOverviewSource = await readFile(new URL('../src/modules/admin/components/StaffOverviewPanel.vue', import.meta.url), 'utf8')
 const navigationSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceNavigation.vue', import.meta.url), 'utf8')
 const shellSource = await readFile(new URL('../src/modules/admin/components/StaffWorkspaceShell.vue', import.meta.url), 'utf8')
-const staffStylesSource = await readFile(new URL('../src/modules/admin/styles/staffWorkspace.css', import.meta.url), 'utf8')
+const staffStylesSource = readCssBundle([
+  '../src/modules/admin/styles/staffWorkspaceShell.css',
+  '../src/modules/admin/styles/staffWorkspaceOverview.css',
+  '../src/modules/admin/styles/staffWorkspaceResponsive.css',
+  '../src/modules/admin/styles/staffSecurityWorkspace.css',
+], import.meta.url)
+const adminIntegrationsSource = readCssBundle([
+  '../src/modules/admin/styles/adminWebhookConfiguration.css',
+  '../src/modules/admin/styles/adminWebhookEditorDrawer.css',
+], import.meta.url)
 const navigationDomainSource = await readFile(new URL('../src/modules/admin/domain/staffNavigation.js', import.meta.url), 'utf8')
-const stylesSource = `${readGlobalStyles()}\n${staffStylesSource}`
+const stylesSource = `${readGlobalStyles()}\n${staffStylesSource}\n${adminIntegrationsSource}`
 
 test('staff workspace exposes combined filters for all shared management modules', () => {
   for (const binding of [
@@ -138,5 +148,5 @@ test('staff overview prioritizes work and uses compact responsive metric bands',
     assert.ok(stylesSource.includes(`.${className}`), `${className} CSS`)
   }
   assert.ok(staffStylesSource.includes('grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr))'))
-  assert.ok(staffStylesSource.includes('@media (max-width: 430px)'))
+  assert.ok(staffStylesSource.includes('@media (max-width: 480px)'))
 })

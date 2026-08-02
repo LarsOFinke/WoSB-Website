@@ -17,7 +17,7 @@
 git clone <REPOSITORY_URL> ~/royal-blackwater-fleet
 cd ~/royal-blackwater-fleet
 sudo ./setup.sh \
-  --profile full \
+  --profile core \
   --domain royal-blackwater-fleet.eu \
   --tls-mode letsencrypt \
   --letsencrypt-email admin@royal-blackwater-fleet.eu
@@ -29,6 +29,10 @@ Danach:
 sudo ./infrastructure/scripts/checks/doctor.sh
 sudo ./infrastructure/scripts/checks/smoke-test.sh
 ```
+
+Das optionale Full-Profil mit Uptime Kuma wird erst nach der administrativen Einrichtung und einer
+Beschränkung des Monitoring-Ports auf LAN/VPN aktiviert. Der Host-Doctor prüft automatische
+Security-Updates, Firewall-Defaults und root-äquivalente Docker-Gruppenmitgliedschaften mit.
 
 Das erste Admin-Passwort sicher ablegen, sofort ändern und
 `infrastructure/first-run-credentials.txt` löschen.

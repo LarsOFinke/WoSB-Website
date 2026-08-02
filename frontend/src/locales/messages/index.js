@@ -11,6 +11,7 @@ import { buildVotingRolesAndSearchMessages } from './buildVotingRolesAndSearch.j
 import { contentModulesAndBuildStatsMessages } from './contentModulesAndBuildStats.js'
 import { combatAnalysisMessages } from './combatAnalysis.js'
 import { dateFieldFixMessages } from './dateFieldFixes.js'
+import { dataRightsMessages } from './dataRights.js'
 import { fleetCalendarMessages } from './fleetCalendar.js'
 import { fleetIdentityMessages } from './fleetIdentity.js'
 import { fleetManagementMessages } from './fleetManagement.js'
@@ -41,6 +42,7 @@ import { userBuildsAndPasswordMessages } from './userBuildsAndPassword.js'
 const messageLayers = [
   appShellMessages,
   privacyMessages,
+  dataRightsMessages,
   legalNoticeMessages,
   authAdminProfileMessages,
   userBuildsAndPasswordMessages,

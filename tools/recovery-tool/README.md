@@ -23,6 +23,9 @@ rbf-recovery-tool server provision ...  Ubuntu-Backup-Server sicher provisionier
 Windows und Linux werden nativ auf dem jeweiligen Betriebssystem gebaut. `age`, `age-keygen`,
 Paramiko und ihre nativen Abhängigkeiten werden von PyInstaller eingebettet.
 
+Die verbindlichen Modulgrenzen, Größenbudgets und Testregeln sind in
+[`docs/BACKUP_ARCHITECTURE.md`](../../docs/BACKUP_ARCHITECTURE.md) festgehalten.
+
 ## Linux-spezifisch
 
 Der Linux-Client kann einen systemd-Benutzertimer einrichten und optional ein lokales

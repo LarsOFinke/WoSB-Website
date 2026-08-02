@@ -83,6 +83,14 @@ export function updateUser(id, payload) {
   return put(`/admin/users/${id}`, payload)
 }
 
+export function listPrivacyRequests() {
+  return get('/admin/privacy-requests')
+}
+
+export function resolvePrivacyRequest(id, payload) {
+  return put(`/admin/privacy-requests/${id}`, payload)
+}
+
 export function getMasterDataOverview() {
   return get('/admin/master-data/overview')
 }

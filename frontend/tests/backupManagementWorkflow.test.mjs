@@ -6,11 +6,12 @@ const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
 
 test('database backup administration is isolated in an admin-only subpage', async () => {
-  const [routes, navigation, page, composable] = await Promise.all([
+  const [routes, navigation, page, composable, enrollmentComposable] = await Promise.all([
     read('src/modules/admin/routes.js'),
     read('src/modules/admin/domain/staffNavigation.js'),
     read('src/modules/admin/pages/DatabaseBackupsPage.vue'),
     read('src/modules/admin/composables/useDatabaseBackupsPage.js'),
+    read('src/modules/admin/composables/useBackupEnrollment.js'),
   ])
 
   assert.match(routes, /path: '\/admin\/database-backups'/)
@@ -39,9 +40,10 @@ test('database backup administration is isolated in an admin-only subpage', asyn
   assert.match(page, /backup-setup-progress/)
   assert.match(page, /enrollmentSetup\.host/)
   assert.match(page, /No token|no private key|privater Schlüssel|required/)
-  assert.match(composable, /parseBackupEnrollmentResponse/)
-  assert.match(composable, /buildBackupEnrollmentCommand/)
-  assert.match(composable, /canCopyEnrollmentCommand/)
+  assert.match(composable, /useBackupEnrollment/)
+  assert.match(enrollmentComposable, /parseBackupEnrollmentResponse/)
+  assert.match(enrollmentComposable, /buildBackupEnrollmentCommand/)
+  assert.match(enrollmentComposable, /canCopyCommand/)
   assert.match(composable, /form\.host_key\.trim\(\) === status\.value\.discovered_host_key/)
   assert.match(composable, /status\.value\.operation === 'apply_enrollment'/)
 })
@@ -87,4 +89,3 @@ test('database restore requires an opaque catalog id and host approval token', a
   assert.match(extensionMessages, /Two-person-style host approval/)
   assert.match(extensionMessages, /Zusätzliche Host-Freigabe/)
 })
-
