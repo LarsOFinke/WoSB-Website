@@ -42,7 +42,9 @@ def plain_url(value: str) -> str:
 
 
 def database_url(base: str, database: str) -> str:
-    return str(make_url(base).set(database=database))
+    # str(URL) intentionally masks credentials as ``***``. This URL is passed
+    # directly to psycopg, so retain the actual password for the CI connection.
+    return make_url(base).set(database=database).render_as_string(hide_password=False)
 
 
 def admin_database(base: str) -> str:
@@ -165,6 +167,8 @@ def main() -> None:
     suffix = str(os.getpid())
     source_db = f"rbf_recovery_source_{suffix}"
     target_db = f"rbf_recovery_target_{suffix}"
+    source_created = False
+    target_created = False
 
     with tempfile.TemporaryDirectory(prefix="rbf-recovery-matrix-") as temporary:
         temp = Path(temporary)
@@ -180,7 +184,9 @@ def main() -> None:
 
         try:
             recreate_database(args.database_url, source_db)
+            source_created = True
             recreate_database(args.database_url, target_db)
+            target_created = True
             run([sys.executable, "-m", "alembic", "upgrade", old_revision], cwd=BACKEND, env=source_env)
             with psycopg.connect(plain_url(source_url)) as connection:
                 with connection.cursor() as cursor:
@@ -256,8 +262,10 @@ def main() -> None:
                 expect=1,
             )
         finally:
-            drop_database(args.database_url, source_db)
-            drop_database(args.database_url, target_db)
+            if source_created:
+                drop_database(args.database_url, source_db)
+            if target_created:
+                drop_database(args.database_url, target_db)
 
     print(f"Recovery matrix OK: {old_revision} -> {', '.join(graph.heads)} with data and API readiness.")
 

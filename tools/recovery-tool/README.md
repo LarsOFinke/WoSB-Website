@@ -14,6 +14,8 @@ Traversal, Links, Spezialdateien, Duplikate, Größenlimits und jede Manifest-Pr
 ```text
 rbf-recovery-tool                 grafische Oberfläche
 rbf-recovery-tool pull            neuestes Bundle laden und vollständig prüfen
+rbf-recovery-tool catalog         Backup-Katalog des Backup-Servers anzeigen
+rbf-recovery-tool catalog --json  maschinenlesbaren Backup-Katalog ausgeben
 rbf-recovery-tool verify ...      lokales Bundle prüfen
 rbf-recovery-tool timer ...       Linux-systemd-Benutzertimer verwalten
 rbf-recovery-tool lab ...         lokales PostgreSQL-Recovery-Labor verwalten
@@ -65,3 +67,18 @@ ausgetauscht.
 ### Automatisch getrennter Recovery-Lesezugang
 
 Das Server-Provisioning erzeugt neben dem schreibenden Produktiv-Uploadkonto einen zweiten, nur lokal erreichbaren und durch `internal-sftp -R` read-only erzwungenen Recovery-Zugang. Der zugehörige private SSH-Schlüssel und die private age-Identität verbleiben auf dem Backup-/Recovery-Gerät. Das Tool testet diesen Zugang und speichert automatisch ein lokales Pull-Profil; anschließend genügt `rbf-recovery-tool pull`.
+
+### Backup-Katalog
+
+Die GUI zeigt unter **Backups auf dem Backup-Server** alle vorhandenen
+Backup-Set-Manifeste mit UTC-Zeitpunkt, Anlass, Gesamtgröße, Bestandteilen und
+Recovery-Status. **Erfolgreich** wird nur angezeigt, wenn das Set committed ist,
+alle referenzierten Artefakte und Sidecars vorhanden sind und ihre Größe sowie
+Prüfsummenbindung zum Manifest passen. Recovery-Sets benötigen zusätzlich einen
+erfolgreichen vollständigen Recovery-Preflight. Unvollständige oder beschädigte
+Sets bleiben als **Ungültig** mit Fehlergrund sichtbar.
+
+Der Katalog wird ausschließlich über den gepinnten read-only SFTP-Zugang
+gelesen. Auf einem provisionierten Backup-Server verwendet das automatisch
+angelegte lokale Profil diesen Zugang, sodass weder Root-Rechte noch Zugriff auf
+das Uploadkonto erforderlich sind.

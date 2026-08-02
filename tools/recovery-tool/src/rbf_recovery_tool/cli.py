@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 
 from .automation import executable_path, install_pull_timer, remove_pull_timer
+from .backup_catalog import fetch_backup_catalog
 from .config import load_profile, profile_path
 from .docker_lab import (
     connection,
@@ -45,6 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command")
     pull = sub.add_parser("pull", help="Neuestes Bundle laden und vollständig prüfen")
     pull.add_argument("--quiet", action="store_true")
+    catalog = sub.add_parser(
+        "catalog", help="Auf dem Backup-Server vorhandene Backup-Sets anzeigen"
+    )
+    catalog.add_argument("--json", action="store_true", dest="as_json")
     verify = sub.add_parser(
         "verify", help="Lokales verschlüsseltes Bundle kryptografisch prüfen"
     )
@@ -147,6 +152,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "pull":
         return _pull(args.quiet)
+    if args.command == "catalog":
+        entries = fetch_backup_catalog(load_profile().normalized())
+        if args.as_json:
+            print(json.dumps([entry.as_dict() for entry in entries], ensure_ascii=False, indent=2))
+        elif not entries:
+            print("Keine Backup-Set-Manifeste auf dem Backup-Server gefunden.")
+        else:
+            for entry in entries:
+                size_mib = entry.total_size_bytes / (1024 * 1024)
+                recovery = "ja" if entry.recoverable else "nein"
+                print(
+                    f"{entry.created_at or '-'}  {entry.status:10}  "
+                    f"{size_mib:9.1f} MiB  Recovery={recovery}  "
+                    f"{entry.reason}  {entry.filename}"
+                )
+                if entry.status != "successful":
+                    print(f"  Problem: {entry.detail}")
+        return 0
     if args.command == "verify":
         result = verify_encrypted_bundle(args.bundle, args.identity)
         print(f"OK: files={result.file_count} sha256={result.bundle_sha256}")

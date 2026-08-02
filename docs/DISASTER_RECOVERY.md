@@ -231,6 +231,17 @@ Nach Erfolg den privaten Schlüssel unverzüglich vom Pi entfernen:
 sudo shred -u /tmp/rbf-recovery-identity.txt 2>/dev/null || sudo rm -f /tmp/rbf-recovery-identity.txt
 ```
 
+Der lokale Backup-Server-Katalog kann in der grafischen Oberfläche über
+**Katalog aktualisieren** oder auf der Kommandozeile gelesen werden:
+
+```bash
+rbf-recovery-tool catalog
+rbf-recovery-tool catalog --json
+```
+
+Die Anzeige verwendet den provisionierten read-only Recovery-Zugang und
+unterscheidet erfolgreiche, recovery-geprüfte und unvollständige Backup-Sets.
+
 
 ## 5. Geschützter PostgreSQL-Restore im Admin-Panel
 

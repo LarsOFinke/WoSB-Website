@@ -28,6 +28,26 @@ class RecoveryEventMixin:
     def _handle_success(self, payload: object) -> None:
         self._set_busy(False, "Erfolgreich")
         self.progress["value"] = 100
+        if isinstance(payload, tuple) and payload and payload[0] == "catalog":
+            entries = payload[1]
+            self.catalog.delete(*self.catalog.get_children())
+            for entry in entries:
+                size_mib = entry.total_size_bytes / (1024 * 1024)
+                self.catalog.insert(
+                    "",
+                    "end",
+                    values=(
+                        entry.created_at or "–",
+                        "Erfolgreich" if entry.status == "successful" else "Ungültig",
+                        entry.reason,
+                        f"{size_mib:.1f} MiB",
+                        "Ja" if entry.recoverable else "Nein",
+                        ", ".join(entry.artifact_types) or entry.detail,
+                    ),
+                )
+            self.vars["status"].set(f"{len(entries)} Backup-Set(s) gefunden")
+            self._append_log(f"Backup-Katalog aktualisiert: {len(entries)} Set(s).")
+            return
         if isinstance(payload, tuple) and payload and payload[0] == "host":
             fingerprint = str(payload[1])
             current = self.vars["host_fingerprint"].get()
