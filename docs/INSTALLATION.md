@@ -39,6 +39,11 @@ aktiviert. Der aufrufende Benutzer erhält keine root-äquivalenten Docker-Grupp
 `--regenerate-secrets` ist aus Sicherheitsgründen nur vor der ersten
 PostgreSQL-Initialisierung erlaubt.
 
+Das Spring-Backend wird mehrstufig im Container gebaut; auf dem Produktionshost sind daher weder
+ein JDK noch Maven nötig. Der Build lädt die in `spring-api/pom.xml` festgelegten Abhängigkeiten und
+erzeugt ein minimales Java-21-Runtime-Image. Für lokale Entwicklung werden JDK 21 und Maven 3.9+
+benötigt; `make spring-test` löst die Projektabhängigkeiten auf und prüft die Installation.
+
 Der Gateway bindet das Statusverzeichnis schreibgeschützt ein. Während dedizierter Updates,
 Neustarts und produktiver Restores liefert er dadurch eine eigenständige statische RBF-503-Seite,
 selbst wenn API oder Datenbank gerade nicht erreichbar sind. Reguläre Backups verursachen keine
@@ -48,6 +53,7 @@ Wartungsseite.
 
 ```bash
 sudo ./infrastructure/scripts/checks/doctor.sh
+docker compose --env-file infrastructure/.env -f infrastructure/compose.yml ps api secure-api gateway
 ```
 
 Mit den Daten aus `infrastructure/first-run-credentials.txt` anmelden, das Admin-Passwort ändern und

@@ -51,4 +51,4 @@ for attempt in $(seq 1 60); do
   sleep 2
 done
 
-die "Healthcheck ist fehlgeschlagen. Logs: infrastructure/scripts/services/logs.sh api gateway"
+die "Healthcheck ist fehlgeschlagen. Logs: infrastructure/scripts/services/logs.sh api secure-api gateway"

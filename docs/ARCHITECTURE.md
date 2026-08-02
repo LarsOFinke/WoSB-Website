@@ -3,15 +3,39 @@
 ## Laufzeit
 
 ```text
-Browser → NGINX Gateway → FastAPI → SQLAlchemy → PostgreSQL
-                         ↘ Upload-Verzeichnis
+Browser → NGINX Gateway ┬→ Spring Boot Security API ─┐
+                        └→ FastAPI → SQLAlchemy ─────┴→ PostgreSQL
+                                   ↘ Upload-Verzeichnis
 Uptime Kuma → internes Gateway/Health-Endpunkte
 ```
 
-NGINX liefert das Vue-Frontend und leitet `/api` an FastAPI weiter. PostgreSQL bleibt im internen
+NGINX liefert das Vue-Frontend. Die sicherheitskritischen Sitzungsendpunkte `/api/auth/login`,
+`/api/auth/logout`, `/api/auth/change-password` und `/api/auth/me` gehen an Spring Boot; die
+Registrierung und übrigen Fachendpunkte bleiben zunächst bei FastAPI. Beide Dienste verwenden
+denselben, von Alembic verwalteten PostgreSQL-Vertrag und dasselbe gehashte Session-Tokenformat.
+PostgreSQL bleibt im internen
 Compose-Netz; der Loopback-Port dient nur der Host-Wartung. Upload-Inhalte werden nicht direkt aus dem Dateisystem ausgeliefert: `/api/files/{id}/content` und der kompatible `/uploads/...`-Pfad laufen durch die API und antworten ohne öffentlichen Cache. Die ausdrücklich öffentlichen Kontexte `guide`, `forum` und `master-data` bleiben anonym lesbar; sonstige Uploads verlangen den Eigentümer oder Staff-Rechte.
 
 ## Backend
+
+### Security-Grenze (Spring Boot)
+
+`spring-api` ist der führende Dienst für Zugangsdatenprüfung, Passwort-Rehashing,
+Session-Erzeugung/-Widerruf und den eigenen Benutzerkontext. Java 21, Spring Boot, Spring Security,
+JPA und MapStruct werden über Maven gebaut. MapStruct erzwingt vollständige DTO-Zuordnung beim
+Kompilieren. Hibernate validiert das vorhandene Schema ausschließlich (`ddl-auto=validate`);
+Schemaänderungen bleiben bis zu einer ausdrücklich geplanten Ablösung alleinige Aufgabe von
+Alembic.
+
+Der Dienst ist fail-closed: nur die vier Auth-Routen und der ausschließlich intern erreichbare
+Actuator-Healthcheck sind freigegeben, alle anderen Routen werden abgewiesen. Host- und
+Origin/Sec-Fetch-Prüfung ergänzen die NGINX-Limits. Der Container besitzt keinen veröffentlichten
+Port, kein allgemeines Outbound-Netz, keine Linux-Capabilities und ein schreibgeschütztes
+Root-Dateisystem.
+
+Diese Grenze ist bewusst ein erster Strangler-Schritt, keine Behauptung einer abgeschlossenen
+Gesamtmigration. Autorisierung fachlicher Objekte bleibt jeweils in dem Dienst, der den Endpunkt
+besitzt; ein Endpunkt darf nie gleichzeitig von beiden Diensten implementiert werden.
 
 Fachmodule unter `backend/src/app/modules/<domain>` besitzen nach Bedarf `models`, `schemas`,
 `routes` und `services`. Routes übersetzen HTTP, Services enthalten Anwendungslogik, Models bilden

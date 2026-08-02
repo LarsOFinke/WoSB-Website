@@ -5,6 +5,12 @@
 PostgreSQL ist die einzige Produktionsdatenbank. Alembic ist die alleinige Quelle für
 Schemaänderungen; `create_all()` bleibt auf lokale SQLite-Tests beschränkt.
 
+Im Hybridbetrieb bleibt Alembic der einzige Schema-Eigentümer. Die Spring-Security-API greift auf
+`users`, `user_profiles`, `site_roles` und `auth_sessions` zu und startet ausschließlich mit
+`spring.jpa.hibernate.ddl-auto=validate`. JPA- oder Flyway-Schemaerzeugung ist untersagt. Eine
+spätere Übergabe der Schemahoheit benötigt eine eigene dokumentierte Migration und darf nicht
+implizit durch Hibernate erfolgen.
+
 Das Schema folgt der 3. Normalform: Rollen, Schiffe, Mounts, Präferenzen, Mitgliedschaften,
 Katalogoptionen und Effekte besitzen eigene Tabellen und Fremdschlüssel. Historisch referenzierte
 Stammdaten werden deaktiviert statt gelöscht.

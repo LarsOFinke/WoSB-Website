@@ -28,6 +28,9 @@ printf '\n[backend] lint and isolated tests\n'
   python "$ROOT_DIR/scripts/run_backend_tests.py"
 )
 
+printf '\n[spring security API] compile and unit tests\n'
+mvn -f "$ROOT_DIR/spring-api/pom.xml" --batch-mode --no-transfer-progress test
+
 printf '\n[recovery tool] unit tests\n'
 python -m pytest -q -p no:cacheprovider "$ROOT_DIR/tools/recovery-tool/tests" "$ROOT_DIR/tests/recovery"
 

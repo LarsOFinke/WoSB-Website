@@ -92,6 +92,10 @@ require_pattern 'data/postgres/PG_VERSION' "$INFRA_DIR/scripts/setup/workflow.sh
 require_pattern 'data/postgres/PG_VERSION' "$INFRA_DIR/scripts/lib/host/storage.sh"
 require_pattern 'AUTO_SEED=true rbf-seed' "$INFRA_DIR/compose.yml"
 require_pattern '^AUTO_SEED=false$' "$INFRA_DIR/.env.example"
+require_file "$ROOT_DIR/spring-api/Dockerfile"
+require_file "$ROOT_DIR/spring-api/pom.xml"
+require_pattern 'proxy_pass http://secure-api:8080' "$INFRA_DIR/nginx/default.conf"
+require_pattern 'anyRequest().denyAll()' "$ROOT_DIR/spring-api/src/main/java/eu/royalblackwater/api/config/SecurityConfiguration.java"
 
 # The backend intentionally requires an env file. The image contains an empty,
 # assignment-free marker while Compose injects real values as process variables.
@@ -170,6 +174,11 @@ assert "  backend:\n    driver: bridge\n    internal: true\n" in networks_sectio
     "backend network must remain internal"
 )
 assert "  outbound:\n    driver: bridge\n" in networks_section, "outbound network must be defined"
+secure_api_section = text.split("  secure-api:\n", 1)[1].split("\n  gateway:\n", 1)[0]
+assert "      - backend\n" in secure_api_section, "secure-api must stay on the internal backend network"
+assert "      - outbound\n" not in secure_api_section, "secure-api must not receive general outbound egress"
+assert "    read_only: true\n" in secure_api_section, "secure-api root filesystem must be read-only"
+assert "      - ALL\n" in secure_api_section, "secure-api must drop Linux capabilities"
 PY_COMPOSE
 
 if docker compose version >/dev/null 2>&1; then

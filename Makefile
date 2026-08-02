@@ -1,6 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: dev-backend dev-frontend test test-full test-recovery test-recovery-matrix lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
+.PHONY: dev-backend dev-frontend test test-full test-recovery test-recovery-matrix spring-test lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
 
 dev-backend:
 	cd backend && rbf-dev
@@ -13,6 +13,9 @@ test:
 
 test-full:
 	bash ./scripts/test.sh full
+
+spring-test:
+	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress test
 
 test-recovery:
 	python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests tests/recovery

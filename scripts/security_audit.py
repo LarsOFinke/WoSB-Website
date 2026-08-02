@@ -34,6 +34,7 @@ approved_actions = {
     "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
     "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
     "actions/setup-node": "249970729cb0ef3589644e2896645e5dc5ba9c38",
+    "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
     "actions/upload-artifact": "b7c566a772e6b6bfb58ed0dc250532a479d7789f",
     "aquasecurity/trivy-action": "a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8",
     "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml": (

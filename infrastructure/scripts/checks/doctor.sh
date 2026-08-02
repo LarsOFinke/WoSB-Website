@@ -74,7 +74,7 @@ else
   warn "Vollständiges verschlüsseltes Disaster-Recovery ist deaktiviert."
 fi
 
-if bw_compose ps --status running api gateway postgres 2>/dev/null | grep -q .; then
+if bw_compose ps --status running api secure-api gateway postgres 2>/dev/null | grep -q .; then
   "$INFRA_DIR/scripts/checks/smoke-test.sh"
 else
   warn "Mindestens ein Kernservice läuft nicht; Smoke-Test wurde übersprungen."

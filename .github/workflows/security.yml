@@ -29,7 +29,7 @@ jobs:
       - name: Build production images
         run: |
           cp infrastructure/.env.example infrastructure/.env
-          docker compose --env-file infrastructure/.env -f infrastructure/compose.yml build api gateway
+          docker compose --env-file infrastructure/.env -f infrastructure/compose.yml build api secure-api gateway
       - name: Scan API image
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
@@ -42,6 +42,14 @@ jobs:
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           image-ref: rbf-hub-gateway:local
+          format: table
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+      - name: Scan Spring security API image
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: rbf-hub-secure-api:local
           format: table
           exit-code: '1'
           ignore-unfixed: true

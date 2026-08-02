@@ -103,9 +103,25 @@ jobs:
           cp .env.example .env
           npm run test:ci
 
+  secure-api:
+    name: Spring security API
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compile and test
+        run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress verify
+
   browser-smoke:
     name: Full-stack browser smoke
-    needs: [backend, frontend]
+    needs: [backend, frontend, secure-api]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -162,7 +178,7 @@ jobs:
   images:
     name: Production images
     if: github.event_name == 'push'
-    needs: [backend, frontend, repository]
+    needs: [backend, frontend, secure-api, repository]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -171,6 +187,6 @@ jobs:
           persist-credentials: false
       - name: Prepare Compose environment
         run: cp infrastructure/.env.example infrastructure/.env
-      - name: Build API and gateway
+      - name: Build API services and gateway
         working-directory: infrastructure
-        run: docker compose -f compose.yml build api gateway
+        run: docker compose -f compose.yml build api secure-api gateway

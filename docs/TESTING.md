@@ -2,6 +2,10 @@
 
 Die v1.0-Testbasis hält die Werkzeugkette klein und prüft die produktionsrelevanten Grenzen:
 
+Die Spring-Security-API besitzt ein eigenes Maven-Gate. Es prüft den zum Python-Bestand
+kompatiblen PBKDF2- und Session-Tokenvertrag, Host-/Cross-Site-Abweisung und kompiliert alle
+MapStruct-Zuordnungen mit Fehlern bei unvollständigen Zielmodellen.
+
 1. **Backend:** Pytest-Module in getrennten Prozessen und Laufzeitverzeichnissen.
 2. **Frontend:** Node-eigene Unit-Tests für reine Berechnungen, Crew, Präferenzen und Datum sowie
    gezielte Build-Designer-Regressionen. Ein Architekturtest prüft jede Route-Page auf Page-Model-Bindung und verbietet dort direkte API-/Async-Verantwortung.
@@ -20,6 +24,7 @@ Die v1.0-Testbasis hält die Werkzeugkette klein und prüft die produktionsrelev
 make test       # schneller Fachtestlauf
 make test-full  # zusätzlich Migration, Build und Infrastruktur
 make validate   # vollständiges Release-Gate
+make spring-test # gezielter Spring-/MapStruct-Test
 ```
 
 Neue Funktionen benötigen mindestens Erfolgs-, Berechtigungs- und Fehlerfall. Reine Fachlogik wird

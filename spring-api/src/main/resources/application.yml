@@ -1,0 +1,46 @@
+server:
+  port: 8080
+  shutdown: graceful
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-binding-errors: never
+spring:
+  application:
+    name: rbf-secure-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 1
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+rbf:
+  session:
+    cookie-name: ${SESSION_COOKIE_NAME:rbf_hub_session}
+    secure: ${SESSION_COOKIE_SECURE:true}
+    same-site: ${SESSION_COOKIE_SAMESITE:Lax}
+    ttl: ${SESSION_TTL:24h}
+  security:
+    allowed-hosts: ${ALLOWED_HOSTS:localhost,127.0.0.1}
+    allowed-origins: ${CORS_ORIGINS:}

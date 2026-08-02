@@ -202,7 +202,7 @@ bw_compose_with_profiles pull postgres
 if [[ "$profile" == full ]]; then
   bw_compose_with_profiles pull uptime-kuma
 fi
-bw_compose build api gateway
+bw_compose build api secure-api gateway
 
 log "Stelle PostgreSQL wieder her, migriere und prüfe die Anwendung."
 /usr/bin/env bash "$SCRIPT_DIR/restore-postgres.sh" "$postgres_backup"
@@ -211,6 +211,7 @@ log "Synchronisiere idempotente System- und Stammdaten des aktuellen Checkouts."
 bw_compose run --rm seed
 bw_compose restart api
 wait_for_api
+bw_compose restart secure-api
 bw_compose restart gateway
 ensure_monitoring_services
 /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"

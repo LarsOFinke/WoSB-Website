@@ -66,9 +66,10 @@ update_capture_service_image() {
 
 update_capture_running_images() {
   update_capture_service_image api API_IMAGE_BEFORE API_IMAGE_TAG_BEFORE
+  update_capture_service_image secure-api SECURE_API_IMAGE_BEFORE SECURE_API_IMAGE_TAG_BEFORE
   update_capture_service_image gateway GATEWAY_IMAGE_BEFORE GATEWAY_IMAGE_TAG_BEFORE
-  if [[ -n "$API_IMAGE_BEFORE" && -n "$GATEWAY_IMAGE_BEFORE" ]]; then
-    log "Laufende API- und Gateway-Images wurden als exakter Rollback-Punkt erfasst."
+  if [[ -n "$API_IMAGE_BEFORE" && -n "$SECURE_API_IMAGE_BEFORE" && -n "$GATEWAY_IMAGE_BEFORE" ]]; then
+    log "Laufende API-, Security-API- und Gateway-Images wurden als exakter Rollback-Punkt erfasst."
   else
     warn "Nicht alle laufenden Images konnten erfasst werden; ein Rollback kann einen Rebuild benötigen."
   fi
@@ -76,14 +77,18 @@ update_capture_running_images() {
 
 update_restore_captured_images() {
   [[ -n "$API_IMAGE_BEFORE" && -n "$API_IMAGE_TAG_BEFORE" ]] || return 1
+  [[ -n "$SECURE_API_IMAGE_BEFORE" && -n "$SECURE_API_IMAGE_TAG_BEFORE" ]] || return 1
   [[ -n "$GATEWAY_IMAGE_BEFORE" && -n "$GATEWAY_IMAGE_TAG_BEFORE" ]] || return 1
   docker image inspect "$API_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
+  docker image inspect "$SECURE_API_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
   docker image inspect "$GATEWAY_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
 
   docker image tag "$API_IMAGE_BEFORE" "$API_IMAGE_TAG_BEFORE"
+  docker image tag "$SECURE_API_IMAGE_BEFORE" "$SECURE_API_IMAGE_TAG_BEFORE"
   docker image tag "$GATEWAY_IMAGE_BEFORE" "$GATEWAY_IMAGE_TAG_BEFORE"
   bw_compose up -d --no-deps api
   wait_for_api
+  bw_compose up -d --no-deps secure-api
   bw_compose up -d --no-deps gateway
   ensure_monitoring_services
 }
@@ -176,7 +181,7 @@ update_execute_deployment() {
     "API und Frontend werden gebaut; anschließend wird der Datenbankstand mit dem Image verglichen." \
     "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 
-  bw_compose build --pull api gateway
+  bw_compose build --pull api secure-api gateway
   update_resolve_database_actions
 
   update_status_write \
@@ -235,7 +240,7 @@ update_attempt_rollback() {
       else
         warn "Exakte frühere Images sind nicht verfügbar; versuche Rebuild des vorherigen Commits."
         (
-          bw_compose build api gateway \
+          bw_compose build api secure-api gateway \
             && deploy_application_update false false \
             && maintenance_disable failed "Server update failed; the previous revision was rebuilt and restored." \
             && /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"

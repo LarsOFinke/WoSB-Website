@@ -25,6 +25,7 @@ htmlcov/
 
 # Node/Vite caches and generated output
 node_modules/
+spring-api/target/
 .vite/
 .npm/
 .eslintcache

@@ -4,16 +4,17 @@
 
 `.github/workflows/ci.yml` läuft auf Pull Requests und `main`:
 
-- Backend: Ruff, isolierte Regressionstests, Alembic- und v1-Datenmigrations-Lifecycle
+- Spring Security API: Java-21-/Maven-Build, MapStruct-Compile-Gate und Security-Vertragstests
+- Python-Backend: Ruff, isolierte Regressionstests, Alembic- und v1-Datenmigrations-Lifecycle
 - Frontend: `npm ci`, Node-Unit-Tests, Build-Designer-Regression, Locale-Vollständigkeit und Produktionsbuild
 - Repository/Infrastruktur: Invarianten, Bash und Compose
-- Images: API und Gateway nach erfolgreichem Push auf `main`
+- Images: Python-API, Spring Security API und Gateway nach erfolgreichem Push auf `main`
 
 Workflow-Rechte sind standardmäßig auf `contents: read` beschränkt; Concurrency bricht veraltete
 CI-Läufe derselben Referenz ab.
 
-`.github/workflows/security.yml` ergänzt dies um OSV-Scans der Lockfiles sowie Trivy-Scans der API-
-und Gateway-Images. High-/Critical-Befunde sind ein Release-Gate. Actions sind auf vollständige
+`.github/workflows/security.yml` ergänzt dies um OSV-Scans der Lockfiles sowie Trivy-Scans beider
+API-Images und des Gateway-Images. High-/Critical-Befunde sind ein Release-Gate. Actions sind auf vollständige
 Commit-SHAs gepinnt; Abhängigkeits- oder Image-Updates dürfen diese Prüfungen nicht umgehen.
 
 Empfohlene Branch Protection für `main`: Pull Request, mindestens eine Freigabe und die drei
