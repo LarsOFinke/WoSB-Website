@@ -76,6 +76,12 @@ unter `backend/seeds/`. Das Manifest deckt Systemrollen, Flotten, normalisierte 
 Build-Kategorien und -Optionen sowie den nach Rate gegliederten Schiffskatalog ab. Unter
 `backend/src` verbleiben nur Loader und idempotente Synchronisationslogik.
 
+Die Staff-Stammdatenverwaltung bearbeitet Stat-Effekte nicht als freies JSON. Sie bezieht
+Bezeichnung, Kategorie, Einheit, Genauigkeit und Werttyp aus dem zentralen Build-Statkatalog und
+überträgt intern weiterhin den stabilen `stat_effects`-API-Vertrag. Damit bleiben technische
+Schlüssel von der Oberfläche getrennt und schiffsspezifische Overrides verwenden dieselben
+Ingame-Bezeichnungen wie die Build-Anzeige.
+
 ```bash
 sudo ./update.sh --seed
 ```

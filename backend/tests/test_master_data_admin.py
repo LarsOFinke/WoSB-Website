@@ -17,6 +17,7 @@ from app.modules.admin.schemas.master_data import (
 from app.modules.admin.services.master_data_service import (
     create_option,
     create_ship,
+    get_taxonomy,
     list_options,
     list_ships,
     restore_all_seed_defaults,
@@ -51,6 +52,19 @@ def _seeded_db() -> Session:
     )
     SeedManager(db).run()
     return db
+
+
+def test_master_data_taxonomy_exposes_user_facing_stat_metadata() -> None:
+    with _seeded_db() as db:
+        taxonomy = get_taxonomy(db)
+        effects = {row.key: row for row in taxonomy.stat_effects}
+
+        assert effects["speed_pct"].label == "Base speed"
+        assert effects["speed_pct"].translation_key == "speed_min_knots"
+        assert effects["speed_pct"].unit == "%"
+        assert effects["speed_pct"].value_type == "number"
+        assert effects["perishable_goods_preserved_enabled"].value_type == "boolean"
+        assert len(effects) == len(taxonomy.stat_effects)
 
 
 def test_admin_overrides_survive_seed_and_can_be_restored() -> None:

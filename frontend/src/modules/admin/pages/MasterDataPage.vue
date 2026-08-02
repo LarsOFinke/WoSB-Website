@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
+import StatEffectEditor from '@/modules/admin/components/StatEffectEditor.vue'
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import { useMasterDataWorkspace } from '@/modules/admin/composables/useMasterDataWorkspace'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
@@ -12,11 +13,11 @@ import { IMAGE_MIME_TYPES } from '@/modules/files/fileTypes'
 const {
   t, activeTab, loading, saving, error, success, overview, taxonomy, categories, options,
   upgradeOptions, ships, optionCategory, optionSearch, shipSearch, categoryEditingId,
-  optionEditingId, shipEditingId, effectsText, categoryForm, optionForm, shipForm,
+  optionEditingId, shipEditingId, effectRows, categoryForm, optionForm, shipForm,
   selectedCategory, selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
   seedStatusLabel, imagePreview, applyUploadedImage, resetCategory, resetOption, resetShip,
   saveCategory, saveOption, upgradeOptionById, upgradeChoicesForOverride, addUpgradeOverride,
-  removeUpgradeOverride, saveShip, deactivateCategory, deactivateOption, deactivateShip,
+  removeUpgradeOverride, statEffectRows, replaceOverrideEffects, saveShip, deactivateCategory, deactivateOption, deactivateShip,
   restoreCategory, restoreOption, restoreShip, restoreAllSeedDefaults,
 } = useMasterDataWorkspace()
 const { isAdmin, user } = useSession()
@@ -202,7 +203,8 @@ function setMortarModificationEnabled(enabled) {
           </fieldset>
 
           <fieldset class="editor-section"><legend>{{ t('masterData.fields.effects') }}</legend>
-            <label><textarea v-model="effectsText" rows="8" spellcheck="false"></textarea><small>{{ t('masterData.effectsHint') }}</small></label>
+            <p class="section-description">{{ t('masterData.effectsHint') }}</p>
+            <StatEffectEditor v-model="effectRows" :definitions="taxonomy.stat_effects" />
           </fieldset>
 
           <fieldset class="editor-section upgrade-override-section"><legend>{{ t('masterData.shipUpgradeOverrides.title') }}</legend>
@@ -214,8 +216,8 @@ function setMortarModificationEnabled(enabled) {
                   <button class="danger-action" type="button" @click="removeUpgradeOverride(index)">{{ t('masterData.shipUpgradeOverrides.remove') }}</button>
                 </div>
                 <div class="override-effect-grid">
-                  <div><span>{{ t('masterData.shipUpgradeOverrides.defaultEffects') }}</span><pre>{{ JSON.stringify(upgradeOptionById(override.option_id)?.stat_effects || {}, null, 2) }}</pre></div>
-                  <label><span>{{ t('masterData.shipUpgradeOverrides.overrideEffects') }}</span><textarea v-model="override.effects_text" rows="5" spellcheck="false"></textarea></label>
+                  <div><span>{{ t('masterData.shipUpgradeOverrides.defaultEffects') }}</span><StatEffectEditor :model-value="statEffectRows(upgradeOptionById(override.option_id)?.stat_effects)" :definitions="taxonomy.stat_effects" readonly /></div>
+                  <div><span>{{ t('masterData.shipUpgradeOverrides.overrideEffects') }}</span><StatEffectEditor :model-value="statEffectRows(override.stat_effects)" :definitions="taxonomy.stat_effects" @update:model-value="replaceOverrideEffects(override, $event)" /></div>
                 </div>
               </article>
             </div>

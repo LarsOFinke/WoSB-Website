@@ -284,7 +284,18 @@ class ShipRateWeaponClassRuleRead(BaseModel):
     weapon_class: str = Field(min_length=1, max_length=24)
 
 
+class StatEffectDefinitionRead(BaseModel):
+    key: str
+    translation_key: str
+    label: str
+    category: str
+    unit: str | None = None
+    precision: int = Field(ge=0, le=6)
+    value_type: str
+
+
 class MasterDataTaxonomyRead(BaseModel):
     weapon_classes: list[WeaponClassRead]
     weapon_slot_types: list[WeaponSlotTypeRead]
     ship_rate_weapon_classes: list[ShipRateWeaponClassRuleRead] = Field(default_factory=list)
+    stat_effects: list[StatEffectDefinitionRead] = Field(default_factory=list)

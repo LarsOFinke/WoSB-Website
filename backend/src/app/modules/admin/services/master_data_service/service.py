@@ -7,12 +7,14 @@ from app.modules.admin.schemas.master_data import (
     MasterDataOverview,
     MasterDataSeedRestoreSummary,
     MasterDataTaxonomyRead,
+    StatEffectDefinitionRead,
     ShipRateWeaponClassRuleRead,
     WeaponClassRead,
     WeaponSlotTypeRead,
 )
 from app.modules.builds.models.build_item_category import BuildItemCategory
 from app.modules.builds.models.build_item_option import BuildItemOption
+from app.modules.builds.services.stat_catalog import STAT_DEFINITIONS
 from app.modules.ships.models.ship import Ship
 from app.modules.ships.models.rate_weapon_class import ShipRateWeaponClassRule
 from app.modules.ships.models.weapon_mount import WeaponClassDefinition, WeaponSlotType
@@ -100,7 +102,30 @@ class MasterDataService:
                 )
                 for row in rate_rules
             ],
+            stat_effects=self._stat_effect_definitions(),
         )
+
+    @staticmethod
+    def _stat_effect_definitions() -> list[StatEffectDefinitionRead]:
+        effects: dict[str, StatEffectDefinitionRead] = {}
+        for definition in STAT_DEFINITIONS:
+            candidates = (
+                (definition.pct_effect, "%"),
+                (definition.flat_effect, definition.unit),
+            )
+            for key, unit in candidates:
+                if not key or key in effects:
+                    continue
+                effects[key] = StatEffectDefinitionRead(
+                    key=key,
+                    translation_key=definition.key,
+                    label=definition.label,
+                    category=definition.category,
+                    unit=unit,
+                    precision=definition.precision,
+                    value_type="boolean" if key.endswith("_enabled") else "number",
+                )
+        return sorted(effects.values(), key=lambda row: (row.category, row.label, row.key))
 
     def _count(self, model: type, condition=None) -> int:
         query = select(func.count(model.id))

@@ -30,11 +30,11 @@ import {
   createShipForm,
   optionFormValues,
   optionPayload,
-  parseEffectObject,
   shipFormValues,
   shipPayload,
   weaponMountRows,
 } from '@/modules/admin/domain/masterDataForms'
+import { effectObjectToRows, effectRowsToObject } from '@/modules/admin/domain/statEffectRows'
 import { applyRateWeaponClassDefaults as applyWeaponClassDefaults } from '@/modules/admin/domain/shipWeaponClassDefaults'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 import { useDebouncedWatch } from '@/shared/composables/useDebouncedWatch'
@@ -55,7 +55,7 @@ export function useMasterDataWorkspace() {
   const error = ref('')
   const success = ref('')
   const overview = ref({ ...EMPTY_OVERVIEW })
-  const taxonomy = ref({ weapon_classes: [], weapon_slot_types: [], ship_rate_weapon_classes: [] })
+  const taxonomy = ref({ weapon_classes: [], weapon_slot_types: [], ship_rate_weapon_classes: [], stat_effects: [] })
   const categories = ref([])
   const options = ref([])
   const upgradeOptions = ref([])
@@ -66,7 +66,7 @@ export function useMasterDataWorkspace() {
   const categoryEditingId = ref(null)
   const optionEditingId = ref(null)
   const shipEditingId = ref(null)
-  const effectsText = ref('{}')
+  const effectRows = ref([])
   const categoryForm = reactive(createCategoryForm())
   const optionForm = reactive(createOptionForm())
   const shipForm = reactive(createShipForm())
@@ -125,7 +125,7 @@ export function useMasterDataWorkspace() {
   function resetOption(row = null) {
     optionEditingId.value = row?.id || null
     Object.assign(optionForm, optionFormValues(row, categories.value[0]?.id || ''))
-    effectsText.value = JSON.stringify(row?.stat_effects || {}, null, 2)
+    effectRows.value = effectObjectToRows(row?.stat_effects || {})
     clearMessages()
   }
 
@@ -210,16 +210,12 @@ export function useMasterDataWorkspace() {
     )
   }
 
-  function parseEffects() {
-    return parseEffectObject(effectsText.value, t('masterData.effectsError'))
-  }
-
   function saveOption() {
     const editingId = optionEditingId.value
     return runSave(
       () => editingId
-        ? updateMasterDataOption(editingId, optionPayload(optionForm, parseEffects()))
-        : createMasterDataOption(optionPayload(optionForm, parseEffects())),
+        ? updateMasterDataOption(editingId, optionPayload(optionForm, effectRowsToObject(effectRows.value)))
+        : createMasterDataOption(optionPayload(optionForm, effectRowsToObject(effectRows.value))),
       loadOptions,
       resetOption,
     )
@@ -235,17 +231,25 @@ export function useMasterDataWorkspace() {
 
   function addUpgradeOverride() {
     const [option] = availableUpgradeOptions(upgradeOptions.value, shipForm.upgrade_effect_overrides, -1)
-    if (option) shipForm.upgrade_effect_overrides.push({ option_id: option.id, effects_text: '{}' })
+    if (option) shipForm.upgrade_effect_overrides.push({ option_id: option.id, stat_effects: {} })
   }
 
   function removeUpgradeOverride(index) {
     shipForm.upgrade_effect_overrides.splice(index, 1)
   }
 
+  function statEffectRows(effects) {
+    return effectObjectToRows(effects)
+  }
+
+  function replaceOverrideEffects(override, rows) {
+    override.stat_effects = effectRowsToObject(rows)
+  }
+
   function parseShipUpgradeOverrides() {
     return shipForm.upgrade_effect_overrides.map((row) => ({
       option_id: Number(row.option_id),
-      stat_effects: parseEffectObject(row.effects_text, t('masterData.effectsError')),
+      stat_effects: { ...row.stat_effects },
     }))
   }
 
@@ -329,12 +333,13 @@ export function useMasterDataWorkspace() {
   return {
     t, activeTab, loading, saving, error, success, overview, taxonomy, categories, options,
     upgradeOptions, ships, optionCategory, optionSearch, shipSearch, categoryEditingId,
-    optionEditingId, shipEditingId, effectsText, categoryForm, optionForm, shipForm,
+    optionEditingId, shipEditingId, effectRows, categoryForm, optionForm, shipForm,
     selectedCategory, selectedOption, selectedShip, tabCounts, seedStatusClass, mountLabel, visibleMounts,
     seedStatusLabel, clearMessages, imagePreview, applyUploadedImage, blankMounts,
     resetCategory, resetOption, resetShip, loadOverview, loadCategories, loadOptions,
-    loadUpgradeOptions, loadShips, reloadAll, saveCategory, parseEffects, saveOption,
+    loadUpgradeOptions, loadShips, reloadAll, saveCategory, saveOption,
     upgradeOptionById, upgradeChoicesForOverride, addUpgradeOverride, removeUpgradeOverride,
+    statEffectRows, replaceOverrideEffects,
     parseShipUpgradeOverrides, saveShip, deactivateCategory, deactivateOption, deactivateShip,
     restoreCategory, restoreOption, restoreShip, restoreAllSeedDefaults,
   }

@@ -111,15 +111,9 @@ export function shipFormValues(row = null, slotTypes = []) {
       : null,
     upgrade_effect_overrides: (row?.upgrade_effect_overrides || []).map((override) => ({
       option_id: override.option_id,
-      effects_text: JSON.stringify(override.stat_effects || {}, null, 2),
+      stat_effects: { ...(override.stat_effects || {}) },
     })),
   }
-}
-
-export function parseEffectObject(text, errorMessage) {
-  const parsed = JSON.parse(text || '{}')
-  if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error(errorMessage)
-  return parsed
 }
 
 export function categoryPayload(form, includeKey = false) {
