@@ -49,6 +49,18 @@ class RequestBoundaryFilterTest {
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void permitsSameOriginMutationWhenOriginListIsStale() throws Exception {
+        var localFilter = new RequestBoundaryFilter(new SecurityProperties(List.of("app.example"), List.of()));
+        var request = request("POST", "app.example");
+        request.setScheme("http");
+        request.setServerPort(80);
+        request.addHeader("Origin", "http://app.example");
+        var response = new MockHttpServletResponse();
+        localFilter.doFilter(request, response, new MockFilterChain());
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
     private static MockHttpServletRequest request(String method, String host) {
         var request = new MockHttpServletRequest(method, "/api/auth/login");
         request.setServerName(host);

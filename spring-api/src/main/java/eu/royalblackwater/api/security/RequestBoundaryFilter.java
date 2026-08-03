@@ -47,12 +47,26 @@ public class RequestBoundaryFilter extends OncePerRequestFilter {
                 URI parsed = URI.create(origin);
                 String normalized = (parsed.getScheme() + "://" + parsed.getAuthority())
                         .toLowerCase(Locale.ROOT);
-                return !allowedOrigins.contains(normalized);
+                return !isSameOrigin(request, parsed) && !allowedOrigins.contains(normalized);
             } catch (IllegalArgumentException exception) {
                 return true;
             }
         }
         return fetchSite != null && "cross-site".equalsIgnoreCase(fetchSite);
+    }
+
+    private static boolean isSameOrigin(HttpServletRequest request, URI origin) {
+        if (origin.getHost() == null || !origin.getHost().equalsIgnoreCase(request.getServerName())) return false;
+        String scheme = request.getScheme();
+        if (scheme == null || !scheme.equalsIgnoreCase(origin.getScheme())) return false;
+        int requestPort = effectivePort(scheme, request.getServerPort());
+        int originPort = effectivePort(origin.getScheme(), origin.getPort());
+        return requestPort == originPort;
+    }
+
+    private static int effectivePort(String scheme, int port) {
+        if (port > 0) return port;
+        return "https".equalsIgnoreCase(scheme) ? 443 : 80;
     }
 
     private static Set<String> normalize(java.util.List<String> values) {
