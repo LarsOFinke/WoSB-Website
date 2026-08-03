@@ -23,6 +23,21 @@ sudo ./setup.sh \
   --letsencrypt-email admin@royal-blackwater-fleet.eu
 ```
 
+Wenn DNS oder Port 80/443 noch nicht bereitstehen, zunächst mit dem sicheren Bootstrap-Modus
+installieren:
+
+```bash
+sudo ./setup.sh --profile core \
+  --domain royal-blackwater-fleet.eu \
+  --tls-mode self-signed
+```
+
+Die Anwendung ist dann intern und für Tests über HTTPS erreichbar, Browser warnen jedoch vor dem
+selbstsignierten Zertifikat. Nach der DNS-/Portfreigabe wird das öffentliche Zertifikat gemäß
+[Installationsleitfaden](INSTALLATION.md#öffentliches-zertifikat-später-aktivieren) auf dem
+Webseiten-Server ausgestellt und synchronisiert. Erst danach ist die öffentliche Freigabe
+abzunehmen.
+
 Danach:
 
 ```bash

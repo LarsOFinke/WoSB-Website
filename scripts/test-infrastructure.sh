@@ -92,6 +92,8 @@ require_pattern 'sha256sum --check SHA256SUMS' "$INFRA_DIR/scripts/update/artifa
 require_pattern 'docker load --input' "$INFRA_DIR/scripts/update/artifact.sh"
 require_pattern 'Vorgebaute Deployment-Images' "$INFRA_DIR/scripts/update/workflow.sh"
 require_pattern 'z "\${ARTIFACT_FILE:-}\"' "$INFRA_DIR/scripts/update/workflow.sh"
+require_pattern 'mktemp "\$certificate_dir/.fullchain.pem.' "$INFRA_DIR/scripts/tls/sync-certificate.sh"
+require_pattern 'mv -fT "\$temporary_fullchain"' "$INFRA_DIR/scripts/tls/sync-certificate.sh"
 
 # Update and first-run safety rules live in their focused modules.
 require_pattern 'update_migrate)' "$INFRA_DIR/scripts/update/request.sh"

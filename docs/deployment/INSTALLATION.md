@@ -46,6 +46,53 @@ administrativ eingerichtet und Port 8443 auf LAN/VPN begrenzt ist. `--tls-mode a
 Domainvalidierung ein Bootstrap-Zertifikat. `--no-start` erzeugt Konfiguration und Services ohne
 Containerstart.
 
+### Installation vor der DNS-/SSL-Freischaltung
+
+Die Erstinstallation kann vollständig erfolgen, bevor DNS oder ein öffentlich vertrauenswürdiges
+Zertifikat bereitstehen:
+
+```bash
+sudo ./setup.sh \
+  --profile core \
+  --domain royal-blackwater-fleet.eu \
+  --tls-mode self-signed
+```
+
+Das Setup erzeugt ein lokales Bootstrap-Zertifikat, startet den Stack und prüft ihn über HTTPS.
+Browser zeigen dabei erwartungsgemäß eine Zertifikatswarnung. Dieses Zertifikat ist nur für die
+Einrichtung, interne Tests und den temporären Betrieb gedacht; es ist keine öffentliche
+Produktivfreigabe.
+
+Auch spätere Image-Updates benötigen zunächst kein öffentliches Zertifikat. Das Artifact-Bundle
+wird per SSH übertragen und mit `sudo ./update.sh --artifact ...` aktiviert. Der vorhandene
+Bootstrap- oder Let's-Encrypt-Zertifikatsbestand bleibt dabei unverändert.
+
+### Öffentliches Zertifikat später aktivieren
+
+Sobald DNS auf den Webseiten-Server zeigt und TCP 80/443 erreichbar ist, wird Let's Encrypt direkt
+auf diesem Server eingerichtet. Port 80 muss während der HTTP-01-Challenge erreichbar bleiben:
+
+```bash
+sudo certbot certonly \
+  --non-interactive --agree-tos \
+  --email admin@royal-blackwater-fleet.eu \
+  --webroot --webroot-path infrastructure/data/acme \
+  --config-dir infrastructure/data/letsencrypt/config \
+  --work-dir infrastructure/data/letsencrypt/work \
+  --logs-dir infrastructure/data/letsencrypt/logs \
+  --cert-name royal-blackwater-fleet.eu \
+  -d royal-blackwater-fleet.eu
+
+sudo RENEWED_LINEAGE="$PWD/infrastructure/data/letsencrypt/config/live/royal-blackwater-fleet.eu" \
+  ./infrastructure/scripts/tls/sync-certificate.sh
+sudo ./infrastructure/scripts/checks/smoke-test.sh
+```
+
+Der Sync aktualisiert den Zertifikatsbestand atomar, lädt das Gateway neu und stellt den
+Zertifikatsanbieter auf `letsencrypt`. Danach übernimmt der systemd-Timer die Verlängerungen.
+Der Backup-Server ist an diesem Vorgang nicht beteiligt und benötigt weder das Zertifikat noch
+den privaten Schlüssel.
+
 Das Setup prüft Architektur, Speicher, Ports und Betriebssystem, installiert Docker/Host-Pakete,
 erzeugt Secrets, baut Images, migriert/seedet PostgreSQL und richtet Firewall, TLS, systemd sowie
 lokale Backups ein. Zusätzlich werden tägliche Security-Updates ohne automatische Neustarts

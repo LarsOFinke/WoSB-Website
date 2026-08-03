@@ -9,8 +9,17 @@ cert_name="$(read_env LETSENCRYPT_CERT_NAME)"
 lineage="${RENEWED_LINEAGE:-$CERTBOT_CONFIG_DIR/live/$cert_name}"
 [[ -s "$lineage/fullchain.pem" && -s "$lineage/privkey.pem" ]] || die "Let's-Encrypt-Zertifikat nicht gefunden: $lineage"
 
-install -m 0644 "$lineage/fullchain.pem" "$INFRA_DIR/data/certs/fullchain.pem"
-install -m 0600 "$lineage/privkey.pem" "$INFRA_DIR/data/certs/privkey.pem"
+certificate_dir="$INFRA_DIR/data/certs"
+temporary_fullchain="$(mktemp "$certificate_dir/.fullchain.pem.XXXXXX")"
+temporary_privkey="$(mktemp "$certificate_dir/.privkey.pem.XXXXXX")"
+cleanup_temporary() {
+  rm -f "$temporary_fullchain" "$temporary_privkey"
+}
+trap cleanup_temporary EXIT
+install -m 0644 "$lineage/fullchain.pem" "$temporary_fullchain"
+install -m 0600 "$lineage/privkey.pem" "$temporary_privkey"
+mv -fT "$temporary_fullchain" "$certificate_dir/fullchain.pem"
+mv -fT "$temporary_privkey" "$certificate_dir/privkey.pem"
 set_env_value CERTIFICATE_PROVIDER letsencrypt
 
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
