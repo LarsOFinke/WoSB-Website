@@ -23,9 +23,10 @@ fi
 
 health_file="$(mktemp)"
 trap 'rm -f "$health_file"' EXIT
+max_attempts=15
 
 log "Warte auf die Anwendung unter $url"
-for attempt in $(seq 1 60); do
+for attempt in $(seq 1 "$max_attempts"); do
   if curl --silent --show-error --fail "${curl_tls_args[@]}" --connect-timeout 3 --max-time 5 \
       --resolve "${hostname}:443:${ip}" "$url" >"$health_file" 2>/dev/null; then
     cat "$health_file"
@@ -35,7 +36,7 @@ for attempt in $(seq 1 60); do
       monitoring_port="$(read_env MONITORING_HTTPS_PORT)"
       [[ "$monitoring_port" =~ ^[0-9]+$ ]] || monitoring_port=8443
       log "Warte auf Uptime Kuma unter https://${hostname}:${monitoring_port}"
-      for _ in $(seq 1 60); do
+      for _ in $(seq 1 "$max_attempts"); do
         if curl --silent --show-error --fail "${curl_tls_args[@]}" --connect-timeout 3 --max-time 5 \
             --resolve "${hostname}:${monitoring_port}:${ip}" \
             "https://${hostname}:${monitoring_port}/" >/dev/null 2>&1; then
