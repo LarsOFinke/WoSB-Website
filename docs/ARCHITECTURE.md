@@ -10,8 +10,8 @@ Uptime Kuma → internes Gateway/Health-Endpunkte
 ```
 
 NGINX liefert das Vue-Frontend und leitet alle `/api/**`-Aufrufe an Spring Boot. Die
-sicherheitskritischen Sitzungsendpunkte, die öffentliche Legal-Notice-Abfrage sowie die lesenden
-Cookie-Endpunkte werden dort nativ bearbeitet; Registrierung, Schreibpfade und übrige
+sicherheitskritischen Sitzungsendpunkte, die öffentliche Legal-Notice-Abfrage sowie die Cookie-
+Consent-Endpunkte werden dort nativ bearbeitet; Registrierung, übrige Schreibpfade und
 Fachendpunkte werden während der Übergangsphase intern an FastAPI weitergereicht. Beide Dienste
 verwenden denselben, von Alembic verwalteten PostgreSQL-Vertrag und dasselbe gehashte
 Session-Tokenformat.
