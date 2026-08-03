@@ -22,8 +22,7 @@ public class RequestBoundaryFilter extends OncePerRequestFilter {
 
     public RequestBoundaryFilter(SecurityProperties properties) {
         allowedHosts = normalize(properties.allowedHosts());
-        allowedOrigins = properties.allowedOrigins().stream().map(String::strip)
-                .filter(value -> !value.isEmpty()).collect(Collectors.toUnmodifiableSet());
+        allowedOrigins = Set.copyOf(properties.normalizeOrigins());
     }
 
     @Override

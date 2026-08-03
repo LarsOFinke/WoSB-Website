@@ -22,6 +22,7 @@ public class FastApiProxyController {
     private static final Set<String> REQUEST_HEADERS = Set.of(
             "accept", "accept-encoding", "content-type", "cookie", "if-match", "if-modified-since",
             "if-none-match", "if-unmodified-since", "range", "user-agent", "x-csrf-token",
+            "origin", "referer", "sec-fetch-site", "sec-fetch-mode", "sec-fetch-dest",
             "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto", "x-real-ip");
     private static final Set<String> RESPONSE_HEADERS = Set.of(
             "cache-control", "content-disposition", "content-type", "etag", "expires", "last-modified",
