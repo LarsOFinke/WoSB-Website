@@ -19,6 +19,9 @@ artifact_prepare() {
     || die "Deployment-Artefakt ist unvollständig (manifest.json, images.tar oder SHA256SUMS fehlt)."
   (cd "$artifact_dir" && sha256sum --check SHA256SUMS) \
     || die "Prüfsummen des Deployment-Artefakts stimmen nicht."
+  [[ -f "$artifact_dir/contracts/recovery/contract.py" ]] \
+    || die "Deployment-Artefakt enthält keinen portablen Recovery-Vertrag."
+  export RBF_ARTIFACT_ROOT="$artifact_dir"
 
   local values=()
   mapfile -d '' -t values < <(ARTIFACT_MANIFEST="$artifact_dir/manifest.json" python3 - <<'PY'

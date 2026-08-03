@@ -3,12 +3,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+ARTIFACT_ROOT = os.environ.get("RBF_ARTIFACT_ROOT")
+IMPORT_ROOT = Path(ARTIFACT_ROOT) if ARTIFACT_ROOT else REPO_ROOT
+if str(IMPORT_ROOT) not in sys.path:
+    sys.path.insert(0, str(IMPORT_ROOT))
 
 from contracts.recovery.contract import (  # noqa: E402
     MigrationGraph,

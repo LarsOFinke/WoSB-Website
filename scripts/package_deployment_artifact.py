@@ -18,6 +18,11 @@ SERVICES = {
     "gateway": "rbf-hub-gateway",
 }
 ALIASES = {"python": "api", "java": "secure-api", "frontend": "gateway"}
+RECOVERY_CONTRACT_FILES = (
+    Path("contracts/__init__.py"),
+    Path("contracts/recovery/__init__.py"),
+    Path("contracts/recovery/contract.py"),
+)
 
 
 def digest(path: Path) -> str:
@@ -80,14 +85,20 @@ def main() -> None:
             json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
+        for relative_path in RECOVERY_CONTRACT_FILES:
+            source = Path(__file__).resolve().parent.parent / relative_path
+            destination = staging / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(source.read_bytes())
         checksums = "".join(
-            f"{digest(path)}  {path.name}\n" for path in (staging / "manifest.json", image_archive)
+            f"{digest(path)}  {path}\n"
+            for path in (staging / "manifest.json", image_archive, *[staging / path for path in RECOVERY_CONTRACT_FILES])
         )
         (staging / "SHA256SUMS").write_text(checksums, encoding="ascii")
         output = args.output_dir / f"rbf-deployment-{args.version}.tar.gz"
         with tarfile.open(output, "w:gz") as archive:
             for path in sorted(staging.iterdir()):
-                archive.add(path, arcname=path.name, recursive=False)
+                archive.add(path, arcname=str(path.relative_to(staging)), recursive=path.is_dir())
     print(output)
     print(digest(output))
 
