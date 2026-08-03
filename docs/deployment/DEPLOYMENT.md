@@ -55,6 +55,17 @@ Für einen minimalistischen Webseiten-Server kann der Build auf dem Backup-/Rele
 erfolgen. Der Host erhält anschließend nur ein geprüftes Image-Artefakt per SSH; ein Git-
 Checkout und ein lokaler Node-, Maven- oder Python-Build sind für das Update nicht nötig.
 
+Das gilt erst nach dem einmaligen Bootstrap. Der Bootstrap muss auf einem persistenten Pfad
+(beispielsweise `/opt/royal-blackwater-fleet`) liegen; ein Bootstrap unter `/tmp` kann durch
+Systembereinigung verschwinden und ist für systemd nicht geeignet. Der Bootstrap installiert
+`/opt/royal-blackwater-fleet/update.sh`; ist dieses Verzeichnis noch nicht vorhanden, kann ein
+Artifact-Update noch nicht gestartet werden. Für den Artifact-Bootstrap werden nur
+`infrastructure/`, `setup.sh`, `update.sh` und `VERSION` benötigt. Das Setup muss dabei mit
+`--no-start` laufen, weil der normale Setup-Pfad ansonsten die fehlenden Source-Build-Kontexte
+`backend/`, `frontend/` und `spring-api/` bauen will. Ausführungsbits gegebenenfalls mit
+`chmod +x setup.sh infrastructure/setup.sh` sowie `find infrastructure/scripts -type f -name
+'*.sh' -exec chmod +x {} +` wiederherstellen.
+
 ## Artefakt bauen
 
 Auf dem getrennten Release-Host mit Docker:
@@ -66,6 +77,21 @@ sha256sum /srv/rbf-releases/rbf-deployment-*.tar.gz
 
 Das Bundle enthält die fertigen Images für FastAPI, Spring Boot und Gateway sowie ein Manifest
 und SHA-256-Prüfsummen. Es enthält keine `.env`, Datenbankdaten oder privaten Backup-Schlüssel.
+Das Bundle ist architekturabhängig. Zielserver und Build-Host müssen dieselbe Docker-Plattform
+verwenden. Für einen ARM64-Testserver (z. B. Raspberry Pi 64-bit) den Build explizit so starten:
+
+```bash
+docker run --privileged --rm tonistiigi/binfmt --install arm64
+DOCKER_DEFAULT_PLATFORM=linux/arm64 \
+  ./infrastructure/scripts/release/build-artifact.sh /srv/rbf-releases-arm64
+```
+
+Der erste Befehl ist auf einem x86-Buildhost erforderlich, sofern noch keine ARM64-QEMU-
+binfmt-Unterstützung eingerichtet ist. Alternativ den Build auf einem nativen ARM64-Host
+ausführen.
+
+Ein auf einem üblichen x86-Host ohne diese Einstellung gebautes `linux/amd64`-Bundle führt auf
+ARM64 mit `Exec format error` zum Abbruch.
 
 Für einen Teil-Rollout kann der Release-Builder nur ausgewählte Komponenten
 kompilieren und paketieren:
@@ -88,6 +114,37 @@ verwendet.
 
 ## Übertragen und aktivieren
 
+Der komplette Ablauf kann über die beiden CLI-Orchestratoren ausgeführt werden. Der Builder
+übernimmt Docker-Build, äußere Prüfsumme und SCP-Transfer:
+
+```bash
+./infrastructure/scripts/release/build-and-transfer.sh \
+  --user USER \
+  --host backup-server \
+  --port 22 \
+  --platform linux/arm64 \
+  --remote-dir /tmp/rbf-releases \
+  --output-dir "$PWD/release-arm64"
+```
+
+Optional kann mit `--identity /path/to/key` ein bestimmter SSH-Schlüssel und mit
+`--components api,secure-api,gateway` ein Teil-Rollout gewählt werden. Der Zielserver benötigt
+für diesen Schritt nur den einmalig eingerichteten persistenten Bootstrap.
+
+Auf dem Zielserver prüft und aktiviert der zweite Orchestrator das Bundle:
+
+```bash
+sudo /opt/royal-blackwater-fleet/infrastructure/scripts/release/install-artifact.sh \
+  --artifact /tmp/rbf-releases/rbf-deployment-1.0.0.tar.gz \
+  --migrate \
+  --requested-by USER
+```
+
+Mit `--update-script /opt/royal-blackwater-fleet/update.sh` kann der Update-Einstiegspunkt
+explizit gesetzt werden. `--no-backup`, `--seed`, `--no-auto-migrate` und `--components` werden
+an den bestehenden Updater weitergereicht. Die äußere Prüfsumme wird vor dem Update geprüft;
+das Artifact selbst prüft zusätzlich Manifest und enthaltene Image-Prüfsummen.
+
 Das Artefakt wird über den bereits eingerichteten, gepinnten SSH-Zugang übertragen:
 
 ```bash
@@ -96,6 +153,13 @@ Das Artefakt wird über den bereits eingerichteten, gepinnten SSH-Zugang übertr
   deploy@webserver /srv/rbf-releases/incoming 22
 ssh deploy@webserver \
   'sudo /opt/royal-blackwater-fleet/update.sh --artifact /srv/rbf-releases/incoming/rbf-deployment-1.0.0.tar.gz --migrate'
+```
+
+Die Prüfsumme kann vor dem Aktivieren unabhängig geprüft werden:
+
+```bash
+cd /srv/rbf-releases/incoming
+sha256sum --check rbf-deployment-1.0.0.tar.gz.sha256
 ```
 
 Der Zielserver prüft Archivpfade, Manifest und Prüfsummen, lädt die Images mit `docker load`,

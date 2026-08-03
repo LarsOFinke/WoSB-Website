@@ -86,6 +86,8 @@ require_pattern 'source "$INFRA_DIR/scripts/update/main.sh"' "$INFRA_DIR/scripts
 require_file "$ROOT_DIR/scripts/package_deployment_artifact.py"
 require_file "$INFRA_DIR/scripts/release/build-artifact.sh"
 require_file "$INFRA_DIR/scripts/release/transfer-artifact.sh"
+require_file "$INFRA_DIR/scripts/release/build-and-transfer.sh"
+require_file "$INFRA_DIR/scripts/release/install-artifact.sh"
 require_file "$INFRA_DIR/scripts/update/artifact.sh"
 require_pattern '--artifact FILE' "$INFRA_DIR/scripts/update/options.sh"
 require_pattern '--components LIST' "$INFRA_DIR/scripts/update/options.sh"

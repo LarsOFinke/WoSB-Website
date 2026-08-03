@@ -29,6 +29,60 @@ sollte nur über LAN/VPN erreichbar sein.
 
 ## 2. Installation
 
+### Bootstrap per SSH/SCP
+
+Für den normalen Source-Setup müssen neben `infrastructure/` und `scripts/` auch die
+Build-Kontexte `backend/`, `frontend/` und `spring-api/` übertragen werden. Für den
+Git-freien Artifact-Deploy ist dagegen ein Minimal-Bootstrap möglich: Infrastruktur,
+die beiden Root-Wrapper und `VERSION` genügen, sofern das Setup mit `--no-start` läuft.
+Dadurch werden Host, Konfiguration, Zertifikate und systemd eingerichtet, aber keine
+Anwendungs-Images gebaut.
+
+Am zuverlässigsten bleiben die Dateirechte bei einem Git-Checkout erhalten:
+
+```bash
+git clone <REPOSITORY_URL> ~/royal-blackwater-fleet
+cd ~/royal-blackwater-fleet
+```
+
+Bei einer reinen SCP-Übertragung müssen mindestens diese Pfade enthalten sein:
+
+```text
+backend/  frontend/  spring-api/  infrastructure/  scripts/
+setup.sh  update.sh  VERSION
+```
+
+Für den Artifact-Bootstrap vom lokalen Rechner zunächst in ein temporäres Transferverzeichnis
+übertragen (nicht als endgültigen Installationsort `/tmp` verwenden):
+
+```bash
+scp -r infrastructure setup.sh update.sh VERSION \
+  USER@TESTSERVER:/tmp/rbf-bootstrap/
+```
+
+Falls die Übertragung die Ausführungsbits nicht erhält, vor dem Setup einmalig korrigieren:
+
+```bash
+chmod +x setup.sh infrastructure/setup.sh
+find infrastructure/scripts -type f -name '*.sh' -exec chmod +x {} +
+```
+
+Ein fehlender Build-Kontext führt beim Setup zu einem Fehler wie
+`unable to prepare context: path "/tmp/rbf-bootstrap/backend" not found`.
+In diesem Fall wurde der Bootstrap ohne `--no-start` gestartet. Für ein bereits übertragenes
+Artifact stattdessen fortsetzen mit:
+
+```bash
+cd /tmp/rbf-bootstrap
+sudo ./setup.sh --profile full --no-start
+sudo ./update.sh --artifact /tmp/rbf-deployment-1.0.0.tar.gz --migrate
+```
+
+Der Bootstrap muss für systemd auf einem persistenten Pfad liegen, zum Beispiel
+`/opt/royal-blackwater-fleet`; `/tmp` ist dafür nicht geeignet. `infrastructure/data/postgres`
+wird vom Setup absichtlich dem PostgreSQL-Container zugewiesen und ist für normale Benutzer
+nicht schreibbar. Das ist kein Quellcodeverlust.
+
 ```bash
 sudo apt install -y git
 git clone <REPOSITORY_URL> ~/royal-blackwater-fleet
@@ -99,6 +153,12 @@ lokale Backups ein. Zusätzlich werden tägliche Security-Updates ohne automatis
 aktiviert. Der aufrufende Benutzer erhält keine root-äquivalenten Docker-Gruppenrechte.
 `--regenerate-secrets` ist aus Sicherheitsgründen nur vor der ersten
 PostgreSQL-Initialisierung erlaubt.
+
+Bei einem Testlauf wurden nach erfolgreicher Installation folgende Host-Sicherheitswarnungen
+ausgegeben: aktive SSH-Passwortauthentifizierung und ein nicht vollständig deaktivierter
+SSH-Root-Login (`without-password`). Das Setup ändert diese Einstellungen absichtlich nicht.
+Vor einer öffentlichen Freigabe zuerst einen geprüften Schlüsselzugang testen und anschließend
+Passwortauthentifizierung sowie Root-Login nach der lokalen SSH-Richtlinie deaktivieren.
 
 Das Spring-Backend wird mehrstufig im Container gebaut; auf dem Produktionshost sind daher weder
 ein JDK noch Maven nötig. Der Build lädt die in `spring-api/pom.xml` festgelegten Abhängigkeiten und

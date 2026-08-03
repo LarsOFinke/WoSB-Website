@@ -94,8 +94,8 @@ Den öffentlichen Wert aus `rbf-recovery-recipient.txt` in `infrastructure/.env`
 ```dotenv
 BACKUP_RECOVERY_ENABLED=true
 BACKUP_AGE_RECIPIENT=age1...
-BACKUP_PULL_EXPORT_DIR=/home/smokenougat/rbf-backups
-BACKUP_PULL_EXPORT_USER=smokenougat
+BACKUP_PULL_EXPORT_DIR=/home/USER/rbf-backups
+BACKUP_PULL_EXPORT_USER=USER
 ```
 
 Danach die Host-Abhängigkeiten und systemd-Units aktualisieren:
@@ -147,8 +147,8 @@ PowerShell-Fallback im Repository-Checkout:
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
 .\tools\windows\Pull-RbfRecovery.ps1 `
-  -Server "smokenougat@server" `
-  -RemoteDirectory "/home/smokenougat/rbf-backups" `
+  -Server "USER@server" `
+  -RemoteDirectory "/home/USER/rbf-backups" `
   -Destination "C:\Users\User\Desktop\DB-Backups\RBF"
 ```
 
@@ -178,15 +178,15 @@ cd ~/WoSB-Website
 Bundle und Identität beispielsweise vom Backup-Laptop übertragen:
 
 ```powershell
-scp "C:\Users\User\Desktop\DB-Backups\RBF\rbf-recovery-....tar.gz.age*" smokenougat@server:/tmp/
-scp "$HOME\RBF-Recovery\rbf-recovery-identity.txt" smokenougat@server:/tmp/
+scp "C:\Users\User\Desktop\DB-Backups\RBF\rbf-recovery-....tar.gz.age*" USER@server:/tmp/
+scp "$HOME\RBF-Recovery\rbf-recovery-identity.txt" USER@server:/tmp/
 ```
 
 Linux-Alternative:
 
 ```bash
-scp ~/RBF-Recovery/Backups/rbf-recovery-....tar.gz.age* smokenougat@server:/tmp/
-scp ~/RBF-Recovery/rbf-recovery-identity.txt smokenougat@server:/tmp/
+scp ~/RBF-Recovery/Backups/rbf-recovery-....tar.gz.age* USER@server:/tmp/
+scp ~/RBF-Recovery/rbf-recovery-identity.txt USER@server:/tmp/
 ```
 
 Dann auf dem Pi:

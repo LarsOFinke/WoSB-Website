@@ -94,6 +94,8 @@ backend/storage/uploads/*
 
 # Packaged binaries, installers and release artifacts
 release/
+!infrastructure/scripts/release/
+!infrastructure/scripts/release/*.sh
 *.deb
 *.rpm
 *.msi

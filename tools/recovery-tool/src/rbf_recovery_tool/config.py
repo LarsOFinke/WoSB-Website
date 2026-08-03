@@ -19,7 +19,7 @@ class Profile:
     host: str = ""
     port: int = 22
     username: str = ""
-    remote_directory: str = "/home/smokenougat/rbf-backups"
+    remote_directory: str = "/home/rbf-backups"
     destination_directory: str = str(Path.home() / "RBF-Recovery" / "Backups")
     ssh_key_path: str = ""
     age_identity_path: str = str(
