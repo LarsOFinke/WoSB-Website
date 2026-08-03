@@ -192,6 +192,13 @@ update_execute_deployment() {
     bw_compose build --pull "${build_services[@]}"
   fi
   if update_component_enabled api; then
+    # An API release can contain seed-catalog changes without a schema change.
+    # Keep schema, code and repository-owned master data on one release revision
+    # regardless of which compatible CLI or admin operation initiated the update.
+    RUN_MIGRATIONS=true
+    RUN_SEED=true
+    update_refresh_operation
+    log "API-Deployment erkannt; Migrationen und idempotentes Seed sind verpflichtend."
     update_resolve_database_actions
   else
     [[ "$RUN_MIGRATIONS" == false && "$RUN_SEED" == false ]] || die "--migrate/--seed erfordert die Komponente api."
@@ -243,6 +250,9 @@ update_attempt_rollback() {
   if [[ -z "${ARTIFACT_FILE:-}" && -d "$REPO_ROOT/.git" && -n "$COMMIT_BEFORE" && -n "$COMMIT_AFTER" && "$COMMIT_BEFORE" != "$COMMIT_AFTER" ]]; then
     git_as_owner reset --hard "$COMMIT_BEFORE"
     reset_code=$?
+  elif [[ -z "${ARTIFACT_FILE:-}" && ! -d "$REPO_ROOT/.git" ]]; then
+    warn "Rollback-Rebuild übersprungen: Auf einem Artifact-Ziel ist kein Git-Checkout vorhanden."
+    return 1
   fi
 
   if [[ "$reset_code" -eq 0 ]]; then

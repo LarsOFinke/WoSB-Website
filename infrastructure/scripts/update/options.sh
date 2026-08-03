@@ -26,13 +26,14 @@ Usage: sudo ./update.sh [options]
 Der Repository-Einstiegspunkt update.sh bleibt öffentlich und delegiert an
 den Infrastruktur-Runner. Dieser Kommandozeilenvertrag bleibt stabil.
 
-Default behavior updates API, Spring API and frontend, compares the database revision with
-the Alembic head in the newly built API image and automatically applies pending
-migrations. PostgreSQL is never seeded unless explicitly requested.
+Default behavior updates API, Spring API and frontend. Every API deployment runs
+Alembic migrations and then the idempotent repository seed. This keeps schema and
+repository-owned master data on the same release revision. Deployments without the
+API component do not touch PostgreSQL.
 
 Options:
-  --migrate            Run Alembic migrations intentionally.
-  --seed               Run migrations and then the idempotent seed intentionally.
+  --migrate            Compatibility option; API deployments always run migrations.
+  --seed               Compatibility option; API deployments always run the idempotent seed.
   --restore-seed-defaults
                        Run migrations and seed after discarding overrides on
                        repository-owned master data. Custom records and user

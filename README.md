@@ -52,14 +52,14 @@ make doctor        # Produktionsdiagnose auf dem Pi
 make infra-backup  # Datenbank, Uploads und Betriebsdaten sichern
 ```
 
-Normales Update mit automatischem Vergleich zwischen Datenbankrevision und neuem API-Image:
+Normales Update der API mit verpflichtender Migration und idempotentem Stammdaten-Seed:
 
 ```bash
 sudo ./update.sh
 ```
 
-Ausstehende Alembic-Migrationen werden dabei automatisch gesichert und ausgeführt. Update mit
-expliziter Migration und Stammdaten:
+Der zentrale Updater ergänzt bei jedem API-Deployment automatisch Migration und Seed. Der
+ausdrückliche Aufruf ist gleichwertig und für Runbooks besonders gut sichtbar:
 
 ```bash
 sudo ./update.sh --migrate --seed

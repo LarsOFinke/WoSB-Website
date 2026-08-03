@@ -65,6 +65,8 @@ def publish(event_action, event_reason, event_message, started_at, event_outcome
     temporary = event_dir / f".{destination.name}.{os.getpid()}.tmp"
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.chmod(0o600)
+    if os.geteuid() == 0:
+        os.chown(temporary, 10001, 10001)
     os.replace(temporary, destination)
     destination.chmod(0o600)
 
@@ -147,6 +149,8 @@ if isinstance(state, dict):
     }
     temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.chmod(0o600)
+    if os.geteuid() == 0:
+        os.chown(temporary, 10001, 10001)
     os.replace(temporary, destination)
 marker.unlink(missing_ok=True)
 PY_MAINTENANCE_FALLBACK

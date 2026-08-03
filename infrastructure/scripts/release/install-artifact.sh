@@ -11,8 +11,8 @@ Options:
   --checksum FILE         äußere SHA-256-Datei (default: FILE.sha256)
   --update-script FILE    Update-Einstiegspunkt (default: ./update.sh)
   --components LIST       api,secure-api,gateway
-  --migrate               Alembic-Migrationen ausführen
-  --seed                  Migrationen und idempotentes Seed ausführen
+  --migrate               Kompatibilitätsoption; API-Deployments migrieren immer
+  --seed                  Kompatibilitätsoption; API-Deployments seeden immer
   --no-auto-migrate       Bei veralteter Datenbank abbrechen
   --no-backup              Vorab-Backup überspringen
   --requested-by NAME     Bediener für den Update-Status
@@ -62,6 +62,11 @@ update_args=(--artifact "$artifact")
 [[ -z "$components" ]] || update_args+=(--components "$components")
 [[ "$migrate" == true ]] && update_args+=(--migrate)
 [[ "$seed" == true ]] && update_args+=(--seed)
+case ",${components:-api,secure-api,gateway}," in
+  *,api,*|*,python,*)
+    [[ "$seed" == true ]] || update_args+=(--seed)
+    ;;
+esac
 [[ "$no_auto_migrate" == true ]] && update_args+=(--no-auto-migrate)
 [[ "$no_backup" == true ]] && update_args+=(--no-backup)
 [[ -z "$requested_by" ]] || update_args+=(--requested-by "$requested_by")

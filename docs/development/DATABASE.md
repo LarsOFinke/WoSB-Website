@@ -93,8 +93,10 @@ sudo ./update.sh --seed
 ```
 
 `--seed` führt immer zuerst `alembic upgrade head` aus. Der API-Container seedet beim normalen Start
-nicht automatisch. Setup und Updater starten dafür den eigenen, kurzlebigen Seed-Container
-ausdrücklich.
+nicht automatisch. Setup und jedes API-Deployment über den Updater starten dafür den eigenen,
+kurzlebigen Seed-Container ausdrücklich. Das ist eine Release-Invariante: Änderungen unter
+`backend/seeds/` können ohne neue Alembic-Revision ausgeliefert werden und sind deshalb nicht durch
+die Schemaprüfung allein abgedeckt. Reine `secure-api`-/`gateway`-Teilrollouts bleiben datenbankfrei.
 
 ## Backup und Restore
 

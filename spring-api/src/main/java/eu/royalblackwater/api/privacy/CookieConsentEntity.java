@@ -2,6 +2,8 @@ package eu.royalblackwater.api.privacy;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -9,7 +11,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "cookie_consent_decisions")
 public class CookieConsentEntity {
-    @Id private Integer id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
     @Column(name = "consent_key", nullable = false, length = 64) private String consentKey;
     @Column(name = "user_id") private Integer userId;
     @Column(name = "policy_version", nullable = false, length = 32) private String policyVersion;

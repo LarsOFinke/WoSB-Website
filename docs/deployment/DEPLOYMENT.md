@@ -136,13 +136,14 @@ Auf dem Zielserver prüft und aktiviert der zweite Orchestrator das Bundle:
 ```bash
 sudo /opt/royal-blackwater-fleet/infrastructure/scripts/release/install-artifact.sh \
   --artifact /tmp/rbf-releases/rbf-deployment-1.0.0.tar.gz \
-  --migrate \
+  --seed \
   --requested-by USER
 ```
 
 Mit `--update-script /opt/royal-blackwater-fleet/update.sh` kann der Update-Einstiegspunkt
-explizit gesetzt werden. `--no-backup`, `--seed`, `--no-auto-migrate` und `--components` werden
-an den bestehenden Updater weitergereicht. Die äußere Prüfsumme wird vor dem Update geprüft;
+explizit gesetzt werden. Der Installer ergänzt `--seed` für jedes Artifact mit API-Komponente;
+der zentrale Updater erzwingt dieselbe Regel zusätzlich. `--no-backup`, `--no-auto-migrate` und
+`--components` werden an den bestehenden Updater weitergereicht. Die äußere Prüfsumme wird vor dem Update geprüft;
 das Artifact selbst prüft zusätzlich Manifest und enthaltene Image-Prüfsummen.
 
 Das Artefakt wird über den bereits eingerichteten, gepinnten SSH-Zugang übertragen:
@@ -152,7 +153,7 @@ Das Artefakt wird über den bereits eingerichteten, gepinnten SSH-Zugang übertr
   /srv/rbf-releases/rbf-deployment-1.0.0.tar.gz \
   deploy@webserver /srv/rbf-releases/incoming 22
 ssh deploy@webserver \
-  'sudo /opt/royal-blackwater-fleet/update.sh --artifact /srv/rbf-releases/incoming/rbf-deployment-1.0.0.tar.gz --migrate'
+  'sudo /opt/royal-blackwater-fleet/update.sh --artifact /srv/rbf-releases/incoming/rbf-deployment-1.0.0.tar.gz --seed'
 ```
 
 Die Prüfsumme kann vor dem Aktivieren unabhängig geprüft werden:
@@ -163,9 +164,21 @@ sha256sum --check rbf-deployment-1.0.0.tar.gz.sha256
 ```
 
 Der Zielserver prüft Archivpfade, Manifest und Prüfsummen, lädt die Images mit `docker load`,
-führt den bestehenden Vorab-Backup-/Migrations-/Smoke-Test-Ablauf aus und behält die zuvor
+führt den bestehenden Vorab-Backup-/Migrations-/Seed-/Smoke-Test-Ablauf aus und behält die zuvor
 laufenden Image-Digests für den automatischen Rollback. Die produktive `.env` bleibt ausschließlich
 auf dem Webseiten-Server.
+
+Auf einem Artifact-Ziel existiert absichtlich kein vollständiger Git-Checkout und damit kein
+Docker-Build-Kontext. Nach einem erfolgreichen Artifact-Deployment darf dort nicht zusätzlich
+`sudo ./update.sh` ohne `--artifact` ausgeführt werden: Der Updater bricht diesen Aufruf nun
+sofort mit einer handlungsorientierten Meldung ab. Für ein weiteres Release wird wieder ein neues,
+prüfsummenverifiziertes Artifact übertragen und mit `update.sh --artifact ... --seed` aktiviert.
+
+Migration und Seed bilden bei API-Releases eine gemeinsame Deployment-Einheit: Alembic stellt das
+Schema bereit, anschließend synchronisiert der Seed die zum selben Release gehörenden System- und
+Stammdaten. Seed-Katalogänderungen benötigen nicht zwangsläufig eine Migration und würden bei einer
+reinen Alembic-Head-Prüfung sonst unbemerkt fehlen. Der Seed ist idempotent und schützt
+Admin-Overrides; `--restore-seed-defaults` bleibt die einzige Option, die diese bewusst verwirft.
 
 ## Webhook-Status
 

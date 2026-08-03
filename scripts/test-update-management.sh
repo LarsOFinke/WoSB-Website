@@ -19,6 +19,51 @@ fail() {
   [[ "$OPERATION" == update_migrate_seed ]] || fail "--seed operation must expose migrate+seed"
 )
 
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/repository.sh"
+  REPO_ROOT="$(mktemp -d)"
+  trap 'rm -rf "$REPO_ROOT"' EXIT
+  ARTIFACT_FILE=""
+  if ( update_repository ) 2>/dev/null; then
+    fail "Gitless source update unexpectedly continued without an artifact"
+  fi
+)
+
+(
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$UPDATE_DIR/options.sh"
+  source "$UPDATE_DIR/workflow.sh"
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  INFRA_DIR="$tmp/infrastructure"
+  mkdir -p "$INFRA_DIR/scripts/deployment" "$INFRA_DIR/scripts/checks"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$INFRA_DIR/scripts/deployment/install-systemd.sh"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$INFRA_DIR/scripts/checks/smoke-test.sh"
+  update_options_reset
+  UPDATE_COMPONENTS=api,secure-api,gateway
+  ARTIFACT_FILE=test-artifact
+  STARTED_AT=""
+  COMMIT_BEFORE=""
+  COMMIT_AFTER=""
+  update_status_write() { :; }
+  ensure_monitoring_services() { :; }
+  update_resolve_database_actions() {
+    [[ "$RUN_MIGRATIONS" == true ]] || fail "API deployment must enable migrations"
+    [[ "$RUN_SEED" == true ]] || fail "API deployment must enable seed"
+  }
+  update_create_backup() { :; }
+  maintenance_enable() { :; }
+  deploy_application_update() {
+    [[ "$1" == true ]] || fail "API deployment did not pass migrations to deployer"
+    [[ "$2" == true ]] || fail "API deployment did not pass seed to deployer"
+  }
+  maintenance_disable() { :; }
+  log() { :; }
+  update_execute_deployment
+  [[ "$OPERATION" == update_migrate_seed ]] || fail "API deployment must expose migrate+seed operation"
+)
+
 python3 - "$UPDATE_DIR/workflow.sh" <<'PY_RELOAD'
 from pathlib import Path
 import sys

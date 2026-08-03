@@ -75,7 +75,7 @@ Artifact stattdessen fortsetzen mit:
 ```bash
 cd /tmp/rbf-bootstrap
 sudo ./setup.sh --profile full --no-start
-sudo ./update.sh --artifact /tmp/rbf-deployment-1.0.0.tar.gz --migrate
+sudo ./update.sh --artifact /tmp/rbf-deployment-1.0.0.tar.gz --seed
 ```
 
 Der Bootstrap muss für systemd auf einem persistenten Pfad liegen, zum Beispiel
@@ -174,7 +174,7 @@ Wartungsseite.
 
 ```bash
 sudo ./infrastructure/scripts/checks/doctor.sh
-docker compose --env-file infrastructure/.env -f infrastructure/compose.yml ps api secure-api gateway
+sudo docker compose --env-file infrastructure/.env -f infrastructure/compose.yml ps api secure-api gateway
 ```
 
 Mit den Daten aus `infrastructure/first-run-credentials.txt` anmelden, das Admin-Passwort ändern und

@@ -2,12 +2,6 @@ name: Deploy production
 
 on:
   workflow_dispatch:
-    inputs:
-      migrate_and_seed:
-        description: Run Alembic migrations and idempotent seed after updating
-        required: true
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -39,11 +33,8 @@ jobs:
           PORT: ${{ secrets.RBF_DEPLOY_PORT }}
           USER: ${{ secrets.RBF_DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.RBF_DEPLOY_PATH }}
-          MIGRATE_AND_SEED: ${{ inputs.migrate_and_seed }}
         run: |
           port="${PORT:-22}"
-          flags=""
-          [[ "$MIGRATE_AND_SEED" == true ]] && flags="--migrate --seed"
-          printf -v remote 'cd %q && sudo ./update.sh %s' "$DEPLOY_PATH" "$flags"
+          printf -v remote 'cd %q && sudo ./update.sh --seed' "$DEPLOY_PATH"
           ssh -i ~/.ssh/rbf_deploy -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes \
             "$USER@$HOST" "$remote"

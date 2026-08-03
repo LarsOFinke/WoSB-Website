@@ -23,8 +23,7 @@ update_repository() {
     return 0
   fi
   if [[ ! -d "$REPO_ROOT/.git" ]]; then
-    warn "Kein .git-Verzeichnis gefunden; Quellcode-Update wird übersprungen. Die Datenbankrevision wird trotzdem gegen das gebaute Image geprüft."
-    return 0
+    die "Kein .git-Verzeichnis und kein Deployment-Artefakt vorhanden. Auf diesem Artifact-Ziel bitte update.sh --artifact FILE verwenden; ein Source-Build ist hier nicht möglich."
   fi
 
   git_as_owner config core.fileMode false

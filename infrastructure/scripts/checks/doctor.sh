@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
+source "$INFRA_DIR/scripts/lib/env.sh"
 source "$INFRA_DIR/scripts/backup/common.sh"
 
 "$INFRA_DIR/scripts/checks/preflight.sh" runtime

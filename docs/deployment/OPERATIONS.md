@@ -4,8 +4,8 @@
 
 ```bash
 sudo ./infrastructure/scripts/checks/doctor.sh
-make infra-status
-make infra-logs
+sudo make infra-status
+sudo make infra-logs
 ```
 
 Health-Endpunkte:
@@ -39,26 +39,37 @@ und Frontend werden auf dem Release-Host kompiliert und als ausgewählte Images
 übertragen. Datenbank-Revisionsprüfung, Migration und Seed laufen nur bei einem
 Update mit `api`.
 
-Standardupdate mit automatischer Schemaerkennung:
+Standardupdate der API:
 
 ```bash
 sudo ./update.sh
 ```
 
-Der Standardlauf baut zuerst das neue API-Image und vergleicht dessen Alembic-Head mit der
-laufenden PostgreSQL-Datenbank. Ausstehende Migrationen werden automatisch erkannt, vorab durch ein
-Datenbankbackup abgesichert und anschließend ausgeführt. Damit werden auch Migrationen nach einem
-zuvor fehlgeschlagenen Deployment erneut erkannt, selbst wenn beim zweiten Lauf kein neuer Git-Diff
-mehr entsteht.
+Der Standardlauf baut zuerst das neue API-Image, erstellt vor den Datenbankarbeiten ein
+Sicherheitsbackup, führt Alembic bis `head` aus und startet danach immer den idempotenten Seed.
+Das ist erforderlich, weil ein Release repository-eigene Stammdaten ändern kann, ohne zugleich
+eine neue Alembic-Revision zu enthalten. Eine reine Schemaprüfung kann diesen Unterschied nicht
+erkennen. Der Seed gleicht neue und geänderte Defaults ab, lässt identische Datensätze unberührt
+und bewahrt Admin-Overrides; er ist daher Teil jedes vollständigen API-Deployments.
 
-Expliziter Migrations- und Seed-Lauf:
+Für Runbooks kann dieselbe Invariante ausdrücklich notiert werden:
 
 ```bash
 sudo ./update.sh --migrate --seed
 ```
 
-`--seed` impliziert immer `--migrate`. Mit `--no-auto-migrate` wird ein Deployment bei einer
-abweichenden Datenbankrevision abgebrochen; ein inkompatibles API-Image wird nicht gestartet.
+`--seed` impliziert immer `--migrate`. Auch ein Aufruf ohne Flag sowie kompatible ältere
+Admin-Anforderungen werden am zentralen Deployment-Rand auf Migration plus Seed angehoben. Nur
+Teilrollouts ohne `api` (`secure-api` und/oder `gateway`) berühren PostgreSQL nicht.
+
+`--restore-seed-defaults` ist davon klar getrennt: Der normale Deployment-Seed überschreibt keine
+Admin-Anpassungen. Nur diese ausdrücklich bestätigte Reparaturoption verwirft Overrides auf
+repository-eigenen Stammdaten.
+
+Artifact-Zielserver besitzen keinen Git-Checkout. Dort ist ein Update ohne `--artifact` kein
+zulässiger Betriebsweg und wird vor jedem Compose-Build abgewiesen. Ein fehlgeschlagener Artifact-
+Lauf versucht außerdem keinen Source-Rebuild als Rollback; dafür muss ein neues Artifact oder ein
+separater, vollständiger Checkout bereitgestellt werden.
 
 Der Updater übernimmt Admin-Anforderungen erst nach dem exklusiven Lock, verweigert lokale
 Git-Änderungen, nutzt Fast-Forward, schreibt während des Laufs einen Heartbeat, sichert vor
