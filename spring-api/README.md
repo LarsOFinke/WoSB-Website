@@ -11,9 +11,11 @@ Nativ besitzt Spring aktuell:
 - `POST /api/auth/change-password`
 - `GET /api/auth/me`
 - `GET /api/legal-notice`
+- `GET /api/privacy/cookie-policy`
+- `GET /api/privacy/cookie-consent`
 
 Alle `/api/**`-Routen werden durch Spring geschützt und angenommen. Nicht migrierte
-Fachrouten laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
+Fachrouten und Schreibpfade laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
 NGINX sprechen nicht mehr direkt mit dem FastAPI-Container. `/uploads/...` bleibt als
 kompatibler Legacy-Dateipfad zunächst direkt am API-Container.
 
