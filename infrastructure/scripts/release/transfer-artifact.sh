@@ -15,8 +15,9 @@ port="${4:-22}"
 [[ "$directory" == /* && "$directory" != *$'\n'* && "$directory" != *' '* ]] || { echo "Zielverzeichnis muss ein absoluter, einzeiliger Pfad ohne Leerzeichen sein." >&2; exit 2; }
 
 name="$(basename "$artifact")"
-ssh_args=(-p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-scp_args=(-P "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+# Allow an interactive password prompt; key-based authentication remains supported.
+ssh_args=(-p "$port" -o BatchMode=no -o StrictHostKeyChecking=yes)
+scp_args=(-P "$port" -o BatchMode=no -o StrictHostKeyChecking=yes)
 ssh "${ssh_args[@]}" "$target" "install -d -m 0750 -- $(printf '%q' "$directory")"
 scp "${scp_args[@]}" "$artifact" "$target:$directory/$name"
 echo "Übertragen: $target:$directory/$name"

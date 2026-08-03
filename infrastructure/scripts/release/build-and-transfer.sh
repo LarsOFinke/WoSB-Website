@@ -75,8 +75,10 @@ checksum="$artifact.sha256"
 [[ -f "$artifact" ]] || die "Builder hat kein Artifact erzeugt: $artifact"
 (cd "$(dirname "$artifact")" && sha256sum "$(basename "$artifact")" > "$(basename "$checksum")")
 
-ssh_args=(-p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes)
-scp_args=(-P "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes)
+# Password authentication remains interactive; SSH keys work without a prompt.
+# Strict host-key verification is retained to prevent silent MITM acceptance.
+ssh_args=(-p "$port" -o BatchMode=no -o StrictHostKeyChecking=yes)
+scp_args=(-P "$port" -o BatchMode=no -o StrictHostKeyChecking=yes)
 if [[ -n "$identity" ]]; then
   ssh_args+=(-i "$identity")
   scp_args+=(-i "$identity")
