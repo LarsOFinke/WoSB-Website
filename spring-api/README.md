@@ -13,6 +13,7 @@ Nativ besitzt Spring aktuell:
 - `GET /api/legal-notice`
 - `GET /api/privacy/cookie-policy`
 - `GET /api/privacy/cookie-consent`
+- `GET /api/fleets/public/official`
 
 Alle `/api/**`-Routen werden durch Spring geschützt und angenommen. Nicht migrierte
 Fachrouten und Schreibpfade laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
