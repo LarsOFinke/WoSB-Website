@@ -21,6 +21,10 @@ artifact_prepare() {
     || die "Prüfsummen des Deployment-Artefakts stimmen nicht."
   [[ -f "$artifact_dir/contracts/recovery/contract.py" ]] \
     || die "Deployment-Artefakt enthält keinen portablen Recovery-Vertrag."
+  [[ -d "$artifact_dir/backend/migrations/versions" ]] \
+    || die "Deployment-Artefakt enthält keinen Alembic-Migrationsgraphen."
+  [[ -d "$artifact_dir/backend/config" ]] \
+    || die "Deployment-Artefakt enthält keine Backend-Konfiguration für Recovery."
   export RBF_ARTIFACT_ROOT="$artifact_dir"
 
   local values=()

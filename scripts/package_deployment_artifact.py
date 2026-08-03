@@ -17,11 +17,20 @@ SERVICES = {
     "secure-api": "rbf-hub-secure-api",
     "gateway": "rbf-hub-gateway",
 }
+SOURCE_ROOT = Path(__file__).resolve().parent.parent
 ALIASES = {"python": "api", "java": "secure-api", "frontend": "gateway"}
 RECOVERY_CONTRACT_FILES = (
     Path("contracts/__init__.py"),
     Path("contracts/recovery/__init__.py"),
     Path("contracts/recovery/contract.py"),
+)
+MIGRATION_FILES = tuple(
+    Path("backend/migrations/versions") / path.name
+    for path in sorted((SOURCE_ROOT / "backend/migrations/versions").glob("*.py"))
+)
+BACKEND_CONFIG_FILES = tuple(
+    Path("backend/config") / path.name
+    for path in sorted((SOURCE_ROOT / "backend/config").glob("*.cfg"))
 )
 
 
@@ -57,6 +66,8 @@ def main() -> None:
             components.append(component)
     if not components:
         raise SystemExit("Mindestens eine Komponente ist erforderlich.")
+    if not MIGRATION_FILES:
+        raise SystemExit("Keine Alembic-Migrationen für das Deployment-Artifact gefunden.")
     images = {
         "api": args.api_image or f"{SERVICES['api']}:{args.version}",
         "secure-api": args.secure_api_image or f"{SERVICES['secure-api']}:{args.version}",
@@ -85,12 +96,13 @@ def main() -> None:
             json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        for relative_path in RECOVERY_CONTRACT_FILES:
-            source = Path(__file__).resolve().parent.parent / relative_path
+        artifact_files = (*RECOVERY_CONTRACT_FILES, *MIGRATION_FILES, *BACKEND_CONFIG_FILES)
+        for relative_path in artifact_files:
+            source = SOURCE_ROOT / relative_path
             destination = staging / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
-        checksum_paths = (Path("manifest.json"), Path("images.tar"), *RECOVERY_CONTRACT_FILES)
+        checksum_paths = (Path("manifest.json"), Path("images.tar"), *artifact_files)
         checksums = "".join(
             f"{digest(staging / path)}  {path}\n"
             for path in checksum_paths

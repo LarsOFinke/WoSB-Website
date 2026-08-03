@@ -95,9 +95,12 @@ fi
 if [[ -f "$REPO_ROOT/frontend/.env" ]]; then
   install -m 0600 "$REPO_ROOT/frontend/.env" "$stage/configuration/frontend.env"
 fi
+config_root="${RBF_ARTIFACT_ROOT:-$REPO_ROOT}/backend/config"
+if [[ -d "$config_root" ]]; then
 while IFS= read -r -d '' cfg; do
   install -m 0600 "$cfg" "$stage/configuration/backend-config/$(basename "$cfg")"
-done < <(find "$REPO_ROOT/backend/config" -maxdepth 1 -type f -name '*.cfg' -print0 | sort -z)
+done < <(find "$config_root" -maxdepth 1 -type f -name '*.cfg' -print0 | sort -z)
+fi
 
 if [[ -d "$INFRA_DIR/data/control/secrets" ]]; then
   while IFS= read -r -d '' secret_file; do

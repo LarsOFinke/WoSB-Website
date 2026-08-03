@@ -153,7 +153,8 @@ trap cleanup_on_exit EXIT
 if [[ -f "$metadata_file" ]]; then
   verify_backup_checksum "$metadata_file"
   python3 "$metadata_script" validate "$metadata_file" "$backup_file" >/dev/null
-  preflight_args=(--metadata "$metadata_file" --migrations-dir "$REPO_ROOT/backend/migrations/versions")
+  migrations_root="${RBF_ARTIFACT_ROOT:-$REPO_ROOT}"
+  preflight_args=(--metadata "$metadata_file" --migrations-dir "$migrations_root/backend/migrations/versions")
   [[ "$allow_legacy" == true ]] && preflight_args+=(--allow-unrecorded)
   [[ "$allow_uncoordinated" == true ]] && preflight_args+=(--allow-uncoordinated)
   compatibility_json="$(python3 "$preflight_script" "${preflight_args[@]}")" \
