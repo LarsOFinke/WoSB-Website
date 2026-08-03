@@ -1,16 +1,20 @@
 # RBF Secure API
 
-Dieser Dienst ist die sicherheitsführende Spring-Boot-Grenze der schrittweisen
-Backend-Migration. Er besitzt aktuell ausschließlich:
+Dieser Dienst ist der zentrale HTTP-Einstiegspunkt der schrittweisen
+Backend-Migration. Authentifizierung ist nativ in Spring implementiert; noch nicht
+migrierte Fachrouten werden intern an FastAPI weitergereicht.
+
+Nativ besitzt Spring aktuell:
 
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `POST /api/auth/change-password`
 - `GET /api/auth/me`
 
-Alle anderen Routen sind durch Spring Security explizit gesperrt. NGINX routet die
-vier Pfade exklusiv hierher; `/api/auth/register` und die übrige Fach-API bleiben
-bis zu ihrer jeweils vollständigen Migration in FastAPI.
+Alle `/api/**`-Routen werden durch Spring geschützt und angenommen. Nicht migrierte
+Fachrouten laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
+NGINX sprechen nicht mehr direkt mit dem FastAPI-Container. `/uploads/...` bleibt als
+kompatibler Legacy-Dateipfad zunächst direkt am API-Container.
 
 ## Lokal prüfen
 

@@ -89,7 +89,10 @@ class ApplicationFactory:
         app.add_exception_handler(HTTPException, http_error_handler)
 
     def _configure_middleware(self, app: FastAPI) -> None:
-        allowed_hosts = {"testserver", "localhost", "127.0.0.1"}
+        # ``api`` is the private Compose DNS name used by the Spring HTTP facade.
+        # It is never published externally; public requests retain their original
+        # host at the Spring boundary and are forwarded only over the backend net.
+        allowed_hosts = {"testserver", "localhost", "127.0.0.1", "api"}
         for origin in self._settings.cors_origins:
             hostname = urlsplit(origin).hostname
             if hostname:

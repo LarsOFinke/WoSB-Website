@@ -36,6 +36,8 @@ management:
         enabled: true
       show-details: never
 rbf:
+  proxy:
+    target-url: ${FASTAPI_INTERNAL_URL:http://api:8000}
   session:
     cookie-name: ${SESSION_COOKIE_NAME:rbf_hub_session}
     secure: ${SESSION_COOKIE_SECURE:true}

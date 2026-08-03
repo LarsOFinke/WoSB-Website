@@ -136,10 +136,13 @@ services:
       SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
       SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS}
+      FASTAPI_INTERNAL_URL: http://api:8000
       ALLOWED_HOSTS: ${APP_HOSTNAME},localhost,127.0.0.1
     depends_on:
       migrate:
         condition: service_completed_successfully
+      api:
+        condition: service_healthy
       postgres:
         condition: service_healthy
     expose:

@@ -28,6 +28,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/me",
                                 "/api/auth/change-password", "/actuator/health/**").permitAll()
+                        .requestMatchers("/api/**").permitAll()
                         .anyRequest().denyAll())
                 .build();
     }

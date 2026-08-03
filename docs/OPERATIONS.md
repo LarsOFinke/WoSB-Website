@@ -15,8 +15,9 @@ GET /api/health
 GET /api/health/ready
 ```
 
-Der öffentliche Healthvertrag bleibt bei FastAPI. Spring Boot stellt zusätzlich nur im internen
-Compose-Netz `/actuator/health/readiness` bereit; NGINX veröffentlicht den Actuator nicht. Status
+Der öffentliche Healthvertrag bleibt fachlich bei FastAPI, wird aber über die zentrale Spring-
+API-Fassade weitergereicht. Spring Boot stellt zusätzlich nur im internen Compose-Netz
+`/actuator/health/readiness` bereit; NGINX veröffentlicht den Actuator nicht. Status
 und Logs des Sicherheitsdienstes werden mit `docker compose ... ps secure-api` beziehungsweise
 `docker compose ... logs secure-api` geprüft. Ein Ausfall sperrt Login, Logout, Passwortwechsel und
 Sessionabfrage, während nicht betroffene öffentliche Python-Inhalte weiter erreichbar bleiben.
