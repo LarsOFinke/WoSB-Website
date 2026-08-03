@@ -1,4 +1,18 @@
-# Installation auf dem Raspberry Pi
+# v1.0-Installation des Webseiten-Servers
+
+Der Produktionsaufbau besteht aus zwei getrennten Hosts:
+
+| Host | Aufgabe | Exponierte Dienste |
+|---|---|---|
+| Webseiten-Server | Gateway, Spring-API, FastAPI, PostgreSQL, lokale Backup-Orchestrierung | TCP 80/443 (optional 8443 nur LAN/VPN) |
+| Backup-/Recovery-Server | verschlüsselte Backup-Sets, SFTP-Upload, read-only Recovery-Download | SSH/SFTP vom Webseiten-Server; kein Webdienst |
+
+Die Sprachlaufzeiten bleiben in getrennten Containern: NGINX/Node für das Frontend,
+Spring Boot/Java für die API-Fassade, FastAPI/Python für die verbleibenden
+Fachmodule und PostgreSQL als eigener Datenbankdienst. Der Webseiten-Server muss
+kein JDK, Maven, Node oder Python auf dem Host installieren; diese Laufzeiten
+werden beim Image-Build beziehungsweise im Container verwendet. Das Recovery-Tool
+wird ausschließlich auf dem zweiten Host installiert.
 
 ## 1. Host vorbereiten
 
@@ -10,7 +24,7 @@ sudo apt update && sudo apt full-upgrade -y
 sudo reboot
 ```
 
-Für öffentlichen Betrieb müssen DNS sowie TCP 80/443 auf den Pi zeigen. Der Monitoring-Port 8443
+Für öffentlichen Betrieb müssen DNS sowie TCP 80/443 auf den Webseiten-Server zeigen. Der Monitoring-Port 8443
 sollte nur über LAN/VPN erreichbar sein.
 
 ## 2. Installation
@@ -62,7 +76,7 @@ die Datei nach sicherer Ablage löschen.
 Vor einer öffentlichen Freigabe sind außerdem Impressum und Datenschutzerklärung zu veröffentlichen,
 DNS/TLS extern zu prüfen, ein SSH-Schlüsselzugang zu testen und das Backup-System einschließlich
 Restore-Nachweis einzurichten. Die vollständige Trennung zwischen automatisierten Schritten und
-Administrator-Gates steht in [SECURITY_PRIVACY_AUDIT.md](SECURITY_PRIVACY_AUDIT.md).
+Administrator-Gates steht im [Security- und Datenschutz-Audit](../audits/SECURITY_PRIVACY_AUDIT.md).
 
 ## Wechsel von einer historischen Datenbank
 

@@ -141,7 +141,7 @@
 - Englische Webhook-Nachrichtenvorlagen um vollständige Ressourcendaten und anklickbare Deep-Links erweitert; Webhook-Envelopes qualifizieren relative Ressourcenpfade nun gegen die öffentliche Website-Origin.
 - Gelöschte Builds und Guides verlinken in Benachrichtigungen auf ihre weiterhin erreichbaren Übersichtsseiten.
 - Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.
-- Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/webhook-templates/message-templates/` ergänzt.
+- Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/integrations/webhook-templates/message-templates/` ergänzt.
 - Standardnachrichten für Build-Webhooks auf das tatsächliche Feld `data.build_name` korrigiert.
 - Update-Erkennung von Git-Diffs auf einen Laufzeitvergleich zwischen Alembic-Head des neu gebauten API-Images und der tatsächlichen PostgreSQL-Revision umgestellt; fehlgeschlagene Migrationen werden im Folgelauf sicher erneut erkannt.
 - Admin-Updateanforderungen werden erst nach Erwerb des exklusiven Locks übernommen; parallele Runner verlieren keine Requests und überschreiben keinen laufenden Status mehr.

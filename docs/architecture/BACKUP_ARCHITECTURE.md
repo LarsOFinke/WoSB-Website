@@ -2,8 +2,8 @@
 
 Dieses Dokument ist der verbindliche Qualitätsstandard für Änderungen am Backup-Modul, am
 Admin-Frontend und am plattformübergreifenden Recovery Tool. Sicherheits- und Betriebsdetails
-stehen ergänzend in [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) und
-[BACKUP_SERVER_ENROLLMENT.md](BACKUP_SERVER_ENROLLMENT.md).
+stehen ergänzend in [DISASTER_RECOVERY.md](../deployment/DISASTER_RECOVERY.md) und
+[BACKUP_SERVER_ENROLLMENT.md](../deployment/BACKUP_SERVER_ENROLLMENT.md).
 
 ## Verantwortungsgrenzen
 

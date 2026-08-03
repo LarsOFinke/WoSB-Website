@@ -26,7 +26,7 @@ Windows und Linux werden nativ auf dem jeweiligen Betriebssystem gebaut. `age`, 
 Paramiko und ihre nativen Abhängigkeiten werden von PyInstaller eingebettet.
 
 Die verbindlichen Modulgrenzen, Größenbudgets und Testregeln sind in
-[`docs/BACKUP_ARCHITECTURE.md`](../../docs/BACKUP_ARCHITECTURE.md) festgehalten.
+[`docs/architecture/BACKUP_ARCHITECTURE.md`](../../docs/architecture/BACKUP_ARCHITECTURE.md) festgehalten.
 
 ## Linux-spezifisch
 

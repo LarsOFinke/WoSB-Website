@@ -104,7 +104,7 @@ test('webhook editor offers compact subscriptions and repository template autofi
   assert.ok(webhookSource.includes('selectVisibleEvents'))
   assert.ok(webhookSource.includes('clearMessageTemplate'))
   assert.ok(!discordPageSource.includes('webhook-template-reference'))
-  assert.ok(!discordPageSource.includes('docs/webhook-templates/message-templates/'))
+  assert.ok(!discordPageSource.includes('docs/integrations/webhook-templates/message-templates/'))
   assert.ok(webhookSource.includes('webhook-editor-backdrop'))
   assert.ok(webhookSource.includes('role="dialog"'))
   assert.ok(webhookSource.includes('openCreateWebhook'))

@@ -31,7 +31,7 @@ API modules contain transport concerns only. File type policy is therefore kept 
 
 ## Global style layers
 
-The shared global cascade is loaded from `src/styles/global/index.js` as eight numerically ordered CSS files. The manifest uses JavaScript imports rather than nested CSS `@import`: an earlier `@import` split changed production extraction and caused visible drift. The import order is an architecture contract, every layer is capped at 75 KB and 3,500 lines, and total frontend source CSS remains below 400 KB. Feature-local styles stay beside their owning module. See `docs/CSS_ARCHITECTURE.md`.
+The shared global cascade is loaded from `src/styles/global/index.js` as eight numerically ordered CSS files. The manifest uses JavaScript imports rather than nested CSS `@import`: an earlier `@import` split changed production extraction and caused visible drift. The import order is an architecture contract, every layer is capped at 75 KB and 3,500 lines, and total frontend source CSS remains below 400 KB. Feature-local styles stay beside their owning module. See `docs/reference/CSS_ARCHITECTURE.md`.
 
 ## Locale delivery
 

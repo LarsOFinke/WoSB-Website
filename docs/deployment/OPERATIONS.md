@@ -112,7 +112,7 @@ und startet das aktuelle API-Image in einem internen Netz ohne veröffentlichte 
 ### Assistierte Backup-Server-Einrichtung
 
 Der empfohlene Ablauf tauscht nur öffentliche Enrollment-JSON-Dateien aus. Die Webseite erzeugt
-den privaten SSH-Schlüssel selbst; das Recovery-Tool 1.4.1 richtet auf dem Backup-Server chroot-
+den privaten SSH-Schlüssel selbst; das Recovery-Tool 1.4.4 richtet auf dem Backup-Server chroot-
 isoliertes SFTP, Benutzer, Speicher, age-Identität und Retention ein. Nach dem Import der Antwort
 werden Host-Key, SFTP und age-Empfänger automatisch geprüft beziehungsweise konfiguriert. Siehe
 [Assistierte Backup-Server-Einrichtung](BACKUP_SERVER_ENROLLMENT.md).
@@ -147,7 +147,7 @@ infrastructure/data/control/status/backup.log
 ```
 
 Das verbindliche externe Pull- und Bare-Metal-Verfahren steht in
-[`docs/DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md).
+[`DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md).
 
 ## Discord-Webhook-Schlüssel
 
@@ -178,7 +178,7 @@ URL.
 ## Monitoring-Major-Upgrade
 
 Uptime Kuma bleibt bis zur kontrollierten Datenmigration auf 1.23.16. Das verbindliche Verfahren
-für Backup, Migration, Verifikation und Rollback steht in `docs/UPTIME_KUMA_2_MIGRATION.md`. Die
+für Backup, Migration, Verifikation und Rollback steht in [`UPTIME_KUMA_2_MIGRATION.md`](UPTIME_KUMA_2_MIGRATION.md). Die
 Image-Version darf nicht im Rahmen eines normalen unbeaufsichtigten App-Updates auf 2.x geändert
 werden.
 
@@ -188,7 +188,7 @@ Der Maintenance-Lauf entfernt abgelaufene Sessions und wendet die in `backend/co
 konfigurierten Fristen auf Sicherheitsaggregationen, Audit-Historie, Webhook-Deliveries,
 Cookie-Einwilligungen, Registrierungsanträge sowie abgeschlossene Datenschutzanträge und
 -kontakte an. Die Standardwerte und betrieblichen Auswirkungen sind in
-[DATA_RETENTION.md](DATA_RETENTION.md) dokumentiert. Nach Änderungen an Fristen sollte der nächste
+[DATA_RETENTION.md](../reference/DATA_RETENTION.md) dokumentiert. Nach Änderungen an Fristen sollte der nächste
 Lauf beobachtet und das Ergebnis über die Systemlogs geprüft werden.
 
 ## Datenschutzvorgänge
@@ -203,7 +203,7 @@ Datenschutzkontakte dürfen nicht in Discord kopiert werden. Die Anwendung verse
 Betreff und Nachricht bewusst nicht über Webhooks. Nach einer Test- oder Fehlanfrage ist sie über
 die Admin-Inbox abzuschließen; der tägliche Maintenance-Lauf entfernt abgeschlossene Vorgänge nach
 der dokumentierten Frist. Der vollständige technische und organisatorische Prüfstand steht in
-[PRIVACY_COMPLIANCE_AUDIT.md](PRIVACY_COMPLIANCE_AUDIT.md).
+[PRIVACY_COMPLIANCE_AUDIT.md](../audits/PRIVACY_COMPLIANCE_AUDIT.md).
 
 ## TLS
 

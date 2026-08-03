@@ -87,7 +87,7 @@ Die Anwendung unterstützt Datenminimierung und Speicherbegrenzung technisch:
 - Exporttabellen werden gegen die aktuelle SQLAlchemy-Metadatenstruktur validiert. Veraltete oder
   umbenannte Tabellen können dadurch nicht mehr unbemerkt aus einem Export herausfallen.
 
-Die konkreten Fristen stehen in [DATA_RETENTION.md](DATA_RETENTION.md). Ihre rechtliche
+Die konkreten Fristen stehen in [DATA_RETENTION.md](../reference/DATA_RETENTION.md). Ihre rechtliche
 Angemessenheit und Rechtsgrundlage muss der Verantwortliche für den tatsächlichen Betrieb prüfen.
 
 ## Offene Administrator- und Go-live-Gates
@@ -123,7 +123,7 @@ Angemessenheit und Rechtsgrundlage muss der Verantwortliche für den tatsächlic
 - Gateway- und Runtime-Images benötigen regelmäßig einen Image-/SBOM-Scan zusätzlich zum
   Lockfile-basierten OSV-Scan. Der Trivy-Scan ist nun als wöchentliches und Push-basiertes
   High-/Critical-Gate umgesetzt; die Administratoren müssen weiterhin Host-Kernel,
-  Docker Engine, containerd und runc gemäß [CONTAINER_SECURITY.md](CONTAINER_SECURITY.md)
+  Docker Engine, containerd und runc gemäß [CONTAINER_SECURITY.md](../architecture/CONTAINER_SECURITY.md)
   aktuell halten.
 - Der technische Export-, Berichtigungs- und Löschworkflow ist umgesetzt. Der Verantwortliche muss
   weiterhin Identitätsprüfung, gesetzliche Fristen und mögliche Aufbewahrungspflichten organisatorisch

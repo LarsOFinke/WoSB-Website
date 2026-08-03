@@ -14,7 +14,7 @@ from app.modules.admin.services.webhook_events import DEFAULT_MESSAGES  # noqa: 
 
 
 def main() -> None:
-    template_dir = ROOT / "docs/webhook-templates/message-templates"
+    template_dir = ROOT / "docs/integrations/webhook-templates/message-templates"
     template_dir.mkdir(parents=True, exist_ok=True)
     expected = {f"{event_type}.txt" for event_type in DEFAULT_MESSAGES}
     for stale in template_dir.glob("*.txt"):
@@ -35,7 +35,7 @@ def main() -> None:
         sections.extend(
             ("", f"## `{event_type}`", "", "```text", message.strip(), "```")
         )
-    (ROOT / "docs/webhook-templates/all-message-templates.md").write_text(
+    (ROOT / "docs/integrations/webhook-templates/all-message-templates.md").write_text(
         "\n".join(sections) + "\n", encoding="utf-8"
     )
 

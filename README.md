@@ -89,24 +89,24 @@ docs/           v1.0-Betriebs- und Entwicklungsdokumentation
 
 ## Dokumentation
 
-- [Qualitätsstandards und Definition of Done](docs/QUALITY_STANDARDS.md)
+- [Qualitätsstandards und Definition of Done](docs/development/QUALITY_STANDARDS.md)
 - [Vollständiger Dokumentationsindex](docs/README.md)
-- [Go-Live-Checkliste](docs/GO_LIVE.md)
-- [Installation](docs/INSTALLATION.md)
-- [Architektur](docs/ARCHITECTURE.md)
-- [Entwicklung](docs/DEVELOPMENT.md)
-- [Datenbank und Seeds](docs/DATABASE.md)
-- [Kampf-DPM-Analyse](docs/COMBAT_DPM_ANALYSIS.md)
-- [Stammdaten-Go-Live-Review](docs/MASTER_DATA_GO_LIVE_REVIEW.md)
-- [Tests](docs/TESTING.md)
-- [Betrieb](docs/OPERATIONS.md)
-- [Disaster Recovery und Desktop-Backup](docs/DISASTER_RECOVERY.md)
-- [Assistierte Backup-Server-Einrichtung](docs/BACKUP_SERVER_ENROLLMENT.md)
+- [Go-Live-Checkliste](docs/deployment/GO_LIVE.md)
+- [Installation](docs/deployment/INSTALLATION.md)
+- [Architektur](docs/architecture/ARCHITECTURE.md)
+- [Entwicklung](docs/development/DEVELOPMENT.md)
+- [Datenbank und Seeds](docs/development/DATABASE.md)
+- [Kampf-DPM-Analyse](docs/audits/COMBAT_DPM_ANALYSIS.md)
+- [Stammdaten-Go-Live-Review](docs/audits/MASTER_DATA_GO_LIVE_REVIEW.md)
+- [Tests](docs/development/TESTING.md)
+- [Betrieb](docs/deployment/OPERATIONS.md)
+- [Disaster Recovery und Desktop-Backup](docs/deployment/DISASTER_RECOVERY.md)
+- [Assistierte Backup-Server-Einrichtung](docs/deployment/BACKUP_SERVER_ENROLLMENT.md)
 - PostgreSQL-Restores nutzen eine validierte Staging-Datenbank, atomaren Tausch und automatischen Rollback; vollständige Bare-Metal-Restores erhalten zusätzlich `.env`, `.cfg`, Uploads, Zertifikate und Host-Secrets im age-verschlüsselten Bundle.
 - Frozen Recovery Tool für Windows und Linux: gemeinsame Quellen unter `tools/recovery-tool`, native Build-Wrapper unter `tools/windows/recovery-tool` und `tools/linux/recovery-tool`; Ubuntu erhält zusätzlich ein installierbares `.deb`, systemd-Pull und ein optionales rootless-Docker-PostgreSQL-Restore-Labor
-- [GitHub CI/CD](docs/DEPLOYMENT.md)
-- [Webhook-Betrieb](docs/outbound-webhooks.md)
-- [Webhook-Nachrichten-Templates](docs/webhook-templates/README.md)
+- [GitHub CI/CD](docs/deployment/DEPLOYMENT.md)
+- [Webhook-Betrieb](docs/integrations/outbound-webhooks.md)
+- [Webhook-Nachrichten-Templates](docs/integrations/webhook-templates/README.md)
 - [Sicherheit](SECURITY.md)
 - [Änderungsverlauf](CHANGELOG.md)
 
@@ -116,4 +116,4 @@ Siehe [NOTICE.md](NOTICE.md).
 
 ## Backup und Recovery
 
-- [Backup-Server einrichten – Kurzleitfaden](docs/BACKUP_SETUP_QUICKSTART.md)
+- [Backup-Server einrichten – Kurzleitfaden](docs/deployment/BACKUP_SETUP_QUICKSTART.md)

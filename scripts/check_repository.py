@@ -177,19 +177,19 @@ required_files = {
     "CONTRIBUTING.md",
     "backend/requirements.lock",
     "backend/requirements-dev.lock",
-    "docs/GO_LIVE.md",
-    "docs/INSTALLATION.md",
-    "docs/ARCHITECTURE.md",
-    "docs/QUALITY_STANDARDS.md",
-    "docs/QUALITY_AUDIT_2026-08.md",
-    "docs/CONTAINER_SECURITY.md",
-    "docs/PRIVACY_COMPLIANCE_AUDIT.md",
-    "docs/DEVELOPMENT.md",
-    "docs/OPERATIONS.md",
-    "docs/DATABASE.md",
-    "docs/TESTING.md",
-    "docs/DEPLOYMENT.md",
-    "docs/UPTIME_KUMA_2_MIGRATION.md",
+    "docs/deployment/GO_LIVE.md",
+    "docs/deployment/INSTALLATION.md",
+    "docs/architecture/ARCHITECTURE.md",
+    "docs/development/QUALITY_STANDARDS.md",
+    "docs/audits/QUALITY_AUDIT_2026-08.md",
+    "docs/architecture/CONTAINER_SECURITY.md",
+    "docs/audits/PRIVACY_COMPLIANCE_AUDIT.md",
+    "docs/development/DEVELOPMENT.md",
+    "docs/deployment/OPERATIONS.md",
+    "docs/development/DATABASE.md",
+    "docs/development/TESTING.md",
+    "docs/deployment/DEPLOYMENT.md",
+    "docs/deployment/UPTIME_KUMA_2_MIGRATION.md",
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
     ".github/workflows/deploy.yml",
@@ -507,7 +507,7 @@ require(
     set(default_messages) == webhook_event_types,
     "webhook DEFAULT_MESSAGES must match EVENT_CATALOG exactly",
 )
-template_dir = ROOT / "docs/webhook-templates/message-templates"
+template_dir = ROOT / "docs/integrations/webhook-templates/message-templates"
 require(template_dir.is_dir(), "missing copy-ready webhook template directory")
 template_files = {path.stem: path for path in template_dir.glob("*.txt")}
 require(
@@ -580,7 +580,7 @@ for event_type, template_path in template_files.items():
             f"linkable webhook template is missing resource URL: {event_type}",
         )
 require(
-    (ROOT / "docs/webhook-templates/README.md").is_file(),
+    (ROOT / "docs/integrations/webhook-templates/README.md").is_file(),
     "missing webhook template usage guide",
 )
 
@@ -707,7 +707,7 @@ require(
     "frontend CSS exceeds the 400 KB source budget",
 )
 require(
-    (ROOT / "docs/CSS_ARCHITECTURE.md").is_file(),
+    (ROOT / "docs/reference/CSS_ARCHITECTURE.md").is_file(),
     "CSS architecture documentation is missing",
 )
 require((ROOT / "scripts/audit_css.py").is_file(), "CSS audit script is missing")
@@ -716,7 +716,7 @@ require(
     "responsive CSS quality gate is missing",
 )
 require(
-    (ROOT / "docs/DATA_RETENTION.md").is_file(),
+    (ROOT / "docs/reference/DATA_RETENTION.md").is_file(),
     "data-retention documentation is missing",
 )
 webhook_event_facade = ROOT / "backend/src/app/modules/admin/services/webhook_events.py"
@@ -738,7 +738,7 @@ require(
     "webhook event facade must remain a thin compatibility layer",
 )
 require(
-    (ROOT / "docs/SECURITY_PRIVACY_AUDIT.md").is_file(),
+    (ROOT / "docs/audits/SECURITY_PRIVACY_AUDIT.md").is_file(),
     "security/privacy audit is missing",
 )
 workflow_sources = "\n".join(

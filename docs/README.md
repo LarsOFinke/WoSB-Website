@@ -1,72 +1,48 @@
-# Projektdokumentation
+# Dokumentation
 
-Dieser Index ist der verbindliche Einstieg. Betriebsanweisungen und Standards beschreiben den
-aktuellen Sollzustand; Dateien mit `AUDIT`, `ANALYSIS` oder `REVIEW` im Namen sind nachvollziehbare
-Momentaufnahmen und ersetzen nicht das jeweils führende Dokument.
+Dieser Index ist der Einstieg für das v1.0-Deployment. Die Dokumente sind nach
+Verantwortung gruppiert; die alten Dateinamen wurden bewusst nicht als zweite
+Quelle dupliziert.
 
-## Schnellzugriff
+## Frischeinrichtung (zwei Server)
 
-- Entwickeln: [DEVELOPMENT.md](DEVELOPMENT.md) und [TESTING.md](TESTING.md)
-- Installieren: [INSTALLATION.md](INSTALLATION.md) und [GO_LIVE.md](GO_LIVE.md)
-- Betreiben: [OPERATIONS.md](OPERATIONS.md) und [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md)
-- Datenschutz: [PRIVACY_COMPLIANCE_AUDIT.md](PRIVACY_COMPLIANCE_AUDIT.md) und [DATA_RETENTION.md](DATA_RETENTION.md)
-- Qualität: [QUALITY_STANDARDS.md](QUALITY_STANDARDS.md) und [ARCHITECTURE.md](ARCHITECTURE.md)
+1. [Webseiten-Server installieren](deployment/INSTALLATION.md)
+2. [Backup-Server per Enrollment einrichten](deployment/BACKUP_SETUP_QUICKSTART.md)
+3. [Go-Live-Prüfung](deployment/GO_LIVE.md)
+4. [Betrieb und Updates](deployment/OPERATIONS.md)
+5. [Disaster Recovery](deployment/DISASTER_RECOVERY.md)
 
-## Verbindliche Standards
+Der Ablauf ist für einen frischen Webseiten-Server und einen getrennten
+Backup-/Recovery-Server ausgelegt. Die Installationsanleitung enthält
+Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 
-- [Qualitätsstandards](QUALITY_STANDARDS.md) – zentraler Qualitätsvertrag und Definition of Done
-- [Architektur](ARCHITECTURE.md) – Systemgrenzen und Modulregeln
-- [Frontend- und CSS-Architektur](CSS_ARCHITECTURE.md) – Design, Responsive-Verhalten und CSS-Budgets
-- [Backup-Architektur](BACKUP_ARCHITECTURE.md) – Backup, Enrollment und Recovery Tool
-- [Tests](TESTING.md) – Testpyramide und Release-Gates
-- [Datenbank](DATABASE.md) – 3NF, Alembic, Seeds und Backups
-- [Security- und Datenschutz-Audit](SECURITY_PRIVACY_AUDIT.md) – Risiken und Administrator-Gates
-- [Dreifachprüfung Datenschutz-Compliance](PRIVACY_COMPLIANCE_AUDIT.md) – Cookies, Datenflüsse und Löschworkflow
-- [Docker- und Container-Sicherheit](CONTAINER_SECURITY.md) – Runtime-, Image- und Incident-Standard
-- [Repository-Qualitätsaudit August 2026](QUALITY_AUDIT_2026-08.md) – aktueller Erfüllungsstand
+## Architektur und Sicherheit
 
-## Entwicklung und Lieferung
+- [Architektur](architecture/ARCHITECTURE.md)
+- [Backup-Architektur](architecture/BACKUP_ARCHITECTURE.md)
+- [Container-Sicherheit und Isolation](architecture/CONTAINER_SECURITY.md)
 
-- [Lokale Entwicklung](DEVELOPMENT.md)
-- [Repository-Aufräumstandard](REPOSITORY_CLEANUP.md)
-- [Deployment und CI/CD](DEPLOYMENT.md)
-- [Go-Live-Checkliste](GO_LIVE.md)
+## Entwicklung und Qualitätsgates
 
-## Installation und Betrieb
+- [Entwicklung](development/DEVELOPMENT.md)
+- [Tests](development/TESTING.md)
+- [Datenbank und Migrationen](development/DATABASE.md)
+- [Qualitätsstandards](development/QUALITY_STANDARDS.md)
 
-- [Installation](INSTALLATION.md)
-- [Betrieb](OPERATIONS.md)
-- [Disaster Recovery](DISASTER_RECOVERY.md)
-- [Backup-Server-Enrollment](BACKUP_SERVER_ENROLLMENT.md)
-- [Backup-Kurzleitfaden](BACKUP_SETUP_QUICKSTART.md)
-- [Uptime-Kuma-2-Migration](UPTIME_KUMA_2_MIGRATION.md)
-- [Bot- und Crawler-Lastregeln](BOT_CRAWLER_POLICY.md)
+## Deployment und Betrieb
 
-## Fachliche Daten und Audits
+- [CI/CD und Deployment](deployment/DEPLOYMENT.md)
+- [Betrieb](deployment/OPERATIONS.md)
+- [Uptime-Kuma-Migration](deployment/UPTIME_KUMA_2_MIGRATION.md)
+- [Backup-Server-Enrollment (Details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
 
-- [Stammdaten-Go-Live-Review](MASTER_DATA_GO_LIVE_REVIEW.md)
-- [Schiffskatalog-Audit](SHIP_SEED_SCREENSHOT_AUDIT.md)
-- [Schiffsgeschwindigkeits-Audit](SHIP_SPEED_CONVERSION_AUDIT.md)
-- [Munitionskatalog-Audit](AMMUNITION_SEED_AUDIT.md)
-- [Upgrade-Katalog-Audit](UPGRADE_SEED_SCREENSHOT_AUDIT.md)
-- [Build-Berechnungs-Audit](BUILD_CALCULATION_AUDIT.md)
-- [Build-Option-Icons](BUILD_OPTION_ICONS.md)
-- [Kampf-DPM-Analyse](COMBAT_DPM_ANALYSIS.md)
-- [Ingame-Referenzbilder und Prüfsummen](ingame-screenshots/)
+## Audits und Reviews
 
-## Integrationen und Benachrichtigungen
+Alle Audits, Seed-Reviews und Qualitätsberichte liegen unter [audits/](audits/).
 
-- [Outbound-Webhooks](outbound-webhooks.md)
-- [Webhook-Nachrichten-Templates](webhook-templates/)
-- [Raid-Helper-Kalenderintegration](RAID_HELPER_CALENDAR.md)
+## Referenz und Integrationen
 
-## Pflege
-
-- Jedes Thema hat genau ein führendes Dokument; andere Texte verlinken darauf, statt Anweisungen zu
-  duplizieren.
-- Verhaltens-, Konfigurations- und Migrationsänderungen aktualisieren die Dokumentation im selben
-  Commit.
-- Audit-Dokumente nennen Stand, geprüften Umfang und verbleibende Grenzen. Sie werden nicht als
-  zeitlose Rechts- oder Betriebsfreigabe verstanden.
-- Relative Links müssen innerhalb des Repositorys auflösbar sein; Beispiele enthalten keine echten
-  Zugangsdaten oder personenbezogenen Daten.
+- [Referenzdokumente](reference/)
+- [Outbound-Webhooks](integrations/outbound-webhooks.md)
+- [Webhook-Templates](integrations/webhook-templates/README.md)
+- [Ingame-Screenshot-Katalog](ingame-screenshots/README.md)

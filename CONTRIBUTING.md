@@ -1,6 +1,6 @@
 # Beitragen
 
-Für alle Beiträge gelten [die Qualitätsstandards](docs/QUALITY_STANDARDS.md) und der
+Für alle Beiträge gelten [die Qualitätsstandards](docs/development/QUALITY_STANDARDS.md) und der
 [Repository-Arbeitsleitfaden](AGENTS.md).
 
 1. Kleine, fachlich abgeschlossene Änderungen bevorzugen.

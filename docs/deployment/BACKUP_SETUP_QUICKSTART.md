@@ -12,12 +12,12 @@ Recovery Tool auf dem Backup-Server installieren beziehungsweise aktualisieren:
 
 ```bash
 cd /pfad/zum/deb-verzeichnis
-sudo apt install ./rbf-recovery-tool_1.4.2_$(dpkg --print-architecture).deb
+sudo apt install ./rbf-recovery-tool_1.4.4_$(dpkg --print-architecture).deb
 rbf-recovery-tool --version
 sudo sshd -t
 ```
 
-Die installierte Version muss mindestens `1.4.2` sein. Das DEB hängt von `pkexec` ab; dadurch kann der spätere Provisionierungsbefehl als normaler Benutzer ausgeführt werden.
+Die installierte Version muss mindestens `1.4.4` sein. Das DEB hängt von `pkexec` ab; dadurch kann der spätere Provisionierungsbefehl als normaler Benutzer ausgeführt werden.
 
 ## 1. Enrollment-Anfrage in WoSB erstellen
 

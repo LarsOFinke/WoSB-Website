@@ -26,7 +26,7 @@ werden.
 
 ## 2. Architektur- und Dateiregeln
 
-Die verbindlichen Modulgrenzen beschreibt [ARCHITECTURE.md](ARCHITECTURE.md).
+Die verbindlichen Modulgrenzen beschreibt [ARCHITECTURE.md](../architecture/ARCHITECTURE.md).
 
 - Eine Datei hat eine klar benennbare Hauptverantwortung. Ihr Name muss diese ohne
   Öffnen der Datei erkennen lassen.
@@ -59,12 +59,12 @@ Automatisierte Größen-, Struktur- und Importregeln liegen in
   Schema-Check und der relevante Restore-/Downgrade-Pfad werden geprüft.
 - Eingaben werden am Systemrand validiert; SQL, Shell und Dateipfade werden nicht
   durch Stringverkettung aus unkontrollierten Werten erzeugt.
-- Backup und Recovery folgen [BACKUP_ARCHITECTURE.md](BACKUP_ARCHITECTURE.md) und
+- Backup und Recovery folgen [BACKUP_ARCHITECTURE.md](../architecture/BACKUP_ARCHITECTURE.md) und
   müssen fehlschlagende Teilzustände eindeutig, auditierbar und wiederholbar machen.
 
 ## 4. Frontend, CSS und UX
 
-[CSS_ARCHITECTURE.md](CSS_ARCHITECTURE.md) definiert Design-Tokens, Schichten,
+[CSS_ARCHITECTURE.md](../reference/CSS_ARCHITECTURE.md) definiert Design-Tokens, Schichten,
 Dateizuschnitt, Responsive-Regeln und Budgets.
 
 - Mobile, schmale und breite Ansichten werden bewusst gestaltet; Media Queries
@@ -89,8 +89,8 @@ Dateizuschnitt, Responsive-Regeln und Budgets.
   Risikosignale erklären Kriterien, vermeiden aber unnötige Rohdatenweitergabe.
 - Abhängigkeiten, Container, Header, Dateirechte und Host-Härtung sind Bestandteil
   der Release-Prüfung. Details und offene Risiken stehen in
-  [SECURITY_PRIVACY_AUDIT.md](SECURITY_PRIVACY_AUDIT.md); für Runtime, Images und
-  Container-Isolation gilt zusätzlich [CONTAINER_SECURITY.md](CONTAINER_SECURITY.md).
+  [SECURITY_PRIVACY_AUDIT.md](../audits/SECURITY_PRIVACY_AUDIT.md); für Runtime, Images und
+  Container-Isolation gilt zusätzlich [CONTAINER_SECURITY.md](../architecture/CONTAINER_SECURITY.md).
 
 ## 6. Tests und Qualitäts-Gates
 

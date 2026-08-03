@@ -2,7 +2,7 @@
 
 Diese Datei gilt für das gesamte Repository. Spezifischere Regeln in einem tiefer
 liegenden `AGENTS.md` haben für ihren Teilbaum Vorrang. Verbindliche technische
-Details stehen in [docs/QUALITY_STANDARDS.md](docs/QUALITY_STANDARDS.md) und den
+Details stehen in [docs/development/QUALITY_STANDARDS.md](docs/development/QUALITY_STANDARDS.md) und den
 dort verlinkten Architekturdokumenten.
 
 ## Arbeitsweise
@@ -46,7 +46,7 @@ dort verlinkten Architekturdokumenten.
 ## Frontend, Sicherheit und Datenschutz
 
 - Für CSS, Responsive-Verhalten, Barrierefreiheit und Design-Tokens gilt
-  [docs/CSS_ARCHITECTURE.md](docs/CSS_ARCHITECTURE.md).
+  [docs/reference/CSS_ARCHITECTURE.md](docs/reference/CSS_ARCHITECTURE.md).
 - Berechtigungen werden serverseitig erzwungen. Frontend-Guards sind nur UX.
 - Keine Secrets, Tokens, personenbezogenen Inhalte oder vollständigen IP-Adressen
   in Quellcode, Fixtures, Logs, Webhooks oder Fehlermeldungen aufnehmen.

@@ -46,7 +46,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Build notifications",
           "keepEndpoint": "Leave blank to keep the current secret Discord URL",
-          "template": "Paste a template from docs/webhook-templates/message-templates/"
+          "template": "Paste a template from docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "The Discord URL is treated like a password and is masked after saving.",
         "templateHint": "Discord supports Markdown. The available placeholders depend on the selected event.",
@@ -253,7 +253,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Build-Benachrichtigungen",
           "keepEndpoint": "Leer lassen, um die aktuelle geheime Discord-URL beizubehalten",
-          "template": "Vorlage aus docs/webhook-templates/message-templates/ einfügen"
+          "template": "Vorlage aus docs/integrations/webhook-templates/message-templates/ einfügen"
         },
         "endpointHint": "Die Discord-URL wird wie ein Passwort behandelt und nach dem Speichern maskiert.",
         "templateHint": "Discord unterstützt Markdown. Die verfügbaren Platzhalter hängen vom gewählten Event ab.",
@@ -460,7 +460,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Notifications de builds",
           "keepEndpoint": "Laisser vide pour conserver l’URL Discord secrète actuelle",
-          "template": "Coller un modèle depuis docs/webhook-templates/message-templates/"
+          "template": "Coller un modèle depuis docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "L’URL Discord est traitée comme un mot de passe et masquée après enregistrement.",
         "templateHint": "Discord prend en charge Markdown. Les variables dépendent de l’événement choisi.",
@@ -629,7 +629,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Avisos de builds",
           "keepEndpoint": "Déjalo vacío para conservar la URL secreta actual",
-          "template": "Pega una plantilla de docs/webhook-templates/message-templates/"
+          "template": "Pega una plantilla de docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "La URL de Discord se trata como una contraseña y se oculta después de guardar.",
         "templateHint": "Discord admite Markdown. Los marcadores dependen del evento elegido.",
@@ -798,7 +798,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Avisos de builds",
           "keepEndpoint": "Deixe vazio para manter o URL secreto atual",
-          "template": "Cole um modelo de docs/webhook-templates/message-templates/"
+          "template": "Cole um modelo de docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "O URL do Discord é tratado como palavra-passe e fica oculto após guardar.",
         "templateHint": "O Discord suporta Markdown. Os marcadores dependem do evento escolhido.",
@@ -967,7 +967,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · Уведомления о билдах",
           "keepEndpoint": "Оставьте пустым, чтобы сохранить текущий секретный URL",
-          "template": "Вставьте шаблон из docs/webhook-templates/message-templates/"
+          "template": "Вставьте шаблон из docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "URL Discord хранится как пароль и после сохранения маскируется.",
         "templateHint": "Discord поддерживает Markdown. Доступные поля зависят от события.",
@@ -1136,7 +1136,7 @@ export const outboundWebhookManagementMessages = {
         "placeholders": {
           "name": "RBF · 配装通知",
           "keepEndpoint": "留空以保留当前的机密 Discord 地址",
-          "template": "从 docs/webhook-templates/message-templates/ 粘贴模板"
+          "template": "从 docs/integrations/webhook-templates/message-templates/ 粘贴模板"
         },
         "endpointHint": "Discord 地址按密码处理，保存后会被隐藏。",
         "templateHint": "Discord 支持 Markdown，可用占位符取决于所选事件。",
