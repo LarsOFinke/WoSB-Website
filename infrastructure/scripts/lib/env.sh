@@ -121,7 +121,9 @@ initialize_env() {
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"
   set_env_value DATABASE_URL "postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"
-  set_env_value CORS_ORIGINS "https://${app_hostname},https://${app_ip}"
+  # Keep the canonical HTTPS origins and the local/IP fallbacks usable during
+  # first-run setup and on test hosts without working DNS yet.
+  set_env_value CORS_ORIGINS "https://${app_hostname},https://${app_ip},http://${app_hostname},http://${app_ip},http://localhost,http://127.0.0.1,https://localhost,https://127.0.0.1"
   set_env_value SEED_ADMIN_USERNAME "$admin_username"
   set_env_value SEED_ADMIN_DISPLAY_NAME "$admin_display_name"
   chmod 600 "$ENV_FILE"

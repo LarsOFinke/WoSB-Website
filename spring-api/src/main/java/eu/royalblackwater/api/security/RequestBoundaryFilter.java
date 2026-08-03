@@ -42,16 +42,18 @@ public class RequestBoundaryFilter extends OncePerRequestFilter {
 
     private boolean crossSite(HttpServletRequest request) {
         String fetchSite = request.getHeader("Sec-Fetch-Site");
-        if (fetchSite != null && "cross-site".equalsIgnoreCase(fetchSite)) return true;
         String origin = request.getHeader("Origin");
-        if (origin == null || origin.isBlank()) return false;
-        try {
-            URI parsed = URI.create(origin);
-            String normalized = parsed.getScheme() + "://" + parsed.getAuthority();
-            return !allowedOrigins.contains(normalized);
-        } catch (IllegalArgumentException exception) {
-            return true;
+        if (origin != null && !origin.isBlank()) {
+            try {
+                URI parsed = URI.create(origin);
+                String normalized = (parsed.getScheme() + "://" + parsed.getAuthority())
+                        .toLowerCase(Locale.ROOT);
+                return !allowedOrigins.contains(normalized);
+            } catch (IllegalArgumentException exception) {
+                return true;
+            }
         }
+        return fetchSite != null && "cross-site".equalsIgnoreCase(fetchSite);
     }
 
     private static Set<String> normalize(java.util.List<String> values) {

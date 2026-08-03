@@ -39,6 +39,16 @@ class RequestBoundaryFilterTest {
         assertThat(response.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void permitsConfiguredCrossSiteMutation() throws Exception {
+        var request = request("POST", "app.example");
+        request.addHeader("Origin", "https://app.example");
+        request.addHeader("Sec-Fetch-Site", "cross-site");
+        var response = new MockHttpServletResponse();
+        filter.doFilter(request, response, new MockFilterChain());
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
     private static MockHttpServletRequest request(String method, String host) {
         var request = new MockHttpServletRequest(method, "/api/auth/login");
         request.setServerName(host);
