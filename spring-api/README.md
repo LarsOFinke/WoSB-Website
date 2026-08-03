@@ -10,6 +10,7 @@ Nativ besitzt Spring aktuell:
 - `POST /api/auth/logout`
 - `POST /api/auth/change-password`
 - `GET /api/auth/me`
+- `GET /api/legal-notice`
 
 Alle `/api/**`-Routen werden durch Spring geschützt und angenommen. Nicht migrierte
 Fachrouten laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
