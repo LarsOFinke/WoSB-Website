@@ -9,6 +9,7 @@ import {
   getBackupControlStatus,
   prepareBackupUploadKey,
   restoreLocalDatabaseBackup,
+  restoreLocalFilesBackup,
   runApplicationBackup,
   scanLocalDatabaseBackups,
   testBackupConnection,
@@ -24,6 +25,7 @@ const EMPTY_STATUS = {
   connection: { configured: false, private_key_configured: false },
   artifacts: [],
   local_database_backups: [],
+  local_files_backups: [],
   local_catalog_updated_at: null,
   local_catalog_skipped_count: 0,
   request_available: false,
@@ -54,6 +56,12 @@ export function useDatabaseBackupsPage() {
     approval_token: '',
     confirmation: '',
   })
+  const filesRestoreForm = reactive({
+    backup_id: '',
+    components: [],
+    approval_token: '',
+    confirmation: '',
+  })
   let pollTimer = null
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
@@ -76,8 +84,12 @@ export function useDatabaseBackupsPage() {
   ))
   const isBootstrapAdmin = computed(() => Boolean(user.value?.is_bootstrap_admin))
   const localBackups = computed(() => status.value.local_database_backups || [])
+  const localFilesBackups = computed(() => status.value.local_files_backups || [])
   const selectedBackup = computed(() => (
     localBackups.value.find((backup) => backup.backup_id === restoreForm.backup_id) || null
+  ))
+  const selectedFilesBackup = computed(() => (
+    localFilesBackups.value.find((backup) => backup.backup_id === filesRestoreForm.backup_id) || null
   ))
   const canRestore = computed(() => (
     canSubmit.value
@@ -89,6 +101,15 @@ export function useDatabaseBackupsPage() {
     && selectedBackup.value?.encryption_keys_compatible !== false
     && APPROVAL_TOKEN_PATTERN.test(restoreForm.approval_token.trim())
     && restoreForm.confirmation === RESTORE_CONFIRMATION
+  ))
+  const canRestoreFiles = computed(() => (
+    canSubmit.value
+    && isBootstrapAdmin.value
+    && Boolean(selectedFilesBackup.value)
+    && filesRestoreForm.components.length > 0
+    && filesRestoreForm.components.every((component) => selectedFilesBackup.value.components.includes(component))
+    && APPROVAL_TOKEN_PATTERN.test(filesRestoreForm.approval_token.trim())
+    && filesRestoreForm.confirmation === 'RESTORE FILES'
   ))
   const stateLabel = computed(() => t(`admin.backups.states.${status.value.state || 'idle'}`))
   const operationLabel = computed(() => (
@@ -144,6 +165,11 @@ export function useDatabaseBackupsPage() {
         if (previousOperation === 'restore_postgresql') {
           restoreForm.approval_token = ''
           restoreForm.confirmation = ''
+        }
+        if (previousOperation === 'restore_files') {
+          filesRestoreForm.approval_token = ''
+          filesRestoreForm.confirmation = ''
+          filesRestoreForm.components = []
         }
       }
       if (status.value.state === 'failed') error.value = status.value.message
@@ -266,6 +292,21 @@ export function useDatabaseBackupsPage() {
     )
   }
 
+  async function restoreFiles() {
+    if (!canRestoreFiles.value) return
+    const filename = selectedFilesBackup.value?.filename || ''
+    if (!window.confirm(t('admin.backups.restore.filesFinalConfirm', { filename }))) return
+    await request(
+      () => restoreLocalFilesBackup({
+        backup_id: filesRestoreForm.backup_id,
+        components: filesRestoreForm.components,
+        approval_token: filesRestoreForm.approval_token.trim(),
+        confirmation: filesRestoreForm.confirmation,
+      }),
+      'admin.backups.messages.filesRestoreQueued',
+    )
+  }
+
   async function removeConfiguration() {
     if (!window.confirm(t('admin.backups.confirmDelete'))) return
     await request(deleteBackupConnection, 'admin.backups.messages.deleteQueued')
@@ -288,6 +329,7 @@ export function useDatabaseBackupsPage() {
     success,
     form,
     restoreForm,
+    filesRestoreForm,
     privateKeyVisible,
     enrollmentResponse,
     enrollmentFileName,
@@ -299,6 +341,7 @@ export function useDatabaseBackupsPage() {
     uploadKeyFingerprint,
     canSubmit,
     canRestore,
+    canRestoreFiles,
     isBootstrapAdmin,
     enrollmentRequest,
     enrollmentResponsePreview,
@@ -310,7 +353,9 @@ export function useDatabaseBackupsPage() {
     canCopyEnrollmentCommand,
     canApplyEnrollment,
     localBackups,
+    localFilesBackups,
     selectedBackup,
+    selectedFilesBackup,
     stateLabel,
     operationLabel,
     discoveredMatchesForm,
@@ -330,6 +375,7 @@ export function useDatabaseBackupsPage() {
     runBackup,
     scanLocalBackups,
     restoreDatabase,
+    restoreFiles,
     removeConfiguration,
   }
 }

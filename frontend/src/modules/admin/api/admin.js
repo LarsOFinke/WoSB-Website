@@ -311,6 +311,10 @@ export function restoreLocalDatabaseBackup(payload) {
   return post('/admin/backups/local/restore', payload)
 }
 
+export function restoreLocalFilesBackup(payload) {
+  return post('/admin/backups/local/files/restore', payload)
+}
+
 export function deleteBackupConnection() {
   return deleteRequest('/admin/backups/configuration')
 }

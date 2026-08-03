@@ -67,6 +67,19 @@ sha256sum /srv/rbf-releases/rbf-deployment-*.tar.gz
 Das Bundle enthält die fertigen Images für FastAPI, Spring Boot und Gateway sowie ein Manifest
 und SHA-256-Prüfsummen. Es enthält keine `.env`, Datenbankdaten oder privaten Backup-Schlüssel.
 
+Für einen Teil-Rollout kann der Release-Builder nur ausgewählte Komponenten
+kompilieren und paketieren:
+
+```bash
+./infrastructure/scripts/release/build-artifact.sh /srv/rbf-releases api
+./infrastructure/scripts/release/build-artifact.sh /srv/rbf-releases java,frontend
+```
+
+Auf dem Webseiten-Server wird ein solches Bundle mit `update.sh --artifact ...
+--components ...` aktiviert. Nicht enthaltene Images werden aus dem aktuell
+laufenden Stand weiterverwendet; das Repository bzw. der Release-Commit wird
+trotzdem als Update-Stand übernommen.
+
 Das Bundle ist unabhängig vom TLS-Zustand des Webseiten-Servers. Es kann während der
 Bootstrap-Phase mit einem selbstsignierten Zertifikat installiert und aktualisiert werden. Ein
 später ausgestelltes Let's-Encrypt-Zertifikat wird ausschließlich auf dem Webseiten-Server in den

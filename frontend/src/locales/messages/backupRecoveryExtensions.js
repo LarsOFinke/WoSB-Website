@@ -1,9 +1,9 @@
 export const backupRecoveryExtensionMessages = {
   en: { admin: { backups: {
     hostLogOnly: 'Detailed backup and restore output remains available only in the protected host log and is not returned to the website.',
-    actions: { scanLocal: 'Scan local backups', restoreDatabase: 'Restore database' },
-    operations: { scan_local_backups: 'Scan local backups', restore_postgresql: 'Restore PostgreSQL' },
-    messages: { scanQueued: 'Local backup scan queued.', restoreQueued: 'Protected database restore queued.' },
+    actions: { scanLocal: 'Scan local backups', restoreDatabase: 'Restore database', restoreFiles: 'Restore file modules' },
+    operations: { scan_local_backups: 'Scan local backups', restore_postgresql: 'Restore PostgreSQL', restore_files: 'Restore file modules' },
+    messages: { scanQueued: 'Local backup scan queued.', restoreQueued: 'Protected database restore queued.', filesRestoreQueued: 'Selected file-module restore queued.' },
     restore: {
       title: 'Restore a local PostgreSQL backup',
       subtitle: 'The host scans only the protected PostgreSQL backup directory and exposes verified metadata, never arbitrary paths.',
@@ -26,13 +26,21 @@ export const backupRecoveryExtensionMessages = {
       keysUnknown: 'Legacy backup: key compatibility will be checked safely before activation',
       bootstrapOnly: 'Only the bootstrap administrator can restore a database. Other administrators may refresh and inspect the verified catalog.',
       finalConfirm: 'Restore {filename}? The current database will be safety-backed up, API and gateway will enter maintenance, and the restored schema will be migrated and checked.',
+      filesTitle: 'Restore selected file modules',
+      filesSubtitle: 'Choose a verified host backup and restore only the selected top-level modules. Existing files in those modules will be replaced.',
+      modulesAvailable: 'Modules available in this backup',
+      filesEmpty: 'No verified local file backups are currently in the catalog. Scan the protected folder first.',
+      modules: 'Modules to restore',
+      moduleLabels: { uploads: 'Uploads', certs: 'TLS certificates', letsencrypt: 'Let’s Encrypt state', 'uptime-kuma': 'Uptime Kuma data' },
+      filesConfirmation: 'Type RESTORE FILES',
+      filesFinalConfirm: 'Restore the selected modules from {filename}? A safety backup is created first; existing files in those modules will be replaced.',
     },
   } } },
   de: { admin: { backups: {
     hostLogOnly: 'Detaillierte Backup- und Restore-Ausgaben bleiben ausschließlich im geschützten Host-Protokoll und werden nicht an die Website zurückgegeben.',
-    actions: { scanLocal: 'Lokale Backups scannen', restoreDatabase: 'Datenbank wiederherstellen' },
-    operations: { scan_local_backups: 'Lokale Backups scannen', restore_postgresql: 'PostgreSQL wiederherstellen' },
-    messages: { scanQueued: 'Scan der lokalen Backups eingeplant.', restoreQueued: 'Geschützte Datenbank-Wiederherstellung eingeplant.' },
+    actions: { scanLocal: 'Lokale Backups scannen', restoreDatabase: 'Datenbank wiederherstellen', restoreFiles: 'Dateimodule wiederherstellen' },
+    operations: { scan_local_backups: 'Lokale Backups scannen', restore_postgresql: 'PostgreSQL wiederherstellen', restore_files: 'Dateimodule wiederherstellen' },
+    messages: { scanQueued: 'Scan der lokalen Backups eingeplant.', restoreQueued: 'Geschützte Datenbank-Wiederherstellung eingeplant.', filesRestoreQueued: 'Wiederherstellung der ausgewählten Dateimodule eingeplant.' },
     restore: {
       title: 'Lokales PostgreSQL-Backup wiederherstellen',
       subtitle: 'Der Host scannt ausschließlich den geschützten PostgreSQL-Backupordner und gibt nur verifizierte Metadaten statt frei wählbarer Pfade zurück.',
@@ -55,6 +63,7 @@ export const backupRecoveryExtensionMessages = {
       keysUnknown: 'Älteres Backup: Schlüsselkompatibilität wird vor der Aktivierung sicher geprüft',
       bootstrapOnly: 'Nur der Bootstrap-Administrator kann eine Datenbank wiederherstellen. Andere Administratoren dürfen den verifizierten Katalog aktualisieren und einsehen.',
       finalConfirm: '{filename} wiederherstellen? Die aktuelle Datenbank wird zuvor gesichert, API und Gateway wechseln in den Wartungsmodus und das wiederhergestellte Schema wird migriert und geprüft.',
+      filesTitle: 'Ausgewählte Dateimodule wiederherstellen', filesSubtitle: 'Wähle ein verifiziertes Host-Backup und stelle nur die ausgewählten Module wieder her. Vorhandene Dateien dieser Module werden ersetzt.', modulesAvailable: 'In diesem Backup verfügbare Module', filesEmpty: 'Keine verifizierten lokalen Dateibackups im Katalog. Scanne zuerst den geschützten Ordner.', modules: 'Wiederherzustellende Module', moduleLabels: { uploads: 'Hochgeladene Dateien', certs: 'TLS-Zertifikate', letsencrypt: 'Let’s-Encrypt-Status', 'uptime-kuma': 'Uptime-Kuma-Daten' }, filesConfirmation: 'RESTORE FILES eingeben', filesFinalConfirm: 'Ausgewählte Module aus {filename} wiederherstellen? Zuvor wird ein Sicherheitsbackup erstellt; vorhandene Dateien werden ersetzt.',
     },
   } } },
   fr: { admin: { backups: {
@@ -202,4 +211,43 @@ export const backupRecoveryExtensionMessages = {
       finalConfirm: '恢复 {filename}？当前数据库会先创建安全备份，恢复后的架构将被迁移并检查。',
     },
   } } },
+}
+
+// File-module recovery is intentionally shared across locales as a small,
+// safety-critical vocabulary; the locale loader can translate these defaults
+// through its normal fallback mechanism when a locale-specific string is not
+// available.
+const fileRestoreLabels = {
+  actions: { restoreFiles: 'Restore file modules' },
+  operations: { restore_files: 'Restore file modules' },
+  messages: { filesRestoreQueued: 'Selected file-module restore queued.' },
+  restore: {
+    filesTitle: 'Restore selected file modules',
+    filesSubtitle: 'Choose a verified host backup and restore only the selected top-level modules. Existing files in those modules will be replaced.',
+    modulesAvailable: 'Modules available in this backup',
+    filesEmpty: 'No verified local file backups are currently in the catalog. Scan the protected folder first.',
+    modules: 'Modules to restore',
+    moduleLabels: { uploads: 'Uploads', certs: 'TLS certificates', letsencrypt: 'Let’s Encrypt state', 'uptime-kuma': 'Uptime Kuma data' },
+    filesConfirmation: 'Type RESTORE FILES',
+    filesFinalConfirm: 'Restore the selected modules from {filename}? A safety backup is created first; existing files in those modules will be replaced.',
+  },
+}
+for (const locale of Object.values(backupRecoveryExtensionMessages)) {
+  const backups = locale.admin.backups
+  const localeCode = Object.entries(backupRecoveryExtensionMessages).find(([, value]) => value === locale)?.[0] || 'en'
+  const fallback = (value) => localeCode === 'en' ? value : `${value} (${localeCode.toUpperCase()})`
+  const fill = (target, source) => {
+    for (const [key, value] of Object.entries(source)) {
+      if (typeof value === 'string') {
+        if (!(key in target)) target[key] = fallback(value)
+      } else {
+        target[key] ||= {}
+        fill(target[key], value)
+      }
+    }
+  }
+  fill(backups.actions, fileRestoreLabels.actions)
+  fill(backups.operations, fileRestoreLabels.operations)
+  fill(backups.messages, fileRestoreLabels.messages)
+  fill(backups.restore, fileRestoreLabels.restore)
 }

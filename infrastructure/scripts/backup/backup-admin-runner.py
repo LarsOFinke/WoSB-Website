@@ -78,6 +78,9 @@ class Runner(
             elif operation == "restore_postgresql":
                 updates = self.restore_postgresql()
                 message = "The selected PostgreSQL backup was restored and the application passed its checks."
+            elif operation == "restore_files":
+                updates = self.restore_files()
+                message = "The selected file modules were restored successfully."
             else:
                 raise RuntimeError("Unsupported backup operation.")
             self.write_status(

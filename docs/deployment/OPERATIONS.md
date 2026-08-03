@@ -24,6 +24,21 @@ Sessionabfrage, während nicht betroffene öffentliche Python-Inhalte weiter err
 
 ## Updates
 
+Ein Update kann auf einzelne Komponenten begrenzt werden. Der Repository-Stand
+wird dabei weiterhin aktualisiert; nicht ausgewählte laufende Images bleiben
+unverändert. `python`, `java` und `frontend` sind Aliase für `api`, `secure-api`
+und `gateway`:
+
+```bash
+sudo ./update.sh --components api
+sudo ./update.sh --components java,frontend
+```
+
+Die Python-API bleibt ein reproduzierbares Container-Image; Java (Spring Boot)
+und Frontend werden auf dem Release-Host kompiliert und als ausgewählte Images
+übertragen. Datenbank-Revisionsprüfung, Migration und Seed laufen nur bei einem
+Update mit `api`.
+
 Standardupdate mit automatischer Schemaerkennung:
 
 ```bash

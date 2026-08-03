@@ -16,6 +16,7 @@ from typing import Any
 
 
 _BACKUP_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,139}\.sql(?:\.gz)?$")
+_FILES_BACKUP_NAME_RE = re.compile(r"^rbf-files-[A-Za-z0-9T-]+\.tar\.gz$")
 _BACKUP_ID_RE = re.compile(r"^[a-f0-9]{64}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 _MAX_CATALOG_ENTRIES = 200
@@ -56,6 +57,28 @@ class LocalBackupRecord:
             "backup_consistency": self.backup_consistency,
             "production_consistent": self.production_consistent,
             "backup_set_verified": self.backup_set_verified,
+        }
+
+
+@dataclass(frozen=True)
+class LocalFilesBackupRecord:
+    backup_id: str
+    filename: str
+    path: Path
+    size_bytes: int
+    sha256: str
+    created_at: str
+    components: tuple[str, ...]
+
+    def public_dict(self) -> dict[str, Any]:
+        return {
+            "backup_id": self.backup_id,
+            "filename": self.filename,
+            "size_bytes": self.size_bytes,
+            "sha256": self.sha256,
+            "created_at": self.created_at,
+            "checksum_verified": True,
+            "components": list(self.components),
         }
 
 
@@ -348,6 +371,76 @@ def resolve_local_postgres_backup(infra_dir: Path, backup_id: str) -> LocalBacku
     raise LocalBackupError("The selected backup is no longer present in the verified host catalog.")
 
 
+def _files_record_for(path: Path) -> LocalFilesBackupRecord:
+    if not _FILES_BACKUP_NAME_RE.fullmatch(path.name) or path.is_symlink():
+        raise LocalBackupError("Unsupported files backup entry.")
+    checksum_path = path.with_name(f"{path.name}.sha256")
+    if checksum_path.is_symlink():
+        raise LocalBackupError("Symlinked files-backup checksum is not accepted.")
+    expected = _expected_checksum(checksum_path, path.name)
+    actual, metadata = _hash_file(path)
+    if not hmac.compare_digest(expected, actual):
+        raise LocalBackupError(f"Files backup checksum mismatch: {path.name}")
+    import tarfile
+
+    components: set[str] = set()
+    with tarfile.open(path, mode="r:gz") as archive:
+        for member in archive.getmembers():
+            parts = Path(member.name).parts
+            if (
+                not parts
+                or Path(member.name).is_absolute()
+                or ".." in parts
+                or parts[0] not in {"uploads", "certs", "letsencrypt", "uptime-kuma"}
+                or not (member.isdir() or member.isfile())
+            ):
+                raise LocalBackupError(f"Unsafe files backup entry: {member.name}")
+            components.add(parts[0])
+    identifier = hashlib.sha256(
+        f"rbf-local-files-v1\0{path.name}\0{metadata.st_size}\0{actual}".encode("utf-8")
+    ).hexdigest()
+    return LocalFilesBackupRecord(
+        backup_id=identifier,
+        filename=path.name,
+        path=path,
+        size_bytes=metadata.st_size,
+        sha256=actual,
+        created_at=datetime.fromtimestamp(metadata.st_mtime, tz=timezone.utc).isoformat(),
+        components=tuple(sorted(components)),
+    )
+
+
+def scan_local_files_backups(infra_dir: Path) -> tuple[list[LocalFilesBackupRecord], int]:
+    root = (infra_dir / "data/backups/files").resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    os.chmod(root, 0o700)
+    records: list[LocalFilesBackupRecord] = []
+    skipped = 0
+    for path in root.iterdir():
+        if path.name.endswith(".sha256") or path.name.startswith("."):
+            continue
+        try:
+            records.append(_files_record_for(path))
+        except (LocalBackupError, OSError, ValueError):
+            skipped += 1
+    records.sort(key=lambda item: (item.created_at, item.filename), reverse=True)
+    if len(records) > _MAX_CATALOG_ENTRIES:
+        skipped += len(records) - _MAX_CATALOG_ENTRIES
+        records = records[:_MAX_CATALOG_ENTRIES]
+    return records, skipped
+
+
+def resolve_local_files_backup(infra_dir: Path, backup_id: str) -> LocalFilesBackupRecord:
+    normalized = str(backup_id or "").strip().lower()
+    if not _BACKUP_ID_RE.fullmatch(normalized):
+        raise LocalBackupError("Invalid files backup selection.")
+    records, _ = scan_local_files_backups(infra_dir)
+    for record in records:
+        if hmac.compare_digest(record.backup_id, normalized):
+            return record
+    raise LocalBackupError("The selected files backup is no longer present in the verified host catalog.")
+
+
 def consume_database_restore_approval(infra_dir: Path, token_sha256: str) -> None:
     normalized_hash = str(token_sha256 or "").strip().lower()
     approval_file = infra_dir / "data/control/secrets/database-restore-approval.json"
@@ -397,4 +490,3 @@ def consume_database_restore_approval(infra_dir: Path, token_sha256: str) -> Non
         expected_hash, normalized_hash
     ):
         raise LocalBackupError("The one-time database-restore approval token was rejected.")
-

@@ -18,6 +18,7 @@ BackupOperation = Literal[
     "delete_configuration",
     "scan_local_backups",
     "restore_postgresql",
+    "restore_files",
 ]
 _HOST_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
 _USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
@@ -185,6 +186,41 @@ class DatabaseRestoreRequest(BaseModel):
         return SecretStr(normalized)
 
 
+class FilesRestoreRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    backup_id: str = Field(min_length=64, max_length=64)
+    components: list[Literal["uploads", "certs", "letsencrypt", "uptime-kuma"]] = Field(
+        min_length=1, max_length=4
+    )
+    approval_token: SecretStr
+    confirmation: Literal["RESTORE FILES"]
+
+    @field_validator("backup_id")
+    @classmethod
+    def validate_backup_id(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not _BACKUP_ID_PATTERN.fullmatch(normalized):
+            raise ValueError("Select a valid files backup from the host-generated catalog.")
+        return normalized
+
+    @field_validator("components")
+    @classmethod
+    def validate_components(cls, value: list[str]) -> list[str]:
+        normalized = sorted(set(value))
+        if len(normalized) != len(value):
+            raise ValueError("Select each file module only once.")
+        return normalized
+
+    @field_validator("approval_token")
+    @classmethod
+    def validate_approval_token(cls, value: SecretStr) -> SecretStr:
+        normalized = value.get_secret_value().strip()
+        if not _APPROVAL_TOKEN_PATTERN.fullmatch(normalized):
+            raise ValueError("Enter the one-time host approval token.")
+        return SecretStr(normalized)
+
+
 class BackupConnectionSummary(BaseModel):
     configured: bool = False
     host: str | None = None
@@ -222,6 +258,16 @@ class LocalDatabaseBackup(BaseModel):
     backup_set_verified: bool = False
 
 
+class LocalFilesBackup(BaseModel):
+    backup_id: str = Field(min_length=64, max_length=64)
+    filename: str = Field(min_length=1, max_length=160)
+    size_bytes: int = Field(ge=0)
+    sha256: str = Field(min_length=64, max_length=64)
+    created_at: str
+    checksum_verified: bool = True
+    components: list[str] = Field(default_factory=list)
+
+
 class BackupControlStatus(BaseModel):
     state: str = "idle"
     operation: str = "idle"
@@ -245,6 +291,7 @@ class BackupControlStatus(BaseModel):
     upload_key_fingerprint: str | None = None
     artifacts: list[BackupArtifact] = Field(default_factory=list)
     local_database_backups: list[LocalDatabaseBackup] = Field(default_factory=list)
+    local_files_backups: list[LocalFilesBackup] = Field(default_factory=list)
     local_catalog_updated_at: str | None = None
     local_catalog_skipped_count: int = Field(default=0, ge=0)
     request_available: bool = False

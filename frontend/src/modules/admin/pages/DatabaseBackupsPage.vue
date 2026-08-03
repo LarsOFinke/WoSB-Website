@@ -24,6 +24,7 @@ const {
   uploadKeyFingerprint,
   canSubmit,
   canRestore,
+  canRestoreFiles,
   isBootstrapAdmin,
   enrollmentRequest,
   enrollmentResponsePreview,
@@ -34,7 +35,10 @@ const {
   canCopyEnrollmentCommand,
   canApplyEnrollment,
   localBackups,
+  localFilesBackups,
   selectedBackup,
+  selectedFilesBackup,
+  filesRestoreForm,
   stateLabel,
   operationLabel,
   discoveredMatchesForm,
@@ -54,6 +58,7 @@ const {
   runBackup,
   scanLocalBackups,
   restoreDatabase,
+  restoreFiles,
   removeConfiguration,
 } = useDatabaseBackupsPage()
 </script>
@@ -541,6 +546,64 @@ const {
         <p v-else class="backup-bootstrap-only">
           {{ t('admin.backups.restore.bootstrapOnly') }}
         </p>
+      </section>
+
+      <section class="wire-section admin-panel backup-restore-panel">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>{{ t('admin.backups.restore.filesTitle') }}</h2>
+            <p>{{ t('admin.backups.restore.filesSubtitle') }}</p>
+          </div>
+        </div>
+        <div v-if="localFilesBackups.length" class="backup-local-catalog">
+          <label
+            v-for="backup in localFilesBackups"
+            :key="backup.backup_id"
+            class="backup-local-entry"
+            :class="{ 'is-selected': filesRestoreForm.backup_id === backup.backup_id }"
+          >
+            <input
+              v-model="filesRestoreForm.backup_id"
+              type="radio"
+              name="files-backup"
+              :value="backup.backup_id"
+              :disabled="!isBootstrapAdmin || inProgress"
+            />
+            <span class="backup-local-entry-main">
+              <strong>{{ backup.filename }}</strong>
+              <small>{{ formatDateTime(backup.created_at) }} · {{ formatBytes(backup.size_bytes) }}</small>
+              <small>{{ t('admin.backups.restore.modulesAvailable') }}: {{ backup.components.join(', ') }}</small>
+            </span>
+            <span class="backup-checksum backup-local-checksum">{{ backup.sha256 }}</span>
+          </label>
+        </div>
+        <p v-else class="muted">{{ t('admin.backups.restore.filesEmpty') }}</p>
+        <form v-if="isBootstrapAdmin" class="backup-restore-form" @submit.prevent="restoreFiles">
+          <fieldset class="backup-module-selection">
+            <legend>{{ t('admin.backups.restore.modules') }}</legend>
+            <label v-for="module in ['uploads', 'certs', 'letsencrypt', 'uptime-kuma']" :key="module">
+              <input
+                v-model="filesRestoreForm.components"
+                type="checkbox"
+                :value="module"
+                :disabled="!selectedFilesBackup?.components.includes(module) || inProgress"
+              />
+              <span>{{ t(`admin.backups.restore.moduleLabels.${module}`) }}</span>
+            </label>
+          </fieldset>
+          <label class="input-panel embedded-field">
+            <span>{{ t('admin.backups.restore.approvalToken') }}</span>
+            <input v-model.trim="filesRestoreForm.approval_token" type="password" minlength="24" maxlength="128" autocomplete="off" />
+          </label>
+          <label class="input-panel embedded-field">
+            <span>{{ t('admin.backups.restore.filesConfirmation') }}</span>
+            <input v-model="filesRestoreForm.confirmation" autocomplete="off" placeholder="RESTORE FILES" />
+          </label>
+          <button class="danger-action" type="submit" :disabled="!canRestoreFiles">
+            {{ inProgress ? t('admin.backups.actions.running') : t('admin.backups.actions.restoreFiles') }}
+          </button>
+        </form>
+        <p v-else class="backup-bootstrap-only">{{ t('admin.backups.restore.bootstrapOnly') }}</p>
       </section>
 
       <div class="backup-host-log-note">

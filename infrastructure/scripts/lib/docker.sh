@@ -137,6 +137,7 @@ deploy_application_update() {
   local run_migrations="${1:-false}"
   local run_seed="${2:-false}"
   local restore_seed_defaults="${3:-false}"
+  local components="${4:-api,secure-api,gateway}"
 
   ensure_env_file
 
@@ -144,8 +145,10 @@ deploy_application_update() {
     quiesce_api_for_database_update
     log "Stelle PostgreSQL für beabsichtigte Datenbankarbeiten sicher."
     ensure_postgres_service
-  else
+  elif [[ ",${components}," == *,api,* ]]; then
     log "Keine Datenbankarbeiten vorgesehen; PostgreSQL wurde bereits für die Revisionsprüfung validiert."
+  else
+    log "Keine API-Komponente ausgewählt; Datenbankdienste bleiben unangetastet."
   fi
 
   if [[ "$run_migrations" == true ]]; then
@@ -171,17 +174,23 @@ deploy_application_update() {
     log "Seed wird übersprungen."
   fi
 
-  verify_database_schema_head
-
-  log "Aktualisiere FastAPI ohne PostgreSQL-Abhängigkeiten neu zu starten."
-  bw_compose up -d --no-deps api
-  wait_for_api
-
-  log "Aktualisiere das Frontend-Gateway."
-  bw_compose up -d --no-deps gateway
+  if [[ ",${components}," == *,api,* ]]; then
+    verify_database_schema_head
+    log "Aktualisiere FastAPI ohne PostgreSQL-Abhängigkeiten neu zu starten."
+    bw_compose up -d --no-deps api
+    wait_for_api
+  fi
+  if [[ ",${components}," == *,secure-api,* ]]; then
+    log "Aktualisiere die Spring-Security-API."
+    bw_compose up -d --no-deps secure-api
+  fi
+  if [[ ",${components}," == *,gateway,* ]]; then
+    log "Aktualisiere das Frontend-Gateway."
+    bw_compose up -d --no-deps gateway
+  fi
 
   ensure_monitoring_services
-  success "API, Frontend und optionale Monitoring-Dienste wurden aktualisiert."
+  success "Ausgewählte Komponenten (${components}) und optionale Monitoring-Dienste wurden aktualisiert."
 }
 
 deploy_stack() {

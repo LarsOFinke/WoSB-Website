@@ -6,6 +6,7 @@ update_options_reset() {
   REQUESTED_AT=""
   SKIP_PULL=false
   ARTIFACT_FILE=""
+  UPDATE_COMPONENTS="api,secure-api,gateway"
   CREATE_BACKUP=true
   RUN_MIGRATIONS=false
   RUN_SEED=false
@@ -25,7 +26,7 @@ Usage: sudo ./update.sh [options]
 Der Repository-Einstiegspunkt update.sh bleibt öffentlich und delegiert an
 den Infrastruktur-Runner. Dieser Kommandozeilenvertrag bleibt stabil.
 
-Default behavior updates API and frontend, compares the database revision with
+Default behavior updates API, Spring API and frontend, compares the database revision with
 the Alembic head in the newly built API image and automatically applies pending
 migrations. PostgreSQL is never seeded unless explicitly requested.
 
@@ -40,6 +41,7 @@ Options:
   --requested-by NAME  Record the requesting operator.
   --skip-pull          Deploy the current checkout without fetching Git.
   --artifact FILE      Import pre-built, checksum-verified images from FILE; no Git pull or target build.
+  --components LIST     Update only comma-separated components: api (or python), secure-api (or java), gateway (or frontend).
   --no-backup          Skip the pre-deployment file/database backup.
   -h, --help           Show this help.
 USAGE
@@ -56,6 +58,7 @@ update_parse_options() {
       --requested-by) update_require_option_value "$1" "${2:-}"; REQUESTED_BY="$2"; shift 2 ;;
       --skip-pull) SKIP_PULL=true; shift ;;
       --artifact) update_require_option_value "$1" "${2:-}"; ARTIFACT_FILE="$2"; SKIP_PULL=true; shift 2 ;;
+      --components) update_require_option_value "$1" "${2:-}"; update_set_components "$2"; shift 2 ;;
       --no-backup) CREATE_BACKUP=false; shift ;;
       --migrate) RUN_MIGRATIONS=true; shift ;;
       --seed) RUN_MIGRATIONS=true; RUN_SEED=true; shift ;;
@@ -71,6 +74,36 @@ update_parse_options() {
     esac
   done
   update_refresh_operation
+}
+
+update_set_components() {
+  local raw="$1" normalized="" component alias
+  IFS=',' read -r -a requested <<< "$raw"
+  ((${#requested[@]} > 0)) || die "--components benötigt mindestens eine Komponente."
+  for component in "${requested[@]}"; do
+    component="${component//[[:space:]]/}"
+    case "$component" in
+      python) alias=api ;;
+      java) alias=secure-api ;;
+      frontend) alias=gateway ;;
+      api|secure-api|gateway) alias="$component" ;;
+      *) die "Unbekannte Update-Komponente: $component (erlaubt: api, secure-api, gateway)." ;;
+    esac
+    case ",${normalized}," in
+      *",${alias},"*) ;;
+      *) normalized="${normalized:+$normalized,}$alias" ;;
+    esac
+  done
+  [[ -n "$normalized" ]] || die "--components benötigt mindestens eine Komponente."
+  UPDATE_COMPONENTS="$normalized"
+}
+
+update_component_enabled() {
+  local component="$1"
+  case ",${UPDATE_COMPONENTS}," in
+    *",${component},"*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 update_refresh_operation() {

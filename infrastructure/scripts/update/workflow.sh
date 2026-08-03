@@ -76,20 +76,21 @@ update_capture_running_images() {
 }
 
 update_restore_captured_images() {
-  [[ -n "$API_IMAGE_BEFORE" && -n "$API_IMAGE_TAG_BEFORE" ]] || return 1
-  [[ -n "$SECURE_API_IMAGE_BEFORE" && -n "$SECURE_API_IMAGE_TAG_BEFORE" ]] || return 1
-  [[ -n "$GATEWAY_IMAGE_BEFORE" && -n "$GATEWAY_IMAGE_TAG_BEFORE" ]] || return 1
-  docker image inspect "$API_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
-  docker image inspect "$SECURE_API_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
-  docker image inspect "$GATEWAY_IMAGE_BEFORE" >/dev/null 2>&1 || return 1
-
-  docker image tag "$API_IMAGE_BEFORE" "$API_IMAGE_TAG_BEFORE"
-  docker image tag "$SECURE_API_IMAGE_BEFORE" "$SECURE_API_IMAGE_TAG_BEFORE"
-  docker image tag "$GATEWAY_IMAGE_BEFORE" "$GATEWAY_IMAGE_TAG_BEFORE"
-  bw_compose up -d --no-deps api
-  wait_for_api
-  bw_compose up -d --no-deps secure-api
-  bw_compose up -d --no-deps gateway
+  local component
+  for component in api secure-api gateway; do
+    update_component_enabled "$component" || continue
+    local id_var="${component^^}_IMAGE_BEFORE" tag_var="${component^^}_IMAGE_TAG_BEFORE"
+    [[ "$component" == secure-api ]] && id_var=SECURE_API_IMAGE_BEFORE && tag_var=SECURE_API_IMAGE_TAG_BEFORE
+    [[ "$component" == api ]] && id_var=API_IMAGE_BEFORE && tag_var=API_IMAGE_TAG_BEFORE
+    [[ "$component" == gateway ]] && id_var=GATEWAY_IMAGE_BEFORE && tag_var=GATEWAY_IMAGE_TAG_BEFORE
+    local image_id="${!id_var:-}" image_tag="${!tag_var:-}"
+    [[ -n "$image_id" && -n "$image_tag" ]] || return 1
+    docker image inspect "$image_id" >/dev/null 2>&1 || return 1
+    docker image tag "$image_id" "$image_tag"
+  done
+  update_component_enabled api && bw_compose up -d --no-deps api && wait_for_api
+  update_component_enabled secure-api && bw_compose up -d --no-deps secure-api
+  update_component_enabled gateway && bw_compose up -d --no-deps gateway
   ensure_monitoring_services
 }
 
@@ -178,15 +179,24 @@ update_execute_deployment() {
   ensure_monitoring_services
   update_status_write \
     running \
-    "API und Frontend werden gebaut; anschließend wird der Datenbankstand mit dem Image verglichen." \
+    "Ausgewählte Komponenten (${UPDATE_COMPONENTS}) werden gebaut bzw. importiert; der Datenbankstand wird nur bei API-Updates geprüft." \
     "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 
   if [[ -n "${ARTIFACT_FILE:-}" ]]; then
     log "Vorgebaute Deployment-Images werden verwendet; Zielserver-Build entfällt."
   else
-    bw_compose build --pull api secure-api gateway
+    local build_services=()
+    update_component_enabled api && build_services+=(api)
+    update_component_enabled secure-api && build_services+=(secure-api)
+    update_component_enabled gateway && build_services+=(gateway)
+    bw_compose build --pull "${build_services[@]}"
   fi
-  update_resolve_database_actions
+  if update_component_enabled api; then
+    update_resolve_database_actions
+  else
+    [[ "$RUN_MIGRATIONS" == false && "$RUN_SEED" == false ]] || die "--migrate/--seed erfordert die Komponente api."
+    log "Keine API-Komponente ausgewählt; Datenbank-Revisionsprüfung und Migration werden übersprungen."
+  fi
 
   update_status_write \
     running \
@@ -200,7 +210,7 @@ update_execute_deployment() {
   /usr/bin/env bash "$INFRA_DIR/scripts/deployment/install-systemd.sh"
 
   maintenance_enable update 180
-  deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED" "$RESTORE_SEED_DEFAULTS"
+  deploy_application_update "$RUN_MIGRATIONS" "$RUN_SEED" "$RESTORE_SEED_DEFAULTS" "$UPDATE_COMPONENTS"
   maintenance_disable succeeded "Server update completed successfully."
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
@@ -244,8 +254,8 @@ update_attempt_rollback() {
       else
         warn "Exakte frühere Images sind nicht verfügbar; versuche Rebuild des vorherigen Commits."
         (
-          bw_compose build api secure-api gateway \
-            && deploy_application_update false false \
+          bw_compose build $(tr ',' ' ' <<< "$UPDATE_COMPONENTS") \
+            && deploy_application_update false false false "$UPDATE_COMPONENTS" \
             && maintenance_disable failed "Server update failed; the previous revision was rebuilt and restored." \
             && /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
         )
