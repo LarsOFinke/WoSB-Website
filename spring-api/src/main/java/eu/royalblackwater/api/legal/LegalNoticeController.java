@@ -18,7 +18,7 @@ public class LegalNoticeController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<LegalNoticeContracts.PublicRead> getPublicNotice() {
-        return ResponseEntity.ok(repository.findById(1L)
+        return ResponseEntity.ok(repository.findById(1)
                 .map(LegalNoticeContracts::from)
                 .orElseGet(() -> LegalNoticeContracts.unpublished(null)));
     }

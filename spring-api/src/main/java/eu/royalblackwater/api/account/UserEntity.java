@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
     @Column(nullable = false, unique = true, length = 80)
     private String username;
     @Column(name = "password_hash", nullable = false, length = 255)
@@ -35,7 +35,7 @@ public class UserEntity {
     @JoinColumn(name = "id", referencedColumnName = "user_id", insertable = false, updatable = false)
     private UserProfileEntity profile;
 
-    public Long getId() { return id; }
+    public Integer getId() { return id; }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }

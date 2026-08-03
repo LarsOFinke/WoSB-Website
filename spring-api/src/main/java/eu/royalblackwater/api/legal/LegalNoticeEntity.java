@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "legal_notices")
 public class LegalNoticeEntity {
-    @Id private Long id;
+    @Id private Integer id;
     private boolean published;
     @Column(name = "provider_name", length = 200) private String providerName;
     @Column(name = "legal_form", length = 120) private String legalForm;

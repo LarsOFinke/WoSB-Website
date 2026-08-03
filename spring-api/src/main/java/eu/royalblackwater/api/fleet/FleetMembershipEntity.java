@@ -13,15 +13,15 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "fleet_memberships")
 public class FleetMembershipEntity {
-    @Id private Long id;
-    @Column(name = "fleet_id", nullable = false) private Long fleetId;
+    @Id private Integer id;
+    @Column(name = "fleet_id", nullable = false) private Integer fleetId;
     @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "user_id", nullable = false) private UserEntity user;
     @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "fleet_role_id", nullable = false) private FleetRoleEntity fleetRole;
     private String status;
     @Column(name = "joined_at") private LocalDateTime joinedAt;
 
-    public Long getId() { return id; }
-    public Long getFleetId() { return fleetId; }
+    public Integer getId() { return id; }
+    public Integer getFleetId() { return fleetId; }
     public LocalDateTime getJoinedAt() { return joinedAt; }
 
     public UserEntity getUser() { return user; }

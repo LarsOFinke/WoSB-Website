@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "fleets")
 public class FleetEntity {
-    @Id private Long id;
+    @Id private Integer id;
     private String name;
     private String slug;
     private String focus;
@@ -17,7 +17,7 @@ public class FleetEntity {
     @Column(name = "sort_order") private int sortOrder;
     @Column(name = "is_active") private boolean active;
 
-    public Long getId() { return id; }
+    public Integer getId() { return id; }
     public String getName() { return name; }
     public String getSlug() { return slug; }
     public String getFocus() { return focus; }

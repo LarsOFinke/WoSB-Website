@@ -35,7 +35,7 @@ public class FleetController {
                                 ? row.getUser().getUsername() : row.getUser().getProfile().getDisplayName(),
                         row.getFleetRole().getCode(), row.getFleetRole().getLabel()))
                 .toList();
-        return new FleetContracts.PublicRead(fleet.getId(), fleet.getName(), fleet.getSlug(), fleet.getFocus(),
+        return new FleetContracts.PublicRead(fleet.getId().longValue(), fleet.getName(), fleet.getSlug(), fleet.getFocus(),
                 fleet.getDescription(), fleet.getStandingOrders(),
                 memberships.countByFleetIdAndStatus(fleet.getId(), "active"), leaders);
     }

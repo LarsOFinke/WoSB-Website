@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "fleet_roles")
 public class FleetRoleEntity {
-    @Id private Long id;
+    @Id private Integer id;
     private String code;
     private String label;
     private int rank;

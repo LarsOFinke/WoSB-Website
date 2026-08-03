@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "cookie_consent_decisions")
 public class CookieConsentEntity {
-    @Id private Long id;
+    @Id private Integer id;
     @Column(name = "consent_key", nullable = false, length = 64) private String consentKey;
-    @Column(name = "user_id") private Long userId;
+    @Column(name = "user_id") private Integer userId;
     @Column(name = "policy_version", nullable = false, length = 32) private String policyVersion;
     private boolean necessary;
     private boolean preferences;
@@ -26,7 +26,7 @@ public class CookieConsentEntity {
     public boolean isExternalMedia() { return externalMedia; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public CookieConsentEntity() { }
-    public CookieConsentEntity(String consentKey, Long userId, String policyVersion, boolean preferences,
+    public CookieConsentEntity(String consentKey, Integer userId, String policyVersion, boolean preferences,
                                boolean analytics, boolean externalMedia, LocalDateTime createdAt) {
         this.consentKey = consentKey;
         this.userId = userId;

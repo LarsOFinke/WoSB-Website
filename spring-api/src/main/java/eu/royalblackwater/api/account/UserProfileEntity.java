@@ -10,7 +10,7 @@ import jakarta.persistence.Table;
 public class UserProfileEntity {
     @Id
     @Column(name = "user_id")
-    private Long userId;
+    private Integer userId;
     @Column(name = "display_name", nullable = false, length = 120)
     private String displayName;
     @Column(name = "external_fleet_name", length = 120)

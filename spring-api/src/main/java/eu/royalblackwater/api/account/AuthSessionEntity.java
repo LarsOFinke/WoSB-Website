@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class AuthSessionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
     @Column(name = "token_hash", nullable = false, unique = true, length = 128)
     private String tokenHash;
     @ManyToOne(optional = false)
@@ -33,7 +33,7 @@ public class AuthSessionEntity {
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
     }
-    public Long getId() { return id; }
+    public Integer getId() { return id; }
     public UserEntity getUser() { return user; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
 }
