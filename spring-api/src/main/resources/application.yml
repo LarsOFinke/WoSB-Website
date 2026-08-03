@@ -40,7 +40,7 @@ rbf:
     cookie-name: ${SESSION_COOKIE_NAME:rbf_hub_session}
     secure: ${SESSION_COOKIE_SECURE:true}
     same-site: ${SESSION_COOKIE_SAMESITE:Lax}
-    ttl: ${SESSION_TTL:24h}
+    ttl: ${SESSION_TTL_HOURS:24}h
   security:
     allowed-hosts: ${ALLOWED_HOSTS:localhost,127.0.0.1}
     allowed-origins: ${CORS_ORIGINS:}

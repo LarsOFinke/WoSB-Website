@@ -114,6 +114,10 @@ initialize_env() {
   [[ -n "$(read_env MONITORING_HTTPS_PORT)" ]] || set_env_value MONITORING_HTTPS_PORT 8443
   set_env_value CONTROL_REQUEST_DIR /run/rbf-control/inbox
   set_env_value CONTROL_STATUS_DIR /run/rbf-control/status
+  [[ -n "$(read_env SESSION_COOKIE_NAME)" ]] || set_env_value SESSION_COOKIE_NAME rbf_hub_session
+  [[ -n "$(read_env SESSION_COOKIE_SAMESITE)" ]] || set_env_value SESSION_COOKIE_SAMESITE Lax
+  [[ -n "$(read_env SESSION_TTL_HOURS)" ]] || set_env_value SESSION_TTL_HOURS 24
+  [[ -n "$(read_env GATEWAY_MAX_BODY_MB)" ]] || set_env_value GATEWAY_MAX_BODY_MB 90
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"
   set_env_value DATABASE_URL "postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"
@@ -181,6 +185,9 @@ validate_env() {
   fi
   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
   [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
+  [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
+  [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE ist ungültig."
+  [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
   local webhook_encryption_keys
   webhook_encryption_keys="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
   [[ -z "$webhook_encryption_keys" || "$webhook_encryption_keys" != CHANGE_ME* ]] || \

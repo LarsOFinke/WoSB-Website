@@ -18,13 +18,14 @@ class ConfigValueParser:
 
     @classmethod
     def integer(cls, section: SectionProxy, key: str) -> int:
-        raw = cls.required(section, key)
+        return cls.integer_value(cls.required(section, key), name=f"[{section.name}].{key}")
+
+    @staticmethod
+    def integer_value(value: str, *, name: str) -> int:
         try:
-            return int(raw)
+            return int(value.strip())
         except ValueError as exc:
-            raise ConfigError(
-                f"Config value [{section.name}].{key} must be an integer."
-            ) from exc
+            raise ConfigError(f"{name} must be an integer.") from exc
 
     @classmethod
     def boolean(cls, section: SectionProxy, key: str) -> bool:

@@ -16,7 +16,16 @@ class SessionSettingsReader:
 
     def read(self, *, application_environment: str) -> SessionSettings:
         section = self._config.section("session")
-        samesite = ConfigValueParser.required(section, "cookie_samesite").lower()
+        cookie_name = self._environment.get(
+            "SESSION_COOKIE_NAME",
+            required=False,
+            default=ConfigValueParser.required(section, "cookie_name"),
+        )
+        samesite = self._environment.get(
+            "SESSION_COOKIE_SAMESITE",
+            required=False,
+            default=ConfigValueParser.required(section, "cookie_samesite"),
+        ).lower()
         if samesite not in self.VALID_SAMESITE_VALUES:
             raise ConfigError("[session].cookie_samesite must be lax, strict or none.")
         secure = ConfigValueParser.parse_boolean(
@@ -25,9 +34,17 @@ class SessionSettingsReader:
         )
         if application_environment == "production" and not secure:
             raise ConfigError("SESSION_COOKIE_SECURE must be true when APP_ENV=production.")
+        ttl_hours = ConfigValueParser.integer_value(
+            self._environment.get(
+                "SESSION_TTL_HOURS",
+                required=False,
+                default=ConfigValueParser.required(section, "ttl_hours"),
+            ),
+            name="SESSION_TTL_HOURS",
+        )
         return SessionSettings(
-            cookie_name=ConfigValueParser.required(section, "cookie_name"),
+            cookie_name=cookie_name,
             cookie_secure=secure,
             cookie_samesite=samesite,
-            ttl_hours=ConfigValueParser.integer(section, "ttl_hours"),
+            ttl_hours=ttl_hours,
         )

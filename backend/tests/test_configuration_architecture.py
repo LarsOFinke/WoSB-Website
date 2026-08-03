@@ -84,6 +84,31 @@ def test_process_environment_overrides_dotenv_values(tmp_path: Path) -> None:
     assert settings.environment == "staging"
 
 
+def test_process_environment_overrides_session_cfg_values(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config"
+    env_file = tmp_path / ".env"
+    _write_config(config_dir)
+    _write_env(env_file, tmp_path)
+
+    settings = SettingsLoader(
+        ConfigurationPaths(
+            tmp_path,
+            env_file,
+            config_dir,
+        ),
+        environ={
+            "APP_ENV": "staging",
+            "SESSION_COOKIE_NAME": "fleet_session",
+            "SESSION_COOKIE_SAMESITE": "strict",
+            "SESSION_TTL_HOURS": "12",
+        },
+    ).load()
+
+    assert settings.session_cookie_name == "fleet_session"
+    assert settings.session_cookie_samesite == "strict"
+    assert settings.session_ttl_hours == 12
+
+
 def test_ini_source_rejects_toml_files(tmp_path: Path) -> None:
     path = tmp_path / "app.toml"
     path.write_text("[app]\nname='legacy'\n", encoding="utf-8")

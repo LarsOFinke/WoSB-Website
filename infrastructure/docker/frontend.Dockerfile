@@ -7,6 +7,7 @@ RUN npm ci
 COPY frontend/ ./
 ARG VITE_API_BASE_URL=/api
 ARG VITE_MONITORING_HTTPS_PORT=8443
+ARG GATEWAY_MAX_BODY_MB=90
 RUN printf 'VITE_API_BASE_URL=%s\nVITE_MONITORING_HTTPS_PORT=%s\n' "$VITE_API_BASE_URL" "$VITE_MONITORING_HTTPS_PORT" > .env \
     && npm run check:locales \
     && npm run build
@@ -16,6 +17,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
     && find /usr/share/nginx/html -type f -exec chmod 0644 {} +
 COPY infrastructure/nginx/default.conf /etc/nginx/conf.d/default.conf
+RUN sed -i "s/__RBF_GATEWAY_MAX_BODY_MB__/${GATEWAY_MAX_BODY_MB}/g" /etc/nginx/conf.d/default.conf
 COPY infrastructure/nginx/security-headers.conf /etc/nginx/snippets/rbf-security-headers.conf
 COPY infrastructure/nginx/upload-security-headers.conf /etc/nginx/snippets/rbf-upload-security-headers.conf
 EXPOSE 80 443

@@ -13,7 +13,6 @@ from app.core.config import settings
 from app.core.time import utc_now
 from app.modules.builds.models.build import Build
 
-MAX_PRINTOUT_BYTES = 12 * 1024 * 1024
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
@@ -33,6 +32,7 @@ def save_build_printout(db: Session, build: Build, upload: UploadFile) -> tuple[
     if upload.content_type != "image/png":
         raise BuildPrintoutError("Build printouts must be PNG images.")
 
+    max_bytes = settings.upload_image_limit_mb * 1024 * 1024
     target = printout_path(build.id)
     target.parent.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256()
@@ -49,8 +49,10 @@ def save_build_printout(db: Session, build: Build, upload: UploadFile) -> tuple[
                 if len(header) < 24:
                     header = (header + chunk)[:24]
                 size += len(chunk)
-                if size > MAX_PRINTOUT_BYTES:
-                    raise BuildPrintoutError("Build printout exceeds the 12 MiB limit.")
+                if size > max_bytes:
+                    raise BuildPrintoutError(
+                        f"Build printout exceeds the {settings.upload_image_limit_mb} MiB limit."
+                    )
                 digest.update(chunk)
                 handle.write(chunk)
         if len(header) < 24 or header[:8] != PNG_SIGNATURE or header[12:16] != b"IHDR":
