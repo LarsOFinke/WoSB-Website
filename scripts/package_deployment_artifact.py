@@ -90,9 +90,10 @@ def main() -> None:
             destination = staging / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(source.read_bytes())
+        checksum_paths = (Path("manifest.json"), Path("images.tar"), *RECOVERY_CONTRACT_FILES)
         checksums = "".join(
-            f"{digest(path)}  {path}\n"
-            for path in (staging / "manifest.json", image_archive, *[staging / path for path in RECOVERY_CONTRACT_FILES])
+            f"{digest(staging / path)}  {path}\n"
+            for path in checksum_paths
         )
         (staging / "SHA256SUMS").write_text(checksums, encoding="ascii")
         output = args.output_dir / f"rbf-deployment-{args.version}.tar.gz"
