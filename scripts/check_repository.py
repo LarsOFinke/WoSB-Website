@@ -230,6 +230,7 @@ require(
 )
 
 if ARGS.strict_tree:
+    source_release_dir = Path("infrastructure/scripts/release")
     for forbidden in sorted(STRICT_FORBIDDEN_DIRS):
         if STRICT_TRACKED_FILES is None:
             found = [path for path in ROOT.rglob(forbidden) if ".git" not in path.parts]
@@ -239,6 +240,10 @@ if ARGS.strict_tree:
                 relative
                 for relative in STRICT_TRACKED_FILES
                 if forbidden in relative.parts
+                and not (
+                    relative.parent == source_release_dir
+                    and relative.suffix == ".sh"
+                )
             ]
             display = found[0] if found else forbidden
         require(not found, f"generated directory in release tree: {display}")
