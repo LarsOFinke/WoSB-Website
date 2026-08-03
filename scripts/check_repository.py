@@ -195,6 +195,10 @@ required_files = {
     ".github/workflows/deploy.yml",
     ".github/workflows/security.yml",
     "scripts/security_audit.py",
+    "scripts/package_deployment_artifact.py",
+    "infrastructure/scripts/release/build-artifact.sh",
+    "infrastructure/scripts/release/transfer-artifact.sh",
+    "infrastructure/scripts/update/artifact.sh",
     "scripts/clean_repository.sh",
 }
 for relative in required_files:

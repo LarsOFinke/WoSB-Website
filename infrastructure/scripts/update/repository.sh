@@ -16,6 +16,12 @@ git_as_owner() {
 }
 
 update_repository() {
+  if [[ -n "${ARTIFACT_FILE:-}" ]]; then
+    COMMIT_BEFORE="artifact-target"
+    COMMIT_AFTER="artifact-pending"
+    log "Git-Pull und Zielserver-Build werden übersprungen; Deployment-Artefakt wird verwendet."
+    return 0
+  fi
   if [[ ! -d "$REPO_ROOT/.git" ]]; then
     warn "Kein .git-Verzeichnis gefunden; Quellcode-Update wird übersprungen. Die Datenbankrevision wird trotzdem gegen das gebaute Image geprüft."
     return 0

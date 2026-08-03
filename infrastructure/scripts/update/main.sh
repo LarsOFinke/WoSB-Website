@@ -12,6 +12,7 @@ source "$UPDATE_LIB_DIR/options.sh"
 source "$UPDATE_LIB_DIR/request.sh"
 source "$UPDATE_LIB_DIR/status.sh"
 source "$UPDATE_LIB_DIR/repository.sh"
+source "$UPDATE_LIB_DIR/artifact.sh"
 source "$UPDATE_LIB_DIR/workflow.sh"
 
 CONTROL_ROOT="$INFRA_DIR/data/control"
@@ -42,6 +43,7 @@ SCHEMA_CURRENT_HEADS=""
 SCHEMA_EXPECTED_HEADS=""
 SCHEMA_MATCHES=false
 MAINTENANCE_ACTIVE=false
+ARTIFACT_VERSION=""
 
 update_main() {
   update_options_reset
@@ -49,7 +51,7 @@ update_main() {
 
   [[ "$EUID" -eq 0 ]] || die "Server-Updates benötigen root-Rechte. Verwende sudo ./update.sh."
   require_command flock
-  require_command git
+  [[ -n "$ARTIFACT_FILE" ]] || require_command git
   require_command python3
   require_command docker
 

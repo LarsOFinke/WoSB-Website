@@ -181,7 +181,11 @@ update_execute_deployment() {
     "API und Frontend werden gebaut; anschließend wird der Datenbankstand mit dem Image verglichen." \
     "$STARTED_AT" "" "$COMMIT_BEFORE" "$COMMIT_AFTER"
 
-  bw_compose build --pull api secure-api gateway
+  if [[ -n "${ARTIFACT_FILE:-}" ]]; then
+    log "Vorgebaute Deployment-Images werden verwendet; Zielserver-Build entfällt."
+  else
+    bw_compose build --pull api secure-api gateway
+  fi
   update_resolve_database_actions
 
   update_status_write \
@@ -226,7 +230,7 @@ update_attempt_rollback() {
   warn "Versuche automatischen Rollback auf die zuvor laufenden Images."
   set +e
   local reset_code=0 rollback_code=1
-  if [[ -d "$REPO_ROOT/.git" && -n "$COMMIT_BEFORE" && -n "$COMMIT_AFTER" && "$COMMIT_BEFORE" != "$COMMIT_AFTER" ]]; then
+  if [[ -z "${ARTIFACT_FILE:-}" && -d "$REPO_ROOT/.git" && -n "$COMMIT_BEFORE" && -n "$COMMIT_AFTER" && "$COMMIT_BEFORE" != "$COMMIT_AFTER" ]]; then
     git_as_owner reset --hard "$COMMIT_BEFORE"
     reset_code=$?
   fi
@@ -317,6 +321,7 @@ update_run() {
   else
     update_capture_running_images
     update_repository
+    artifact_prepare
     # Continue with the freshly pulled deployment logic. Otherwise an older
     # host runner can build a new API image while still using stale migration,
     # backup or rollback functions from before the pull.

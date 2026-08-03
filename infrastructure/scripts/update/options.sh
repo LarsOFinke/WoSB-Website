@@ -5,6 +5,7 @@ update_options_reset() {
   REQUESTED_BY=manual
   REQUESTED_AT=""
   SKIP_PULL=false
+  ARTIFACT_FILE=""
   CREATE_BACKUP=true
   RUN_MIGRATIONS=false
   RUN_SEED=false
@@ -38,6 +39,7 @@ Options:
   --no-auto-migrate    Refuse deployment when the database is behind instead of migrating.
   --requested-by NAME  Record the requesting operator.
   --skip-pull          Deploy the current checkout without fetching Git.
+  --artifact FILE      Import pre-built, checksum-verified images from FILE; no Git pull or target build.
   --no-backup          Skip the pre-deployment file/database backup.
   -h, --help           Show this help.
 USAGE
@@ -53,6 +55,7 @@ update_parse_options() {
     case "$1" in
       --requested-by) update_require_option_value "$1" "${2:-}"; REQUESTED_BY="$2"; shift 2 ;;
       --skip-pull) SKIP_PULL=true; shift ;;
+      --artifact) update_require_option_value "$1" "${2:-}"; ARTIFACT_FILE="$2"; SKIP_PULL=true; shift 2 ;;
       --no-backup) CREATE_BACKUP=false; shift ;;
       --migrate) RUN_MIGRATIONS=true; shift ;;
       --seed) RUN_MIGRATIONS=true; RUN_SEED=true; shift ;;

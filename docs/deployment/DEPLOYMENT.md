@@ -49,3 +49,48 @@ Der Zielbenutzer benötigt nur SSH-Zugang zum Repository sowie eine eng begrenzt
 `update.sh`. Der private Schlüssel darf keinen weiteren Serverzugriff erlauben. Das Environment
 sollte eine manuelle Freigabe verlangen. Das Deployment führt auf dem Pi den vorhandenen,
 backup- und lock-geschützten Updater aus; es dupliziert keine Betriebslogik in GitHub Actions.
+# Git-freies Image-Deployment (Prototyp)
+
+Für einen minimalistischen Webseiten-Server kann der Build auf dem Backup-/Release-Host
+erfolgen. Der Host erhält anschließend nur ein geprüftes Image-Artefakt per SSH; ein Git-
+Checkout und ein lokaler Node-, Maven- oder Python-Build sind für das Update nicht nötig.
+
+## Artefakt bauen
+
+Auf dem getrennten Release-Host mit Docker:
+
+```bash
+./infrastructure/scripts/release/build-artifact.sh /srv/rbf-releases
+sha256sum /srv/rbf-releases/rbf-deployment-*.tar.gz
+```
+
+Das Bundle enthält die fertigen Images für FastAPI, Spring Boot und Gateway sowie ein Manifest
+und SHA-256-Prüfsummen. Es enthält keine `.env`, Datenbankdaten oder privaten Backup-Schlüssel.
+
+## Übertragen und aktivieren
+
+Das Artefakt wird über den bereits eingerichteten, gepinnten SSH-Zugang übertragen:
+
+```bash
+./infrastructure/scripts/release/transfer-artifact.sh \
+  /srv/rbf-releases/rbf-deployment-1.0.0.tar.gz \
+  deploy@webserver /srv/rbf-releases/incoming 22
+ssh deploy@webserver \
+  'sudo /opt/royal-blackwater-fleet/update.sh --artifact /srv/rbf-releases/incoming/rbf-deployment-1.0.0.tar.gz --migrate'
+```
+
+Der Zielserver prüft Archivpfade, Manifest und Prüfsummen, lädt die Images mit `docker load`,
+führt den bestehenden Vorab-Backup-/Migrations-/Smoke-Test-Ablauf aus und behält die zuvor
+laufenden Image-Digests für den automatischen Rollback. Die produktive `.env` bleibt ausschließlich
+auf dem Webseiten-Server.
+
+## Webhook-Status
+
+Der Artifact-Modus verwendet denselben Update-Status wie der bestehende Git-Modus. Damit werden
+die vorhandenen Outbound-Webhook-Ereignisse `system.update.started` und `system.update.result`
+auch für Image-Deployments ausgelöst. Ein eingehender Webhook ist nicht erforderlich und bleibt
+bewusst deaktiviert; der SSH-Aufruf ist die autorisierte Aktivierung.
+
+Der Prototyp validiert SHA-256-Prüfsummen. Für den produktiven Ausbau sollte zusätzlich eine
+Signatur (z. B. cosign/age detached signature) und eine getrennte Release-Berechtigung ergänzt
+werden.
