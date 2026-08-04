@@ -36,8 +36,9 @@ for a verified backup and recovery path.
   duplicated compatibility paths.
 - A source file has one nameable main responsibility. Executable Java and
   JavaScript responsibilities should be split around 300–400 lines and must stay
-  within enforced repository limits. Cohesive declarative catalogs are reviewed
-  separately but must not accumulate unrelated logic.
+  within the enforced 420-line repository limit. The locale message modules and
+  `autoLocalizationCatalog.js` are explicit declarative exceptions; they are
+  reviewed separately and must not accumulate executable or unrelated logic.
 - Generated sources and build outputs are changed through their generator, not by
   hand. Local environments, caches, runtime data and release outputs stay
   unversioned.

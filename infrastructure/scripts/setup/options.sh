@@ -24,10 +24,10 @@ setup_usage() {
 Royal Blackwater Fleet - Raspberry Pi First-Run Setup
 
 Usage:
-  sudo ./setup.sh [options]
+  sudo ./infrastructure/setup.sh [options]
 
-Der Repository-Einstiegspunkt setup.sh bleibt öffentlich und delegiert an
-infrastructure/setup.sh. Dieser Kommandozeilenvertrag bleibt stabil.
+Der öffentliche Produktions- und First-Run-Einstieg ist
+./deploy.sh --configure. Dieses Setup bleibt ein interner Quellbaum-Runner.
 
 Options:
   --profile core|full       core: app stack, full: app stack + Uptime Kuma (default)

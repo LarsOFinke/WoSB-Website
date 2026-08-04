@@ -4,7 +4,7 @@
 
 Die öffentlichen Befehle liegen im übergeordneten Repository:
 
-- `<repo>/setup.sh` delegiert an `infrastructure/setup.sh`.
+- `<repo>/deploy.sh --configure` ist der vollständige First-Run-Einstieg.
 - `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer unter `scripts/release/deploy-from-origin.sh`.
 
 Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
@@ -12,9 +12,10 @@ internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufge
 
 ## Verantwortlichkeiten
 
-### Setup
+### Internes Host-Setup
 
-- `setup.sh`: kompatibler, dünner Runner.
+- `setup.sh`: interner Runner für lokale Entwicklung und Artefaktinstallation;
+  kein öffentlicher Root-Wrapper.
 - `scripts/setup/options.sh`: CLI, Standardwerte und Eingabevalidierung.
 - `scripts/setup/workflow.sh`: Reihenfolge des First-Run-Setups.
 - `scripts/setup/main.sh`: Composition Root; verbindet Optionen, Host und Docker.

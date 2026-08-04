@@ -19,7 +19,8 @@
     "prepreview": "node scripts/check-env.mjs",
     "pretest": "npm run locales:generate",
     "test": "npm run test:unit && npm run test:build-designer && npm run check:page-bindings && npm run check:locales && npm run check:responsive",
-    "test:ci": "npm run test && npm run build",
+    "test:ci": "npm run test && npm run build && npm run test:browser",
+    "test:browser": "playwright test",
     "test:unit": "node --test tests/*.test.mjs",
     "check:page-bindings": "node scripts/check-page-bindings.mjs"
   },
@@ -30,6 +31,7 @@
     "vue-router": "^4.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/compiler-sfc": "^3.5.39",
     "vite": "^8.1.3"

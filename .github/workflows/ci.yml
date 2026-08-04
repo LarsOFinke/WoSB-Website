@@ -21,6 +21,7 @@ jobs:
         with: {python-version: '3.13'}
       - run: cp frontend/.env.example frontend/.env
       - run: cd frontend && npm ci
+      - run: cd frontend && npx playwright install --with-deps chromium
       - run: bash scripts/test.sh full
 
   release-images:

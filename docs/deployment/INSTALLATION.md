@@ -40,7 +40,10 @@ eine ausdrückliche Bestätigung für den fehlenden Backup-Punkt.
 existing database. Normal updates always create the coordinated backup before
 the release switch.
 
-For a source-based local setup, `sudo ./setup.sh --profile full` remains available, but it is not the production release path.
+Der öffentliche First-Run-Einstieg ist `./deploy.sh --configure`. Das interne
+Quellbaum-Setup unter `infrastructure/setup.sh` wird nur noch von lokalen
+Entwicklungs- und Artefaktabläufen verwendet und ist kein stabiler
+Produktionsvertrag.
 
 ## Existing database adoption
 

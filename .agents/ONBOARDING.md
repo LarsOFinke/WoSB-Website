@@ -91,7 +91,9 @@ make validate
 
 Der Scope-Helfer delegiert an bestehende Repository-Gates. Frontend-Tests nutzen
 `bash .agents/scripts/check-frontend.sh`, das eine fehlende lokale `.env` nur
-temporär aus `.env.example` erzeugt und garantiert wieder entfernt.
+temporär aus `.env.example` erzeugt und garantiert wieder entfernt. Das Gate
+enthält Chromium-Browser-Smokes; den Browser lokal einmalig mit
+`cd frontend && npx playwright install chromium` bereitstellen.
 
 ## Cache aktualisieren
 

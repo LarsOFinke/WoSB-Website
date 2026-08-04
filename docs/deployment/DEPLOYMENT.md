@@ -65,14 +65,16 @@ Beispiele:
   --bootstrap-identity-file ~/.ssh/provider-vps
 ```
 
-Für die getrennte Host-Administration kann das Setup einen eigenen
-Schlüsselzugang anlegen:
+Der vollständige First-Run-Dialog legt den getrennten Host-Administrator und
+seinen Schlüsselzugang an:
 
 ```bash
-sudo ./setup.sh \
-  --ssh-admin-username rbfadmin \
-  --ssh-admin-public-key-file /secure/operator/rbfadmin.pub
+./deploy.sh --configure
 ```
+
+Für nicht-interaktive Provider-Zugänge stehen zusätzlich `--bootstrap-user`
+und `--bootstrap-identity-file` zur Verfügung. Der interne
+`infrastructure/setup.sh`-Runner ist kein öffentlicher Deployment-Einstieg.
 
 Der Account ist vom Anwendungsadministrator getrennt, erhält keinen
 Docker-Gruppenzugriff, wird per `publickey` authentifiziert und hat keinen

@@ -33,7 +33,9 @@ Secrets nach einem Verdacht sofort rotieren: PostgreSQL, Seed-Admin,
 
 ## Secret-Rotation
 
-`setup.sh --regenerate-secrets` ist nur für eine noch nicht initialisierte Installation vorgesehen.
+`sudo ./infrastructure/setup.sh --regenerate-secrets` ist ein interner
+Quellbaum-Ablauf und nur für eine noch nicht initialisierte Installation
+vorgesehen. Der öffentliche First Run erfolgt mit `./deploy.sh --configure`.
 Bei einer bestehenden PostgreSQL-Instanz werden Datenbankrolle, `.env` und abhängige Dienste in
 einem geplanten Wartungsfenster gemeinsam rotiert; ein bloßes Überschreiben der `.env` ist verboten.
 Discord-Webhook-Schlüssel werden als kommagetrennte Key-Ring-Liste rotiert: neuen Schlüssel zuerst

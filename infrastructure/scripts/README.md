@@ -5,9 +5,11 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 
 ## Einstiegspunkte
 
-- `../../setup.sh` delegiert an `setup/` und ist der öffentliche Host-Setup-Aufruf.
+- `../../deploy.sh --configure` ist der öffentliche First-Run-Aufruf.
 - `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`.
   Beide Namen bleiben als kompatible Benutzerverträge erhalten.
+- `../setup.sh` delegiert intern an `setup/` und wird nur von lokalen
+  Entwicklungs- und Artefaktabläufen aufgerufen.
 - `release/build-artifact.sh` baut und validiert das kompilierte Deployment-Artefakt.
 - `services/boot.sh`, `services/start.sh`, `services/stop.sh` und
   `services/systemd-stop.sh` bilden den Container-Lebenszyklus.
@@ -30,7 +32,7 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 
 - Alle versionierten Shell-Skripte bestehen `bash -n`.
 - Alle versionierten Python-Skripte bestehen `python3 -m compileall`.
-- Öffentliche Wrapper (`deploy.sh`, `update.sh`, Setup-Aufruf) wurden nicht
+- Öffentliche Wrapper (`deploy.sh`, `update.sh`) wurden nicht
   zusammengelegt, weil sie bestehende Betriebsverträge darstellen.
 - Manuelle Recovery-Helfer (`merge-encryption-keyring.sh`,
   `verify-recovery.sh`) wurden nicht gelöscht: fehlende Quelltextverweise sind

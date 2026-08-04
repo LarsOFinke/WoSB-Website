@@ -29,6 +29,8 @@ Composables coordinate Vue state, lifecycle hooks, API calls and user-facing suc
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
 
+Executable JavaScript modules are capped at 420 lines by `scripts/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module.
+
 ## Global style layers
 
 The shared global cascade is loaded from `src/styles/global/index.js` as eight numerically ordered CSS files. The manifest uses JavaScript imports rather than nested CSS `@import`: an earlier `@import` split changed production extraction and caused visible drift. The import order is an architecture contract, every layer is capped at 75 KB and 3,500 lines, and total frontend source CSS remains below 400 KB. Feature-local styles stay beside their owning module. See `docs/reference/CSS_ARCHITECTURE.md`.

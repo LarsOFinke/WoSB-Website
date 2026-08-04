@@ -3,6 +3,7 @@ package eu.royalblackwater.api.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import eu.royalblackwater.api.persistence.JdbcQueryService;
+import eu.royalblackwater.api.security.PasswordHasher;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -43,6 +44,9 @@ class ApplicationIntegrationTest {
 
     @Autowired
     JdbcQueryService jdbc;
+
+    @Autowired
+    PasswordHasher passwords;
 
     @LocalServerPort
     int port;
@@ -97,10 +101,115 @@ class ApplicationIntegrationTest {
         assertThat(registration.statusCode()).isIn(202, 409);
     }
 
-    private HttpResponse<String> get(String path) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-                .GET()
-                .build();
-        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+    @Test
+    void enforcesAuthenticationAdminRoleRequestBoundaryAndCsrf() throws Exception {
+        assertThat(get("/api/admin/users").statusCode()).isEqualTo(401);
+
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        assertThat(get("/api/admin/users", administrator.sessionCookie()).statusCode()).isEqualTo(200);
+
+        String memberUsername = "integration-member";
+        String memberPassword = "Integration-Member-Password-42!";
+        createMember(memberUsername, memberPassword);
+        SessionCookies member = login(memberUsername, memberPassword);
+        assertThat(get("/api/admin/users", member.sessionCookie()).statusCode()).isEqualTo(403);
+
+        HttpResponse<String> missingCsrf = post(
+                "/api/auth/change-password",
+                "{\"current_password\":\"wrong\",\"new_password\":\"Different-Password-42!\"}",
+                member.sessionCookie(), null, localOrigin());
+        assertThat(missingCsrf.statusCode()).isEqualTo(403);
+
+        HttpResponse<String> invalidCurrentPassword = post(
+                "/api/auth/change-password",
+                "{\"current_password\":\"wrong\",\"new_password\":\"Different-Password-42!\"}",
+                member.cookieHeader(), member.csrfToken(), localOrigin());
+        assertThat(invalidCurrentPassword.statusCode()).isEqualTo(400);
+        assertThat(invalidCurrentPassword.body()).doesNotContain("Exception", "stackTrace");
+
+        HttpResponse<String> crossSiteLogin = post(
+                "/api/auth/login",
+                "{\"username\":\"admin\",\"password\":\"Integration-Test-Admin-Password-42!\"}",
+                null, null, "https://untrusted.example");
+        assertThat(crossSiteLogin.statusCode()).isEqualTo(403);
     }
+
+    @Test
+    void rejectsInvalidPublicMutationWithoutLeakingImplementationDetails() throws Exception {
+        HttpResponse<String> response = post("/api/auth/register", "{}", null, null, localOrigin());
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).doesNotContain("Exception", "stackTrace", "org.springframework");
+    }
+
+    private HttpResponse<String> get(String path) throws Exception {
+        return get(path, null);
+    }
+
+    private HttpResponse<String> get(String path, String cookie) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path)).GET();
+        if (cookie != null) request.header("Cookie", cookie);
+        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> post(String path, String body, String cookie, String csrf, String origin)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path))
+                .header("Content-Type", "application/json")
+                .header("Origin", origin)
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (cookie != null) request.header("Cookie", cookie);
+        if (csrf != null) request.header("X-XSRF-TOKEN", csrf);
+        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private SessionCookies login(String username, String password) throws Exception {
+        HttpResponse<String> login = post("/api/auth/login",
+                "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}",
+                null, null, localOrigin());
+        assertThat(login.statusCode()).isEqualTo(200);
+        String sessionCookie = cookie(login, "rbf_hub_session");
+
+        HttpResponse<String> csrfBootstrap = get("/api/auth/me", sessionCookie);
+        String csrfToken = cookieValue(csrfBootstrap, "XSRF-TOKEN");
+        return new SessionCookies(sessionCookie, csrfToken);
+    }
+
+    private void createMember(String username, String password) {
+        jdbc.update("delete from users where username=:username", Map.of("username", username));
+        long userId = jdbc.insertReturningId("""
+                insert into users(username,password_hash,site_role_id,is_active,is_bootstrap_admin,created_at,updated_at)
+                values(:username,:password,(select id from site_roles where code='user'),true,false,current_timestamp,current_timestamp)
+                returning id
+                """, Map.of("username", username, "password", passwords.hash(password)));
+        jdbc.update("""
+                insert into user_profiles(user_id,display_name,created_at,updated_at)
+                values(:userId,'Integration Member',current_timestamp,current_timestamp)
+                """, Map.of("userId", userId));
+    }
+
+    private static String cookie(HttpResponse<String> response, String name) {
+        return name + "=" + cookieValue(response, name);
+    }
+
+    private static String cookieValue(HttpResponse<String> response, String name) {
+        Pattern pattern = Pattern.compile("(?:^|;\\s*)" + Pattern.quote(name) + "=([^;]+)");
+        return response.headers().allValues("set-cookie").stream()
+                .map(pattern::matcher)
+                .filter(java.util.regex.Matcher::find)
+                .map(matcher -> matcher.group(1))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Missing cookie " + name));
+    }
+
+    private String localOrigin() {
+        return "http://localhost:" + port;
+    }
+
+    private record SessionCookies(String sessionCookie, String csrfToken) {
+        String cookieHeader() {
+            return sessionCookie + "; XSRF-TOKEN=" + csrfToken;
+        }
+    }
+
 }

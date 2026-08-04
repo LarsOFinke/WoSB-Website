@@ -75,7 +75,9 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   Lazy-Load-Abfragen auslösen. Wachsende Listen brauchen begrenzte Suche,
   Pagination und Domänenfilter; Collections gebündelt/projiziert laden.
 - MapStruct kompiliert mit `unmappedTargetPolicy=ERROR`. Java-Dateien mit
-  ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen.
+  ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen. Dieselbe
+  harte Grenze gilt für ausführbare Frontend-JavaScript-Module; ausgenommen sind
+  nur die geprüften deklarativen Locale-Module und `autoLocalizationCatalog.js`.
 - Schemaänderungen ausschließlich als neue unveränderliche Flyway-Migration.
   Bestehende Systeme behalten die unveränderte V1-Historie; neue Datenbanken
   verwenden den B2-Marker und die fachlich getrennten V3–V7-Migrationen. Neue
@@ -175,7 +177,7 @@ Agenten-Helfer für wiederkehrende Bestandsaufnahme und Prüfauswahl:
 bash .agents/scripts/project-context.sh       # kompakter, stets aktueller Projekt-/Git-Snapshot
 bash .agents/scripts/check-changes.sh         # Prüfempfehlung aus den geänderten Pfaden
 bash .agents/scripts/check-changes.sh --run   # empfohlene vorhandene Repository-Gates ausführen
-bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build mit temporärer .env
+bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build/Browser-Smoke mit temporärer .env
 ```
 
 Die Helfer enthalten keine eigene Fachprüfung. Sie lesen den aktuellen Stand und
@@ -184,7 +186,9 @@ zweite, später abweichende Qualitätslogik entsteht.
 
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
-`mvn verify`, Frontend-Tests/Build und abschließend `--strict-tree` aus. Für kleine
+`mvn verify`, Frontend-Tests/Build/Chromium-Smokes und abschließend `--strict-tree`
+aus. Playwright-Chromium wird lokal einmalig mit `npx playwright install chromium`
+im `frontend/` installiert. Für kleine
 Änderungen zuerst gezielt testen, danach die betroffenen Gates; bei
 querschnittlichen Änderungen `make validate`.
 

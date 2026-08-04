@@ -15,7 +15,8 @@ It includes:
 5. MapStruct compilation with unmapped targets as errors.
 6. Build-calculation golden cases.
 7. Query batching/N+1 invariants and list-filter tests.
-8. Vue unit, locale, binding, responsive and production-build checks.
+8. Vue unit, locale, binding, responsive, production-build and Chromium browser
+   smoke checks for navigation, accessibility and critical forms.
 9. Release artifact inventory, tamper and safe-extraction tests.
 10. Backup-set and recovery-bundle contract tests.
 11. Shell syntax, Compose, container and repository hygiene checks.
@@ -31,6 +32,10 @@ bash .agents/scripts/check-changes.sh         # show checks for the current diff
 bash .agents/scripts/check-changes.sh --run   # run those existing gates
 bash .agents/scripts/check-frontend.sh        # frontend tests/build with temporary env
 ```
+
+The frontend gate requires the Playwright Chromium runtime. Install it once with
+`npx playwright install chromium` from `frontend/`; CI installs Chromium and its
+system dependencies explicitly before running the gate.
 
 The helpers do not implement separate assertions. They delegate to `make`, the
 existing test scripts and the strict repository checker. A failed or skipped
