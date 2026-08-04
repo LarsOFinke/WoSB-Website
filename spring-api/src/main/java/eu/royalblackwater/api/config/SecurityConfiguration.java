@@ -51,7 +51,13 @@ public class SecurityConfiguration {
                     repository.setCookieCustomizer(cookie -> cookie.secure(sessionProperties.secure()).sameSite(sessionProperties.sameSite()));
                     XorCsrfTokenRequestAttributeHandler handler = new XorCsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName("_csrf");
-                    csrf.csrfTokenRepository(repository).csrfTokenRequestHandler(handler);
+                    csrf.csrfTokenRepository(repository).csrfTokenRequestHandler(handler)
+                            // These endpoints are intentionally anonymous and
+                            // are protected by validation, rate limits and the
+                            // request-boundary/origin checks instead.
+                            .ignoringRequestMatchers(
+                                    "/api/auth/login", "/api/auth/register",
+                                    "/api/privacy/cookie-consent", "/api/privacy/contact");
                 })
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .httpBasic(basic -> basic.disable())
