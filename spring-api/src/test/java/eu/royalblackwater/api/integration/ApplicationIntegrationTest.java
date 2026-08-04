@@ -75,11 +75,10 @@ class ApplicationIntegrationTest {
         assertThat(fleet.statusCode()).isIn(200, 404);
 
         HttpResponse<String> csrfBootstrap = get("/api/auth/me");
-        String xsrf = csrfBootstrap.headers().firstValue("set-cookie")
-                .flatMap(value -> Pattern.compile("(?:^|;\\s*)XSRF-TOKEN=([^;]+)").matcher(value).find()
-                        ? java.util.Optional.of(Pattern.compile("(?:^|;\\s*)XSRF-TOKEN=([^;]+)").matcher(value).replaceAll("$1"))
-                        : java.util.Optional.empty())
-                .orElseThrow();
+        String setCookie = csrfBootstrap.headers().firstValue("set-cookie").orElseThrow();
+        var xsrfMatcher = Pattern.compile("(?:^|;\\s*)XSRF-TOKEN=([^;]+)").matcher(setCookie);
+        assertThat(xsrfMatcher.find()).isTrue();
+        String xsrf = xsrfMatcher.group(1);
         HttpRequest register = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/register"))
                 .header("Content-Type", "application/json")
                 .header("Cookie", "XSRF-TOKEN=" + xsrf)
