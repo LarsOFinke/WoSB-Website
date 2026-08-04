@@ -88,11 +88,7 @@ class ApplicationIntegrationTest {
                                 + "\"display_name\":\"Integration Public Route\",\"wants_fleet_membership\":false}"))
                 .build();
         HttpResponse<String> registration = HttpClient.newHttpClient().send(register, HttpResponse.BodyHandlers.ofString());
-        // The JDK client does not model browser cookie handling/deferred CSRF
-        // token semantics exactly; Spring may route the missing/invalid token
-        // through the anonymous entry point (401). The route must not fail
-        // with a server error or a protected-resource response for valid data.
-        assertThat(registration.statusCode()).isIn(202, 401, 403, 409);
+        assertThat(registration.statusCode()).isIn(202, 409);
     }
 
     private HttpResponse<String> get(String path) throws Exception {

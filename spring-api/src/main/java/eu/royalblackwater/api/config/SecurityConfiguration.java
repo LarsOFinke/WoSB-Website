@@ -14,7 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,9 @@ public class SecurityConfiguration {
                     CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
                     repository.setCookiePath("/");
                     repository.setCookieCustomizer(cookie -> cookie.secure(sessionProperties.secure()).sameSite(sessionProperties.sameSite()));
-                    XorCsrfTokenRequestAttributeHandler handler = new XorCsrfTokenRequestAttributeHandler();
+                    // The browser SPA reads the raw token from the readable
+                    // XSRF-TOKEN cookie and echoes it in X-XSRF-TOKEN.
+                    CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName("_csrf");
                     csrf.csrfTokenRepository(repository).csrfTokenRequestHandler(handler)
                             // These endpoints are intentionally anonymous and
