@@ -67,7 +67,10 @@ fi
 artifact="$(realpath "$artifact")"; checksum="$artifact.sha256"
 [[ -f "$artifact" && -f "$checksum" ]] || { echo "[origin] Artefakt oder Prüfsumme fehlt." >&2; exit 1; }
 ssh -p "$port" "$user@$host" "mkdir -p '$remote_dir'"
-scp -P "$port" "$artifact" "$checksum" "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$user@$host:$remote_dir/"
+scp -P "$port" "$artifact" "$checksum" \
+  "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
+  "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" \
+  "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$user@$host:$remote_dir/"
 remote_command=(sudo bash "$remote_dir/setup_website.sh")
 if [[ "$automated" == true ]]; then
   remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
