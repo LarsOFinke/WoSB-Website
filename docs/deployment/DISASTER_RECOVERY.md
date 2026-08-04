@@ -27,7 +27,7 @@ On a replacement host:
 
 1. install Docker/Compose, `age`, Python 3 and PostgreSQL client utilities;
 2. restore the bundle with explicit `--yes` confirmation;
-3. install the exact release artifact into `/opt/rbf`;
+3. install the exact release artifact into `/srv/rbf`;
 4. restore persistent files;
 5. import the database into staging;
 6. start the matching Spring image against staging and require Flyway validation and readiness;

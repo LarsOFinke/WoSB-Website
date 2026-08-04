@@ -14,14 +14,20 @@ Fehlen Docker oder Compose, verwendet der Assistent automatisch den vorhandenen
 Host-Bootstrap aus `infrastructure/scripts/lib/host/packages.sh`. Mit
 `--skip-host` kann dieser Schritt bewusst deaktiviert werden.
 Wird keine Environment-Datei angegeben, erzeugt der Assistent automatisch
-`/opt/rbf/shared/.env` mit neuen Secrets und legt die einmaligen Zugangsdaten in
-`/opt/rbf/shared/first-run-credentials.txt` ab.
+`/srv/rbf/shared/.env` mit neuen Secrets und legt die einmaligen Zugangsdaten in
+`/srv/rbf/shared/first-run-credentials.txt` ab.
+
+Bei einer wirklich leeren Zielinstallation erkennt `setup_website.sh` den
+Erstinstallationsfall automatisch und setzt intern die notwendige Bestätigung.
+Sobald aktive oder nicht eindeutig verwaiste Release-Daten vorhanden sind,
+bleibt der Backup-Schutz aktiv und der Lauf bricht ohne manuelle Entscheidung
+ab.
 
 ```bash
 sudo ./setup_website.sh \
   --artifact rbf-deployment-1.0.0.tar.gz \
   --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
-  --install-root /opt/rbf \
+  --install-root /srv/rbf \
   --env /secure/rbf.env \
   --no-backup
 ```
@@ -30,11 +36,9 @@ Für einen manuellen Lauf ohne Flags kann `sudo ./setup_website.sh` verwendet
 werden. Der Dialog fragt alle Werte ab und verlangt bei einer Erstinstallation
 eine ausdrückliche Bestätigung für den fehlenden Backup-Punkt.
 
-`--no-backup` is allowed only for a genuinely new installation without an
-existing database. The current origin deployment explicitly combines it with
-`--skip-backup` after replacing the active release; this is temporary while the
-shared-backup manifest path is being repaired. Do not infer from this that a
-database backup exists for every deployment.
+`--no-backup` remains restricted to a genuinely new installation without an
+existing database. Normal updates always create the coordinated backup before
+the release switch.
 
 For a source-based local setup, `sudo ./setup.sh --profile full` remains available, but it is not the production release path.
 

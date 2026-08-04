@@ -14,7 +14,7 @@ else
   exit 1
 fi
 
-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"
+artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"
 env_source=""; no_backup=false; skip_backup=false; requested_by="cli"; interactive_mode=false
 
 usage() {
@@ -24,7 +24,7 @@ Usage: sudo install-artifact.sh --artifact FILE [options]
 
 Options:
   --checksum FILE       Outer SHA-256 file (default: FILE.sha256)
-  --install-root DIR    Versioned installation root (default: /opt/rbf)
+  --install-root DIR    Versioned installation root (default: /srv/rbf)
   --env FILE            Private environment file (required on first install)
   --no-backup           Allow first install without a pre-deployment backup
   --skip-backup         Skip the coordinated pre-deployment backup for this activation

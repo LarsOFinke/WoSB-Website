@@ -3,7 +3,7 @@ set -Eeuo pipefail
 die() { echo "[cleanup] $*" >&2; exit 1; }
 [[ "$EUID" -eq 0 ]] || die "Das Aufräumen benötigt root-Rechte."
 for command in flock python3 realpath systemctl; do command -v "$command" >/dev/null 2>&1 || die "Benötigtes Kommando fehlt: $command"; done
-install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; version=""; assume_yes=false; if_present=false; replace_active=false
+install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; version=""; assume_yes=false; if_present=false; replace_active=false
 while (($#)); do
   case "$1" in
     --version) version="${2:-}"; shift 2 ;;

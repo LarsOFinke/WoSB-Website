@@ -4,10 +4,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 usage(){ cat >&2 <<'USAGE'
 Usage: sudo restore-recovery.sh --identity AGE_KEY --bundle BUNDLE [--verify-only]
-       [--yes --replace-existing] [--install-root /opt/rbf] [--report FILE]
+       [--yes --replace-existing] [--install-root /srv/rbf] [--report FILE]
 USAGE
 exit 2; }
-identity=""; bundle=""; verify_only=false; confirmed=false; replace_existing=false; report=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"
+identity=""; bundle=""; verify_only=false; confirmed=false; replace_existing=false; report=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"
 while (($#)); do
   case "$1" in
     --identity) identity="${2:-}"; shift 2;; --bundle) bundle="${2:-}"; shift 2;;

@@ -78,7 +78,7 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 sudo ./setup_website.sh \
   --artifact rbf-deployment-1.0.0.tar.gz \
   --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
-  --install-root /opt/rbf \
+  --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
 
@@ -91,6 +91,11 @@ Updates werden durch ein neues Release-Artefakt ausgelöst:
 ```bash
 sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.1.tar.gz
 ```
+
+`/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente
+Release-, Konfigurations- und Datenstruktur liegt unter `/srv/rbf`. Eine
+bestehende Installation unter `/opt/rbf` wird beim ersten Deployment automatisch
+und fail-closed nach `/srv/rbf` migriert.
 
 Rollback, Backup und Restore wechseln Anwendung, Flyway-Schema und persistente
 Dateien kontrolliert gemeinsam. Das zum Backup gehörende Release-Artefakt wird im

@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 INFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$INFRA_DIR/scripts/lib/host/control.sh"
-INSTALL_ROOT="${RBF_INSTALL_ROOT:-/opt/rbf}"
+INSTALL_ROOT="${RBF_INSTALL_ROOT:-/srv/rbf}"
 REQUEST="$INFRA_DIR/data/control/inbox/update.request"; STATUS="$INFRA_DIR/data/control/status/update-status.json"
 RUN_DIR="$INFRA_DIR/data/control/run"; install -d -m 0700 "$RUN_DIR" "$(dirname "$STATUS")"
 artifact=""; operation=""; requested_by="cli"

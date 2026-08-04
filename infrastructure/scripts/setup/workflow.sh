@@ -19,6 +19,12 @@ migrate_legacy_runtime_names() {
 setup_prepare_host() {
   if [[ "$SKIP_HOST" == false ]]; then
     install_host_dependencies
+    if [[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" ]]; then
+      /usr/bin/env bash "$SETUP_LIB_DIR/provision-ssh-admin.sh" \
+        "$SSH_ADMIN_USERNAME" "$SSH_ADMIN_PUBLIC_KEY_FILE"
+    else
+      warn "Kein SSH-Public-Key angegeben; der getrennte SSH-Admin wird nicht eingerichtet."
+    fi
     return
   fi
 
@@ -100,6 +106,7 @@ setup_print_summary() {
  Monitoring:      entfernt (Uptime Kuma)
  TLS provider:    $(read_env CERTIFICATE_PROVIDER)
  Credentials:     $INFRA_DIR/first-run-credentials.txt
+ SSH administration: $([[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" ]] && echo "$SSH_ADMIN_USERNAME (publickey)" || echo "not configured")
 
  Für Let's Encrypt müssen DNS sowie TCP-Port 80 und 443 auf diesen Pi zeigen.
  Ohne erfolgreiche Domainvalidierung bleibt das Bootstrap-Zertifikat aktiv und

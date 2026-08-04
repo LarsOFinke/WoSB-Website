@@ -6,9 +6,9 @@ Core services are `postgres`, `api` and `gateway`. The former Uptime Kuma
 monitoring profile has been removed from the production stack.
 
 ```bash
-sudo /opt/rbf/current/infrastructure/scripts/services/status.sh
-sudo /opt/rbf/current/infrastructure/scripts/checks/doctor.sh
-sudo /opt/rbf/current/infrastructure/scripts/checks/smoke-test.sh
+sudo /srv/rbf/current/infrastructure/scripts/services/status.sh
+sudo /srv/rbf/current/infrastructure/scripts/checks/doctor.sh
+sudo /srv/rbf/current/infrastructure/scripts/checks/smoke-test.sh
 ```
 
 Spring readiness is available internally at `/actuator/health/readiness`; the public gateway exposes the application health contract.
@@ -32,14 +32,14 @@ server; that runner now fails closed. `--restart` and `--rollback` remain valid
 local recovery operations.
 
 Für lokale Wartungsaktionen auf dem Zielserver bleiben die versionierten
-Runner unter `/opt/rbf/current/infrastructure/scripts/services/` verfügbar.
+Runner unter `/srv/rbf/current/infrastructure/scripts/services/` verfügbar.
 
 The target host still exposes read-only status for operations monitoring.
 
 ## Logs
 
 ```bash
-sudo /opt/rbf/current/infrastructure/scripts/services/logs.sh
+sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh
 sudo journalctl -u rbf-hub.service -u rbf-hub-backup.service
 ```
 
@@ -55,7 +55,7 @@ Every normal origin deployment creates the coordinated backup set before the
 release switch. The backup routine can also be run manually:
 
 ```bash
-sudo /opt/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --reason scheduled
+sudo /srv/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --reason scheduled
 ```
 
 A backup is healthy only if its manifest references a passed isolated restore

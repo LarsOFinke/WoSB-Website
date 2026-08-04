@@ -15,6 +15,8 @@ setup_options_reset() {
   REQUESTED_LETSENCRYPT_STAGING=""
   ADMIN_USERNAME=admin
   ADMIN_DISPLAY_NAME="RBF Command"
+  SSH_ADMIN_USERNAME=rbfadmin
+  SSH_ADMIN_PUBLIC_KEY_FILE=""
 }
 
 setup_usage() {
@@ -34,6 +36,10 @@ Options:
   --ip ADDRESS              LAN address for certificate and startup summary
   --admin-username NAME     Initial administrator username (default: admin)
   --admin-display-name NAME Initial administrator display name
+  --ssh-admin-username NAME
+                           Host account for key-only SSH administration (default: rbfadmin)
+  --ssh-admin-public-key-file PATH
+                           OpenSSH public-key file; provisions the host account when supplied
   --tls-mode MODE           auto, letsencrypt or self-signed (default: auto)
   --letsencrypt-email MAIL  Contact email required for public certificates
   --letsencrypt-staging     Use the Let's Encrypt staging CA for testing
@@ -59,6 +65,8 @@ setup_parse_options() {
       --ip) setup_require_option_value "$1" "${2:-}"; REQUESTED_IP="$2"; shift 2 ;;
       --admin-username) setup_require_option_value "$1" "${2:-}"; ADMIN_USERNAME="$2"; shift 2 ;;
       --admin-display-name) setup_require_option_value "$1" "${2:-}"; ADMIN_DISPLAY_NAME="$2"; shift 2 ;;
+      --ssh-admin-username) setup_require_option_value "$1" "${2:-}"; SSH_ADMIN_USERNAME="$2"; shift 2 ;;
+      --ssh-admin-public-key-file) setup_require_option_value "$1" "${2:-}"; SSH_ADMIN_PUBLIC_KEY_FILE="$2"; shift 2 ;;
       --tls-mode) setup_require_option_value "$1" "${2:-}"; REQUESTED_TLS_MODE="$2"; shift 2 ;;
       --letsencrypt-email) setup_require_option_value "$1" "${2:-}"; REQUESTED_LETSENCRYPT_EMAIL="$2"; shift 2 ;;
       --letsencrypt-staging) REQUESTED_LETSENCRYPT_STAGING=true; shift ;;
@@ -76,6 +84,10 @@ setup_parse_options() {
 setup_validate_options() {
   [[ "$PROFILE" == core || "$PROFILE" == full ]] || die "--profile muss core oder full sein."
   [[ "$ADMIN_USERNAME" =~ ^[A-Za-z0-9_.-]{3,40}$ ]] || die "Ungültiger Admin-Benutzername."
+  [[ "$SSH_ADMIN_USERNAME" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || die "Ungültiger SSH-Admin-Benutzername."
+  if [[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" && "$SKIP_HOST" == true ]]; then
+    die "--ssh-admin-public-key-file benötigt Host-Provisionierung; --skip-host entfernen."
+  fi
   [[ -z "$REQUESTED_TLS_MODE" || "$REQUESTED_TLS_MODE" =~ ^(auto|letsencrypt|self-signed)$ ]] \
     || die "--tls-mode muss auto, letsencrypt oder self-signed sein."
 }

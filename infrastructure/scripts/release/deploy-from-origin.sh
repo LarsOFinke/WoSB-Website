@@ -66,9 +66,15 @@ if [[ -z "$artifact" ]]; then
 fi
 artifact="$(realpath "$artifact")"; checksum="$artifact.sha256"
 [[ -f "$artifact" && -f "$checksum" ]] || { echo "[origin] Artefakt oder Prüfsumme fehlt." >&2; exit 1; }
+cleanup_remote_stage() {
+  ssh -p "$port" "$user@$host" "rm -f -- '$remote_dir/$(basename "$artifact")' '$remote_dir/$(basename "$checksum")' '$remote_dir/setup_website.sh' '$remote_dir/migrate-install-root.sh' '$remote_dir/cleanup-failed-release.sh' '$remote_dir/verify-artifact.py'" \
+    >/dev/null 2>&1 || echo "[origin] Remote-Staging konnte nicht bereinigt werden: $remote_dir" >&2
+}
+trap cleanup_remote_stage EXIT
 ssh -p "$port" "$user@$host" "mkdir -p '$remote_dir'"
 scp -P "$port" "$artifact" "$checksum" \
   "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
+  "$ROOT_DIR/infrastructure/scripts/release/migrate-install-root.sh" \
   "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" \
   "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$user@$host:$remote_dir/"
 cleanup_command=(sudo bash "$remote_dir/cleanup-failed-release.sh" --if-present --yes)

@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; env_source=""; no_backup=false; skip_backup=false; skip_host=false
+artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; no_backup=false; skip_backup=false; skip_host=false
 usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --no-backup --skip-host]" >&2; exit 2; }
 if (($# == 0)); then
   [[ -t 0 && -t 1 ]] || { echo "[website] Ohne Flags benötigt setup_website.sh ein interaktives Terminal." >&2; exit 2; }
@@ -75,6 +75,38 @@ if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>
 fi
 command -v docker >/dev/null 2>&1 || { echo "[website] Docker konnte nicht installiert werden." >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "[website] Docker Compose v2 fehlt oder ist nicht erreichbar." >&2; exit 1; }
+legacy_install_root="/opt/rbf"
+migration_helper="$stage/bundle/payload/infrastructure/scripts/release/migrate-install-root.sh"
+if [[ ! -x "$migration_helper" && -x "$SCRIPT_DIR/migrate-install-root.sh" ]]; then
+  migration_helper="$SCRIPT_DIR/migrate-install-root.sh"
+fi
+target_had_current=false
+if [[ -e "$install_root/current" || -L "$install_root/current" ]]; then
+  target_had_current=true
+fi
+if [[ "$install_root" == "/srv/rbf" && ( -e "$legacy_install_root" || -L "$legacy_install_root" ) ]]; then
+  if [[ -e "$install_root" || -L "$install_root" ]]; then
+    echo "[website] Alte und neue Installationsroot existieren gleichzeitig: $legacy_install_root und $install_root" >&2
+    echo "[website] Automatische Migration wird aus Sicherheitsgründen abgebrochen." >&2
+    exit 1
+  fi
+  [[ -x "$migration_helper" ]] || { echo "[website] Release enthält keinen Installationsroot-Migrationshelfer." >&2; exit 1; }
+  echo "[website] Migriere die bestehende Installation automatisch von $legacy_install_root nach $install_root."
+  "$migration_helper" "$legacy_install_root" "$install_root"
+  target_had_current=true
+fi
+if [[ "$target_had_current" == false && "$no_backup" == false ]]; then
+  shopt -s nullglob
+  existing_releases=("$install_root/releases"/*)
+  shopt -u nullglob
+  if ((${#existing_releases[@]} > 0)); then
+    echo "[website] Keine aktive Installation, aber vorhandene Releases unter $install_root/releases." >&2
+    echo "[website] Automatische Erstinstallation wird aus Sicherheitsgründen abgebrochen." >&2
+    exit 1
+  fi
+  no_backup=true
+  echo "[website] Keine bestehende Installation gefunden; Erstinstallation wird ohne Pre-Deployment-Backup fortgesetzt."
+fi
 if [[ -z "$env_source" ]]; then
   env_source="$install_root/shared/.env"
   env_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-env.sh"

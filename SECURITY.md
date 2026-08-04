@@ -19,6 +19,10 @@ Version, Reproduktionsschritte, Auswirkung und einen möglichen Fix.
   Shell-Argumente ausgeführt.
 - GitHub Actions besitzen standardmäßig nur Leserechte. Produktion nutzt ein geschütztes
   `production`-Environment und einen dedizierten SSH-Schlüssel.
+- Die Host-Administration kann über einen separaten, schlüsselgebundenen
+  `rbfadmin`-Account erfolgen. Dieser Account ist von den privaten
+  Anwendungsaccounts getrennt, besitzt keinen Docker-Gruppenzugriff und
+  deaktiviert Passwort-, Agent- und Forwarding-Zugriffe konto-spezifisch.
 - Vor Migration oder Seed erstellt der Updater ein vollständiges Sicherheitsbackup.
 - Manuelle Remote-Backups verwenden einen separaten root-seitigen systemd-Runner. Die API besitzt weder Docker-Socket- noch Lesezugriff auf den privaten Backup-Schlüssel; SSH-Host-Keys werden vor jeder Verbindung strikt aus einer dedizierten `known_hosts`-Datei geprüft.
 - Lokale PostgreSQL-Restores akzeptieren keine Browserpfade oder freien Dateinamen. Der Host katalogisiert nur reguläre, SHA-256-verifizierte Dumps; ein Restore erfordert den Bootstrap-Admin, eine exakte Bestätigung und einen einmaligen per `sudo` erzeugten Host-Token. Der Klartext-Token wird nicht in der Warteschlange, API-Antwort oder im Audit-Log persistiert. Kurzlebige Restore-Freigaben werden außerdem ausdrücklich aus Recovery-Bundles ausgeschlossen.

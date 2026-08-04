@@ -99,6 +99,9 @@ deploy_stack() {
   bw_compose up -d api
   wait_for_api
   verify_flyway_schema
-  bw_compose up -d --remove-orphans gateway
+  # The API was already started, waited for, and schema-verified above. Do not
+  # let Compose reconcile its dependency again: that can recreate/terminate a
+  # healthy API container while bringing up the gateway (exit 143).
+  bw_compose up -d --no-deps --remove-orphans gateway
   success "Spring-Boot-Stack wurde gestartet."
 }

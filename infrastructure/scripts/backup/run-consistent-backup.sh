@@ -170,7 +170,7 @@ if [[ "$include_recovery" == true ]]; then
 fi
 
 set_path="$INFRA_DIR/data/backups/sets/rbf-backup-set-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
-# In a versioned installation data/ is a symlink into /opt/rbf/shared. The
+# In a versioned installation data/ is a symlink into /srv/rbf/shared. The
 # manifest root must therefore be the installation root, not the release's
 # infrastructure directory, otherwise shared backup artifacts look external.
 manifest_root="$INFRA_DIR"

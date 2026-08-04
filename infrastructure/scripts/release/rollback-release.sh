@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 die() { echo "[rollback] $*" >&2; exit 1; }
 [[ "$EUID" -eq 0 ]] || die "Release rollback requires root."
-install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"
+install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"
 [[ "$install_root" == /* && "$install_root" != / ]] || die "Install root must be a specific absolute directory."
 shared="$install_root/shared"; state="$shared/deployment-state.json"
 [[ -f "$state" && ! -L "$state" ]] || die "No deployment rollback metadata is available."

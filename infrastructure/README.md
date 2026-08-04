@@ -19,13 +19,13 @@ Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
 - `scripts/backup/`: koordinierte PostgreSQL-/Datei-/Recovery-Sicherungen.
 - `scripts/migration/`: einmaliges, fail-closed Gate für Bestandsdatenbanken.
 
-Produktionsreleases laufen unter `/opt/rbf/releases/<version>`, gemeinsam genutzte Konfiguration und Daten unter `/opt/rbf/shared`, und `/opt/rbf/current` zeigt atomar auf das aktive Release.
+Produktionsreleases laufen unter `/srv/rbf/releases/<version>`, gemeinsam genutzte Konfiguration und Daten unter `/srv/rbf/shared`, und `/srv/rbf/current` zeigt atomar auf das aktive Release.
 
 Nach einem fehlgeschlagenen Versuch kann derselbe Versionsstand erneut installiert
 werden, ohne Backups oder Diagnosen zu löschen:
 
 ```bash
-sudo /opt/rbf/current/infrastructure/scripts/release/cleanup-failed-release.sh --version 1.0.0
+sudo /srv/rbf/current/infrastructure/scripts/release/cleanup-failed-release.sh --version 1.0.0
 ```
 
 Das Skript verweigert aktive Releases sowie Zustände außerhalb von `failed` und
