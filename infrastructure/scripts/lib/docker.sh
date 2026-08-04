@@ -27,9 +27,14 @@ bw_compose_with_profiles() {
 
 wait_for_postgres() {
   for _ in $(seq 1 60); do
-    bw_compose exec -T postgres pg_isready -U "$(read_env POSTGRES_USER)" -d "$(read_env POSTGRES_DB)" >/dev/null 2>&1 && return 0
+    if bw_compose exec -T postgres pg_isready -U "$(read_env POSTGRES_USER)" -d "$(read_env POSTGRES_DB)" >/dev/null 2>&1 \
+      && bw_compose exec -T postgres psql -v ON_ERROR_STOP=1 -Atqc 'select 1' \
+        -U "$(read_env POSTGRES_USER)" -d "$(read_env POSTGRES_DB)" >/dev/null 2>&1; then
+      return 0
+    fi
     sleep 2
   done
+  bw_compose logs --tail=160 postgres >&2 || true
   die "PostgreSQL wurde nicht rechtzeitig bereit."
 }
 

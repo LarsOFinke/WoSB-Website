@@ -163,6 +163,22 @@ rollback_failed_install() {
   local code=$?
   trap - ERR
   set +e
+  failure_log="$shared/deployments/failed-${version}-$(date -u +%Y%m%dT%H%M%SZ).log"
+  {
+    echo "Royal Blackwater Fleet release activation failed"
+    echo "version=$version"
+    echo "release=$release_dir"
+    echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo
+    if [[ -d "$release_dir/infrastructure" ]]; then
+      failed_compose=(docker compose --env-file "$shared/.env" --env-file "$release_dir/infrastructure/.release.env" -f "$release_dir/infrastructure/compose.release.yml")
+      (cd "$release_dir/infrastructure" && "${failed_compose[@]}" ps -a) || true
+      (cd "$release_dir/infrastructure" && "${failed_compose[@]}" logs --tail=240 api gateway postgres) || true
+    fi
+    journalctl -u rbf-hub.service -n 240 --no-pager || true
+  } > "$failure_log" 2>&1 || true
+  chmod 0600 "$failure_log" 2>/dev/null || true
+  echo "[release] Aktivierungsdiagnose wurde gesichert: $failure_log" >&2
   if [[ "$switched" == true ]]; then
     if [[ -n "$previous_release" ]]; then
       ln -sfn "$previous_release" "$install_root/.current.rollback"
