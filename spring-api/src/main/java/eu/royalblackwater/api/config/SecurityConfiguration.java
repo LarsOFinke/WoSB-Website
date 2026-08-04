@@ -16,6 +16,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,6 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
         OperationsProperties.class, SecretEncryptionProperties.class, LegalNoticeProperties.class,
         BootstrapAdminProperties.class})
 public class SecurityConfiguration {
+    private static final Logger LOG = LoggerFactory.getLogger(SecurityConfiguration.class);
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/health", "/api/health/ready", "/actuator/health/**",
             "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/register",
@@ -78,9 +81,34 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint((request, response, exception) -> response.sendError(401))
-                        .accessDeniedHandler((request, response, exception) -> response.sendError(403)))
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            LOG.warn("security_401 method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
+                                    request.getMethod(), request.getRequestURI(),
+                                    hasHeader(request, "Origin"), hasCookie(request, "rbf_hub_session"),
+                                    hasHeader(request, "X-XSRF-TOKEN"), exception.getClass().getSimpleName());
+                            response.sendError(401);
+                        })
+                        .accessDeniedHandler((request, response, exception) -> {
+                            LOG.warn("security_403 method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
+                                    request.getMethod(), request.getRequestURI(),
+                                    hasHeader(request, "Origin"), hasCookie(request, "rbf_hub_session"),
+                                    hasHeader(request, "X-XSRF-TOKEN"), exception.getClass().getSimpleName());
+                            response.sendError(403);
+                        }))
                 .build();
+    }
+
+    private static boolean hasHeader(jakarta.servlet.http.HttpServletRequest request, String name) {
+        String value = request.getHeader(name);
+        return value != null && !value.isBlank();
+    }
+
+    private static boolean hasCookie(jakarta.servlet.http.HttpServletRequest request, String name) {
+        if (request.getCookies() == null) return false;
+        for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+            if (name.equals(cookie.getName())) return true;
+        }
+        return false;
     }
 
     @Bean
