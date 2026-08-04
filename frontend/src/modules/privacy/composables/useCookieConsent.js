@@ -32,9 +32,13 @@ function applyState(payload) {
   }
 }
 
-async function initialize() {
-  if (state.initialized) return
-  if (initializationPromise) return initializationPromise
+async function initialize({ force = false } = {}) {
+  if (state.initialized && !force) return
+  if (initializationPromise) {
+    await initializationPromise
+    if (!force) return
+    if (initializationPromise) return initializationPromise
+  }
   state.loading = true
   state.error = ''
   initializationPromise = getCookieConsent()
@@ -44,7 +48,7 @@ async function initialize() {
     })
     .catch((error) => {
       state.error = error.message || 'Unable to load cookie settings.'
-      state.initialized = true
+      state.initialized = false
     })
     .finally(() => {
       state.loading = false
@@ -83,6 +87,7 @@ function saveCustom() {
 function openSettings() {
   state.visible = true
   state.settingsOpen = true
+  return initialize({ force: true })
 }
 
 function toggleSettings() {

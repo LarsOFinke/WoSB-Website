@@ -47,21 +47,21 @@ onMounted(initialize)
             <strong>{{ t('privacy.cookies.categories.preferences.title') }}</strong>
             <small>{{ t('privacy.cookies.categories.preferences.description') }}</small>
           </span>
-          <input v-model="state.choice.preferences" type="checkbox" />
+          <input v-model="state.choice.preferences" type="checkbox" :disabled="disabled" />
         </label>
         <label class="cookie-consent__category">
           <span>
             <strong>{{ t('privacy.cookies.categories.analytics.title') }}</strong>
             <small>{{ t('privacy.cookies.categories.analytics.description') }}</small>
           </span>
-          <input v-model="state.choice.analytics" type="checkbox" />
+          <input v-model="state.choice.analytics" type="checkbox" :disabled="disabled" />
         </label>
         <label class="cookie-consent__category">
           <span>
             <strong>{{ t('privacy.cookies.categories.externalMedia.title') }}</strong>
             <small>{{ t('privacy.cookies.categories.externalMedia.description') }}</small>
           </span>
-          <input v-model="state.choice.external_media" type="checkbox" />
+          <input v-model="state.choice.external_media" type="checkbox" :disabled="disabled" />
         </label>
       </div>
 

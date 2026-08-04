@@ -142,6 +142,26 @@ class ApplicationIntegrationTest {
         assertThat(response.body()).doesNotContain("Exception", "stackTrace", "org.springframework");
     }
 
+    @Test
+    void persistsAndReloadsAnonymousCookieConsent() throws Exception {
+        HttpResponse<String> initial = get("/api/privacy/cookie-consent");
+        assertThat(initial.statusCode()).isEqualTo(200);
+        assertThat(initial.body()).contains("\"has_decision\":false");
+
+        HttpResponse<String> saved = post(
+                "/api/privacy/cookie-consent",
+                "{\"necessary\":true,\"preferences\":true,\"analytics\":false,\"external_media\":true}",
+                null, null, localOrigin());
+        assertThat(saved.statusCode()).isEqualTo(200);
+        assertThat(saved.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"external_media\":true");
+
+        HttpResponse<String> reloaded = get(
+                "/api/privacy/cookie-consent", cookie(saved, "rbf_cookie_consent"));
+        assertThat(reloaded.statusCode()).isEqualTo(200);
+        assertThat(reloaded.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"analytics\":false",
+                "\"external_media\":true");
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         return get(path, null);
     }

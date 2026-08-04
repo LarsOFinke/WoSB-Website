@@ -73,3 +73,34 @@ test('mobile navigation opens through its accessible control', async ({ page }) 
   await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
   await expect(page.locator('#workspace-sidebar')).toHaveClass(/is-open/)
 })
+
+test('cookie settings retry a failed initial load and show the saved choice', async ({ page }) => {
+  let requestCount = 0
+  await page.route(/^https?:\/\/[^/]+\/api\/privacy\/cookie-consent$/, async (route) => {
+    requestCount += 1
+    if (requestCount === 1) {
+      await route.fulfill({ status: 503, json: { detail: 'Temporarily unavailable.' } })
+      return
+    }
+    await route.fulfill({
+      json: {
+        has_decision: true,
+        policy_version: '2026-07-11',
+        necessary: true,
+        preferences: true,
+        analytics: false,
+        external_media: true,
+      },
+    })
+  })
+
+  await page.goto('/login')
+  await page.getByRole('button', { name: /Cookie settings|Cookie-Einstellungen/ }).click()
+
+  const dialog = page.getByRole('dialog', { name: /Cookie settings|Cookie-Einstellungen/ })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('checkbox').nth(1)).toBeChecked()
+  await expect(dialog.getByRole('checkbox').nth(2)).not.toBeChecked()
+  await expect(dialog.getByRole('checkbox').nth(3)).toBeChecked()
+  expect(requestCount).toBe(2)
+})

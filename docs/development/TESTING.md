@@ -45,8 +45,8 @@ output is needed for diagnosis.
 
 `ApplicationIntegrationTest` starts the complete Spring application against a
 PostgreSQL Testcontainer and exercises real HTTP behavior for public health and
-registration, sessions, administrator authorization, CSRF, origin checks and
-bounded error responses. Run it in isolation with:
+registration, anonymous cookie-consent persistence, sessions, administrator
+authorization, CSRF, origin checks and bounded error responses. Run it in isolation with:
 
 ```bash
 mvn -f spring-api/pom.xml -Dtest=ApplicationIntegrationTest test
@@ -57,8 +57,9 @@ through `maven-dependency-plugin`, so default and overridden local repositories
 use the same configuration and tests never rely on dynamic self-attachment.
 
 The Playwright suite starts Vite and replaces only `/api/` requests with
-deterministic browser fixtures. It verifies browser-side navigation and form
-contracts without weakening the Spring integration boundary. Run it with:
+deterministic browser fixtures. It verifies browser-side navigation, cookie-setting
+reloads after transient API failures and form contracts without weakening the
+Spring integration boundary. Run it with:
 
 ```bash
 cd frontend

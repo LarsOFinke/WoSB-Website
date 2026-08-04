@@ -19,7 +19,7 @@ Normal releases are still built and transferred from the trusted origin server,
 for example:
 
 ```bash
-sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.1.tar.gz
+sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.2.tar.gz
 ```
 
 The dispatcher cleans failed releases and replaces an active release with the
