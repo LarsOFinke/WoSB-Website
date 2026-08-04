@@ -14,8 +14,20 @@ Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
 
 - `compose.yml`: Source-Build für Entwicklung und Erstkonfiguration.
 - `compose.release.yml`: Produktion aus kompiliertem JAR und Frontend-`dist`.
-- `scripts/release/`: verifizierte, atomare Artifact-Installation und Rollback.
+- `scripts/release/`: verifizierte, atomare Artifact-Installation, Rollback und
+  das gezielte Aufräumen fehlgeschlagener, nicht aktiver Releases.
 - `scripts/backup/`: koordinierte PostgreSQL-/Datei-/Recovery-Sicherungen.
 - `scripts/migration/`: einmaliges, fail-closed Gate für Bestandsdatenbanken.
 
 Produktionsreleases laufen unter `/opt/rbf/releases/<version>`, gemeinsam genutzte Konfiguration und Daten unter `/opt/rbf/shared`, und `/opt/rbf/current` zeigt atomar auf das aktive Release.
+
+Nach einem fehlgeschlagenen Versuch kann derselbe Versionsstand erneut installiert
+werden, ohne Backups oder Diagnosen zu löschen:
+
+```bash
+sudo /opt/rbf/current/infrastructure/scripts/release/cleanup-failed-release.sh --version 1.0.0
+```
+
+Das Skript verweigert aktive Releases sowie Zustände außerhalb von `failed` und
+`activating`. Mit `--yes` lässt sich die Bestätigung in automatisierten Abläufen
+überspringen.

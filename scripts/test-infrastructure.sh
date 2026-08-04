@@ -38,6 +38,7 @@ done
 [[ -f "$INFRA_DIR/docker/gateway-runtime.Dockerfile" ]] || fail 'missing gateway runtime image'
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh" ]] || fail 'artifact installer is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" ]] || fail 'website setup wrapper is not executable'
+[[ -x "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" ]] || fail 'failed-release cleanup is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/services/systemd-stop.sh" ]] || fail 'systemd stop helper is not executable'
 grep -q 'ExecStop=/usr/bin/env bash @INFRA_DIR@/scripts/services/systemd-stop.sh' "$INFRA_DIR/systemd/rbf-hub.service" \
   || fail 'systemd service must preserve failed-start containers for diagnostics'
