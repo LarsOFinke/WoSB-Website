@@ -48,8 +48,7 @@ print(backup_set)
 PYHEALTH
   )" || die "Backup-Health-Status ist ungültig oder veraltet."
   [[ -f "$backup_set" ]] || die "Vom Backup-Health-Status referenziertes Set fehlt: $backup_set"
-  manifest_root="$INFRA_DIR"
-  [[ ! -d "$INFRA_DIR/../../shared" ]] || manifest_root="$(realpath "$INFRA_DIR/../..")"
+  manifest_root="$(backup_manifest_root)"
   python3 "$INFRA_DIR/scripts/backup/backup_set_manifest.py" validate --root "$manifest_root" "$backup_set" >/dev/null \
     || die "Neuestes Backup-Set ist nicht vollständig oder nicht recovery-verifiziert."
   success "Neuestes koordiniertes Backup-Set ist aktuell, vollständig und recovery-verifiziert."

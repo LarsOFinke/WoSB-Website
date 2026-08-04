@@ -2,6 +2,22 @@
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
+backup_manifest_root() {
+  local candidate="${RBF_INSTALL_ROOT:-}" runtime_data shared_data
+  [[ -n "$candidate" ]] || candidate="$(realpath -m "$INFRA_DIR/../../..")"
+  [[ "$candidate" == /* ]] || die "Backup-Installationsroot muss absolut sein: $candidate"
+  candidate="$(realpath -m "$candidate")"
+  if [[ -d "$INFRA_DIR/data" && -d "$candidate/shared/data" ]]; then
+    runtime_data="$(realpath "$INFRA_DIR/data")"
+    shared_data="$(realpath "$candidate/shared/data")"
+    if [[ "$runtime_data" == "$shared_data" ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  fi
+  printf '%s' "$INFRA_DIR"
+}
+
 backup_finalize() {
   local output="$1" category="$2"
   require_command sha256sum

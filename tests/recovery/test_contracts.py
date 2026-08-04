@@ -22,7 +22,7 @@ def test_backup_set_is_bound_to_spring_flyway_preflight(tmp_path: Path) -> None:
     assert validate_manifest(root,target)['committed'] is True
 
 def test_backup_set_accepts_shared_data_behind_a_versioned_release_symlink(tmp_path: Path) -> None:
-    root=tmp_path/'rbf'; infra=root/'releases/1.0.2/infrastructure'; shared=root/'shared/data'; shared.mkdir(parents=True); infra.mkdir(parents=True)
+    root=tmp_path/'rbf'; infra=root/'releases/1.0.3/infrastructure'; shared=root/'shared/data'; shared.mkdir(parents=True); infra.mkdir(parents=True)
     (infra/'data').symlink_to(shared, target_is_directory=True)
     files=infra/'data/backups/files/files.tar.gz'; target=infra/'data/backups/sets/set.json'
     files.parent.mkdir(parents=True); target.parent.mkdir(parents=True); files.write_bytes(b'files'); sidecar(files)

@@ -47,10 +47,15 @@ if find "$INFRA_DIR/scripts" -type f -name '*.sh' ! -perm /111 -print -quit | gr
 fi
 [[ -f "$INFRA_DIR/scripts/migration/verify-alembic-head.sql" && -f "$INFRA_DIR/scripts/migration/adopt-flyway.sql" ]] || fail 'controlled legacy schema adoption gate missing'
 
-runtime_override="$(mktemp -d)"
+runtime_root="$(mktemp -d)"
+runtime_override="$runtime_root/releases/1.0.3/infrastructure"
+mkdir -p "$runtime_override" "$runtime_root/shared/data"
+ln -s "$runtime_root/shared/data" "$runtime_override/data"
 resolved_override="$(RBF_RUNTIME_INFRA_DIR="$runtime_override" bash -c 'source "$1"; printf "%s" "$INFRA_DIR"' _ "$INFRA_DIR/scripts/lib/common.sh")"
 [[ "$resolved_override" == "$(realpath "$runtime_override")" ]] || fail 'incoming release helpers cannot bind to the active runtime infrastructure'
-rmdir "$runtime_override"
+manifest_root="$(RBF_RUNTIME_INFRA_DIR="$runtime_override" RBF_INSTALL_ROOT="$runtime_root" bash -c 'source "$1"; backup_manifest_root' _ "$INFRA_DIR/scripts/backup/common.sh")"
+[[ "$manifest_root" == "$(realpath "$runtime_root")" ]] || fail 'versioned release backup manifest root does not resolve to the installation root'
+rm -rf -- "$runtime_root"
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   temp_env="$(mktemp)"; trap 'rm -f "$temp_env"' EXIT

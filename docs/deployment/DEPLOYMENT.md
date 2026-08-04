@@ -103,8 +103,8 @@ ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.3.tar.gz \
-  --checksum rbf-deployment-1.0.3.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.4.tar.gz \
+  --checksum rbf-deployment-1.0.4.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```

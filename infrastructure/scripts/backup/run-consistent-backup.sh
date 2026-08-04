@@ -170,13 +170,9 @@ if [[ "$include_recovery" == true ]]; then
 fi
 
 set_path="$INFRA_DIR/data/backups/sets/rbf-backup-set-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
-# In a versioned installation data/ is a symlink into /srv/rbf/shared. The
-# manifest root must therefore be the installation root, not the release's
-# infrastructure directory, otherwise shared backup artifacts look external.
-manifest_root="$INFRA_DIR"
-if [[ -d "$INFRA_DIR/../../shared" ]]; then
-  manifest_root="$(realpath "$INFRA_DIR/../..")"
-fi
+# In a versioned installation data/ is a symlink into the installation's shared
+# tree. The helper verifies that relationship before widening the manifest root.
+manifest_root="$(backup_manifest_root)"
 manifest_args=(create --root "$manifest_root" --output "$set_path" --files "$files_backup" --reason "$reason")
 [[ -z "$postgres_backup" ]] || manifest_args+=(--postgres "$postgres_backup" --verification "$verification_report")
 [[ -z "$recovery_backup" ]] || manifest_args+=(--recovery "$recovery_backup")
