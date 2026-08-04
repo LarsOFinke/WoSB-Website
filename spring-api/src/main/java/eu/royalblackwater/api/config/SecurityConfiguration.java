@@ -64,8 +64,14 @@ public class SecurityConfiguration {
                         // Keep method/path matching explicit: this avoids a
                         // servlet-path matcher treating generated public
                         // routes as protected after the Spring Boot 4 move.
-                        .requestMatchers(HttpMethod.GET, "/api/fleets/public/official").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/health", "/api/health/ready", "/actuator/health/**",
+                                "/api/auth/me", "/api/legal-notice", "/api/privacy/cookie-consent",
+                                "/api/privacy/cookie-policy", "/api/fleets/public/official",
+                                "/api/files/*/content").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login", "/api/auth/logout", "/api/auth/register",
+                                "/api/privacy/cookie-consent", "/api/privacy/contact").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
