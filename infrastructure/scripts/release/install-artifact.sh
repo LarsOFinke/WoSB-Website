@@ -15,7 +15,7 @@ else
 fi
 
 artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"
-env_source=""; no_backup=false; requested_by="cli"; interactive_mode=false
+env_source=""; no_backup=false; skip_backup=false; requested_by="cli"; interactive_mode=false
 
 usage() {
   cat >&2 <<'USAGE'
@@ -27,6 +27,7 @@ Options:
   --install-root DIR    Versioned installation root (default: /opt/rbf)
   --env FILE            Private environment file (required on first install)
   --no-backup           Allow first install without a pre-deployment backup
+  --skip-backup         Skip the coordinated pre-deployment backup for this activation
   --requested-by NAME   Operator recorded in deployment metadata
 USAGE
   exit 2
@@ -64,6 +65,7 @@ while (($#)); do
     --install-root) install_root="${2:-}"; shift 2 ;;
     --env) env_source="${2:-}"; shift 2 ;;
     --no-backup) no_backup=true; shift ;;
+    --skip-backup) skip_backup=true; shift ;;
     --requested-by) requested_by="${2:-}"; shift 2 ;;
     -h|--help) usage ;;
     *) usage ;;
@@ -146,7 +148,7 @@ if [[ -z "$env_source" && ! -f "$shared/.env" ]]; then
   die "First installation requires --env FILE."
 fi
 
-if [[ -n "$previous_release" ]]; then
+if [[ -n "$previous_release" && "$skip_backup" != true ]]; then
   postgres_result="$stage/postgres.result"; files_result="$stage/files.result"; set_result="$stage/set.result"
   verification_result="$stage/verification.result"; recovery_result="$stage/recovery.result"
   RBF_INSTALL_ROOT="$install_root" "$previous_release/infrastructure/scripts/backup/run-consistent-backup.sh" \
@@ -158,6 +160,7 @@ if [[ -n "$previous_release" ]]; then
   [[ -f "$backup_postgres" && -f "$backup_files" && -s "$set_result" ]] \
     || die "Coordinated pre-deployment backup did not return all required artifacts."
 fi
+[[ "$skip_backup" != true ]] || echo "[release] Koordiniertes Pre-Deployment-Backup ist für diesen Lauf deaktiviert."
 
 rollback_failed_install() {
   local code=$?

@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; env_source=""; no_backup=false; skip_host=false
+artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; env_source=""; no_backup=false; skip_backup=false; skip_host=false
 usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --no-backup --skip-host]" >&2; exit 2; }
 if (($# == 0)); then
   [[ -t 0 && -t 1 ]] || { echo "[website] Ohne Flags benötigt setup_website.sh ein interaktives Terminal." >&2; exit 2; }
@@ -37,6 +37,7 @@ while (($#)); do
     --install-root) install_root="${2:-}"; shift 2;;
     --env) env_source="${2:-}"; shift 2;;
     --no-backup) no_backup=true; shift;;
+    --skip-backup) skip_backup=true; shift;;
     --skip-host) skip_host=true; shift;;
     -h|--help) usage;; *) usage;;
   esac
@@ -48,6 +49,7 @@ artifact="$(realpath "$artifact")"; checksum="$(realpath "${checksum:-$artifact.
   sudo_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root")
   [[ -z "$env_source" ]] || sudo_args+=(--env "$env_source")
   [[ "$no_backup" == true ]] && sudo_args+=(--no-backup)
+  [[ "$skip_backup" == true ]] && sudo_args+=(--skip-backup)
   [[ "$skip_host" == true ]] && sudo_args+=(--skip-host)
   exec sudo --preserve-env=RBF_INSTALL_ROOT bash "$0" "${sudo_args[@]}"
 }
@@ -86,6 +88,7 @@ tls_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-websit
 printf '\n[website] Verifiziert. Installation wird vorbereitet:\n  Artefakt: %s\n  Ziel:     %s\n\n' "$artifact" "$install_root"
 installer_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root" --requested-by origin)
 [[ "$no_backup" == true ]] && installer_args+=(--no-backup)
+[[ "$skip_backup" == true ]] && installer_args+=(--skip-backup)
 [[ -z "$env_source" ]] || installer_args+=(--env "$env_source")
 RBF_ARTIFACT_VERIFIER="$stage/bundle/payload/infrastructure/scripts/release/verify-artifact.py" \
   "$installer" "${installer_args[@]}"
