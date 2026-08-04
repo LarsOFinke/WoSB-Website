@@ -20,6 +20,7 @@ require_command install
 require_command sshd
 require_command visudo
 require_command mktemp
+require_command systemctl
 
 public_key="$(tr -d '\r' < "$public_key_file")"
 [[ "$public_key" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)[[:space:]]+[A-Za-z0-9+/=]+([[:space:]]+[^[:space:]]+)?$ ]] \
@@ -91,5 +92,9 @@ if ! sshd -t; then
   die "Die SSHD-Konfiguration ist ungültig; die vorherige Konfiguration wurde wiederhergestellt."
 fi
 rm -f "$previous_dropin"
+
+if ! systemctl reload ssh.service 2>/dev/null && ! systemctl reload sshd.service 2>/dev/null; then
+  die "Die geprüfte SSH-Konfiguration konnte nicht neu geladen werden."
+fi
 
 success "SSH-Administrationsnutzer eingerichtet: $username (Schlüsselzugang, kein Passwort-/Forwarding-Zugriff)."

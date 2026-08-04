@@ -49,3 +49,30 @@ damit auch ältere, bereits gebaute Artefakte fail-closed migriert werden könne
 `scripts/test-update-management.sh` prüft statisch, dass der Origin-Dispatcher
 keine Backup-Überspring- oder Active-Replacement-Flags enthält und dass Installer
 und Docker-Lifecycle die Backup-/Flyway-Schritte weiterhin aufrufen.
+
+## SSH-Dispatcher ohne Passwort-Fallback
+
+Die interaktive Passwortabfrage entstand, weil `.env.origin` den privaten
+Anwendungsaccount verwendete und der Dispatcher keine feste Identity-Datei
+übergeben hat. Der Dispatcher unterstützt jetzt `RBF_DEPLOY_IDENTITY_FILE` bzw.
+`--identity-file` und setzt für alle SSH-/SCP-Aufrufe `BatchMode=yes` sowie
+`IdentitiesOnly=yes`. Dadurch wird eine falsch eingerichtete Schlüsselstrecke
+sofort sichtbar, statt in einer unbeaufsichtigten Ausführung nach einem Passwort
+zu fragen. Nach dem einmaligen Bootstrap des dedizierten Accounts muss der
+Zugang in einer zweiten Sitzung geprüft und erst dann in `.env.origin` aktiviert
+werden.
+
+Für frisch installierte Zielsysteme übernimmt `deploy.sh` diesen Übergang nun im
+selben Lauf: Schlägt der Key-only-Preflight fehl, kann ein vorhandener
+Initialbenutzer interaktiv oder per `--bootstrap-user` angegeben werden. Über
+diese Verbindung werden ausschließlich der SSH-Provisioner und der Public Key
+gestaged. Nach Einrichtung und SSH-Reload muss der neue `rbfadmin`-Preflight samt
+`sudo -n` erfolgreich sein, bevor Build oder Release-Installation beginnen. Der
+Initialbenutzer wird nicht in der Ursprungskonfiguration persistiert.
+
+Der Bootstrap setzt keinen Passwort-Login voraus. Ohne explizite Bootstrap-
+Identity übernimmt OpenSSH die Auswahl aus SSH-Konfiguration, Agent und
+Standard-Keys und nutzt ein Passwort nur, wenn der Server dies erlaubt. Mit
+`--bootstrap-identity-file` wird der angegebene VPS-Key exklusiv und im
+Batch-Modus verwendet. Für initiale Root-Zugänge wird der Provisioner direkt,
+für andere Accounts über `sudo` gestartet.
