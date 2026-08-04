@@ -32,18 +32,17 @@ sudo ./setup_website.sh \
 ```
 
 Der Ursprungs-Dispatcher führt vor der Übertragung automatisch einen Cleanup-Lauf
-für fehlgeschlagene oder bewusst zu ersetzende Releases aus. Dadurch darf beim
-Deploy derselben Versionsnummer der bisher aktive Release entfernt und sauber
-neu installiert werden; `/opt/rbf/shared` mit Environment, Daten und Diagnosen
-bleibt erhalten.
+nur für fehlgeschlagene oder unvollständige Releases aus. Der aktive Release wird
+niemals vor dem Backup entfernt; ein erneuter Deploy derselben bereits aktiven
+Versionsnummer wird daher sicher abgelehnt. `/opt/rbf/shared` mit Environment,
+Daten und Diagnosen bleibt erhalten.
 
 Der Installer:
 
 1. verifies outer checksum, safe archive paths and complete inventory;
 2. acquires the release lock;
-3. uses the current transition policy: coordinated application backups are
-   currently skipped by the origin dispatcher; the backup scripts remain
-   available for a separately planned recovery rollout;
+3. creates a coordinated PostgreSQL/file/recovery backup set from the active
+   release before any release switch; activation stops if that backup fails;
 4. installs `/opt/rbf/releases/<version>`;
 5. builds only the small API and gateway runtime images from the JAR and `dist`;
 6. switches `/opt/rbf/current` atomically;
@@ -54,11 +53,13 @@ Der Installer:
 
 No Git checkout, Maven, npm or package-registry access is needed on the target host.
 
-The origin dispatcher passes `--skip-backup --no-backup` deliberately during this
-transition. `--no-backup` is safe there because the cleanup step has already
-removed the active release while preserving shared state. Direct target-side
-artifact activation is not supported; use `./deploy.sh` for a new transfer and
-`./update.sh` for every subsequent release.
+The origin dispatcher does not pass `--skip-backup` or `--no-backup` for normal
+updates. The target installer therefore invokes the coordinated backup before
+the atomic release switch. `--no-backup` remains restricted to a genuinely new
+installation; `--skip-backup` is an explicit emergency/operator override and is
+not part of the origin update path. Direct target-side artifact activation is
+not supported; use `./deploy.sh` for a new transfer and `./update.sh` for every
+subsequent release.
 
 ## Promotion
 
@@ -70,6 +71,5 @@ Build each release once. Promote the same checksummed artifact from CI to stagin
 sudo /opt/rbf/current/infrastructure/scripts/release/rollback-release.sh
 ```
 
-Rollback restores the previous application release. Database restore remains a
-separate, explicitly supervised operation until the coordinated backup manifest
-path is re-enabled.
+Rollback restores the previous application release; the coordinated backup
+artifacts remain available for the explicit database/file restore path.

@@ -27,4 +27,8 @@ if m.digest(Path(sys.argv[1])/entry['path']) == entry['sha256']: raise SystemExi
 PY
 for operation in update restart rollback; do grep -q "${operation}" "$ROOT_DIR/infrastructure/scripts/services/update.sh" || exit 1; done
 ! grep -q 'update_migrate' "$ROOT_DIR/frontend/src/modules/admin/components/SystemOperationsPanel.vue"
+! grep -q -- '--skip-backup --no-backup' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+! grep -q -- '--replace-active' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'run-consistent-backup.sh' "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh"
+grep -q 'prepare_flyway_cutover' "$ROOT_DIR/infrastructure/scripts/lib/docker.sh"
 printf '[updates] OK: compiled artifact inventory, tamper detection and operation contract\n'

@@ -51,13 +51,13 @@ Flyway runs during API startup before readiness. Failed or checksum-inconsistent
 
 ## Backup routine
 
-The origin deployment currently passes `--skip-backup` while the backup manifest
-path is being corrected. This is an explicit temporary policy, not proof that a
-deployment is recoverable from the database alone. Run the routine manually only
-after checking its restore-preflight result:
+Every normal origin deployment creates the coordinated backup set before the
+release switch. The backup routine can also be run manually:
 
 ```bash
 sudo /opt/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --reason scheduled
 ```
 
-A backup is healthy only if its manifest references a passed isolated restore preflight. Periodically perform a full recovery exercise on a separate host.
+A backup is healthy only if its manifest references a passed isolated restore
+preflight. If this preflight fails, the update stops before `current` changes.
+Periodically perform a full recovery exercise on a separate host.
