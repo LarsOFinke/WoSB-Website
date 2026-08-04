@@ -12,7 +12,8 @@ RUN printf 'VITE_API_BASE_URL=%s\nVITE_MONITORING_HTTPS_PORT=%s\n' "$VITE_API_BA
     && npm run check:locales \
     && npm run build
 
-FROM nginx:1.27.5-alpine3.21 AS runtime
+FROM nginx:1.29.4-alpine3.23 AS runtime
+ARG GATEWAY_MAX_BODY_MB=90
 COPY --from=build /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
     && find /usr/share/nginx/html -type f -exec chmod 0644 {} +
@@ -23,4 +24,7 @@ RUN case "$GATEWAY_MAX_BODY_MB" in \
     && sed -i "s/__RBF_GATEWAY_MAX_BODY_MB__/${GATEWAY_MAX_BODY_MB}/g" /etc/nginx/conf.d/default.conf
 COPY infrastructure/nginx/security-headers.conf /etc/nginx/snippets/rbf-security-headers.conf
 COPY infrastructure/nginx/upload-security-headers.conf /etc/nginx/snippets/rbf-upload-security-headers.conf
-EXPOSE 80 443
+RUN addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \
+    && mkdir -p /var/cache/nginx /var/run /var/log/nginx /var/www/certbot \
+    && chown -R rbf:rbf /var/cache/nginx /var/run /var/log/nginx /var/www/certbot /etc/nginx/conf.d
+EXPOSE 8080 8443

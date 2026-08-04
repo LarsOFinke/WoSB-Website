@@ -24,9 +24,9 @@
 **/build
 **/dist
 frontend/src/locales/generated
+artifacts
 
 # Runtime data and credentials
-backend/storage
 infrastructure/data
 infrastructure/first-run-credentials.txt
 **/*.db

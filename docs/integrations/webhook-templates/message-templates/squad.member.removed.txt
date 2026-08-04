@@ -1,8 +1,1 @@
-➖ **Squad Member Removed**
-Squad: **{data.squad_name}**
-Membership ID: `{data.member_id}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Open squad roster]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

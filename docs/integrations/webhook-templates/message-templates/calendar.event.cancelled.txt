@@ -1,4 +1,1 @@
-❌ **Shoutout cancelled: {data.title}**
-The calendar event scheduled for `{data.start_at}` will not take place.
-📍 {data.location}
-🔗 [See the current calendar]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

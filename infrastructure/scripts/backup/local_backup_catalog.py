@@ -15,7 +15,7 @@ import sys
 from typing import Any
 
 
-_BACKUP_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,139}\.sql(?:\.gz)?$")
+_BACKUP_NAME_RE = re.compile(r"^rbf-postgres-[A-Za-z0-9T-]+\.dump$")
 _FILES_BACKUP_NAME_RE = re.compile(r"^rbf-files-[A-Za-z0-9T-]+\.tar\.gz$")
 _BACKUP_ID_RE = re.compile(r"^[a-f0-9]{64}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
@@ -38,7 +38,7 @@ class LocalBackupRecord:
     created_at: str
     restore_metadata_verified: bool = False
     encryption_keys_compatible: bool | None = None
-    alembic_head: str | None = None
+    flyway_version: str | None = None
     backup_consistency: str = "unrecorded"
     production_consistent: bool = False
     backup_set_verified: bool = False
@@ -53,7 +53,7 @@ class LocalBackupRecord:
             "checksum_verified": True,
             "restore_metadata_verified": self.restore_metadata_verified,
             "encryption_keys_compatible": self.encryption_keys_compatible,
-            "alembic_head": self.alembic_head,
+            "flyway_version": self.flyway_version,
             "backup_consistency": self.backup_consistency,
             "production_consistent": self.production_consistent,
             "backup_set_verified": self.backup_set_verified,
@@ -287,7 +287,7 @@ def _record_for(path: Path, infra_dir: Path, verified_set_members: set[Path]) ->
     )
     metadata_verified = restore_metadata is not None
     compatible: bool | None = None
-    alembic_head: str | None = None
+    flyway_version: str | None = None
     consistency = "unrecorded"
     production_consistent = False
     if restore_metadata is not None:
@@ -301,11 +301,7 @@ def _record_for(path: Path, infra_dir: Path, verified_set_members: set[Path]) ->
         compatible = bool(backup_fingerprints & current_fingerprints) if backup_fingerprints else None
         application = restore_metadata.get("application")
         if isinstance(application, dict):
-            revisions = application.get("alembic_revisions") or application.get("alembic_head")
-            if isinstance(revisions, list):
-                alembic_head = ",".join(str(value) for value in revisions if value) or None
-            else:
-                alembic_head = str(revisions or "") or None
+            flyway_version = str(application.get("flyway_version") or "") or None
         backup = restore_metadata.get("backup")
         if isinstance(backup, dict):
             consistency = str(backup.get("consistency") or "unrecorded")
@@ -324,7 +320,7 @@ def _record_for(path: Path, infra_dir: Path, verified_set_members: set[Path]) ->
         created_at=created_at,
         restore_metadata_verified=metadata_verified,
         encryption_keys_compatible=compatible,
-        alembic_head=alembic_head,
+        flyway_version=flyway_version,
         backup_consistency=consistency,
         production_consistent=production_consistent,
         backup_set_verified=path.resolve() in verified_set_members,

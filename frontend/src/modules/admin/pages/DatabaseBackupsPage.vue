@@ -478,7 +478,7 @@ const {
             <span class="backup-local-entry-main">
               <strong>{{ backup.filename }}</strong>
               <small>{{ formatDateTime(backup.created_at) }} · {{ formatBytes(backup.size_bytes) }}</small>
-              <small v-if="backup.alembic_head">{{ t('admin.backups.restore.schemaRevision') }}: {{ backup.alembic_head }}</small>
+              <small v-if="backup.flyway_version">{{ t('admin.backups.restore.schemaRevision') }}: {{ backup.flyway_version }}</small>
               <small v-if="!backup.restore_metadata_verified" class="backup-compatibility is-incompatible">
                 {{ t('admin.backups.restore.metadataMissing') }}
               </small>

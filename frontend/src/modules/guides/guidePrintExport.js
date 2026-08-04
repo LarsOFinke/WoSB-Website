@@ -1,4 +1,3 @@
-import { renderMarkdown as renderSafeMarkdown } from '../../shared/content/markdown.js'
 import {
   parseRichTextEmbeds,
   unembeddedAttachments,
@@ -138,7 +137,7 @@ function renderBuild(build, t) {
 }
 
 function renderGuideParts(model, helpers) {
-  const renderMarkdown = helpers.renderMarkdown || renderSafeMarkdown
+  const renderMarkdown = helpers.renderMarkdown || ((source) => `<p>${escapeHtml(String(source || ''))}</p>`)
   return model.parts.map((part) => {
     if (part.type === 'text') return `<div class="guide-print-copy">${renderMarkdown(part.text)}</div>`
     if (part.type === 'file') return renderFile(part.file)

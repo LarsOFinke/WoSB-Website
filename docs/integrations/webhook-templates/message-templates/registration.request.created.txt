@@ -1,7 +1,1 @@
-🔔 **Registration Needs Review**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Request ID: `{data.id}`
-Fleet application: `{data.wants_fleet_membership}`
-Received at: `{occurred_at}`
-👉 **Please review promptly:** [Open moderation queue]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

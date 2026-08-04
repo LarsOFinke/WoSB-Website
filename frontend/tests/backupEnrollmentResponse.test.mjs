@@ -25,7 +25,7 @@ function response(overrides = {}) {
   }
 }
 
-test('enrollment response parser accepts the Recovery Tool response including UTF-8 BOM', () => {
+test('enrollment response parser accepts the provisioner response including UTF-8 BOM', () => {
   const text = `\uFEFF${JSON.stringify(response())}\n`
   const result = parseBackupEnrollmentResponse(text, 'A'.repeat(32))
   assert.equal(result.error, null)
@@ -61,12 +61,13 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
   })
   assert.equal(result.error, null)
   assert.match(result.command, /REQUEST="\$HOME\/Downloads\/rbf-backup-enrollment-/)
-  assert.match(result.command, /command -v rbf-recovery-tool/)
-  assert.match(result.command, /rbf-recovery-tool server provision/)
+  assert.match(result.command, /provision-rbf-backup-server\.sh/)
+  assert.match(result.command, /sha256sum -c/)
+  assert.match(result.command, /sudo bash \"\$PROVISIONER\"/)
   assert.match(result.command, /--host '192\.168\.2\.107'/)
   assert.match(result.command, /--directory '\/srv\/rbf-backups\/wosb'/)
   assert.match(result.command, /--allow-from '192\.168\.2\.36\/32'/)
-  assert.match(result.command, /--output "\$RESPONSE"/)
+  assert.match(result.command, /--result "\$RESPONSE"/)
 })
 
 test('enrollment setup validator blocks incomplete commands before copy', () => {

@@ -1,8 +1,1 @@
-✏️ **Forum Reply Updated**
-Thread ID: `{data.thread_id}`
-Author: **{data.author.display_name}**
-Reply ID: `{data.id}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-Message: {data.body}
-🔗 [Open discussion]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

@@ -1,5 +1,1 @@
-🚨 **Database Restore Requested**
-Backup reference: `{data.backup_id}`
-Requested by: **{actor.display_name}**
-Status: awaiting protected host approval
-🔗 [Review backup status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

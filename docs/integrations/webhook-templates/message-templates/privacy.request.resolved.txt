@@ -1,7 +1,1 @@
-✅ **Data-Subject Request Resolved**
-Type: `{data.request_type}`
-Request ID: `{data.id}`
-Decision: `{data.decision}`
-Resolved by: **{actor.display_name}**
-No resolution details are sent to Discord.
-🔗 [Open privacy administration]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

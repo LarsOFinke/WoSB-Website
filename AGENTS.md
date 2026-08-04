@@ -22,12 +22,11 @@ dort verlinkten Architekturdokumenten.
 
 ## Architektur und Quellcode
 
-- Backend-Domänen bleiben unter `backend/src/app/modules/<domain>/` in Routen,
-  Schemas, Services und Modelle getrennt. Routen orchestrieren HTTP; Fachlogik und
-  Datenzugriff gehören in Services.
-- Abhängigkeiten werden am Rand zusammengesetzt und per Konstruktor oder FastAPI-
-  Dependency übergeben, wenn Zustandsverwaltung, Austauschbarkeit oder Tests davon
-  profitieren. Reine, kleine Funktionen benötigen keinen DI-Container.
+- Backend-Domänen bleiben unter `spring-api/src/main/java/eu/royalblackwater/api/<domain>/`
+  in Controller-/Operation-Handler, Services, Repositories und Mapper getrennt. HTTP-Handler
+  orchestrieren nur Transport; Fachlogik, Autorisierung und Transaktionen gehören in Services.
+- Abhängigkeiten werden per Konstruktor injiziert. Feldinjektion und Service-Locator sind
+  unzulässig. Reine, kleine Funktionen benötigen keinen Spring-Bean-Lebenszyklus.
 - Frontend-Seiten orchestrieren. Wiederverwendbare Darstellung gehört in
   Komponenten, Zustand und Abläufe in Composables, Netzwerkzugriff in API-Module.
 - Infrastruktur-Skripte orchestrieren robuste, idempotente Helper. Kritische
@@ -40,8 +39,8 @@ dort verlinkten Architekturdokumenten.
   kohäsive deklarative Kataloge sind keine Einladung zu weiteren Sammeldateien.
 - KISS vor vorsorglicher Generalisierung; SOLID sinngemäß anwenden. Keine Wrapper,
   Manager oder Basisklassen ohne mindestens einen konkreten Wartbarkeitsgewinn.
-- Datenbankschema nur mit Alembic-Migration ändern. Modell, Migration, Upgrade- und
-  gegebenenfalls Downgrade-/Recovery-Pfad gemeinsam prüfen.
+- Datenbankschema ausschließlich mit unveränderlichen Flyway-Migrationen ändern. Modell,
+  Migration, Upgrade- und Recovery-Pfad gemeinsam prüfen; Hibernate bleibt auf `validate`.
 
 ## Frontend, Sicherheit und Datenschutz
 

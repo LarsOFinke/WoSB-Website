@@ -63,8 +63,8 @@ async function trigger(operation) {
   if (!props.isAdmin || inProgress.value) return
   const confirmKey = {
     restart: 'admin.system.restartConfirm',
-    update_migrate: 'admin.system.migrateConfirm',
-    update_migrate_seed: 'admin.system.migrateSeedConfirm',
+    update: 'admin.system.updateConfirm',
+    rollback: 'admin.system.rollbackConfirm',
   }[operation]
   if (confirmKey && !window.confirm(t(confirmKey))) return
 
@@ -77,8 +77,7 @@ async function trigger(operation) {
     const successKey = {
       restart: 'admin.system.restartRequestAccepted',
       update: 'admin.system.requestAccepted',
-      update_migrate: 'admin.system.migrateRequestAccepted',
-      update_migrate_seed: 'admin.system.migrateSeedRequestAccepted',
+      rollback: 'admin.system.rollbackRequestAccepted',
     }[operation] || 'admin.system.requestAccepted'
     success.value = t(successKey)
     schedulePoll()
@@ -128,11 +127,8 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <button class="form-button primary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update')">
           {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
         </button>
-        <button class="form-button secondary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update_migrate')">
-          {{ t('admin.system.migrateButton') }}
-        </button>
-        <button class="form-button secondary-action seed-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update_migrate_seed')">
-          {{ t('admin.system.migrateSeedButton') }}
+        <button class="form-button secondary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('rollback')">
+          {{ t('admin.system.rollbackButton') }}
         </button>
       </div>
       <small v-else>{{ t('admin.system.adminOnly') }}</small>

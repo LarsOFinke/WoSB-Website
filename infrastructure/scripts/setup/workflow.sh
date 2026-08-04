@@ -85,7 +85,7 @@ setup_deploy() {
   if [[ "$PROFILE" == full ]]; then
     bw_compose_with_profiles pull uptime-kuma
   fi
-  bw_compose build api secure-api gateway
+  bw_compose build api gateway
   deploy_stack
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
   configure_production_tls

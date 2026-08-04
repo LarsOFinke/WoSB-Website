@@ -66,7 +66,6 @@ EXCLUDED_SUFFIXES = {
 EXCLUDED_NAME_SUFFIXES = (".tar.gz",)
 EXCLUDED_RELATIVE_PREFIXES = (
     Path("frontend/src/locales/generated"),
-    Path("backend/storage/uploads"),
 )
 
 

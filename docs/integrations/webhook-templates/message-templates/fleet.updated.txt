@@ -1,7 +1,1 @@
-🛠️ **Fleet Profile Updated**
-Fleet: **{data.name}**
-Focus: `{data.focus}`
-Members: `{data.active_members_count}`
-Description: {data.description}
-Updated by: **{actor.display_name}**
-🔗 [Open fleet]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

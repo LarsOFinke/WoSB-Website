@@ -1,119 +1,118 @@
 #!/usr/bin/env python3
-"""Package already-built application images for Git-free target deployment."""
-
+"""Create a source-free deployment bundle from a tested Spring JAR and frontend dist."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-from pathlib import Path
-import subprocess
+import os
+from pathlib import Path, PurePosixPath
+import shutil
 import tarfile
 import tempfile
+from datetime import datetime, timezone
 
-
-SERVICES = {
-    "api": "rbf-hub-api",
-    "secure-api": "rbf-hub-secure-api",
-    "gateway": "rbf-hub-gateway",
-}
-SOURCE_ROOT = Path(__file__).resolve().parent.parent
-ALIASES = {"python": "api", "java": "secure-api", "frontend": "gateway"}
-RECOVERY_CONTRACT_FILES = (
-    Path("contracts/__init__.py"),
-    Path("contracts/recovery/__init__.py"),
-    Path("contracts/recovery/contract.py"),
+ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_FILES = (
+    "VERSION",
+    "setup.sh",
+    "update.sh",
+    "infrastructure/compose.release.yml",
+    "infrastructure/.env.example",
+    "infrastructure/nginx/default.conf",
+    "infrastructure/nginx/monitoring.conf",
+    "infrastructure/nginx/security-headers.conf",
+    "infrastructure/nginx/upload-security-headers.conf",
+    "infrastructure/docker/api-runtime.Dockerfile",
+    "infrastructure/docker/gateway-runtime.Dockerfile",
 )
-MIGRATION_FILES = tuple(
-    Path("backend/migrations/versions") / path.name
-    for path in sorted((SOURCE_ROOT / "backend/migrations/versions").glob("*.py"))
-)
-BACKEND_CONFIG_FILES = tuple(
-    Path("backend/config") / path.name
-    for path in sorted((SOURCE_ROOT / "backend/config").glob("*.cfg"))
+RUNTIME_DIRS = (
+    "infrastructure/scripts",
+    "infrastructure/systemd",
 )
 
 
-def digest(path: Path) -> str:
-    hasher = hashlib.sha256()
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
     with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
-def run(command: list[str]) -> None:
-    subprocess.run(command, check=True)
+def regular_files(root: Path) -> list[Path]:
+    return sorted(p for p in root.rglob("*") if p.is_file() and not p.is_symlink())
+
+
+def copy_tree(source: Path, target: Path) -> None:
+    if not source.is_dir():
+        raise SystemExit(f"Required runtime directory is missing: {source}")
+    shutil.copytree(source, target, dirs_exist_ok=True, symlinks=False,
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", required=True, help="release/application version")
+    parser.add_argument("--version", required=True)
+    parser.add_argument("--jar", type=Path, required=True)
+    parser.add_argument("--frontend-dist", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--git-commit", default="", help="optional source revision identifier")
-    parser.add_argument("--api-image", default="", help="override the API image reference")
-    parser.add_argument("--secure-api-image", default="", help="override the Spring image reference")
-    parser.add_argument("--gateway-image", default="", help="override the gateway image reference")
-    parser.add_argument("--components", default="api,secure-api,gateway", help="comma-separated components to package")
+    parser.add_argument("--source-revision", default="")
     args = parser.parse_args()
 
-    components: list[str] = []
-    for value in args.components.split(","):
-        component = ALIASES.get(value.strip(), value.strip())
-        if component not in SERVICES:
-            raise SystemExit(f"Unbekannte Komponente: {value}")
-        if component not in components:
-            components.append(component)
-    if not components:
-        raise SystemExit("Mindestens eine Komponente ist erforderlich.")
-    if not MIGRATION_FILES:
-        raise SystemExit("Keine Alembic-Migrationen für das Deployment-Artifact gefunden.")
-    images = {
-        "api": args.api_image or f"{SERVICES['api']}:{args.version}",
-        "secure-api": args.secure_api_image or f"{SERVICES['secure-api']}:{args.version}",
-        "gateway": args.gateway_image or f"{SERVICES['gateway']}:{args.version}",
-    }
-    images = {service: images[service] for service in components}
-    for service, image in images.items():
-        result = subprocess.run(["docker", "image", "inspect", image], capture_output=True)
-        if result.returncode:
-            raise SystemExit(f"Image für {service} fehlt: {image}")
+    expected = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    if args.version != expected:
+        raise SystemExit(f"Version mismatch: argument={args.version}, repository={expected}")
+    jar = args.jar.resolve()
+    frontend = args.frontend_dist.resolve()
+    if not jar.is_file() or jar.stat().st_size < 1024 * 1024:
+        raise SystemExit(f"Compiled Spring Boot JAR missing or implausibly small: {jar}")
+    if not (frontend / "index.html").is_file():
+        raise SystemExit(f"Compiled frontend dist is incomplete: {frontend}")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="rbf-artifact-") as temporary:
-        staging = Path(temporary)
-        image_archive = staging / "images.tar"
-        run(["docker", "save", "--output", str(image_archive), *images.values()])
+    output = args.output_dir / f"rbf-deployment-{args.version}.tar.gz"
+    with tempfile.TemporaryDirectory(prefix="rbf-release-") as temporary:
+        stage = Path(temporary) / "bundle"
+        payload = stage / "payload"
+        (payload / "artifacts" / "frontend").mkdir(parents=True)
+        shutil.copy2(jar, payload / "artifacts" / "rbf-api.jar")
+        copy_tree(frontend, payload / "artifacts" / "frontend")
+        for relative in RUNTIME_FILES:
+            source = ROOT / relative
+            if not source.is_file():
+                raise SystemExit(f"Required runtime file is missing: {source}")
+            target = payload / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        for relative in RUNTIME_DIRS:
+            copy_tree(ROOT / relative, payload / relative)
+
+        inventory = []
+        for path in regular_files(payload):
+            relative = path.relative_to(stage).as_posix()
+            inventory.append({"path": relative, "size_bytes": path.stat().st_size, "sha256": sha256(path)})
         manifest = {
-            "schema_version": 1,
-            "kind": "rbf-deployment-artifact",
+            "schema_version": 2,
+            "kind": "rbf-compiled-release",
             "version": args.version,
-            "git_commit": args.git_commit,
-            "components": components,
-            "images": images,
+            "source_revision": args.source_revision,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "minimum_installer_schema": 2,
+            "artifacts": {"api": "payload/artifacts/rbf-api.jar", "frontend": "payload/artifacts/frontend"},
+            "files": inventory,
         }
-        (staging / "manifest.json").write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
-        artifact_files = (*RECOVERY_CONTRACT_FILES, *MIGRATION_FILES, *BACKEND_CONFIG_FILES)
-        for relative_path in artifact_files:
-            source = SOURCE_ROOT / relative_path
-            destination = staging / relative_path
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(source.read_bytes())
-        checksum_paths = (Path("manifest.json"), Path("images.tar"), *artifact_files)
-        checksums = "".join(
-            f"{digest(staging / path)}  {path}\n"
-            for path in checksum_paths
-        )
-        (staging / "SHA256SUMS").write_text(checksums, encoding="ascii")
-        output = args.output_dir / f"rbf-deployment-{args.version}.tar.gz"
-        with tarfile.open(output, "w:gz") as archive:
-            for path in sorted(staging.iterdir()):
-                archive.add(path, arcname=str(path.relative_to(staging)), recursive=path.is_dir())
+        (stage / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        checksum_lines = [f"{entry['sha256']}  {entry['path']}\n" for entry in inventory]
+        checksum_lines.append(f"{sha256(stage / 'manifest.json')}  manifest.json\n")
+        (stage / "SHA256SUMS").write_text("".join(checksum_lines), encoding="ascii")
+        os.chmod(stage / "SHA256SUMS", 0o644)
+        with tarfile.open(output, "w:gz", format=tarfile.PAX_FORMAT) as archive:
+            for path in sorted(stage.iterdir()):
+                archive.add(path, arcname=PurePosixPath(path.name), recursive=True)
+    checksum = output.with_suffix(output.suffix + ".sha256")
+    checksum.write_text(f"{sha256(output)}  {output.name}\n", encoding="ascii")
     print(output)
-    print(digest(output))
 
 
 if __name__ == "__main__":

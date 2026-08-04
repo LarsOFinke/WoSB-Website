@@ -1,2 +1,0 @@
-class RaidHelperError(ValueError):
-    pass

@@ -1,9 +1,1 @@
-➕ **Squad Member Added**
-Squad: **{data.squad_name}**
-Member: **{data.member_display_name}**
-Role: `{data.member_role}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Added by: **{actor.display_name}**
-Added at: `{occurred_at}`
-🔗 [Open squad roster]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

@@ -1,10 +1,1 @@
-📝 **Guide Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Summary: {data.summary}
-Attachments: `{data.attachment_count}`
-Linked builds: `{data.build_reference_count}`
-Updated at: `{data.updated_at}`
-Updated by: **{actor.display_name}**
-🔗 [Open guide]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

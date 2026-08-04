@@ -1,6 +1,1 @@
-🛡️ **Data-Subject Request Needs Review**
-Type: `{data.request_type}`
-Request ID: `{data.id}`
-Submitted at: `{occurred_at}`
-No request details are sent to Discord.
-👉 [Open the protected privacy queue]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

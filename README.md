@@ -1,39 +1,30 @@
 # Royal Blackwater Fleet v1.0.0
 
-Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3, FastAPI,
-PostgreSQL, NGINX und einem reproduzierbaren Raspberry-Pi-Deployment.
+Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
+Spring Boot 3, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
 
-## Schnellstart auf dem Raspberry Pi
+## Architektur in Kürze
 
-Voraussetzungen: Raspberry Pi OS Lite **64-bit** oder Debian/Ubuntu 64-bit, mindestens 2 GiB RAM,
-8 GiB freier Speicher, DNS auf den Pi sowie weitergeleitete TCP-Ports 80 und 443.
-
-```bash
-git clone <REPOSITORY_URL> ~/royal-blackwater-fleet
-cd ~/royal-blackwater-fleet
-sudo ./setup.sh \
-  --profile full \
-  --domain royal-blackwater-fleet.eu \
-  --tls-mode letsencrypt \
-  --letsencrypt-email admin@royal-blackwater-fleet.eu
+```text
+Browser → NGINX → Spring Boot API → PostgreSQL
 ```
 
-Das Setup installiert die Host-Abhängigkeiten, erzeugt Secrets, baut die Container, migriert und
-seedet ausschließlich System- und Stammdaten in PostgreSQL, konfiguriert TLS, Firewall, systemd, Backups und optional Uptime Kuma. Die einmalig
-erzeugten Zugangsdaten liegen mit Modus `0600` unter
-`infrastructure/first-run-credentials.txt` und sollten nach sicherer Ablage gelöscht werden.
+Spring Security bildet die alleinige Sicherheitsgrenze. Das Backend verwendet
+validierte Java-Verträge, MapStruct, JDBC/JPA mit expliziten Fetch-Plänen,
+Flyway-Migrationen und eingebettete, idempotente Stammdaten. Das frühere
+Python-Backend ist nicht mehr Bestandteil der Laufzeit.
 
-## Entwicklung
+## Lokale Entwicklung
+
+Voraussetzungen: Java 21, Maven 3.9+, Node.js 22, npm und PostgreSQL beziehungsweise
+Docker für die Integrationstests.
 
 ```bash
-cd backend
-python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements-dev.lock
-pip install --no-deps -e .
-cp .env.example .env
-rbf-dev
+cp infrastructure/.env.example infrastructure/.env
+mvn -f spring-api/pom.xml spring-boot:run
 ```
+
+In einem zweiten Terminal:
 
 ```bash
 cd frontend
@@ -42,78 +33,77 @@ npm ci
 npm run dev
 ```
 
-## Qualitäts- und Betriebsbefehle
+## Qualitätsprüfung
 
 ```bash
-make test          # schnelle, deterministische Tests
-make test-full     # Migration, Build und Infrastrukturchecks
-make validate      # vollständige Release-Prüfung
-make doctor        # Produktionsdiagnose auf dem Pi
-make infra-backup  # Datenbank, Uploads und Betriebsdaten sichern
+make test          # schnelle deterministische Prüfungen
+make test-full     # vollständiger Java-/Frontend-/Infrastruktur-Gate
+make validate      # identisch zum vollständigen Release-Gate
+make check-tree    # sauberer Repository-Baum
 ```
 
-Normales Update der API mit verpflichtender Migration und idempotentem Stammdaten-Seed:
+Ein Release gilt nur dann als auslieferbar, wenn Maven-Kompilierung, Spring- und
+PostgreSQL-Integrationstests, Frontend-Tests und Produktionsbuild sowie die
+Infrastruktur- und Recovery-Vertragstests erfolgreich waren.
+
+## Release bauen
+
+CI beziehungsweise eine vollständige Build-Umgebung erzeugt ein source-freies,
+prüfsummenbewehrtes Release-Artefakt:
 
 ```bash
-sudo ./update.sh
+bash infrastructure/scripts/release/build-artifact.sh
 ```
 
-Der zentrale Updater ergänzt bei jedem API-Deployment automatisch Migration und Seed. Der
-ausdrückliche Aufruf ist gleichwertig und für Runbooks besonders gut sichtbar:
+Das Zielsystem benötigt weder Git noch Maven, npm oder Zugriff auf Paketregistries.
+Es prüft das Bundle und baut nur die minimalen Runtime-Container aus dem bereits
+kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
-sudo ./update.sh --migrate --seed
+sudo infrastructure/scripts/release/install-artifact.sh \
+  --artifact rbf-deployment-1.0.0.tar.gz \
+  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
+  --install-root /opt/rbf \
+  --env /secure/rbf.env
 ```
 
-Repository-eigene Stammdaten können bei bewusstem Verwerfen aller Admin-Overrides repariert werden:
+Updates werden durch ein neues Release-Artefakt ausgelöst:
 
 ```bash
-sudo ./update.sh --restore-seed-defaults
+sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.1.tar.gz
 ```
 
-Eigene Stammdatensätze und Benutzerinhalte bleiben dabei erhalten. Dieselbe Funktion steht Admins
-in der Stammdatenverwaltung als bestätigter Button zur Verfügung.
-
-Im Admin-Panel stehen Standardupdate, explizite Migration und Migration mit Seed ebenfalls bereit. Die Website zeigt dabei nur einen datensparsamen Status; detaillierte Update-Ausgaben bleiben in Host-Logs und Webhooks.
+Rollback, Backup und Restore wechseln Anwendung, Flyway-Schema und persistente
+Dateien kontrolliert gemeinsam. Das zum Backup gehörende Release-Artefakt wird im
+verschlüsselten Recovery-Bundle mitgeführt.
 
 ## Projektstruktur
 
 ```text
-backend/        FastAPI, SQLAlchemy, Alembic, fachliche Module und Tests
-frontend/       Vue 3, modulare UI, Lokalisierung und deterministische JS-Tests
-infrastructure/ Docker Compose, NGINX, TLS, Backup, systemd und Pi-Bootstrap
-scripts/        einheitliche Test-, Validierungs- und Release-Werkzeuge
-docs/           v1.0-Betriebs- und Entwicklungsdokumentation
-.github/        CI, Releases, optionales Produktionsdeployment und Dependabot
+spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
+frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
+contracts/       versionierter HTTP-, Build-Stat- und Webhook-Vertrag
+infrastructure/  Compose, NGINX, Release, Update, Backup und Restore
+scripts/         Repository-, Security-, Build- und Packaging-Werkzeuge
+tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
+docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
+.github/         CI, Release-Erstellung und Deployment-Promotion
 ```
 
 ## Dokumentation
 
-- [Qualitätsstandards und Definition of Done](docs/development/QUALITY_STANDARDS.md)
-- [Vollständiger Dokumentationsindex](docs/README.md)
-- [Go-Live-Checkliste](docs/deployment/GO_LIVE.md)
-- [Installation](docs/deployment/INSTALLATION.md)
 - [Architektur](docs/architecture/ARCHITECTURE.md)
+- [Qualitätsstandards](docs/development/QUALITY_STANDARDS.md)
 - [Entwicklung](docs/development/DEVELOPMENT.md)
-- [Datenbank und Seeds](docs/development/DATABASE.md)
-- [Kampf-DPM-Analyse](docs/audits/COMBAT_DPM_ANALYSIS.md)
-- [Stammdaten-Go-Live-Review](docs/audits/MASTER_DATA_GO_LIVE_REVIEW.md)
+- [Datenbank und Flyway](docs/development/DATABASE.md)
 - [Tests](docs/development/TESTING.md)
+- [Deployment](docs/deployment/DEPLOYMENT.md)
+- [Installation](docs/deployment/INSTALLATION.md)
 - [Betrieb](docs/deployment/OPERATIONS.md)
-- [Disaster Recovery und Desktop-Backup](docs/deployment/DISASTER_RECOVERY.md)
-- [Assistierte Backup-Server-Einrichtung](docs/deployment/BACKUP_SERVER_ENROLLMENT.md)
-- PostgreSQL-Restores nutzen eine validierte Staging-Datenbank, atomaren Tausch und automatischen Rollback; vollständige Bare-Metal-Restores erhalten zusätzlich `.env`, `.cfg`, Uploads, Zertifikate und Host-Secrets im age-verschlüsselten Bundle.
-- Frozen Recovery Tool für Windows und Linux: gemeinsame Quellen unter `tools/recovery-tool`, native Build-Wrapper unter `tools/windows/recovery-tool` und `tools/linux/recovery-tool`; Ubuntu erhält zusätzlich ein installierbares `.deb`, systemd-Pull und ein optionales rootless-Docker-PostgreSQL-Restore-Labor
-- [GitHub CI/CD](docs/deployment/DEPLOYMENT.md)
-- [Webhook-Betrieb](docs/integrations/outbound-webhooks.md)
-- [Webhook-Nachrichten-Templates](docs/integrations/webhook-templates/README.md)
+- [Disaster Recovery](docs/deployment/DISASTER_RECOVERY.md)
 - [Sicherheit](SECURITY.md)
 - [Änderungsverlauf](CHANGELOG.md)
 
 ## Lizenz und Hinweise
 
 Siehe [NOTICE.md](NOTICE.md).
-
-## Backup und Recovery
-
-- [Backup-Server einrichten – Kurzleitfaden](docs/deployment/BACKUP_SETUP_QUICKSTART.md)

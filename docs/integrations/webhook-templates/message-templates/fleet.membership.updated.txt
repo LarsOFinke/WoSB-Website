@@ -1,8 +1,1 @@
-🧭 **Fleet Membership Updated**
-Member: **{data.user.display_name}** (`{data.user.username}`)
-Fleet ID: `{data.fleet_id}`
-Status: `{data.status}`
-Role: `{data.role}`
-Assignment: {data.assignment}
-Updated by: **{actor.display_name}**
-🔗 [Open fleet management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

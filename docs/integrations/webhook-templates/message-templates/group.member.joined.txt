@@ -1,9 +1,1 @@
-🙋 **Member Joined Group Search**
-Group: **{data.title}**
-Member: **{data.member.display_name}**
-Fleet: {data.member.fleet_name}
-Ship: **{data.member.ship_name}** (Rate `{data.member.ship_rate}`)
-Members: `{data.active_members_count}` / `{data.max_members}`
-Remaining slots: `{data.spots_left}`
-Joined at: `{occurred_at}`
-🔗 [Open group search]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

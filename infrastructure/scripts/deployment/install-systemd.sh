@@ -17,8 +17,9 @@ units=(
   rbf-hub-update.path
 )
 
+systemd_infra="${RBF_SYSTEMD_INFRA_DIR:-$INFRA_DIR}"
 for unit in "${units[@]}"; do
-  sed "s|@INFRA_DIR@|$INFRA_DIR|g" "$INFRA_DIR/systemd/$unit" > "/etc/systemd/system/$unit"
+  sed "s|@INFRA_DIR@|$systemd_infra|g" "$INFRA_DIR/systemd/$unit" > "/etc/systemd/system/$unit"
 done
 
 # Clean migration from the pre-RBF alpha names. The old units call the same

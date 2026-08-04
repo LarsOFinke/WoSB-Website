@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
 import { openGuidePrintWindow } from '@/modules/guides/guidePrintExport'
+import { renderMarkdown } from '@/shared/content/markdown'
 
 export function useGuidePrintActions(guide, { t }) {
   const printBusy = ref(false)
@@ -11,7 +12,7 @@ export function useGuidePrintActions(guide, { t }) {
     printBusy.value = true
     printStatus.value = ''
     try {
-      openGuidePrintWindow(guide.value, { t })
+      openGuidePrintWindow(guide.value, { t, renderMarkdown })
       printStatus.value = t('guides.print.windowOpened')
     } catch {
       printStatus.value = t('guides.print.error')

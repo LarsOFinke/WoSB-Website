@@ -1,40 +1,28 @@
 name: Deploy production
-
 on:
   workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: production
-  cancel-in-progress: false
+    inputs:
+      release_tag: {description: 'Signed release tag, e.g. v1.0.0', required: true}
+permissions: {contents: read}
+concurrency: {group: production, cancel-in-progress: false}
 
 jobs:
   deploy:
-    name: Raspberry Pi production
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     environment: production
+    timeout-minutes: 30
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false, ref: '${{ inputs.release_tag }}'}
+      - name: Download immutable release
+        env: {GH_TOKEN: '${{ github.token }}', TAG: '${{ inputs.release_tag }}'}
+        run: gh release download "$TAG" --pattern 'rbf-deployment-*.tar.gz*' --dir release
       - name: Configure SSH
-        env:
-          DEPLOY_KEY: ${{ secrets.RBF_DEPLOY_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.RBF_DEPLOY_KNOWN_HOSTS }}
+        env: {DEPLOY_KEY: '${{ secrets.RBF_DEPLOY_SSH_KEY }}', KNOWN_HOSTS: '${{ secrets.RBF_DEPLOY_KNOWN_HOSTS }}'}
+        run: install -m 700 -d ~/.ssh && printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/rbf_deploy && chmod 600 ~/.ssh/rbf_deploy && printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Stage and install artifact
+        env: {HOST: '${{ secrets.RBF_DEPLOY_HOST }}', PORT: '${{ secrets.RBF_DEPLOY_PORT }}', USER: '${{ secrets.RBF_DEPLOY_USER }}'}
         run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/rbf_deploy
-          chmod 600 ~/.ssh/rbf_deploy
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-      - name: Update production
-        env:
-          HOST: ${{ secrets.RBF_DEPLOY_HOST }}
-          PORT: ${{ secrets.RBF_DEPLOY_PORT }}
-          USER: ${{ secrets.RBF_DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.RBF_DEPLOY_PATH }}
-        run: |
-          port="${PORT:-22}"
-          printf -v remote 'cd %q && sudo ./update.sh --seed' "$DEPLOY_PATH"
-          ssh -i ~/.ssh/rbf_deploy -p "$port" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "$USER@$HOST" "$remote"
+          port="${PORT:-22}"; artifact="$(find release -name 'rbf-deployment-*.tar.gz' | head -1)"
+          scp -i ~/.ssh/rbf_deploy -P "$port" "$artifact" "$artifact.sha256" infrastructure/scripts/release/install-artifact.sh infrastructure/scripts/release/verify-artifact.py "$USER@$HOST:/tmp/"
+          ssh -i ~/.ssh/rbf_deploy -p "$port" "$USER@$HOST" "sudo bash /tmp/install-artifact.sh --artifact /tmp/$(basename "$artifact") --checksum /tmp/$(basename "$artifact.sha256") --install-root /opt/rbf --requested-by github-actions"

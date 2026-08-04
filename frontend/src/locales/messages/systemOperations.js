@@ -222,3 +222,21 @@ const operationPanelMessages = {
 for (const [locale, copy] of Object.entries(operationPanelMessages)) {
   Object.assign(systemOperationsMessages[locale].admin.system, copy)
 }
+
+
+const artifactOperationMessages = {
+  en: { updateConfirm: 'Deploy the newest staged, checksummed release artifact? A coordinated database backup and readiness check are mandatory.', rollbackButton: 'Roll back release', rollbackConfirm: 'Restore the previous release and its coordinated database backup?', rollbackRequestAccepted: 'The rollback request was accepted by the host runner.', rollbackOperation: 'Release and database rollback', updateOperation: 'Deploy staged release artifact' },
+  de: { updateConfirm: 'Das neueste bereitgestellte und prüfsummenvalidierte Release-Artefakt ausrollen? Ein koordiniertes Datenbank-Backup und eine Bereitschaftsprüfung sind verpflichtend.', rollbackButton: 'Release zurückrollen', rollbackConfirm: 'Das vorherige Release und dessen koordiniertes Datenbank-Backup wiederherstellen?', rollbackRequestAccepted: 'Die Rollback-Anfrage wurde vom Host-Runner angenommen.', rollbackOperation: 'Release- und Datenbank-Rollback', updateOperation: 'Bereitgestelltes Release-Artefakt ausrollen' },
+  fr: { updateConfirm: 'Déployer le dernier artefact de version vérifié par somme de contrôle ? Une sauvegarde coordonnée et un contrôle de disponibilité sont obligatoires.', rollbackButton: 'Restaurer la version', rollbackConfirm: 'Restaurer la version précédente et sa sauvegarde coordonnée de la base ?', rollbackRequestAccepted: 'La demande de restauration a été acceptée par le runner hôte.', rollbackOperation: 'Restauration de la version et de la base', updateOperation: 'Déployer l’artefact de version préparé' },
+  es: { updateConfirm: '¿Desplegar el último artefact de versión verificado? Son obligatorias una copia coordinada de la base y la comprobación de disponibilidad.', rollbackButton: 'Revertir versión', rollbackConfirm: '¿Restaurar la versión anterior y su copia coordinada de la base de datos?', rollbackRequestAccepted: 'El runner del host aceptó la reversión.', rollbackOperation: 'Reversión de versión y base de datos', updateOperation: 'Desplegar artefacto preparado' },
+  pt: { updateConfirm: 'Aplicar o artefacto de versão mais recente e validado? É obrigatório criar uma cópia coordenada da base e validar a disponibilidade.', rollbackButton: 'Reverter versão', rollbackConfirm: 'Restaurar a versão anterior e a respetiva cópia coordenada da base de dados?', rollbackRequestAccepted: 'O runner do host aceitou a reversão.', rollbackOperation: 'Reversão da versão e da base de dados', updateOperation: 'Aplicar artefacto preparado' },
+  ru: { updateConfirm: 'Развернуть последний подготовленный и проверенный артефакт релиза? Обязательны согласованная резервная копия базы и проверка готовности.', rollbackButton: 'Откатить релиз', rollbackConfirm: 'Восстановить предыдущий релиз и связанную резервную копию базы данных?', rollbackRequestAccepted: 'Host runner принял запрос на откат.', rollbackOperation: 'Откат релиза и базы данных', updateOperation: 'Развернуть подготовленный артефакт' },
+  cn: { updateConfirm: '部署最新且已校验的发布制品吗？必须先创建协调数据库备份并通过就绪检查。', rollbackButton: '回滚发布', rollbackConfirm: '恢复上一个发布及其协调数据库备份吗？', rollbackRequestAccepted: '主机执行器已接受回滚请求。', rollbackOperation: '发布与数据库回滚', updateOperation: '部署已暂存的发布制品' },
+}
+
+for (const [locale, copy] of Object.entries(artifactOperationMessages)) {
+  const system = systemOperationsMessages[locale].admin.system
+  Object.assign(system, copy)
+  system.operations.update = copy.updateOperation
+  system.operations.rollback = copy.rollbackOperation
+}

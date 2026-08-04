@@ -1,6 +1,8 @@
 package eu.royalblackwater.api.security;
 
 import eu.royalblackwater.api.config.SecurityProperties;
+import eu.royalblackwater.api.securityops.IpBlockService;
+import eu.royalblackwater.api.securityops.SecuritySignalService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,20 +21,30 @@ public class RequestBoundaryFilter extends OncePerRequestFilter {
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");
     private final Set<String> allowedHosts;
     private final Set<String> allowedOrigins;
+    private final IpBlockService ipBlocks;
+    private final SecuritySignalService signals;
 
-    public RequestBoundaryFilter(SecurityProperties properties) {
+    public RequestBoundaryFilter(SecurityProperties properties, IpBlockService ipBlocks, SecuritySignalService signals) {
         allowedHosts = normalize(properties.allowedHosts());
         allowedOrigins = Set.copyOf(properties.normalizeOrigins());
+        this.ipBlocks = ipBlocks;
+        this.signals = signals;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        if (ipBlocks.isBlocked(request.getRemoteAddr())) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
         if (!allowedHosts.contains(request.getServerName().toLowerCase(Locale.ROOT))) {
+            signals.record(request, "reconnaissance", "invalid_host");
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
         if (!SAFE_METHODS.contains(request.getMethod()) && crossSite(request)) {
+            signals.record(request, "reconnaissance", "cross_site");
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -70,6 +82,7 @@ public class RequestBoundaryFilter extends OncePerRequestFilter {
     }
 
     private static Set<String> normalize(java.util.List<String> values) {
+        if (values == null) return Set.of();
         return values.stream().map(String::strip).filter(value -> !value.isEmpty())
                 .map(value -> value.split(":", 2)[0].toLowerCase(Locale.ROOT))
                 .collect(Collectors.toUnmodifiableSet());

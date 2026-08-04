@@ -1,8 +1,1 @@
-⛔ **Registration Rejected**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Request ID: `{data.id}`
-Rejected by: **{actor.display_name}** (`{actor.username}`)
-Decision note: {data.decision_note}
-Processed at: `{occurred_at}`
-🔗 [Open registration management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

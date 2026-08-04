@@ -1,5 +1,1 @@
-➖ **Fleet Role Removed**
-Role: **{data.label}** (`{data.code}`)
-Role ID: `{data.id}`
-Removed by: **{actor.display_name}**
-🔗 [Open fleet roles]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

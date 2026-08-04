@@ -1,10 +1,1 @@
-🔧 **Build Updated**
-Build: **{data.build_name}**
-Ship: **{data.ship.name}** (Rate `{data.ship.rate}`)
-Build type: `{data.build_type}`
-Official template: `{data.is_official_template}`
-Crew: `{data.sailors}` sailors · `{data.soldiers}` soldiers · `{data.musketeers}` musketeers · `{data.mercenaries}` mercenaries
-Owner ID: `{data.owner_id}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-🔗 [Open build]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

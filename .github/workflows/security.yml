@@ -1,80 +1,43 @@
 name: Security
-
 on:
-  pull_request:
-    branches: [main]
-  merge_group:
-    types: [checks_requested]
-  push:
-    branches: [main]
-  schedule:
-    - cron: '17 4 * * 1'
+  pull_request: {branches: [main]}
+  merge_group: {types: [checks_requested]}
+  push: {branches: [main]}
+  schedule: [{cron: '17 4 * * 1'}]
   workflow_dispatch:
-
-permissions:
-  actions: read
-  contents: read
-  security-events: write
+permissions: {actions: read, contents: read, security-events: write}
 
 jobs:
-  container-images:
-    name: Container image vulnerabilities
-    if: github.event_name != 'pull_request'
+  dependency-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-        with:
-          persist-credentials: false
-      - name: Build production images
-        run: |
-          cp infrastructure/.env.example infrastructure/.env
-          docker compose --env-file infrastructure/.env -f infrastructure/compose.yml build api secure-api gateway
-      - name: Scan API image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
-        with:
-          image-ref: rbf-hub-api:local
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-      - name: Scan gateway image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
-        with:
-          image-ref: rbf-hub-gateway:local
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-      - name: Scan Spring security API image
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
-        with:
-          image-ref: rbf-hub-secure-api:local
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false}
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with: {node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+      - run: cd frontend && npm ci && npm audit --audit-level=high
+      - run: python scripts/security_audit.py
 
-  osv-pr:
-    name: Dependency delta scan
-    if: github.event_name == 'pull_request'
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@3adb4b14a2b0623876d18d863a498b785fb3752d # v2.3.8
-    with:
-      scan-args: |-
-        --lockfile=frontend/package-lock.json
-        --lockfile=requirements.txt:backend/requirements.lock
-        --lockfile=requirements.txt:backend/requirements-dev.lock
-
-  osv-full:
-    name: Full dependency scan
-    if: >-
-      github.event_name == 'push' ||
-      github.event_name == 'merge_group' ||
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@3adb4b14a2b0623876d18d863a498b785fb3752d # v2.3.8
-    with:
-      scan-args: |-
-        --lockfile=frontend/package-lock.json
-        --lockfile=requirements.txt:backend/requirements.lock
-        --lockfile=requirements.txt:backend/requirements-dev.lock
+  container-images:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with: {persist-credentials: false}
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95
+        with: {distribution: temurin, java-version: '21', cache: maven}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with: {node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress -DskipTests package
+      - run: cp frontend/.env.example frontend/.env && cd frontend && npm ci && npm run build
+      - run: mkdir -p artifacts/frontend && cp "$(find spring-api/target -name 'rbf-api-*.jar' ! -name '*.original' | head -1)" artifacts/rbf-api.jar && cp -a frontend/dist/. artifacts/frontend/
+      - run: cp infrastructure/.env.example infrastructure/.env && docker compose --env-file infrastructure/.env -f infrastructure/compose.release.yml build api gateway
+      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8
+        with: {image-ref: 'rbf-hub-api:local', format: table, exit-code: '1', ignore-unfixed: true, severity: 'HIGH,CRITICAL'}
+      - uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8
+        with: {image-ref: 'rbf-hub-gateway:local', format: table, exit-code: '1', ignore-unfixed: true, severity: 'HIGH,CRITICAL'}

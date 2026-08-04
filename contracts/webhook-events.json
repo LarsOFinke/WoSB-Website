@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "events": [
+    {
+      "key": "integration.test",
+      "category": "integration",
+      "description": "Manual connectivity and payload test.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "system.update.started",
+      "category": "system",
+      "description": "A controlled server operation was requested and queued.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "system.update.result",
+      "category": "system",
+      "description": "A controlled server operation completed or failed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "system.maintenance.started",
+      "category": "system",
+      "description": "A maintenance window was activated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "system.maintenance.ended",
+      "category": "system",
+      "description": "A maintenance window ended or failed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "backup.run.requested",
+      "category": "operations",
+      "description": "An administrator requested a protected application backup.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "backup.restore.requested",
+      "category": "operations",
+      "description": "A bootstrap administrator requested a database restore.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "backup.configuration.updated",
+      "category": "operations",
+      "description": "The protected backup connection configuration changed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "backup.configuration.deleted",
+      "category": "operations",
+      "description": "The protected backup connection configuration was removed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "privacy.request.created",
+      "category": "moderation",
+      "description": "A data-subject request requires an administrator response.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "privacy.request.resolved",
+      "category": "moderation",
+      "description": "A data-subject request was resolved by an administrator.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "registration.request.created",
+      "category": "registrations",
+      "description": "A new access request was submitted.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "registration.request.approved",
+      "category": "registrations",
+      "description": "An access request was approved.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "registration.request.rejected",
+      "category": "registrations",
+      "description": "An access request was rejected.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.created",
+      "category": "squads",
+      "description": "A squad was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.updated",
+      "category": "squads",
+      "description": "A squad was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.archived",
+      "category": "squads",
+      "description": "A squad was archived.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.member.added",
+      "category": "squads",
+      "description": "A member was added to a squad.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.member.updated",
+      "category": "squads",
+      "description": "A squad membership was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "squad.member.removed",
+      "category": "squads",
+      "description": "A member was removed from a squad.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "group.created",
+      "category": "groups",
+      "description": "A new group-search listing was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "group.member.joined",
+      "category": "groups",
+      "description": "A member joined a group-search listing.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "group.closed",
+      "category": "groups",
+      "description": "A group-search listing was closed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "calendar.event.created",
+      "category": "calendar",
+      "description": "A fleet or squad event was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "calendar.event.updated",
+      "category": "calendar",
+      "description": "A fleet or squad event was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "calendar.event.cancelled",
+      "category": "calendar",
+      "description": "A fleet or squad event was cancelled.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "guide.created",
+      "category": "content",
+      "description": "A new guide was published.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "guide.updated",
+      "category": "content",
+      "description": "A published guide was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "guide.removed",
+      "category": "content",
+      "description": "A guide was removed from publication.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "newcomer_guide.updated",
+      "category": "content",
+      "description": "The starter guide was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "build.created",
+      "category": "builds",
+      "description": "A new build was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "build.updated",
+      "category": "builds",
+      "description": "A build was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "build.removed",
+      "category": "builds",
+      "description": "A build was removed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "build.printout.published",
+      "category": "builds",
+      "description": "A public build printout was published to Discord.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.thread.created",
+      "category": "forum",
+      "description": "A new forum thread was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.thread.updated",
+      "category": "forum",
+      "description": "A forum thread was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.thread.removed",
+      "category": "forum",
+      "description": "A forum thread was removed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.post.created",
+      "category": "forum",
+      "description": "A new forum reply was posted.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.post.updated",
+      "category": "forum",
+      "description": "A forum reply was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "forum.post.removed",
+      "category": "forum",
+      "description": "A forum reply was removed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.created",
+      "category": "fleet",
+      "description": "A fleet was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.updated",
+      "category": "fleet",
+      "description": "A fleet profile was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.application.created",
+      "category": "fleet",
+      "description": "A fleet application was submitted.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.membership.updated",
+      "category": "fleet",
+      "description": "A fleet membership was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.leader.assigned",
+      "category": "fleet",
+      "description": "A fleet leadership role was assigned.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.role.created",
+      "category": "fleet",
+      "description": "A fleet role was created.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.role.updated",
+      "category": "fleet",
+      "description": "A fleet role was updated.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    },
+    {
+      "key": "fleet.role.removed",
+      "category": "fleet",
+      "description": "A fleet role was removed.",
+      "default_message": "RBF event **{event}** for {resource.type} #{resource.id}."
+    }
+  ]
+}

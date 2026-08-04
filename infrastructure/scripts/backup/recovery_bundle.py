@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import os
-from pathlib import Path, PurePosixPath
-import shutil
-import tarfile
+import argparse, hashlib, json, os, shutil, tarfile
 from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 ALLOWED_ROOTS = {"artifacts", "configuration", "system", "manifest.json"}
 
 
@@ -22,156 +16,100 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def iter_regular_files(root: Path):
-    for path in sorted(root.rglob("*")):
-        if path.is_file():
-            yield path
+def regular_files(root: Path):
+    return sorted(path for path in root.rglob("*") if path.is_file() and not path.is_symlink())
 
 
-def build_manifest(stage: Path, postgres_name: str, files_name: str) -> None:
-    file_entries = []
-    for path in iter_regular_files(stage):
+def create_manifest(stage: Path, postgres_name: str, files_name: str, release_name: str) -> None:
+    metadata_path = stage / "system" / "backup-metadata.json"
+    application = json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.is_file() else {}
+    entries = []
+    for path in regular_files(stage):
         relative = path.relative_to(stage).as_posix()
         if relative == "manifest.json":
             continue
-        file_entries.append(
-            {
-                "path": relative,
-                "size_bytes": path.stat().st_size,
-                "sha256": sha256_file(path),
-            }
-        )
-
-    metadata_path = stage / "system" / "backup-metadata.json"
-    metadata: dict[str, object] = {}
-    if metadata_path.is_file():
-        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-
+        entries.append({"path": relative, "size_bytes": path.stat().st_size, "sha256": sha256_file(path)})
     payload = {
         "schema_version": SCHEMA_VERSION,
+        "kind": "rbf-disaster-recovery-bundle",
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "application": metadata,
+        "application": application,
         "artifacts": {
             "postgres": f"artifacts/postgres/{postgres_name}",
             "files": f"artifacts/files/{files_name}",
+            "release": f"artifacts/release/{release_name}",
             "configuration": "configuration",
         },
-        "files": file_entries,
+        "files": entries,
     }
     target = stage / "manifest.json"
-    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    target.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     os.chmod(target, 0o600)
 
 
-def validate_member(member: tarfile.TarInfo) -> PurePosixPath:
-    path = PurePosixPath(member.name)
+def safe_path(name: str) -> PurePosixPath:
+    path = PurePosixPath(name)
     if path.is_absolute() or not path.parts or ".." in path.parts:
-        raise RuntimeError(f"Unsafe path in recovery archive: {member.name}")
+        raise RuntimeError(f"Unsafe path in recovery archive: {name}")
     if path.parts[0] not in ALLOWED_ROOTS:
-        raise RuntimeError(f"Unexpected root path in recovery archive: {member.name}")
-    if not (member.isdir() or member.isfile()):
-        raise RuntimeError(f"Unsupported archive entry type: {member.name}")
+        raise RuntimeError(f"Unexpected root path in recovery archive: {name}")
     return path
 
 
 def extract_safely(archive: Path, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(archive, mode="r:gz") as handle:
-        for member in handle.getmembers():
-            relative = validate_member(member)
+    with tarfile.open(archive, "r:gz") as bundle:
+        for member in bundle.getmembers():
+            relative = safe_path(member.name)
+            if not (member.isdir() or member.isfile()):
+                raise RuntimeError(f"Links and special entries are forbidden: {member.name}")
             target = destination.joinpath(*relative.parts)
-            resolved_parent = target.parent.resolve()
-            if destination.resolve() not in (resolved_parent, *resolved_parent.parents):
-                raise RuntimeError(f"Archive entry escapes destination: {member.name}")
+            parent = target.parent.resolve(); root = destination.resolve()
+            if root != parent and root not in parent.parents:
+                raise RuntimeError(f"Archive path escapes destination: {member.name}")
             if member.isdir():
-                target.mkdir(parents=True, exist_ok=True)
-                continue
+                target.mkdir(parents=True, exist_ok=True); continue
             target.parent.mkdir(parents=True, exist_ok=True)
-            source = handle.extractfile(member)
-            if source is None:
-                raise RuntimeError(f"Could not read archive entry: {member.name}")
-            with source, target.open("wb") as output:
-                shutil.copyfileobj(source, output)
+            source = bundle.extractfile(member)
+            if source is None: raise RuntimeError(f"Cannot read archive entry: {member.name}")
+            with source, target.open("wb") as output: shutil.copyfileobj(source, output)
             os.chmod(target, 0o600)
 
 
 def verify_extracted(root: Path) -> dict[str, object]:
     manifest_path = root / "manifest.json"
-    if not manifest_path.is_file():
-        raise RuntimeError("Recovery archive has no manifest.json")
+    if not manifest_path.is_file(): raise RuntimeError("Recovery manifest is missing")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if manifest.get("schema_version") != SCHEMA_VERSION:
-        raise RuntimeError("Unsupported recovery-bundle schema version")
+    if manifest.get("schema_version") != SCHEMA_VERSION or manifest.get("kind") != "rbf-disaster-recovery-bundle":
+        raise RuntimeError("Unsupported recovery bundle")
     entries = manifest.get("files")
-    if not isinstance(entries, list) or not entries:
-        raise RuntimeError("Recovery manifest has no file inventory")
-
-    expected_paths: set[str] = set()
+    if not isinstance(entries, list) or not entries: raise RuntimeError("Recovery inventory is empty")
+    expected: set[str] = set()
     for entry in entries:
-        if not isinstance(entry, dict):
-            raise RuntimeError("Invalid recovery-manifest file entry")
-        relative = str(entry.get("path") or "")
-        path = PurePosixPath(relative)
-        if path.is_absolute() or not path.parts or ".." in path.parts:
-            raise RuntimeError(f"Unsafe manifest path: {relative}")
+        relative = str(entry.get("path") or ""); path = safe_path(relative)
         target = root.joinpath(*path.parts)
-        if not target.is_file():
-            raise RuntimeError(f"Recovery file is missing: {relative}")
-        expected_paths.add(relative)
-        if "size_bytes" not in entry or target.stat().st_size != int(entry["size_bytes"]):
-            raise RuntimeError(f"Recovery file size mismatch: {relative}")
-        if sha256_file(target) != str(entry.get("sha256") or ""):
-            raise RuntimeError(f"Recovery file checksum mismatch: {relative}")
-
-    actual_paths = {
-        path.relative_to(root).as_posix()
-        for path in iter_regular_files(root)
-        if path.name != "manifest.json"
-    }
-    if actual_paths != expected_paths:
-        extra = sorted(actual_paths - expected_paths)
-        missing = sorted(expected_paths - actual_paths)
-        raise RuntimeError(f"Recovery inventory mismatch; extra={extra}, missing={missing}")
-
+        if not target.is_file() or target.is_symlink(): raise RuntimeError(f"Recovery file missing: {relative}")
+        if target.stat().st_size != int(entry.get("size_bytes", -1)): raise RuntimeError(f"Size mismatch: {relative}")
+        if sha256_file(target) != str(entry.get("sha256") or ""): raise RuntimeError(f"Checksum mismatch: {relative}")
+        expected.add(relative)
+    actual = {path.relative_to(root).as_posix() for path in regular_files(root) if path.name != "manifest.json"}
+    if actual != expected: raise RuntimeError(f"Inventory mismatch: missing={sorted(expected-actual)}, extra={sorted(actual-expected)}")
     artifacts = manifest.get("artifacts")
-    if not isinstance(artifacts, dict):
-        raise RuntimeError("Recovery manifest has no artifact map")
-    for key in ("postgres", "files", "configuration"):
-        relative = str(artifacts.get(key) or "")
-        target = root / relative
-        if key == "configuration":
-            if not target.is_dir():
-                raise RuntimeError("Recovery configuration directory is missing")
-        elif not target.is_file():
-            raise RuntimeError(f"Recovery {key} artifact is missing")
+    if not isinstance(artifacts, dict): raise RuntimeError("Artifact map is missing")
+    for key in ("postgres", "files", "release"):
+        if not (root / str(artifacts.get(key) or "")).is_file(): raise RuntimeError(f"Recovery {key} artifact is missing")
+    if not (root / str(artifacts.get("configuration") or "")).is_dir(): raise RuntimeError("Recovery configuration is missing")
     return manifest
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    manifest_parser = subparsers.add_parser("create-manifest")
-    manifest_parser.add_argument("stage", type=Path)
-    manifest_parser.add_argument("postgres_name")
-    manifest_parser.add_argument("files_name")
-
-    extract_parser = subparsers.add_parser("extract-and-verify")
-    extract_parser.add_argument("archive", type=Path)
-    extract_parser.add_argument("destination", type=Path)
-
-    verify_parser = subparsers.add_parser("verify-extracted")
-    verify_parser.add_argument("destination", type=Path)
-
+    parser = argparse.ArgumentParser(); commands = parser.add_subparsers(dest="command", required=True)
+    create = commands.add_parser("create-manifest"); create.add_argument("stage", type=Path); create.add_argument("postgres_name"); create.add_argument("files_name"); create.add_argument("release_name")
+    extract = commands.add_parser("extract-and-verify"); extract.add_argument("archive", type=Path); extract.add_argument("destination", type=Path)
+    verify = commands.add_parser("verify-extracted"); verify.add_argument("destination", type=Path)
     args = parser.parse_args()
-    if args.command == "create-manifest":
-        build_manifest(args.stage, args.postgres_name, args.files_name)
-    elif args.command == "extract-and-verify":
-        extract_safely(args.archive, args.destination)
-        print(json.dumps(verify_extracted(args.destination), ensure_ascii=False))
-    elif args.command == "verify-extracted":
-        print(json.dumps(verify_extracted(args.destination), ensure_ascii=False))
+    if args.command == "create-manifest": create_manifest(args.stage, args.postgres_name, args.files_name, args.release_name)
+    elif args.command == "extract-and-verify": extract_safely(args.archive, args.destination); print(json.dumps(verify_extracted(args.destination), sort_keys=True))
+    else: print(json.dumps(verify_extracted(args.destination), sort_keys=True))
 
-
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()

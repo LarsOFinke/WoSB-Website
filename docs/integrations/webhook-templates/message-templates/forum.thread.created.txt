@@ -1,9 +1,1 @@
-💬 **New Forum Thread**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Replies: `{data.reply_count}`
-Created at: `{data.created_at}`
-Last activity: `{data.last_activity_at}`
-Created by: **{actor.display_name}**
-🔗 [Open thread]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

@@ -76,21 +76,9 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Local uploads
-# Single repository-local upload source: backend/storage/uploads.
-# Root-level storage/ is intentionally ignored to avoid a second source of truth.
+# Local uploads and generated application data
 storage/
-backend/storage/uploads/*
-!backend/storage/uploads/demo/
-!backend/storage/uploads/demo/*.svg
-
-# Recovery-tool build environments and outputs
-/tools/linux/recovery-tool/.venv-build/
-/tools/linux/recovery-tool/build/
-/tools/linux/recovery-tool/dist/
-/tools/windows/recovery-tool/.venv-build/
-/tools/windows/recovery-tool/build/
-/tools/windows/recovery-tool/dist/
+artifacts/
 
 # Packaged binaries, installers and release artifacts
 release/

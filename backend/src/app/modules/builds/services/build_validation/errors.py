@@ -1,2 +1,0 @@
-class BuildValidationError(ValueError):
-    pass

@@ -7,7 +7,7 @@ const picker = readFileSync(new URL('../src/modules/builds/components/BuildOptio
 const pickerCss = readFileSync(new URL('../src/modules/builds/styles/buildOptionPicker.css', import.meta.url), 'utf8')
 
 function catalog(name) {
-  return JSON.parse(readFileSync(new URL(`../../backend/seeds/builds/options/${name}.json`, import.meta.url), 'utf8'))
+  return JSON.parse(readFileSync(new URL(`../../spring-api/src/main/resources/seed/builds/options/${name}.json`, import.meta.url), 'utf8'))
 }
 
 function publicAsset(imageUrl) {

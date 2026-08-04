@@ -1,6 +1,1 @@
-🗑️ **Forum Thread Removed**
-Title: **{data.title}**
-Thread ID: `{data.id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Browse forum]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

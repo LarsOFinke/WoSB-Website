@@ -1,556 +1,387 @@
 # Discord webhook message templates
 
-Generated from the versioned backend defaults. Use the Staff Panel presets for
-moderation, operations or public calendar channels and customize only when needed.
+Generated from `contracts/webhook-events.json`.
 
 ## `backup.configuration.deleted`
 
+The protected backup connection configuration was removed.
+
 ```text
-🔐 **Backup Configuration Removed**
-Requested by: **{actor.display_name}**
-Status: queued for the protected host runner
-Reference: `{resource.id}`
-🔗 [Open backup administration]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `backup.configuration.updated`
 
+The protected backup connection configuration changed.
+
 ```text
-🔐 **Backup Configuration Changed**
-Action: `{data.action}`
-Requested by: **{actor.display_name}**
-Status: queued for the protected host runner
-Reference: `{resource.id}`
-🔗 [Open backup administration]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `backup.restore.requested`
 
+A bootstrap administrator requested a database restore.
+
 ```text
-🚨 **Database Restore Requested**
-Backup reference: `{data.backup_id}`
-Requested by: **{actor.display_name}**
-Status: awaiting protected host approval
-🔗 [Review backup status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `backup.run.requested`
 
+An administrator requested a protected application backup.
+
 ```text
-💾 **Application Backup Requested**
-Requested by: **{actor.display_name}**
-Status: queued for the protected host runner
-Includes: database, uploads and encrypted recovery bundle
-🔗 [Review backup status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `build.created`
 
+A new build was created.
+
 ```text
-⚓ **New Build Created**
-Build: **{data.build_name}**
-Ship: **{data.ship.name}** (Rate `{data.ship.rate}`)
-Build type: `{data.build_type}`
-Official template: `{data.is_official_template}`
-Crew: `{data.sailors}` sailors · `{data.soldiers}` soldiers · `{data.musketeers}` musketeers · `{data.mercenaries}` mercenaries
-Owner ID: `{data.owner_id}`
-Created by: **{actor.display_name}**
-Created at: `{data.created_at}`
-🔗 [Open build]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## `build.printout.published`
+
+A public build printout was published to Discord.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `build.removed`
 
+A build was removed.
+
 ```text
-🗑️ **Build Removed**
-Build: **{data.build_name}**
-Build ID: `{data.id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Browse remaining builds]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `build.updated`
 
+A build was updated.
+
 ```text
-🔧 **Build Updated**
-Build: **{data.build_name}**
-Ship: **{data.ship.name}** (Rate `{data.ship.rate}`)
-Build type: `{data.build_type}`
-Official template: `{data.is_official_template}`
-Crew: `{data.sailors}` sailors · `{data.soldiers}` soldiers · `{data.musketeers}` musketeers · `{data.mercenaries}` mercenaries
-Owner ID: `{data.owner_id}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-🔗 [Open build]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `calendar.event.cancelled`
 
+A fleet or squad event was cancelled.
+
 ```text
-❌ **Shoutout cancelled: {data.title}**
-The calendar event scheduled for `{data.start_at}` will not take place.
-📍 {data.location}
-🔗 [See the current calendar]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `calendar.event.created`
 
+A fleet or squad event was created.
+
 ```text
-🏴‍☠️ **Fleet shoutout: {data.title}**
-🗓️ Starts: `{data.start_at}`
-⏱️ Ends: `{data.end_at}`
-📍 {data.location}
-👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
-🔗 [Open event and join in]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `calendar.event.updated`
 
+A fleet or squad event was updated.
+
 ```text
-📣 **Shoutout updated: {data.title}**
-🗓️ Starts: `{data.start_at}` · Ends: `{data.end_at}`
-📍 {data.location}
-👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
-🔗 [Check the latest event details]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.application.created`
 
+A fleet application was submitted.
+
 ```text
-📨 **New Fleet Application**
-Applicant: **{data.user.display_name}** (`{data.user.username}`)
-Fleet ID: `{data.fleet_id}`
-Status: `{data.status}`
-Application note: {data.note}
-🔗 [Open fleet management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.created`
 
+A fleet was created.
+
 ```text
-⚓ **Fleet Created**
-Fleet: **{data.name}**
-Focus: `{data.focus}`
-Members: `{data.active_members_count}`
-Created by: **{actor.display_name}**
-🔗 [Open fleet]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.leader.assigned`
 
+A fleet leadership role was assigned.
+
 ```text
-🧭 **Fleet Leadership Assigned**
-Member: **{data.user.display_name}** (`{data.user.username}`)
-Fleet ID: `{data.fleet_id}`
-Role: `{data.role}`
-Assigned by: **{actor.display_name}**
-🔗 [Open fleet management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.membership.updated`
 
+A fleet membership was updated.
+
 ```text
-🧭 **Fleet Membership Updated**
-Member: **{data.user.display_name}** (`{data.user.username}`)
-Fleet ID: `{data.fleet_id}`
-Status: `{data.status}`
-Role: `{data.role}`
-Assignment: {data.assignment}
-Updated by: **{actor.display_name}**
-🔗 [Open fleet management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.role.created`
 
+A fleet role was created.
+
 ```text
-➕ **Fleet Role Created**
-Role: **{data.label}** (`{data.code}`)
-Rank: `{data.rank}`
-Created by: **{actor.display_name}**
-🔗 [Open fleet roles]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.role.removed`
 
+A fleet role was removed.
+
 ```text
-➖ **Fleet Role Removed**
-Role: **{data.label}** (`{data.code}`)
-Role ID: `{data.id}`
-Removed by: **{actor.display_name}**
-🔗 [Open fleet roles]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.role.updated`
 
+A fleet role was updated.
+
 ```text
-🔄 **Fleet Role Updated**
-Role: **{data.label}** (`{data.code}`)
-Rank: `{data.rank}`
-Active: `{data.is_active}`
-Updated by: **{actor.display_name}**
-🔗 [Open fleet roles]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `fleet.updated`
 
+A fleet profile was updated.
+
 ```text
-🛠️ **Fleet Profile Updated**
-Fleet: **{data.name}**
-Focus: `{data.focus}`
-Members: `{data.active_members_count}`
-Description: {data.description}
-Updated by: **{actor.display_name}**
-🔗 [Open fleet]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.post.created`
 
+A new forum reply was posted.
+
 ```text
-💬 **New Forum Reply**
-Thread ID: `{data.thread_id}`
-Author: **{data.author.display_name}**
-Reply ID: `{data.id}`
-Posted at: `{data.created_at}`
-Message: {data.body}
-🔗 [Open discussion]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.post.removed`
 
+A forum reply was removed.
+
 ```text
-🗑️ **Forum Reply Removed**
-Thread ID: `{data.thread_id}`
-Reply ID: `{data.id}`
-Original author: **{data.author.display_name}**
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Open discussion]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.post.updated`
 
+A forum reply was updated.
+
 ```text
-✏️ **Forum Reply Updated**
-Thread ID: `{data.thread_id}`
-Author: **{data.author.display_name}**
-Reply ID: `{data.id}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-Message: {data.body}
-🔗 [Open discussion]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.thread.created`
 
+A new forum thread was created.
+
 ```text
-💬 **New Forum Thread**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Replies: `{data.reply_count}`
-Created at: `{data.created_at}`
-Last activity: `{data.last_activity_at}`
-Created by: **{actor.display_name}**
-🔗 [Open thread]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.thread.removed`
 
+A forum thread was removed.
+
 ```text
-🗑️ **Forum Thread Removed**
-Title: **{data.title}**
-Thread ID: `{data.id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Browse forum]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `forum.thread.updated`
 
+A forum thread was updated.
+
 ```text
-✏️ **Forum Thread Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Replies: `{data.reply_count}`
-Last activity: `{data.last_activity_at}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-🔗 [Open thread]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `group.closed`
 
+A group-search listing was closed.
+
 ```text
-🔒 **Group Search Closed**
-Group: **{data.title}**
-Focus: `{data.focus}`
-Members: `{data.active_members_count}` / `{data.max_members}`
-Closed by: **{actor.display_name}**
-Closed at: `{occurred_at}`
-🔗 [Open group record]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `group.created`
 
+A new group-search listing was created.
+
 ```text
-🔎 **New Group Search**
-Group: **{data.title}**
-Focus: `{data.focus}`
-Owner: **{data.owner.display_name}**
-Slots: `{data.spots_left}` / `{data.max_members}` available
-Allowed ship rates: `{data.max_ship_rate}` to `{data.min_ship_rate}`
-Starts: `{data.scheduled_start_at}`
-Ends: `{data.scheduled_end_at}`
-Expires: `{data.expires_at}`
-Created by: **{actor.display_name}**
-🔗 [Open group search]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `group.member.joined`
 
+A member joined a group-search listing.
+
 ```text
-🙋 **Member Joined Group Search**
-Group: **{data.title}**
-Member: **{data.member.display_name}**
-Fleet: {data.member.fleet_name}
-Ship: **{data.member.ship_name}** (Rate `{data.member.ship_rate}`)
-Members: `{data.active_members_count}` / `{data.max_members}`
-Remaining slots: `{data.spots_left}`
-Joined at: `{occurred_at}`
-🔗 [Open group search]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `guide.created`
 
+A new guide was published.
+
 ```text
-📘 **New Guide Published**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Summary: {data.summary}
-Attachments: `{data.attachment_count}`
-Linked builds: `{data.build_reference_count}`
-Published at: `{data.created_at}`
-Created by: **{actor.display_name}**
-🔗 [Open guide]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `guide.removed`
 
+A guide was removed from publication.
+
 ```text
-🗑️ **Guide Removed**
-Title: **{data.title}**
-Guide ID: `{data.id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Browse remaining guides]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `guide.updated`
 
+A published guide was updated.
+
 ```text
-📝 **Guide Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Summary: {data.summary}
-Attachments: `{data.attachment_count}`
-Linked builds: `{data.build_reference_count}`
-Updated at: `{data.updated_at}`
-Updated by: **{actor.display_name}**
-🔗 [Open guide]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `integration.test`
 
+Manual connectivity and payload test.
+
 ```text
-🧪 **RBF Webhook Test**
-Destination: **{destination.name}**
-Event: `{event}`
-Delivery ID: `{id}`
-Occurred at: `{occurred_at}`
-Message: {data.message}
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `newcomer_guide.updated`
 
+The starter guide was updated.
+
 ```text
-🧭 **Newcomer Guide Updated**
-Title: **{data.title}**
-Last editor: **{data.updated_by}**
-Updated at: `{data.updated_at}`
-Changed by: **{actor.display_name}**
-🔗 [Open newcomer guide]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `privacy.request.created`
 
+A data-subject request requires an administrator response.
+
 ```text
-🛡️ **Data-Subject Request Needs Review**
-Type: `{data.request_type}`
-Request ID: `{data.id}`
-Submitted at: `{occurred_at}`
-No request details are sent to Discord.
-👉 [Open the protected privacy queue]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `privacy.request.resolved`
 
+A data-subject request was resolved by an administrator.
+
 ```text
-✅ **Data-Subject Request Resolved**
-Type: `{data.request_type}`
-Request ID: `{data.id}`
-Decision: `{data.decision}`
-Resolved by: **{actor.display_name}**
-No resolution details are sent to Discord.
-🔗 [Open privacy administration]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `registration.request.approved`
 
+An access request was approved.
+
 ```text
-✅ **Registration Approved**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Request ID: `{data.id}`
-Fleet application: `{data.wants_fleet_membership}`
-Approved by: **{actor.display_name}** (`{actor.username}`)
-Decision note: {data.decision_note}
-Processed at: `{occurred_at}`
-🔗 [Open registration management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `registration.request.created`
 
+A new access request was submitted.
+
 ```text
-🔔 **Registration Needs Review**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Request ID: `{data.id}`
-Fleet application: `{data.wants_fleet_membership}`
-Received at: `{occurred_at}`
-👉 **Please review promptly:** [Open moderation queue]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `registration.request.rejected`
 
+An access request was rejected.
+
 ```text
-⛔ **Registration Rejected**
-Name: **{data.display_name}**
-Username: `{data.username}`
-Request ID: `{data.id}`
-Rejected by: **{actor.display_name}** (`{actor.username}`)
-Decision note: {data.decision_note}
-Processed at: `{occurred_at}`
-🔗 [Open registration management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.archived`
 
+A squad was archived.
+
 ```text
-📦 **Squad Archived**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Final member count: `{data.member_count}`
-Archived by: **{actor.display_name}**
-Archived at: `{occurred_at}`
-🔗 [Open squad record]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.created`
 
+A squad was created.
+
 ```text
-🛡️ **Squad Created**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Members: `{data.member_count}`
-Created by: **{actor.display_name}**
-Created at: `{occurred_at}`
-🔗 [Open squad]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.member.added`
 
+A member was added to a squad.
+
 ```text
-➕ **Squad Member Added**
-Squad: **{data.squad_name}**
-Member: **{data.member_display_name}**
-Role: `{data.member_role}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Added by: **{actor.display_name}**
-Added at: `{occurred_at}`
-🔗 [Open squad roster]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.member.removed`
 
+A member was removed from a squad.
+
 ```text
-➖ **Squad Member Removed**
-Squad: **{data.squad_name}**
-Membership ID: `{data.member_id}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Open squad roster]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.member.updated`
 
+A squad membership was updated.
+
 ```text
-🔄 **Squad Membership Updated**
-Squad: **{data.squad_name}**
-Membership ID: `{data.member_id}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Updated by: **{actor.display_name}**
-Updated at: `{occurred_at}`
-🔗 [Open squad roster]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `squad.updated`
 
+A squad was updated.
+
 ```text
-🛠️ **Squad Updated**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Members: `{data.member_count}`
-Updated by: **{actor.display_name}**
-Updated at: `{occurred_at}`
-🔗 [Open squad]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## `system.maintenance.ended`
+
+A maintenance window ended or failed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## `system.maintenance.started`
+
+A maintenance window was activated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `system.update.result`
 
+A controlled server operation completed or failed.
+
 ```text
-{data.state} **Server Operation Result**
-Mode: `{data.operation}`
-Result: `{data.state}`
-Requested by: **{data.requested_by}**
-Started: `{data.started_at}`
-Finished: `{data.finished_at}`
-Revision: `{data.commit_before}` → `{data.commit_after}`
-{data.message}
-🔗 [Open system status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
 ## `system.update.started`
 
+A controlled server operation was requested and queued.
+
 ```text
-🚀 **Server Operation Started**
-Mode: `{data.operation}`
-Requested by: **{data.requested_by}**
-Requested at: `{data.requested_at}`
-Status: `{data.state}`
-{data.message}
-🔗 [Open system status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.
 ```

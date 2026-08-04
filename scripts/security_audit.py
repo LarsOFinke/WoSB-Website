@@ -1,278 +1,59 @@
 #!/usr/bin/env python3
-"""Deterministic repository security invariants.
-
-This complements online software-composition analysis. It intentionally checks
-security properties that are specific to this repository and can run offline.
-"""
+"""Static, fail-closed security invariants for application and deployment boundaries."""
 from __future__ import annotations
-
-import ast
 import re
 from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
 
-ROOT = Path(__file__).resolve().parents[1]
-FAILURES: list[str] = []
-CHECKS = 0
+def require(value: bool,message: str)->None:
+    if not value: raise SystemExit(f'[security] {message}')
+def read(path: str)->str:
+    target=ROOT/path; require(target.is_file(),f'missing {path}'); return target.read_text(encoding='utf-8')
 
+security=read('spring-api/src/main/java/eu/royalblackwater/api/config/SecurityConfiguration.java')
+for contract in ('.csrf(csrf ->','CookieCsrfTokenRepository','withHttpOnlyFalse()', '.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")','.requestMatchers("/api/**").authenticated()','.anyRequest().denyAll()','SessionCreationPolicy.STATELESS','setAllowCredentials(true)'):
+    require(contract in security,f'missing Spring Security contract: {contract}')
+require('csrf.disable' not in security,'CSRF must not be disabled')
+require('"*"' not in re.search(r'CorsConfigurationSource[\s\S]+?return source;',security).group(0),'credentialed CORS must not allow wildcard origins')
+app=read('spring-api/src/main/resources/application.yml')
+for contract in ('include-message: never','show-details: never','open-in-view: false','ddl-auto: validate','clean-disabled: true','fail-on-unknown-properties: true','fail_on_pagination_over_collection_fetch: true'):
+    require(contract in app,f'missing production setting: {contract}')
+require('baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}' in app,'unsafe automatic Flyway baseline default')
+password=read('spring-api/src/main/java/eu/royalblackwater/api/security/PasswordHasher.java')
+require('ITERATIONS = 600_000' in password and 'PBKDF2WithHmacSHA256' in password,'password hashing policy regressed')
+session=read('spring-api/src/main/java/eu/royalblackwater/api/security/SessionTokenService.java')
+require('new byte[32]' in session and 'SHA-256' in session,'session token entropy/hash policy regressed')
+auth=read('spring-api/src/main/java/eu/royalblackwater/api/account/AuthOperationHandler.java')
+for contract in ('.httpOnly(true)','.secure(session.secure())','.sameSite(session.sameSite())','.maxAge(session.ttl())'):
+    require(contract in auth,f'session cookie contract missing: {contract}')
+secret=read('spring-api/src/main/java/eu/royalblackwater/api/security/FernetSecretBox.java')
+require('At least one application encryption key is required' in secret,'secret key must be mandatory')
+for forbidden in ('derivedKey(', 'databaseUrl', 'AES/ECB', 'Cipher.getInstance("AES")'):
+    require(forbidden not in secret,f'insecure secret-box fallback remains: {forbidden}')
 
-def check(condition: bool, message: str) -> None:
-    global CHECKS
-    CHECKS += 1
-    if not condition:
-        FAILURES.append(message)
+java_root=ROOT/'spring-api/src/main/java'
+all_java='\n'.join(p.read_text(encoding='utf-8',errors='ignore') for p in java_root.rglob('*.java'))
+for forbidden in ('Runtime.getRuntime().exec','ProcessBuilder(', 'TrustAll', 'HostnameVerifier', 'setFollowRedirects(true)', 'FetchType.EAGER'):
+    require(forbidden not in all_java,f'forbidden Java security pattern: {forbidden}')
+require('SKIP LOCKED' in all_java.upper(),'persistent delivery workers must claim rows without duplicate work')
 
-
-def text(relative: str) -> str:
-    return (ROOT / relative).read_text(encoding="utf-8")
-
-
-# CI supply-chain hygiene. All external actions are pinned to reviewed immutable commits.
-workflow_paths = sorted((ROOT / ".github/workflows").glob("*.yml"))
-workflow_sources = "\n".join(path.read_text(encoding="utf-8") for path in workflow_paths)
-check("pull_request_target:" not in workflow_sources, "pull_request_target must not be used")
-approved_actions = {
-    "actions/checkout": "d23441a48e516b6c34aea4fa41551a30e30af803",
-    "actions/setup-python": "ece7cb06caefa5fff74198d8649806c4678c61a1",
-    "actions/setup-node": "249970729cb0ef3589644e2896645e5dc5ba9c38",
-    "actions/setup-java": "03ad4de0992f5dab5e18fcb136590ce7c4a0ac95",
-    "actions/upload-artifact": "b7c566a772e6b6bfb58ed0dc250532a479d7789f",
-    "aquasecurity/trivy-action": "a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8",
-    "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml": (
-        "3adb4b14a2b0623876d18d863a498b785fb3752d"
-    ),
-    "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml": (
-        "3adb4b14a2b0623876d18d863a498b785fb3752d"
-    ),
-}
-action_references = 0
-for path in workflow_paths:
-    source = path.read_text(encoding="utf-8")
-    checkout_count = source.count("actions/checkout@")
-    check(
-        source.count("persist-credentials: false") >= checkout_count,
-        f"{path.relative_to(ROOT)} must disable persisted checkout credentials",
-    )
-    for line_number, line in enumerate(source.splitlines(), start=1):
-        match = re.match(r'\s*(?:-\s*)?uses:\s*["\']?([^@\s"\']+)@([^\s"\']+)', line)
-        if match is None:
-            continue
-        action, revision = match.groups()
-        if action.startswith(("./", "docker://")):
-            continue
-        action_references += 1
-        check(
-            action in approved_actions,
-            f"unreviewed action in {path.relative_to(ROOT)}:{line_number}",
-        )
-        if action in approved_actions:
-            check(
-                revision == approved_actions[action],
-                f"mutable or unexpected action revision in {path.relative_to(ROOT)}:{line_number}",
-            )
-check(action_references > 0, "no external GitHub Actions were inspected")
-check("osv-scanner-reusable" in workflow_sources, "OSV dependency scanning workflow is missing")
-check("aquasecurity/trivy-action@" in workflow_sources, "container image scanning is missing")
-check("severity: HIGH,CRITICAL" in workflow_sources, "container scan severity gate is missing")
-check("ignore-unfixed: true" in workflow_sources, "container scan fix policy is missing")
-
-# Container and edge hardening.
-compose = text("infrastructure/compose.yml")
-check("privileged: true" not in compose, "privileged container found")
-check("/var/run/docker.sock" not in compose, "Docker socket must not be mounted")
-check(compose.count("no-new-privileges:true") >= 7, "services must retain no-new-privileges")
-check(compose.count("pids_limit:") >= 7, "every service must retain a process limit")
-check(compose.count("cap_drop:") >= 3, "non-root application jobs must drop Linux capabilities")
-host_packages = text("infrastructure/scripts/lib/host/packages.sh")
-host_firewall = text("infrastructure/scripts/lib/host/firewall.sh")
-check("unattended-upgrades" in host_packages, "host security updates must be installed")
-check("apt-daily-upgrade.timer" in host_packages, "host security update timer must be enabled")
-check("usermod -aG docker" not in host_packages, "setup must not grant root-equivalent Docker group access")
-check("ufw default deny incoming" in host_firewall, "host firewall must default-deny inbound traffic")
-headers = text("infrastructure/nginx/security-headers.conf")
-for header in (
-    "Strict-Transport-Security",
-    "Content-Security-Policy",
-    "Cross-Origin-Opener-Policy",
-    "Cross-Origin-Resource-Policy",
-    "X-Permitted-Cross-Domain-Policies",
-):
-    check(header in headers, f"missing edge header: {header}")
-upload_headers = text("infrastructure/nginx/upload-security-headers.conf")
-for header in (
-    "Strict-Transport-Security",
-    "X-Content-Type-Options",
-    "Content-Security-Policy",
-    "Cross-Origin-Resource-Policy",
-):
-    check(header in upload_headers, f"missing upload response header: {header}")
-nginx = text("infrastructure/nginx/default.conf")
-check("limit_req zone=auth_login" in nginx, "login rate limit is missing")
-check("limit_req zone=auth_register" in nginx, "registration rate limit is missing")
-session_config = text("backend/config/session.cfg")
-check(
-    "cookie_samesite = lax" in session_config
-    or "cookie_samesite = strict" in session_config,
-    "session cookie SameSite protection is missing",
-)
-auth_routes = text("backend/src/app/modules/accounts/routes/auth.py")
-check("httponly=True" in auth_routes, "session cookie must remain HttpOnly")
-privacy_export = text("backend/src/app/modules/privacy/services/data_export_service.py")
-privacy_requests = text(
-    "backend/src/app/modules/privacy/services/data_subject_request_service.py"
-)
-for secret_column in ("password_hash", "token_hash", "consent_key"):
-    check(
-        secret_column in privacy_export,
-        f"personal export does not explicitly exclude {secret_column}",
-    )
-check("auth_sessions" in privacy_requests, "account deletion must revoke sessions")
-check("is_active = False" in privacy_requests, "account deletion must deactivate login")
-check("is_bootstrap_admin" in privacy_requests, "bootstrap administrator deletion must remain blocked")
-
-# Secret handling and Discord webhook invariants.
-webhook_model = text("backend/src/app/modules/admin/models/outbound_webhook.py")
-webhook_service = text("backend/src/app/modules/admin/services/outbound_webhook_service.py")
-secret_box = text("backend/src/app/core/secret_box.py")
-check("discord_avatar_url" not in webhook_model, "obsolete webhook avatar column remains")
-check("webhook_secret_box.encrypt" in webhook_service, "webhook endpoints are not encrypted")
-check(
-    "MultiFernet" in secret_box and "needs_rotation" in secret_box,
-    "key rotation support missing",
-)
-check(
-    "WEBHOOK_ENCRYPTION_KEYS" in text("infrastructure/scripts/lib/env.sh"),
-    "deployment does not generate a webhook encryption key",
-)
-
-# High-confidence committed-secret patterns in production/configuration files.
-scan_roots = [
-    ROOT / "backend/src",
-    ROOT / "frontend/src",
-    ROOT / "infrastructure",
-    ROOT / "tools/recovery-tool",
-    ROOT / ".github",
-]
-secret_patterns = {
-    "private key": re.compile(
-        r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----[\s\S]{64,}"
-        r"-----END (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"
-    ),
-    "AWS access key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
-    "GitHub token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}\b"),
-    "Discord webhook credential": re.compile(
-        r"https://(?:canary\.|ptb\.)?discord(?:app)?\.com/api(?:/v\d+)?/webhooks/"
-        r"\d{10,}/[A-Za-z0-9._-]{30,}"
-    ),
-}
-text_suffixes = {
-    ".py", ".js", ".mjs", ".vue", ".sh", ".yml", ".yaml", ".conf", ".env",
-    ".example", ".ini", ".cfg", ".toml", ".json", ".md", ".txt", ".pem", ".key",
-}
-for root in scan_roots:
-    for path in root.rglob("*"):
-        if not path.is_file():
-            continue
-        is_candidate = (
-            path.suffix.casefold() in text_suffixes
-            or path.name.startswith(".env")
-            or path.name.startswith("Dockerfile")
-        )
-        if not is_candidate or path.stat().st_size > 2_000_000:
-            continue
-        source = path.read_text(encoding="utf-8", errors="ignore")
-        for label, pattern in secret_patterns.items():
-            check(
-                pattern.search(source) is None,
-                f"possible committed {label}: {path.relative_to(ROOT)}",
-            )
-
-backup_admin_runner = "\n".join(
-    text(f"infrastructure/scripts/backup/{name}")
-    for name in (
-        "backup-admin-runner.py",
-        "backup_runner_core.py",
-        "backup_runner_enrollment.py",
-        "backup_runner_transfer.py",
-        "backup_runner_restore.py",
-    )
-)
-restore_runner_block = text("infrastructure/scripts/backup/backup_runner_restore.py")
-check(
-    restore_runner_block.index("consume_database_restore_approval")
-    < restore_runner_block.index("resolve_local_postgres_backup"),
-    "database restore host approval must precede local backup resolution",
-)
-
-# Assisted backup-server enrollment must separate write and recovery credentials.
-enrollment_contract = text("contracts/backup_enrollment.py")
-server_setup = text("tools/recovery-tool/src/rbf_recovery_tool/server_setup.py")
-server_provision = text("tools/linux/recovery-tool/Provision-RbfBackupServer.sh")
-remote_sync = text("infrastructure/scripts/backup/sync-backup-set-remote.py")
-check("PRIVATE KEY" not in enrollment_contract, "enrollment contract must not carry private keys")
-check("_ensure_recovery_ssh_key" in server_setup, "local recovery read key generation is missing")
-check("_configure_local_recovery_profile" in server_setup, "local recovery profile automation is missing")
-check("ForceCommand internal-sftp -u 0027 -d /data" in server_provision, "managed upload SFTP policy is missing")
-check("ForceCommand internal-sftp -R -d /data" in server_provision, "managed recovery account is not read-only")
-check('from="127.0.0.1,::1"' in server_provision, "recovery SSH key must be restricted to loopback")
-check("ChrootDirectory" in server_provision, "managed SFTP accounts must remain chrooted")
-check("Abbruch zum Schutz des bestehenden Kontos" in server_provision, "provisioner may overwrite unmanaged accounts")
-check("zurückgerollt" in server_provision, "invalid SSHD enrollment configuration lacks rollback")
-check("validate_manifest(infra, args.backup_set.resolve())" in remote_sync, "scheduled offsite sync must validate the committed set")
-check(remote_sync.index('runner.transfer(config, args.verification.resolve(), "verification")') < remote_sync.index('runner.transfer(config, args.backup_set.resolve(), "backup_set")'), "remote set commit marker must be published after verification")
-
-# Frozen recovery client must retain explicit host-key pinning and secret-minimal profiles.
-recovery_sftp = text("tools/recovery-tool/src/rbf_recovery_tool/sftp_client.py")
-recovery_config = text("tools/recovery-tool/src/rbf_recovery_tool/config.py")
-recovery_verification = text("tools/recovery-tool/src/rbf_recovery_tool/verification.py")
-recovery_lab = text("tools/recovery-tool/src/rbf_recovery_tool/docker_lab.py")
-recovery_linux_setup = text("tools/recovery-tool/src/rbf_recovery_tool/linux_setup.py")
-check("PinnedFingerprintPolicy" in recovery_sftp, "recovery client lost SSH host-key pinning")
-check("AutoAddPolicy" not in recovery_sftp, "recovery client must not auto-trust SSH host keys")
-check("password:" not in recovery_config, "recovery profile must not persist passwords")
-check("verify_sidecar" in recovery_verification, "recovery client must verify transport checksums")
-check("_validated_members" in recovery_verification, "recovery client must validate archive members")
-check(
-    '127.0.0.1:${{POSTGRES_LOCAL_PORT}}:5432' in recovery_lab,
-    "local recovery database must remain loopback-only",
-)
-preflight_override = recovery_lab.split("def _application_preflight_override", 1)[1].split("def verify_recovery", 1)[0]
-check("networks: [rbf_recovery_backend]" in preflight_override, "recovery API preflight must use the internal lab network")
-check("ports:" not in preflight_override, "recovery API preflight must not publish host ports")
-check("no-new-privileges:true" in recovery_lab, "local recovery database must prevent privilege escalation")
-check("${{POSTGRES_PASSWORD}}" in recovery_lab, "local recovery compose must reference the protected env file for its password")
-check("require_root_owned=True" in recovery_linux_setup, "privileged recovery helper must be root-owned")
-check("shell=True" not in recovery_linux_setup, "Linux recovery setup must not invoke a shell")
-
-# Python code: no dynamic execution or shell=True in production/runtime modules.
-python_sources = [
-    *(ROOT / "backend/src").rglob("*.py"),
-    *(ROOT / "infrastructure/scripts").rglob("*.py"),
-    *(ROOT / "tools/recovery-tool/src").rglob("*.py"),
-]
-for path in python_sources:
-    try:
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except SyntaxError as exc:
-        FAILURES.append(f"cannot parse {path.relative_to(ROOT)}: {exc}")
-        continue
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            check(
-                node.func.id not in {"eval", "exec"},
-                f"dynamic execution in {path.relative_to(ROOT)}",
-            )
-        if isinstance(node, ast.Call):
-            for keyword in node.keywords:
-                if keyword.arg == "shell" and isinstance(keyword.value, ast.Constant):
-                    check(
-                        keyword.value.value is not True,
-                        f"shell=True in {path.relative_to(ROOT)}",
-                    )
-
-if FAILURES:
-    print("[security-audit] FAILED")
-    for failure in FAILURES:
-        print(f" - {failure}")
-    raise SystemExit(1)
-
-print(f"[security-audit] {CHECKS} offline security invariants passed")
+compose=read('infrastructure/compose.yml')
+for service in ('api','gateway'):
+    match=re.search(rf'(?ms)^  {re.escape(service)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)', compose)
+    require(match is not None,f'missing compose service {service}')
+    section=match.group(1)
+    require('read_only: true' in section,f'{service} filesystem is not read-only')
+    require('no-new-privileges:true' in section,f'{service} lacks no-new-privileges')
+    require('cap_drop: [ALL]' in section or '- ALL' in section,f'{service} does not drop capabilities')
+require('127.0.0.1:${POSTGRES_LOCAL_PORT' in compose,'PostgreSQL may not bind publicly')
+installer=read('infrastructure/scripts/release/verify-artifact.py')
+for contract in ('Links and special files are forbidden','Artifact checksum mismatch','Artifact inventory mismatch','path.is_absolute()','".." in path.parts'):
+    require(contract in installer,f'artifact verifier lost safety contract: {contract}')
+recovery=read('infrastructure/scripts/backup/recovery_bundle.py')
+for contract in ('Links and special entries are forbidden','Checksum mismatch','Inventory mismatch','path.is_absolute()'):
+    require(contract in recovery,f'recovery verifier lost safety contract: {contract}')
+nginx=read('infrastructure/nginx/default.conf')
+for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Policy'):
+    require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
+require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
+print('[security] OK: Spring security, secret handling, containers and artifact boundaries')

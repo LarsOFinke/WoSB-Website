@@ -1,1 +1,0 @@
-"""forum domain module."""

@@ -1,6 +1,1 @@
-🛠️ **Maintenance Started**
-Reason: `{data.reason}`
-Started: `{data.started_at}`
-Status: `{data.outcome}`
-{data.message}
-🔗 [Open system status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

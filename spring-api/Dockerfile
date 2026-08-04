@@ -8,7 +8,7 @@ RUN mvn --batch-mode --no-transfer-progress clean package -DskipTests
 FROM eclipse-temurin:21.0.8_9-jre-alpine
 RUN addgroup -S rbf && adduser -S -G rbf -u 10001 rbf
 WORKDIR /app
-COPY --from=build --chown=rbf:rbf /workspace/target/rbf-secure-api-*.jar /app/application.jar
+COPY --from=build --chown=rbf:rbf /workspace/target/rbf-api-*.jar /app/application.jar
 USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/application.jar"]

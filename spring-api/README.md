@@ -1,42 +1,18 @@
-# RBF Secure API
+# Spring Boot API
 
-Dieser Dienst ist der zentrale HTTP-Einstiegspunkt der schrittweisen
-Backend-Migration. Authentifizierung ist nativ in Spring implementiert; noch nicht
-migrierte Fachrouten werden intern an FastAPI weitergereicht.
-
-Nativ besitzt Spring aktuell:
-
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `POST /api/auth/change-password`
-- `GET /api/auth/me`
-- `GET /api/legal-notice`
-- `GET /api/privacy/cookie-policy`
-- `GET /api/privacy/cookie-consent`
-- `GET /api/fleets/public/official`
-
-Alle `/api/**`-Routen werden durch Spring geschützt und angenommen. Nicht migrierte
-Fachrouten und Schreibpfade laufen ausschließlich über den internen Proxy zu FastAPI; der Browser und
-NGINX sprechen nicht mehr direkt mit dem FastAPI-Container. `/uploads/...` bleibt als
-kompatibler Legacy-Dateipfad zunächst direkt am API-Container.
-
-## Lokal prüfen
-
-Voraussetzungen sind JDK 21 und Maven 3.9 oder neuer.
+Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `contracts/api-contract.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
 
 ```bash
-mvn --batch-mode --no-transfer-progress test
+mvn -f spring-api/pom.xml verify
+mvn -f spring-api/pom.xml spring-boot:run
 ```
 
-Für einen lokalen Start werden `SPRING_DATASOURCE_URL`, `POSTGRES_USER`,
-`POSTGRES_PASSWORD`, `SESSION_COOKIE_SECURE`, `ALLOWED_HOSTS` und `CORS_ORIGINS`
-benötigt. Hibernate darf das von Alembic verwaltete Schema nur validieren und nie
-erzeugen oder verändern.
+Wichtige Regeln:
 
-## Sicherheitsvertrag
-
-- PBKDF2-HMAC-SHA256 und SHA-256-Sessionhashes bleiben kompatibel zum Python-Bestand.
-- Cookies sind HttpOnly, im Produktionsprofil Secure und haben eine explizite SameSite-Policy.
-- Host- und Origin/Sec-Fetch-Prüfung weisen fremde Werte ab; NGINX begrenzt Anfrageraten.
-- Der Actuator veröffentlicht ausschließlich Health und bleibt im internen Compose-Netz.
-- Der Container läuft ohne root, Linux-Capabilities oder allgemeines Outbound-Netz.
+- Java 21 und Spring Boot 4.
+- PostgreSQL als Produktionsdatenbank.
+- Flyway ist alleiniger Schemabesitzer.
+- Hibernate validiert nur; Open Session in View ist aus.
+- MapStruct bricht bei nicht zugeordneten Zielfeldern ab.
+- Spring Security und CSRF schützen alle privaten Operationen.
+- Listenabfragen müssen gebündelt und paginationstauglich sein.

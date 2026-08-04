@@ -1,22 +1,17 @@
 version: 2
 updates:
-  - package-ecosystem: pip
-    directory: /backend
+  - package-ecosystem: maven
+    directory: /spring-api
     schedule: { interval: weekly }
     groups:
-      backend-dependencies:
-        patterns: ['*']
+      spring-dependencies: { patterns: ['*'] }
   - package-ecosystem: npm
     directory: /frontend
     schedule: { interval: weekly }
     groups:
-      frontend-dependencies:
-        patterns: ['*']
+      frontend-dependencies: { patterns: ['*'] }
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: weekly }
-  - package-ecosystem: docker
-    directory: /backend
     schedule: { interval: weekly }
   - package-ecosystem: docker
     directory: /infrastructure/docker

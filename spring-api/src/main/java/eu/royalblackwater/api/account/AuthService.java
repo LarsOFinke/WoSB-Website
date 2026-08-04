@@ -18,15 +18,16 @@ public class AuthService {
     private final PasswordHasher passwords;
     private final SessionTokenService tokens;
     private final SessionProperties properties;
-    private final Clock clock = Clock.systemUTC();
+    private final Clock clock;
 
     public AuthService(UserRepository users, AuthSessionRepository sessions, PasswordHasher passwords,
-                       SessionTokenService tokens, SessionProperties properties) {
+                       SessionTokenService tokens, SessionProperties properties, Clock clock) {
         this.users = users;
         this.sessions = sessions;
         this.passwords = passwords;
         this.tokens = tokens;
         this.properties = properties;
+        this.clock = clock;
     }
 
     @Transactional
@@ -50,7 +51,8 @@ public class AuthService {
             sessions.delete(session);
             return Optional.empty();
         }
-        return session.getUser().isActive() ? Optional.of(session.getUser()) : Optional.empty();
+        if (!session.getUser().isActive()) return Optional.empty();
+        return users.findById(session.getUser().getId());
     }
 
     @Transactional

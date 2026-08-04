@@ -1,7 +1,1 @@
-🔒 **Group Search Closed**
-Group: **{data.title}**
-Focus: `{data.focus}`
-Members: `{data.active_members_count}` / `{data.max_members}`
-Closed by: **{actor.display_name}**
-Closed at: `{occurred_at}`
-🔗 [Open group record]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

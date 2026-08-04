@@ -1,88 +1,56 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-
+export PYTHONDONTWRITEBYTECODE=1
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MODE="${1:-quick}"
-[[ "$MODE" == quick || "$MODE" == full ]] || {
-  echo "Usage: scripts/test.sh [quick|full]" >&2
-  exit 2
-}
-
-tmp_dir=""
-frontend_env_created=false
-cleanup() {
-  [[ "$frontend_env_created" == false ]] || rm -f "$ROOT_DIR/frontend/.env"
-  [[ -z "$tmp_dir" ]] || rm -rf "$tmp_dir"
-  rm -rf \
-    "$ROOT_DIR/frontend/dist" \
-    "$ROOT_DIR/frontend/src/locales/generated"
-  "$ROOT_DIR/backend/scripts/clear-pycache.sh" >/dev/null 2>&1 || true
-  find "$ROOT_DIR/tools/recovery-tool" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
-}
+MODE="${1:-full}"
+[[ "$MODE" == quick || "$MODE" == full ]] || { echo 'Usage: scripts/test.sh [quick|full]' >&2; exit 2; }
+created_frontend_env=false
+cleanup(){ [[ "$created_frontend_env" == false ]] || rm -f "$ROOT_DIR/frontend/.env"; }
 trap cleanup EXIT
 
-printf '\n[backend] lint and isolated tests\n'
-(
-  cd "$ROOT_DIR/backend"
-  ruff check --no-cache src tests
-  python "$ROOT_DIR/scripts/run_backend_tests.py"
-)
-
-printf '\n[spring security API] compile and unit tests\n'
-mvn -f "$ROOT_DIR/spring-api/pom.xml" --batch-mode --no-transfer-progress test
-
-printf '\n[recovery tool] unit tests\n'
-python -m pytest -q -p no:cacheprovider "$ROOT_DIR/tools/recovery-tool/tests" "$ROOT_DIR/tests/recovery"
-
-printf '\n[security] offline repository audit\n'
-python "$ROOT_DIR/scripts/security_audit.py"
-
-printf '\n[css] architecture audit\n'
-python "$ROOT_DIR/scripts/audit_css.py"
-
-printf '\n[frontend] deterministic checks\n'
-(cd "$ROOT_DIR/frontend" && npm run test)
-
-[[ "$MODE" == full ]] || exit 0
-
-printf '\n[backend] baseline schema lifecycle\n'
-tmp_dir="$(mktemp -d)"
-cat > "$tmp_dir/test.env" <<ENV
-APP_ENV=development
-DATABASE_URL=sqlite:///$tmp_dir/test.db
-DB_SCHEMA_MODE=none
-UPLOAD_DIR=$tmp_dir/uploads
-CONTROL_DIR=$tmp_dir/control
-CORS_ORIGINS=http://localhost
-SESSION_COOKIE_SECURE=false
-AUTO_SEED=false
-ENV
-(
-  cd "$ROOT_DIR/backend"
-  PYTHONPATH=src python -m compileall -q src tests migrations
-  RBF_ENV_FILE="$tmp_dir/test.env" PYTHONPATH=src alembic upgrade head
-  RBF_ENV_FILE="$tmp_dir/test.env" PYTHONPATH=src alembic check
-  RBF_ENV_FILE="$tmp_dir/test.env" PYTHONPATH=src alembic downgrade base
-  RBF_ENV_FILE="$tmp_dir/test.env" PYTHONPATH=src alembic upgrade head
-)
-
-printf '\n[frontend] production build\n'
-if [[ ! -f "$ROOT_DIR/frontend/.env" ]]; then
-  cp "$ROOT_DIR/frontend/.env.example" "$ROOT_DIR/frontend/.env"
-  frontend_env_created=true
+python3 "$ROOT_DIR/scripts/check_repository.py"
+python3 "$ROOT_DIR/scripts/security_audit.py"
+python3 "$ROOT_DIR/scripts/audit_spring_backend.py"
+python3 "$ROOT_DIR/scripts/audit_css.py"
+if command -v javac >/dev/null 2>&1; then
+  java_check_dir="$(mktemp -d)"
+  javac -d "$java_check_dir" "$ROOT_DIR/scripts/java/JavaSyntaxCheck.java"
+  java -cp "$java_check_dir" JavaSyntaxCheck "$ROOT_DIR/spring-api/src"
+  rm -rf "$java_check_dir"
+elif [[ "$MODE" == full ]]; then
+  echo '[test] A Java 21 JDK is required for full validation.' >&2; exit 1
 fi
-(cd "$ROOT_DIR/frontend" && npm run build)
-
-# The infrastructure audit deliberately rejects local runtime env files. Remove
-# the temporary build-only copy before handing the tree to that audit.
-if [[ "$frontend_env_created" == true ]]; then
-  rm -f "$ROOT_DIR/frontend/.env"
-  frontend_env_created=false
-fi
-
-printf '\n[infrastructure] static and Compose checks\n'
 bash "$ROOT_DIR/scripts/test-infrastructure.sh"
+bash "$ROOT_DIR/scripts/test-update-management.sh"
+python3 -m pytest -q -p no:cacheprovider "$ROOT_DIR/tests/recovery"
 
-bash "$ROOT_DIR/backend/scripts/clear-pycache.sh"
-python "$ROOT_DIR/scripts/check_repository.py" --strict-tree
-printf '\nValidation completed successfully.\n'
+if command -v mvn >/dev/null 2>&1; then
+  mvn -f "$ROOT_DIR/spring-api/pom.xml" --batch-mode --no-transfer-progress verify
+elif [[ "$MODE" == full ]]; then
+  echo '[test] Maven 3.9 is required for full validation.' >&2; exit 1
+else
+  echo '[test] Maven unavailable; Spring compilation skipped in quick mode.' >&2
+fi
+
+if command -v npm >/dev/null 2>&1; then
+  if [[ ! -d "$ROOT_DIR/frontend/node_modules" ]]; then
+    if [[ "$MODE" == full ]]; then
+      (cd "$ROOT_DIR/frontend" && npm ci)
+    else
+      echo '[test] frontend dependencies absent; running dependency-free frontend tests.' >&2
+      (cd "$ROOT_DIR/frontend" && npm run locales:generate && node --test tests/*.test.mjs)
+    fi
+  fi
+  if [[ -d "$ROOT_DIR/frontend/node_modules" ]]; then
+    if [[ ! -f "$ROOT_DIR/frontend/.env" ]]; then cp "$ROOT_DIR/frontend/.env.example" "$ROOT_DIR/frontend/.env"; created_frontend_env=true; fi
+    (cd "$ROOT_DIR/frontend" && npm run test:ci)
+  fi
+elif [[ "$MODE" == full ]]; then
+  echo '[test] Node/npm are required for full validation.' >&2; exit 1
+fi
+rm -rf "$ROOT_DIR/frontend/src/locales/generated"
+find "$ROOT_DIR" -type d -name '__pycache__' -prune -exec rm -rf {} +
+find "$ROOT_DIR" -type f -name '*.pyc' -delete
+
+python3 "$ROOT_DIR/scripts/check_repository.py" --strict-tree
+printf '[test] validation completed successfully\n'

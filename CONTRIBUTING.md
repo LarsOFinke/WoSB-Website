@@ -4,7 +4,7 @@ Für alle Beiträge gelten [die Qualitätsstandards](docs/development/QUALITY_ST
 [Repository-Arbeitsleitfaden](AGENTS.md).
 
 1. Kleine, fachlich abgeschlossene Änderungen bevorzugen.
-2. Datenbankschema ausschließlich über Alembic ändern.
+2. Datenbankschema ausschließlich über unveränderliche Flyway-Migrationen ändern.
 3. Stammdaten über stabile `seed_id`, Revision und Checksumme pflegen.
 4. API-Berechtigungen immer serverseitig testen; Frontend-Guards sind nur Komfort.
 5. Keine neue große Seite oder Service-Datei ohne klaren Grund. Ab etwa 300–400 Zeilen prüfen, ob

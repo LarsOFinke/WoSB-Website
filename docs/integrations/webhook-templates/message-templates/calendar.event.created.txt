@@ -1,6 +1,1 @@
-🏴‍☠️ **Fleet shoutout: {data.title}**
-🗓️ Starts: `{data.start_at}`
-⏱️ Ends: `{data.end_at}`
-📍 {data.location}
-👥 Hosted by **{data.owner.display_name}** for **{data.scope_name}**
-🔗 [Open event and join in]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

@@ -1,0 +1,68 @@
+package eu.royalblackwater.api.account;
+
+import eu.royalblackwater.api.contract.RegisterRequest;
+import eu.royalblackwater.api.contract.RegisterResponse;
+import eu.royalblackwater.api.fleet.FleetEntity;
+import eu.royalblackwater.api.fleet.FleetRepository;
+import eu.royalblackwater.api.security.PasswordHasher;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Locale;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.CONFLICT;
+
+@Service
+public class RegistrationService {
+    private final RegistrationRequestRepository requests;
+    private final RegistrationRequestMapper mapper;
+    private final UserRepository users;
+    private final FleetRepository fleets;
+    private final PasswordHasher passwords;
+    private final Clock clock;
+
+    public RegistrationService(RegistrationRequestRepository requests, RegistrationRequestMapper mapper,
+                               UserRepository users, FleetRepository fleets, PasswordHasher passwords, Clock clock) {
+        this.requests = requests;
+        this.mapper = mapper;
+        this.users = users;
+        this.fleets = fleets;
+        this.passwords = passwords;
+        this.clock = clock;
+    }
+
+    @Transactional
+    public RegisterResponse submit(RegisterRequest payload) {
+        String username = payload.username().strip().toLowerCase(Locale.ROOT);
+        String displayName = payload.displayName().strip();
+        boolean wantsFleet = Boolean.TRUE.equals(payload.wantsFleetMembership());
+        String note = normalized(payload.fleetApplicationNote());
+        if (!wantsFleet && (payload.fleetId() != null || note != null)) {
+            throw new ResponseStatusException(CONFLICT, "Fleet application details require wants_fleet_membership=true.");
+        }
+        if (users.existsByUsername(username) || requests.existsByUsernameAndStatus(username, "pending")) {
+            throw new ResponseStatusException(CONFLICT, "Username already exists or is waiting for review.");
+        }
+        Integer fleetId = null;
+        if (wantsFleet) {
+            FleetEntity official = fleets.findFirstByActiveTrueOrderBySortOrderAscIdAsc()
+                    .orElseThrow(() -> new ResponseStatusException(CONFLICT, "Official fleet not found."));
+            if (payload.fleetId() != null && payload.fleetId().intValue() != official.getId()) {
+                throw new ResponseStatusException(CONFLICT, "Only the official fleet can be joined.");
+            }
+            fleetId = official.getId();
+        }
+        LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+        RegistrationRequestEntity saved = requests.save(new RegistrationRequestEntity(
+                username, passwords.hash(payload.password()), displayName, wantsFleet, fleetId, note, now));
+        return new RegisterResponse("Registration request submitted for admin review.", mapper.toPublic(saved));
+    }
+
+    private static String normalized(String value) {
+        if (value == null) return null;
+        String stripped = value.strip();
+        return stripped.isEmpty() ? null : stripped;
+    }
+}

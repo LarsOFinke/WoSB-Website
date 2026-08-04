@@ -1,6 +1,1 @@
-🧭 **Fleet Leadership Assigned**
-Member: **{data.user.display_name}** (`{data.user.username}`)
-Fleet ID: `{data.fleet_id}`
-Role: `{data.role}`
-Assigned by: **{actor.display_name}**
-🔗 [Open fleet management]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

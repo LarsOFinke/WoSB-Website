@@ -7,37 +7,57 @@ server:
     include-binding-errors: never
 spring:
   application:
-    name: rbf-secure-api
+    name: rbf-api
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     hikari:
-      maximum-pool-size: 8
-      minimum-idle: 1
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:12}
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+      connection-timeout: 10s
+      validation-timeout: 3s
+  flyway:
+    enabled: true
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: 1
+    baseline-description: reviewed legacy schema
+    clean-disabled: true
+    validate-migration-naming: true
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:
       hibernate.jdbc.time_zone: UTC
+      hibernate.query.fail_on_pagination_over_collection_fetch: true
   jackson:
     property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:50MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:52MB}
   lifecycle:
     timeout-per-shutdown-phase: 20s
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
         enabled: true
       show-details: never
+  health:
+    db:
+      enabled: true
 rbf:
-  proxy:
-    target-url: ${FASTAPI_INTERNAL_URL:http://api:8000}
+  scheduling:
+    enabled: ${RBF_SCHEDULING_ENABLED:true}
   session:
     cookie-name: ${SESSION_COOKIE_NAME:rbf_hub_session}
     secure: ${SESSION_COOKIE_SECURE:true}
@@ -46,3 +66,45 @@ rbf:
   security:
     allowed-hosts: ${ALLOWED_HOSTS:localhost,127.0.0.1}
     allowed-origins: ${CORS_ORIGINS:}
+  secrets:
+    encryption-keys: ${WEBHOOK_ENCRYPTION_KEYS:}
+  storage:
+    upload-root: ${UPLOAD_DIR:/var/lib/rbf/uploads}
+    image-limit-mb: ${UPLOAD_IMAGE_LIMIT_MB:12}
+    document-limit-mb: ${UPLOAD_DOCUMENT_LIMIT_MB:24}
+    video-limit-mb: ${UPLOAD_VIDEO_LIMIT_MB:50}
+    per-user-total-mb: ${UPLOAD_PER_USER_TOTAL_MB:250}
+    global-total-mb: ${UPLOAD_GLOBAL_TOTAL_MB:4096}
+    minimum-free-mb: ${UPLOAD_MINIMUM_FREE_MB:512}
+  raid-helper:
+    delivery-delay: ${RAID_HELPER_DELIVERY_DELAY:PT15S}
+  operations:
+    control-root: ${CONTROL_DIR:/var/lib/rbf/control}
+  bootstrap-admin:
+    username: ${SEED_ADMIN_USERNAME:admin}
+    password: ${SEED_ADMIN_PASSWORD:}
+    display-name: ${SEED_ADMIN_DISPLAY_NAME:RBF Command}
+  legal-notice:
+    published: ${LEGAL_NOTICE_PUBLISHED:false}
+    provider-name: ${LEGAL_NOTICE_PROVIDER_NAME:}
+    legal-form: ${LEGAL_NOTICE_LEGAL_FORM:}
+    represented-by: ${LEGAL_NOTICE_REPRESENTED_BY:}
+    street: ${LEGAL_NOTICE_STREET:}
+    postal-code: ${LEGAL_NOTICE_POSTAL_CODE:}
+    city: ${LEGAL_NOTICE_CITY:}
+    country: ${LEGAL_NOTICE_COUNTRY:Deutschland}
+    email: ${LEGAL_NOTICE_EMAIL:}
+    phone: ${LEGAL_NOTICE_PHONE:}
+    register-name: ${LEGAL_NOTICE_REGISTER_NAME:}
+    register-court: ${LEGAL_NOTICE_REGISTER_COURT:}
+    register-number: ${LEGAL_NOTICE_REGISTER_NUMBER:}
+    vat-id: ${LEGAL_NOTICE_VAT_ID:}
+    business-id: ${LEGAL_NOTICE_BUSINESS_ID:}
+    supervisory-authority: ${LEGAL_NOTICE_SUPERVISORY_AUTHORITY:}
+    editorial-responsible-name: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_NAME:}
+    editorial-responsible-street: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_STREET:}
+    editorial-responsible-postal-code: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_POSTAL_CODE:}
+    editorial-responsible-city: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_CITY:}
+    editorial-responsible-country: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_COUNTRY:Deutschland}
+    dispute-resolution-text: ${LEGAL_NOTICE_DISPUTE_RESOLUTION_TEXT:}
+    additional-information: ${LEGAL_NOTICE_ADDITIONAL_INFORMATION:}

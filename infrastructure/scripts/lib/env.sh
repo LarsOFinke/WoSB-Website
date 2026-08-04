@@ -112,15 +112,13 @@ initialize_env() {
   set_env_value LETSENCRYPT_CERT_NAME "$certificate_name"
   [[ -n "$(read_env CERTIFICATE_PROVIDER)" ]] || set_env_value CERTIFICATE_PROVIDER self-signed
   [[ -n "$(read_env MONITORING_HTTPS_PORT)" ]] || set_env_value MONITORING_HTTPS_PORT 8443
-  set_env_value CONTROL_REQUEST_DIR /run/rbf-control/inbox
-  set_env_value CONTROL_STATUS_DIR /run/rbf-control/status
+  set_env_value CONTROL_DIR /var/lib/rbf/control
   [[ -n "$(read_env SESSION_COOKIE_NAME)" ]] || set_env_value SESSION_COOKIE_NAME rbf_hub_session
   [[ -n "$(read_env SESSION_COOKIE_SAMESITE)" ]] || set_env_value SESSION_COOKIE_SAMESITE Lax
   [[ -n "$(read_env SESSION_TTL_HOURS)" ]] || set_env_value SESSION_TTL_HOURS 24
   [[ -n "$(read_env GATEWAY_MAX_BODY_MB)" ]] || set_env_value GATEWAY_MAX_BODY_MB 90
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"
-  set_env_value DATABASE_URL "postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"
   # Keep the canonical HTTPS origins and the local/IP fallbacks usable during
   # first-run setup and on test hosts without working DNS yet.
   set_env_value CORS_ORIGINS "https://${app_hostname},https://${app_ip},http://${app_hostname},http://${app_ip},http://localhost,http://127.0.0.1,https://localhost,https://127.0.0.1"
@@ -163,56 +161,26 @@ validate_env() {
     [[ -n "$(read_env "$key")" ]] || missing+=("$key")
   done < "$INFRA_DIR/config/env/required.env.keys"
   ((${#missing[@]} == 0)) || die "Fehlende .env-Werte: ${missing[*]}"
-  [[ "$(read_env DB_SCHEMA_MODE)" == migrate ]] || die "Production benötigt DB_SCHEMA_MODE=migrate."
-  [[ "$(read_env DATABASE_URL)" == postgresql+psycopg://* ]] || die "Production benötigt PostgreSQL."
 
-  local postgres_user postgres_password postgres_database expected_database_url
-  postgres_user="$(read_env POSTGRES_USER)"
-  postgres_password="$(read_env POSTGRES_PASSWORD)"
-  postgres_database="$(read_env POSTGRES_DB)"
-  expected_database_url="postgresql+psycopg://${postgres_user}:${postgres_password}@postgres:5432/${postgres_database}"
-  [[ "$(read_env DATABASE_URL)" == "$expected_database_url" ]] || \
-    die "DATABASE_URL und POSTGRES_* Zugangsdaten sind nicht konsistent."
+  [[ "$(read_env POSTGRES_PASSWORD)" != CHANGE_ME* ]] || die "POSTGRES_PASSWORD wurde nicht erzeugt."
+  [[ "$(read_env WEBHOOK_ENCRYPTION_KEYS)" != CHANGE_ME* ]] || die "WEBHOOK_ENCRYPTION_KEYS wurde nicht erzeugt."
+  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" =~ ^(true|false)$ ]] || die "FLYWAY_BASELINE_ON_MIGRATE muss true oder false sein."
+  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" == false ]] || die "Production verwendet den geprüften Cutover; baseline-on-migrate muss false bleiben."
+  [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE ist ungültig."
+  [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
+  [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
 
   local tls_mode certificate_provider hostname
-  tls_mode="$(read_env TLS_MODE)"
-  certificate_provider="$(read_env CERTIFICATE_PROVIDER)"
-  hostname="$(read_env APP_HOSTNAME)"
+  tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"
   [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE muss auto, letsencrypt oder self-signed sein."
   [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER ist ungültig."
   [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME ist ungültig."
   if [[ "$tls_mode" == letsencrypt ]]; then
-    [[ -n "$(read_env LETSENCRYPT_EMAIL)" ]] || die "TLS_MODE=letsencrypt benötigt LETSENCRYPT_EMAIL oder --letsencrypt-email."
-    [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlich auflösbaren Domainnamen."
+    [[ -n "$(read_env LETSENCRYPT_EMAIL)" ]] || die "TLS_MODE=letsencrypt benötigt LETSENCRYPT_EMAIL."
+    [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlichen Domainnamen."
   fi
   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
   [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
-  [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
-  [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE ist ungültig."
-  [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
-  local webhook_encryption_keys
-  webhook_encryption_keys="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
-  [[ -z "$webhook_encryption_keys" || "$webhook_encryption_keys" != CHANGE_ME* ]] || \
-    die "WEBHOOK_ENCRYPTION_KEYS wurde noch nicht sicher erzeugt."
-
-  local retention_days recovery_enabled recovery_recipient export_dir export_user
-  retention_days="$(read_env BACKUP_RETENTION_DAYS)"
-  [[ -z "$retention_days" || "$retention_days" =~ ^[1-9][0-9]*$ ]] \
-    || die "BACKUP_RETENTION_DAYS muss eine positive ganze Zahl sein."
-  recovery_enabled="$(read_env BACKUP_RECOVERY_ENABLED)"
-  [[ -z "$recovery_enabled" || "$recovery_enabled" =~ ^(true|false)$ ]] \
-    || die "BACKUP_RECOVERY_ENABLED muss true oder false sein."
-  if is_true "$recovery_enabled"; then
-    recovery_recipient="$(read_env BACKUP_AGE_RECIPIENT)"
-    [[ "$recovery_recipient" =~ ^age1[0-9a-z]{20,}$ ]] \
-      || die "Aktiviertes Recovery-Backup benötigt einen gültigen BACKUP_AGE_RECIPIENT."
-    command -v age >/dev/null 2>&1 \
-      || die "Aktiviertes Recovery-Backup benötigt das Host-Paket age."
-  fi
-  export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
-  export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
-  [[ -z "$export_dir" && -z "$export_user" || -n "$export_dir" && -n "$export_user" ]] \
-    || die "BACKUP_PULL_EXPORT_DIR und BACKUP_PULL_EXPORT_USER müssen gemeinsam gesetzt sein."
-  [[ -z "$export_dir" || "$export_dir" == /* ]] \
-    || die "BACKUP_PULL_EXPORT_DIR muss ein absoluter Pfad sein."
+  local retention="$(read_env BACKUP_RETENTION_DAYS)"
+  [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS muss positiv sein."
 }

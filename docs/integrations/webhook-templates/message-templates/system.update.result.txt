@@ -1,9 +1,1 @@
-{data.state} **Server Operation Result**
-Mode: `{data.operation}`
-Result: `{data.state}`
-Requested by: **{data.requested_by}**
-Started: `{data.started_at}`
-Finished: `{data.finished_at}`
-Revision: `{data.commit_before}` → `{data.commit_after}`
-{data.message}
-🔗 [Open system status]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

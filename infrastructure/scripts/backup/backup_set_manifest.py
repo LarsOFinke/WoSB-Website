@@ -17,15 +17,7 @@ MAX_MANIFEST_BYTES = 128 * 1024
 SHA_RE = re.compile(r"^[a-f0-9]{64}$")
 PRODUCTION_CONSISTENCY = frozenset({"application-quiesced", "no-running-api"})
 REQUIRED_RECOVERY_CHECKS = frozenset(
-    {
-        "metadata_compatibility",
-        "staging_database_creation",
-        "postgres_import",
-        "migration_and_schema_preflight",
-        "secret_key_preflight",
-        "application_readiness_preflight",
-        "preflight_cleanup",
-    }
+    {"dump_inventory", "staging_database_restore", "flyway_validation", "application_readiness", "preflight_cleanup"}
 )
 
 
@@ -105,12 +97,12 @@ def _metadata_record(root: Path, postgres: Path) -> tuple[dict[str, Any], dict[s
 def _verification_record(root: Path, report_path: Path, postgres_record: dict[str, Any]) -> dict[str, Any]:
     payload = _read_json(report_path, 128 * 1024)
     if (
-        int(payload.get("schema_version", -1)) != 1
+        int(payload.get("schema_version", -1)) != 2
         or payload.get("mode") != "preflight"
         or payload.get("status") != "passed"
         or payload.get("recoverable") is not True
     ):
-        raise RuntimeError("Recovery verification report is not a successful full preflight.")
+        raise RuntimeError("Recovery verification report is not a successful Spring/Flyway preflight.")
     source = payload.get("source_artifact")
     if not isinstance(source, dict):
         raise RuntimeError("Recovery report has no portable source-artifact binding.")

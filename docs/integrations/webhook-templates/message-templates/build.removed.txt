@@ -1,6 +1,1 @@
-🗑️ **Build Removed**
-Build: **{data.build_name}**
-Build ID: `{data.id}`
-Removed by: **{actor.display_name}**
-Removed at: `{occurred_at}`
-🔗 [Browse remaining builds]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

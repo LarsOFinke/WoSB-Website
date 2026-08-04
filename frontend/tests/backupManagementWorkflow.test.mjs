@@ -85,7 +85,7 @@ test('database restore requires an opaque catalog id and host approval token', a
   assert.match(composable, /backup_id: restoreForm\.backup_id/)
   assert.match(composable, /encryption_keys_compatible !== false/)
   assert.match(page, /backup\.encryption_keys_compatible === false/)
-  assert.match(page, /backup\.alembic_head/)
+  assert.match(page, /backup\.flyway_version/)
   assert.match(extensionMessages, /Two-person-style host approval/)
   assert.match(extensionMessages, /Zusätzliche Host-Freigabe/)
 })

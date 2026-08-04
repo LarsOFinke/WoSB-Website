@@ -7,13 +7,7 @@ maintenance_status_dir() {
 maintenance_control() {
   local action="$1"
   shift
-  if [[ -n "${ARTIFACT_FILE:-}" ]]; then
-    maintenance_control_artifact "$action" "$@"
-    return
-  fi
-  PYTHONPATH="$REPO_ROOT/backend/src" python3 -m app.cli.maintenance_mode \
-    "$action" --status-dir "$(maintenance_status_dir)" \
-    --event-dir "$INFRA_DIR/data/control/inbox" "$@"
+  maintenance_control_artifact "$action" "$@"
 }
 
 maintenance_control_artifact() {

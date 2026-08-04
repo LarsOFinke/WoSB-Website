@@ -1,9 +1,1 @@
-🛡️ **Squad Created**
-Name: **{data.name}**
-Slug: `{data.slug}`
-Squad ID: `{data.id}`
-Fleet ID: `{data.fleet_id}`
-Members: `{data.member_count}`
-Created by: **{actor.display_name}**
-Created at: `{occurred_at}`
-🔗 [Open squad]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

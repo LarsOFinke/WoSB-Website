@@ -24,8 +24,10 @@ apply_runtime_ownership() {
 
   chown -R 70:70 "$INFRA_DIR/data/postgres"
   chown -R 10001:10001 "$INFRA_DIR/data/uploads"
+  chown root:10001 "$INFRA_DIR/data/control"
   chown -R 10001:10001 "$INFRA_DIR/data/control/inbox"
-  chown -R root:root "$INFRA_DIR/data/control/status" "$INFRA_DIR/data/control/run" "$INFRA_DIR/data/control/secrets" "$INFRA_DIR/data/recovered-config"
+  chown -R root:10001 "$INFRA_DIR/data/control/status"
+  chown -R root:root "$INFRA_DIR/data/control/run" "$INFRA_DIR/data/control/secrets" "$INFRA_DIR/data/recovered-config"
   chown -R 101:101 "$INFRA_DIR/data/nginx"
   chown -R 1000:1000 "$INFRA_DIR/data/uptime-kuma"
 }

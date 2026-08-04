@@ -1,9 +1,8 @@
 SHELL := /usr/bin/env bash
+.PHONY: dev-api dev-frontend test test-full spring-test frontend-test lint css-audit security-audit build validate clean clean-all check-tree setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update package-release
 
-.PHONY: dev-backend dev-frontend test test-full test-recovery test-recovery-matrix spring-test lint css-audit security-audit build validate clean clean-all check-tree build-recovery-linux clear-pycache setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update
-
-dev-backend:
-	cd backend && rbf-dev
+dev-api:
+	mvn -f spring-api/pom.xml spring-boot:run
 
 dev-frontend:
 	cd frontend && npm run dev
@@ -11,21 +10,18 @@ dev-frontend:
 test:
 	bash ./scripts/test.sh quick
 
-test-full:
+test-full validate:
 	bash ./scripts/test.sh full
 
 spring-test:
-	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress test
+	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress verify
 
-test-recovery:
-	python -m pytest -q -p no:cacheprovider tools/recovery-tool/tests tests/recovery
-
-test-recovery-matrix:
-	@test -n "$$RECOVERY_MATRIX_DATABASE_URL" || { echo "RECOVERY_MATRIX_DATABASE_URL fehlt" >&2; exit 2; }
-	python scripts/test_recovery_matrix.py
+frontend-test:
+	cd frontend && npm run test:ci
 
 lint:
-	cd backend && ruff check --no-cache src tests
+	python scripts/check_repository.py
+	bash scripts/test-infrastructure.sh
 
 css-audit:
 	python scripts/audit_css.py
@@ -33,10 +29,8 @@ css-audit:
 security-audit:
 	python scripts/security_audit.py
 
-validate:
-	bash ./scripts/test.sh full
-
 build:
+	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress package
 	cd frontend && npm run build
 
 clean:
@@ -48,12 +42,6 @@ clean-all:
 check-tree:
 	python ./scripts/check_repository.py --strict-tree
 
-build-recovery-linux:
-	cd tools/linux/recovery-tool && ./Build-RbfRecoveryTool.sh
-
-clear-pycache:
-	bash ./backend/scripts/clear-pycache.sh
-
 setup-pi:
 	sudo ./infrastructure/setup.sh --profile full
 
@@ -62,18 +50,16 @@ doctor:
 
 infra-up:
 	$(MAKE) -C infrastructure up
-
 infra-down:
 	$(MAKE) -C infrastructure down
-
 infra-status:
 	$(MAKE) -C infrastructure status
-
 infra-logs:
 	$(MAKE) -C infrastructure logs
-
 infra-backup:
 	$(MAKE) -C infrastructure backup
-
 infra-update:
 	sudo ./update.sh
+
+package-release:
+	bash infrastructure/scripts/release/build-artifact.sh

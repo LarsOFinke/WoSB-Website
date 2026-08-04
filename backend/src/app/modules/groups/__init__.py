@@ -1,1 +1,0 @@
-"""groups domain module."""

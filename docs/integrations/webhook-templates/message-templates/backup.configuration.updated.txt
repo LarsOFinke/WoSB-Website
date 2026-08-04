@@ -1,6 +1,1 @@
-🔐 **Backup Configuration Changed**
-Action: `{data.action}`
-Requested by: **{actor.display_name}**
-Status: queued for the protected host runner
-Reference: `{resource.id}`
-🔗 [Open backup administration]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

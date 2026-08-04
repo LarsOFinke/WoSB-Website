@@ -1,7 +1,1 @@
-💬 **New Forum Reply**
-Thread ID: `{data.thread_id}`
-Author: **{data.author.display_name}**
-Reply ID: `{data.id}`
-Posted at: `{data.created_at}`
-Message: {data.body}
-🔗 [Open discussion]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

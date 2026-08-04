@@ -2,7 +2,7 @@
 
 Dieses Dokument beschreibt die technisch erzwungene Standardaufbewahrung. Abweichende gesetzliche
 oder vertragliche Anforderungen müssen vor dem Produktivbetrieb durch den Verantwortlichen geprüft
-und über `backend/config/uploads.cfg` konfiguriert werden.
+und über die Spring-Konfiguration und Infrastruktur-Umgebungsdatei konfiguriert werden.
 
 | Datenklasse | Standard | Zweck | Löschung |
 |---|---:|---|---|
@@ -37,7 +37,7 @@ Signalkategorie, Begründung, sicherem Ziel und UTC-Tag existiert höchstens ein
 - UTC-Kalendertag,
 - einer der oben genannten groben Signalkategorien,
 - einer festen Begründung wie abgelehnte Anmeldung, überschrittenes Rate-Limit oder verdächtiger Scan,
-- bei bekannten API-Endpunkten dem FastAPI-Routen-Template ohne konkrete Objekt-IDs oder bei
+- bei bekannten API-Endpunkten dem normalisierten Spring-Routen-Template ohne konkrete Objekt-IDs oder bei
   Scans einer festen Zielkategorie wie „Git-Metadaten“ oder „Umgebungsdatei“,
 - Tageszähler der Signale.
 

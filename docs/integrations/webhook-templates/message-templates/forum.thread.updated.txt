@@ -1,9 +1,1 @@
-✏️ **Forum Thread Updated**
-Title: **{data.title}**
-Category: `{data.category}`
-Author: **{data.owner.display_name}**
-Replies: `{data.reply_count}`
-Last activity: `{data.last_activity_at}`
-Updated by: **{actor.display_name}**
-Updated at: `{data.updated_at}`
-🔗 [Open thread]({resource.url})
+RBF event **{event}** for {resource.type} #{resource.id}.

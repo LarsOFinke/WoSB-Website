@@ -2,18 +2,16 @@
 
 ## Backend
 
+Voraussetzungen sind Java 21, Maven 3.9+ und PostgreSQL. Für die vollständigen
+Integrationstests wird Docker mit Testcontainers empfohlen.
+
 ```bash
-cd backend
-python -m venv .venv
-. .venv/bin/activate
-pip install -r requirements-dev.lock
-pip install --no-deps -e .
-cp .env.example .env
-rbf-dev
+mvn -f spring-api/pom.xml spring-boot:run
 ```
 
-SQLite ist der lokale Standard. Produktionslogik verweigert SQLite und verlangt PostgreSQL plus
-`DB_SCHEMA_MODE=migrate`.
+Die lokale Konfiguration wird aus den in `application.yml` dokumentierten
+Umgebungsvariablen gespeist. PostgreSQL ist die einzige unterstützte Datenbank.
+Flyway migriert das Schema; Hibernate prüft es mit `ddl-auto=validate`.
 
 ## Frontend
 
@@ -24,25 +22,27 @@ npm ci
 npm run dev
 ```
 
-Node 22 und Python 3.12 entsprechen der CI. Das Lockfile muss ausschließlich öffentliche
+Node 22 entspricht der CI. Das Lockfile muss ausschließlich öffentliche
 Registry-URLs enthalten.
 
 ## Befehle
 
 ```bash
-make test       # Ruff, Backendtests, Build-Designer- und Locale-Checks
-make test-full  # zusätzlich Migration, Produktionsbuild und Infrastruktur
-make validate             # Release-Invarianten plus vollständige Tests
-make clean                # generierte Dateien und Buildausgaben entfernen
-make clean-all            # zusätzlich lokale Abhängigkeitsumgebungen entfernen
-make check-tree           # sauberen, paketfreien Repository-Baum prüfen
-make build-recovery-linux # Linux-Recovery-Binary, Installer und DEB bauen
+make test       # Repository-, Security-, Java-, Frontend- und Infrastrukturchecks im Schnellmodus
+make test-full  # vollständige Spring-, PostgreSQL-, Frontend- und Recovery-Prüfung
+make validate   # vollständiger Release-Gate
+make clean      # generierte Dateien und Buildausgaben entfernen
+make clean-all  # zusätzlich lokale Abhängigkeitsumgebungen entfernen
+make check-tree # sauberen, paketfreien Repository-Baum prüfen
 ```
 
-Neue API-Funktionen benötigen Berechtigungs-, Erfolgs- und Fehlerfall. Komplexe reine Berechnungen
-werden ohne Browser oder Datenbank getestet. UI-End-to-End-Tests werden erst ergänzt, wenn ein
-kritischer Ablauf nicht zuverlässig durch Service- und Komponentenlogik abgedeckt werden kann.
+Neue API-Funktionen benötigen Berechtigungs-, Erfolgs- und Fehlerfälle. Wachsende
+Listen brauchen begrenzte Pagination, Such- und Domänenfilter. Collections werden
+gebündelt oder über Projektionen geladen; Query-Count-Tests sichern kritische
+Assembler gegen N+1-Regressionen ab.
 
 ## Abhängigkeiten
 
-`requirements.lock` bildet die Produktionsumgebung ab, `requirements-dev.lock` ergänzt die Testwerkzeuge. Änderungen an `pyproject.toml` müssen beide Lockfiles bewusst aktualisieren.
+Backend-Abhängigkeiten werden ausschließlich in `spring-api/pom.xml` gepflegt.
+MapStruct muss bei nicht zugeordneten Zielfeldern fehlschlagen. Frontend-Abhängigkeiten
+werden über `frontend/package-lock.json` reproduzierbar installiert.

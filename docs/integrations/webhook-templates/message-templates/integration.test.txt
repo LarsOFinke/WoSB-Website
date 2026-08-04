@@ -1,6 +1,1 @@
-🧪 **RBF Webhook Test**
-Destination: **{destination.name}**
-Event: `{event}`
-Delivery ID: `{id}`
-Occurred at: `{occurred_at}`
-Message: {data.message}
+RBF event **{event}** for {resource.type} #{resource.id}.

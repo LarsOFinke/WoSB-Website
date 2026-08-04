@@ -139,18 +139,22 @@ test -r "$REQUEST" || {
   exit 1
 }
 
-command -v rbf-recovery-tool >/dev/null || {
-  echo "FEHLER: rbf-recovery-tool ist nicht installiert."
+PROVISIONER="$HOME/Downloads/provision-rbf-backup-server.sh"
+CHECKSUM="$PROVISIONER.sha256"
+
+test -r "$PROVISIONER" -a -r "$CHECKSUM" || {
+  echo "FEHLER: Provisioner oder Prüfsumme fehlt in ~/Downloads."
   exit 1
 }
+( cd "$(dirname "$PROVISIONER")" && sha256sum -c "$(basename "$CHECKSUM")" ) || exit 1
 
-rbf-recovery-tool server provision \\
-  "$REQUEST" \\
-  --host ${shellQuote(values.host)} \\
-  --port ${values.port} \\
-  --directory ${shellQuote(values.directory)} \\
-  --retention-days ${values.retentionDays} \\
-${allowFromLine}  --output "$RESPONSE"
+sudo bash "$PROVISIONER" \
+  --request "$REQUEST" \
+  --host ${shellQuote(values.host)} \
+  --port ${values.port} \
+  --directory ${shellQuote(values.directory)} \
+  --retention-days ${values.retentionDays} \
+${allowFromLine}  --result "$RESPONSE"
 
 echo "Antwortdatei: $RESPONSE"`
   return { command, error: null }
