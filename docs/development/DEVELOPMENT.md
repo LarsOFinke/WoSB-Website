@@ -17,7 +17,7 @@ Konfigurationsdateien.
 ## Backend
 
 Voraussetzungen sind Java 21, Maven 3.9+ und PostgreSQL. Für die vollständigen
-Integrationstests wird Docker mit Testcontainers empfohlen.
+Integrationstests ist Docker mit Testcontainers erforderlich.
 
 ```bash
 mvn -f spring-api/pom.xml spring-boot:run
@@ -33,11 +33,13 @@ Flyway migriert das Schema; Hibernate prüft es mit `ddl-auto=validate`.
 cd frontend
 cp .env.example .env
 npm ci
+npx playwright install chromium
 npm run dev
 ```
 
-Node 22 entspricht der CI. Das Lockfile muss ausschließlich öffentliche
-Registry-URLs enthalten.
+Node 22 entspricht der CI. Playwright Chromium wird einmalig lokal installiert;
+CI installiert Browser und Systemabhängigkeiten vor dem vollständigen Gate. Das
+Lockfile muss ausschließlich öffentliche Registry-URLs enthalten.
 
 ## Befehle
 
@@ -48,6 +50,13 @@ make validate   # vollständiger Release-Gate
 make clean      # generierte Dateien und Buildausgaben entfernen
 make clean-all  # zusätzlich lokale Abhängigkeitsumgebungen entfernen
 make check-tree # sauberen, paketfreien Repository-Baum prüfen
+```
+
+Für fokussiertes Feedback stehen insbesondere folgende Einstiege bereit:
+
+```bash
+mvn -f spring-api/pom.xml -Dtest=ApplicationIntegrationTest test
+cd frontend && npm run test:browser
 ```
 
 Für einen vorhandenen Diff kann `bash .agents/scripts/check-changes.sh` die

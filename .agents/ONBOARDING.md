@@ -50,6 +50,7 @@ gesamten Repositorys beginnen, wenn der Cache bereits den Einstieg nennt.
 | Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
 | API-Vertrag | `contracts/api-contract.json`, danach generierter Transport und Handler |
 | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
+| Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh` |
 | Frontend-Funktion | `frontend/src/modules/<feature>/` |
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, betroffene Modulstile |
 | Sicherheit | `SecurityConfiguration`, `security/`, `scripts/security_audit.py` |
@@ -69,6 +70,11 @@ Controller und Locale-Ausgaben nicht von Hand bearbeiten.
 - Zentrale API-Fehler erscheinen als `api_error`; Authentifizierungs- und
   Autorisierungsablehnungen als `security_401` beziehungsweise `security_403`.
   Keine Payloads oder Secrets zum Logging hinzufügen.
+- `ApplicationIntegrationTest` prüft die laufende Spring-Anwendung über echtes
+  HTTP gegen PostgreSQL/Testcontainers. Browser-Verträge liegen unter
+  `frontend/tests/browser/` und mocken ausschließlich `/api/`-Anfragen.
+- Ausführbare Java- und Frontend-JavaScript-Dateien sind auf 420 Zeilen begrenzt.
+  Nur die dokumentierten deklarativen Locale-Kataloge sind ausgenommen.
 - Cookie-Einstellungen öffnen ohne vorhandene Entscheidung nicht automatisch,
   solange keine optionale Cookie-/Tracking-Integration aktiv ist. Der manuelle
   Einstieg bleibt über Footer und Datenschutzcenter erhalten.

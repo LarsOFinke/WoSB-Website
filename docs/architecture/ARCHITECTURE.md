@@ -59,5 +59,9 @@ live below `/srv/rbf`; `/tmp/rbf-release` is transfer staging only.
 The architecture is considered healthy when domain ownership remains explicit,
 queries and payloads are bounded, security/privacy controls are server enforced,
 and application, schema and persistent data can be deployed or restored as one
-coherent version. The measurable repository-wide requirements and definition of
-done are maintained in `docs/development/QUALITY_STANDARDS.md`.
+coherent version. Executable Java and frontend JavaScript modules are capped at
+420 lines; declarative locale catalogs are the narrow documented exception.
+Spring HTTP behavior is exercised against PostgreSQL Testcontainers, while
+Playwright covers critical browser navigation, accessibility and form contracts.
+The measurable repository-wide requirements and definition of done are maintained
+in `docs/development/QUALITY_STANDARDS.md`.

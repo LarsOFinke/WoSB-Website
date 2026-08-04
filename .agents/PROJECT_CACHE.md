@@ -11,11 +11,12 @@
 ## Schnellbild
 
 - Produkt: **Royal Blackwater Fleet**, ein Fleet-Operations-Portal für World of
-  Sea Battle, Version `1.0.1`.
+  Sea Battle. Die aktuelle Version immer aus `VERSION` lesen.
 - Laufzeit: `Browser -> NGINX -> Spring Boot API -> PostgreSQL`.
 - Backend: Java 21, Spring Boot 4.1, Maven 3.9, Spring Security, JPA/JDBC,
   MapStruct, Flyway, PostgreSQL und Testcontainers.
-- Frontend: Vue 3.5, Vue Router 4, Vite 8, Node 22; JavaScript ohne TypeScript.
+- Frontend: Vue 3.5, Vue Router 4, Vite 8, Node 22 und Playwright Chromium;
+  JavaScript ohne TypeScript.
 - Betrieb: Docker Compose, NGINX, systemd-Runner sowie artefaktbasierte Release-,
   Update-, Backup- und Restore-Abläufe.
 - Das frühere Python-Backend ist nicht mehr Teil der Laufzeit. Python wird für
@@ -78,6 +79,9 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen. Dieselbe
   harte Grenze gilt für ausführbare Frontend-JavaScript-Module; ausgenommen sind
   nur die geprüften deklarativen Locale-Module und `autoLocalizationCatalog.js`.
+- Mockito wird im Maven-Testprozess als expliziter Startup-Agent geladen; die
+  Dependency-Property löst den Pfad auch bei abweichendem lokalen Maven-Repository
+  auf. Dynamisches Self-Attach ist kein Bestandteil des Testablaufs.
 - Schemaänderungen ausschließlich als neue unveränderliche Flyway-Migration.
   Bestehende Systeme behalten die unveränderte V1-Historie; neue Datenbanken
   verwenden den B2-Marker und die fachlich getrennten V3–V7-Migrationen. Neue
@@ -107,6 +111,15 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 - Globale CSS-Kaskade: acht geordnete Imports aus
   `frontend/src/styles/global/index.js`; Reihenfolge ist Architekturvertrag.
   Feature-Stile bleiben beim Modul.
+- Build-Druck trennt Modellbildung (`buildPrintModel.js`), Bild-Einbettung
+  (`buildPrintImageEmbedding.js`) und SVG-/Dokument-Orchestrierung
+  (`buildPrintExport.js`). Lokalisierungsverhalten liegt in
+  `autoLocalization.js`, der große Übersetzungskatalog separat in
+  `autoLocalizationCatalog.js`.
+- Browser-Smokes liegen unter `frontend/tests/browser/`. Sie starten Vite und
+  mocken nur `/api/`; echte Security-, Session-, CSRF- und Origin-Grenzen prüft
+  `spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java`
+  gegen PostgreSQL.
 
 ## Infrastruktur und Betriebsgrenzen
 
@@ -117,7 +130,8 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   Bootstrap-Zugang und Deployment laufen in einem Ablauf. Bootstrap-Zugangsdaten
   werden nicht in `.env.origin` persistiert. Normale Folgeläufe verwenden nur den
   geprüften Key-Zugang und `sudo -n`.
-- Setup ist in `scripts/setup/{options,workflow,main}.sh` getrennt.
+- Das interne Setup ist unter
+  `infrastructure/scripts/setup/{options,workflow,main}.sh` getrennt.
 - Host-Helfer liegen unter `scripts/lib/host/` (Pakete, Storage, Firewall, TLS,
   Control); Skripte müssen robust, idempotent und mit klaren Fehlercodes arbeiten.
 - Die API führt keine privilegierten Host-Befehle aus. Sie schreibt restriktive
@@ -165,7 +179,7 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 make test          # schneller, ggf. Toolchains überspringender Prüfpfad
 make validate      # vollständiges Release-Gate; identisch zu make test-full
 make spring-test   # Maven verify
-make frontend-test # Frontend-Test plus Produktionsbuild
+make frontend-test # Frontend-Test, Produktionsbuild und Chromium-Smokes
 make check-tree    # strikte Repository-Hygiene
 make build         # Spring-Paket plus Frontend-Build
 make package-release
@@ -215,8 +229,8 @@ querschnittlichen Änderungen `make validate`.
    Komposition; vorhandene Komponenten/Tokens wiederverwenden.
 2. Barrierefreiheit, responsive CSS, Übersetzungen und serverseitige
    Berechtigung beachten.
-3. Fokussierte Unit-/Domain-Tests plus Page-Binding-, Locale-, Responsive- und
-   Build-Prüfung nach Relevanz.
+3. Fokussierte Unit-/Domain-Tests plus Page-Binding-, Locale-, Responsive-,
+   Browser- und Build-Prüfung nach Relevanz.
 
 ### Infrastruktur/Release/Recovery
 

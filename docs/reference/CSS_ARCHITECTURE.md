@@ -67,7 +67,7 @@ responsive refinement, so each candidate must be evaluated in its cascade contex
 - Preserve keyboard focus and reduced-motion behavior when changing visuals.
 - Never hide root-level horizontal overflow. Fix the component or give the owning data surface an
   explicit horizontal scroll container.
-- Run `npm test` and `python scripts/check_repository.py --strict-tree` after structural changes.
+- Run `npm test` and `python3 scripts/check_repository.py --strict-tree` after structural changes.
 
 Repository gates cap every stylesheet at 420 lines, keep total frontend CSS below 400 KB,
 enforce one token root, and verify numeric manifest order. The 420-line hard gate leaves a small
@@ -96,9 +96,12 @@ Do not introduce a nearby breakpoint for a single component. Prefer intrinsic gr
 `auto-fit`, `minmax()`, `clamp()` and `min-width: 0`. If a genuinely new threshold is required,
 update this table and `frontend/scripts/check-responsive-css.mjs` in the same change.
 
-The browser smoke test checks the application at widths `320`, `375`, `430`, `720`, `768`,
-`1024` and `1440` pixels. Public, member and administrative routes must not make the document root
-wider than its viewport. Wide tables may scroll inside a labelled local container.
+The responsive source check protects the breakpoint contract above. Manual layout
+review covers widths `320`, `375`, `430`, `720`, `768`, `1024` and `1440` pixels.
+The automated Playwright suite currently exercises the accessible mobile navigation
+at `390px` in real Chromium, in addition to desktop navigation and critical forms.
+Public, member and administrative routes must not make the document root wider than
+its viewport. Wide tables may scroll inside a labelled local container.
 
 ## Legibility and touch interaction
 
@@ -140,9 +143,10 @@ editorial content merely because both are headings.
 2. Check 320, 375, 430, 720, 768, 1024 and 1440px widths; include long translated content.
 3. Confirm no document-level horizontal overflow and no clipped focused element.
 4. Confirm important metadata and actions remain available on phones.
-5. Run `npm test`, `npm run build`, `python scripts/audit_css.py` and
-   `python scripts/check_repository.py --strict-tree`.
-6. For release-affecting layout changes, run `python scripts/run_browser_smoke.py` in an
-   environment with the supported Playwright Chromium binary.
+5. Run `(cd frontend && npm test && npm run build)`,
+   `python3 scripts/audit_css.py` and
+   `python3 scripts/check_repository.py --strict-tree` from the repository root.
+6. For release-affecting layout changes, run `npm run test:browser` from
+   `frontend/` in an environment with the supported Playwright Chromium binary.
 7. Manually sample current Chrome/Chromium, Firefox and Safari/iOS before release. Automated
    Chromium coverage does not replace engine- and device-specific review.

@@ -1,6 +1,6 @@
 # Dokumentation
 
-Dieser Index ist der Einstieg für das v1.0-Deployment. Die Dokumente sind nach
+Dieser Index ist der Einstieg für Entwicklung, Deployment und Betrieb. Die Dokumente sind nach
 Verantwortung gruppiert; die alten Dateinamen wurden bewusst nicht als zweite
 Quelle dupliziert.
 
@@ -45,8 +45,11 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 
 - [CI/CD und Deployment](deployment/DEPLOYMENT.md)
 - [Betrieb](deployment/OPERATIONS.md)
-- [Uptime-Kuma-Migration](deployment/UPTIME_KUMA_2_MIGRATION.md)
 - [Backup-Server-Enrollment (Details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
+
+Uptime Kuma gehört nicht mehr zum Produktionsstack. Historische Ursache und
+Entfernung sind im [Deployment-Incident-Index](debugging/DEPLOYMENT_INCIDENTS.md)
+dokumentiert.
 
 ## Referenz und Integrationen
 
