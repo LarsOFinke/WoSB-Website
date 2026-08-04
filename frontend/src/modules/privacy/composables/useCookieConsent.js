@@ -30,7 +30,6 @@ function applyState(payload) {
     analytics: Boolean(payload?.analytics),
     external_media: Boolean(payload?.external_media),
   }
-  state.visible = !payload?.has_decision
 }
 
 async function initialize() {
@@ -45,7 +44,6 @@ async function initialize() {
     })
     .catch((error) => {
       state.error = error.message || 'Unable to load cookie settings.'
-      state.visible = true
       state.initialized = true
     })
     .finally(() => {

@@ -4,11 +4,14 @@
 > Quelle. Vor Änderungen immer `AGENTS.md`, betroffene Dateien, Aufrufer, Tests,
 > Konfiguration und Dokumentation lesen. Bei Widersprüchen gilt der Quellcode bzw.
 > die unten genannte Primärquelle.
+>
+> Neuer Agent? Zuerst [ONBOARDING.md](ONBOARDING.md) lesen; dort steht der
+> kürzeste sichere Einstieg einschließlich Live-Snapshot und Prüfauswahl.
 
 ## Schnellbild
 
 - Produkt: **Royal Blackwater Fleet**, ein Fleet-Operations-Portal für World of
-  Sea Battle, Version `1.0.0`.
+  Sea Battle, Version `1.0.1`.
 - Laufzeit: `Browser -> NGINX -> Spring Boot API -> PostgreSQL`.
 - Backend: Java 21, Spring Boot 4.1, Maven 3.9, Spring Security, JPA/JDBC,
   MapStruct, Flyway, PostgreSQL und Testcontainers.
@@ -74,7 +77,9 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 - MapStruct kompiliert mit `unmappedTargetPolicy=ERROR`. Java-Dateien mit
   ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen.
 - Schemaänderungen ausschließlich als neue unveränderliche Flyway-Migration.
-  Aktueller Stand bei Erfassung: nur `V1__current_schema_baseline.sql`.
+  Bestehende Systeme behalten die unveränderte V1-Historie; neue Datenbanken
+  verwenden den B2-Marker und die fachlich getrennten V3–V7-Migrationen. Neue
+  Schemaarbeit beginnt als kleine Vorwärtsmigration ab V8.
 - Referenzdaten liegen unter `spring-api/src/main/resources/seed` und werden
   idempotent angewendet; administrative Overrides bewusst erhalten.
 
@@ -105,6 +110,11 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 
 - Öffentliche Ursprungseinstiege: `deploy.sh` und `update.sh`; beide delegieren an
   `infrastructure/scripts/release/deploy-from-origin.sh`.
+- `./deploy.sh --configure` ist der vollständige interaktive First Run: Ziel,
+  dedizierter `rbfadmin`, optional erzeugter Ed25519-Key, einmaliger VPS-
+  Bootstrap-Zugang und Deployment laufen in einem Ablauf. Bootstrap-Zugangsdaten
+  werden nicht in `.env.origin` persistiert. Normale Folgeläufe verwenden nur den
+  geprüften Key-Zugang und `sudo -n`.
 - Setup ist in `scripts/setup/{options,workflow,main}.sh` getrennt.
 - Host-Helfer liegen unter `scripts/lib/host/` (Pakete, Storage, Firewall, TLS,
   Control); Skripte müssen robust, idempotent und mit klaren Fehlercodes arbeiten.
@@ -122,6 +132,31 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   knappe Audit-/Aktionshinweise und dürfen den Hauptablauf nicht unkontrolliert
   blockieren.
 
+## Stabiler Debugging-Ausgangspunkt (2026-08-04)
+
+- Deployment-/Update-Primärdoku: `docs/deployment/DEPLOYMENT.md` und
+  `docs/debugging/2026-08-04-update-path-review.md`.
+- Bekannte Produktionsfehler und geprüfte Ursachen:
+  `docs/debugging/DEPLOYMENT_INCIDENTS.md`. Dort zuerst nach Symptom suchen,
+  bevor Logs oder Abläufe erneut vollständig kartiert werden.
+- API-Fehler werden zentral als `api_error` mit Status, Methode, Pfad und
+  ausnahmebezogener Ursache protokolliert; keine Request-Payloads oder Secrets in
+  Logs ergänzen. Sicherheitsablehnungen bleiben separat als `security_401` bzw.
+  `security_403` sichtbar.
+- Der Release-Ablauf hält PostgreSQL-Daten unter dem gemeinsamen Installationsroot,
+  erstellt vor Updates koordinierte Backups, lässt Flyway migrieren und stellt bei
+  fehlgeschlagener Aktivierung Release und Backup wieder her. Niemals Volumes oder
+  Datenverzeichnisse als vermeintliche Fehlerbehebung löschen.
+- Das Cookie-Consent-UI öffnet ohne gespeicherte Entscheidung nicht automatisch,
+  solange keine optionale Cookie-/Tracking-Integration aktiv ist. Manuelles Öffnen
+  bleibt über Footer und Datenschutzcenter möglich.
+- API-Nutzung und Sicherheitsgrenzen stehen in `docs/reference/API.md`; der
+  vollständige Endpunktindex wird aus `contracts/api-contract.json` nach
+  `docs/reference/API_ENDPOINTS.md` generiert.
+- Historische Audit-Snapshots werden nicht mehr als zweite Dokumentationsquelle
+  gepflegt. Aktuelle Soll-Regeln stehen ausschließlich in Architektur-,
+  Entwicklungs-, Referenz- und Betriebsdokumenten.
+
 ## Häufige Befehle
 
 ```bash
@@ -133,6 +168,19 @@ make check-tree    # strikte Repository-Hygiene
 make build         # Spring-Paket plus Frontend-Build
 make package-release
 ```
+
+Agenten-Helfer für wiederkehrende Bestandsaufnahme und Prüfauswahl:
+
+```bash
+bash .agents/scripts/project-context.sh       # kompakter, stets aktueller Projekt-/Git-Snapshot
+bash .agents/scripts/check-changes.sh         # Prüfempfehlung aus den geänderten Pfaden
+bash .agents/scripts/check-changes.sh --run   # empfohlene vorhandene Repository-Gates ausführen
+bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build mit temporärer .env
+```
+
+Die Helfer enthalten keine eigene Fachprüfung. Sie lesen den aktuellen Stand und
+delegieren an `make`, `scripts/test-*.sh` und `check_repository.py`, damit keine
+zweite, später abweichende Qualitätslogik entsteht.
 
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
@@ -180,3 +228,6 @@ Cache neu prüfen, wenn `AGENTS.md`, `README.md`, Architektur-/Qualitätsdokumen
 Runtime-/Deployment-Topologie geändert wurden. Keine flüchtigen Dateizahlen,
 Testzahlen oder Vertragsoperationszahlen als Entscheidungsgrundlage verwenden;
 bei Bedarf direkt mit `rg`, `find` oder dem jeweiligen Parser ermitteln.
+Für den flüchtigen Stand zuerst `bash .agents/scripts/project-context.sh` ausführen;
+dadurch müssen Branch, Version, Arbeitsbaum und Debugging-Einstiege nicht aus
+älteren Sitzungszusammenfassungen rekonstruiert werden.

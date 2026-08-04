@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.0.0
+# Royal Blackwater Fleet v1.0.1
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
@@ -46,13 +46,13 @@ Ein Release gilt nur dann als auslieferbar, wenn Maven-Kompilierung, Spring- und
 PostgreSQL-Integrationstests, Frontend-Tests und Produktionsbuild sowie die
 Infrastruktur- und Recovery-Vertragstests erfolgreich waren.
 
-## Release bauen
+## Release bauen und deployen
 
 CI beziehungsweise eine vollständige Build-Umgebung erzeugt ein source-freies,
 prüfsummenbewehrtes Release-Artefakt:
 
 ```bash
-bash ./deploy.sh
+bash ./infrastructure/scripts/release/build-artifact.sh
 ```
 
 Für den interaktiven Ursprung-zu-Zielserver-Ablauf genügt anschließend:
@@ -68,7 +68,11 @@ Die beim ersten Lauf erzeugte `.env.origin` speichert die nicht geheimen
 Verbindungs- und Pfadwerte geschützt für spätere Updates; Vorlage:
 `.env.origin.example`.
 
-Ohne Flags fragt das Skript Ausgabeverzeichnis und Quellrevision interaktiv ab.
+Eine vollständig neue Zielmaschine wird mit `./deploy.sh --configure`
+eingerichtet. Der Assistent kann den dedizierten SSH-Administrator und seinen
+Deploy-Key über einen einmaligen VPS-Bootstrap-Zugang anlegen und danach im selben
+Lauf deployen. Spätere Aufrufe von `./deploy.sh` verwenden diese geprüfte
+Konfiguration ohne private Anwendungsaccounts.
 
 Das Zielsystem benötigt weder Git noch Maven, npm oder Zugriff auf Paketregistries.
 Es prüft das Bundle und baut nur die minimalen Runtime-Container aus dem bereits
@@ -76,8 +80,8 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.0.tar.gz \
-  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.1.tar.gz \
+  --checksum rbf-deployment-1.0.1.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -120,6 +124,7 @@ docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
 - [Qualitätsstandards](docs/development/QUALITY_STANDARDS.md)
 - [Entwicklung](docs/development/DEVELOPMENT.md)
 - [Datenbank und Flyway](docs/development/DATABASE.md)
+- [API-Nutzung und Sicherheit](docs/reference/API.md)
 - [Tests](docs/development/TESTING.md)
 - [Deployment](docs/deployment/DEPLOYMENT.md)
 - [Installation](docs/deployment/INSTALLATION.md)
@@ -127,6 +132,7 @@ docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
 - [Disaster Recovery](docs/deployment/DISASTER_RECOVERY.md)
 - [Sicherheit](SECURITY.md)
 - [Änderungsverlauf](CHANGELOG.md)
+- [Agent Onboarding](.agents/ONBOARDING.md)
 
 ## Lizenz und Hinweise
 

@@ -4,6 +4,18 @@ Dieser Index ist der Einstieg für das v1.0-Deployment. Die Dokumente sind nach
 Verantwortung gruppiert; die alten Dateinamen wurden bewusst nicht als zweite
 Quelle dupliziert.
 
+## Agenten-Einstieg
+
+- [Agent Onboarding](../.agents/ONBOARDING.md) – tokenarmer Schnellstart und
+  Aufgabennavigation
+- [Projekt-Cache](../.agents/PROJECT_CACHE.md) – stabile Systemlandkarte und
+  bekannte Debugging-Grundlage
+- [`AGENTS.md`](../AGENTS.md) – verbindliche Arbeitsregeln
+
+Die `.agents`-Dokumente sind Navigationshilfen. Verbindliche Qualitäts-,
+Architektur-, Security-, Datenschutz- und Betriebsregeln bleiben in den unten
+aufgeführten Primärdokumenten.
+
 ## Frischeinrichtung (zwei Server)
 
 1. [Webseiten-Server installieren](deployment/INSTALLATION.md)
@@ -36,13 +48,19 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 - [Uptime-Kuma-Migration](deployment/UPTIME_KUMA_2_MIGRATION.md)
 - [Backup-Server-Enrollment (Details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
 
-## Audits und Reviews
-
-Alle Audits, Seed-Reviews und Qualitätsberichte liegen unter [audits/](audits/).
-
 ## Referenz und Integrationen
 
 - [Referenzdokumente](reference/)
+- [API-Nutzung und Sicherheit](reference/API.md)
+- [Generierte API-Endpunktreferenz](reference/API_ENDPOINTS.md)
 - [Outbound-Webhooks](integrations/outbound-webhooks.md)
 - [Webhook-Templates](integrations/webhook-templates/README.md)
 - [Ingame-Screenshot-Katalog](ingame-screenshots/README.md)
+
+## Pflegevertrag
+
+Verhaltensänderungen aktualisieren Implementierung, Tests und zugehörige Doku im
+selben Arbeitsschritt. Änderungen an Topologie, Modulgrenzen, Gates oder zentralen
+Debugging-Einstiegen aktualisieren zusätzlich Agent-Onboarding und Projekt-Cache.
+Flüchtige Werte wie Branch, Revision und Dateizahlen werden nicht abgeschrieben,
+sondern mit `bash .agents/scripts/project-context.sh` live ermittelt.

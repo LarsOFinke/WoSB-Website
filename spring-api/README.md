@@ -2,6 +2,9 @@
 
 Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `contracts/api-contract.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
 
+Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
+Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
+
 ```bash
 mvn -f spring-api/pom.xml verify
 mvn -f spring-api/pom.xml spring-boot:run

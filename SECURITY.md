@@ -45,6 +45,7 @@ alte Schlüssel entfernen.
 
 Datenminimierung und Löschfristen sind Sicherheitsanforderungen. Die technisch erzwungenen Fristen
 stehen in `docs/reference/DATA_RETENTION.md`; offene Befunde und Verantwortlichkeiten stehen in
-`docs/audits/SECURITY_PRIVACY_AUDIT.md`. Query-Werte, Proxy-Ketten und geprüfte Registrierungsgeheimnisse
+`docs/development/QUALITY_STANDARDS.md` und `docs/reference/DATA_RETENTION.md`.
+Query-Werte, Proxy-Ketten und geprüfte Registrierungsgeheimnisse
 dürfen nicht dauerhaft gespeichert werden. Änderungen an Datenflüssen, Logging, Drittanbietern oder
 Backups benötigen eine erneute Datenschutzprüfung.

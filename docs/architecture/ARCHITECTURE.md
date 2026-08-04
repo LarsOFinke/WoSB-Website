@@ -26,7 +26,12 @@ Domain services own authorization, transactions and audit semantics. Repositorie
 
 ## Persistence
 
-Flyway is the only schema owner. Hibernate runs with `ddl-auto=validate`. New installations apply `V1__current_schema_baseline.sql` and later forward migrations. Existing installations from the retired schema manager pass a one-time fingerprint and adoption gate before normal Flyway validation.
+Flyway is the only schema owner. Hibernate runs with `ddl-auto=validate`. Existing
+installations retain the immutable `V1__current_schema_baseline.sql` history. New
+empty databases select the B2 modular baseline marker and apply the focused
+V3–V7 schema migrations; later changes continue as small forward migrations.
+Existing installations from the retired schema manager pass a one-time
+fingerprint and adoption gate before normal Flyway validation.
 
 Reference data is embedded below `spring-api/src/main/resources/seed` and applied idempotently by Spring. Administrative overrides are preserved explicitly.
 
@@ -41,3 +46,18 @@ Growing lists use bounded `search`, `limit`, `offset` and domain-specific filter
 ## Operations
 
 The API never runs privileged host commands. It writes owner-only JSON requests to an unprivileged inbox. Root-owned systemd runners claim requests through no-follow descriptors and publish world-readable status files without exposing secrets.
+
+Origin deployments use a dedicated key-authenticated SSH administrator rather
+than an application or personal account. `deploy.sh --configure` can provision
+that account through a one-time VPS bootstrap identity, verifies key-only access
+and passwordless non-interactive sudo, then continues the artifact deployment in
+the same run. Persistent releases, configuration, database and recovery state
+live below `/srv/rbf`; `/tmp/rbf-release` is transfer staging only.
+
+## Quality boundaries
+
+The architecture is considered healthy when domain ownership remains explicit,
+queries and payloads are bounded, security/privacy controls are server enforced,
+and application, schema and persistent data can be deployed or restored as one
+coherent version. The measurable repository-wide requirements and definition of
+done are maintained in `docs/development/QUALITY_STANDARDS.md`.

@@ -52,7 +52,7 @@ repository_files=[Path(raw) for raw in repository_result.stdout.split('\0') if r
 for relative in repository_files:
     path=ROOT/relative
     if not path.is_file() or path.suffix == '.pyc' or any(part in {'node_modules','target','dist','release','__pycache__'} for part in relative.parts): continue
-    if path in scan_exclusions or 'audits' in path.parts: continue
+    if path in scan_exclusions: continue
     if path in allowed_legacy or path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.ico','.zip','.gz','.age','.woff','.woff2'}: continue
     source=path.read_text(encoding='utf-8',errors='ignore').lower()
     for forbidden in ('fastapi','uvicorn','rbf-seed','secure-api'):
@@ -63,10 +63,12 @@ for relative in repository_files:
 for path in (ROOT/'spring-api/src/main/java').rglob('*.java'):
     require(len(path.read_text(encoding='utf-8').splitlines())<=420,f'Java file exceeds 420 lines: {path.relative_to(ROOT)}')
 for migration in (ROOT/'spring-api/src/main/resources/db/migration').glob('*.sql'):
-    require(re.fullmatch(r'V\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
+    require(re.fullmatch(r'[BV]\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
 
 subprocess.run([sys.executable,str(ROOT/'scripts/audit_spring_backend.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'scripts/migration/generate_build_stat_catalog.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'scripts/migration/generate_modular_flyway_baseline.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'scripts/documentation/generate_api_reference.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'scripts/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:
     forbidden_names={'.env','.DS_Store'}

@@ -51,6 +51,12 @@ class ApplicationIntegrationTest {
     void migratesSeedsAndStartsTheCompleteApplication() {
         assertThat(jdbc.count("select count(*) from flyway_schema_history where success=true", Map.of()))
                 .isPositive();
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='1'", Map.of()))
+                .isZero();
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='2'", Map.of()))
+                .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='7'", Map.of()))
+                .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from site_roles", Map.of())).isPositive();
         assertThat(jdbc.count("select count(*) from users where is_bootstrap_admin=true", Map.of()))
                 .isEqualTo(1);

@@ -139,12 +139,14 @@ einem expliziten Fetch-Join laden. `/error` bleibt öffentlich, damit Folgefehle
 nicht als irreführender 401 erscheinen. Nach dem Deployment Browser-Session
 beibehalten; ein erneuter Login ist nur nötig, wenn die Session abgelaufen ist.
 
-## 10. Cookie-Banner erscheint nicht
+## 10. Cookie-Einstellungen werden nicht automatisch eingeblendet
 
-Wenn `GET /api/privacy/cookie-consent` 200 liefert, aber der Banner nicht erscheint,
-liegt meist bereits das Consent-Cookie im Browser. In einem privaten Fenster oder
-nach Löschen des site-spezifischen `rbf_cookie_consent` erneut laden. Keine
-Produktions-Cookies per Ticket teilen.
+Das ist der erwartete Zustand, solange keine optionale Cookie- oder Tracking-
+Integration aktiv ist. Eine fehlende gespeicherte Entscheidung und ein Fehler beim
+Abruf der Entscheidung öffnen den Dialog nicht automatisch. Damit erzeugt die
+reine Anzeige des Banners nicht erst selbst ein Consent-Cookie. Die Einstellungen
+bleiben über den Footer und das Datenschutzcenter erreichbar. Keine Produktions-
+Cookies per Ticket teilen.
 
 ## 11. Versionen stimmen nicht überein
 

@@ -5,6 +5,12 @@ liegenden `AGENTS.md` haben für ihren Teilbaum Vorrang. Verbindliche technische
 Details stehen in [docs/development/QUALITY_STANDARDS.md](docs/development/QUALITY_STANDARDS.md) und den
 dort verlinkten Architekturdokumenten.
 
+> **Agenten-Schnellstart:** Vor einer breiten Repository-Analyse zuerst
+> [`.agents/ONBOARDING.md`](.agents/ONBOARDING.md) lesen und
+> `bash .agents/scripts/project-context.sh` ausführen. Der Einstieg verweist auf
+> den gepflegten Projekt-Cache, bekannte Fehlerbilder und scopeabhängige
+> Prüfungen, damit bereits geklärte Architektur nicht erneut ermittelt wird.
+
 ## Arbeitsweise
 
 1. Vor Änderungen den betroffenen Ablauf, seine Aufrufer, Tests, Konfiguration und

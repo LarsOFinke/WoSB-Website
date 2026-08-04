@@ -1,5 +1,19 @@
 # Entwicklung
 
+## Schnelle Orientierung für Repository-Agenten
+
+`AGENTS.md` ist der verbindliche Arbeitsleitfaden. Agenten beginnen anschließend
+mit [`.agents/ONBOARDING.md`](../../.agents/ONBOARDING.md) und einem aktuellen,
+geheimnisfreien Snapshot:
+
+```bash
+bash .agents/scripts/project-context.sh
+```
+
+Der Projekt-Cache beschleunigt die Navigation, ersetzt aber weder diese
+Entwicklungsdokumentation noch die betroffenen Quell-, Test- und
+Konfigurationsdateien.
+
 ## Backend
 
 Voraussetzungen sind Java 21, Maven 3.9+ und PostgreSQL. Für die vollständigen
@@ -35,6 +49,10 @@ make clean      # generierte Dateien und Buildausgaben entfernen
 make clean-all  # zusätzlich lokale Abhängigkeitsumgebungen entfernen
 make check-tree # sauberen, paketfreien Repository-Baum prüfen
 ```
+
+Für einen vorhandenen Diff kann `bash .agents/scripts/check-changes.sh` die
+kleinste passende Prüfmenge anzeigen. Querschnittliche Änderungen bleiben immer
+ein Fall für `make validate`.
 
 Neue API-Funktionen benötigen Berechtigungs-, Erfolgs- und Fehlerfälle. Wachsende
 Listen brauchen begrenzte Pagination, Such- und Domänenfilter. Collections werden
