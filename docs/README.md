@@ -40,6 +40,7 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 - [Tests](development/TESTING.md)
 - [Datenbank und Migrationen](development/DATABASE.md)
 - [Qualitätsstandards](development/QUALITY_STANDARDS.md)
+- [Versionierung](development/VERSIONING.md)
 
 ## Deployment und Betrieb
 

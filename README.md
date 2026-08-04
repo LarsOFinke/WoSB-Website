@@ -122,6 +122,7 @@ docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
 
 - [Architektur](docs/architecture/ARCHITECTURE.md)
 - [Qualitätsstandards](docs/development/QUALITY_STANDARDS.md)
+- [Versionierung](docs/development/VERSIONING.md)
 - [Entwicklung](docs/development/DEVELOPMENT.md)
 - [Datenbank und Flyway](docs/development/DATABASE.md)
 - [API-Nutzung und Sicherheit](docs/reference/API.md)

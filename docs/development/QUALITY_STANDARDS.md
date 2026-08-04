@@ -108,6 +108,10 @@ for a verified backup and recovery path.
 ## Operations and recoverability
 
 - Production deploys compiled, checksummed, source-free artifacts only.
+- Releases follow `MAJOR.MINOR.PATCH` as defined in
+  `docs/development/VERSIONING.md`: fixes increment Patch, compatible features
+  increment Minor, and incompatible or explicitly major extensions increment
+  Major. Published versions are immutable.
 - Database migration, coordinated backup, release switch, readiness and rollback
   form one controlled workflow. Normal updates never bypass the backup gate.
 - Restore is staged, version-aware and fail-closed. Application artifact, Flyway

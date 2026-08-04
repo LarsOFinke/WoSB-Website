@@ -51,6 +51,7 @@ gesamten Repositorys beginnen, wenn der Cache bereits den Einstieg nennt.
 | API-Vertrag | `contracts/api-contract.json`, danach generierter Transport und Handler |
 | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
 | Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh` |
+| Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
 | Frontend-Funktion | `frontend/src/modules/<feature>/` |
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, betroffene Modulstile |
 | Sicherheit | `SecurityConfiguration`, `security/`, `scripts/security_audit.py` |
@@ -62,6 +63,9 @@ Controller und Locale-Ausgaben nicht von Hand bearbeiten.
 ## Bekannter stabiler Stand
 
 - Version: aus `VERSION` lesen; keine Zahl aus diesem Dokument übernehmen.
+- Nächste Version tokenarm mit `bash .agents/scripts/next-version.sh
+  patch|minor|major` bestimmen: Patch für Fixes, Minor für kompatible Features,
+  Major für inkompatible oder ausdrücklich große Erweiterungen.
 - Der interaktive First Run ist `./deploy.sh --configure`. Er kann den
   dedizierten `rbfadmin` samt Key über einen einmaligen VPS-Bootstrap-Zugang
   einrichten und danach im selben Lauf deployen.

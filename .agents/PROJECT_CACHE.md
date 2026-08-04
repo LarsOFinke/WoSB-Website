@@ -26,7 +26,7 @@
 
 | Thema | Zuerst lesen |
 | --- | --- |
-| Arbeitsregeln | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
+| Arbeitsregeln | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md`, `docs/development/VERSIONING.md` |
 | Gesamtsystem | `README.md`, `docs/architecture/ARCHITECTURE.md` |
 | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
 | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
