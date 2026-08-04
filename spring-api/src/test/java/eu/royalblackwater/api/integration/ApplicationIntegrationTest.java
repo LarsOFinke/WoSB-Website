@@ -85,7 +85,7 @@ class ApplicationIntegrationTest {
                 .header("X-XSRF-TOKEN", xsrf)
                 .POST(HttpRequest.BodyPublishers.ofString(
                         "{\"username\":\"integration-public-route\",\"password\":\"Integration-Password-42!\","
-                                + "\"displayName\":\"Integration Public Route\",\"wantsFleetMembership\":false}"))
+                                + "\"display_name\":\"Integration Public Route\",\"wants_fleet_membership\":false}"))
                 .build();
         HttpResponse<String> registration = HttpClient.newHttpClient().send(register, HttpResponse.BodyHandlers.ofString());
         // The JDK client does not model browser cookie handling/deferred CSRF

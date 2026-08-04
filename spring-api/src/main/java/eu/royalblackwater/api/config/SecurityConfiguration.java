@@ -82,6 +82,9 @@ public class SecurityConfiguration {
                                 "/api/auth/login", "/api/auth/logout", "/api/auth/register",
                                 "/api/privacy/cookie-consent", "/api/privacy/contact").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        // Error dispatches must remain observable. Otherwise a
+                        // backend exception can be masked as a second 401.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/**").authenticated()

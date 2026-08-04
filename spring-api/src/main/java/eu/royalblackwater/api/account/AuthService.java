@@ -51,8 +51,9 @@ public class AuthService {
             sessions.delete(session);
             return Optional.empty();
         }
-        if (!session.getUser().isActive()) return Optional.empty();
-        return users.findById(session.getUser().getId());
+        Optional<UserEntity> user = users.findAuthenticatedById(session.getUser().getId());
+        if (user.isEmpty() || !user.get().isActive()) return Optional.empty();
+        return user;
     }
 
     @Transactional

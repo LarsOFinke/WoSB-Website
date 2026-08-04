@@ -123,20 +123,36 @@ Prüfe, dass das laufende JAR zur Release-Version passt. Die Security-Konfigurat
 erlaubt die anonymen Methoden explizit und ignoriert CSRF nur für diese Routen;
 401/403-Logs enthalten nur Methode, Pfad und boolesche Kontextmerkmale.
 
-## 9. Cookie-Banner erscheint nicht
+## 9. 401 trotz Session-Cookie auf geschützten Routen
+
+**Symptom:** Eingeloggte Requests liefern 401; im API-Log steht zusätzlich
+`LazyInitializationException` für `SiteRoleEntity` und danach ein 401 für
+`/error`.
+
+**Ursache:** Der Session-Filter erstellt die Spring-Authentifizierung nach dem
+Ende des Repository-Aufrufs. Wird die Site-Rolle dabei nur als lazy Proxy
+zurückgegeben, kann der Filter deren Berechtigungen nicht mehr laden. Der
+geschützte Fehlerpfad verdeckt anschließend die eigentliche Ausnahme.
+
+**Lösung:** Die Authentifizierungsabfrage muss Benutzer und Site-Rolle mit
+einem expliziten Fetch-Join laden. `/error` bleibt öffentlich, damit Folgefehler
+nicht als irreführender 401 erscheinen. Nach dem Deployment Browser-Session
+beibehalten; ein erneuter Login ist nur nötig, wenn die Session abgelaufen ist.
+
+## 10. Cookie-Banner erscheint nicht
 
 Wenn `GET /api/privacy/cookie-consent` 200 liefert, aber der Banner nicht erscheint,
 liegt meist bereits das Consent-Cookie im Browser. In einem privaten Fenster oder
 nach Löschen des site-spezifischen `rbf_cookie_consent` erneut laden. Keine
 Produktions-Cookies per Ticket teilen.
 
-## 10. Versionen stimmen nicht überein
+## 11. Versionen stimmen nicht überein
 
 `VERSION`, `spring-api/pom.xml` sowie Frontend `package.json` und Lockfile müssen
 denselben Stand tragen. `scripts/check_repository.py --strict-tree` und der
 Origin-Build brechen bei Abweichungen absichtlich ab.
 
-## 11. Erststart scheitert während eines Monitoring-Image-Pulls
+## 12. Erststart scheitert während eines Monitoring-Image-Pulls
 
 **Symptom:** API und PostgreSQL sind bereit, aber der Release-Start endet während
 des Downloads von `louislam/uptime-kuma` mit einem fehlgeschlagenen Healthcheck.
