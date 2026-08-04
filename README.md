@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.0.2
+# Royal Blackwater Fleet v1.0.3
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
@@ -80,8 +80,8 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.2.tar.gz \
-  --checksum rbf-deployment-1.0.2.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.3.tar.gz \
+  --checksum rbf-deployment-1.0.3.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -93,7 +93,7 @@ Terminal abgefragt.
 Updates werden durch ein neues Release-Artefakt ausgelöst:
 
 ```bash
-sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.2.tar.gz
+sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.3.tar.gz
 ```
 
 `/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente

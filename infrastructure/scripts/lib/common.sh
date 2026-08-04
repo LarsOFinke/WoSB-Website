@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-INFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+default_infra_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+INFRA_DIR="${RBF_RUNTIME_INFRA_DIR:-$default_infra_dir}"
+[[ "$INFRA_DIR" == /* && -d "$INFRA_DIR" ]] || {
+  echo "[error] RBF runtime infrastructure directory is invalid: $INFRA_DIR" >&2
+  exit 1
+}
+INFRA_DIR="$(realpath "$INFRA_DIR")"
 REPO_ROOT="$(cd "$INFRA_DIR/.." && pwd)"
 ENV_FILE="$INFRA_DIR/.env"
 COMPOSE_FILE="${RBF_COMPOSE_FILE:-$INFRA_DIR/compose.yml}"

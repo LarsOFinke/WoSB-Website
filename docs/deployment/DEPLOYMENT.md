@@ -103,8 +103,8 @@ ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.2.tar.gz \
-  --checksum rbf-deployment-1.0.2.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.3.tar.gz \
+  --checksum rbf-deployment-1.0.3.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -119,8 +119,10 @@ Der Installer:
 
 1. verifies outer checksum, safe archive paths and complete inventory;
 2. acquires the release lock;
-3. creates a coordinated PostgreSQL/file/recovery backup set from the active
-   release before any release switch; activation stops if that backup fails;
+3. uses the verified incoming backup runner against the active release's
+   Compose configuration and shared data to create a coordinated
+   PostgreSQL/file/recovery backup set before any release switch; activation
+   stops if that backup fails;
 4. installs `/srv/rbf/releases/<version>`;
 5. builds only the small API and gateway runtime images from the JAR and `dist`;
 6. switches `/srv/rbf/current` atomically;
@@ -133,7 +135,9 @@ No Git checkout, Maven, npm or package-registry access is needed on the target h
 
 The origin dispatcher does not pass `--skip-backup` or `--no-backup` for normal
 updates. The target installer therefore invokes the coordinated backup before
-the atomic release switch. On a genuinely empty target, `setup_website.sh`
+the atomic release switch. Using the incoming runner allows a release to repair
+backup orchestration defects in its predecessor without mutating that immutable
+active release. On a genuinely empty target, `setup_website.sh`
 automatically marks the run as a first installation without a backup; if
 release data or an active installation is present, it fails closed and keeps
 the backup requirement. `--skip-backup` remains an explicit emergency/operator

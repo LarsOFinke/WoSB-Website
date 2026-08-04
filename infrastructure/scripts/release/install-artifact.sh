@@ -151,7 +151,10 @@ fi
 if [[ -n "$previous_release" && "$skip_backup" != true ]]; then
   postgres_result="$stage/postgres.result"; files_result="$stage/files.result"; set_result="$stage/set.result"
   verification_result="$stage/verification.result"; recovery_result="$stage/recovery.result"
-  RBF_INSTALL_ROOT="$install_root" "$previous_release/infrastructure/scripts/backup/run-consistent-backup.sh" \
+  backup_runner="$SCRIPT_DIR/../backup/run-consistent-backup.sh"
+  [[ -x "$backup_runner" ]] || die "Incoming release has no coordinated backup runner."
+  RBF_INSTALL_ROOT="$install_root" RBF_RUNTIME_INFRA_DIR="$previous_release/infrastructure" \
+    "$backup_runner" \
     --reason pre-deployment --postgres-result "$postgres_result" --files-result "$files_result" \
     --verification-result "$verification_result" --recovery-result "$recovery_result" \
     --backup-set-result "$set_result"

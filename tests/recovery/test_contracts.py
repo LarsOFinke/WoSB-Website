@@ -21,6 +21,15 @@ def test_backup_set_is_bound_to_spring_flyway_preflight(tmp_path: Path) -> None:
     create_manifest(root,target,files=files,postgres=db,verification=report); sidecar(target)
     assert validate_manifest(root,target)['committed'] is True
 
+def test_backup_set_accepts_shared_data_behind_a_versioned_release_symlink(tmp_path: Path) -> None:
+    root=tmp_path/'rbf'; infra=root/'releases/1.0.2/infrastructure'; shared=root/'shared/data'; shared.mkdir(parents=True); infra.mkdir(parents=True)
+    (infra/'data').symlink_to(shared, target_is_directory=True)
+    files=infra/'data/backups/files/files.tar.gz'; target=infra/'data/backups/sets/set.json'
+    files.parent.mkdir(parents=True); target.parent.mkdir(parents=True); files.write_bytes(b'files'); sidecar(files)
+    create_manifest(root,target,files=files); sidecar(target)
+    payload=validate_manifest(root,target)
+    assert payload['artifacts']['files']['path']=='shared/data/backups/files/files.tar.gz'
+
 def test_backup_enrollment_response_is_request_bound() -> None:
     request=validate_request({'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','requested_username':'rbf-backup','requested_directory':'/data','created_at':'2026-08-01T10:00:00+00:00','product_hostname':'rbf.example.net'})
     response=validate_response({'schema_version':1,'kind':RESPONSE_KIND,'enrollment_id':request['enrollment_id'],'host':'backup.example.net','port':22,'username':'rbf-backup','remote_directory':'/data','host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=','host_key_fingerprint':'SHA256:'+'A'*43,'age_recipient':'age1'+'a'*58,'managed_server':True},expected_enrollment_id=str(request['enrollment_id']))

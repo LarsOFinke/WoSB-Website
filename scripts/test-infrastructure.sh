@@ -47,6 +47,11 @@ if find "$INFRA_DIR/scripts" -type f -name '*.sh' ! -perm /111 -print -quit | gr
 fi
 [[ -f "$INFRA_DIR/scripts/migration/verify-alembic-head.sql" && -f "$INFRA_DIR/scripts/migration/adopt-flyway.sql" ]] || fail 'controlled legacy schema adoption gate missing'
 
+runtime_override="$(mktemp -d)"
+resolved_override="$(RBF_RUNTIME_INFRA_DIR="$runtime_override" bash -c 'source "$1"; printf "%s" "$INFRA_DIR"' _ "$INFRA_DIR/scripts/lib/common.sh")"
+[[ "$resolved_override" == "$(realpath "$runtime_override")" ]] || fail 'incoming release helpers cannot bind to the active runtime infrastructure'
+rmdir "$runtime_override"
+
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   temp_env="$(mktemp)"; trap 'rm -f "$temp_env"' EXIT
   cp "$INFRA_DIR/.env.example" "$temp_env"
