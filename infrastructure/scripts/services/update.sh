@@ -40,13 +40,11 @@ write_status running "Host operation started."
 trap 'write_status failed "Host operation failed."' ERR
 case "$operation" in
   update)
-    cat >&2 <<'MESSAGE'
-[update] Zielserver-Updates sind deaktiviert.
-[update] Releases werden ausschließlich auf dem Ursprungsserver mit ./update.sh
-[update] gebaut, verifiziert, übertragen und aktiviert. Verwende für lokale
-[update] Wartung --restart oder --rollback.
-MESSAGE
-    exit 78
+    if [[ -z "$artifact" ]]; then
+      artifact="$(find "$INSTALL_ROOT/shared/releases/inbox" -maxdepth 1 -type f -name 'rbf-deployment-*.tar.gz' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)"
+    fi
+    [[ -f "$artifact" && -f "$artifact.sha256" ]] || { echo "[update] Kein geprüftes Release-Artefakt in $INSTALL_ROOT/shared/releases/inbox gefunden." >&2; exit 1; }
+    "$INFRA_DIR/scripts/release/install-artifact.sh" --artifact "$artifact" --checksum "$artifact.sha256" --install-root "$INSTALL_ROOT" --requested-by "$requested_by"
     ;;
   restart)
     exec 8>"$RUN_DIR/update.lock"; flock 8

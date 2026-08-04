@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { useLocale } from '@/locales'
-import { getSystemUpdateStatus } from '@/modules/admin/api/admin'
+import { getSystemUpdateStatus, requestSystemUpdate } from '@/modules/admin/api/admin'
 
 const props = defineProps({
   apiStatus: { type: String, required: true },
@@ -51,6 +51,24 @@ async function refresh() {
   schedulePoll()
 }
 
+async function requestOperation(operation) {
+  if (!update.value.request_available || inProgress.value) return
+  const confirmationKey = operation === 'restart'
+    ? 'restartConfirm'
+    : operation === 'rollback' ? 'rollbackConfirm' : 'updateConfirm'
+  if (!window.confirm(t(`admin.system.${confirmationKey}`))) return
+  loading.value = true
+  error.value = ''
+  try {
+    update.value = (await requestSystemUpdate(operation)).status
+    schedulePoll()
+  } catch (err) {
+    error.value = err.message || t('admin.system.requestError')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(refresh)
 onUnmounted(() => window.clearTimeout(pollTimer))
 </script>
@@ -75,8 +93,19 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatDateTime(update.started_at) }}</dd></div>
         <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatDateTime(update.finished_at) }}</dd></div>
       </dl>
-      <small>Server-Updates und Rollbacks werden ausschließlich am Ursprungsserver
-        über <code>./setup.sh update</code> gestartet.</small>
+      <small>Updates verwenden nur geprüfte Artefakte aus dem geschützten Host-Inbox-
+        Verzeichnis; Backups, Migrationen und Readiness-Prüfung laufen vor der Aktivierung.</small>
+      <div class="system-update-actions">
+        <button class="primary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('update')">
+          {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
+        </button>
+        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('restart')">
+          {{ t('admin.system.restartButton') }}
+        </button>
+        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('rollback')">
+          {{ t('admin.system.rollbackButton') }}
+        </button>
+      </div>
     </article>
   </div>
 

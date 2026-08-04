@@ -15,9 +15,10 @@ test('system update panel exposes only privacy-minimal status fields', async () 
 })
 
 
-test('system operations point operators to the trusted origin host', async () => {
+test('system operations expose guarded host-runner actions without deployment internals', async () => {
   const panel = await readFile(panelPath, 'utf8')
-  assert.match(panel, /Ursprungsserver/)
-  assert.match(panel, /setup\.sh update/)
-  assert.equal(panel.includes("trigger('restart')"), false)
+  assert.match(panel, /requestOperation\('update'\)/)
+  assert.match(panel, /requestOperation\('restart'\)/)
+  assert.match(panel, /requestOperation\('rollback'\)/)
+  assert.equal(panel.includes('setup.sh update'), false)
 })

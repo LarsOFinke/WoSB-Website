@@ -30,7 +30,7 @@ internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufge
 
 ### Kontrollierte Server-Aktionen
 
-- `scripts/services/update.sh`: fail-closed Kompatibilitäts-Runner für alte Zielserver-Aufrufe; lokale `restart`-/`rollback`-Recovery bleibt möglich, Release-Aktivierung erfolgt ausschließlich über den Ursprung.
+- `scripts/services/update.sh`: root-owned Host-Runner für geprüfte Inbox-Artefakte sowie lokale `restart`-/`rollback`-Recovery; normale Artefakte werden weiterhin am Ursprung gebaut und übertragen.
 - `scripts/update/options.sh`: CLI sowie Update- und Neustartmodus.
 - `scripts/update/request.sh`: Admin-Panel-Anforderung.
 - `scripts/update/status.sh`: atomare Statuspersistenz.

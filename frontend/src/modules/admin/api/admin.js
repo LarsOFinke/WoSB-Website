@@ -6,6 +6,10 @@ export function getSystemUpdateStatus() {
   return get('/admin/system/update')
 }
 
+export function requestSystemUpdate(operation = 'update') {
+  return post('/admin/system/update', { operation })
+}
+
 export function listRegistrationRequests({ status = 'pending', search = '', fromDate = '', toDate = '' } = {}) {
   return get(withQuery('/admin/registration-requests', {
     status,

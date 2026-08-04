@@ -13,28 +13,26 @@ sudo /srv/rbf/current/infrastructure/scripts/checks/smoke-test.sh
 
 Spring readiness is available internally at `/actuator/health/readiness`; the public gateway exposes the application health contract.
 
-## Updates from the origin host
+## Updates from the origin host or staff panel
 
-Updates, restarts and rollbacks are deliberately not triggered from the web
-application. Start them on the trusted origin server through the repository
-dispatcher, for example:
+Normal releases are still built and transferred from the trusted origin server,
+for example:
 
 ```bash
 sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.1.tar.gz
 ```
 
 The dispatcher cleans failed releases and replaces an active release with the
-same version before installing the verified artifact. It also removes stale
-Spring Boot JARs during the origin build, so the image tag and the application
-version cannot silently diverge. Do not run `infrastructure/scripts/services/update.sh`
-or the former Admin-Panel update path to activate an artifact on the website
-server; that runner now fails closed. `--restart` and `--rollback` remain valid
-local recovery operations.
+same version before installing the verified artifact. The staff panel can also
+queue `update`, `restart`, or `rollback` through the root-owned systemd watcher.
+An update is accepted only when a checksummed artifact is already staged in
+`/srv/rbf/shared/releases/inbox`; the host runner then uses the same coordinated
+backup, migration, activation and rollback path as a normal release.
 
 Für lokale Wartungsaktionen auf dem Zielserver bleiben die versionierten
 Runner unter `/srv/rbf/current/infrastructure/scripts/services/` verfügbar.
 
-The target host still exposes read-only status for operations monitoring.
+The target host exposes operation status and a guarded staff-panel request path.
 
 ## Logs
 
