@@ -39,10 +39,18 @@ for command in java mvn node npm python3; do
   command -v "$command" >/dev/null 2>&1 || { echo "[release] Missing build tool: $command" >&2; exit 1; }
 done
 [[ -n "$source_revision" ]] || source_revision="$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || printf unknown)"
+version="$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")"
+# Remove stale packaged JARs before validation so an older version can never be
+# selected or accidentally carried into a release artifact.
+find "$ROOT_DIR/spring-api/target" -maxdepth 1 -type f -name 'rbf-api-*.jar' ! -name '*.original' -delete 2>/dev/null || true
 
 bash "$ROOT_DIR/scripts/test.sh" full
-jar="$(find "$ROOT_DIR/spring-api/target" -maxdepth 1 -type f -name 'rbf-api-*.jar' ! -name '*.original' -print -quit)"
+jar="$ROOT_DIR/spring-api/target/rbf-api-${version}.jar"
 [[ -n "$jar" ]] || { echo "[release] Verified Spring Boot JAR is missing." >&2; exit 1; }
+[[ -f "$jar" && ! -L "$jar" ]] || {
+  echo "[release] Verified Spring Boot JAR for version $version is missing: $jar" >&2
+  exit 1
+}
 
 python3 "$ROOT_DIR/scripts/package_deployment_artifact.py" \
   --version "$(cat "$ROOT_DIR/VERSION")" \
