@@ -61,6 +61,11 @@ public class SecurityConfiguration {
                 .addFilterAfter(sessionAuthentication, RequestBoundaryFilter.class)
                 .addFilterAfter(csrfCookieFilter, SessionAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // Keep method/path matching explicit: this avoids a
+                        // servlet-path matcher treating generated public
+                        // routes as protected after the Spring Boot 4 move.
+                        .requestMatchers(HttpMethod.GET, "/api/fleets/public/official").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

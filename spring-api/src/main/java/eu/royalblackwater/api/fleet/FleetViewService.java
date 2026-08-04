@@ -129,10 +129,8 @@ public class FleetViewService {
 
     private Map<String, Object> official(boolean includeInactive) {
         String active = includeInactive ? "" : " where f.is_active=true";
-        return jdbc.optional(FLEET_SELECT + active + """
-                order by case when f.slug='royal-blackwater-fleet' then 0 else 1 end, f.sort_order, f.id
-                limit 1
-                """, Map.of()).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Fleet not found."));
+        return jdbc.optional(FLEET_SELECT + active + " order by case when f.slug='royal-blackwater-fleet' then 0 else 1 end, f.sort_order, f.id limit 1",
+                Map.of()).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Fleet not found."));
     }
 
     private Map<String, Object> fleet(long fleetId, boolean includeInactive) {

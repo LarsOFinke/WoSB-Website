@@ -68,6 +68,23 @@ class ApplicationIntegrationTest {
         assertThat(protectedApi.statusCode()).isEqualTo(401);
     }
 
+    @Test
+    void exposesRegistrationAndOfficialFleetWithoutAuthentication() throws Exception {
+        HttpResponse<String> fleet = get("/api/fleets/public/official");
+        assertThat(fleet.statusCode()).isIn(200, 404);
+
+        HttpRequest register = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/register"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(
+                        "{\"username\":\"integration-public-route\",\"password\":\"Integration-Password-42!\","
+                                + "\"displayName\":\"Integration Public Route\",\"wantsFleetMembership\":false}"))
+                .build();
+        HttpResponse<String> registration = HttpClient.newHttpClient().send(register, HttpResponse.BodyHandlers.ofString());
+        // Without the browser's XSRF header Spring rejects the unsafe request
+        // with 403; it must never be rejected as unauthenticated (401).
+        assertThat(registration.statusCode()).isIn(202, 403, 409);
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
                 .GET()
