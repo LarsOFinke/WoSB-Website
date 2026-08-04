@@ -581,7 +581,7 @@ const {
         <form v-if="isBootstrapAdmin" class="backup-restore-form" @submit.prevent="restoreFiles">
           <fieldset class="backup-module-selection">
             <legend>{{ t('admin.backups.restore.modules') }}</legend>
-            <label v-for="module in ['uploads', 'certs', 'letsencrypt', 'uptime-kuma']" :key="module">
+            <label v-for="module in ['uploads', 'certs', 'letsencrypt']" :key="module">
               <input
                 v-model="filesRestoreForm.components"
                 type="checkbox"

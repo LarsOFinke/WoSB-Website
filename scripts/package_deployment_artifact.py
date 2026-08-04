@@ -22,7 +22,6 @@ RUNTIME_FILES = (
     "infrastructure/compose.release.yml",
     "infrastructure/.env.example",
     "infrastructure/nginx/default.conf",
-    "infrastructure/nginx/monitoring.conf",
     "infrastructure/nginx/security-headers.conf",
     "infrastructure/nginx/upload-security-headers.conf",
     "infrastructure/docker/api-runtime.Dockerfile",

@@ -30,7 +30,11 @@ Für einen manuellen Lauf ohne Flags kann `sudo ./setup_website.sh` verwendet
 werden. Der Dialog fragt alle Werte ab und verlangt bei einer Erstinstallation
 eine ausdrückliche Bestätigung für den fehlenden Backup-Punkt.
 
-`--no-backup` is allowed only for a genuinely new installation without an existing database. Subsequent installs create a coordinated backup automatically.
+`--no-backup` is allowed only for a genuinely new installation without an
+existing database. The current origin deployment explicitly combines it with
+`--skip-backup` after replacing the active release; this is temporary while the
+shared-backup manifest path is being repaired. Do not infer from this that a
+database backup exists for every deployment.
 
 For a source-based local setup, `sudo ./setup.sh --profile full` remains available, but it is not the production release path.
 

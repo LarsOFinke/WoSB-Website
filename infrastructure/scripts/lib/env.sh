@@ -111,7 +111,6 @@ initialize_env() {
   is_true "$letsencrypt_staging" && certificate_name="${app_hostname}-staging"
   set_env_value LETSENCRYPT_CERT_NAME "$certificate_name"
   [[ -n "$(read_env CERTIFICATE_PROVIDER)" ]] || set_env_value CERTIFICATE_PROVIDER self-signed
-  [[ -n "$(read_env MONITORING_HTTPS_PORT)" ]] || set_env_value MONITORING_HTTPS_PORT 8443
   set_env_value CONTROL_DIR /var/lib/rbf/control
   [[ -n "$(read_env SESSION_COOKIE_NAME)" ]] || set_env_value SESSION_COOKIE_NAME rbf_hub_session
   [[ -n "$(read_env SESSION_COOKIE_SAMESITE)" ]] || set_env_value SESSION_COOKIE_SAMESITE Lax
@@ -131,7 +130,6 @@ initialize_env() {
 Royal Blackwater Fleet - First Run
 Primary URL: https://${app_hostname}
 LAN fallback: https://${app_ip}
-Monitoring: https://${app_hostname}:$(read_env MONITORING_HTTPS_PORT)
 Admin user: ${admin_username}
 Admin password: ${admin_password}
 PostgreSQL user: ${postgres_user}
@@ -180,7 +178,6 @@ validate_env() {
     [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlichen Domainnamen."
   fi
   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
-  [[ "$(read_env MONITORING_HTTPS_PORT)" =~ ^[0-9]+$ ]] || die "MONITORING_HTTPS_PORT muss numerisch sein."
   local retention="$(read_env BACKUP_RETENTION_DAYS)"
   [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS muss positiv sein."
 }

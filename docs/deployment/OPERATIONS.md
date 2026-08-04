@@ -2,7 +2,8 @@
 
 ## Services
 
-Core services are `postgres`, `api` and `gateway`. Optional monitoring uses the `monitoring` Compose profile.
+Core services are `postgres`, `api` and `gateway`. The former Uptime Kuma
+monitoring profile has been removed from the production stack.
 
 ```bash
 sudo /opt/rbf/current/infrastructure/scripts/services/status.sh
@@ -21,6 +22,14 @@ dispatcher, for example:
 ```bash
 sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.1.tar.gz
 ```
+
+The dispatcher cleans failed releases and replaces an active release with the
+same version before installing the verified artifact. It also removes stale
+Spring Boot JARs during the origin build, so the image tag and the application
+version cannot silently diverge. Do not run `infrastructure/scripts/services/update.sh`
+or the former Admin-Panel update path to activate an artifact on the website
+server; that runner now fails closed. `--restart` and `--rollback` remain valid
+local recovery operations.
 
 Für lokale Wartungsaktionen auf dem Zielserver bleiben die versionierten
 Runner unter `/opt/rbf/current/infrastructure/scripts/services/` verfügbar.
@@ -41,6 +50,11 @@ Never copy secrets, cookies, authorization headers or raw personal payloads into
 Flyway runs during API startup before readiness. Failed or checksum-inconsistent migrations keep the API unready. Published migrations are immutable; destructive cleanup is delayed until all supported releases no longer depend on the old shape.
 
 ## Backup routine
+
+The origin deployment currently passes `--skip-backup` while the backup manifest
+path is being corrected. This is an explicit temporary policy, not proof that a
+deployment is recoverable from the database alone. Run the routine manually only
+after checking its restore-preflight result:
 
 ```bash
 sudo /opt/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --reason scheduled

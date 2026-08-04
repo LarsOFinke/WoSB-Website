@@ -26,9 +26,5 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   if [[ -n "$(bw_compose ps -q gateway 2>/dev/null || true)" ]]; then
     bw_compose exec -T gateway nginx -s reload >/dev/null 2>&1 || bw_compose restart gateway >/dev/null
   fi
-  if is_true "$(read_env ENABLE_MONITORING)" && [[ -n "$(bw_compose_with_profiles ps -q monitoring-gateway 2>/dev/null || true)" ]]; then
-    bw_compose_with_profiles exec -T monitoring-gateway nginx -s reload >/dev/null 2>&1 \
-      || bw_compose_with_profiles restart monitoring-gateway >/dev/null
-  fi
 fi
 success "Let's-Encrypt-Zertifikat wurde installiert und die Gateways wurden neu geladen."

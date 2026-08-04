@@ -13,7 +13,7 @@ install -d -m 0700 "$backup_dir"
 install -d -m 0750 "$INFRA_DIR/data/uploads"
 minimum_bytes="${BACKUP_MIN_FILES_BYTES:-$(read_env BACKUP_MIN_FILES_BYTES)}"; minimum_bytes="${minimum_bytes:-64}"
 backup_paths=(uploads)
-for optional_path in certs letsencrypt uptime-kuma; do
+for optional_path in certs letsencrypt; do
   if [[ -e "$INFRA_DIR/data/$optional_path" ]]; then backup_paths+=("$optional_path"); else warn "Optionaler Backup-Pfad fehlt und wird übersprungen: $optional_path"; fi
 done
 rm -f "$temporary"

@@ -24,6 +24,16 @@ fi
 install -d -m 0700 "$shared/locks"; exec 9>"$shared/locks/release.lock"; flock 9
 current_target="$(readlink -f "$install_root/current" 2>/dev/null || true)"
 if [[ "$replace_active" == true ]]; then
+  current_entry="$install_root/current"
+  if [[ -e "$current_entry" && ! -L "$current_entry" ]]; then
+    [[ "$assume_yes" == true ]] || die "Verwaistes current-Verzeichnis gefunden; --replace-active benötigt --yes."
+    echo "[cleanup] Entferne verwaisten current-Eintrag vor dem Deploy."
+    systemctl stop rbf-hub.service >/dev/null 2>&1 || true
+    rm -rf -- "$current_entry"
+    rm -f "$shared/deployment-state.json"
+    echo "[cleanup] Verwaister current-Eintrag entfernt; Shared-Daten und Environment bleiben erhalten."
+    exit 0
+  fi
   [[ -n "$current_target" && "$current_target" == "$releases/"* && -d "$current_target" ]] \
     || { [[ "$if_present" == true ]] && { echo "[cleanup] Kein aktiver Release gefunden; übersprungen."; exit 0; }; die "Kein sicher ersetzbarer aktiver Release gefunden."; }
   version="$(basename "$current_target")"

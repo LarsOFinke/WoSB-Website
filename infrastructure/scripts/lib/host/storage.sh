@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 prepare_data_directories() {
-  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,uptime-kuma,acme,control/inbox,control/status,control/run,control/secrets,recovered-config,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
+  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,acme,control/inbox,control/status,control/run,control/secrets,recovered-config,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
   prepare_postgres_directory
   apply_runtime_ownership
   apply_runtime_permissions
@@ -29,7 +29,6 @@ apply_runtime_ownership() {
   chown -R root:10001 "$INFRA_DIR/data/control/status"
   chown -R root:root "$INFRA_DIR/data/control/run" "$INFRA_DIR/data/control/secrets" "$INFRA_DIR/data/recovered-config"
   chown -R 101:101 "$INFRA_DIR/data/nginx"
-  chown -R 1000:1000 "$INFRA_DIR/data/uptime-kuma"
 }
 
 apply_runtime_permissions() {

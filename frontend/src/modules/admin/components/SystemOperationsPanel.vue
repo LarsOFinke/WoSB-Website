@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { MONITORING_HTTPS_PORT } from '@/config/runtime'
 import { useLocale } from '@/locales'
 import { getSystemUpdateStatus } from '@/modules/admin/api/admin'
 
@@ -20,11 +19,6 @@ let pollTimer = null
 const inProgress = computed(() => ['queued', 'running'].includes(update.value.state))
 const stateLabel = computed(() => t(`admin.system.states.${update.value.state || 'idle'}`))
 const operationLabel = computed(() => t(`admin.system.operations.${update.value.operation || 'update'}`))
-const monitoringUrl = computed(() => {
-  if (typeof window === 'undefined') return `https://royal-blackwater-fleet.eu:${MONITORING_HTTPS_PORT}`
-  return `https://${window.location.hostname}:${MONITORING_HTTPS_PORT}`
-})
-
 function formatDateTime(value) {
   if (!value) return '—'
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
@@ -71,14 +65,6 @@ onUnmounted(() => window.clearTimeout(pollTimer))
     <aside class="home-status-card refined-status-card admin-status-card" aria-live="polite">
       <span>{{ t('admin.status.cardLabel') }}</span><strong>{{ apiStatus }}</strong><p>{{ apiStatusDetail }}</p>
     </aside>
-
-    <article class="home-status-card refined-status-card system-operation-card">
-      <span>{{ t('admin.system.monitoringTitle') }}</span>
-      <strong>HTTPS · {{ MONITORING_HTTPS_PORT }}</strong>
-      <p>{{ t('admin.system.monitoringText') }}</p>
-      <small>{{ t('admin.system.httpsHint') }}</small>
-      <a class="button-box" :href="monitoringUrl" target="_blank" rel="noopener">{{ t('admin.system.openMonitoring') }}</a>
-    </article>
 
     <article class="home-status-card refined-status-card system-operation-card system-update-card" aria-live="polite">
       <span>{{ t('admin.system.updateTitle') }}</span>

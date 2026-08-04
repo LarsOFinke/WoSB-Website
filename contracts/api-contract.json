@@ -2781,12 +2781,11 @@
               "enum": [
                 "uploads",
                 "certs",
-                "letsencrypt",
-                "uptime-kuma"
+                "letsencrypt"
               ],
               "type": "string"
             },
-            "maxItems": 4,
+            "maxItems": 3,
             "minItems": 1,
             "title": "Components",
             "type": "array"

@@ -6,9 +6,8 @@ RUN npm ci
 
 COPY frontend/ ./
 ARG VITE_API_BASE_URL=/api
-ARG VITE_MONITORING_HTTPS_PORT=8443
 ARG GATEWAY_MAX_BODY_MB=90
-RUN printf 'VITE_API_BASE_URL=%s\nVITE_MONITORING_HTTPS_PORT=%s\n' "$VITE_API_BASE_URL" "$VITE_MONITORING_HTTPS_PORT" > .env \
+RUN printf 'VITE_API_BASE_URL=%s\n' "$VITE_API_BASE_URL" > .env \
     && npm run check:locales \
     && npm run build
 

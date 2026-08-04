@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
-components=(uploads certs letsencrypt uptime-kuma)
+components=(uploads certs letsencrypt)
 backup_file=""
 while (($#)); do
   case "$1" in
@@ -16,14 +16,14 @@ while (($#)); do
     *) [[ -z "$backup_file" ]] || die "Nur ein Datei-Backup darf angegeben werden."; backup_file="$1"; shift ;;
   esac
 done
-[[ -n "$backup_file" ]] || die "Aufruf: $0 --yes [--components uploads,certs,letsencrypt,uptime-kuma] /pfad/rbf-files-*.tar.gz"
+[[ -n "$backup_file" ]] || die "Aufruf: $0 --yes [--components uploads,certs,letsencrypt] /pfad/rbf-files-*.tar.gz"
 backup_file="$(realpath "$backup_file")"
 [[ -f "$backup_file" ]] || die "Backup nicht gefunden: $backup_file"
 verify_backup_checksum "$backup_file"
 
 declare -A selected=()
 for component in "${components[@]}"; do
-  [[ "$component" =~ ^(uploads|certs|letsencrypt|uptime-kuma)$ ]] || die "Nicht unterstütztes Restore-Modul: $component"
+  [[ "$component" =~ ^(uploads|certs|letsencrypt)$ ]] || die "Nicht unterstütztes Restore-Modul: $component"
   selected["$component"]=1
 done
 (( ${#selected[@]} > 0 )) || die "Mindestens ein Restore-Modul muss ausgewählt werden."
@@ -34,7 +34,7 @@ import sys
 import tarfile
 
 archive = sys.argv[1]
-allowed = {"uploads", "certs", "letsencrypt", "uptime-kuma"}
+allowed = {"uploads", "certs", "letsencrypt"}
 with tarfile.open(archive, mode="r:gz") as handle:
     for member in handle.getmembers():
         path = PurePosixPath(member.name)

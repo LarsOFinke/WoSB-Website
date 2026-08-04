@@ -18,7 +18,7 @@ bw_compose() {
     $compose "${env_files[@]}" -f "$COMPOSE_FILE" "$@")
 }
 
-compose_profiles() { is_true "$(read_env ENABLE_MONITORING)" && printf '%s' '--profile monitoring'; }
+compose_profiles() { :; }
 bw_compose_with_profiles() {
   local profiles=() value
   value="$(compose_profiles || true)"; [[ -z "$value" ]] || read -r -a profiles <<<"$value"
@@ -53,10 +53,7 @@ wait_for_api() {
 }
 
 ensure_postgres_service() { bw_compose up -d postgres; wait_for_postgres; }
-ensure_monitoring_services() {
-  is_true "$(read_env ENABLE_MONITORING)" || return 0
-  bw_compose_with_profiles up -d --no-deps uptime-kuma monitoring-gateway
-}
+ensure_monitoring_services() { return 0; }
 
 postgres_sql() {
   bw_compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "$(read_env POSTGRES_USER)" -d "$(read_env POSTGRES_DB)" "$@"
@@ -94,7 +91,6 @@ deploy_application_update() {
   prepare_flyway_cutover
   case ",${_components}," in *,api,*) bw_compose up -d --no-deps api; wait_for_api; verify_flyway_schema ;; esac
   case ",${_components}," in *,gateway,*) bw_compose up -d --no-deps gateway ;; esac
-  ensure_monitoring_services
 }
 
 deploy_stack() {
@@ -103,6 +99,6 @@ deploy_stack() {
   bw_compose up -d api
   wait_for_api
   verify_flyway_schema
-  bw_compose_with_profiles up -d --remove-orphans gateway $(is_true "$(read_env ENABLE_MONITORING)" && printf 'uptime-kuma monitoring-gateway' || true)
+  bw_compose up -d --remove-orphans gateway
   success "Spring-Boot-Stack wurde gestartet."
 }

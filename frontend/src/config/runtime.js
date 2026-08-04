@@ -7,5 +7,3 @@ function requireEnvValue(name) {
 }
 
 export const API_BASE_URL = requireEnvValue('VITE_API_BASE_URL')
-
-export const MONITORING_HTTPS_PORT = import.meta.env.VITE_MONITORING_HTTPS_PORT || '8443'

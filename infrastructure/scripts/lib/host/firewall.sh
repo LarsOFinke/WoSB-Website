@@ -26,15 +26,5 @@ configure_firewall() {
   ufw allow "${ssh_port}/tcp"
   ufw allow 80/tcp
   ufw allow 443/tcp
-  configure_monitoring_firewall_rule
   ufw --force enable
-}
-
-configure_monitoring_firewall_rule() {
-  is_true "$(read_env ENABLE_MONITORING)" || return 0
-
-  local monitoring_port
-  monitoring_port="$(read_env MONITORING_HTTPS_PORT)"
-  [[ "$monitoring_port" =~ ^[0-9]+$ ]] || monitoring_port=8443
-  ufw allow "${monitoring_port}/tcp"
 }

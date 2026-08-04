@@ -43,11 +43,6 @@ setup_prepare_configuration() {
     "$REQUESTED_LETSENCRYPT_EMAIL" \
     "$REQUESTED_LETSENCRYPT_STAGING"
 
-  if [[ "$PROFILE" == full ]]; then
-    set_env_value ENABLE_MONITORING true
-  else
-    set_env_value ENABLE_MONITORING false
-  fi
   validate_env
 }
 
@@ -82,9 +77,6 @@ setup_deploy() {
   fi
 
   bw_compose_with_profiles pull postgres
-  if [[ "$PROFILE" == full ]]; then
-    bw_compose_with_profiles pull uptime-kuma
-  fi
   bw_compose build api gateway
   deploy_stack
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
@@ -93,15 +85,9 @@ setup_deploy() {
 }
 
 setup_print_summary() {
-  local app_ip app_hostname monitoring
+  local app_ip app_hostname
   app_ip="$(read_env APP_IP)"
   app_hostname="$(read_env APP_HOSTNAME)"
-  if [[ "$PROFILE" == full ]]; then
-    monitoring="https://${app_hostname}:$(read_env MONITORING_HTTPS_PORT)"
-  else
-    monitoring="deaktiviert"
-  fi
-
   cat <<SUMMARY
 
 ============================================================
@@ -111,7 +97,7 @@ setup_print_summary() {
  LAN fallback:    https://${app_ip}
  API readiness:  https://${app_hostname}/api/health/ready
  PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (nur Loopback)
- Monitoring:      ${monitoring}
+ Monitoring:      entfernt (Uptime Kuma)
  TLS provider:    $(read_env CERTIFICATE_PROVIDER)
  Credentials:     $INFRA_DIR/first-run-credentials.txt
 

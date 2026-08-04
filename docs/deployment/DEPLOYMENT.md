@@ -31,23 +31,34 @@ sudo ./setup_website.sh \
   --env /secure/rbf.env
 ```
 
-The installer:
+Der Ursprungs-Dispatcher führt vor der Übertragung automatisch einen Cleanup-Lauf
+für fehlgeschlagene oder bewusst zu ersetzende Releases aus. Dadurch darf beim
+Deploy derselben Versionsnummer der bisher aktive Release entfernt und sauber
+neu installiert werden; `/opt/rbf/shared` mit Environment, Daten und Diagnosen
+bleibt erhalten.
+
+Der Installer:
 
 1. verifies outer checksum, safe archive paths and complete inventory;
 2. acquires the release lock;
-3. creates a coordinated pre-deployment backup when a release is active;
+3. uses the current transition policy: coordinated application backups are
+   currently skipped by the origin dispatcher; the backup scripts remain
+   available for a separately planned recovery rollout;
 4. installs `/opt/rbf/releases/<version>`;
 5. builds only the small API and gateway runtime images from the JAR and `dist`;
 6. switches `/opt/rbf/current` atomically;
 7. installs versioned systemd units and runs readiness/smoke tests;
-8. restores the previous release and database backup on failure.
+8. writes an activation diagnostic under
+   `/opt/rbf/shared/deployments/failed-<version>-<timestamp>.log` and restores
+   the previous release where possible on failure.
 
 No Git checkout, Maven, npm or package-registry access is needed on the target host.
 
-The first installation is the only invocation that accepts `--no-backup`; it also
-requires `--env` with the private production configuration. Every later version
-must run with an active `/opt/rbf/current` release so the coordinated pre-deployment
-backup and rollback metadata can be created.
+The origin dispatcher passes `--skip-backup --no-backup` deliberately during this
+transition. `--no-backup` is safe there because the cleanup step has already
+removed the active release while preserving shared state. Direct target-side
+artifact activation is not supported; use `./deploy.sh` for a new transfer and
+`./update.sh` for every subsequent release.
 
 ## Promotion
 
@@ -59,4 +70,6 @@ Build each release once. Promote the same checksummed artifact from CI to stagin
 sudo /opt/rbf/current/infrastructure/scripts/release/rollback-release.sh
 ```
 
-Rollback restores both the previous application release and the coordinated database point recorded for the current deployment. Schema evolution should still use additive expand/contract migrations to minimize restore requirements.
+Rollback restores the previous application release. Database restore remains a
+separate, explicitly supervised operation until the coordinated backup manifest
+path is re-enabled.

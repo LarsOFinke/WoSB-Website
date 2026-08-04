@@ -387,7 +387,7 @@ def _files_record_for(path: Path) -> LocalFilesBackupRecord:
                 not parts
                 or Path(member.name).is_absolute()
                 or ".." in parts
-                or parts[0] not in {"uploads", "certs", "letsencrypt", "uptime-kuma"}
+                or parts[0] not in {"uploads", "certs", "letsencrypt"}
                 or not (member.isdir() or member.isfile())
             ):
                 raise LocalBackupError(f"Unsafe files backup entry: {member.name}")

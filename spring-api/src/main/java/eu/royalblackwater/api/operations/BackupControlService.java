@@ -34,7 +34,7 @@ public class BackupControlService {
     private static final Pattern HOST_KEY=Pattern.compile("^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]+$");
     private static final Pattern BACKUP_ID=Pattern.compile("^[a-f0-9]{64}$");
     private static final Pattern TOKEN=Pattern.compile("^[A-Za-z0-9_-]{24,128}$");
-    private static final Set<String> COMPONENTS=Set.of("uploads","certs","letsencrypt","uptime-kuma");
+    private static final Set<String> COMPONENTS=Set.of("uploads","certs","letsencrypt");
     private static final TypeReference<Map<String,Object>> MAP=new TypeReference<>() { };
     private final ControlFileStore files;
     private final ContractConversionService contracts;

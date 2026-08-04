@@ -106,7 +106,7 @@ class BackupRestoreMixin:
         if not isinstance(components, list) or not components:
             raise RuntimeError("Select at least one supported file module.")
         normalized = sorted({str(value).strip() for value in components})
-        allowed = {"uploads", "certs", "letsencrypt", "uptime-kuma"}
+        allowed = {"uploads", "certs", "letsencrypt"}
         if not set(normalized).issubset(allowed):
             raise RuntimeError("The selected file module is not supported.")
         consume_database_restore_approval(self.infra_dir, approval_token_sha256)
