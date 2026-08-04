@@ -1,6 +1,5 @@
 package eu.royalblackwater.api.operations;
 
-import eu.royalblackwater.api.audit.AuditService;
 import eu.royalblackwater.api.contract.SystemUpdateRequestResult;
 import eu.royalblackwater.api.contract.SystemUpdateStatus;
 import eu.royalblackwater.api.security.AuthenticatedUser;
@@ -18,11 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class SystemUpdateService {
     private static final Set<String> ACTIVE=Set.of("queued","running");
-    private static final Set<String> OPERATIONS=Set.of("update","restart","rollback");
     private final ControlFileStore files;
-    private final AuditService audit;
     private final Clock clock;
-    public SystemUpdateService(ControlFileStore files,AuditService audit,Clock clock){this.files=files;this.audit=audit;this.clock=clock;}
+    public SystemUpdateService(ControlFileStore files,Clock clock){this.files=files;this.clock=clock;}
 
     public SystemUpdateStatus status(){
         Map<String,Object> status=new LinkedHashMap<>(files.readStatus("update-status.json"));
@@ -41,14 +38,7 @@ public class SystemUpdateService {
     }
 
     public SystemUpdateRequestResult request(AuthenticatedUser actor,String rawOperation){
-        String operation=rawOperation==null||rawOperation.isBlank()?"update":rawOperation.strip().toLowerCase();
-        if(!OPERATIONS.contains(operation))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Operation must be update, restart, or rollback.");
-        SystemUpdateStatus current=status();
-        if(files.requestExists("update.request")||ACTIVE.contains(current.state()))throw new ResponseStatusException(HttpStatus.CONFLICT,"A server operation is already queued or running.");
-        Map<String,Object> payload=Map.of("requested_by",actor.username(),"requested_at",clock.instant().toString(),"operation",operation);
-        try{files.publishRequest("update.request",payload);}catch(ControlFileStore.ControlConflictException exception){throw new ResponseStatusException(HttpStatus.CONFLICT,exception.getMessage());}
-        audit.record(actor,"system_update",operation,"request","Requested artifact host operation: "+operation,Set.of("operation"));
-        return new SystemUpdateRequestResult(true,status());
+        throw new ResponseStatusException(HttpStatus.GONE,"Server operations must be started on the origin host with ./setup.sh update.");
     }
 
     private boolean stale(String state,Map<String,Object> payload,boolean requestExists){

@@ -12,21 +12,26 @@ sudo /opt/rbf/current/infrastructure/scripts/checks/smoke-test.sh
 
 Spring readiness is available internally at `/actuator/health/readiness`; the public gateway exposes the application health contract.
 
-## Admin operations
+## Updates from the origin host
 
-Administrators may request only:
+Updates, restarts and rollbacks are deliberately not triggered from the web
+application. Start them on the trusted origin server through the repository
+dispatcher, for example:
 
-- `update`: install the newest staged, checksummed release artifact;
-- `restart`: restart API and gateway without changing PostgreSQL;
-- `rollback`: restore the previous release and its coordinated database backup.
+```bash
+sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.1.tar.gz
+```
 
-The API writes an owner-only request file. The root runner claims it securely and accepts no arbitrary command arguments from HTTP.
+Für lokale Wartungsaktionen auf dem Zielserver bleiben die versionierten
+Runner unter `/opt/rbf/current/infrastructure/scripts/services/` verfügbar.
+
+The target host still exposes read-only status for operations monitoring.
 
 ## Logs
 
 ```bash
 sudo /opt/rbf/current/infrastructure/scripts/services/logs.sh
-sudo journalctl -u rbf-update-runner -u rbf-backup-runner
+sudo journalctl -u rbf-hub.service -u rbf-hub-backup.service
 ```
 
 Never copy secrets, cookies, authorization headers or raw personal payloads into tickets.

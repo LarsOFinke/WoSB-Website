@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/docker.sh"
 ensure_env_file
 require_command curl
 force_insecure=false
@@ -15,4 +16,8 @@ for _ in $(seq 1 20); do
   fi
   sleep 2
 done
+echo "[smoke] Healthcheck fehlgeschlagen; letzter Containerstatus:" >&2
+bw_compose_with_profiles ps >&2 || true
+echo "[smoke] Letzte API-/Gateway-Logs:" >&2
+bw_compose_with_profiles logs --tail=120 api gateway >&2 || true
 die "Healthcheck ist fehlgeschlagen. Logs: infrastructure/scripts/services/logs.sh api gateway"

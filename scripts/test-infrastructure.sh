@@ -36,12 +36,16 @@ for token in FASTAPI_INTERNAL_URL RBF_SECURE_API_IMAGE AUTO_SEED; do
 done
 [[ -f "$INFRA_DIR/docker/api-runtime.Dockerfile" ]] || fail 'missing API runtime image'
 [[ -f "$INFRA_DIR/docker/gateway-runtime.Dockerfile" ]] || fail 'missing gateway runtime image'
-[[ -x "$INFRA_DIR/scripts/release/install-artifact.sh" ]] || fail 'artifact installer is not executable'
+[[ -x "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh" ]] || fail 'artifact installer is not executable'
+[[ -x "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" ]] || fail 'website setup wrapper is not executable'
+if find "$INFRA_DIR/scripts" -type f -name '*.sh' ! -perm /111 -print -quit | grep -q .; then
+  fail 'infrastructure shell scripts must be executable'
+fi
 [[ -f "$INFRA_DIR/scripts/migration/verify-alembic-head.sql" && -f "$INFRA_DIR/scripts/migration/adopt-flyway.sql" ]] || fail 'controlled legacy schema adoption gate missing'
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   temp_env="$(mktemp)"; trap 'rm -f "$temp_env"' EXIT
   cp "$INFRA_DIR/.env.example" "$temp_env"
-  docker compose --env-file "$temp_env" -f "$INFRA_DIR/compose.release.yml" config >/dev/null
+  RBF_ENV_FILE="$temp_env" docker compose --env-file "$temp_env" -f "$INFRA_DIR/compose.release.yml" config >/dev/null
 fi
 printf '[infrastructure] OK: shell, Python, Compose and artifact-runtime invariants\n'

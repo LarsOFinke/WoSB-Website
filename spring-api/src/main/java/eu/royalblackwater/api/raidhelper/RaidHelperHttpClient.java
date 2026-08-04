@@ -13,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ public class RaidHelperHttpClient {
     private final FernetSecretBox secrets;
     private final RaidHelperPolicy policy;
 
+    @Autowired
     public RaidHelperHttpClient(ObjectMapper json, FernetSecretBox secrets, RaidHelperPolicy policy) {
         this(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
                 .followRedirects(HttpClient.Redirect.NEVER).build(), json, secrets, policy);

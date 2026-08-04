@@ -8,14 +8,27 @@ Create a private environment file from `infrastructure/.env.example`, replace ev
 
 ## First artifact install
 
+Der empfohlene Ursprungspfad ist `./deploy.sh`. Auf dem Zielserver kann
+`setup_website.sh` alternativ direkt interaktiv oder mit Flags ausgeführt werden.
+Fehlen Docker oder Compose, verwendet der Assistent automatisch den vorhandenen
+Host-Bootstrap aus `infrastructure/scripts/lib/host/packages.sh`. Mit
+`--skip-host` kann dieser Schritt bewusst deaktiviert werden.
+Wird keine Environment-Datei angegeben, erzeugt der Assistent automatisch
+`/opt/rbf/shared/.env` mit neuen Secrets und legt die einmaligen Zugangsdaten in
+`/opt/rbf/shared/first-run-credentials.txt` ab.
+
 ```bash
-sudo infrastructure/scripts/release/install-artifact.sh \
+sudo ./setup_website.sh \
   --artifact rbf-deployment-1.0.0.tar.gz \
   --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
   --install-root /opt/rbf \
   --env /secure/rbf.env \
   --no-backup
 ```
+
+Für einen manuellen Lauf ohne Flags kann `sudo ./setup_website.sh` verwendet
+werden. Der Dialog fragt alle Werte ab und verlangt bei einer Erstinstallation
+eine ausdrückliche Bestätigung für den fehlenden Backup-Punkt.
 
 `--no-backup` is allowed only for a genuinely new installation without an existing database. Subsequent installs create a coordinated backup automatically.
 

@@ -77,7 +77,7 @@ const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin
         </section>
 
         <section v-if="activeTab === 'status' && isAdmin" class="wire-section admin-panel admin-status-panel">
-          <SystemOperationsPanel :api-status="apiStatus" :api-status-detail="apiStatusDetail" :is-admin="isAdmin" @refresh-api="loadStatus" />
+          <SystemOperationsPanel :api-status="apiStatus" :api-status-detail="apiStatusDetail" @refresh-api="loadStatus" />
 
           <div class="workspace-metric-grid admin-dashboard-grid">
             <MetricCard :label="t('admin.registrations.dashboardLabel')" :value="pendingRegistrationRows.length" :hint="t('admin.registrations.dashboardHint')" tone="accent" />

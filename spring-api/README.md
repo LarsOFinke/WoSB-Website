@@ -9,7 +9,7 @@ mvn -f spring-api/pom.xml spring-boot:run
 
 Wichtige Regeln:
 
-- Java 21 und Spring Boot 4.
+- Java 21 und Spring Boot 4.1.
 - PostgreSQL als Produktionsdatenbank.
 - Flyway ist alleiniger Schemabesitzer.
 - Hibernate validiert nur; Open Session in View ist aus.

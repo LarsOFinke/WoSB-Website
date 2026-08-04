@@ -1,7 +1,7 @@
 # Royal Blackwater Fleet v1.0.0
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
-Spring Boot 3, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
+Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
 
 ## Architektur in Kürze
 
@@ -52,20 +52,39 @@ CI beziehungsweise eine vollständige Build-Umgebung erzeugt ein source-freies,
 prüfsummenbewehrtes Release-Artefakt:
 
 ```bash
-bash infrastructure/scripts/release/build-artifact.sh
+bash ./deploy.sh
 ```
+
+Für den interaktiven Ursprung-zu-Zielserver-Ablauf genügt anschließend:
+
+```bash
+./deploy.sh
+```
+
+Der Ursprung überträgt das geprüfte Artefakt und `setup_website.sh` per SSH.
+Auf dem Webseitenserver verifiziert `setup_website.sh` das Paket und startet
+die atomare Installation. Alle Dialoge können über Flags automatisiert werden.
+Die beim ersten Lauf erzeugte `.env.origin` speichert die nicht geheimen
+Verbindungs- und Pfadwerte geschützt für spätere Updates; Vorlage:
+`.env.origin.example`.
+
+Ohne Flags fragt das Skript Ausgabeverzeichnis und Quellrevision interaktiv ab.
 
 Das Zielsystem benötigt weder Git noch Maven, npm oder Zugriff auf Paketregistries.
 Es prüft das Bundle und baut nur die minimalen Runtime-Container aus dem bereits
 kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
-sudo infrastructure/scripts/release/install-artifact.sh \
+sudo ./setup_website.sh \
   --artifact rbf-deployment-1.0.0.tar.gz \
   --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
   --install-root /opt/rbf \
   --env /secure/rbf.env
 ```
+
+Alternativ genügt `sudo ./setup_website.sh`; dann werden Artefakt, Prüfsumme,
+Installationsroot, Environment-Datei und die Erstinstallationsbestätigung im
+Terminal abgefragt.
 
 Updates werden durch ein neues Release-Artefakt ausgelöst:
 

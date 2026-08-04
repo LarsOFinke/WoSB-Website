@@ -25,7 +25,9 @@ bash "$ROOT_DIR/scripts/test-update-management.sh"
 python3 -m pytest -q -p no:cacheprovider "$ROOT_DIR/tests/recovery"
 
 if command -v mvn >/dev/null 2>&1; then
-  mvn -f "$ROOT_DIR/spring-api/pom.xml" --batch-mode --no-transfer-progress verify
+  maven_repo_args=()
+  [[ -z "${MAVEN_REPO_LOCAL:-}" ]] || maven_repo_args+=("-Dmaven.repo.local=$MAVEN_REPO_LOCAL")
+  mvn "${maven_repo_args[@]}" -f "$ROOT_DIR/spring-api/pom.xml" --batch-mode --no-transfer-progress verify
 elif [[ "$MODE" == full ]]; then
   echo '[test] Maven 3.9 is required for full validation.' >&2; exit 1
 else

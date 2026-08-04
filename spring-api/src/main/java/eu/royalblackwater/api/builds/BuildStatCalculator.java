@@ -29,11 +29,11 @@ public class BuildStatCalculator {
         List<BuildStatRow> rows = new ArrayList<>();
         Set<String> consumedEffects = new HashSet<>();
         for (BuildStatDefinition definition : BuildStatCatalog.ALL) {
-            Double base = number(ship.get(definition.baseField()));
+            Double base = definition.baseField() == null ? null : number(ship.get(definition.baseField()));
             double percent = percentage(definition.pctEffect(), effects, effectSets);
             String flatKey = definition.calculationFlatEffect() != null
                     ? definition.calculationFlatEffect() : definition.flatEffect();
-            double flat = numberOrZero(effects.get(flatKey));
+            double flat = flatKey == null ? 0 : numberOrZero(effects.get(flatKey));
             addConsumed(consumedEffects, definition.pctEffect(), definition.flatEffect(),
                     definition.calculationFlatEffect());
             if (base == null && percent == 0 && flat == 0) continue;
@@ -116,7 +116,8 @@ public class BuildStatCalculator {
     private static Number rounded(Double value, int precision) {
         if (value == null) return null;
         BigDecimal rounded = BigDecimal.valueOf(value).setScale(Math.max(0, precision), RoundingMode.HALF_UP);
-        return precision <= 0 ? rounded.longValueExact() : rounded.doubleValue();
+        if (precision <= 0) return rounded.longValueExact();
+        return rounded.doubleValue();
     }
 
     private static Double number(Number value) { return value == null ? null : value.doubleValue(); }

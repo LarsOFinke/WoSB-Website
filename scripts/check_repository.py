@@ -30,7 +30,7 @@ require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract
 compose=text('infrastructure/compose.yml')
 for service in ('postgres:','api:','gateway:'): require(f'  {service}' in compose,f'missing compose service {service[:-1]}')
 for forbidden in ('secure-api:','migrate:','seed:','FASTAPI_INTERNAL_URL','AUTO_SEED','RBF_SECURE_API_IMAGE'): require(forbidden not in compose,f'legacy compose token remains: {forbidden}')
-require('flyway-core' in text('spring-api/pom.xml') and 'mapstruct' in text('spring-api/pom.xml'),'Flyway and MapStruct are mandatory')
+require('spring-boot-starter-flyway' in text('spring-api/pom.xml') and 'mapstruct' in text('spring-api/pom.xml'),'Flyway and MapStruct are mandatory')
 require('ddl-auto: validate' in text('spring-api/src/main/resources/application.yml'),'Hibernate must validate rather than mutate schema')
 
 allowed_legacy={
@@ -44,8 +44,14 @@ scan_exclusions={
     ROOT/'scripts/audit_spring_backend.py',
     ROOT/'scripts/test-infrastructure.sh',
 }
-for path in ROOT.rglob('*'):
-    if not path.is_file() or any(part in {'.git','node_modules','target','dist','release'} for part in path.parts): continue
+repository_result=subprocess.run(
+    ['git','-C',str(ROOT),'ls-files','--cached','--others','--exclude-standard','-z'],
+    check=True,capture_output=True,text=True,
+)
+repository_files=[Path(raw) for raw in repository_result.stdout.split('\0') if raw]
+for relative in repository_files:
+    path=ROOT/relative
+    if not path.is_file() or path.suffix == '.pyc' or any(part in {'node_modules','target','dist','release','__pycache__'} for part in relative.parts): continue
     if path in scan_exclusions or 'audits' in path.parts: continue
     if path in allowed_legacy or path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.ico','.zip','.gz','.age','.woff','.woff2'}: continue
     source=path.read_text(encoding='utf-8',errors='ignore').lower()
@@ -64,8 +70,8 @@ subprocess.run([sys.executable,str(ROOT/'scripts/migration/generate_build_stat_c
 subprocess.run([sys.executable,str(ROOT/'scripts/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:
     forbidden_names={'.env','.DS_Store'}
-    for path in ROOT.rglob('*'):
-        relative=path.relative_to(ROOT)
+    for relative in repository_files:
+        path=ROOT/relative
         require(path.name not in forbidden_names or relative.as_posix() in {'frontend/.env.example','infrastructure/.env.example'},f'untracked local file: {relative}')
         require(path.name!='__pycache__' and path.suffix!='.pyc',f'Python cache artifact: {relative}')
         require(not any(part in {'node_modules','target','dist','.pytest_cache','.ruff_cache','.mypy_cache'} for part in relative.parts),f'build/cache directory committed: {relative}')

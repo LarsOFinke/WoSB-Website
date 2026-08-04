@@ -27,4 +27,8 @@ COPY infrastructure/nginx/upload-security-headers.conf /etc/nginx/snippets/rbf-u
 RUN addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \
     && mkdir -p /var/cache/nginx /var/run /var/log/nginx /var/www/certbot \
     && chown -R rbf:rbf /var/cache/nginx /var/run /var/log/nginx /var/www/certbot /etc/nginx/conf.d
+RUN sed -i 's|error_log /var/log/nginx/error.log notice;|error_log /dev/stderr notice;|' /etc/nginx/nginx.conf
+USER 101
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]
 EXPOSE 8080 8443

@@ -15,11 +15,9 @@ test('system update panel exposes only privacy-minimal status fields', async () 
 })
 
 
-test('system operations expose a confirmed application-only restart', async () => {
+test('system operations point operators to the trusted origin host', async () => {
   const panel = await readFile(panelPath, 'utf8')
-  assert.match(panel, /trigger\('restart'\)/)
-  assert.match(panel, /admin\.system\.restartConfirm/)
-  assert.match(panel, /admin\.system\.restartRequestAccepted/)
-  assert.match(panel, /system-restart-action/)
-  assert.match(panel, /danger-action/)
+  assert.match(panel, /Ursprungsserver/)
+  assert.match(panel, /setup\.sh update/)
+  assert.equal(panel.includes("trigger('restart')"), false)
 })

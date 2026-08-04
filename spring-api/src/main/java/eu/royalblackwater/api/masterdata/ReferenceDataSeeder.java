@@ -178,8 +178,11 @@ public class ReferenceDataSeeder {
     private void replaceOptionChildren(long optionId, Map<String, Object> item) {
         jdbc.update("delete from build_item_effects where option_id=:id", Map.of("id",optionId));
         for (Map.Entry<String,Object> effect : map(item.get("stat_effects")).entrySet()) {
-            jdbc.update("insert into build_item_effects(option_id,effect_key,effect_value) values(:id,:key,:value)",
-                    Map.of("id",optionId,"key",effect.getKey(),"value",((Number)effect.getValue()).doubleValue()));
+            jdbc.update("""
+                    insert into build_item_effects(option_id,effect_key,effect_value,created_at,updated_at)
+                    values(:id,:key,:value,:now,:now)
+                    """, Map.of("id",optionId,"key",effect.getKey(),
+                    "value",((Number)effect.getValue()).doubleValue(),"now",now()));
         }
         jdbc.update("delete from build_item_option_slot_types where option_id=:id", Map.of("id",optionId));
         for (String code : strings(item.get("allowed_slot_types"))) {

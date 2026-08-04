@@ -3,6 +3,7 @@ package eu.royalblackwater.api.masterdata;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,7 +84,7 @@ public class SeedCatalog {
             if (item instanceof Map<?, ?> raw) {
                 Map<String, Object> normalized = new LinkedHashMap<>();
                 raw.forEach((key, entry) -> normalized.put(String.valueOf(key), entry));
-                result.add(Map.copyOf(normalized));
+                result.add(Collections.unmodifiableMap(normalized));
             }
         }
         return List.copyOf(result);

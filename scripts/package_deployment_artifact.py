@@ -15,8 +15,10 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parent.parent
 RUNTIME_FILES = (
     "VERSION",
-    "setup.sh",
-    "update.sh",
+    "infrastructure/scripts/release/install-artifact.sh",
+    "contracts/__init__.py",
+    "contracts/backup_enrollment.py",
+    "infrastructure/setup.sh",
     "infrastructure/compose.release.yml",
     "infrastructure/.env.example",
     "infrastructure/nginx/default.conf",
@@ -27,6 +29,7 @@ RUNTIME_FILES = (
     "infrastructure/docker/gateway-runtime.Dockerfile",
 )
 RUNTIME_DIRS = (
+    "infrastructure/config",
     "infrastructure/scripts",
     "infrastructure/systemd",
 )
@@ -49,6 +52,18 @@ def copy_tree(source: Path, target: Path) -> None:
         raise SystemExit(f"Required runtime directory is missing: {source}")
     shutil.copytree(source, target, dirs_exist_ok=True, symlinks=False,
                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"))
+    # Runtime shell entrypoints must remain executable even when a checkout
+    # lost the executable bit. The artifact verifier preserves this mode.
+    for script in target.rglob("*.sh"):
+        script.chmod(script.stat().st_mode | 0o111)
+
+
+def normalize_frontend_permissions(target: Path) -> None:
+    for directory in target.rglob("*"):
+        if directory.is_dir():
+            directory.chmod(0o755)
+        elif directory.is_file():
+            directory.chmod(0o644)
 
 
 def main() -> None:
@@ -78,6 +93,7 @@ def main() -> None:
         (payload / "artifacts" / "frontend").mkdir(parents=True)
         shutil.copy2(jar, payload / "artifacts" / "rbf-api.jar")
         copy_tree(frontend, payload / "artifacts" / "frontend")
+        normalize_frontend_permissions(payload / "artifacts" / "frontend")
         for relative in RUNTIME_FILES:
             source = ROOT / relative
             if not source.is_file():

@@ -2,15 +2,14 @@
 set -Eeuo pipefail
 INFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$INFRA_DIR/scripts/lib/host/control.sh"
-REPO_ROOT="$(cd "$INFRA_DIR/.." && pwd)"
-INSTALL_ROOT="${RBF_INSTALL_ROOT:-$(cd "$REPO_ROOT/../.." && pwd)}"
+INSTALL_ROOT="${RBF_INSTALL_ROOT:-/opt/rbf}"
 REQUEST="$INFRA_DIR/data/control/inbox/update.request"; STATUS="$INFRA_DIR/data/control/status/update-status.json"
 RUN_DIR="$INFRA_DIR/data/control/run"; install -d -m 0700 "$RUN_DIR" "$(dirname "$STATUS")"
 artifact=""; operation=""; requested_by="cli"
 while (($#)); do
   case "$1" in --artifact) artifact="${2:-}"; shift 2;; --requested-by) requested_by="${2:-}"; shift 2;; --restart) operation=restart; shift;; --rollback) operation=rollback; shift;; -h|--help) echo "Usage: update.sh [--artifact FILE|--restart|--rollback] [--requested-by NAME]"; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac
 done
-exec 9>"$RUN_DIR/update.lock"; flock 9
+exec 9>"$RUN_DIR/operation.lock"; flock 9
 if [[ -z "$artifact" && -z "$operation" && -f "$REQUEST" ]]; then
   claimed="$RUN_DIR/update-request.$$.json"
   claim_control_request "$REQUEST" "$claimed" 10001
@@ -45,7 +44,10 @@ case "$operation" in
     [[ -f "$artifact" && -f "$artifact.sha256" ]] || { echo "No staged deployment artifact with checksum." >&2; exit 1; }
     "$INFRA_DIR/scripts/release/install-artifact.sh" --artifact "$artifact" --checksum "$artifact.sha256" --install-root "$INSTALL_ROOT" --requested-by "$requested_by"
     ;;
-  restart) "$INFRA_DIR/scripts/services/restart-application.sh";;
+  restart)
+    exec 8>"$RUN_DIR/update.lock"; flock 8
+    "$INFRA_DIR/scripts/services/restart-application.sh"
+    ;;
   rollback) "$INFRA_DIR/scripts/release/rollback-release.sh";;
   *) echo "Unsupported operation: $operation" >&2; exit 2;;
 esac

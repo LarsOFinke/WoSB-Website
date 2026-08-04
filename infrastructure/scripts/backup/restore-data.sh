@@ -51,8 +51,30 @@ with tarfile.open(archive, mode="r:gz") as handle:
             )
 PY
 
+restore_components=()
+for component in "${!selected[@]}"; do
+  if tar -tzf "$backup_file" | awk -v component="$component" '$0 == component || index($0, component "/") == 1 {found=1} END {exit !found}'; then
+    restore_components+=("$component")
+  elif [[ "$component" == uploads ]]; then
+    die "Pflichtmodul fehlt im Datei-Backup: $component"
+  else
+    warn "Restore-Modul fehlt im Backup und wird übersprungen: $component"
+  fi
+done
+(( ${#restore_components[@]} > 0 )) || die "Kein ausgewähltes Restore-Modul ist im Backup enthalten."
+
+stage="$(mktemp -d "$INFRA_DIR/data/.restore-stage.XXXXXX")"
+cleanup() { rm -rf -- "$stage"; }
+trap cleanup EXIT
 tar_args=(--no-same-owner --no-same-permissions)
-for component in "${!selected[@]}"; do tar_args+=("$component"); done
-warn "Ausgewählte Restore-Module (${!selected[*]}) werden aus $backup_file wiederhergestellt."
-tar -xzf "$backup_file" -C "$INFRA_DIR/data" "${tar_args[@]}"
+for component in "${restore_components[@]}"; do tar_args+=("$component"); done
+warn "Ausgewählte Restore-Module (${restore_components[*]}) werden aus $backup_file wiederhergestellt."
+tar -xzf "$backup_file" -C "$stage" "${tar_args[@]}"
+for component in "${restore_components[@]}"; do
+  target="$INFRA_DIR/data/$component"
+  [[ ! -L "$target" ]] || die "Restore-Ziel ist ein unsicherer Symlink: $target"
+  [[ -d "$stage/$component" ]] || die "Restore-Modul wurde nicht extrahiert: $component"
+  rm -rf -- "$target"
+  mv -- "$stage/$component" "$target"
+done
 success "Datei-Wiederherstellung abgeschlossen. Führe anschließend setup/doctor und einen Smoke-Test aus."

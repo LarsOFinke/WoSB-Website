@@ -3,10 +3,10 @@ SHELL := /usr/bin/env bash
 .PHONY: setup setup-core up down restart status logs update backup backup-db backup-files backup-preflight smoke doctor lint config
 
 setup:
-	sudo ../setup.sh --profile full
+	sudo ./setup.sh --profile full
 
 setup-core:
-	sudo ../setup.sh --profile core
+	sudo ./setup.sh --profile core
 
 up:
 	./scripts/services/start.sh

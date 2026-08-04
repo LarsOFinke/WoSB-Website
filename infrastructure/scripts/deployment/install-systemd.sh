@@ -13,8 +13,6 @@ units=(
   rbf-hub-backup-admin.path
   rbf-hub-cert-renew.service
   rbf-hub-cert-renew.timer
-  rbf-hub-update.service
-  rbf-hub-update.path
 )
 
 systemd_infra="${RBF_SYSTEMD_INFRA_DIR:-$INFRA_DIR}"
@@ -41,9 +39,11 @@ done
 
 
 systemctl daemon-reload
+systemctl disable --now rbf-hub-update.path rbf-hub-update.service >/dev/null 2>&1 || true
+rm -f /etc/systemd/system/rbf-hub-update.path /etc/systemd/system/rbf-hub-update.service
+systemctl daemon-reload
 systemctl enable rbf-hub.service
 systemctl enable --now rbf-hub-backup.timer
 systemctl enable --now rbf-hub-backup-admin.path
 systemctl enable --now rbf-hub-cert-renew.timer
-systemctl enable --now rbf-hub-update.path
-success "RBF systemd-Startdienst, Backup-/TLS-Timer und Admin-Update-/Backup-Runner wurden installiert."
+success "RBF systemd-Startdienst sowie Backup-/TLS-Timer wurden installiert. Updates laufen ausschließlich über den Ursprungsserver."

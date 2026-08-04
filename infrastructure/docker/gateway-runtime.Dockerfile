@@ -7,5 +7,9 @@ COPY infrastructure/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY infrastructure/nginx/security-headers.conf /etc/nginx/snippets/rbf-security-headers.conf
 COPY infrastructure/nginx/upload-security-headers.conf /etc/nginx/snippets/rbf-upload-security-headers.conf
 RUN sed -i "s/__RBF_GATEWAY_MAX_BODY_MB__/${GATEWAY_MAX_BODY_MB}/g" /etc/nginx/conf.d/default.conf
+RUN sed -i 's|error_log /var/log/nginx/error.log notice;|error_log /dev/stderr notice;|' /etc/nginx/nginx.conf
 COPY artifacts/frontend/ /usr/share/nginx/html/
+USER 101
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]
 EXPOSE 8080 8443

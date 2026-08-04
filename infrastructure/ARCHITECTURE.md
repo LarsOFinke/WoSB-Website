@@ -5,10 +5,10 @@
 Die öffentlichen Befehle liegen im übergeordneten Repository:
 
 - `<repo>/setup.sh` delegiert an `infrastructure/setup.sh`.
-- `<repo>/update.sh` delegiert an `infrastructure/scripts/services/update.sh`.
+- `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer unter `scripts/release/deploy-from-origin.sh`.
 
 Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
-übergeordneten Wrapper, systemd-Units und Admin-Panel-Aufrufe unverändert weiterarbeiten.
+internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufgerufen werden.
 
 ## Verantwortlichkeiten
 
@@ -30,7 +30,7 @@ Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch 
 
 ### Kontrollierte Server-Aktionen
 
-- `scripts/services/update.sh`: kompatibler Runner für den Repository-Entry-Point und systemd.
+- `scripts/services/update.sh`: Runner für den Ursprung-Dispatcher und interne Recovery-Abläufe.
 - `scripts/update/options.sh`: CLI sowie Update- und Neustartmodus.
 - `scripts/update/request.sh`: Admin-Panel-Anforderung.
 - `scripts/update/status.sh`: atomare Statuspersistenz.

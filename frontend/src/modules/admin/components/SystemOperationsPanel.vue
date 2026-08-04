@@ -3,12 +3,11 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { MONITORING_HTTPS_PORT } from '@/config/runtime'
 import { useLocale } from '@/locales'
-import { getSystemUpdateStatus, requestSystemUpdate } from '@/modules/admin/api/admin'
+import { getSystemUpdateStatus } from '@/modules/admin/api/admin'
 
 const props = defineProps({
   apiStatus: { type: String, required: true },
   apiStatusDetail: { type: String, required: true },
-  isAdmin: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['refresh-api'])
@@ -16,7 +15,6 @@ const { locale, t } = useLocale()
 const update = ref({ state: 'idle', operation: 'update', message: '', request_available: false })
 const loading = ref(false)
 const error = ref('')
-const success = ref('')
 let pollTimer = null
 
 const inProgress = computed(() => ['queued', 'running'].includes(update.value.state))
@@ -59,35 +57,6 @@ async function refresh() {
   schedulePoll()
 }
 
-async function trigger(operation) {
-  if (!props.isAdmin || inProgress.value) return
-  const confirmKey = {
-    restart: 'admin.system.restartConfirm',
-    update: 'admin.system.updateConfirm',
-    rollback: 'admin.system.rollbackConfirm',
-  }[operation]
-  if (confirmKey && !window.confirm(t(confirmKey))) return
-
-  loading.value = true
-  error.value = ''
-  success.value = ''
-  try {
-    const response = await requestSystemUpdate(operation)
-    update.value = response.status
-    const successKey = {
-      restart: 'admin.system.restartRequestAccepted',
-      update: 'admin.system.requestAccepted',
-      rollback: 'admin.system.rollbackRequestAccepted',
-    }[operation] || 'admin.system.requestAccepted'
-    success.value = t(successKey)
-    schedulePoll()
-  } catch (err) {
-    error.value = err.message || t('admin.system.requestError')
-  } finally {
-    loading.value = false
-  }
-}
-
 onMounted(refresh)
 onUnmounted(() => window.clearTimeout(pollTimer))
 </script>
@@ -120,22 +89,11 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatDateTime(update.started_at) }}</dd></div>
         <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatDateTime(update.finished_at) }}</dd></div>
       </dl>
-      <div v-if="isAdmin" class="system-update-actions">
-        <button class="form-button danger-action system-restart-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('restart')">
-          {{ t('admin.system.restartButton') }}
-        </button>
-        <button class="form-button primary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('update')">
-          {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
-        </button>
-        <button class="form-button secondary-action" type="button" :disabled="loading || inProgress || !update.request_available" @click="trigger('rollback')">
-          {{ t('admin.system.rollbackButton') }}
-        </button>
-      </div>
-      <small v-else>{{ t('admin.system.adminOnly') }}</small>
+      <small>Server-Updates und Rollbacks werden ausschließlich am Ursprungsserver
+        über <code>./setup.sh update</code> gestartet.</small>
     </article>
   </div>
 
-  <p v-if="success" class="success-text table-state">{{ success }}</p>
   <p v-if="error" class="error-text table-state">{{ error }}</p>
 
 </template>

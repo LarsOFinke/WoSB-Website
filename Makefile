@@ -62,4 +62,4 @@ infra-update:
 	sudo ./update.sh
 
 package-release:
-	bash infrastructure/scripts/release/build-artifact.sh
+	bash ./infrastructure/scripts/release/build-artifact.sh

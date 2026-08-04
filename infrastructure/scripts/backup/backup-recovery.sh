@@ -18,7 +18,7 @@ postgres_backup="$(realpath "$postgres_backup")"; files_backup="$(realpath "$fil
 [[ -f "$postgres_backup" && -f "$files_backup" ]] || die "Database or files backup is missing."
 verify_backup_checksum "$postgres_backup"; verify_backup_checksum "$files_backup"
 if [[ -z "$release_artifact" ]]; then
-  install_root="${RBF_INSTALL_ROOT:-$(cd "$REPO_ROOT/../.." && pwd)}"
+  install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"
   release_artifact="$install_root/shared/release-artifacts/current.tar.gz"
 fi
 release_artifact="$(realpath "$release_artifact")"

@@ -41,7 +41,8 @@ CERTCFG
   fi
 
   rm -f "$config_file" "$error_file"
-  chmod 600 "$cert_dir/privkey.pem"
+  chown 0:101 "$cert_dir/privkey.pem"
+  chmod 640 "$cert_dir/privkey.pem"
   chmod 644 "$cert_dir/fullchain.pem"
   set_env_value CERTIFICATE_PROVIDER self-signed
   success "Selbstsigniertes Bootstrap-Zertifikat für ${hostname} / ${ip} erstellt."

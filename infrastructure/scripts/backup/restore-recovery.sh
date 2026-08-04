@@ -18,6 +18,7 @@ while (($#)); do
 done
 [[ "$EUID" -eq 0 ]] || die "Disaster recovery requires root."
 [[ "$verify_only" == true || "$confirmed" == true ]] || die "Use --yes for an actual restore."
+[[ -n "$identity" && -n "$bundle" ]] || usage
 for command in age python3 tar sha256sum pg_restore; do require_command "$command"; done
 identity="$(realpath "$identity")"; bundle="$(realpath "$bundle")"
 [[ -f "$identity" && -f "$bundle" ]] || die "Identity or recovery bundle is missing."
@@ -60,7 +61,10 @@ find "$install_root/shared/data/control/secrets" -type f -exec chmod 0600 {} +
 
 installed_version="$(cat "$install_root/shared/current-version" 2>/dev/null || true)"
 if [[ "$installed_version" != "$release_version" || ! -L "$install_root/current" ]]; then
-  "$SCRIPT_DIR/../release/install-artifact.sh" --artifact "$release" --checksum "$release.sha256" --install-root "$install_root" --env "$configuration/infrastructure.env" --no-backup --requested-by disaster-recovery
+  install_args=(--artifact "$release" --checksum "$release.sha256" --install-root "$install_root"
+    --env "$configuration/infrastructure.env" --requested-by disaster-recovery)
+  [[ -L "$install_root/current" ]] || install_args+=(--no-backup)
+  "$REPO_ROOT/infrastructure/scripts/release/install-artifact.sh" "${install_args[@]}"
 fi
 current="$(readlink -f "$install_root/current")"
 [[ -x "$current/infrastructure/scripts/backup/restore-data.sh" ]] || die "Installed release lacks restore tooling."

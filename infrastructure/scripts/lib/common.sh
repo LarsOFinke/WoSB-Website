@@ -36,6 +36,18 @@ read_env() {
   awk -F= -v key="$key" '$1 == key {sub(/^[^=]*=/, ""); gsub(/^\047|\047$/, ""); gsub(/^\"|\"$/, ""); print; exit}' "$ENV_FILE"
 }
 
+# Docker Compose applies the release-specific environment after the shared
+# environment. Runtime helpers that need image or project names must use the
+# same precedence instead of reading only .env.
+read_effective_env() {
+  local key="$1" value=""
+  if [[ -f "$RELEASE_ENV_FILE" ]]; then
+    value="$(awk -F= -v key="$key" '$1 == key {sub(/^[^=]*=/, ""); gsub(/^\047|\047$/, ""); gsub(/^\"|\"$/, ""); print; exit}' "$RELEASE_ENV_FILE")"
+  fi
+  [[ -n "$value" ]] || value="$(read_env "$key")"
+  printf '%s' "$value"
+}
+
 is_true() {
   case "${1,,}" in true|1|yes|on) return 0 ;; *) return 1 ;; esac
 }

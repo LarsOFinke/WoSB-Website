@@ -17,7 +17,7 @@ cleanup_temporary() {
 }
 trap cleanup_temporary EXIT
 install -m 0644 "$lineage/fullchain.pem" "$temporary_fullchain"
-install -m 0600 "$lineage/privkey.pem" "$temporary_privkey"
+install -o 0 -g 101 -m 0640 "$lineage/privkey.pem" "$temporary_privkey"
 mv -fT "$temporary_fullchain" "$certificate_dir/fullchain.pem"
 mv -fT "$temporary_privkey" "$certificate_dir/privkey.pem"
 set_env_value CERTIFICATE_PROVIDER letsencrypt

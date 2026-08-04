@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 
 @Mapper
 public interface UserMapper {
+    @Mapping(target = "id", source = "user.id")
     @Mapping(target = "displayName", expression = "java(displayName(user))")
     @Mapping(target = "role", source = "user.siteRole.code")
     @Mapping(target = "isActive", source = "user.active")

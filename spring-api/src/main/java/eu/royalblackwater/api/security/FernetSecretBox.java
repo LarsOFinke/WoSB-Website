@@ -13,6 +13,7 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,6 +30,7 @@ public class FernetSecretBox {
     private final SecureRandom random;
     private final Clock clock;
 
+    @Autowired
     public FernetSecretBox(SecretEncryptionProperties properties, Clock clock) {
         this(properties.configuredKeys(), new SecureRandom(), clock);
     }

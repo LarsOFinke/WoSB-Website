@@ -3,11 +3,16 @@ package eu.royalblackwater.api.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import eu.royalblackwater.api.persistence.JdbcQueryService;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -38,6 +43,9 @@ class ApplicationIntegrationTest {
     @Autowired
     JdbcQueryService jdbc;
 
+    @LocalServerPort
+    int port;
+
     @Test
     void migratesSeedsAndStartsTheCompleteApplication() {
         assertThat(jdbc.count("select count(*) from flyway_schema_history where success=true", Map.of()))
@@ -45,5 +53,25 @@ class ApplicationIntegrationTest {
         assertThat(jdbc.count("select count(*) from site_roles", Map.of())).isPositive();
         assertThat(jdbc.count("select count(*) from users where is_bootstrap_admin=true", Map.of()))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void exposesHealthAndReadinessButProtectsMemberApis() throws Exception {
+        HttpResponse<String> health = get("/api/health");
+        HttpResponse<String> readiness = get("/api/health/ready");
+        HttpResponse<String> protectedApi = get("/api/builds");
+
+        assertThat(health.statusCode()).isEqualTo(200);
+        assertThat(health.body()).contains("\"status\":\"ok\"");
+        assertThat(readiness.statusCode()).isEqualTo(200);
+        assertThat(readiness.body()).contains("\"status\":\"ready\"");
+        assertThat(protectedApi.statusCode()).isEqualTo(401);
+    }
+
+    private HttpResponse<String> get(String path) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .GET()
+                .build();
+        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
     }
 }

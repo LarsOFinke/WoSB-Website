@@ -26,7 +26,7 @@ Verification decrypts into a private temporary directory, rejects unsafe archive
 On a replacement host:
 
 1. install Docker/Compose, `age`, Python 3 and PostgreSQL client utilities;
-2. restore the bundle with explicit confirmation;
+2. restore the bundle with explicit `--yes` confirmation;
 3. install the exact release artifact into `/opt/rbf`;
 4. restore persistent files;
 5. import the database into staging;
@@ -38,7 +38,7 @@ On a replacement host:
 sudo infrastructure/scripts/backup/restore-recovery.sh \
   --bundle rbf-recovery-<timestamp>.tar.gz.age \
   --identity /secure/age-identity.txt \
-  --confirm-restore \
+  --yes \
   --replace-existing
 ```
 
