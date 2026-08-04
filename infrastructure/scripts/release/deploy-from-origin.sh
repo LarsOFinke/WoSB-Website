@@ -77,9 +77,8 @@ cleanup_line=""; for word in "${cleanup_command[@]}"; do printf -v quoted ' %q' 
 echo "[origin] Bereinige fehlgeschlagene, nicht aktive Releases auf dem Zielserver (falls vorhanden)."
 ssh -t -p "$port" "$user@$host" "$cleanup_line"
 remote_command=(sudo bash "$remote_dir/setup_website.sh")
-remote_command+=(--skip-backup)
+remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")" --skip-backup)
 if [[ "$automated" == true ]]; then
-  remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
   [[ -z "$install_root" ]] || remote_command+=(--install-root "$install_root")
   [[ -z "$env_source" ]] || remote_command+=(--env "$env_source")
   [[ "$no_backup" == true ]] && remote_command+=(--no-backup)
