@@ -92,3 +92,10 @@ installer_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$i
 [[ -z "$env_source" ]] || installer_args+=(--env "$env_source")
 RBF_ARTIFACT_VERIFIER="$stage/bundle/payload/infrastructure/scripts/release/verify-artifact.py" \
   "$installer" "${installer_args[@]}"
+
+credentials_file="$install_root/shared/first-run-credentials.txt"
+if [[ -f "$credentials_file" && ! -L "$credentials_file" ]]; then
+  printf '\n[website] First-Run-Zugangsdaten (einmalig sicher speichern):\n'
+  sed -n '1,20p' "$credentials_file"
+  printf '[website] Danach die Zugangsdaten-Datei sicher löschen: %s\n\n' "$credentials_file"
+fi
