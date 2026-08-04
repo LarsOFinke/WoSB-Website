@@ -127,6 +127,12 @@ def generate_record(name: str, schema: dict) -> str:
         is_required = raw_name in required
         value_type, type_imports = schema_type(prop, required=is_required)
         field_annotations, annotation_imports = annotations(prop, is_required)
+        # Jackson's SNAKE_CASE strategy preserves digits without inserting an
+        # underscore (``upgrade1``), while the public contract uses
+        # ``upgrade_1``. Keep the wire name explicit for numbered fields.
+        if re.search(r"_[0-9]+(?:_|$)", raw_name):
+            field_annotations.insert(0, f'@JsonProperty("{raw_name}")')
+            annotation_imports.add("com.fasterxml.jackson.annotation.JsonProperty")
         imports.update(type_imports)
         imports.update(annotation_imports)
         prefix = " ".join(field_annotations)

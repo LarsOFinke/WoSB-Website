@@ -4,6 +4,7 @@ import eu.royalblackwater.api.contract.BuildCreate;
 import eu.royalblackwater.api.contract.BuildUpdate;
 import eu.royalblackwater.api.contract.InventorySlot;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -90,7 +91,8 @@ record BuildPayload(
         List<String> normalizedUpgrades = new ArrayList<>(8);
         for (String upgrade : upgrades) normalizedUpgrades.add(optional(upgrade));
         return new BuildPayload(normalizedName, normalizedType, shipId, List.copyOf(normalizedClassifications),
-                optional(sails), List.copyOf(normalizedUpgrades), optional(lantern), Boolean.TRUE.equals(researchSlot),
+                optional(sails), Collections.unmodifiableList(normalizedUpgrades), optional(lantern),
+                Boolean.TRUE.equals(researchSlot),
                 Boolean.TRUE.equals(mortarModification), nonNegative(sailors), nonNegative(soldiers),
                 nonNegative(musketeers), nonNegative(mercenaries), slots(front), slots(rear), slots(port),
                 slots(starboard), slots(mortar), slots(special), uniqueSpecialists(crew), slots(ammunition),

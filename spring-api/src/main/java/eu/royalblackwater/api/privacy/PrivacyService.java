@@ -4,6 +4,7 @@ import eu.royalblackwater.api.contract.DataSubjectRequestCreate;
 import eu.royalblackwater.api.contract.DataSubjectRequestRead;
 import eu.royalblackwater.api.contract.PrivacyContactCreate;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
+import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -124,13 +125,13 @@ public class PrivacyService {
 
     private static DataSubjectRequestRead requestRead(Map<String, Object> row) {
         return new DataSubjectRequestRead(
-                (LocalDateTime) row.get("created_at"),
+                RowValues.dateTime(row, "created_at"),
                 (String) row.get("details"),
                 number(row.get("handled_by_user_id")),
                 ((Number) row.get("id")).longValue(),
                 (String) row.get("request_type"),
                 (String) row.get("resolution_note"),
-                (LocalDateTime) row.get("resolved_at"),
+                RowValues.nullableDateTime(row, "resolved_at"),
                 (String) row.get("status"),
                 ((Number) row.get("subject_user_id")).longValue(),
                 (String) row.get("subject_username"));

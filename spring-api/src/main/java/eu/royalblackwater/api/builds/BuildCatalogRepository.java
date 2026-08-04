@@ -85,7 +85,8 @@ class BuildCatalogRepository {
                     nullable(row, "source"), nullable(row, "notes"), nullable(row, "image_url"),
                     nullable(row, "option_kind"), nullable(row, "weapon_class"), integer(row, "weapon_class_rank"),
                     decimal(row, "weapon_caliber_inches"), integer(row, "sort_order"),
-                    (LocalDateTime) row.get("created_at"), (LocalDateTime) row.get("updated_at"),
+                    eu.royalblackwater.api.persistence.RowValues.dateTime(row, "created_at"),
+                    eu.royalblackwater.api.persistence.RowValues.dateTime(row, "updated_at"),
                     List.copyOf(slotTypes), Map.copyOf(base), Map.copyOf(effective), override != null, performance));
         }
         return List.copyOf(result);

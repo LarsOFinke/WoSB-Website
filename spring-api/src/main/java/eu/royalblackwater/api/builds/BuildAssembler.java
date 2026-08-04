@@ -13,6 +13,7 @@ import eu.royalblackwater.api.contract.InventorySlot;
 import eu.royalblackwater.api.contract.ShipStats;
 import eu.royalblackwater.api.persistence.RowValues;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -145,7 +146,8 @@ class BuildAssembler {
         for (int index = 1; index <= 8; index++) upgrades.add(upgrade(aggregate, index));
         return new BuildPayload(RowValues.requiredString(row, "build_name"), RowValues.requiredString(row, "build_type"),
                 RowValues.longValue(row, "ship_id"), aggregate.classifications(), single(aggregate, "sail"),
-                List.copyOf(upgrades), single(aggregate, "lantern"), row.get("research_upgrade_feature_id") != null,
+                Collections.unmodifiableList(upgrades), single(aggregate, "lantern"),
+                row.get("research_upgrade_feature_id") != null,
                 bool(row, "mortar_modification_installed"), longValue(row, "sailors"), longValue(row, "soldiers"),
                 longValue(row, "musketeers"), longValue(row, "mercenaries"), slots(aggregate, "weapon_front"),
                 slots(aggregate, "weapon_rear"), slots(aggregate, "weapon_port"), slots(aggregate, "weapon_starboard"),
