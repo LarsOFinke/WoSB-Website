@@ -31,11 +31,17 @@ Use focused feedback during implementation, then run the required release gate:
 bash .agents/scripts/check-changes.sh         # show checks for the current diff
 bash .agents/scripts/check-changes.sh --run   # run those existing gates
 bash .agents/scripts/check-frontend.sh        # frontend tests/build with temporary env
+bash .agents/scripts/check-docs.sh            # documentation references and repository checks
+bash .agents/scripts/check-all.sh             # quiet wrapper around the full release gate
 ```
 
 The frontend gate requires the Playwright Chromium runtime. Install it once with
 `npx playwright install chromium` from `frontend/`; CI installs Chromium and its
 system dependencies explicitly before running the gate.
+
+Agent wrappers suppress successful tool chatter to conserve context and print a
+bounded failure tail. Set `AGENT_GATE_VERBOSE=1` only when the complete underlying
+output is needed for diagnosis.
 
 `ApplicationIntegrationTest` starts the complete Spring application against a
 PostgreSQL Testcontainer and exercises real HTTP behavior for public health and

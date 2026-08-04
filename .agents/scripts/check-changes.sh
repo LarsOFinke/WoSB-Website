@@ -24,14 +24,22 @@ frontend=false
 backend=false
 infrastructure=false
 contracts=false
+documentation=false
+crosscutting=false
 for path in "${changed_files[@]}"; do
   case "$path" in
     frontend/*) frontend=true ;;
     spring-api/*) backend=true ;;
-    infrastructure/*|deploy.sh|update.sh|scripts/test-infrastructure.sh|scripts/test-update-management.sh)
+    infrastructure/*|deploy.sh|update.sh|scripts/test-infrastructure.sh|scripts/test-update-management.sh|.agents/scripts/*)
       infrastructure=true
       ;;
     contracts/*|scripts/migration/*) contracts=true ;;
+    docs/*|.agents/*.md|README.md|AGENTS.md|SECURITY.md|scripts/check_documentation.py)
+      documentation=true
+      ;;
+    Makefile|scripts/test.sh|scripts/check_repository.py|.github/workflows/*)
+      crosscutting=true
+      ;;
   esac
 done
 
@@ -41,17 +49,18 @@ for active in "$frontend" "$backend" "$infrastructure" "$contracts"; do
 done
 
 commands=()
-if ((scope_count > 1)) || [[ "$contracts" == true ]]; then
-  commands+=("make validate")
+if [[ "$crosscutting" == true ]] || ((scope_count > 1)) || [[ "$contracts" == true ]]; then
+  commands+=("bash .agents/scripts/check-all.sh")
 else
   [[ "$frontend" != true ]] || commands+=("bash .agents/scripts/check-frontend.sh")
-  [[ "$backend" != true ]] || commands+=("make spring-test")
+  [[ "$backend" != true ]] || commands+=("bash .agents/scripts/check-backend.sh")
   if [[ "$infrastructure" == true ]]; then
-    commands+=("bash scripts/test-infrastructure.sh")
-    commands+=("bash scripts/test-update-management.sh")
+    commands+=("bash .agents/scripts/check-infrastructure.sh")
   fi
-  commands+=("python3 scripts/check_repository.py --strict-tree")
+  [[ "$frontend" == true || "$backend" == true || "$infrastructure" == true ]] \
+    || commands+=("python3 scripts/check_repository.py --strict-tree")
 fi
+[[ "$documentation" != true ]] || commands+=("bash .agents/scripts/check-docs.sh")
 
 printf '[agent-check] Geänderte Dateien: %d\n' "${#changed_files[@]}"
 printf '  %s\n' "${changed_files[@]}"

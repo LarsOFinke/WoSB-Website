@@ -9,6 +9,7 @@ cleanup(){ [[ "$created_frontend_env" == false ]] || rm -f "$ROOT_DIR/frontend/.
 trap cleanup EXIT
 
 python3 "$ROOT_DIR/scripts/check_repository.py"
+python3 "$ROOT_DIR/scripts/check_documentation.py"
 python3 "$ROOT_DIR/scripts/security_audit.py"
 python3 "$ROOT_DIR/scripts/audit_spring_backend.py"
 python3 "$ROOT_DIR/scripts/audit_css.py"

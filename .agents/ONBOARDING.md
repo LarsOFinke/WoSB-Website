@@ -92,7 +92,7 @@ bash .agents/scripts/check-changes.sh
 bash .agents/scripts/check-changes.sh --run
 
 # Vollständiges Gate bei querschnittlichen Änderungen
-make validate
+bash .agents/scripts/check-all.sh
 ```
 
 Der Scope-Helfer delegiert an bestehende Repository-Gates. Frontend-Tests nutzen
@@ -100,6 +100,19 @@ Der Scope-Helfer delegiert an bestehende Repository-Gates. Frontend-Tests nutzen
 temporär aus `.env.example` erzeugt und garantiert wieder entfernt. Das Gate
 enthält Chromium-Browser-Smokes; den Browser lokal einmalig mit
 `cd frontend && npx playwright install chromium` bereitstellen.
+
+Die Agenten-Gates sind absichtlich tokenarm: Bei Erfolg geben sie nur eine
+Statuszeile aus, bei Fehlern einen begrenzten Log-Ausschnitt. Vollständige
+Werkzeugausgabe lässt sich bei Bedarf mit `AGENT_GATE_VERBOSE=1` einschalten.
+Direkte Einstiege sind:
+
+```bash
+bash .agents/scripts/check-backend.sh
+bash .agents/scripts/check-frontend.sh
+bash .agents/scripts/check-infrastructure.sh
+bash .agents/scripts/check-docs.sh
+bash .agents/scripts/check-all.sh
+```
 
 ## Cache aktualisieren
 

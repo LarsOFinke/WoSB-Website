@@ -20,14 +20,15 @@ frontend-test:
 	cd frontend && npm run test:ci
 
 lint:
-	python scripts/check_repository.py
+	python3 scripts/check_repository.py
+	python3 scripts/check_documentation.py
 	bash scripts/test-infrastructure.sh
 
 css-audit:
-	python scripts/audit_css.py
+	python3 scripts/audit_css.py
 
 security-audit:
-	python scripts/security_audit.py
+	python3 scripts/security_audit.py
 
 build:
 	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress package
@@ -40,7 +41,7 @@ clean-all:
 	bash ./scripts/clean_repository.sh --all
 
 check-tree:
-	python ./scripts/check_repository.py --strict-tree
+	python3 ./scripts/check_repository.py --strict-tree
 
 setup-pi:
 	sudo ./infrastructure/setup.sh --profile full

@@ -191,12 +191,20 @@ Agenten-Helfer für wiederkehrende Bestandsaufnahme und Prüfauswahl:
 bash .agents/scripts/project-context.sh       # kompakter, stets aktueller Projekt-/Git-Snapshot
 bash .agents/scripts/check-changes.sh         # Prüfempfehlung aus den geänderten Pfaden
 bash .agents/scripts/check-changes.sh --run   # empfohlene vorhandene Repository-Gates ausführen
+bash .agents/scripts/check-backend.sh         # Maven-/PostgreSQL-Gate, kompakte Ausgabe
 bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build/Browser-Smoke mit temporärer .env
+bash .agents/scripts/check-infrastructure.sh  # Infrastruktur-/Update-Verträge, kompakte Ausgabe
+bash .agents/scripts/check-docs.sh            # lokale Markdown-Links, Befehle und Doku-Generierung
+bash .agents/scripts/check-all.sh             # make validate mit kompakter Ausgabe
 ```
 
 Die Helfer enthalten keine eigene Fachprüfung. Sie lesen den aktuellen Stand und
 delegieren an `make`, `scripts/test-*.sh` und `check_repository.py`, damit keine
-zweite, später abweichende Qualitätslogik entsteht.
+zweite, später abweichende Qualitätslogik entsteht. Dokumentationsinvarianten
+liegen entsprechend in `scripts/check_documentation.py`; `check-docs.sh` ist nur
+der tokenarme Einstieg. Erfolgreiche Gates liefern eine Statuszeile, Fehler die
+letzten 200 Logzeilen. `AGENT_GATE_VERBOSE=1` schaltet die vollständige Ausgabe
+für gezielte Diagnose ein.
 
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
