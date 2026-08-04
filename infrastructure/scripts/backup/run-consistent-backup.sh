@@ -170,12 +170,19 @@ if [[ "$include_recovery" == true ]]; then
 fi
 
 set_path="$INFRA_DIR/data/backups/sets/rbf-backup-set-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
-manifest_args=(create --root "$INFRA_DIR" --output "$set_path" --files "$files_backup" --reason "$reason")
+# In a versioned installation data/ is a symlink into /opt/rbf/shared. The
+# manifest root must therefore be the installation root, not the release's
+# infrastructure directory, otherwise shared backup artifacts look external.
+manifest_root="$INFRA_DIR"
+if [[ -d "$INFRA_DIR/../../shared" ]]; then
+  manifest_root="$(realpath "$INFRA_DIR/../..")"
+fi
+manifest_args=(create --root "$manifest_root" --output "$set_path" --files "$files_backup" --reason "$reason")
 [[ -z "$postgres_backup" ]] || manifest_args+=(--postgres "$postgres_backup" --verification "$verification_report")
 [[ -z "$recovery_backup" ]] || manifest_args+=(--recovery "$recovery_backup")
 python3 "$SCRIPT_DIR/backup_set_manifest.py" "${manifest_args[@]}" >/dev/null
 backup_finalize "$set_path" "sets"
-python3 "$SCRIPT_DIR/backup_set_manifest.py" validate --root "$INFRA_DIR" "$set_path" >/dev/null
+python3 "$SCRIPT_DIR/backup_set_manifest.py" validate --root "$manifest_root" "$set_path" >/dev/null
 export_verified_recovery_set "$recovery_backup" "$verification_report" "$set_path"
 printf '%s\n' "$set_path" > "$set_result"; chmod 600 "$set_result"
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
