@@ -37,9 +37,11 @@ public class ForumOperationHandler extends AbstractApiOperationHandler {
                              MultipartFile upload) {
         AuthenticatedUser actor = CurrentUser.require();
         return switch (operationId) {
-            case "get_threads_api_forum_threads_get" -> forum.list(
-                    ListFilter.optionalText(parameters, "search", 120),
-                    ListFilter.optionalText(parameters, "category", 80));
+            case "get_threads_api_forum_threads_get" -> {
+                ListFilter page = ListFilter.from(parameters, 50, 100);
+                yield forum.list(ListFilter.optionalText(parameters, "search", 120),
+                        ListFilter.optionalText(parameters, "category", 80), page.limit(), page.offset());
+            }
             case "post_thread_api_forum_threads_post" -> forum.create(
                     body(requestBody, ForumThreadCreate.class), actor);
             case "get_thread_detail_api_forum_threads__thread_id__get" -> forum.get(

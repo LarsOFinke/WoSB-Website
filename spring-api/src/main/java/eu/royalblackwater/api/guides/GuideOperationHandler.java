@@ -25,8 +25,11 @@ public class GuideOperationHandler extends AbstractApiOperationHandler {
     protected Object execute(String operationId, Map<String, Object> parameters, Object requestBody, MultipartFile upload) {
         AuthenticatedUser actor = CurrentUser.require();
         return switch (operationId) {
-            case "get_guides_api_guides_get" -> guides.list(ListFilter.optionalText(parameters, "search", 120),
-                    ListFilter.optionalText(parameters, "category", 80), actor);
+            case "get_guides_api_guides_get" -> {
+                ListFilter page = ListFilter.from(parameters, 50, 100);
+                yield guides.list(ListFilter.optionalText(parameters, "search", 120),
+                        ListFilter.optionalText(parameters, "category", 80), page.limit(), page.offset(), actor);
+            }
             case "post_guide_api_guides_post" -> guides.create(body(requestBody, GuideCreate.class), actor);
             case "get_guide_detail_api_guides__guide_id__get" -> guides.get(longParameter(parameters, "guide_id"), actor);
             case "put_guide_api_guides__guide_id__put" -> guides.update(longParameter(parameters, "guide_id"), body(requestBody, GuideUpdate.class), actor);

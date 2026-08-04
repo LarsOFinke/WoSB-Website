@@ -25,9 +25,11 @@ public class ForumAdministrationOperationHandler extends AbstractApiOperationHan
     @Override
     protected Object execute(String operationId, Map<String, Object> parameters, Object body, MultipartFile upload) {
         return switch (operationId) {
-            case "admin_list_forum_threads_api_admin_forum_threads_get" ->
-                    forum.list(ListFilter.optionalText(parameters, "search", 120),
-                            ListFilter.optionalText(parameters, "category", 80));
+            case "admin_list_forum_threads_api_admin_forum_threads_get" -> {
+                ListFilter page = ListFilter.from(parameters, 50, 100);
+                yield forum.list(ListFilter.optionalText(parameters, "search", 120),
+                        ListFilter.optionalText(parameters, "category", 80), page.limit(), page.offset());
+            }
             case "admin_delete_forum_thread_api_admin_forum_threads__thread_id__delete" -> {
                 forum.deleteThread(longParameter(parameters,"thread_id"),CurrentUser.require());
                 yield null;

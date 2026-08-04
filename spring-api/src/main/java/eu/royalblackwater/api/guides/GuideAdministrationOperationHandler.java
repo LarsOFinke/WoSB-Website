@@ -3,6 +3,7 @@ package eu.royalblackwater.api.guides;
 import eu.royalblackwater.api.security.AuthenticatedUser;
 import eu.royalblackwater.api.security.CurrentUser;
 import eu.royalblackwater.api.transport.AbstractApiOperationHandler;
+import eu.royalblackwater.api.transport.ListFilter;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,10 @@ public class GuideAdministrationOperationHandler extends AbstractApiOperationHan
     protected Object execute(String operationId, Map<String, Object> parameters, Object requestBody, MultipartFile upload) {
         AuthenticatedUser actor = CurrentUser.require();
         return switch (operationId) {
-            case "admin_list_guides_api_admin_guides_get" -> guides.listForAdministration();
+            case "admin_list_guides_api_admin_guides_get" -> {
+                ListFilter page = ListFilter.from(parameters, 50, 100);
+                yield guides.listForAdministration(page.limit(), page.offset());
+            }
             case "admin_delete_guide_api_admin_guides__guide_id__delete" -> { guides.delete(longParameter(parameters, "guide_id"), actor, true); yield null; }
             default -> throw new IllegalStateException("Unsupported guide administration operation: " + operationId);
         };

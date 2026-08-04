@@ -1,8 +1,8 @@
 import { deleteRequest, get, post, put } from '@/shared/api/client'
 import { withQuery } from '@/shared/api/query'
 
-export function listThreads(search = '', category = '') {
-  return get(withQuery('/forum/threads', { search, category }))
+export function listThreads(search = '', category = '', limit = 50, offset = 0) {
+  return get(withQuery('/forum/threads', { search, category, limit, offset }))
 }
 
 export function getThread(id) {

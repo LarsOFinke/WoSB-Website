@@ -55,7 +55,7 @@ public class GuideService {
     }
 
     @Transactional(readOnly = true)
-    public List<GuideSummary> list(String search, String category, AuthenticatedUser actor) {
+    public List<GuideSummary> list(String search, String category, int limit, int offset, AuthenticatedUser actor) {
         StringBuilder sql = new StringBuilder(SUMMARY + " where g.is_published=true");
         Map<String, Object> parameters = new LinkedHashMap<>();
         if (search != null && !search.isBlank()) {
@@ -65,13 +65,16 @@ public class GuideService {
         if (category != null && !category.isBlank()) {
             sql.append(" and g.category=:category"); parameters.put("category", normalizeCategory(category));
         }
-        sql.append(" order by g.updated_at desc,g.id desc limit 250");
+        sql.append(" order by g.updated_at desc,g.id desc limit :limit offset :offset");
+        parameters.put("limit", limit);
+        parameters.put("offset", offset);
         return summaries(jdbc.query(sql.toString(), parameters));
     }
 
     @Transactional(readOnly = true)
-    public List<GuideSummary> listForAdministration() {
-        return summaries(jdbc.query(SUMMARY + " order by g.updated_at desc,g.id desc limit 1000", Map.of()));
+    public List<GuideSummary> listForAdministration(int limit, int offset) {
+        return summaries(jdbc.query(SUMMARY + " order by g.updated_at desc,g.id desc limit :limit offset :offset",
+                Map.of("limit", limit, "offset", offset)));
     }
 
     @Transactional(readOnly = true)

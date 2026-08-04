@@ -23,9 +23,11 @@ public class AdminGuidesGeneratedController {
     @GetMapping("/api/admin/guides")
     public ResponseEntity<?> adminListGuides(
             @RequestParam(name = "search", required = false) String search,
-            @RequestParam(name = "category", required = false) String category
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
-        return dispatcher.dispatch("admin_list_guides_api_admin_guides_get", ApiParameters.of("search", search, "category", category), null, null, 200);
+        return dispatcher.dispatch("admin_list_guides_api_admin_guides_get", ApiParameters.of("search", search, "category", category, "limit", limit, "offset", offset), null, null, 200);
     }
 
     @DeleteMapping("/api/admin/guides/{guide_id}")

@@ -57,7 +57,7 @@ public class ForumService {
     }
 
     @Transactional(readOnly = true)
-    public List<ForumThreadSummary> list(String search, String category) {
+    public List<ForumThreadSummary> list(String search, String category, int limit, int offset) {
         StringBuilder sql = new StringBuilder(SUMMARY_SELECT + " where 1=1");
         Map<String, Object> parameters = new LinkedHashMap<>();
         if (search != null && !search.isBlank()) {
@@ -68,7 +68,9 @@ public class ForumService {
             sql.append(" and t.category=:category");
             parameters.put("category", category(category));
         }
-        sql.append(" group by t.id,u.username,up.display_name order by t.updated_at desc,t.id desc limit 500");
+        sql.append(" group by t.id,u.username,up.display_name order by t.updated_at desc,t.id desc limit :limit offset :offset");
+        parameters.put("limit", limit);
+        parameters.put("offset", offset);
         return jdbc.query(sql.toString(), parameters).stream().map(ForumService::summary).toList();
     }
 

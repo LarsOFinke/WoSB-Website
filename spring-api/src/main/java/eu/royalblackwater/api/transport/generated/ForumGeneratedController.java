@@ -46,9 +46,11 @@ public class ForumGeneratedController {
     @GetMapping("/api/forum/threads")
     public ResponseEntity<?> getThreads(
             @RequestParam(name = "search", required = false) String search,
-            @RequestParam(name = "category", required = false) String category
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
-        return dispatcher.dispatch("get_threads_api_forum_threads_get", ApiParameters.of("search", search, "category", category), null, null, 200);
+        return dispatcher.dispatch("get_threads_api_forum_threads_get", ApiParameters.of("search", search, "category", category, "limit", limit, "offset", offset), null, null, 200);
     }
 
     @PostMapping("/api/forum/threads")
