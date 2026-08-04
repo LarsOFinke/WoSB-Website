@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -73,16 +74,22 @@ class ApplicationIntegrationTest {
         HttpResponse<String> fleet = get("/api/fleets/public/official");
         assertThat(fleet.statusCode()).isIn(200, 404);
 
+        HttpResponse<String> csrfBootstrap = get("/api/auth/me");
+        String xsrf = csrfBootstrap.headers().firstValue("set-cookie")
+                .flatMap(value -> Pattern.compile("(?:^|;\\s*)XSRF-TOKEN=([^;]+)").matcher(value).find()
+                        ? java.util.Optional.of(Pattern.compile("(?:^|;\\s*)XSRF-TOKEN=([^;]+)").matcher(value).replaceAll("$1"))
+                        : java.util.Optional.empty())
+                .orElseThrow();
         HttpRequest register = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/register"))
                 .header("Content-Type", "application/json")
+                .header("Cookie", "XSRF-TOKEN=" + xsrf)
+                .header("X-XSRF-TOKEN", xsrf)
                 .POST(HttpRequest.BodyPublishers.ofString(
                         "{\"username\":\"integration-public-route\",\"password\":\"Integration-Password-42!\","
                                 + "\"displayName\":\"Integration Public Route\",\"wantsFleetMembership\":false}"))
                 .build();
         HttpResponse<String> registration = HttpClient.newHttpClient().send(register, HttpResponse.BodyHandlers.ofString());
-        // Without the browser's XSRF header Spring rejects the unsafe request
-        // with 403; it must never be rejected as unauthenticated (401).
-        assertThat(registration.statusCode()).isIn(202, 403, 409);
+        assertThat(registration.statusCode()).isIn(202, 409);
     }
 
     private HttpResponse<String> get(String path) throws Exception {
