@@ -71,6 +71,11 @@ scp -P "$port" "$artifact" "$checksum" \
   "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
   "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" \
   "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$user@$host:$remote_dir/"
+cleanup_command=(sudo bash "$remote_dir/cleanup-failed-release.sh" --if-present --yes)
+[[ -z "$install_root" ]] || cleanup_command+=(--install-root "$install_root")
+cleanup_line=""; for word in "${cleanup_command[@]}"; do printf -v quoted ' %q' "$word"; cleanup_line+="$quoted"; done
+echo "[origin] Bereinige fehlgeschlagene, nicht aktive Releases auf dem Zielserver (falls vorhanden)."
+ssh -t -p "$port" "$user@$host" "$cleanup_line"
 remote_command=(sudo bash "$remote_dir/setup_website.sh")
 if [[ "$automated" == true ]]; then
   remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")

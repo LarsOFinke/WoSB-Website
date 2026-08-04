@@ -3,19 +3,23 @@ set -Eeuo pipefail
 die() { echo "[cleanup] $*" >&2; exit 1; }
 [[ "$EUID" -eq 0 ]] || die "Das Aufräumen benötigt root-Rechte."
 for command in flock python3 realpath; do command -v "$command" >/dev/null 2>&1 || die "Benötigtes Kommando fehlt: $command"; done
-install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; version=""; assume_yes=false
+install_root="${RBF_INSTALL_ROOT:-/opt/rbf}"; version=""; assume_yes=false; if_present=false
 while (($#)); do
   case "$1" in
     --version) version="${2:-}"; shift 2 ;;
     --install-root) install_root="${2:-}"; shift 2 ;;
     --yes) assume_yes=true; shift ;;
+    --if-present) if_present=true; shift ;;
     -h|--help) echo 'Usage: cleanup-failed-release.sh [--version X.Y.Z] [--install-root DIR] [--yes]'; exit 0 ;;
     *) die "Unbekannte Option: $1" ;;
   esac
 done
 [[ "$install_root" == /* && "$install_root" != / ]] || die "Installationsroot muss absolut sein."
 install_root="$(realpath -m "$install_root")"; shared="$install_root/shared"; releases="$install_root/releases"
-[[ -d "$releases" && -d "$shared/deployments" ]] || die "Keine Release-Verwaltung unter $install_root gefunden."
+if [[ ! -d "$releases" || ! -d "$shared/deployments" ]]; then
+  [[ "$if_present" == true ]] && { echo "[cleanup] Keine bestehende Release-Verwaltung gefunden; übersprungen."; exit 0; }
+  die "Keine Release-Verwaltung unter $install_root gefunden."
+fi
 install -d -m 0700 "$shared/locks"; exec 9>"$shared/locks/release.lock"; flock 9
 current_target="$(readlink -f "$install_root/current" 2>/dev/null || true)"
 if [[ -z "$version" ]]; then
@@ -32,7 +36,10 @@ PY
   )
   ((${#candidates[@]} == 1)) && version="${candidates[0]}"
   if ((${#candidates[@]} > 1)); then printf 'Aufräumbare Releases:\n%s\n' "${candidates[*]}" >&2; read -r -p 'Version: ' version; fi
-  [[ -n "$version" ]] || die "Kein aufräumbarer fehlgeschlagener Release gefunden."
+  if [[ -z "$version" ]]; then
+    [[ "$if_present" == true ]] && { echo "[cleanup] Kein fehlgeschlagener Release gefunden; übersprungen."; exit 0; }
+    die "Kein aufräumbarer fehlgeschlagener Release gefunden."
+  fi
 fi
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "Version ist kein gültiges SemVer: $version"
 release_dir="$releases/$version"; record="$shared/deployments/$version.json"
