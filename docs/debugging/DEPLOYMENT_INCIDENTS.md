@@ -35,13 +35,15 @@ mit `./update.sh` übertragen; kein altes Archiv wiederverwenden.
 
 **Symptom:** `Immutable release already exists and is active`.
 
-**Ursache:** Ein Deploy wurde als gewöhnliches Update behandelt, obwohl dieselbe
-Versionsnummer erneut getestet werden soll.
+**Ursache:** Die Versionsnummer wurde nach der Aktivierung erneut verwendet.
+Aktivierte Releases sind unveränderlich; auch ein nachträglicher Hotfix oder eine
+Dokumentationskorrektur benötigt deshalb eine neue Patch-Version.
 
-**Lösung:** `./deploy.sh` und `./update.sh` rufen den Cleanup mit
-`--replace-active --yes` auf. Nur der aktive Release und seine Metadaten werden
-entfernt; `/opt/rbf/shared` bleibt bestehen. Niemals manuell `shared/.env` oder
-`shared/data` löschen.
+**Lösung:** Die Änderung nach
+[`VERSIONING.md`](../development/VERSIONING.md) klassifizieren, `VERSION` und die
+gekoppelten Versionsquellen erhöhen und ein neues Artefakt bauen. Den aktiven
+Release, seine Metadaten, `shared/.env` oder `shared/data` niemals manuell
+löschen, um dieselbe Versionsnummer erneut zu verwenden.
 
 ## 4. NGINX startet in einer Restart-Schleife
 
