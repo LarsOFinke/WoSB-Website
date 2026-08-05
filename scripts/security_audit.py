@@ -57,6 +57,10 @@ for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Poli
     require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
 require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
 pom=read('spring-api/pom.xml')
+require('<tomcat.version>11.0.24</tomcat.version>' in pom,
+        'embedded Tomcat must retain the reviewed security update')
+require('<log4j2.version>2.25.5</log4j2.version>' in pom,
+        'Log4j API must retain the reviewed security update')
 require('<postgresql.version>42.7.12</postgresql.version>' in pom,
         'PostgreSQL JDBC must retain the reviewed security update')
 for dockerfile in ('spring-api/Dockerfile','infrastructure/docker/api-runtime.Dockerfile',

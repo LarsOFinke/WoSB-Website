@@ -239,6 +239,13 @@ demselben Trivy-Cache scannen; der Java-Scan lädt beim ersten Lauf eine große
 zusätzliche Datenbank. Die Runtime-Dockerfiles müssen vor dem Wechsel zum
 unprivilegierten Benutzer `apk upgrade --no-cache` ausführen.
 
+Der Security-Scan vom 5. August 2026 erforderte gezielte Spring-Boot-
+Dependency-Overrides: Tomcat `11.0.24` für die bis `11.0.23` reichenden
+Juli-Fixes, Log4j `2.25.5` für `CVE-2026-49844` und pgJDBC `42.7.12` für
+`CVE-2026-54291`. Diese Werte sind in `pom.xml` und `security_audit.py` als
+gemeinsam zu aktualisierender geprüfter Stand gebunden; neue Scannerfunde zuerst
+gegen die Herstellerhinweise prüfen und nicht pauschal unterdrücken.
+
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
 `mvn verify`, Frontend-Tests/Build/Chromium-Smokes und abschließend `--strict-tree`
