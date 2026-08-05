@@ -1,6 +1,7 @@
 package eu.royalblackwater.api.persistence;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -37,6 +38,13 @@ public final class RowValues {
         Object value = row.get(key);
         if (value instanceof Boolean flag) return flag;
         throw new IllegalStateException("Expected boolean column: " + key);
+    }
+
+    public static LocalDate date(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        if (value instanceof LocalDate date) return date;
+        if (value instanceof java.sql.Date sqlDate) return sqlDate.toLocalDate();
+        throw new IllegalStateException("Expected date column: " + key);
     }
 
     public static LocalDateTime dateTime(Map<String, Object> row, String key) {

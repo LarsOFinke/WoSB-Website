@@ -7,16 +7,27 @@ kopiert Secrets, Cookies oder Authorization-Header in Tickets.
 
 ## Schnelle Eingrenzung
 
+Vom Ursprungssystem zuerst den interaktiven, redigierenden Collector verwenden:
+
+```bash
+./debug.sh
+./debug.sh --area calendar --category http-500 --since 30m --tail 400
+```
+
+Er nutzt `.env.origin`, speichert die agententaugliche Ausgabe lokal unter
+`.diagnostics/` und verändert das Zielsystem nicht. Direkte Zielserverbefehle
+sind nur der manuelle Fallback:
+
 ```bash
 sudo systemctl status rbf-hub.service --no-pager
 sudo journalctl -u rbf-hub.service -n 200 --no-pager
-sudo /opt/rbf/current/infrastructure/scripts/services/status.sh
-sudo /opt/rbf/current/infrastructure/scripts/checks/doctor.sh
-sudo /opt/rbf/current/infrastructure/scripts/services/logs.sh api gateway
+sudo /srv/rbf/current/infrastructure/scripts/services/status.sh
+sudo /srv/rbf/current/infrastructure/scripts/checks/doctor.sh
+sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh api gateway
 ```
 
 Bei einem fehlgeschlagenen Release zuerst die Aktivierungsdiagnose unter
-`/opt/rbf/shared/deployments/failed-*.log` sichern. Container und Netzwerke erst
+`/srv/rbf/shared/deployments/failed-*.log` sichern. Container und Netzwerke erst
 danach bereinigen; die Diagnose darf nicht durch `docker compose down` verloren
 gehen.
 

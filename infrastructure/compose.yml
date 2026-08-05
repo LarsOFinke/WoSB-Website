@@ -84,6 +84,7 @@ services:
       api:
         condition: service_healthy
     networks: [frontend, backend]
+    group_add: ["10001"]
     read_only: true
     tmpfs:
       - /var/cache/nginx:uid=101,gid=101,mode=0755

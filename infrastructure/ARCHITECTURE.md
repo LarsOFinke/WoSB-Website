@@ -6,9 +6,24 @@ Die öffentlichen Befehle liegen im übergeordneten Repository:
 
 - `<repo>/deploy.sh --configure` ist der vollständige First-Run-Einstieg.
 - `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer unter `scripts/release/deploy-from-origin.sh`.
+- `<repo>/debug.sh` delegiert an `scripts/diagnostics/collect-from-origin.sh`
+  und schreibt redigierte Diagnoseausgaben lokal am Ursprung.
 
 Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
 internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufgerufen werden.
+Allgemeine Repository-Prüfungen und Generatoren bleiben im top-level `scripts/`;
+Runtime-/Hostskripte gehören wegen ihrer Artefakt- und Zielsystemverantwortung
+unter `infrastructure/scripts/`.
+
+### Diagnosegrenze
+
+Der Origin-Collector verwendet Host, Benutzer, Port, Installationsroot und
+Identity aus `.env.origin`. Er streamt den geprüften Remote-Collector per SSH an
+`sudo -n bash`, ohne ihn oder Rohlogs auf dem Ziel zu speichern. Der Remote-Teil
+liest nur systemd- und Compose-Logs beziehungsweise Dienststatus. Erst am
+Ursprung werden IP-Adressen, E-Mail-Adressen, Querywerte und Zugangsdaten
+redigiert; die begrenzte Ausgabe landet mit restriktiven Rechten unter
+`.diagnostics/` oder einem expliziten lokalen Pfad.
 
 ## Verantwortlichkeiten
 

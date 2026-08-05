@@ -45,6 +45,13 @@ Mit `rg` zuerst Aufrufer, Tests, Konfiguration und Dokumentation einer
 Verantwortung finden. Keine breite Dateifür-Datei-Lektüre, wenn Cache und
 Primärquelle den Einstieg bereits nennen.
 
+Skripte nach ausführender Verantwortung ablegen: kleine öffentliche
+Origin-Orchestratoren (`deploy.sh`, `update.sh`, `debug.sh`) im Root,
+ausgelieferte Host-/Runtime-/Recovery-Logik unter `infrastructure/scripts/` und
+Repositoryprüfungen sowie Generatoren unter `scripts/`. Eine einheitliche
+Navigation bedeutet hier klare Ownership, nicht das Vermischen dieser
+verschiedenen Laufzeitgrenzen in einem einzigen Verzeichnis.
+
 ## 3. Befunde priorisieren
 
 Jeden Befund einer Priorität und einem Beweis zuordnen:

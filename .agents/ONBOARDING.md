@@ -38,6 +38,9 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 - Deployment und Update starten am Ursprung über `deploy.sh`/`update.sh` und
   verwenden Artefakte, Backups, Flyway und Rollback. Produktionsdaten oder
   Docker-Volumes niemals als Diagnosemaßnahme löschen.
+- Produktionsdiagnosen starten am Ursprung über `./debug.sh`. Der Wrapper nutzt
+  `.env.origin`, filtert remote und speichert nur die lokal redigierte Ausgabe;
+  keine Rohlogs oder Diagnosearchive auf dem Ziel erzeugen.
 - Lokale `.env`, private Schlüssel, Tokens, personenbezogene Daten und
   vollständige IP-Adressen weder lesen/ausgeben noch versionieren, wenn sie für
   den konkreten Auftrag nicht zwingend erforderlich sind.
@@ -46,7 +49,7 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 
 | Aufgabe | Primärer Einstieg |
 | --- | --- |
-| Produktionsfehler | `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
+| Produktionsfehler | `./debug.sh`, danach `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
 | Deployment/SSH | `docs/deployment/DEPLOYMENT.md`, `infrastructure/scripts/release/deploy-from-origin.sh` |
 | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
@@ -59,6 +62,12 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, betroffene Modulstile |
 | Sicherheit | `SecurityConfiguration`, `security/`, `scripts/security_audit.py` |
 | Datenschutz | `privacy/`, `docs/reference/DATA_RETENTION.md` |
+
+Skript-Ownership: Im Root liegen nur kleine öffentliche Orchestratoren wie
+`deploy.sh`, `update.sh` und `debug.sh`. Zielsystem-, Release-, Backup- und
+Hostlogik liegt unter `infrastructure/scripts/` und wird mit dem Runtime-Artefakt
+ausgeliefert. Repository-Prüfungen, Generatoren und CI-Helfer liegen unter
+`scripts/`; keine parallelen Kopien zwischen diesen Bäumen anlegen.
 
 Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte
 Controller und Locale-Ausgaben nicht von Hand bearbeiten.

@@ -124,8 +124,9 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 
 ## Infrastruktur und Betriebsgrenzen
 
-- Öffentliche Ursprungseinstiege: `deploy.sh` und `update.sh`; beide delegieren an
-  `infrastructure/scripts/release/deploy-from-origin.sh`.
+- Öffentliche Ursprungseinstiege: `deploy.sh`, `update.sh` und `debug.sh`.
+  Deploy/Update delegieren an `infrastructure/scripts/release/deploy-from-origin.sh`;
+  Debugging delegiert an `infrastructure/scripts/diagnostics/collect-from-origin.sh`.
 - `./deploy.sh --configure` ist der vollständige interaktive First Run: Ziel,
   dedizierter `rbfadmin`, optional erzeugter Ed25519-Key, einmaliger VPS-
   Bootstrap-Zugang und Deployment laufen in einem Ablauf. Bootstrap-Zugangsdaten
@@ -133,8 +134,11 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   geprüften Key-Zugang und `sudo -n`.
 - Das interne Setup ist unter
   `infrastructure/scripts/setup/{options,workflow,main}.sh` getrennt.
-- Host-Helfer liegen unter `scripts/lib/host/` (Pakete, Storage, Firewall, TLS,
-  Control); Skripte müssen robust, idempotent und mit klaren Fehlercodes arbeiten.
+- Host-Helfer liegen unter `infrastructure/scripts/lib/host/` (Pakete, Storage,
+  Firewall, TLS, Control); Skripte müssen robust, idempotent und mit klaren
+  Fehlercodes arbeiten. Öffentliche Root-Skripte orchestrieren nur; Runtime-
+  und Hostlogik bleibt unter `infrastructure/scripts/`, Repositorywerkzeuge unter
+  top-level `scripts/`.
 - Die API führt keine privilegierten Host-Befehle aus. Sie schreibt restriktive
   JSON-Anforderungen in eine Inbox; root-eigene systemd-Runner übernehmen sie.
 - Produktion nutzt kompilierte, prüfsummenbewehrte, source-freie Artefakte.
@@ -156,6 +160,10 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 - Bekannte Produktionsfehler und geprüfte Ursachen:
   `docs/debugging/DEPLOYMENT_INCIDENTS.md`. Dort zuerst nach Symptom suchen,
   bevor Logs oder Abläufe erneut vollständig kartiert werden.
+- Produktionslogs tokenarm mit `./debug.sh` am Ursprung sammeln. Bereich,
+  Kategorie, Zeitraum, Zeilenlimit und optionalen Suchtext eng wählen. Der
+  Remote-Collector schreibt nichts auf das Ziel; nur die redigierte lokale Datei
+  unter `.diagnostics/` für Agentenanalyse öffnen. Rohlogs nicht übernehmen.
 - API-Fehler werden zentral als `api_error` mit Status, Methode, Pfad und
   ausnahmebezogener Ursache protokolliert; keine Request-Payloads oder Secrets in
   Logs ergänzen. Sicherheitsablehnungen bleiben separat als `security_401` bzw.
@@ -164,6 +172,15 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   `MethodArgumentTypeMismatchException` prüfen. OpenAPI-`date` und `date-time`
   müssen im Routengenerator explizit als ISO gebunden werden; Browser-UTC-Werte
   tragen `Z`. Transport-Bindungsfehler sind HTTP 400, keine Serverfehler.
+- Master-Data-`UnrecognizedPropertyException` auf `seed_checksum`, relationale
+  IDs oder Hilfsspalten bedeutet, dass interne Datenbankfelder ungefiltert an
+  den API-Contract gelangten. Am Mapper-Rand entfernen, nicht den öffentlichen
+  Contract erweitern oder Jackson global lockern.
+- Security-Dashboard-`ClassCastException` zwischen `java.sql.Date` und
+  `LocalDate` am Persistence-Rand über `RowValues.date` normalisieren.
+- Gateway-`stat()`-Fehler auf dem Maintenance-Marker weisen auf die fehlende
+  zusätzliche Runtime-Gruppe 10001 hin; Status bleibt read-only, Rechte nicht
+  pauschal öffnen.
 - Der Release-Ablauf hält PostgreSQL-Daten unter dem gemeinsamen Installationsroot,
   erstellt vor Updates koordinierte Backups, lässt Flyway migrieren und stellt bei
   fehlgeschlagener Aktivierung Release und Backup wieder her. Niemals Volumes oder

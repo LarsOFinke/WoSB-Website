@@ -8,7 +8,8 @@ Die beiden Einstiegspunkte für Deployment liegen bewusst auf Repository-Ebene:
 `scripts/release/` enthält die internen
 Release-Implementierungen, den Artefakt-Verifier und den Release-Rollback.
 Der Ursprungstransfer läuft über `../deploy.sh`, Updates über `../update.sh`;
-der Zielserver nutzt diesen Wrapper.
+`../debug.sh` verwendet dieselbe SSH-Verbindung für lesende, begrenzte und lokal
+redigierte Diagnosen. Der Zielserver nutzt die versionierten Runtime-Wrapper.
 Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
 `.env.origin.example` erstellt.
 
@@ -18,6 +19,8 @@ Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
   das gezielte Aufräumen fehlgeschlagener, nicht aktiver Releases.
 - `scripts/backup/`: koordinierte PostgreSQL-/Datei-/Recovery-Sicherungen.
 - `scripts/migration/`: einmaliges, fail-closed Gate für Bestandsdatenbanken.
+- `scripts/diagnostics/`: Origin-Sammlung, flüchtiger Remote-Collector und
+  Redaktion für agententaugliche Diagnoseausgaben.
 
 Die Alpine-basierten API- und Gateway-Runtimeimages wenden beim Build mit
 `apk upgrade --no-cache` die Sicherheitsupdates des gebundenen stabilen

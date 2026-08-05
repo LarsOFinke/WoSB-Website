@@ -185,7 +185,7 @@ public class MasterDataQueryService {
     }
 
     private MasterDataCategoryRead category(Map<String, Object> row) {
-        Map<String, Object> values = new LinkedHashMap<>(row);
+        Map<String, Object> values = contractValues(row);
         values.put("seed_status", seedStatus(row));
         return contracts.convert(values, MasterDataCategoryRead.class);
     }
@@ -193,7 +193,7 @@ public class MasterDataQueryService {
     private MasterDataOptionRead option(Map<String, Object> row, Map<Long, List<String>> slots,
             Map<Long, Map<String, Double>> effects) {
         long id = longValue(row, "id");
-        Map<String, Object> values = new LinkedHashMap<>(row);
+        Map<String, Object> values = contractValues(row);
         values.put("allowed_slot_types", slots.getOrDefault(id, List.of()));
         values.put("stat_effects", effects.getOrDefault(id, Map.of()));
         values.put("seed_status", seedStatus(row));
@@ -211,11 +211,11 @@ public class MasterDataQueryService {
     private MasterDataShipRead ship(Map<String, Object> row, List<Map<String, Object>> mounts,
             Map<String, Object> mortar, List<Map<String, Object>> overrideRows,
             Map<Long, Map<String, Double>> baseEffects) {
-        Map<String, Object> values = new LinkedHashMap<>(row);
-        values.put("weapon_mounts", mounts);
+        Map<String, Object> values = contractValues(row);
+        values.put("weapon_mounts", mounts.stream().map(MasterDataQueryService::withoutShipId).toList());
         values.put("weapon_layout", layout(mounts));
         values.put("seed_status", seedStatus(row));
-        values.put("mortar_modification", mortar);
+        values.put("mortar_modification", mortar == null ? null : withoutShipId(mortar));
         values.put("upgrade_effect_overrides", assembleOverrides(overrideRows, baseEffects));
         return contracts.convert(values, MasterDataShipRead.class);
     }
@@ -288,6 +288,21 @@ public class MasterDataQueryService {
             return "custom";
         }
         return Boolean.TRUE.equals(row.get("is_seed_overridden")) ? "overridden" : "managed";
+    }
+
+    private static Map<String, Object> contractValues(Map<String, Object> row) {
+        Map<String, Object> values = new LinkedHashMap<>(row);
+        values.remove("seed_checksum");
+        values.remove("weapon_class_id");
+        values.remove("base_damage");
+        values.remove("reload_seconds");
+        return values;
+    }
+
+    private static Map<String, Object> withoutShipId(Map<String, Object> row) {
+        Map<String, Object> values = new LinkedHashMap<>(row);
+        values.remove("ship_id");
+        return values;
     }
 
     private static String valueType(String key) {

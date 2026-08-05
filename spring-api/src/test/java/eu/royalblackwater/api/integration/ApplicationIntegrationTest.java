@@ -188,6 +188,11 @@ class ApplicationIntegrationTest {
                 "/api/admin/builds",
                 "/api/admin/build-roles",
                 "/api/admin/users",
+                "/api/admin/master-data/overview",
+                "/api/admin/master-data/taxonomy",
+                "/api/admin/master-data/categories",
+                "/api/admin/master-data/options",
+                "/api/admin/master-data/ships",
                 "/api/admin/logs/security-dashboard?sort=threat&limit=100",
                 "/api/admin/ip-blocks/summary"
         }) {

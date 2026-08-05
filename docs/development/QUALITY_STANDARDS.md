@@ -122,6 +122,14 @@ for a verified backup and recovery path.
 - Infrastructure scripts are idempotent orchestrators around focused helpers.
   Critical file changes are atomic where practical and failures have a non-zero
   exit code plus an actionable message.
+- Script ownership is explicit: public origin commands are small root wrappers;
+  deploy/runtime/backup/host implementations live under
+  `infrastructure/scripts/` and ship with the runtime artifact; repository
+  checks, generators and CI helpers live under top-level `scripts/`. Do not
+  maintain duplicate proxy copies across these boundaries.
+- Production diagnostics are read-only, bounded and redacted at the trusted
+  origin. Raw target logs are not persisted as convenience artifacts and agent
+  inputs exclude credentials, query values, email addresses and complete IPs.
 - The API never gains direct host root privileges. Privileged actions cross the
   documented owner-only request boundary to root-owned systemd runners.
 

@@ -65,7 +65,7 @@ public class SecurityDashboardService {
             item.signals.merge(signal,count,Long::sum);
             String reason=requiredString(row,"reason");String target=requiredString(row,"request_target");
             item.reasons.merge(signal+"\u0000"+reason+"\u0000"+target,count,Long::sum);
-            LocalDate day=(LocalDate)row.get("day");item.first=item.first==null||day.isBefore(item.first)?day:item.first;item.last=item.last==null||day.isAfter(item.last)?day:item.last;
+            LocalDate day=date(row,"day");item.first=item.first==null||day.isBefore(item.first)?day:item.first;item.last=item.last==null||day.isAfter(item.last)?day:item.last;
         }
         List<SecurityIpRow> result=new ArrayList<>();
         for(Map.Entry<String,IpAccumulator> entry:grouped.entrySet()){
@@ -83,7 +83,7 @@ public class SecurityDashboardService {
     private List<SecurityDayBucket> days(List<Map<String,Object>> rows,LocalDate from,LocalDate to){
         Map<LocalDate,DayAccumulator> grouped=new HashMap<>();
         for(Map<String,Object> row:rows){
-            LocalDate day=(LocalDate)row.get("day");DayAccumulator item=grouped.computeIfAbsent(day,ignored->new DayAccumulator());
+            LocalDate day=date(row,"day");DayAccumulator item=grouped.computeIfAbsent(day,ignored->new DayAccumulator());
             long count=longValue(row,"event_count");item.total+=count;item.ips.add(requiredString(row,"client_ip"));item.signals.merge(requiredString(row,"signal"),count,Long::sum);
         }
         List<SecurityDayBucket> result=new ArrayList<>();

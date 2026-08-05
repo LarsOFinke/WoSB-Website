@@ -1,5 +1,10 @@
 # Deployment-Incidents und bekannte Fehlerbilder
 
+Für die erste Eingrenzung vom Ursprung `./debug.sh` verwenden und Bereich,
+Kategorie, Zeitraum sowie Zeilenlimit möglichst eng wählen. Die lokal redigierte
+Datei unter `.diagnostics/` ist die bevorzugte Grundlage für Agentenanalyse;
+Rohlogs vom Ziel weder dauerhaft sammeln noch ungeprüft weitergeben.
+
 ## 1. `Permission denied` bei Skripten
 
 **Symptom:** `install-artifact.sh`, `stop.sh`, `install-systemd.sh` oder
@@ -196,3 +201,42 @@ den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
 mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
 Antwort. Generierte Controller nicht direkt korrigieren; stets
 `scripts/migration/generate_spring_routes.py` ändern und neu generieren.
+
+## 14. HTTP 500 bei Master-Data-Kategorien
+
+**Symptom:** `/api/admin/master-data/categories` liefert HTTP 500; im API-Log
+steht `UnrecognizedPropertyException` für `seed_checksum`.
+
+**Ursache:** Die Datenbankabfrage enthält interne Seed-Metadaten, die bewusst
+nicht Teil des öffentlichen Read-Contracts sind. Die strikte Contract-
+Konvertierung weist unbekannte Eigenschaften korrekt zurück.
+
+**Lösung:** Interne Seed-Prüfsummen, relationale IDs und Hilfsspalten werden am
+Master-Data-Mapping-Rand entfernt, bevor Kategorien, Optionen oder Schiffe in
+API-Contracts konvertiert werden. Den Contract nicht um interne Datenbankfelder
+erweitern und Jackson nicht global auf das Ignorieren unbekannter Felder
+umstellen.
+
+## 15. HTTP 500 im Security-Dashboard
+
+**Symptom:** `/api/admin/logs/security-dashboard` liefert HTTP 500; im API-Log
+steht `ClassCastException: java.sql.Date cannot be cast to java.time.LocalDate`.
+
+**Ursache:** PostgreSQL-DATE-Werte kommen über JDBC als `java.sql.Date`, während
+der Service sie direkt zu `LocalDate` castete.
+
+**Lösung:** Datumstypen am gemeinsamen Persistence-Rand über `RowValues.date`
+normalisieren. Der Regressionstest verwendet ausdrücklich `java.sql.Date`, damit
+ein reiner Mock mit bereits konvertiertem `LocalDate` den Fehler nicht verdeckt.
+
+## 16. NGINX kann den Maintenance-Marker nicht prüfen
+
+**Symptom:** Gateway-Logs enthalten bei Requests `stat() ... maintenance-mode.json
+failed (13: Permission denied)`.
+
+**Ursache:** Der nicht privilegierte Gateway-Prozess mit UID 101 konnte das auf
+Gruppe 10001 begrenzte Control-Verzeichnis nicht durchlaufen.
+
+**Lösung:** Der Gateway erhält in beiden Compose-Dateien ausschließlich die
+zusätzliche numerische Runtime-Gruppe 10001. Status bleibt read-only gemountet;
+die Verzeichnisrechte werden nicht global geöffnet.

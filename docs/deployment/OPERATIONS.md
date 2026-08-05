@@ -19,7 +19,7 @@ Normal releases are still built and transferred from the trusted origin server,
 for example:
 
 ```bash
-sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.5.tar.gz
+sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.6.tar.gz
 ```
 
 The dispatcher cleans failed releases and replaces an active release with the
@@ -36,12 +36,38 @@ The target host exposes operation status and a guarded staff-panel request path.
 
 ## Logs
 
+Vom vertrauenswürdigen Ursprungssystem ist der bevorzugte Einstieg:
+
+```bash
+./debug.sh
+
+# Nicht-interaktiv und bereits stark eingegrenzt:
+./debug.sh --area calendar --category http-500 --since 30m --tail 400
+./debug.sh --area staff --category errors --since 1h --match MethodArgumentTypeMismatchException
+```
+
+Der Wrapper verwendet die bereits von `deploy.sh --configure` gepflegte
+`.env.origin` einschließlich SSH-Key und `sudo -n`. Bereiche sind `overview`,
+`staff`, `calendar`, `api`, `security`, `gateway`, `database`, `deployment` und
+`all`; Kategorien sind `errors`, `warnings`, `http-500`, `auth`, `migration`
+und `all`. Zeitraum und Zeilenlimit sind validiert und begrenzt. `--match`
+ergänzt einen literalen Suchtext.
+
+Die Rohdaten werden nur gestreamt. Auf dem Zielsystem entsteht kein
+Diagnosearchiv. Am Ursprung entfernt der Collector ANSI-Steuerzeichen,
+IP-/E-Mail-Adressen, Querywerte und typische Credential-Felder und speichert das
+Ergebnis standardmäßig mit Modus `0600` unter `.diagnostics/*.log`. Der Pfad wird
+am Ende ausgegeben und kann einem Agenten für eine gezielte Analyse genannt
+werden. Vor externer Weitergabe trotzdem manuell prüfen; niemals Rohlogs,
+Secrets, Cookies, Authorization-Header oder personenbezogene Payloads in Tickets
+kopieren.
+
+Direkt auf dem Zielserver bleiben für einen Operator verfügbar:
+
 ```bash
 sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh
 sudo journalctl -u rbf-hub.service -u rbf-hub-backup.service
 ```
-
-Never copy secrets, cookies, authorization headers or raw personal payloads into tickets.
 
 ## Database changes
 

@@ -8,6 +8,8 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 - `../../deploy.sh --configure` ist der öffentliche First-Run-Aufruf.
 - `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`.
   Beide Namen bleiben als kompatible Benutzerverträge erhalten.
+- `../../debug.sh` sammelt über dieselbe Origin-Verbindung begrenzte,
+  redigierte Zielsystemdiagnosen und speichert sie ausschließlich am Ursprung.
 - `../setup.sh` delegiert intern an `setup/` und wird nur von lokalen
   Entwicklungs- und Artefaktabläufen aufgerufen.
 - `release/build-artifact.sh` baut und validiert das kompilierte Deployment-Artefakt.
@@ -21,12 +23,23 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
   `backup-admin-runner.py`, auch wenn sie nicht als Shell-Aufrufer erscheinen.
 - `checks/`: Preflight-, Host-Sicherheits-, Smoke- und Diagnoseprüfungen.
 - `deployment/`: systemd-Installation.
+- `diagnostics/`: Origin-Collector, flüchtiger Remote-Collector und lokale
+  Redaktion für agententaugliche Betriebsdiagnosen.
 - `lib/`: gemeinsam genutzte Shell-Bibliotheken für Docker, Umgebung, Host,
   Speicher, TLS, JSON und Wartungsstatus.
 - `release/`: Artefaktprüfung, Installation, Rollback und TLS-/Host-Vorbereitung.
 - `services/`: laufender Anwendungsbetrieb und kontrollierte Admin-Operationen.
 - `setup/`: CLI-Optionen und Setup-Orchestrierung.
 - `tls/`: Zertifikatserneuerung und Synchronisierung.
+
+## Ablage- und Ownership-Regel
+
+Öffentliche Bedienverträge bleiben als kleine Orchestratoren im Repository-Root:
+`deploy.sh`, `update.sh` und `debug.sh`. Zielsystem-, Release-, Backup- und
+Serviceimplementierungen liegen unter `infrastructure/scripts/`, weil dieser
+Baum zum geprüften Runtime-Artefakt gehört. Repository-, CI-, Audit- und
+Generatorwerkzeuge liegen dagegen unter `<repo>/scripts/`. Diese Grenze nicht
+durch Proxy-Kopien oder parallele Skriptbäume verwischen.
 
 ## Aufräumprüfung (2026-08-04)
 
