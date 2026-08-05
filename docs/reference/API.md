@@ -12,8 +12,10 @@ Java request/response records derive from the same contract.
   multipart definitions from the contract.
 - Successful delete operations may return `204 No Content`; clients must not
   attempt to parse an empty response body.
-- Timestamps use the formats declared in the OpenAPI schemas and are transported
-  as JSON strings.
+- `date` values use ISO `YYYY-MM-DD`; `date-time` values use ISO-8601 and may
+  carry an offset such as the browser-produced UTC suffix `Z`. Generated Spring
+  query adapters bind these formats explicitly instead of relying on the
+  server locale.
 
 ## Authentication model
 
@@ -63,7 +65,8 @@ handler and its domain service together.
 
 ## Errors and validation
 
-- `400` denotes malformed JSON or transport-level binding failures.
+- `400` denotes malformed JSON or transport-level binding failures, including
+  invalid date and timestamp query parameters.
 - `401` denotes missing or invalid authentication.
 - `403` denotes rejected authorization, CSRF, host or origin boundaries.
 - `404` is used when a resource is unavailable to the caller.

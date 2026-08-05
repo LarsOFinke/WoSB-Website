@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
@@ -43,6 +44,15 @@ public class ApiExceptionHandler {
                 request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
                 safeReason(exception.getMostSpecificCause().getMessage()));
         return ResponseEntity.badRequest().body(Map.of("detail", "Request body is invalid."));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ResponseEntity<Map<String, String>> typeMismatch(MethodArgumentTypeMismatchException exception,
+                                                      HttpServletRequest request) {
+        LOG.warn("api_error status=400 method={} path={} type={} reason={}",
+                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+                safeReason("Invalid query parameter: " + exception.getName()));
+        return ResponseEntity.badRequest().body(Map.of("detail", "Query parameter is invalid."));
     }
 
     @ExceptionHandler(Exception.class)

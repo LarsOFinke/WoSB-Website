@@ -180,3 +180,19 @@ Monitoring-Container werden durch `--remove-orphans` beim nächsten Start entfer
 `--replace-active --yes` auf. Ein solcher Eintrag wird nur entfernt, wenn darin
 `infrastructure/compose.release.yml` liegt; `/opt/rbf/shared` bleibt unangetastet.
 Unbekannte oder unsichere Einträge werden weiterhin fail-closed abgewiesen.
+
+## 13. HTTP 500 bei Kalender- oder Staff-Datumsfiltern
+
+**Symptom:** Kalender, Staff-Übersicht oder die Datumsfilter für Registrierungen,
+Audit-Logs und Security-Dashboard liefern HTTP 500. Im API-Log steht
+`MethodArgumentTypeMismatchException` für `LocalDate` oder `LocalDateTime`.
+
+**Ursache:** Browser senden vertragskonforme ISO-Werte (`YYYY-MM-DD` beziehungsweise
+UTC-Zeitpunkte mit `Z`), während die generierten Spring-Controller zuvor den
+localeabhängigen Standardkonverter verwendeten. Der globale Fehlerhandler stufte
+den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
+
+**Lösung:** Der Routengenerator versieht `date`- und `date-time`-Queryparameter
+mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
+Antwort. Generierte Controller nicht direkt korrigieren; stets
+`scripts/migration/generate_spring_routes.py` ändern und neu generieren.

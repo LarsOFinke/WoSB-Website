@@ -4,6 +4,7 @@ package eu.royalblackwater.api.transport.generated;
 import eu.royalblackwater.api.transport.ApiOperationDispatcher;
 import eu.royalblackwater.api.transport.ApiParameters;
 import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +25,8 @@ public class AdminAuditLogsGeneratedController {
             @RequestParam(name = "entity_type", required = false) String entityType,
             @RequestParam(name = "action", required = false) String action,
             @RequestParam(name = "actor", required = false) String actor,
-            @RequestParam(name = "from_date", required = false) LocalDate fromDate,
-            @RequestParam(name = "to_date", required = false) LocalDate toDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "from_date", required = false) LocalDate fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "to_date", required = false) LocalDate toDate,
             @RequestParam(name = "limit", defaultValue = "200") long limit
     ) {
         return dispatcher.dispatch("admin_audit_logs_api_admin_audit_logs_get", ApiParameters.of("entity_type", entityType, "action", action, "actor", actor, "from_date", fromDate, "to_date", toDate, "limit", limit), null, null, 200);

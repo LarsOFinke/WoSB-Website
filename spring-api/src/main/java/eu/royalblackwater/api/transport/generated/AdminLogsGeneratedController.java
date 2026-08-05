@@ -4,6 +4,7 @@ package eu.royalblackwater.api.transport.generated;
 import eu.royalblackwater.api.transport.ApiOperationDispatcher;
 import eu.royalblackwater.api.transport.ApiParameters;
 import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +22,8 @@ public class AdminLogsGeneratedController {
 
     @GetMapping("/api/admin/logs/security-dashboard")
     public ResponseEntity<?> adminSecurityDashboard(
-            @RequestParam(name = "from_date", required = false) LocalDate fromDate,
-            @RequestParam(name = "to_date", required = false) LocalDate toDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "from_date", required = false) LocalDate fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "to_date", required = false) LocalDate toDate,
             @RequestParam(name = "threat_level", required = false) String threatLevel,
             @RequestParam(name = "client_ip", required = false) String clientIp,
             @RequestParam(name = "sort", defaultValue = "threat") String sort,

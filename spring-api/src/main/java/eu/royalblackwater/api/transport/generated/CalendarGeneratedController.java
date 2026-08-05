@@ -7,6 +7,7 @@ import eu.royalblackwater.api.transport.ApiOperationDispatcher;
 import eu.royalblackwater.api.transport.ApiParameters;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,8 +30,8 @@ public class CalendarGeneratedController {
 
     @GetMapping("/api/calendar/events")
     public ResponseEntity<?> getEvents(
-            @RequestParam(name = "start", required = false) LocalDateTime start,
-            @RequestParam(name = "end", required = false) LocalDateTime end,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam(name = "start", required = false) LocalDateTime start,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam(name = "end", required = false) LocalDateTime end,
             @RequestParam(name = "category", required = false) String category,
             @RequestParam(name = "squad_id", required = false) Long squadId,
             @RequestParam(name = "fleet_only", defaultValue = "false") boolean fleetOnly

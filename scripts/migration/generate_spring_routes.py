@@ -153,6 +153,15 @@ def parameter_annotation(parameter: dict) -> tuple[str, str, str, set[str]]:
             pieces.append(f"required = {str(required).lower()}")
         annotation = "@RequestParam(" + ", ".join(pieces) + ")"
         imports.add("org.springframework.web.bind.annotation.RequestParam")
+        temporal_schema = next(
+            (entry for entry in schema.get("anyOf", []) if entry.get("type") != "null"),
+            schema,
+        )
+        temporal_format = temporal_schema.get("format")
+        if temporal_format in {"date", "date-time"}:
+            iso = "DATE_TIME" if temporal_format == "date-time" else "DATE"
+            annotation = f"@DateTimeFormat(iso = DateTimeFormat.ISO.{iso}) " + annotation
+            imports.add("org.springframework.format.annotation.DateTimeFormat")
     else:
         raise ValueError(location)
     return annotation, value_type, name, imports

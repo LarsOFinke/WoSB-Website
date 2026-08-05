@@ -143,6 +143,59 @@ class ApplicationIntegrationTest {
     }
 
     @Test
+    void acceptsIsoDatesAndUtcTimestampsProducedByTheFrontend() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+
+        for (String path : new String[] {
+                "/api/admin/registration-requests?from_date=2030-01-01&to_date=2030-02-01",
+                "/api/admin/audit-logs?from_date=2030-01-01&to_date=2030-02-01",
+                "/api/admin/logs/security-dashboard?from_date=2030-01-01&to_date=2030-02-01"
+        }) {
+            assertThat(get(path, administrator.sessionCookie()).statusCode()).as(path).isEqualTo(200);
+        }
+
+        HttpResponse<String> calendar = get(
+                "/api/calendar/events?start=2030-01-01T00:00:00.000Z&end=2030-02-01T00:00:00.000Z",
+                administrator.sessionCookie());
+        assertThat(calendar.statusCode()).isEqualTo(200);
+
+        HttpResponse<String> invalidCalendar = get(
+                "/api/calendar/events?start=not-a-timestamp", administrator.sessionCookie());
+        assertThat(invalidCalendar.statusCode()).isEqualTo(400);
+        assertThat(invalidCalendar.body()).doesNotContain("Exception", "stackTrace", "org.springframework");
+
+        HttpResponse<String> created = post(
+                "/api/calendar/events",
+                "{\"title\":\"UTC contract integration event\",\"category\":\"other\","
+                        + "\"start_at\":\"2030-01-15T18:00:00.000Z\","
+                        + "\"end_at\":\"2030-01-15T20:00:00.000Z\","
+                        + "\"raid_helper_enabled\":false}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertThat(created.statusCode()).isEqualTo(201);
+        assertThat(created.body()).contains("\"title\":\"UTC contract integration event\"");
+    }
+
+    @Test
+    void loadsEveryStaffOverviewDataSourceWithoutServerErrors() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+
+        for (String path : new String[] {
+                "/api/admin/registration-requests?status=pending",
+                "/api/calendar/events?start=2030-01-01T00:00:00.000Z&end=2030-04-01T00:00:00.000Z",
+                "/api/admin/forum/threads",
+                "/api/admin/guides",
+                "/api/groups",
+                "/api/admin/builds",
+                "/api/admin/build-roles",
+                "/api/admin/users",
+                "/api/admin/logs/security-dashboard?sort=threat&limit=100",
+                "/api/admin/ip-blocks/summary"
+        }) {
+            assertThat(get(path, administrator.sessionCookie()).statusCode()).as(path).isEqualTo(200);
+        }
+    }
+
+    @Test
     void persistsAndReloadsAnonymousCookieConsent() throws Exception {
         HttpResponse<String> initial = get("/api/privacy/cookie-consent");
         assertThat(initial.statusCode()).isEqualTo(200);

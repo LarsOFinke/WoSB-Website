@@ -6,6 +6,7 @@ import eu.royalblackwater.api.transport.ApiOperationDispatcher;
 import eu.royalblackwater.api.transport.ApiParameters;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,8 +29,8 @@ public class AdminRegistrationRequestsGeneratedController {
     public ResponseEntity<?> adminListRegistrationRequests(
             @RequestParam(name = "status", defaultValue = "pending") String status,
             @RequestParam(name = "search", required = false) String search,
-            @RequestParam(name = "from_date", required = false) LocalDate fromDate,
-            @RequestParam(name = "to_date", required = false) LocalDate toDate
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "from_date", required = false) LocalDate fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "to_date", required = false) LocalDate toDate
     ) {
         return dispatcher.dispatch("admin_list_registration_requests_api_admin_registration_requests_get", ApiParameters.of("status", status, "search", search, "from_date", fromDate, "to_date", toDate), null, null, 200);
     }
