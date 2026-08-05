@@ -1,4 +1,4 @@
-FROM nginx:1.29.4-alpine3.23
+FROM nginx:1.31.2-alpine3.23
 ARG GATEWAY_MAX_BODY_MB=90
 RUN apk upgrade --no-cache \
     && addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \

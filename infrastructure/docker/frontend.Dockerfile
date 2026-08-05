@@ -11,7 +11,7 @@ RUN printf 'VITE_API_BASE_URL=%s\n' "$VITE_API_BASE_URL" > .env \
     && npm run check:locales \
     && npm run build
 
-FROM nginx:1.29.4-alpine3.23 AS runtime
+FROM nginx:1.31.2-alpine3.23 AS runtime
 ARG GATEWAY_MAX_BODY_MB=90
 COPY --from=build /app/dist /usr/share/nginx/html
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
