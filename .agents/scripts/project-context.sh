@@ -18,6 +18,14 @@ printf 'working_tree_changes=%d\n' "${#changes[@]}"
 printf 'primary_rules=AGENTS.md,docs/development/QUALITY_STANDARDS.md\n'
 printf 'deployment_docs=docs/deployment/DEPLOYMENT.md,docs/debugging/2026-08-04-update-path-review.md\n'
 printf 'incident_index=docs/debugging/DEPLOYMENT_INCIDENTS.md\n'
+printf 'module_catalog=docs/architecture/MODULE_CATALOG.md\n'
+printf 'module_cache=.agents/MODULE_CACHE.md\n'
+printf 'debugging_cache=.agents/DEBUGGING_CACHE.md\n'
+if python3 infrastructure/scripts/quality/check_documentation.py --cache-only >/dev/null 2>&1; then
+  printf 'agent_cache_status=ok\n'
+else
+  printf 'agent_cache_status=stale (run bash .agents/scripts/check-cache.sh)\n'
+fi
 printf 'full_gate=make validate\n'
 
 if ((${#changes[@]})); then

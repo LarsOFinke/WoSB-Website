@@ -24,6 +24,8 @@ public class CookieConsentEntity {
     @Column(name = "created_at") private LocalDateTime createdAt;
 
     public String getPolicyVersion() { return policyVersion; }
+    String getConsentKey() { return consentKey; }
+    Integer getUserId() { return userId; }
     public boolean isNecessary() { return necessary; }
     public boolean isPreferences() { return preferences; }
     public boolean isAnalytics() { return analytics; }

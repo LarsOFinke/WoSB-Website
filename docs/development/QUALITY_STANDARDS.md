@@ -143,6 +143,12 @@ for a verified backup and recovery path.
 - `docs/README.md` is the human documentation index. `AGENTS.md` points agents to
   `.agents/ONBOARDING.md`, which in turn references `.agents/PROJECT_CACHE.md` and
   live helper scripts.
+- `docs/architecture/MODULE_CATALOG.md` documents every backend, frontend and
+  infrastructure module. `.agents/MODULE_CACHE.md` is its compact routing layer;
+  the documentation gate compares both with the actual module directories.
+- Durable debugging conclusions live in an appropriate runbook and are mirrored
+  compactly in `.agents/DEBUGGING_CACHE.md`. Raw incident data never becomes a
+  cache.
 - Agent caches contain stable navigation and verified debugging conclusions, not
   secrets or volatile counts. Runtime topology, primary entry points, gates and
   known incident resolutions are updated when they change.

@@ -10,6 +10,9 @@ Quelle dupliziert.
   Aufgabennavigation
 - [Projekt-Cache](../.agents/PROJECT_CACHE.md) – stabile Systemlandkarte und
   bekannte Debugging-Grundlage
+- [Modul-Cache](../.agents/MODULE_CACHE.md) – vollständiger Quick-Overview für
+  Backend-, Frontend- und Infrastrukturmodule
+- [Debugging-Cache](../.agents/DEBUGGING_CACHE.md) – tokenarme Symptomnavigation
 - [`AGENTS.md`](../AGENTS.md) – verbindliche Arbeitsregeln
 
 Die `.agents`-Dokumente sind Navigationshilfen. Verbindliche Qualitäts-,
@@ -31,6 +34,7 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 ## Architektur und Sicherheit
 
 - [Architektur](architecture/ARCHITECTURE.md)
+- [Modulkatalog](architecture/MODULE_CATALOG.md)
 - [Backup-Architektur](architecture/BACKUP_ARCHITECTURE.md)
 - [Container-Sicherheit und Isolation](architecture/CONTAINER_SECURITY.md)
 
@@ -47,6 +51,7 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 - [CI/CD und Deployment](deployment/DEPLOYMENT.md)
 - [Betrieb](deployment/OPERATIONS.md)
 - [Backup-Server-Enrollment (Details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
+- [Modulorientiertes Debugging](debugging/MODULE_DEBUGGING.md)
 
 Uptime Kuma gehört nicht mehr zum Produktionsstack. Historische Ursache und
 Entfernung sind im [Deployment-Incident-Index](debugging/DEPLOYMENT_INCIDENTS.md)

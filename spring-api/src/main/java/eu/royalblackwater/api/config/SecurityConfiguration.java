@@ -26,7 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @EnableConfigurationProperties({SessionProperties.class, SecurityProperties.class, StorageProperties.class,
         OperationsProperties.class, SecretEncryptionProperties.class, LegalNoticeProperties.class,
-        BootstrapAdminProperties.class})
+        BootstrapAdminProperties.class, PrivacyRetentionProperties.class})
 public class SecurityConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfiguration.class);
     private static final String[] PUBLIC_ENDPOINTS = {

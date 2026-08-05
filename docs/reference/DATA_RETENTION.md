@@ -1,6 +1,9 @@
 # Datenaufbewahrung und Löschkonzept
 
-Dieses Dokument beschreibt die technisch erzwungene Standardaufbewahrung. Abweichende gesetzliche
+Dieses Dokument beschreibt die Standardaufbewahrung. Die Fristen für Cookie-Einwilligungen sowie
+abgeschlossene Datenschutzanträge und -kontakte werden von der Anwendung technisch erzwungen.
+Die übrigen Tabellenzeilen sind verbindliche Sollfristen für die jeweiligen Betriebsabläufe.
+Abweichende gesetzliche
 oder vertragliche Anforderungen müssen vor dem Produktivbetrieb durch den Verantwortlichen geprüft
 und über die Spring-Konfiguration und Infrastruktur-Umgebungsdatei konfiguriert werden.
 
@@ -62,22 +65,24 @@ von der bannbezogenen Datenbankauswertung getrennt und werden nicht auf der Webs
 
 ## Konfiguration
 
-```ini
-[maintenance]
-security_event_retention_days = 7
-inactive_ip_block_retention_days = 90
-audit_log_retention_days = 365
-webhook_delivery_retention_days = 30
-cookie_consent_retention_days = 400
-resolved_privacy_request_retention_days = 400
-pending_registration_retention_days = 30
-reviewed_registration_retention_days = 90
-interval_hours = 24
+```yaml
+rbf:
+  privacy:
+    cookie-consent-retention: 400d
+    resolved-request-retention: 400d
+    retention-interval: PT24H
 ```
+
+Im Produktivbetrieb werden diese Werte über `COOKIE_CONSENT_RETENTION`,
+`RESOLVED_PRIVACY_REQUEST_RETENTION` und `PRIVACY_RETENTION_INTERVAL` gesetzt. Es gelten
+Spring-`Duration`-Werte, beispielsweise `400d` oder `PT24H`; alle Aufbewahrungsfristen müssen
+positiv sein. Der Datenschutzlauf startet einmal nach erfolgreicher Anwendungsinitialisierung und
+danach im konfigurierten Intervall. `RBF_SCHEDULING_ENABLED=false` deaktiviert beide Ausführungen,
+etwa für isolierte Integrationstests.
 
 Eine Verkürzung ist grundsätzlich vorzuziehen. Eine Verlängerung braucht einen dokumentierten Zweck,
 eine Rechtsgrundlage und einen Termin zur erneuten Prüfung. Änderungen wirken beim nächsten
-Maintenance-Lauf; vor einer deutlichen Verkürzung ist ein kontrolliertes Backup sinnvoll.
+Datenschutzlauf; vor einer deutlichen Verkürzung ist ein kontrolliertes Backup sinnvoll.
 
 ## Nicht automatisch gelöschte Inhalte
 

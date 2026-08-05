@@ -5,6 +5,11 @@ und beim Betrieb des Website-Servers tatsächlich aufgetreten sind. Sie sind
 bewusst auf Diagnose und sichere nächste Schritte beschränkt; keine Anleitung
 kopiert Secrets, Cookies oder Authorization-Header in Tickets.
 
+- [Modulorientiertes Debugging](MODULE_DEBUGGING.md) – Schichtentrennung,
+  Evidenzminimum und passende Regressionstest-Ebene
+- [Deployment-Incidents](DEPLOYMENT_INCIDENTS.md) – bekannte konkrete Symptome,
+  Ursachen und sichere nächste Schritte
+
 ## Schnelle Eingrenzung
 
 Vom Ursprungssystem zuerst den interaktiven, redigierenden Collector verwenden:

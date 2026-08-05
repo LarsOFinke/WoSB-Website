@@ -52,6 +52,7 @@ if find "$INFRA_DIR/scripts" -type f -name '*.sh' ! -perm /111 -print -quit | gr
   fail 'infrastructure shell scripts must be executable'
 fi
 [[ -f "$INFRA_DIR/scripts/migration/verify-alembic-head.sql" && -f "$INFRA_DIR/scripts/migration/adopt-flyway.sql" ]] || fail 'controlled legacy schema adoption gate missing'
+python3 "$INFRA_DIR/scripts/quality/check_documentation.py" --cache-only
 
 runtime_root="$(mktemp -d)"
 runtime_override="$runtime_root/releases/1.0.3/infrastructure"

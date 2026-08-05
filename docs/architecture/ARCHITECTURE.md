@@ -1,5 +1,8 @@
 # System architecture
 
+Die Verantwortungen und Diagnoseeinstiege jedes Backend-, Frontend- und
+Infrastrukturmoduls sind im [Modulkatalog](MODULE_CATALOG.md) zusammengeführt.
+
 ## Runtime
 
 ```text

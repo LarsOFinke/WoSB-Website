@@ -77,6 +77,8 @@ handler and its domain service together.
 
 Clients should primarily branch on HTTP status and the bounded public error
 detail. Internal Java exception names and production log messages are not API.
+For the safe route-to-handler diagnostic workflow see
+[Module-oriented debugging](../debugging/MODULE_DEBUGGING.md).
 
 ## Pagination and filtering
 

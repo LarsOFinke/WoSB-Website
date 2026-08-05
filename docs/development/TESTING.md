@@ -68,6 +68,7 @@ bash .agents/scripts/check-changes.sh         # show checks for the current diff
 bash .agents/scripts/check-changes.sh --run   # run those existing gates
 bash .agents/scripts/check-frontend.sh        # frontend tests/build with temporary env
 bash .agents/scripts/check-docs.sh            # documentation references and repository checks
+bash .agents/scripts/check-cache.sh           # module catalog/cache completeness
 bash .agents/scripts/check-all.sh             # quiet wrapper around the full release gate
 ```
 
@@ -116,6 +117,12 @@ The helpers do not implement separate assertions. They delegate to `make`, the
 existing test scripts and the strict repository checker. A failed or skipped
 check remains failed/skipped even when the cause is a local sandbox or missing
 toolchain; record the limitation and rerun it in a supported environment.
+
+`check-cache.sh` is the narrow exception: it asks the canonical documentation
+checker to compare the real backend, frontend and infrastructure module
+directories with both the primary module catalog and the agent quick cache. It
+detects missing navigation entries, while review remains responsible for the
+semantic accuracy of their descriptions.
 
 For frontend changes, test logic, page bindings, locales, responsive invariants,
 critical browser flows and a production build. Backend changes require Maven

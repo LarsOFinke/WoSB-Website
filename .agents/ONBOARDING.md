@@ -13,7 +13,11 @@ bash .agents/scripts/project-context.sh
 # 2. Gepflegte Systemlandkarte lesen
 sed -n '1,260p' .agents/PROJECT_CACHE.md
 
-# 3. Nach der Änderung passende Gates ermitteln
+# 3. Betroffenes Modul und bei Fehlern den Debugging-Cache öffnen
+sed -n '1,260p' .agents/MODULE_CACHE.md
+sed -n '1,220p' .agents/DEBUGGING_CACHE.md
+
+# 4. Nach der Änderung passende Gates ermitteln
 bash .agents/scripts/check-changes.sh
 ```
 
@@ -51,6 +55,8 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | Aufgabe | Primärer Einstieg |
 | --- | --- |
 | Produktionsfehler | `infrastructure/scripts/diagnostics/debug.sh`, danach `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
+| Lokaler Modulfehler | `.agents/DEBUGGING_CACHE.md`, `docs/debugging/MODULE_DEBUGGING.md` |
+| Modulverantwortung | `.agents/MODULE_CACHE.md`, danach `docs/architecture/MODULE_CATALOG.md` |
 | Deployment/SSH | `docs/deployment/DEPLOYMENT.md`, `infrastructure/scripts/release/deploy-from-origin.sh` |
 | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
@@ -130,6 +136,7 @@ bash .agents/scripts/check-backend.sh
 bash .agents/scripts/check-frontend.sh
 bash .agents/scripts/check-infrastructure.sh
 bash .agents/scripts/check-docs.sh
+bash .agents/scripts/check-cache.sh
 bash .agents/scripts/check-all.sh
 ```
 
@@ -148,7 +155,10 @@ Dependency-Checks startet. Ein lokaler Commit benötigt keinen sofortigen Push.
 ## Cache aktualisieren
 
 `PROJECT_CACHE.md` und diese Datei im selben Auftrag aktualisieren, wenn sich
-Runtime-Topologie, Hauptmodule, Deployment-/Recovery-Ablauf, verbindliche Gates
-oder zentrale Debugging-Einstiege ändern. Flüchtige Fakten wie Branch, Revision,
-Datei- oder Testanzahl bleiben aus dem Textcache heraus und werden über
-`project-context.sh` live ermittelt.
+Runtime-Topologie, Deployment-/Recovery-Ablauf, verbindliche Gates oder zentrale
+Einstiege ändern. Neue/umbenannte Module aktualisieren zusätzlich
+`MODULE_CACHE.md` und `docs/architecture/MODULE_CATALOG.md`; reproduzierte,
+dauerhaft hilfreiche Fehlerursachen aktualisieren `DEBUGGING_CACHE.md` und das
+passende Runbook. `check-cache.sh` prüft die Bestandsvollständigkeit. Flüchtige
+Fakten wie Branch, Revision, Datei- oder Testanzahl bleiben aus dem Textcache
+heraus und werden über `project-context.sh` live ermittelt.

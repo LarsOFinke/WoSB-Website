@@ -30,3 +30,11 @@ test('failed cookie settings initialization remains retryable', () => {
   const initializationFailure = consentComposable.match(/\.catch\(\(error\) => \{([\s\S]*?)\n    \}\)/)?.[1] || ''
   assert.match(initializationFailure, /state\.initialized\s*=\s*false/)
 })
+
+test('saving always enforces necessary consent and only closes after success', () => {
+  assert.match(consentComposable, /saveCookieConsent\(\{ necessary: true, \.\.\.choice \}\)/)
+  const persistFailure = consentComposable.match(/async function persist[\s\S]*?catch \(error\) \{([\s\S]*?)\n  \} finally/)?.[1] || ''
+  assert.notEqual(persistFailure, '')
+  assert.doesNotMatch(persistFailure, /state\.visible\s*=\s*false/)
+  assert.doesNotMatch(persistFailure, /state\.settingsOpen\s*=\s*false/)
+})

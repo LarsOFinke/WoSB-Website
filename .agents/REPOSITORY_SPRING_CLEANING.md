@@ -27,6 +27,7 @@ unangetastet.
 ```bash
 bash .agents/scripts/project-context.sh
 sed -n '1,280p' .agents/PROJECT_CACHE.md
+sed -n '1,260p' .agents/MODULE_CACHE.md
 bash .agents/scripts/check-changes.sh
 ```
 
@@ -35,6 +36,8 @@ Danach nur die Primärquellen des tatsächlichen Scopes lesen:
 | Scope | Primärquellen |
 | --- | --- |
 | Gesamtqualität | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
+| Modulgrenzen | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
+| Debugging | `docs/debugging/MODULE_DEBUGGING.md`, `.agents/DEBUGGING_CACHE.md` |
 | Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `contracts/api-contract.json` |
 | Frontend/CSS | `frontend/ARCHITECTURE.md`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, betroffene Migrationen und Upgrade-Tests |
@@ -179,6 +182,8 @@ In dieser Reihenfolge arbeiten:
    entfernen;
 7. Architektur-, Betriebs-, Test- und `.agents`-Navigation im selben Schritt
    aktualisieren.
+8. Modulbestand mit `bash .agents/scripts/check-cache.sh` gegen Docs und
+   Quick-Cache prüfen.
 
 Keine mechanische „Layer-Vervollständigung“: Ein Feature braucht nur die
 Verzeichnisse und Typen, für die es reale Verantwortung gibt.

@@ -58,6 +58,10 @@ management:
 rbf:
   scheduling:
     enabled: ${RBF_SCHEDULING_ENABLED:true}
+  privacy:
+    cookie-consent-retention: ${COOKIE_CONSENT_RETENTION:400d}
+    resolved-request-retention: ${RESOLVED_PRIVACY_REQUEST_RETENTION:400d}
+    retention-interval: ${PRIVACY_RETENTION_INTERVAL:PT24H}
   session:
     cookie-name: ${SESSION_COOKIE_NAME:rbf_hub_session}
     secure: ${SESSION_COOKIE_SECURE:true}

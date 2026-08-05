@@ -115,6 +115,9 @@ initialize_env() {
   [[ -n "$(read_env SESSION_COOKIE_NAME)" ]] || set_env_value SESSION_COOKIE_NAME rbf_hub_session
   [[ -n "$(read_env SESSION_COOKIE_SAMESITE)" ]] || set_env_value SESSION_COOKIE_SAMESITE Lax
   [[ -n "$(read_env SESSION_TTL_HOURS)" ]] || set_env_value SESSION_TTL_HOURS 24
+  [[ -n "$(read_env COOKIE_CONSENT_RETENTION)" ]] || set_env_value COOKIE_CONSENT_RETENTION 400d
+  [[ -n "$(read_env RESOLVED_PRIVACY_REQUEST_RETENTION)" ]] || set_env_value RESOLVED_PRIVACY_REQUEST_RETENTION 400d
+  [[ -n "$(read_env PRIVACY_RETENTION_INTERVAL)" ]] || set_env_value PRIVACY_RETENTION_INTERVAL PT24H
   [[ -n "$(read_env GATEWAY_MAX_BODY_MB)" ]] || set_env_value GATEWAY_MAX_BODY_MB 90
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"

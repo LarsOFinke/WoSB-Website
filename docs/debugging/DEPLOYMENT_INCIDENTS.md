@@ -1,5 +1,9 @@
 # Deployment-Incidents und bekannte Fehlerbilder
 
+Für Fehler in lokalen API-, Frontend- oder Domänenabläufen zuerst
+[`MODULE_DEBUGGING.md`](MODULE_DEBUGGING.md) verwenden. Dieses Dokument ergänzt
+den Ablauf um produktions- und releasebezogene Fehlerbilder.
+
 Für die erste Eingrenzung vom Ursprung `./infrastructure/scripts/diagnostics/debug.sh` verwenden und Bereich,
 Kategorie, Zeitraum sowie Zeilenlimit möglichst eng wählen. Die lokal redigierte
 Datei unter `.diagnostics/` ist die bevorzugte Grundlage für Agentenanalyse;

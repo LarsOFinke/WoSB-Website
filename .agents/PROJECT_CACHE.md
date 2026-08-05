@@ -1,6 +1,6 @@
 # Projekt-Cache für Repository-Agenten
 
-> Erfasst am 2026-08-04. Dieser Cache ist ein Navigationsindex, keine verbindliche
+> Geprüft am 2026-08-05. Dieser Cache ist ein Navigationsindex, keine verbindliche
 > Quelle. Vor Änderungen immer `AGENTS.md`, betroffene Dateien, Aufrufer, Tests,
 > Konfiguration und Dokumentation lesen. Bei Widersprüchen gilt der Quellcode bzw.
 > die unten genannte Primärquelle.
@@ -28,6 +28,8 @@
 | --- | --- |
 | Arbeitsregeln | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md`, `docs/development/VERSIONING.md` |
 | Gesamtsystem | `README.md`, `docs/architecture/ARCHITECTURE.md` |
+| Modulverantwortung | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
+| Debugging | `.agents/DEBUGGING_CACHE.md`, `docs/debugging/MODULE_DEBUGGING.md` |
 | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
 | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
@@ -59,6 +61,11 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 `release/` und `release-arm64/` sind generierte/ignorierte Ausgaben.
 
 ## Backend-Navigation
+
+Der vollständige pfadgenaue Modulbestand mit Verantwortung und Diagnoseeinstieg
+steht im `docs/architecture/MODULE_CATALOG.md`; die tokenarme Auswahl steht in
+`.agents/MODULE_CACHE.md`. Keine Modulverantwortung aus dem Verzeichnisnamen
+allein ableiten.
 
 - Composition/Querschnitt: `config`, `core`, `contract`, `operations`,
   `persistence`, `transport`, `transport/generated`.
@@ -158,7 +165,11 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   knappe Audit-/Aktionshinweise und dürfen den Hauptablauf nicht unkontrolliert
   blockieren.
 
-## Stabiler Debugging-Ausgangspunkt (2026-08-04)
+## Stabiler Debugging-Ausgangspunkt
+
+- Für die erste Symptomklassifikation `.agents/DEBUGGING_CACHE.md` verwenden;
+  der ausführliche schichtorientierte Ablauf steht in
+  `docs/debugging/MODULE_DEBUGGING.md`.
 
 - Deployment-/Update-Primärdoku: `docs/deployment/DEPLOYMENT.md` und
   `docs/debugging/2026-08-04-update-path-review.md`.
@@ -229,6 +240,7 @@ bash .agents/scripts/check-backend.sh         # Maven-/PostgreSQL-Gate, kompakte
 bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build/Browser-Smoke mit temporärer .env
 bash .agents/scripts/check-infrastructure.sh  # Infrastruktur-/Update-Verträge, kompakte Ausgabe
 bash .agents/scripts/check-docs.sh            # lokale Markdown-Links, Befehle und Doku-Generierung
+bash .agents/scripts/check-cache.sh           # Modulbestand in Primärdoku und Quick-Cache abgleichen
 bash .agents/scripts/check-all.sh             # make validate mit kompakter Ausgabe
 ```
 
@@ -331,3 +343,7 @@ bei Bedarf direkt mit `rg`, `find` oder dem jeweiligen Parser ermitteln.
 Für den flüchtigen Stand zuerst `bash .agents/scripts/project-context.sh` ausführen;
 dadurch müssen Branch, Version, Arbeitsbaum und Debugging-Einstiege nicht aus
 älteren Sitzungszusammenfassungen rekonstruiert werden.
+`project-context.sh` meldet außerdem `agent_cache_status`; bei `stale` zuerst
+`bash .agents/scripts/check-cache.sh` ausführen und die fehlenden Einträge
+fachlich ergänzen. Ein grüner Check beweist Bestandsvollständigkeit, nicht die
+inhaltliche Aktualität der Beschreibung.
