@@ -73,7 +73,7 @@ for a verified backup and recovery path.
 - Collections are fetched in batches or projections, never inside a result loop.
   Avoid multiple bag fetches and eager collections.
 - Query-count tests cover critical list/detail assemblers;
-  `scripts/audit_spring_backend.py` enforces static invariants.
+  `infrastructure/scripts/quality/audit_spring_backend.py` enforces static invariants.
 - New sort/filter paths include matching indexes or a documented reason why the
   existing access path is sufficient.
 
@@ -122,11 +122,14 @@ for a verified backup and recovery path.
 - Infrastructure scripts are idempotent orchestrators around focused helpers.
   Critical file changes are atomic where practical and failures have a non-zero
   exit code plus an actionable message.
-- Script ownership is explicit: public origin commands are small root wrappers;
-  deploy/runtime/backup/host implementations live under
-  `infrastructure/scripts/` and ship with the runtime artifact; repository
-  checks, generators and CI helpers live under top-level `scripts/`. Do not
-  maintain duplicate proxy copies across these boundaries.
+- Script ownership is explicit: only `deploy.sh` and `update.sh` are public root
+  wrappers. Shared scripts live in responsibility-based modules under
+  `infrastructure/scripts/`: `quality/`, `generation/`, `release/` and focused
+  runtime modules. The deployment packager uses an explicit allowlist, so
+  repository-only quality/generation code does not ship to production. Do not
+  recreate a top-level `scripts/` or duplicate proxy copies.
+- Helpers under `.agents/scripts/` and `frontend/scripts/` stay with their
+  owning module and may not become general-purpose cross-repository logic.
 - Production diagnostics are read-only, bounded and redacted at the trusted
   origin. Raw target logs are not persisted as convenience artifacts and agent
   inputs exclude credentials, query values, email addresses and complete IPs.
@@ -158,7 +161,7 @@ make validate
 ```
 
 At minimum, directly affected tests/linters and
-`python3 scripts/check_repository.py --strict-tree` must pass. A skipped toolchain,
+`python3 infrastructure/scripts/quality/check_repository.py --strict-tree` must pass. A skipped toolchain,
 container build or integration suite is not a successful release result. Report
 environmental blockers separately from product failures and rerun the missing
 gate in a supported environment.

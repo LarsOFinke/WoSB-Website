@@ -85,7 +85,7 @@ Templates support Discord Markdown and event-specific placeholders such as `{dat
 
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
 
-Run `python3 scripts/sync_webhook_templates.py` after changing runtime defaults; the repository
+Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; the repository
 check enforces an exact match between the event catalog, preview payloads and documentation.
 
 ## Webhook avatar

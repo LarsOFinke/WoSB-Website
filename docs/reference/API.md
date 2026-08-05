@@ -89,8 +89,8 @@ the OpenAPI parameter schemas and enforced again by the backend.
 
 1. Change and review `contracts/api-contract.json`.
 2. Regenerate Java contracts/controllers with the scripts under
-   `scripts/migration/`; never edit generated Java manually.
+   `infrastructure/scripts/generation/`; never edit generated Java manually.
 3. Regenerate `API_ENDPOINTS.md` with
-   `python3 scripts/documentation/generate_api_reference.py`.
+   `python3 infrastructure/scripts/generation/generate_api_reference.py`.
 4. Update handlers, services, authorization, frontend API modules and tests.
 5. Run the focused gates and `make validate` for cross-cutting contract changes.

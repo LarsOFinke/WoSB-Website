@@ -3,7 +3,7 @@
 from __future__ import annotations
 import argparse, json, re, subprocess, sys
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[3]
 
 def require(condition: bool, message: str) -> None:
     if not condition: raise SystemExit(f"[repository] {message}")
@@ -16,7 +16,11 @@ version=text('VERSION').strip(); require(re.fullmatch(r'\d+\.\d+\.\d+',version) 
 require(f'<version>{version}</version>' in text('spring-api/pom.xml'),'Maven project version differs from VERSION')
 require(json.loads(text('frontend/package.json'))['version']==version,'frontend version differs from VERSION')
 require(not (ROOT/'backend').exists(),'Python backend directory must not exist')
-for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','scripts/package_deployment_artifact.py','contracts/api-contract.json','contracts/build-stat-catalog.json','contracts/webhook-events.json'):
+require(not (ROOT/'scripts').exists(),'top-level scripts directory must not be recreated')
+root_shell_scripts={path.name for path in ROOT.glob('*.sh')}
+require(root_shell_scripts=={'deploy.sh','update.sh'},
+        f'root shell entrypoints must be deploy.sh/update.sh, found {sorted(root_shell_scripts)}')
+for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','contracts/api-contract.json','contracts/build-stat-catalog.json','contracts/webhook-events.json'):
     text(path)
 
 contract=json.loads(text('contracts/api-contract.json'))
@@ -49,9 +53,9 @@ allowed_legacy={
 }
 scan_exclusions={
     ROOT/'CHANGELOG.md',
-    ROOT/'scripts/check_repository.py',
-    ROOT/'scripts/audit_spring_backend.py',
-    ROOT/'scripts/test-infrastructure.sh',
+    ROOT/'infrastructure/scripts/quality/check_repository.py',
+    ROOT/'infrastructure/scripts/quality/audit_spring_backend.py',
+    ROOT/'infrastructure/scripts/quality/tests/infrastructure.sh',
 }
 repository_result=subprocess.run(
     ['git','-C',str(ROOT),'ls-files','--cached','--others','--exclude-standard','-z'],
@@ -80,11 +84,11 @@ for path in (*frontend_source.rglob('*.js'),*frontend_source.rglob('*.mjs')):
 for migration in (ROOT/'spring-api/src/main/resources/db/migration').glob('*.sql'):
     require(re.fullmatch(r'[BV]\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
 
-subprocess.run([sys.executable,str(ROOT/'scripts/audit_spring_backend.py')],check=True)
-subprocess.run([sys.executable,str(ROOT/'scripts/migration/generate_build_stat_catalog.py'),'--check'],check=True)
-subprocess.run([sys.executable,str(ROOT/'scripts/migration/generate_modular_flyway_baseline.py'),'--check'],check=True)
-subprocess.run([sys.executable,str(ROOT/'scripts/documentation/generate_api_reference.py'),'--check'],check=True)
-subprocess.run([sys.executable,str(ROOT/'scripts/sync_webhook_templates.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_spring_backend.py')],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_build_stat_catalog.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_modular_flyway_baseline.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_api_reference.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:
     forbidden_names={'.env','.DS_Store'}
     for relative in repository_files:

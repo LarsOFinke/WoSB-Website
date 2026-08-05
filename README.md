@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.0.6
+# Royal Blackwater Fleet v1.0.7
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
@@ -77,8 +77,8 @@ Konfiguration ohne private Anwendungsaccounts.
 Dieselbe Origin-Verbindung dient der begrenzten Produktionsdiagnose:
 
 ```bash
-./debug.sh
-./debug.sh --area calendar --category http-500 --since 30m
+./infrastructure/scripts/diagnostics/debug.sh
+./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m
 ```
 
 Die Ausgabe wird auf dem Ursprung redigiert und lokal unter `.diagnostics/`
@@ -90,8 +90,8 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.6.tar.gz \
-  --checksum rbf-deployment-1.0.6.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.7.tar.gz \
+  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -103,7 +103,7 @@ Terminal abgefragt.
 Updates werden durch ein neues Release-Artefakt ausgelöst:
 
 ```bash
-sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.6.tar.gz
+sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.7.tar.gz
 ```
 
 `/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente
@@ -121,8 +121,7 @@ verschlüsselten Recovery-Bundle mitgeführt.
 spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
 frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
 contracts/       versionierter HTTP-, Build-Stat- und Webhook-Vertrag
-infrastructure/  Compose, NGINX, Release, Update, Backup und Restore
-scripts/         Repository-, Security-, Build- und Packaging-Werkzeuge
+infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
 tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
 docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
 .github/         CI, Release-Erstellung und Deployment-Promotion

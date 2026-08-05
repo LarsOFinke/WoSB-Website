@@ -44,7 +44,7 @@ version="$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")"
 # selected or accidentally carried into a release artifact.
 find "$ROOT_DIR/spring-api/target" -maxdepth 1 -type f -name 'rbf-api-*.jar' ! -name '*.original' -delete 2>/dev/null || true
 
-bash "$ROOT_DIR/scripts/test.sh" full
+bash "$ROOT_DIR/infrastructure/scripts/quality/validate.sh" full
 jar="$ROOT_DIR/spring-api/target/rbf-api-${version}.jar"
 [[ -n "$jar" ]] || { echo "[release] Verified Spring Boot JAR is missing." >&2; exit 1; }
 [[ -f "$jar" && ! -L "$jar" ]] || {
@@ -52,7 +52,7 @@ jar="$ROOT_DIR/spring-api/target/rbf-api-${version}.jar"
   exit 1
 }
 
-python3 "$ROOT_DIR/scripts/package_deployment_artifact.py" \
+python3 "$ROOT_DIR/infrastructure/scripts/release/package_deployment_artifact.py" \
   --version "$(cat "$ROOT_DIR/VERSION")" \
   --jar "$jar" \
   --frontend-dist "$ROOT_DIR/frontend/dist" \

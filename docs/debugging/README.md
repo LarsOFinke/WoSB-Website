@@ -10,8 +10,8 @@ kopiert Secrets, Cookies oder Authorization-Header in Tickets.
 Vom Ursprungssystem zuerst den interaktiven, redigierenden Collector verwenden:
 
 ```bash
-./debug.sh
-./debug.sh --area calendar --category http-500 --since 30m --tail 400
+./infrastructure/scripts/diagnostics/debug.sh
+./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m --tail 400
 ```
 
 Er nutzt `.env.origin`, speichert die agententaugliche Ausgabe lokal unter

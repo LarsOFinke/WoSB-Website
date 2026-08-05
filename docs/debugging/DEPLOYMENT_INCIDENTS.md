@@ -1,14 +1,15 @@
 # Deployment-Incidents und bekannte Fehlerbilder
 
-Für die erste Eingrenzung vom Ursprung `./debug.sh` verwenden und Bereich,
+Für die erste Eingrenzung vom Ursprung `./infrastructure/scripts/diagnostics/debug.sh` verwenden und Bereich,
 Kategorie, Zeitraum sowie Zeilenlimit möglichst eng wählen. Die lokal redigierte
 Datei unter `.diagnostics/` ist die bevorzugte Grundlage für Agentenanalyse;
 Rohlogs vom Ziel weder dauerhaft sammeln noch ungeprüft weitergeben.
 
 ## 1. `Permission denied` bei Skripten
 
-**Symptom:** `install-artifact.sh`, `stop.sh`, `install-systemd.sh` oder
-`scripts/test.sh` lassen sich nach SCP oder einem Root-Build nicht ausführen.
+**Symptom:** Ausgelieferte Runtime-Skripte wie `install-artifact.sh`, `stop.sh`
+oder `install-systemd.sh` lassen sich nach SCP oder einem Root-Build nicht
+ausführen.
 
 **Ursache:** Ausführungsbits oder Eigentümer wurden beim Kopieren bzw. durch
 `sudo ./deploy.sh` verändert.
@@ -158,7 +159,7 @@ Cookies per Ticket teilen.
 ## 11. Versionen stimmen nicht überein
 
 `VERSION`, `spring-api/pom.xml` sowie Frontend `package.json` und Lockfile müssen
-denselben Stand tragen. `scripts/check_repository.py --strict-tree` und der
+denselben Stand tragen. `infrastructure/scripts/quality/check_repository.py --strict-tree` und der
 Origin-Build brechen bei Abweichungen absichtlich ab.
 
 ## 12. Erststart scheitert während eines Monitoring-Image-Pulls
@@ -200,7 +201,7 @@ den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
 **Lösung:** Der Routengenerator versieht `date`- und `date-time`-Queryparameter
 mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
 Antwort. Generierte Controller nicht direkt korrigieren; stets
-`scripts/migration/generate_spring_routes.py` ändern und neu generieren.
+`infrastructure/scripts/generation/generate_spring_routes.py` ändern und neu generieren.
 
 ## 14. HTTP 500 bei Master-Data-Kategorien
 

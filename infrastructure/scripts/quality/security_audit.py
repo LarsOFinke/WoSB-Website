@@ -3,7 +3,7 @@
 from __future__ import annotations
 import re
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[3]
 
 def require(value: bool,message: str)->None:
     if not value: raise SystemExit(f'[security] {message}')

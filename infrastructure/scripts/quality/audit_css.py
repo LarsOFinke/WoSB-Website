@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 CSS_ROOT = ROOT / "frontend/src"
 GLOBAL_ROOT = CSS_ROOT / "styles/global"
 MAX_CSS_LINES = 420

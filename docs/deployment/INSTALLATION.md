@@ -25,8 +25,8 @@ ab.
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.6.tar.gz \
-  --checksum rbf-deployment-1.0.6.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.7.tar.gz \
+  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env \
   --no-backup

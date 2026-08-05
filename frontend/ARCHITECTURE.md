@@ -21,7 +21,7 @@ page -> composable -> domain
 page -> component
 ```
 
-Pages must not call API modules directly or own asynchronous workflows. They bind a page model to route-level markup and compose components. This boundary applies to every route page and is enforced repository-wide by `pageResponsibilityBoundaries.test.mjs` and `scripts/check_repository.py`.
+Pages must not call API modules directly or own asynchronous workflows. They bind a page model to route-level markup and compose components. This boundary applies to every route page and is enforced repository-wide by `pageResponsibilityBoundaries.test.mjs` and `infrastructure/scripts/quality/check_repository.py`.
 
 Domain modules are framework-independent wherever practical. They receive their data and collaborators as arguments, return values without side effects, and can be tested with Node's built-in test runner.
 
@@ -29,7 +29,7 @@ Composables coordinate Vue state, lifecycle hooks, API calls and user-facing suc
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
 
-Executable JavaScript modules are capped at 420 lines by `scripts/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module.
+Executable JavaScript modules are capped at 420 lines by `infrastructure/scripts/quality/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module.
 
 ## Global style layers
 

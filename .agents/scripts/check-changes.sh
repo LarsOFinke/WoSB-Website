@@ -30,14 +30,14 @@ for path in "${changed_files[@]}"; do
   case "$path" in
     frontend/*) frontend=true ;;
     spring-api/*) backend=true ;;
-    infrastructure/*|deploy.sh|update.sh|scripts/test-infrastructure.sh|scripts/test-update-management.sh|.agents/scripts/*)
+    infrastructure/*|deploy.sh|update.sh|.agents/scripts/*)
       infrastructure=true
       ;;
-    contracts/*|scripts/migration/*) contracts=true ;;
-    docs/*|.agents/*.md|README.md|AGENTS.md|SECURITY.md|scripts/check_documentation.py)
+    contracts/*|infrastructure/scripts/generation/*) contracts=true ;;
+    docs/*|.agents/*.md|README.md|AGENTS.md|SECURITY.md|infrastructure/scripts/quality/check_documentation.py)
       documentation=true
       ;;
-    Makefile|scripts/test.sh|scripts/check_repository.py|.github/workflows/*)
+    Makefile|infrastructure/scripts/quality/validate.sh|infrastructure/scripts/quality/check_repository.py|.github/workflows/*)
       crosscutting=true
       ;;
   esac
@@ -58,7 +58,7 @@ else
     commands+=("bash .agents/scripts/check-infrastructure.sh")
   fi
   [[ "$frontend" == true || "$backend" == true || "$infrastructure" == true ]] \
-    || commands+=("python3 scripts/check_repository.py --strict-tree")
+    || commands+=("python3 infrastructure/scripts/quality/check_repository.py --strict-tree")
 fi
 [[ "$documentation" != true ]] || commands+=("bash .agents/scripts/check-docs.sh")
 

@@ -19,7 +19,7 @@ Normal releases are still built and transferred from the trusted origin server,
 for example:
 
 ```bash
-sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.6.tar.gz
+sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.7.tar.gz
 ```
 
 The dispatcher cleans failed releases and replaces an active release with the
@@ -39,11 +39,11 @@ The target host exposes operation status and a guarded staff-panel request path.
 Vom vertrauenswürdigen Ursprungssystem ist der bevorzugte Einstieg:
 
 ```bash
-./debug.sh
+./infrastructure/scripts/diagnostics/debug.sh
 
 # Nicht-interaktiv und bereits stark eingegrenzt:
-./debug.sh --area calendar --category http-500 --since 30m --tail 400
-./debug.sh --area staff --category errors --since 1h --match MethodArgumentTypeMismatchException
+./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m --tail 400
+./infrastructure/scripts/diagnostics/debug.sh --area staff --category errors --since 1h --match MethodArgumentTypeMismatchException
 ```
 
 Der Wrapper verwendet die bereits von `deploy.sh --configure` gepflegte

@@ -70,7 +70,7 @@ make validate
 ```
 
 Mindestens müssen die direkt betroffenen Linter und Tests sowie
-`python3 scripts/check_repository.py --strict-tree` erfolgreich sein. Generierte
+`python3 infrastructure/scripts/quality/check_repository.py --strict-tree` erfolgreich sein. Generierte
 Artefakte (`dist`, Caches, virtuelle Umgebungen, lokale `.env`- und Betriebsdaten)
 nicht versionieren und generierte Dateien nicht von Hand bearbeiten.
 

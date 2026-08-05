@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/frontend" "$work/release" "$work/extracted"
 printf '<!doctype html><title>RBF</title>\n' > "$work/frontend/index.html"
@@ -12,9 +12,14 @@ with zipfile.ZipFile(p,'w',compression=zipfile.ZIP_STORED) as z:
     z.writestr('META-INF/MANIFEST.MF','Manifest-Version: 1.0\nMain-Class: org.springframework.boot.loader.launch.JarLauncher\n')
     z.writestr('BOOT-INF/classes/padding.bin',b'RBF0'*(300_000))
 PY
-python3 "$ROOT_DIR/scripts/package_deployment_artifact.py" --version "$(cat "$ROOT_DIR/VERSION")" --jar "$work/rbf-api.jar" --frontend-dist "$work/frontend" --output-dir "$work/release" --source-revision test
+python3 "$ROOT_DIR/infrastructure/scripts/release/package_deployment_artifact.py" --version "$(cat "$ROOT_DIR/VERSION")" --jar "$work/rbf-api.jar" --frontend-dist "$work/frontend" --output-dir "$work/release" --source-revision test
 artifact="$(find "$work/release" -name 'rbf-deployment-*.tar.gz' -print -quit)"
 python3 "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$artifact" "$work/extracted" >/dev/null
+if find "$work/extracted/payload/infrastructure/scripts" -type f \
+    \( -path '*/quality/*' -o -path '*/generation/*' -o -name 'package_*.py' \) -print -quit | grep -q .; then
+  echo '[updates] repository-only scripts leaked into the runtime artifact' >&2
+  exit 1
+fi
 printf 'tamper' >> "$work/extracted/payload/artifacts/rbf-api.jar"
 python3 - "$work/extracted" <<'PY'
 import importlib.util,sys

@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 JAVA = ROOT / "spring-api/src/main/java"
 CONTRACT = ROOT / "contracts/api-contract.json"
 

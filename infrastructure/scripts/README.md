@@ -8,7 +8,7 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 - `../../deploy.sh --configure` ist der öffentliche First-Run-Aufruf.
 - `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`.
   Beide Namen bleiben als kompatible Benutzerverträge erhalten.
-- `../../debug.sh` sammelt über dieselbe Origin-Verbindung begrenzte,
+- `diagnostics/debug.sh` sammelt über dieselbe Origin-Verbindung begrenzte,
   redigierte Zielsystemdiagnosen und speichert sie ausschließlich am Ursprung.
 - `../setup.sh` delegiert intern an `setup/` und wird nur von lokalen
   Entwicklungs- und Artefaktabläufen aufgerufen.
@@ -25,21 +25,31 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 - `deployment/`: systemd-Installation.
 - `diagnostics/`: Origin-Collector, flüchtiger Remote-Collector und lokale
   Redaktion für agententaugliche Betriebsdiagnosen.
+- `generation/`: deterministische API-, Java-, Flyway-, Build- und
+  Dokumentationsgeneratoren. Veröffentlichte Flyway-Dateien bleiben trotz
+  verschobenem Generator unveränderlich.
 - `lib/`: gemeinsam genutzte Shell-Bibliotheken für Docker, Umgebung, Host,
   Speicher, TLS, JSON und Wartungsstatus.
-- `release/`: Artefaktprüfung, Installation, Rollback und TLS-/Host-Vorbereitung.
+- `quality/`: Repository-Audits, Hygiene, Security-Prüfung und das vollständige
+  Validierungs-Gate; fokussierte Vertragsprüfungen liegen in `quality/tests/`.
+- `release/`: Artefaktbau und -prüfung, Packaging, Origin-Transfer,
+  Installation, Rollback und TLS-/Host-Vorbereitung.
 - `services/`: laufender Anwendungsbetrieb und kontrollierte Admin-Operationen.
 - `setup/`: CLI-Optionen und Setup-Orchestrierung.
 - `tls/`: Zertifikatserneuerung und Synchronisierung.
 
 ## Ablage- und Ownership-Regel
 
-Öffentliche Bedienverträge bleiben als kleine Orchestratoren im Repository-Root:
-`deploy.sh`, `update.sh` und `debug.sh`. Zielsystem-, Release-, Backup- und
-Serviceimplementierungen liegen unter `infrastructure/scripts/`, weil dieser
-Baum zum geprüften Runtime-Artefakt gehört. Repository-, CI-, Audit- und
-Generatorwerkzeuge liegen dagegen unter `<repo>/scripts/`. Diese Grenze nicht
-durch Proxy-Kopien oder parallele Skriptbäume verwischen.
+Im Repository-Root bleiben ausschließlich die öffentlichen Bedienverträge
+`deploy.sh` und `update.sh`. Alle gemeinsamen Skripte liegen in diesem Baum und
+werden nach Verantwortung einem Modul zugeordnet; ein neues top-level `scripts/`
+ist unzulässig. `.agents/scripts/` und `frontend/scripts/` sind eng an ihre
+jeweiligen Eigentümermodule gebunden und keine allgemeinen Skriptsammlungen.
+
+Die gemeinsame Ablage bedeutet nicht, dass jedes Modul Produktionsbestandteil
+ist. `release/package_deployment_artifact.py` verwendet eine explizite
+Runtime-Allowlist. `quality/`, `generation/` und die Packaging-Programme selbst
+bleiben auf dem Ursprung beziehungsweise in CI und werden nicht ausgeliefert.
 
 ## Aufräumprüfung (2026-08-04)
 
@@ -50,5 +60,5 @@ durch Proxy-Kopien oder parallele Skriptbäume verwischen.
 - Manuelle Recovery-Helfer (`merge-encryption-keyring.sh`,
   `verify-recovery.sh`) wurden nicht gelöscht: fehlende Quelltextverweise sind
   bei bewusst manuellen Notfallwerkzeugen kein Beweis für Nichtverwendung.
-- `scripts/package_release.py` bleibt erhalten, da der Release-Workflow es
+- `release/package_release.py` bleibt erhalten, da der Release-Workflow es
   weiterhin für das zusätzliche Quellarchiv aufruft.

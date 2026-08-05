@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/bin"
 touch "$work/identity"
@@ -23,7 +23,8 @@ printf '%s\n' \
   'api | Authorization: Bearer secret-value Cookie=session-secret'
 EOF
 chmod +x "$work/bin/ssh"
-PATH="$work/bin:$PATH" RBF_TEST_SSH_ARGS="$work/ssh.args" bash "$ROOT_DIR/debug.sh" \
+PATH="$work/bin:$PATH" RBF_TEST_SSH_ARGS="$work/ssh.args" \
+  bash "$ROOT_DIR/infrastructure/scripts/diagnostics/debug.sh" \
   --config "$work/origin.env" --area calendar --category http-500 --since 15m --tail 20 \
   --match calendar --output "$work/result.log" >/dev/null
 grep -q 'api_error status=500' "$work/result.log"

@@ -29,7 +29,7 @@ jobs:
           mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress \
             org.owasp:dependency-check-maven:12.2.2:check "${dependency_check_args[@]}"
       - run: cd frontend && npm ci && npm audit --audit-level=high
-      - run: python scripts/security_audit.py
+      - run: python infrastructure/scripts/quality/security_audit.py
 
   container-images:
     if: github.event_name != 'pull_request'

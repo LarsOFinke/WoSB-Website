@@ -6,7 +6,7 @@ import argparse
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 MIGRATIONS = ROOT / "spring-api/src/main/resources/db/migration"
 SOURCE = MIGRATIONS / "V1__current_schema_baseline.sql"
 PARTS = (
@@ -28,6 +28,7 @@ def render(source: str, start: str, end: str | None, filename: str) -> str:
     end_at = len(source) if end is None else source.index(end, start_at)
     body = idempotent(source[start_at:end_at].strip())
     return (
+        # Published Flyway files retain their historical header and checksum.
         "-- Generated once from immutable V1 by scripts/migration/"
         "generate_modular_flyway_baseline.py.\n"
         "-- New databases start at B2 and apply this focused schema part. Existing V1 databases\n"

@@ -38,7 +38,8 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 - Deployment und Update starten am Ursprung über `deploy.sh`/`update.sh` und
   verwenden Artefakte, Backups, Flyway und Rollback. Produktionsdaten oder
   Docker-Volumes niemals als Diagnosemaßnahme löschen.
-- Produktionsdiagnosen starten am Ursprung über `./debug.sh`. Der Wrapper nutzt
+- Produktionsdiagnosen starten am Ursprung über
+  `infrastructure/scripts/diagnostics/debug.sh`. Der Moduleinstieg nutzt
   `.env.origin`, filtert remote und speichert nur die lokal redigierte Ausgabe;
   keine Rohlogs oder Diagnosearchive auf dem Ziel erzeugen.
 - Lokale `.env`, private Schlüssel, Tokens, personenbezogene Daten und
@@ -49,25 +50,27 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 
 | Aufgabe | Primärer Einstieg |
 | --- | --- |
-| Produktionsfehler | `./debug.sh`, danach `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
+| Produktionsfehler | `infrastructure/scripts/diagnostics/debug.sh`, danach `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
 | Deployment/SSH | `docs/deployment/DEPLOYMENT.md`, `infrastructure/scripts/release/deploy-from-origin.sh` |
 | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
 | Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
 | API-Vertrag | `contracts/api-contract.json`, danach generierter Transport und Handler |
 | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
-| Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh` |
+| Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
 | Frontend-Funktion | `frontend/src/modules/<feature>/` |
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, betroffene Modulstile |
-| Sicherheit | `SecurityConfiguration`, `security/`, `scripts/security_audit.py` |
+| Sicherheit | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
 | Datenschutz | `privacy/`, `docs/reference/DATA_RETENTION.md` |
 
-Skript-Ownership: Im Root liegen nur kleine öffentliche Orchestratoren wie
-`deploy.sh`, `update.sh` und `debug.sh`. Zielsystem-, Release-, Backup- und
-Hostlogik liegt unter `infrastructure/scripts/` und wird mit dem Runtime-Artefakt
-ausgeliefert. Repository-Prüfungen, Generatoren und CI-Helfer liegen unter
-`scripts/`; keine parallelen Kopien zwischen diesen Bäumen anlegen.
+Skript-Ownership: Im Root liegen ausschließlich die öffentlichen Orchestratoren
+`deploy.sh` und `update.sh`. Sämtliche gemeinsame Skriptlogik liegt modular unter
+`infrastructure/scripts/`: `quality/` für Gates und Audits, `generation/` für
+Generatoren, `release/` für Packaging/Deployment sowie fachliche Runtime-Module.
+Das Release-Artefakt verwendet eine explizite Runtime-Allowlist; `quality/` und
+`generation/` werden nicht auf das Ziel ausgeliefert. Modulgebundene Helfer unter
+`.agents/scripts/` und `frontend/scripts/` verbleiben bei ihren Eigentümern.
 
 Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte
 Controller und Locale-Ausgaben nicht von Hand bearbeiten.

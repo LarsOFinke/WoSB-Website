@@ -12,7 +12,7 @@ import tarfile
 import tempfile
 from datetime import datetime, timezone
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 RUNTIME_FILES = (
     "VERSION",
     "infrastructure/scripts/release/install-artifact.sh",
@@ -29,7 +29,16 @@ RUNTIME_FILES = (
 )
 RUNTIME_DIRS = (
     "infrastructure/config",
-    "infrastructure/scripts",
+    "infrastructure/scripts/backup",
+    "infrastructure/scripts/checks",
+    "infrastructure/scripts/deployment",
+    "infrastructure/scripts/diagnostics",
+    "infrastructure/scripts/lib",
+    "infrastructure/scripts/migration",
+    "infrastructure/scripts/release",
+    "infrastructure/scripts/services",
+    "infrastructure/scripts/setup",
+    "infrastructure/scripts/tls",
     "infrastructure/systemd",
 )
 
@@ -50,7 +59,9 @@ def copy_tree(source: Path, target: Path) -> None:
     if not source.is_dir():
         raise SystemExit(f"Required runtime directory is missing: {source}")
     shutil.copytree(source, target, dirs_exist_ok=True, symlinks=False,
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".DS_Store"))
+                    ignore=shutil.ignore_patterns(
+                        "__pycache__", "*.pyc", ".DS_Store",
+                        "package_deployment_artifact.py", "package_release.py"))
     # Runtime shell entrypoints must remain executable even when a checkout
     # lost the executable bit. The artifact verifier preserves this mode.
     for script in target.rglob("*.sh"):

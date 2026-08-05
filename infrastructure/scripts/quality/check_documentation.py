@@ -7,11 +7,11 @@ import subprocess
 from pathlib import Path
 from urllib.parse import unquote
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 LINK_PATTERN = re.compile(r"!?\[[^]]*]\(([^)]+)\)")
 FORBIDDEN_COMMANDS = {
-    "python scripts/": "use python3 for repository scripts",
-    "scripts/run_browser_smoke.py": "use frontend npm run test:browser",
+    "python infrastructure/scripts/": "use python3 for repository scripts",
+    "run_browser_smoke.py": "use frontend npm run test:browser",
 }
 
 

@@ -9,7 +9,7 @@ import stat
 import zipfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 EXCLUDED_PARTS = {
     ".git",
     ".github-cache",
@@ -28,7 +28,6 @@ EXCLUDED_PARTS = {
     "dist",
     "htmlcov",
     "node_modules",
-    "release",
     "venv",
 }
 EXCLUDED_NAMES = {
@@ -66,6 +65,7 @@ EXCLUDED_SUFFIXES = {
 EXCLUDED_NAME_SUFFIXES = (".tar.gz",)
 EXCLUDED_RELATIVE_PREFIXES = (
     Path("frontend/src/locales/generated"),
+    Path("release"),
 )
 
 

@@ -46,7 +46,7 @@ damit auch ältere, bereits gebaute Artefakte fail-closed migriert werden könne
 
 ## Regression-Gates
 
-`scripts/test-update-management.sh` prüft statisch, dass der Origin-Dispatcher
+`infrastructure/scripts/quality/tests/update-management.sh` prüft statisch, dass der Origin-Dispatcher
 keine Backup-Überspring- oder Active-Replacement-Flags enthält und dass Installer
 und Docker-Lifecycle die Backup-/Flyway-Schritte weiterhin aufrufen.
 

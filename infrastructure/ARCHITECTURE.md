@@ -6,14 +6,16 @@ Die öffentlichen Befehle liegen im übergeordneten Repository:
 
 - `<repo>/deploy.sh --configure` ist der vollständige First-Run-Einstieg.
 - `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer unter `scripts/release/deploy-from-origin.sh`.
-- `<repo>/debug.sh` delegiert an `scripts/diagnostics/collect-from-origin.sh`
-  und schreibt redigierte Diagnoseausgaben lokal am Ursprung.
+- `scripts/diagnostics/debug.sh` ist der modulare Diagnoseeinstieg und schreibt
+  redigierte Ausgaben lokal am Ursprung.
 
 Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
 internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufgerufen werden.
-Allgemeine Repository-Prüfungen und Generatoren bleiben im top-level `scripts/`;
-Runtime-/Hostskripte gehören wegen ihrer Artefakt- und Zielsystemverantwortung
-unter `infrastructure/scripts/`.
+Alle gemeinsamen Skripte liegen unter `infrastructure/scripts/`. `quality/` und
+`generation/` sind ursprungs-/CI-seitige Module; Host- und Runtime-Module werden
+über eine explizite Allowlist gepackt. Im Root bleiben nur `deploy.sh` und
+`update.sh`. Eigentümergebundene Helfer in `.agents/scripts/` und
+`frontend/scripts/` bleiben bei ihren Modulen.
 
 ### Diagnosegrenze
 
@@ -44,14 +46,16 @@ redigiert; die begrenzte Ausgabe landet mit restriktiven Rechten unter
 - `scripts/lib/host/firewall.sh`: UFW-Regeln.
 - `scripts/lib/host/tls.sh`: Bootstrap- und Let's-Encrypt-Zertifikate.
 
+### Quality und Generierung
+
+- `scripts/quality/validate.sh`: vollständiges Repository-Gate.
+- `scripts/quality/tests/`: Infrastruktur-, Update- und Diagnoseverträge.
+- `scripts/generation/`: API-Referenz, Java-Contracts/-Routen, Build-Katalog,
+  Flyway-Baseline und Webhook-Vorlagen.
+
 ### Kontrollierte Server-Aktionen
 
 - `scripts/services/update.sh`: root-owned Host-Runner für geprüfte Inbox-Artefakte sowie lokale `restart`-/`rollback`-Recovery; normale Artefakte werden weiterhin am Ursprung gebaut und übertragen.
-- `scripts/update/options.sh`: CLI sowie Update- und Neustartmodus.
-- `scripts/update/request.sh`: Admin-Panel-Anforderung.
-- `scripts/update/status.sh`: atomare Statuspersistenz.
-- `scripts/update/repository.sh`: Git und Migrationserkennung.
-- `scripts/update/workflow.sh`: kontrollierter Anwendungsneustart oder Backup, Build, Deployment und Smoke-Test.
 - `scripts/services/restart-application.sh`: startet ausschließlich API und Gateway neu, wartet auf Readiness und lässt PostgreSQL online.
 
 ### Direct Discord channel webhooks

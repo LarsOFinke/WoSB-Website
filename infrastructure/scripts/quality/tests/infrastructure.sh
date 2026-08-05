@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 INFRA_DIR="$ROOT_DIR/infrastructure"
 
 fail(){ printf '[infrastructure] %s\n' "$*" >&2; exit 1; }
@@ -10,7 +10,7 @@ while IFS= read -r -d '' file; do bash -n "$file"; done < <(
   find "$ROOT_DIR" -type d \( -name .git -o -name node_modules -o -name target -o -name dist -o -name data \) -prune -o -type f -name '*.sh' -print0
 )
 while IFS= read -r -d '' file; do python3 -m py_compile "$file"; done < <(
-  find "$ROOT_DIR/scripts" "$INFRA_DIR/scripts" "$ROOT_DIR/tests" -type d -name __pycache__ -prune -o -type f -name '*.py' -print0
+  find "$INFRA_DIR/scripts" "$ROOT_DIR/tests" -type d -name __pycache__ -prune -o -type f -name '*.py' -print0
 )
 python3 - "$INFRA_DIR/compose.yml" "$INFRA_DIR/compose.release.yml" <<'PY'
 import re,sys
@@ -34,7 +34,8 @@ PY
 
 [[ ! -d "$ROOT_DIR/backend" ]] || fail 'Python backend directory still exists'
 for token in FASTAPI_INTERNAL_URL RBF_SECURE_API_IMAGE AUTO_SEED; do
-  ! grep -R --exclude-dir=data --exclude-dir=.git -- "$token" "$INFRA_DIR" >/dev/null || fail "legacy runtime token: $token"
+  ! grep -R --exclude-dir=data --exclude-dir=.git --exclude-dir=generation --exclude-dir=quality -- "$token" "$INFRA_DIR" >/dev/null \
+    || fail "legacy runtime token: $token"
 done
 [[ -f "$INFRA_DIR/docker/api-runtime.Dockerfile" ]] || fail 'missing API runtime image'
 [[ -f "$INFRA_DIR/docker/gateway-runtime.Dockerfile" ]] || fail 'missing gateway runtime image'
@@ -67,5 +68,5 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
   cp "$INFRA_DIR/.env.example" "$temp_env"
   RBF_ENV_FILE="$temp_env" docker compose --env-file "$temp_env" -f "$INFRA_DIR/compose.release.yml" config >/dev/null
 fi
-bash "$ROOT_DIR/scripts/test-debug-diagnostics.sh"
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/debug-diagnostics.sh"
 printf '[infrastructure] OK: shell, Python, Compose and artifact-runtime invariants\n'

@@ -29,7 +29,7 @@ werden. Vor dem Build prüft der Dispatcher den Schlüsselzugang und
 `sudo -n`; dadurch scheitert eine unvollständige Zielprovisionierung sofort und
 ohne lokale oder entfernte Passwortabfrage.
 
-`./debug.sh` verwendet dieselbe `.env.origin` und denselben dedizierten SSH-Key
+`./infrastructure/scripts/diagnostics/debug.sh` verwendet dieselbe `.env.origin` und denselben dedizierten SSH-Key
 für ausschließlich lesende Zielsystemdiagnosen. Im Unterschied zum Deployment
 streamt es einen kleinen Collector über SSH, legt auf dem Ziel keine Datei ab und
 speichert nur die begrenzte, redigierte Ausgabe lokal am Ursprung. Bedienung und
@@ -109,8 +109,8 @@ ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.6.tar.gz \
-  --checksum rbf-deployment-1.0.6.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.7.tar.gz \
+  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```

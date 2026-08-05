@@ -27,7 +27,7 @@ focused V3–V7 schema migrations:
 Existing V1 databases ignore B2 and apply V3–V7 safely: their table/index
 creation is idempotent and therefore preserves all rows and the V1 checksum. The
 focused files are generated once from immutable V1 by
-`scripts/migration/generate_modular_flyway_baseline.py`; the repository gate
+`infrastructure/scripts/generation/generate_modular_flyway_baseline.py`; the repository gate
 checks their exact content. Future schema work starts at V8 and is authored as a
 small immutable migration for one coherent change. Do not regenerate or edit a
 published V3–V7 file after release.

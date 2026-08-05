@@ -81,9 +81,7 @@ storage/
 artifacts/
 
 # Packaged binaries, installers and release artifacts
-release/
-!infrastructure/scripts/release/
-!infrastructure/scripts/release/*.sh
+/release/
 *.deb
 *.rpm
 *.msi

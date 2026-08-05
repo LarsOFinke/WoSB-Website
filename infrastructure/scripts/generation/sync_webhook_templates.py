@@ -3,7 +3,7 @@
 from __future__ import annotations
 import json,sys
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]; SOURCE=ROOT/'contracts/webhook-events.json'
+ROOT=Path(__file__).resolve().parents[3]; SOURCE=ROOT/'contracts/webhook-events.json'
 def main():
     payload=json.loads(SOURCE.read_text()); events=payload.get('events')
     if payload.get('schema_version')!=1 or not isinstance(events,list):raise SystemExit('Invalid webhook contract')

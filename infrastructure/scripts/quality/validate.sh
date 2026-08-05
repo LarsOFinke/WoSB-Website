@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 export PYTHONDONTWRITEBYTECODE=1
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 MODE="${1:-full}"
-[[ "$MODE" == quick || "$MODE" == full ]] || { echo 'Usage: scripts/test.sh [quick|full]' >&2; exit 2; }
+[[ "$MODE" == quick || "$MODE" == full ]] || { echo 'Usage: infrastructure/scripts/quality/validate.sh [quick|full]' >&2; exit 2; }
 created_frontend_env=false
 cleanup(){ [[ "$created_frontend_env" == false ]] || rm -f "$ROOT_DIR/frontend/.env"; }
 trap cleanup EXIT
 
-python3 "$ROOT_DIR/scripts/check_repository.py"
-python3 "$ROOT_DIR/scripts/check_documentation.py"
-python3 "$ROOT_DIR/scripts/security_audit.py"
-python3 "$ROOT_DIR/scripts/audit_spring_backend.py"
-python3 "$ROOT_DIR/scripts/audit_css.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/check_repository.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/check_documentation.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/security_audit.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/audit_spring_backend.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/audit_css.py"
 if command -v javac >/dev/null 2>&1; then
   java_check_dir="$(mktemp -d)"
-  javac -d "$java_check_dir" "$ROOT_DIR/scripts/java/JavaSyntaxCheck.java"
+  javac -d "$java_check_dir" "$ROOT_DIR/infrastructure/scripts/quality/java/JavaSyntaxCheck.java"
   java -cp "$java_check_dir" JavaSyntaxCheck "$ROOT_DIR/spring-api/src"
   rm -rf "$java_check_dir"
 elif [[ "$MODE" == full ]]; then
   echo '[test] A Java 21 JDK is required for full validation.' >&2; exit 1
 fi
-bash "$ROOT_DIR/scripts/test-infrastructure.sh"
-bash "$ROOT_DIR/scripts/test-update-management.sh"
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/infrastructure.sh"
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/update-management.sh"
 python3 -c 'import pytest' 2>/dev/null || {
   echo '[test] pytest is required; install CI test dependencies with: python3 -m pip install -r requirements-ci.txt' >&2
   exit 1
@@ -59,5 +59,5 @@ rm -rf "$ROOT_DIR/frontend/src/locales/generated"
 find "$ROOT_DIR" -type d -name '__pycache__' -prune -exec rm -rf {} +
 find "$ROOT_DIR" -type f -name '*.pyc' -delete
 
-python3 "$ROOT_DIR/scripts/check_repository.py" --strict-tree
+python3 "$ROOT_DIR/infrastructure/scripts/quality/check_repository.py" --strict-tree
 printf '[test] validation completed successfully\n'

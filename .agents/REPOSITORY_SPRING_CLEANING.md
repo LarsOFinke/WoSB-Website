@@ -39,18 +39,19 @@ Danach nur die Primärquellen des tatsächlichen Scopes lesen:
 | Frontend/CSS | `frontend/ARCHITECTURE.md`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, betroffene Migrationen und Upgrade-Tests |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
-| CI und Gates | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh`, `.github/workflows/` |
+| CI und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh`, `.github/workflows/` |
 
 Mit `rg` zuerst Aufrufer, Tests, Konfiguration und Dokumentation einer
 Verantwortung finden. Keine breite Dateifür-Datei-Lektüre, wenn Cache und
 Primärquelle den Einstieg bereits nennen.
 
-Skripte nach ausführender Verantwortung ablegen: kleine öffentliche
-Origin-Orchestratoren (`deploy.sh`, `update.sh`, `debug.sh`) im Root,
-ausgelieferte Host-/Runtime-/Recovery-Logik unter `infrastructure/scripts/` und
-Repositoryprüfungen sowie Generatoren unter `scripts/`. Eine einheitliche
-Navigation bedeutet hier klare Ownership, nicht das Vermischen dieser
-verschiedenen Laufzeitgrenzen in einem einzigen Verzeichnis.
+Skripte nach ausführender Verantwortung innerhalb der zentralen Modularchitektur
+ablegen: Im Root bleiben nur `deploy.sh` und `update.sh`; Quality-Gates liegen
+unter `infrastructure/scripts/quality/`, Generatoren unter `generation/`,
+Packaging/Deployment unter `release/` und Host-/Runtime-/Recovery-Logik in den
+fachlichen Modulen. Das Runtime-Artefakt nimmt nur explizit freigegebene Module
+mit. `.agents/scripts/` und `frontend/scripts/` sind eigentümergebundene Helfer,
+keine allgemeinen Parallelbäume.
 
 ## 3. Befunde priorisieren
 

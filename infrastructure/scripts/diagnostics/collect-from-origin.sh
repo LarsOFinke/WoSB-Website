@@ -8,7 +8,7 @@ area=""; category=""; since="30m"; tail_lines="400"; match=""; output=""
 
 usage() {
   cat <<'EOF'
-Usage: ./debug.sh [OPTIONS]
+Usage: infrastructure/scripts/diagnostics/debug.sh [OPTIONS]
 
 Collects a bounded, redacted diagnostic log on the origin system through the
 existing deployment SSH identity. Without --area an interactive menu is shown.

@@ -67,7 +67,7 @@ responsive refinement, so each candidate must be evaluated in its cascade contex
 - Preserve keyboard focus and reduced-motion behavior when changing visuals.
 - Never hide root-level horizontal overflow. Fix the component or give the owning data surface an
   explicit horizontal scroll container.
-- Run `npm test` and `python3 scripts/check_repository.py --strict-tree` after structural changes.
+- Run `npm test` and `python3 infrastructure/scripts/quality/check_repository.py --strict-tree` after structural changes.
 
 Repository gates cap every stylesheet at 420 lines, keep total frontend CSS below 400 KB,
 enforce one token root, and verify numeric manifest order. The 420-line hard gate leaves a small
@@ -144,8 +144,8 @@ editorial content merely because both are headings.
 3. Confirm no document-level horizontal overflow and no clipped focused element.
 4. Confirm important metadata and actions remain available on phones.
 5. Run `(cd frontend && npm test && npm run build)`,
-   `python3 scripts/audit_css.py` and
-   `python3 scripts/check_repository.py --strict-tree` from the repository root.
+   `python3 infrastructure/scripts/quality/audit_css.py` and
+   `python3 infrastructure/scripts/quality/check_repository.py --strict-tree` from the repository root.
 6. For release-affecting layout changes, run `npm run test:browser` from
    `frontend/` in an environment with the supported Playwright Chromium binary.
 7. Manually sample current Chrome/Chromium, Firefox and Safari/iOS before release. Automated

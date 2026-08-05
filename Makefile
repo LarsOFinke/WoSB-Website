@@ -8,10 +8,10 @@ dev-frontend:
 	cd frontend && npm run dev
 
 test:
-	bash ./scripts/test.sh quick
+	bash ./infrastructure/scripts/quality/validate.sh quick
 
 test-full validate:
-	bash ./scripts/test.sh full
+	bash ./infrastructure/scripts/quality/validate.sh full
 
 spring-test:
 	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress verify
@@ -20,28 +20,28 @@ frontend-test:
 	cd frontend && npm run test:ci
 
 lint:
-	python3 scripts/check_repository.py
-	python3 scripts/check_documentation.py
-	bash scripts/test-infrastructure.sh
+	python3 infrastructure/scripts/quality/check_repository.py
+	python3 infrastructure/scripts/quality/check_documentation.py
+	bash infrastructure/scripts/quality/tests/infrastructure.sh
 
 css-audit:
-	python3 scripts/audit_css.py
+	python3 infrastructure/scripts/quality/audit_css.py
 
 security-audit:
-	python3 scripts/security_audit.py
+	python3 infrastructure/scripts/quality/security_audit.py
 
 build:
 	mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress package
 	cd frontend && npm run build
 
 clean:
-	bash ./scripts/clean_repository.sh
+	bash ./infrastructure/scripts/quality/clean_repository.sh
 
 clean-all:
-	bash ./scripts/clean_repository.sh --all
+	bash ./infrastructure/scripts/quality/clean_repository.sh --all
 
 check-tree:
-	python3 ./scripts/check_repository.py --strict-tree
+	python3 ./infrastructure/scripts/quality/check_repository.py --strict-tree
 
 setup-pi:
 	sudo ./infrastructure/setup.sh --profile full

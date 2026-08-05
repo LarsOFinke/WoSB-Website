@@ -31,7 +31,7 @@
 | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
 | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
-| Tests | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh` |
+| Tests | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
 | Betrieb/Recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
@@ -47,8 +47,7 @@ Betriebsabläufen schließen die zugehörige Dokumentation ein.
 spring-api/      alleinige Backend-Laufzeit, Security, Fachdomänen, Persistenz
 frontend/        Vue-Anwendung, Feature-Module, Lokalisierung und UI-Tests
 contracts/       versionierte HTTP-, Build-, Backup- und Webhook-Verträge
-infrastructure/  Compose, NGINX, Setup, Release, Update, Backup und Restore
-scripts/         Qualitäts-, Security-, Packaging- und Repository-Werkzeuge
+infrastructure/  Compose und zentrale Skriptmodule für Quality, Generation und Runtime
 tests/recovery/  sprachneutrale Recovery-/Remote-Sync-Vertragstests
 docs/            Architektur, Entwicklung, Betrieb, Referenz und Audits
 .github/         CI-, Security-, Release- und Deployment-Workflows
@@ -124,9 +123,10 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 
 ## Infrastruktur und Betriebsgrenzen
 
-- Öffentliche Ursprungseinstiege: `deploy.sh`, `update.sh` und `debug.sh`.
-  Deploy/Update delegieren an `infrastructure/scripts/release/deploy-from-origin.sh`;
-  Debugging delegiert an `infrastructure/scripts/diagnostics/collect-from-origin.sh`.
+- Öffentliche Root-Einstiege sind ausschließlich `deploy.sh` und `update.sh`;
+  beide delegieren an `infrastructure/scripts/release/deploy-from-origin.sh`.
+  Produktionsdiagnosen starten direkt über
+  `infrastructure/scripts/diagnostics/debug.sh`.
 - `./deploy.sh --configure` ist der vollständige interaktive First Run: Ziel,
   dedizierter `rbfadmin`, optional erzeugter Ed25519-Key, einmaliger VPS-
   Bootstrap-Zugang und Deployment laufen in einem Ablauf. Bootstrap-Zugangsdaten
@@ -136,9 +136,14 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   `infrastructure/scripts/setup/{options,workflow,main}.sh` getrennt.
 - Host-Helfer liegen unter `infrastructure/scripts/lib/host/` (Pakete, Storage,
   Firewall, TLS, Control); Skripte müssen robust, idempotent und mit klaren
-  Fehlercodes arbeiten. Öffentliche Root-Skripte orchestrieren nur; Runtime-
-  und Hostlogik bleibt unter `infrastructure/scripts/`, Repositorywerkzeuge unter
-  top-level `scripts/`.
+  Fehlercodes arbeiten. Alle gemeinsamen Repository-Skripte liegen modular unter
+  `infrastructure/scripts/`: `quality/`, `quality/tests/`, `generation/`,
+  `release/` und die fachlichen Runtime-Module. Ein top-level `scripts/` darf
+  nicht neu eingeführt werden.
+- Der Deployment-Packager kopiert Runtime-Module über eine explizite Allowlist.
+  `quality/`, `generation/` und die Packaging-Skripte selbst dürfen nicht im
+  Produktionsartefakt landen. `.agents/scripts/` und `frontend/scripts/` bleiben
+  als eigentümergebundene Modulhelfer bestehen.
 - Die API führt keine privilegierten Host-Befehle aus. Sie schreibt restriktive
   JSON-Anforderungen in eine Inbox; root-eigene systemd-Runner übernehmen sie.
 - Produktion nutzt kompilierte, prüfsummenbewehrte, source-freie Artefakte.
@@ -160,7 +165,7 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
 - Bekannte Produktionsfehler und geprüfte Ursachen:
   `docs/debugging/DEPLOYMENT_INCIDENTS.md`. Dort zuerst nach Symptom suchen,
   bevor Logs oder Abläufe erneut vollständig kartiert werden.
-- Produktionslogs tokenarm mit `./debug.sh` am Ursprung sammeln. Bereich,
+- Produktionslogs tokenarm mit `infrastructure/scripts/diagnostics/debug.sh` am Ursprung sammeln. Bereich,
   Kategorie, Zeitraum, Zeilenlimit und optionalen Suchtext eng wählen. Der
   Remote-Collector schreibt nichts auf das Ziel; nur die redigierte lokale Datei
   unter `.diagnostics/` für Agentenanalyse öffnen. Rohlogs nicht übernehmen.
@@ -207,7 +212,8 @@ make build         # Spring-Paket plus Frontend-Build
 make package-release
 ```
 
-Vor `make validate` beziehungsweise einem direkten `scripts/test.sh`-Lauf wird
+Vor `make validate` beziehungsweise einem direkten
+`infrastructure/scripts/quality/validate.sh`-Lauf wird
 die kleine, fest versionierte Python-Testsuite einmalig mit
 `python3 -m pip install -r requirements-ci.txt` installiert. Die CI- und
 Release-Workflows tun dies nach `actions/setup-python` explizit; gehostete
@@ -227,9 +233,9 @@ bash .agents/scripts/check-all.sh             # make validate mit kompakter Ausg
 ```
 
 Die Helfer enthalten keine eigene Fachprüfung. Sie lesen den aktuellen Stand und
-delegieren an `make`, `scripts/test-*.sh` und `check_repository.py`, damit keine
-zweite, später abweichende Qualitätslogik entsteht. Dokumentationsinvarianten
-liegen entsprechend in `scripts/check_documentation.py`; `check-docs.sh` ist nur
+delegieren an `make` und `infrastructure/scripts/quality/`, damit keine zweite,
+später abweichende Qualitätslogik entsteht. Dokumentationsinvarianten liegen in
+`infrastructure/scripts/quality/check_documentation.py`; `check-docs.sh` ist nur
 der tokenarme Einstieg. Erfolgreiche Gates liefern eine Statuszeile, Fehler die
 letzten 200 Logzeilen. `AGENT_GATE_VERBOSE=1` schaltet die vollständige Ausgabe
 für gezielte Diagnose ein.
@@ -274,7 +280,7 @@ Juli-Fixes, Log4j `2.25.5` für `CVE-2026-49844` und pgJDBC `42.7.12` für
 gemeinsam zu aktualisierender geprüfter Stand gebunden; neue Scannerfunde zuerst
 gegen die Herstellerhinweise prüfen und nicht pauschal unterdrücken.
 
-`scripts/test.sh full` führt statische Repository-, Security-, Spring- und
+`infrastructure/scripts/quality/validate.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
 `mvn verify`, Frontend-Tests/Build/Chromium-Smokes und abschließend `--strict-tree`
 aus. Playwright-Chromium wird lokal einmalig mit `npx playwright install chromium`
@@ -318,7 +324,7 @@ querschnittlichen Änderungen `make validate`.
 ## Cache-Pflege
 
 Cache neu prüfen, wenn `AGENTS.md`, `README.md`, Architektur-/Qualitätsdokumente,
-`pom.xml`, `package.json`, `Makefile`, `scripts/test.sh`, Modulverzeichnisse oder
+`pom.xml`, `package.json`, `Makefile`, `infrastructure/scripts/quality/validate.sh`, Modulverzeichnisse oder
 Runtime-/Deployment-Topologie geändert wurden. Keine flüchtigen Dateizahlen,
 Testzahlen oder Vertragsoperationszahlen als Entscheidungsgrundlage verwenden;
 bei Bedarf direkt mit `rg`, `find` oder dem jeweiligen Parser ermitteln.

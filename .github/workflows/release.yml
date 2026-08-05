@@ -22,10 +22,10 @@ jobs:
         run: test "$GITHUB_REF_NAME" = "v$(cat VERSION)"
       - run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress clean verify
       - run: cp frontend/.env.example frontend/.env && cd frontend && npm ci && npm run test:ci
-      - run: bash scripts/test.sh
+      - run: bash infrastructure/scripts/quality/validate.sh
       - name: Package compiled release
-        run: python scripts/package_deployment_artifact.py --version "$(cat VERSION)" --jar "$(find spring-api/target -name 'rbf-api-*.jar' ! -name '*.original' | head -1)" --frontend-dist frontend/dist --output-dir release --source-revision "$GITHUB_SHA"
-      - run: python scripts/package_release.py --version "$(cat VERSION)" --output-dir release
+        run: python infrastructure/scripts/release/package_deployment_artifact.py --version "$(cat VERSION)" --jar "$(find spring-api/target -name 'rbf-api-*.jar' ! -name '*.original' | head -1)" --frontend-dist frontend/dist --output-dir release --source-revision "$GITHUB_SHA"
+      - run: python infrastructure/scripts/release/package_release.py --version "$(cat VERSION)" --output-dir release
       - name: Publish backup-server provisioner
         run: |
           cp tools/backup-server/provision-rbf-backup-server.sh release/
