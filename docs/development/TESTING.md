@@ -43,6 +43,20 @@ through the plugin's environment-variable integration; pull requests without
 secret access use the slower public NVD path. Never print the key to verify it.
 GitHub exposes only secret metadata, not the stored value.
 
+Creating or rotating the secret changes GitHub configuration, not repository
+content. It therefore needs no trigger commit or push. Start a fresh security
+run explicitly, or rerun the failed workflow after setting the secret:
+
+```bash
+gh workflow run security.yml
+gh run list --workflow security.yml --limit 5
+# Alternatively, for a known failed run:
+gh run rerun <run-id> --failed
+```
+
+The newly started or rerun job reads the current secret value. Verify only the
+workflow result; do not attempt to read the secret back.
+
 ## Scope-based development checks
 
 Use focused feedback during implementation, then run the required release gate:

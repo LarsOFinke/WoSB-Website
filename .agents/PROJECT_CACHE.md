@@ -226,6 +226,11 @@ beenden und den verpflichtenden vollständigen Scan im GitHub-Security-Workflow
 mit Maven-Cache sowie vorzugsweise dem optionalen Secret `NVD_API_KEY` ausführen.
 Das Secret wird nur bei nicht leerem Wert als Umgebungsvariable an den Scanner
 übergeben; der Cache beschleunigt den Lauf, ersetzt aber niemals das Scan-Gate.
+`gh secret set NVD_API_KEY` ändert GitHub-Konfiguration und benötigt keinen
+Commit oder Trigger-Push. Danach `gh workflow run security.yml` auslösen oder
+einen bekannten fehlgeschlagenen Lauf mit `gh run rerun <run-id> --failed`
+wiederholen. Der neue Lauf liest den aktuell gespeicherten Secret-Wert; niemals
+versuchen, den Schlüssel zur Kontrolle auszugeben.
 
 Trivy prüft API und Gateway in aufeinanderfolgenden fail-closed Schritten. Ein
 Fund im API-Image verhindert daher den nachfolgenden Gateway-Schritt. Nach einem

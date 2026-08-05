@@ -143,6 +143,9 @@ Spezifisch für OWASP/NVD: Ein leerer Cache umfasst mehrere hunderttausend
 Datensätze. Ohne API-Key lokal nur Verbindung und korrekte Key-Behandlung
 verifizieren; den vollständigen verpflichtenden Scan im GitHub-Workflow mit
 Maven-Cache und möglichst `NVD_API_KEY` ausführen.
+Das Setzen dieses GitHub-Secrets erfordert keinen Repository-Push: anschließend
+den Security-Workflow per `gh workflow run security.yml` neu starten oder den
+fehlgeschlagenen Lauf wiederholen.
 
 Für jeden reparierten CI-Vertrag eine kleine statische oder dynamische
 Regressionprüfung ergänzen. Workflow-Syntax prüfen und den konkreten vormals
