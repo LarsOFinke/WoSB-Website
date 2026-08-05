@@ -36,6 +36,9 @@ for token in FASTAPI_INTERNAL_URL RBF_SECURE_API_IMAGE AUTO_SEED; do
 done
 [[ -f "$INFRA_DIR/docker/api-runtime.Dockerfile" ]] || fail 'missing API runtime image'
 [[ -f "$INFRA_DIR/docker/gateway-runtime.Dockerfile" ]] || fail 'missing gateway runtime image'
+if grep -Eq '^[[:space:]]*/?artifacts/?[[:space:]]*$' "$ROOT_DIR/.dockerignore"; then
+  fail 'release artifacts are excluded from the runtime image build context'
+fi
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh" ]] || fail 'artifact installer is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" ]] || fail 'website setup wrapper is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" ]] || fail 'failed-release cleanup is not executable'

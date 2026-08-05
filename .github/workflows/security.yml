@@ -10,7 +10,7 @@ permissions: {actions: read, contents: read, security-events: write}
 jobs:
   dependency-scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with: {persist-credentials: false}
@@ -18,7 +18,16 @@ jobs:
         with: {distribution: temurin, java-version: '21', cache: maven}
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with: {node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json}
-      - run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+      - name: Scan Spring dependencies
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          dependency_check_args=(-DfailBuildOnCVSS=7)
+          if [[ -n "$NVD_API_KEY" ]]; then
+            dependency_check_args+=(-DnvdApiKeyEnvironmentVariable=NVD_API_KEY)
+          fi
+          mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress \
+            org.owasp:dependency-check-maven:12.2.2:check "${dependency_check_args[@]}"
       - run: cd frontend && npm ci && npm audit --audit-level=high
       - run: python scripts/security_audit.py
 

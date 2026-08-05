@@ -32,6 +32,7 @@
 | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
 | Tests | `docs/development/TESTING.md`, `Makefile`, `scripts/test.sh` |
+| Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
 | Betrieb/Recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
 | HTTP-Vertrag | `contracts/api-contract.json` |
@@ -185,6 +186,12 @@ make build         # Spring-Paket plus Frontend-Build
 make package-release
 ```
 
+Vor `make validate` beziehungsweise einem direkten `scripts/test.sh`-Lauf wird
+die kleine, fest versionierte Python-Testsuite einmalig mit
+`python3 -m pip install -r requirements-ci.txt` installiert. Die CI- und
+Release-Workflows tun dies nach `actions/setup-python` explizit; gehostete
+Python-Runtimes bringen `pytest` nicht verlässlich mit.
+
 Agenten-Helfer für wiederkehrende Bestandsaufnahme und Prüfauswahl:
 
 ```bash
@@ -205,6 +212,20 @@ liegen entsprechend in `scripts/check_documentation.py`; `check-docs.sh` ist nur
 der tokenarme Einstieg. Erfolgreiche Gates liefern eine Statuszeile, Fehler die
 letzten 200 Logzeilen. `AGENT_GATE_VERBOSE=1` schaltet die vollständige Ausgabe
 für gezielte Diagnose ein.
+
+Lang laufende Gates, Downloads und Container-Builds bleiben in ihrer bestehenden
+Prozess-Session aktiv. Zur Tokenschonung nicht eng pollen oder wiederholt
+Vollausgaben anfordern, sondern bis zum Abschluss beziehungsweise bis zu einem
+handlungsrelevanten Fehler warten und erst dann mit dem Ergebnis weiterarbeiten.
+Fehlende Zwischenausgabe ist kein Grund, denselben Prozess erneut zu starten.
+
+Der OWASP-Dependency-Check lädt bei leerem Cache mehrere hunderttausend
+NVD-Datensätze. Einen keylosen Cold Start nicht lokal bis zum Ende babysitten:
+Nach dem erfolgreichen Verbindungs- und Konfigurationsnachweis den lokalen Lauf
+beenden und den verpflichtenden vollständigen Scan im GitHub-Security-Workflow
+mit Maven-Cache sowie vorzugsweise dem optionalen Secret `NVD_API_KEY` ausführen.
+Das Secret wird nur bei nicht leerem Wert als Umgebungsvariable an den Scanner
+übergeben; der Cache beschleunigt den Lauf, ersetzt aber niemals das Scan-Gate.
 
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,

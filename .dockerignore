@@ -24,7 +24,6 @@
 **/build
 **/dist
 frontend/src/locales/generated
-artifacts
 
 # Runtime data and credentials
 infrastructure/data

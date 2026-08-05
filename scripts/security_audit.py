@@ -56,4 +56,9 @@ nginx=read('infrastructure/nginx/default.conf')
 for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Policy'):
     require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
 require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
+security_workflow=read('.github/workflows/security.yml')
+require('org.owasp:dependency-check-maven:12.2.2:check' in security_workflow,
+        'OWASP dependency-check must use the reviewed pinned version')
+require('nvdApiKeyEnvironmentVariable=NVD_API_KEY' in security_workflow,
+        'OWASP dependency-check must receive its optional NVD key through an environment variable')
 print('[security] OK: Spring security, secret handling, containers and artifact boundaries')

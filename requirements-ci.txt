@@ -1,0 +1,2 @@
+# Python dependencies used only by repository and recovery tests.
+pytest==9.0.2

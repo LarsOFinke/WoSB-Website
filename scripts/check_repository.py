@@ -32,6 +32,15 @@ for service in ('postgres:','api:','gateway:'): require(f'  {service}' in compos
 for forbidden in ('secure-api:','migrate:','seed:','FASTAPI_INTERNAL_URL','AUTO_SEED','RBF_SECURE_API_IMAGE'): require(forbidden not in compose,f'legacy compose token remains: {forbidden}')
 require('spring-boot-starter-flyway' in text('spring-api/pom.xml') and 'mapstruct' in text('spring-api/pom.xml'),'Flyway and MapStruct are mandatory')
 require('ddl-auto: validate' in text('spring-api/src/main/resources/application.yml'),'Hibernate must validate rather than mutate schema')
+ci_requirements=text('requirements-ci.txt')
+require(re.fullmatch(r'# Python dependencies used only by repository and recovery tests\.\npytest==\d+\.\d+\.\d+\n',ci_requirements) is not None,
+        'CI Python test dependencies must remain minimal and exactly pinned')
+for workflow_path in ('.github/workflows/ci.yml','.github/workflows/release.yml'):
+    workflow=text(workflow_path)
+    require('actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1' in workflow,
+            f'{workflow_path} must configure the pinned Python runtime action')
+    require('python -m pip install --disable-pip-version-check -r requirements-ci.txt' in workflow,
+            f'{workflow_path} must install the pinned Python test dependencies')
 
 allowed_legacy={
     ROOT/'infrastructure/scripts/migration/verify-alembic-head.sql',

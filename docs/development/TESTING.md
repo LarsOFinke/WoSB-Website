@@ -3,8 +3,13 @@
 Run the complete gate with:
 
 ```bash
+python3 -m pip install -r requirements-ci.txt
 make validate
 ```
+
+The pinned Python test dependency is installed explicitly because hosted Python
+runtimes do not include `pytest`. Repository audit scripts themselves continue to
+use only the Python standard library.
 
 It includes:
 

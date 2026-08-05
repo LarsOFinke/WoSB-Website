@@ -21,6 +21,9 @@ Danach nur die vom Auftrag betroffenen Primärdateien, deren direkte Aufrufer,
 Tests, Konfiguration und Dokumentation lesen. Keine pauschale Volltextanalyse des
 gesamten Repositorys beginnen, wenn der Cache bereits den Einstieg nennt.
 
+Für einen ausdrücklich breiten Qualitäts- und Strukturputz gilt der tokenarme
+Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
+
 ## Feste Systemgrenzen
 
 - Laufzeit: `Browser -> NGINX -> Spring Boot -> PostgreSQL`.
@@ -117,6 +120,12 @@ bash .agents/scripts/check-infrastructure.sh
 bash .agents/scripts/check-docs.sh
 bash .agents/scripts/check-all.sh
 ```
+
+Lang laufende Befehle in ihrer bestehenden Prozess-Session weiterlaufen lassen.
+Nicht durch enges Polling oder wiederholte Vollausgaben Tokens verbrauchen;
+stattdessen auf Abschluss oder eine handlungsrelevante Fehlermeldung warten und
+erst mit diesem Ergebnis weiterarbeiten. Einen noch laufenden Prozess nicht nur
+wegen ausbleibender neuer Ausgabe neu starten.
 
 ## Cache aktualisieren
 
