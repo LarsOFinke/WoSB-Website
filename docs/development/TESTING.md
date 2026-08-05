@@ -28,6 +28,21 @@ It includes:
 
 A release is not production-ready when Maven, frontend build, PostgreSQL integration tests or container builds were skipped. Local quick mode may skip unavailable toolchains, but CI may not.
 
+## NVD API key for the security workflow
+
+The OWASP dependency scan accepts the optional repository secret
+`NVD_API_KEY`. Set or rotate it from an authenticated local GitHub CLI without
+placing the value in shell history, source files or workflow arguments:
+
+```bash
+gh secret set NVD_API_KEY
+```
+
+The command reads the value interactively. The workflow passes a non-empty key
+through the plugin's environment-variable integration; pull requests without
+secret access use the slower public NVD path. Never print the key to verify it.
+GitHub exposes only secret metadata, not the stored value.
+
 ## Scope-based development checks
 
 Use focused feedback during implementation, then run the required release gate:

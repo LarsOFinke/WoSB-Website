@@ -19,6 +19,11 @@ Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
 - `scripts/backup/`: koordinierte PostgreSQL-/Datei-/Recovery-Sicherungen.
 - `scripts/migration/`: einmaliges, fail-closed Gate für Bestandsdatenbanken.
 
+Die Alpine-basierten API- und Gateway-Runtimeimages wenden beim Build mit
+`apk upgrade --no-cache` die Sicherheitsupdates des gebundenen stabilen
+Alpine-Zweigs an. Der Security-Workflow scannt danach beide fertigen Images mit
+Trivy und bricht bei reparierbaren HIGH-/CRITICAL-Funden ab.
+
 Produktionsreleases laufen unter `/srv/rbf/releases/<version>`, gemeinsam genutzte Konfiguration und Daten unter `/srv/rbf/shared`, und `/srv/rbf/current` zeigt atomar auf das aktive Release.
 
 Nach einem fehlgeschlagenen Versuch kann derselbe Versionsstand erneut installiert

@@ -227,6 +227,13 @@ mit Maven-Cache sowie vorzugsweise dem optionalen Secret `NVD_API_KEY` ausführe
 Das Secret wird nur bei nicht leerem Wert als Umgebungsvariable an den Scanner
 übergeben; der Cache beschleunigt den Lauf, ersetzt aber niemals das Scan-Gate.
 
+Trivy prüft API und Gateway in aufeinanderfolgenden fail-closed Schritten. Ein
+Fund im API-Image verhindert daher den nachfolgenden Gateway-Schritt. Nach einem
+Container-Sicherheitsfix lokal immer beide fertig gebauten Images separat mit
+demselben Trivy-Cache scannen; der Java-Scan lädt beim ersten Lauf eine große
+zusätzliche Datenbank. Die Runtime-Dockerfiles müssen vor dem Wechsel zum
+unprivilegierten Benutzer `apk upgrade --no-cache` ausführen.
+
 `scripts/test.sh full` führt statische Repository-, Security-, Spring- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
 `mvn verify`, Frontend-Tests/Build/Chromium-Smokes und abschließend `--strict-tree`

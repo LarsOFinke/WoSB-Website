@@ -5,8 +5,9 @@ RUN mvn --batch-mode --no-transfer-progress dependency:go-offline
 COPY src ./src
 RUN mvn --batch-mode --no-transfer-progress clean package -DskipTests
 
-FROM eclipse-temurin:21.0.8_9-jre-alpine
-RUN addgroup -S rbf && adduser -S -G rbf -u 10001 rbf
+FROM eclipse-temurin:21-jre-alpine
+RUN apk upgrade --no-cache \
+    && addgroup -S rbf && adduser -S -G rbf -u 10001 rbf
 WORKDIR /app
 COPY --from=build --chown=rbf:rbf /workspace/target/rbf-api-*.jar /app/application.jar
 USER 10001:10001

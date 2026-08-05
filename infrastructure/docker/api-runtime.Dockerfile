@@ -1,5 +1,6 @@
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \
+RUN apk upgrade --no-cache \
+    && addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \
     && mkdir -p /app /var/lib/rbf/uploads /var/lib/rbf/control \
     && chown -R rbf:rbf /app /var/lib/rbf
 WORKDIR /app

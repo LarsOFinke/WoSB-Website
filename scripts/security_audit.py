@@ -56,9 +56,19 @@ nginx=read('infrastructure/nginx/default.conf')
 for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Policy'):
     require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
 require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
+pom=read('spring-api/pom.xml')
+require('<postgresql.version>42.7.12</postgresql.version>' in pom,
+        'PostgreSQL JDBC must retain the reviewed security update')
+for dockerfile in ('spring-api/Dockerfile','infrastructure/docker/api-runtime.Dockerfile',
+                   'infrastructure/docker/frontend.Dockerfile','infrastructure/docker/gateway-runtime.Dockerfile'):
+    require('apk upgrade --no-cache' in read(dockerfile),
+            f'{dockerfile} must apply Alpine security updates during the image build')
 security_workflow=read('.github/workflows/security.yml')
 require('org.owasp:dependency-check-maven:12.2.2:check' in security_workflow,
         'OWASP dependency-check must use the reviewed pinned version')
+require('NVD_API_KEY: ${{ secrets.NVD_API_KEY }}' in security_workflow and
+        'if [[ -n "$NVD_API_KEY" ]]' in security_workflow,
+        'OWASP dependency-check must consume only a non-empty GitHub NVD secret')
 require('nvdApiKeyEnvironmentVariable=NVD_API_KEY' in security_workflow,
         'OWASP dependency-check must receive its optional NVD key through an environment variable')
 print('[security] OK: Spring security, secret handling, containers and artifact boundaries')
