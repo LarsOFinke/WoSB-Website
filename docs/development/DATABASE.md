@@ -10,6 +10,11 @@ PostgreSQL is the only production database and Flyway is the sole schema owner.
 - Prefer additive expand/contract changes; delay destructive cleanup.
 - Add indexes for filter/sort paths and verify them with realistic query plans.
 - Reference-data changes belong to versioned Spring seed resources and must preserve administrative overrides deliberately.
+- Startup seeding repairs system-owned roles and the official fleet while preserving
+  marked category, option and ship overrides. An explicit seed restore discards
+  those overrides. After seeding, bootstrap-admin initialization idempotently
+  ensures an active `fleet_admiral` membership in the official fleet so fleet and
+  squad administration do not depend on manual database repair.
 
 ## Modular baseline without history rewrites
 

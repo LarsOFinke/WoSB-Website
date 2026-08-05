@@ -16,7 +16,9 @@ It includes:
 1. Spring unit and integration tests with PostgreSQL Testcontainers.
 2. Flyway empty-database and supported-upgrade tests.
 3. Spring Security, session, CSRF and authorization tests.
-4. API operation coverage for every currently generated contract operation.
+4. API operation coverage for every currently generated contract operation. The
+   repository gate regenerates the Spring route adapters in memory and reports a
+   bounded per-file diff when contract, controller or operation catalog drift.
 5. MapStruct compilation with unmapped targets as errors.
 6. Build-calculation golden cases.
 7. Query batching/N+1 invariants and list-filter tests.
@@ -89,6 +91,16 @@ mvn -f spring-api/pom.xml -Dtest=ApplicationIntegrationTest test
 Mockito is loaded as an explicit JVM startup agent. Maven resolves the agent path
 through `maven-dependency-plugin`, so default and overridden local repositories
 use the same configuration and tests never rely on dynamic self-attachment.
+
+Generated API route drift can be diagnosed without starting Docker or Spring:
+
+```bash
+python3 infrastructure/scripts/generation/generate_spring_routes.py --check
+```
+
+The check covers every contract operation and names the first affected files.
+Regenerate only after reviewing a contract change by running the same command
+without `--check`.
 
 The Playwright suite starts Vite and replaces only `/api/` requests with
 deterministic browser fixtures. It verifies browser-side navigation, cookie-setting

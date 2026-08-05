@@ -348,19 +348,20 @@ public class SquadService {
                         "now", now(), "squadId", squadId));
     }
     private void ensureUniqueName(long fleetId, String name, Long excluded) {
+        String exclusion = excluded == null ? "" : " and id<>:excluded";
         long count = jdbc.count("""
                 select count(*) from squads where fleet_id=:fleetId and lower(name)=lower(:name)
-                  and (:excluded is null or id<>:excluded)
-                """, SqlParameters.ofNullable("fleetId", fleetId, "name", name, "excluded", excluded));
+                """ + exclusion, SqlParameters.ofNullable("fleetId", fleetId, "name", name, "excluded", excluded));
         if (count > 0) throw bad("A squad with this name already exists.");
     }
     private String uniqueSlug(long fleetId, String name, Long excluded) {
         String base = slugify(name), candidate = base;
+        String exclusion = excluded == null ? "" : " and id<>:excluded";
         for (int suffix = 2; suffix < 10000; suffix++) {
             long count = jdbc.count("""
                     select count(*) from squads where fleet_id=:fleetId and slug=:slug
-                      and (:excluded is null or id<>:excluded)
-                    """, SqlParameters.ofNullable("fleetId", fleetId, "slug", candidate, "excluded", excluded));
+                    """ + exclusion,
+                    SqlParameters.ofNullable("fleetId", fleetId, "slug", candidate, "excluded", excluded));
             if (count == 0) return candidate;
             candidate = base + "-" + suffix;
         }

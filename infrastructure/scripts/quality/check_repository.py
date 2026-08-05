@@ -88,6 +88,7 @@ subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_sp
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_build_stat_catalog.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_modular_flyway_baseline.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_api_reference.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_spring_routes.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:
     forbidden_names={'.env','.DS_Store'}

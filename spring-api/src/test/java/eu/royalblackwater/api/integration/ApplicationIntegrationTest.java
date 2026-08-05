@@ -2,6 +2,8 @@ package eu.royalblackwater.api.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import eu.royalblackwater.api.account.BootstrapAdministratorInitializer;
+import eu.royalblackwater.api.masterdata.ReferenceDataSeeder;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
 import eu.royalblackwater.api.security.PasswordHasher;
 import java.net.URI;
@@ -48,6 +50,12 @@ class ApplicationIntegrationTest {
     @Autowired
     PasswordHasher passwords;
 
+    @Autowired
+    BootstrapAdministratorInitializer bootstrapAdministrator;
+
+    @Autowired
+    ReferenceDataSeeder referenceDataSeeder;
+
     @LocalServerPort
     int port;
 
@@ -67,6 +75,82 @@ class ApplicationIntegrationTest {
     }
 
     @Test
+    void repairsBootstrapFleetLeadershipAndKeepsInitializationIdempotent() {
+        Map<String, Object> membership = bootstrapMembership();
+        assertThat(membership).containsEntry("status", "active").containsEntry("role", "fleet_admiral")
+                .containsEntry("slug", "royal-blackwater-fleet")
+                .containsEntry("can_manage_fleet", true).containsEntry("can_manage_members", true);
+
+        jdbc.update("""
+                update fleet_memberships set status='inactive',fleet_role_id=(select id from fleet_roles where code='member')
+                where id=:id
+                """, Map.of("id", ((Number) membership.get("id")).longValue()));
+        bootstrapAdministrator.initialize();
+        bootstrapAdministrator.initialize();
+
+        assertThat(bootstrapMembership()).containsEntry("status", "active").containsEntry("role", "fleet_admiral");
+        assertThat(jdbc.count("""
+                select count(*) from fleet_memberships m join users u on u.id=m.user_id
+                where u.is_bootstrap_admin=true
+                """, Map.of())).isEqualTo(1);
+    }
+
+    @Test
+    void preservesMasterDataOverridesDuringStartupSyncAndRestoresThemExplicitly() throws Exception {
+        Map<String, Object> category = jdbc.required("""
+                select id,label from build_item_categories where seed_key is not null order by id limit 1
+                """, Map.of());
+        long categoryId = ((Number) category.get("id")).longValue();
+        String seedLabel = String.valueOf(category.get("label"));
+        long categories = jdbc.count("select count(*) from build_item_categories", Map.of());
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        assertStatus(put("/api/admin/master-data/categories/" + categoryId,
+                "{\"label\":\"Local integration override\",\"sort_order\":1,\"is_active\":true}",
+                administrator), 200, "PUT", "/api/admin/master-data/categories/{category_id}");
+        jdbc.update("update fleet_roles set can_manage_fleet=false where code='fleet_admiral'", Map.of());
+
+        referenceDataSeeder.synchronize(false);
+        assertThat(jdbc.required("select label,is_seed_overridden from build_item_categories where id=:id",
+                Map.of("id", categoryId))).containsEntry("label", "Local integration override")
+                .containsEntry("is_seed_overridden", true);
+        assertThat(jdbc.required("select can_manage_fleet from fleet_roles where code='fleet_admiral'", Map.of()))
+                .containsEntry("can_manage_fleet", true);
+        assertThat(jdbc.count("select count(*) from build_item_categories", Map.of())).isEqualTo(categories);
+
+        assertStatus(post("/api/admin/master-data/categories/" + categoryId + "/restore-seed", "",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                200, "POST", "/api/admin/master-data/categories/{category_id}/restore-seed");
+        assertThat(jdbc.required("select label,is_seed_overridden from build_item_categories where id=:id",
+                Map.of("id", categoryId))).containsEntry("label", seedLabel).containsEntry("is_seed_overridden", false);
+        assertThat(jdbc.count("select count(*) from build_item_categories", Map.of())).isEqualTo(categories);
+    }
+
+    @Test
+    void bootstrapFleetManagerCanCreateAndOperateASquadOverHttp() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        long membershipId = ((Number) bootstrapMembership().get("id")).longValue();
+        String squadName = "Integration Squadron " + System.nanoTime();
+        HttpResponse<String> created = post("/api/squads", "{\"name\":\"" + squadName
+                        + "\",\"leader_membership_id\":" + membershipId + ",\"max_members\":8}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(created, 201, "POST", "/api/squads");
+        long squadId = jsonId(created.body());
+
+        assertStatus(get("/api/squads/" + squadId, administrator.sessionCookie()),
+                200, "GET", "/api/squads/{squad_id}");
+        assertStatus(get("/api/squads/mine", administrator.sessionCookie()), 200, "GET", "/api/squads/mine");
+        HttpResponse<String> roster = get("/api/squads/roster", administrator.sessionCookie());
+        assertStatus(roster, 200, "GET", "/api/squads/roster");
+        assertThat(roster.body()).contains("\"fleet_membership_id\":" + membershipId);
+
+        HttpResponse<String> archived = delete("/api/squads/" + squadId,
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(archived, 204, "DELETE", "/api/squads/{squad_id}");
+        assertThat(jdbc.count("select count(*) from squads where id=:id and is_active=false", Map.of("id", squadId)))
+                .isEqualTo(1);
+    }
+
+    @Test
     void exposesHealthAndReadinessButProtectsMemberApis() throws Exception {
         HttpResponse<String> health = get("/api/health");
         HttpResponse<String> readiness = get("/api/health/ready");
@@ -82,7 +166,9 @@ class ApplicationIntegrationTest {
     @Test
     void exposesRegistrationAndOfficialFleetWithoutAuthentication() throws Exception {
         HttpResponse<String> fleet = get("/api/fleets/public/official");
-        assertThat(fleet.statusCode()).isIn(200, 404);
+        assertStatus(fleet, 200, "GET", "/api/fleets/public/official");
+        assertThat(fleet.body()).contains("\"slug\":\"royal-blackwater-fleet\"")
+                .contains("\"role\":\"fleet_admiral\"");
 
         HttpResponse<String> csrfBootstrap = get("/api/auth/me");
         String setCookie = csrfBootstrap.headers().firstValue("set-cookie").orElseThrow();
@@ -151,17 +237,17 @@ class ApplicationIntegrationTest {
                 "/api/admin/audit-logs?from_date=2030-01-01&to_date=2030-02-01",
                 "/api/admin/logs/security-dashboard?from_date=2030-01-01&to_date=2030-02-01"
         }) {
-            assertThat(get(path, administrator.sessionCookie()).statusCode()).as(path).isEqualTo(200);
+            assertStatus(get(path, administrator.sessionCookie()), 200, "GET", path);
         }
 
         HttpResponse<String> calendar = get(
                 "/api/calendar/events?start=2030-01-01T00:00:00.000Z&end=2030-02-01T00:00:00.000Z",
                 administrator.sessionCookie());
-        assertThat(calendar.statusCode()).isEqualTo(200);
+        assertStatus(calendar, 200, "GET", "/api/calendar/events");
 
         HttpResponse<String> invalidCalendar = get(
                 "/api/calendar/events?start=not-a-timestamp", administrator.sessionCookie());
-        assertThat(invalidCalendar.statusCode()).isEqualTo(400);
+        assertStatus(invalidCalendar, 400, "GET", "/api/calendar/events?start=not-a-timestamp");
         assertThat(invalidCalendar.body()).doesNotContain("Exception", "stackTrace", "org.springframework");
 
         HttpResponse<String> created = post(
@@ -196,7 +282,7 @@ class ApplicationIntegrationTest {
                 "/api/admin/logs/security-dashboard?sort=threat&limit=100",
                 "/api/admin/ip-blocks/summary"
         }) {
-            assertThat(get(path, administrator.sessionCookie()).statusCode()).as(path).isEqualTo(200);
+            assertStatus(get(path, administrator.sessionCookie()), 200, "GET", path);
         }
     }
 
@@ -241,6 +327,21 @@ class ApplicationIntegrationTest {
         return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    private HttpResponse<String> delete(String path, String cookie, String csrf, String origin) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path))
+                .header("Origin", origin).DELETE();
+        if (cookie != null) request.header("Cookie", cookie);
+        if (csrf != null) request.header("X-XSRF-TOKEN", csrf);
+        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> put(String path, String body, SessionCookies session) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(localOrigin() + path)).header("Content-Type", "application/json")
+                .header("Origin", localOrigin()).header("Cookie", session.cookieHeader())
+                .header("X-XSRF-TOKEN", session.csrfToken()).PUT(HttpRequest.BodyPublishers.ofString(body)).build();
+        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     private SessionCookies login(String username, String password) throws Exception {
         HttpResponse<String> login = post("/api/auth/login",
                 "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}",
@@ -278,6 +379,31 @@ class ApplicationIntegrationTest {
                 .map(matcher -> matcher.group(1))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Missing cookie " + name));
+    }
+
+    private static void assertStatus(
+            HttpResponse<String> response, int expectedStatus, String method, String path) {
+        String body = response.body() == null ? "" : response.body().replaceAll("[\\r\\n\\t]+", " ");
+        String excerpt = body.substring(0, Math.min(body.length(), 500));
+        assertThat(response.statusCode())
+                .as("%s %s expected status %s but received %s; response=%s",
+                        method, path, expectedStatus, response.statusCode(), excerpt)
+                .isEqualTo(expectedStatus);
+    }
+
+    private Map<String, Object> bootstrapMembership() {
+        return jdbc.required("""
+                select m.id,m.status,r.code role,r.can_manage_fleet,r.can_manage_members,f.slug
+                from users u join fleet_memberships m on m.user_id=u.id
+                join fleet_roles r on r.id=m.fleet_role_id join fleets f on f.id=m.fleet_id
+                where u.is_bootstrap_admin=true
+                """, Map.of());
+    }
+
+    private static long jsonId(String body) {
+        var matcher = Pattern.compile("\\\"id\\\":(\\d+)").matcher(body);
+        if (!matcher.find()) throw new AssertionError("Response does not contain a numeric id: " + body);
+        return Long.parseLong(matcher.group(1));
     }
 
     private String localOrigin() {

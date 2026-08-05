@@ -206,10 +206,11 @@ public class FleetCommandService {
     }
 
     private void ensureUnique(String name, String slug, Long excludedId) {
+        String exclusion = excludedId == null ? "" : " and id<>:id";
         long duplicates = jdbc.count("""
                 select count(*) from fleets
-                where (lower(name)=lower(:name) or slug=:slug) and (:id is null or id<>:id)
-                """, SqlParameters.ofNullable("name", name, "slug", slug, "id", excludedId));
+                where (lower(name)=lower(:name) or slug=:slug)
+                """ + exclusion, SqlParameters.ofNullable("name", name, "slug", slug, "id", excludedId));
         if (duplicates > 0) throw bad("Fleet name or slug already exists.");
     }
 
