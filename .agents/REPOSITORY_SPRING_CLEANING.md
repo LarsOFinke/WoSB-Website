@@ -147,6 +147,12 @@ Das Setzen dieses GitHub-Secrets erfordert keinen Repository-Push: anschließend
 den Security-Workflow per `gh workflow run security.yml` neu starten oder den
 fehlgeschlagenen Lauf wiederholen.
 
+Commits bilden kleine, geprüfte Aufräumschritte; Pushes bilden bewusst gebündelte
+CI-Grenzen. Da jeder Push nach `main` den NVD-Dependency-Check anstößt, nicht jeden
+lokalen Commit sofort pushen. Vor dem Push prüfen, ob der Stand als gemeinsame
+CI-Einheit sinnvoll abgeschlossen ist und der externe Scan wirklich erneut
+benötigt wird.
+
 Für jeden reparierten CI-Vertrag eine kleine statische oder dynamische
 Regressionprüfung ergänzen. Workflow-Syntax prüfen und den konkreten vormals
 fehlgeschlagenen Befehl lokal reproduzieren, soweit die Umgebung es erlaubt.

@@ -160,6 +160,10 @@ Nicht von Hand bearbeiten oder versionieren: `frontend/src/locales/generated/`,
   ausnahmebezogener Ursache protokolliert; keine Request-Payloads oder Secrets in
   Logs ergänzen. Sicherheitsablehnungen bleiben separat als `security_401` bzw.
   `security_403` sichtbar.
+- Bei 500ern aus Kalender oder Staff-Datumsfiltern zuerst auf
+  `MethodArgumentTypeMismatchException` prüfen. OpenAPI-`date` und `date-time`
+  müssen im Routengenerator explizit als ISO gebunden werden; Browser-UTC-Werte
+  tragen `Z`. Transport-Bindungsfehler sind HTTP 400, keine Serverfehler.
 - Der Release-Ablauf hält PostgreSQL-Daten unter dem gemeinsamen Installationsroot,
   erstellt vor Updates koordinierte Backups, lässt Flyway migrieren und stellt bei
   fehlgeschlagener Aktivierung Release und Backup wieder her. Niemals Volumes oder
@@ -231,6 +235,13 @@ Commit oder Trigger-Push. Danach `gh workflow run security.yml` auslösen oder
 einen bekannten fehlgeschlagenen Lauf mit `gh run rerun <run-id> --failed`
 wiederholen. Der neue Lauf liest den aktuell gespeicherten Secret-Wert; niemals
 versuchen, den Schlüssel zur Kontrolle auszugeben.
+
+Der Security-Workflow läuft bei jedem Push nach `main` und beansprucht dabei den
+NVD-Dienst. Deshalb Änderungen lokal in sinnvollen, geprüften Commits sichern,
+Pushes aber als separate bewusste Aktion bündeln. Nicht nach jedem kleinen Commit
+pushen und keinen Push nur als NVD-Key- oder Cache-Test erzeugen; bei gezieltem
+Bedarf den vorhandenen Workflow manuell starten beziehungsweise fehlgeschlagene
+Jobs erneut ausführen.
 
 Trivy prüft API und Gateway in aufeinanderfolgenden fail-closed Schritten. Ein
 Fund im API-Image verhindert daher den nachfolgenden Gateway-Schritt. Nach einem

@@ -127,6 +127,12 @@ stattdessen auf Abschluss oder eine handlungsrelevante Fehlermeldung warten und
 erst mit diesem Ergebnis weiterarbeiten. Einen noch laufenden Prozess nicht nur
 wegen ausbleibender neuer Ausgabe neu starten.
 
+Lokale, fachlich abgeschlossene Änderungen dürfen auf ausdrücklichen Wunsch als
+kleine nachvollziehbare Einheiten committed werden. Commit und Push bleiben zwei
+getrennte Entscheidungen: Pushes bewusst bündeln und nur ausdrücklich ausführen,
+weil ein Push nach `main` externe CI einschließlich des aufwendigen NVD-
+Dependency-Checks startet. Ein lokaler Commit benötigt keinen sofortigen Push.
+
 ## Cache aktualisieren
 
 `PROJECT_CACHE.md` und diese Datei im selben Auftrag aktualisieren, wenn sich
