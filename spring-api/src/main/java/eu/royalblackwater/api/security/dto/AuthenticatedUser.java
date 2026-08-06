@@ -1,4 +1,4 @@
-package eu.royalblackwater.api.security.model;
+package eu.royalblackwater.api.security.dto;
 
 import java.security.Principal;
 import java.util.Locale;

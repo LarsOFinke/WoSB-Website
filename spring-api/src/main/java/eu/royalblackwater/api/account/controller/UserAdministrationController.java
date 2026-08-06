@@ -11,8 +11,6 @@ import eu.royalblackwater.api.contract.api.AdminModeratorsApi;
 import eu.royalblackwater.api.contract.api.AdminUsersApi;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import eu.royalblackwater.api.shared.web.RequestParameters;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +29,7 @@ public class UserAdministrationController extends ApiControllerSupport implement
     public ResponseEntity<ModeratorCreateResponse> adminCreateModerator(
             ModeratorCreate body
     ) {
-        return respond(users.createModerator(body(body,ModeratorCreate.class),CurrentUser.require()), 201);
+        return respond(users.createModerator(body,CurrentUser.require()), 201);
     }
 
     @Override
@@ -43,8 +41,8 @@ public class UserAdministrationController extends ApiControllerSupport implement
             long limit,
             long offset
     ) {
-        Map<String, Object> parameters = RequestParameters.of("search", search, "role", role, "status", status, "fleet_id", fleetId, "limit", limit, "offset", offset);
-        return respond(users.list(UserAdministrationFilter.from(parameters)), 200);
+        return respond(users.list(UserAdministrationFilter.from(
+                search, role, status, fleetId, limit, offset)), 200);
     }
 
     @Override
@@ -54,6 +52,6 @@ public class UserAdministrationController extends ApiControllerSupport implement
     ) {
 
         return respond(users.update(
-                            userId,body(body,UserAdministrationUpdate.class),CurrentUser.require()), 200);
+                            userId,body,CurrentUser.require()), 200);
     }
 }

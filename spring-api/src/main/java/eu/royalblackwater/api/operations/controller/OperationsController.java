@@ -14,7 +14,7 @@ import eu.royalblackwater.api.contract.api.AdminBackupsApi;
 import eu.royalblackwater.api.contract.api.AdminSystemApi;
 import eu.royalblackwater.api.operations.service.BackupControlService;
 import eu.royalblackwater.api.operations.service.SystemUpdateService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;
@@ -100,7 +100,7 @@ public class OperationsController extends ApiControllerSupport implements AdminB
 
     @Override
     public ResponseEntity<BackupControlStatus> adminBackupStatus() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(backups.status(), 200);
     }
 
@@ -112,7 +112,7 @@ public class OperationsController extends ApiControllerSupport implements AdminB
 
     @Override
     public ResponseEntity<SystemUpdateStatus> adminSystemUpdateStatus() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(updates.status(), 200);
     }
 

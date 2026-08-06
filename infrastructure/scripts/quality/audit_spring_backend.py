@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[3]
 JAVA = ROOT / "spring-api/src/main/java/eu/royalblackwater/api"
 CONTRACT = ROOT / "contracts/api-contract.json"
 API_PACKAGE = JAVA / "contract/api"
-LAYER_NAMES = {"controller", "filter", "service", "mapper", "dto", "entity", "repository", "model"}
+LAYER_NAMES = {"controller", "filter", "service", "mapper", "dto", "entity", "repository"}
 INFRASTRUCTURE_MODULES = {"config", "contract", "dto", "persistence", "shared"}
 
 
@@ -173,8 +173,11 @@ for path in JAVA.rglob("*.java"):
             require(not forbidden, f"controller bypasses service layer in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
             require("ResponseEntity<?>" not in source,
                     f"controller exposes an untyped response: {path.relative_to(ROOT)}")
-            require("Object request = body" not in source and "body(request," not in source,
+            require("Object request = body" not in source and "body(request," not in source
+                    and re.search(r"\bbody\s*\(\s*body\s*,", source) is None,
                     f"controller degrades a typed request DTO to Object: {path.relative_to(ROOT)}")
+            require("Map<String, Object>" not in source,
+                    f"controller rebuilds typed request parameters as a raw map: {path.relative_to(ROOT)}")
             require(not re.search(r"\bnew\s+[A-Z][A-Za-z0-9_]*(?:Response|Summary|Details|Result|View|Dto)\s*\(", source),
                     f"controller constructs an API representation outside a mapper: {path.relative_to(ROOT)}")
             require(not re.search(r"(?i)\b(select|insert\s+into|update\s+\w+|delete\s+from)\b", source),
@@ -210,7 +213,14 @@ for path in JAVA.rglob("*.java"):
             require(not forbidden, f"repository depends on upper layer in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
 
 # Domain code lives in explicit layer packages; only infrastructure packages may keep flat classes.
+empty_source_directories = sorted(path.relative_to(ROOT) for path in JAVA.rglob("*")
+                                  if path.is_dir() and not any(path.iterdir()))
+require(not empty_source_directories,
+        "empty Java source directories remain: " + ", ".join(map(str, empty_source_directories)))
+
 for module in sorted(path for path in JAVA.iterdir() if path.is_dir()):
+    require(not (module / "model").exists(),
+            f"ambiguous model package remains in {module.name}; use dto/entity/service/repository ownership")
     if module.name in INFRASTRUCTURE_MODULES:
         continue
     direct_java = sorted(module.glob("*.java"))
@@ -234,6 +244,20 @@ for path in dto_files:
 require(not list((JAVA / "contract").glob("*.java")),
         "legacy transport DTOs remain in the contract package")
 
+# Module repositories must have an application consumer; component scanning alone is not useful work.
+all_sources = {path: read(path) for path in JAVA.rglob("*.java")}
+all_java_source = "\n".join(all_sources.values())
+for path, source in all_sources.items():
+    relative = path.relative_to(JAVA)
+    if len(relative.parts) < 3 or relative.parts[1] != "repository" or "queries" in relative.parts:
+        continue
+    declaration = re.search(r"\b(?:class|interface)\s+([A-Za-z_$][\w$]*)", source)
+    require(declaration is not None, f"repository has no top-level type: {path.relative_to(ROOT)}")
+    repository_name = declaration.group(1)
+    references = len(re.findall(rf"\b{re.escape(repository_name)}\b", all_java_source))
+    require(references > 1,
+            f"repository has no application consumer: {path.relative_to(ROOT)}")
+
 # The generic JDBC executor is infrastructure-only. Application code reaches it through module repositories.
 for path in JAVA.rglob("*.java"):
     if "import eu.royalblackwater.api.persistence.JdbcQueryService;" not in read(path):
@@ -243,7 +267,7 @@ for path in JAVA.rglob("*.java"):
     require(allowed, f"generic JDBC executor escapes repository boundary: {path.relative_to(ROOT)}")
 
 all_java = "\n".join(read(path) for path in JAVA.rglob("*.java"))
-for forbidden in ("FastApiProxy", "FASTAPI_INTERNAL_URL", "http://api:8000", "FetchType.EAGER"):
+for forbidden in ("FastApiProxy", "FASTAPI_INTERNAL_URL", "http://api:8000", "FetchType.EAGER", "RequestParameters"):
     require(forbidden not in all_java, f"forbidden migration/runtime token remains: {forbidden}")
 
 # Entity graphs may fetch one collection, but never multiple List bags.

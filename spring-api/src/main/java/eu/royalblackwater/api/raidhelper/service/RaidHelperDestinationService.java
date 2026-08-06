@@ -7,7 +7,7 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.raidhelper.mapper.RaidHelperDtoMapper;
 import eu.royalblackwater.api.raidhelper.repository.RaidHelperRepository;
 import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperDestinationQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

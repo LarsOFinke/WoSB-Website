@@ -9,7 +9,7 @@ import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.privacy.mapper.PrivacyDtoMapper;
 import eu.royalblackwater.api.privacy.repository.PrivacyDataRepository;
 import eu.royalblackwater.api.privacy.repository.queries.PrivacyAdministrationQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.security.SecureRandom;
 import java.time.Clock;

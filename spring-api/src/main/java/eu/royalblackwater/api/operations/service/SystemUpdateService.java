@@ -6,7 +6,7 @@ import eu.royalblackwater.api.operations.repository.ControlFileStore;
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.SystemUpdateRequestResult;
 import eu.royalblackwater.api.dto.SystemUpdateStatus;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

@@ -8,7 +8,6 @@ import eu.royalblackwater.api.contract.api.AdminRegistrationRequestsApi;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import java.time.LocalDate;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,7 +41,7 @@ public class RegistrationAdministrationController extends ApiControllerSupport i
             RegistrationDecision body
     ) {
 
-        return respond(registrations.approve(requestId,body(body,RegistrationDecision.class),
+        return respond(registrations.approve(requestId,body,
                                     CurrentUser.require()), 200);
     }
 
@@ -52,12 +51,7 @@ public class RegistrationAdministrationController extends ApiControllerSupport i
             RegistrationDecision body
     ) {
 
-        return respond(registrations.reject(requestId,body(body,RegistrationDecision.class),
+        return respond(registrations.reject(requestId,body,
                                     CurrentUser.require()), 200);
-    }
-
-    private static LocalDate date(Map<String, Object> parameters, String name) {
-        Object value = parameters.get(name);
-        return value instanceof LocalDate date ? date : null;
     }
 }

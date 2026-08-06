@@ -1,4 +1,4 @@
-package eu.royalblackwater.api.builds.model;
+package eu.royalblackwater.api.builds.dto;
 
 import eu.royalblackwater.api.dto.ShipRead;
 import java.util.Map;

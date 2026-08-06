@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.core.io.Resource;
 import eu.royalblackwater.api.contract.api.FilesApi;
 import eu.royalblackwater.api.files.service.FileAssetService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;

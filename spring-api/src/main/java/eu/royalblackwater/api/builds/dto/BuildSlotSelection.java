@@ -1,4 +1,4 @@
-package eu.royalblackwater.api.builds.model;
+package eu.royalblackwater.api.builds.dto;
 
 public record BuildSlotSelection(
         String type,

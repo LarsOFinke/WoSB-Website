@@ -4,7 +4,7 @@ import eu.royalblackwater.api.dto.FleetMembershipUpdate;
 import eu.royalblackwater.api.fleet.dto.FleetMembershipTargetDto;
 import eu.royalblackwater.api.fleet.service.FleetAccessPolicy;
 import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

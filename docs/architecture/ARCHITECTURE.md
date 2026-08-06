@@ -32,7 +32,9 @@ response, or a controller bypasses the service layer.
 
 Domain services own authorization, transactions and audit semantics. Every domain is
 split into explicit `controller`, `filter`, `service`, `mapper`, `dto`, `entity` and
-`repository` packages as applicable. Services depend on module repositories rather
+`repository` packages as applicable. Generic `model` packages are intentionally
+forbidden: transition/value objects belong to the module `dto` package, persistence
+state to `entity`, and catalogs to their owning service or repository. Services depend on module repositories rather
 than the generic JDBC executor. Repository implementations own database access, and
 module-local `repository/queries` catalogs own SQL definitions; SQL literals are
 prohibited in services.

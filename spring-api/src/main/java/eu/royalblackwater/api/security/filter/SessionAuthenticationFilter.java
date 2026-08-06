@@ -2,7 +2,7 @@ package eu.royalblackwater.api.security.filter;
 
 import eu.royalblackwater.api.account.service.AuthService;
 import eu.royalblackwater.api.config.SessionProperties;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

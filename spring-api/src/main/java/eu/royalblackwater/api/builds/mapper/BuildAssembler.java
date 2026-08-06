@@ -1,15 +1,15 @@
 package eu.royalblackwater.api.builds.mapper;
 
-import eu.royalblackwater.api.builds.model.BuildAggregate;
-import eu.royalblackwater.api.builds.model.BuildCatalogOption;
-import eu.royalblackwater.api.builds.model.BuildFeatureSnapshot;
-import eu.royalblackwater.api.builds.model.BuildPageResult;
-import eu.royalblackwater.api.builds.model.BuildPayload;
-import eu.royalblackwater.api.builds.model.BuildShipSnapshot;
-import eu.royalblackwater.api.builds.model.BuildSlotSelection;
-import eu.royalblackwater.api.builds.model.BuildStatCatalog;
-import eu.royalblackwater.api.builds.model.BuildStoredSlot;
-import eu.royalblackwater.api.builds.model.UpgradeSlotAccess;
+import eu.royalblackwater.api.builds.dto.BuildAggregate;
+import eu.royalblackwater.api.builds.dto.BuildCatalogOption;
+import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildPageResult;
+import eu.royalblackwater.api.builds.dto.BuildPayload;
+import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
+import eu.royalblackwater.api.builds.service.BuildStatCatalog;
+import eu.royalblackwater.api.builds.dto.BuildStoredSlot;
+import eu.royalblackwater.api.builds.dto.UpgradeSlotAccess;
 import eu.royalblackwater.api.builds.repository.BuildCatalogRepository;
 import eu.royalblackwater.api.builds.service.BuildStatsService;
 import eu.royalblackwater.api.builds.service.UpgradeSlotService;

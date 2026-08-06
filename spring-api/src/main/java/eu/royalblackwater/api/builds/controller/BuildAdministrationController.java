@@ -10,7 +10,7 @@ import eu.royalblackwater.api.dto.BuildRoleCreate;
 import eu.royalblackwater.api.dto.BuildRoleUpdate;
 import eu.royalblackwater.api.contract.api.AdminBuildRolesApi;
 import eu.royalblackwater.api.contract.api.AdminBuildsApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class BuildAdministrationController extends ApiControllerSupport implemen
 
     @Override
     public ResponseEntity<List<BuildRoleRead>> adminListBuildRoles() {
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return respond(roles.list(), 200);
     }
 

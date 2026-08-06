@@ -6,7 +6,7 @@ import eu.royalblackwater.api.dto.PrivacyContactReceipt;
 import eu.royalblackwater.api.privacy.mapper.PrivacyDtoMapper;
 import eu.royalblackwater.api.privacy.repository.PrivacyDataRepository;
 import eu.royalblackwater.api.privacy.service.PrivacyService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;

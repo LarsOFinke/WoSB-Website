@@ -1,8 +1,8 @@
 package eu.royalblackwater.api.builds.repository;
 
-import eu.royalblackwater.api.builds.model.BuildCatalogOption;
-import eu.royalblackwater.api.builds.model.BuildFeatureSnapshot;
-import eu.royalblackwater.api.builds.model.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildCatalogOption;
+import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
 import eu.royalblackwater.api.dto.ShipRead;
 import eu.royalblackwater.api.dto.WeaponPerformanceRead;
 import eu.royalblackwater.api.persistence.JdbcQueryService;

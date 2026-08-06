@@ -1,6 +1,6 @@
 package eu.royalblackwater.api.builds.mapper;
 
-import eu.royalblackwater.api.builds.model.BuildStatDefinition;
+import eu.royalblackwater.api.builds.dto.BuildStatDefinition;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
 import eu.royalblackwater.api.dto.BuildRoleRead;
 import eu.royalblackwater.api.dto.BuildStatRow;

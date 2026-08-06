@@ -6,7 +6,7 @@ import eu.royalblackwater.api.account.mapper.AuthenticationDtoMapper;
 import eu.royalblackwater.api.account.repository.AuthSessionRepository;
 import eu.royalblackwater.api.account.repository.UserRepository;
 import eu.royalblackwater.api.config.SessionProperties;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.PasswordHasher;
 import eu.royalblackwater.api.security.service.SessionTokenService;
 import java.time.Clock;

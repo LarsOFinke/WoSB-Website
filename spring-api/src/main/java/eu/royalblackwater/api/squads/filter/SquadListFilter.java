@@ -1,14 +1,14 @@
 package eu.royalblackwater.api.squads.filter;
 
 import eu.royalblackwater.api.shared.filter.ListFilter;
-import java.util.Map;
 
 public record SquadListFilter(ListFilter page, Long fleetId, boolean includeInactive, boolean mineOnly) {
-    public static SquadListFilter from(Map<String, Object> parameters) {
+    public static SquadListFilter from(
+            String search, Long fleetId, boolean includeInactive, long limit, long offset) {
         return new SquadListFilter(
-                ListFilter.from(parameters, 100, 250),
-                ListFilter.optionalPositiveLong(parameters, "fleet_id"),
-                parameters.get("include_inactive") instanceof Boolean value && value,
+                ListFilter.of(search, limit, offset, 250),
+                ListFilter.optionalPositiveLong(fleetId, "fleet_id"),
+                includeInactive,
                 false);
     }
 

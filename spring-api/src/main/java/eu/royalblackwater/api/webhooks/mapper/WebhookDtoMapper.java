@@ -2,9 +2,11 @@ package eu.royalblackwater.api.webhooks.mapper;
 
 import eu.royalblackwater.api.dto.OutboundWebhookDeliveryDeleteResult;
 import eu.royalblackwater.api.dto.OutboundWebhookDeliveryRead;
+import eu.royalblackwater.api.dto.OutboundWebhookEventCatalogItem;
 import eu.royalblackwater.api.dto.OutboundWebhookRead;
 import eu.royalblackwater.api.dto.OutboundWebhookSummary;
 import eu.royalblackwater.api.shared.mapper.ContractConversionService;
+import eu.royalblackwater.api.webhooks.dto.WebhookEventDefinition;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +32,14 @@ public final class WebhookDtoMapper {
     public static OutboundWebhookDeliveryRead delivery(Map<String, Object> row,
             ContractConversionService contracts) {
         return contracts.convert(row, OutboundWebhookDeliveryRead.class);
+    }
+
+    public static List<OutboundWebhookEventCatalogItem> eventCatalog(List<WebhookEventDefinition> definitions) {
+        return definitions.stream()
+                .map(definition -> new OutboundWebhookEventCatalogItem(
+                        definition.defaultTemplate(), definition.description(),
+                        definition.group(), definition.key()))
+                .toList();
     }
 
     public static OutboundWebhookDeliveryDeleteResult deleted(long count) {

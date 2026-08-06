@@ -9,7 +9,7 @@ import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetRoleQueries;
 import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.persistence.SqlUpdate;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

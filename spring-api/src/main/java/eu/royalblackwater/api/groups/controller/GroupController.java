@@ -6,10 +6,9 @@ import eu.royalblackwater.api.dto.GroupCreate;
 import eu.royalblackwater.api.dto.GroupJoinRequest;
 import eu.royalblackwater.api.contract.api.GroupsApi;
 import eu.royalblackwater.api.groups.service.GroupService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +31,7 @@ public class GroupController extends ApiControllerSupport implements GroupsApi {
             Long maxShipRate
     ) {
 
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return respond(groups.list(
                             search, focus,
                             minShipRate, maxShipRate, null), 200);
@@ -61,7 +60,7 @@ public class GroupController extends ApiControllerSupport implements GroupsApi {
             long groupId
     ) {
 
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return respond(groups.get(groupId), 200);
     }
 
@@ -84,10 +83,5 @@ public class GroupController extends ApiControllerSupport implements GroupsApi {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(groups.join(
                             groupId, body, actor), 200);
-    }
-
-    private static Long nullableLong(Map<String, Object> parameters, String name) {
-        Object value = parameters.get(name);
-        return value instanceof Number number ? number.longValue() : null;
     }
 }

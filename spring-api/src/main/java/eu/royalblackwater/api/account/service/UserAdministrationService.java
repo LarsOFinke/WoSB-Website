@@ -9,7 +9,7 @@ import eu.royalblackwater.api.dto.ModeratorCreateResponse;
 import eu.royalblackwater.api.dto.UserAdministrationUpdate;
 import eu.royalblackwater.api.dto.UserRead;
 import eu.royalblackwater.api.persistence.RowValues;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.time.Clock;
 import java.time.LocalDateTime;

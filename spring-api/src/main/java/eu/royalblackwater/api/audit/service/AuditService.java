@@ -3,7 +3,7 @@ package eu.royalblackwater.api.audit.service;
 import eu.royalblackwater.api.audit.repository.AuditDataRepository;
 import eu.royalblackwater.api.audit.repository.queries.AuditQueries;
 import eu.royalblackwater.api.persistence.SqlParameters;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

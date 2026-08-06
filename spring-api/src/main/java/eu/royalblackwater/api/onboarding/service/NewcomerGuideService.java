@@ -12,7 +12,7 @@ import eu.royalblackwater.api.onboarding.repository.NewcomerGuideRepository;
 import eu.royalblackwater.api.onboarding.repository.queries.NewcomerGuideQueries;
 import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.persistence.SqlParameters;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;

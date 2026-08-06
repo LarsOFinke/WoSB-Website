@@ -2,7 +2,7 @@ package eu.royalblackwater.api.raidhelper.service;
 
 import eu.royalblackwater.api.raidhelper.dto.RaidHelperConnectionDto;
 import eu.royalblackwater.api.raidhelper.dto.RaidHelperJsonPayloadDto;
-import eu.royalblackwater.api.security.model.SecretBoxException;
+import eu.royalblackwater.api.security.service.SecretBoxException;
 import eu.royalblackwater.api.security.service.FernetSecretBox;
 import java.io.IOException;
 import java.io.InputStream;

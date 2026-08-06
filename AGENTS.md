@@ -29,8 +29,10 @@ dort verlinkten Architekturdokumenten.
 ## Architektur und Quellcode
 
 - Backend-Domänen bleiben unter `spring-api/src/main/java/eu/royalblackwater/api/<domain>/`
-  in `controller`, `filter`, `service`, `mapper`, `dto`, `entity`, `repository` und bei Bedarf `model`
-  getrennt. Generierte API-Interfaces definieren ausschließlich den HTTP-Vertrag; Controller
+  in `controller`, `filter`, `service`, `mapper`, `dto`, `entity` und `repository`
+  getrennt. Generische `model`-Pakete sind unzulässig: fachmodulinterne Übergabe- und Wertobjekte
+  gehören nach `<domain>/dto`, Persistenztypen nach `<domain>/entity` und deklarative Kataloge
+  in die verantwortliche Service- oder Repository-Schicht. Generierte API-Interfaces definieren ausschließlich den HTTP-Vertrag; Controller
   binden Requests und delegieren direkt an Services. Fachlogik, Autorisierung und Transaktionen
   gehören in Services, Persistenz ausschließlich hinter Modul-Repositories. SQL-Definitionen
   liegen in modulbezogenen `repository/queries`-Katalogen; SQL in Services ist unzulässig.

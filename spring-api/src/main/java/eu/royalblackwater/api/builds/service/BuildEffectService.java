@@ -1,10 +1,10 @@
 package eu.royalblackwater.api.builds.service;
 
-import eu.royalblackwater.api.builds.model.BuildEffects;
-import eu.royalblackwater.api.builds.model.BuildFeatureSnapshot;
-import eu.royalblackwater.api.builds.model.BuildPayload;
-import eu.royalblackwater.api.builds.model.BuildShipSnapshot;
-import eu.royalblackwater.api.builds.model.BuildSlotSelection;
+import eu.royalblackwater.api.builds.dto.BuildEffects;
+import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildPayload;
+import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

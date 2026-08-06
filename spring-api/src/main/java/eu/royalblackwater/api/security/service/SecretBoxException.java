@@ -1,4 +1,4 @@
-package eu.royalblackwater.api.security.model;
+package eu.royalblackwater.api.security.service;
 
 public class SecretBoxException extends IllegalStateException {
     public SecretBoxException(String message) {

@@ -7,7 +7,7 @@ import eu.royalblackwater.api.builds.repository.queries.BuildPrintoutQueries;
 import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
 import eu.royalblackwater.api.persistence.RowValues;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.shared.dto.BinaryDownloadDto;
 import java.io.IOException;
 import java.io.InputStream;

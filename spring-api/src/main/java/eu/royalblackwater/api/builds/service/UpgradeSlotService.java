@@ -1,9 +1,9 @@
 package eu.royalblackwater.api.builds.service;
 
-import eu.royalblackwater.api.builds.model.BuildFeatureSnapshot;
-import eu.royalblackwater.api.builds.model.BuildShipSnapshot;
-import eu.royalblackwater.api.builds.model.BuildSlotSelection;
-import eu.royalblackwater.api.builds.model.UpgradeSlotAccess;
+import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
+import eu.royalblackwater.api.builds.dto.UpgradeSlotAccess;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

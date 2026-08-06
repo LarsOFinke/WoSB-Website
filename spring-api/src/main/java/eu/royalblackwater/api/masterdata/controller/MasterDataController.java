@@ -16,7 +16,7 @@ import eu.royalblackwater.api.dto.MasterDataShipUpdate;
 import eu.royalblackwater.api.contract.api.AdminMasterDataApi;
 import eu.royalblackwater.api.masterdata.service.MasterDataMutationService;
 import eu.royalblackwater.api.masterdata.service.MasterDataQueryService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +36,7 @@ public class MasterDataController extends ApiControllerSupport implements AdminM
 
     @Override
     public ResponseEntity<List<MasterDataCategoryRead>> categories() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(queries.categories(), 200);
     }
 
@@ -80,7 +80,7 @@ public class MasterDataController extends ApiControllerSupport implements AdminM
             String category,
             String search
     ) {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(queries.options(), 200);
     }
 
@@ -121,7 +121,7 @@ public class MasterDataController extends ApiControllerSupport implements AdminM
 
     @Override
     public ResponseEntity<MasterDataOverview> overview() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(queries.overview(), 200);
     }
 
@@ -135,7 +135,7 @@ public class MasterDataController extends ApiControllerSupport implements AdminM
     public ResponseEntity<List<MasterDataShipRead>> ships(
             String search
     ) {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(queries.ships(), 200);
     }
 
@@ -176,7 +176,7 @@ public class MasterDataController extends ApiControllerSupport implements AdminM
 
     @Override
     public ResponseEntity<MasterDataTaxonomyRead> taxonomy() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(queries.taxonomy(), 200);
     }
 }

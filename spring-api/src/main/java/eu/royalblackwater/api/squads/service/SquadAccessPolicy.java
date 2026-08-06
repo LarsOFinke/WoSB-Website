@@ -1,7 +1,7 @@
 package eu.royalblackwater.api.squads.service;
 
 import eu.royalblackwater.api.fleet.service.FleetAccessPolicy;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.squads.repository.SquadRepository;
 import eu.royalblackwater.api.squads.repository.queries.SquadAccessQueries;
 import java.util.Map;

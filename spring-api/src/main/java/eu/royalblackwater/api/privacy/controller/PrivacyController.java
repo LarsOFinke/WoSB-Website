@@ -18,7 +18,7 @@ import eu.royalblackwater.api.privacy.service.CookieConsentService;
 import eu.royalblackwater.api.privacy.service.PersonalDataExportService;
 import eu.royalblackwater.api.privacy.service.PrivacyAdministrationService;
 import eu.royalblackwater.api.privacy.service.PrivacyService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,7 +63,7 @@ public class PrivacyController extends ApiControllerSupport implements AdminPriv
     ) {
 
         return respond(administration.resolveContact(requestId,
-                                    body(body, PrivacyContactResolve.class), CurrentUser.require()), 200);
+                                    body, CurrentUser.require()), 200);
     }
 
     @Override
@@ -73,14 +73,14 @@ public class PrivacyController extends ApiControllerSupport implements AdminPriv
     ) {
 
         return respond(administration.resolveRequest(requestId,
-                                    body(body, DataSubjectRequestResolve.class), CurrentUser.require()), 200);
+                                    body, CurrentUser.require()), 200);
     }
 
     @Override
     public ResponseEntity<PrivacyContactReceipt> createPrivacyContact(
             PrivacyContactCreate body
     ) {
-        return respond(privacy.createContact(body(body, PrivacyContactCreate.class), CurrentUser.optional().orElse(null)), 201);
+        return respond(privacy.createContact(body, CurrentUser.optional().orElse(null)), 201);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class PrivacyController extends ApiControllerSupport implements AdminPriv
     public ResponseEntity<CookieConsentRead> saveCookieConsent(
             CookieConsentChoice body
     ) {
-        return saveConsent(body(body, CookieConsentChoice.class));
+        return saveConsent(body);
     }
 
     @Override
@@ -114,7 +114,7 @@ public class PrivacyController extends ApiControllerSupport implements AdminPriv
     public ResponseEntity<DataSubjectRequestRead> createDataSubjectRequest(
             DataSubjectRequestCreate body
     ) {
-        return respond(privacy.createRequest(CurrentUser.require(), body(body, DataSubjectRequestCreate.class)), 201);
+        return respond(privacy.createRequest(CurrentUser.require(), body), 201);
     }
 
     private ResponseEntity<CookieConsentRead> saveConsent(CookieConsentChoice choice) {

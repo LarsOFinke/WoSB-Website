@@ -7,7 +7,7 @@ import eu.royalblackwater.api.files.mapper.FileDtoMapper;
 import eu.royalblackwater.api.files.repository.FileAssetRepository;
 import eu.royalblackwater.api.files.repository.queries.FileAssetQueries;
 import eu.royalblackwater.api.persistence.RowValues;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.shared.dto.BinaryDownloadDto;
 import java.io.IOException;
 import java.io.InputStream;

@@ -4,7 +4,6 @@ import eu.royalblackwater.api.operations.mapper.OperationsDtoMapper;
 import eu.royalblackwater.api.operations.repository.ControlFileStore;
 
 import eu.royalblackwater.api.audit.service.AuditService;
-import eu.royalblackwater.api.dto.*;
 import eu.royalblackwater.api.dto.BackupConfigurationRequest;
 import eu.royalblackwater.api.dto.BackupControlRequestResult;
 import eu.royalblackwater.api.dto.BackupControlStatus;
@@ -12,7 +11,7 @@ import eu.royalblackwater.api.dto.BackupDiscoveryRequest;
 import eu.royalblackwater.api.dto.BackupEnrollmentResponseRequest;
 import eu.royalblackwater.api.dto.DatabaseRestoreRequest;
 import eu.royalblackwater.api.dto.FilesRestoreRequest;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;

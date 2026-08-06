@@ -64,8 +64,10 @@ for a verified backup and recovery path.
   allow-listed mapping.
 - Generated HTTP request and response DTOs live exclusively in
   `eu.royalblackwater.api.dto`; module-internal transition DTOs live in the owning
-  module's `dto` package. Controllers and public service signatures expose neither
-  entities nor raw database/JSON row maps.
+  module's `dto` package. Generic `model` packages are forbidden because they hide
+  ownership. Controllers and public service signatures expose neither entities nor
+  raw database/JSON row maps, and typed query parameters are never rebuilt as raw
+  maps before validation.
 - Every HTTP module owns a mapper layer for DTO/entity/row transitions. Untyped
   `ResponseEntity<?>`, controller-side body recasting and direct entity exposure are
   architecture violations.

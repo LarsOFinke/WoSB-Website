@@ -1,6 +1,6 @@
 package eu.royalblackwater.api.masterdata.service;
 
-import eu.royalblackwater.api.masterdata.model.SeedCatalog;
+import eu.royalblackwater.api.masterdata.repository.SeedCatalog;
 import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
 import eu.royalblackwater.api.masterdata.repository.queries.ReferenceDataQueries;
 import eu.royalblackwater.api.persistence.SqlParameters;

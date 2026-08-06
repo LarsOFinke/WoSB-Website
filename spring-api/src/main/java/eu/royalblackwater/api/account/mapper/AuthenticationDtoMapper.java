@@ -1,7 +1,7 @@
 package eu.royalblackwater.api.account.mapper;
 
 import eu.royalblackwater.api.account.entity.UserEntity;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import org.springframework.stereotype.Component;
 
 @Component

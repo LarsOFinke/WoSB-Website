@@ -8,7 +8,7 @@ import eu.royalblackwater.api.raidhelper.dto.RaidHelperTemplateConfigDto;
 import eu.royalblackwater.api.raidhelper.mapper.RaidHelperDtoMapper;
 import eu.royalblackwater.api.raidhelper.repository.RaidHelperRepository;
 import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperTemplateQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

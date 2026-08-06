@@ -9,13 +9,11 @@ import eu.royalblackwater.api.dto.SquadMemberCreate;
 import eu.royalblackwater.api.dto.SquadMemberUpdate;
 import eu.royalblackwater.api.dto.SquadUpdate;
 import eu.royalblackwater.api.contract.api.SquadsApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import eu.royalblackwater.api.shared.web.RequestParameters;
 import eu.royalblackwater.api.squads.filter.SquadListFilter;
 import eu.royalblackwater.api.squads.service.SquadService;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,13 +29,8 @@ public class SquadController extends ApiControllerSupport implements SquadsApi {
 
     @Override
     public ResponseEntity<List<SquadSummaryRead>> getSquads(String search, Long fleetId, boolean includeInactive, long limit, long offset) {
-        Map<String, Object> parameters = RequestParameters.of(
-                "search", search,
-                "fleet_id", fleetId,
-                "include_inactive", includeInactive,
-                "limit", limit,
-                "offset", offset);
-        return respond(squads.list(actor(), SquadListFilter.from(parameters)), 200);
+        return respond(squads.list(actor(),
+                SquadListFilter.from(search, fleetId, includeInactive, limit, offset)), 200);
     }
 
     @Override

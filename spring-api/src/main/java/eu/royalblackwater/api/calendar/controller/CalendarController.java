@@ -6,7 +6,7 @@ import eu.royalblackwater.api.calendar.service.CalendarService;
 import eu.royalblackwater.api.dto.FleetEventCreate;
 import eu.royalblackwater.api.dto.FleetEventUpdate;
 import eu.royalblackwater.api.contract.api.CalendarApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import java.time.LocalDateTime;
@@ -45,7 +45,7 @@ public class CalendarController extends ApiControllerSupport implements Calendar
             FleetEventCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(calendar.create(body(body, FleetEventCreate.class), actor), 201);
+        return respond(calendar.create(body, actor), 201);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class CalendarController extends ApiControllerSupport implements Calendar
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(calendar.update(
-                            eventId, body(body, FleetEventUpdate.class), actor), 200);
+                            eventId, body, actor), 200);
     }
 
     @Override
@@ -84,13 +84,5 @@ public class CalendarController extends ApiControllerSupport implements Calendar
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(calendar.retry(eventId, actor), 200);
-    }
-
-    private static LocalDateTime dateTime(Object value) {
-        return value instanceof LocalDateTime dateTime ? dateTime : null;
-    }
-
-    private static Long nullableLong(Object value) {
-        return value instanceof Number number ? number.longValue() : null;
     }
 }

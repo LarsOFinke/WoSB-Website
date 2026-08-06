@@ -45,6 +45,7 @@ Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
 - [Datenbank und Migrationen](development/DATABASE.md)
 - [Qualitätsstandards](development/QUALITY_STANDARDS.md)
 - [Versionierung](development/VERSIONING.md)
+- [Technische Reviews](development/reviews/) – zeitgebundene Refactoring- und Prüfnachweise
 
 ## Deployment und Betrieb
 

@@ -17,7 +17,7 @@ import eu.royalblackwater.api.contract.api.FleetsApi;
 import eu.royalblackwater.api.fleet.service.FleetCommandService;
 import eu.royalblackwater.api.fleet.service.FleetRoleService;
 import eu.royalblackwater.api.fleet.service.FleetViewService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;

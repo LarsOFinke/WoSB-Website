@@ -13,7 +13,7 @@ import eu.royalblackwater.api.fleet.service.FleetAccessPolicy;
 import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.persistence.SqlUpdate;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.squads.filter.SquadListFilter;
 import eu.royalblackwater.api.squads.mapper.SquadDtoMapper;
 import eu.royalblackwater.api.squads.repository.SquadRepository;

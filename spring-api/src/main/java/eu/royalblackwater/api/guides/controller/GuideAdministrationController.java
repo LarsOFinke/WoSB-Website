@@ -4,12 +4,10 @@ import eu.royalblackwater.api.dto.GuideSummary;
 import java.util.List;
 import eu.royalblackwater.api.contract.api.AdminGuidesApi;
 import eu.royalblackwater.api.guides.service.GuideService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.filter.ListFilter;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import eu.royalblackwater.api.shared.web.RequestParameters;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,9 +27,9 @@ public class GuideAdministrationController extends ApiControllerSupport implemen
             long limit,
             long offset
     ) {
-        Map<String, Object> parameters = RequestParameters.of("search", search, "category", category, "limit", limit, "offset", offset);
-        AuthenticatedUser actor = CurrentUser.require();
-        ListFilter page = ListFilter.from(parameters, 50, 100);
+        CurrentUser.require();
+        ListFilter page = ListFilter.of(search, limit, offset, 100);
+        ListFilter.optionalText(category, "category", 80);
         return respond(guides.listForAdministration(page.limit(), page.offset()), 200);
     }
 

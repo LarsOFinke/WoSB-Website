@@ -1,8 +1,8 @@
 package eu.royalblackwater.api.builds.service;
 
 import eu.royalblackwater.api.builds.mapper.BuildDtoMapper;
-import eu.royalblackwater.api.builds.model.BuildStatCatalog;
-import eu.royalblackwater.api.builds.model.BuildStatDefinition;
+import eu.royalblackwater.api.builds.service.BuildStatCatalog;
+import eu.royalblackwater.api.builds.dto.BuildStatDefinition;
 import eu.royalblackwater.api.dto.BuildStatDefinitionRead;
 import eu.royalblackwater.api.dto.BuildStatRow;
 import java.math.BigDecimal;

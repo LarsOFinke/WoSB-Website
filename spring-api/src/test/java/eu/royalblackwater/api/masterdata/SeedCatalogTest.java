@@ -1,6 +1,6 @@
 package eu.royalblackwater.api.masterdata;
 
-import eu.royalblackwater.api.masterdata.model.SeedCatalog;
+import eu.royalblackwater.api.masterdata.repository.SeedCatalog;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;

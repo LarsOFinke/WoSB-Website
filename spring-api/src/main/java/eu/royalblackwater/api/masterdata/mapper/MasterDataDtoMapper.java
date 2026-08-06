@@ -1,6 +1,6 @@
 package eu.royalblackwater.api.masterdata.mapper;
 
-import eu.royalblackwater.api.builds.model.BuildStatCatalog;
+import eu.royalblackwater.api.builds.service.BuildStatCatalog;
 import eu.royalblackwater.api.dto.MasterDataCategoryRead;
 import eu.royalblackwater.api.dto.MasterDataOptionRead;
 import eu.royalblackwater.api.dto.MasterDataOverview;

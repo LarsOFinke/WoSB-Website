@@ -4,10 +4,8 @@ import eu.royalblackwater.api.dto.ShipRead;
 import java.util.List;
 import eu.royalblackwater.api.contract.api.ShipsApi;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import eu.royalblackwater.api.shared.web.RequestParameters;
 import eu.royalblackwater.api.ships.filter.ShipListFilter;
 import eu.royalblackwater.api.ships.service.ShipQueryService;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +25,7 @@ public class ShipController extends ApiControllerSupport implements ShipsApi {
             long limit,
             long offset
     ) {
-        Map<String, Object> parameters = RequestParameters.of("search", search, "rate", rate, "ship_type", shipType, "limit", limit, "offset", offset);
-        return respond(ships.activeShips(ShipListFilter.from(parameters)), 200);
+        return respond(ships.activeShips(
+                ShipListFilter.from(search, rate, shipType, limit, offset)), 200);
     }
 }

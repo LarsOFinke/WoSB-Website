@@ -6,7 +6,7 @@ import eu.royalblackwater.api.dto.IpBlockRead;
 import eu.royalblackwater.api.dto.IpBlockSummary;
 import eu.royalblackwater.api.dto.IpBlockUnblock;
 import eu.royalblackwater.api.persistence.SqlParameters;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.securityops.mapper.SecurityOperationsDtoMapper;
 import eu.royalblackwater.api.securityops.repository.SecurityOperationsRepository;
 import eu.royalblackwater.api.securityops.repository.queries.IpBlockQueries;

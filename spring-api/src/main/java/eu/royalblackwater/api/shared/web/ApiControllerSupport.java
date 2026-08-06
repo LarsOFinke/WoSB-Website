@@ -1,14 +1,11 @@
 package eu.royalblackwater.api.shared.web;
 
 import eu.royalblackwater.api.shared.dto.BinaryDownloadDto;
-import java.util.Map;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 /** Shared response and validation helpers for thin, fully typed HTTP controllers. */
 public abstract class ApiControllerSupport {
@@ -38,28 +35,6 @@ public abstract class ApiControllerSupport {
         }
         headers.set("X-Content-Type-Options", "nosniff");
         return ResponseEntity.ok().headers(headers).body(download.resource());
-    }
-
-    protected static long longParameter(Map<String, Object> parameters, String name) {
-        Object value = parameters.get(name);
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        throw new ResponseStatusException(BAD_REQUEST, "Missing or invalid parameter: " + name);
-    }
-
-    protected static int intParameter(Map<String, Object> parameters, String name) {
-        return Math.toIntExact(longParameter(parameters, name));
-    }
-
-    protected static String stringParameter(Map<String, Object> parameters, String name) {
-        Object value = parameters.get(name);
-        return value == null ? null : String.valueOf(value);
-    }
-
-    protected static boolean booleanParameter(Map<String, Object> parameters, String name, boolean fallback) {
-        Object value = parameters.get(name);
-        return value instanceof Boolean flag ? flag : fallback;
     }
 
 }

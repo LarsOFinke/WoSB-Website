@@ -6,7 +6,7 @@ import eu.royalblackwater.api.fleet.dto.FleetMembershipTargetDto;
 import eu.royalblackwater.api.fleet.mapper.FleetDtoMapper;
 import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetAccessQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;

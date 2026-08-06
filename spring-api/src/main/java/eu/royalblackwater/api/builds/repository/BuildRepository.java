@@ -1,11 +1,11 @@
 package eu.royalblackwater.api.builds.repository;
 
-import eu.royalblackwater.api.builds.model.BuildAggregate;
-import eu.royalblackwater.api.builds.model.BuildPageResult;
-import eu.royalblackwater.api.builds.model.BuildPayload;
-import eu.royalblackwater.api.builds.model.BuildPreparedPayload;
-import eu.royalblackwater.api.builds.model.BuildSlotSelection;
-import eu.royalblackwater.api.builds.model.BuildStoredSlot;
+import eu.royalblackwater.api.builds.dto.BuildAggregate;
+import eu.royalblackwater.api.builds.dto.BuildPageResult;
+import eu.royalblackwater.api.builds.dto.BuildPayload;
+import eu.royalblackwater.api.builds.dto.BuildPreparedPayload;
+import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
+import eu.royalblackwater.api.builds.dto.BuildStoredSlot;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import java.time.Clock;

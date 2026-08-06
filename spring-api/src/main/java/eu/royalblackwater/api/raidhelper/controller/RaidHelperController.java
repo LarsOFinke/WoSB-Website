@@ -18,7 +18,7 @@ import eu.royalblackwater.api.raidhelper.service.RaidHelperLinkService;
 import eu.royalblackwater.api.raidhelper.service.RaidHelperProbeService;
 import eu.royalblackwater.api.raidhelper.service.RaidHelperProfileService;
 import eu.royalblackwater.api.raidhelper.service.RaidHelperTemplateService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +57,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
             RaidHelperDestinationWrite body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(destinations.create(actor, body(body, RaidHelperDestinationWrite.class)), 201);
+        return respond(destinations.create(actor, body), 201);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(destinations.update(actor, destinationId,
-                                    body(body, RaidHelperDestinationWrite.class)), 200);
+                                    body), 200);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(probes.destination(actor, destinationId,
-                                    body(body, RaidHelperDestinationTestRequest.class)), 200);
+                                    body), 200);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
             RaidHelperProfileCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(profiles.create(actor, body(body, RaidHelperProfileCreate.class)), 201);
+        return respond(profiles.create(actor, body), 201);
     }
 
     @Override
@@ -121,7 +121,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(profiles.update(actor, profileId, body(body, RaidHelperProfileWrite.class)), 200);
+        return respond(profiles.update(actor, profileId, body), 200);
     }
 
     @Override
@@ -144,7 +144,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
             RaidHelperTemplateWrite body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(templates.create(actor, body(body, RaidHelperTemplateWrite.class)), 201);
+        return respond(templates.create(actor, body), 201);
     }
 
     @Override
@@ -163,7 +163,7 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(templates.update(actor, templateId, body(body, RaidHelperTemplateWrite.class)), 200);
+        return respond(templates.update(actor, templateId, body), 200);
     }
 
     @Override
@@ -175,9 +175,5 @@ public class RaidHelperController extends ApiControllerSupport implements AdminR
         AuthenticatedUser actor = CurrentUser.require();
         return respond(links.options(actor,
                             category, squadId), 200);
-    }
-
-    private static Long nullableLong(Object value) {
-        return value instanceof Number number ? number.longValue() : null;
     }
 }

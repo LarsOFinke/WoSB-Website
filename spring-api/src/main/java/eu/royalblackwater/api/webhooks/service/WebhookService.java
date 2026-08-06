@@ -1,17 +1,17 @@
 package eu.royalblackwater.api.webhooks.service;
 
 import eu.royalblackwater.api.audit.service.AuditService;
-import eu.royalblackwater.api.dto.*;
 import eu.royalblackwater.api.dto.OutboundWebhookBroadcastRequest;
 import eu.royalblackwater.api.dto.OutboundWebhookCreate;
 import eu.royalblackwater.api.dto.OutboundWebhookDeliveryDeleteResult;
 import eu.royalblackwater.api.dto.OutboundWebhookDeliveryRead;
+import eu.royalblackwater.api.dto.OutboundWebhookEventCatalogItem;
 import eu.royalblackwater.api.dto.OutboundWebhookRead;
 import eu.royalblackwater.api.dto.OutboundWebhookSummary;
 import eu.royalblackwater.api.dto.OutboundWebhookTestRequest;
 import eu.royalblackwater.api.dto.OutboundWebhookUpdate;
 import eu.royalblackwater.api.persistence.SqlParameters;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.FernetSecretBox;
 import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import eu.royalblackwater.api.webhooks.mapper.WebhookDtoMapper;
@@ -58,6 +58,11 @@ public class WebhookService {
     public List<OutboundWebhookRead> list(String purpose){
         String where="broadcast".equals(purpose)?WebhookQueries.LIST_WHERE_01:"";
         return repository.query(WebhookQueries.LIST_SELECT_01+where+WebhookQueries.LIST_ORDER_BY_01,Map.of()).stream().map(this::toRead).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OutboundWebhookEventCatalogItem> eventCatalog() {
+        return WebhookDtoMapper.eventCatalog(WebhookEventCatalog.ALL);
     }
 
     @Transactional(readOnly=true)

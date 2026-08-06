@@ -5,7 +5,7 @@ import eu.royalblackwater.api.dto.CookieConsentChoice;
 import eu.royalblackwater.api.privacy.entity.CookieConsentEntity;
 import eu.royalblackwater.api.privacy.repository.CookieConsentRepository;
 import eu.royalblackwater.api.privacy.service.CookieConsentService;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import jakarta.servlet.http.Cookie;
 import java.time.Clock;
 import java.time.Duration;

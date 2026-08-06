@@ -1,8 +1,6 @@
 package eu.royalblackwater.api.fleet.service;
 
 import eu.royalblackwater.api.dto.FleetDetail;
-import eu.royalblackwater.api.dto.FleetMemberUserRead;
-import eu.royalblackwater.api.dto.FleetMembershipFleetRead;
 import eu.royalblackwater.api.dto.FleetMembershipRead;
 import eu.royalblackwater.api.dto.FleetMembershipSelfRead;
 import eu.royalblackwater.api.dto.FleetPublicLeaderRead;
@@ -12,7 +10,7 @@ import eu.royalblackwater.api.fleet.mapper.FleetDtoMapper;
 import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetViewQueries;
 import eu.royalblackwater.api.persistence.RowValues;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;

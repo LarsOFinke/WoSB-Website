@@ -13,10 +13,9 @@ import eu.royalblackwater.api.builds.service.BuildService;
 import eu.royalblackwater.api.dto.BuildCreate;
 import eu.royalblackwater.api.dto.BuildUpdate;
 import eu.royalblackwater.api.contract.api.BuildsApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -96,13 +95,13 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
             Long shipId
     ) {
 
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return respond(builds.options(shipId), 200);
     }
 
     @Override
     public ResponseEntity<List<BuildRoleRead>> getBuildRoles() {
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return respond(builds.roles(), 200);
     }
 
@@ -120,7 +119,7 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
             long buildId
     ) {
 
-        AuthenticatedUser actor = CurrentUser.require();
+        CurrentUser.require();
         return download(printouts.content(buildId));
     }
 
@@ -151,9 +150,5 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.vote(buildId, actor, true), 200);
-    }
-
-    private static Long nullableLong(Map<String, Object> parameters, String name) {
-        Object value = parameters.get(name); return value instanceof Number number ? number.longValue() : null;
     }
 }

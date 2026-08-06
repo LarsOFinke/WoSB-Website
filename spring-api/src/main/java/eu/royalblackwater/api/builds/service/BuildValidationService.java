@@ -1,13 +1,13 @@
 package eu.royalblackwater.api.builds.service;
 
-import eu.royalblackwater.api.builds.model.BuildCatalogOption;
-import eu.royalblackwater.api.builds.model.BuildEffects;
-import eu.royalblackwater.api.builds.model.BuildFeatureSnapshot;
-import eu.royalblackwater.api.builds.model.BuildPayload;
-import eu.royalblackwater.api.builds.model.BuildPreparedPayload;
-import eu.royalblackwater.api.builds.model.BuildShipSnapshot;
-import eu.royalblackwater.api.builds.model.BuildSlotSelection;
-import eu.royalblackwater.api.builds.model.UpgradeSlotAccess;
+import eu.royalblackwater.api.builds.dto.BuildCatalogOption;
+import eu.royalblackwater.api.builds.dto.BuildEffects;
+import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildPayload;
+import eu.royalblackwater.api.builds.dto.BuildPreparedPayload;
+import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
+import eu.royalblackwater.api.builds.dto.UpgradeSlotAccess;
 import eu.royalblackwater.api.builds.repository.BuildCatalogRepository;
 import eu.royalblackwater.api.builds.repository.BuildDataRepository;
 import eu.royalblackwater.api.builds.repository.queries.BuildValidationQueries;

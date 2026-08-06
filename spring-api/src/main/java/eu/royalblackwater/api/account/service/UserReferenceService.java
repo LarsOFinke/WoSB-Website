@@ -4,7 +4,6 @@ import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.repository.AccountDataRepository;
 import eu.royalblackwater.api.account.repository.queries.UserReferenceQueries;
 import eu.royalblackwater.api.dto.UserReferenceRead;
-import eu.royalblackwater.api.persistence.RowValues;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;

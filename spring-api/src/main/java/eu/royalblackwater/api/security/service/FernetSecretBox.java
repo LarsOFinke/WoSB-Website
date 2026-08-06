@@ -1,7 +1,7 @@
 package eu.royalblackwater.api.security.service;
 
 import eu.royalblackwater.api.config.SecretEncryptionProperties;
-import eu.royalblackwater.api.security.model.SecretBoxException;
+import eu.royalblackwater.api.security.service.SecretBoxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;

@@ -11,7 +11,7 @@ import eu.royalblackwater.api.raidhelper.mapper.RaidHelperDtoMapper;
 import eu.royalblackwater.api.raidhelper.mapper.RaidHelperPayloadRenderer;
 import eu.royalblackwater.api.raidhelper.repository.RaidHelperRepository;
 import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperProbeQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

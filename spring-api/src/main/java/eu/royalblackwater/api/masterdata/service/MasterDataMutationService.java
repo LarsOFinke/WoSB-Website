@@ -1,7 +1,6 @@
 package eu.royalblackwater.api.masterdata.service;
 
 import eu.royalblackwater.api.audit.service.AuditService;
-import eu.royalblackwater.api.dto.*;
 import eu.royalblackwater.api.dto.MasterDataCategoryCreate;
 import eu.royalblackwater.api.dto.MasterDataCategoryRead;
 import eu.royalblackwater.api.dto.MasterDataCategoryUpdate;
@@ -20,7 +19,7 @@ import eu.royalblackwater.api.masterdata.mapper.MasterDataDtoMapper;
 import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
 import eu.royalblackwater.api.masterdata.repository.queries.MasterDataMutationQueries;
 import eu.royalblackwater.api.persistence.SqlParameters;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;

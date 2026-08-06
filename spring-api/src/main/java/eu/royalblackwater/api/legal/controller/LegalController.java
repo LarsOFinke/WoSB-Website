@@ -31,7 +31,7 @@ public class LegalController extends ApiControllerSupport implements AdminLegalN
     public ResponseEntity<LegalNoticeAdminRead> adminUpdateLegalNotice(
             LegalNoticeUpdate body
     ) {
-        return respond(notices.update(body(body, LegalNoticeUpdate.class), CurrentUser.require()), 200);
+        return respond(notices.update(body, CurrentUser.require()), 200);
     }
 
     @Override

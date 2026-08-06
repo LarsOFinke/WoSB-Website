@@ -35,7 +35,7 @@ public class ProfileController extends ApiControllerSupport implements ProfileAp
             ProfileUpdate body
     ) {
         int userId = CurrentUser.require().id();
-        return respond(profiles.update(userId, body(body, ProfileUpdate.class)), 200);
+        return respond(profiles.update(userId, body), 200);
     }
 
     @Override

@@ -1,18 +1,20 @@
 package eu.royalblackwater.api.ships.filter;
 
 import eu.royalblackwater.api.shared.filter.ListFilter;
-import java.util.Map;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 public record ShipListFilter(ListFilter page, Long rate, String shipType) {
-    public static ShipListFilter from(Map<String, Object> parameters) {
-        Long rate = ListFilter.optionalPositiveLong(parameters, "rate");
-        if (rate != null && rate > 7) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.BAD_REQUEST, "rate must be between 1 and 7.");
+    public static ShipListFilter from(String search, Long rate, String shipType, long limit, long offset) {
+        Long normalizedRate = ListFilter.optionalPositiveLong(rate, "rate");
+        if (normalizedRate != null && normalizedRate > 7) {
+            throw new ResponseStatusException(BAD_REQUEST, "rate must be between 1 and 7.");
         }
         return new ShipListFilter(
-                ListFilter.from(parameters, 100, 250), rate,
-                ListFilter.optionalText(parameters, "ship_type", 80));
+                ListFilter.of(search, limit, offset, 250),
+                normalizedRate,
+                ListFilter.optionalText(shipType, "ship_type", 80));
     }
 
     public static ShipListFilter all() {

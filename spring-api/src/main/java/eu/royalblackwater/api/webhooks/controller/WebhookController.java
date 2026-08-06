@@ -11,12 +11,10 @@ import eu.royalblackwater.api.dto.OutboundWebhookCreate;
 import eu.royalblackwater.api.dto.OutboundWebhookTestRequest;
 import eu.royalblackwater.api.dto.OutboundWebhookUpdate;
 import eu.royalblackwater.api.contract.api.AdminDiscordWebhooksApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
-import eu.royalblackwater.api.webhooks.model.WebhookEventCatalog;
 import eu.royalblackwater.api.webhooks.service.WebhookService;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +31,7 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
             String purpose
     ) {
 
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(webhooks.list(purpose), 200);
     }
 
@@ -55,7 +53,7 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
 
     @Override
     public ResponseEntity<List<OutboundWebhookRead>> adminListBroadcastWebhooks() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(webhooks.list("broadcast"), 200);
     }
 
@@ -79,7 +77,7 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
             long limit
     ) {
 
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(webhooks.deliveries(
                             webhookId,status,eventType,limit), 200);
     }
@@ -104,8 +102,8 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
 
     @Override
     public ResponseEntity<List<OutboundWebhookEventCatalogItem>> adminWebhookEventCatalog() {
-        AuthenticatedUser actor=CurrentUser.require();
-        return respond(WebhookEventCatalog.ALL, 200);
+        CurrentUser.require();
+        return respond(webhooks.eventCatalog(), 200);
     }
 
     @Override
@@ -113,7 +111,7 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
             String purpose
     ) {
 
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(webhooks.summary(purpose), 200);
     }
 
@@ -143,5 +141,4 @@ public class WebhookController extends ApiControllerSupport implements AdminDisc
         AuthenticatedUser actor=CurrentUser.require();
         return respond(webhooks.test(actor,webhookId,body), 200);
     }
-    private static Long nullableLong(Map<String,Object> parameters,String name){Object value=parameters.get(name);return value instanceof Number number?number.longValue():null;}
 }

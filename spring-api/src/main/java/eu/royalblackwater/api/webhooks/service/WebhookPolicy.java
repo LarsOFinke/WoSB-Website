@@ -1,7 +1,6 @@
 package eu.royalblackwater.api.webhooks.service;
 
 import eu.royalblackwater.api.security.service.FernetSecretBox;
-import eu.royalblackwater.api.webhooks.model.WebhookEventCatalog;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;

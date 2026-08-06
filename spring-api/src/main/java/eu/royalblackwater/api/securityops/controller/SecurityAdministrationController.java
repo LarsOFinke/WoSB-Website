@@ -8,13 +8,12 @@ import eu.royalblackwater.api.dto.IpBlockCreate;
 import eu.royalblackwater.api.dto.IpBlockUnblock;
 import eu.royalblackwater.api.contract.api.AdminIpBlocksApi;
 import eu.royalblackwater.api.contract.api.AdminLogsApi;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.securityops.service.IpBlockService;
 import eu.royalblackwater.api.securityops.service.SecurityDashboardService;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import java.time.LocalDate;
-import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +32,7 @@ public class SecurityAdministrationController extends ApiControllerSupport imple
             long limit
     ) {
 
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(blocks.list(status,search,limit), 200);
     }
 
@@ -47,7 +46,7 @@ public class SecurityAdministrationController extends ApiControllerSupport imple
 
     @Override
     public ResponseEntity<IpBlockSummary> adminIpBlockSummary() {
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(blocks.summary(), 200);
     }
 
@@ -70,9 +69,8 @@ public class SecurityAdministrationController extends ApiControllerSupport imple
             long limit
     ) {
 
-        AuthenticatedUser actor=CurrentUser.require();
+        CurrentUser.require();
         return respond(dashboard.build(fromDate,toDate,
                             threatLevel,clientIp,sort,limit), 200);
     }
-    private static LocalDate date(Map<String,Object> parameters,String key){return parameters.get(key) instanceof LocalDate value?value:null;}
 }

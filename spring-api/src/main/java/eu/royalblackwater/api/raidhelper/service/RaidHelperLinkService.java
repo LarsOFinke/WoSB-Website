@@ -9,7 +9,7 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.raidhelper.mapper.RaidHelperDtoMapper;
 import eu.royalblackwater.api.raidhelper.repository.RaidHelperRepository;
 import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperLinkQueries;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.squads.service.SquadAccessPolicy;
 import java.time.Clock;
 import java.time.LocalDateTime;

@@ -7,7 +7,7 @@ import eu.royalblackwater.api.dto.CookieConsentRead;
 import eu.royalblackwater.api.privacy.entity.CookieConsentEntity;
 import eu.royalblackwater.api.privacy.mapper.PrivacyDtoMapper;
 import eu.royalblackwater.api.privacy.repository.CookieConsentRepository;
-import eu.royalblackwater.api.security.model.AuthenticatedUser;
+import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.SecureRandom;
