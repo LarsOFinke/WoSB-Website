@@ -1,9 +1,11 @@
 package eu.royalblackwater.api.config;
 
-import eu.royalblackwater.api.security.CsrfCookieFilter;
-import eu.royalblackwater.api.security.RequestBoundaryFilter;
-import eu.royalblackwater.api.security.SessionAuthenticationFilter;
+import eu.royalblackwater.api.security.filter.CsrfCookieFilter;
+import eu.royalblackwater.api.security.filter.RequestBoundaryFilter;
+import eu.royalblackwater.api.security.filter.SessionAuthenticationFilter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +15,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;

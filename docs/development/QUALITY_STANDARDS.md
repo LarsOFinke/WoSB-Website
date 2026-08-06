@@ -26,8 +26,10 @@ for a verified backup and recovery path.
 ## Architecture and maintainability
 
 - Follow the dependency directions in `docs/architecture/ARCHITECTURE.md` and
-  `frontend/ARCHITECTURE.md`; transport layers orchestrate and domain services own
-  business rules.
+  `frontend/ARCHITECTURE.md`; generated API interfaces define transport, module
+  controllers bind HTTP, services own business rules and transactions, repositories
+  own persistence access, module-local `repository/queries` catalogs own SQL
+  definitions, and mappers own representation changes.
 - Inject dependencies through constructors. Do not introduce field injection,
   service locators or generic manager/wrapper layers without a concrete lifecycle
   or substitution benefit.
@@ -46,17 +48,27 @@ for a verified backup and recovery path.
 ## Backend correctness and security
 
 - Java 21, constructor injection and explicit domain boundaries are mandatory.
-- `contracts/api-contract.json` is the HTTP contract. Generated controllers bind
-  and validate transport data, then delegate each operation to exactly one
-  operation handler.
+- `contracts/api-contract.json` is the HTTP contract. Generated `*Api` interfaces
+  bind and validate transport data. Exactly one module controller implements each
+  interface and delegates directly to services; central dispatchers and operation
+  handlers are forbidden.
 - Typed validated contracts and MapStruct use fail-closed mappings; unmapped
   target fields are compilation errors.
 - Spring Security is the sole authentication and authorization boundary. Mutating
   browser requests retain session/JWT validation as applicable, CSRF, host and
   origin controls. Endpoint-local authentication shortcuts are prohibited.
 - Transactions encompass a business mutation and its required audit record.
-- SQL remains parameterized. User-controlled identifiers, sort clauses or SQL
-  fragments require an explicit allow-listed mapping.
+- SQL remains parameterized and belongs to the owning module's repository layer.
+  Services contain no SQL literals and do not access the generic JDBC executor.
+  User-controlled identifiers, sort clauses or SQL fragments require an explicit
+  allow-listed mapping.
+- Generated HTTP request and response DTOs live exclusively in
+  `eu.royalblackwater.api.dto`; module-internal transition DTOs live in the owning
+  module's `dto` package. Controllers and public service signatures expose neither
+  entities nor raw database/JSON row maps.
+- Every HTTP module owns a mapper layer for DTO/entity/row transitions. Untyped
+  `ResponseEntity<?>`, controller-side body recasting and direct entity exposure are
+  architecture violations.
 - `open-in-view=false`: response assembly must not depend on lazy loading outside
   the transaction. Authentication queries fetch every authority needed by the
   security filter before the persistence context closes.

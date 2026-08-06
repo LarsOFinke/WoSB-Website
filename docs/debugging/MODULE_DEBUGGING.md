@@ -27,9 +27,9 @@ IP-Adressen oder unredigierte Datenbankauszüge.
 ### API und Backend
 
 1. Route und `operationId` in `contracts/api-contract.json` bestimmen.
-2. Generierten Controller nur lesen; zuständigen Operation-Handler über die
-   `operations()`-Menge finden.
-3. Service, Policy und Repository-/Mapper-Rand verfolgen.
+2. Generiertes `contract/api/*Api.java` nur lesen und den implementierenden
+   Modul-Controller über dessen `implements`-Klausel finden.
+3. Vom Controller zum Service, zur Policy und zum Repository-/Mapper-Rand verfolgen.
 4. HTTP-Status einordnen: Transport-/Bean-Binding 400, Authentifizierung 401,
    Autorisierung/CSRF/Origin 403, Zustandskonflikt 409, fachliche Validierung 422.
 5. Erst Service-/Policy-Test, bei Security, SQL oder Mapping zusätzlich echten
@@ -42,7 +42,7 @@ mvn -f spring-api/pom.xml -Dtest='<Testklasse>' test
 ```
 
 Mocktests reichen nicht aus, wenn PostgreSQL-Typen, Constraints, Transaktionen,
-Spring Security, CSRF, Cookieattribute oder generierter Transport Teil der
+Spring Security, CSRF, Cookieattribute oder generierte API-Bindings Teil der
 Ursache sind. Dafür liegt der Integrationsrand unter
 `spring-api/src/test/java/eu/royalblackwater/api/integration/`.
 
@@ -97,7 +97,7 @@ Diagnoseschritte.
 
 | Fehlerklasse | Minimale Evidenz | Erwartete Absicherung |
 | --- | --- | --- |
-| Transport/Contract | Methode, Routen-Template, Status, Bindingdetail | Generator-Check plus Handler-/HTTP-Test |
+| Transport/Contract | Methode, Routen-Template, Status, Bindingdetail | Generator- und Architektur-Check plus Controller-/HTTP-Test |
 | Auth/Permission | 401/403, boolesche Cookie-/Origin-/CSRF-Merkmale, Rolle | Security-/Policy-Test und geschützte HTTP-Route |
 | SQL/Persistenz | Query-Verantwortung, SQL-State/Constraint, abstrahierte Parameterform | Service-Test plus PostgreSQL-Test |
 | Seed/Bootstrap | Seed-Key/Rollen-Code/Status, Wiederholungsablauf | idempotenter Initializer-/PostgreSQL-Test |

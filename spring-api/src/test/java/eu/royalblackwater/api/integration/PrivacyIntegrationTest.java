@@ -1,11 +1,10 @@
 package eu.royalblackwater.api.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import eu.royalblackwater.api.config.PrivacyRetentionProperties;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
-import eu.royalblackwater.api.privacy.PrivacyRetentionService;
-import eu.royalblackwater.api.security.PasswordHasher;
+import eu.royalblackwater.api.privacy.repository.PrivacyDataRepository;
+import eu.royalblackwater.api.privacy.service.PrivacyRetentionService;
+import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -24,6 +23,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers(disabledWithoutDocker = true)
@@ -153,7 +153,7 @@ class PrivacyIntegrationTest {
                 """, Map.of("id", userId));
 
         PrivacyRetentionService.CleanupResult result = new PrivacyRetentionService(
-                jdbc, new PrivacyRetentionProperties(
+                new PrivacyDataRepository(jdbc), new PrivacyRetentionProperties(
                         Duration.ofDays(400), Duration.ofDays(400), Duration.ofHours(24)), Clock.systemUTC())
                 .cleanExpiredData();
 

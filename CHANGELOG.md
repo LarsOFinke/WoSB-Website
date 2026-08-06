@@ -11,6 +11,7 @@
 
 ## Unreleased
 
+- Completed the DTO boundary refactor across the Spring API: 179 generated request/response records now match the OpenAPI contract, all 177 operations use concrete response types, every HTTP module owns mapper-based transitions, and architecture gates reject entity/raw-row exposure, wildcard responses, controller body recasting and API-DTO construction outside mappers.
 - Completed the Spring Boot cutover: all 177 API operations are native, the FastAPI/Python runtime and catch-all proxy are removed, Flyway and versioned Java seeding own database lifecycle, and deployment/update/backup/restore now consume immutable compiled release artifacts instead of a source checkout.
 - Added bounded shared list filters, strict numeric conversion and server-side caps for unpaginated discovery endpoints. Batched guide owners and build references, master-data ship relations, squad and newcomer-guide collections, and request-local build catalogs remove the reviewed N+1 read paths; focused tests and repository invariants guard the optimizations.
 - Added Java 21 syntax parsing to local validation and a PostgreSQL Testcontainers application-start test covering Flyway, reference-data seeding and bootstrap-administrator creation.

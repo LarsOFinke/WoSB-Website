@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Spring MVC route adapters from the reviewed OpenAPI snapshot."""
+"""Generate typed Spring MVC API interfaces from the reviewed OpenAPI snapshot."""
 from __future__ import annotations
 
 import hashlib
@@ -12,22 +12,32 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 SCHEMA = json.loads((ROOT / "contracts/api-contract.json").read_text(encoding="utf-8"))
-TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/transport/generated"
-PACKAGE = "eu.royalblackwater.api.transport.generated"
-HTTP = {"get": "GetMapping", "post": "PostMapping", "put": "PutMapping", "patch": "PatchMapping", "delete": "DeleteMapping"}
+TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract/api"
+PACKAGE = "eu.royalblackwater.api.contract.api"
+HTTP = {
+    "get": "GetMapping",
+    "post": "PostMapping",
+    "put": "PutMapping",
+    "patch": "PatchMapping",
+    "delete": "DeleteMapping",
+}
 
-JAVA_KEYWORDS = {"class", "default", "protected", "public", "private", "record", "switch", "case", "new", "return", "void", "long", "int", "double", "boolean", "null", "true", "false", "this", "super", "interface", "enum", "extends", "implements", "package", "import", "static", "final", "try", "catch", "finally", "throw", "throws", "while", "for", "if", "else", "do", "break", "continue", "instanceof", "var", "yield", "sealed", "permits"}
+JAVA_KEYWORDS = {
+    "class", "default", "protected", "public", "private", "record", "switch", "case", "new",
+    "return", "void", "long", "int", "double", "boolean", "null", "true", "false", "this",
+    "super", "interface", "enum", "extends", "implements", "package", "import", "static", "final",
+    "try", "catch", "finally", "throw", "throws", "while", "for", "if", "else", "do", "break",
+    "continue", "instanceof", "var", "yield", "sealed", "permits",
+}
 
 
 def camel(value: str, upper: bool = False) -> str:
-    parts = [p for p in re.split(r"[^A-Za-z0-9]+", value) if p]
+    parts = [part for part in re.split(r"[^A-Za-z0-9]+", value) if part]
     if not parts:
         return "value"
     first = parts[0][:1].upper() + parts[0][1:] if upper else parts[0].lower()
     name = first + "".join(part[:1].upper() + part[1:] for part in parts[1:])
-    if name in JAVA_KEYWORDS:
-        name += "Value"
-    return name
+    return name + "Value" if name in JAVA_KEYWORDS else name
 
 
 def ref_name(ref: str) -> str:
@@ -38,7 +48,7 @@ def java_type(schema: dict, required: bool) -> tuple[str, set[str]]:
     imports: set[str] = set()
     if "$ref" in schema:
         name = ref_name(schema["$ref"])
-        imports.add(f"eu.royalblackwater.api.contract.{name}")
+        imports.add(f"eu.royalblackwater.api.dto.{name}")
         return name, imports
     if "anyOf" in schema:
         choices = [entry for entry in schema["anyOf"] if entry.get("type") != "null"]
@@ -56,6 +66,9 @@ def java_type(schema: dict, required: bool) -> tuple[str, set[str]]:
     kind = schema.get("type")
     fmt = schema.get("format")
     if kind == "string":
+        if fmt == "binary":
+            imports.add("org.springframework.core.io.Resource")
+            return "Resource", imports
         if fmt == "date":
             imports.add("java.time.LocalDate")
             return "LocalDate", imports
@@ -73,7 +86,8 @@ def java_type(schema: dict, required: bool) -> tuple[str, set[str]]:
         inner, nested = java_type(schema.get("items", {}), True)
         imports.update(nested)
         imports.add("java.util.List")
-        return f"List<{ {'long':'Long','double':'Double','boolean':'Boolean'}.get(inner, inner) }>", imports
+        boxed = {"long": "Long", "double": "Double", "boolean": "Boolean"}.get(inner, inner)
+        return f"List<{boxed}>", imports
     if kind == "object" or "additionalProperties" in schema:
         imports.add("java.util.Map")
         return "Map<String, Object>", imports
@@ -116,6 +130,19 @@ def success_status(operation: dict) -> int:
     return min(codes) if codes else 200
 
 
+def success_response_type(operation: dict) -> tuple[str, set[str]]:
+    status = success_status(operation)
+    response = operation.get("responses", {}).get(str(status), {})
+    if status == 204:
+        return "Void", set()
+    content = response.get("content", {})
+    if not content:
+        return "Void", set()
+    media = "application/json" if "application/json" in content else next(iter(content))
+    schema = content[media].get("schema", {})
+    return java_type(schema, True)
+
+
 def method_name(operation_id: str, used: set[str]) -> str:
     base = camel(operation_id.split("_api_", 1)[0])
     name = base
@@ -125,21 +152,12 @@ def method_name(operation_id: str, used: set[str]) -> str:
     return name
 
 
-def mapping_path(path: str, group: str) -> str:
-    # Controllers intentionally use full paths so generated groups can be moved without changing contracts.
-    return path
-
-
 def parameter_annotation(parameter: dict) -> tuple[str, str, str, set[str]]:
     raw = parameter["name"]
     location = parameter["in"]
     required = bool(parameter.get("required"))
     schema = parameter.get("schema", {})
-    if "default" in schema:
-        required_for_type = True
-    else:
-        required_for_type = required
-    value_type, imports = java_type(schema, required_for_type)
+    value_type, imports = java_type(schema, True if "default" in schema else required)
     name = camel(raw)
     if location == "path":
         annotation = f'@PathVariable("{raw}")'
@@ -149,16 +167,12 @@ def parameter_annotation(parameter: dict) -> tuple[str, str, str, set[str]]:
         pieces = [f'name = "{raw}"']
         if default is not None:
             default_text = str(default).lower() if isinstance(default, bool) else str(default)
-            escaped = default_text.replace('"', '\\"')
-            pieces.append(f'defaultValue = "{escaped}"')
+            pieces.append(f'defaultValue = "{default_text.replace(chr(34), chr(92) + chr(34))}"')
         else:
             pieces.append(f"required = {str(required).lower()}")
         annotation = "@RequestParam(" + ", ".join(pieces) + ")"
         imports.add("org.springframework.web.bind.annotation.RequestParam")
-        temporal_schema = next(
-            (entry for entry in schema.get("anyOf", []) if entry.get("type") != "null"),
-            schema,
-        )
+        temporal_schema = next((entry for entry in schema.get("anyOf", []) if entry.get("type") != "null"), schema)
         temporal_format = temporal_schema.get("format")
         if temporal_format in {"date", "date-time"}:
             iso = "DATE_TIME" if temporal_format == "date-time" else "DATE"
@@ -169,61 +183,53 @@ def parameter_annotation(parameter: dict) -> tuple[str, str, str, set[str]]:
     return annotation, value_type, name, imports
 
 
-def generate_controller(group: str, operations: list[tuple[str, str, dict]]) -> tuple[str, str]:
-    class_name = camel(group, upper=True) + "GeneratedController"
-    imports = {
-        "eu.royalblackwater.api.transport.ApiOperationDispatcher",
-        "eu.royalblackwater.api.transport.ApiParameters",
-        "org.springframework.http.ResponseEntity",
-        "org.springframework.validation.annotation.Validated",
-        "org.springframework.web.bind.annotation.RestController",
-    }
+def operation_signature(operation: dict) -> tuple[list[str], list[tuple[str, str]], str | None, bool, set[str]]:
+    signature: list[str] = []
+    parameters: list[tuple[str, str]] = []
+    imports: set[str] = set()
+    for parameter in operation.get("parameters", []):
+        if parameter.get("in") == "cookie":
+            continue
+        annotation, value_type, name, nested = parameter_annotation(parameter)
+        imports.update(nested)
+        signature.append(f"            {annotation} {value_type} {name}")
+        parameters.append((parameter["name"], name))
+    body_type, multipart, nested = request_body(operation)
+    imports.update(nested)
+    if body_type is not None and multipart:
+        imports.update({"org.springframework.web.bind.annotation.RequestPart", "org.springframework.web.multipart.MultipartFile"})
+        signature.append(f'            @RequestPart("{body_type}") MultipartFile upload')
+    elif body_type is not None:
+        imports.update({"jakarta.validation.Valid", "org.springframework.web.bind.annotation.RequestBody"})
+        signature.append(f"            @Valid @RequestBody {body_type} body")
+    return signature, parameters, body_type, multipart, imports
+
+
+def generate_api(group: str, operations: list[tuple[str, str, dict]]) -> tuple[str, str]:
+    class_name = camel(group, upper=True) + "Api"
+    imports = {"org.springframework.http.ResponseEntity"}
     methods: list[str] = []
     used: set[str] = set()
     for path, http_method, operation in operations:
         mapping = HTTP[http_method]
         imports.add(f"org.springframework.web.bind.annotation.{mapping}")
-        signature: list[str] = []
-        arguments: list[str] = []
-        for parameter in operation.get("parameters", []):
-            if parameter.get("in") == "cookie":
-                continue
-            annotation, value_type, name, nested = parameter_annotation(parameter)
-            imports.update(nested)
-            signature.append(f"            {annotation} {value_type} {name}")
-            arguments.extend([f'"{parameter["name"]}"', name])
-        body_type, multipart, nested = request_body(operation)
+        signature, _, _, _, nested = operation_signature(operation)
         imports.update(nested)
-        body_expr = "null"
-        file_expr = "null"
-        if body_type is not None and multipart:
-            imports.update({"org.springframework.web.bind.annotation.RequestPart", "org.springframework.web.multipart.MultipartFile"})
-            signature.append(f'            @RequestPart("{body_type}") MultipartFile upload')
-            file_expr = "upload"
-        elif body_type is not None:
-            imports.update({"jakarta.validation.Valid", "org.springframework.web.bind.annotation.RequestBody"})
-            signature.append(f"            @Valid @RequestBody {body_type} body")
-            body_expr = "body"
-        params_expr = "ApiParameters.empty()" if not arguments else "ApiParameters.of(" + ", ".join(arguments) + ")"
+        response_type, response_imports = success_response_type(operation)
+        imports.update(response_imports)
         signature_text = ",\n".join(signature)
         method = method_name(operation["operationId"], used)
-        status = success_status(operation)
-        methods.append(
-            f'    @{mapping}("{mapping_path(path, group)}")\n'
-            f"    public ResponseEntity<?> {method}(\n{signature_text}\n    ) {{\n"
-            f'        return dispatcher.dispatch("{operation["operationId"]}", {params_expr}, {body_expr}, {file_expr}, {status});\n'
-            "    }\n"
+        declaration = (
+            f"    ResponseEntity<{response_type}> {method}(\n{signature_text}\n    );\n"
+            if signature
+            else f"    ResponseEntity<{response_type}> {method}();\n"
         )
+        methods.append(f'    @{mapping}("{path}")\n' + declaration)
     import_block = "".join(f"import {value};\n" for value in sorted(imports))
     text = (
         "// Generated by infrastructure/scripts/generation/generate_spring_routes.py; do not edit manually.\n"
         f"package {PACKAGE};\n\n{import_block}\n"
-        "@RestController\n@Validated\n"
-        f"public class {class_name} {{\n"
-        "    private final ApiOperationDispatcher dispatcher;\n\n"
-        f"    public {class_name}(ApiOperationDispatcher dispatcher) {{\n"
-        "        this.dispatcher = dispatcher;\n"
-        "    }\n\n"
+        f"public interface {class_name} {{\n"
         + "\n".join(methods)
         + "}\n"
     )
@@ -232,57 +238,39 @@ def generate_controller(group: str, operations: list[tuple[str, str, dict]]) -> 
 
 def render_outputs() -> tuple[dict[Path, str], int]:
     grouped: dict[str, list[tuple[str, str, dict]]] = defaultdict(list)
-    operation_ids: list[str] = []
+    operation_count = 0
     for path, item in SCHEMA["paths"].items():
         for method, operation in item.items():
             if method not in HTTP:
                 continue
             grouped[group_for(path)].append((path, method, operation))
-            operation_ids.append(operation["operationId"])
+            operation_count += 1
     outputs: dict[Path, str] = {}
     for group, operations in sorted(grouped.items()):
-        class_name, text = generate_controller(group, sorted(operations))
-        outputs[TARGET / (class_name + ".java")] = text
-    catalog = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/transport/ApiOperationCatalog.java"
-    values = ",\n".join(f'            "{operation_id}"' for operation_id in sorted(operation_ids))
-    outputs[catalog] = (
-        "// Generated by infrastructure/scripts/generation/generate_spring_routes.py; do not edit manually.\n"
-        "package eu.royalblackwater.api.transport;\n\n"
-        "import java.util.Set;\n\n"
-        "public final class ApiOperationCatalog {\n"
-        "    private ApiOperationCatalog() { }\n"
-        "    public static final Set<String> ALL = Set.of(\n"
-        + values + "\n    );\n}\n"
-    )
-    return outputs, len(operation_ids)
+        class_name, text = generate_api(group, sorted(operations))
+        outputs[TARGET / f"{class_name}.java"] = text
+    return outputs, operation_count
 
 
 def check_outputs(outputs: dict[Path, str], operation_count: int) -> None:
-    expected_controllers = {path for path in outputs if path.parent == TARGET}
-    stale_controllers = sorted(set(TARGET.glob("*.java")) - expected_controllers)
+    expected = set(outputs)
+    stale = sorted(set(TARGET.glob("*.java")) - expected) if TARGET.exists() else []
     mismatches: list[str] = []
-    for path, expected in outputs.items():
+    for path, generated in outputs.items():
         actual = path.read_text(encoding="utf-8") if path.is_file() else ""
-        if actual == expected:
+        if actual == generated:
             continue
-        diff = unified_diff(
-            actual.splitlines(), expected.splitlines(),
-            fromfile=str(path.relative_to(ROOT)),
-            tofile=f"generated:{path.relative_to(ROOT)}",
-            lineterm="",
-            n=2,
-        )
+        diff = unified_diff(actual.splitlines(), generated.splitlines(), fromfile=str(path.relative_to(ROOT)),
+                            tofile=f"generated:{path.relative_to(ROOT)}", lineterm="", n=2)
         mismatches.append("\n".join(list(diff)[:40]))
-    if stale_controllers:
-        names = ", ".join(str(path.relative_to(ROOT)) for path in stale_controllers)
-        mismatches.append(f"stale generated controllers: {names}")
+    if stale:
+        mismatches.append("stale generated API interfaces: " + ", ".join(str(path.relative_to(ROOT)) for path in stale))
     if mismatches:
-        detail = "\n\n".join(mismatches[:5])
         raise SystemExit(
-            "[spring-routes] generated API routes are stale; run "
-            "python3 infrastructure/scripts/generation/generate_spring_routes.py\n" + detail
+            "[spring-routes] generated API interfaces are stale; run "
+            "python3 infrastructure/scripts/generation/generate_spring_routes.py\n" + "\n\n".join(mismatches[:5])
         )
-    print(f"Spring route generation OK ({len(expected_controllers)} controllers, {operation_count} operations).")
+    print(f"Spring API interface generation OK ({len(expected)} interfaces, {operation_count} operations).")
 
 
 def main() -> None:
@@ -293,13 +281,12 @@ def main() -> None:
     if sys.argv[1:]:
         raise SystemExit("Usage: generate_spring_routes.py [--check]")
     TARGET.mkdir(parents=True, exist_ok=True)
-    expected_controllers = {path for path in outputs if path.parent == TARGET}
     for path, generated in outputs.items():
         path.write_text(generated, encoding="utf-8")
     for path in TARGET.glob("*.java"):
-        if path not in expected_controllers:
+        if path not in outputs:
             path.unlink()
-    print(f"generated {len(expected_controllers)} controllers for {operation_count} operations")
+    print(f"generated {len(outputs)} API interfaces for {operation_count} operations")
 
 
 if __name__ == "__main__":

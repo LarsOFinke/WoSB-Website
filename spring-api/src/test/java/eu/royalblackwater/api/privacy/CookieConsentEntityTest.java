@@ -1,10 +1,10 @@
 package eu.royalblackwater.api.privacy;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import eu.royalblackwater.api.privacy.entity.CookieConsentEntity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CookieConsentEntityTest {
     @Test

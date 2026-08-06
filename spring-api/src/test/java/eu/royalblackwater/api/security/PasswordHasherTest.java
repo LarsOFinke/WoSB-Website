@@ -1,7 +1,8 @@
 package eu.royalblackwater.api.security;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import eu.royalblackwater.api.security.service.PasswordHasher;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PasswordHasherTest {
     private final PasswordHasher hasher = new PasswordHasher();

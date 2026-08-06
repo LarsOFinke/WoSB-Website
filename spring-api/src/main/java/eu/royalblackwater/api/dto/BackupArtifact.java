@@ -1,0 +1,13 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+public record BackupArtifact(
+        @NotNull String artifactType,
+        @NotNull String filename,
+        @NotNull String remotePath,
+        @NotNull @Size(min = 64, max = 64) String sha256,
+        @Min(0) long sizeBytes) { }

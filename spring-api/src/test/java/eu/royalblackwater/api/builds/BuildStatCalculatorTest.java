@@ -1,11 +1,11 @@
 package eu.royalblackwater.api.builds;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import eu.royalblackwater.api.contract.BuildStatRow;
+import eu.royalblackwater.api.builds.service.BuildStatCalculator;
+import eu.royalblackwater.api.dto.BuildStatRow;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class BuildStatCalculatorTest {
     private final BuildStatCalculator calculator = new BuildStatCalculator();

@@ -1,16 +1,11 @@
 package eu.royalblackwater.api.privacy;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import eu.royalblackwater.api.config.SessionProperties;
-import eu.royalblackwater.api.contract.CookieConsentChoice;
-import eu.royalblackwater.api.security.AuthenticatedUser;
+import eu.royalblackwater.api.dto.CookieConsentChoice;
+import eu.royalblackwater.api.privacy.entity.CookieConsentEntity;
+import eu.royalblackwater.api.privacy.repository.CookieConsentRepository;
+import eu.royalblackwater.api.privacy.service.CookieConsentService;
+import eu.royalblackwater.api.security.model.AuthenticatedUser;
 import jakarta.servlet.http.Cookie;
 import java.time.Clock;
 import java.time.Duration;
@@ -22,6 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class CookieConsentServiceTest {
     private static final Clock CLOCK = Clock.fixed(

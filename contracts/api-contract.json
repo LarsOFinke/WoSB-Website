@@ -11782,6 +11782,268 @@
         ],
         "title": "WeaponSlotTypeRead",
         "type": "object"
+      },
+      "HealthStatusRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "title": "HealthStatusRead"
+      },
+      "HomeActivityWindowRead": {
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "main": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "port_battles": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "timezone",
+          "main",
+          "port_battles"
+        ],
+        "type": "object",
+        "title": "HomeActivityWindowRead"
+      },
+      "HomeVoicePolicyRead": {
+        "properties": {
+          "competitive": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "general": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "competitive",
+          "general"
+        ],
+        "type": "object",
+        "title": "HomeVoicePolicyRead"
+      },
+      "HomeModuleRead": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          },
+          "access": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "key",
+          "status",
+          "access"
+        ],
+        "type": "object",
+        "title": "HomeModuleRead"
+      },
+      "HomeRead": {
+        "properties": {
+          "route": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "focus": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "activity_window": {
+            "$ref": "#/components/schemas/HomeActivityWindowRead"
+          },
+          "voice_policy": {
+            "$ref": "#/components/schemas/HomeVoicePolicyRead"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeModuleRead"
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "route",
+          "title",
+          "focus",
+          "activity_window",
+          "voice_policy",
+          "modules"
+        ],
+        "type": "object",
+        "title": "HomeRead"
+      },
+      "PrivacyContactReceipt": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "type": "object",
+        "title": "PrivacyContactReceipt"
+      },
+      "PersonalDataExportRead": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "exported_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "subject": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "categories": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          },
+          "exclusions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 32
+          }
+        },
+        "required": [
+          "schema_version",
+          "exported_at",
+          "subject",
+          "categories",
+          "exclusions"
+        ],
+        "type": "object",
+        "title": "PersonalDataExportRead"
+      },
+      "ProfileShipOptionRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "rate": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "rate"
+        ],
+        "type": "object",
+        "title": "ProfileShipOptionRead"
+      },
+      "ProfileRoleOptionRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "label"
+        ],
+        "type": "object",
+        "title": "ProfileRoleOptionRead"
+      },
+      "ProfilePreferenceOptionsRead": {
+        "properties": {
+          "ships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileShipOptionRead"
+            },
+            "maxItems": 1000
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileRoleOptionRead"
+            },
+            "maxItems": 1000
+          }
+        },
+        "required": [
+          "ships",
+          "roles"
+        ],
+        "type": "object",
+        "title": "ProfilePreferenceOptionsRead"
       }
     }
   },
@@ -18458,7 +18720,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           },
           "422": {
             "content": {
@@ -19385,7 +19655,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           },
           "422": {
             "content": {
@@ -21557,11 +21835,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Health Check Api Health Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/HealthStatusRead"
                 }
               }
             },
@@ -21582,11 +21856,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Readiness Check Api Health Ready Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/HealthStatusRead"
                 }
               }
             },
@@ -21626,9 +21896,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Home Api Home Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/HomeRead"
                 }
               }
             },
@@ -21814,18 +22082,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  },
-                  "title": "Response Create Privacy Contact Api Privacy Contact Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/PrivacyContactReceipt"
                 }
               }
             },
@@ -22017,9 +22274,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Export Personal Data Api Privacy Data Export Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/PersonalDataExportRead"
                 }
               }
             },
@@ -22284,9 +22539,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Preference Options Api Profile Preferences Options Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ProfilePreferenceOptionsRead"
                 }
               }
             },

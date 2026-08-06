@@ -28,7 +28,7 @@ function sanitizePrintFileName(value, fallback = 'document') {
   return String(value || fallback)
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')  // Check if sanitization is good enough to prevent malicious files
     .replace(/(^-|-$)/g, '')
     .slice(0, 72) || fallback
 }

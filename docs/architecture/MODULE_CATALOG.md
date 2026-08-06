@@ -14,9 +14,10 @@ Dokumentationsgate gleicht beide Bestände automatisch mit dem Dateisystem ab.
 
 Alle Backendmodule liegen unter
 `spring-api/src/main/java/eu/royalblackwater/api/`. Der normale Ablauf ist
-generierter Controller → Operation-Handler → Service → Repository/Mapper. Bei
-API-Fehlern zuerst `operationId`, Handler, Service und serverseitige
-Berechtigungsentscheidung zusammen verfolgen.
+OpenAPI-Vertrag → generiertes API-Interface + API-DTO → Modul-Controller → Service →
+Repository → Mapper → API-/Modul-DTO. Bei API-Fehlern zuerst Route/`operationId`, implementierendes
+Interface, Controller, Service und serverseitige Berechtigungsentscheidung zusammen
+verfolgen.
 
 | Modul | Verantwortung und Grenzen | Diagnose und zentrale Tests |
 | --- | --- | --- |
@@ -26,8 +27,9 @@ Berechtigungsentscheidung zusammen verfolgen.
 | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Flotten-/Squad-Kalender und Eventzugriff; Raid-Helper-Zustellung bleibt eine nachgelagerte Integration. | `CalendarService`; ISO-`date`/`date-time`-Bindung und `MethodArgumentTypeMismatchException` prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Spring-Komposition, typisierte Konfiguration, Security- und Fehlergrenzen, Scheduling. Keine Fachlogik. | `application.yml`, `SecurityConfiguration`, `ApiExceptionHandler`; Bindingfehler beim Start und zentrale `api_error`-Zeilen prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/content/` | Gemeinsame Validierung sicher eingebetteter Inhalte. | `ContentEmbedValidator` und aufrufende Guides-/Forum-Services; abgelehnte Schemes und Hosts gezielt testen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | Generierte Java-Abbilder des versionierten HTTP-Vertrags. Niemals manuell bearbeiten. | `contracts/api-contract.json`, Generator-`--check`, `ApiOperationDispatcherTest`. |
-| `spring-api/src/main/java/eu/royalblackwater/api/core/` | Kleine, domänenübergreifende Kernoperationen wie Health/Readiness. | `CoreOperationHandler` und `/api/health*`; bei Readiness zusätzlich DB und Flyway prüfen. |
+| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | Generierte typisierte Spring-MVC-Interfaces des versionierten HTTP-Vertrags. Niemals manuell bearbeiten. | `contracts/api-contract.json`, Routengenerator-`--check`, `audit_spring_backend.py`. |
+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | Generierte Request-/Response-DTOs des HTTP-Vertrags. Fachmodulinterne Übergabe-DTOs liegen separat unter `<domain>/dto`. | DTO-Generator, Contract-Schema und DTO-Grenzprüfungen im Spring-Audit. |
+| `spring-api/src/main/java/eu/royalblackwater/api/core/` | Kleine, domänenübergreifende Kernoperationen wie Health/Readiness in Controller, Service und Repository getrennt. | `CoreController`, `CoreService` und `/api/health*`; bei Readiness zusätzlich DB und Flyway prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Inhaltsabruf, Quoten, Typ- und Eigentumsprüfung. Metadaten liegen in PostgreSQL, Binärdaten im konfigurierten Storage. | `FileAssetService`, Storage-Konfiguration und Upload-Grenztests; Pfadnormalisierung und freien Speicher prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotten, Rollen, Mitgliedschaften, Führung und serverseitige Fähigkeiten. Bootstrap-Flottenleitung wird durch die Account-Initialisierung sichergestellt. | `FleetAccessPolicyTest`, `BootstrapAdministratorInitializerTest`, HTTP-Squad-Test; Rollen-Code, Status und Fleet-ID gemeinsam prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/forum/` | Threads, Beiträge, Anhänge, Eigentümer- und Moderationsoperationen. | `ForumService` und Frontend-Forumtests; bei Löschung Referenzen und Berechtigung getrennt prüfen. |
@@ -42,9 +44,9 @@ Berechtigungsentscheidung zusammen verfolgen.
 | `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | Profile, Ziele, Templates, Payload-Rendering und verzögerte externe Zustellung. Fehler dürfen den Kalenderablauf nicht unkontrolliert blockieren. | `RaidHelperDeliveryWorker`, Probe-/Policy-Services und [Integrationsreferenz](../reference/RAID_HELPER_CALENDAR.md). |
 | `spring-api/src/main/java/eu/royalblackwater/api/security/` | Authenticated Principal, Sessionfilter, CSRF, Passwort- und Secret-Kryptografie sowie Host-/Origin-Grenze. | Security-Unit-Tests und `ApplicationIntegrationTest`; 401, 403 und CSRF getrennt diagnostizieren. |
 | `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Zweckgebundene aggregierte Sperrsignale, IP-Sperren und Security-Dashboard. Keine allgemeine Requesthistorie. | `SecurityDashboardServiceTest`, [Aufbewahrung](../reference/DATA_RETENTION.md); JDBC-`DATE` über `RowValues` lesen. |
+| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Schmale modulübergreifende Web-, Filter- und Mapping-Helfer ohne Fachlogik. | `ApiControllerSupport`, `ListFilter`, `ContractConversionService`; neue Helfer nur bei mehreren echten Verbrauchern. |
 | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | Lesender Schiffskatalog, Waffenklassen, Mounts und Leistungsprofile. Mutationen laufen über Stammdaten. | `ShipQueryService`, Listenfilter und Master-Data-Seedtests; Taxonomie-IDs und aktive Datensätze prüfen. |
 | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squads innerhalb einer Flotte, Roster, Rollen, Leitung und Mitgliedschaften auf Basis gültiger Fleet-Memberships. | `SquadAccessPolicyTest` und PostgreSQL-HTTP-Test; Fleet-Zugehörigkeit, Membership-Status und Rollenfähigkeit gemeinsam prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/transport/` | Operation-Katalog, Dispatch, Parameter- und Contract-Konvertierung zwischen generiertem HTTP-Transport und Handlern. | `ApiOperationDispatcherTest`, `AbstractApiOperationHandlerTest`, Generator-Checks; fehlende/doppelte `operationId` verhindern den Start. |
 | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Website-Webhooks, Eventkatalog, Policy, Zustellhistorie und knappe ausgehende Hinweise. Secrets bleiben verschlüsselt. | Webhook-Policy-/Payloadtests und Lieferstatus; Zielscope, Eventtyp und redigierte Fehler prüfen. |
 
 ## Frontend-Featuremodule

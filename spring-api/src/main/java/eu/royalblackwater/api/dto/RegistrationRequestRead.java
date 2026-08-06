@@ -1,0 +1,20 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+
+public record RegistrationRequestRead(
+        @NotNull LocalDateTime createdAt,
+        UserRead createdUser,
+        String decisionNote,
+        @NotNull String displayName,
+        String fleetApplicationNote,
+        Long fleetId,
+        long id,
+        LocalDateTime reviewedAt,
+        UserRead reviewedBy,
+        @NotNull String status,
+        @NotNull LocalDateTime updatedAt,
+        @NotNull String username,
+        Boolean wantsFleetMembership) { }

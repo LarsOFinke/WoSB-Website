@@ -1,0 +1,18 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+
+public record BuildStatDefinitionRead(
+        String baseField,
+        String calculationFlatEffect,
+        @NotNull String category,
+        String flatEffect,
+        @NotNull String key,
+        @NotNull String label,
+        String pctBaseField,
+        String pctEffect,
+        Boolean positiveIsGood,
+        Long precision,
+        String source,
+        String unit) { }

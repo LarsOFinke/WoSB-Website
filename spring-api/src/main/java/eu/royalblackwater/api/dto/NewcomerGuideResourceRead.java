@@ -1,0 +1,13 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+
+public record NewcomerGuideResourceRead(
+        Boolean available,
+        String description,
+        @NotNull String href,
+        long id,
+        @NotNull String label,
+        Long resourceId,
+        @NotNull String resourceType) { }

@@ -1,5 +1,14 @@
 package eu.royalblackwater.api.masterdata;
 
+import eu.royalblackwater.api.dto.MasterDataCategoryRead;
+import eu.royalblackwater.api.masterdata.mapper.MasterDataDtoMapper;
+import eu.royalblackwater.api.masterdata.service.MasterDataQueryService;
+import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
+import eu.royalblackwater.api.shared.mapper.ContractConversionService;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -9,20 +18,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import eu.royalblackwater.api.persistence.JdbcQueryService;
-import eu.royalblackwater.api.contract.MasterDataCategoryRead;
-import eu.royalblackwater.api.transport.ContractConversionService;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
 class MasterDataQueryServiceTest {
     @Test
     void excludesInternalSeedChecksumFromCategoryContract() {
-        JdbcQueryService jdbc = mock(JdbcQueryService.class);
+        MasterDataRepository repository = mock(MasterDataRepository.class);
         ContractConversionService contracts = mock(ContractConversionService.class);
-        when(jdbc.query(anyString(), anyMap())).thenReturn(List.of(Map.of(
+        when(repository.query(anyString(), anyMap())).thenReturn(List.of(Map.of(
                 "id", 1L,
                 "seed_key", "managed-category",
                 "seed_checksum", "internal-checksum",
@@ -30,7 +31,7 @@ class MasterDataQueryServiceTest {
         when(contracts.convert(anyMap(), eq(MasterDataCategoryRead.class)))
                 .thenReturn(mock(MasterDataCategoryRead.class));
 
-        new MasterDataQueryService(jdbc, contracts).categories();
+        new MasterDataQueryService(repository, new MasterDataDtoMapper(contracts)).categories();
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, Object>> values = ArgumentCaptor.forClass(Map.class);
@@ -41,9 +42,9 @@ class MasterDataQueryServiceTest {
 
     @Test
     void loadsShipRelationsWithAFixedNumberOfQueries() {
-        JdbcQueryService jdbc = mock(JdbcQueryService.class);
+        MasterDataRepository repository = mock(MasterDataRepository.class);
         ContractConversionService contracts = mock(ContractConversionService.class);
-        when(jdbc.query(anyString(), anyMap())).thenAnswer(invocation -> {
+        when(repository.query(anyString(), anyMap())).thenAnswer(invocation -> {
             String sql = invocation.getArgument(0);
             if (sql.startsWith("select * from ships order by")) {
                 return List.of(
@@ -53,7 +54,7 @@ class MasterDataQueryServiceTest {
             return List.of();
         });
 
-        assertThat(new MasterDataQueryService(jdbc, contracts).ships()).hasSize(2);
-        verify(jdbc, times(5)).query(anyString(), anyMap());
+        assertThat(new MasterDataQueryService(repository, new MasterDataDtoMapper(contracts)).ships()).hasSize(2);
+        verify(repository, times(5)).query(anyString(), anyMap());
     }
 }

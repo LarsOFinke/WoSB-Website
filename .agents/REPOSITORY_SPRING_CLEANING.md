@@ -80,9 +80,9 @@ SOLID ist hier eine Entscheidungshilfe, kein Klassenzähler:
 - **Eine benennbare Verantwortung:** Transport bindet, Service entscheidet,
   Repository persistiert, Mapper übersetzt. Frontend-Seiten komponieren,
   Composables steuern Abläufe, API-Module transportieren, Domain-Module rechnen.
-- **Erweiterung am stabilen Vertrag:** vorhandene Operation-Handler,
-  Domain-Module und Infrastruktur-Helper erweitern, statt parallele
-  Kompatibilitätspfade einzuführen.
+- **Erweiterung am stabilen Vertrag:** vorhandene generierte API-Interfaces,
+  Modul-Controller, Services und Infrastruktur-Helper erweitern, statt parallele
+  Dispatch- oder Kompatibilitätspfade einzuführen.
 - **Austauschbarkeit:** Vererbung nur bei tatsächlich substituierbaren Typen;
   meist sind kleine Komposition und Konstruktorinjektion klarer.
 - **Schmale Schnittstellen:** nur die Daten und Operationen übergeben, die ein
@@ -107,7 +107,7 @@ KISS begrenzt die Umsetzung:
 Für jede betroffene Operation vom Vertrag bis zur Persistenz verfolgen:
 
 ```text
-api-contract -> generierter Controller -> Operation-Handler -> Service
+api-contract -> generiertes API-Interface -> Modul-Controller -> Service
              -> Repository/Mapper -> Migration/Index -> Tests/Dokumentation
 ```
 

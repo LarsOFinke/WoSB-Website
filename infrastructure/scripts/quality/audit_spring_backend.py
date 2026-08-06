@@ -1,19 +1,28 @@
 #!/usr/bin/env python3
-"""Offline structural checks for the native Spring backend."""
+"""Offline structural checks for the modular Spring backend."""
 from __future__ import annotations
+
 import json
 import re
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-JAVA = ROOT / "spring-api/src/main/java"
+JAVA = ROOT / "spring-api/src/main/java/eu/royalblackwater/api"
 CONTRACT = ROOT / "contracts/api-contract.json"
+API_PACKAGE = JAVA / "contract/api"
+LAYER_NAMES = {"controller", "filter", "service", "mapper", "dto", "entity", "repository", "model"}
+INFRASTRUCTURE_MODULES = {"config", "contract", "dto", "persistence", "shared"}
 
 
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise SystemExit(f"[spring-audit] {message}")
+
+
+def read(path: Path) -> str:
+    require(path.is_file(), f"missing file: {path.relative_to(ROOT)}")
+    return path.read_text(encoding="utf-8")
 
 
 def operation_ids() -> set[str]:
@@ -26,47 +35,248 @@ def operation_ids() -> set[str]:
     return result
 
 
-ops = operation_ids()
-handlers: dict[str, list[Path]] = defaultdict(list)
-for path in JAVA.rglob("*OperationHandler.java"):
-    source = path.read_text(encoding="utf-8")
-    for operation in ops.intersection(re.findall(r'"([a-zA-Z0-9_]+)"', source)):
-        handlers[operation].append(path.relative_to(ROOT))
-missing = sorted(ops - handlers.keys())
-duplicates = {operation: paths for operation, paths in handlers.items() if len(paths) != 1}
-require(not missing, f"missing operation handlers: {', '.join(missing[:10])}")
-require(not duplicates, "duplicate operation handlers: " + ", ".join(sorted(duplicates)[:10]))
+def methods(source: str) -> set[str]:
+    result: set[str] = set()
+    for line in source.splitlines():
+        match = re.search(r"\bResponseEntity<.+>\s+([A-Za-z_$][\w$]*)\s*\(", line)
+        if match:
+            result.add(match.group(1))
+    return result
 
-all_java = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in JAVA.rglob("*.java"))
+
+def imports(source: str) -> set[str]:
+    return set(re.findall(r"^import\s+([\w.]+);", source, flags=re.MULTILINE))
+
+
+def java_string_literals(source: str) -> list[str]:
+    """Return Java string/text-block contents while ignoring comments and character literals."""
+    result: list[str] = []
+    index = 0
+    while index < len(source):
+        if source.startswith("//", index):
+            end = source.find("\n", index + 2)
+            index = len(source) if end < 0 else end + 1
+            continue
+        if source.startswith("/*", index):
+            end = source.find("*/", index + 2)
+            index = len(source) if end < 0 else end + 2
+            continue
+        if source[index] == "'":
+            index += 1
+            while index < len(source):
+                if source[index] == "\\":
+                    index += 2
+                elif source[index] == "'":
+                    index += 1
+                    break
+                else:
+                    index += 1
+            continue
+        if source.startswith('"""', index):
+            end = source.find('"""', index + 3)
+            require(end >= 0, "unclosed Java text block")
+            result.append(source[index + 3:end])
+            index = end + 3
+            continue
+        if source[index] == '"':
+            end = index + 1
+            value: list[str] = []
+            while end < len(source):
+                if source[end] == "\\" and end + 1 < len(source):
+                    value.extend((source[end], source[end + 1]))
+                    end += 2
+                elif source[end] == '"':
+                    break
+                else:
+                    value.append(source[end])
+                    end += 1
+            require(end < len(source), "unclosed Java string literal")
+            result.append("".join(value))
+            index = end + 1
+            continue
+        index += 1
+    return result
+
+
+def contains_sql_literal(source: str) -> bool:
+    starters = (
+        "select ", "insert ", "update ", "delete ", "with ", "where ",
+        "order by ", "group by ", "having ", "limit ", "offset ", "from ",
+        "join ", "left join ", "right join ", "inner join ", "outer join ",
+        "returning ", "values(", "values ", "set ", "and ", "or ", "on conflict ",
+    )
+    statement = re.compile(
+        r"(?s)(?:^|\n)\s*(?:select|insert\s+into|update\s+[a-z_]|delete\s+from|"
+        r"with\s+[a-z_]|where|order\s+by|group\s+by|left\s+join|join)\b"
+    )
+    return any(value.strip().startswith(starters) or statement.search(value)
+               for value in java_string_literals(source))
+
+
+ops = operation_ids()
+api_files = sorted(API_PACKAGE.glob("*Api.java"))
+require(api_files, "generated API interfaces are missing")
+route_count = sum(len(re.findall(r"@(Get|Post|Put|Patch|Delete)Mapping\(", read(path))) for path in api_files)
+require(route_count == len(ops), f"generated interfaces expose {route_count} routes for {len(ops)} operations")
+
+api_methods: dict[str, set[str]] = {}
+for path in api_files:
+    source = read(path)
+    require(source.startswith("// Generated by infrastructure/scripts/generation/generate_spring_routes.py"),
+            f"API interface is not generator-owned: {path.relative_to(ROOT)}")
+    require("ResponseEntity<?>" not in source,
+            f"API interface exposes an untyped response: {path.relative_to(ROOT)}")
+    api_methods[path.stem] = methods(source)
+    require(api_methods[path.stem], f"API interface has no methods: {path.relative_to(ROOT)}")
+
+controllers = sorted(JAVA.glob("*/controller/*Controller.java"))
+require(controllers, "module controllers are missing")
+implementors: dict[str, list[Path]] = defaultdict(list)
+for path in controllers:
+    source = read(path)
+    require("@RestController" in source, f"controller lacks @RestController: {path.relative_to(ROOT)}")
+    require(not re.search(r"@(Get|Post|Put|Patch|Delete|Request)Mapping\(", source),
+            f"route mappings belong to generated API interfaces: {path.relative_to(ROOT)}")
+    implemented = re.search(r"\bimplements\s+([^\{]+)\{", source)
+    require(implemented is not None, f"controller implements no generated API interface: {path.relative_to(ROOT)}")
+    names = [name.strip().split("<", 1)[0] for name in implemented.group(1).split(",")]
+    names = [name for name in names if name.endswith("Api")]
+    require(names, f"controller implements no *Api interface: {path.relative_to(ROOT)}")
+    declared = methods(source)
+    for name in names:
+        require(name in api_methods, f"unknown API interface {name} in {path.relative_to(ROOT)}")
+        implementors[name].append(path)
+        missing = api_methods[name] - declared
+        require(not missing, f"{path.relative_to(ROOT)} misses {name} methods: {', '.join(sorted(missing))}")
+
+missing_interfaces = sorted(set(api_methods) - set(implementors))
+duplicate_interfaces = {name: paths for name, paths in implementors.items() if len(paths) != 1}
+require(not missing_interfaces, "API interfaces without controller: " + ", ".join(missing_interfaces))
+require(not duplicate_interfaces, "API interfaces with multiple controllers: " + ", ".join(sorted(duplicate_interfaces)))
+
+for path in JAVA.rglob("*.java"):
+    source = read(path)
+    relative = path.relative_to(JAVA)
+    lines = source.splitlines()
+    require(len(lines) <= 420, f"Java responsibility exceeds 420 lines: {path.relative_to(ROOT)} ({len(lines)})")
+    require("OperationHandler" not in source, f"obsolete operation-handler architecture remains: {path.relative_to(ROOT)}")
+    require("ApiOperationDispatcher" not in source, f"obsolete central dispatcher remains: {path.relative_to(ROOT)}")
+
+    parts = relative.parts
+    if len(parts) >= 3 and parts[1] in LAYER_NAMES:
+        layer = parts[1]
+        imported = imports(source)
+        if layer == "controller":
+            forbidden = [value for value in imported if ".repository." in value or ".entity." in value
+                         or value.startswith("eu.royalblackwater.api.persistence.")
+                         or value.startswith("org.springframework.jdbc.") or value.startswith("org.flywaydb.")]
+            require(not forbidden, f"controller bypasses service layer in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
+            require("ResponseEntity<?>" not in source,
+                    f"controller exposes an untyped response: {path.relative_to(ROOT)}")
+            require("Object request = body" not in source and "body(request," not in source,
+                    f"controller degrades a typed request DTO to Object: {path.relative_to(ROOT)}")
+            require(not re.search(r"\bnew\s+[A-Z][A-Za-z0-9_]*(?:Response|Summary|Details|Result|View|Dto)\s*\(", source),
+                    f"controller constructs an API representation outside a mapper: {path.relative_to(ROOT)}")
+            require(not re.search(r"(?i)\b(select|insert\s+into|update\s+\w+|delete\s+from)\b", source),
+                    f"SQL found in controller: {path.relative_to(ROOT)}")
+        elif layer == "service":
+            forbidden = [value for value in imported if ".controller." in value or ".contract.api." in value
+                         or value == "eu.royalblackwater.api.persistence.JdbcQueryService"]
+            require(not forbidden, f"service violates layer direction in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
+            require(not contains_sql_literal(source),
+                    f"SQL definitions belong to the repository layer: {path.relative_to(ROOT)}")
+            api_dto_names = {value.rsplit(".", 1)[-1] for value in imported
+                             if value.startswith("eu.royalblackwater.api.dto.")}
+            constructed_dtos = sorted(name for name in api_dto_names
+                                      if re.search(rf"\bnew\s+{re.escape(name)}\s*\(", source))
+            require(not constructed_dtos,
+                    f"service constructs API DTOs outside the mapper layer in {path.relative_to(ROOT)}: "
+                    + ", ".join(constructed_dtos))
+            for signature in re.findall(r"public\s+(?:static\s+)?[^;{\n]+\([^;{]*\)", source):
+                normalized = " ".join(signature.split())
+                require("Map<String, Object>" not in normalized and "List<Map<" not in normalized,
+                        f"raw database/JSON map crosses service boundary in {path.relative_to(ROOT)}: {normalized}")
+                require(not re.search(r"\b(?:Optional<)?[A-Za-z_$][\w$]*Entity(?:>|\s)", normalized),
+                        f"entity crosses service boundary in {path.relative_to(ROOT)}: {normalized}")
+        elif layer == "mapper":
+            forbidden = [value for value in imported if ".controller." in value]
+            require(not forbidden, f"mapper depends on transport layer in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
+        elif layer == "dto":
+            forbidden = [value for value in imported if any(token in value for token in
+                         (".controller.", ".service.", ".repository.", ".entity."))]
+            require(not forbidden, f"DTO depends on application layers in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
+        elif layer == "repository":
+            forbidden = [value for value in imported if ".controller." in value or ".service." in value]
+            require(not forbidden, f"repository depends on upper layer in {path.relative_to(ROOT)}: {', '.join(sorted(forbidden))}")
+
+# Domain code lives in explicit layer packages; only infrastructure packages may keep flat classes.
+for module in sorted(path for path in JAVA.iterdir() if path.is_dir()):
+    if module.name in INFRASTRUCTURE_MODULES:
+        continue
+    direct_java = sorted(module.glob("*.java"))
+    require(not direct_java, f"unlayered Java files in {module.name}: " + ", ".join(path.name for path in direct_java))
+    if (module / "controller").is_dir():
+        require((module / "service").is_dir(), f"HTTP module lacks service layer: {module.name}")
+        require((module / "repository").is_dir(),
+                f"HTTP module lacks repository layer: {module.name}")
+        require((module / "mapper").is_dir(),
+                f"HTTP module lacks mapper layer: {module.name}")
+
+# Generated API DTOs are the only transport model package and remain generator-owned.
+dto_files = sorted((JAVA / "dto").glob("*.java"))
+require(dto_files, "generated API DTOs are missing")
+for path in dto_files:
+    source = read(path)
+    require(source.startswith("// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py"),
+            f"API DTO is not generator-owned: {path.relative_to(ROOT)}")
+    require("package eu.royalblackwater.api.dto;" in source,
+            f"API DTO uses the wrong package: {path.relative_to(ROOT)}")
+require(not list((JAVA / "contract").glob("*.java")),
+        "legacy transport DTOs remain in the contract package")
+
+# The generic JDBC executor is infrastructure-only. Application code reaches it through module repositories.
+for path in JAVA.rglob("*.java"):
+    if "import eu.royalblackwater.api.persistence.JdbcQueryService;" not in read(path):
+        continue
+    relative = path.relative_to(JAVA)
+    allowed = relative.parts[0] == "persistence" or (len(relative.parts) > 1 and relative.parts[1] == "repository")
+    require(allowed, f"generic JDBC executor escapes repository boundary: {path.relative_to(ROOT)}")
+
+all_java = "\n".join(read(path) for path in JAVA.rglob("*.java"))
 for forbidden in ("FastApiProxy", "FASTAPI_INTERNAL_URL", "http://api:8000", "FetchType.EAGER"):
     require(forbidden not in all_java, f"forbidden migration/runtime token remains: {forbidden}")
 
+# Entity graphs may fetch one collection, but never multiple List bags.
 for path in JAVA.rglob("*.java"):
-    source = path.read_text(encoding="utf-8")
-    lines = source.splitlines()
-    require(len(lines) <= 420, f"Java responsibility exceeds 420 lines: {path.relative_to(ROOT)} ({len(lines)})")
-    # Entity graphs may fetch one collection, but never multiple List bags.
+    source = read(path)
     for graph in re.findall(r"@EntityGraph\(attributePaths\s*=\s*\{([^}]*)}\)", source):
         collection_paths = [value for value in re.findall(r'"([^"]+)"', graph) if value.endswith("Preferences")]
         require(len(collection_paths) <= 1, f"multiple bag fetch in {path.relative_to(ROOT)}")
 
-# Known high-volume reads must remain batched rather than issue a query per row.
-squad = (JAVA / "eu/royalblackwater/api/squads/SquadService.java").read_text(encoding="utf-8")
+# Known high-volume reads must stay batched.
+squad = (read(JAVA / "squads/service/SquadService.java")
+         + read(JAVA / "squads/repository/queries/SquadQueries.java"))
 require("where sm.squad_id in (:ids)" in squad, "squad member list is not batch-loaded")
-guide = (JAVA / "eu/royalblackwater/api/onboarding/NewcomerGuideService.java").read_text(encoding="utf-8")
-require("where r.block_id in (:ids)" in guide, "newcomer guide resources are not batch-loaded")
-ships = (JAVA / "eu/royalblackwater/api/ships/ShipQueryService.java").read_text(encoding="utf-8")
+newcomer = (read(JAVA / "onboarding/service/NewcomerGuideService.java")
+            + read(JAVA / "onboarding/repository/queries/NewcomerGuideQueries.java"))
+require("where r.block_id in (:ids)" in newcomer, "newcomer guide resources are not batch-loaded")
+ships = read(JAVA / "ships/repository/ShipRepository.java")
 require("group by m.ship_id" in ships.lower(), "ship weapon mounts are not aggregated in one query")
-masterdata = (JAVA / "eu/royalblackwater/api/masterdata/MasterDataQueryService.java").read_text(encoding="utf-8")
+masterdata = (read(JAVA / "masterdata/service/MasterDataQueryService.java")
+              + read(JAVA / "masterdata/repository/queries/MasterDataQueryQueries.java"))
 for marker in ("where m.ship_id in (:ids)", "where value.ship_id in (:ids)", "where ship_id in (:ids)"):
     require(marker in masterdata, f"master-data ship relation is not batch-loaded: {marker}")
-references = (JAVA / "eu/royalblackwater/api/account/UserReferenceService.java").read_text(encoding="utf-8")
+references = (read(JAVA / "account/service/UserReferenceService.java")
+              + read(JAVA / "account/repository/queries/UserReferenceQueries.java"))
 require("where u.id in (:ids)" in references, "user references are not batch-loaded")
-guides = (JAVA / "eu/royalblackwater/api/guides/GuideService.java").read_text(encoding="utf-8")
+guides = read(JAVA / "guides/service/GuideService.java")
 require("builds.getMany" in guides and "for (Long buildId : normalizedBuildIds) builds.get" not in guides,
         "guide build references are not batch-loaded")
-build_assembler = (JAVA / "eu/royalblackwater/api/builds/BuildAssembler.java").read_text(encoding="utf-8")
+build_assembler = read(JAVA / "builds/mapper/BuildAssembler.java")
 require("RuntimeCache cache" in build_assembler and "cache.options.computeIfAbsent" in build_assembler,
         "build list runtime catalogs are not request-cached")
 
-print(f"Spring backend audit OK ({len(ops)} operations, {len(list(JAVA.rglob('*.java')))} Java files).")
+print(
+    f"Spring backend audit OK ({len(ops)} operations, {len(api_files)} API interfaces, "
+    f"{len(controllers)} controllers, {len(list(JAVA.rglob('*.java')))} Java files)."
+)

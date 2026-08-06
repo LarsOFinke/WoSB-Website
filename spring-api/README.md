@@ -5,6 +5,22 @@ Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementier
 Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
 Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
 
+## Modularchitektur
+
+Der HTTP-Vertrag wird als typisierte Interfaces unter `contract/api/` und als
+Transport-DTOs unter `api/dto/` generiert. Jedes Fachmodul implementiert die
+zugehörigen Interfaces mit eigenen Controllern und gliedert seinen Code in
+`controller`, `filter`, `service`, `mapper`, `dto`, `entity`, `repository` und bei
+Bedarf `model`. Modulinterne DTOs kapseln Übergaben zu Integrationen oder komplexen
+Fachabläufen; sie ersetzen keine generierten API-DTOs.
+
+Controller sprechen ausschließlich typisierte Request-/Response-DTOs. Öffentliche
+Service-Grenzen geben keine Entities, JDBC-Zeilen oder `Map<String,Object>` weiter.
+Mapper sind die einzige Stelle für Entity-/Zeilen-/DTO-Konvertierung. SQL-Definitionen
+liegen innerhalb der jeweiligen Repository-Schicht unter `repository/queries`;
+Services enthalten weder SQL-Literale noch Zugriffe auf den generischen JDBC-Executor.
+Es gibt keinen zentralen Dispatcher und keine Operation-Handler.
+
 ```bash
 mvn -f spring-api/pom.xml verify
 mvn -f spring-api/pom.xml spring-boot:run

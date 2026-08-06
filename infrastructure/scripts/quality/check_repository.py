@@ -29,7 +29,8 @@ for item in contract.get('paths',{}).values():
     for operation in item.values():
         if isinstance(operation,dict) and operation.get('operationId'): operations.append(operation['operationId'])
 require(len(operations)==177 and len(set(operations))==177,f'API contract must expose 177 unique operations, found {len(operations)}/{len(set(operations))}')
-require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').glob('*.java')))==len(contract['components']['schemas']),'generated Java contract count is stale')
+require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/dto').glob('*.java')))==len(contract['components']['schemas']),'generated Java DTO count is stale')
+require(not list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').glob('*.java')),'legacy contract DTO sources remain')
 
 compose=text('infrastructure/compose.yml')
 for service in ('postgres:','api:','gateway:'): require(f'  {service}' in compose,f'missing compose service {service[:-1]}')
@@ -88,6 +89,7 @@ subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_sp
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_build_stat_catalog.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_modular_flyway_baseline.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_api_reference.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_java_contracts.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_spring_routes.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:

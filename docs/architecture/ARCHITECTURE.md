@@ -12,8 +12,8 @@ NGINX gateway
   ↓ private Docker network
 Spring Boot API
   ├─ Spring Security / CSRF / session authentication
-  ├─ operation dispatcher and domain services
-  ├─ JDBC/JPA repositories and MapStruct mappers
+  ├─ generated API interfaces, module controllers and domain services
+  ├─ module-owned JDBC/JPA repositories and explicit mappers
   ├─ Flyway migrations and versioned reference-data seed
   ├─ uploads and host-control inbox
   └─ PostgreSQL
@@ -23,9 +23,26 @@ The gateway is the only public container. PostgreSQL binds to loopback for admin
 
 ## Backend boundaries
 
-`contracts/api-contract.json` is the versioned HTTP contract. Generated Spring controllers bind and validate requests, then delegate by `operationId` to exactly one handler. Startup fails on missing or duplicate handlers.
+`contracts/api-contract.json` is the versioned HTTP contract. The generators create
+Spring MVC interfaces under `api/contract/api` and immutable transport DTO records
+under `api/dto`. Module-owned `@RestController` classes implement those interfaces
+and delegate directly to services. The structural audit fails when an API interface
+is missing an implementation, is implemented more than once, exposes an untyped
+response, or a controller bypasses the service layer.
 
-Domain services own authorization, transactions and audit semantics. Repositories use parameterized SQL or bounded JPA fetch plans. Hibernate Open Session in View is disabled, so response assembly cannot issue accidental lazy queries.
+Domain services own authorization, transactions and audit semantics. Every domain is
+split into explicit `controller`, `filter`, `service`, `mapper`, `dto`, `entity` and
+`repository` packages as applicable. Services depend on module repositories rather
+than the generic JDBC executor. Repository implementations own database access, and
+module-local `repository/queries` catalogs own SQL definitions; SQL literals are
+prohibited in services.
+
+The transport boundary is DTO-only: controllers and public service methods do not
+expose entities, JDBC rows or raw JSON/database maps. Module mappers translate
+repository rows and entities into generated API DTOs or named internal DTOs. Dynamic
+third-party JSON is wrapped in an integration-specific DTO before it crosses a
+service boundary. Hibernate Open Session in View is disabled, so response assembly
+cannot issue accidental lazy queries.
 
 ## Persistence
 

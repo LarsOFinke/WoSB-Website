@@ -1,0 +1,10 @@
+- Check if Sanitization is good enough for file-uploads (front- and backend sanitization)
+- File- and Rate-Limit for Uploads?
+- Frontend Route-access-security
+- Update-Backup-Process secured with fallbacks?
+- Recovery-Tool compatibility for test- and deploy-env?
+- Docker-containers secured from outside on deployment (no -it Flag for debugging via DB-logs from separate container?)
+- Deployment .env's secured?
+- SSL-cert swap from test to deploy possible yet?
+- fleet management access not working yet --> seed-admin not getting assigned as initial-lead? // date-time format issue in contract between frontend and API?
+--> implement API-debugging to check why HTTP-500

@@ -68,15 +68,18 @@ steht im `docs/architecture/MODULE_CATALOG.md`; die tokenarme Auswahl steht in
 allein ableiten.
 
 - Composition/Querschnitt: `config`, `core`, `contract`, `operations`,
-  `persistence`, `transport`, `transport/generated`.
+  `persistence`, `shared`, die generierten `contract/api`-Interfaces und `api/dto`-Transportmodelle.
 - Fachdomänen: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
   `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
   `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `webhooks`.
-- Generierte Controller validieren den HTTP-Transport und delegieren anhand der
-  `operationId` an genau einen Handler; fehlende oder doppelte Handler verhindern
-  den Start.
-- Controller/Handler orchestrieren nur. Autorisierung, Fachlogik, Transaktionen
-  und notwendiges Audit gehören in Services; Abhängigkeiten per Konstruktor.
+- Generierte `contract/api/*Api`-Interfaces und `api/dto/*`-Records definieren
+  den typisierten HTTP-Transport. Genau ein Modul-Controller implementiert jedes Interface; fehlende
+  oder doppelte Implementierungen brechen das Architektur-Gate.
+- Controller orchestrieren nur und kennen weder Entities noch Repositories.
+  Autorisierung, Fachlogik, Transaktionen und notwendiges Audit gehören in
+  Services; Persistenzzugriff erfolgt über Modul-Repositories. Öffentliche
+  Service-Grenzen transportieren API- oder Modul-DTOs, keine JDBC-Zeilen,
+  Roh-Maps oder Entities. Zeilen-/Entity-Konvertierung gehört in Mapper.
 - Spring Security ist die einzige Sicherheitsgrenze. Router-/UI-Guards sind nur
   UX. Private Mutationen benötigen Session, CSRF sowie Host-/Origin-Prüfung.
 - Hibernate: `ddl-auto=validate`, `open-in-view=false`; Responses dürfen keine
@@ -304,8 +307,8 @@ querschnittlichen Änderungen `make validate`.
 
 ### API oder Backend-Domäne
 
-1. Vertrag/Operation, generierten Transport, Handler, Service, Repository/Mapper,
-   Security und Audit gemeinsam verfolgen.
+1. Vertrag/Operation, API-DTO, generiertes API-Interface, Modul-Controller, Service,
+   Repository/Mapper, Security und Audit gemeinsam verfolgen.
 2. Erfolgs-, Fehler- und Berechtigungsfälle ergänzen; bei Listen auch Filter,
    Grenzwerte und Query-Anzahl prüfen.
 3. Keine PII, Tokens, vollständigen IP-Adressen oder Secrets in Logs, Fehlern,

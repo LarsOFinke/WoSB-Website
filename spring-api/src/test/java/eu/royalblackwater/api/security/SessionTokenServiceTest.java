@@ -1,7 +1,8 @@
 package eu.royalblackwater.api.security;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import eu.royalblackwater.api.security.service.SessionTokenService;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class SessionTokenServiceTest {
     @Test

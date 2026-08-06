@@ -1,0 +1,16 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+
+public record RaidHelperOptionDestination(
+        String defaultLeaderId,
+        long id,
+        boolean isDefault,
+        @NotNull String name,
+        long profileId,
+        @NotNull String profileName,
+        @NotNull String scopeType,
+        Long squadId,
+        @NotNull List<RaidHelperOptionTemplate> templates) { }

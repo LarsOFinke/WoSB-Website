@@ -1,0 +1,13 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
+
+public record ValidationError(
+        Map<String, Object> ctx,
+        Object input,
+        @NotNull List<Object> loc,
+        @NotNull String msg,
+        @NotNull String type) { }

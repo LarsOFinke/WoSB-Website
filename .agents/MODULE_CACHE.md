@@ -16,7 +16,8 @@ Richtigkeit einer Beschreibung.
 | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Kalender und Events | ISO-Datumsbindung, `CalendarService` |
 | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Composition, Properties, Security, Errors | `application.yml`, Start-/Bindingfehler |
 | `spring-api/src/main/java/eu/royalblackwater/api/content/` | sichere Content-Embeds | Validator plus Aufrufer |
-| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | generierte Java-Verträge | JSON-Vertrag/Generator, nie direkt editieren |
+| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | generierte Spring-API-Interfaces | JSON-Vertrag/Routengenerator, nie direkt editieren |
+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | DTO-Generator/Contract, nie direkt editieren |
 | `spring-api/src/main/java/eu/royalblackwater/api/core/` | Health/Readiness/Kernoperationen | Health plus DB/Flyway |
 | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Quoten, Typen, Eigentum | Storage-/Pfadgrenzen |
 | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotte, Memberships, Rollen/Fähigkeiten | AccessPolicy und Bootstrap-Membership |
@@ -32,9 +33,9 @@ Richtigkeit einer Beschreibung.
 | `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | externe Eventzustellung | Policy, Worker, Deliverystatus |
 | `spring-api/src/main/java/eu/royalblackwater/api/security/` | Session, CSRF, Host/Origin, Kryptografie | 401/403/CSRF separat prüfen |
 | `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Sperrsignale/IP-Blocks/Dashboard | Aggregation, `RowValues.date` |
+| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | gemeinsame Web-/Filter-/Mapper-Helfer | keine Fachlogik, mehrere Verbraucher |
 | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | lesender Schiffskatalog | Query/Filter/Taxonomie |
 | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squad/Roster auf Fleet-Membership | Fleet-ID, Status, Capability |
-| `spring-api/src/main/java/eu/royalblackwater/api/transport/` | operationId-Dispatch und Conversion | Generator + Dispatcher-Test |
 | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Webhook-Policy und Zustellung | Scope/Event/verschlüsseltes Secret |
 
 ## Frontend in einem Blick

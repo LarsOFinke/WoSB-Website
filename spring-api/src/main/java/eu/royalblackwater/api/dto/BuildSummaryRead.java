@@ -1,0 +1,23 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record BuildSummaryRead(
+        List<InventorySlot> ammunitionSlots,
+        @NotNull String buildName,
+        @NotNull String buildRoleLabel,
+        @NotNull String buildType,
+        List<String> classificationTags,
+        @NotNull LocalDateTime createdAt,
+        Boolean hasUpvoted,
+        List<InventorySlot> holdSlots,
+        long id,
+        Boolean isOfficialTemplate,
+        @NotNull BuildListMetrics metrics,
+        Long ownerId,
+        @NotNull ShipRead ship,
+        @NotNull LocalDateTime updatedAt,
+        Long upvoteCount) { }

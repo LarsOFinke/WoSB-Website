@@ -29,8 +29,15 @@ dort verlinkten Architekturdokumenten.
 ## Architektur und Quellcode
 
 - Backend-Domänen bleiben unter `spring-api/src/main/java/eu/royalblackwater/api/<domain>/`
-  in Controller-/Operation-Handler, Services, Repositories und Mapper getrennt. HTTP-Handler
-  orchestrieren nur Transport; Fachlogik, Autorisierung und Transaktionen gehören in Services.
+  in `controller`, `filter`, `service`, `mapper`, `dto`, `entity`, `repository` und bei Bedarf `model`
+  getrennt. Generierte API-Interfaces definieren ausschließlich den HTTP-Vertrag; Controller
+  binden Requests und delegieren direkt an Services. Fachlogik, Autorisierung und Transaktionen
+  gehören in Services, Persistenz ausschließlich hinter Modul-Repositories. SQL-Definitionen
+  liegen in modulbezogenen `repository/queries`-Katalogen; SQL in Services ist unzulässig.
+  Generierte Transport-DTOs liegen ausschließlich unter `api/dto`; fachmodulinterne
+  Übergabeobjekte unter `<domain>/dto`. Controller und öffentliche Service-Grenzen
+  geben weder Entities noch Datenbankzeilen/Roh-Maps weiter. Nur Mapper übersetzen
+  zwischen API-DTOs, internen DTOs, Entities und Repository-Zeilen.
 - Abhängigkeiten werden per Konstruktor injiziert. Feldinjektion und Service-Locator sind
   unzulässig. Reine, kleine Funktionen benötigen keinen Spring-Bean-Lebenszyklus.
 - Frontend-Seiten orchestrieren. Wiederverwendbare Darstellung gehört in

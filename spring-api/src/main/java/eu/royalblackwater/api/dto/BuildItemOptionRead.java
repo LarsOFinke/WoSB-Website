@@ -1,0 +1,26 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+public record BuildItemOptionRead(
+        List<String> allowedSlotTypes,
+        Map<String, Number> baseStatEffects,
+        @NotNull String categoryKey,
+        @NotNull LocalDateTime createdAt,
+        long id,
+        String imageUrl,
+        Boolean isShipSpecific,
+        @NotNull String name,
+        String notes,
+        String optionKind,
+        long sortOrder,
+        String source,
+        Map<String, Number> statEffects,
+        @NotNull LocalDateTime updatedAt,
+        Double weaponCaliberInches,
+        String weaponClass,
+        WeaponPerformanceRead weaponPerformance) { }

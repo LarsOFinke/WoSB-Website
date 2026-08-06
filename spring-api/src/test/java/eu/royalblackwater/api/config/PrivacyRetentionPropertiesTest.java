@@ -1,9 +1,8 @@
 package eu.royalblackwater.api.config;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class PrivacyRetentionPropertiesTest {
     @Test

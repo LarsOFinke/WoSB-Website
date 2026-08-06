@@ -1,0 +1,16 @@
+// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+package eu.royalblackwater.api.dto;
+
+import jakarta.validation.constraints.NotNull;
+
+public record FleetRoleRead(
+        boolean canManageFleet,
+        boolean canManageMembers,
+        @NotNull String code,
+        long id,
+        boolean isActive,
+        boolean isLeadership,
+        boolean isSystem,
+        @NotNull String label,
+        Long memberCount,
+        long rank) { }

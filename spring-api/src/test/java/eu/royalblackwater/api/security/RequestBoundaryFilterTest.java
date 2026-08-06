@@ -1,18 +1,18 @@
 package eu.royalblackwater.api.security;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import eu.royalblackwater.api.config.SecurityProperties;
-import eu.royalblackwater.api.securityops.IpBlockService;
-import eu.royalblackwater.api.securityops.SecuritySignalService;
+import eu.royalblackwater.api.security.filter.RequestBoundaryFilter;
+import eu.royalblackwater.api.securityops.service.IpBlockService;
+import eu.royalblackwater.api.securityops.service.SecuritySignalService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RequestBoundaryFilterTest {
     private final IpBlockService ipBlocks = unblockedIpService();

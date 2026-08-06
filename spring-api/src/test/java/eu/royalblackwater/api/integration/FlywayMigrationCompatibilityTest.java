@@ -1,7 +1,5 @@
 package eu.royalblackwater.api.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayMigrationCompatibilityTest {

@@ -19,14 +19,14 @@ app=read('spring-api/src/main/resources/application.yml')
 for contract in ('include-message: never','show-details: never','open-in-view: false','ddl-auto: validate','clean-disabled: true','fail-on-unknown-properties: true','fail_on_pagination_over_collection_fetch: true'):
     require(contract in app,f'missing production setting: {contract}')
 require('baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}' in app,'unsafe automatic Flyway baseline default')
-password=read('spring-api/src/main/java/eu/royalblackwater/api/security/PasswordHasher.java')
+password=read('spring-api/src/main/java/eu/royalblackwater/api/security/service/PasswordHasher.java')
 require('ITERATIONS = 600_000' in password and 'PBKDF2WithHmacSHA256' in password,'password hashing policy regressed')
-session=read('spring-api/src/main/java/eu/royalblackwater/api/security/SessionTokenService.java')
+session=read('spring-api/src/main/java/eu/royalblackwater/api/security/service/SessionTokenService.java')
 require('new byte[32]' in session and 'SHA-256' in session,'session token entropy/hash policy regressed')
-auth=read('spring-api/src/main/java/eu/royalblackwater/api/account/AuthOperationHandler.java')
+auth=read('spring-api/src/main/java/eu/royalblackwater/api/account/controller/AuthController.java')
 for contract in ('.httpOnly(true)','.secure(session.secure())','.sameSite(session.sameSite())','.maxAge(session.ttl())'):
     require(contract in auth,f'session cookie contract missing: {contract}')
-secret=read('spring-api/src/main/java/eu/royalblackwater/api/security/FernetSecretBox.java')
+secret=read('spring-api/src/main/java/eu/royalblackwater/api/security/service/FernetSecretBox.java')
 require('At least one application encryption key is required' in secret,'secret key must be mandatory')
 for forbidden in ('derivedKey(', 'databaseUrl', 'AES/ECB', 'Cipher.getInstance("AES")'):
     require(forbidden not in secret,f'insecure secret-box fallback remains: {forbidden}')
