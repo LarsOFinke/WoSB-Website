@@ -4,20 +4,20 @@ import eu.royalblackwater.api.dto.BackupControlRequestResult;
 import eu.royalblackwater.api.dto.BackupControlStatus;
 import eu.royalblackwater.api.dto.SystemUpdateRequestResult;
 import eu.royalblackwater.api.dto.SystemUpdateStatus;
-import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import java.util.Map;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class OperationsDtoMapper {
-    private final ContractConversionService contracts;
+    private final ObjectMapper json;
 
-    public OperationsDtoMapper(ContractConversionService contracts) {
-        this.contracts = contracts;
+    public OperationsDtoMapper(ObjectMapper json) {
+        this.json = json;
     }
 
     public BackupControlStatus backupStatus(Map<String, Object> values) {
-        return contracts.convert(values, BackupControlStatus.class);
+        return json.convertValue(values, BackupControlStatus.class);
     }
 
     public BackupControlRequestResult backupRequest(boolean accepted, BackupControlStatus status) {

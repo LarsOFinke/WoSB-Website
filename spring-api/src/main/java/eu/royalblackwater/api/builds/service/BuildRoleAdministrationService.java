@@ -8,6 +8,7 @@ import eu.royalblackwater.api.dto.BuildRoleCreate;
 import eu.royalblackwater.api.dto.BuildRoleRead;
 import eu.royalblackwater.api.dto.BuildRoleUpdate;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
+import eu.royalblackwater.api.persistence.SqlParameters;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -45,7 +46,7 @@ public class BuildRoleAdministrationService {
             throw new ResponseStatusException(CONFLICT, "A build role with this slug already exists.");
         }
         LocalDateTime now = now();
-        repository.update(BuildRoleAdministrationQueries.CREATE_INSERT_01, eu.royalblackwater.api.persistence.SqlParameters.ofNullable("slug", slug,
+        repository.update(BuildRoleAdministrationQueries.CREATE_INSERT_01, SqlParameters.ofNullable("slug", slug,
                 "label", payload.label().strip(), "description", normalize(payload.description()),
                 "sortOrder", payload.sortOrder() == null ? 100L : Math.max(0L, payload.sortOrder()), "now", now));
         audit.record(actor, "build_role", slug, "create", "Build role created.", List.of("slug", "label"));
@@ -55,7 +56,7 @@ public class BuildRoleAdministrationService {
     @Transactional
     public BuildRoleRead update(String slug, BuildRoleUpdate payload, AuthenticatedUser actor) {
         String normalized = normalizeSlug(slug);
-        if (repository.update(BuildRoleAdministrationQueries.UPDATE_UPDATE_01, eu.royalblackwater.api.persistence.SqlParameters.ofNullable("label", payload.label().strip(),
+        if (repository.update(BuildRoleAdministrationQueries.UPDATE_UPDATE_01, SqlParameters.ofNullable("label", payload.label().strip(),
                 "description", normalize(payload.description()), "sortOrder", payload.sortOrder() == null ? 100L : Math.max(0L, payload.sortOrder()),
                 "now", now(), "slug", normalized)) == 0) throw notFound();
         audit.record(actor, "build_role", normalized, "update", "Build role updated.", List.of("label", "description", "sort_order"));

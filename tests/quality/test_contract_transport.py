@@ -1,16 +1,32 @@
-from infrastructure.scripts.generation import generate_spring_routes as routes
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+OPENAPI = json.loads((ROOT / "openapi/openapi.json").read_text(encoding="utf-8"))
+CONTROLLERS = ROOT / "spring-api/src/main/java/eu/royalblackwater/api"
+HTTP = {"get", "post", "put", "patch", "delete"}
 
 
 def multipart_operations():
     result = []
-    for path, item in routes.SCHEMA["paths"].items():
+    for path, item in OPENAPI["paths"].items():
         for method, operation in item.items():
-            if method not in routes.HTTP:
+            if method not in HTTP:
                 continue
             content = operation.get("requestBody", {}).get("content", {})
             if "multipart/form-data" in content:
                 result.append((path, method, operation))
     return result
+
+
+def controller_sources() -> str:
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in CONTROLLERS.glob("*/controller/*Controller.java")
+    )
 
 
 def test_multipart_contract_documents_transport_rejection():
@@ -23,17 +39,28 @@ def test_multipart_contract_documents_transport_rejection():
         assert schema == {"$ref": "#/components/schemas/ApiError"}
 
 
-def test_generated_multipart_routes_declare_consumes_media_type():
-    outputs, operation_count = routes.render_outputs()
+def test_controller_owned_multipart_routes_declare_consumes_media_type():
+    source = controller_sources()
 
-    assert operation_count == 177
     for path, method, _ in multipart_operations():
-        group = routes.group_for(path)
-        class_name = routes.camel(group, upper=True) + "Api"
-        source = outputs[routes.TARGET / f"{class_name}.java"]
-        mapping = routes.HTTP[method]
+        mapping = method.capitalize()
         expected = (
-            f'@{mapping}(value = "{path}", '
+            f'@{mapping}Mapping(value = "{path}", '
             'consumes = MediaType.MULTIPART_FORM_DATA_VALUE)'
         )
         assert expected in source
+
+
+def test_controller_layer_owns_all_openapi_routes_without_generated_api_interfaces():
+    source = controller_sources()
+    mappings = re.findall(r"@(Get|Post|Put|Patch|Delete)Mapping\(", source)
+    expected = sum(
+        1
+        for item in OPENAPI["paths"].values()
+        for method, operation in item.items()
+        if method in HTTP and isinstance(operation, dict)
+    )
+
+    assert expected == 177
+    assert len(mappings) == expected
+    assert not (ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract").exists()

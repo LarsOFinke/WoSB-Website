@@ -8,7 +8,7 @@ import { calculateBuildStatRows } from '../src/modules/builds/buildCalculations.
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const contract = JSON.parse(fs.readFileSync(
-  path.resolve(here, '../../contracts/build-calculation-cases.json'),
+  path.resolve(here, './fixtures/build-calculation-cases.json'),
   'utf8',
 ))
 

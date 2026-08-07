@@ -1,19 +1,16 @@
 package eu.royalblackwater.api.privacy.controller;
 
+import eu.royalblackwater.api.dto.CookieConsentChoice;
 import eu.royalblackwater.api.dto.CookieConsentPolicy;
 import eu.royalblackwater.api.dto.CookieConsentRead;
+import eu.royalblackwater.api.dto.DataSubjectRequestCreate;
 import eu.royalblackwater.api.dto.DataSubjectRequestRead;
+import eu.royalblackwater.api.dto.DataSubjectRequestResolve;
 import eu.royalblackwater.api.dto.PersonalDataExportRead;
+import eu.royalblackwater.api.dto.PrivacyContactCreate;
 import eu.royalblackwater.api.dto.PrivacyContactRead;
 import eu.royalblackwater.api.dto.PrivacyContactReceipt;
-import java.util.List;
-import eu.royalblackwater.api.dto.CookieConsentChoice;
-import eu.royalblackwater.api.dto.DataSubjectRequestCreate;
-import eu.royalblackwater.api.dto.DataSubjectRequestResolve;
-import eu.royalblackwater.api.dto.PrivacyContactCreate;
 import eu.royalblackwater.api.dto.PrivacyContactResolve;
-import eu.royalblackwater.api.contract.api.AdminPrivacyRequestsApi;
-import eu.royalblackwater.api.contract.api.PrivacyApi;
 import eu.royalblackwater.api.privacy.service.CookieConsentService;
 import eu.royalblackwater.api.privacy.service.PersonalDataExportService;
 import eu.royalblackwater.api.privacy.service.PrivacyAdministrationService;
@@ -22,14 +19,21 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
-public class PrivacyController extends ApiControllerSupport implements AdminPrivacyRequestsApi, PrivacyApi {
+public class PrivacyController extends ApiControllerSupport {
 
     private final PrivacyService privacy;
     private final PersonalDataExportService export;
@@ -46,73 +50,73 @@ public class PrivacyController extends ApiControllerSupport implements AdminPriv
         this.request = request;
     }
 
-    @Override
+    @GetMapping("/api/admin/privacy-requests")
     public ResponseEntity<List<DataSubjectRequestRead>> listPrivacyRequests() {
         return respond(administration.listRequests(), 200);
     }
 
-    @Override
+    @GetMapping("/api/admin/privacy-requests/contacts")
     public ResponseEntity<List<PrivacyContactRead>> listPrivacyContacts() {
         return respond(administration.listContacts(), 200);
     }
 
-    @Override
+    @PutMapping("/api/admin/privacy-requests/contacts/{request_id}")
     public ResponseEntity<PrivacyContactRead> resolvePrivacyContact(
-            long requestId,
-            PrivacyContactResolve body
+            @PathVariable("request_id") long requestId,
+            @Valid @RequestBody PrivacyContactResolve body
     ) {
 
         return respond(administration.resolveContact(requestId,
                                     body, CurrentUser.require()), 200);
     }
 
-    @Override
+    @PutMapping("/api/admin/privacy-requests/{request_id}")
     public ResponseEntity<DataSubjectRequestRead> resolvePrivacyRequest(
-            long requestId,
-            DataSubjectRequestResolve body
+            @PathVariable("request_id") long requestId,
+            @Valid @RequestBody DataSubjectRequestResolve body
     ) {
 
         return respond(administration.resolveRequest(requestId,
                                     body, CurrentUser.require()), 200);
     }
 
-    @Override
+    @PostMapping("/api/privacy/contact")
     public ResponseEntity<PrivacyContactReceipt> createPrivacyContact(
-            PrivacyContactCreate body
+            @Valid @RequestBody PrivacyContactCreate body
     ) {
         return respond(privacy.createContact(body, CurrentUser.optional().orElse(null)), 201);
     }
 
-    @Override
+    @GetMapping("/api/privacy/cookie-consent")
     public ResponseEntity<CookieConsentRead> getCookieConsent() {
         return respond(consent.state(request), 200);
     }
 
-    @Override
+    @PostMapping("/api/privacy/cookie-consent")
     public ResponseEntity<CookieConsentRead> saveCookieConsent(
-            CookieConsentChoice body
+            @Valid @RequestBody CookieConsentChoice body
     ) {
         return saveConsent(body);
     }
 
-    @Override
+    @GetMapping("/api/privacy/cookie-policy")
     public ResponseEntity<CookieConsentPolicy> getCookiePolicy() {
         return respond(consent.policy(), 200);
     }
 
-    @Override
+    @GetMapping("/api/privacy/data-export")
     public ResponseEntity<PersonalDataExportRead> exportPersonalData() {
         return respond(export.build(CurrentUser.require()), 200);
     }
 
-    @Override
+    @GetMapping("/api/privacy/requests")
     public ResponseEntity<List<DataSubjectRequestRead>> listMyDataSubjectRequests() {
         return respond(privacy.listRequests(CurrentUser.require().id()), 200);
     }
 
-    @Override
+    @PostMapping("/api/privacy/requests")
     public ResponseEntity<DataSubjectRequestRead> createDataSubjectRequest(
-            DataSubjectRequestCreate body
+            @Valid @RequestBody DataSubjectRequestCreate body
     ) {
         return respond(privacy.createRequest(CurrentUser.require(), body), 201);
     }

@@ -1,72 +1,77 @@
 package eu.royalblackwater.api.securityops.controller;
 
+import eu.royalblackwater.api.dto.IpBlockCreate;
 import eu.royalblackwater.api.dto.IpBlockRead;
 import eu.royalblackwater.api.dto.IpBlockSummary;
-import eu.royalblackwater.api.dto.SecurityDashboard;
-import java.util.List;
-import eu.royalblackwater.api.dto.IpBlockCreate;
 import eu.royalblackwater.api.dto.IpBlockUnblock;
-import eu.royalblackwater.api.contract.api.AdminIpBlocksApi;
-import eu.royalblackwater.api.contract.api.AdminLogsApi;
+import eu.royalblackwater.api.dto.SecurityDashboard;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.securityops.service.IpBlockService;
 import eu.royalblackwater.api.securityops.service.SecurityDashboardService;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
-public class SecurityAdministrationController extends ApiControllerSupport implements AdminIpBlocksApi, AdminLogsApi {
+public class SecurityAdministrationController extends ApiControllerSupport {
 
     private final IpBlockService blocks;private final SecurityDashboardService dashboard;
     public SecurityAdministrationController(IpBlockService blocks,SecurityDashboardService dashboard){this.blocks=blocks;this.dashboard=dashboard;}
 
-    @Override
+    @GetMapping("/api/admin/ip-blocks")
     public ResponseEntity<List<IpBlockRead>> adminListIpBlocks(
-            String status,
-            String search,
-            long limit
+            @RequestParam(name = "status", defaultValue = "active") String status,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "limit", defaultValue = "200") long limit
     ) {
 
         CurrentUser.require();
         return respond(blocks.list(status,search,limit), 200);
     }
 
-    @Override
+    @PostMapping("/api/admin/ip-blocks")
     public ResponseEntity<IpBlockRead> adminCreateIpBlock(
-            IpBlockCreate body
+            @Valid @RequestBody IpBlockCreate body
     ) {
         AuthenticatedUser actor=CurrentUser.require();
         return respond(blocks.create(actor,body), 201);
     }
 
-    @Override
+    @GetMapping("/api/admin/ip-blocks/summary")
     public ResponseEntity<IpBlockSummary> adminIpBlockSummary() {
         CurrentUser.require();
         return respond(blocks.summary(), 200);
     }
 
-    @Override
+    @PostMapping("/api/admin/ip-blocks/{block_id}/unblock")
     public ResponseEntity<IpBlockRead> adminUnblockIp(
-            long blockId,
-            IpBlockUnblock body
+            @PathVariable("block_id") long blockId,
+            @Valid @RequestBody IpBlockUnblock body
     ) {
         AuthenticatedUser actor=CurrentUser.require();
         return respond(blocks.unblock(actor,blockId,body), 200);
     }
 
-    @Override
+    @GetMapping("/api/admin/logs/security-dashboard")
     public ResponseEntity<SecurityDashboard> adminSecurityDashboard(
-            LocalDate fromDate,
-            LocalDate toDate,
-            String threatLevel,
-            String clientIp,
-            String sort,
-            long limit
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "from_date", required = false) LocalDate fromDate,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @RequestParam(name = "to_date", required = false) LocalDate toDate,
+            @RequestParam(name = "threat_level", required = false) String threatLevel,
+            @RequestParam(name = "client_ip", required = false) String clientIp,
+            @RequestParam(name = "sort", defaultValue = "threat") String sort,
+            @RequestParam(name = "limit", defaultValue = "100") long limit
     ) {
 
         CurrentUser.require();

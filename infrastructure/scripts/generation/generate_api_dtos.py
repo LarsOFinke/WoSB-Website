@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate immutable Java API DTO records from the reviewed API contract."""
+"""Generate immutable Java API DTO records from the reviewed OpenAPI specification."""
 from __future__ import annotations
 
 import argparse
@@ -9,9 +9,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-SCHEMA_PATH = ROOT / "contracts/api-contract.json"
+SCHEMA_PATH = ROOT / "openapi/openapi.json"
 TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/dto"
-LEGACY_TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract"
 PACKAGE = "eu.royalblackwater.api.dto"
 JAVA_KEYWORDS = {"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "record", "sealed", "permits", "yield", "var", "null", "true", "false"}
 
@@ -148,7 +147,7 @@ def generate_record(name: str, schema: dict) -> str:
     else:
         declaration = f"public record {name}() {{ }}\n"
     return (
-        "// Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.\n"
+        "// Generated API DTO by infrastructure/scripts/generation/generate_api_dtos.py; do not edit manually.\n"
         f"package {PACKAGE};\n\n"
         + (imports_block + "\n" if imports_block else "")
         + declaration
@@ -176,8 +175,7 @@ def check_outputs(outputs: dict[Path, str]) -> None:
         for path in TARGET.glob("*.java")
         if path.name not in expected_names
     ]
-    legacy = [path.relative_to(ROOT) for path in LEGACY_TARGET.glob("*.java")]
-    failures = stale + unexpected + legacy
+    failures = stale + unexpected
     if failures:
         formatted = "\n".join(f" - {path}" for path in failures)
         raise SystemExit(f"generated Java DTOs are stale or misplaced:\n{formatted}")
@@ -192,11 +190,6 @@ def write_outputs(outputs: dict[Path, str]) -> None:
     for path in TARGET.glob("*.java"):
         if path.name not in expected_names:
             path.unlink()
-    # Transport records used to live beside the generated API interfaces. Keep
-    # the interface package stable, but remove legacy model sources so DTOs have
-    # one unambiguous ownership boundary.
-    for path in LEGACY_TARGET.glob("*.java"):
-        path.unlink()
     print(f"generated {len(outputs)} Java DTOs")
 
 

@@ -5,7 +5,6 @@ import eu.royalblackwater.api.account.service.AuthService;
 import eu.royalblackwater.api.account.service.RegistrationService;
 import eu.royalblackwater.api.account.service.UserViewService;
 import eu.royalblackwater.api.config.SessionProperties;
-import eu.royalblackwater.api.contract.api.AuthApi;
 import eu.royalblackwater.api.dto.LoginRequest;
 import eu.royalblackwater.api.dto.LoginResponse;
 import eu.royalblackwater.api.dto.PasswordChangeRequest;
@@ -17,11 +16,15 @@ import eu.royalblackwater.api.securityops.service.SecuritySignalService;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.Optional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,7 +33,7 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @Validated
-public class AuthController extends ApiControllerSupport implements AuthApi {
+public class AuthController extends ApiControllerSupport {
 
     private final AuthService auth;
     private final UserViewService users;
@@ -50,17 +53,21 @@ public class AuthController extends ApiControllerSupport implements AuthApi {
         this.securitySignals = securitySignals;
     }
 
-    @Override
-    public ResponseEntity<PasswordChangeResponse> changePassword(PasswordChangeRequest body) {
+    @PostMapping("/api/auth/change-password")
+    public ResponseEntity<PasswordChangeResponse> changePassword(
+            @Valid @RequestBody PasswordChangeRequest body
+    ) {
         return performPasswordChange(body);
     }
 
-    @Override
-    public ResponseEntity<LoginResponse> login(LoginRequest body) {
+    @PostMapping("/api/auth/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest body
+    ) {
         return performLogin(body);
     }
 
-    @Override
+    @PostMapping("/api/auth/logout")
     public ResponseEntity<Void> logout() {
         auth.logout(rawToken());
         return ResponseEntity.noContent()
@@ -68,14 +75,16 @@ public class AuthController extends ApiControllerSupport implements AuthApi {
                 .build();
     }
 
-    @Override
+    @GetMapping("/api/auth/me")
     public ResponseEntity<UserRead> me() {
         Optional<Integer> userId = auth.authenticatedUserId(rawToken());
         return ResponseEntity.ok(userId.map(users::read).orElse(null));
     }
 
-    @Override
-    public ResponseEntity<RegisterResponse> register(RegisterRequest body) {
+    @PostMapping("/api/auth/register")
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @RequestBody RegisterRequest body
+    ) {
         return ResponseEntity.status(202).body(registration.submit(body));
     }
 

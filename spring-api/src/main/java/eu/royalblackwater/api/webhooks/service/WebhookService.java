@@ -13,7 +13,6 @@ import eu.royalblackwater.api.dto.OutboundWebhookUpdate;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.FernetSecretBox;
-import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import eu.royalblackwater.api.webhooks.mapper.WebhookDtoMapper;
 import eu.royalblackwater.api.webhooks.repository.WebhookRepository;
 import eu.royalblackwater.api.webhooks.repository.queries.WebhookQueries;
@@ -47,14 +46,13 @@ public class WebhookService {
     private final WebhookHttpClient http;
     private final FernetSecretBox secrets;
     private final ObjectMapper json;
-    private final ContractConversionService contracts;
     private final AuditService audit;
     private final Clock clock;
 
     public WebhookService(WebhookRepository repository,WebhookPolicy policy,WebhookHttpClient http,FernetSecretBox secrets,
-            ObjectMapper json,ContractConversionService contracts,AuditService audit,Clock clock){
+            ObjectMapper json,AuditService audit,Clock clock){
         this.repository=repository;this.policy=policy;this.http=http;this.secrets=secrets;this.json=json;
-        this.contracts=contracts;this.audit=audit;this.clock=clock;
+        this.audit=audit;this.clock=clock;
     }
 
     @Transactional(readOnly=true)
@@ -144,7 +142,7 @@ public class WebhookService {
         if(status!=null&&!status.isBlank()){sql.append(WebhookQueries.DELIVERIES_AND_02);params.put("status",status.strip());}
         if(eventType!=null&&!eventType.isBlank()){sql.append(WebhookQueries.DELIVERIES_AND_03);params.put("event",eventType.strip());}
         sql.append(WebhookQueries.DELIVERIES_ORDER_BY_01);params.put("limit",Math.max(1,Math.min(1000,limit)));
-        return repository.query(sql.toString(),params).stream().map(row -> WebhookDtoMapper.delivery(row, contracts)).toList();
+        return repository.query(sql.toString(),params).stream().map(row -> WebhookDtoMapper.delivery(row)).toList();
     }
 
     @Transactional
@@ -202,7 +200,7 @@ public class WebhookService {
 
     private OutboundWebhookDeliveryRead delivery(long id){
         Map<String,Object> row=repository.optional(WebhookQueries.DELIVERY_SELECT_01,Map.of("id",id)).orElseThrow(()->notFound("Delivery"));
-        return WebhookDtoMapper.delivery(row, contracts);
+        return WebhookDtoMapper.delivery(row);
     }
 
     private OutboundWebhookRead requiredRead(long id){return toRead(required(id));}

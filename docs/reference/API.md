@@ -1,10 +1,11 @@
 # API usage and security
 
-The versioned OpenAPI 3.1 contract at `contracts/api-contract.json` is the
-canonical machine-readable API definition. The generated exhaustive endpoint
-index is [API_ENDPOINTS.md](API_ENDPOINTS.md). Generated Spring `*Api` interfaces
-and immutable Java request/response records derive from the same contract; the
-implementing controllers are handwritten and module-owned.
+The versioned OpenAPI 3.1 specification at `openapi/openapi.json` is the
+canonical machine-readable external API definition. The generated exhaustive
+endpoint index is [API_ENDPOINTS.md](API_ENDPOINTS.md), and immutable Java
+request/response DTO records derive from the same specification. Spring MVC
+routing itself is module-controller-owned and checked back against OpenAPI by
+`audit_controller_contract.py`; there is no generated runtime API-interface layer.
 
 ## Base URL and media types
 
@@ -14,9 +15,9 @@ implementing controllers are handwritten and module-owned.
 - Successful delete operations may return `204 No Content`; clients must not
   attempt to parse an empty response body.
 - `date` values use ISO `YYYY-MM-DD`; `date-time` values use ISO-8601 and may
-  carry an offset such as the browser-produced UTC suffix `Z`. Generated Spring
-  query adapters bind these formats explicitly instead of relying on the
-  server locale.
+  carry an offset such as the browser-produced UTC suffix `Z`. Controller-owned
+  query bindings use explicit `DateTimeFormat` annotations instead of relying on
+  the server locale.
 
 ## Authentication model
 
@@ -61,12 +62,12 @@ GET  /api/auth/me                   Cookie: rbf_hub_session=...
   rules and may be stricter than the path prefix suggests.
 
 The OpenAPI snapshot does not duplicate dynamic authorization rules per endpoint.
-For a security-sensitive change, inspect `SecurityConfiguration`, the generated
-API interface, its implementing module controller and the domain service together.
+For a security-sensitive change, inspect `SecurityConfiguration`, the owning
+module controller and the domain service together.
 
 ## Errors and validation
 
-JSON error responses use the contract-owned `ApiError` shape
+JSON error responses use the OpenAPI-owned `ApiError` shape
 `{ "detail": "..." }`. Bean-validation and binding failures are HTTP `400`;
 HTTP `422` is reserved for the small set of operations whose service layer
 rejects syntactically valid but semantically invalid input.
@@ -93,13 +94,15 @@ and domain filter parameters. Clients must not assume an unbounded complete list
 or invent undocumented query parameters. Defaults and maximums are defined by
 the OpenAPI parameter schemas and enforced again by the backend.
 
-## Contract change workflow
+## OpenAPI change workflow
 
-1. Change and review `contracts/api-contract.json`.
-2. Regenerate Java `*Api` interfaces and API DTOs with the scripts under
-   `infrastructure/scripts/generation/`; never edit generated Java manually.
-3. Regenerate `API_ENDPOINTS.md` with
+1. Change and review `openapi/openapi.json`.
+2. Regenerate API DTOs with
+   `python3 infrastructure/scripts/generation/generate_api_dtos.py`; never edit
+   generated DTO records manually.
+3. Update the owning module controller mapping/bindings and run
+   `python3 infrastructure/scripts/quality/audit_controller_contract.py`.
+4. Regenerate `API_ENDPOINTS.md` with
    `python3 infrastructure/scripts/generation/generate_api_reference.py`.
-4. Update the implementing module controllers, services, mappers/repositories,
-   authorization, frontend API modules and tests.
-5. Run the focused gates and `make validate` for cross-cutting contract changes.
+5. Update services, mappers/repositories, authorization, frontend API modules and
+   stateful/contract-wide tests, then run `make validate` for cross-cutting changes.

@@ -3,7 +3,7 @@ import hashlib, json, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path: sys.path.insert(0,str(ROOT))
-from contracts.backup_enrollment import REQUEST_KIND, RESPONSE_KIND, validate_request, validate_response
+from infrastructure.scripts.backup.backup_enrollment_contract import REQUEST_KIND, RESPONSE_KIND, validate_request, validate_response
 from infrastructure.scripts.backup.backup_set_manifest import create_manifest, validate_manifest
 
 def sidecar(path: Path) -> None:

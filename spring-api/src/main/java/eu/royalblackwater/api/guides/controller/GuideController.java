@@ -1,34 +1,41 @@
 package eu.royalblackwater.api.guides.controller;
 
+import eu.royalblackwater.api.dto.GuideCreate;
 import eu.royalblackwater.api.dto.GuideRead;
 import eu.royalblackwater.api.dto.GuideSummary;
-import java.util.List;
-import eu.royalblackwater.api.dto.GuideCreate;
 import eu.royalblackwater.api.dto.GuideUpdate;
-import eu.royalblackwater.api.contract.api.GuidesApi;
 import eu.royalblackwater.api.guides.service.GuideService;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.filter.ListFilter;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
+import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
-public class GuideController extends ApiControllerSupport implements GuidesApi {
+public class GuideController extends ApiControllerSupport {
 
     private final GuideService guides;
 
     public GuideController(GuideService guides) { this.guides = guides; }
 
-    @Override
+    @GetMapping("/api/guides")
     public ResponseEntity<List<GuideSummary>> getGuides(
-            String search,
-            String category,
-            long limit,
-            long offset
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         ListFilter page = ListFilter.of(search, limit, offset, 100);
@@ -37,36 +44,36 @@ public class GuideController extends ApiControllerSupport implements GuidesApi {
                 page.limit(), page.offset(), actor), 200);
     }
 
-    @Override
+    @PostMapping("/api/guides")
     public ResponseEntity<GuideRead> postGuide(
-            GuideCreate body
+            @Valid @RequestBody GuideCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(guides.create(body, actor), 201);
     }
 
-    @Override
+    @DeleteMapping("/api/guides/{guide_id}")
     public ResponseEntity<Void> deleteOwnGuide(
-            long guideId
+            @PathVariable("guide_id") long guideId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         guides.delete(guideId, actor, false); return noContent();
     }
 
-    @Override
+    @GetMapping("/api/guides/{guide_id}")
     public ResponseEntity<GuideRead> getGuideDetail(
-            long guideId
+            @PathVariable("guide_id") long guideId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(guides.get(guideId, actor), 200);
     }
 
-    @Override
+    @PutMapping("/api/guides/{guide_id}")
     public ResponseEntity<GuideRead> putGuide(
-            long guideId,
-            GuideUpdate body
+            @PathVariable("guide_id") long guideId,
+            @Valid @RequestBody GuideUpdate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();

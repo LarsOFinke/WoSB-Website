@@ -8,7 +8,7 @@ import socket
 import subprocess
 from typing import Any
 
-from contracts.backup_enrollment import (
+from backup_enrollment_contract import (
     REQUEST_KIND,
     SCHEMA_VERSION,
     canonical_json,

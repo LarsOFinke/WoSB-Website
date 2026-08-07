@@ -157,12 +157,12 @@ class ApiSurfaceIntegrationTest {
     @SuppressWarnings("unchecked")
     private Map<String, Object> readContract() throws Exception {
         Path contract = Stream.of(
-                        Path.of(System.getProperty("user.dir"), "..", "contracts", "api-contract.json"),
-                        Path.of(System.getProperty("user.dir"), "contracts", "api-contract.json"))
+                        Path.of(System.getProperty("user.dir"), "..", "openapi", "openapi.json"),
+                        Path.of(System.getProperty("user.dir"), "openapi", "openapi.json"))
                 .map(Path::normalize)
                 .filter(Files::isRegularFile)
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("Could not locate contracts/api-contract.json from "
+                .orElseThrow(() -> new AssertionError("Could not locate openapi/openapi.json from "
                         + System.getProperty("user.dir")));
         return json.readValue(Files.readString(contract), Map.class);
     }

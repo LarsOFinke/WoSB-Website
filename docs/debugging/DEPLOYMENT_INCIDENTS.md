@@ -205,7 +205,7 @@ den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
 **Lösung:** Der Routengenerator versieht `date`- und `date-time`-Queryparameter
 mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
 Antwort. Generierte Controller nicht direkt korrigieren; stets
-`infrastructure/scripts/generation/generate_spring_routes.py` ändern und neu generieren.
+`openapi/openapi.json` und die Controller-Bindings gemeinsam korrigieren und mit `audit_controller_contract.py` prüfen.
 
 ## 14. HTTP 500 bei Master-Data-Kategorien
 

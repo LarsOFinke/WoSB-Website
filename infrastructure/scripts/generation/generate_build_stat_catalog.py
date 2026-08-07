@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Generate the Java build-stat catalog from its language-neutral contract."""
+"""Generate the Java build-stat catalog from its versioned reference catalog."""
 from __future__ import annotations
 import json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]
-SOURCE=ROOT/'contracts/build-stat-catalog.json'
+SOURCE=ROOT/'spring-api/src/main/reference/build-stat-catalog.json'
 TARGET=ROOT/'spring-api/src/main/java/eu/royalblackwater/api/builds/service/BuildStatCatalog.java'
 ORDER=('key','label','category','base_field','unit','pct_effect','flat_effect','calculation_flat_effect','precision','positive_is_good','source','pct_base_field')
 def java(value):
@@ -14,7 +14,7 @@ def java(value):
     return str(value)
 def render():
     payload=json.loads(SOURCE.read_text())
-    if payload.get('schema_version')!=1 or not isinstance(payload.get('stats'),list):raise SystemExit('Invalid build stat contract')
+    if payload.get('schema_version')!=1 or not isinstance(payload.get('stats'),list):raise SystemExit('Invalid build stat catalog')
     rows=[]; keys=set()
     for row in payload['stats']:
         key=row.get('key')

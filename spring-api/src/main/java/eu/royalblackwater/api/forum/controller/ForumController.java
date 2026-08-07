@@ -1,26 +1,33 @@
 package eu.royalblackwater.api.forum.controller;
 
-import eu.royalblackwater.api.dto.ForumPostRead;
-import eu.royalblackwater.api.dto.ForumThreadRead;
-import eu.royalblackwater.api.dto.ForumThreadSummary;
-import java.util.List;
 import eu.royalblackwater.api.dto.ForumPostCreate;
+import eu.royalblackwater.api.dto.ForumPostRead;
 import eu.royalblackwater.api.dto.ForumPostUpdate;
 import eu.royalblackwater.api.dto.ForumThreadCreate;
+import eu.royalblackwater.api.dto.ForumThreadRead;
+import eu.royalblackwater.api.dto.ForumThreadSummary;
 import eu.royalblackwater.api.dto.ForumThreadUpdate;
-import eu.royalblackwater.api.contract.api.ForumApi;
 import eu.royalblackwater.api.forum.service.ForumService;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.filter.ListFilter;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
+import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
-public class ForumController extends ApiControllerSupport implements ForumApi {
+public class ForumController extends ApiControllerSupport {
 
     private final ForumService forum;
 
@@ -28,9 +35,9 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
         this.forum = forum;
     }
 
-    @Override
+    @DeleteMapping("/api/forum/posts/{post_id}")
     public ResponseEntity<Void> deleteForumPost(
-            long postId
+            @PathVariable("post_id") long postId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -38,10 +45,10 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
         return noContent();
     }
 
-    @Override
+    @PutMapping("/api/forum/posts/{post_id}")
     public ResponseEntity<ForumPostRead> putPost(
-            long postId,
-            ForumPostUpdate body
+            @PathVariable("post_id") long postId,
+            @Valid @RequestBody ForumPostUpdate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -49,12 +56,12 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
                             postId, body, actor), 200);
     }
 
-    @Override
+    @GetMapping("/api/forum/threads")
     public ResponseEntity<List<ForumThreadSummary>> getThreads(
-            String search,
-            String category,
-            long limit,
-            long offset
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
         CurrentUser.require();
         ListFilter page = ListFilter.of(search, limit, offset, 100);
@@ -63,18 +70,18 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
                 page.limit(), page.offset()), 200);
     }
 
-    @Override
+    @PostMapping("/api/forum/threads")
     public ResponseEntity<ForumThreadRead> postThread(
-            ForumThreadCreate body
+            @Valid @RequestBody ForumThreadCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(forum.create(
                             body, actor), 201);
     }
 
-    @Override
+    @GetMapping("/api/forum/threads/{thread_id}")
     public ResponseEntity<ForumThreadRead> getThreadDetail(
-            long threadId
+            @PathVariable("thread_id") long threadId
     ) {
 
         CurrentUser.require();
@@ -82,10 +89,10 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
                             threadId), 200);
     }
 
-    @Override
+    @PutMapping("/api/forum/threads/{thread_id}")
     public ResponseEntity<ForumThreadRead> putThread(
-            long threadId,
-            ForumThreadUpdate body
+            @PathVariable("thread_id") long threadId,
+            @Valid @RequestBody ForumThreadUpdate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -93,10 +100,10 @@ public class ForumController extends ApiControllerSupport implements ForumApi {
                             threadId, body, actor), 200);
     }
 
-    @Override
+    @PostMapping("/api/forum/threads/{thread_id}/posts")
     public ResponseEntity<ForumPostRead> postReply(
-            long threadId,
-            ForumPostCreate body
+            @PathVariable("thread_id") long threadId,
+            @Valid @RequestBody ForumPostCreate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();

@@ -5,7 +5,6 @@ import eu.royalblackwater.api.dto.OutboundWebhookDeliveryRead;
 import eu.royalblackwater.api.dto.OutboundWebhookEventCatalogItem;
 import eu.royalblackwater.api.dto.OutboundWebhookRead;
 import eu.royalblackwater.api.dto.OutboundWebhookSummary;
-import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import eu.royalblackwater.api.webhooks.dto.WebhookEventDefinition;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +34,15 @@ public final class WebhookDtoMapper {
         return new OutboundWebhookSummary(active, failures, scoped, deliveries, broadcastTargets);
     }
 
-    public static OutboundWebhookDeliveryRead delivery(Map<String, Object> row,
-            ContractConversionService contracts) {
-        return contracts.convert(row, OutboundWebhookDeliveryRead.class);
+    public static OutboundWebhookDeliveryRead delivery(Map<String, Object> row) {
+        return new OutboundWebhookDeliveryRead(
+                longValue(row, "attempts"), dateTime(row, "created_at"), nullableDateTime(row, "delivered_at"),
+                requiredString(row, "delivery_id"), string(row, "error_message"),
+                requiredString(row, "event_type"), longValue(row, "id"),
+                nullableDateTime(row, "last_attempt_at"), requiredString(row, "resource_id"),
+                requiredString(row, "resource_type"), string(row, "response_body"),
+                nullableLong(row, "response_status"), requiredString(row, "status"),
+                longValue(row, "webhook_id"), requiredString(row, "webhook_name"));
     }
 
     public static List<OutboundWebhookEventCatalogItem> eventCatalog(List<WebhookEventDefinition> definitions) {

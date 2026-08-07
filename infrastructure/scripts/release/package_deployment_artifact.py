@@ -16,8 +16,6 @@ ROOT = Path(__file__).resolve().parents[3]
 RUNTIME_FILES = (
     "VERSION",
     "infrastructure/scripts/release/install-artifact.sh",
-    "contracts/__init__.py",
-    "contracts/backup_enrollment.py",
     "infrastructure/setup.sh",
     "infrastructure/compose.release.yml",
     "infrastructure/.env.example",

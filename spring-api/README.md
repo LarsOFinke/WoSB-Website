@@ -1,35 +1,39 @@
 # Spring Boot API
 
-Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `contracts/api-contract.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
+Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `openapi/openapi.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
 
 Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
 Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
 
 ## Modularchitektur
 
-Der HTTP-Vertrag wird als typisierte Interfaces unter `contract/api/` und als
-Transport-DTOs unter `api/dto/` generiert. Jedes Fachmodul implementiert die
-zugehörigen Interfaces mit eigenen Controllern und gliedert seinen Code in
-`controller`, `filter`, `service`, `mapper`, `dto`, `entity` und `repository`.
-Generische `model`-Pakete sind verboten. Modulinterne DTOs kapseln Übergaben zu
-Integrationen oder komplexen Fachabläufen; sie ersetzen keine generierten API-DTOs.
+`openapi/openapi.json` ist die externe HTTP-Spezifikation. Daraus werden nur die
+Transport-DTOs unter `api/dto/` generiert. Die Spring-MVC-Bindings liegen bewusst
+direkt in den Modul-Controllern: `@GetMapping`/`@PostMapping`,
+`@PathVariable`, `@RequestParam` sowie `@Valid @RequestBody` sind Controller-
+Verantwortung und werden mit `audit_controller_contract.py` gegen OpenAPI geprüft.
 
-Controller implementieren die generierten `*Api`-Interfaces, binden ausschließlich
-typisierte Request-/Response-DTOs und delegieren fachliche Arbeit an Services.
-Öffentliche Service-Grenzen geben keine Entities, JDBC-Zeilen oder
-`Map<String,Object>` weiter. Mapper sind die einzige Stelle für
-Entity-/Zeilen-/DTO-Konvertierung. Repositories kapseln Persistenz; SQL-Definitionen
-liegen innerhalb der jeweiligen Repository-Schicht unter `repository/queries`.
-Services enthalten weder SQL-Literale noch Zugriffe auf den generischen JDBC-Executor.
-Es gibt keinen zentralen Dispatcher und keine Operation-Handler.
+Jedes Fachmodul gliedert seinen Code nach Bedarf in `controller`, `filter`,
+`service`, `mapper`, `dto`, `entity` und `repository`. Generische `model`- oder
+`contract`-Pakete sind verboten. Modulinterne DTOs kapseln typisierte Übergaben
+für Fachabläufe; API-DTOs bilden ausschließlich den HTTP-Rand.
+
+Controller sind HTTP-orientiert, validieren typisierte Request-DTOs und delegieren
+fachliche Arbeit an Services. Öffentliche Service-Grenzen geben keine Entities,
+JDBC-Zeilen oder `Map<String,Object>` weiter. Mapper besitzen
+Entity-/Zeilen-/DTO-Konvertierung; generische ObjectMapper-basierte
+"Contract-Conversion" ist kein Anwendungs-Layer. Repositories kapseln Persistenz;
+SQL-Definitionen liegen innerhalb der jeweiligen Repository-Schicht unter
+`repository/queries`. Services enthalten weder SQL-Literale noch Zugriffe auf den
+generischen JDBC-Executor.
 
 Der Laufzeitpfad ist damit bewusst eindeutig:
 
 ```text
 HTTP -> Filter/Security -> Controller -> Service -> Repository -> PostgreSQL
-                                  |          |
-                                  |          +-> Mapper -> API-/Modul-DTO
-                                  +-> HTTP-Status/Header/Cookies
+                           |           |
+                           |           +-> Mapper <-> API-/Modul-DTO/Entity/Row
+                           +-> DTO-Validierung + HTTP-Status/Header/Cookies
 ```
 
 Import- und Typkonsistenz werden zusätzlich im Spring-Strukturaudit geprüft;

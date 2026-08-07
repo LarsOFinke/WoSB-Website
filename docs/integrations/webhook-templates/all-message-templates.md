@@ -1,6 +1,6 @@
 # Discord webhook message templates
 
-Generated from `contracts/webhook-events.json`.
+Generated from `spring-api/src/main/reference/webhook-events.json`.
 
 ## `backup.configuration.deleted`
 

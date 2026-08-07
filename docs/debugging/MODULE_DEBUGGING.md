@@ -26,9 +26,9 @@ IP-Adressen oder unredigierte Datenbankauszüge.
 
 ### API und Backend
 
-1. Route und `operationId` in `contracts/api-contract.json` bestimmen.
-2. Generiertes `contract/api/*Api.java` nur lesen und den implementierenden
-   Modul-Controller über dessen `implements`-Klausel finden.
+1. Route und `operationId` in `openapi/openapi.json` bestimmen.
+2. Die Route direkt im Modul-Controller (`@*Mapping`) finden; Request-DTO,
+   `@PathVariable`/`@RequestParam` und `@Valid @RequestBody` dort gegen OpenAPI prüfen.
 3. Vom Controller zum Service, zur Policy und zum Repository-/Mapper-Rand verfolgen.
 4. HTTP-Status einordnen: Transport-/Bean-Binding 400, Authentifizierung 401,
    Autorisierung/CSRF/Origin 403, Zustandskonflikt 409, fachliche Validierung 422.
@@ -36,7 +36,7 @@ IP-Adressen oder unredigierte Datenbankauszüge.
    HTTP-Test gegen PostgreSQL ergänzen.
 
 ```bash
-rg -n 'operation_id|operationId|Fehlertext' contracts spring-api/src/main/java
+rg -n 'operation_id|operationId|Fehlertext' openapi spring-api/src/main/java
 rg -n 'api_error|security_401|security_403' spring-api/src/main/java docs/debugging
 mvn -f spring-api/pom.xml -Dtest='<Testklasse>' test
 ```
@@ -118,7 +118,7 @@ erste serverseitige Root Cause verfolgt:
 2. In Surefire-/Server-Ausgabe die erste `api_error status=500`-Zeile suchen und
    Exceptiontyp sowie den ersten eigenen Stack-Frame notieren. Nicht beim äußeren
    Assertion-Fehler stehen bleiben.
-3. Die Route über Contract/operationId → generiertes `*Api` → Controller → Service →
+3. Die Route über OpenAPI/operationId → Controller → Service →
    Repository/Mapper verfolgen. Nur den tatsächlich ausgeführten Pfad untersuchen.
 4. Bei Spring-JDBC-Fehlern die **fertig zusammengesetzte SQL-Bedeutung** prüfen:
    Fragmentgrenzen, Named-Parameter und Bindings sowie Alias/Spalte gegen Flyway.

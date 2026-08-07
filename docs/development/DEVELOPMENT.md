@@ -30,13 +30,13 @@ Flyway migriert das Schema; Hibernate prüft es mit `ddl-auto=validate`.
 Backend-Änderungen folgen der aktuellen Modulgrenze:
 
 ```text
-OpenAPI -> generiertes *Api-Interface + API-DTO -> Controller -> Service -> Repository
-                                                        |            |
-                                                        |            +-> PostgreSQL
-                                                        +-> Mapper <-> DTO/Entity/Row
+OpenAPI -> generiertes API-DTO -> Controller -> Service -> Repository
+                                  |            |
+                                  |            +-> PostgreSQL
+                                  +-> Mapper <-> DTO/Entity/Row
 ```
 
-Controller bleiben HTTP-orientiert und verwenden typisierte DTOs. Services
+Controller besitzen die Spring-MVC-Routen, bleiben HTTP-orientiert und validieren typisierte DTOs direkt. Services
 besitzen Fachlogik, Autorisierung und Transaktionen, aber weder SQL noch rohe
 HTTP-/DB-Repräsentationen. Repositories besitzen Persistenz und Query-Kataloge;
 Mapper besitzen die Repräsentationswechsel. Fachmodulinterne Übergabeobjekte

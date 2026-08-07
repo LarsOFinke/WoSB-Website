@@ -37,8 +37,8 @@
 | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
 | Betrieb/Recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
-| HTTP-Vertrag | `contracts/api-contract.json` |
-| Webhooks/Build-Daten | `contracts/webhook-events.json`, `contracts/build-*.json` |
+| HTTP-Vertrag | `openapi/openapi.json` |
+| Webhooks/Build-Daten | `spring-api/src/main/reference/webhook-events.json`, `spring-api/src/main/reference/build-stat-catalog.json` |
 
 Der Dokumentationsindex ist `docs/README.md`. Änderungen an Verhalten oder
 Betriebsabläufen schließen die zugehörige Dokumentation ein.
@@ -48,7 +48,7 @@ Betriebsabläufen schließen die zugehörige Dokumentation ein.
 ```text
 spring-api/      alleinige Backend-Laufzeit, Security, Fachdomänen, Persistenz
 frontend/        Vue-Anwendung, Feature-Module, Lokalisierung und UI-Tests
-contracts/       versionierte HTTP-, Build-, Backup- und Webhook-Verträge
+openapi/         versionierte externe HTTP-Spezifikation
 infrastructure/  Compose und zentrale Skriptmodule für Quality, Generation und Runtime
 tests/recovery/  sprachneutrale Recovery-/Remote-Sync-Vertragstests
 docs/            Architektur, Entwicklung, Betrieb, Referenz und Audits
@@ -67,14 +67,15 @@ steht im `docs/architecture/MODULE_CATALOG.md`; die tokenarme Auswahl steht in
 `.agents/MODULE_CACHE.md`. Keine Modulverantwortung aus dem Verzeichnisnamen
 allein ableiten.
 
-- Composition/Querschnitt: `config`, `core`, `contract`, `operations`,
-  `persistence`, `shared`, die generierten `contract/api`-Interfaces und `api/dto`-Transportmodelle.
+- Composition/Querschnitt: `config`, `core`, `operations`, `persistence`, `shared`
+  und die generierten `api/dto`-Transportmodelle.
 - Fachdomänen: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
   `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
   `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `webhooks`.
-- Generierte `contract/api/*Api`-Interfaces und `api/dto/*`-Records definieren
-  den typisierten HTTP-Transport. Genau ein Modul-Controller implementiert jedes Interface; fehlende
-  oder doppelte Implementierungen brechen das Architektur-Gate.
+- `openapi/openapi.json` definiert den externen HTTP-Transport; generierte
+  `api/dto/*`-Records bilden dessen Request-/Response-Typen. Modul-Controller besitzen
+  die Spring-MVC-Bindings direkt; fehlende, doppelte oder abweichende Routen brechen
+  `audit_controller_contract.py`.
 - Controller orchestrieren nur und kennen weder Entities noch Repositories.
   Autorisierung, Fachlogik, Transaktionen und notwendiges Audit gehören in
   Services; Persistenzzugriff erfolgt über Modul-Repositories. Öffentliche
@@ -208,7 +209,7 @@ allein ableiten.
   solange keine optionale Cookie-/Tracking-Integration aktiv ist. Manuelles Öffnen
   bleibt über Footer und Datenschutzcenter möglich.
 - API-Nutzung und Sicherheitsgrenzen stehen in `docs/reference/API.md`; der
-  vollständige Endpunktindex wird aus `contracts/api-contract.json` nach
+  vollständige Endpunktindex wird aus `openapi/openapi.json` nach
   `docs/reference/API_ENDPOINTS.md` generiert.
 - Historische Audit-Snapshots werden nicht mehr als zweite Dokumentationsquelle
   gepflegt. Aktuelle Soll-Regeln stehen ausschließlich in Architektur-,
@@ -314,7 +315,7 @@ querschnittlichen Änderungen `make validate`.
 
 ### API oder Backend-Domäne
 
-1. Vertrag/Operation, API-DTO, generiertes API-Interface, Modul-Controller, Service,
+1. OpenAPI-Operation, API-DTO, Modul-Controller, Service,
    Repository/Mapper, Security und Audit gemeinsam verfolgen.
 2. Erfolgs-, Fehler- und Berechtigungsfälle ergänzen; bei Listen auch Filter,
    Grenzwerte und Query-Anzahl prüfen.

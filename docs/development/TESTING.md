@@ -143,15 +143,17 @@ Mockito is loaded as an explicit JVM startup agent. Maven resolves the agent pat
 through `maven-dependency-plugin`, so default and overridden local repositories
 use the same configuration and tests never rely on dynamic self-attachment.
 
-Generated API route drift can be diagnosed without starting Docker or Spring:
+Controller/OpenAPI route drift can be diagnosed without starting Docker or Spring:
 
 ```bash
-python3 infrastructure/scripts/generation/generate_spring_routes.py --check
+python3 infrastructure/scripts/quality/audit_controller_contract.py
+python3 infrastructure/scripts/generation/generate_api_dtos.py --check
 ```
 
-The check covers every contract operation and names the first affected files.
-Regenerate only after reviewing a contract change by running the same command
-without `--check`.
+The controller audit covers all 177 operations and compares HTTP method/path,
+path/query bindings, request DTO/media type and successful response type against
+OpenAPI. DTOs remain generator-owned; controller mappings are handwritten and
+module-owned, so there is no route-generator regeneration step.
 
 The Playwright suite starts Vite and replaces only `/api/` requests with
 deterministic browser fixtures. It verifies browser-side navigation, cookie-setting

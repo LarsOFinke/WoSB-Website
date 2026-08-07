@@ -23,7 +23,7 @@ fi
 frontend=false
 backend=false
 infrastructure=false
-contracts=false
+specification=false
 documentation=false
 crosscutting=false
 for path in "${changed_files[@]}"; do
@@ -33,7 +33,7 @@ for path in "${changed_files[@]}"; do
     infrastructure/*|deploy.sh|update.sh|.agents/scripts/*)
       infrastructure=true
       ;;
-    contracts/*|infrastructure/scripts/generation/*) contracts=true ;;
+    openapi/*|spring-api/src/main/reference/*|infrastructure/scripts/generation/*) specification=true ;;
     docs/*|.agents/*.md|README.md|AGENTS.md|SECURITY.md|infrastructure/scripts/quality/check_documentation.py)
       documentation=true
       ;;
@@ -44,12 +44,12 @@ for path in "${changed_files[@]}"; do
 done
 
 scope_count=0
-for active in "$frontend" "$backend" "$infrastructure" "$contracts"; do
+for active in "$frontend" "$backend" "$infrastructure" "$specification"; do
   [[ "$active" != true ]] || ((scope_count += 1))
 done
 
 commands=()
-if [[ "$crosscutting" == true ]] || ((scope_count > 1)) || [[ "$contracts" == true ]]; then
+if [[ "$crosscutting" == true ]] || ((scope_count > 1)) || [[ "$specification" == true ]]; then
   commands+=("bash .agents/scripts/check-all.sh")
 else
   [[ "$frontend" != true ]] || commands+=("bash .agents/scripts/check-frontend.sh")

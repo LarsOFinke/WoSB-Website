@@ -20,10 +20,10 @@ require(not (ROOT/'scripts').exists(),'top-level scripts directory must not be r
 root_shell_scripts={path.name for path in ROOT.glob('*.sh')}
 require(root_shell_scripts=={'deploy.sh','update.sh'},
         f'root shell entrypoints must be deploy.sh/update.sh, found {sorted(root_shell_scripts)}')
-for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','contracts/api-contract.json','contracts/build-stat-catalog.json','contracts/webhook-events.json'):
+for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','openapi/openapi.json','spring-api/src/main/reference/build-stat-catalog.json','spring-api/src/main/reference/webhook-events.json'):
     text(path)
 
-contract=json.loads(text('contracts/api-contract.json'))
+contract=json.loads(text('openapi/openapi.json'))
 schemas=contract.get('components',{}).get('schemas',{})
 require('ApiError' in schemas,'API contract must define the Spring ApiError response schema')
 require('HTTPValidationError' not in schemas and 'ValidationError' not in schemas,
@@ -75,7 +75,7 @@ for item in contract.get('paths',{}).values():
         if isinstance(operation,dict) and operation.get('operationId'): operations.append(operation['operationId'])
 require(len(operations)==177 and len(set(operations))==177,f'API contract must expose 177 unique operations, found {len(operations)}/{len(set(operations))}')
 require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/dto').glob('*.java')))==len(contract['components']['schemas']),'generated Java DTO count is stale')
-require(not list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').glob('*.java')),'legacy contract DTO sources remain')
+require(not (ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').exists(),'obsolete generated contract layer remains')
 
 compose=text('infrastructure/compose.yml')
 for service in ('postgres:','api:','gateway:'): require(f'  {service}' in compose,f'missing compose service {service[:-1]}')
@@ -131,13 +131,13 @@ for path in (*frontend_source.rglob('*.js'),*frontend_source.rglob('*.mjs')):
 for migration in (ROOT/'spring-api/src/main/resources/db/migration').glob('*.sql'):
     require(re.fullmatch(r'[BV]\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
 
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_controller_contract.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_spring_backend.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_sql_runtime.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_build_stat_catalog.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_modular_flyway_baseline.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_api_reference.py'),'--check'],check=True)
-subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_java_contracts.py'),'--check'],check=True)
-subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_spring_routes.py'),'--check'],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_api_dtos.py'),'--check'],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/sync_webhook_templates.py'),'--check'],check=True)
 if args.strict_tree:
     forbidden_names={'.env','.DS_Store'}

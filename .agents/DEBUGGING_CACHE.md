@@ -11,7 +11,7 @@ Arbeitskontext übernehmen.
 
 | Symptom | Zuerst prüfen | Danach |
 | --- | --- | --- |
-| API 500 | zentrale `api_error`-Zeile, Methode/Pfad/Exceptiontyp | Route → operationId → `*Api`-Interface → Modul-Controller → Service → Repository/Mapper |
+| API 500 | zentrale `api_error`-Zeile, Methode/Pfad/Exceptiontyp | Route → operationId → Modul-Controller → Service → Repository/Mapper |
 | 401 | `security_401`, Session-Cookie nur als vorhanden/nicht vorhanden | `SessionAuthenticationFilter`, aktiver User und Rollen-Fetch |
 | 403 | `security_403`, Origin-/CSRF-Merkmale | Authority, Domain-Policy, CSRF und Host/Origin getrennt |
 | 400/422 | Contractschema und `ApiExceptionHandler` | Transportbindung (400) von fachlicher Ablehnung (422) trennen |

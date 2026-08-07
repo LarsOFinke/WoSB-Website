@@ -1,15 +1,16 @@
 package eu.royalblackwater.api.builds.mapper;
 
 import eu.royalblackwater.api.builds.dto.BuildStatDefinition;
+import eu.royalblackwater.api.builds.dto.BuildStatsSnapshot;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
 import eu.royalblackwater.api.dto.BuildRoleRead;
 import eu.royalblackwater.api.dto.BuildStatRow;
 import eu.royalblackwater.api.dto.BuildVoteState;
 import eu.royalblackwater.api.dto.BuildStatDefinitionRead;
 import eu.royalblackwater.api.dto.ShipStats;
-import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import eu.royalblackwater.api.persistence.RowValues;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class BuildDtoMapper {
@@ -50,8 +51,56 @@ public final class BuildDtoMapper {
                 (long) definition.precision(), definition.source(), definition.unit());
     }
 
-    public static ShipStats shipStats(Map<String, Object> values, ContractConversionService contracts) {
-        return contracts.convert(values, ShipStats.class);
+    public static ShipStats shipStats(BuildStatsSnapshot value) {
+        return new ShipStats(
+                value.ammunitionSlotsUsed(),
+                value.baseCrewCapacity(),
+                value.baseSailorMinimum(),
+                value.baseSailorTarget(),
+                new LinkedHashMap<String, Object>(value.baseStats()),
+                value.baseUpgradeSlotsAvailable(),
+                value.consumableSlotsUsed(),
+                value.crewCapacity(),
+                value.crewRemaining(),
+                value.crewTotal(),
+                value.effectiveCrewCapacity(),
+                value.effectiveSailorMinimum(),
+                value.effectiveSailorTarget(),
+                value.effectiveStats(),
+                value.expansionUpgradeSlots(),
+                value.extraUpgradeSlots(),
+                value.holdSlotsUsed(),
+                value.inventorySlotsUsed(),
+                value.itemEffects(),
+                value.lanternEffects(),
+                value.mortarModificationEffects(),
+                value.mortarModificationInstalled(),
+                value.researchUpgradeSlotEffects(),
+                value.researchUpgradeSlots(),
+                value.sailEffects(),
+                value.sailingEfficiencyPct(),
+                value.sailorMinimum(),
+                value.sailorTarget(),
+                value.sailorsRequiredMet(),
+                value.shipExtraUpgradeSlots(),
+                value.specialCrewEffects(),
+                value.specialCrewTotal(),
+                value.statRows(),
+                value.statWarnings(),
+                value.upgradeBuffs(),
+                value.upgradeDebuffs(),
+                value.upgradeEffects(),
+                value.upgradeSlot5Unlocked(),
+                value.upgradeSlot6Available(),
+                value.upgradeSlot6Unlocked(),
+                value.upgradeSlot7Available(),
+                value.upgradeSlot8Available(),
+                value.upgradeSlotsAvailable(),
+                value.upgradeSlotsUsed(),
+                value.weaponCapacity(),
+                value.weaponCapacityTotal(),
+                value.weaponSlots(),
+                value.weaponTotal());
     }
 
 }

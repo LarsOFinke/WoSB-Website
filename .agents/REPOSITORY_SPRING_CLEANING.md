@@ -38,7 +38,7 @@ Danach nur die Primärquellen des tatsächlichen Scopes lesen:
 | Gesamtqualität | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
 | Modulgrenzen | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
 | Debugging | `docs/debugging/MODULE_DEBUGGING.md`, `.agents/DEBUGGING_CACHE.md` |
-| Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `contracts/api-contract.json` |
+| Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `openapi/openapi.json` |
 | Frontend/CSS | `frontend/ARCHITECTURE.md`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, betroffene Migrationen und Upgrade-Tests |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
@@ -80,9 +80,9 @@ SOLID ist hier eine Entscheidungshilfe, kein Klassenzähler:
 - **Eine benennbare Verantwortung:** Transport bindet, Service entscheidet,
   Repository persistiert, Mapper übersetzt. Frontend-Seiten komponieren,
   Composables steuern Abläufe, API-Module transportieren, Domain-Module rechnen.
-- **Erweiterung am stabilen Vertrag:** vorhandene generierte API-Interfaces,
-  Modul-Controller, Services und Infrastruktur-Helper erweitern, statt parallele
-  Dispatch- oder Kompatibilitätspfade einzuführen.
+- **Erweiterung am stabilen Vertrag:** die OpenAPI-Spezifikation, generierten
+  API-DTOs, Modul-Controller, Services und Infrastruktur-Helper weiterentwickeln,
+  statt parallele Dispatch-, Transport- oder Kompatibilitätspfade einzuführen.
 - **Austauschbarkeit:** Vererbung nur bei tatsächlich substituierbaren Typen;
   meist sind kleine Komposition und Konstruktorinjektion klarer.
 - **Schmale Schnittstellen:** nur die Daten und Operationen übergeben, die ein
@@ -107,7 +107,7 @@ KISS begrenzt die Umsetzung:
 Für jede betroffene Operation vom Vertrag bis zur Persistenz verfolgen:
 
 ```text
-api-contract -> generiertes API-Interface -> Modul-Controller -> Service
+OpenAPI -> generiertes API-DTO -> Modul-Controller -> Service
              -> Repository/Mapper -> Migration/Index -> Tests/Dokumentation
 ```
 

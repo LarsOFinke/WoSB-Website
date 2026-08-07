@@ -3,13 +3,13 @@ package eu.royalblackwater.api.builds.service;
 import eu.royalblackwater.api.builds.mapper.BuildDtoMapper;
 import eu.royalblackwater.api.builds.dto.BuildEffects;
 import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
+import eu.royalblackwater.api.builds.dto.BuildStatsSnapshot;
 import eu.royalblackwater.api.builds.dto.BuildPayload;
 import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
 import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
 import eu.royalblackwater.api.builds.dto.UpgradeSlotAccess;
 import eu.royalblackwater.api.dto.BuildStatRow;
 import eu.royalblackwater.api.dto.ShipStats;
-import eu.royalblackwater.api.shared.mapper.ContractConversionService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,14 +25,12 @@ public class BuildStatsService {
     private final BuildEffectService effects;
     private final UpgradeSlotService upgradeSlots;
     private final BuildStatCalculator calculator;
-    private final ContractConversionService contracts;
 
     public BuildStatsService(BuildEffectService effects, UpgradeSlotService upgradeSlots,
-                      BuildStatCalculator calculator, ContractConversionService contracts) {
+                      BuildStatCalculator calculator) {
         this.effects = effects;
         this.upgradeSlots = upgradeSlots;
         this.calculator = calculator;
-        this.contracts = contracts;
     }
 
     public ShipStats calculate(BuildPayload payload, BuildShipSnapshot ship, BuildFeatureSnapshot feature,
@@ -70,38 +68,56 @@ public class BuildStatsService {
         long ammunition = countRows(slots, "ammunition");
         long consumables = countRows(slots, "consumable");
         long hold = countRows(slots, "hold");
-        Map<String, Object> value = new LinkedHashMap<>();
-        value.put("crew_total", crewTotal); value.put("crew_capacity", crewCapacity);
-        value.put("crew_remaining", Math.max(crewCapacity - crewTotal, 0));
-        value.put("sailor_minimum", sailorMinimum); value.put("sailors_required_met", payload.sailors() >= sailorMinimum);
-        value.put("sailor_target", sailorMinimum); value.put("base_sailor_target", (long) ship.sailorMinimum());
-        value.put("effective_sailor_target", sailorMinimum); value.put("sailing_efficiency_pct", sailingEfficiency);
-        value.put("upgrade_slots_used", upgradeUsed); value.put("upgrade_slots_available", (long) access.availableSlots());
-        value.put("base_upgrade_slots_available", (long) access.baseSlots());
-        value.put("extra_upgrade_slots", integer(upgradeEffects.get("extra_upgrade_slots")));
-        value.put("expansion_upgrade_slots", (long) access.expansionSlots()); value.put("research_upgrade_slots", (long) access.researchSlots());
-        value.put("ship_extra_upgrade_slots", (long) access.shipExtraSlots()); value.put("upgrade_slot_5_unlocked", access.slot5());
-        value.put("upgrade_slot_6_available", access.slot6()); value.put("upgrade_slot_6_unlocked", access.slot6());
-        value.put("upgrade_slot_7_available", access.slot7()); value.put("upgrade_slot_8_available", access.slot8());
-        value.put("base_crew_capacity", (long) ship.crewCapacity()); value.put("effective_crew_capacity", crewCapacity);
-        value.put("base_sailor_minimum", (long) ship.sailorMinimum()); value.put("effective_sailor_minimum", sailorMinimum);
-        value.put("item_effects", resolved.totals()); value.put("sail_effects", sailEffects);
-        value.put("lantern_effects", lanternEffects); value.put("upgrade_effects", upgradeEffects);
-        value.put("special_crew_effects", specialistEffects);
-        value.put("research_upgrade_slot_effects", feature == null ? Map.of() : feature.effects());
-        value.put("mortar_modification_installed", payload.mortarModification());
-        value.put("mortar_modification_effects", ship.mortarEffects(payload.mortarModification()));
-        value.put("upgrade_buffs", Map.copyOf(buffs)); value.put("upgrade_debuffs", Map.copyOf(debuffs));
-        value.put("base_stats", ship.baseStats()); value.put("effective_stats", calculator.effectiveStats(statRows));
-        value.put("stat_rows", statRows); value.put("stat_warnings", warnings);
-        value.put("weapon_slots", Map.copyOf(weaponSlots)); value.put("weapon_capacity", Map.copyOf(weaponCapacity));
-        value.put("weapon_total", weaponSlots.values().stream().mapToLong(Long::longValue).sum());
-        value.put("weapon_capacity_total", weaponCapacity.values().stream().mapToLong(Long::longValue).sum());
-        value.put("special_crew_total", countRows(slots, "special_crew"));
-        value.put("inventory_slots_used", ammunition + consumables + hold);
-        value.put("ammunition_slots_used", ammunition); value.put("consumable_slots_used", consumables);
-        value.put("hold_slots_used", hold);
-        return BuildDtoMapper.shipStats(value, contracts);
+        BuildStatsSnapshot snapshot = new BuildStatsSnapshot(
+                ammunition,
+                (long) ship.crewCapacity(),
+                (long) ship.sailorMinimum(),
+                (long) ship.sailorMinimum(),
+                ship.baseStats(),
+                (long) access.baseSlots(),
+                consumables,
+                crewCapacity,
+                Math.max(crewCapacity - crewTotal, 0),
+                crewTotal,
+                crewCapacity,
+                sailorMinimum,
+                sailorMinimum,
+                calculator.effectiveStats(statRows),
+                (long) access.expansionSlots(),
+                (long) integer(upgradeEffects.get("extra_upgrade_slots")),
+                hold,
+                ammunition + consumables + hold,
+                resolved.totals(),
+                lanternEffects,
+                ship.mortarEffects(payload.mortarModification()),
+                payload.mortarModification(),
+                feature == null ? Map.of() : feature.effects(),
+                (long) access.researchSlots(),
+                sailEffects,
+                sailingEfficiency,
+                sailorMinimum,
+                sailorMinimum,
+                payload.sailors() >= sailorMinimum,
+                (long) access.shipExtraSlots(),
+                specialistEffects,
+                countRows(slots, "special_crew"),
+                statRows,
+                warnings,
+                Map.copyOf(buffs),
+                Map.copyOf(debuffs),
+                upgradeEffects,
+                access.slot5(),
+                access.slot6(),
+                access.slot6(),
+                access.slot7(),
+                access.slot8(),
+                access.availableSlots(),
+                upgradeUsed,
+                Map.copyOf(weaponCapacity),
+                weaponCapacity.values().stream().mapToLong(Long::longValue).sum(),
+                Map.copyOf(weaponSlots),
+                weaponSlots.values().stream().mapToLong(Long::longValue).sum());
+        return BuildDtoMapper.shipStats(snapshot);
     }
 
     private static long effectiveCrewCapacity(BuildShipSnapshot ship, BuildEffects effects) {

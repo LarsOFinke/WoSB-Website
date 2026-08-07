@@ -34,9 +34,10 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 - `spring-api/` ist das einzige Backend; kein Python-Webbackend rekonstruieren.
 - Frontend: Seite orchestriert, Composable hält Ablauf/Zustand, API-Modul macht
   Netzwerkzugriffe, Domain-Modul enthält reine Regeln.
-- Backend: OpenAPI-Vertrag -> generiertes `*Api`-Interface + API-DTO ->
-  Modul-Controller -> Service -> Repository -> PostgreSQL. Mapper übersetzen
-  ausschließlich zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
+- Backend: OpenAPI-Spezifikation -> generiertes API-DTO -> Modul-Controller ->
+  Service -> Repository -> PostgreSQL. Controller besitzen Spring-MVC-Bindings und
+  validieren DTOs direkt; Mapper übersetzen ausschließlich zwischen API-/Modul-DTOs,
+  Entities und Repository-Zeilen.
   Fachlogik, Autorisierung und Transaktionen gehören in den Service; Controller
   und öffentliche Service-Grenzen kennen weder Entities noch JDBC-Zeilen/Roh-Maps.
 - Schemaänderungen ausschließlich durch neue Flyway-Migrationen; veröffentlichte
@@ -63,7 +64,7 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
 | Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
-| API-Vertrag | `contracts/api-contract.json`, danach `api/dto/*`, `contract/api/*Api.java` und Modul-Controller |
+| API-Spezifikation | `openapi/openapi.json`, danach `api/dto/*` und owning Modul-Controller |
 | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
 | Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
@@ -80,8 +81,7 @@ Das Release-Artefakt verwendet eine explizite Runtime-Allowlist; `quality/` und
 `generation/` werden nicht auf das Ziel ausgeliefert. Modulgebundene Helfer unter
 `.agents/scripts/` und `frontend/scripts/` verbleiben bei ihren Eigentümern.
 
-Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte
-Contract-Klassen, API-Interfaces und Locale-Ausgaben nicht von Hand bearbeiten.
+Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte API-DTOs und Locale-Ausgaben nicht von Hand bearbeiten; Controller-Routen sind Modulcode und werden gegen OpenAPI auditiert.
 
 ## Bekannter stabiler Stand
 

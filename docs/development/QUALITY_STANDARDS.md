@@ -26,10 +26,10 @@ for a verified backup and recovery path.
 ## Architecture and maintainability
 
 - Follow the dependency directions in `docs/architecture/ARCHITECTURE.md` and
-  `frontend/ARCHITECTURE.md`; generated API interfaces define transport, module
-  controllers bind HTTP, services own business rules and transactions, repositories
-  own persistence access, module-local `repository/queries` catalogs own SQL
-  definitions, and mappers own representation changes.
+  `frontend/ARCHITECTURE.md`; module controllers own HTTP routing and bind/validate
+  generated API DTOs directly, services own business rules and transactions,
+  repositories own persistence access, module-local `repository/queries` catalogs
+  own SQL definitions, and mappers own representation changes.
 - Inject dependencies through constructors. Do not introduce field injection,
   service locators or generic manager/wrapper layers without a concrete lifecycle
   or substitution benefit.
@@ -73,12 +73,13 @@ behavior that static analysis cannot resolve.
 ## Backend correctness and security
 
 - Java 21, constructor injection and explicit domain boundaries are mandatory.
-- `contracts/api-contract.json` is the HTTP contract. Generated `*Api` interfaces
-  bind and validate transport data. Exactly one module controller implements each
-  interface and delegates directly to services; central dispatchers and operation
-  handlers are forbidden.
-- Typed validated contracts and MapStruct use fail-closed mappings; unmapped
-  target fields are compilation errors.
+- `openapi/openapi.json` is the external HTTP specification. It generates only
+  immutable API DTOs. Module controllers own Spring MVC mappings and validate
+  request DTOs directly with Bean Validation; `audit_controller_contract.py`
+  fails on route, parameter, body, media-type or response drift. A generated
+  runtime `contract`/`*Api` interface layer is forbidden.
+- Typed validated DTOs and MapStruct use fail-closed mappings; unmapped target
+  fields are compilation errors.
 - Spring Security is the sole authentication and authorization boundary. Mutating
   browser requests retain session/JWT validation as applicable, CSRF, host and
   origin controls. Endpoint-local authentication shortcuts are prohibited.
@@ -94,8 +95,10 @@ behavior that static analysis cannot resolve.
   raw database/JSON row maps, and typed query parameters are never rebuilt as raw
   maps before validation.
 - Every HTTP module owns a mapper layer for DTO/entity/row transitions. Untyped
-  `ResponseEntity<?>`, controller-side body recasting and direct entity exposure are
-  architecture violations.
+  `ResponseEntity<?>`, controller-side body recasting, generic contract-conversion
+  services and direct entity exposure are architecture violations. ObjectMapper
+  conversion is permitted only inside an explicit mapper for genuinely dynamic
+  integration/control-file JSON, never as a generic application-layer shortcut.
 - Java imports must be explicit, resolvable and used. Wildcard imports, duplicate
   imports, unused imports and unresolved project-internal imports are repository-gate failures.
   DTO/mapper changes must compile with Maven; parser-only syntax checks are not

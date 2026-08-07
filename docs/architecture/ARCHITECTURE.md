@@ -12,7 +12,7 @@ NGINX gateway
   ↓ private Docker network
 Spring Boot API
   ├─ Spring Security / CSRF / request filters
-  ├─ generated API interfaces + API DTOs
+  ├─ controller-owned Spring MVC bindings + generated API DTOs
   ├─ module-owned controllers + domain services
   ├─ explicit mappers + module-owned JDBC/JPA repositories
   ├─ Flyway migrations and versioned reference-data seed
@@ -24,12 +24,14 @@ The gateway is the only public container. PostgreSQL binds to loopback for admin
 
 ## Backend boundaries
 
-`contracts/api-contract.json` is the versioned HTTP contract. The generators create
-Spring MVC interfaces under `api/contract/api` and immutable transport DTO records
-under `api/dto`. Module-owned `@RestController` classes implement those interfaces
-and delegate directly to services. The structural audit fails when an API interface
-is missing an implementation, is implemented more than once, exposes an untyped
-response, or a controller bypasses the service layer.
+`openapi/openapi.json` is the versioned external HTTP specification. The DTO
+generator creates immutable transport records under `api/dto`; it does not create
+a runtime contract layer. Module-owned `@RestController` classes own their Spring
+MVC mappings and bind/validate generated request DTOs directly.
+`audit_controller_contract.py` compares all 177 controller routes, parameters,
+request bodies, multipart media types and success response types against OpenAPI.
+The structural audit rejects missing/duplicate mappings and controller bypasses of
+the service layer.
 
 Domain services own authorization, transactions and audit semantics. Every domain is
 split into explicit `controller`, `filter`, `service`, `mapper`, `dto`, `entity` and
@@ -41,9 +43,9 @@ module-local `repository/queries` catalogs own SQL definitions; SQL literals are
 prohibited in services.
 
 The runtime dependency direction is explicit: filters/security execute before the
-module controller; the controller implements the generated `*Api` contract and
-delegates to a service; the service orchestrates authorization, transactions,
-repositories and mappers; repositories own persistence. Mappers do not own business
+module controller; the controller owns HTTP binding and DTO validation and delegates
+to a service; the service orchestrates authorization, transactions, repositories
+and mappers; repositories own persistence. Mappers do not own business
 rules or database access.
 
 The transport boundary is DTO-only: controllers and public service methods do not

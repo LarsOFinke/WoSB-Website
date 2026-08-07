@@ -1,25 +1,31 @@
 package eu.royalblackwater.api.builds.controller;
 
-import eu.royalblackwater.api.dto.BuildRead;
-import eu.royalblackwater.api.dto.BuildRoleRead;
-import java.util.List;
 import eu.royalblackwater.api.builds.service.BuildRoleAdministrationService;
 import eu.royalblackwater.api.builds.service.BuildService;
+import eu.royalblackwater.api.dto.BuildRead;
 import eu.royalblackwater.api.dto.BuildRoleAssignment;
 import eu.royalblackwater.api.dto.BuildRoleCreate;
+import eu.royalblackwater.api.dto.BuildRoleRead;
 import eu.royalblackwater.api.dto.BuildRoleUpdate;
-import eu.royalblackwater.api.contract.api.AdminBuildRolesApi;
-import eu.royalblackwater.api.contract.api.AdminBuildsApi;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
+import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Validated
-public class BuildAdministrationController extends ApiControllerSupport implements AdminBuildRolesApi, AdminBuildsApi {
+public class BuildAdministrationController extends ApiControllerSupport {
 
     private final BuildService builds;
     private final BuildRoleAdministrationService roles;
@@ -28,33 +34,33 @@ public class BuildAdministrationController extends ApiControllerSupport implemen
         this.builds = builds; this.roles = roles;
     }
 
-    @Override
+    @GetMapping("/api/admin/build-roles")
     public ResponseEntity<List<BuildRoleRead>> adminListBuildRoles() {
         CurrentUser.require();
         return respond(roles.list(), 200);
     }
 
-    @Override
+    @PostMapping("/api/admin/build-roles")
     public ResponseEntity<BuildRoleRead> adminCreateBuildRole(
-            BuildRoleCreate body
+            @Valid @RequestBody BuildRoleCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(roles.create(body, actor), 201);
     }
 
-    @Override
+    @DeleteMapping("/api/admin/build-roles/{slug}")
     public ResponseEntity<Void> adminDeleteBuildRole(
-            String slug
+            @PathVariable("slug") String slug
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         roles.delete(slug, actor); return noContent();
     }
 
-    @Override
+    @PutMapping("/api/admin/build-roles/{slug}")
     public ResponseEntity<BuildRoleRead> adminUpdateBuildRole(
-            String slug,
-            BuildRoleUpdate body
+            @PathVariable("slug") String slug,
+            @Valid @RequestBody BuildRoleUpdate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -62,28 +68,28 @@ public class BuildAdministrationController extends ApiControllerSupport implemen
                             body, actor), 200);
     }
 
-    @Override
+    @GetMapping("/api/admin/builds")
     public ResponseEntity<List<BuildRead>> adminListBuilds(
-            String search,
-            String buildType
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "build_type", required = false) String buildType
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.allForAdministration(actor), 200);
     }
 
-    @Override
+    @DeleteMapping("/api/admin/builds/{build_id}")
     public ResponseEntity<Void> adminDeleteBuild(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         builds.deleteAny(buildId, actor); return noContent();
     }
 
-    @Override
+    @PutMapping("/api/admin/builds/{build_id}/role")
     public ResponseEntity<BuildRead> adminAssignBuildRole(
-            long buildId,
-            BuildRoleAssignment body
+            @PathVariable("build_id") long buildId,
+            @Valid @RequestBody BuildRoleAssignment body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();

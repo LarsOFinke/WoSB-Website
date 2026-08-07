@@ -9,14 +9,15 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
 Browser → NGINX → Spring Boot API → PostgreSQL
 ```
 
-Spring Security bildet die alleinige Sicherheitsgrenze. Der OpenAPI-Vertrag
-generiert typisierte `*Api`-Interfaces und immutable Request-/Response-DTOs. Die
-Fachmodule implementieren diese Verträge mit eigenen Controllern; Controller
-delegieren an Services, Repositories kapseln JDBC/JPA und SQL, und Mapper bilden
-die einzige Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und
-Repository-Zeilen. Generische `model`-Pakete, zentrale Dispatcher und
-Operation-Handler gehören nicht mehr zur Laufzeitarchitektur. Flyway besitzt das
-Schema; das frühere Python-Backend ist vollständig entfernt.
+Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/openapi.json`
+ist die externe HTTP-Spezifikation und erzeugt ausschließlich immutable
+Request-/Response-DTOs. Die Modul-Controller besitzen ihre Spring-MVC-Routen und
+validieren diese DTOs direkt; Services besitzen Fachlogik und Transaktionen,
+Repositories kapseln JDBC/JPA und SQL, und Mapper bilden die einzige
+Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
+Generische `model`-/`contract`-Laufzeitschichten, zentrale Dispatcher und
+Operation-Handler gehören nicht zur Backendarchitektur. Flyway besitzt das Schema;
+das frühere Python-Backend ist vollständig entfernt.
 
 ## Lokale Entwicklung
 
@@ -124,7 +125,7 @@ verschlüsselten Recovery-Bundle mitgeführt.
 ```text
 spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
 frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
-contracts/       versionierter HTTP-, Build-Stat- und Webhook-Vertrag
+openapi/         versionierte externe OpenAPI-Spezifikation
 infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
 tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
 docs/            Architektur-, Entwicklungs- und Betriebsdokumentation

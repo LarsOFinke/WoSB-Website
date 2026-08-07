@@ -1,29 +1,38 @@
 package eu.royalblackwater.api.builds.controller;
 
+import eu.royalblackwater.api.builds.service.BuildPrintoutService;
+import eu.royalblackwater.api.builds.service.BuildService;
+import eu.royalblackwater.api.dto.BuildCreate;
 import eu.royalblackwater.api.dto.BuildOptionsCatalog;
 import eu.royalblackwater.api.dto.BuildPage;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
 import eu.royalblackwater.api.dto.BuildRead;
 import eu.royalblackwater.api.dto.BuildRoleRead;
-import eu.royalblackwater.api.dto.BuildVoteState;
-import java.util.List;
-import org.springframework.core.io.Resource;
-import eu.royalblackwater.api.builds.service.BuildPrintoutService;
-import eu.royalblackwater.api.builds.service.BuildService;
-import eu.royalblackwater.api.dto.BuildCreate;
 import eu.royalblackwater.api.dto.BuildUpdate;
-import eu.royalblackwater.api.contract.api.BuildsApi;
+import eu.royalblackwater.api.dto.BuildVoteState;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Validated
-public class BuildController extends ApiControllerSupport implements BuildsApi {
+public class BuildController extends ApiControllerSupport {
 
     private final BuildService builds;
     private final BuildPrintoutService printouts;
@@ -32,13 +41,13 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
         this.builds = builds; this.printouts = printouts;
     }
 
-    @Override
+    @GetMapping("/api/builds")
     public ResponseEntity<BuildPage> getBuilds(
-            String search,
-            String buildType,
-            String classification,
-            long limit,
-            long offset
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "build_type", required = false) String buildType,
+            @RequestParam(name = "classification", required = false) String classification,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -47,21 +56,21 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
                             limit, offset, actor), 200);
     }
 
-    @Override
+    @PostMapping("/api/builds")
     public ResponseEntity<BuildRead> postBuild(
-            BuildCreate body
+            @Valid @RequestBody BuildCreate body
     ) {
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.create(body, actor), 201);
     }
 
-    @Override
+    @GetMapping("/api/builds/mine")
     public ResponseEntity<BuildPage> getMyBuilds(
-            String search,
-            String buildType,
-            String classification,
-            long limit,
-            long offset
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "build_type", required = false) String buildType,
+            @RequestParam(name = "classification", required = false) String classification,
+            @RequestParam(name = "limit", defaultValue = "50") long limit,
+            @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -70,19 +79,19 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
                             limit, offset, actor), 200);
     }
 
-    @Override
+    @DeleteMapping("/api/builds/mine/{build_id}")
     public ResponseEntity<Void> deleteMyBuild(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         builds.deleteOwned(buildId, actor); return noContent();
     }
 
-    @Override
+    @PutMapping("/api/builds/mine/{build_id}")
     public ResponseEntity<BuildRead> putMyBuild(
-            long buildId,
-            BuildUpdate body
+            @PathVariable("build_id") long buildId,
+            @Valid @RequestBody BuildUpdate body
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
@@ -90,62 +99,62 @@ public class BuildController extends ApiControllerSupport implements BuildsApi {
                             body, actor), 200);
     }
 
-    @Override
+    @GetMapping("/api/builds/options")
     public ResponseEntity<BuildOptionsCatalog> getBuildOptions(
-            Long shipId
+            @RequestParam(name = "ship_id", required = false) Long shipId
     ) {
 
         CurrentUser.require();
         return respond(builds.options(shipId), 200);
     }
 
-    @Override
+    @GetMapping("/api/builds/roles")
     public ResponseEntity<List<BuildRoleRead>> getBuildRoles() {
         CurrentUser.require();
         return respond(builds.roles(), 200);
     }
 
-    @Override
+    @GetMapping("/api/builds/{build_id}")
     public ResponseEntity<BuildRead> getBuildDetail(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.get(buildId, actor), 200);
     }
 
-    @Override
+    @GetMapping("/api/builds/{build_id}/printout")
     public ResponseEntity<Resource> getBuildPrintout(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         CurrentUser.require();
         return download(printouts.content(buildId));
     }
 
-    @Override
+    @PutMapping(value = "/api/builds/{build_id}/printout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BuildPrintoutRead> putBuildPrintout(
-            long buildId,
-            boolean notifyDiscord,
-            MultipartFile upload
+            @PathVariable("build_id") long buildId,
+            @RequestParam(name = "notify_discord", defaultValue = "false") boolean notifyDiscord,
+            @RequestPart("image") MultipartFile upload
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(printouts.save(buildId, upload, actor), 200);
     }
 
-    @Override
+    @DeleteMapping("/api/builds/{build_id}/upvote")
     public ResponseEntity<BuildVoteState> deleteBuildUpvote(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.vote(buildId, actor, false), 200);
     }
 
-    @Override
+    @PostMapping("/api/builds/{build_id}/upvote")
     public ResponseEntity<BuildVoteState> postBuildUpvote(
-            long buildId
+            @PathVariable("build_id") long buildId
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
