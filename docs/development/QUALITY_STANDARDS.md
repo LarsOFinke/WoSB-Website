@@ -45,6 +45,31 @@ for a verified backup and recovery path.
   hand. Local environments, caches, runtime data and release outputs stay
   unversioned.
 
+## Persistence runtime correctness
+
+A JDBC statement is not considered verified merely because Java compiles. SQL that
+is assembled from constants, optional filters or allowlisted sort fragments must be
+validated at both the static and PostgreSQL runtime boundaries. In particular:
+
+- adjacent SQL fragments must preserve an explicit token boundary; never rely on
+  Java source indentation or text-block appearance to provide runtime whitespace;
+- every statically resolvable named SQL parameter must have exactly one supplied
+  parameter binding and no supplied binding may be unused;
+- statically resolvable `alias.column` references must exist in the canonical Flyway
+  schema; schema compatibility baselines must not drift from the current modular
+  schema;
+- every contract GET is exercised through Spring and PostgreSQL, including optional
+  query/filter branches where the contract provides them;
+- important write/read round trips receive explicit domain happy-path integration
+  tests in addition to the broad transport smoke sweep;
+- an unexpected HTTP 5xx is always a regression. Do not weaken the expected status
+  or catch the exception merely to make the test green; trace the first server-side
+  exception to its SQL/mapper/service root cause and add a regression at that route.
+
+`python3 infrastructure/scripts/quality/audit_sql_runtime.py` is part of the normal
+quality gate. `mvn verify` remains authoritative for real Spring/JDBC/PostgreSQL
+behavior that static analysis cannot resolve.
+
 ## Backend correctness and security
 
 - Java 21, constructor injection and explicit domain boundaries are mandatory.

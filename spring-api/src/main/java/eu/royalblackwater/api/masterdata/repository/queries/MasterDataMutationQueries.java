@@ -23,9 +23,7 @@ public final class MasterDataMutationQueries {
     public static final String UPDATE_OPTION_UPDATE_01 = "update build_item_options set is_seed_overridden=seed_key is not null where id=:id";
 
     public static final String DELETE_OPTION_SELECT_01 = """
-                select (select count(*) from build_slot_items where option_id=:id)
-                     +(select count(*) from build_inventory_items where option_id=:id)
-                     +(select count(*) from build_weapon_items where option_id=:id)
+                select (select count(*) from build_slots where option_id=:id)
                      +(select count(*) from ship_upgrade_effect_overrides where option_id=:id)
                 """;
 

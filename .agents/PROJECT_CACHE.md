@@ -214,12 +214,19 @@ allein ableiten.
   gepflegt. Aktuelle Soll-Regeln stehen ausschließlich in Architektur-,
   Entwicklungs-, Referenz- und Betriebsdokumenten.
 
+## Release-Regel
+
+Jeder deploybare Stand erhält eine neue Version. Fehlerfixes ohne höhere
+Änderungsklasse erhöhen mindestens `PATCH` um `0.0.1`; aktivierte Versionen werden
+nie wiederverwendet. Die aktuelle Basis immer aus `VERSION` lesen.
+
 ## Häufige Befehle
 
 ```bash
 make test          # schneller, ggf. Toolchains überspringender Prüfpfad
 make validate      # vollständiges Release-Gate; identisch zu make test-full
 make spring-test   # Maven verify
+make sql-audit     # statischer SQL-Fragment-/Parameter-/Schema-Audit
 make frontend-test # Frontend-Test, Produktionsbuild und Chromium-Smokes
 make check-tree    # strikte Repository-Hygiene
 make build         # Spring-Paket plus Frontend-Build
@@ -239,7 +246,7 @@ Agenten-Helfer für wiederkehrende Bestandsaufnahme und Prüfauswahl:
 bash .agents/scripts/project-context.sh       # kompakter, stets aktueller Projekt-/Git-Snapshot
 bash .agents/scripts/check-changes.sh         # Prüfempfehlung aus den geänderten Pfaden
 bash .agents/scripts/check-changes.sh --run   # empfohlene vorhandene Repository-Gates ausführen
-bash .agents/scripts/check-backend.sh         # Maven-/PostgreSQL-Gate, kompakte Ausgabe
+bash .agents/scripts/check-backend.sh         # SQL-Runtime-Audit + Maven/PostgreSQL, kompakte Ausgabe
 bash .agents/scripts/check-frontend.sh        # Frontend-Test/Build/Browser-Smoke mit temporärer .env
 bash .agents/scripts/check-infrastructure.sh  # Infrastruktur-/Update-Verträge, kompakte Ausgabe
 bash .agents/scripts/check-docs.sh            # lokale Markdown-Links, Befehle und Doku-Generierung
@@ -295,7 +302,7 @@ Juli-Fixes, Log4j `2.25.5` für `CVE-2026-49844` und pgJDBC `42.7.12` für
 gemeinsam zu aktualisierender geprüfter Stand gebunden; neue Scannerfunde zuerst
 gegen die Herstellerhinweise prüfen und nicht pauschal unterdrücken.
 
-`infrastructure/scripts/quality/validate.sh full` führt statische Repository-, Security-, Spring- und
+`infrastructure/scripts/quality/validate.sh full` führt statische Repository-, Security-, Spring-, SQL-Runtime- und
 CSS-Audits, Java-Syntaxprüfung, Infrastruktur-/Update-Tests, Recovery-Pytests,
 `mvn verify`, Frontend-Tests/Build/Chromium-Smokes und abschließend `--strict-tree`
 aus. Playwright-Chromium wird lokal einmalig mit `npx playwright install chromium`
@@ -311,7 +318,11 @@ querschnittlichen Änderungen `make validate`.
    Repository/Mapper, Security und Audit gemeinsam verfolgen.
 2. Erfolgs-, Fehler- und Berechtigungsfälle ergänzen; bei Listen auch Filter,
    Grenzwerte und Query-Anzahl prüfen.
-3. Keine PII, Tokens, vollständigen IP-Adressen oder Secrets in Logs, Fehlern,
+3. Für Review-/Admin-/State-Machine-Endpunkte einen stateful HTTP-Lifecycle testen:
+   Voraussetzung erzeugen -> Listen/Detail lesen -> Transition -> Folge-Read; alternative
+   Entscheidungen getrennt und verbrauchte Transition als kontrolliertes 4xx prüfen.
+   `ApiSurfaceIntegrationTest`, SQL-Audit und Lifecycle-Test sind komplementär.
+4. Keine PII, Tokens, vollständigen IP-Adressen oder Secrets in Logs, Fehlern,
    Fixtures oder Webhooks.
 
 ### Datenmodell

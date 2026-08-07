@@ -1,5 +1,5 @@
 SHELL := /usr/bin/env bash
-.PHONY: dev-api dev-frontend test test-full spring-test frontend-test lint css-audit security-audit build validate clean clean-all check-tree setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update package-release
+.PHONY: dev-api dev-frontend test test-full spring-test frontend-test lint sql-audit css-audit security-audit build validate clean clean-all check-tree setup-pi doctor infra-up infra-down infra-status infra-logs infra-backup infra-update package-release
 
 dev-api:
 	mvn -f spring-api/pom.xml spring-boot:run
@@ -23,6 +23,9 @@ lint:
 	python3 infrastructure/scripts/quality/check_repository.py
 	python3 infrastructure/scripts/quality/check_documentation.py
 	bash infrastructure/scripts/quality/tests/infrastructure.sh
+
+sql-audit:
+	python3 infrastructure/scripts/quality/audit_sql_runtime.py
 
 css-audit:
 	python3 infrastructure/scripts/quality/audit_css.py

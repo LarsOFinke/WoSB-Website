@@ -12,6 +12,7 @@ import eu.royalblackwater.api.dto.BuildVoteState;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,7 +77,7 @@ public interface BuildsApi {
             @PathVariable("build_id") long buildId
     );
 
-    @PutMapping("/api/builds/{build_id}/printout")
+    @PutMapping(value = "/api/builds/{build_id}/printout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<BuildPrintoutRead> putBuildPrintout(
             @PathVariable("build_id") long buildId,
             @RequestParam(name = "notify_discord", defaultValue = "false") boolean notifyDiscord,

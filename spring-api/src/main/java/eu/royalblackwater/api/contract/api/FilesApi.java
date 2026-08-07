@@ -4,6 +4,7 @@ package eu.royalblackwater.api.contract.api;
 import eu.royalblackwater.api.dto.FileRead;
 import java.util.List;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,7 @@ public interface FilesApi {
             @RequestParam(name = "usage_context", required = false) String usageContext
     );
 
-    @PostMapping("/api/files")
+    @PostMapping(value = "/api/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<FileRead> postFile(
             @RequestParam(name = "usage_context", defaultValue = "general") String usageContext,
             @RequestPart("file") MultipartFile upload

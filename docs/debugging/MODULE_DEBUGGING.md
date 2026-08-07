@@ -106,6 +106,59 @@ Diagnoseschritte.
 | externe Integration | Zielscope, Eventtyp, Delivery-Status, begrenzter Fehler | Policy-/Renderer-Test; Hauptablauf bleibt kontrolliert |
 | Deployment | Releaseversion, Phase, Readiness, redigierter Root Cause | Infrastruktur-/Update-/Recovery-Vertragstest |
 
+## Runbook: unerwarteter API-500
+
+Ein generischer `{"detail":"Internal server error."}`-Body ist nur das Symptom.
+Für einen 500er wird immer der reale Spring-/PostgreSQL-Pfad reproduziert und der
+erste serverseitige Root Cause verfolgt:
+
+1. Den konkreten HTTP-Aufruf in einem Spring-Boot-Integrationstest gegen einen
+   PostgreSQL-Testcontainer reproduzieren. Methode, Pfad, Status und einen begrenzten
+   Response-Ausschnitt in die Assertion aufnehmen.
+2. In Surefire-/Server-Ausgabe die erste `api_error status=500`-Zeile suchen und
+   Exceptiontyp sowie den ersten eigenen Stack-Frame notieren. Nicht beim äußeren
+   Assertion-Fehler stehen bleiben.
+3. Die Route über Contract/operationId → generiertes `*Api` → Controller → Service →
+   Repository/Mapper verfolgen. Nur den tatsächlich ausgeführten Pfad untersuchen.
+4. Bei Spring-JDBC-Fehlern die **fertig zusammengesetzte SQL-Bedeutung** prüfen:
+   Fragmentgrenzen, Named-Parameter und Bindings sowie Alias/Spalte gegen Flyway.
+   Ein Fehler wie ein zusammengezogener Parametername zeigt häufig fehlenden
+   Whitespace zwischen zwei Java-SQL-Fragmenten.
+5. `python3 infrastructure/scripts/quality/audit_sql_runtime.py` ausführen und
+   benachbarte Query-Kataloge auf dieselbe Fehlerklasse prüfen.
+6. Den konkreten Endpoint als dauerhaften Happy-Path-/Regressionstest behalten. Bei
+   Filter-/Sortier-SQL zusätzlich den gefilterten Query-Zweig testen.
+7. Bei Review-, Admin- oder sonstigen Zustandsautomaten nicht bei einem isolierten
+   Request stehen bleiben: echte Voraussetzung erzeugen, Listen-/Detail-Read ausführen,
+   Transition durchführen und anschließend den neuen Zustand über HTTP erneut lesen.
+   Approve/Reject beziehungsweise Complete/Reject getrennt testen. Eine wiederholte
+   bereits verbrauchte Transition muss kontrolliert 4xx liefern und niemals 500.
+8. Bei Mapper-/Referenzauflösung optionale Fremdschlüssel ausdrücklich als nullable behandeln.
+   Insbesondere niemals `Map.get(RowValues.nullableLong(...))` direkt verwenden: leere
+   immutable Maps aus `Map.of()` akzeptieren keinen `null`-Key und können einen normalen
+   pending/unreviewed Zustand als `NullPointerException` in einen 500er verwandeln. Erst
+   auf `null` prüfen, dann den Lookup ausführen.
+9. Danach `ApiSurfaceIntegrationTest` und schließlich `mvn verify` ausführen. Der
+   contractweite No-5xx-Sweep, der statische SQL-Audit und die stateful Lifecycle-Tests
+   sind drei unabhängige Absicherungen gegen unterschiedliche Laufzeitfehler.
+
+Referenz für Access Review:
+`register -> pending -> status=all -> approve -> login -> approved` sowie separat
+`register -> pending -> reject -> rejected`. Sentinel-IDs sind für reine Transporttests
+zulässig; für stateful Regressionen echte IDs/Datensätze verwenden, damit Repository,
+Mapper und Folgeabfragen tatsächlich ausgeführt werden.
+
+Ein 4xx kann im Surface-Sweep fachlich korrekt sein; ein unerwarteter 5xx ist es nie.
+Bei einem neuen 500er wird zuerst die Exception behoben, nicht der Test abgeschwächt.
+
+Direkte Diagnosebefehle:
+
+```bash
+grep -R -n -A100 -B20 'api_error status=500' spring-api/target/surefire-reports/
+python3 infrastructure/scripts/quality/audit_sql_runtime.py
+mvn -f spring-api/pom.xml -Dtest=ApiSurfaceIntegrationTest test
+```
+
 ## Abschluss einer Debugging-Änderung
 
 - Root Cause statt Symptom behoben.

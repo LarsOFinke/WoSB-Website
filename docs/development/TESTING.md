@@ -83,11 +83,61 @@ output is needed for diagnosis.
 `ApplicationIntegrationTest` starts the complete Spring application against a
 PostgreSQL Testcontainer and exercises real HTTP behavior for public health and
 registration, anonymous cookie-consent persistence, sessions, administrator
-authorization, CSRF, origin checks and bounded error responses. Run it in isolation with:
+authorization, CSRF, origin checks and bounded error responses. Its domain happy
+paths create and reload Fleet/Squad, Build, Forum, Guide, Group and Calendar data
+through HTTP so repository/mapper failures cannot hide behind controller-only tests.
+Run it in isolation with:
 
 ```bash
 mvn -f spring-api/pom.xml -Dtest=ApplicationIntegrationTest test
 ```
+
+`ApiSurfaceIntegrationTest` reads the canonical OpenAPI contract and turns the
+complete operation inventory into a runtime no-5xx sweep. Every GET is executed
+against the real Spring application and PostgreSQL at least once; GETs with optional
+query parameters are executed again with the optional filters populated to activate
+dynamic SQL branches. Non-GET operations are exercised at the transport boundary
+without destructive domain mutations. Body probes follow the OpenAPI media type:
+JSON operations receive malformed JSON, while multipart operations receive multipart
+framing with a missing required part. A second multipart-only negative case sends
+JSON deliberately and requires HTTP 415, so content-negotiation/binding failures do
+not masquerade as domain failures. Any response >= 500 fails the suite. Run it
+with:
+
+```bash
+mvn -f spring-api/pom.xml -Dtest=ApiSurfaceIntegrationTest test
+```
+
+The surface sweep is deliberately not the final word for stateful administration and
+review workflows. Endpoints that consume or mutate persisted state must also have a
+real lifecycle regression in `ApplicationIntegrationTest`: create or submit the
+prerequisite data, read it through the user-facing list/detail route, perform the
+transition, and verify a meaningful follow-up read. Review flows must cover both
+approve/complete and reject branches where they exist, and repeating an already
+consumed transition must return a bounded 4xx rather than 500. Prefer real fixture IDs
+over impossible sentinel IDs whenever doing so reaches repository/mapper logic safely.
+
+Registration Access Review is the reference flow:
+`register -> pending list -> status=all -> approve -> login -> approved list`, plus an
+independent `register -> pending -> reject -> rejected list` branch. The broader
+administration regression also round-trips user moderation, Build-role CRUD, privacy
+review and IP block/unblock. Together, the contract surface sweep, SQL runtime audit
+and stateful lifecycle tests are three independent layers; none replaces either of
+the others.
+
+SQL assembly also has a dependency-free static gate:
+
+```bash
+python3 infrastructure/scripts/quality/audit_sql_runtime.py
+```
+
+The SQL runtime audit checks statically resolvable fragment boundaries, named
+parameter parity, table and alias/column references against the Flyway schema and
+compatibility schema drift. It complements rather than replaces PostgreSQL integration tests:
+dynamic SQL and mapper behavior remain runtime concerns. The audit itself has
+regression fixtures for merged named parameters, retired relations and invalid
+alias/column references in `tests/quality/test_sql_runtime_audit.py`; they run as part
+of the repository validation pytest phase.
 
 Mockito is loaded as an explicit JVM startup agent. Maven resolves the agent path
 through `maven-dependency-plugin`, so default and overridden local repositories

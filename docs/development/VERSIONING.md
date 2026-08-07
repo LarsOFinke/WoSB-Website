@@ -15,6 +15,11 @@ inkompatible Änderung bleibt ein Major-Release. Reine Größe allein macht eine
 Änderung nicht inkompatibel, kann bei einer bewusst als Produktmeilenstein
 geplanten Erweiterung aber einen Major-Sprung begründen.
 
+Jeder Stand, der über den Update-Mechanismus ausgerollt werden soll, erhält eine
+neue, höhere Releaseversion. Ein deploybarer Fehlerfix wird daher mindestens um
+`0.0.1` erhöht; eine bereits aktivierte Versionsnummer wird auch für kleine
+Folgepatches nicht wiederverwendet.
+
 Vor jedem Release:
 
 1. Änderungsklasse anhand des gesamten Release-Inhalts bestimmen.

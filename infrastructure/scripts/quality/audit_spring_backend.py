@@ -222,6 +222,8 @@ for path in JAVA.rglob("*.java"):
     require(len(lines) <= 420, f"Java responsibility exceeds 420 lines: {path.relative_to(ROOT)} ({len(lines)})")
     require("OperationHandler" not in source, f"obsolete operation-handler architecture remains: {path.relative_to(ROOT)}")
     require("ApiOperationDispatcher" not in source, f"obsolete central dispatcher remains: {path.relative_to(ROOT)}")
+    require(re.search(r"\.get\s*\(\s*(?:RowValues\.)?nullableLong\s*\(", source) is None,
+            f"nullable database identifier is used directly as Map.get key without a null guard: {path.relative_to(ROOT)}")
 
     parts = relative.parts
     if len(parts) >= 3 and parts[1] in LAYER_NAMES:

@@ -192,6 +192,68 @@ class ApplicationIntegrationTest {
     }
 
     @Test
+    void createsAndReloadsCoreContentDomainsWithoutServerErrors() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        long nonce = System.nanoTime();
+
+        Map<String, Object> ship = jdbc.required("""
+                select id,sailor_minimum from ships where is_active=true order by id limit 1
+                """, Map.of());
+        long shipId = ((Number) ship.get("id")).longValue();
+        long sailorMinimum = ((Number) ship.get("sailor_minimum")).longValue();
+        HttpResponse<String> build = post(
+                "/api/builds",
+                "{\"build_name\":\"Integration Build " + nonce + "\",\"ship_id\":" + shipId
+                        + ",\"sailors\":" + sailorMinimum + "}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(build, 201, "POST", "/api/builds");
+        long buildId = jsonId(build.body());
+        assertStatus(get("/api/builds/" + buildId, administrator.sessionCookie()),
+                200, "GET", "/api/builds/{build_id}");
+
+        HttpResponse<String> thread = post(
+                "/api/forum/threads",
+                "{\"title\":\"Integration Thread " + nonce + "\",\"body\":\"Integration body.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(thread, 201, "POST", "/api/forum/threads");
+        long threadId = jsonId(thread.body());
+        assertStatus(get("/api/forum/threads/" + threadId, administrator.sessionCookie()),
+                200, "GET", "/api/forum/threads/{thread_id}");
+
+        HttpResponse<String> guide = post(
+                "/api/guides",
+                "{\"title\":\"Integration Guide " + nonce + "\",\"body\":\"Integration guide body.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(guide, 201, "POST", "/api/guides");
+        long guideId = jsonId(guide.body());
+        assertStatus(get("/api/guides/" + guideId, administrator.sessionCookie()),
+                200, "GET", "/api/guides/{guide_id}");
+
+        HttpResponse<String> group = post(
+                "/api/groups",
+                "{\"title\":\"Integration Group " + nonce + "\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(group, 201, "POST", "/api/groups");
+        long groupId = jsonId(group.body());
+        assertStatus(get("/api/groups/" + groupId, administrator.sessionCookie()),
+                200, "GET", "/api/groups/{group_id}");
+
+        long categoryId = ((Number) jdbc.required(
+                "select id from build_item_categories order by id limit 1", Map.of()).get("id")).longValue();
+        HttpResponse<String> option = post(
+                "/api/admin/master-data/options",
+                "{\"category_id\":" + categoryId + ",\"name\":\"Integration Option " + nonce + "\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(option, 201, "POST", "/api/admin/master-data/options");
+        long optionId = jsonId(option.body());
+        assertStatus(delete("/api/admin/master-data/options/" + optionId,
+                        administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/admin/master-data/options/{option_id}");
+        assertThat(jdbc.count("select count(*) from build_item_options where id=:id", Map.of("id", optionId)))
+                .isZero();
+    }
+
+    @Test
     void exposesHealthAndReadinessButProtectsMemberApis() throws Exception {
         HttpResponse<String> health = get("/api/health");
         HttpResponse<String> readiness = get("/api/health/ready");
@@ -226,6 +288,155 @@ class ApplicationIntegrationTest {
                 .build();
         HttpResponse<String> registration = HttpClient.newHttpClient().send(register, HttpResponse.BodyHandlers.ofString());
         assertThat(registration.statusCode()).isIn(202, 409);
+    }
+
+    @Test
+    void reviewsRegistrationRequestsAcrossApproveRejectAndAllStatusLifecycles() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        long nonce = Math.abs(System.nanoTime());
+        long fleetId = ((Number) bootstrapMembership().get("fleet_id")).longValue();
+
+        String approvedUsername = "review-approve-" + nonce;
+        String approvedPassword = "Review-Approved-Password-42!";
+        assertStatus(submitPublicRegistration(approvedUsername, approvedPassword,
+                        "Approved Review User", true, fleetId, "Please review fleet access."),
+                202, "POST", "/api/auth/register");
+
+        HttpResponse<String> pending = get(
+                "/api/admin/registration-requests?status=pending&search=" + approvedUsername,
+                administrator.sessionCookie());
+        assertStatus(pending, 200, "GET", "/api/admin/registration-requests?status=pending");
+        assertThat(pending.body()).contains(approvedUsername, "\"status\":\"pending\"");
+        long approvedRequestId = jsonId(pending.body());
+
+        HttpResponse<String> all = get(
+                "/api/admin/registration-requests?status=all&search=" + approvedUsername,
+                administrator.sessionCookie());
+        assertStatus(all, 200, "GET", "/api/admin/registration-requests?status=all");
+        assertThat(all.body()).contains(approvedUsername);
+
+        HttpResponse<String> approved = post(
+                "/api/admin/registration-requests/" + approvedRequestId + "/approve",
+                "{\"note\":\"Approved by integration access review.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(approved, 200, "POST", "/api/admin/registration-requests/{request_id}/approve");
+        assertThat(approved.body()).contains("\"status\":\"approved\"",
+                "\"created_user\":{", "\"reviewed_by\":{");
+        assertThat(jdbc.count("select count(*) from users where username=:username",
+                Map.of("username", approvedUsername))).isEqualTo(1);
+        assertThat(jdbc.count("""
+                select count(*) from fleet_memberships m join users u on u.id=m.user_id
+                where u.username=:username and m.fleet_id=:fleetId and m.status='pending'
+                """, Map.of("username", approvedUsername, "fleetId", fleetId))).isEqualTo(1);
+        assertStatus(post("/api/auth/login",
+                        "{\"username\":\"" + approvedUsername + "\",\"password\":\""
+                                + approvedPassword + "\"}", null, null, localOrigin()),
+                200, "POST", "/api/auth/login");
+        assertStatus(get("/api/admin/registration-requests?status=approved&search=" + approvedUsername,
+                        administrator.sessionCookie()),
+                200, "GET", "/api/admin/registration-requests?status=approved");
+        assertStatus(post("/api/admin/registration-requests/" + approvedRequestId + "/approve",
+                        "{}", administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                400, "POST", "/api/admin/registration-requests/{request_id}/approve repeated");
+
+        String rejectedUsername = "review-reject-" + nonce;
+        assertStatus(submitPublicRegistration(rejectedUsername, "Review-Rejected-Password-42!",
+                        "Rejected Review User", false, null, null),
+                202, "POST", "/api/auth/register");
+        HttpResponse<String> rejectPending = get(
+                "/api/admin/registration-requests?status=pending&search=" + rejectedUsername,
+                administrator.sessionCookie());
+        assertStatus(rejectPending, 200, "GET", "/api/admin/registration-requests?status=pending");
+        long rejectedRequestId = jsonId(rejectPending.body());
+        HttpResponse<String> rejected = post(
+                "/api/admin/registration-requests/" + rejectedRequestId + "/reject",
+                "{\"note\":\"Rejected by integration access review.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(rejected, 200, "POST", "/api/admin/registration-requests/{request_id}/reject");
+        assertThat(rejected.body()).contains("\"status\":\"rejected\"", "\"reviewed_by\":{");
+        assertThat(jdbc.count("select count(*) from users where username=:username",
+                Map.of("username", rejectedUsername))).isZero();
+        assertStatus(get("/api/admin/registration-requests?status=rejected&search=" + rejectedUsername,
+                        administrator.sessionCookie()),
+                200, "GET", "/api/admin/registration-requests?status=rejected");
+        assertStatus(post("/api/admin/registration-requests/" + rejectedRequestId + "/reject",
+                        "{}", administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                400, "POST", "/api/admin/registration-requests/{request_id}/reject repeated");
+    }
+
+    @Test
+    void roundTripsAdministrativeAccountBuildRolePrivacyAndIpBlockWorkflows() throws Exception {
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        long nonce = Math.abs(System.nanoTime());
+
+        String moderatorUsername = "integration-mod-" + nonce;
+        HttpResponse<String> moderator = post("/api/admin/moderators",
+                "{\"username\":\"" + moderatorUsername
+                        + "\",\"password\":\"Integration-Moderator-Password-42!\","
+                        + "\"display_name\":\"Integration Moderator\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(moderator, 201, "POST", "/api/admin/moderators");
+        long moderatorId = jsonId(moderator.body());
+        assertStatus(put("/api/admin/users/" + moderatorId,
+                        "{\"role\":\"user\",\"is_active\":true}", administrator),
+                200, "PUT", "/api/admin/users/{user_id}");
+        assertStatus(get("/api/admin/users?search=" + moderatorUsername, administrator.sessionCookie()),
+                200, "GET", "/api/admin/users?search");
+
+        String roleSlug = "integration-" + Long.toString(nonce, 36);
+        HttpResponse<String> role = post("/api/admin/build-roles",
+                "{\"slug\":\"" + roleSlug
+                        + "\",\"label\":\"Integration Role\",\"sort_order\":9000}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(role, 201, "POST", "/api/admin/build-roles");
+        assertStatus(put("/api/admin/build-roles/" + roleSlug,
+                        "{\"label\":\"Integration Role Updated\",\"description\":\"Stateful API regression.\",\"sort_order\":9001}",
+                        administrator),
+                200, "PUT", "/api/admin/build-roles/{slug}");
+        assertStatus(delete("/api/admin/build-roles/" + roleSlug,
+                        administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/admin/build-roles/{slug}");
+
+        jdbc.update("delete from data_subject_requests where subject_user_id=(select id from users where username='admin') and request_type='correction'", Map.of());
+        HttpResponse<String> privacyRequest = post("/api/privacy/requests",
+                "{\"request_type\":\"correction\",\"details\":\"Stateful integration correction request.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(privacyRequest, 201, "POST", "/api/privacy/requests");
+        long privacyRequestId = jsonId(privacyRequest.body());
+        assertStatus(put("/api/admin/privacy-requests/" + privacyRequestId,
+                        "{\"decision\":\"complete\",\"resolution_note\":\"Handled by integration review.\"}",
+                        administrator),
+                200, "PUT", "/api/admin/privacy-requests/{request_id}");
+
+        String contactEmail = "privacy-" + nonce + "@example.test";
+        HttpResponse<String> contact = post("/api/privacy/contact",
+                "{\"reply_email\":\"" + contactEmail
+                        + "\",\"subject\":\"Integration privacy review\","
+                        + "\"message\":\"This is a stateful privacy contact integration request.\"}",
+                null, null, localOrigin());
+        assertStatus(contact, 201, "POST", "/api/privacy/contact");
+        long contactId = ((Number) jdbc.required(
+                "select id from privacy_contact_requests where reply_email=:email order by id desc limit 1",
+                Map.of("email", contactEmail)).get("id")).longValue();
+        assertStatus(put("/api/admin/privacy-requests/contacts/" + contactId,
+                        "{\"decision\":\"reject\",\"resolution_note\":\"Closed by integration review.\"}",
+                        administrator),
+                200, "PUT", "/api/admin/privacy-requests/contacts/{request_id}");
+
+        String blockedIp = "198.51.100." + (20 + (nonce % 200));
+        HttpResponse<String> block = post("/api/admin/ip-blocks",
+                "{\"ip_address\":\"" + blockedIp
+                        + "\",\"reason\":\"Integration security review\",\"notes\":\"Stateful no-5xx regression.\"}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(block, 201, "POST", "/api/admin/ip-blocks");
+        long blockId = jsonId(block.body());
+        assertStatus(post("/api/admin/ip-blocks/" + blockId + "/unblock",
+                        "{\"reason\":\"Integration cleanup\"}",
+                        administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                200, "POST", "/api/admin/ip-blocks/{block_id}/unblock");
+
+        assertStatus(get("/api/admin/audit-logs?actor=admin&limit=100", administrator.sessionCookie()),
+                200, "GET", "/api/admin/audit-logs");
     }
 
     @Test
@@ -301,6 +512,10 @@ class ApplicationIntegrationTest {
                 administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
         assertThat(created.statusCode()).isEqualTo(201);
         assertThat(created.body()).contains("\"title\":\"UTC contract integration event\"");
+
+        long eventId = jsonId(created.body());
+        assertStatus(get("/api/calendar/events/" + eventId, administrator.sessionCookie()),
+                200, "GET", "/api/calendar/events/{event_id}");
     }
 
     @Test
@@ -346,6 +561,28 @@ class ApplicationIntegrationTest {
         assertThat(reloaded.statusCode()).isEqualTo(200);
         assertThat(reloaded.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"analytics\":false",
                 "\"external_media\":true");
+    }
+
+    private HttpResponse<String> submitPublicRegistration(
+            String username, String password, String displayName, boolean wantsFleetMembership,
+            Long fleetId, String fleetApplicationNote) throws Exception {
+        HttpResponse<String> csrfBootstrap = get("/api/auth/me");
+        String xsrf = cookieValue(csrfBootstrap, "XSRF-TOKEN");
+        String fleet = fleetId == null ? "null" : String.valueOf(fleetId);
+        String note = fleetApplicationNote == null
+                ? "null"
+                : "\"" + fleetApplicationNote.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        String body = "{\"username\":\"" + username + "\",\"password\":\"" + password
+                + "\",\"display_name\":\"" + displayName + "\",\"wants_fleet_membership\":"
+                + wantsFleetMembership + ",\"fleet_id\":" + fleet + ",\"fleet_application_note\":" + note + "}";
+        HttpRequest request = HttpRequest.newBuilder(URI.create(localOrigin() + "/api/auth/register"))
+                .header("Content-Type", "application/json")
+                .header("Origin", localOrigin())
+                .header("Cookie", "XSRF-TOKEN=" + xsrf)
+                .header("X-XSRF-TOKEN", xsrf)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> get(String path) throws Exception {
@@ -435,7 +672,7 @@ class ApplicationIntegrationTest {
 
     private Map<String, Object> bootstrapMembership() {
         return jdbc.required("""
-                select m.id,m.status,r.code role,r.can_manage_fleet,r.can_manage_members,f.slug
+                select m.id,m.fleet_id,m.status,r.code role,r.can_manage_fleet,r.can_manage_members,f.slug
                 from users u join fleet_memberships m on m.user_id=u.id
                 join fleet_roles r on r.id=m.fleet_role_id join fleets f on f.id=m.fleet_id
                 where u.is_bootstrap_admin=true

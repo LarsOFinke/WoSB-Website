@@ -56,8 +56,27 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
   `200 null`; Session-Entzug an einer geschützten Route prüfen.
 - Bean-Validation und JSON-/Query-Binding liefern zentral HTTP 400; fachliche
   Domainvalidierung kann 422 liefern.
+- Multipart-Endpunkte separat behandeln: OpenAPI-Medientyp und generiertes
+  `consumes` müssen übereinstimmen. Fehlender/kaputter Multipart-Body ist 400,
+  falscher Content-Type 415 und Größenlimit 413; keiner dieser Transportfehler darf
+  durch den generischen Handler zu 500 werden.
 - Cookie-Einstellungen öffnen ohne gespeicherte Entscheidung absichtlich nicht
   automatisch, solange keine optionale Integration aktiv ist.
+- Bei API-500ern zuerst in Surefire/Serverausgabe `api_error status=500` und den
+  ersten eigenen Stack-Frame lesen. Der generische Response-Body ist keine Root Cause.
+- Zusammengesetztes JDBC-SQL kann trotz gültigem Java erst zur Laufzeit scheitern:
+  Fragmentgrenzen, Named-Parameter/Bindings und Alias/Spalten mit
+  `python3 infrastructure/scripts/quality/audit_sql_runtime.py` prüfen; danach den
+  betroffenen HTTP-Pfad plus `ApiSurfaceIntegrationTest` ausführen.
+- Ein grüner Surface-Sweep ersetzt bei Review-/Admin-Flows keinen stateful Test.
+  Referenz: Voraussetzung anlegen -> pending/list/read -> approve/reject/resolve ->
+  Folge-Read/Login/Audit. Bereits verbrauchte Transition wiederholen und kontrolliertes
+  4xx verlangen. Für diese Flows echte IDs statt 404-Sentinelwerten verwenden.
+- Registration Access Review muss beide Zweige abdecken: `status=all`, Approve mit
+  anschließendem Login/Approved-Read und Reject mit Rejected-Read.
+- Optionale DB-Referenzen nie direkt als `Map.get(nullableLong(...))` verwenden. Ein
+  pending/unreviewed Datensatz liefert dort `null`; insbesondere `Map.of()` wirft beim
+  Lookup mit `null` eine NPE und maskiert einen gültigen Zustand als API-500.
 - JDBC kann `DATE` als `java.sql.Date` liefern; am `RowValues`-Rand normalisieren.
 - Interne Seed-/Relationsfelder vor strikter Contract-Konvertierung entfernen.
 - Generierte Controller und Contracts nie direkt korrigieren; Generatorquelle

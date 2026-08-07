@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
+import { toQueryString } from '../src/shared/api/query.js'
+
 const registerPage = readFileSync(new URL('../src/modules/accounts/pages/RegisterPage.vue', import.meta.url), 'utf8')
 const registerPageModel = readFileSync(new URL('../src/modules/accounts/composables/useRegisterPage.js', import.meta.url), 'utf8')
 const adminPage = readFileSync(new URL('../src/modules/admin/pages/AdminPage.vue', import.meta.url), 'utf8')
@@ -20,4 +22,10 @@ test('access review surfaces the attached fleet application', () => {
   assert.match(adminPage, /request\.wants_fleet_membership/)
   assert.match(adminPage, /request\.fleet_application_note/)
   assert.match(adminPage, /admin\.registrations\.fleetApplication/)
+})
+
+
+test('access review sends an explicit all status instead of dropping the filter', () => {
+  assert.match(adminPage, /<option value="all">/)
+  assert.equal(toQueryString({ status: 'all' }), 'status=all')
 })

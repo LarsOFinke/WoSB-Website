@@ -31,7 +31,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 public class RegistrationAdministrationService {
-    private static final Set<String> STATUSES = Set.of("pending", "approved", "rejected");
+    private static final Set<String> STATUSES = Set.of("pending", "approved", "rejected", "all");
     private static final String REDACTED_HASH = "!reviewed-registration-secret-removed!";
     private final AccountDataRepository repository;
     private final UserDirectoryService users;
@@ -50,6 +50,7 @@ public class RegistrationAdministrationService {
     public List<RegistrationRequestRead> list(String status, String search, LocalDate fromDate, LocalDate toDate) {
         String normalizedStatus = status == null ? "pending" : status.strip().toLowerCase(Locale.ROOT);
         if (!normalizedStatus.isEmpty() && !STATUSES.contains(normalizedStatus)) throw bad("Invalid registration status.");
+        if ("all".equals(normalizedStatus)) normalizedStatus = "";
         StringBuilder sql = new StringBuilder(RegistrationAdministrationQueries.LIST_SELECT_01);
         Map<String, Object> parameters = new LinkedHashMap<>();
         if (!normalizedStatus.isEmpty()) {
@@ -151,9 +152,17 @@ public class RegistrationAdministrationService {
             if (created != null) referenced.add(created);
         }
         Map<Long, UserRead> userMap = users.readMany(new ArrayList<>(referenced));
-        return rows.stream().map(row -> AccountDtoMapper.registrationRequest(row,
-                userMap.get(RowValues.nullableLong(row, "created_user_id")),
-                userMap.get(RowValues.nullableLong(row, "reviewed_by_id")))).toList();
+        return rows.stream().map(row -> {
+            Long createdUserId = RowValues.nullableLong(row, "created_user_id");
+            Long reviewedById = RowValues.nullableLong(row, "reviewed_by_id");
+            return AccountDtoMapper.registrationRequest(row,
+                    referencedUser(userMap, createdUserId),
+                    referencedUser(userMap, reviewedById));
+        }).toList();
+    }
+
+    private static UserRead referencedUser(Map<Long, UserRead> userMap, Long userId) {
+        return userId == null ? null : userMap.get(userId);
     }
 
     private static String normalizedNote(String note) {

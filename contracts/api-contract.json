@@ -12010,7 +12010,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.0.1"
+    "version": "1.0.5"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -17265,6 +17265,12 @@
             "schema": {
               "anyOf": [
                 {
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "all"
+                  ],
                   "maxLength": 24,
                   "type": "string"
                 },
@@ -18805,6 +18811,16 @@
               }
             },
             "description": "Invalid request"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unsupported media type"
           }
         },
         "summary": "Put Build Printout",
@@ -19554,6 +19570,16 @@
               }
             },
             "description": "Invalid request"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unsupported media type"
           }
         },
         "summary": "Post File",
