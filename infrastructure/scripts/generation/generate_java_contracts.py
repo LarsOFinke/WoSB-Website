@@ -13,6 +13,7 @@ SCHEMA_PATH = ROOT / "contracts/api-contract.json"
 TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/dto"
 LEGACY_TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract"
 PACKAGE = "eu.royalblackwater.api.dto"
+JAVA_KEYWORDS = {"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "record", "sealed", "permits", "yield", "var", "null", "true", "false"}
 
 
 def java_name(value: str) -> str:
@@ -20,8 +21,7 @@ def java_name(value: str) -> str:
     name = parts[0].lower() + "".join(part[:1].upper() + part[1:] for part in parts[1:] if part)
     if not name:
         name = "value"
-    java_keywords = {"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "record", "sealed", "permits", "yield", "var", "null", "true", "false"}
-    if keyword.iskeyword(name) or name in java_keywords:
+    if keyword.iskeyword(name) or name in JAVA_KEYWORDS:
         name += "Value"
     return name
 
@@ -129,10 +129,10 @@ def generate_record(name: str, schema: dict) -> str:
         is_required = raw_name in required
         value_type, type_imports = schema_type(prop, required=is_required)
         field_annotations, annotation_imports = annotations(prop, is_required)
-        # Jackson's SNAKE_CASE strategy preserves digits without inserting an
-        # underscore (``upgrade1``), while the public contract uses
-        # ``upgrade_1``. Keep the wire name explicit for numbered fields.
-        if re.search(r"_[0-9]+(?:_|$)", raw_name):
+        # Keep the public wire name explicit whenever Java cannot use it as-is.
+        # This covers reserved words such as ``protected`` and numbered fields
+        # where Jackson's SNAKE_CASE strategy would otherwise drift.
+        if raw_name in JAVA_KEYWORDS or re.search(r"_[0-9]+(?:_|$)", raw_name):
             field_annotations.insert(0, f'@JsonProperty("{raw_name}")')
             annotation_imports.add("com.fasterxml.jackson.annotation.JsonProperty")
         imports.update(type_imports)

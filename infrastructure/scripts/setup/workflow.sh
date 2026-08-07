@@ -34,6 +34,9 @@ setup_prepare_host() {
 }
 
 setup_prepare_configuration() {
+  if [[ ! -f "$INFRA_DIR/data/postgres/PG_VERSION" ]]; then
+    VERIFY_BOOTSTRAP_LOGIN=true
+  fi
   if [[ "$REGENERATE_SECRETS" == true && -f "$INFRA_DIR/data/postgres/PG_VERSION" ]]; then
     die "--regenerate-secrets ist nur vor der ersten PostgreSQL-Initialisierung erlaubt. Nutze für bestehende Installationen die dokumentierte Secret-Rotation."
   fi
@@ -85,7 +88,9 @@ setup_deploy() {
   bw_compose_with_profiles pull postgres
   bw_compose build api gateway
   deploy_stack
-  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" --insecure
+  smoke_args=(--insecure)
+  [[ "$VERIFY_BOOTSTRAP_LOGIN" == true ]] && smoke_args+=(--bootstrap-login)
+  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
   configure_production_tls
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }

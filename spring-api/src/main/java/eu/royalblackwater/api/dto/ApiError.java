@@ -1,7 +1,7 @@
 // Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
 package eu.royalblackwater.api.dto;
 
-import java.util.List;
+import jakarta.validation.constraints.NotNull;
 
-public record HTTPValidationError(
-        List<ValidationError> detail) { }
+public record ApiError(
+        @NotNull String detail) { }

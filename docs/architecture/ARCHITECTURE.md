@@ -11,9 +11,10 @@ Browser
 NGINX gateway
   ↓ private Docker network
 Spring Boot API
-  ├─ Spring Security / CSRF / session authentication
-  ├─ generated API interfaces, module controllers and domain services
-  ├─ module-owned JDBC/JPA repositories and explicit mappers
+  ├─ Spring Security / CSRF / request filters
+  ├─ generated API interfaces + API DTOs
+  ├─ module-owned controllers + domain services
+  ├─ explicit mappers + module-owned JDBC/JPA repositories
   ├─ Flyway migrations and versioned reference-data seed
   ├─ uploads and host-control inbox
   └─ PostgreSQL
@@ -39,12 +40,23 @@ than the generic JDBC executor. Repository implementations own database access, 
 module-local `repository/queries` catalogs own SQL definitions; SQL literals are
 prohibited in services.
 
+The runtime dependency direction is explicit: filters/security execute before the
+module controller; the controller implements the generated `*Api` contract and
+delegates to a service; the service orchestrates authorization, transactions,
+repositories and mappers; repositories own persistence. Mappers do not own business
+rules or database access.
+
 The transport boundary is DTO-only: controllers and public service methods do not
 expose entities, JDBC rows or raw JSON/database maps. Module mappers translate
 repository rows and entities into generated API DTOs or named internal DTOs. Dynamic
 third-party JSON is wrapped in an integration-specific DTO before it crosses a
 service boundary. Hibernate Open Session in View is disabled, so response assembly
 cannot issue accidental lazy queries.
+
+Java imports are treated as part of this boundary: duplicate, trivially unused and
+unresolved project-internal imports fail the offline Spring audit. Full type
+compatibility—including MapStruct generated code—remains a compiler concern and is
+therefore validated by Maven in the release gate.
 
 ## Persistence
 

@@ -15,6 +15,11 @@ PostgreSQL is the only production database and Flyway is the sole schema owner.
   those overrides. After seeding, bootstrap-admin initialization idempotently
   ensures an active `fleet_admiral` membership in the official fleet so fleet and
   squad administration do not depend on manual database repair.
+- `SEED_ADMIN_PASSWORD` is a creation-only first-run secret. Once a bootstrap
+  administrator exists, startup never overwrites its password from environment
+  configuration. Password changes therefore survive restarts and deployments. A
+  fresh installation verifies the generated seed credentials against
+  `POST /api/auth/login` before activation is considered successful.
 
 ## Modular baseline without history rewrites
 

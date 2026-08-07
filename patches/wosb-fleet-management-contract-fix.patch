@@ -1,0 +1,368 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4a84e5e..4b555e3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,6 +11,7 @@
+ 
+ ### Fixed
+ 
++- Repaired the fleet-management API contract: Java keyword-backed DTO fields now retain their OpenAPI wire names, fleet-role routes validate their fleet scope and management authorization, and first-run/integration smoke coverage exercises the complete manageable-fleet → management-detail → roles request chain.
+ - Made Spring `@Repository` beans and shared JDBC repository methods CGLIB-proxyable after the real Spring Boot/Testcontainers integration run exposed final-class proxy failures.
+ - Replaced deprecated Spring 7 `HttpStatus.UNPROCESSABLE_ENTITY` usages with `UNPROCESSABLE_CONTENT`.
+ - Scoped MapStruct annotation-processor compiler options to main compilation to avoid false test-compile processor warnings.
+diff --git a/contracts/api-contract.json b/contracts/api-contract.json
+index 44e7f51..3522927 100644
+--- a/contracts/api-contract.json
++++ b/contracts/api-contract.json
+@@ -19887,6 +19887,36 @@
+               }
+             },
+             "description": "Invalid request"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Authentication required"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet management access required"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet not found"
+           }
+         },
+         "summary": "Get Manageable Fleets",
+@@ -20220,6 +20250,36 @@
+               }
+             },
+             "description": "Invalid request"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Authentication required"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet management access required"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet not found"
+           }
+         },
+         "summary": "Get Fleet Management Detail",
+@@ -20369,6 +20429,36 @@
+               }
+             },
+             "description": "Invalid request"
++          },
++          "401": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Authentication required"
++          },
++          "403": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet management access required"
++          },
++          "404": {
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/ApiError"
++                }
++              }
++            },
++            "description": "Fleet not found"
+           }
+         },
+         "summary": "Get Fleet Roles",
+diff --git a/infrastructure/scripts/checks/smoke-test.sh b/infrastructure/scripts/checks/smoke-test.sh
+index 01cc442..c07e98b 100755
+--- a/infrastructure/scripts/checks/smoke-test.sh
++++ b/infrastructure/scripts/checks/smoke-test.sh
+@@ -57,11 +57,14 @@ if [[ "$verify_bootstrap_login" == true ]]; then
+     || die "Bootstrap-Admin-Zugangsdaten fehlen für die First-Run-Prüfung."
+ 
+   payload="{\"username\":\"$(json_escape "$admin_username")\",\"password\":\"$(json_escape "$admin_password")\"}"
++  cookie_jar="$(mktemp)"
++  trap 'rm -f "$cookie_jar"' EXIT
+   login_status="$(curl "${base_args[@]}" \
+     --header 'Content-Type: application/json' \
+     --header "Origin: https://${hostname}" \
+     --request POST \
+     --data-binary "$payload" \
++    --cookie-jar "$cookie_jar" \
+     --output /dev/null \
+     --write-out '%{http_code}' \
+     "https://${hostname}/api/auth/login")" \
+@@ -69,4 +72,21 @@ if [[ "$verify_bootstrap_login" == true ]]; then
+   [[ "$login_status" == 200 ]] \
+     || die "Bootstrap-Admin-Anmeldung ist fehlgeschlagen (HTTP ${login_status}); SEED_ADMIN_USERNAME/SEED_ADMIN_PASSWORD passen nicht zum initialisierten Benutzer."
+   success "Bootstrap-Admin-Zugangsdaten wurden über die öffentliche Login-API verifiziert."
++
++  manageable_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
++    "https://${hostname}/api/fleets/manageable")" \
++    || die "Fleet-Management-Preflight ist bei /api/fleets/manageable fehlgeschlagen."
++  fleet_id="$(printf '%s' "$manageable_body" | grep -o '"id":[0-9][0-9]*' | head -n1 | cut -d: -f2 || true)"
++  [[ -n "$fleet_id" ]] || die "Fleet-Management-Preflight hat keine verwaltbare Flotte geliefert."
++
++  management_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
++    "https://${hostname}/api/fleets/${fleet_id}/manage")" \
++    || die "Fleet-Management-Preflight ist bei /api/fleets/${fleet_id}/manage fehlgeschlagen."
++  [[ "$management_body" == *'"memberships":'* && "$management_body" == *'"protected":'* ]] \
++    || die "Fleet-Management-Response entspricht nicht dem erwarteten DTO-Vertrag."
++
++  curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
++    "https://${hostname}/api/fleets/${fleet_id}/roles?include_inactive=true" >/dev/null \
++    || die "Fleet-Management-Preflight ist beim Laden der Rollen fehlgeschlagen."
++  success "Fleet-Management-API wurde mit dem Bootstrap-Administrator end-to-end verifiziert."
+ fi
+diff --git a/infrastructure/scripts/generation/generate_java_contracts.py b/infrastructure/scripts/generation/generate_java_contracts.py
+index d6d4e92..1158129 100644
+--- a/infrastructure/scripts/generation/generate_java_contracts.py
++++ b/infrastructure/scripts/generation/generate_java_contracts.py
+@@ -13,6 +13,7 @@ SCHEMA_PATH = ROOT / "contracts/api-contract.json"
+ TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/dto"
+ LEGACY_TARGET = ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract"
+ PACKAGE = "eu.royalblackwater.api.dto"
++JAVA_KEYWORDS = {"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "record", "sealed", "permits", "yield", "var", "null", "true", "false"}
+ 
+ 
+ def java_name(value: str) -> str:
+@@ -20,8 +21,7 @@ def java_name(value: str) -> str:
+     name = parts[0].lower() + "".join(part[:1].upper() + part[1:] for part in parts[1:] if part)
+     if not name:
+         name = "value"
+-    java_keywords = {"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "record", "sealed", "permits", "yield", "var", "null", "true", "false"}
+-    if keyword.iskeyword(name) or name in java_keywords:
++    if keyword.iskeyword(name) or name in JAVA_KEYWORDS:
+         name += "Value"
+     return name
+ 
+@@ -129,10 +129,10 @@ def generate_record(name: str, schema: dict) -> str:
+         is_required = raw_name in required
+         value_type, type_imports = schema_type(prop, required=is_required)
+         field_annotations, annotation_imports = annotations(prop, is_required)
+-        # Jackson's SNAKE_CASE strategy preserves digits without inserting an
+-        # underscore (``upgrade1``), while the public contract uses
+-        # ``upgrade_1``. Keep the wire name explicit for numbered fields.
+-        if re.search(r"_[0-9]+(?:_|$)", raw_name):
++        # Keep the public wire name explicit whenever Java cannot use it as-is.
++        # This covers reserved words such as ``protected`` and numbered fields
++        # where Jackson's SNAKE_CASE strategy would otherwise drift.
++        if raw_name in JAVA_KEYWORDS or re.search(r"_[0-9]+(?:_|$)", raw_name):
+             field_annotations.insert(0, f'@JsonProperty("{raw_name}")')
+             annotation_imports.add("com.fasterxml.jackson.annotation.JsonProperty")
+         imports.update(type_imports)
+diff --git a/infrastructure/scripts/quality/check_repository.py b/infrastructure/scripts/quality/check_repository.py
+index 413a227..f867a81 100644
+--- a/infrastructure/scripts/quality/check_repository.py
++++ b/infrastructure/scripts/quality/check_repository.py
+@@ -29,6 +29,14 @@ require('ApiError' in schemas,'API contract must define the Spring ApiError resp
+ require('HTTPValidationError' not in schemas and 'ValidationError' not in schemas,
+         'retired Python validation error schemas must not return to the API contract')
+ 
++java_keywords={"abstract","assert","boolean","break","byte","case","catch","char","class","const","continue","default","do","double","else","enum","extends","final","finally","float","for","goto","if","implements","import","instanceof","int","interface","long","native","new","package","private","protected","public","return","short","static","strictfp","super","switch","synchronized","this","throw","throws","transient","try","void","volatile","while","record","sealed","permits","yield","var","null","true","false"}
++for schema_name,schema in schemas.items():
++    for wire_name in schema.get('properties',{}):
++        if wire_name not in java_keywords: continue
++        generated=text(f'spring-api/src/main/java/eu/royalblackwater/api/dto/{schema_name}.java')
++        require(f'@JsonProperty("{wire_name}")' in generated,
++                f'generated DTO {schema_name} must preserve reserved wire property {wire_name!r}')
++
+ def response_schema_ref(operation: dict, status: str) -> str | None:
+     return (operation.get('responses',{}).get(status,{})
+             .get('content',{}).get('application/json',{}).get('schema',{}).get('$ref'))
+diff --git a/infrastructure/scripts/quality/tests/update-management.sh b/infrastructure/scripts/quality/tests/update-management.sh
+index 11fbbf5..b3fce7f 100755
+--- a/infrastructure/scripts/quality/tests/update-management.sh
++++ b/infrastructure/scripts/quality/tests/update-management.sh
+@@ -40,6 +40,9 @@ grep -q 'RBF_RUNTIME_INFRA_DIR' "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+ grep -q 'smoke_args+=(--bootstrap-login)' "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh"
+ grep -q -- '--bootstrap-login' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh"
+ grep -q 'SEED_ADMIN_PASSWORD' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh"
++grep -q '/api/fleets/manageable' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh"
++grep -q '/manage' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh"
++grep -q 'include_inactive=true' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh"
+ ! grep -q '"$previous_release/infrastructure/scripts/backup/run-consistent-backup.sh"' "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh"
+ grep -q 'prepare_flyway_cutover' "$ROOT_DIR/infrastructure/scripts/lib/docker.sh"
+ grep -q -- '--identity-file' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/dto/FleetMembershipManagementRead.java b/spring-api/src/main/java/eu/royalblackwater/api/dto/FleetMembershipManagementRead.java
+index 8e56d48..a6d09ca 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/dto/FleetMembershipManagementRead.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/dto/FleetMembershipManagementRead.java
+@@ -1,6 +1,7 @@
+ // Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
+ package eu.royalblackwater.api.dto;
+ 
++import com.fasterxml.jackson.annotation.JsonProperty;
+ import java.util.List;
+ 
+ public record FleetMembershipManagementRead(
+@@ -8,5 +9,5 @@ public record FleetMembershipManagementRead(
+         Boolean canChangeRole,
+         Boolean canChangeStatus,
+         Boolean canEditDirectory,
+-        Boolean protectedValue,
++        @JsonProperty("protected") Boolean protectedValue,
+         String reason) { }
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/fleet/controller/FleetController.java b/spring-api/src/main/java/eu/royalblackwater/api/fleet/controller/FleetController.java
+index 07d4c43..296b4e3 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/fleet/controller/FleetController.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/fleet/controller/FleetController.java
+@@ -131,7 +131,7 @@ public class FleetController extends ApiControllerSupport implements FleetsApi {
+             boolean includeInactive
+     ) {
+ 
+-        return respond(roles.list(includeInactive), 200);
++        return respond(roles.list(fleetId, includeInactive, CurrentUser.require()), 200);
+     }
+ 
+     @Override
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetRoleQueries.java b/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetRoleQueries.java
+index 2b14915..6d890e2 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetRoleQueries.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetRoleQueries.java
+@@ -13,6 +13,8 @@ public final class FleetRoleQueries {
+ 
+     public static final String LIST_ORDER_BY_01 = " order by r.rank desc, r.label asc";
+ 
++    public static final String FLEET_EXISTS_SELECT_01 = "select count(*) from fleets where id=:id";
++
+     public static final String CREATE_SELECT_01 = "select count(*) from fleet_roles where code=:code";
+ 
+     public static final String CREATE_INSERT_01 = """
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetRoleService.java b/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetRoleService.java
+index cccb909..01e16a2 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetRoleService.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetRoleService.java
+@@ -40,7 +40,9 @@ public class FleetRoleService {
+     }
+ 
+     @Transactional(readOnly = true)
+-    public List<FleetRoleRead> list(boolean includeInactive) {
++    public List<FleetRoleRead> list(long fleetId, boolean includeInactive, AuthenticatedUser actor) {
++        requireFleet(fleetId);
++        policy.requireFleetManager(actor, fleetId);
+         String filter = includeInactive ? "" : FleetRoleQueries.LIST_WHERE_01;
+         return repository.query(FleetRoleQueries.SELECT + filter + FleetRoleQueries.LIST_ORDER_BY_01, Map.of()).stream()
+                 .map(mapper::role).toList();
+@@ -48,6 +50,7 @@ public class FleetRoleService {
+ 
+     @Transactional
+     public FleetRoleRead create(long fleetId, FleetRoleCreate payload, AuthenticatedUser actor) {
++        requireFleet(fleetId);
+         policy.requireRoleManager(actor, fleetId);
+         String code = normalizeCode(payload.code());
+         if (repository.count(FleetRoleQueries.CREATE_SELECT_01, Map.of("code", code)) > 0) {
+@@ -68,6 +71,7 @@ public class FleetRoleService {
+ 
+     @Transactional
+     public FleetRoleRead update(long fleetId, long roleId, FleetRoleUpdate payload, AuthenticatedUser actor) {
++        requireFleet(fleetId);
+         policy.requireRoleManager(actor, fleetId);
+         Map<String, Object> existing = raw(roleId);
+         if (RowValues.booleanValue(existing, "is_system")) {
+@@ -102,6 +106,7 @@ public class FleetRoleService {
+ 
+     @Transactional
+     public void delete(long fleetId, long roleId, AuthenticatedUser actor) {
++        requireFleet(fleetId);
+         policy.requireRoleManager(actor, fleetId);
+         Map<String, Object> existing = raw(roleId);
+         if (RowValues.booleanValue(existing, "is_system")) {
+@@ -114,6 +119,12 @@ public class FleetRoleService {
+         audit.record(actor, "fleet_role", roleId, "delete", "Fleet role #" + roleId + " deleted.", List.of());
+     }
+ 
++    private void requireFleet(long fleetId) {
++        if (repository.count(FleetRoleQueries.FLEET_EXISTS_SELECT_01, Map.of("id", fleetId)) == 0) {
++            throw new ResponseStatusException(NOT_FOUND, "Fleet not found.");
++        }
++    }
++
+     private FleetRoleRead find(long roleId) {
+         return mapper.role(raw(roleId));
+     }
+diff --git a/spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java b/spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java
+index 4be954a..d306fe2 100644
+--- a/spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java
++++ b/spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java
+@@ -144,6 +144,28 @@ class ApplicationIntegrationTest {
+         assertThat(jdbc.count("select count(*) from build_item_categories", Map.of())).isEqualTo(categories);
+     }
+ 
++    @Test
++    void bootstrapAdministratorCanLoadFleetManagementWorkspace() throws Exception {
++        referenceDataSeeder.synchronize(false);
++        bootstrapAdministrator.initialize();
++        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
++
++        HttpResponse<String> manageable = get("/api/fleets/manageable", administrator.sessionCookie());
++        assertStatus(manageable, 200, "GET", "/api/fleets/manageable");
++        long fleetId = jsonId(manageable.body());
++
++        HttpResponse<String> detail = get("/api/fleets/" + fleetId + "/manage", administrator.sessionCookie());
++        assertStatus(detail, 200, "GET", "/api/fleets/{fleet_id}/manage");
++        assertThat(detail.body()).contains("\"memberships\":[", "\"management\":{");
++        assertThat(detail.body()).contains("\"protected\":");
++        assertThat(detail.body()).doesNotContain("\"protected_value\":");
++
++        HttpResponse<String> roles = get(
++                "/api/fleets/" + fleetId + "/roles?include_inactive=true", administrator.sessionCookie());
++        assertStatus(roles, 200, "GET", "/api/fleets/{fleet_id}/roles?include_inactive=true");
++        assertThat(roles.body()).contains("\"code\":\"fleet_admiral\"");
++    }
++
+     @Test
+     void bootstrapFleetManagerCanCreateAndOperateASquadOverHttp() throws Exception {
+         SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");

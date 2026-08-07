@@ -131,7 +131,7 @@ public class FleetController extends ApiControllerSupport implements FleetsApi {
             boolean includeInactive
     ) {
 
-        return respond(roles.list(includeInactive), 200);
+        return respond(roles.list(fleetId, includeInactive, CurrentUser.require()), 200);
     }
 
     @Override

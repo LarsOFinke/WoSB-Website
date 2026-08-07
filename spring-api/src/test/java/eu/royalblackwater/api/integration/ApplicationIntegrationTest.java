@@ -74,6 +74,26 @@ class ApplicationIntegrationTest {
     }
 
     @Test
+    void bootstrapAdministratorCanLoginWithConfiguredFirstRunCredentials() throws Exception {
+        HttpResponse<String> response = post(
+                "/api/auth/login",
+                "{\"username\":\"admin\",\"password\":\"Integration-Test-Admin-Password-42!\"}",
+                null, null, localOrigin());
+
+        assertStatus(response, 200, "POST", "/api/auth/login");
+        assertThat(response.body()).contains("\"username\":\"admin\"");
+        assertThat(response.headers().allValues("set-cookie"))
+                .anyMatch(value -> value.startsWith("rbf_hub_session="));
+
+        HttpResponse<String> rejected = post(
+                "/api/auth/login",
+                "{\"username\":\"admin\",\"password\":\"definitely-wrong-password\"}",
+                null, null, localOrigin());
+        assertStatus(rejected, 401, "POST", "/api/auth/login");
+        assertThat(rejected.body()).contains("\"detail\":\"Invalid username or password.\"");
+    }
+
+    @Test
     void repairsBootstrapFleetLeadershipAndKeepsInitializationIdempotent() {
         Map<String, Object> membership = bootstrapMembership();
         assertThat(membership).containsEntry("status", "active").containsEntry("role", "fleet_admiral")
@@ -122,6 +142,28 @@ class ApplicationIntegrationTest {
         assertThat(jdbc.required("select label,is_seed_overridden from build_item_categories where id=:id",
                 Map.of("id", categoryId))).containsEntry("label", seedLabel).containsEntry("is_seed_overridden", false);
         assertThat(jdbc.count("select count(*) from build_item_categories", Map.of())).isEqualTo(categories);
+    }
+
+    @Test
+    void bootstrapAdministratorCanLoadFleetManagementWorkspace() throws Exception {
+        referenceDataSeeder.synchronize(false);
+        bootstrapAdministrator.initialize();
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+
+        HttpResponse<String> manageable = get("/api/fleets/manageable", administrator.sessionCookie());
+        assertStatus(manageable, 200, "GET", "/api/fleets/manageable");
+        long fleetId = jsonId(manageable.body());
+
+        HttpResponse<String> detail = get("/api/fleets/" + fleetId + "/manage", administrator.sessionCookie());
+        assertStatus(detail, 200, "GET", "/api/fleets/{fleet_id}/manage");
+        assertThat(detail.body()).contains("\"memberships\":[", "\"management\":{");
+        assertThat(detail.body()).contains("\"protected\":");
+        assertThat(detail.body()).doesNotContain("\"protected_value\":");
+
+        HttpResponse<String> roles = get(
+                "/api/fleets/" + fleetId + "/roles?include_inactive=true", administrator.sessionCookie());
+        assertStatus(roles, 200, "GET", "/api/fleets/{fleet_id}/roles?include_inactive=true");
+        assertThat(roles.body()).contains("\"code\":\"fleet_admiral\"");
     }
 
     @Test
@@ -224,6 +266,7 @@ class ApplicationIntegrationTest {
         HttpResponse<String> response = post("/api/auth/register", "{}", null, null, localOrigin());
 
         assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).contains("\"detail\":");
         assertThat(response.body()).doesNotContain("Exception", "stackTrace", "org.springframework");
     }
 

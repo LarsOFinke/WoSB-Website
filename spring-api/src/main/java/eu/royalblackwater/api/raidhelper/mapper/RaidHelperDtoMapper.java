@@ -16,7 +16,13 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Component;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.nullableLong;
+import static eu.royalblackwater.api.persistence.RowValues.string;
+import static eu.royalblackwater.api.persistence.RowValues.requiredString;
+import static eu.royalblackwater.api.persistence.RowValues.booleanValue;
+import static eu.royalblackwater.api.persistence.RowValues.dateTime;
+import static eu.royalblackwater.api.persistence.RowValues.nullableDateTime;
 
 @Component
 public class RaidHelperDtoMapper {

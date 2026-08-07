@@ -89,7 +89,7 @@ public class RaidHelperProbeService {
                         "The temporary event was created, but automatic cleanup failed. " + client.failureMessage(delete));
             }
             String label = minimal ? "minimal default payload" : "selected application template";
-            return result(true, create.statusCode(),
+            return mapper.profileTestResult(true, create.statusCode(),
                     "Raid-Helper event creation and cleanup succeeded for " + label + ".");
         } catch (RuntimeException exception) {
             return mapper.profileTestResult(false, null, "Raid-Helper destination test failed.");

@@ -21,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT;
 
 @Service
 public class PrivacyService {
@@ -62,7 +62,7 @@ public class PrivacyService {
     public DataSubjectRequestRead createRequest(AuthenticatedUser user, DataSubjectRequestCreate payload) {
         String type = payload.requestType().strip().toLowerCase(Locale.ROOT);
         if (!REQUEST_TYPES.contains(type)) {
-            throw new ResponseStatusException(UNPROCESSABLE_ENTITY, "Unsupported privacy request type.");
+            throw new ResponseStatusException(UNPROCESSABLE_CONTENT, "Unsupported privacy request type.");
         }
         if (user.bootstrapAdmin() && "deletion".equals(type)) {
             throw new ResponseStatusException(CONFLICT,
@@ -88,7 +88,7 @@ public class PrivacyService {
         int separator = email.indexOf('@');
         if (separator <= 0 || separator != email.lastIndexOf('@') || separator >= email.length() - 3
                 || email.indexOf('.', separator) < separator + 2 || email.chars().anyMatch(Character::isWhitespace)) {
-            throw new ResponseStatusException(UNPROCESSABLE_ENTITY, "Enter a valid reply email address.");
+            throw new ResponseStatusException(UNPROCESSABLE_CONTENT, "Enter a valid reply email address.");
         }
         return email;
     }

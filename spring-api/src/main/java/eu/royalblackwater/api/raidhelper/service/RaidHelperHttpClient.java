@@ -144,6 +144,8 @@ public class RaidHelperHttpClient {
     }
 
     public static class RaidHelperTransportException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         public RaidHelperTransportException(String message) { super(message); }
         public RaidHelperTransportException(String message, Throwable cause) { super(message, cause); }
     }

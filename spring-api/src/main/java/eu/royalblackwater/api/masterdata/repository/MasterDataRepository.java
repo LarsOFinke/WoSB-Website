@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the masterdata domain. */
 @Repository
-public final class MasterDataRepository extends JdbcRepositorySupport {
+public class MasterDataRepository extends JdbcRepositorySupport {
     public MasterDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

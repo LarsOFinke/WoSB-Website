@@ -294,7 +294,9 @@ RBF_SYSTEMD_INFRA_DIR="$install_root/current/infrastructure" \
 echo "[release] Starte rbf-hub.service neu und warte auf Spring Boot/Compose."
 timeout 120s systemctl restart rbf-hub.service
 echo "[release] Führe Readiness- und Gateway-Smoke-Test aus (max. 60 Sekunden)."
-timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh"
+smoke_args=()
+[[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
+timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
 
 install -m 0600 "$artifact_copy" "$shared/release-artifacts/current.tar.gz"
 (cd "$shared/release-artifacts" && sha256sum current.tar.gz > current.tar.gz.sha256)

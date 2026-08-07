@@ -98,6 +98,62 @@ def java_string_literals(source: str) -> list[str]:
     return result
 
 
+
+
+def check_import_hygiene() -> None:
+    roots = [ROOT / "spring-api/src/main/java", ROOT / "spring-api/src/test/java"]
+    sources = [path for root in roots if root.is_dir() for path in root.rglob("*.java")]
+    internal_types: set[str] = set()
+    for path in sources:
+        source = path.read_text(encoding="utf-8")
+        package_match = re.search(r"^package\s+([\w.]+);", source, flags=re.MULTILINE)
+        declaration = re.search(r"\b(?:class|interface|record|enum|@interface)\s+([A-Za-z_$][\w$]*)", source)
+        if package_match and declaration:
+            internal_types.add(f"{package_match.group(1)}.{declaration.group(1)}")
+
+    internal_by_simple: dict[str, set[str]] = defaultdict(set)
+    for qualified in internal_types:
+        internal_by_simple[qualified.rsplit(".", 1)[-1]].add(qualified)
+
+    for path in sources:
+        source = path.read_text(encoding="utf-8")
+        package_match = re.search(r"^package\s+([\w.]+);", source, flags=re.MULTILINE)
+        package_name = package_match.group(1) if package_match else ""
+        import_rows = re.findall(r"^import\s+(static\s+)?([\w.*]+);", source, flags=re.MULTILINE)
+        rendered = [(bool(static), qualified) for static, qualified in import_rows]
+        require(len(rendered) == len(set(rendered)),
+                f"duplicate Java import in {path.relative_to(ROOT)}")
+        for is_static, qualified in rendered:
+            simple = qualified.rsplit(".", 1)[-1]
+            require(simple != "*",
+                    f"wildcard Java import in {path.relative_to(ROOT)}: {qualified}")
+            occurrences = len(re.findall(rf"\b{re.escape(simple)}\b", source))
+            require(occurrences > 1,
+                    f"unused Java import in {path.relative_to(ROOT)}: {qualified}")
+            if not qualified.startswith("eu.royalblackwater.api."):
+                continue
+            if is_static:
+                owner = qualified[:-2] if qualified.endswith(".*") else qualified.rsplit(".", 1)[0]
+                require(owner in internal_types,
+                        f"unresolved internal static import in {path.relative_to(ROOT)}: {qualified}")
+            else:
+                require(qualified in internal_types,
+                        f"unresolved internal import in {path.relative_to(ROOT)}: {qualified}")
+
+        explicit_imports = {qualified for is_static, qualified in rendered if not is_static}
+        static_owners = {qualified[:-2] if qualified.endswith(".*") else qualified.rsplit(".", 1)[0]
+                         for is_static, qualified in rendered if is_static}
+        for simple in set(re.findall(r"\b([A-Z][A-Za-z0-9_$]*)\s*\.", source)):
+            candidates = internal_by_simple.get(simple, set())
+            if len(candidates) != 1:
+                continue
+            qualified = next(iter(candidates))
+            owner_package = qualified.rsplit(".", 1)[0]
+            if owner_package == package_name or qualified in explicit_imports or qualified in static_owners:
+                continue
+            require(False, f"missing internal Java import in {path.relative_to(ROOT)}: {qualified}")
+
+
 def contains_sql_literal(source: str) -> bool:
     starters = (
         "select ", "insert ", "update ", "delete ", "with ", "where ",
@@ -112,6 +168,8 @@ def contains_sql_literal(source: str) -> bool:
     return any(value.strip().startswith(starters) or statement.search(value)
                for value in java_string_literals(source))
 
+
+check_import_hygiene()
 
 ops = operation_ids()
 api_files = sorted(API_PACKAGE.glob("*Api.java"))
@@ -158,6 +216,9 @@ for path in JAVA.rglob("*.java"):
     source = read(path)
     relative = path.relative_to(JAVA)
     lines = source.splitlines()
+    if "@Repository" in source:
+        require(re.search(r"\bfinal\s+class\b", source) is None,
+                f"Spring @Repository bean is final and cannot be CGLIB-proxied: {path.relative_to(ROOT)}")
     require(len(lines) <= 420, f"Java responsibility exceeds 420 lines: {path.relative_to(ROOT)} ({len(lines)})")
     require("OperationHandler" not in source, f"obsolete operation-handler architecture remains: {path.relative_to(ROOT)}")
     require("ApiOperationDispatcher" not in source, f"obsolete central dispatcher remains: {path.relative_to(ROOT)}")
@@ -258,6 +319,11 @@ for path, source in all_sources.items():
     require(references > 1,
             f"repository has no application consumer: {path.relative_to(ROOT)}")
 
+# Shared repository mechanics must stay overridable for Spring class-based proxies.
+support_source = read(JAVA / "persistence/JdbcRepositorySupport.java")
+require(not re.search(r"\bpublic\s+final\s+", support_source),
+        "JdbcRepositorySupport exposes final public methods that CGLIB cannot advise")
+
 # The generic JDBC executor is infrastructure-only. Application code reaches it through module repositories.
 for path in JAVA.rglob("*.java"):
     if "import eu.royalblackwater.api.persistence.JdbcQueryService;" not in read(path):
@@ -267,7 +333,7 @@ for path in JAVA.rglob("*.java"):
     require(allowed, f"generic JDBC executor escapes repository boundary: {path.relative_to(ROOT)}")
 
 all_java = "\n".join(read(path) for path in JAVA.rglob("*.java"))
-for forbidden in ("FastApiProxy", "FASTAPI_INTERNAL_URL", "http://api:8000", "FetchType.EAGER", "RequestParameters"):
+for forbidden in ("FastApiProxy", "FASTAPI_INTERNAL_URL", "http://api:8000", "FetchType.EAGER", "RequestParameters", "UNPROCESSABLE_ENTITY"):
     require(forbidden not in all_java, f"forbidden migration/runtime token remains: {forbidden}")
 
 # Entity graphs may fetch one collection, but never multiple List bags.

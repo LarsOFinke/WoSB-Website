@@ -5348,17 +5348,17 @@
         "title": "GuideUpdate",
         "type": "object"
       },
-      "HTTPValidationError": {
+      "ApiError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
             "title": "Detail",
-            "type": "array"
+            "type": "string"
           }
         },
-        "title": "HTTPValidationError",
+        "required": [
+          "detail"
+        ],
+        "title": "ApiError",
         "type": "object"
       },
       "InventorySlot": {
@@ -11677,46 +11677,6 @@
         "title": "UserReferenceRead",
         "type": "object"
       },
-      "ValidationError": {
-        "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "title": "Location",
-            "type": "array"
-          },
-          "msg": {
-            "title": "Message",
-            "type": "string"
-          },
-          "type": {
-            "title": "Error Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError",
-        "type": "object"
-      },
       "WeaponClassRead": {
         "properties": {
           "code": {
@@ -12050,7 +12010,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.0.7"
+    "version": "1.0.1"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -12187,15 +12147,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Audit Logs",
@@ -12237,15 +12197,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Backup Configuration",
@@ -12295,15 +12255,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Configure Backup Host",
@@ -12355,15 +12315,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Discover Backup Host",
@@ -12415,15 +12375,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Apply Backup Enrollment",
@@ -12465,15 +12425,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Prepare Backup Enrollment",
@@ -12515,15 +12475,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Prepare Backup Upload Key",
@@ -12575,15 +12535,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Restore Local Files Backup",
@@ -12635,15 +12595,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Restore Local Database Backup",
@@ -12685,15 +12645,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Scan Local Database Backups",
@@ -12735,15 +12695,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Run Application Backup",
@@ -12785,15 +12745,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Backup Status",
@@ -12835,15 +12795,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Test Backup Connection",
@@ -12889,15 +12849,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Build Roles",
@@ -12947,15 +12907,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Create Build Role",
@@ -12999,15 +12959,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Build Role",
@@ -13066,15 +13026,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Update Build Role",
@@ -13154,15 +13114,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Builds",
@@ -13206,15 +13166,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Build",
@@ -13275,15 +13235,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Assign Build Role",
@@ -13346,15 +13306,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Webhooks",
@@ -13404,15 +13364,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Create Webhook",
@@ -13468,15 +13428,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Send Broadcast",
@@ -13522,15 +13482,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Broadcast Webhooks",
@@ -13623,15 +13583,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Webhook Delivery History",
@@ -13738,15 +13698,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Webhook Deliveries",
@@ -13797,15 +13757,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Webhook Delivery",
@@ -13856,15 +13816,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Retry Webhook Delivery",
@@ -13910,15 +13870,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Webhook Event Catalog",
@@ -13977,15 +13937,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Webhook Summary",
@@ -14029,15 +13989,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Webhook",
@@ -14096,15 +14056,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Update Webhook",
@@ -14165,15 +14125,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Test Webhook",
@@ -14274,15 +14234,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Forum Threads",
@@ -14326,15 +14286,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Forum Thread",
@@ -14435,15 +14395,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Guides",
@@ -14487,15 +14447,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Delete Guide",
@@ -14581,15 +14541,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Ip Blocks",
@@ -14639,15 +14599,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Create Ip Block",
@@ -14689,15 +14649,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Ip Block Summary",
@@ -14758,15 +14718,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Unblock Ip",
@@ -14808,15 +14768,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Get Legal Notice",
@@ -14866,15 +14826,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Update Legal Notice",
@@ -14916,15 +14876,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Reset Legal Notice",
@@ -15058,15 +15018,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Security Dashboard",
@@ -15112,15 +15072,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Categories",
@@ -15170,15 +15130,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Category",
@@ -15222,15 +15182,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Category",
@@ -15289,15 +15249,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Category",
@@ -15348,15 +15308,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Restore Category",
@@ -15436,15 +15396,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Options",
@@ -15494,15 +15454,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Option",
@@ -15546,15 +15506,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Option",
@@ -15613,15 +15573,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Option",
@@ -15672,15 +15632,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Restore Option",
@@ -15722,15 +15682,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Overview",
@@ -15772,15 +15732,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Restore Seed Defaults",
@@ -15843,15 +15803,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Ships",
@@ -15901,15 +15861,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Ship",
@@ -15953,15 +15913,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Ship",
@@ -16020,15 +15980,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Ship",
@@ -16079,15 +16039,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Restore Ship",
@@ -16129,15 +16089,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Taxonomy",
@@ -16189,15 +16149,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Create Moderator",
@@ -16243,15 +16203,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "List Privacy Requests",
@@ -16297,15 +16257,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "List Privacy Contacts",
@@ -16366,15 +16326,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Resolve Privacy Contact",
@@ -16435,15 +16405,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Resolve Privacy Request",
@@ -16489,15 +16469,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Destinations",
@@ -16547,15 +16527,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Destination Create",
@@ -16599,15 +16579,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Destination Delete",
@@ -16666,15 +16646,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Destination Update",
@@ -16735,15 +16715,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Destination Test",
@@ -16789,15 +16769,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Profiles",
@@ -16847,15 +16827,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Profile Create",
@@ -16899,15 +16879,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Profile Delete",
@@ -16966,15 +16946,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Profile Update",
@@ -17025,15 +17005,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Profile Test",
@@ -17079,15 +17059,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Templates",
@@ -17137,15 +17117,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Template Create",
@@ -17189,15 +17169,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Template Delete",
@@ -17256,15 +17236,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Template Update",
@@ -17379,15 +17359,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Registration Requests",
@@ -17448,15 +17428,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Approve Registration Request",
@@ -17517,15 +17497,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Reject Registration Request",
@@ -17567,15 +17547,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin System Update Status",
@@ -17632,15 +17612,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Request System Update",
@@ -17780,15 +17760,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin List Users",
@@ -17849,15 +17829,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Admin Update User",
@@ -17909,15 +17889,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Change Password",
@@ -17950,15 +17930,25 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid credentials"
           }
         },
         "summary": "Login",
@@ -17992,15 +17982,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Logout",
@@ -18049,15 +18039,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Me",
@@ -18090,15 +18080,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Register",
@@ -18213,15 +18203,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Builds",
@@ -18270,15 +18260,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Build",
@@ -18393,15 +18383,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get My Builds",
@@ -18444,15 +18434,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete My Build",
@@ -18510,15 +18500,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put My Build",
@@ -18576,15 +18566,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Build Options",
@@ -18629,15 +18619,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Build Roles",
@@ -18687,15 +18677,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Build Detail",
@@ -18730,15 +18720,15 @@
               }
             }
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Build Printout",
@@ -18806,15 +18796,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Build Printout",
@@ -18864,15 +18854,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Build Upvote",
@@ -18920,15 +18910,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Build Upvote",
@@ -19050,15 +19040,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Events",
@@ -19107,15 +19097,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Event",
@@ -19158,15 +19148,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Event",
@@ -19214,15 +19204,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Event Detail",
@@ -19280,15 +19270,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Event",
@@ -19338,15 +19328,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Retry Raid Helper Event",
@@ -19417,15 +19407,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Options",
@@ -19487,15 +19477,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Files",
@@ -19555,15 +19545,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post File",
@@ -19606,15 +19596,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Own File",
@@ -19665,15 +19655,15 @@
               }
             }
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get File Content",
@@ -19719,15 +19709,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Fleets",
@@ -19776,15 +19766,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Fleet",
@@ -19835,15 +19825,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Fleet Join",
@@ -19888,15 +19878,45 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet management access required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet not found"
           }
         },
         "summary": "Get Manageable Fleets",
@@ -19941,15 +19961,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get My Fleet Memberships",
@@ -20020,15 +20040,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Fleet Detail",
@@ -20086,15 +20106,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Fleet",
@@ -20163,15 +20183,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Fleet Leader",
@@ -20221,15 +20241,45 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet management access required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet not found"
           }
         },
         "summary": "Get Fleet Management Detail",
@@ -20298,15 +20348,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Membership",
@@ -20370,15 +20420,45 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet management access required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet not found"
           }
         },
         "summary": "Get Fleet Roles",
@@ -20436,15 +20516,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Fleet Role",
@@ -20496,15 +20576,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Role",
@@ -20571,15 +20651,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Fleet Role",
@@ -20622,15 +20702,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Forum Post",
@@ -20688,15 +20768,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Post",
@@ -20796,15 +20876,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Threads",
@@ -20853,15 +20933,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Thread",
@@ -20911,15 +20991,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Thread Detail",
@@ -20977,15 +21057,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Thread",
@@ -21045,15 +21125,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Reply",
@@ -21168,15 +21248,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Groups",
@@ -21225,15 +21305,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Group",
@@ -21295,15 +21375,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get My Groups",
@@ -21353,15 +21433,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Group Detail",
@@ -21404,15 +21484,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Group Close",
@@ -21472,15 +21552,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Group Join",
@@ -21580,15 +21660,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Guides",
@@ -21637,15 +21717,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Guide",
@@ -21688,15 +21768,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Own Guide",
@@ -21744,15 +21824,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Guide Detail",
@@ -21810,15 +21890,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Guide",
@@ -21902,15 +21982,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Home",
@@ -21972,15 +22052,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Read Newcomer Guide",
@@ -22029,15 +22109,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Replace Newcomer Guide",
@@ -22088,15 +22168,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Create Privacy Contact",
@@ -22137,15 +22227,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Cookie Consent",
@@ -22210,15 +22300,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Save Cookie Consent",
@@ -22280,15 +22380,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Export Personal Data",
@@ -22333,15 +22433,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "List My Data Subject Requests",
@@ -22390,15 +22490,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Create Data Subject Request",
@@ -22439,15 +22549,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Profile",
@@ -22496,15 +22606,25 @@
             },
             "description": "Successful Response"
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Semantically invalid request"
           }
         },
         "summary": "Put Profile",
@@ -22545,15 +22665,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Preference Options",
@@ -22674,15 +22794,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "List Ships",
@@ -22795,15 +22915,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Squads",
@@ -22852,15 +22972,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Squad",
@@ -22905,15 +23025,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get My Squads",
@@ -22958,15 +23078,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Squad Roster",
@@ -23009,15 +23129,15 @@
           "204": {
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Squad",
@@ -23065,15 +23185,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Get Squad Detail",
@@ -23131,15 +23251,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Squad",
@@ -23199,15 +23319,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Post Squad Member",
@@ -23266,15 +23386,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Delete Squad Member",
@@ -23341,15 +23461,15 @@
             },
             "description": "Successful Response"
           },
-          "422": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Invalid request"
           }
         },
         "summary": "Put Squad Member",

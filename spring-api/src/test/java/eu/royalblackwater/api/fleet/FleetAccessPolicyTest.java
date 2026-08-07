@@ -1,5 +1,6 @@
 package eu.royalblackwater.api.fleet;
 
+import eu.royalblackwater.api.dto.FleetMembershipManagementRead;
 import eu.royalblackwater.api.dto.FleetMembershipUpdate;
 import eu.royalblackwater.api.fleet.dto.FleetMembershipTargetDto;
 import eu.royalblackwater.api.fleet.service.FleetAccessPolicy;
@@ -14,6 +15,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +30,26 @@ class FleetAccessPolicyTest {
         assertThat(policy.canManageFleet(administrator, 42L)).isTrue();
         assertThat(policy.managedFleetIds(administrator, List.of(42L, 43L))).containsExactlyInAnyOrder(42L, 43L);
         verifyNoInteractions(repository);
+    }
+
+
+    @Test
+    void lastBootstrapAdmiralDoesNotLoadAssignableRolesForReadOnlyManagementMetadata() {
+        FleetDataRepository repository = mock(FleetDataRepository.class);
+        when(repository.count(anyString(), anyMap())).thenReturn(1L);
+        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
+        AuthenticatedUser administrator = new AuthenticatedUser(1, "admin", "admin", true, true, true);
+        FleetMembershipTargetDto lastAdmiral = new FleetMembershipTargetDto(
+                1L, "fleet_admiral", 80L, "active", "admin");
+
+        FleetMembershipManagementRead permissions = policy.permissions(administrator, 42L, lastAdmiral);
+
+        assertThat(permissions.canEditDirectory()).isTrue();
+        assertThat(permissions.canChangeRole()).isFalse();
+        assertThat(permissions.canChangeStatus()).isFalse();
+        assertThat(permissions.assignableRoles()).isEmpty();
+        assertThat(permissions.reason()).isEqualTo("last_admiral");
+        verify(repository, never()).query(anyString(), anyMap());
     }
 
     @Test

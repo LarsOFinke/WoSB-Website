@@ -34,9 +34,11 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 - `spring-api/` ist das einzige Backend; kein Python-Webbackend rekonstruieren.
 - Frontend: Seite orchestriert, Composable hält Ablauf/Zustand, API-Modul macht
   Netzwerkzugriffe, Domain-Modul enthält reine Regeln.
-- Backend: OpenAPI-Vertrag -> generiertes API-Interface -> Modul-Controller ->
-  API-DTO -> Controller -> Service -> Repository; Mapper übersetzen zu API-/Modul-DTOs. Fachlogik, Autorisierung und Transaktionen gehören
-  in den Service; Controller und öffentliche Service-Grenzen kennen weder Entities noch JDBC-Zeilen/Roh-Maps.
+- Backend: OpenAPI-Vertrag -> generiertes `*Api`-Interface + API-DTO ->
+  Modul-Controller -> Service -> Repository -> PostgreSQL. Mapper übersetzen
+  ausschließlich zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
+  Fachlogik, Autorisierung und Transaktionen gehören in den Service; Controller
+  und öffentliche Service-Grenzen kennen weder Entities noch JDBC-Zeilen/Roh-Maps.
 - Schemaänderungen ausschließlich durch neue Flyway-Migrationen; veröffentlichte
   Migrationen nie bearbeiten. Hibernate bleibt auf `validate`.
 - Deployment und Update starten am Ursprung über `deploy.sh`/`update.sh` und

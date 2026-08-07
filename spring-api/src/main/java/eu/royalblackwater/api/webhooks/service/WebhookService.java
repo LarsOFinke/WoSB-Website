@@ -33,7 +33,10 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.string;
+import static eu.royalblackwater.api.persistence.RowValues.requiredString;
+import static eu.royalblackwater.api.persistence.RowValues.booleanValue;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service

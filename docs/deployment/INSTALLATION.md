@@ -15,7 +15,12 @@ Host-Bootstrap aus `infrastructure/scripts/lib/host/packages.sh`. Mit
 `--skip-host` kann dieser Schritt bewusst deaktiviert werden.
 Wird keine Environment-Datei angegeben, erzeugt der Assistent automatisch
 `/srv/rbf/shared/.env` mit neuen Secrets und legt die einmaligen Zugangsdaten in
-`/srv/rbf/shared/first-run-credentials.txt` ab.
+`/srv/rbf/shared/first-run-credentials.txt` ab. Bei einer neuen Installation
+prüft der Aktivierungslauf diese Zugangsdaten anschließend über die öffentliche
+`POST /api/auth/login`-Route. Ein 401 beendet die Erstinstallation fail-closed,
+statt eine nicht nutzbare Bootstrap-Identität auszuliefern. Die Seed-Zugangsdaten
+sind ausschließlich für die erstmalige Anlage bestimmt und setzen das Passwort
+eines bereits vorhandenen Bootstrap-Administrators niemals zurück.
 
 Bei einer wirklich leeren Zielinstallation erkennt `setup_website.sh` den
 Erstinstallationsfall automatisch und setzt intern die notwendige Bestätigung.
@@ -25,8 +30,8 @@ ab.
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.7.tar.gz \
-  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.0.tar.gz \
+  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env \
   --no-backup

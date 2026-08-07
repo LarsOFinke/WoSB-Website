@@ -43,7 +43,11 @@ Dateirechten erzeugen. Dieser Key ist absichtlich ohne Passphrase, damit später
 automatisierte Updates keinen interaktiven Secret-Dialog benötigen; der
 Ursprungsrechner und sein Benutzerkonto müssen entsprechend geschützt sein.
 Initialbenutzer und Bootstrap-Identity gelten nur für diesen Einrichtungslauf
-und werden nicht in `.env.origin` gespeichert.
+und werden nicht in `.env.origin` gespeichert. Auf einer wirklich neuen
+Anwendungsinstallation verifiziert der Release-Installer zusätzlich die erzeugten
+`SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` direkt über `/api/auth/login`. Diese
+Prüfung wird bei Updates bewusst nicht wiederholt, weil das Seed-Passwort nach der
+Erstanlage kein Passwort-Reset-Mechanismus ist.
 
 Auf einem frisch installierten Zielsystem darf `rbfadmin` zunächst fehlen. Der
 Dispatcher fragt dann im interaktiven Lauf einmalig nach dem vorhandenen
@@ -109,8 +113,8 @@ ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.7.tar.gz \
-  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.0.tar.gz \
+  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the privacy domain. */
 @Repository
-public final class PrivacyDataRepository extends JdbcRepositorySupport {
+public class PrivacyDataRepository extends JdbcRepositorySupport {
     public PrivacyDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

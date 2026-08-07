@@ -24,6 +24,51 @@ for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_base
     text(path)
 
 contract=json.loads(text('contracts/api-contract.json'))
+schemas=contract.get('components',{}).get('schemas',{})
+require('ApiError' in schemas,'API contract must define the Spring ApiError response schema')
+require('HTTPValidationError' not in schemas and 'ValidationError' not in schemas,
+        'retired Python validation error schemas must not return to the API contract')
+
+java_keywords={"abstract","assert","boolean","break","byte","case","catch","char","class","const","continue","default","do","double","else","enum","extends","final","finally","float","for","goto","if","implements","import","instanceof","int","interface","long","native","new","package","private","protected","public","return","short","static","strictfp","super","switch","synchronized","this","throw","throws","transient","try","void","volatile","while","record","sealed","permits","yield","var","null","true","false"}
+for schema_name,schema in schemas.items():
+    for wire_name in schema.get('properties',{}):
+        if wire_name not in java_keywords: continue
+        generated=text(f'spring-api/src/main/java/eu/royalblackwater/api/dto/{schema_name}.java')
+        require(f'@JsonProperty("{wire_name}")' in generated,
+                f'generated DTO {schema_name} must preserve reserved wire property {wire_name!r}')
+
+def response_schema_ref(operation: dict, status: str) -> str | None:
+    return (operation.get('responses',{}).get(status,{})
+            .get('content',{}).get('application/json',{}).get('schema',{}).get('$ref'))
+
+login_operation=contract.get('paths',{}).get('/api/auth/login',{}).get('post',{})
+require(login_operation.get('requestBody',{}).get('content',{}).get('application/json',{}).get('schema',{}).get('$ref')
+        == '#/components/schemas/LoginRequest','login request contract must use LoginRequest')
+require(response_schema_ref(login_operation,'200')=='#/components/schemas/LoginResponse',
+        'login success contract must use LoginResponse')
+require(response_schema_ref(login_operation,'400')=='#/components/schemas/ApiError',
+        'login validation failures must be documented as HTTP 400 ApiError')
+require(response_schema_ref(login_operation,'401')=='#/components/schemas/ApiError',
+        'invalid login credentials must be documented as HTTP 401 ApiError')
+
+domain_422={
+    ('/api/profile','put'),
+    ('/api/privacy/contact','post'),
+    ('/api/privacy/cookie-consent','post'),
+    ('/api/privacy/requests','post'),
+    ('/api/admin/privacy-requests/{request_id}','put'),
+    ('/api/admin/privacy-requests/contacts/{request_id}','put'),
+}
+actual_422=set()
+for api_path,item in contract.get('paths',{}).items():
+    for method,operation in item.items():
+        if not isinstance(operation,dict): continue
+        if '422' in operation.get('responses',{}):
+            require(response_schema_ref(operation,'422')=='#/components/schemas/ApiError',
+                    f'{method.upper()} {api_path} must use ApiError for HTTP 422')
+            actual_422.add((api_path,method))
+require(actual_422==domain_422,
+        f'HTTP 422 contract drift: expected {sorted(domain_422)}, found {sorted(actual_422)}')
 operations=[]
 for item in contract.get('paths',{}).values():
     for operation in item.values():
@@ -66,6 +111,7 @@ repository_files=[Path(raw) for raw in repository_result.stdout.split('\0') if r
 for relative in repository_files:
     path=ROOT/relative
     if not path.is_file() or path.suffix == '.pyc' or any(part in {'node_modules','target','dist','release','__pycache__'} for part in relative.parts): continue
+    if relative.parts and relative.parts[0] == 'patches': continue
     if path in scan_exclusions: continue
     if path in allowed_legacy or path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.ico','.zip','.gz','.age','.woff','.woff2'}: continue
     source=path.read_text(encoding='utf-8',errors='ignore').lower()

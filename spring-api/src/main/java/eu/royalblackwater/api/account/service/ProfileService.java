@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT;
 
 @Service
 public class ProfileService {
@@ -105,6 +105,6 @@ public class ProfileService {
     }
 
     private static ResponseStatusException invalid(String detail) {
-        return new ResponseStatusException(UNPROCESSABLE_ENTITY, detail);
+        return new ResponseStatusException(UNPROCESSABLE_CONTENT, detail);
     }
 }

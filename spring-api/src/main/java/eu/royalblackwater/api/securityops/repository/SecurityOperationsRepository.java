@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the securityops domain. */
 @Repository
-public final class SecurityOperationsRepository extends JdbcRepositorySupport {
+public class SecurityOperationsRepository extends JdbcRepositorySupport {
     public SecurityOperationsRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

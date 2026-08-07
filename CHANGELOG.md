@@ -9,8 +9,18 @@
 
 # Changelog
 
+### Fixed
+
+- Repaired the fleet-management API contract: Java keyword-backed DTO fields now retain their OpenAPI wire names, fleet-role routes validate their fleet scope and management authorization, and first-run/integration smoke coverage exercises the complete manageable-fleet → management-detail → roles request chain.
+- Made Spring `@Repository` beans and shared JDBC repository methods CGLIB-proxyable after the real Spring Boot/Testcontainers integration run exposed final-class proxy failures.
+- Replaced deprecated Spring 7 `HttpStatus.UNPROCESSABLE_ENTITY` usages with `UNPROCESSABLE_CONTENT`.
+- Scoped MapStruct annotation-processor compiler options to main compilation to avoid false test-compile processor warnings.
+
 ## Unreleased
 
+- Reconciled the Spring HTTP error contract and bootstrap-login lifecycle: generated request DTOs and login bindings remain unchanged, validation errors now use HTTP 400 with the shared `ApiError.detail` shape, semantic 422 responses are explicit, login documents invalid credentials as 401, and genuinely fresh installations verify generated bootstrap credentials through the public login API without ever resetting an existing administrator password. The post-cutover release baseline is reset to 1.0.0.
+
+- Hardened the post-refactor Spring API type boundary: fixed missing mapper imports, corrected the privacy export category generic type, repaired the Raid-Helper probe result mapping, removed the remaining unused import, replaced all residual Java wildcard imports with explicit imports, added serialization metadata to custom exception types, and extended the Spring audit to reject wildcard, duplicate, unused, unresolved and commonly missing project-internal imports. Architecture, API, development and debugging documentation now reflect the controller/service/mapper/repository design instead of the retired handler flow.
 - Cleaned the Spring API package tree: removed all ambiguous `model` packages, moved internal transition records into module DTO packages, placed seed/event catalogs in their owning repository/service layers, removed an unused Spring Data repository and dead controller helpers, and replaced Map-based query-parameter roundtrips with typed filters. Architecture gates now reject empty source directories, generic model packages, raw controller parameter maps and repositories without consumers, and the repository cleanup script now removes generated file artifacts without the conflicting `find -prune`/`-delete` combination.
 - Completed the DTO boundary refactor across the Spring API: 179 generated request/response records now match the OpenAPI contract, all 177 operations use concrete response types, every HTTP module owns mapper-based transitions, and architecture gates reject entity/raw-row exposure, wildcard responses, controller body recasting and API-DTO construction outside mappers.
 - Completed the Spring Boot cutover: all 177 API operations are native, the FastAPI/Python runtime and catch-all proxy are removed, Flyway and versioned Java seeding own database lifecycle, and deployment/update/backup/restore now consume immutable compiled release artifacts instead of a source checkout.

@@ -27,6 +27,23 @@ Die lokale Konfiguration wird aus den in `application.yml` dokumentierten
 Umgebungsvariablen gespeist. PostgreSQL ist die einzige unterstützte Datenbank.
 Flyway migriert das Schema; Hibernate prüft es mit `ddl-auto=validate`.
 
+Backend-Änderungen folgen der aktuellen Modulgrenze:
+
+```text
+OpenAPI -> generiertes *Api-Interface + API-DTO -> Controller -> Service -> Repository
+                                                        |            |
+                                                        |            +-> PostgreSQL
+                                                        +-> Mapper <-> DTO/Entity/Row
+```
+
+Controller bleiben HTTP-orientiert und verwenden typisierte DTOs. Services
+besitzen Fachlogik, Autorisierung und Transaktionen, aber weder SQL noch rohe
+HTTP-/DB-Repräsentationen. Repositories besitzen Persistenz und Query-Kataloge;
+Mapper besitzen die Repräsentationswechsel. Fachmodulinterne Übergabeobjekte
+liegen in `dto`, Persistenzzustand in `entity`; generische `model`-Pakete sind
+nicht zulässig. Neue oder verschobene Java-Typen müssen mit expliziten,
+auflösbaren und verwendeten Imports eingecheckt werden.
+
 ## Frontend
 
 ```bash

@@ -4,9 +4,9 @@ Royal Blackwater Fleet verwendet `MAJOR.MINOR.PATCH`. Die höchste zutreffende
 Änderungsklasse bestimmt die nächste Version; niedrigere Stellen werden beim
 Erhöhen zurückgesetzt.
 
-| Klasse | Form | Verwenden für | Beispiel ab `1.0.7` |
+| Klasse | Form | Verwenden für | Beispiel ab `1.0.0` |
 | --- | --- | --- | --- |
-| Patch | `x.y.Z` | Hotfixes, Fehler-, Sicherheits- und Dokumentationskorrekturen sowie kompatible interne Verbesserungen | `1.0.8` |
+| Patch | `x.y.Z` | Hotfixes, Fehler-, Sicherheits- und Dokumentationskorrekturen sowie kompatible interne Verbesserungen | `1.0.1` |
 | Minor | `x.Y.0` | Rückwärtskompatible Features, neue optionale API-Felder und additive Funktionen oder Migrationen | `1.1.0` |
 | Major | `X.0.0` | Inkompatible Verträge, Konfigurationen oder Migrationen sowie ausdrücklich große Produkterweiterungen | `2.0.0` |
 

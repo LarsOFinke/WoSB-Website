@@ -24,7 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.nullableLong;
+import static eu.royalblackwater.api.persistence.RowValues.string;
+import static eu.royalblackwater.api.persistence.RowValues.requiredString;
+import static eu.royalblackwater.api.persistence.RowValues.booleanValue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 

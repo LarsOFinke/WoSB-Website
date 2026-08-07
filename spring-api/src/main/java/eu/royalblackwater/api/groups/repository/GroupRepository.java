@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the groups domain. */
 @Repository
-public final class GroupRepository extends JdbcRepositorySupport {
+public class GroupRepository extends JdbcRepositorySupport {
     public GroupRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the webhooks domain. */
 @Repository
-public final class WebhookRepository extends JdbcRepositorySupport {
+public class WebhookRepository extends JdbcRepositorySupport {
     public WebhookRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

@@ -13,6 +13,8 @@ public final class FleetRoleQueries {
 
     public static final String LIST_ORDER_BY_01 = " order by r.rank desc, r.label asc";
 
+    public static final String FLEET_EXISTS_SELECT_01 = "select count(*) from fleets where id=:id";
+
     public static final String CREATE_SELECT_01 = "select count(*) from fleet_roles where code=:code";
 
     public static final String CREATE_INSERT_01 = """

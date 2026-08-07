@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the fleet domain. */
 @Repository
-public final class FleetDataRepository extends JdbcRepositorySupport {
+public class FleetDataRepository extends JdbcRepositorySupport {
     public FleetDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

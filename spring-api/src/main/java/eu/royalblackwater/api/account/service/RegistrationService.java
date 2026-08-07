@@ -1,6 +1,7 @@
 package eu.royalblackwater.api.account.service;
 
 import eu.royalblackwater.api.account.entity.RegistrationRequestEntity;
+import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.mapper.RegistrationRequestMapper;
 import eu.royalblackwater.api.account.repository.RegistrationRequestRepository;
 import eu.royalblackwater.api.account.repository.UserRepository;

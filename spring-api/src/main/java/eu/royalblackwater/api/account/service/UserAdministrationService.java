@@ -1,6 +1,7 @@
 package eu.royalblackwater.api.account.service;
 
 import eu.royalblackwater.api.account.filter.UserAdministrationFilter;
+import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.repository.AccountDataRepository;
 import eu.royalblackwater.api.account.repository.queries.UserAdministrationQueries;
 import eu.royalblackwater.api.audit.service.AuditService;

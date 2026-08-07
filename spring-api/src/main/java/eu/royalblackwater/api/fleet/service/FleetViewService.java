@@ -99,7 +99,12 @@ public class FleetViewService {
 
     private List<Map<String, Object>> membershipRows(long fleetId, boolean leadersOnly) {
         String filter = leadersOnly ? FleetViewQueries.MEMBERSHIP_ROWS_AND_01 : "";
-        return repository.query(FleetViewQueries.MEMBERSHIP_SELECT + FleetViewQueries.MEMBERSHIP_ROWS_WHERE_01 + filter + FleetViewQueries.MEMBERSHIP_ROWS_ORDER_BY_01, Map.of("fleetId", fleetId));
+        String sql = String.join(" ",
+                FleetViewQueries.MEMBERSHIP_SELECT,
+                FleetViewQueries.MEMBERSHIP_ROWS_WHERE_01,
+                filter,
+                FleetViewQueries.MEMBERSHIP_ROWS_ORDER_BY_01);
+        return repository.query(sql, Map.of("fleetId", fleetId));
     }
 
     private FleetRead fleetRead(Map<String, Object> row) {

@@ -21,7 +21,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT;
 
 @Service
 public class CookieConsentService {
@@ -59,7 +59,7 @@ public class CookieConsentService {
     public SavedConsent save(CookieConsentChoice choice, HttpServletRequest request, AuthenticatedUser user) {
         boolean necessary = choice.necessary() == null || choice.necessary();
         if (!necessary) {
-            throw new ResponseStatusException(UNPROCESSABLE_ENTITY,
+            throw new ResponseStatusException(UNPROCESSABLE_CONTENT,
                     "Strictly necessary cookies cannot be disabled.");
         }
         String key = key(request);

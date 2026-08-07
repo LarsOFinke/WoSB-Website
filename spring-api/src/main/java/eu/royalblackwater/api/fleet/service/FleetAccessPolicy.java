@@ -90,10 +90,10 @@ public class FleetAccessPolicy {
         long activeAdmirals = activeAdmirals(fleetId);
         boolean lastAdmiral = "fleet_admiral".equals(targetRole)
                 && "active".equals(targetStatus) && activeAdmirals <= 1;
-        List<String> allRoles = assignableRoles(Long.MAX_VALUE);
 
         if (actor.isAdmin()) {
-            return result(true, !lastAdmiral, !lastAdmiral, allRoles,
+            List<String> roles = lastAdmiral ? List.of() : allAssignableRoles();
+            return result(true, !lastAdmiral, !lastAdmiral, roles,
                     lastAdmiral ? "last_admiral" : null);
         }
         if (targetUserId == actor.id()) return result(false, false, false, List.of(), "self");
@@ -128,7 +128,13 @@ public class FleetAccessPolicy {
     }
 
     private List<String> assignableRoles(long belowRank) {
-        return repository.query(FleetAccessQueries.ASSIGNABLE_ROLES_SELECT_01, Map.of("rank", belowRank)).stream().map(row -> String.valueOf(row.get("code"))).toList();
+        return repository.query(FleetAccessQueries.ASSIGNABLE_ROLES_SELECT_01, Map.of("rank", belowRank)).stream()
+                .map(row -> String.valueOf(row.get("code"))).toList();
+    }
+
+    private List<String> allAssignableRoles() {
+        return repository.query(FleetAccessQueries.ALL_ASSIGNABLE_ROLES_SELECT_01, Map.of()).stream()
+                .map(row -> String.valueOf(row.get("code"))).toList();
     }
 
     private static FleetMembershipManagementRead result(

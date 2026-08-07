@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the files domain. */
 @Repository
-public final class FileAssetRepository extends JdbcRepositorySupport {
+public class FileAssetRepository extends JdbcRepositorySupport {
     public FileAssetRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

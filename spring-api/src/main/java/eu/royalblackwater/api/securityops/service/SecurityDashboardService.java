@@ -20,7 +20,9 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.requiredString;
+import static eu.royalblackwater.api.persistence.RowValues.date;
 
 @Service
 public class SecurityDashboardService {

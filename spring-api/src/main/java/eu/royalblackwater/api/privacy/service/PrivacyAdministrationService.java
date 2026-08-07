@@ -27,7 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
+import static org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT;
 
 @Service
 public class PrivacyAdministrationService {
@@ -145,7 +145,7 @@ public class PrivacyAdministrationService {
     private static String decision(String raw) {
         String value = raw == null ? "" : raw.strip().toLowerCase(Locale.ROOT);
         if (!DECISIONS.contains(value)) {
-            throw new ResponseStatusException(UNPROCESSABLE_ENTITY, "Decision must be complete or reject.");
+            throw new ResponseStatusException(UNPROCESSABLE_CONTENT, "Decision must be complete or reject.");
         }
         return value;
     }

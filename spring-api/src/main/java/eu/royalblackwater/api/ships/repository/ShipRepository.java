@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public final class ShipRepository extends JdbcRepositorySupport {
+public class ShipRepository extends JdbcRepositorySupport {
     public static final String SHIP_QUERY = """
             select s.id, s.name, s.rate, s.ship_type, s.durability, s.speed_min_knots, s.speed_knots,
                    s.maneuverability, s.armor, s.hold_capacity, s.crew_capacity, s.sailor_minimum,

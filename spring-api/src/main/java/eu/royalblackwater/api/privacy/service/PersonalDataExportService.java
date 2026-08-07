@@ -54,7 +54,7 @@ public class PersonalDataExportService {
     @Transactional(readOnly = true)
     public PersonalDataExportRead build(AuthenticatedUser user) {
         Map<String, Object> account = repository.optional(PersonalDataExportQueries.BUILD_SELECT_01, Map.of("userId", user.id())).map(this::safeRow).orElseThrow();
-        Map<String, Object> categories = new LinkedHashMap<>();
+        Map<String, List<Map<String, Object>>> categories = new LinkedHashMap<>();
         for (Relation relation : RELATIONS) {
             verifyMapping(relation);
             List<Map<String, Object>> rows = repository.query(

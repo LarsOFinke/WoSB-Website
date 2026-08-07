@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the legal domain. */
 @Repository
-public final class LegalNoticeRepository extends JdbcRepositorySupport {
+public class LegalNoticeRepository extends JdbcRepositorySupport {
     public LegalNoticeRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

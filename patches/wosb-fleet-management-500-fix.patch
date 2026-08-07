@@ -1,0 +1,106 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4b555e3..618fd15 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -18,6 +18,8 @@
+ 
+ ## Unreleased
+ 
++- Fixed Fleet management permission metadata so the protected last bootstrap admiral no longer triggers an unnecessary assignable-role database lookup while loading `/api/fleets/{fleet_id}/manage`.
++
+ - Hardened the post-refactor Spring API type boundary: fixed missing mapper imports, corrected the privacy export category generic type, repaired the Raid-Helper probe result mapping, removed the remaining unused import, replaced all residual Java wildcard imports with explicit imports, added serialization metadata to custom exception types, and extended the Spring audit to reject wildcard, duplicate, unused, unresolved and commonly missing project-internal imports. Architecture, API, development and debugging documentation now reflect the controller/service/mapper/repository design instead of the retired handler flow.
+ - Cleaned the Spring API package tree: removed all ambiguous `model` packages, moved internal transition records into module DTO packages, placed seed/event catalogs in their owning repository/service layers, removed an unused Spring Data repository and dead controller helpers, and replaced Map-based query-parameter roundtrips with typed filters. Architecture gates now reject empty source directories, generic model packages, raw controller parameter maps and repositories without consumers, and the repository cleanup script now removes generated file artifacts without the conflicting `find -prune`/`-delete` combination.
+ - Completed the DTO boundary refactor across the Spring API: 179 generated request/response records now match the OpenAPI contract, all 177 operations use concrete response types, every HTTP module owns mapper-based transitions, and architecture gates reject entity/raw-row exposure, wildcard responses, controller body recasting and API-DTO construction outside mappers.
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetAccessQueries.java b/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetAccessQueries.java
+index 9b36271..8479691 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetAccessQueries.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/fleet/repository/queries/FleetAccessQueries.java
+@@ -43,4 +43,9 @@ public final class FleetAccessQueries {
+                 order by rank asc, code asc
+                 """;
+ 
++    public static final String ALL_ASSIGNABLE_ROLES_SELECT_01 = """
++                select code from fleet_roles where is_active = true
++                order by rank asc, code asc
++                """;
++
+ }
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetAccessPolicy.java b/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetAccessPolicy.java
+index 253223d..9cdb943 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetAccessPolicy.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/fleet/service/FleetAccessPolicy.java
+@@ -90,10 +90,10 @@ public class FleetAccessPolicy {
+         long activeAdmirals = activeAdmirals(fleetId);
+         boolean lastAdmiral = "fleet_admiral".equals(targetRole)
+                 && "active".equals(targetStatus) && activeAdmirals <= 1;
+-        List<String> allRoles = assignableRoles(Long.MAX_VALUE);
+ 
+         if (actor.isAdmin()) {
+-            return result(true, !lastAdmiral, !lastAdmiral, allRoles,
++            List<String> roles = lastAdmiral ? List.of() : allAssignableRoles();
++            return result(true, !lastAdmiral, !lastAdmiral, roles,
+                     lastAdmiral ? "last_admiral" : null);
+         }
+         if (targetUserId == actor.id()) return result(false, false, false, List.of(), "self");
+@@ -128,7 +128,13 @@ public class FleetAccessPolicy {
+     }
+ 
+     private List<String> assignableRoles(long belowRank) {
+-        return repository.query(FleetAccessQueries.ASSIGNABLE_ROLES_SELECT_01, Map.of("rank", belowRank)).stream().map(row -> String.valueOf(row.get("code"))).toList();
++        return repository.query(FleetAccessQueries.ASSIGNABLE_ROLES_SELECT_01, Map.of("rank", belowRank)).stream()
++                .map(row -> String.valueOf(row.get("code"))).toList();
++    }
++
++    private List<String> allAssignableRoles() {
++        return repository.query(FleetAccessQueries.ALL_ASSIGNABLE_ROLES_SELECT_01, Map.of()).stream()
++                .map(row -> String.valueOf(row.get("code"))).toList();
+     }
+ 
+     private static FleetMembershipManagementRead result(
+diff --git a/spring-api/src/test/java/eu/royalblackwater/api/fleet/FleetAccessPolicyTest.java b/spring-api/src/test/java/eu/royalblackwater/api/fleet/FleetAccessPolicyTest.java
+index 9b51fc0..b90ea10 100644
+--- a/spring-api/src/test/java/eu/royalblackwater/api/fleet/FleetAccessPolicyTest.java
++++ b/spring-api/src/test/java/eu/royalblackwater/api/fleet/FleetAccessPolicyTest.java
+@@ -1,5 +1,6 @@
+ package eu.royalblackwater.api.fleet;
+ 
++import eu.royalblackwater.api.dto.FleetMembershipManagementRead;
+ import eu.royalblackwater.api.dto.FleetMembershipUpdate;
+ import eu.royalblackwater.api.fleet.dto.FleetMembershipTargetDto;
+ import eu.royalblackwater.api.fleet.service.FleetAccessPolicy;
+@@ -14,6 +15,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.ArgumentMatchers.anyMap;
+ import static org.mockito.ArgumentMatchers.anyString;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.never;
++import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.verifyNoInteractions;
+ import static org.mockito.Mockito.when;
+ 
+@@ -29,6 +32,26 @@ class FleetAccessPolicyTest {
+         verifyNoInteractions(repository);
+     }
+ 
++
++    @Test
++    void lastBootstrapAdmiralDoesNotLoadAssignableRolesForReadOnlyManagementMetadata() {
++        FleetDataRepository repository = mock(FleetDataRepository.class);
++        when(repository.count(anyString(), anyMap())).thenReturn(1L);
++        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
++        AuthenticatedUser administrator = new AuthenticatedUser(1, "admin", "admin", true, true, true);
++        FleetMembershipTargetDto lastAdmiral = new FleetMembershipTargetDto(
++                1L, "fleet_admiral", 80L, "active", "admin");
++
++        FleetMembershipManagementRead permissions = policy.permissions(administrator, 42L, lastAdmiral);
++
++        assertThat(permissions.canEditDirectory()).isTrue();
++        assertThat(permissions.canChangeRole()).isFalse();
++        assertThat(permissions.canChangeStatus()).isFalse();
++        assertThat(permissions.assignableRoles()).isEmpty();
++        assertThat(permissions.reason()).isEqualTo("last_admiral");
++        verify(repository, never()).query(anyString(), anyMap());
++    }
++
+     @Test
+     void protectsTheLastActiveFleetAdmiralFromDemotionAndDeactivation() {
+         FleetDataRepository repository = mock(FleetDataRepository.class);

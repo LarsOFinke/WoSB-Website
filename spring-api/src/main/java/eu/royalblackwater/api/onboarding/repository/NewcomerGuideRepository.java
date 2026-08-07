@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the onboarding domain. */
 @Repository
-public final class NewcomerGuideRepository extends JdbcRepositorySupport {
+public class NewcomerGuideRepository extends JdbcRepositorySupport {
     public NewcomerGuideRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

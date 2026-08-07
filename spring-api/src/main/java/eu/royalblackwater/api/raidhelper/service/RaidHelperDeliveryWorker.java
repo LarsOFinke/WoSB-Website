@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
 
 @Component
 public class RaidHelperDeliveryWorker {

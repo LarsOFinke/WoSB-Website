@@ -1,6 +1,7 @@
 // Generated API DTO by infrastructure/scripts/generation/generate_java_contracts.py; do not edit manually.
 package eu.royalblackwater.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public record FleetMembershipManagementRead(
@@ -8,5 +9,5 @@ public record FleetMembershipManagementRead(
         Boolean canChangeRole,
         Boolean canChangeStatus,
         Boolean canEditDirectory,
-        Boolean protectedValue,
+        @JsonProperty("protected") Boolean protectedValue,
         String reason) { }

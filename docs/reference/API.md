@@ -2,8 +2,9 @@
 
 The versioned OpenAPI 3.1 contract at `contracts/api-contract.json` is the
 canonical machine-readable API definition. The generated exhaustive endpoint
-index is [API_ENDPOINTS.md](API_ENDPOINTS.md). Generated Spring controllers and
-Java request/response records derive from the same contract.
+index is [API_ENDPOINTS.md](API_ENDPOINTS.md). Generated Spring `*Api` interfaces
+and immutable Java request/response records derive from the same contract; the
+implementing controllers are handwritten and module-owned.
 
 ## Base URL and media types
 
@@ -60,10 +61,15 @@ GET  /api/auth/me                   Cookie: rbf_hub_session=...
   rules and may be stricter than the path prefix suggests.
 
 The OpenAPI snapshot does not duplicate dynamic authorization rules per endpoint.
-For a security-sensitive change, inspect `SecurityConfiguration`, the operation
-handler and its domain service together.
+For a security-sensitive change, inspect `SecurityConfiguration`, the generated
+API interface, its implementing module controller and the domain service together.
 
 ## Errors and validation
+
+JSON error responses use the contract-owned `ApiError` shape
+`{ "detail": "..." }`. Bean-validation and binding failures are HTTP `400`;
+HTTP `422` is reserved for the small set of operations whose service layer
+rejects syntactically valid but semantically invalid input.
 
 - `400` denotes malformed JSON or transport-level binding failures, including
   invalid date and timestamp query parameters.
@@ -77,7 +83,7 @@ handler and its domain service together.
 
 Clients should primarily branch on HTTP status and the bounded public error
 detail. Internal Java exception names and production log messages are not API.
-For the safe route-to-handler diagnostic workflow see
+For the safe route-to-controller/service diagnostic workflow see
 [Module-oriented debugging](../debugging/MODULE_DEBUGGING.md).
 
 ## Pagination and filtering
@@ -90,9 +96,10 @@ the OpenAPI parameter schemas and enforced again by the backend.
 ## Contract change workflow
 
 1. Change and review `contracts/api-contract.json`.
-2. Regenerate Java contracts/controllers with the scripts under
+2. Regenerate Java `*Api` interfaces and API DTOs with the scripts under
    `infrastructure/scripts/generation/`; never edit generated Java manually.
 3. Regenerate `API_ENDPOINTS.md` with
    `python3 infrastructure/scripts/generation/generate_api_reference.py`.
-4. Update handlers, services, authorization, frontend API modules and tests.
+4. Update the implementing module controllers, services, mappers/repositories,
+   authorization, frontend API modules and tests.
 5. Run the focused gates and `make validate` for cross-cutting contract changes.

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the builds domain. */
 @Repository
-public final class BuildDataRepository extends JdbcRepositorySupport {
+public class BuildDataRepository extends JdbcRepositorySupport {
     public BuildDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

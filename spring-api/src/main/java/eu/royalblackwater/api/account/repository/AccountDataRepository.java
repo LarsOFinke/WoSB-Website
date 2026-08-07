@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the account domain. */
 @Repository
-public final class AccountDataRepository extends JdbcRepositorySupport {
+public class AccountDataRepository extends JdbcRepositorySupport {
     public AccountDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

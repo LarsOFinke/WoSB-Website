@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the audit domain. */
 @Repository
-public final class AuditDataRepository extends JdbcRepositorySupport {
+public class AuditDataRepository extends JdbcRepositorySupport {
     public AuditDataRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

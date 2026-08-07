@@ -15,27 +15,27 @@ public abstract class JdbcRepositorySupport {
         this.jdbc = jdbc;
     }
 
-    public final List<Map<String, Object>> query(String sql, Map<String, ?> parameters) {
+    public List<Map<String, Object>> query(String sql, Map<String, ?> parameters) {
         return jdbc.query(sql, parameters);
     }
 
-    public final Optional<Map<String, Object>> optional(String sql, Map<String, ?> parameters) {
+    public Optional<Map<String, Object>> optional(String sql, Map<String, ?> parameters) {
         return jdbc.optional(sql, parameters);
     }
 
-    public final Map<String, Object> required(String sql, Map<String, ?> parameters) {
+    public Map<String, Object> required(String sql, Map<String, ?> parameters) {
         return jdbc.required(sql, parameters);
     }
 
-    public final int update(String sql, Map<String, ?> parameters) {
+    public int update(String sql, Map<String, ?> parameters) {
         return jdbc.update(sql, parameters);
     }
 
-    public final long insertReturningId(String sql, Map<String, ?> parameters) {
+    public long insertReturningId(String sql, Map<String, ?> parameters) {
         return jdbc.insertReturningId(sql, parameters);
     }
 
-    public final long count(String sql, Map<String, ?> parameters) {
+    public long count(String sql, Map<String, ?> parameters) {
         return jdbc.count(sql, parameters);
     }
 }

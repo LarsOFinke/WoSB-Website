@@ -63,7 +63,9 @@ public class ControlFileStore {
     private static void setPrivate(Path file){try{Files.setPosixFilePermissions(file,PRIVATE);}catch(IOException|UnsupportedOperationException ignored){ }}
     private static void fsyncDirectory(Path directory){try(FileChannel channel=FileChannel.open(directory,StandardOpenOption.READ)){channel.force(true);}catch(IOException|UnsupportedOperationException ignored){ }}
 
-    public static final class ControlConflictException extends RuntimeException{
+    public static class ControlConflictException extends RuntimeException{
+        private static final long serialVersionUID = 1L;
+
         public ControlConflictException(String message,Throwable cause){super(message,cause);}
     }
 }

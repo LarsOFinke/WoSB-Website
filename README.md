@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.0.7
+# Royal Blackwater Fleet v1.0.0
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
@@ -9,10 +9,14 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
 Browser → NGINX → Spring Boot API → PostgreSQL
 ```
 
-Spring Security bildet die alleinige Sicherheitsgrenze. Das Backend verwendet
-validierte Java-Verträge, MapStruct, JDBC/JPA mit expliziten Fetch-Plänen,
-Flyway-Migrationen und eingebettete, idempotente Stammdaten. Das frühere
-Python-Backend ist nicht mehr Bestandteil der Laufzeit.
+Spring Security bildet die alleinige Sicherheitsgrenze. Der OpenAPI-Vertrag
+generiert typisierte `*Api`-Interfaces und immutable Request-/Response-DTOs. Die
+Fachmodule implementieren diese Verträge mit eigenen Controllern; Controller
+delegieren an Services, Repositories kapseln JDBC/JPA und SQL, und Mapper bilden
+die einzige Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und
+Repository-Zeilen. Generische `model`-Pakete, zentrale Dispatcher und
+Operation-Handler gehören nicht mehr zur Laufzeitarchitektur. Flyway besitzt das
+Schema; das frühere Python-Backend ist vollständig entfernt.
 
 ## Lokale Entwicklung
 
@@ -90,8 +94,8 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.7.tar.gz \
-  --checksum rbf-deployment-1.0.7.tar.gz.sha256 \
+  --artifact rbf-deployment-1.0.0.tar.gz \
+  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -103,7 +107,7 @@ Terminal abgefragt.
 Updates werden durch ein neues Release-Artefakt ausgelöst:
 
 ```bash
-sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.7.tar.gz
+sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.0.tar.gz
 ```
 
 `/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente

@@ -7,7 +7,12 @@ import eu.royalblackwater.api.dto.UserReferenceRead;
 import java.util.List;
 import java.util.Map;
 
-import static eu.royalblackwater.api.persistence.RowValues.*;
+import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.nullableLong;
+import static eu.royalblackwater.api.persistence.RowValues.string;
+import static eu.royalblackwater.api.persistence.RowValues.requiredString;
+import static eu.royalblackwater.api.persistence.RowValues.booleanValue;
+import static eu.royalblackwater.api.persistence.RowValues.dateTime;
 
 public final class CalendarDtoMapper {
     private CalendarDtoMapper() { }

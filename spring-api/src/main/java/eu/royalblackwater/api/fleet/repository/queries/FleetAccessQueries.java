@@ -43,4 +43,9 @@ public final class FleetAccessQueries {
                 order by rank asc, code asc
                 """;
 
+    public static final String ALL_ASSIGNABLE_ROLES_SELECT_01 = """
+                select code from fleet_roles where is_active = true
+                order by rank asc, code asc
+                """;
+
 }

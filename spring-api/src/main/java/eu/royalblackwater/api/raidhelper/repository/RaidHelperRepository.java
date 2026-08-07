@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the raidhelper domain. */
 @Repository
-public final class RaidHelperRepository extends JdbcRepositorySupport {
+public class RaidHelperRepository extends JdbcRepositorySupport {
     public RaidHelperRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 /** Module-owned persistence boundary for the calendar domain. */
 @Repository
-public final class CalendarRepository extends JdbcRepositorySupport {
+public class CalendarRepository extends JdbcRepositorySupport {
     public CalendarRepository(JdbcQueryService jdbc) {
         super(jdbc);
     }

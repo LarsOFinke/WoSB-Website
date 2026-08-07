@@ -40,7 +40,9 @@ public class FleetRoleService {
     }
 
     @Transactional(readOnly = true)
-    public List<FleetRoleRead> list(boolean includeInactive) {
+    public List<FleetRoleRead> list(long fleetId, boolean includeInactive, AuthenticatedUser actor) {
+        requireFleet(fleetId);
+        policy.requireFleetManager(actor, fleetId);
         String filter = includeInactive ? "" : FleetRoleQueries.LIST_WHERE_01;
         return repository.query(FleetRoleQueries.SELECT + filter + FleetRoleQueries.LIST_ORDER_BY_01, Map.of()).stream()
                 .map(mapper::role).toList();
@@ -48,6 +50,7 @@ public class FleetRoleService {
 
     @Transactional
     public FleetRoleRead create(long fleetId, FleetRoleCreate payload, AuthenticatedUser actor) {
+        requireFleet(fleetId);
         policy.requireRoleManager(actor, fleetId);
         String code = normalizeCode(payload.code());
         if (repository.count(FleetRoleQueries.CREATE_SELECT_01, Map.of("code", code)) > 0) {
@@ -68,6 +71,7 @@ public class FleetRoleService {
 
     @Transactional
     public FleetRoleRead update(long fleetId, long roleId, FleetRoleUpdate payload, AuthenticatedUser actor) {
+        requireFleet(fleetId);
         policy.requireRoleManager(actor, fleetId);
         Map<String, Object> existing = raw(roleId);
         if (RowValues.booleanValue(existing, "is_system")) {
@@ -102,6 +106,7 @@ public class FleetRoleService {
 
     @Transactional
     public void delete(long fleetId, long roleId, AuthenticatedUser actor) {
+        requireFleet(fleetId);
         policy.requireRoleManager(actor, fleetId);
         Map<String, Object> existing = raw(roleId);
         if (RowValues.booleanValue(existing, "is_system")) {
@@ -112,6 +117,12 @@ public class FleetRoleService {
         }
         repository.update(FleetRoleQueries.DELETE_DELETE_01, Map.of("id", roleId));
         audit.record(actor, "fleet_role", roleId, "delete", "Fleet role #" + roleId + " deleted.", List.of());
+    }
+
+    private void requireFleet(long fleetId) {
+        if (repository.count(FleetRoleQueries.FLEET_EXISTS_SELECT_01, Map.of("id", fleetId)) == 0) {
+            throw new ResponseStatusException(NOT_FOUND, "Fleet not found.");
+        }
     }
 
     private FleetRoleRead find(long roleId) {

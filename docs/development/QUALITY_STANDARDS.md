@@ -71,6 +71,10 @@ for a verified backup and recovery path.
 - Every HTTP module owns a mapper layer for DTO/entity/row transitions. Untyped
   `ResponseEntity<?>`, controller-side body recasting and direct entity exposure are
   architecture violations.
+- Java imports must be explicit, resolvable and used. Wildcard imports, duplicate
+  imports, unused imports and unresolved project-internal imports are repository-gate failures.
+  DTO/mapper changes must compile with Maven; parser-only syntax checks are not
+  sufficient evidence for generic conversions, constructor signatures or MapStruct.
 - `open-in-view=false`: response assembly must not depend on lazy loading outside
   the transaction. Authentication queries fetch every authority needed by the
   security filter before the persistence context closes.
