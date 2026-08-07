@@ -7,7 +7,6 @@ import eu.royalblackwater.api.calendar.repository.queries.CalendarQueries;
 import eu.royalblackwater.api.dto.FleetEventCreate;
 import eu.royalblackwater.api.dto.FleetEventRead;
 import eu.royalblackwater.api.dto.FleetEventUpdate;
-import eu.royalblackwater.api.dto.RaidHelperDispatchSelection;
 import eu.royalblackwater.api.dto.RaidHelperEventLinkRead;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.raidhelper.service.RaidHelperLinkService;

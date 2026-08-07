@@ -40,7 +40,6 @@ public class ProfileController extends ApiControllerSupport implements ProfileAp
 
     @Override
     public ResponseEntity<ProfilePreferenceOptionsRead> getPreferenceOptions() {
-        int userId = CurrentUser.require().id();
         return respond(profiles.options(), 200);
     }
 }

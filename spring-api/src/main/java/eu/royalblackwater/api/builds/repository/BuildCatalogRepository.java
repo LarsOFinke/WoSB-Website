@@ -6,7 +6,6 @@ import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
 import eu.royalblackwater.api.dto.ShipRead;
 import eu.royalblackwater.api.dto.WeaponPerformanceRead;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
-import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.ships.mapper.ShipMapper;
 import eu.royalblackwater.api.ships.repository.ShipRepository;
 import java.util.ArrayList;

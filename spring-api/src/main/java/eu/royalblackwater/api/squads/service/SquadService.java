@@ -237,8 +237,6 @@ public class SquadService {
     }
     private SquadSummaryRead summary(Map<String, Object> squad, AuthenticatedUser actor,
                                      List<Map<String, Object>> rawMembers, boolean managesFleet) {
-        long id = RowValues.longValue(squad, "id");
-        long fleetId = RowValues.longValue(squad, "fleet_id");
         Map<String, Object> currentRow = rawMembers.stream()
                 .filter(row -> RowValues.longValue(row, "user_id") == actor.id()).findFirst().orElse(null);
         String currentRole = currentRow == null ? null : RowValues.requiredString(currentRow, "squad_role");

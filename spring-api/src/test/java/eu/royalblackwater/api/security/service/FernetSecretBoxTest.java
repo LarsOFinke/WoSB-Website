@@ -1,6 +1,5 @@
 package eu.royalblackwater.api.security.service;
 
-import eu.royalblackwater.api.security.service.SecretBoxException;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;

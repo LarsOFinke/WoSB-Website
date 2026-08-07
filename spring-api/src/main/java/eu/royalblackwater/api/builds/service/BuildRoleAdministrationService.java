@@ -7,7 +7,6 @@ import eu.royalblackwater.api.builds.repository.queries.BuildRoleAdministrationQ
 import eu.royalblackwater.api.dto.BuildRoleCreate;
 import eu.royalblackwater.api.dto.BuildRoleRead;
 import eu.royalblackwater.api.dto.BuildRoleUpdate;
-import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;

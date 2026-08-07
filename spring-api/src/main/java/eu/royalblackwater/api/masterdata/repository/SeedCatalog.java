@@ -76,7 +76,6 @@ public class SeedCatalog {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static List<Map<String, Object>> listOfMaps(Object value) {
         if (!(value instanceof List<?> list)) return List.of();
         List<Map<String, Object>> result = new ArrayList<>();
