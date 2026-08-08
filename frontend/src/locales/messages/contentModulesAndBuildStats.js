@@ -44,6 +44,7 @@ export const contentModulesAndBuildStatsMessages = {
       inlineMissing: 'File #{id} is not attached to this content.',
       embedSizes: { small: 'Small', medium: 'Medium', large: 'Large', full: 'Full width' },
       validation: {
+        unsafeName: '{name}: filename contains unsafe control or direction characters.',
         unsupportedType: '{name}: unsupported file type.',
         empty: '{name}: empty files cannot be uploaded.',
         tooLarge: '{name}: file is too large. Limit: {limit}.',
@@ -418,6 +419,7 @@ export const contentModulesAndBuildStatsMessages = {
       inlineMissing: 'Datei #{id} ist diesem Inhalt nicht angehängt.',
       embedSizes: { small: 'Klein', medium: 'Mittel', large: 'Groß', full: 'Volle Breite' },
       validation: {
+        unsafeName: '{name}: Dateiname enthält unsichere Steuer- oder Richtungszeichen.',
         unsupportedType: '{name}: Dateityp wird nicht unterstützt.',
         empty: '{name}: Leere Dateien können nicht hochgeladen werden.',
         tooLarge: '{name}: Datei ist zu groß. Limit: {limit}.',

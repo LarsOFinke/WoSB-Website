@@ -1,10 +1,13 @@
-- Check if Sanitization is good enough for file-uploads (front- and backend sanitization)
-- File- and Rate-Limit for Uploads?
-- Frontend Route-access-security
-- Update-Backup-Process secured with fallbacks?
-- Recovery-Tool compatibility for test- and deploy-env?
-- Docker-containers secured from outside on deployment (no -it Flag for debugging via DB-logs from separate container?)
-- Deployment .env's secured?
-- SSL-cert swap from test to deploy possible yet?
-- fleet management access not working yet --> seed-admin not getting assigned as initial-lead? // date-time format issue in contract between frontend and API?
---> implement API-debugging to check why HTTP-500
+# Security / Operations backlog — reviewed 2026-08-08
+
+- [x] Upload sanitization: backend is authoritative (magic-byte/type validation, normalized safe display filenames); frontend rejects unsafe control/bidi names early.
+- [x] Upload file/rate limits: Spring streaming limits + per-type/user/global/disk quotas; gateway adds dedicated POST /api/files rate limiting and 52 MiB transport cap.
+- [x] Frontend route access: centralized router guard loads the session first; authenticated/staff/admin/fleet-management metadata are enforced as UX defense-in-depth. Backend authorization remains authoritative.
+- [x] Update/backup fallbacks: coordinated pre-deployment DB/files/certs backup, restore preflight, immutable releases and automatic previous-release rollback are mandatory.
+- [x] Recovery compatibility: recovery artifacts are installation-root/environment independent; environment identity is now explicit in the private target .env, while secrets/certificates remain target-local.
+- [x] Container exposure: PostgreSQL is loopback-only, backend network is internal, API/gateway run read-only/non-root with dropped capabilities and no-new-privileges. Debugging uses bounded logs/diagnostics, never interactive production containers as a normal workflow.
+- [x] Deployment .env security: test/production origin profiles are separate and mode 0600; target environment files remain outside immutable release artifacts and are copied with mode 0600.
+- [x] TLS test/production separation: Production requires TLS_MODE=letsencrypt, public hostname and LETSENCRYPT_STAGING=false. Certificate/key/hostname/expiry are verified before atomic swap. Test may use self-signed or Let's Encrypt staging. Certificates are never promoted from test to production.
+- [x] Fleet-management bootstrap / date-time / HTTP-500 investigation: covered by stateful integration tests, SQL runtime audit and bootstrap fleet-management smoke tests introduced in 1.0.2–1.0.5.
+
+See docs/deployment/OPERATIONS.md, docs/architecture/CONTAINER_SECURITY.md, docs/development/TESTING.md and .agents/PROJECT_CACHE.md for the durable rules.

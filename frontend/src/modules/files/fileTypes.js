@@ -15,6 +15,6 @@ export const ACCEPTED_FILE_TYPES = [
 ]
 
 export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_TYPES.join(',')
-export const MAX_UPLOAD_BYTES = 80 * 1024 * 1024
+export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 export const MAX_IMAGE_BYTES = 12 * 1024 * 1024
-export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
+export const MAX_DOCUMENT_BYTES = 24 * 1024 * 1024

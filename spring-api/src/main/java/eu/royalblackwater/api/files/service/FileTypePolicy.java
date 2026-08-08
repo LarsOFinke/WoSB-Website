@@ -2,6 +2,7 @@ package eu.royalblackwater.api.files.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -31,6 +32,20 @@ public final class FileTypePolicy {
         String extension = dot < 0 ? "" : name.substring(dot);
         if (!ALLOWED.containsKey(extension)) throw bad("Unsupported file type.");
         return extension;
+    }
+
+
+    static String sanitizeOriginalName(String filename, String fallback) {
+        if (filename == null || filename.isBlank()) return fallback;
+        String leaf = filename.replace('\\', '/');
+        leaf = leaf.substring(leaf.lastIndexOf('/') + 1);
+        String normalized = Normalizer.normalize(leaf, Normalizer.Form.NFC)
+                .replaceAll("[\\p{Cc}\\p{Cf}]", "")
+                .replaceAll("[<>:\"/\\\\|?*]", "_")
+                .strip();
+        while (normalized.startsWith(".")) normalized = normalized.substring(1).stripLeading();
+        if (normalized.isBlank() || ".".equals(normalized) || "..".equals(normalized)) return fallback;
+        return normalized.length() > 180 ? normalized.substring(0, 180) : normalized;
     }
 
     static String validate(Path path, String extension, String declaredType) throws IOException {

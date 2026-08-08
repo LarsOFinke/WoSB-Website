@@ -18,6 +18,7 @@ Arbeitskontext übernehmen.
 | leere/falsche API-Antwort | Contract-Mapper und interne DB-Spalten | unbekannte Felder nicht durch Contractlockerung kaschieren |
 | Startfehler | Properties-Binding, Flyway, Hibernate-`validate` | Readiness und erster Root-Cause-Stacktrace |
 | Seed/Stammdaten | Seed-Key, Checksum, Override-Flag | Seeder idempotent erneut ausführen; keine Migration editieren |
+| Legacy-Teilrestore/Migration | zuerst Dry-Run + erste Preflight-Exception | semantische FK-Auflösung prüfen; keine alten IDs oder kompletten Python-Dumps über Java-DB restaurieren |
 | Fleet/Squad | Fleet-ID, Membership-Status, Rollen-Code/Capabilities | Bootstrap-Repair und AccessPolicy/HTTP-Test |
 | Privacy/Cookie | Policy-Version, Entscheidung vorhanden, keine Schlüsselwerte | Retention, Exportausschlüsse, geschützte Route nach Löschung |
 | Frontend lädt nicht | Browser-Konsole, fehlgeschlagener API-Status, Route | Page → Composable → API/Domain; Vite-Build und Browser-Smoke |
@@ -47,7 +48,8 @@ Test parallel neu starten.
 Gültige Bereiche: `overview`, `staff`, `calendar`, `api`, `security`, `gateway`,
 `database`, `deployment`, `all`. Kategorien: `errors`, `warnings`, `http-500`,
 `auth`, `migration`, `all`. Erst eng sammeln, dann bei Bedarf Zeitraum oder
-Bereich erweitern. Der Collector liest `.env.origin`, schreibt remote nichts und
+Bereich erweitern. Der Collector liest standardmäßig `.env.origin.test`;
+Production verlangt `--production` und `.env.origin.production`. Er schreibt remote nichts und
 legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
 
 ## Bekannte stabile Fallstricke
@@ -81,6 +83,11 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
 - Interne Seed-/Relationsfelder vor strikter Contract-Konvertierung entfernen.
 - Generierte Controller und Contracts nie direkt korrigieren; Generatorquelle
   ändern und `--check` ausführen.
+- Legacy-Build-Daten als logische Migration behandeln: exakt dieselbe geprüfte SQL-Datei
+  zuerst testseitig Dry-Run -> Commit -> UI/API verifizieren und danach productionseitig
+  erneut Dry-Run -> Commit. Schiffe/Optionen/Rollen/Features semantisch auflösen; historische
+  numerische IDs, User-/Auth-Daten und Masterdata niemals aus dem Python-Komplettdump übernehmen.
+  Runbook: `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md`.
 - Produktionsdaten, Volumes, `shared/data` und aktive Releases sind keine
   zulässigen Debug-Cleanup-Ziele.
 

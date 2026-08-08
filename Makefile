@@ -23,6 +23,7 @@ lint:
 	python3 infrastructure/scripts/quality/check_repository.py
 	python3 infrastructure/scripts/quality/check_documentation.py
 	bash infrastructure/scripts/quality/tests/infrastructure.sh
+	bash infrastructure/scripts/quality/tests/tls-environment-safety.sh
 
 sql-audit:
 	python3 infrastructure/scripts/quality/audit_sql_runtime.py

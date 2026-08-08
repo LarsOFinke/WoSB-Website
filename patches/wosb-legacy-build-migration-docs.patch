@@ -1,0 +1,324 @@
+diff --git a/.agents/DEBUGGING_CACHE.md b/.agents/DEBUGGING_CACHE.md
+index 7471dbe..700d544 100644
+--- a/.agents/DEBUGGING_CACHE.md
++++ b/.agents/DEBUGGING_CACHE.md
+@@ -18,6 +18,7 @@ Arbeitskontext übernehmen.
+ | leere/falsche API-Antwort | Contract-Mapper und interne DB-Spalten | unbekannte Felder nicht durch Contractlockerung kaschieren |
+ | Startfehler | Properties-Binding, Flyway, Hibernate-`validate` | Readiness und erster Root-Cause-Stacktrace |
+ | Seed/Stammdaten | Seed-Key, Checksum, Override-Flag | Seeder idempotent erneut ausführen; keine Migration editieren |
++| Legacy-Teilrestore/Migration | zuerst Dry-Run + erste Preflight-Exception | semantische FK-Auflösung prüfen; keine alten IDs oder kompletten Python-Dumps über Java-DB restaurieren |
+ | Fleet/Squad | Fleet-ID, Membership-Status, Rollen-Code/Capabilities | Bootstrap-Repair und AccessPolicy/HTTP-Test |
+ | Privacy/Cookie | Policy-Version, Entscheidung vorhanden, keine Schlüsselwerte | Retention, Exportausschlüsse, geschützte Route nach Löschung |
+ | Frontend lädt nicht | Browser-Konsole, fehlgeschlagener API-Status, Route | Page → Composable → API/Domain; Vite-Build und Browser-Smoke |
+@@ -82,6 +83,11 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
+ - Interne Seed-/Relationsfelder vor strikter Contract-Konvertierung entfernen.
+ - Generierte Controller und Contracts nie direkt korrigieren; Generatorquelle
+   ändern und `--check` ausführen.
++- Legacy-Build-Daten als logische Migration behandeln: exakt dieselbe geprüfte SQL-Datei
++  zuerst testseitig Dry-Run -> Commit -> UI/API verifizieren und danach productionseitig
++  erneut Dry-Run -> Commit. Schiffe/Optionen/Rollen/Features semantisch auflösen; historische
++  numerische IDs, User-/Auth-Daten und Masterdata niemals aus dem Python-Komplettdump übernehmen.
++  Runbook: `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md`.
+ - Produktionsdaten, Volumes, `shared/data` und aktive Releases sind keine
+   zulässigen Debug-Cleanup-Ziele.
+ 
+diff --git a/.agents/PROJECT_CACHE.md b/.agents/PROJECT_CACHE.md
+index be178d0..a8c5b16 100644
+--- a/.agents/PROJECT_CACHE.md
++++ b/.agents/PROJECT_CACHE.md
+@@ -33,6 +33,7 @@
+ | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
+ | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
+ | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
++| Legacy-Datenmigration | `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md` |
+ | Tests | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
+ | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
+ | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
+@@ -170,6 +171,11 @@ allein ableiten.
+   Verifier und Rollback liegen unter `infrastructure/scripts/release/`.
+ - Backup/Restore koppeln Anwendung, Flyway-Schema, persistente Dateien und das
+   zugehörige Release-Artefakt. Restore ist gestaged und fail-closed.
++- Ein bewusst begrenzter Legacy-Teilrestore (z. B. Python→Java Builds) ist dagegen eine
++  logische Datenmigration gegen das bereits aktuelle Flyway-Schema: keine alten numerischen
++  FKs, User/Auth-/Masterdata oder DDL übernehmen. Referenzen semantisch auflösen, exakt dieselbe
++  Importdatei erst auf Test und danach Production verwenden und auf beiden Zielen vor Commit einen
++  vollständigen transaktionalen Dry-Run verlangen.
+ - Outbound-Netzwerk ist auf explizite Integrationen begrenzt. Webhooks enthalten
+   knappe Audit-/Aktionshinweise und dürfen den Hauptablauf nicht unkontrolliert
+   blockieren.
+diff --git a/docs/architecture/BACKUP_ARCHITECTURE.md b/docs/architecture/BACKUP_ARCHITECTURE.md
+index 0fc7869..f702a3f 100644
+--- a/docs/architecture/BACKUP_ARCHITECTURE.md
++++ b/docs/architecture/BACKUP_ARCHITECTURE.md
+@@ -13,3 +13,14 @@ The API only creates a signed intent file. A root-owned runner validates ownersh
+ Database restore always imports into a staging database first. The active Spring image applies and validates Flyway, reaches readiness, and only then may the staging database be atomically activated. A failed activation restores the previous database.
+ 
+ Recovery bundles are encrypted with `age`, contain a complete SHA-256 inventory, reject links and special entries during extraction, and can be verified without modifying production.
++
++## Partial logical migration is not disaster recovery
++
++A build-only recovery from a legacy Python dump is handled as a reviewed logical
++data migration, not by restoring the old database over the current installation.
++The target remains on the current Flyway schema and current master data; only the
++required aggregate is reconstructed using semantic references and explicit owner
++mapping. The exact migration artifact must pass a transactional dry-run and a
++committed verification on the test server before the same artifact can be used
++on production. See
++[`../debugging/LEGACY_BUILD_DATA_MIGRATION.md`](../debugging/LEGACY_BUILD_DATA_MIGRATION.md).
+diff --git a/docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md b/docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md
+new file mode 100644
+index 0000000..24e3648
+--- /dev/null
++++ b/docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md
+@@ -0,0 +1,218 @@
++# Legacy build data migration (Python -> Spring Boot)
++
++This runbook covers a **logical, build-only data migration** from a legacy
++PostgreSQL dump into an already installed and Flyway-migrated Spring Boot
++installation.
++
++It is deliberately different from disaster recovery. Do not restore the old
++whole-database dump over a current installation merely to recover builds.
++Legacy dumps can contain users, password hashes, sessions, audit data, obsolete
++seed identifiers, old schema DDL and historical sequences that do not belong in
++the current runtime.
++
++## When to use this procedure
++
++Use this path when all of the following are true:
++
++- only build data needs to be recovered or transferred;
++- the target Spring Boot installation is already healthy and migrated;
++- the logical build schema is still compatible;
++- legacy technical foreign-key IDs or seed keys may differ from the current
++  Java seed catalog;
++- the import has first been tested against the test server.
++
++For a complete installation recovery use
++[`../deployment/DISASTER_RECOVERY.md`](../deployment/DISASTER_RECOVERY.md)
++instead.
++
++## Data boundary
++
++The reviewed build-only migration contains only the logical build aggregate:
++
++- `builds`;
++- `build_slots`;
++- `build_classifications`.
++
++It intentionally does **not** import:
++
++- users or password hashes;
++- auth sessions;
++- audit data;
++- votes, guides, groups or files;
++- master/seed rows;
++- Flyway history;
++- DDL, constraints or sequences.
++
++Owners are mapped to users that already exist on the target installation.
++Historical numeric user, ship, option or feature IDs must never be copied
++across environments.
++
++## Reference resolution
++
++A portable migration resolves references by functional identity rather than by
++legacy numeric IDs.
++
++For the reviewed Python -> Java build migration the resolver uses:
++
++- ships: legacy seed key, current Java seed key, then unique ship name;
++- build options: legacy seed key, current Java seed key, then category + unique
++  option name;
++- build roles: role slug;
++- research feature: feature code;
++- owners: explicit source-username -> target-username mapping.
++
++All available identities must resolve to exactly one target row. A missing or
++ambiguous match is an import failure, not a reason to guess an ID or edit target
++master data during the restore.
++
++This is important because adopted databases can preserve manually overridden
++seed state while the functional catalog entry remains the same. A migration may
++therefore tolerate technical seed-key drift but must remain fail-closed on
++semantic ambiguity.
++
++## Required preflight checks
++
++Before inserting data, a logical migration must verify at least:
++
++1. required target tables/columns exist;
++2. source-stage row and foreign-key closure is complete;
++3. every owner mapping resolves to exactly one existing target user;
++4. ships/options/roles/features resolve unambiguously;
++5. slot type and option category remain compatible;
++6. classifications and list-size limits remain valid;
++7. no duplicate slot positions or duplicate logical items exist;
++8. current weapon mount/capacity/caliber rules still accept the build;
++9. current upgrade-slot and lantern rules still accept the build;
++10. current crew minimum/effective-capacity rules still accept the build;
++11. an existing logical target build is either identical or the import aborts;
++12. post-import counts and logical relations match the staged backup.
++
++Do not weaken one of these checks merely to make an old dump importable. Resolve
++and document the actual Python -> Java semantic difference instead.
++
++## Copy the migration to the target
++
++The SSH deployment user should not be able to write directly into `/srv/rbf`.
++Upload to its home directory first:
++
++```bash
++scp rbf-builds-partial-20260731-java-v3.sql rbfadmin@TESTSERVER:~/
++```
++
++Then install the file with root ownership:
++
++```bash
++sudo install -d -m 0750 /srv/rbf/shared/imports
++sudo install -o root -g root -m 0600 \
++  ~/rbf-builds-partial-20260731-java-v3.sql \
++  /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
++rm ~/rbf-builds-partial-20260731-java-v3.sql
++```
++
++Do not make `/srv/rbf/shared` generally writable and do not use `chmod 777` as
++an upload workaround.
++
++## Mandatory test-server dry-run
++
++Run the migration through the repository Docker helper so credentials remain in
++the target environment. The outer `rbfadmin` user may not be able to `cd` into
++`/srv/rbf/current`; perform that step inside the root shell:
++
++```bash
++sudo bash -lc '
++cd /srv/rbf/current
++source infrastructure/scripts/lib/docker.sh
++
++postgres_sql \
++  -v ON_ERROR_STOP=1 \
++  -v dry_run=1 \
++  -v owner_puszpang=admin \
++  -v owner_nostrapi=admin \
++  -f - < /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
++'
++```
++
++`dry_run=1` is the safe default. The script performs the full import and
++verification in one transaction and finishes with a rollback. A successful run
++must explicitly report:
++
++```text
++DRY RUN successful; rolling back all changes.
++```
++
++Any `ERROR`, missing/ambiguous reference, compatibility failure or conflicting
++existing build stops the procedure. Do not proceed to a committed import until
++the dry-run is completely green.
++
++## Commit the test-server import
++
++Before a committed import, create a current backup using the normal backup path.
++Then rerun the exact same migration with only `dry_run=0` changed:
++
++```bash
++sudo bash -lc '
++cd /srv/rbf/current
++source infrastructure/scripts/lib/docker.sh
++
++postgres_sql \
++  -v ON_ERROR_STOP=1 \
++  -v dry_run=0 \
++  -v owner_puszpang=admin \
++  -v owner_nostrapi=admin \
++  -f - < /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
++'
++```
++
++The current Spring API reads build state from PostgreSQL on request; a server
++restart is normally not required after this build-only import. Verify several
++representative builds through the API/UI immediately after commit, including
++opening and saving builds with different ships, weapon layouts and upgrades.
++If build caching is introduced in the future, this no-restart assumption must
++be revisited explicitly.
++
++## Promotion to production
++
++Only promote a migration file after the **same file** has passed the complete
++Dry-Run -> Commit -> UI/API verification cycle on the test server.
++
++Use the identical SQL file on production. Environment-specific differences
++must be passed only through explicit variables such as owner mappings. Do not
++regenerate a second production-specific data dump after test verification, as
++that removes the exact-artifact guarantee.
++
++Production still requires:
++
++1. current coordinated backup before import;
++2. production-specific owner mapping to existing users;
++3. another dry-run on the production database;
++4. committed import only after the production dry-run is green;
++5. immediate API/UI verification after commit.
++
++## Debugging a failed preflight
++
++A failed preflight is useful evidence. Work from the first error only.
++
++Typical Python -> Java drift classes are:
++
++- case or prefix changes in technical seed keys;
++- manually preserved/overridden seed keys in an adopted database;
++- renamed catalog entries;
++- removed or newly constrained slot types/options;
++- changed weapon mount, capacity or upgrade rules;
++- missing target owners.
++
++For a technical seed-key drift, first prove that the legacy and Java rows are
++still the same functional entity. Then extend semantic resolution using stable
++business attributes. Never hardcode current numeric database IDs into the
++portable migration.
++
++If the failure instead shows a genuinely missing or ambiguous functional
++entity, stop and review master-data migration separately.
++
++## Durable rule
++
++A partial data restore is a **migration artifact**, not an application release
++artifact and not a full backup. Keep the source dump and reviewed logical
++migration immutable once production has used them, record their hashes outside
++the repository if retained operationally, and keep customer/production data out
++of Git.
+diff --git a/docs/debugging/README.md b/docs/debugging/README.md
+index 9168802..48e57dc 100644
+--- a/docs/debugging/README.md
++++ b/docs/debugging/README.md
+@@ -9,6 +9,9 @@ kopiert Secrets, Cookies oder Authorization-Header in Tickets.
+   Evidenzminimum und passende Regressionstest-Ebene
+ - [Deployment-Incidents](DEPLOYMENT_INCIDENTS.md) – bekannte konkrete Symptome,
+   Ursachen und sichere nächste Schritte
++- [Legacy-Build-Datenmigration](LEGACY_BUILD_DATA_MIGRATION.md) – geprüfter
++  Build-only Python→Java-Teilrestore mit Dry-Run, semantischer FK-Auflösung und
++  Test→Production-Promotion
+ 
+ ## Schnelle Eingrenzung
+ 
+diff --git a/docs/development/DATABASE.md b/docs/development/DATABASE.md
+index 71b8447..5bf45e5 100644
+--- a/docs/development/DATABASE.md
++++ b/docs/development/DATABASE.md
+@@ -47,3 +47,14 @@ published V3–V7 file after release.
+ `mvn verify` uses PostgreSQL Testcontainers to validate an empty schema, migrations and application startup. Restore tests additionally load a dump into staging and require Flyway plus Spring readiness. Migration tests must cover both a fresh B2 path and upgrade from a V1 schema history.
+ 
+ The one-time scripts under `infrastructure/scripts/migration` exist only to adopt the reviewed final schema from installations created before Flyway. They are not a general baseline escape hatch.
++
++## Logical partial data migrations
++
++A legacy data recovery that intentionally imports only one aggregate (for example
++old Python-era builds) is **not** a Flyway migration and is not a full database
++restore. Run it against the already migrated target schema as a reviewed logical
++migration artifact. Historical numeric foreign keys must be resolved through
++stable or semantic target identities, and every import must provide a complete
++transactional dry-run before commit. Test-server verification of the exact SQL
++artifact is mandatory before production use. See
++[`../debugging/LEGACY_BUILD_DATA_MIGRATION.md`](../debugging/LEGACY_BUILD_DATA_MIGRATION.md).

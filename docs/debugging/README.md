@@ -9,6 +9,9 @@ kopiert Secrets, Cookies oder Authorization-Header in Tickets.
   Evidenzminimum und passende Regressionstest-Ebene
 - [Deployment-Incidents](DEPLOYMENT_INCIDENTS.md) – bekannte konkrete Symptome,
   Ursachen und sichere nächste Schritte
+- [Legacy-Build-Datenmigration](LEGACY_BUILD_DATA_MIGRATION.md) – geprüfter
+  Build-only Python→Java-Teilrestore mit Dry-Run, semantischer FK-Auflösung und
+  Test→Production-Promotion
 
 ## Schnelle Eingrenzung
 
@@ -19,8 +22,10 @@ Vom Ursprungssystem zuerst den interaktiven, redigierenden Collector verwenden:
 ./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m --tail 400
 ```
 
-Er nutzt `.env.origin`, speichert die agententaugliche Ausgabe lokal unter
-`.diagnostics/` und verändert das Zielsystem nicht. Direkte Zielserverbefehle
+Ohne Flag nutzt er `.env.origin.test`; Production wird nur mit
+`--production` und `.env.origin.production` ausgewählt. Die agententaugliche
+Ausgabe landet lokal unter `.diagnostics/` und verändert das Zielsystem nicht.
+Direkte Zielserverbefehle
 sind nur der manuelle Fallback:
 
 ```bash

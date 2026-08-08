@@ -4,9 +4,11 @@
 
 Die öffentlichen Befehle liegen im übergeordneten Repository:
 
-- `<repo>/deploy.sh --configure` ist der vollständige First-Run-Einstieg.
-- `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer unter `scripts/release/deploy-from-origin.sh`.
-- `scripts/diagnostics/debug.sh` ist der modulare Diagnoseeinstieg und schreibt
+- `<repo>/deploy.sh --configure` richtet den Testserver ein; Test ist das Standardziel.
+- `<repo>/deploy.sh --production --configure` richtet Production explizit ein.
+- `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer;
+  `--production` ist für jeden Production-Lauf erforderlich.
+- `scripts/diagnostics/debug.sh` folgt derselben Zielauswahl und schreibt
   redigierte Ausgaben lokal am Ursprung.
 
 Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
@@ -20,7 +22,9 @@ Alle gemeinsamen Skripte liegen unter `infrastructure/scripts/`. `quality/` und
 ### Diagnosegrenze
 
 Der Origin-Collector verwendet Host, Benutzer, Port, Installationsroot und
-Identity aus `.env.origin`. Er streamt den geprüften Remote-Collector per SSH an
+Identity aus dem ausgewählten `.env.origin.test`- beziehungsweise
+`.env.origin.production`-Profil. Ohne Flag ist Test aktiv; Production verlangt
+`--production`. Er streamt den geprüften Remote-Collector per SSH an
 `sudo -n bash`, ohne ihn oder Rohlogs auf dem Ziel zu speichern. Der Remote-Teil
 liest nur systemd- und Compose-Logs beziehungsweise Dienststatus. Erst am
 Ursprung werden IP-Adressen, E-Mail-Adressen, Querywerte und Zugangsdaten

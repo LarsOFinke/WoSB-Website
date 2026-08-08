@@ -43,12 +43,14 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 - Schemaänderungen ausschließlich durch neue Flyway-Migrationen; veröffentlichte
   Migrationen nie bearbeiten. Hibernate bleibt auf `validate`.
 - Deployment und Update starten am Ursprung über `deploy.sh`/`update.sh` und
-  verwenden Artefakte, Backups, Flyway und Rollback. Produktionsdaten oder
-  Docker-Volumes niemals als Diagnosemaßnahme löschen.
-- Produktionsdiagnosen starten am Ursprung über
-  `infrastructure/scripts/diagnostics/debug.sh`. Der Moduleinstieg nutzt
-  `.env.origin`, filtert remote und speichert nur die lokal redigierte Ausgabe;
-  keine Rohlogs oder Diagnosearchive auf dem Ziel erzeugen.
+  verwenden Artefakte, Backups, Flyway und Rollback. **Test ist immer das
+  Standardziel**; Production darf nur mit `--production` angesprochen werden.
+  Die Profile liegen getrennt in `.env.origin.test` und `.env.origin.production`.
+  Produktionsdaten oder Docker-Volumes niemals als Diagnosemaßnahme löschen.
+- Diagnostics starten am Ursprung über `infrastructure/scripts/diagnostics/debug.sh`
+  und folgen derselben Zielauswahl: Test ohne Flag, Production mit
+  `--production`. Remote wird begrenzt, lokal redigiert; keine Rohlogs oder
+  Diagnosearchive auf dem Ziel erzeugen.
 - Lokale `.env`, private Schlüssel, Tokens, personenbezogene Daten und
   vollständige IP-Adressen weder lesen/ausgeben noch versionieren, wenn sie für
   den konkreten Auftrag nicht zwingend erforderlich sind.

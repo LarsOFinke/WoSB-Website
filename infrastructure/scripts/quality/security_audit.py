@@ -75,4 +75,23 @@ require('NVD_API_KEY: ${{ secrets.NVD_API_KEY }}' in security_workflow and
         'OWASP dependency-check must consume only a non-empty GitHub NVD secret')
 require('nvdApiKeyEnvironmentVariable=NVD_API_KEY' in security_workflow,
         'OWASP dependency-check must receive its optional NVD key through an environment variable')
+require("schedule: [{cron: '17 4 * * *'}]" in security_workflow,
+        'dependency vulnerability scan must run daily')
+require('actions/cache@5a3ec84eff668545956fd18022155c47e93e2684' in security_workflow and
+        '~/.m2/repository/org/owasp/dependency-check-data' in security_workflow,
+        'OWASP dependency-check data cache must be restored with the reviewed pinned cache action')
+require('org.owasp:dependency-check-maven:12.2.2:update-only' in security_workflow and
+        '-DnvdValidForHours=0' in security_workflow,
+        'daily security workflow must refresh the vulnerability cache before analysis')
+for contract in ('-DautoUpdate=false', '-DfailBuildOnCVSS=7',
+                 '-DfailBuildOnUnusedSuppressionRule=true',
+                 '-DsuppressionFile=spring-api/dependency-check-suppressions.xml'):
+    require(contract in security_workflow,f'missing Dependency-Check fail-closed contract: {contract}')
+suppressions=read('spring-api/dependency-check-suppressions.xml')
+require('CVE-2026-66299' in suppressions and
+        r'tomcat-embed-core@11\.0\.24' in suppressions and
+        'until="2026-09-08Z"' in suppressions,
+        'Tomcat CVE-2026-66299 suppression must stay exact and time-bounded')
+for forbidden in ('<cvssBelow>', '<cvssScore>', '<vulnerabilityName regex="true">.*</vulnerabilityName>'):
+    require(forbidden not in suppressions,f'broad Dependency-Check suppression forbidden: {forbidden}')
 print('[security] OK: Spring security, secret handling, containers and artifact boundaries')

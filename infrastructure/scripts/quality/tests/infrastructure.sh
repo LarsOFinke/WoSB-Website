@@ -69,5 +69,6 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
   cp "$INFRA_DIR/.env.example" "$temp_env"
   RBF_ENV_FILE="$temp_env" docker compose --env-file "$temp_env" -f "$INFRA_DIR/compose.release.yml" config >/dev/null
 fi
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/origin-target-selection.sh"
 bash "$ROOT_DIR/infrastructure/scripts/quality/tests/debug-diagnostics.sh"
 printf '[infrastructure] OK: shell, Python, Compose and artifact-runtime invariants\n'

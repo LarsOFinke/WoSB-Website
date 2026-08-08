@@ -8,6 +8,9 @@ cert_name="$(read_env LETSENCRYPT_CERT_NAME)"
 [[ -n "$cert_name" ]] || cert_name="$(read_env APP_HOSTNAME)"
 lineage="${RENEWED_LINEAGE:-$CERTBOT_CONFIG_DIR/live/$cert_name}"
 [[ -s "$lineage/fullchain.pem" && -s "$lineage/privkey.pem" ]] || die "Let's-Encrypt-Zertifikat nicht gefunden: $lineage"
+hostname="$(read_env APP_HOSTNAME)"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib/host" && pwd)/tls.sh"
+verify_tls_material "$lineage/fullchain.pem" "$lineage/privkey.pem" "$hostname" 604800
 
 certificate_dir="$INFRA_DIR/data/certs"
 temporary_fullchain="$(mktemp "$certificate_dir/.fullchain.pem.XXXXXX")"

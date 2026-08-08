@@ -47,3 +47,14 @@ published V3–V7 file after release.
 `mvn verify` uses PostgreSQL Testcontainers to validate an empty schema, migrations and application startup. Restore tests additionally load a dump into staging and require Flyway plus Spring readiness. Migration tests must cover both a fresh B2 path and upgrade from a V1 schema history.
 
 The one-time scripts under `infrastructure/scripts/migration` exist only to adopt the reviewed final schema from installations created before Flyway. They are not a general baseline escape hatch.
+
+## Logical partial data migrations
+
+A legacy data recovery that intentionally imports only one aggregate (for example
+old Python-era builds) is **not** a Flyway migration and is not a full database
+restore. Run it against the already migrated target schema as a reviewed logical
+migration artifact. Historical numeric foreign keys must be resolved through
+stable or semantic target identities, and every import must provide a complete
+transactional dry-run before commit. Test-server verification of the exact SQL
+artifact is mandatory before production use. See
+[`../debugging/LEGACY_BUILD_DATA_MIGRATION.md`](../debugging/LEGACY_BUILD_DATA_MIGRATION.md).

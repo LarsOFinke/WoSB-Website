@@ -8,10 +8,12 @@ Die beiden Einstiegspunkte für Deployment liegen bewusst auf Repository-Ebene:
 `scripts/release/` enthält die internen
 Release-Implementierungen, den Artefakt-Verifier und den Release-Rollback.
 Der Ursprungstransfer läuft über `../deploy.sh`, Updates über `../update.sh`;
-`scripts/diagnostics/debug.sh` verwendet dieselbe SSH-Verbindung für lesende, begrenzte und lokal
-redigierte Diagnosen. Der Zielserver nutzt die versionierten Runtime-Wrapper.
-Die lokale Origin-Konfiguration liegt in `.env.origin` und wird aus
-`.env.origin.example` erstellt.
+beide zielen ohne Flag auf den Testserver. Production wird ausschließlich mit
+`--production` ausgewählt. `scripts/diagnostics/debug.sh` verwendet dieselbe
+Zielauswahl für lesende, begrenzte und lokal redigierte Diagnosen. Die getrennten
+privaten Origin-Konfigurationen heißen `.env.origin.test` und
+`.env.origin.production`; die gleichnamigen `.example`-Dateien sind Vorlagen.
+Der Zielserver nutzt die versionierten Runtime-Wrapper.
 
 - `compose.yml`: Source-Build für Entwicklung und Erstkonfiguration.
 - `compose.release.yml`: Produktion aus kompiliertem JAR und Frontend-`dist`.

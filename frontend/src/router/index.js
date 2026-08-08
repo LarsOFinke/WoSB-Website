@@ -55,16 +55,16 @@ router.beforeEach(async (to) => {
     return typeof to.query.redirect === 'string' ? to.query.redirect : '/profile'
   }
 
+  if ((to.meta.requiresUser || to.meta.requiresStaff || to.meta.requiresAdmin || to.meta.requiresFleetManagement) && !isAuthenticated.value) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
   if (to.meta.requiresAdmin && !isAdmin.value) {
     return { name: 'profile' }
   }
 
   if (to.meta.requiresStaff && !isStaff.value) {
-    return { name: 'login', query: { redirect: to.fullPath } }
-  }
-
-  if (to.meta.requiresUser && !isAuthenticated.value) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return { name: 'profile' }
   }
 
   if (to.meta.requiresFleetManagement && !canManageFleet.value) {

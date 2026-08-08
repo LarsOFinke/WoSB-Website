@@ -46,8 +46,10 @@ Vom vertrauenswürdigen Ursprungssystem ist der bevorzugte Einstieg:
 ./infrastructure/scripts/diagnostics/debug.sh --area staff --category errors --since 1h --match MethodArgumentTypeMismatchException
 ```
 
-Der Wrapper verwendet die bereits von `deploy.sh --configure` gepflegte
-`.env.origin` einschließlich SSH-Key und `sudo -n`. Bereiche sind `overview`,
+Der Wrapper verwendet standardmäßig die von `deploy.sh --configure` gepflegte
+`.env.origin.test`. Production-Diagnosen erfordern `--production` und verwenden
+`.env.origin.production`; beide Profile enthalten ihren eigenen SSH-Key-/Host-
+Kontext und `sudo -n`. Bereiche sind `overview`,
 `staff`, `calendar`, `api`, `security`, `gateway`, `database`, `deployment` und
 `all`; Kategorien sind `errors`, `warnings`, `http-500`, `auth`, `migration`
 und `all`. Zeitraum und Zeilenlimit sind validiert und begrenzt. `--match`
@@ -85,3 +87,13 @@ sudo /srv/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --r
 A backup is healthy only if its manifest references a passed isolated restore
 preflight. If this preflight fails, the update stops before `current` changes.
 Periodically perform a full recovery exercise on a separate host.
+
+## Test/Production TLS and target isolation
+
+Origin deployment targets and website runtime identities are separate. `deploy.sh`/`update.sh` default to `test`; Production always requires `--production`. The selected target is written to the private website `.env` as `DEPLOYMENT_ENVIRONMENT` and must never be inferred from a certificate or hostname.
+
+Production is fail-closed: `TLS_MODE=letsencrypt`, a public `APP_HOSTNAME`, a configured `LETSENCRYPT_EMAIL`, and `LETSENCRYPT_STAGING=false` are mandatory. Test may use self-signed TLS or Let's Encrypt staging. Staging certificates are deliberately never promoted to Production. Each target obtains and renews its own certificate in its own shared data tree.
+
+Before `fullchain.pem`/`privkey.pem` are atomically replaced, the TLS helper verifies the certificate hostname, certificate/private-key match and at least seven days of remaining validity. The certificate renewal timer keeps using Certbot's deploy hook, so nginx is reloaded only after a successful validated renewal. Release artifacts contain neither target `.env` files nor certificates. Coordinated file backups include the target-local certificate and Let's Encrypt state for disaster recovery.
+
+The release compose file does not publish PostgreSQL to the host. Database inspection uses bounded `docker compose exec -T`/diagnostic helpers; interactive production containers are not a normal debugging interface.

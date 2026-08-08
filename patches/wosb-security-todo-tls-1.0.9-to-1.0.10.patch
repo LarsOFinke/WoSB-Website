@@ -1,0 +1,714 @@
+diff --git a/.agents/PROJECT_CACHE.md b/.agents/PROJECT_CACHE.md
+index e58af5c..3cc8b71 100644
+--- a/.agents/PROJECT_CACHE.md
++++ b/.agents/PROJECT_CACHE.md
+@@ -380,3 +380,9 @@ Removal is mandatory when one of these conditions is reached:
+ 3. the suppression reaches its hard expiry on **2026-09-08 UTC**.
+ 
+ The security workflow sets `failBuildOnUnusedSuppressionRule=true`. Therefore a dependency upgrade that fixes/removes the finding deliberately turns this suppression into a CI failure until the rule is deleted. Agents must **remove** an unused suppression, not weaken that check. Extending the expiry requires a fresh upstream advisory review and an updated explanation in both `.agents/` and `docs/development/TESTING.md`.
++
++### 2026-08-08 security/TLS backlog closure
++
++The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. Production must use a public hostname, `TLS_MODE=letsencrypt` and `LETSENCRYPT_STAGING=false`; test may use staging/self-signed. Never copy certificates from test to production: each target owns `shared/data/{certs,letsencrypt}` and obtains its own certificate. `sync-certificate.sh` validates hostname, key pairing and remaining lifetime before atomic replacement.
++
++Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, Spring multipart and service quota/type/signature layers. Frontend route guards and upload checks are defense-in-depth only; backend authorization and validation remain authoritative. Update activation still requires coordinated pre-deployment backups and restores the previous release/data on failed activation. Debug API 500s through the stateful HTTP integration suites and SQL runtime audit rather than ad-hoc production container sessions.
+diff --git a/.agents/REPOSITORY_SPRING_CLEANING.md b/.agents/REPOSITORY_SPRING_CLEANING.md
+index 5f517c3..1d88335 100644
+--- a/.agents/REPOSITORY_SPRING_CLEANING.md
++++ b/.agents/REPOSITORY_SPRING_CLEANING.md
+@@ -235,3 +235,7 @@ beauftragt wurden.
+ Dependency-Check suppressions are treated like temporary compatibility debt: exact dependency + exact CVE, explicit reason, expiry, upstream removal condition, and automated unused-rule detection. The daily security job must refresh its vulnerability database before scanning. Never make the CVSS threshold more permissive to accommodate a single disputed finding.
+ 
+ For the current Tomcat exception, `CVE-2026-66299` may only be suppressed for `tomcat-embed-core:11.0.24` because the reviewed Apache advisory scopes the defect to the WebSocket chat example application, which is not deployed by WoSB. Delete the rule when Tomcat reaches `11.0.25+`; `failBuildOnUnusedSuppressionRule=true` exists specifically to force that cleanup.
++
++### Security backlog completion rule
++
++A security TODO is not complete merely because code exists. Convert it into a repeatable invariant: a quality test or integration test plus durable documentation. For TLS, Production must fail closed on staging/self-signed configuration and certificate material must be validated before swap. For uploads, frontend checks never replace backend type/signature/quota enforcement. For deployment, private target environments/certificates stay outside immutable artifacts and databases are not host-published in release compose.
+diff --git a/.agents/ToDo.txt b/.agents/ToDo.txt
+index 887fa06..1abed8e 100644
+--- a/.agents/ToDo.txt
++++ b/.agents/ToDo.txt
+@@ -1,10 +1,13 @@
+-- Check if Sanitization is good enough for file-uploads (front- and backend sanitization)
+-- File- and Rate-Limit for Uploads?
+-- Frontend Route-access-security
+-- Update-Backup-Process secured with fallbacks?
+-- Recovery-Tool compatibility for test- and deploy-env?
+-- Docker-containers secured from outside on deployment (no -it Flag for debugging via DB-logs from separate container?)
+-- Deployment .env's secured?
+-- SSL-cert swap from test to deploy possible yet?
+-- fleet management access not working yet --> seed-admin not getting assigned as initial-lead? // date-time format issue in contract between frontend and API?
+---> implement API-debugging to check why HTTP-500
+\ No newline at end of file
++# Security / Operations backlog — reviewed 2026-08-08
++
++- [x] Upload sanitization: backend is authoritative (magic-byte/type validation, normalized safe display filenames); frontend rejects unsafe control/bidi names early.
++- [x] Upload file/rate limits: Spring streaming limits + per-type/user/global/disk quotas; gateway adds dedicated POST /api/files rate limiting and 52 MiB transport cap.
++- [x] Frontend route access: centralized router guard loads the session first; authenticated/staff/admin/fleet-management metadata are enforced as UX defense-in-depth. Backend authorization remains authoritative.
++- [x] Update/backup fallbacks: coordinated pre-deployment DB/files/certs backup, restore preflight, immutable releases and automatic previous-release rollback are mandatory.
++- [x] Recovery compatibility: recovery artifacts are installation-root/environment independent; environment identity is now explicit in the private target .env, while secrets/certificates remain target-local.
++- [x] Container exposure: PostgreSQL is loopback-only, backend network is internal, API/gateway run read-only/non-root with dropped capabilities and no-new-privileges. Debugging uses bounded logs/diagnostics, never interactive production containers as a normal workflow.
++- [x] Deployment .env security: test/production origin profiles are separate and mode 0600; target environment files remain outside immutable release artifacts and are copied with mode 0600.
++- [x] TLS test/production separation: Production requires TLS_MODE=letsencrypt, public hostname and LETSENCRYPT_STAGING=false. Certificate/key/hostname/expiry are verified before atomic swap. Test may use self-signed or Let's Encrypt staging. Certificates are never promoted from test to production.
++- [x] Fleet-management bootstrap / date-time / HTTP-500 investigation: covered by stateful integration tests, SQL runtime audit and bootstrap fleet-management smoke tests introduced in 1.0.2–1.0.5.
++
++See docs/deployment/OPERATIONS.md, docs/architecture/CONTAINER_SECURITY.md, docs/development/TESTING.md and .agents/PROJECT_CACHE.md for the durable rules.
+diff --git a/.agents/scripts/check-infrastructure.sh b/.agents/scripts/check-infrastructure.sh
+index 9ff8005..f5d6d85 100644
+--- a/.agents/scripts/check-infrastructure.sh
++++ b/.agents/scripts/check-infrastructure.sh
+@@ -8,4 +8,5 @@ source "$SCRIPT_DIR/lib/quiet-gate.sh"
+ cd "$ROOT_DIR"
+ agent_run_quiet 'Infrastrukturverträge' bash infrastructure/scripts/quality/tests/infrastructure.sh
+ agent_run_quiet 'Update-/Releaseverträge' bash infrastructure/scripts/quality/tests/update-management.sh
++agent_run_quiet 'TLS-/Zielumgebungsverträge' bash infrastructure/scripts/quality/tests/tls-environment-safety.sh
+ agent_run_quiet 'Repository-Hygiene' python3 infrastructure/scripts/quality/check_repository.py --strict-tree
+diff --git a/Makefile b/Makefile
+index e00b7fa..9814236 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,6 +23,7 @@ lint:
+ 	python3 infrastructure/scripts/quality/check_repository.py
+ 	python3 infrastructure/scripts/quality/check_documentation.py
+ 	bash infrastructure/scripts/quality/tests/infrastructure.sh
++	bash infrastructure/scripts/quality/tests/tls-environment-safety.sh
+ 
+ sql-audit:
+ 	python3 infrastructure/scripts/quality/audit_sql_runtime.py
+diff --git a/README.md b/README.md
+index 57b2e56..c63b3bb 100644
+--- a/README.md
++++ b/README.md
+@@ -9,14 +9,15 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
+ Browser → NGINX → Spring Boot API → PostgreSQL
+ ```
+ 
+-Spring Security bildet die alleinige Sicherheitsgrenze. Der OpenAPI-Vertrag
+-generiert typisierte `*Api`-Interfaces und immutable Request-/Response-DTOs. Die
+-Fachmodule implementieren diese Verträge mit eigenen Controllern; Controller
+-delegieren an Services, Repositories kapseln JDBC/JPA und SQL, und Mapper bilden
+-die einzige Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und
+-Repository-Zeilen. Generische `model`-Pakete, zentrale Dispatcher und
+-Operation-Handler gehören nicht mehr zur Laufzeitarchitektur. Flyway besitzt das
+-Schema; das frühere Python-Backend ist vollständig entfernt.
++Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/openapi.json`
++ist die externe HTTP-Spezifikation und erzeugt ausschließlich immutable
++Request-/Response-DTOs. Die Modul-Controller besitzen ihre Spring-MVC-Routen und
++validieren diese DTOs direkt; Services besitzen Fachlogik und Transaktionen,
++Repositories kapseln JDBC/JPA und SQL, und Mapper bilden die einzige
++Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
++Generische `model`-/`contract`-Laufzeitschichten, zentrale Dispatcher und
++Operation-Handler gehören nicht zur Backendarchitektur. Flyway besitzt das Schema;
++das frühere Python-Backend ist vollständig entfernt.
+ 
+ ## Lokale Entwicklung
+ 
+@@ -59,30 +60,36 @@ prüfsummenbewehrtes Release-Artefakt:
+ bash ./infrastructure/scripts/release/build-artifact.sh
+ ```
+ 
+-Für den interaktiven Ursprung-zu-Zielserver-Ablauf genügt anschließend:
++Für den Ursprung-zu-Zielserver-Ablauf ist der **Testserver das sichere Standardziel**:
+ 
+ ```bash
+ ./deploy.sh
++./update.sh
++```
++
++Production wird ausschließlich explizit ausgewählt:
++
++```bash
++./deploy.sh --production
++./update.sh --production
+ ```
+ 
+ Der Ursprung überträgt das geprüfte Artefakt und `setup_website.sh` per SSH.
+-Auf dem Webseitenserver verifiziert `setup_website.sh` das Paket und startet
+-die atomare Installation. Alle Dialoge können über Flags automatisiert werden.
+-Die beim ersten Lauf erzeugte `.env.origin` speichert die nicht geheimen
+-Verbindungs- und Pfadwerte geschützt für spätere Updates; Vorlage:
+-`.env.origin.example`.
++Auf dem Zielserver verifiziert `setup_website.sh` das Paket und startet die
++atomare Installation. Test und Production besitzen getrennte, private
++Origin-Konfigurationen: `.env.origin.test` und `.env.origin.production`; Vorlagen
++sind `.env.origin.test.example` und `.env.origin.production.example`.
+ 
+-Eine vollständig neue Zielmaschine wird mit `./deploy.sh --configure`
+-eingerichtet. Der Assistent kann den dedizierten SSH-Administrator und seinen
+-Deploy-Key über einen einmaligen VPS-Bootstrap-Zugang anlegen und danach im selben
+-Lauf deployen. Spätere Aufrufe von `./deploy.sh` verwenden diese geprüfte
+-Konfiguration ohne private Anwendungsaccounts.
++Eine neue Testmaschine wird mit `./deploy.sh --configure` eingerichtet, eine neue
++Production-Maschine nur mit `./deploy.sh --production --configure`. Spätere
++Aufrufe verwenden das jeweils ausgewählte Profil ohne private Anwendungsaccounts.
+ 
+-Dieselbe Origin-Verbindung dient der begrenzten Produktionsdiagnose:
++Diagnostics verwenden dieselbe sichere Zielauswahl: ohne Flag Test, für
++Production ausdrücklich `--production`.
+ 
+ ```bash
+ ./infrastructure/scripts/diagnostics/debug.sh
+-./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m
++./infrastructure/scripts/diagnostics/debug.sh --production --area calendar --category http-500 --since 30m
+ ```
+ 
+ Die Ausgabe wird auf dem Ursprung redigiert und lokal unter `.diagnostics/`
+@@ -124,7 +131,7 @@ verschlüsselten Recovery-Bundle mitgeführt.
+ ```text
+ spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
+ frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
+-contracts/       versionierter HTTP-, Build-Stat- und Webhook-Vertrag
++openapi/         versionierte externe OpenAPI-Spezifikation
+ infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
+ tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
+ docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
+diff --git a/VERSION b/VERSION
+index 66c4c22..7ee7020 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-1.0.9
++1.0.10
+diff --git a/docs/architecture/CONTAINER_SECURITY.md b/docs/architecture/CONTAINER_SECURITY.md
+index afa24ba..c134a18 100644
+--- a/docs/architecture/CONTAINER_SECURITY.md
++++ b/docs/architecture/CONTAINER_SECURITY.md
+@@ -112,3 +112,9 @@ sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+ Ein grüner Image-Scan beweist nicht, dass Runtime und Kernel sicher sind. Umgekehrt
+ ist eine ältere, aber von Debian/Ubuntu gepatchte Paketversion nicht automatisch
+ verwundbar; entscheidend ist das jeweilige Distribution-Advisory.
++
++### Runtime exposure and upload boundary
++
++The release stack publishes only the HTTP/HTTPS gateway. PostgreSQL has no host port in `compose.release.yml`; the backend bridge is internal, while only the API receives the dedicated outbound network. API and gateway run non-root, read-only, with `no-new-privileges` and all Linux capabilities dropped. Operational debugging uses bounded service logs/diagnostics rather than routine `docker exec -it` sessions.
++
++`POST /api/files` has three independent limits: nginx request/rate limiting, Spring multipart size limits, and the file service's per-type/per-user/global/free-space quotas. The backend validates extension + declared MIME + file signature and normalizes display filenames; frontend validation is only early feedback and is never the trust boundary.
+diff --git a/docs/deployment/OPERATIONS.md b/docs/deployment/OPERATIONS.md
+index 3e405e5..31b87c3 100644
+--- a/docs/deployment/OPERATIONS.md
++++ b/docs/deployment/OPERATIONS.md
+@@ -87,3 +87,13 @@ sudo /srv/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --r
+ A backup is healthy only if its manifest references a passed isolated restore
+ preflight. If this preflight fails, the update stops before `current` changes.
+ Periodically perform a full recovery exercise on a separate host.
++
++## Test/Production TLS and target isolation
++
++Origin deployment targets and website runtime identities are separate. `deploy.sh`/`update.sh` default to `test`; Production always requires `--production`. The selected target is written to the private website `.env` as `DEPLOYMENT_ENVIRONMENT` and must never be inferred from a certificate or hostname.
++
++Production is fail-closed: `TLS_MODE=letsencrypt`, a public `APP_HOSTNAME`, a configured `LETSENCRYPT_EMAIL`, and `LETSENCRYPT_STAGING=false` are mandatory. Test may use self-signed TLS or Let's Encrypt staging. Staging certificates are deliberately never promoted to Production. Each target obtains and renews its own certificate in its own shared data tree.
++
++Before `fullchain.pem`/`privkey.pem` are atomically replaced, the TLS helper verifies the certificate hostname, certificate/private-key match and at least seven days of remaining validity. The certificate renewal timer keeps using Certbot's deploy hook, so nginx is reloaded only after a successful validated renewal. Release artifacts contain neither target `.env` files nor certificates. Coordinated file backups include the target-local certificate and Let's Encrypt state for disaster recovery.
++
++The release compose file does not publish PostgreSQL to the host. Database inspection uses bounded `docker compose exec -T`/diagnostic helpers; interactive production containers are not a normal debugging interface.
+diff --git a/docs/development/TESTING.md b/docs/development/TESTING.md
+index 067cee1..be018a5 100644
+--- a/docs/development/TESTING.md
++++ b/docs/development/TESTING.md
+@@ -191,3 +191,7 @@ Dependency suppressions are exceptional and must remain narrow, documented, time
+ The suppression must be removed as soon as embedded Tomcat is **11.0.25 or newer**, or immediately if Apache broadens the affected scope. CI uses `failBuildOnUnusedSuppressionRule=true`, so an upgrade that makes the exact `11.0.24` suppression unused intentionally breaks the security job until the obsolete rule is deleted. The rule also expires on **2026-09-08 UTC** as a second fail-closed review deadline. Do not extend that date without re-reading the upstream Apache advisory and recording a new review.
+ 
+ The normal high-severity gate remains `failBuildOnCVSS=7`. Never suppress by broad CVSS range, wildcard vulnerability name, entire Tomcat family, or generic CPE just to make CI green.
++
++### Security operations fixtures
++
++`infrastructure/scripts/quality/tests/tls-environment-safety.sh` is the regression gate for Test/Production TLS isolation. It functionally validates certificate/key/hostname matching and statically requires Production to reject self-signed/ACME-staging configuration. `frontend/tests/fileUploadSecurity.test.mjs` keeps browser-side upload limits aligned with the backend envelope; backend type/signature/quota checks remain authoritative.
+diff --git a/docs/reference/API_ENDPOINTS.md b/docs/reference/API_ENDPOINTS.md
+index e99e5be..6ec81b1 100644
+--- a/docs/reference/API_ENDPOINTS.md
++++ b/docs/reference/API_ENDPOINTS.md
+@@ -2,7 +2,7 @@
+ 
+ <!-- Generated by infrastructure/scripts/generation/generate_api_reference.py; do not edit manually. -->
+ 
+-Contract version: `1.0.9`. Canonical source: `openapi/openapi.json`.
++Contract version: `1.0.10`. Canonical source: `openapi/openapi.json`.
+ 
+ Request/response schemas, validation constraints and parameter definitions remain in the canonical
+ OpenAPI 3.1 contract. Access is enforced by Spring Security and documented in `API.md`.
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 85ed3bc..5b315c3 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "royal-blackwater-fleet-frontend",
+-  "version": "1.0.9",
++  "version": "1.0.10",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "royal-blackwater-fleet-frontend",
+-      "version": "1.0.9",
++      "version": "1.0.10",
+       "dependencies": {
+         "dompurify": "^3.4.12",
+         "markdown-it": "^14.3.0",
+diff --git a/frontend/package.json b/frontend/package.json
+index 0f05652..1c4df46 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "royal-blackwater-fleet-frontend",
+-  "version": "1.0.9",
++  "version": "1.0.10",
+   "private": true,
+   "type": "module",
+   "scripts": {
+diff --git a/frontend/src/core/components/FileUploadPanel.vue b/frontend/src/core/components/FileUploadPanel.vue
+index 5c50def..2187eb3 100644
+--- a/frontend/src/core/components/FileUploadPanel.vue
++++ b/frontend/src/core/components/FileUploadPanel.vue
+@@ -26,6 +26,7 @@ const error = ref('')
+ const acceptAttribute = computed(() => (props.acceptedTypes?.length ? props.acceptedTypes.join(',') : ACCEPT_ATTRIBUTE))
+ 
+ function validationMessage(file, result) {
++  if (result.reason === 'name') return t('files.validation.unsafeName', { name: file.name })
+   if (result.reason === 'type') return t('files.validation.unsupportedType', { name: file.name })
+   if (result.reason === 'empty') return t('files.validation.empty', { name: file.name })
+   if (result.reason === 'size') return t('files.validation.tooLarge', { name: file.name, limit: formatFileSize(maxBytesForFile(file)) })
+diff --git a/frontend/src/locales/messages/contentModulesAndBuildStats.js b/frontend/src/locales/messages/contentModulesAndBuildStats.js
+index 75ad7e2..17e8061 100644
+--- a/frontend/src/locales/messages/contentModulesAndBuildStats.js
++++ b/frontend/src/locales/messages/contentModulesAndBuildStats.js
+@@ -44,6 +44,7 @@ export const contentModulesAndBuildStatsMessages = {
+       inlineMissing: 'File #{id} is not attached to this content.',
+       embedSizes: { small: 'Small', medium: 'Medium', large: 'Large', full: 'Full width' },
+       validation: {
++        unsafeName: '{name}: filename contains unsafe control or direction characters.',
+         unsupportedType: '{name}: unsupported file type.',
+         empty: '{name}: empty files cannot be uploaded.',
+         tooLarge: '{name}: file is too large. Limit: {limit}.',
+@@ -418,6 +419,7 @@ export const contentModulesAndBuildStatsMessages = {
+       inlineMissing: 'Datei #{id} ist diesem Inhalt nicht angehängt.',
+       embedSizes: { small: 'Klein', medium: 'Mittel', large: 'Groß', full: 'Volle Breite' },
+       validation: {
++        unsafeName: '{name}: Dateiname enthält unsichere Steuer- oder Richtungszeichen.',
+         unsupportedType: '{name}: Dateityp wird nicht unterstützt.',
+         empty: '{name}: Leere Dateien können nicht hochgeladen werden.',
+         tooLarge: '{name}: Datei ist zu groß. Limit: {limit}.',
+diff --git a/frontend/src/modules/files/api/files.js b/frontend/src/modules/files/api/files.js
+index 1fcc405..aeac613 100644
+--- a/frontend/src/modules/files/api/files.js
++++ b/frontend/src/modules/files/api/files.js
+@@ -13,6 +13,11 @@ export { ACCEPT_ATTRIBUTE, ACCEPTED_FILE_TYPES, IMAGE_MIME_TYPES, MAX_DOCUMENT_B
+ const EMBEDDABLE_MIME_PREFIXES = ['image/', 'video/']
+ const EMBEDDABLE_DOCUMENT_MIME_TYPES = new Set(['application/pdf', 'text/plain'])
+ 
++function hasUnsafeFilename(name) {
++  const value = String(name || '')
++  return !value.trim() || /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u206f]/u.test(value)
++}
++
+ export function maxBytesForFile(file) {
+   const mimeType = String(file?.type || '').toLowerCase()
+   if (mimeType.startsWith('image/')) return MAX_IMAGE_BYTES
+@@ -21,6 +26,7 @@ export function maxBytesForFile(file) {
+ }
+ 
+ export function validateFileForUpload(file) {
++  if (hasUnsafeFilename(file?.name)) return { valid: false, reason: 'name' }
+   const mimeType = String(file?.type || '').toLowerCase()
+   if (!ACCEPTED_FILE_TYPES.includes(mimeType)) {
+     return { valid: false, reason: 'type' }
+diff --git a/frontend/src/modules/files/fileTypes.js b/frontend/src/modules/files/fileTypes.js
+index 27c2d36..2bc5de4 100644
+--- a/frontend/src/modules/files/fileTypes.js
++++ b/frontend/src/modules/files/fileTypes.js
+@@ -15,6 +15,6 @@ export const ACCEPTED_FILE_TYPES = [
+ ]
+ 
+ export const ACCEPT_ATTRIBUTE = ACCEPTED_FILE_TYPES.join(',')
+-export const MAX_UPLOAD_BYTES = 80 * 1024 * 1024
++export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+ export const MAX_IMAGE_BYTES = 12 * 1024 * 1024
+-export const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
++export const MAX_DOCUMENT_BYTES = 24 * 1024 * 1024
+diff --git a/frontend/src/router/index.js b/frontend/src/router/index.js
+index 3759294..a8db732 100644
+--- a/frontend/src/router/index.js
++++ b/frontend/src/router/index.js
+@@ -55,16 +55,16 @@ router.beforeEach(async (to) => {
+     return typeof to.query.redirect === 'string' ? to.query.redirect : '/profile'
+   }
+ 
++  if ((to.meta.requiresUser || to.meta.requiresStaff || to.meta.requiresAdmin || to.meta.requiresFleetManagement) && !isAuthenticated.value) {
++    return { name: 'login', query: { redirect: to.fullPath } }
++  }
++
+   if (to.meta.requiresAdmin && !isAdmin.value) {
+     return { name: 'profile' }
+   }
+ 
+   if (to.meta.requiresStaff && !isStaff.value) {
+-    return { name: 'login', query: { redirect: to.fullPath } }
+-  }
+-
+-  if (to.meta.requiresUser && !isAuthenticated.value) {
+-    return { name: 'login', query: { redirect: to.fullPath } }
++    return { name: 'profile' }
+   }
+ 
+   if (to.meta.requiresFleetManagement && !canManageFleet.value) {
+diff --git a/infrastructure/compose.release.yml b/infrastructure/compose.release.yml
+index fc8f042..97c4265 100644
+--- a/infrastructure/compose.release.yml
++++ b/infrastructure/compose.release.yml
+@@ -14,8 +14,6 @@ services:
+     env_file: ["${RBF_ENV_FILE:-.env}"]
+     volumes:
+       - ./data/postgres:/var/lib/postgresql/data
+-    ports:
+-      - "127.0.0.1:${POSTGRES_LOCAL_PORT:-15432}:5432"
+     healthcheck:
+       test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+       interval: 10s
+diff --git a/infrastructure/nginx/default.conf b/infrastructure/nginx/default.conf
+index d59df56..75d3b00 100644
+--- a/infrastructure/nginx/default.conf
++++ b/infrastructure/nginx/default.conf
+@@ -3,6 +3,8 @@ log_format rbf_api '$request_method $uri status=$status duration=$request_time o
+ limit_req_zone $binary_remote_addr zone=auth_login:10m rate=10r/m;
+ limit_req_zone $binary_remote_addr zone=auth_register:10m rate=4r/m;
+ limit_req_zone $binary_remote_addr zone=api_general:10m rate=120r/m;
++map $request_method $rbf_upload_rate_key { default ""; POST $binary_remote_addr; }
++limit_req_zone $rbf_upload_rate_key zone=file_upload:10m rate=12r/m;
+ limit_req_zone $binary_remote_addr zone=public_pages:10m rate=60r/m;
+ limit_conn_zone $binary_remote_addr zone=connections_per_ip:10m;
+ limit_req_status 429;
+@@ -174,6 +176,24 @@ server {
+         proxy_set_header X-Forwarded-Proto https;
+     }
+ 
++    location = /api/files {
++        if (-f /run/rbf-control/status/maintenance-mode.json) { return 503; }
++        include /etc/nginx/snippets/rbf-security-headers.conf;
++        limit_req zone=api_general burst=120 nodelay;
++        limit_req zone=file_upload burst=4 nodelay;
++        limit_conn connections_per_ip 8;
++        client_max_body_size 52m;
++        add_header X-Robots-Tag "noindex, nofollow, noarchive" always;
++        proxy_pass http://api:8080;
++        proxy_http_version 1.1;
++        proxy_set_header Host $host;
++        proxy_set_header X-Real-IP $remote_addr;
++        proxy_set_header X-Forwarded-For $remote_addr;
++        proxy_set_header X-Forwarded-Proto https;
++        proxy_set_header X-Forwarded-Host $host;
++        proxy_read_timeout 120s;
++    }
++
+     location /api/ {
+         if (-f /run/rbf-control/status/maintenance-mode.json) { return 503; }
+         include /etc/nginx/snippets/rbf-security-headers.conf;
+diff --git a/infrastructure/scripts/lib/env.sh b/infrastructure/scripts/lib/env.sh
+index cbe1adb..00b5c75 100755
+--- a/infrastructure/scripts/lib/env.sh
++++ b/infrastructure/scripts/lib/env.sh
+@@ -171,8 +171,10 @@ validate_env() {
+   [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
+   [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
+ 
+-  local tls_mode certificate_provider hostname
++  local tls_mode certificate_provider hostname deployment_environment
+   tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"
++  deployment_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
++  [[ -z "$deployment_environment" || "$deployment_environment" =~ ^(test|production)$ ]] || die "DEPLOYMENT_ENVIRONMENT muss test oder production sein."
+   [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE muss auto, letsencrypt oder self-signed sein."
+   [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER ist ungültig."
+   [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME ist ungültig."
+@@ -181,6 +183,11 @@ validate_env() {
+     [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlichen Domainnamen."
+   fi
+   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
++  if [[ "$deployment_environment" == production ]]; then
++    [[ "$tls_mode" == letsencrypt ]] || die "Production erfordert TLS_MODE=letsencrypt; auto/self-signed ist dort nicht zulässig."
++    [[ "$(read_env LETSENCRYPT_STAGING)" == false ]] || die "Production darf niemals Let's-Encrypt-Staging verwenden."
++    [[ "$hostname" == *.* && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Production benötigt einen öffentlichen TLS-Hostnamen."
++  fi
+   local retention="$(read_env BACKUP_RETENTION_DAYS)"
+   [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS muss positiv sein."
+ }
+diff --git a/infrastructure/scripts/lib/host/tls.sh b/infrastructure/scripts/lib/host/tls.sh
+index 222d217..5166252 100755
+--- a/infrastructure/scripts/lib/host/tls.sh
++++ b/infrastructure/scripts/lib/host/tls.sh
+@@ -1,6 +1,22 @@
+ #!/usr/bin/env bash
+ set -Eeuo pipefail
+ 
++
++verify_tls_material() {
++  local certificate="$1" private_key="$2" hostname="$3" minimum_seconds="${4:-604800}"
++  [[ -s "$certificate" && -s "$private_key" ]] || die "TLS-Zertifikat oder privater Schlüssel fehlt."
++  require_command openssl
++  openssl x509 -in "$certificate" -noout -checkhost "$hostname" >/dev/null 2>&1 \
++    || die "TLS-Zertifikat gilt nicht für APP_HOSTNAME=$hostname."
++  local cert_key private_key_fingerprint
++  cert_key="$(openssl x509 -in "$certificate" -pubkey -noout | openssl pkey -pubin -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
++  private_key_fingerprint="$(openssl pkey -in "$private_key" -pubout -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
++  [[ -n "$cert_key" && "$cert_key" == "$private_key_fingerprint" ]] \
++    || die "TLS-Zertifikat und privater Schlüssel gehören nicht zusammen."
++  openssl x509 -in "$certificate" -checkend "$minimum_seconds" -noout >/dev/null 2>&1 \
++    || die "TLS-Zertifikat ist abgelaufen oder unterschreitet die Mindestrestlaufzeit."
++}
++
+ generate_self_signed_certificate() {
+   local hostname ip cert_dir config_file error_file
+   hostname="$(read_env APP_HOSTNAME)"
+diff --git a/infrastructure/scripts/quality/tests/update-management.sh b/infrastructure/scripts/quality/tests/update-management.sh
+index a367a2f..738b9dd 100755
+--- a/infrastructure/scripts/quality/tests/update-management.sh
++++ b/infrastructure/scripts/quality/tests/update-management.sh
+@@ -62,4 +62,8 @@ grep -q 'provision-ssh-admin.sh' "$ROOT_DIR/infrastructure/scripts/release/deplo
+ grep -q 'bootstrap_user.*== root' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+ grep -q 'configure_deploy_identity' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+ grep -q 'configure_bootstrap_access' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
++
++grep -q -- '--target-environment "$target_environment"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
++grep -q 'DEPLOYMENT_ENVIRONMENT' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh"
++! grep -q '127.0.0.1:${POSTGRES_LOCAL_PORT:-15432}:5432' "$ROOT_DIR/infrastructure/compose.release.yml"
+ printf '[updates] OK: compiled artifact inventory, tamper detection and operation contract\n'
+diff --git a/infrastructure/scripts/quality/validate.sh b/infrastructure/scripts/quality/validate.sh
+index 5c436f2..d444d6f 100755
+--- a/infrastructure/scripts/quality/validate.sh
++++ b/infrastructure/scripts/quality/validate.sh
+@@ -23,6 +23,7 @@ elif [[ "$MODE" == full ]]; then
+ fi
+ bash "$ROOT_DIR/infrastructure/scripts/quality/tests/infrastructure.sh"
+ bash "$ROOT_DIR/infrastructure/scripts/quality/tests/update-management.sh"
++bash "$ROOT_DIR/infrastructure/scripts/quality/tests/tls-environment-safety.sh"
+ python3 -c 'import pytest' 2>/dev/null || {
+   echo '[test] pytest is required; install CI test dependencies with: python3 -m pip install -r requirements-ci.txt' >&2
+   exit 1
+diff --git a/infrastructure/scripts/release/deploy-from-origin.sh b/infrastructure/scripts/release/deploy-from-origin.sh
+index aa22cab..3021d0f 100755
+--- a/infrastructure/scripts/release/deploy-from-origin.sh
++++ b/infrastructure/scripts/release/deploy-from-origin.sh
+@@ -74,7 +74,12 @@ while (($#)); do case "$1" in
+   --install-root) install_root="${2:-}"; automated=true; shift 2;; --no-backup) no_backup=true; automated=true; shift;;
+   --config) config_file="${2:-}"; shift 2;;
+   -h|--help) usage;; *) usage;; esac; done
+-if [[ -f "$config_file" ]]; then
++if [[ -e "$config_file" ]]; then
++  [[ -f "$config_file" && ! -L "$config_file" ]] || { echo "$origin_prefix Origin-Konfiguration muss eine reguläre, nicht verlinkte Datei sein: $config_file" >&2; exit 1; }
++  config_mode="$(stat -c '%a' "$config_file")"
++  [[ "$config_mode" == 600 ]] || { echo "$origin_prefix Unsichere Rechte für $config_file ($config_mode); erwartet 600." >&2; exit 1; }
++  config_owner="$(stat -c '%u' "$config_file")"
++  [[ "$config_owner" == "$(id -u)" ]] || { echo "$origin_prefix Origin-Konfiguration gehört nicht dem aufrufenden Benutzer." >&2; exit 1; }
+   # shellcheck disable=SC1090
+   source "$config_file"
+   host="${host:-${RBF_DEPLOY_HOST:-}}"; user="${user:-${RBF_DEPLOY_USER:-rbfadmin}}"
+@@ -236,7 +241,7 @@ cleanup_command=(sudo -n bash "$remote_dir/cleanup-failed-release.sh" --if-prese
+ cleanup_line=""; for word in "${cleanup_command[@]}"; do printf -v quoted ' %q' "$word"; cleanup_line+="$quoted"; done
+ echo "$origin_prefix Bereinige fehlgeschlagene, nicht aktive Releases auf dem Zielserver (falls vorhanden)."
+ ssh "${ssh_args[@]}" "$user@$host" "$cleanup_line"
+-remote_command=(sudo -n bash "$remote_dir/setup_website.sh")
++remote_command=(sudo -n bash "$remote_dir/setup_website.sh" --target-environment "$target_environment")
+ remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
+ if [[ "$automated" == true ]]; then
+   [[ -z "$install_root" ]] || remote_command+=(--install-root "$install_root")
+diff --git a/infrastructure/scripts/release/install-artifact.sh b/infrastructure/scripts/release/install-artifact.sh
+index 7899ec9..4f02e85 100755
+--- a/infrastructure/scripts/release/install-artifact.sh
++++ b/infrastructure/scripts/release/install-artifact.sh
+@@ -298,6 +298,18 @@ smoke_args=()
+ [[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
+ timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
+ 
++if [[ "$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$/, "", $2); gsub(/^"|"$/, "", $2); print $2; exit}' "$shared/.env")" == production ]]; then
++  echo "[release] Finalisiere öffentliches Production-TLS innerhalb der atomaren Aktivierung."
++  RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
++    set -Eeuo pipefail
++    source "$1/scripts/lib/env.sh"
++    source "$1/scripts/lib/host/tls.sh"
++    configure_production_tls
++    [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production-TLS wurde nicht aktiviert."
++    "$1/scripts/checks/smoke-test.sh"
++  ' _ "$install_root/current/infrastructure"
++fi
++
+ install -m 0600 "$artifact_copy" "$shared/release-artifacts/current.tar.gz"
+ (cd "$shared/release-artifacts" && sha256sum current.tar.gz > current.tar.gz.sha256)
+ printf '%s\n' "$version" > "$shared/current-version"
+diff --git a/infrastructure/scripts/release/prepare-website-env.sh b/infrastructure/scripts/release/prepare-website-env.sh
+index f9f06e7..9512848 100755
+--- a/infrastructure/scripts/release/prepare-website-env.sh
++++ b/infrastructure/scripts/release/prepare-website-env.sh
+@@ -5,13 +5,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ INFRA_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ target_env="${1:?target environment path required}"
+ target_credentials="${2:?target credentials path required}"
++target_environment="${3:-test}"
++[[ "$target_environment" =~ ^(test|production)$ ]] || die "Ungültige Zielumgebung: $target_environment"
+ source "$INFRA_DIR/scripts/lib/env.sh"
+ export ENV_FILE="$target_env"
+ install -d -m 0700 "$(dirname "$target_env")"
+ if [[ ! -f "$target_env" ]]; then
+-  initialize_env "" "" false admin "RBF Command" auto "" false
++  if [[ "$target_environment" == production ]]; then
++    die "Production benötigt eine explizit vorbereitete private Environment-Datei mit TLS_MODE=letsencrypt und LETSENCRYPT_EMAIL."
++  fi
++  initialize_env "" "" false admin "RBF Command" auto "" true
+   install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$target_credentials"
+   echo "[website] Neue Environment-Datei und First-Run-Zugangsdaten wurden erzeugt."
+ else
+   chmod 0600 "$target_env"
+ fi
++set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
+diff --git a/infrastructure/scripts/release/setup_website.sh b/infrastructure/scripts/release/setup_website.sh
+index ac8ab7d..7fa3654 100755
+--- a/infrastructure/scripts/release/setup_website.sh
++++ b/infrastructure/scripts/release/setup_website.sh
+@@ -2,8 +2,8 @@
+ set -Eeuo pipefail
+ 
+ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; no_backup=false; skip_backup=false; skip_host=false
+-usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --no-backup --skip-host]" >&2; exit 2; }
++artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; target_environment="${RBF_TARGET_ENVIRONMENT:-test}"; no_backup=false; skip_backup=false; skip_host=false
++usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --target-environment test|production --no-backup --skip-host]" >&2; exit 2; }
+ if (($# == 0)); then
+   [[ -t 0 && -t 1 ]] || { echo "[website] Ohne Flags benötigt setup_website.sh ein interaktives Terminal." >&2; exit 2; }
+   cat <<'BANNER'
+@@ -36,6 +36,7 @@ while (($#)); do
+     --checksum) checksum="${2:-}"; shift 2;;
+     --install-root) install_root="${2:-}"; shift 2;;
+     --env) env_source="${2:-}"; shift 2;;
++    --target-environment) target_environment="${2:-}"; shift 2;;
+     --no-backup) no_backup=true; shift;;
+     --skip-backup) skip_backup=true; shift;;
+     --skip-host) skip_host=true; shift;;
+@@ -43,10 +44,11 @@ while (($#)); do
+   esac
+ done
+ [[ -n "$artifact" ]] || usage
++[[ "$target_environment" =~ ^(test|production)$ ]] || { echo "[website] Ungültige Zielumgebung: $target_environment" >&2; exit 2; }
+ artifact="$(realpath "$artifact")"; checksum="$(realpath "${checksum:-$artifact.sha256}")"
+ [[ -f "$artifact" && -f "$checksum" ]] || { echo "[website] Artefakt oder Prüfsumme fehlt." >&2; exit 1; }
+ [[ "$EUID" -eq 0 ]] || {
+-  sudo_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root")
++  sudo_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root" --target-environment "$target_environment")
+   [[ -z "$env_source" ]] || sudo_args+=(--env "$env_source")
+   [[ "$no_backup" == true ]] && sudo_args+=(--no-backup)
+   [[ "$skip_backup" == true ]] && sudo_args+=(--skip-backup)
+@@ -111,9 +113,17 @@ if [[ -z "$env_source" ]]; then
+   env_source="$install_root/shared/.env"
+   env_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-env.sh"
+   [[ -x "$env_prepare" ]] || { echo "[website] Release enthält keinen Environment-Bootstrap." >&2; exit 1; }
+-  "$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt"
++  "$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt" "$target_environment"
+ fi
+ [[ -f "$env_source" ]] || { echo "[website] Environment-Datei fehlt: $env_source" >&2; exit 1; }
++source "$stage/bundle/payload/infrastructure/scripts/lib/env.sh"
++export ENV_FILE="$env_source"
++existing_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
++if [[ -n "$existing_environment" && "$existing_environment" != "$target_environment" ]]; then
++  die "Bestehende Installation ist als $existing_environment markiert und darf nicht in $target_environment umgewidmet werden. Verwende getrennte Installationsroots/Server."
++fi
++set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
++validate_env
+ tls_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-tls.sh"
+ [[ -x "$tls_prepare" ]] || { echo "[website] Release enthält keinen TLS-Bootstrap." >&2; exit 1; }
+ "$tls_prepare" "$env_source" "$install_root/shared"
+diff --git a/infrastructure/scripts/tls/sync-certificate.sh b/infrastructure/scripts/tls/sync-certificate.sh
+index 74c2f02..13cbba1 100755
+--- a/infrastructure/scripts/tls/sync-certificate.sh
++++ b/infrastructure/scripts/tls/sync-certificate.sh
+@@ -8,6 +8,9 @@ cert_name="$(read_env LETSENCRYPT_CERT_NAME)"
+ [[ -n "$cert_name" ]] || cert_name="$(read_env APP_HOSTNAME)"
+ lineage="${RENEWED_LINEAGE:-$CERTBOT_CONFIG_DIR/live/$cert_name}"
+ [[ -s "$lineage/fullchain.pem" && -s "$lineage/privkey.pem" ]] || die "Let's-Encrypt-Zertifikat nicht gefunden: $lineage"
++hostname="$(read_env APP_HOSTNAME)"
++source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib/host" && pwd)/tls.sh"
++verify_tls_material "$lineage/fullchain.pem" "$lineage/privkey.pem" "$hostname" 604800
+ 
+ certificate_dir="$INFRA_DIR/data/certs"
+ temporary_fullchain="$(mktemp "$certificate_dir/.fullchain.pem.XXXXXX")"
+diff --git a/openapi/openapi.json b/openapi/openapi.json
+index fc6f00b..99cee0c 100644
+--- a/openapi/openapi.json
++++ b/openapi/openapi.json
+@@ -12010,7 +12010,7 @@
+   "info": {
+     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
+     "title": "Royal Blackwater Fleet",
+-    "version": "1.0.9"
++    "version": "1.0.10"
+   },
+   "openapi": "3.1.0",
+   "paths": {
+diff --git a/spring-api/pom.xml b/spring-api/pom.xml
+index 91f7f32..c9e5add 100644
+--- a/spring-api/pom.xml
++++ b/spring-api/pom.xml
+@@ -11,7 +11,7 @@
+ 
+     <groupId>eu.royalblackwater</groupId>
+     <artifactId>rbf-api</artifactId>
+-    <version>1.0.9</version>
++    <version>1.0.10</version>
+     <name>Royal Blackwater Fleet API</name>
+     <description>Production backend for the Royal Blackwater Fleet portal.</description>
+ 
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileAssetService.java b/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileAssetService.java
+index 5b59cd2..28b26ba 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileAssetService.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileAssetService.java
+@@ -90,7 +90,7 @@ public class FileAssetService {
+             registerRollbackCleanup(target);
+             String relativePath = root.relativize(target).toString().replace('\\', '/');
+             long id = repository.insertReturningId(FileAssetQueries.UPLOAD_INSERT_01, Map.of(
+-                            "ownerId", owner.id(), "originalName", safeOriginalName(upload, storedName),
++                            "ownerId", owner.id(), "originalName", FileTypePolicy.sanitizeOriginalName(upload.getOriginalFilename(), storedName),
+                             "storedName", storedName, "relativePath", relativePath, "mimeType", detectedType,
+                             "sizeBytes", Files.size(target), "context", normalizedContext,
+                             "public", "master-data".equals(normalizedContext), "createdAt", createdAt));
+@@ -273,12 +273,6 @@ public class FileAssetService {
+     }
+ 
+     private static String normalizedType(String value) { return value == null ? "" : value.split(";", 2)[0].strip().toLowerCase(); }
+-    private static String safeOriginalName(MultipartFile upload, String fallback) {
+-        String value = upload.getOriginalFilename();
+-        if (value == null || value.isBlank()) return fallback;
+-        String name = Path.of(value).getFileName().toString();
+-        return name.length() > 255 ? name.substring(0, 255) : name;
+-    }
+     private static List<Long> distinctPositive(List<Long> ids) {
+         if (ids == null) return List.of();
+         LinkedHashSet<Long> values = new LinkedHashSet<>();
+diff --git a/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileTypePolicy.java b/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileTypePolicy.java
+index 3e40e78..a191716 100644
+--- a/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileTypePolicy.java
++++ b/spring-api/src/main/java/eu/royalblackwater/api/files/service/FileTypePolicy.java
+@@ -2,6 +2,7 @@ package eu.royalblackwater.api.files.service;
+ 
+ import java.io.IOException;
+ import java.nio.charset.StandardCharsets;
++import java.text.Normalizer;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.util.Map;
+@@ -33,6 +34,20 @@ public final class FileTypePolicy {
+         return extension;
+     }
+ 
++
++    static String sanitizeOriginalName(String filename, String fallback) {
++        if (filename == null || filename.isBlank()) return fallback;
++        String leaf = filename.replace('\\', '/');
++        leaf = leaf.substring(leaf.lastIndexOf('/') + 1);
++        String normalized = Normalizer.normalize(leaf, Normalizer.Form.NFC)
++                .replaceAll("[\\p{Cc}\\p{Cf}]", "")
++                .replaceAll("[<>:\"/\\\\|?*]", "_")
++                .strip();
++        while (normalized.startsWith(".")) normalized = normalized.substring(1).stripLeading();
++        if (normalized.isBlank() || ".".equals(normalized) || "..".equals(normalized)) return fallback;
++        return normalized.length() > 180 ? normalized.substring(0, 180) : normalized;
++    }
++
+     static String validate(Path path, String extension, String declaredType) throws IOException {
+         String normalized = declaredType == null ? "" : declaredType.split(";", 2)[0].strip().toLowerCase();
+         if (!ALLOWED.getOrDefault(extension, Set.of()).contains(normalized)) {

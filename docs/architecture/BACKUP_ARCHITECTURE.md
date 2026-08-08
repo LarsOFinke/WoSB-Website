@@ -13,3 +13,14 @@ The API only creates a signed intent file. A root-owned runner validates ownersh
 Database restore always imports into a staging database first. The active Spring image applies and validates Flyway, reaches readiness, and only then may the staging database be atomically activated. A failed activation restores the previous database.
 
 Recovery bundles are encrypted with `age`, contain a complete SHA-256 inventory, reject links and special entries during extraction, and can be verified without modifying production.
+
+## Partial logical migration is not disaster recovery
+
+A build-only recovery from a legacy Python dump is handled as a reviewed logical
+data migration, not by restoring the old database over the current installation.
+The target remains on the current Flyway schema and current master data; only the
+required aggregate is reconstructed using semantic references and explicit owner
+mapping. The exact migration artifact must pass a transactional dry-run and a
+committed verification on the test server before the same artifact can be used
+on production. See
+[`../debugging/LEGACY_BUILD_DATA_MIGRATION.md`](../debugging/LEGACY_BUILD_DATA_MIGRATION.md).

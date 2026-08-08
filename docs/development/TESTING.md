@@ -181,3 +181,17 @@ critical browser flows and a production build. Backend changes require Maven
 compilation/tests and, when persistence is involved, PostgreSQL/Testcontainers.
 Infrastructure changes require the infrastructure/update contract suites; backup,
 migration or recovery changes also require the recovery tests.
+
+## Daily dependency vulnerability cache and temporary suppressions
+
+The `Security` GitHub Actions workflow refreshes OWASP Dependency-Check's NVD/cache data **daily at 04:17 UTC** and then scans the Spring dependency graph from that refreshed cache. The cache is stored under Maven's Dependency-Check data directory and uses a date-scoped GitHub Actions cache key so the previous day's database can be restored and incrementally refreshed instead of performing a cold NVD import on every run.
+
+Dependency suppressions are exceptional and must remain narrow, documented, time-bounded, and self-removing. The current `spring-api/dependency-check-suppressions.xml` entry for **CVE-2026-66299** applies only to `org.apache.tomcat.embed:tomcat-embed-core:11.0.24`. Apache documents the issue as affecting the Tomcat WebSocket chat **example application**; WoSB embeds Tomcat and does not package or deploy the Tomcat examples web application. The suppression therefore records an applicability decision rather than lowering the global CVSS gate.
+
+The suppression must be removed as soon as embedded Tomcat is **11.0.25 or newer**, or immediately if Apache broadens the affected scope. CI uses `failBuildOnUnusedSuppressionRule=true`, so an upgrade that makes the exact `11.0.24` suppression unused intentionally breaks the security job until the obsolete rule is deleted. The rule also expires on **2026-09-08 UTC** as a second fail-closed review deadline. Do not extend that date without re-reading the upstream Apache advisory and recording a new review.
+
+The normal high-severity gate remains `failBuildOnCVSS=7`. Never suppress by broad CVSS range, wildcard vulnerability name, entire Tomcat family, or generic CPE just to make CI green.
+
+### Security operations fixtures
+
+`infrastructure/scripts/quality/tests/tls-environment-safety.sh` is the regression gate for Test/Production TLS isolation. It functionally validates certificate/key/hostname matching and statically requires Production to reject self-signed/ACME-staging configuration. `frontend/tests/fileUploadSecurity.test.mjs` keeps browser-side upload limits aligned with the backend envelope; backend type/signature/quota checks remain authoritative. Mandatory infrastructure quality gates must only depend on declared baseline host tools; the TLS gate uses `grep` rather than optional developer tooling such as `ripgrep`, because `update.sh` executes the same gate on deployment hosts.

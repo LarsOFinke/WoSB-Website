@@ -50,7 +50,10 @@ grep -q 'RBF_DEPLOY_IDENTITY_FILE' "$ROOT_DIR/infrastructure/scripts/release/dep
 grep -q -- '-o BatchMode=yes' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q -- '-o IdentitiesOnly=yes' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'discover_identity_file' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
-grep -q 'RBF_DEPLOY_USER=rbfadmin' "$ROOT_DIR/.env.origin.example"
+grep -q 'RBF_DEPLOY_USER=rbfadmin' "$ROOT_DIR/.env.origin.test.example"
+grep -q 'RBF_DEPLOY_USER=rbfadmin' "$ROOT_DIR/.env.origin.production.example"
+grep -q 'target_environment="$RBF_ORIGIN_TARGET"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q '\.env.origin.\$target_environment' "$ROOT_DIR/infrastructure/scripts/lib/origin-target.sh"
 grep -q -- '--configure' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'sudo -n' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q -- '--bootstrap-user' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
@@ -59,4 +62,8 @@ grep -q 'provision-ssh-admin.sh' "$ROOT_DIR/infrastructure/scripts/release/deplo
 grep -q 'bootstrap_user.*== root' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_deploy_identity' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_bootstrap_access' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+
+grep -q -- '--target-environment "$target_environment"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'DEPLOYMENT_ENVIRONMENT' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh"
+! grep -q '127.0.0.1:${POSTGRES_LOCAL_PORT:-15432}:5432' "$ROOT_DIR/infrastructure/compose.release.yml"
 printf '[updates] OK: compiled artifact inventory, tamper detection and operation contract\n'

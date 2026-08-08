@@ -298,6 +298,18 @@ smoke_args=()
 [[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
 timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
 
+if [[ "$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$/, "", $2); gsub(/^"|"$/, "", $2); print $2; exit}' "$shared/.env")" == production ]]; then
+  echo "[release] Finalisiere öffentliches Production-TLS innerhalb der atomaren Aktivierung."
+  RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
+    set -Eeuo pipefail
+    source "$1/scripts/lib/env.sh"
+    source "$1/scripts/lib/host/tls.sh"
+    configure_production_tls
+    [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production-TLS wurde nicht aktiviert."
+    "$1/scripts/checks/smoke-test.sh"
+  ' _ "$install_root/current/infrastructure"
+fi
+
 install -m 0600 "$artifact_copy" "$shared/release-artifacts/current.tar.gz"
 (cd "$shared/release-artifacts" && sha256sum current.tar.gz > current.tar.gz.sha256)
 printf '%s\n' "$version" > "$shared/current-version"

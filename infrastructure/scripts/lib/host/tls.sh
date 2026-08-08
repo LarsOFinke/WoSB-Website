@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+
+verify_tls_material() {
+  local certificate="$1" private_key="$2" hostname="$3" minimum_seconds="${4:-604800}"
+  [[ -s "$certificate" && -s "$private_key" ]] || die "TLS-Zertifikat oder privater Schlüssel fehlt."
+  require_command openssl
+  openssl x509 -in "$certificate" -noout -checkhost "$hostname" >/dev/null 2>&1 \
+    || die "TLS-Zertifikat gilt nicht für APP_HOSTNAME=$hostname."
+  local cert_key private_key_fingerprint
+  cert_key="$(openssl x509 -in "$certificate" -pubkey -noout | openssl pkey -pubin -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
+  private_key_fingerprint="$(openssl pkey -in "$private_key" -pubout -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
+  [[ -n "$cert_key" && "$cert_key" == "$private_key_fingerprint" ]] \
+    || die "TLS-Zertifikat und privater Schlüssel gehören nicht zusammen."
+  openssl x509 -in "$certificate" -checkend "$minimum_seconds" -noout >/dev/null 2>&1 \
+    || die "TLS-Zertifikat ist abgelaufen oder unterschreitet die Mindestrestlaufzeit."
+}
+
 generate_self_signed_certificate() {
   local hostname ip cert_dir config_file error_file
   hostname="$(read_env APP_HOSTNAME)"

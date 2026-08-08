@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd https://dependency-check.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+    <suppress until="2026-09-08Z">
+        <notes><![CDATA[
+        Reviewed 2026-08-08.
+        CVE-2026-66299 affects the Apache Tomcat WebSocket chat example application.
+        WoSB uses embedded Tomcat and does not package or deploy the Tomcat examples web application.
+        Apache states installations without the examples web application are not affected.
+
+        Removal condition:
+        - remove this suppression as soon as embedded Tomcat is >= 11.0.25, or
+        - remove/review it immediately if Apache changes the affected scope.
+
+        CI runs Dependency-Check daily with failBuildOnUnusedSuppressionRule=true. Therefore an
+        upgrade that makes this rule unused intentionally fails the security job until this entry
+        is deleted. The explicit expiry is a second fail-closed review deadline.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-core@11\.0\.24$</packageUrl>
+        <cve>CVE-2026-66299</cve>
+    </suppress>
+</suppressions>

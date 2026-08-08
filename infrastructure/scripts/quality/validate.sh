@@ -23,6 +23,7 @@ elif [[ "$MODE" == full ]]; then
 fi
 bash "$ROOT_DIR/infrastructure/scripts/quality/tests/infrastructure.sh"
 bash "$ROOT_DIR/infrastructure/scripts/quality/tests/update-management.sh"
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/tls-environment-safety.sh"
 python3 -c 'import pytest' 2>/dev/null || {
   echo '[test] pytest is required; install CI test dependencies with: python3 -m pip install -r requirements-ci.txt' >&2
   exit 1

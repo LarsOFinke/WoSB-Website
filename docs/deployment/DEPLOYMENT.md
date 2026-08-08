@@ -10,27 +10,39 @@ bash ./deploy.sh
 
 The resulting `rbf-deployment-<version>.tar.gz` contains compiled artifacts, minimal runtime Dockerfiles, Compose configuration and version-matched operations scripts. Every file is listed with size and SHA-256 in `manifest.json` and `SHA256SUMS`.
 
-Vom Ursprungsserver aus kann der Transfer interaktiv mit `./deploy.sh`
-gestartet werden. Dabei werden Artefakt, Prüfsumme, der Website-Setup-Wrapper
-und der Verifier per SSH zum Webseitenserver übertragen; dort übernimmt der
-Wrapper die Zielserver-Installation. Für CI stehen entsprechende
+Vom Ursprungsserver aus ist der **Testserver das Standardziel**. `./deploy.sh`
+und `./update.sh` laden `.env.origin.test`; Production wird ausschließlich durch
+das explizite Flag `--production` ausgewählt und lädt
+`.env.origin.production`. Dabei werden Artefakt, Prüfsumme, Website-Setup-Wrapper
+und Verifier per SSH zum gewählten Zielserver übertragen. Für CI stehen dieselben
 Flags zur Verfügung.
+
+```bash
+# Test (Standard)
+./deploy.sh
+./update.sh
+
+# Production (immer explizit)
+./deploy.sh --production
+./update.sh --production
+```
+
 Der Zielserver-Bootstrap installiert fehlende Docker-/Compose-Abhängigkeiten
 über den bestehenden Host-Paketpfad; `--skip-host` deaktiviert dies explizit.
-Die erste interaktive Ausführung legt dafür `.env.origin` (chmod 600) an.
-Spätere `deploy`-/`update`-Aufrufe laden diese Konfiguration automatisch;
-Flags überschreiben einzelne Werte.
+Die beiden privaten Origin-Dateien werden mit Modus `0600` gepflegt. Vorlagen:
+`.env.origin.test.example` und `.env.origin.production.example`.
 
 `deploy.sh` und `update.sh` werden auf dem Ursprungsrechner als normaler Benutzer
-und ohne `sudo` ausgeführt. Sobald `.env.origin` existiert, läuft ein Aufruf ohne
-Flags vollständig nicht-interaktiv. Der Einrichtungsdialog kann bei einer
-geänderten Zielmaschine gezielt mit `./deploy.sh --configure` erneut gestartet
-werden. Vor dem Build prüft der Dispatcher den Schlüsselzugang und
-`sudo -n`; dadurch scheitert eine unvollständige Zielprovisionierung sofort und
-ohne lokale oder entfernte Passwortabfrage.
+und ohne `sudo` ausgeführt. Sobald das ausgewählte Profil existiert, läuft der
+Aufruf nicht-interaktiv. Test wird mit `./deploy.sh --configure` eingerichtet;
+Production bewusst nur mit `./deploy.sh --production --configure`. Vor dem Build
+prüft der Dispatcher Schlüsselzugang und `sudo -n`; dadurch scheitert eine
+unvollständige Zielprovisionierung sofort und ohne Passwortabfrage.
 
-`./infrastructure/scripts/diagnostics/debug.sh` verwendet dieselbe `.env.origin` und denselben dedizierten SSH-Key
-für ausschließlich lesende Zielsystemdiagnosen. Im Unterschied zum Deployment
+`./infrastructure/scripts/diagnostics/debug.sh` folgt derselben Zielauswahl:
+Test ohne Flag, Production mit `--production`. Es verwendet den jeweils
+zugehörigen dedizierten SSH-Key für ausschließlich lesende Zielsystemdiagnosen.
+Im Unterschied zum Deployment
 streamt es einen kleinen Collector über SSH, legt auf dem Ziel keine Datei ab und
 speichert nur die begrenzte, redigierte Ausgabe lokal am Ursprung. Bedienung und
 Filter stehen in [OPERATIONS.md](OPERATIONS.md#logs).
@@ -43,7 +55,8 @@ Dateirechten erzeugen. Dieser Key ist absichtlich ohne Passphrase, damit später
 automatisierte Updates keinen interaktiven Secret-Dialog benötigen; der
 Ursprungsrechner und sein Benutzerkonto müssen entsprechend geschützt sein.
 Initialbenutzer und Bootstrap-Identity gelten nur für diesen Einrichtungslauf
-und werden nicht in `.env.origin` gespeichert. Auf einer wirklich neuen
+und werden weder in `.env.origin.test` noch `.env.origin.production` gespeichert.
+Auf einer wirklich neuen
 Anwendungsinstallation verifiziert der Release-Installer zusätzlich die erzeugten
 `SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` direkt über `/api/auth/login`. Diese
 Prüfung wird bei Updates bewusst nicht wiederholt, weil das Seed-Passwort nach der
@@ -61,8 +74,8 @@ führen den Provisioner über `sudo` aus. Über diese ausdrücklich freigegebene
 Verbindung überträgt der Dispatcher nur Provisioner und Public Key, richtet
 `rbfadmin` ein, lädt die geprüfte SSH-Konfiguration neu und verifiziert den
 Key-only-Zugang. Anschließend setzt derselbe `deploy.sh`-Lauf mit Build, Transfer
-und Installation fort. Der Initialbenutzer wird weder in `.env.origin` gespeichert
-noch für spätere Updates verwendet.
+und Installation fort. Der Initialbenutzer wird in keinem Origin-Profil gespeichert
+und nicht für spätere Updates verwendet.
 
 Beispiele:
 
@@ -75,12 +88,35 @@ Beispiele:
   --bootstrap-identity-file ~/.ssh/provider-vps
 ```
 
-Der vollständige First-Run-Dialog legt den getrennten Host-Administrator und
-seinen Schlüsselzugang an:
+Die vollständigen First-Run-Dialoge legen den getrennten Host-Administrator und
+seinen Schlüsselzugang pro Ziel an:
 
 ```bash
+# Test
 ./deploy.sh --configure
+
+# Production
+./deploy.sh --production --configure
 ```
+
+### Migration von der bisherigen `.env.origin`
+
+Die alte Einzeldatei wird absichtlich **nicht automatisch übernommen**, weil ein
+Fallback den neuen Test-Default versehentlich auf Production zeigen lassen könnte.
+Wenn die bisherige `.env.origin` den Production-Server beschreibt, migriere sie
+einmalig bewusst:
+
+```bash
+cp .env.origin .env.origin.production
+chmod 600 .env.origin.production
+cp .env.origin.test.example .env.origin.test
+chmod 600 .env.origin.test
+# anschließend Testwerte in .env.origin.test eintragen oder ./deploy.sh --configure verwenden
+```
+
+Danach kann die alte `.env.origin` lokal entfernt werden. Sie wird von den
+öffentlichen Deployment-/Update-Einstiegen nicht mehr als implizites Zielprofil
+verwendet.
 
 Für nicht-interaktive Provider-Zugänge stehen zusätzlich `--bootstrap-user`
 und `--bootstrap-identity-file` zur Verfügung. Der interne
@@ -95,7 +131,8 @@ Sitzung getestet werden; erst danach dürfen globale Root-/Passwort-SSH-Zugänge
 deaktiviert werden.
 
 Der Ursprungs-Dispatcher verwendet für diesen Zugang `RBF_DEPLOY_USER` und
-`RBF_DEPLOY_IDENTITY_FILE` aus `.env.origin` (Dateimodus `0600`). Ohne explizite
+`RBF_DEPLOY_IDENTITY_FILE` aus dem ausgewählten `.env.origin.test`- oder
+`.env.origin.production`-Profil (Dateimodus `0600`). Ohne explizite
 Werte wird `rbfadmin` und – sofern vorhanden – `$HOME/.ssh/rbfadmin` automatisch
 verwendet; bei einem abweichenden Zielbenutzer wird entsprechend
 `$HOME/.ssh/<zielbenutzer>` geprüft. Der private Schlüssel bleibt ausschließlich

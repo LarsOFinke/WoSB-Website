@@ -5,11 +5,12 @@ stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
 
 ## Einstiegspunkte
 
-- `../../deploy.sh --configure` ist der öffentliche First-Run-Aufruf.
-- `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`.
-  Beide Namen bleiben als kompatible Benutzerverträge erhalten.
-- `diagnostics/debug.sh` sammelt über dieselbe Origin-Verbindung begrenzte,
-  redigierte Zielsystemdiagnosen und speichert sie ausschließlich am Ursprung.
+- `../../deploy.sh --configure` richtet den Testserver ein; Test ist Standard.
+- `../../deploy.sh --production --configure` richtet Production explizit ein.
+- `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`;
+  Production erfordert bei jedem Lauf `--production`.
+- `diagnostics/debug.sh` folgt derselben Zielauswahl und sammelt begrenzte,
+  redigierte Zielsystemdiagnosen ausschließlich am Ursprung.
 - `../setup.sh` delegiert intern an `setup/` und wird nur von lokalen
   Entwicklungs- und Artefaktabläufen aufgerufen.
 - `release/build-artifact.sh` baut und validiert das kompilierte Deployment-Artefakt.

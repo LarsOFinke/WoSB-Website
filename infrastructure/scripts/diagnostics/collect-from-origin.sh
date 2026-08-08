@@ -3,7 +3,11 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-config_file="${RBF_ORIGIN_CONFIG:-$ROOT_DIR/.env.origin}"
+# shellcheck source=../lib/origin-target.sh
+source "$SCRIPT_DIR/../lib/origin-target.sh"
+rbf_origin_select_target "$ROOT_DIR" "$@"
+target_environment="$RBF_ORIGIN_TARGET"; config_file="$RBF_ORIGIN_CONFIG_FILE"
+target_cli_flag=""; [[ "$target_environment" != production ]] || target_cli_flag=" --production"
 area=""; category=""; since="30m"; tail_lines="400"; match=""; output=""
 
 usage() {
@@ -13,18 +17,21 @@ Usage: infrastructure/scripts/diagnostics/debug.sh [OPTIONS]
 Collects a bounded, redacted diagnostic log on the origin system through the
 existing deployment SSH identity. Without --area an interactive menu is shown.
 
+  --test               Testserver verwenden (Standard)
+  --production         Production-Server verwenden
   --area AREA          overview|staff|calendar|api|security|gateway|database|deployment|all
   --category CATEGORY  errors|warnings|http-500|auth|migration|all (default: errors)
   --since DURATION     positive duration such as 15m, 2h or 1d (default: 30m)
   --tail LINES         maximum lines per remote source, 1..2000 (default: 400)
   --match TEXT         optional additional literal match, maximum 120 characters
   --output FILE        local output path; '-' writes only to stdout
-  --config FILE        origin connection file (default: .env.origin)
+  --config FILE        origin connection file (overrides target default)
 EOF
 }
 
 while (($#)); do
   case "$1" in
+    --test|--production) shift ;;
     --area) area="${2:-}"; shift 2 ;;
     --category) category="${2:-}"; shift 2 ;;
     --since) since="${2:-}"; shift 2 ;;
@@ -92,9 +99,13 @@ case "$category" in errors|warnings|http-500|auth|migration|all) ;; *) echo "[de
 [[ "$tail_lines" =~ ^[0-9]+$ && "$tail_lines" -ge 1 && "$tail_lines" -le 2000 ]] \
   || { echo '[debug] --tail muss zwischen 1 und 2000 liegen.' >&2; exit 2; }
 [[ "$match" != *$'\n'* && ${#match} -le 120 ]] || { echo '[debug] --match ist zu lang oder mehrzeilig.' >&2; exit 2; }
-[[ -f "$config_file" ]] || { echo "[debug] Origin-Konfiguration fehlt: $config_file" >&2; exit 1; }
+[[ -f "$config_file" ]] || {
+  echo "[debug:$target_environment] Origin-Konfiguration fehlt: $config_file" >&2
+  echo "[debug:$target_environment] Richte das Ziel zuerst mit ./deploy.sh${target_cli_flag} --configure ein." >&2
+  exit 1
+}
 
-# .env.origin is an owner-only shell configuration created by deploy.sh.
+# The selected .env.origin.<target> file is owner-only and created by deploy.sh.
 # shellcheck disable=SC1090
 source "$config_file"
 host="${RBF_DEPLOY_HOST:-}"; user="${RBF_DEPLOY_USER:-rbfadmin}"
@@ -118,8 +129,8 @@ for word in "${remote_command[@]}"; do printf -v quoted ' %q' "$word"; remote_li
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 if [[ -z "$output" ]]; then output="$ROOT_DIR/.diagnostics/${timestamp}-${area}-${category}.log"; fi
 collect() {
-  printf 'RBF_ORIGIN_DIAGNOSTIC=1\ncollected_at=%s\narea=%s\ncategory=%s\nsince=%s\ntail=%s\n' \
-    "$timestamp" "$area" "$category" "$since" "$tail_lines"
+  printf 'RBF_ORIGIN_DIAGNOSTIC=1\ntarget_environment=%s\ncollected_at=%s\narea=%s\ncategory=%s\nsince=%s\ntail=%s\n' \
+    "$target_environment" "$timestamp" "$area" "$category" "$since" "$tail_lines"
   # remote_line is assembled with printf %q from validated arguments.
   # shellcheck disable=SC2029
   ssh "${ssh_args[@]}" "$user@$host" "$remote_line" < "$SCRIPT_DIR/collect-remote.sh"

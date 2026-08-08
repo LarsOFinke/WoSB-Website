@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-config_file="${RBF_ORIGIN_CONFIG:-$ROOT_DIR/.env.origin}"
+# shellcheck source=../lib/origin-target.sh
+source "$SCRIPT_DIR/../lib/origin-target.sh"
+rbf_origin_select_target "$ROOT_DIR" "$@"
+target_environment="$RBF_ORIGIN_TARGET"; config_file="$RBF_ORIGIN_CONFIG_FILE"
+origin_prefix="[origin:$target_environment]"
 if [[ "$EUID" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != root ]]; then
-  echo "[origin] Hinweis: deploy.sh benötigt lokal kein sudo; führe den Transfer als $SUDO_USER aus." >&2
+  echo "$origin_prefix Hinweis: deploy.sh benötigt lokal kein sudo; führe den Transfer als $SUDO_USER aus." >&2
   user_group="$(id -gn "$SUDO_USER")"
   if [[ -f "$config_file" ]]; then
     chown "$SUDO_USER:$user_group" "$config_file"
@@ -20,7 +24,7 @@ if [[ "$EUID" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != root ]]; then
 fi
 artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; no_backup=false; automated=false
 interactive=false; configure=false
-usage(){ echo "Usage: deploy.sh|update.sh [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE]" >&2; exit 2; }
+usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE]" >&2; exit 2; }
 discover_identity_file() {
   [[ -n "$identity_file" ]] && return 0
   [[ -n "${HOME:-}" && -n "$user" ]] || return 0
@@ -59,6 +63,7 @@ configure_bootstrap_access() {
 }
 initial_argument_count=$#
 while (($#)); do case "$1" in
+  --test|--production) shift;;
   --configure) configure=true; shift;;
   --artifact) artifact="${2:-}"; automated=true; shift 2;; --host) host="${2:-}"; shift 2;; --user) user="${2:-}"; shift 2;;
   --bootstrap-user) bootstrap_user="${2:-}"; shift 2;;
@@ -69,7 +74,12 @@ while (($#)); do case "$1" in
   --install-root) install_root="${2:-}"; automated=true; shift 2;; --no-backup) no_backup=true; automated=true; shift;;
   --config) config_file="${2:-}"; shift 2;;
   -h|--help) usage;; *) usage;; esac; done
-if [[ -f "$config_file" ]]; then
+if [[ -e "$config_file" ]]; then
+  [[ -f "$config_file" && ! -L "$config_file" ]] || { echo "$origin_prefix Origin-Konfiguration muss eine reguläre, nicht verlinkte Datei sein: $config_file" >&2; exit 1; }
+  config_mode="$(stat -c '%a' "$config_file")"
+  [[ "$config_mode" == 600 ]] || { echo "$origin_prefix Unsichere Rechte für $config_file ($config_mode); erwartet 600." >&2; exit 1; }
+  config_owner="$(stat -c '%u' "$config_file")"
+  [[ "$config_owner" == "$(id -u)" ]] || { echo "$origin_prefix Origin-Konfiguration gehört nicht dem aufrufenden Benutzer." >&2; exit 1; }
   # shellcheck disable=SC1090
   source "$config_file"
   host="${host:-${RBF_DEPLOY_HOST:-}}"; user="${user:-${RBF_DEPLOY_USER:-rbfadmin}}"
@@ -78,7 +88,17 @@ if [[ -f "$config_file" ]]; then
   install_root="${install_root:-${RBF_DEPLOY_INSTALL_ROOT:-}}"; env_source="${env_source:-${RBF_DEPLOY_ENV_SOURCE:-}}"
 fi
 port="${port:-22}"; remote_dir="${remote_dir:-/tmp/rbf-release}"
-if [[ "$configure" == true || ( "$initial_argument_count" -eq 0 && ! -f "$config_file" ) ]]; then interactive=true; fi
+if [[ "$configure" == true || ( "$target_environment" == test && "$initial_argument_count" -eq 0 && ! -f "$config_file" ) ]]; then
+  interactive=true
+elif [[ ! -f "$config_file" && -z "$host" ]]; then
+  echo "$origin_prefix Origin-Konfiguration fehlt: $config_file" >&2
+  if [[ "$target_environment" == production ]]; then
+    echo "$origin_prefix Production wird nur nach explizitem './deploy.sh --production --configure' eingerichtet." >&2
+  else
+    echo "$origin_prefix Richte das Ziel mit './deploy.sh --configure' ein." >&2
+  fi
+  exit 1
+fi
 if [[ "$interactive" == true ]]; then
   [[ -t 0 && -t 1 ]] || { echo "[origin] Ohne Flags benötigt deploy ein interaktives Terminal." >&2; exit 2; }
   read -r -p "Webseitenserver [${host}]: " answer; host="${answer:-$host}"
@@ -112,7 +132,7 @@ EOF
   mv -f "$temporary" "$config_file"
   chmod 0600 "$config_file"
 fi
-[[ "$EUID" -ne 0 ]] || echo "[origin] Hinweis: deploy.sh benötigt lokal kein sudo." >&2
+[[ "$EUID" -ne 0 ]] || echo "$origin_prefix Hinweis: deploy.sh benötigt lokal kein sudo." >&2
 [[ -z "$identity_file" || -f "$identity_file" ]] || { echo "[origin] SSH-Identity-Datei fehlt: $identity_file" >&2; exit 1; }
 ssh_args=(-o BatchMode=yes -o IdentitiesOnly=yes -p "$port")
 scp_args=(-o BatchMode=yes -o IdentitiesOnly=yes -P "$port")
@@ -121,7 +141,9 @@ if [[ -n "$identity_file" ]]; then
   scp_args+=(-i "$identity_file")
 fi
 identity_label="${identity_file:-SSH-Agent}"
-echo "[origin] Prüfe Schlüsselzugang: $user@$host:$port (Identity: $identity_label)."
+echo "$origin_prefix Zielprofil=$target_environment Konfiguration=$config_file"
+[[ "$target_environment" != production ]] || echo "$origin_prefix PRODUCTION-Ziel explizit ausgewählt."
+echo "$origin_prefix Prüfe Schlüsselzugang: $user@$host:$port (Identity: $identity_label)."
 bootstrap_deploy_access() (
   set -Eeuo pipefail
   [[ -n "$identity_file" ]] || { echo "[origin] Für den Bootstrap ist eine feste private Identity-Datei erforderlich." >&2; exit 1; }
@@ -217,9 +239,9 @@ scp "${scp_args[@]}" "$artifact" "$checksum" \
 cleanup_command=(sudo -n bash "$remote_dir/cleanup-failed-release.sh" --if-present --yes)
 [[ -z "$install_root" ]] || cleanup_command+=(--install-root "$install_root")
 cleanup_line=""; for word in "${cleanup_command[@]}"; do printf -v quoted ' %q' "$word"; cleanup_line+="$quoted"; done
-echo "[origin] Bereinige fehlgeschlagene, nicht aktive Releases auf dem Zielserver (falls vorhanden)."
+echo "$origin_prefix Bereinige fehlgeschlagene, nicht aktive Releases auf dem Zielserver (falls vorhanden)."
 ssh "${ssh_args[@]}" "$user@$host" "$cleanup_line"
-remote_command=(sudo -n bash "$remote_dir/setup_website.sh")
+remote_command=(sudo -n bash "$remote_dir/setup_website.sh" --target-environment "$target_environment")
 remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
 if [[ "$automated" == true ]]; then
   [[ -z "$install_root" ]] || remote_command+=(--install-root "$install_root")

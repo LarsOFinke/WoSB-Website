@@ -28,6 +28,7 @@ PATH="$work/bin:$PATH" RBF_TEST_SSH_ARGS="$work/ssh.args" \
   --config "$work/origin.env" --area calendar --category http-500 --since 15m --tail 20 \
   --match calendar --output "$work/result.log" >/dev/null
 grep -q 'api_error status=500' "$work/result.log"
+grep -q 'target_environment=test' "$work/result.log"
 grep -q '<redacted-ip>' "$work/result.log"
 grep -q '<redacted-email>' "$work/result.log"
 grep -q 'start=<redacted>' "$work/result.log"

@@ -33,6 +33,7 @@
 | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
 | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
 | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
+| Legacy-Datenmigration | `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md` |
 | Tests | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
@@ -138,11 +139,15 @@ allein ableiten.
   beide delegieren an `infrastructure/scripts/release/deploy-from-origin.sh`.
   Produktionsdiagnosen starten direkt über
   `infrastructure/scripts/diagnostics/debug.sh`.
-- `./deploy.sh --configure` ist der vollständige interaktive First Run: Ziel,
-  dedizierter `rbfadmin`, optional erzeugter Ed25519-Key, einmaliger VPS-
-  Bootstrap-Zugang und Deployment laufen in einem Ablauf. Bootstrap-Zugangsdaten
-  werden nicht in `.env.origin` persistiert. Normale Folgeläufe verwenden nur den
-  geprüften Key-Zugang und `sudo -n`.
+- `./deploy.sh --configure` ist der vollständige interaktive First Run für den
+  **Testserver**. Production wird ausschließlich mit
+  `./deploy.sh --production --configure` eingerichtet. Bootstrap-Zugangsdaten
+  werden nicht persistiert; normale Folgeläufe verwenden nur den geprüften
+  Key-Zugang und `sudo -n`.
+- Origin-Ziele sind strikt getrennt: `.env.origin.test` ist der Default für
+  `deploy.sh`, `update.sh` und Diagnostics; `.env.origin.production` wird nur
+  nach explizitem `--production` geladen. Keine automatische Legacy-Fallback-
+  Auswahl auf `.env.origin` zulassen.
 - Das interne Setup ist unter
   `infrastructure/scripts/setup/{options,workflow,main}.sh` getrennt.
 - Host-Helfer liegen unter `infrastructure/scripts/lib/host/` (Pakete, Storage,
@@ -158,13 +163,19 @@ allein ableiten.
 - Die API führt keine privilegierten Host-Befehle aus. Sie schreibt restriktive
   JSON-Anforderungen in eine Inbox; root-eigene systemd-Runner übernehmen sie.
 - Produktion nutzt kompilierte, prüfsummenbewehrte, source-freie Artefakte.
-  Ursprungstransfer: `./deploy.sh`; Update: `./update.sh`; Zielserver-Wrapper:
-  `infrastructure/scripts/release/setup_website.sh`.
-  Origin-Verbindung wird interaktiv in `.env.origin` gespeichert
-  (`.env.origin.example` ist die Vorlage).
+  Ursprungstransfer: `./deploy.sh`; Update: `./update.sh`; beide verwenden ohne
+  Flag den Testserver. Production erfordert `--production`. Zielserver-Wrapper:
+  `infrastructure/scripts/release/setup_website.sh`. Origin-Verbindungen werden
+  getrennt in `.env.origin.test` und `.env.origin.production` gespeichert; die
+  gleichnamigen `.example`-Dateien sind die Vorlagen.
   Verifier und Rollback liegen unter `infrastructure/scripts/release/`.
 - Backup/Restore koppeln Anwendung, Flyway-Schema, persistente Dateien und das
   zugehörige Release-Artefakt. Restore ist gestaged und fail-closed.
+- Ein bewusst begrenzter Legacy-Teilrestore (z. B. Python→Java Builds) ist dagegen eine
+  logische Datenmigration gegen das bereits aktuelle Flyway-Schema: keine alten numerischen
+  FKs, User/Auth-/Masterdata oder DDL übernehmen. Referenzen semantisch auflösen, exakt dieselbe
+  Importdatei erst auf Test und danach Production verwenden und auf beiden Zielen vor Commit einen
+  vollständigen transaktionalen Dry-Run verlangen.
 - Outbound-Netzwerk ist auf explizite Integrationen begrenzt. Webhooks enthalten
   knappe Audit-/Aktionshinweise und dürfen den Hauptablauf nicht unkontrolliert
   blockieren.
@@ -362,3 +373,25 @@ dadurch müssen Branch, Version, Arbeitsbaum und Debugging-Einstiege nicht aus
 `bash .agents/scripts/check-cache.sh` ausführen und die fehlenden Einträge
 fachlich ergänzen. Ein grüner Check beweist Bestandsvollständigkeit, nicht die
 inhaltliche Aktualität der Beschreibung.
+
+### Daily dependency cache check and CVE-2026-66299 suppression
+
+Security dependency analysis is intentionally **daily**, not weekly. `.github/workflows/security.yml` refreshes the OWASP Dependency-Check vulnerability cache first (`dependency-check:update-only`, `nvdValidForHours=0`) and then runs the scan with automatic updating disabled so the analyzed dataset is exactly the refreshed cache. The date-scoped cache under `~/.m2/repository/org/owasp/dependency-check-data` prevents repeated cold NVD imports while still producing a fresh daily cache generation.
+
+`spring-api/dependency-check-suppressions.xml` currently contains one reviewed exception for `CVE-2026-66299` and **only** `pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@11.0.24`. Reason: Apache limits the vulnerability to the WebSocket chat example application; the WoSB Spring Boot runtime embeds Tomcat and does not ship Tomcat's examples webapp. This is an applicability exception, not an acceptance of a vulnerable deployed component.
+
+Removal is mandatory when one of these conditions is reached:
+1. Spring Boot / dependency management resolves embedded Tomcat to **>= 11.0.25**;
+2. Apache changes the advisory so non-example embedded deployments are affected;
+3. the suppression reaches its hard expiry on **2026-09-08 UTC**.
+
+The security workflow sets `failBuildOnUnusedSuppressionRule=true`. Therefore a dependency upgrade that fixes/removes the finding deliberately turns this suppression into a CI failure until the rule is deleted. Agents must **remove** an unused suppression, not weaken that check. Extending the expiry requires a fresh upstream advisory review and an updated explanation in both `.agents/` and `docs/development/TESTING.md`.
+
+### 2026-08-08 security/TLS backlog closure
+
+The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. Production must use a public hostname, `TLS_MODE=letsencrypt` and `LETSENCRYPT_STAGING=false`; test may use staging/self-signed. Never copy certificates from test to production: each target owns `shared/data/{certs,letsencrypt}` and obtains its own certificate. `sync-certificate.sh` validates hostname, key pairing and remaining lifetime before atomic replacement.
+
+Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, Spring multipart and service quota/type/signature layers. Frontend route guards and upload checks are defense-in-depth only; backend authorization and validation remain authoritative. Update activation still requires coordinated pre-deployment backups and restores the previous release/data on failed activation. Debug API 500s through the stateful HTTP integration suites and SQL runtime audit rather than ad-hoc production container sessions.
+### 2026-08-08 deployment-host quality-tool portability
+
+Mandatory `update.sh`/deployment quality gates must not depend on optional developer utilities. In particular, TLS/environment safety checks use baseline `grep` plus `openssl`; `ripgrep` (`rg`) is not a deployment-host prerequisite. If a new mandatory gate needs an external command, either declare/install it explicitly as an infrastructure prerequisite or implement the check with the existing baseline toolset.

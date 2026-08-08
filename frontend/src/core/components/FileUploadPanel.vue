@@ -26,6 +26,7 @@ const error = ref('')
 const acceptAttribute = computed(() => (props.acceptedTypes?.length ? props.acceptedTypes.join(',') : ACCEPT_ATTRIBUTE))
 
 function validationMessage(file, result) {
+  if (result.reason === 'name') return t('files.validation.unsafeName', { name: file.name })
   if (result.reason === 'type') return t('files.validation.unsupportedType', { name: file.name })
   if (result.reason === 'empty') return t('files.validation.empty', { name: file.name })
   if (result.reason === 'size') return t('files.validation.tooLarge', { name: file.name, limit: formatFileSize(maxBytesForFile(file)) })

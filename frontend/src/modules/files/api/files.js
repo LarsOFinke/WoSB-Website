@@ -13,6 +13,11 @@ export { ACCEPT_ATTRIBUTE, ACCEPTED_FILE_TYPES, IMAGE_MIME_TYPES, MAX_DOCUMENT_B
 const EMBEDDABLE_MIME_PREFIXES = ['image/', 'video/']
 const EMBEDDABLE_DOCUMENT_MIME_TYPES = new Set(['application/pdf', 'text/plain'])
 
+function hasUnsafeFilename(name) {
+  const value = String(name || '')
+  return !value.trim() || /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u206f]/u.test(value)
+}
+
 export function maxBytesForFile(file) {
   const mimeType = String(file?.type || '').toLowerCase()
   if (mimeType.startsWith('image/')) return MAX_IMAGE_BYTES
@@ -21,6 +26,7 @@ export function maxBytesForFile(file) {
 }
 
 export function validateFileForUpload(file) {
+  if (hasUnsafeFilename(file?.name)) return { valid: false, reason: 'name' }
   const mimeType = String(file?.type || '').toLowerCase()
   if (!ACCEPTED_FILE_TYPES.includes(mimeType)) {
     return { valid: false, reason: 'type' }

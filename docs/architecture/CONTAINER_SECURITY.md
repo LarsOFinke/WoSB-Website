@@ -112,3 +112,9 @@ sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 Ein grüner Image-Scan beweist nicht, dass Runtime und Kernel sicher sind. Umgekehrt
 ist eine ältere, aber von Debian/Ubuntu gepatchte Paketversion nicht automatisch
 verwundbar; entscheidend ist das jeweilige Distribution-Advisory.
+
+### Runtime exposure and upload boundary
+
+The release stack publishes only the HTTP/HTTPS gateway. PostgreSQL has no host port in `compose.release.yml`; the backend bridge is internal, while only the API receives the dedicated outbound network. API and gateway run non-root, read-only, with `no-new-privileges` and all Linux capabilities dropped. Operational debugging uses bounded service logs/diagnostics rather than routine `docker exec -it` sessions.
+
+`POST /api/files` has three independent limits: nginx request/rate limiting, Spring multipart size limits, and the file service's per-type/per-user/global/free-space quotas. The backend validates extension + declared MIME + file signature and normalizes display filenames; frontend validation is only early feedback and is never the trust boundary.

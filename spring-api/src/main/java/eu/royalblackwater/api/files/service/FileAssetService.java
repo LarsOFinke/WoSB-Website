@@ -90,7 +90,7 @@ public class FileAssetService {
             registerRollbackCleanup(target);
             String relativePath = root.relativize(target).toString().replace('\\', '/');
             long id = repository.insertReturningId(FileAssetQueries.UPLOAD_INSERT_01, Map.of(
-                            "ownerId", owner.id(), "originalName", safeOriginalName(upload, storedName),
+                            "ownerId", owner.id(), "originalName", FileTypePolicy.sanitizeOriginalName(upload.getOriginalFilename(), storedName),
                             "storedName", storedName, "relativePath", relativePath, "mimeType", detectedType,
                             "sizeBytes", Files.size(target), "context", normalizedContext,
                             "public", "master-data".equals(normalizedContext), "createdAt", createdAt));
@@ -273,12 +273,6 @@ public class FileAssetService {
     }
 
     private static String normalizedType(String value) { return value == null ? "" : value.split(";", 2)[0].strip().toLowerCase(); }
-    private static String safeOriginalName(MultipartFile upload, String fallback) {
-        String value = upload.getOriginalFilename();
-        if (value == null || value.isBlank()) return fallback;
-        String name = Path.of(value).getFileName().toString();
-        return name.length() > 255 ? name.substring(0, 255) : name;
-    }
     private static List<Long> distinctPositive(List<Long> ids) {
         if (ids == null) return List.of();
         LinkedHashSet<Long> values = new LinkedHashSet<>();

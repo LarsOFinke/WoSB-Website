@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; no_backup=false; skip_backup=false; skip_host=false
-usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --no-backup --skip-host]" >&2; exit 2; }
+artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; target_environment="${RBF_TARGET_ENVIRONMENT:-test}"; no_backup=false; skip_backup=false; skip_host=false
+usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --target-environment test|production --no-backup --skip-host]" >&2; exit 2; }
 if (($# == 0)); then
   [[ -t 0 && -t 1 ]] || { echo "[website] Ohne Flags benötigt setup_website.sh ein interaktives Terminal." >&2; exit 2; }
   cat <<'BANNER'
@@ -36,6 +36,7 @@ while (($#)); do
     --checksum) checksum="${2:-}"; shift 2;;
     --install-root) install_root="${2:-}"; shift 2;;
     --env) env_source="${2:-}"; shift 2;;
+    --target-environment) target_environment="${2:-}"; shift 2;;
     --no-backup) no_backup=true; shift;;
     --skip-backup) skip_backup=true; shift;;
     --skip-host) skip_host=true; shift;;
@@ -43,10 +44,11 @@ while (($#)); do
   esac
 done
 [[ -n "$artifact" ]] || usage
+[[ "$target_environment" =~ ^(test|production)$ ]] || { echo "[website] Ungültige Zielumgebung: $target_environment" >&2; exit 2; }
 artifact="$(realpath "$artifact")"; checksum="$(realpath "${checksum:-$artifact.sha256}")"
 [[ -f "$artifact" && -f "$checksum" ]] || { echo "[website] Artefakt oder Prüfsumme fehlt." >&2; exit 1; }
 [[ "$EUID" -eq 0 ]] || {
-  sudo_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root")
+  sudo_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root" --target-environment "$target_environment")
   [[ -z "$env_source" ]] || sudo_args+=(--env "$env_source")
   [[ "$no_backup" == true ]] && sudo_args+=(--no-backup)
   [[ "$skip_backup" == true ]] && sudo_args+=(--skip-backup)
@@ -111,9 +113,17 @@ if [[ -z "$env_source" ]]; then
   env_source="$install_root/shared/.env"
   env_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-env.sh"
   [[ -x "$env_prepare" ]] || { echo "[website] Release enthält keinen Environment-Bootstrap." >&2; exit 1; }
-  "$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt"
+  "$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt" "$target_environment"
 fi
 [[ -f "$env_source" ]] || { echo "[website] Environment-Datei fehlt: $env_source" >&2; exit 1; }
+source "$stage/bundle/payload/infrastructure/scripts/lib/env.sh"
+export ENV_FILE="$env_source"
+existing_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
+if [[ -n "$existing_environment" && "$existing_environment" != "$target_environment" ]]; then
+  die "Bestehende Installation ist als $existing_environment markiert und darf nicht in $target_environment umgewidmet werden. Verwende getrennte Installationsroots/Server."
+fi
+set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
+validate_env
 tls_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-tls.sh"
 [[ -x "$tls_prepare" ]] || { echo "[website] Release enthält keinen TLS-Bootstrap." >&2; exit 1; }
 "$tls_prepare" "$env_source" "$install_root/shared"

@@ -171,8 +171,10 @@ validate_env() {
   [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
   [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
 
-  local tls_mode certificate_provider hostname
+  local tls_mode certificate_provider hostname deployment_environment
   tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"
+  deployment_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
+  [[ -z "$deployment_environment" || "$deployment_environment" =~ ^(test|production)$ ]] || die "DEPLOYMENT_ENVIRONMENT muss test oder production sein."
   [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE muss auto, letsencrypt oder self-signed sein."
   [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER ist ungültig."
   [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME ist ungültig."
@@ -181,6 +183,11 @@ validate_env() {
     [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlichen Domainnamen."
   fi
   [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
+  if [[ "$deployment_environment" == production ]]; then
+    [[ "$tls_mode" == letsencrypt ]] || die "Production erfordert TLS_MODE=letsencrypt; auto/self-signed ist dort nicht zulässig."
+    [[ "$(read_env LETSENCRYPT_STAGING)" == false ]] || die "Production darf niemals Let's-Encrypt-Staging verwenden."
+    [[ "$hostname" == *.* && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Production benötigt einen öffentlichen TLS-Hostnamen."
+  fi
   local retention="$(read_env BACKUP_RETENTION_DAYS)"
   [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS muss positiv sein."
 }

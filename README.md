@@ -60,30 +60,36 @@ prüfsummenbewehrtes Release-Artefakt:
 bash ./infrastructure/scripts/release/build-artifact.sh
 ```
 
-Für den interaktiven Ursprung-zu-Zielserver-Ablauf genügt anschließend:
+Für den Ursprung-zu-Zielserver-Ablauf ist der **Testserver das sichere Standardziel**:
 
 ```bash
 ./deploy.sh
+./update.sh
+```
+
+Production wird ausschließlich explizit ausgewählt:
+
+```bash
+./deploy.sh --production
+./update.sh --production
 ```
 
 Der Ursprung überträgt das geprüfte Artefakt und `setup_website.sh` per SSH.
-Auf dem Webseitenserver verifiziert `setup_website.sh` das Paket und startet
-die atomare Installation. Alle Dialoge können über Flags automatisiert werden.
-Die beim ersten Lauf erzeugte `.env.origin` speichert die nicht geheimen
-Verbindungs- und Pfadwerte geschützt für spätere Updates; Vorlage:
-`.env.origin.example`.
+Auf dem Zielserver verifiziert `setup_website.sh` das Paket und startet die
+atomare Installation. Test und Production besitzen getrennte, private
+Origin-Konfigurationen: `.env.origin.test` und `.env.origin.production`; Vorlagen
+sind `.env.origin.test.example` und `.env.origin.production.example`.
 
-Eine vollständig neue Zielmaschine wird mit `./deploy.sh --configure`
-eingerichtet. Der Assistent kann den dedizierten SSH-Administrator und seinen
-Deploy-Key über einen einmaligen VPS-Bootstrap-Zugang anlegen und danach im selben
-Lauf deployen. Spätere Aufrufe von `./deploy.sh` verwenden diese geprüfte
-Konfiguration ohne private Anwendungsaccounts.
+Eine neue Testmaschine wird mit `./deploy.sh --configure` eingerichtet, eine neue
+Production-Maschine nur mit `./deploy.sh --production --configure`. Spätere
+Aufrufe verwenden das jeweils ausgewählte Profil ohne private Anwendungsaccounts.
 
-Dieselbe Origin-Verbindung dient der begrenzten Produktionsdiagnose:
+Diagnostics verwenden dieselbe sichere Zielauswahl: ohne Flag Test, für
+Production ausdrücklich `--production`.
 
 ```bash
 ./infrastructure/scripts/diagnostics/debug.sh
-./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m
+./infrastructure/scripts/diagnostics/debug.sh --production --area calendar --category http-500 --since 30m
 ```
 
 Die Ausgabe wird auf dem Ursprung redigiert und lokal unter `.diagnostics/`

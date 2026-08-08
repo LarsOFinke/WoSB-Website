@@ -86,7 +86,8 @@ Vom Ursprungssystem sammeln:
 ./infrastructure/scripts/diagnostics/debug.sh --area deployment --category errors --since 2h --tail 600
 ```
 
-Der Collector verwendet die bestehende `.env.origin`-Verbindung, begrenzt die
+Der Collector verwendet standardmäßig `.env.origin.test`; Production wird
+explizit mit `--production` und `.env.origin.production` gewählt. Er begrenzt die
 Remote-Ausgabe und redigiert sie lokal. Bei fehlgeschlagener Aktivierung zuerst
 das `failed-*.log`, Servicezustand und Compose-Status sichern. Erst danach darf
 eine gezielte, dokumentierte Recovery-Aktion erfolgen. `docker compose down`,

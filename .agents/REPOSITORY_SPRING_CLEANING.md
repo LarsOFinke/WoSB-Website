@@ -229,3 +229,13 @@ Der Frühjahrsputz ist abgeschlossen, wenn:
 
 Commit oder Push gehören nicht zum Frühjahrsputz, solange sie nicht ausdrücklich
 beauftragt wurden.
+
+### Vulnerability suppressions are temporary architecture debt
+
+Dependency-Check suppressions are treated like temporary compatibility debt: exact dependency + exact CVE, explicit reason, expiry, upstream removal condition, and automated unused-rule detection. The daily security job must refresh its vulnerability database before scanning. Never make the CVSS threshold more permissive to accommodate a single disputed finding.
+
+For the current Tomcat exception, `CVE-2026-66299` may only be suppressed for `tomcat-embed-core:11.0.24` because the reviewed Apache advisory scopes the defect to the WebSocket chat example application, which is not deployed by WoSB. Delete the rule when Tomcat reaches `11.0.25+`; `failBuildOnUnusedSuppressionRule=true` exists specifically to force that cleanup.
+
+### Security backlog completion rule
+
+A security TODO is not complete merely because code exists. Convert it into a repeatable invariant: a quality test or integration test plus durable documentation. For TLS, Production must fail closed on staging/self-signed configuration and certificate material must be validated before swap. For uploads, frontend checks never replace backend type/signature/quota enforcement. For deployment, private target environments/certificates stay outside immutable artifacts and databases are not host-published in release compose.

@@ -154,6 +154,10 @@ behavior that static analysis cannot resolve.
 ## Operations and recoverability
 
 - Production deploys compiled, checksummed, source-free artifacts only.
+- Origin deployment is fail-safe by target: `deploy.sh`, `update.sh` and diagnostics
+  default to the test profile (`.env.origin.test`). Production is never inferred
+  and requires the explicit `--production` flag plus `.env.origin.production`.
+  Do not reintroduce an automatic fallback from the legacy `.env.origin` file.
 - Releases follow `MAJOR.MINOR.PATCH` as defined in
   `docs/development/VERSIONING.md`: fixes increment Patch, compatible features
   increment Minor, and incompatible or explicitly major extensions increment
