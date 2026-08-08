@@ -1,0 +1,61 @@
+{
+  "path": "/api/admin/master-data/options/{option_id}/restore-seed",
+  "method": "post",
+  "operation": {
+    "operationId": "restore_option_api_admin_master_data_options__option_id__restore_seed_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "option_id",
+        "required": true,
+        "schema": {
+          "title": "Option Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MasterDataOptionRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Restore Option",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

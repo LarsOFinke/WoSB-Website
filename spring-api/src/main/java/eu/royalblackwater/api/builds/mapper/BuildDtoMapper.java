@@ -39,9 +39,9 @@ public final class BuildDtoMapper {
                 "flat", null, precision, "upgrade_modifiers", unit);
     }
 
-    public static BuildPrintoutRead printout(boolean changed, String checksum, long size,
-            LocalDateTime updatedAt, String url) {
-        return new BuildPrintoutRead(changed, checksum, size, updatedAt, url);
+    public static BuildPrintoutRead printout(boolean changed, String cacheKey, String checksum, long size,
+            LocalDateTime sourceUpdatedAt, LocalDateTime updatedAt, String url) {
+        return new BuildPrintoutRead(changed, cacheKey, checksum, size, sourceUpdatedAt, updatedAt, url);
     }
 
     public static BuildStatDefinitionRead statDefinition(BuildStatDefinition definition) {

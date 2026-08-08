@@ -1,0 +1,82 @@
+{
+  "path": "/api/files",
+  "method": "post",
+  "operation": {
+    "operationId": "post_file_api_files_post",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "usage_context",
+        "required": false,
+        "schema": {
+          "default": "general",
+          "maxLength": 40,
+          "title": "Usage Context",
+          "type": "string"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "multipart/form-data": {
+          "schema": {
+            "$ref": "#/components/schemas/Body_post_file_api_files_post"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FileRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "415": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Unsupported media type"
+      }
+    },
+    "summary": "Post File",
+    "tags": [
+      "files"
+    ]
+  }
+}

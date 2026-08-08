@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "blocks": {
+      "items": {
+        "$ref": "#/components/schemas/NewcomerGuideBlockInput"
+      },
+      "maxItems": 30,
+      "title": "Blocks",
+      "type": "array"
+    },
+    "intro": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Intro",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "title": "NewcomerGuideUpdate",
+  "type": "object"
+}

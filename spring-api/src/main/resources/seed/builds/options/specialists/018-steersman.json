@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "steersman",
+  "name": "Steersman",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. When durability is 50% or lower: maneuverability +6. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "low_durability_maneuverability": 6
+  },
+  "image_url": "/build-assets/options/specialists/steersman.png"
+}

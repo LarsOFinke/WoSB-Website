@@ -1,0 +1,62 @@
+{
+  "name": "Red Arrow",
+  "rate": 4,
+  "ship_type": "Galleon",
+  "durability": 1940,
+  "speed_min_knots": 8.6,
+  "speed_knots": 11.3,
+  "maneuverability": 95,
+  "armor": 5.5,
+  "hold_capacity": 18000,
+  "crew_capacity": 140,
+  "sailor_minimum": 56,
+  "displacement_tons": 2700,
+  "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Red Arrow",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 6,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 15,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 15,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 1,
+      "max_weapon_class": null,
+      "max_caliber_inches": 7,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

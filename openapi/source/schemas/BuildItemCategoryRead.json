@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "key",
+    "label",
+    "sort_order"
+  ],
+  "title": "BuildItemCategoryRead",
+  "type": "object"
+}

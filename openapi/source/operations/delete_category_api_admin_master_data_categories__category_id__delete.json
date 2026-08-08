@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/master-data/categories/{category_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_category_api_admin_master_data_categories__category_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "category_id",
+        "required": true,
+        "schema": {
+          "title": "Category Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Category",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

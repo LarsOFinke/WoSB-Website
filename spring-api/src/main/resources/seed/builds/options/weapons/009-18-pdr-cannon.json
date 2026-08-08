@@ -1,0 +1,16 @@
+{
+  "category": "weapon",
+  "name": "18-pdr Cannon",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "cannon",
+  "allowed_slot_types": [
+    "weapon_port",
+    "weapon_starboard"
+  ],
+  "weapon_class": "medium",
+  "seed_id": "18-pdr-cannon",
+  "weapon_performance": {
+    "base_damage": 15,
+    "reload_seconds": 10.5
+  }
+}

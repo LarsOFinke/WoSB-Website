@@ -1,0 +1,51 @@
+{
+  "path": "/api/profile/preferences/options",
+  "method": "get",
+  "operation": {
+    "operationId": "get_preference_options_api_profile_preferences_options_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProfilePreferenceOptionsRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Preference Options",
+    "tags": [
+      "profile"
+    ]
+  }
+}

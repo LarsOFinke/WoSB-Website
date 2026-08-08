@@ -1,0 +1,14 @@
+{
+  "key": "steady_course_enabled",
+  "label": "Steady-course assistance",
+  "category": "mobility",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "steady_course_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

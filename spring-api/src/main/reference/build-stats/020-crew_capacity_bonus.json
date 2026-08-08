@@ -1,0 +1,14 @@
+{
+  "key": "crew_capacity_bonus",
+  "label": "Crew capacity bonus",
+  "category": "crew",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "crew_capacity",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

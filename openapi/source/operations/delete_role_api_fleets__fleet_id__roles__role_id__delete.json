@@ -1,0 +1,62 @@
+{
+  "path": "/api/fleets/{fleet_id}/roles/{role_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_role_api_fleets__fleet_id__roles__role_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "path",
+        "name": "role_id",
+        "required": true,
+        "schema": {
+          "title": "Role Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Role",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

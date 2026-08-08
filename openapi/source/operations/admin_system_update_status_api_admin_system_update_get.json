@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/system/update",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_system_update_status_api_admin_system_update_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SystemUpdateStatus"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin System Update Status",
+    "tags": [
+      "admin",
+      "admin-system"
+    ]
+  }
+}

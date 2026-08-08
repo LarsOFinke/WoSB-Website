@@ -1,0 +1,14 @@
+{
+  "category": "upgrade",
+  "name": "Double Hold",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Hold +4500. Item loss -40%. Durability -5%.",
+  "option_kind": "ship_upgrade_expeditionary",
+  "stat_effects": {
+    "hold_capacity": 4500,
+    "item_loss_pct": -40,
+    "hull_hp_pct": -5
+  },
+  "seed_id": "double-hold",
+  "image_url": "/build-assets/options/upgrades/double-hold.png"
+}

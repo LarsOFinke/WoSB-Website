@@ -1,0 +1,16 @@
+{
+  "category": "weapon",
+  "name": "8-pdr Culverin",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "cannon",
+  "allowed_slot_types": [
+    "weapon_port",
+    "weapon_starboard"
+  ],
+  "weapon_class": "light",
+  "seed_id": "8-pdr-culverin",
+  "weapon_performance": {
+    "base_damage": 15,
+    "reload_seconds": 13
+  }
+}

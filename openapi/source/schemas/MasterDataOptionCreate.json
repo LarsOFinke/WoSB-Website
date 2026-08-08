@@ -1,0 +1,129 @@
+{
+  "properties": {
+    "allowed_slot_types": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Slot Types",
+      "type": "array"
+    },
+    "category_id": {
+      "minimum": 1.0,
+      "title": "Category Id",
+      "type": "integer"
+    },
+    "image_url": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Image Url"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Notes"
+    },
+    "option_kind": {
+      "anyOf": [
+        {
+          "maxLength": 40,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Option Kind"
+    },
+    "sort_order": {
+      "default": 100,
+      "maximum": 100000.0,
+      "minimum": 0.0,
+      "title": "Sort Order",
+      "type": "integer"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "maxLength": 240,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "stat_effects": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Stat Effects",
+      "type": "object"
+    },
+    "weapon_caliber_inches": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Weapon Caliber Inches"
+    },
+    "weapon_class": {
+      "anyOf": [
+        {
+          "maxLength": 24,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Weapon Class"
+    },
+    "weapon_performance": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/MasterDataWeaponPerformance"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "category_id",
+    "name"
+  ],
+  "title": "MasterDataOptionCreate",
+  "type": "object"
+}

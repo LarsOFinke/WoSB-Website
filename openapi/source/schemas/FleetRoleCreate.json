@@ -1,0 +1,44 @@
+{
+  "properties": {
+    "can_manage_fleet": {
+      "default": false,
+      "title": "Can Manage Fleet",
+      "type": "boolean"
+    },
+    "can_manage_members": {
+      "default": false,
+      "title": "Can Manage Members",
+      "type": "boolean"
+    },
+    "code": {
+      "maxLength": 40,
+      "minLength": 2,
+      "title": "Code",
+      "type": "string"
+    },
+    "is_leadership": {
+      "default": false,
+      "title": "Is Leadership",
+      "type": "boolean"
+    },
+    "label": {
+      "maxLength": 80,
+      "minLength": 2,
+      "title": "Label",
+      "type": "string"
+    },
+    "rank": {
+      "maximum": 79.0,
+      "minimum": 1.0,
+      "title": "Rank",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "code",
+    "label",
+    "rank"
+  ],
+  "title": "FleetRoleCreate",
+  "type": "object"
+}

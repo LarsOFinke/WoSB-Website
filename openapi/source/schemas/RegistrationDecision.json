@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "note": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    }
+  },
+  "title": "RegistrationDecision",
+  "type": "object"
+}

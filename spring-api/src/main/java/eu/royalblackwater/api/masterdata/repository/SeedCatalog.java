@@ -28,13 +28,13 @@ public class SeedCatalog {
     public List<Map<String, Object>> categories() { return items("classpath:seed/builds/categories.json"); }
 
     public List<Map<String, Object>> options() {
-        return resources("classpath*:seed/builds/options/*.json").stream()
-                .flatMap(resource -> items(resource).stream()).toList();
+        return resources("classpath*:seed/builds/options/*/*.json").stream()
+                .map(this::item).toList();
     }
 
     public List<Map<String, Object>> ships() {
-        return resources("classpath*:seed/ships/rates/*.json").stream()
-                .flatMap(resource -> items(resource).stream()).toList();
+        return resources("classpath*:seed/ships/rates/*/*.json").stream()
+                .map(this::item).toList();
     }
 
     public Map<String, Object> definitions() { return document("classpath:seed/ships/definitions.json"); }
@@ -46,25 +46,29 @@ public class SeedCatalog {
         return listOfMaps(document(location).get("items"));
     }
 
-    private List<Map<String, Object>> items(Resource resource) {
-        return listOfMaps(read(resource).get("items"));
+    private Map<String, Object> document(String location) {
+        return read(resources.getResource(location));
     }
 
-    private Map<String, Object> document(String location) {
-        try {
-            return read(resources.getResource(location));
-        } catch (RuntimeException exception) {
-            throw exception;
-        }
+    private Map<String, Object> item(Resource resource) {
+        return readOnlyMap(read(resource));
     }
 
     private List<Resource> resources(String pattern) {
         try {
             List<Resource> result = new ArrayList<>(List.of(resources.getResources(pattern)));
-            result.sort(Comparator.comparing(Resource::getFilename, Comparator.nullsLast(String::compareTo)));
+            result.sort(Comparator.comparing(SeedCatalog::resourceLocation));
             return result;
         } catch (IOException exception) {
             throw new IllegalStateException("Could not enumerate seed resources: " + pattern, exception);
+        }
+    }
+
+    private static String resourceLocation(Resource resource) {
+        try {
+            return resource.getURL().toExternalForm();
+        } catch (IOException exception) {
+            return resource.getDescription();
         }
     }
 
@@ -80,12 +84,14 @@ public class SeedCatalog {
         if (!(value instanceof List<?> list)) return List.of();
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object item : list) {
-            if (item instanceof Map<?, ?> raw) {
-                Map<String, Object> normalized = new LinkedHashMap<>();
-                raw.forEach((key, entry) -> normalized.put(String.valueOf(key), entry));
-                result.add(Collections.unmodifiableMap(normalized));
-            }
+            if (item instanceof Map<?, ?> raw) result.add(readOnlyMap(raw));
         }
         return List.copyOf(result);
+    }
+
+    private static Map<String, Object> readOnlyMap(Map<?, ?> raw) {
+        Map<String, Object> normalized = new LinkedHashMap<>();
+        raw.forEach((key, entry) -> normalized.put(String.valueOf(key), entry));
+        return Collections.unmodifiableMap(normalized);
     }
 }

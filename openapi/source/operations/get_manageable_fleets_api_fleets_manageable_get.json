@@ -1,0 +1,85 @@
+{
+  "path": "/api/fleets/manageable",
+  "method": "get",
+  "operation": {
+    "operationId": "get_manageable_fleets_api_fleets_manageable_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FleetRead"
+              },
+              "title": "Response Get Manageable Fleets Api Fleets Manageable Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "401": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Authentication required"
+      },
+      "403": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Fleet management access required"
+      },
+      "404": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Fleet not found"
+      }
+    },
+    "summary": "Get Manageable Fleets",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

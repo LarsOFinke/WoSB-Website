@@ -1,0 +1,13 @@
+{
+  "category": "sail",
+  "seed_id": "tarpaulin",
+  "name": "Tarpaulin Sails",
+  "source": "tooltip-sail-catalog-2026-07-v3",
+  "notes": "Verified in-game tooltip: +3.1 kn speed and -2 maneuverability.",
+  "option_kind": "sail",
+  "stat_effects": {
+    "speed_knots": 3.1,
+    "maneuverability": -2
+  },
+  "image_url": "/build-assets/options/sails/tarpaulin.svg"
+}

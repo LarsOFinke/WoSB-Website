@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Reinforced Bolt Ropes",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Sail protection +30%. Sail fire protection +50%.",
+  "option_kind": "ship_upgrade_protection",
+  "stat_effects": {
+    "sail_protection_pct": 30,
+    "sail_fire_protection_pct": 50
+  },
+  "seed_id": "reinforced-bolt-ropes",
+  "image_url": "/build-assets/options/upgrades/reinforced-bolt-ropes.png"
+}

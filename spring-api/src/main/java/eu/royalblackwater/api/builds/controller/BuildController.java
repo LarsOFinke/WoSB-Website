@@ -14,11 +14,13 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -125,22 +127,26 @@ public class BuildController extends ApiControllerSupport {
 
     @GetMapping("/api/builds/{build_id}/printout")
     public ResponseEntity<Resource> getBuildPrintout(
-            @PathVariable("build_id") long buildId
+            @PathVariable("build_id") long buildId,
+            @RequestParam(name = "cache_key", required = true) String cacheKey
     ) {
 
         CurrentUser.require();
-        return download(printouts.content(buildId));
+        return download(printouts.content(buildId, cacheKey));
     }
 
     @PutMapping(value = "/api/builds/{build_id}/printout", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BuildPrintoutRead> putBuildPrintout(
             @PathVariable("build_id") long buildId,
+            @RequestParam(name = "cache_key", required = true) String cacheKey,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            @RequestParam(name = "source_updated_at", required = true) LocalDateTime sourceUpdatedAt,
             @RequestParam(name = "notify_discord", defaultValue = "false") boolean notifyDiscord,
             @RequestPart("image") MultipartFile upload
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
-        return respond(printouts.save(buildId, upload, actor), 200);
+        return respond(printouts.save(buildId, upload, cacheKey, sourceUpdatedAt, actor), 200);
     }
 
     @DeleteMapping("/api/builds/{build_id}/upvote")

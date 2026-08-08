@@ -18,6 +18,10 @@
 
 ## Unreleased
 
+- Added correlation-first API diagnostics: every API response receives `X-Request-Id`, central error/security records carry the same ID, and opt-in payload-free request lifecycle logging exposes normalized route, status and duration for automated tests and short debugging windows.
+- Expanded Build printout cache regression coverage across Flyway V1-to-current upgrades, fresh V8 schema application, service-level cache reuse/invalidation and a real HTTP/PostgreSQL/filesystem lifecycle; migration compatibility tests now derive pending migration counts instead of hard-coding them.
+- Split hand-maintained OpenAPI operations/schemas, Build stat definitions, Build option seeds and ship-rate seeds into responsibility-scoped JSON files while retaining deterministic generated compatibility artifacts and stable catalog order; the repository gate now caps hand-maintained JSON at 420 lines.
+
 - Reconciled the Spring HTTP error contract and bootstrap-login lifecycle: generated request DTOs and login bindings remain unchanged, validation errors now use HTTP 400 with the shared `ApiError.detail` shape, semantic 422 responses are explicit, login documents invalid credentials as 401, and genuinely fresh installations verify generated bootstrap credentials through the public login API without ever resetting an existing administrator password. The post-cutover release baseline is reset to 1.0.0.
 
 - Hardened the post-refactor Spring API type boundary: fixed missing mapper imports, corrected the privacy export category generic type, repaired the Raid-Helper probe result mapping, removed the remaining unused import, replaced all residual Java wildcard imports with explicit imports, added serialization metadata to custom exception types, and extended the Spring audit to reject wildcard, duplicate, unused, unresolved and commonly missing project-internal imports. Architecture, API, development and debugging documentation now reflect the controller/service/mapper/repository design instead of the retired handler flow.

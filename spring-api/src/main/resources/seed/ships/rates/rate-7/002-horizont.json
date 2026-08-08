@@ -1,0 +1,62 @@
+{
+  "name": "Horizont",
+  "rate": 7,
+  "ship_type": "Brigantine",
+  "durability": 850,
+  "speed_min_knots": 8.4,
+  "speed_knots": 8.4,
+  "maneuverability": 80,
+  "armor": 3.2,
+  "hold_capacity": 7000,
+  "crew_capacity": 78,
+  "sailor_minimum": 31,
+  "displacement_tons": 1125,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Horizont",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 2,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 8,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 8,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

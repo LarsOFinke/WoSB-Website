@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Upper Deck",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Barrel reload speed +35%. Swivel-gun reload speed +35%.",
+  "option_kind": "ship_upgrade_combat",
+  "stat_effects": {
+    "barrel_reload_pct": 35,
+    "swivel_gun_reload_pct": 35
+  },
+  "seed_id": "upper-deck",
+  "image_url": "/build-assets/options/upgrades/upper-deck.png"
+}

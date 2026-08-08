@@ -1,0 +1,14 @@
+{
+  "key": "broad_reach_cruising_speed_bonus_pct",
+  "label": "Broad-reach cruising bonus",
+  "category": "mobility",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "broad_reach_cruising_speed_bonus_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "equipment_modifiers",
+  "pct_base_field": null
+}

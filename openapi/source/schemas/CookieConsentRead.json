@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "analytics": {
+      "default": false,
+      "title": "Analytics",
+      "type": "boolean"
+    },
+    "decided_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Decided At"
+    },
+    "external_media": {
+      "default": false,
+      "title": "External Media",
+      "type": "boolean"
+    },
+    "has_decision": {
+      "default": false,
+      "title": "Has Decision",
+      "type": "boolean"
+    },
+    "necessary": {
+      "default": true,
+      "title": "Necessary",
+      "type": "boolean"
+    },
+    "policy_version": {
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "preferences": {
+      "default": false,
+      "title": "Preferences",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "policy_version"
+  ],
+  "title": "CookieConsentRead",
+  "type": "object"
+}

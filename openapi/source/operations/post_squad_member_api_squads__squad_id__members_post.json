@@ -1,0 +1,70 @@
+{
+  "path": "/api/squads/{squad_id}/members",
+  "method": "post",
+  "operation": {
+    "operationId": "post_squad_member_api_squads__squad_id__members_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "squad_id",
+        "required": true,
+        "schema": {
+          "title": "Squad Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SquadMemberCreate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SquadDetailRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Squad Member",
+    "tags": [
+      "fleet squads"
+    ]
+  }
+}

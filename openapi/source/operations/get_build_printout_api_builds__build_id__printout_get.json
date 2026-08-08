@@ -1,0 +1,66 @@
+{
+  "path": "/api/builds/{build_id}/printout",
+  "method": "get",
+  "operation": {
+    "operationId": "get_build_printout_api_builds__build_id__printout_get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "cache_key",
+        "required": true,
+        "schema": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Cache Key",
+          "type": "string"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Successful Response",
+        "content": {
+          "application/octet-stream": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "404": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Build printout cache entry not found"
+      }
+    },
+    "summary": "Get Build Printout",
+    "tags": [
+      "builds"
+    ]
+  }
+}

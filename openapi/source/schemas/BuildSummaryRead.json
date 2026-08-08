@@ -1,0 +1,95 @@
+{
+  "properties": {
+    "ammunition_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "title": "Ammunition Slots",
+      "type": "array"
+    },
+    "build_name": {
+      "title": "Build Name",
+      "type": "string"
+    },
+    "build_role_label": {
+      "title": "Build Role Label",
+      "type": "string"
+    },
+    "build_type": {
+      "title": "Build Type",
+      "type": "string"
+    },
+    "classification_tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Classification Tags",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "has_upvoted": {
+      "default": false,
+      "title": "Has Upvoted",
+      "type": "boolean"
+    },
+    "hold_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "title": "Hold Slots",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_official_template": {
+      "default": false,
+      "title": "Is Official Template",
+      "type": "boolean"
+    },
+    "metrics": {
+      "$ref": "#/components/schemas/BuildListMetrics"
+    },
+    "owner_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Id"
+    },
+    "ship": {
+      "$ref": "#/components/schemas/ShipRead"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "upvote_count": {
+      "default": 0,
+      "title": "Upvote Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "build_name",
+    "build_type",
+    "build_role_label",
+    "ship",
+    "metrics",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "BuildSummaryRead",
+  "type": "object"
+}

@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/builds/{build_id}/role",
+  "method": "put",
+  "operation": {
+    "operationId": "admin_assign_build_role_api_admin_builds__build_id__role_put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BuildRoleAssignment"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Assign Build Role",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

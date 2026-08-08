@@ -1,0 +1,14 @@
+{
+  "key": "perishable_goods_preserved_enabled",
+  "label": "Perishable goods do not spoil",
+  "category": "logistics",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "perishable_goods_preserved_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

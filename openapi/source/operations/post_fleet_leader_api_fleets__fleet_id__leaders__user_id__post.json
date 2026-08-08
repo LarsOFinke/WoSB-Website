@@ -1,0 +1,79 @@
+{
+  "path": "/api/fleets/{fleet_id}/leaders/{user_id}",
+  "method": "post",
+  "operation": {
+    "operationId": "post_fleet_leader_api_fleets__fleet_id__leaders__user_id__post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "path",
+        "name": "user_id",
+        "required": true,
+        "schema": {
+          "title": "User Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FleetMembershipUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetMembershipRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Fleet Leader",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

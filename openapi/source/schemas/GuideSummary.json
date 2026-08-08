@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "attachment_count": {
+      "default": 0,
+      "title": "Attachment Count",
+      "type": "integer"
+    },
+    "build_reference_count": {
+      "default": 0,
+      "title": "Build Reference Count",
+      "type": "integer"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "owner": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "owner_id": {
+      "title": "Owner Id",
+      "type": "integer"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Summary"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "category",
+    "owner_id",
+    "owner",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "GuideSummary",
+  "type": "object"
+}

@@ -45,8 +45,12 @@ export function updateMyBuild(id, payload) {
   return put(`/builds/mine/${id}`, payload)
 }
 
-export function publishBuildPrintout(id, image, notifyDiscord = false) {
+export function publishBuildPrintout(id, image, notifyDiscord = false, cache = {}) {
   const form = new FormData()
   form.append('image', image, `build-${id}.png`)
-  return putForm(withQuery(`/builds/${id}/printout`, { notify_discord: notifyDiscord }), form)
+  return putForm(withQuery(`/builds/${id}/printout`, {
+    cache_key: cache.cacheKey || '',
+    source_updated_at: cache.sourceUpdatedAt || '',
+    notify_discord: notifyDiscord,
+  }), form)
 }

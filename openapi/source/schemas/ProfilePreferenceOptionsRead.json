@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "ships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/ProfileShipOptionRead"
+      },
+      "maxItems": 1000
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/ProfileRoleOptionRead"
+      },
+      "maxItems": 1000
+    }
+  },
+  "required": [
+    "ships",
+    "roles"
+  ],
+  "type": "object",
+  "title": "ProfilePreferenceOptionsRead"
+}

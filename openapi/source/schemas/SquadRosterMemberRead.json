@@ -1,0 +1,35 @@
+{
+  "properties": {
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_membership_id": {
+      "title": "Fleet Membership Id",
+      "type": "integer"
+    },
+    "fleet_role": {
+      "title": "Fleet Role",
+      "type": "string"
+    },
+    "squad_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Squad Ids",
+      "type": "array"
+    },
+    "user_id": {
+      "title": "User Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "fleet_membership_id",
+    "user_id",
+    "display_name",
+    "fleet_role"
+  ],
+  "title": "SquadRosterMemberRead",
+  "type": "object"
+}

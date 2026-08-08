@@ -1,0 +1,14 @@
+{
+  "key": "sail_deployment_speed_pct",
+  "label": "Sail deployment speed",
+  "category": "mobility",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "sail_deployment_speed_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

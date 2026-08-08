@@ -21,6 +21,7 @@ const COLUMN_GAP = 22
 const COLUMN_WIDTH = (CONTENT_WIDTH - COLUMN_GAP) / 2
 const SECTION_GAP = 22
 const FOOTER_HEIGHT = 86
+export const BUILD_PRINT_RENDERER_VERSION = '3'
 
 const BUILD_PRINT_THEMES = Object.freeze({
   dark: Object.freeze({
@@ -278,7 +279,7 @@ function createBuildPrintDocument(build, helpers = {}) {
   const classifications = model.classificationLabels.length ? model.classificationLabels.join('  ·  ') : model.buildType
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="2" data-build-sheet-theme="${theme}">
+  <svg xmlns="http://www.w3.org/2000/svg" width="${PAGE_WIDTH}" height="${pageHeight}" viewBox="0 0 ${PAGE_WIDTH} ${pageHeight}" data-build-sheet-version="${BUILD_PRINT_RENDERER_VERSION}" data-build-sheet-theme="${theme}">
     <style>
       text{font-family:Inter,Segoe UI,Arial,sans-serif}.brand{fill:${colors.accent};font-size:17px;font-weight:800;letter-spacing:3px}.title{fill:${colors.text};font-family:Georgia,serif;font-size:51px;font-weight:500}.meta{fill:${colors.muted};font-size:19px}.share{fill:${colors.accent};font-size:14px}.eyebrow{fill:${colors.accent};font-size:12px;font-weight:800;letter-spacing:2px}.section-title{fill:${colors.text};font-family:Georgia,serif;font-size:24px}.index{fill:${colors.accent};font-size:11px;font-weight:800}.row-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.row-value{fill:${colors.text};font-size:18px;font-weight:700}.row-meta{fill:${colors.faint};font-size:13px}.group-line{fill:${colors.text};font-size:16px}.inventory-index{fill:${colors.accent};font-size:11px;font-weight:800}.note-line{fill:${colors.muted};font-family:Georgia,serif;font-size:17px}.performance-label{fill:${colors.muted};font-size:13px;font-weight:700;letter-spacing:.7px;text-transform:uppercase}.performance-value{fill:${colors.text};font-family:Georgia,serif;font-size:29px}.performance-base{fill:${colors.faint};font-size:13px}.performance-modifier{font-size:13px;font-weight:800}.footer{fill:${colors.faint};font-size:13px}
     </style>

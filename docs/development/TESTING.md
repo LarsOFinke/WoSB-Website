@@ -14,7 +14,8 @@ use only the Python standard library.
 It includes:
 
 1. Spring unit and integration tests with PostgreSQL Testcontainers.
-2. Flyway empty-database and supported-upgrade tests.
+2. Flyway empty-database and supported-upgrade tests, including forward migration
+   discovery instead of brittle hard-coded migration counts.
 3. Spring Security, session, CSRF and authorization tests.
 4. API operation coverage for every currently generated contract operation. The
    repository gate regenerates the Spring route adapters in memory and reports a
@@ -92,7 +93,20 @@ Run it in isolation with:
 mvn -f spring-api/pom.xml -Dtest=ApplicationIntegrationTest test
 ```
 
-`ApiSurfaceIntegrationTest` reads the canonical OpenAPI contract and turns the
+`BuildPrintoutIntegrationTest` owns the cross-boundary regression for the versioned
+Build printout cache. It creates a real Build, stores and downloads a PNG over HTTP,
+proves that the identical cache identity is reused without a second audit mutation,
+changes the business Build, verifies metadata/file invalidation and regenerates the
+new version. `BuildPrintoutServiceTest` separately covers stale revisions, conflicting
+bytes, cache reuse, invalidation and cleanup behavior at the service/filesystem edge.
+
+The Spring integration suites enable `rbf.diagnostics.http-lifecycle-logging=true`.
+Every API response still receives `X-Request-Id` when lifecycle telemetry is disabled;
+when enabled the test output contains `api_request_start`/`api_request_complete` with
+request ID, method, normalized route, status and duration. This is intended for
+automated correlation and short diagnostic runs, not persistent visitor analytics.
+
+`ApiSurfaceIntegrationTest` reads the assembled OpenAPI compatibility artifact and turns the
 complete operation inventory into a runtime no-5xx sweep. Every GET is executed
 against the real Spring application and PostgreSQL at least once; GETs with optional
 query parameters are executed again with the optional filters populated to activate

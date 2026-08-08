@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/raid-helper/destinations/{destination_id}/test",
+  "method": "post",
+  "operation": {
+    "operationId": "destination_test_api_admin_raid_helper_destinations__destination_id__test_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "destination_id",
+        "required": true,
+        "schema": {
+          "title": "Destination Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RaidHelperDestinationTestRequest"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RaidHelperProfileTestResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Destination Test",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

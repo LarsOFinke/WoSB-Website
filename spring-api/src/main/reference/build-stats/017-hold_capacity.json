@@ -1,0 +1,14 @@
+{
+  "key": "hold_capacity",
+  "label": "Cargo hold",
+  "category": "logistics",
+  "base_field": "hold_capacity",
+  "unit": "t",
+  "pct_effect": "hold_capacity_pct",
+  "flat_effect": null,
+  "calculation_flat_effect": "hold_capacity",
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "ship_catalog",
+  "pct_base_field": null
+}

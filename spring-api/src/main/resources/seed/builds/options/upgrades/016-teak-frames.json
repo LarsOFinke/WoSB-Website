@@ -1,0 +1,14 @@
+{
+  "category": "upgrade",
+  "name": "Teak Frames",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Armor +1.5. Crew +10. Maneuverability -6%.",
+  "option_kind": "ship_upgrade_protection",
+  "stat_effects": {
+    "armor": 1.5,
+    "crew_capacity": 10,
+    "turn_rate_pct": -6
+  },
+  "seed_id": "teak-frames",
+  "image_url": "/build-assets/options/upgrades/teak-frames.png"
+}

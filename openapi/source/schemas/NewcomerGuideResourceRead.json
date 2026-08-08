@@ -1,0 +1,61 @@
+{
+  "properties": {
+    "available": {
+      "default": true,
+      "title": "Available",
+      "type": "boolean"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "href": {
+      "title": "Href",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "resource_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resource Id"
+    },
+    "resource_type": {
+      "enum": [
+        "guide",
+        "build",
+        "internal",
+        "external"
+      ],
+      "title": "Resource Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "resource_type",
+    "label",
+    "href"
+  ],
+  "title": "NewcomerGuideResourceRead",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "key": "double_items_at_sea_chance_pct",
+  "label": "Double items at sea chance",
+  "category": "rewards",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "double_items_at_sea_chance_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

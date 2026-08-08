@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "confirmation": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Confirmation"
+    },
+    "details": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Details"
+    },
+    "request_type": {
+      "enum": [
+        "correction",
+        "deletion"
+      ],
+      "title": "Request Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_type"
+  ],
+  "title": "DataSubjectRequestCreate",
+  "type": "object"
+}

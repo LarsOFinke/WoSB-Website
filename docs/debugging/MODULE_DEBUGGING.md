@@ -26,7 +26,7 @@ IP-Adressen oder unredigierte Datenbankauszüge.
 
 ### API und Backend
 
-1. Route und `operationId` in `openapi/openapi.json` bestimmen.
+1. Route und `operationId` in `openapi/source/operations/` bestimmen; `openapi/openapi.json` nur als zusammengesetztes Kontrollartefakt verwenden.
 2. Die Route direkt im Modul-Controller (`@*Mapping`) finden; Request-DTO,
    `@PathVariable`/`@RequestParam` und `@Valid @RequestBody` dort gegen OpenAPI prüfen.
 3. Vom Controller zum Service, zur Policy und zum Repository-/Mapper-Rand verfolgen.
@@ -37,7 +37,7 @@ IP-Adressen oder unredigierte Datenbankauszüge.
 
 ```bash
 rg -n 'operation_id|operationId|Fehlertext' openapi spring-api/src/main/java
-rg -n 'api_error|security_401|security_403' spring-api/src/main/java docs/debugging
+rg -n 'api_error|security_401|security_403|api_request_complete' spring-api/src/main/java docs/debugging
 mvn -f spring-api/pom.xml -Dtest='<Testklasse>' test
 ```
 
@@ -116,9 +116,10 @@ erste serverseitige Root Cause verfolgt:
 1. Den konkreten HTTP-Aufruf in einem Spring-Boot-Integrationstest gegen einen
    PostgreSQL-Testcontainer reproduzieren. Methode, Pfad, Status und einen begrenzten
    Response-Ausschnitt in die Assertion aufnehmen.
-2. In Surefire-/Server-Ausgabe die erste `api_error status=500`-Zeile suchen und
-   Exceptiontyp sowie den ersten eigenen Stack-Frame notieren. Nicht beim äußeren
-   Assertion-Fehler stehen bleiben.
+2. Die `X-Request-Id` aus der fehlgeschlagenen Testantwort verwenden und in
+   Surefire-/Server-Ausgabe die korrespondierende `api_error status=500 request_id=...`-
+   Zeile suchen. Exceptiontyp sowie den ersten eigenen Stack-Frame notieren; nicht
+   beim äußeren Assertion-Fehler stehen bleiben.
 3. Die Route über OpenAPI/operationId → Controller → Service →
    Repository/Mapper verfolgen. Nur den tatsächlich ausgeführten Pfad untersuchen.
 4. Bei Spring-JDBC-Fehlern die **fertig zusammengesetzte SQL-Bedeutung** prüfen:
@@ -156,6 +157,7 @@ Direkte Diagnosebefehle:
 
 ```bash
 grep -R -n -A100 -B20 'api_error status=500' spring-api/target/surefire-reports/
+# Für einen konkreten Testfehler bevorzugt nach dessen X-Request-Id suchen.
 python3 infrastructure/scripts/quality/audit_sql_runtime.py
 mvn -f spring-api/pom.xml -Dtest=ApiSurfaceIntegrationTest test
 ```

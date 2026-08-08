@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "category_count": {
+      "title": "Category Count",
+      "type": "integer"
+    },
+    "inactive_count": {
+      "title": "Inactive Count",
+      "type": "integer"
+    },
+    "option_count": {
+      "title": "Option Count",
+      "type": "integer"
+    },
+    "overridden_count": {
+      "title": "Overridden Count",
+      "type": "integer"
+    },
+    "ship_count": {
+      "title": "Ship Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "category_count",
+    "option_count",
+    "ship_count",
+    "overridden_count",
+    "inactive_count"
+  ],
+  "title": "MasterDataOverview",
+  "type": "object"
+}

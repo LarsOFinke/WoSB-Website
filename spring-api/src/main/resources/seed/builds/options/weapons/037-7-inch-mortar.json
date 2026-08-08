@@ -1,0 +1,12 @@
+{
+  "category": "weapon",
+  "name": "7-inch Mortar",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "mortar",
+  "allowed_slot_types": [
+    "weapon_mortar"
+  ],
+  "weapon_class": null,
+  "weapon_caliber_inches": 7,
+  "seed_id": "7-inch-mortar"
+}

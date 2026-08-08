@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 240,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    }
+  },
+  "title": "IpBlockUnblock",
+  "type": "object"
+}

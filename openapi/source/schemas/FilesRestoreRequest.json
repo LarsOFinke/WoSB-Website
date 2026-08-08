@@ -1,0 +1,44 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "approval_token": {
+      "format": "password",
+      "title": "Approval Token",
+      "type": "string",
+      "writeOnly": true
+    },
+    "backup_id": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "components": {
+      "items": {
+        "enum": [
+          "uploads",
+          "certs",
+          "letsencrypt"
+        ],
+        "type": "string"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Components",
+      "type": "array"
+    },
+    "confirmation": {
+      "const": "RESTORE FILES",
+      "title": "Confirmation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "backup_id",
+    "components",
+    "approval_token",
+    "confirmation"
+  ],
+  "title": "FilesRestoreRequest",
+  "type": "object"
+}

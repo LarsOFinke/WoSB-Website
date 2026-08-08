@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "boatman",
+  "name": "Boatman",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. For each assigned Sailor: fishing speed +1%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "fishing_speed_per_sailor_pct": 1
+  },
+  "image_url": "/build-assets/options/specialists/boatman.png"
+}

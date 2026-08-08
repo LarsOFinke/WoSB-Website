@@ -1,0 +1,68 @@
+{
+  "path": "/api/builds/options",
+  "method": "get",
+  "operation": {
+    "operationId": "get_build_options_api_builds_options_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "ship_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ship Id"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildOptionsCatalog"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Build Options",
+    "tags": [
+      "builds"
+    ]
+  }
+}

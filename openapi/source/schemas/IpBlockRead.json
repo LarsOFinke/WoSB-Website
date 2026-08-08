@@ -1,0 +1,128 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by_user_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Created By User Id"
+    },
+    "created_by_username": {
+      "title": "Created By Username",
+      "type": "string"
+    },
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expires At"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "ip_address": {
+      "title": "Ip Address",
+      "type": "string"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_expired": {
+      "title": "Is Expired",
+      "type": "boolean"
+    },
+    "is_temporary": {
+      "title": "Is Temporary",
+      "type": "boolean"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Notes"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "unblock_reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unblock Reason"
+    },
+    "unblocked_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unblocked At"
+    },
+    "unblocked_by_user_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unblocked By User Id"
+    },
+    "unblocked_by_username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unblocked By Username"
+    }
+  },
+  "required": [
+    "id",
+    "ip_address",
+    "reason",
+    "created_at",
+    "created_by_username",
+    "is_active",
+    "is_temporary",
+    "is_expired"
+  ],
+  "title": "IpBlockRead",
+  "type": "object"
+}

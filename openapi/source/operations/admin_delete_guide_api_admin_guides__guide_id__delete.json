@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/guides/{guide_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_guide_api_admin_guides__guide_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "guide_id",
+        "required": true,
+        "schema": {
+          "title": "Guide Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Guide",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

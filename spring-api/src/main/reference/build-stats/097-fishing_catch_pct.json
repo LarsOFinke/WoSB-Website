@@ -1,0 +1,14 @@
+{
+  "key": "fishing_catch_pct",
+  "label": "Whale-hunting and fishing catch",
+  "category": "rewards",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "fishing_catch_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

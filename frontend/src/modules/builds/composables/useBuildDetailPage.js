@@ -28,7 +28,7 @@ import { useSession } from '@/modules/accounts/session'
 
 export function useBuildDetailPage(props) {
   const { optionLabel, t } = useLocale()
-  const { user } = useSession()
+  const { user, isStaff } = useSession()
   const build = ref(null)
   const optionCatalog = ref({ categories: [], options: {}, stat_definitions: [], research_upgrade_slot_effects: {}, research_upgrade_slot_grant: 0, limits: {} })
   const loading = ref(false)
@@ -38,11 +38,12 @@ export function useBuildDetailPage(props) {
   const voteError = ref('')
   const categoryFallbackImages = buildCategoryVisuals
   const crewFallbackImages = buildCrewVisuals
-  const printActions = useBuildPrintActions(build, { t, optionLabel, optionImage })
+  const canEdit = computed(() => Number(build.value?.owner_id) === Number(user.value?.id) && !build.value?.is_official_template)
+  const canCachePrintout = computed(() => canEdit.value || isStaff.value)
+  const printActions = useBuildPrintActions(build, { t, optionLabel, optionImage, canCache: canCachePrintout })
 
   const weaponArcRows = computed(() => createWeaponArcRows(build.value, t))
   const crewTotal = computed(() => build.value?.ship_stats?.crew_total || 0)
-  const canEdit = computed(() => Number(build.value?.owner_id) === Number(user.value?.id) && !build.value?.is_official_template)
   const upgrades = computed(() => buildUpgrades(build.value))
   const commandDeckUpgradeSlots = computed(() => commandDeckSlots(build.value, optionLabel))
   const specialCrewSlots = computed(() => build.value?.special_crew_slots || [])

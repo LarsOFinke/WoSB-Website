@@ -1,0 +1,12 @@
+{
+  "category": "lantern",
+  "seed_id": "white",
+  "name": "White Lantern",
+  "source": "tooltip-lantern-catalog-2026-07-v4",
+  "notes": "Verified in-game tooltip: +10% experience/loot.",
+  "option_kind": "lantern",
+  "stat_effects": {
+    "exp_loot_pct": 10
+  },
+  "image_url": "/build-assets/options/lanterns/white.svg"
+}

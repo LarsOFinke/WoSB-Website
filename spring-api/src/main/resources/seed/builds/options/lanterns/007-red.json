@@ -1,0 +1,14 @@
+{
+  "category": "lantern",
+  "seed_id": "red",
+  "name": "Red Lantern",
+  "source": "tooltip-lantern-catalog-2026-07-v4",
+  "notes": "Verified in-game tooltip: +5% maneuverability, +5% damage and +7% experience/loot.",
+  "option_kind": "lantern",
+  "stat_effects": {
+    "turn_rate_pct": 5,
+    "damage_pct": 5,
+    "exp_loot_pct": 7
+  },
+  "image_url": "/build-assets/options/lanterns/red.svg"
+}

@@ -1,0 +1,413 @@
+{
+  "properties": {
+    "ammunition_slots_used": {
+      "title": "Ammunition Slots Used",
+      "type": "integer"
+    },
+    "base_crew_capacity": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Crew Capacity"
+    },
+    "base_sailor_minimum": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Sailor Minimum"
+    },
+    "base_sailor_target": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Sailor Target"
+    },
+    "base_stats": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Base Stats",
+      "type": "object"
+    },
+    "base_upgrade_slots_available": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Upgrade Slots Available"
+    },
+    "consumable_slots_used": {
+      "title": "Consumable Slots Used",
+      "type": "integer"
+    },
+    "crew_capacity": {
+      "title": "Crew Capacity",
+      "type": "integer"
+    },
+    "crew_remaining": {
+      "title": "Crew Remaining",
+      "type": "integer"
+    },
+    "crew_total": {
+      "title": "Crew Total",
+      "type": "integer"
+    },
+    "effective_crew_capacity": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective Crew Capacity"
+    },
+    "effective_sailor_minimum": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective Sailor Minimum"
+    },
+    "effective_sailor_target": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective Sailor Target"
+    },
+    "effective_stats": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "title": "Effective Stats",
+      "type": "object"
+    },
+    "expansion_upgrade_slots": {
+      "default": 0,
+      "title": "Expansion Upgrade Slots",
+      "type": "integer"
+    },
+    "extra_upgrade_slots": {
+      "default": 0,
+      "title": "Extra Upgrade Slots",
+      "type": "integer"
+    },
+    "hold_slots_used": {
+      "title": "Hold Slots Used",
+      "type": "integer"
+    },
+    "inventory_slots_used": {
+      "title": "Inventory Slots Used",
+      "type": "integer"
+    },
+    "item_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Item Effects",
+      "type": "object"
+    },
+    "lantern_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Lantern Effects",
+      "type": "object"
+    },
+    "mortar_modification_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Mortar Modification Effects",
+      "type": "object"
+    },
+    "mortar_modification_installed": {
+      "default": false,
+      "title": "Mortar Modification Installed",
+      "type": "boolean"
+    },
+    "research_upgrade_slot_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Research Upgrade Slot Effects",
+      "type": "object"
+    },
+    "research_upgrade_slots": {
+      "default": 0,
+      "title": "Research Upgrade Slots",
+      "type": "integer"
+    },
+    "sail_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Sail Effects",
+      "type": "object"
+    },
+    "sailing_efficiency_pct": {
+      "default": 100,
+      "title": "Sailing Efficiency Pct",
+      "type": "integer"
+    },
+    "sailor_minimum": {
+      "title": "Sailor Minimum",
+      "type": "integer"
+    },
+    "sailor_target": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Sailor Target"
+    },
+    "sailors_required_met": {
+      "title": "Sailors Required Met",
+      "type": "boolean"
+    },
+    "ship_extra_upgrade_slots": {
+      "default": 0,
+      "title": "Ship Extra Upgrade Slots",
+      "type": "integer"
+    },
+    "special_crew_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Special Crew Effects",
+      "type": "object"
+    },
+    "special_crew_total": {
+      "title": "Special Crew Total",
+      "type": "integer"
+    },
+    "stat_rows": {
+      "items": {
+        "$ref": "#/components/schemas/BuildStatRow"
+      },
+      "title": "Stat Rows",
+      "type": "array"
+    },
+    "stat_warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Stat Warnings",
+      "type": "array"
+    },
+    "upgrade_buffs": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Upgrade Buffs",
+      "type": "object"
+    },
+    "upgrade_debuffs": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Upgrade Debuffs",
+      "type": "object"
+    },
+    "upgrade_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Upgrade Effects",
+      "type": "object"
+    },
+    "upgrade_slot_5_unlocked": {
+      "default": false,
+      "title": "Upgrade Slot 5 Unlocked",
+      "type": "boolean"
+    },
+    "upgrade_slot_6_available": {
+      "default": false,
+      "title": "Upgrade Slot 6 Available",
+      "type": "boolean"
+    },
+    "upgrade_slot_6_unlocked": {
+      "default": false,
+      "title": "Upgrade Slot 6 Unlocked",
+      "type": "boolean"
+    },
+    "upgrade_slot_7_available": {
+      "default": false,
+      "title": "Upgrade Slot 7 Available",
+      "type": "boolean"
+    },
+    "upgrade_slot_8_available": {
+      "default": false,
+      "title": "Upgrade Slot 8 Available",
+      "type": "boolean"
+    },
+    "upgrade_slots_available": {
+      "title": "Upgrade Slots Available",
+      "type": "integer"
+    },
+    "upgrade_slots_used": {
+      "title": "Upgrade Slots Used",
+      "type": "integer"
+    },
+    "weapon_capacity": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Weapon Capacity",
+      "type": "object"
+    },
+    "weapon_capacity_total": {
+      "default": 0,
+      "title": "Weapon Capacity Total",
+      "type": "integer"
+    },
+    "weapon_slots": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Weapon Slots",
+      "type": "object"
+    },
+    "weapon_total": {
+      "title": "Weapon Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "crew_total",
+    "crew_capacity",
+    "crew_remaining",
+    "sailor_minimum",
+    "sailors_required_met",
+    "upgrade_slots_used",
+    "upgrade_slots_available",
+    "weapon_slots",
+    "weapon_total",
+    "special_crew_total",
+    "inventory_slots_used",
+    "ammunition_slots_used",
+    "consumable_slots_used",
+    "hold_slots_used"
+  ],
+  "title": "ShipStats",
+  "type": "object"
+}

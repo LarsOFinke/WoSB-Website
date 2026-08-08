@@ -1,0 +1,126 @@
+{
+  "properties": {
+    "can_administer": {
+      "title": "Can Administer",
+      "type": "boolean"
+    },
+    "can_manage": {
+      "title": "Can Manage",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "current_user_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Current User Role"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "fleet_id": {
+      "title": "Fleet Id",
+      "type": "integer"
+    },
+    "focus": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Focus"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_member": {
+      "title": "Is Member",
+      "type": "boolean"
+    },
+    "leader": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/SquadMemberRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "max_members": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Members"
+    },
+    "member_count": {
+      "title": "Member Count",
+      "type": "integer"
+    },
+    "members": {
+      "items": {
+        "$ref": "#/components/schemas/SquadMemberRead"
+      },
+      "title": "Members",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "fleet_id",
+    "name",
+    "slug",
+    "is_active",
+    "member_count",
+    "is_member",
+    "can_manage",
+    "can_administer",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "SquadDetailRead",
+  "type": "object"
+}

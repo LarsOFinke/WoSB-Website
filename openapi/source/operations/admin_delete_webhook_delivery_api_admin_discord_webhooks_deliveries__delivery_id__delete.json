@@ -1,0 +1,61 @@
+{
+  "path": "/api/admin/discord-webhooks/deliveries/{delivery_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_webhook_delivery_api_admin_discord_webhooks_deliveries__delivery_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "delivery_id",
+        "required": true,
+        "schema": {
+          "title": "Delivery Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookDeliveryDeleteResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Webhook Delivery",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

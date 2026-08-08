@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "broadside_capacity_delta": {
+      "title": "Broadside Capacity Delta",
+      "type": "integer"
+    },
+    "crew_capacity_delta": {
+      "title": "Crew Capacity Delta",
+      "type": "integer"
+    },
+    "durability_delta": {
+      "title": "Durability Delta",
+      "type": "integer"
+    },
+    "hold_capacity_pct": {
+      "title": "Hold Capacity Pct",
+      "type": "number"
+    },
+    "maneuverability_delta": {
+      "title": "Maneuverability Delta",
+      "type": "number"
+    },
+    "max_caliber_inches": {
+      "title": "Max Caliber Inches",
+      "type": "number"
+    },
+    "mortar_capacity": {
+      "title": "Mortar Capacity",
+      "type": "integer"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "speed_pct": {
+      "title": "Speed Pct",
+      "type": "number"
+    }
+  },
+  "required": [
+    "mortar_capacity",
+    "max_caliber_inches",
+    "broadside_capacity_delta",
+    "durability_delta",
+    "speed_pct",
+    "maneuverability_delta",
+    "hold_capacity_pct",
+    "crew_capacity_delta",
+    "source"
+  ],
+  "title": "ShipMortarModificationRead",
+  "type": "object"
+}

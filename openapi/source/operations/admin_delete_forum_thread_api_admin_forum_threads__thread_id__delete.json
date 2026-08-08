@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/forum/threads/{thread_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_forum_thread_api_admin_forum_threads__thread_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "thread_id",
+        "required": true,
+        "schema": {
+          "title": "Thread Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Forum Thread",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

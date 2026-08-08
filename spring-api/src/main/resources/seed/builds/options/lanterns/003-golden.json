@@ -1,0 +1,14 @@
+{
+  "category": "lantern",
+  "seed_id": "golden",
+  "name": "Golden Lantern",
+  "source": "tooltip-lantern-catalog-2026-07-v4",
+  "notes": "Verified in-game tooltip: +5% speed, armor and damage.",
+  "option_kind": "lantern",
+  "stat_effects": {
+    "speed_pct": 5,
+    "armor_pct": 5,
+    "damage_pct": 5
+  },
+  "image_url": "/build-assets/options/lanterns/golden.svg"
+}

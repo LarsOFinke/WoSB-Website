@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "role": {
+      "title": "Role",
+      "type": "string"
+    },
+    "username": {
+      "title": "Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "username",
+    "display_name",
+    "role"
+  ],
+  "title": "FleetMemberUserRead",
+  "type": "object"
+}

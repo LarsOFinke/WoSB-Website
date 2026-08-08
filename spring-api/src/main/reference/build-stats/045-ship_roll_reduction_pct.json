@@ -1,0 +1,14 @@
+{
+  "key": "ship_roll_reduction_pct",
+  "label": "Ship roll reduction",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "ship_roll_reduction_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

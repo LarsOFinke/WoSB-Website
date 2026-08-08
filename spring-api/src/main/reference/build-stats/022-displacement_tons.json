@@ -1,0 +1,14 @@
+{
+  "key": "displacement_tons",
+  "label": "Displacement",
+  "category": "ship",
+  "base_field": "displacement_tons",
+  "unit": "t",
+  "pct_effect": null,
+  "flat_effect": null,
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "ship_catalog",
+  "pct_base_field": null
+}

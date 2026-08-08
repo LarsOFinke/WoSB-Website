@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/backups/configuration",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_backup_configuration_api_admin_backups_configuration_delete",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "202": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BackupControlRequestResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Backup Configuration",
+    "tags": [
+      "admin",
+      "admin-backups"
+    ]
+  }
+}

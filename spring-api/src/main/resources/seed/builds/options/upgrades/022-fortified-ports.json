@@ -1,0 +1,12 @@
+{
+  "category": "upgrade",
+  "name": "Fortified Ports",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Cannon range +10.",
+  "option_kind": "ship_upgrade_combat",
+  "stat_effects": {
+    "weapon_range": 10
+  },
+  "seed_id": "fortified-ports",
+  "image_url": "/build-assets/options/upgrades/fortified-ports.png"
+}

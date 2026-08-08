@@ -1,0 +1,14 @@
+{
+  "key": "durability",
+  "label": "Durability",
+  "category": "survivability",
+  "base_field": "durability",
+  "unit": null,
+  "pct_effect": "hull_hp_pct",
+  "flat_effect": null,
+  "calculation_flat_effect": "durability",
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "ship_catalog",
+  "pct_base_field": null
+}

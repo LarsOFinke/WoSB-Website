@@ -1,0 +1,81 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_seed_overridden": {
+      "default": false,
+      "title": "Is Seed Overridden",
+      "type": "boolean"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "seed_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Seed Key"
+    },
+    "seed_revision": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Seed Revision"
+    },
+    "seed_status": {
+      "title": "Seed Status",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": 100,
+      "maximum": 100000.0,
+      "minimum": 0.0,
+      "title": "Sort Order",
+      "type": "integer"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "seed_status",
+    "label",
+    "id",
+    "key",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "MasterDataCategoryRead",
+  "type": "object"
+}

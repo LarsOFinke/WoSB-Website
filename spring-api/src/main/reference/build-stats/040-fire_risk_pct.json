@@ -1,0 +1,14 @@
+{
+  "key": "fire_risk_pct",
+  "label": "Fire risk",
+  "category": "risk",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "fire_risk_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": false,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

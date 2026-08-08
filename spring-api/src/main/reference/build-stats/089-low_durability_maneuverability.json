@@ -1,0 +1,14 @@
+{
+  "key": "low_durability_maneuverability",
+  "label": "Maneuverability at 50% durability or lower",
+  "category": "mobility",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "low_durability_maneuverability",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

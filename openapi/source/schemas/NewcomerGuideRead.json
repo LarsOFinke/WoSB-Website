@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "blocks": {
+      "items": {
+        "$ref": "#/components/schemas/NewcomerGuideBlockRead"
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "intro": {
+      "title": "Intro",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "updated_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Updated By"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "intro",
+    "updated_at"
+  ],
+  "title": "NewcomerGuideRead",
+  "type": "object"
+}

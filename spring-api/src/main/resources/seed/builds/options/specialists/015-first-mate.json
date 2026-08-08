@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "first-mate",
+  "name": "First Mate",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. For each assigned Sailor: sail deployment speed +0.2%. Catalog status: clarified-by-project-owner-2026-07-28.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "sail_deployment_speed_per_sailor_pct": 0.2
+  },
+  "image_url": "/build-assets/options/specialists/first-mate.png"
+}

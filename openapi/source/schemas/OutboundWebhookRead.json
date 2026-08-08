@@ -1,0 +1,125 @@
+{
+  "properties": {
+    "broadcast_enabled": {
+      "title": "Broadcast Enabled",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by_username": {
+      "title": "Created By Username",
+      "type": "string"
+    },
+    "discord_username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Username"
+    },
+    "endpoint_url": {
+      "title": "Endpoint Url",
+      "type": "string"
+    },
+    "event_types": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Event Types",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "last_failure_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Failure At"
+    },
+    "last_success_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Success At"
+    },
+    "message_template": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Message Template"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "scope_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scope Id"
+    },
+    "scope_type": {
+      "enum": [
+        "global",
+        "fleet",
+        "squad"
+      ],
+      "title": "Scope Type",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "endpoint_url",
+    "event_types",
+    "scope_type",
+    "broadcast_enabled",
+    "is_active",
+    "created_at",
+    "updated_at",
+    "created_by_username"
+  ],
+  "title": "OutboundWebhookRead",
+  "type": "object"
+}

@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "description": "Account access request with an optional official-fleet application.",
+  "properties": {
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_application_note": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Application Note"
+    },
+    "fleet_id": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Id"
+    },
+    "password": {
+      "maxLength": 200,
+      "minLength": 12,
+      "title": "Password",
+      "type": "string"
+    },
+    "username": {
+      "maxLength": 80,
+      "minLength": 3,
+      "title": "Username",
+      "type": "string"
+    },
+    "wants_fleet_membership": {
+      "default": false,
+      "title": "Wants Fleet Membership",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "username",
+    "password",
+    "display_name"
+  ],
+  "title": "RegisterRequest",
+  "type": "object"
+}

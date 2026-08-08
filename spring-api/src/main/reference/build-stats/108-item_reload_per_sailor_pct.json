@@ -1,0 +1,14 @@
+{
+  "key": "item_reload_per_sailor_pct",
+  "label": "Item reload per Sailor",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "item_reload_per_sailor_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_catalog",
+  "pct_base_field": null
+}

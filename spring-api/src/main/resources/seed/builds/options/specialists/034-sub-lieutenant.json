@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "sub-lieutenant",
+  "name": "Sub-lieutenant",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Military. For each assigned Sailor: item reload +0.1%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "item_reload_per_sailor_pct": 0.1
+  },
+  "image_url": "/build-assets/options/specialists/sub-lieutenant.png"
+}

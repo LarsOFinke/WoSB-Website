@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/master-data/ships/{ship_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_ship_api_admin_master_data_ships__ship_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "ship_id",
+        "required": true,
+        "schema": {
+          "title": "Ship Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MasterDataShipUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MasterDataShipRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Ship",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

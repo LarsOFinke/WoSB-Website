@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Copper Plating",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Water-fire protection +25%. Protection against gunpowder barrels and fire ships +30%.",
+  "option_kind": "ship_upgrade_protection",
+  "stat_effects": {
+    "water_fire_protection_pct": 25,
+    "explosive_fire_ship_protection_pct": 30
+  },
+  "seed_id": "copper-plating",
+  "image_url": "/build-assets/options/upgrades/copper-plating.png"
+}

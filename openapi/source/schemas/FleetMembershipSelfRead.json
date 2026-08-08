@@ -1,0 +1,144 @@
+{
+  "properties": {
+    "admin_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Admin Note"
+    },
+    "assignment": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Assignment"
+    },
+    "availability": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Availability"
+    },
+    "discord_handle": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Handle"
+    },
+    "fleet": {
+      "$ref": "#/components/schemas/FleetMembershipFleetRead"
+    },
+    "fleet_id": {
+      "title": "Fleet Id",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "joined_at": {
+      "format": "date-time",
+      "title": "Joined At",
+      "type": "string"
+    },
+    "management": {
+      "$ref": "#/components/schemas/FleetMembershipManagementRead"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    },
+    "preferred_roles": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Preferred Roles"
+    },
+    "preferred_ships": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Preferred Ships"
+    },
+    "role": {
+      "title": "Role",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "timezone": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Timezone"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "user": {
+      "$ref": "#/components/schemas/FleetMemberUserRead"
+    },
+    "user_id": {
+      "title": "User Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "fleet_id",
+    "user_id",
+    "role",
+    "status",
+    "joined_at",
+    "updated_at",
+    "user",
+    "fleet"
+  ],
+  "title": "FleetMembershipSelfRead",
+  "type": "object"
+}

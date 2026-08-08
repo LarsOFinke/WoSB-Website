@@ -1,0 +1,69 @@
+{
+  "path": "/api/squads/{squad_id}/members/{member_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_squad_member_api_squads__squad_id__members__member_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "squad_id",
+        "required": true,
+        "schema": {
+          "title": "Squad Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "path",
+        "name": "member_id",
+        "required": true,
+        "schema": {
+          "title": "Member Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SquadDetailRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Squad Member",
+    "tags": [
+      "fleet squads"
+    ]
+  }
+}

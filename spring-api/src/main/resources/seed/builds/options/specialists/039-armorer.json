@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "armorer",
+  "name": "Armorer",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Military. The next reload after firing a single cannon shot is 20% faster. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "next_single_shot_reload_pct": 20
+  },
+  "image_url": "/build-assets/options/specialists/armorer.png"
+}

@@ -59,9 +59,17 @@ Audittexte enthalten keine Kopie der IP-Adresse.
 ## Infrastruktur-Logs
 
 Der produktive NGINX-Gateway schreibt keine Access-Logs. Damit werden dort insbesondere keine
-Routen, IP-Adressen oder User-Agents als normale Besuchsprotokolle aufgezeichnet. Das Backend-
-Konsolenlogging enthält keine Client-IP, Route, Query oder User-Agent. Kritische Betriebsfehler sind
-von der bannbezogenen Datenbankauswertung getrennt und werden nicht auf der Webseite angezeigt.
+Routen, IP-Adressen oder User-Agents als normale Besuchsprotokolle aufgezeichnet. Das Backend
+führt ebenfalls keine persistente Request-Telemetrie. Für Fehler und Security-Ablehnungen darf das
+flüchtige Betriebslogging eine servergenerierte Request-ID, HTTP-Methode, normalisiertes
+Spring-Routen-Template, Status-/Fehlerklasse und den begrenzten Exception-Kontext enthalten.
+Client-IP, Querywerte, User-Agent, Cookies sowie Request-/Response-Payloads bleiben ausgeschlossen.
+
+Erfolgreiche Request-Lifecycle-Telemetrie ist standardmäßig deaktiviert.
+`RBF_HTTP_LIFECYCLE_LOGGING=true` darf für automatisierte Tests oder kurze gezielte Diagnosefenster
+aktiviert werden und protokolliert ausschließlich Request-ID, Methode, normalisierte Route, Status
+und Laufzeit. Diese Logs werden nicht in der Anwendungsdatenbank gespeichert und nicht über die
+Staff-API angezeigt.
 
 ## Konfiguration
 

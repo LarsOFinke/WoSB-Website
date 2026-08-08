@@ -1,0 +1,66 @@
+{
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "label": {
+      "anyOf": [
+        {
+          "maxLength": 180,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Label"
+    },
+    "resource_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resource Id"
+    },
+    "resource_type": {
+      "enum": [
+        "guide",
+        "build",
+        "internal",
+        "external"
+      ],
+      "title": "Resource Type",
+      "type": "string"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Url"
+    }
+  },
+  "required": [
+    "resource_type"
+  ],
+  "title": "NewcomerGuideResourceInput",
+  "type": "object"
+}

@@ -1,0 +1,24 @@
+{
+  "description": "Full replacement payload for an existing forum post.",
+  "properties": {
+    "body": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Body",
+      "type": "string"
+    },
+    "file_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 12,
+      "title": "File Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "body"
+  ],
+  "title": "ForumPostUpdate",
+  "type": "object"
+}

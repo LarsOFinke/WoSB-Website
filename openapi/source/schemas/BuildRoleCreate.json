@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "slug": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Slug",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": 0,
+      "maximum": 10000.0,
+      "minimum": -10000.0,
+      "title": "Sort Order",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "label",
+    "slug"
+  ],
+  "title": "BuildRoleCreate",
+  "type": "object"
+}

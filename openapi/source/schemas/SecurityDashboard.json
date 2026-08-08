@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "days": {
+      "items": {
+        "$ref": "#/components/schemas/SecurityDayBucket"
+      },
+      "title": "Days",
+      "type": "array"
+    },
+    "ips": {
+      "items": {
+        "$ref": "#/components/schemas/SecurityIpRow"
+      },
+      "title": "Ips",
+      "type": "array"
+    },
+    "signal_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Signal Counts",
+      "type": "object"
+    },
+    "threat_counts": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Threat Counts",
+      "type": "object"
+    },
+    "threat_level": {
+      "title": "Threat Level",
+      "type": "string"
+    },
+    "threat_score": {
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Threat Score",
+      "type": "integer"
+    },
+    "total_events": {
+      "title": "Total Events",
+      "type": "integer"
+    },
+    "unique_ips": {
+      "title": "Unique Ips",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "threat_score",
+    "threat_level",
+    "total_events",
+    "unique_ips"
+  ],
+  "title": "SecurityDashboard",
+  "type": "object"
+}

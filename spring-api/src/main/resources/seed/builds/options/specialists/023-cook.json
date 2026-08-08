@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "cook",
+  "name": "Cook",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. Food nutrition +33%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "food_nutrition_pct": 33
+  },
+  "image_url": "/build-assets/options/specialists/cook.png"
+}

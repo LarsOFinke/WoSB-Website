@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "precision": {
+      "maximum": 6.0,
+      "minimum": 0.0,
+      "title": "Precision",
+      "type": "integer"
+    },
+    "translation_key": {
+      "title": "Translation Key",
+      "type": "string"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unit"
+    },
+    "value_type": {
+      "title": "Value Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "translation_key",
+    "label",
+    "category",
+    "precision",
+    "value_type"
+  ],
+  "title": "StatEffectDefinitionRead",
+  "type": "object"
+}

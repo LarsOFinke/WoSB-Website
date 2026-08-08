@@ -1,0 +1,132 @@
+{
+  "path": "/api/calendar/events",
+  "method": "get",
+  "operation": {
+    "operationId": "get_events_api_calendar_events_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "start",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Start"
+        }
+      },
+      {
+        "in": "query",
+        "name": "end",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "End"
+        }
+      },
+      {
+        "in": "query",
+        "name": "category",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Category"
+        }
+      },
+      {
+        "in": "query",
+        "name": "squad_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Squad Id"
+        }
+      },
+      {
+        "in": "query",
+        "name": "fleet_only",
+        "required": false,
+        "schema": {
+          "default": false,
+          "title": "Fleet Only",
+          "type": "boolean"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FleetEventRead"
+              },
+              "title": "Response Get Events Api Calendar Events Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Events",
+    "tags": [
+      "fleet calendar"
+    ]
+  }
+}

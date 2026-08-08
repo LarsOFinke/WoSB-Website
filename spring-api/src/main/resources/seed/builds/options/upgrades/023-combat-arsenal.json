@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Combat Arsenal",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Item reload speed +20%. Ammunition-type switch speed +50%.",
+  "option_kind": "ship_upgrade_combat",
+  "stat_effects": {
+    "item_reload_pct": 20,
+    "ammo_switch_speed_pct": 50
+  },
+  "seed_id": "combat-arsenal",
+  "image_url": "/build-assets/options/upgrades/combat-arsenal.png"
+}

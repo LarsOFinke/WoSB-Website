@@ -38,13 +38,15 @@ Existing V1 databases ignore B2 and apply V3–V7 safely: their table/index
 creation is idempotent and therefore preserves all rows and the V1 checksum. The
 focused files are generated once from immutable V1 by
 `infrastructure/scripts/generation/generate_modular_flyway_baseline.py`; the repository gate
-checks their exact content. Future schema work starts at V8 and is authored as a
-small immutable migration for one coherent change. Do not regenerate or edit a
-published V3–V7 file after release.
+checks their exact content. Forward schema work starts at V8 and every V8+ file is a small immutable
+migration for one coherent change. `V8__build_printout_cache.sql` separates the
+server-wide derived printout cache identity from the business build revision.
+Do not regenerate or edit a published V3–V7 file, and never fold a V8+ change
+back into V1 or the modular baseline.
 
 ## Verification
 
-`mvn verify` uses PostgreSQL Testcontainers to validate an empty schema, migrations and application startup. Restore tests additionally load a dump into staging and require Flyway plus Spring readiness. Migration tests must cover both a fresh B2 path and upgrade from a V1 schema history.
+`mvn verify` uses PostgreSQL Testcontainers to validate an empty schema, migrations and application startup. The static SQL audit compares immutable V1 only with the modular baseline mirror V3–V7; V8+ migrations are then layered on top when constructing the current runtime schema for query validation. This distinction prevents legitimate forward migrations from being reported as baseline drift. Restore tests additionally load a dump into staging and require Flyway plus Spring readiness. Migration tests must cover both a fresh B2 path and upgrade from a V1 schema history.
 
 The one-time scripts under `infrastructure/scripts/migration` exist only to adopt the reviewed final schema from installations created before Flyway. They are not a general baseline escape hatch.
 

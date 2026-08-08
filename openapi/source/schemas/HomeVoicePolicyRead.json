@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "competitive": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "general": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "competitive",
+    "general"
+  ],
+  "type": "object",
+  "title": "HomeVoicePolicyRead"
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Kobukson",
+  "rate": 3,
+  "ship_type": "Phanokson",
+  "durability": 2000,
+  "speed_min_knots": 8,
+  "speed_knots": 10.9,
+  "maneuverability": 85,
+  "armor": 4.6,
+  "hold_capacity": 18000,
+  "crew_capacity": 124,
+  "sailor_minimum": 50,
+  "displacement_tons": 2250,
+  "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Kobukson",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 15,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 15,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 4,
+      "max_weapon_class": null,
+      "max_caliber_inches": 9,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

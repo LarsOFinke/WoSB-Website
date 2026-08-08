@@ -1,0 +1,45 @@
+{
+  "properties": {
+    "assignable_roles": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assignable Roles",
+      "type": "array"
+    },
+    "can_change_role": {
+      "default": false,
+      "title": "Can Change Role",
+      "type": "boolean"
+    },
+    "can_change_status": {
+      "default": false,
+      "title": "Can Change Status",
+      "type": "boolean"
+    },
+    "can_edit_directory": {
+      "default": false,
+      "title": "Can Edit Directory",
+      "type": "boolean"
+    },
+    "protected": {
+      "default": true,
+      "title": "Protected",
+      "type": "boolean"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "insufficient",
+      "title": "Reason"
+    }
+  },
+  "title": "FleetMembershipManagementRead",
+  "type": "object"
+}

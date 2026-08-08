@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/master-data/categories",
+  "method": "get",
+  "operation": {
+    "operationId": "categories_api_admin_master_data_categories_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/MasterDataCategoryRead"
+              },
+              "title": "Response Categories Api Admin Master Data Categories Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Categories",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

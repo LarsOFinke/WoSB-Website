@@ -1,0 +1,23 @@
+{
+  "path": "/api/health",
+  "method": "get",
+  "operation": {
+    "operationId": "health_check_api_health_get",
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HealthStatusRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      }
+    },
+    "summary": "Health Check",
+    "tags": [
+      "health"
+    ]
+  }
+}

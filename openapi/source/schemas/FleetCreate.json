@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "focus": {
+      "maxLength": 80,
+      "minLength": 2,
+      "title": "Focus",
+      "type": "string"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Name",
+      "type": "string"
+    },
+    "slug": {
+      "maxLength": 120,
+      "minLength": 2,
+      "title": "Slug",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": 100,
+      "maximum": 9999.0,
+      "minimum": 0.0,
+      "title": "Sort Order",
+      "type": "integer"
+    },
+    "standing_orders": {
+      "anyOf": [
+        {
+          "maxLength": 3000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Standing Orders"
+    }
+  },
+  "required": [
+    "name",
+    "slug",
+    "focus"
+  ],
+  "title": "FleetCreate",
+  "type": "object"
+}

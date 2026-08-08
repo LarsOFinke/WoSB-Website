@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "deleted_count": {
+      "default": 0,
+      "title": "Deleted Count",
+      "type": "integer"
+    }
+  },
+  "title": "OutboundWebhookDeliveryDeleteResult",
+  "type": "object"
+}

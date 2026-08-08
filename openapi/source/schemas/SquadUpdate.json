@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 3000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "focus": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Focus"
+    },
+    "max_members": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 2.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Members"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "minLength": 2,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Name"
+    }
+  },
+  "title": "SquadUpdate",
+  "type": "object"
+}

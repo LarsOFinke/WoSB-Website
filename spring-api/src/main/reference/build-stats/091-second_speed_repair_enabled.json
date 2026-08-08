@@ -1,0 +1,14 @@
+{
+  "key": "second_speed_repair_enabled",
+  "label": "Repairs available at second speed",
+  "category": "survivability",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "second_speed_repair_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/registration-requests/{request_id}/reject",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_reject_registration_request_api_admin_registration_requests__request_id__reject_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "request_id",
+        "required": true,
+        "schema": {
+          "title": "Request Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RegistrationDecision"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RegistrationRequestRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Reject Registration Request",
+    "tags": [
+      "admin",
+      "admin-registrations"
+    ]
+  }
+}

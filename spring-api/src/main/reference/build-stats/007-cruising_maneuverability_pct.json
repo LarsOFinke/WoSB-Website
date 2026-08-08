@@ -1,0 +1,14 @@
+{
+  "key": "cruising_maneuverability_pct",
+  "label": "Cruising maneuverability",
+  "category": "mobility",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "cruising_maneuverability_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "equipment_modifiers",
+  "pct_base_field": null
+}

@@ -32,6 +32,15 @@ SAFE_LEFT_BOUNDARY = set(" (,.=<>+-*/;[]")
 SAFE_RIGHT_BOUNDARY = set(" ),.=<>+-*/;[]")
 
 
+def versioned_migrations(minimum_version: int = 2) -> list[Path]:
+    values: list[tuple[int, Path]] = []
+    for path in MIGRATIONS.glob("V*__*.sql"):
+        match = re.match(r"V(\d+)__", path.name)
+        if match and int(match.group(1)) >= minimum_version:
+            values.append((int(match.group(1)), path))
+    return [path for _version, path in sorted(values, key=lambda item: (item[0], item[1].name))]
+
+
 @dataclass(frozen=True)
 class Issue:
     path: Path
@@ -129,9 +138,18 @@ def parse_schema(paths: Iterable[Path]) -> dict[str, set[str]]:
 
 def schema_drift_issues() -> list[Issue]:
     legacy_path = MIGRATIONS / "V1__current_schema_baseline.sql"
-    modular_paths = sorted(MIGRATIONS.glob("V[2-9]__*.sql"))
+    baseline_paths = [
+        MIGRATIONS / f"V{version}__{name}"
+        for version, name in (
+            (3, "foundation_and_catalog_schema.sql"),
+            (4, "identity_and_catalog_relations.sql"),
+            (5, "domain_aggregate_schema.sql"),
+            (6, "domain_relation_schema.sql"),
+            (7, "schema_indexes.sql"),
+        )
+    ]
     legacy = parse_schema([legacy_path])
-    modular = parse_schema(modular_paths)
+    modular = parse_schema(baseline_paths)
     issues: list[Issue] = []
     if set(legacy) != set(modular):
         issues.append(Issue(legacy_path, 1, "Flyway v1 compatibility schema and modular schema expose different tables"))
@@ -528,8 +546,7 @@ def sql_update_schema_issues(schema: dict[str, set[str]]) -> tuple[list[Issue], 
 
 def main() -> int:
     constants = string_constants()
-    modular_paths = sorted(MIGRATIONS.glob("V[2-9]__*.sql"))
-    schema = parse_schema(modular_paths)
+    schema = parse_schema(versioned_migrations())
 
     issues: list[Issue] = []
     issues.extend(schema_drift_issues())

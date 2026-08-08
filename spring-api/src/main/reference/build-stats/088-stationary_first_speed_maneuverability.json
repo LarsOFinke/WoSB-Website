@@ -1,0 +1,14 @@
+{
+  "key": "stationary_first_speed_maneuverability",
+  "label": "Maneuverability while stationary and at first speed",
+  "category": "mobility",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "stationary_first_speed_maneuverability",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

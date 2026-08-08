@@ -1,0 +1,69 @@
+{
+  "path": "/api/admin/discord-webhooks/summary",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_webhook_summary_api_admin_discord_webhooks_summary_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "purpose",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "pattern": "^(automation|broadcast)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Purpose"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookSummary"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Webhook Summary",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

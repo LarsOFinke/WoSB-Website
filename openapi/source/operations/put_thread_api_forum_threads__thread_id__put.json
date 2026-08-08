@@ -1,0 +1,70 @@
+{
+  "path": "/api/forum/threads/{thread_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_thread_api_forum_threads__thread_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "thread_id",
+        "required": true,
+        "schema": {
+          "title": "Thread Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ForumThreadUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ForumThreadRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Thread",
+    "tags": [
+      "forum"
+    ]
+  }
+}

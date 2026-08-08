@@ -1,0 +1,14 @@
+{
+  "key": "next_single_shot_reload_pct",
+  "label": "Next reload after a single cannon shot",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "next_single_shot_reload_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "file": {
+      "format": "binary",
+      "title": "File",
+      "type": "string"
+    }
+  },
+  "required": [
+    "file"
+  ],
+  "title": "Body_post_file_api_files_post",
+  "type": "object"
+}

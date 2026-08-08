@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Structural Expansion",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Upgrade spaces +2. Maneuverability -10%.",
+  "option_kind": "ship_upgrade_unusual",
+  "stat_effects": {
+    "extra_upgrade_slots": 2,
+    "turn_rate_pct": -10
+  },
+  "seed_id": "structural-expansion",
+  "image_url": "/build-assets/options/upgrades/structural-expansion.png"
+}

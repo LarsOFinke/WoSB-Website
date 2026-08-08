@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Combat Crow's Nest",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Visibility range +50%. Weapon aiming speed +60%.",
+  "option_kind": "ship_upgrade_expeditionary",
+  "stat_effects": {
+    "visibility_range_pct": 50,
+    "weapon_aiming_pct": 60
+  },
+  "seed_id": "combat-crow-s-nest",
+  "image_url": "/build-assets/options/upgrades/combat-crow-s-nest.png"
+}

@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "host": {
+      "maxLength": 253,
+      "minLength": 1,
+      "title": "Host",
+      "type": "string"
+    },
+    "port": {
+      "default": 22,
+      "maximum": 65535.0,
+      "minimum": 1.0,
+      "title": "Port",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "host"
+  ],
+  "title": "BackupDiscoveryRequest",
+  "type": "object"
+}

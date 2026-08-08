@@ -1,0 +1,23 @@
+{
+  "path": "/api/fleets/public/official",
+  "method": "get",
+  "operation": {
+    "operationId": "get_public_official_fleet_api_fleets_public_official_get",
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetPublicRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      }
+    },
+    "summary": "Get Public Official Fleet",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

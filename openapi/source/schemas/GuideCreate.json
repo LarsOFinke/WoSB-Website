@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "body": {
+      "maxLength": 20000,
+      "minLength": 1,
+      "title": "Body",
+      "type": "string"
+    },
+    "build_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 20,
+      "title": "Build Ids",
+      "type": "array"
+    },
+    "category": {
+      "default": "general",
+      "maxLength": 80,
+      "title": "Category",
+      "type": "string"
+    },
+    "file_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 20,
+      "title": "File Ids",
+      "type": "array"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "maxLength": 400,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Summary"
+    },
+    "title": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "body"
+  ],
+  "title": "GuideCreate",
+  "type": "object"
+}

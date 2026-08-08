@@ -1,0 +1,14 @@
+{
+  "key": "exp_loot_pct",
+  "label": "Experience and loot",
+  "category": "rewards",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "exp_loot_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "equipment_modifiers",
+  "pct_base_field": null
+}

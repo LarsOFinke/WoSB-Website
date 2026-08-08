@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "capacity": {
+      "default": 0,
+      "maximum": 1000.0,
+      "minimum": 0.0,
+      "title": "Capacity",
+      "type": "integer"
+    },
+    "max_caliber_inches": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Caliber Inches"
+    },
+    "max_weapon_class": {
+      "anyOf": [
+        {
+          "maxLength": 24,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Weapon Class"
+    },
+    "slot_type": {
+      "maxLength": 40,
+      "minLength": 1,
+      "title": "Slot Type",
+      "type": "string"
+    },
+    "special_weapon_capacity": {
+      "default": 0,
+      "maximum": 1000.0,
+      "minimum": 0.0,
+      "title": "Special Weapon Capacity",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "slot_type"
+  ],
+  "title": "MasterDataShipMount",
+  "type": "object"
+}

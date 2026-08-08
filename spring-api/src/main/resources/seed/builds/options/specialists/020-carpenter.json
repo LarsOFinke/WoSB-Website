@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "carpenter",
+  "name": "Ship's Carpenter",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. Repairs are available at second speed, but are slower. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "second_speed_repair_enabled": 1
+  },
+  "image_url": "/build-assets/options/specialists/carpenter.png"
+}

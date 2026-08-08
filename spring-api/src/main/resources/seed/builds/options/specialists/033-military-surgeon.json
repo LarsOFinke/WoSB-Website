@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "military-surgeon",
+  "name": "Surgeon",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Military. Half of the crew wounded by cannon fire is healed during repairs. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "repair_wounded_crew_pct": 50
+  },
+  "image_url": "/build-assets/options/specialists/military-surgeon.png"
+}

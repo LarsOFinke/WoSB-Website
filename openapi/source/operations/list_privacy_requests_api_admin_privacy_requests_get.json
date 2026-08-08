@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/privacy-requests",
+  "method": "get",
+  "operation": {
+    "operationId": "list_privacy_requests_api_admin_privacy_requests_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/DataSubjectRequestRead"
+              },
+              "title": "Response List Privacy Requests Api Admin Privacy Requests Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "List Privacy Requests",
+    "tags": [
+      "admin",
+      "admin-privacy"
+    ]
+  }
+}

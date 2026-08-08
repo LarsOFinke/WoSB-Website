@@ -1,0 +1,14 @@
+{
+  "key": "ammo_switch_per_sailor_pct",
+  "label": "Ammunition switch speed per Sailor",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "ammo_switch_per_sailor_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_catalog",
+  "pct_base_field": null
+}

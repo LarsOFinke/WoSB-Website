@@ -1,0 +1,60 @@
+{
+  "path": "/api/builds/{build_id}",
+  "method": "get",
+  "operation": {
+    "operationId": "get_build_detail_api_builds__build_id__get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Build Detail",
+    "tags": [
+      "builds"
+    ]
+  }
+}

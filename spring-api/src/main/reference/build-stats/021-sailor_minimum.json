@@ -1,0 +1,14 @@
+{
+  "key": "sailor_minimum",
+  "label": "Sailing crew target",
+  "category": "crew",
+  "base_field": "sailor_minimum",
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "sailor_minimum",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": false,
+  "source": "ship_catalog",
+  "pct_base_field": null
+}

@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "helmsman",
+  "name": "Helmsman",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. Maneuverability while stationary and at first speed +4. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "stationary_first_speed_maneuverability": 4
+  },
+  "image_url": "/build-assets/options/specialists/helmsman.png"
+}

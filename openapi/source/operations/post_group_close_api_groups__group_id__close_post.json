@@ -1,0 +1,53 @@
+{
+  "path": "/api/groups/{group_id}/close",
+  "method": "post",
+  "operation": {
+    "operationId": "post_group_close_api_groups__group_id__close_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "group_id",
+        "required": true,
+        "schema": {
+          "title": "Group Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Group Close",
+    "tags": [
+      "groups"
+    ]
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "path": "/api/admin/users",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_list_users_api_admin_users_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "search",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Search"
+        }
+      },
+      {
+        "in": "query",
+        "name": "role",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 24,
+              "pattern": "^(user|moderator|admin)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Role"
+        }
+      },
+      {
+        "in": "query",
+        "name": "status",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 16,
+              "pattern": "^(active|inactive|all)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status"
+        }
+      },
+      {
+        "in": "query",
+        "name": "fleet_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fleet Id"
+        }
+      },
+      {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 100,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "offset",
+        "required": false,
+        "schema": {
+          "default": 0,
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UserRead"
+              },
+              "title": "Response Admin List Users Api Admin Users Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin List Users",
+    "tags": [
+      "admin",
+      "admin-users"
+    ]
+  }
+}

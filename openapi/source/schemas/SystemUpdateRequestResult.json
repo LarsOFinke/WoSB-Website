@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "accepted": {
+      "title": "Accepted",
+      "type": "boolean"
+    },
+    "status": {
+      "$ref": "#/components/schemas/SystemUpdateStatus"
+    }
+  },
+  "required": [
+    "accepted",
+    "status"
+  ],
+  "title": "SystemUpdateRequestResult",
+  "type": "object"
+}

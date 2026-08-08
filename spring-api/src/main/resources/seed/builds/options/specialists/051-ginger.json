@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "ginger",
+  "name": "Ginger",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Adventurers. Resolves incompatibility conflicts between Specialists. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "conflict_resolution_enabled": 1
+  },
+  "image_url": "/build-assets/options/specialists/ginger.png"
+}

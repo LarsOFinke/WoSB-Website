@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/builds/{build_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_build_api_admin_builds__build_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Build",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

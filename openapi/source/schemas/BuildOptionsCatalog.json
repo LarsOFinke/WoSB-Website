@@ -1,0 +1,69 @@
+{
+  "properties": {
+    "build_roles": {
+      "items": {
+        "$ref": "#/components/schemas/BuildRoleRead"
+      },
+      "title": "Build Roles",
+      "type": "array"
+    },
+    "categories": {
+      "items": {
+        "$ref": "#/components/schemas/BuildItemCategoryRead"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "limits": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Limits",
+      "type": "object"
+    },
+    "options": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/components/schemas/BuildItemOptionRead"
+        },
+        "type": "array"
+      },
+      "title": "Options",
+      "type": "object"
+    },
+    "research_upgrade_slot_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Research Upgrade Slot Effects",
+      "type": "object"
+    },
+    "research_upgrade_slot_grant": {
+      "default": 0,
+      "maximum": 8.0,
+      "minimum": 0.0,
+      "title": "Research Upgrade Slot Grant",
+      "type": "integer"
+    },
+    "stat_definitions": {
+      "items": {
+        "$ref": "#/components/schemas/BuildStatDefinitionRead"
+      },
+      "title": "Stat Definitions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "categories",
+    "options"
+  ],
+  "title": "BuildOptionsCatalog",
+  "type": "object"
+}

@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "harpooner",
+  "name": "Harpooner",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Pirates. Boarding hook reload speed +60%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "boarding_hook_reload_pct": 60
+  },
+  "image_url": "/build-assets/options/specialists/harpooner.png"
+}

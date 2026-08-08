@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/build-roles/{slug}",
+  "method": "put",
+  "operation": {
+    "operationId": "admin_update_build_role_api_admin_build_roles__slug__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "slug",
+        "required": true,
+        "schema": {
+          "title": "Slug",
+          "type": "string"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/BuildRoleUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildRoleRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Update Build Role",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

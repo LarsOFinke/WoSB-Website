@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/users/{user_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "admin_update_user_api_admin_users__user_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "user_id",
+        "required": true,
+        "schema": {
+          "title": "User Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/UserAdministrationUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Update User",
+    "tags": [
+      "admin",
+      "admin-users"
+    ]
+  }
+}

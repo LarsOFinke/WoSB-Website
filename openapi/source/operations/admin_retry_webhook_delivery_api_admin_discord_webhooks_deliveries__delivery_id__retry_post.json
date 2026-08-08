@@ -1,0 +1,61 @@
+{
+  "path": "/api/admin/discord-webhooks/deliveries/{delivery_id}/retry",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_retry_webhook_delivery_api_admin_discord_webhooks_deliveries__delivery_id__retry_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "delivery_id",
+        "required": true,
+        "schema": {
+          "title": "Delivery Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookDeliveryRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Retry Webhook Delivery",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

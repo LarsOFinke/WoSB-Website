@@ -1,0 +1,62 @@
+{
+  "name": "Essex",
+  "rate": 4,
+  "ship_type": "Frigate",
+  "durability": 2160,
+  "speed_min_knots": 8.9,
+  "speed_knots": 11.5,
+  "maneuverability": 88,
+  "armor": 4.8,
+  "hold_capacity": 15500,
+  "crew_capacity": 136,
+  "sailor_minimum": 54,
+  "displacement_tons": 2115,
+  "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Essex",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 2,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 2,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 21,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 21,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

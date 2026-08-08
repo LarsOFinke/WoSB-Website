@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/raid-helper/destinations/{destination_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "destination_update_api_admin_raid_helper_destinations__destination_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "destination_id",
+        "required": true,
+        "schema": {
+          "title": "Destination Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RaidHelperDestinationWrite"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RaidHelperDestinationRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Destination Update",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

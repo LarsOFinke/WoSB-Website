@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "day": {
+      "format": "date",
+      "title": "Day",
+      "type": "string"
+    },
+    "login_failures": {
+      "title": "Login Failures",
+      "type": "integer"
+    },
+    "rate_limits": {
+      "title": "Rate Limits",
+      "type": "integer"
+    },
+    "reconnaissance": {
+      "title": "Reconnaissance",
+      "type": "integer"
+    },
+    "total_events": {
+      "title": "Total Events",
+      "type": "integer"
+    },
+    "unique_ips": {
+      "title": "Unique Ips",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "day",
+    "total_events",
+    "unique_ips",
+    "reconnaissance",
+    "login_failures",
+    "rate_limits"
+  ],
+  "title": "SecurityDayBucket",
+  "type": "object"
+}

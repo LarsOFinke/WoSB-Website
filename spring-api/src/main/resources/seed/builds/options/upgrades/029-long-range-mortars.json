@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Long-Range Mortars",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Mortar range +10. Maneuverability -8%.",
+  "option_kind": "ship_upgrade_mortar",
+  "stat_effects": {
+    "mortar_range": 10,
+    "turn_rate_pct": -8
+  },
+  "seed_id": "long-range-mortars",
+  "image_url": "/build-assets/options/upgrades/long-range-mortars.png"
+}

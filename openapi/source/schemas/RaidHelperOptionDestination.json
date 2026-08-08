@@ -1,0 +1,68 @@
+{
+  "properties": {
+    "default_leader_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Default Leader Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_default": {
+      "title": "Is Default",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "integer"
+    },
+    "profile_name": {
+      "title": "Profile Name",
+      "type": "string"
+    },
+    "scope_type": {
+      "title": "Scope Type",
+      "type": "string"
+    },
+    "squad_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Squad Id"
+    },
+    "templates": {
+      "items": {
+        "$ref": "#/components/schemas/RaidHelperOptionTemplate"
+      },
+      "title": "Templates",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "profile_id",
+    "profile_name",
+    "scope_type",
+    "is_default",
+    "templates"
+  ],
+  "title": "RaidHelperOptionDestination",
+  "type": "object"
+}

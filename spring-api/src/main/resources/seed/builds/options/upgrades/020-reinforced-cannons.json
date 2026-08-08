@@ -1,0 +1,12 @@
+{
+  "category": "upgrade",
+  "name": "Reinforced Cannons",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Damage from stern and bow weapons +87%.",
+  "option_kind": "ship_upgrade_combat",
+  "stat_effects": {
+    "bow_stern_weapon_damage_pct": 87
+  },
+  "seed_id": "reinforced-cannons",
+  "image_url": "/build-assets/options/upgrades/reinforced-cannons.png"
+}

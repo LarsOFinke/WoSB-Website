@@ -1,0 +1,123 @@
+{
+  "path": "/api/squads",
+  "method": "get",
+  "operation": {
+    "operationId": "get_squads_api_squads_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "search",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Search"
+        }
+      },
+      {
+        "in": "query",
+        "name": "fleet_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fleet Id"
+        }
+      },
+      {
+        "in": "query",
+        "name": "include_inactive",
+        "required": false,
+        "schema": {
+          "default": false,
+          "title": "Include Inactive",
+          "type": "boolean"
+        }
+      },
+      {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 100,
+          "maximum": 250,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "offset",
+        "required": false,
+        "schema": {
+          "default": 0,
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/SquadSummaryRead"
+              },
+              "title": "Response Get Squads Api Squads Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Squads",
+    "tags": [
+      "fleet squads"
+    ]
+  }
+}

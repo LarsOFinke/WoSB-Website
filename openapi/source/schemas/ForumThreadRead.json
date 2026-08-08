@@ -1,0 +1,62 @@
+{
+  "properties": {
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "last_activity_at": {
+      "format": "date-time",
+      "title": "Last Activity At",
+      "type": "string"
+    },
+    "owner": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "owner_id": {
+      "title": "Owner Id",
+      "type": "integer"
+    },
+    "posts": {
+      "items": {
+        "$ref": "#/components/schemas/ForumPostRead"
+      },
+      "title": "Posts",
+      "type": "array"
+    },
+    "reply_count": {
+      "title": "Reply Count",
+      "type": "integer"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "category",
+    "owner_id",
+    "owner",
+    "reply_count",
+    "last_activity_at",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "ForumThreadRead",
+  "type": "object"
+}

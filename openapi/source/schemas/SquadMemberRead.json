@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_membership_id": {
+      "title": "Fleet Membership Id",
+      "type": "integer"
+    },
+    "fleet_role": {
+      "title": "Fleet Role",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "joined_at": {
+      "format": "date-time",
+      "title": "Joined At",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    },
+    "squad_role": {
+      "title": "Squad Role",
+      "type": "string"
+    },
+    "user_id": {
+      "title": "User Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "fleet_membership_id",
+    "user_id",
+    "display_name",
+    "fleet_role",
+    "squad_role",
+    "joined_at"
+  ],
+  "title": "SquadMemberRead",
+  "type": "object"
+}

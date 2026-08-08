@@ -1,0 +1,14 @@
+{
+  "key": "consumables_no_port_timer_enabled",
+  "label": "No consumable timer before entering port",
+  "category": "utility",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "consumables_no_port_timer_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

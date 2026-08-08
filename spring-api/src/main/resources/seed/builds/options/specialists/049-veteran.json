@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "veteran",
+  "name": "Veteran",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Adventurers. Consumables picked up at sea do not receive a timer until entering a port. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "consumables_no_port_timer_enabled": 1
+  },
+  "image_url": "/build-assets/options/specialists/veteran.png"
+}

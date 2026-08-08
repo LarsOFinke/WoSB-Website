@@ -1,0 +1,70 @@
+{
+  "path": "/api/fleets/{fleet_id}/roles",
+  "method": "post",
+  "operation": {
+    "operationId": "post_fleet_role_api_fleets__fleet_id__roles_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FleetRoleCreate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetRoleRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Fleet Role",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

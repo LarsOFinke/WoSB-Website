@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "decision": {
+      "enum": [
+        "complete",
+        "reject"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "resolution_note": {
+      "maxLength": 4000,
+      "minLength": 3,
+      "title": "Resolution Note",
+      "type": "string"
+    }
+  },
+  "required": [
+    "decision",
+    "resolution_note"
+  ],
+  "title": "PrivacyContactResolve",
+  "type": "object"
+}

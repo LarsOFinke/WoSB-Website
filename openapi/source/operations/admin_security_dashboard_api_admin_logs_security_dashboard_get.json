@@ -1,0 +1,144 @@
+{
+  "path": "/api/admin/logs/security-dashboard",
+  "method": "get",
+  "operation": {
+    "description": "Return only aggregated IP-ban candidates; no raw request logs exist.",
+    "operationId": "admin_security_dashboard_api_admin_logs_security_dashboard_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "from_date",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "From Date"
+        }
+      },
+      {
+        "in": "query",
+        "name": "to_date",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "To Date"
+        }
+      },
+      {
+        "in": "query",
+        "name": "threat_level",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "pattern": "^(low|guarded|elevated|critical)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Threat Level"
+        }
+      },
+      {
+        "in": "query",
+        "name": "client_ip",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 45,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Client Ip"
+        }
+      },
+      {
+        "in": "query",
+        "name": "sort",
+        "required": false,
+        "schema": {
+          "default": "threat",
+          "pattern": "^(threat|events|last_seen|ip)$",
+          "title": "Sort",
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 100,
+          "maximum": 250,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SecurityDashboard"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Security Dashboard",
+    "tags": [
+      "admin",
+      "admin-security"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "path": "/api/builds/{build_id}/upvote",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_build_upvote_api_builds__build_id__upvote_delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildVoteState"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Build Upvote",
+    "tags": [
+      "builds"
+    ]
+  }
+}

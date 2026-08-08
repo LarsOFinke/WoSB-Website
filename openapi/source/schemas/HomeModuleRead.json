@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "access": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    }
+  },
+  "required": [
+    "key",
+    "status",
+    "access"
+  ],
+  "type": "object",
+  "title": "HomeModuleRead"
+}

@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Repair Arsenal",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Durability +150. Repair item efficiency +20%.",
+  "option_kind": "ship_upgrade_protection",
+  "stat_effects": {
+    "durability": 150,
+    "repair_item_efficiency_pct": 20
+  },
+  "seed_id": "repair-arsenal",
+  "image_url": "/build-assets/options/upgrades/repair-arsenal.png"
+}

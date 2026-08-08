@@ -1,0 +1,110 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_user": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/UserRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decision_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Decision Note"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_application_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Application Note"
+    },
+    "fleet_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "reviewed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reviewed At"
+    },
+    "reviewed_by": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/UserRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "username": {
+      "title": "Username",
+      "type": "string"
+    },
+    "wants_fleet_membership": {
+      "default": false,
+      "title": "Wants Fleet Membership",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "username",
+    "display_name",
+    "status",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "RegistrationRequestRead",
+  "type": "object"
+}

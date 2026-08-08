@@ -1,0 +1,173 @@
+{
+  "properties": {
+    "availability": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Availability"
+    },
+    "can_grant_admin": {
+      "default": false,
+      "title": "Can Grant Admin",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "discord_handle": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Handle"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Id"
+    },
+    "fleet_membership_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Membership Id"
+    },
+    "fleet_membership_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Membership Role"
+    },
+    "fleet_membership_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Membership Status"
+    },
+    "fleet_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Name"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_bootstrap_admin": {
+      "default": false,
+      "title": "Is Bootstrap Admin",
+      "type": "boolean"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    },
+    "preferred_focus": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Preferred Focus"
+    },
+    "preferred_role_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Preferred Role Ids",
+      "type": "array"
+    },
+    "preferred_ship_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Preferred Ship Ids",
+      "type": "array"
+    },
+    "role": {
+      "title": "Role",
+      "type": "string"
+    },
+    "timezone": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Timezone"
+    },
+    "username": {
+      "title": "Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "username",
+    "display_name",
+    "role",
+    "is_active",
+    "created_at"
+  ],
+  "title": "UserRead",
+  "type": "object"
+}

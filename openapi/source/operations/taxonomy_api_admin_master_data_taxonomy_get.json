@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/master-data/taxonomy",
+  "method": "get",
+  "operation": {
+    "operationId": "taxonomy_api_admin_master_data_taxonomy_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MasterDataTaxonomyRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Taxonomy",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

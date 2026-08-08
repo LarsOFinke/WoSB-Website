@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/backups/local/scan",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_scan_local_database_backups_api_admin_backups_local_scan_post",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "202": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BackupControlRequestResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Scan Local Database Backups",
+    "tags": [
+      "admin",
+      "admin-backups"
+    ]
+  }
+}

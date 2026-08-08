@@ -1,0 +1,40 @@
+{
+  "properties": {
+    "base_stat_effects": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Base Stat Effects",
+      "type": "object"
+    },
+    "effective_stat_effects": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Effective Stat Effects",
+      "type": "object"
+    },
+    "option_id": {
+      "minimum": 1.0,
+      "title": "Option Id",
+      "type": "integer"
+    },
+    "option_name": {
+      "title": "Option Name",
+      "type": "string"
+    },
+    "stat_effects": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Stat Effects",
+      "type": "object"
+    }
+  },
+  "required": [
+    "option_id",
+    "option_name"
+  ],
+  "title": "MasterDataShipUpgradeOverrideRead",
+  "type": "object"
+}

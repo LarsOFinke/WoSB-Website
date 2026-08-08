@@ -1,0 +1,12 @@
+{
+  "category": "weapon",
+  "name": "Twin 6-pdr",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "bow_stern",
+  "allowed_slot_types": [
+    "weapon_front",
+    "weapon_rear"
+  ],
+  "weapon_class": "light",
+  "seed_id": "twin-6-pdr"
+}

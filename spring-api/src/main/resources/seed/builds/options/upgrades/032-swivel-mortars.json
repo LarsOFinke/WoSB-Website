@@ -1,0 +1,14 @@
+{
+  "category": "upgrade",
+  "name": "Swivel Mortars",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Mortar damage +12%. Mortar angle +50 degrees. Mortar aiming speed -25%.",
+  "option_kind": "ship_upgrade_mortar",
+  "stat_effects": {
+    "mortar_damage_pct": 12,
+    "mortar_angle_degrees": 50,
+    "mortar_aiming_pct": -25
+  },
+  "seed_id": "swivel-mortars",
+  "image_url": "/build-assets/options/upgrades/swivel-mortars.png"
+}

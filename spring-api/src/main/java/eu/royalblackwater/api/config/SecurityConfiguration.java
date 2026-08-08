@@ -3,6 +3,7 @@ package eu.royalblackwater.api.config;
 import eu.royalblackwater.api.security.filter.CsrfCookieFilter;
 import eu.royalblackwater.api.security.filter.RequestBoundaryFilter;
 import eu.royalblackwater.api.security.filter.SessionAuthenticationFilter;
+import eu.royalblackwater.api.shared.web.ApiRequestAttributes;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @EnableConfigurationProperties({SessionProperties.class, SecurityProperties.class, StorageProperties.class,
         OperationsProperties.class, SecretEncryptionProperties.class, LegalNoticeProperties.class,
-        BootstrapAdminProperties.class, PrivacyRetentionProperties.class})
+        BootstrapAdminProperties.class, PrivacyRetentionProperties.class, ApiDiagnosticsProperties.class})
 public class SecurityConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfiguration.class);
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -93,15 +94,15 @@ public class SecurityConfiguration {
                         .anyRequest().denyAll())
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint((request, response, exception) -> {
-                            LOG.warn("security_401 method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
-                                    request.getMethod(), request.getRequestURI(),
+                            LOG.warn("security_401 request_id={} method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
+                                    ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request),
                                     hasHeader(request, "Origin"), hasCookie(request, "rbf_hub_session"),
                                     hasHeader(request, "X-XSRF-TOKEN"), exception.getClass().getSimpleName());
                             response.sendError(401);
                         })
                         .accessDeniedHandler((request, response, exception) -> {
-                            LOG.warn("security_403 method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
-                                    request.getMethod(), request.getRequestURI(),
+                            LOG.warn("security_403 request_id={} method={} path={} originPresent={} sessionCookiePresent={} csrfHeaderPresent={} cause={}",
+                                    ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request),
                                     hasHeader(request, "Origin"), hasCookie(request, "rbf_hub_session"),
                                     hasHeader(request, "X-XSRF-TOKEN"), exception.getClass().getSimpleName());
                             response.sendError(403);
@@ -128,7 +129,7 @@ public class SecurityConfiguration {
         configuration.setAllowedOrigins(securityProperties.normalizeOrigins());
         configuration.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Content-Type", "Accept", "X-Requested-With", "X-XSRF-TOKEN"));
-        configuration.setExposedHeaders(List.of("Location", "Retry-After"));
+        configuration.setExposedHeaders(List.of("Location", "Retry-After", ApiRequestAttributes.REQUEST_ID_HEADER));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

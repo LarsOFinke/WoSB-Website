@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Incendiary Mixture",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Fire effects and ignition with any ammunition type. Projectile speed +10%.",
+  "option_kind": "ship_upgrade_combat",
+  "stat_effects": {
+    "all_ammo_ignition_enabled": 1,
+    "projectile_speed_pct": 10
+  },
+  "seed_id": "incendiary-mixture",
+  "image_url": "/build-assets/options/upgrades/incendiary-mixture.png"
+}

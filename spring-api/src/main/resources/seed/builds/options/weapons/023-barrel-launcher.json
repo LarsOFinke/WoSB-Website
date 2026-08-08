@@ -1,0 +1,12 @@
+{
+  "category": "weapon",
+  "name": "Barrel Launcher",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "mortar_launcher",
+  "allowed_slot_types": [
+    "weapon_mortar"
+  ],
+  "weapon_class": null,
+  "weapon_caliber_inches": null,
+  "seed_id": "barrel-launcher"
+}

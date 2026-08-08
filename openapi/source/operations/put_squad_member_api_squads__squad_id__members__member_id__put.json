@@ -1,0 +1,79 @@
+{
+  "path": "/api/squads/{squad_id}/members/{member_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_squad_member_api_squads__squad_id__members__member_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "squad_id",
+        "required": true,
+        "schema": {
+          "title": "Squad Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "path",
+        "name": "member_id",
+        "required": true,
+        "schema": {
+          "title": "Member Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/SquadMemberUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SquadDetailRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Squad Member",
+    "tags": [
+      "fleet squads"
+    ]
+  }
+}

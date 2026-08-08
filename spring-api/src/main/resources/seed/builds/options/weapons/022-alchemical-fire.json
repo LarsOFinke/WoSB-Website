@@ -1,0 +1,14 @@
+{
+  "category": "weapon",
+  "name": "Alchemical Fire",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "special_weapon",
+  "allowed_slot_types": [
+    "weapon_front",
+    "weapon_rear",
+    "weapon_special"
+  ],
+  "weapon_class": null,
+  "weapon_caliber_inches": null,
+  "seed_id": "alchemical-fire"
+}

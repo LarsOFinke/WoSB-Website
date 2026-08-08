@@ -1,0 +1,12 @@
+{
+  "category": "lantern",
+  "seed_id": "lilac",
+  "name": "Lilac Lantern",
+  "source": "tooltip-lantern-catalog-2026-07-v4",
+  "notes": "Verified in-game tooltip: +7% maneuverability.",
+  "option_kind": "lantern",
+  "stat_effects": {
+    "turn_rate_pct": 7
+  },
+  "image_url": "/build-assets/options/lanterns/lilac.svg"
+}

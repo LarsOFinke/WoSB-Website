@@ -1,0 +1,14 @@
+{
+  "key": "cruising_speed_gain_pct",
+  "label": "Cruising speed gain",
+  "category": "mobility",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "cruising_speed_gain_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "equipment_modifiers",
+  "pct_base_field": null
+}

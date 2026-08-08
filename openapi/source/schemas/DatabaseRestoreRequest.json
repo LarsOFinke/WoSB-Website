@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "approval_token": {
+      "format": "password",
+      "title": "Approval Token",
+      "type": "string",
+      "writeOnly": true
+    },
+    "backup_id": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "confirmation": {
+      "const": "RESTORE DATABASE",
+      "title": "Confirmation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "backup_id",
+    "approval_token",
+    "confirmation"
+  ],
+  "title": "DatabaseRestoreRequest",
+  "type": "object"
+}

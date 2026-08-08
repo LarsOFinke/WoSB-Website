@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "changed": {
+      "title": "Changed",
+      "type": "boolean"
+    },
+    "cache_key": {
+      "maxLength": 128,
+      "title": "Cache Key",
+      "type": "string"
+    },
+    "checksum": {
+      "title": "Checksum",
+      "type": "string"
+    },
+    "size_bytes": {
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "source_updated_at": {
+      "format": "date-time",
+      "title": "Source Updated At",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "url",
+    "checksum",
+    "size_bytes",
+    "updated_at",
+    "changed",
+    "cache_key",
+    "source_updated_at"
+  ],
+  "title": "BuildPrintoutRead",
+  "type": "object"
+}

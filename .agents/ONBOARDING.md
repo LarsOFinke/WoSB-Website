@@ -66,7 +66,7 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
 | Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
-| API-Spezifikation | `openapi/openapi.json`, danach `api/dto/*` und owning Modul-Controller |
+| API-Spezifikation | `openapi/source/`, danach zusammengesetztes `openapi/openapi.json`, `api/dto/*` und owning Modul-Controller |
 | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
 | Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |

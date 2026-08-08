@@ -1,0 +1,14 @@
+{
+  "key": "repair_item_efficiency_pct",
+  "label": "Repair item efficiency",
+  "category": "survivability",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "repair_item_efficiency_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

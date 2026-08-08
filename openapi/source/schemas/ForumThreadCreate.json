@@ -1,0 +1,36 @@
+{
+  "properties": {
+    "body": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Body",
+      "type": "string"
+    },
+    "category": {
+      "default": "general",
+      "maxLength": 80,
+      "title": "Category",
+      "type": "string"
+    },
+    "file_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 12,
+      "title": "File Ids",
+      "type": "array"
+    },
+    "title": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "body",
+    "title"
+  ],
+  "title": "ForumThreadCreate",
+  "type": "object"
+}

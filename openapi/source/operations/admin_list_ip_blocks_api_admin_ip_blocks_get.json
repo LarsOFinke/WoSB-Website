@@ -1,0 +1,96 @@
+{
+  "path": "/api/admin/ip-blocks",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_list_ip_blocks_api_admin_ip_blocks_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "status",
+        "required": false,
+        "schema": {
+          "default": "active",
+          "pattern": "^(active|expired|unblocked|all)$",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "search",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Search"
+        }
+      },
+      {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 200,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/IpBlockRead"
+              },
+              "title": "Response Admin List Ip Blocks Api Admin Ip Blocks Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin List Ip Blocks",
+    "tags": [
+      "admin",
+      "admin-security"
+    ]
+  }
+}

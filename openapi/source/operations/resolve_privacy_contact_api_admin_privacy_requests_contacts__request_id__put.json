@@ -1,0 +1,81 @@
+{
+  "path": "/api/admin/privacy-requests/contacts/{request_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "resolve_privacy_contact_api_admin_privacy_requests_contacts__request_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "request_id",
+        "required": true,
+        "schema": {
+          "title": "Request Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/PrivacyContactResolve"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PrivacyContactRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "422": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Semantically invalid request"
+      }
+    },
+    "summary": "Resolve Privacy Contact",
+    "tags": [
+      "admin",
+      "admin-privacy"
+    ]
+  }
+}

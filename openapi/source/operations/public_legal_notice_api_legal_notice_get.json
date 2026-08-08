@@ -1,0 +1,23 @@
+{
+  "path": "/api/legal-notice",
+  "method": "get",
+  "operation": {
+    "operationId": "public_legal_notice_api_legal_notice_get",
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LegalNoticePublicRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      }
+    },
+    "summary": "Public Legal Notice",
+    "tags": [
+      "legal-notice"
+    ]
+  }
+}

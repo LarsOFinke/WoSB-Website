@@ -1,0 +1,84 @@
+{
+  "properties": {
+    "attachment_count": {
+      "default": 0,
+      "title": "Attachment Count",
+      "type": "integer"
+    },
+    "attachments": {
+      "items": {
+        "$ref": "#/components/schemas/FileRead"
+      },
+      "title": "Attachments",
+      "type": "array"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "build_reference_count": {
+      "default": 0,
+      "title": "Build Reference Count",
+      "type": "integer"
+    },
+    "builds": {
+      "items": {
+        "$ref": "#/components/schemas/BuildRead"
+      },
+      "title": "Builds",
+      "type": "array"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "owner": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "owner_id": {
+      "title": "Owner Id",
+      "type": "integer"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Summary"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "category",
+    "owner_id",
+    "owner",
+    "created_at",
+    "updated_at",
+    "body"
+  ],
+  "title": "GuideRead",
+  "type": "object"
+}

@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/raid-helper/templates/{template_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "template_delete_api_admin_raid_helper_templates__template_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "template_id",
+        "required": true,
+        "schema": {
+          "title": "Template Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Template Delete",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

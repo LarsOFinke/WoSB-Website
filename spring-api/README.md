@@ -1,13 +1,13 @@
 # Spring Boot API
 
-Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `openapi/openapi.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
+Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus der unter `openapi/source/` gepflegten und nach `openapi/openapi.json` zusammengesetzten Spezifikation nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
 
 Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
 Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
 
 ## Modularchitektur
 
-`openapi/openapi.json` ist die externe HTTP-Spezifikation. Daraus werden nur die
+`openapi/source/` ist die Autorenquelle der externen HTTP-Spezifikation; `openapi/openapi.json` ist das deterministisch zusammengesetzte Artefakt. Daraus werden nur die
 Transport-DTOs unter `api/dto/` generiert. Die Spring-MVC-Bindings liegen bewusst
 direkt in den Modul-Controllern: `@GetMapping`/`@PostMapping`,
 `@PathVariable`, `@RequestParam` sowie `@Valid @RequestBody` sind Controller-

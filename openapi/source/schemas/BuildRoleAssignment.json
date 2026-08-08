@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "build_type": {
+      "maxLength": 32,
+      "minLength": 1,
+      "title": "Build Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "build_type"
+  ],
+  "title": "BuildRoleAssignment",
+  "type": "object"
+}

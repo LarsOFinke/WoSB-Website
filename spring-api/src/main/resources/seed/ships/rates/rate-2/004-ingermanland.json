@@ -1,0 +1,102 @@
+{
+  "name": "Ingermanland",
+  "rate": 2,
+  "ship_type": "Ship of the Line",
+  "durability": 2340,
+  "speed_min_knots": 9,
+  "speed_knots": 11.6,
+  "maneuverability": 87,
+  "armor": 3.2,
+  "hold_capacity": 17500,
+  "crew_capacity": 152,
+  "sailor_minimum": 61,
+  "displacement_tons": 3060,
+  "source": "WoSB in-game owned-ship screenshot audit 2026-07-28",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Ingermanland",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 4,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 32,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 32,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ],
+  "upgrade_effect_overrides": [
+    {
+      "upgrade_seed_id": "reinforced-masts",
+      "stat_effects": {
+        "speed_knots": 0.4,
+        "sail_efficiency": 0.8
+      }
+    },
+    {
+      "upgrade_seed_id": "double-hold",
+      "stat_effects": {
+        "hold_capacity": 6500
+      }
+    },
+    {
+      "upgrade_seed_id": "cellars",
+      "stat_effects": {
+        "hold_capacity": 3500
+      }
+    },
+    {
+      "upgrade_seed_id": "extra-bunks",
+      "stat_effects": {
+        "crew_capacity": 20
+      }
+    },
+    {
+      "upgrade_seed_id": "repair-arsenal",
+      "stat_effects": {
+        "durability": 210
+      }
+    },
+    {
+      "upgrade_seed_id": "teak-frames",
+      "stat_effects": {
+        "armor": 1.0,
+        "crew_capacity": 14
+      }
+    }
+  ]
+}

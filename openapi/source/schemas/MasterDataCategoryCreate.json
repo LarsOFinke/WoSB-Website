@@ -1,0 +1,35 @@
+{
+  "properties": {
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "key": {
+      "maxLength": 40,
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": 100,
+      "maximum": 100000.0,
+      "minimum": 0.0,
+      "title": "Sort Order",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "label",
+    "key"
+  ],
+  "title": "MasterDataCategoryCreate",
+  "type": "object"
+}

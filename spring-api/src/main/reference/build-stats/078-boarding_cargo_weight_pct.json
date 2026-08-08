@@ -1,0 +1,14 @@
+{
+  "key": "boarding_cargo_weight_pct",
+  "label": "Boarding cargo weight",
+  "category": "boarding",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "boarding_cargo_weight_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

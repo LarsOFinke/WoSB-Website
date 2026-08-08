@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "artifact_type": {
+      "enum": [
+        "postgresql",
+        "files",
+        "recovery"
+      ],
+      "title": "Artifact Type",
+      "type": "string"
+    },
+    "filename": {
+      "title": "Filename",
+      "type": "string"
+    },
+    "remote_path": {
+      "title": "Remote Path",
+      "type": "string"
+    },
+    "sha256": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Sha256",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 0.0,
+      "title": "Size Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "artifact_type",
+    "filename",
+    "size_bytes",
+    "sha256",
+    "remote_path"
+  ],
+  "title": "BackupArtifact",
+  "type": "object"
+}

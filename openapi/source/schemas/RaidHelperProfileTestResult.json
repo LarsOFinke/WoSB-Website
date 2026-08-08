@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "ok": {
+      "title": "Ok",
+      "type": "boolean"
+    },
+    "status_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Status Code"
+    }
+  },
+  "required": [
+    "ok",
+    "message"
+  ],
+  "title": "RaidHelperProfileTestResult",
+  "type": "object"
+}

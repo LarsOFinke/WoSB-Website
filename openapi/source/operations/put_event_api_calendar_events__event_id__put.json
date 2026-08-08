@@ -1,0 +1,70 @@
+{
+  "path": "/api/calendar/events/{event_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_event_api_calendar_events__event_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "event_id",
+        "required": true,
+        "schema": {
+          "title": "Event Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FleetEventUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetEventRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Event",
+    "tags": [
+      "fleet calendar"
+    ]
+  }
+}

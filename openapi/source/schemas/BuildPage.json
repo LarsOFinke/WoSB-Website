@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/components/schemas/BuildSummaryRead"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "limit": {
+      "default": 50,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "offset": {
+      "default": 0,
+      "title": "Offset",
+      "type": "integer"
+    },
+    "total": {
+      "default": 0,
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "title": "BuildPage",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "key": "animal_slaughter_for_food_enabled",
+  "label": "Animal slaughter for food",
+  "category": "crew",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "animal_slaughter_for_food_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

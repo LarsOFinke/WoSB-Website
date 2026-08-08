@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "rate": {
+      "maximum": 7.0,
+      "minimum": 1.0,
+      "title": "Rate",
+      "type": "integer"
+    },
+    "weapon_class": {
+      "maxLength": 24,
+      "minLength": 1,
+      "title": "Weapon Class",
+      "type": "string"
+    }
+  },
+  "required": [
+    "rate",
+    "weapon_class"
+  ],
+  "title": "ShipRateWeaponClassRuleRead",
+  "type": "object"
+}

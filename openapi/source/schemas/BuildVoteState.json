@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "build_id": {
+      "title": "Build Id",
+      "type": "integer"
+    },
+    "has_upvoted": {
+      "title": "Has Upvoted",
+      "type": "boolean"
+    },
+    "upvote_count": {
+      "minimum": 0.0,
+      "title": "Upvote Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "build_id",
+    "upvote_count",
+    "has_upvoted"
+  ],
+  "title": "BuildVoteState",
+  "type": "object"
+}

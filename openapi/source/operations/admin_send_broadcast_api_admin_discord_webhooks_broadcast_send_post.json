@@ -1,0 +1,66 @@
+{
+  "path": "/api/admin/discord-webhooks/broadcast/send",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_send_broadcast_api_admin_discord_webhooks_broadcast_send_post",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OutboundWebhookBroadcastRequest"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/OutboundWebhookDeliveryRead"
+              },
+              "title": "Response Admin Send Broadcast Api Admin Discord Webhooks Broadcast Send Post",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Send Broadcast",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

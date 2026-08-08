@@ -34,15 +34,17 @@ public class BuildService {
     private final BuildValidationService validation;
     private final BuildAssembler assembler;
     private final BuildDataRepository data;
+    private final BuildPrintoutService printouts;
     private final AuditService audit;
     private final Clock clock;
 
     public BuildService(BuildRepository builds, BuildValidationService validation, BuildAssembler assembler,
-                        BuildDataRepository data, AuditService audit, Clock clock) {
+                        BuildDataRepository data, BuildPrintoutService printouts, AuditService audit, Clock clock) {
         this.builds = builds;
         this.validation = validation;
         this.assembler = assembler;
         this.data = data;
+        this.printouts = printouts;
         this.audit = audit;
         this.clock = clock;
     }
@@ -96,6 +98,7 @@ public class BuildService {
     public BuildRead update(long id, BuildUpdate payload, AuthenticatedUser actor) {
         BuildPreparedPayload prepared = prepare(payload);
         if (!builds.updateOwned(id, actor.id(), prepared)) throw notFound();
+        printouts.invalidate(id);
         audit.record(actor, "build", id, "update", "Build updated.", List.of("build_name", "ship_id", "slots"));
         return assembler.detail(required(id, (long) actor.id()));
     }
@@ -103,12 +106,14 @@ public class BuildService {
     @Transactional
     public void deleteOwned(long id, AuthenticatedUser actor) {
         if (!builds.deleteOwned(id, actor.id())) throw notFound();
+        printouts.deleteAfterBuildCommit(id);
         audit.record(actor, "build", id, "delete", "Build deleted by owner.", List.of());
     }
 
     @Transactional
     public void deleteAny(long id, AuthenticatedUser actor) {
         if (!builds.deleteAny(id)) throw notFound();
+        printouts.deleteAfterBuildCommit(id);
         audit.record(actor, "build", id, "delete", "Build deleted by administrator.", List.of());
     }
 
@@ -136,6 +141,7 @@ public class BuildService {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Build role not found.");
         }
         builds.assignRole(id, role);
+        printouts.invalidate(id);
         audit.record(actor, "build", id, "role_update", "Build role changed.", List.of("build_type"));
         return assembler.detail(required(id, (long) actor.id()));
     }

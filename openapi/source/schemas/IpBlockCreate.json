@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "expires_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expires At"
+    },
+    "ip_address": {
+      "maxLength": 64,
+      "minLength": 2,
+      "title": "Ip Address",
+      "type": "string"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Notes"
+    },
+    "reason": {
+      "maxLength": 240,
+      "minLength": 3,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ip_address",
+    "reason"
+  ],
+  "title": "IpBlockCreate",
+  "type": "object"
+}

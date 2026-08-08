@@ -1,0 +1,14 @@
+{
+  "key": "low_durability_reload_pct",
+  "label": "Reload speed at 50% durability or lower",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "low_durability_reload_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

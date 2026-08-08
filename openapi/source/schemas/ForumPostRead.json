@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "attachments": {
+      "items": {
+        "$ref": "#/components/schemas/FileRead"
+      },
+      "title": "Attachments",
+      "type": "array"
+    },
+    "author": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "author_id": {
+      "title": "Author Id",
+      "type": "integer"
+    },
+    "body": {
+      "title": "Body",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "thread_id": {
+      "title": "Thread Id",
+      "type": "integer"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "thread_id",
+    "author_id",
+    "author",
+    "body",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "ForumPostRead",
+  "type": "object"
+}

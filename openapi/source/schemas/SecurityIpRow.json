@@ -1,0 +1,84 @@
+{
+  "properties": {
+    "client_ip": {
+      "title": "Client Ip",
+      "type": "string"
+    },
+    "event_count": {
+      "title": "Event Count",
+      "type": "integer"
+    },
+    "first_seen": {
+      "format": "date",
+      "title": "First Seen",
+      "type": "string"
+    },
+    "last_seen": {
+      "format": "date",
+      "title": "Last Seen",
+      "type": "string"
+    },
+    "login_failure_points": {
+      "title": "Login Failure Points",
+      "type": "integer"
+    },
+    "login_failures": {
+      "title": "Login Failures",
+      "type": "integer"
+    },
+    "rate_limit_points": {
+      "title": "Rate Limit Points",
+      "type": "integer"
+    },
+    "rate_limits": {
+      "title": "Rate Limits",
+      "type": "integer"
+    },
+    "reasons": {
+      "items": {
+        "$ref": "#/components/schemas/SecurityReasonBreakdown"
+      },
+      "title": "Reasons",
+      "type": "array"
+    },
+    "reconnaissance": {
+      "title": "Reconnaissance",
+      "type": "integer"
+    },
+    "reconnaissance_points": {
+      "title": "Reconnaissance Points",
+      "type": "integer"
+    },
+    "threat_level": {
+      "title": "Threat Level",
+      "type": "string"
+    },
+    "threat_score": {
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Threat Score",
+      "type": "integer"
+    },
+    "volume_bonus": {
+      "title": "Volume Bonus",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "client_ip",
+    "threat_score",
+    "threat_level",
+    "event_count",
+    "reconnaissance",
+    "login_failures",
+    "rate_limits",
+    "reconnaissance_points",
+    "login_failure_points",
+    "rate_limit_points",
+    "volume_bonus",
+    "first_seen",
+    "last_seen"
+  ],
+  "title": "SecurityIpRow",
+  "type": "object"
+}

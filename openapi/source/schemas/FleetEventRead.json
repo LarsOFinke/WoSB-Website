@@ -1,0 +1,136 @@
+{
+  "properties": {
+    "all_day": {
+      "title": "All Day",
+      "type": "boolean"
+    },
+    "can_manage": {
+      "default": false,
+      "title": "Can Manage",
+      "type": "boolean"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_cancelled": {
+      "title": "Is Cancelled",
+      "type": "boolean"
+    },
+    "location": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Location"
+    },
+    "owner": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "owner_id": {
+      "title": "Owner Id",
+      "type": "integer"
+    },
+    "raid_helper_enabled": {
+      "default": true,
+      "title": "Raid Helper Enabled",
+      "type": "boolean"
+    },
+    "raid_helper_links": {
+      "items": {
+        "$ref": "#/components/schemas/RaidHelperEventLinkRead"
+      },
+      "title": "Raid Helper Links",
+      "type": "array"
+    },
+    "scope_name": {
+      "default": "Fleet",
+      "title": "Scope Name",
+      "type": "string"
+    },
+    "scope_type": {
+      "default": "fleet",
+      "title": "Scope Type",
+      "type": "string"
+    },
+    "squad": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/CalendarSquadRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "squad_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Squad Id"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "category",
+    "start_at",
+    "end_at",
+    "all_day",
+    "owner_id",
+    "owner",
+    "is_cancelled",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "FleetEventRead",
+  "type": "object"
+}

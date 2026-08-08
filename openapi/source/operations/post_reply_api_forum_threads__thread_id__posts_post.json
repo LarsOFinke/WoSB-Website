@@ -1,0 +1,70 @@
+{
+  "path": "/api/forum/threads/{thread_id}/posts",
+  "method": "post",
+  "operation": {
+    "operationId": "post_reply_api_forum_threads__thread_id__posts_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "thread_id",
+        "required": true,
+        "schema": {
+          "title": "Thread Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/ForumPostCreate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "201": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ForumPostRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Reply",
+    "tags": [
+      "forum"
+    ]
+  }
+}

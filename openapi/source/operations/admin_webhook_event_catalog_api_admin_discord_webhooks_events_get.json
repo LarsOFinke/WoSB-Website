@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/discord-webhooks/events",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_webhook_event_catalog_api_admin_discord_webhooks_events_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/OutboundWebhookEventCatalogItem"
+              },
+              "title": "Response Admin Webhook Event Catalog Api Admin Discord Webhooks Events Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Webhook Event Catalog",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

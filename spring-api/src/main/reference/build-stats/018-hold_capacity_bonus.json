@@ -1,0 +1,14 @@
+{
+  "key": "hold_capacity_bonus",
+  "label": "Cargo hold bonus",
+  "category": "logistics",
+  "base_field": null,
+  "unit": "t",
+  "pct_effect": null,
+  "flat_effect": "hold_capacity",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

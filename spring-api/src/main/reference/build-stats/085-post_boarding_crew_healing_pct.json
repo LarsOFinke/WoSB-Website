@@ -1,0 +1,14 @@
+{
+  "key": "post_boarding_crew_healing_pct",
+  "label": "Crew healing after boarding",
+  "category": "crew",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "post_boarding_crew_healing_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

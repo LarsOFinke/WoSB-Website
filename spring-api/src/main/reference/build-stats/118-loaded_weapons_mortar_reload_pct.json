@@ -1,0 +1,14 @@
+{
+  "key": "loaded_weapons_mortar_reload_pct",
+  "label": "Mortar reload speed while weapons are loaded",
+  "category": "siege",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "loaded_weapons_mortar_reload_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

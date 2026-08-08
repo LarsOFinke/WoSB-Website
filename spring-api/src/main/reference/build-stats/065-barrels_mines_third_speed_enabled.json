@@ -1,0 +1,14 @@
+{
+  "key": "barrels_mines_third_speed_enabled",
+  "label": "Barrels and mines at third speed",
+  "category": "combat",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "barrels_mines_third_speed_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

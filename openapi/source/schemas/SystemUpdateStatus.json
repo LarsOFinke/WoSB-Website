@@ -1,0 +1,59 @@
+{
+  "properties": {
+    "finished_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Finished At"
+    },
+    "message": {
+      "default": "No update has been requested yet.",
+      "title": "Message",
+      "type": "string"
+    },
+    "operation": {
+      "default": "update",
+      "title": "Operation",
+      "type": "string"
+    },
+    "request_available": {
+      "default": false,
+      "title": "Request Available",
+      "type": "boolean"
+    },
+    "requested_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Requested At"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Started At"
+    },
+    "state": {
+      "default": "idle",
+      "title": "State",
+      "type": "string"
+    }
+  },
+  "title": "SystemUpdateStatus",
+  "type": "object"
+}

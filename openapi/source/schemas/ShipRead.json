@@ -1,0 +1,190 @@
+{
+  "properties": {
+    "armor": {
+      "title": "Armor",
+      "type": "number"
+    },
+    "broadside_weapon_capacity": {
+      "default": 0,
+      "title": "Broadside Weapon Capacity",
+      "type": "integer"
+    },
+    "crew_capacity": {
+      "title": "Crew Capacity",
+      "type": "integer"
+    },
+    "dedicated_special_weapon_capacity": {
+      "default": 0,
+      "title": "Dedicated Special Weapon Capacity",
+      "type": "integer"
+    },
+    "displacement_tons": {
+      "title": "Displacement Tons",
+      "type": "integer"
+    },
+    "durability": {
+      "title": "Durability",
+      "type": "integer"
+    },
+    "front_special_weapon_capacity": {
+      "default": 0,
+      "title": "Front Special Weapon Capacity",
+      "type": "integer"
+    },
+    "front_weapon_capacity": {
+      "default": 0,
+      "title": "Front Weapon Capacity",
+      "type": "integer"
+    },
+    "has_lantern": {
+      "title": "Has Lantern",
+      "type": "boolean"
+    },
+    "hold_capacity": {
+      "title": "Hold Capacity",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "image_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Image Url"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "maneuverability": {
+      "title": "Maneuverability",
+      "type": "number"
+    },
+    "max_mortar_caliber_inches": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Mortar Caliber Inches"
+    },
+    "mortar_modification": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/ShipMortarModificationRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "mortar_weapon_capacity": {
+      "default": 0,
+      "title": "Mortar Weapon Capacity",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "rate": {
+      "title": "Rate",
+      "type": "integer"
+    },
+    "rear_special_weapon_capacity": {
+      "default": 0,
+      "title": "Rear Special Weapon Capacity",
+      "type": "integer"
+    },
+    "rear_weapon_capacity": {
+      "default": 0,
+      "title": "Rear Weapon Capacity",
+      "type": "integer"
+    },
+    "sail_slots": {
+      "title": "Sail Slots",
+      "type": "integer"
+    },
+    "sailor_minimum": {
+      "title": "Sailor Minimum",
+      "type": "integer"
+    },
+    "ship_type": {
+      "title": "Ship Type",
+      "type": "string"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "special_weapon_capacity": {
+      "default": 0,
+      "title": "Special Weapon Capacity",
+      "type": "integer"
+    },
+    "speed_knots": {
+      "title": "Speed Knots",
+      "type": "number"
+    },
+    "speed_min_knots": {
+      "title": "Speed Min Knots",
+      "type": "number"
+    },
+    "upgrade_slots": {
+      "title": "Upgrade Slots",
+      "type": "integer"
+    },
+    "weapon_layout": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Weapon Layout"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "rate",
+    "ship_type",
+    "durability",
+    "speed_min_knots",
+    "speed_knots",
+    "maneuverability",
+    "armor",
+    "hold_capacity",
+    "crew_capacity",
+    "sailor_minimum",
+    "displacement_tons",
+    "sail_slots",
+    "upgrade_slots",
+    "has_lantern",
+    "is_active"
+  ],
+  "title": "ShipRead",
+  "type": "object"
+}

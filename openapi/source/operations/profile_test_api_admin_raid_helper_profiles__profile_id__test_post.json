@@ -1,0 +1,61 @@
+{
+  "path": "/api/admin/raid-helper/profiles/{profile_id}/test",
+  "method": "post",
+  "operation": {
+    "operationId": "profile_test_api_admin_raid_helper_profiles__profile_id__test_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "profile_id",
+        "required": true,
+        "schema": {
+          "title": "Profile Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RaidHelperProfileTestResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Profile Test",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Sparrow",
+  "rate": 4,
+  "ship_type": "Tartane",
+  "durability": 1000,
+  "speed_min_knots": 9.1,
+  "speed_knots": 11.6,
+  "maneuverability": 95,
+  "armor": 1.5,
+  "hold_capacity": 10000,
+  "crew_capacity": 72,
+  "sailor_minimum": 29,
+  "displacement_tons": 1350,
+  "source": "WoSB in-game owned-ship screenshot audit 2026-07-31",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Sparrow",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 4,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 4,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 3,
+      "max_weapon_class": null,
+      "max_caliber_inches": 8,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ],
+  "upgrade_effect_overrides": [
+    {
+      "upgrade_seed_id": "reinforced-cannons",
+      "stat_effects": {
+        "bow_stern_weapon_damage_pct": 113
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "category": "sail",
+  "seed_id": "raiding",
+  "name": "Raiding Sails",
+  "source": "tooltip-sail-catalog-2026-07-v3",
+  "notes": "Verified in-game tooltip: +4.1 kn speed, -20% maneuverability in cruising mode and -20% cruising-speed gain.",
+  "option_kind": "sail",
+  "stat_effects": {
+    "speed_knots": 4.1,
+    "cruising_maneuverability_pct": -20,
+    "cruising_speed_gain_pct": -20
+  },
+  "image_url": "/build-assets/options/sails/raiding.svg"
+}

@@ -1,0 +1,81 @@
+{
+  "path": "/api/calendar/raid-helper/options",
+  "method": "get",
+  "operation": {
+    "operationId": "options_api_calendar_raid_helper_options_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "category",
+        "required": true,
+        "schema": {
+          "maxLength": 80,
+          "title": "Category",
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "squad_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Squad Id"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RaidHelperOptionDestination"
+              },
+              "title": "Response Options Api Calendar Raid Helper Options Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Options",
+    "tags": [
+      "calendar-raid-helper"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "code": {
+      "title": "Code",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "code",
+    "label",
+    "sort_order"
+  ],
+  "title": "WeaponSlotTypeRead",
+  "type": "object"
+}

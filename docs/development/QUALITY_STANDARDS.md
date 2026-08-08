@@ -73,13 +73,22 @@ behavior that static analysis cannot resolve.
 ## Backend correctness and security
 
 - Java 21, constructor injection and explicit domain boundaries are mandatory.
-- `openapi/openapi.json` is the external HTTP specification. It generates only
+- `openapi/source/` is the hand-maintained external HTTP specification; `openapi/openapi.json` is assembled deterministically and must never be edited by hand. It generates only
   immutable API DTOs. Module controllers own Spring MVC mappings and validate
   request DTOs directly with Bean Validation; `audit_controller_contract.py`
   fails on route, parameter, body, media-type or response drift. A generated
   runtime `contract`/`*Api` interface layer is forbidden.
 - Typed validated DTOs and MapStruct use fail-closed mappings; unmapped target
   fields are compilation errors.
+- Hand-maintained JSON follows the same readability boundary as executable source:
+  one responsibility per file and at most 420 lines under `openapi/source/`, seed
+  catalogs, reference catalogs and frontend fixtures. Generated compatibility
+  artifacts and lockfiles are exempt; see `docs/development/JSON_CATALOGS.md`.
+- API diagnostics are payload-free and correlation-first. Every API response may
+  expose the generated `X-Request-Id`; errors/security rejections include it in
+  server logs. Successful request lifecycle telemetry is opt-in via
+  `RBF_HTTP_LIFECYCLE_LOGGING`, disabled by default and must never log query values,
+  cookies, client IPs, user agents or request/response bodies.
 - Spring Security is the sole authentication and authorization boundary. Mutating
   browser requests retain session/JWT validation as applicable, CSRF, host and
   origin controls. Endpoint-local authentication shortcuts are prohibited.

@@ -1,0 +1,87 @@
+{
+  "properties": {
+    "backup_consistency": {
+      "default": "unrecorded",
+      "title": "Backup Consistency",
+      "type": "string"
+    },
+    "backup_id": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "backup_set_verified": {
+      "default": false,
+      "title": "Backup Set Verified",
+      "type": "boolean"
+    },
+    "checksum_verified": {
+      "default": true,
+      "title": "Checksum Verified",
+      "type": "boolean"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "encryption_keys_compatible": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Encryption Keys Compatible"
+    },
+    "filename": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+    },
+    "flyway_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Flyway Version"
+    },
+    "production_consistent": {
+      "default": false,
+      "title": "Production Consistent",
+      "type": "boolean"
+    },
+    "restore_metadata_verified": {
+      "default": false,
+      "title": "Restore Metadata Verified",
+      "type": "boolean"
+    },
+    "sha256": {
+      "maxLength": 64,
+      "minLength": 64,
+      "title": "Sha256",
+      "type": "string"
+    },
+    "size_bytes": {
+      "minimum": 0.0,
+      "title": "Size Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "backup_id",
+    "filename",
+    "size_bytes",
+    "sha256",
+    "created_at"
+  ],
+  "title": "LocalDatabaseBackup",
+  "type": "object"
+}

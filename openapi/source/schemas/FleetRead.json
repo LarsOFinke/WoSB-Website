@@ -1,0 +1,89 @@
+{
+  "properties": {
+    "active_members_count": {
+      "default": 0,
+      "title": "Active Members Count",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "focus": {
+      "title": "Focus",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "leaders": {
+      "items": {
+        "$ref": "#/components/schemas/FleetMembershipRead"
+      },
+      "title": "Leaders",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "pending_members_count": {
+      "default": 0,
+      "title": "Pending Members Count",
+      "type": "integer"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    },
+    "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+    },
+    "standing_orders": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Standing Orders"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "focus",
+    "sort_order",
+    "is_active",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "FleetRead",
+  "type": "object"
+}

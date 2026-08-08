@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "senior-doctor",
+  "name": "Senior doctor",
+  "source": "B20-in-game-screenshots-2026-07-26",
+  "notes": "Group: Pirates. Crew healing after boarding +20%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "post_boarding_crew_healing_pct": 20
+  },
+  "image_url": "/build-assets/options/specialists/senior-doctor.png"
+}

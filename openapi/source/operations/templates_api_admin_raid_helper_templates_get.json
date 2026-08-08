@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/raid-helper/templates",
+  "method": "get",
+  "operation": {
+    "operationId": "templates_api_admin_raid_helper_templates_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RaidHelperTemplateRead"
+              },
+              "title": "Response Templates Api Admin Raid Helper Templates Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Templates",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

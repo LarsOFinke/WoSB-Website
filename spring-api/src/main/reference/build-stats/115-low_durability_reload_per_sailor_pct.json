@@ -1,0 +1,14 @@
+{
+  "key": "low_durability_reload_per_sailor_pct",
+  "label": "Low-durability reload speed per Sailor",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "low_durability_reload_per_sailor_pct",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "specialist_catalog",
+  "pct_base_field": null
+}

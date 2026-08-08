@@ -1,0 +1,62 @@
+{
+  "name": "La Salamandre",
+  "rate": 6,
+  "ship_type": "Ketch",
+  "durability": 1160,
+  "speed_min_knots": 8.8,
+  "speed_knots": 8.8,
+  "maneuverability": 82,
+  "armor": 3.6,
+  "hold_capacity": 9500,
+  "crew_capacity": 96,
+  "sailor_minimum": 38,
+  "displacement_tons": 1350,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "La Salamandre",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 2,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 10,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 10,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "key": "boarding_musketeer_defense_enabled",
+  "label": "Musketeers start defending during boarding",
+  "category": "boarding",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "boarding_musketeer_defense_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Maneuverable Helm",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Maneuverability +8%. Speed while turning at cruise speed -15%.",
+  "option_kind": "ship_upgrade_speed",
+  "stat_effects": {
+    "turn_rate_pct": 8,
+    "cruising_turn_speed_penalty_pct": -15
+  },
+  "seed_id": "maneuverable-helm",
+  "image_url": "/build-assets/options/upgrades/maneuverable-helm.png"
+}

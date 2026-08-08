@@ -1,0 +1,14 @@
+{
+  "key": "sortie_death_prevention_enabled",
+  "label": "No crew deaths in sorties",
+  "category": "boarding",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "sortie_death_prevention_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

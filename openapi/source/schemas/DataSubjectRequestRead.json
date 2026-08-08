@@ -1,0 +1,88 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "details": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Details"
+    },
+    "handled_by_user_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Handled By User Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "request_type": {
+      "title": "Request Type",
+      "type": "string"
+    },
+    "resolution_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolution Note"
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolved At"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "subject_user_id": {
+      "title": "Subject User Id",
+      "type": "integer"
+    },
+    "subject_username": {
+      "title": "Subject Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "subject_user_id",
+    "subject_username",
+    "request_type",
+    "status",
+    "details",
+    "resolution_note",
+    "handled_by_user_id",
+    "created_at",
+    "resolved_at"
+  ],
+  "title": "DataSubjectRequestRead",
+  "type": "object"
+}

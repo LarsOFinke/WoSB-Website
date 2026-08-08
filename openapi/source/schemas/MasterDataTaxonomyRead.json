@@ -1,0 +1,38 @@
+{
+  "properties": {
+    "ship_rate_weapon_classes": {
+      "items": {
+        "$ref": "#/components/schemas/ShipRateWeaponClassRuleRead"
+      },
+      "title": "Ship Rate Weapon Classes",
+      "type": "array"
+    },
+    "stat_effects": {
+      "items": {
+        "$ref": "#/components/schemas/StatEffectDefinitionRead"
+      },
+      "title": "Stat Effects",
+      "type": "array"
+    },
+    "weapon_classes": {
+      "items": {
+        "$ref": "#/components/schemas/WeaponClassRead"
+      },
+      "title": "Weapon Classes",
+      "type": "array"
+    },
+    "weapon_slot_types": {
+      "items": {
+        "$ref": "#/components/schemas/WeaponSlotTypeRead"
+      },
+      "title": "Weapon Slot Types",
+      "type": "array"
+    }
+  },
+  "required": [
+    "weapon_classes",
+    "weapon_slot_types"
+  ],
+  "title": "MasterDataTaxonomyRead",
+  "type": "object"
+}

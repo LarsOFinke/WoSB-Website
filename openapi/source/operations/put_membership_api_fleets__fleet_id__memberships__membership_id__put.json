@@ -1,0 +1,79 @@
+{
+  "path": "/api/fleets/{fleet_id}/memberships/{membership_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_membership_api_fleets__fleet_id__memberships__membership_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "path",
+        "name": "membership_id",
+        "required": true,
+        "schema": {
+          "title": "Membership Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/FleetMembershipUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetMembershipRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Membership",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

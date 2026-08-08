@@ -1,0 +1,12 @@
+{
+  "category": "sail",
+  "seed_id": "elite",
+  "name": "Elite Sails",
+  "source": "tooltip-sail-catalog-2026-07-v3",
+  "notes": "Verified in-game tooltip: +2.8 kn speed.",
+  "option_kind": "sail",
+  "stat_effects": {
+    "speed_knots": 2.8
+  },
+  "image_url": "/build-assets/options/sails/elite.svg"
+}

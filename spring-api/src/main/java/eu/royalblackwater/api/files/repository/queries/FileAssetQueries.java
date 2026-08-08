@@ -51,6 +51,9 @@ public final class FileAssetQueries {
 
     public static final String EFFECTIVE_LIMIT_SELECT_01 = "select coalesce(sum(size_bytes),0) from stored_files where owner_id=:id";
 
-    public static final String EFFECTIVE_LIMIT_SELECT_02 = "select coalesce(sum(size_bytes),0) from stored_files";
+    public static final String EFFECTIVE_LIMIT_SELECT_02 = """
+            select (select coalesce(sum(size_bytes),0) from stored_files)
+                 + (select coalesce(sum(printout_size_bytes),0) from builds)
+            """;
 
 }

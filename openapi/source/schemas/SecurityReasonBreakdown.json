@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "event_count": {
+      "title": "Event Count",
+      "type": "integer"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "request_target": {
+      "title": "Request Target",
+      "type": "string"
+    },
+    "signal": {
+      "title": "Signal",
+      "type": "string"
+    }
+  },
+  "required": [
+    "signal",
+    "reason",
+    "request_target",
+    "event_count"
+  ],
+  "title": "SecurityReasonBreakdown",
+  "type": "object"
+}

@@ -1,0 +1,51 @@
+{
+  "properties": {
+    "ammunition_slots_used": {
+      "default": 0,
+      "title": "Ammunition Slots Used",
+      "type": "integer"
+    },
+    "consumable_slots_used": {
+      "default": 0,
+      "title": "Consumable Slots Used",
+      "type": "integer"
+    },
+    "crew_capacity": {
+      "default": 0,
+      "title": "Crew Capacity",
+      "type": "integer"
+    },
+    "crew_total": {
+      "default": 0,
+      "title": "Crew Total",
+      "type": "integer"
+    },
+    "hold_slots_used": {
+      "default": 0,
+      "title": "Hold Slots Used",
+      "type": "integer"
+    },
+    "special_crew_total": {
+      "default": 0,
+      "title": "Special Crew Total",
+      "type": "integer"
+    },
+    "upgrade_slots_available": {
+      "default": 0,
+      "title": "Upgrade Slots Available",
+      "type": "integer"
+    },
+    "upgrade_slots_used": {
+      "default": 0,
+      "title": "Upgrade Slots Used",
+      "type": "integer"
+    },
+    "weapon_total": {
+      "default": 0,
+      "title": "Weapon Total",
+      "type": "integer"
+    }
+  },
+  "title": "BuildListMetrics",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "category": "lantern",
+  "seed_id": "ice",
+  "name": "Ice Lantern",
+  "source": "tooltip-lantern-catalog-2026-07-v4",
+  "notes": "Verified current-event tooltip: +5% speed, cargo hold and durability.",
+  "option_kind": "lantern",
+  "stat_effects": {
+    "speed_pct": 5,
+    "hold_capacity_pct": 5,
+    "hull_hp_pct": 5
+  },
+  "image_url": "/build-assets/options/lanterns/ice.svg"
+}

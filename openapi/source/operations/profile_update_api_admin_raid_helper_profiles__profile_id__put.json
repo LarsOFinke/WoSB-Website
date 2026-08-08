@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/raid-helper/profiles/{profile_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "profile_update_api_admin_raid_helper_profiles__profile_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "profile_id",
+        "required": true,
+        "schema": {
+          "title": "Profile Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/RaidHelperProfileWrite"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RaidHelperProfileRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Profile Update",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

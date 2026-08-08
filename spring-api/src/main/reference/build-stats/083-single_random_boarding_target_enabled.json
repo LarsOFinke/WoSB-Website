@@ -1,0 +1,14 @@
+{
+  "key": "single_random_boarding_target_enabled",
+  "label": "Single random target at boarding start",
+  "category": "boarding",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "single_random_boarding_target_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

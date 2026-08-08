@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "High Helm Port",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Barrels and mines are available at third speed. Barrel and mine damage radius +30%.",
+  "option_kind": "ship_upgrade_unusual",
+  "stat_effects": {
+    "barrels_mines_third_speed_enabled": 1,
+    "barrel_mine_radius_pct": 30
+  },
+  "seed_id": "high-helm-port",
+  "image_url": "/build-assets/options/upgrades/high-helm-port.png"
+}

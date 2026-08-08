@@ -1,0 +1,14 @@
+{
+  "key": "swivel_gun_reload_pct",
+  "label": "Swivel-gun reload speed",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "swivel_gun_reload_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

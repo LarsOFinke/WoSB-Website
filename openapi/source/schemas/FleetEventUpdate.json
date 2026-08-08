@@ -1,0 +1,86 @@
+{
+  "properties": {
+    "all_day": {
+      "default": false,
+      "title": "All Day",
+      "type": "boolean"
+    },
+    "category": {
+      "default": "other",
+      "maxLength": 80,
+      "title": "Category",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 3000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "location": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Location"
+    },
+    "raid_helper_dispatches": {
+      "items": {
+        "$ref": "#/components/schemas/RaidHelperDispatchSelection"
+      },
+      "maxItems": 20,
+      "title": "Raid Helper Dispatches",
+      "type": "array"
+    },
+    "raid_helper_enabled": {
+      "default": true,
+      "title": "Raid Helper Enabled",
+      "type": "boolean"
+    },
+    "squad_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Squad Id"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "start_at",
+    "end_at"
+  ],
+  "title": "FleetEventUpdate",
+  "type": "object"
+}

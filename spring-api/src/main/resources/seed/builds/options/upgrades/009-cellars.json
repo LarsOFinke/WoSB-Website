@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Cellars",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Hold +2000. Perishable goods do not spoil.",
+  "option_kind": "ship_upgrade_expeditionary",
+  "stat_effects": {
+    "hold_capacity": 2000,
+    "perishable_goods_preserved_enabled": 1
+  },
+  "seed_id": "cellars",
+  "image_url": "/build-assets/options/upgrades/cellars.png"
+}

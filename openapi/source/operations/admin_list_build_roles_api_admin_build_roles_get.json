@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/build-roles",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_list_build_roles_api_admin_build_roles_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/BuildRoleRead"
+              },
+              "title": "Response Admin List Build Roles Api Admin Build Roles Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin List Build Roles",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

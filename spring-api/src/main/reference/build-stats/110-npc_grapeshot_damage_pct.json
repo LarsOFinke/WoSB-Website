@@ -1,0 +1,14 @@
+{
+  "key": "npc_grapeshot_damage_pct",
+  "label": "Grapeshot damage against NPCs",
+  "category": "combat",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "npc_grapeshot_damage_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

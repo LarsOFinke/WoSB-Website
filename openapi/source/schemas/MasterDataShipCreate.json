@@ -1,0 +1,155 @@
+{
+  "properties": {
+    "armor": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Armor",
+      "type": "number"
+    },
+    "crew_capacity": {
+      "default": 100,
+      "minimum": 0.0,
+      "title": "Crew Capacity",
+      "type": "integer"
+    },
+    "displacement_tons": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Displacement Tons",
+      "type": "integer"
+    },
+    "durability": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Durability",
+      "type": "integer"
+    },
+    "has_lantern": {
+      "default": true,
+      "title": "Has Lantern",
+      "type": "boolean"
+    },
+    "hold_capacity": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Hold Capacity",
+      "type": "integer"
+    },
+    "image_url": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Image Url"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "maneuverability": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Maneuverability",
+      "type": "number"
+    },
+    "mortar_modification": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/MasterDataShipMortarModification"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "rate": {
+      "maximum": 7.0,
+      "minimum": 1.0,
+      "title": "Rate",
+      "type": "integer"
+    },
+    "sail_slots": {
+      "default": 1,
+      "maximum": 20.0,
+      "minimum": 0.0,
+      "title": "Sail Slots",
+      "type": "integer"
+    },
+    "sailor_minimum": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Sailor Minimum",
+      "type": "integer"
+    },
+    "ship_type": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Ship Type",
+      "type": "string"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "maxLength": 240,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "speed_knots": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Speed Knots",
+      "type": "number"
+    },
+    "speed_min_knots": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Speed Min Knots",
+      "type": "number"
+    },
+    "upgrade_effect_overrides": {
+      "items": {
+        "$ref": "#/components/schemas/MasterDataShipUpgradeOverride"
+      },
+      "title": "Upgrade Effect Overrides",
+      "type": "array"
+    },
+    "upgrade_slots": {
+      "default": 5,
+      "maximum": 8.0,
+      "minimum": 0.0,
+      "title": "Upgrade Slots",
+      "type": "integer"
+    },
+    "weapon_mounts": {
+      "items": {
+        "$ref": "#/components/schemas/MasterDataShipMount"
+      },
+      "title": "Weapon Mounts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "rate",
+    "ship_type"
+  ],
+  "title": "MasterDataShipCreate",
+  "type": "object"
+}

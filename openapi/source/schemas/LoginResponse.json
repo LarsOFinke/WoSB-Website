@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "user": {
+      "$ref": "#/components/schemas/UserRead"
+    }
+  },
+  "required": [
+    "user"
+  ],
+  "title": "LoginResponse",
+  "type": "object"
+}

@@ -1,0 +1,62 @@
+{
+  "properties": {
+    "api_base_url": {
+      "default": "https://raid-helper.xyz/api/v4",
+      "maxLength": 200,
+      "title": "Api Base Url",
+      "type": "string"
+    },
+    "api_key": {
+      "maxLength": 500,
+      "minLength": 8,
+      "title": "Api Key",
+      "type": "string"
+    },
+    "default_leader_id": {
+      "anyOf": [
+        {
+          "maxLength": 32,
+          "minLength": 5,
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Default Leader Id"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "server_id": {
+      "maxLength": 32,
+      "minLength": 5,
+      "pattern": "^[0-9]+$",
+      "title": "Server Id",
+      "type": "string"
+    },
+    "timezone": {
+      "default": "Europe/Berlin",
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Timezone",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "server_id",
+    "api_key"
+  ],
+  "title": "RaidHelperProfileCreate",
+  "type": "object"
+}

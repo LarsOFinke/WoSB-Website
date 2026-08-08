@@ -1,0 +1,62 @@
+{
+  "name": "Octopus",
+  "rate": 2,
+  "ship_type": "Ship",
+  "durability": 2760,
+  "speed_min_knots": 8.3,
+  "speed_knots": 8.3,
+  "maneuverability": 75,
+  "armor": 6.8,
+  "hold_capacity": 23000,
+  "crew_capacity": 176,
+  "sailor_minimum": 70,
+  "displacement_tons": 3375,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Octopus",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 8,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 1
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 37,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 37,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

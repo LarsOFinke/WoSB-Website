@@ -35,7 +35,7 @@ function blobToDataUrl(blob) {
 async function fetchPrintImageDataUrl(url, fetchImpl) {
   const response = await fetchImpl(url, {
     credentials: 'same-origin',
-    cache: 'no-store',
+    cache: 'force-cache',
     mode: 'same-origin',
   })
   if (!response?.ok) throw new Error(`Print image request failed (${response?.status || 'network'}): ${url}`)
@@ -81,6 +81,21 @@ async function rasterizePrintImageDataUrl(url, { ImageImpl = globalThis.Image, d
   return dataUrl
 }
 
+const PRINT_IMAGE_FETCH_CONCURRENCY = 6
+
+async function runBounded(tasks, worker, concurrency = PRINT_IMAGE_FETCH_CONCURRENCY) {
+  if (!tasks.length) return
+  let nextIndex = 0
+  const workerCount = Math.min(Math.max(1, concurrency), tasks.length)
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (nextIndex < tasks.length) {
+      const index = nextIndex
+      nextIndex += 1
+      await worker(tasks[index])
+    }
+  }))
+}
+
 async function resolvePrintImageDataUrl(url, options = {}) {
   const errors = []
   if (typeof options.fetchImpl === 'function') {
@@ -114,7 +129,7 @@ export async function inlinePrintImageResources(svg, {
 
   const replacements = new Map()
   const failures = []
-  await Promise.all(externalHrefs.map(async (escapedHref) => {
+  await runBounded(externalHrefs, async (escapedHref) => {
     const href = xmlAttributeValue(escapedHref)
     let task = cache.get(href)
     if (!task) {
@@ -127,7 +142,7 @@ export async function inlinePrintImageResources(svg, {
       cache.delete(href)
       failures.push({ href, error })
     }
-  }))
+  })
 
   if (failures.length) {
     const failedUrls = failures.map(({ href }) => href).join(', ')

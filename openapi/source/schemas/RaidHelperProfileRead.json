@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "api_base_url": {
+      "title": "Api Base Url",
+      "type": "string"
+    },
+    "api_key_configured": {
+      "title": "Api Key Configured",
+      "type": "boolean"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by_username": {
+      "title": "Created By Username",
+      "type": "string"
+    },
+    "default_leader_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Default Leader Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "server_id": {
+      "title": "Server Id",
+      "type": "string"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "server_id",
+    "api_base_url",
+    "timezone",
+    "is_active",
+    "api_key_configured",
+    "created_by_username",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "RaidHelperProfileRead",
+  "type": "object"
+}

@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/discord-webhooks/{webhook_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "admin_update_webhook_api_admin_discord_webhooks__webhook_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "webhook_id",
+        "required": true,
+        "schema": {
+          "title": "Webhook Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OutboundWebhookUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Update Webhook",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

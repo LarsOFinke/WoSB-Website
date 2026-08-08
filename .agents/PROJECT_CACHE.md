@@ -1,6 +1,6 @@
 # Projekt-Cache für Repository-Agenten
 
-> Geprüft am 2026-08-05. Dieser Cache ist ein Navigationsindex, keine verbindliche
+> Geprüft am 2026-08-08. Dieser Cache ist ein Navigationsindex, keine verbindliche
 > Quelle. Vor Änderungen immer `AGENTS.md`, betroffene Dateien, Aufrufer, Tests,
 > Konfiguration und Dokumentation lesen. Bei Widersprüchen gilt der Quellcode bzw.
 > die unten genannte Primärquelle.
@@ -38,8 +38,8 @@
 | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
 | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
 | Betrieb/Recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
-| HTTP-Vertrag | `openapi/openapi.json` |
-| Webhooks/Build-Daten | `spring-api/src/main/reference/webhook-events.json`, `spring-api/src/main/reference/build-stat-catalog.json` |
+| HTTP-Vertrag | `openapi/source/` (Autorenquelle), `openapi/openapi.json` (generiert) |
+| Webhooks/Build-Daten | `spring-api/src/main/reference/webhook-events.json`, `spring-api/src/main/reference/build-stats/` |
 
 Der Dokumentationsindex ist `docs/README.md`. Änderungen an Verhalten oder
 Betriebsabläufen schließen die zugehörige Dokumentation ein.
@@ -73,7 +73,7 @@ allein ableiten.
 - Fachdomänen: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
   `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
   `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `webhooks`.
-- `openapi/openapi.json` definiert den externen HTTP-Transport; generierte
+- `openapi/source/` definiert den externen HTTP-Transport; `openapi/openapi.json` wird deterministisch zusammengesetzt und generierte
   `api/dto/*`-Records bilden dessen Request-/Response-Typen. Modul-Controller besitzen
   die Spring-MVC-Bindings direkt; fehlende, doppelte oder abweichende Routen brechen
   `audit_controller_contract.py`.
@@ -88,7 +88,10 @@ allein ableiten.
   Lazy-Load-Abfragen auslösen. Wachsende Listen brauchen begrenzte Suche,
   Pagination und Domänenfilter; Collections gebündelt/projiziert laden.
 - MapStruct kompiliert mit `unmappedTargetPolicy=ERROR`. Java-Dateien mit
-  ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen. Dieselbe
+  ausführbarer Verantwortung bleiben grundsätzlich unter 420 Zeilen. Handgepflegte
+  JSON-Quellen folgen ebenfalls der 420-Zeilen-Grenze und werden nach Verantwortung
+  unter `openapi/source/`, `main/reference/build-stats/` und den Seed-Unterordnern
+  fragmentiert; Details: `docs/development/JSON_CATALOGS.md`. Dieselbe
   harte Grenze gilt für ausführbare Frontend-JavaScript-Module; ausgenommen sind
   nur die geprüften deklarativen Locale-Module und `autoLocalizationCatalog.js`.
 - Mockito wird im Maven-Testprozess als expliziter Startup-Agent geladen; die
@@ -195,10 +198,12 @@ allein ableiten.
   Kategorie, Zeitraum, Zeilenlimit und optionalen Suchtext eng wählen. Der
   Remote-Collector schreibt nichts auf das Ziel; nur die redigierte lokale Datei
   unter `.diagnostics/` für Agentenanalyse öffnen. Rohlogs nicht übernehmen.
-- API-Fehler werden zentral als `api_error` mit Status, Methode, Pfad und
-  ausnahmebezogener Ursache protokolliert; keine Request-Payloads oder Secrets in
-  Logs ergänzen. Sicherheitsablehnungen bleiben separat als `security_401` bzw.
-  `security_403` sichtbar.
+- Jede API-Antwort erhält eine servergenerierte `X-Request-Id`. API-Fehler werden
+  zentral als `api_error` mit Request-ID, Status, Methode, normalisiertem Pfad und
+  ausnahmebezogener Ursache protokolliert; Sicherheitsablehnungen bleiben separat
+  als `security_401` bzw. `security_403` sichtbar. `RBF_HTTP_LIFECYCLE_LOGGING=true`
+  aktiviert für Tests/kurze Diagnosen Start/Complete-Logs mit Status und Laufzeit;
+  Standard ist `false`. Nie Payloads, Querywerte, Cookies, Client-IP oder User-Agent loggen.
 - Bei 500ern aus Kalender oder Staff-Datumsfiltern zuerst auf
   `MethodArgumentTypeMismatchException` prüfen. OpenAPI-`date` und `date-time`
   müssen im Routengenerator explizit als ISO gebunden werden; Browser-UTC-Werte
@@ -395,3 +400,22 @@ Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, 
 ### 2026-08-08 deployment-host quality-tool portability
 
 Mandatory `update.sh`/deployment quality gates must not depend on optional developer utilities. In particular, TLS/environment safety checks use baseline `grep` plus `openssl`; `ripgrep` (`rg`) is not a deployment-host prerequisite. If a new mandatory gate needs an external command, either declare/install it explicitly as an infrastructure prerequisite or implement the check with the existing baseline toolset.
+
+### Serverweiter Build-Printout-Cache
+
+Seit v1.0.13 werden Build-PNGs als begrenzter, gemeinsam nutzbarer Derived Cache
+behandelt. Identität = Renderer-Version + SHA-256 des SVG-Quellrenders;
+`builds.updated_at` bleibt ausschließlich Business-Revision. Die API liefert
+einen versionierten `printout_url?...cache_key=...`; alle Viewer dürfen einen
+aktuellen Treffer lesen, nur Owner/Staff dürfen ihn erzeugen/reparieren.
+
+Pro Build bleibt nur der aktuell gewählte Cache-Eintrag aktiv. Die Datei ist
+checksum-versioniert, wird transaktionssicher umgeschaltet und die vorige Datei
+nach Commit entfernt. Update/Rollenänderung/Löschung invalidieren den Cache.
+Globaler Storage-Deckel und Minimum-Free-Space gelten gemeinsam für Uploads und
+Printouts; täglicher Cleanup entfernt Stale Metadata, Orphans und Temp-Dateien; frische
+Orphan-Kandidaten erhalten eine Stunde Grace Window gegen laufende Cache-Commits.
+Bei jeder Änderung am Print-Renderer, die das sichtbare Ergebnis verändern kann,
+`BUILD_PRINT_RENDERER_VERSION` mitbumpen. V8 ist die erste Forward-Flyway-
+Migration nach der unveränderlichen modularen V3–V7-Baseline; SQL-Audits dürfen
+V8+ nicht als Drift gegenüber V1 interpretieren.

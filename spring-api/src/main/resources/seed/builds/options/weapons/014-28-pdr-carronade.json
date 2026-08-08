@@ -1,0 +1,16 @@
+{
+  "category": "weapon",
+  "name": "28-pdr Carronade",
+  "source": "WoSB wiki Basic Weapons audit 2026-07",
+  "option_kind": "cannon",
+  "allowed_slot_types": [
+    "weapon_port",
+    "weapon_starboard"
+  ],
+  "weapon_class": "medium",
+  "seed_id": "28-pdr-carronade",
+  "weapon_performance": {
+    "base_damage": 23,
+    "reload_seconds": 22.5
+  }
+}

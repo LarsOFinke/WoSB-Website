@@ -1,0 +1,60 @@
+{
+  "path": "/api/fleets/{fleet_id}",
+  "method": "get",
+  "operation": {
+    "operationId": "get_fleet_detail_api_fleets__fleet_id__get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetDetail"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Fleet Detail",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

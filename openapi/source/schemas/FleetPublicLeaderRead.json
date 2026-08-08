@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "role": {
+      "title": "Role",
+      "type": "string"
+    },
+    "role_label": {
+      "title": "Role Label",
+      "type": "string"
+    }
+  },
+  "required": [
+    "display_name",
+    "role",
+    "role_label"
+  ],
+  "title": "FleetPublicLeaderRead",
+  "type": "object"
+}

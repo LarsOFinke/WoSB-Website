@@ -56,6 +56,35 @@ nginx=read('infrastructure/nginx/default.conf')
 for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Policy'):
     require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
 require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
+require('limit_req_zone $binary_remote_addr zone=file_content:10m rate=600r/m;' in nginx,
+        'build/master-data media must have a dedicated bounded download rate')
+media_location=re.search(r'location ~ \^/api/files/\[0-9\]\+/content\$ \{([\s\S]*?)\n    \}', nginx)
+require(media_location is not None,'dedicated file-content gateway location missing')
+media_block=media_location.group(1)
+require('limit_req zone=file_content burst=300 nodelay;' in media_block,
+        'file-content route must use the reviewed media limiter')
+require('limit_req zone=api_general' not in media_block,
+        'file-content fetches must not consume the interactive API rate budget')
+require('limit_conn connections_per_ip 20;' in media_block,
+        'file-content route must retain a per-IP concurrency bound')
+
+printout_queries=read('spring-api/src/main/java/eu/royalblackwater/api/builds/repository/queries/BuildPrintoutQueries.java')
+printout_service=read('spring-api/src/main/java/eu/royalblackwater/api/builds/service/BuildPrintoutService.java')
+file_queries=read('spring-api/src/main/java/eu/royalblackwater/api/files/repository/queries/FileAssetQueries.java')
+printout_migration=read('spring-api/src/main/resources/db/migration/V8__build_printout_cache.sql')
+require('for update' in printout_queries.lower(),
+        'build printout cache writes must serialize on the build row')
+require('printout_source_updated_at=:sourceUpdatedAt' in printout_queries and
+        'updated_at=:now' not in printout_queries.replace('printout_updated_at=:now', ''),
+        'derived printout cache writes must not mutate the business build revision')
+require('build-" + buildId + "-" + checksum + ".png"' in printout_service,
+        'build printouts must use checksum-versioned files for transaction-safe replacement')
+require('cache_key=' in printout_service and 'cacheKey.equals(RowValues.string(build, "printout_cache_key"))' in printout_service,
+        'build printout downloads must bind the HTTP URL to the current server cache key')
+require('sum(printout_size_bytes)' in file_queries and 'sum(size_bytes)' in file_queries,
+        'ordinary uploads and shared build printouts must consume one global storage budget')
+for column in ('printout_cache_key', 'printout_source_updated_at'):
+    require(column in printout_migration, f'build printout cache migration missing {column}')
 pom=read('spring-api/pom.xml')
 require('<tomcat.version>11.0.24</tomcat.version>' in pom,
         'embedded Tomcat must retain the reviewed security update')

@@ -1,0 +1,70 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_public": {
+      "default": false,
+      "title": "Is Public",
+      "type": "boolean"
+    },
+    "mime_type": {
+      "title": "Mime Type",
+      "type": "string"
+    },
+    "original_name": {
+      "title": "Original Name",
+      "type": "string"
+    },
+    "owner_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Owner Id"
+    },
+    "public_url": {
+      "title": "Public Url",
+      "type": "string"
+    },
+    "relative_path": {
+      "title": "Relative Path",
+      "type": "string"
+    },
+    "size_bytes": {
+      "title": "Size Bytes",
+      "type": "integer"
+    },
+    "stored_name": {
+      "title": "Stored Name",
+      "type": "string"
+    },
+    "usage_context": {
+      "title": "Usage Context",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "original_name",
+    "stored_name",
+    "relative_path",
+    "public_url",
+    "mime_type",
+    "size_bytes",
+    "usage_context",
+    "created_at"
+  ],
+  "title": "FileRead",
+  "type": "object"
+}

@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "can_manage_fleet": {
+      "title": "Can Manage Fleet",
+      "type": "boolean"
+    },
+    "can_manage_members": {
+      "title": "Can Manage Members",
+      "type": "boolean"
+    },
+    "code": {
+      "title": "Code",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_leadership": {
+      "title": "Is Leadership",
+      "type": "boolean"
+    },
+    "is_system": {
+      "title": "Is System",
+      "type": "boolean"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "member_count": {
+      "default": 0,
+      "title": "Member Count",
+      "type": "integer"
+    },
+    "rank": {
+      "title": "Rank",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "code",
+    "label",
+    "rank",
+    "is_leadership",
+    "can_manage_fleet",
+    "can_manage_members",
+    "is_system",
+    "is_active"
+  ],
+  "title": "FleetRoleRead",
+  "type": "object"
+}

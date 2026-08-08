@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/discord-webhooks/{webhook_id}/test",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_test_webhook_api_admin_discord_webhooks__webhook_id__test_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "webhook_id",
+        "required": true,
+        "schema": {
+          "title": "Webhook Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/OutboundWebhookTestRequest"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookDeliveryRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Test Webhook",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

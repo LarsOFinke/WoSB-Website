@@ -1,0 +1,14 @@
+{
+  "key": "all_ammo_ignition_enabled",
+  "label": "Fire effects with every ammunition type",
+  "category": "combat",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "all_ammo_ignition_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

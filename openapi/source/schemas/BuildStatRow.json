@@ -1,0 +1,141 @@
+{
+  "properties": {
+    "base": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "effect_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effect Key"
+    },
+    "effective": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Effective"
+    },
+    "flat_modifier": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Flat Modifier"
+    },
+    "is_debuff": {
+      "default": false,
+      "title": "Is Debuff",
+      "type": "boolean"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "modifier": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Modifier"
+    },
+    "modifier_kind": {
+      "default": "flat",
+      "title": "Modifier Kind",
+      "type": "string"
+    },
+    "percent_modifier": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Percent Modifier"
+    },
+    "precision": {
+      "default": 0,
+      "title": "Precision",
+      "type": "integer"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unit"
+    }
+  },
+  "required": [
+    "key",
+    "label",
+    "category"
+  ],
+  "title": "BuildStatRow",
+  "type": "object"
+}

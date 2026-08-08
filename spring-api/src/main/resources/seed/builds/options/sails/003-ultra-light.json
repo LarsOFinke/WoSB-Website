@@ -1,0 +1,14 @@
+{
+  "category": "sail",
+  "seed_id": "ultra-light",
+  "name": "Ultra-light Sails",
+  "source": "tooltip-sail-catalog-2026-07-v3",
+  "notes": "Verified in-game tooltip: +2.4 kn speed, +15% maneuverability in cruising mode and -30% speed while turning in cruising mode.",
+  "option_kind": "sail",
+  "stat_effects": {
+    "speed_knots": 2.4,
+    "cruising_maneuverability_pct": 15,
+    "cruising_turn_speed_penalty_pct": -30
+  },
+  "image_url": "/build-assets/options/sails/ultra-light.svg"
+}

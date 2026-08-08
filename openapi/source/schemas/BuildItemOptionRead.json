@@ -1,0 +1,156 @@
+{
+  "properties": {
+    "allowed_slot_types": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Allowed Slot Types",
+      "type": "array"
+    },
+    "base_stat_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Base Stat Effects",
+      "type": "object"
+    },
+    "category_key": {
+      "title": "Category Key",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "image_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Image Url"
+    },
+    "is_ship_specific": {
+      "default": false,
+      "title": "Is Ship Specific",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Notes"
+    },
+    "option_kind": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Option Kind"
+    },
+    "sort_order": {
+      "title": "Sort Order",
+      "type": "integer"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "stat_effects": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Stat Effects",
+      "type": "object"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "weapon_caliber_inches": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Weapon Caliber Inches"
+    },
+    "weapon_class": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Weapon Class"
+    },
+    "weapon_performance": {
+      "anyOf": [
+        {
+          "$ref": "#/components/schemas/WeaponPerformanceRead"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "category_key",
+    "name",
+    "sort_order",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "BuildItemOptionRead",
+  "type": "object"
+}

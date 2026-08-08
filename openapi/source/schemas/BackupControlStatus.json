@@ -1,0 +1,232 @@
+{
+  "properties": {
+    "age_recipient_configured": {
+      "default": false,
+      "title": "Age Recipient Configured",
+      "type": "boolean"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/components/schemas/BackupArtifact"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "connection": {
+      "$ref": "#/components/schemas/BackupConnectionSummary"
+    },
+    "discovered_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discovered Fingerprint"
+    },
+    "discovered_host": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discovered Host"
+    },
+    "discovered_host_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discovered Host Key"
+    },
+    "discovered_port": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discovered Port"
+    },
+    "enrollment_applied": {
+      "default": false,
+      "title": "Enrollment Applied",
+      "type": "boolean"
+    },
+    "enrollment_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Enrollment Id"
+    },
+    "enrollment_public_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Enrollment Public Key"
+    },
+    "enrollment_request": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Enrollment Request"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Finished At"
+    },
+    "heartbeat_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Heartbeat At"
+    },
+    "local_catalog_skipped_count": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Local Catalog Skipped Count",
+      "type": "integer"
+    },
+    "local_catalog_updated_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Local Catalog Updated At"
+    },
+    "local_database_backups": {
+      "items": {
+        "$ref": "#/components/schemas/LocalDatabaseBackup"
+      },
+      "title": "Local Database Backups",
+      "type": "array"
+    },
+    "local_files_backups": {
+      "items": {
+        "$ref": "#/components/schemas/LocalFilesBackup"
+      },
+      "title": "Local Files Backups",
+      "type": "array"
+    },
+    "message": {
+      "default": "No backup operation has been requested yet.",
+      "title": "Message",
+      "type": "string"
+    },
+    "operation": {
+      "default": "idle",
+      "title": "Operation",
+      "type": "string"
+    },
+    "request_available": {
+      "default": false,
+      "title": "Request Available",
+      "type": "boolean"
+    },
+    "requested_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Requested At"
+    },
+    "requested_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Requested By"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Started At"
+    },
+    "state": {
+      "default": "idle",
+      "title": "State",
+      "type": "string"
+    },
+    "upload_key_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upload Key Fingerprint"
+    },
+    "upload_public_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upload Public Key"
+    }
+  },
+  "title": "BackupControlStatus",
+  "type": "object"
+}

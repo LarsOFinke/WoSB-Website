@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "event_type": {
+      "default": "integration.test",
+      "maxLength": 80,
+      "title": "Event Type",
+      "type": "string"
+    }
+  },
+  "title": "OutboundWebhookTestRequest",
+  "type": "object"
+}

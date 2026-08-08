@@ -1,0 +1,87 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "broadcast_enabled": {
+      "default": false,
+      "title": "Broadcast Enabled",
+      "type": "boolean"
+    },
+    "discord_username": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Username"
+    },
+    "endpoint_url": {
+      "maxLength": 1000,
+      "minLength": 8,
+      "title": "Endpoint Url",
+      "type": "string"
+    },
+    "event_types": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Event Types",
+      "type": "array"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "message_template": {
+      "anyOf": [
+        {
+          "maxLength": 4000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Message Template"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 3,
+      "title": "Name",
+      "type": "string"
+    },
+    "scope_id": {
+      "anyOf": [
+        {
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scope Id"
+    },
+    "scope_type": {
+      "default": "global",
+      "enum": [
+        "global",
+        "fleet",
+        "squad"
+      ],
+      "title": "Scope Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "endpoint_url"
+  ],
+  "title": "OutboundWebhookCreate",
+  "type": "object"
+}

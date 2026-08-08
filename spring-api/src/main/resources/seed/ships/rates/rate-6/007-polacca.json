@@ -1,0 +1,62 @@
+{
+  "name": "Polacca",
+  "rate": 6,
+  "ship_type": "Polacca",
+  "durability": 980,
+  "speed_min_knots": 9,
+  "speed_knots": 9,
+  "maneuverability": 102,
+  "armor": 2.9,
+  "hold_capacity": 9000,
+  "crew_capacity": 74,
+  "sailor_minimum": 30,
+  "displacement_tons": 1575,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Polacca",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 7,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 7,
+      "max_weapon_class": "light",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 1,
+      "max_weapon_class": null,
+      "max_caliber_inches": 6,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

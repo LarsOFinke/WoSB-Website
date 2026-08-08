@@ -1,0 +1,61 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_application_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Application Note"
+    },
+    "fleet_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "username": {
+      "title": "Username",
+      "type": "string"
+    },
+    "wants_fleet_membership": {
+      "default": false,
+      "title": "Wants Fleet Membership",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "username",
+    "display_name",
+    "status",
+    "created_at"
+  ],
+  "title": "RegistrationRequestPublic",
+  "type": "object"
+}

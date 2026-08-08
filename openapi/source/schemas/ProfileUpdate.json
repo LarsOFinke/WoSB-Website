@@ -1,0 +1,103 @@
+{
+  "properties": {
+    "availability": {
+      "anyOf": [
+        {
+          "maxLength": 240,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Availability"
+    },
+    "discord_handle": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Handle"
+    },
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "fleet_name": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Name"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    },
+    "preferred_focus": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Preferred Focus"
+    },
+    "preferred_role_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 10,
+      "title": "Preferred Role Ids",
+      "type": "array"
+    },
+    "preferred_ship_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 20,
+      "title": "Preferred Ship Ids",
+      "type": "array"
+    },
+    "timezone": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Timezone"
+    }
+  },
+  "required": [
+    "display_name"
+  ],
+  "title": "ProfileUpdate",
+  "type": "object"
+}

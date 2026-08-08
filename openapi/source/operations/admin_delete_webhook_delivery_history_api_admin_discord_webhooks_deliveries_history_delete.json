@@ -1,0 +1,103 @@
+{
+  "path": "/api/admin/discord-webhooks/deliveries/history",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_webhook_delivery_history_api_admin_discord_webhooks_deliveries_history_delete",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "webhook_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Webhook Id"
+        }
+      },
+      {
+        "in": "query",
+        "name": "status",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "pattern": "^(queued|success|failed|processing)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status"
+        }
+      },
+      {
+        "in": "query",
+        "name": "event_type",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Event Type"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OutboundWebhookDeliveryDeleteResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Webhook Delivery History",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Le Saint Louis",
+  "rate": 3,
+  "ship_type": "Ship of the Line",
+  "durability": 2700,
+  "speed_min_knots": 7.9,
+  "speed_knots": 7.9,
+  "maneuverability": 78,
+  "armor": 5.6,
+  "hold_capacity": 20000,
+  "crew_capacity": 170,
+  "sailor_minimum": 68,
+  "displacement_tons": 2925,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Le Saint Louis",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 6,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 6,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 26,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 26,
+      "max_weapon_class": "medium",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

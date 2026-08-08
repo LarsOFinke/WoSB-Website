@@ -1,5 +1,6 @@
 package eu.royalblackwater.api.config;
 
+import eu.royalblackwater.api.shared.web.ApiRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -23,8 +24,8 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ResponseStatusException.class)
     ResponseEntity<Map<String, String>> status(ResponseStatusException exception, HttpServletRequest request) {
         int status = exception.getStatusCode().value();
-        LOG.warn("api_error status={} method={} path={} type={} reason={}", status,
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+        LOG.warn("api_error status={} request_id={} method={} path={} type={} reason={}", status,
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                 safeReason(exception.getReason()));
         return ResponseEntity.status(exception.getStatusCode())
                 .body(Map.of("detail", exception.getReason() == null ? "Request rejected." : exception.getReason()));
@@ -35,16 +36,16 @@ public class ApiExceptionHandler {
                                                     HttpServletRequest request) {
         String detail = exception.getBindingResult().getAllErrors().stream()
                 .findFirst().map(error -> error.getDefaultMessage()).orElse("Invalid request.");
-        LOG.warn("api_error status=400 method={} path={} type={} reason={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(), safeReason(detail));
+        LOG.warn("api_error status=400 request_id={} method={} path={} type={} reason={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(), safeReason(detail));
         return ResponseEntity.badRequest().body(Map.of("detail", detail));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<Map<String, String>> unreadable(HttpMessageNotReadableException exception,
                                                     HttpServletRequest request) {
-        LOG.warn("api_error status=400 method={} path={} type={} reason={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+        LOG.warn("api_error status=400 request_id={} method={} path={} type={} reason={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                 safeReason(exception.getMostSpecificCause().getMessage()));
         return ResponseEntity.badRequest().body(Map.of("detail", "Request body is invalid."));
     }
@@ -52,8 +53,8 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ResponseEntity<Map<String, String>> typeMismatch(MethodArgumentTypeMismatchException exception,
                                                       HttpServletRequest request) {
-        LOG.warn("api_error status=400 method={} path={} type={} reason={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+        LOG.warn("api_error status=400 request_id={} method={} path={} type={} reason={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                 safeReason("Invalid query parameter: " + exception.getName()));
         return ResponseEntity.badRequest().body(Map.of("detail", "Query parameter is invalid."));
     }
@@ -61,8 +62,8 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     ResponseEntity<Map<String, String>> uploadTooLarge(MaxUploadSizeExceededException exception,
                                                         HttpServletRequest request) {
-        LOG.warn("api_error status=413 method={} path={} type={} reason={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+        LOG.warn("api_error status=413 request_id={} method={} path={} type={} reason={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                 safeReason(exception.getMessage()));
         return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
                 .body(Map.of("detail", "Request body is too large."));
@@ -70,8 +71,8 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MultipartException.class)
     ResponseEntity<Map<String, String>> multipart(MultipartException exception, HttpServletRequest request) {
-        LOG.warn("api_error status=400 method={} path={} type={} reason={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+        LOG.warn("api_error status=400 request_id={} method={} path={} type={} reason={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                 safeReason(exception.getMessage()));
         return ResponseEntity.badRequest().body(Map.of("detail", "Multipart request is invalid."));
     }
@@ -80,14 +81,15 @@ public class ApiExceptionHandler {
     ResponseEntity<Map<String, String>> unexpected(Exception exception, HttpServletRequest request) {
         if (exception instanceof ErrorResponse errorResponse && errorResponse.getStatusCode().is4xxClientError()) {
             int status = errorResponse.getStatusCode().value();
-            LOG.warn("api_error status={} method={} path={} type={} reason={}", status,
-                    request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(),
+            LOG.warn("api_error status={} request_id={} method={} path={} type={} reason={}", status,
+                    ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request), exception.getClass().getSimpleName(),
                     safeReason(errorResponse.getBody().getDetail()));
             return ResponseEntity.status(errorResponse.getStatusCode())
                     .body(Map.of("detail", clientErrorDetail(status)));
         }
-        LOG.error("api_error status=500 method={} path={} type={}",
-                request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName(), exception);
+        LOG.error("api_error status=500 request_id={} method={} path={} type={}",
+                ApiRequestAttributes.requestId(request), request.getMethod(), ApiRequestAttributes.route(request),
+                exception.getClass().getSimpleName(), exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("detail", "Internal server error."));
     }

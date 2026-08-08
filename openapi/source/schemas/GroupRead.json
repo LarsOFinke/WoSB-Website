@@ -1,0 +1,214 @@
+{
+  "properties": {
+    "active_members_count": {
+      "title": "Active Members Count",
+      "type": "integer"
+    },
+    "activity_plan": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Activity Plan"
+    },
+    "allow_guests": {
+      "default": true,
+      "title": "Allow Guests",
+      "type": "boolean"
+    },
+    "closed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Closed At"
+    },
+    "contact_note": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Contact Note"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "expectations": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expectations"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "fleet_restriction": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Restriction"
+    },
+    "focus": {
+      "default": "pve_general",
+      "maxLength": 80,
+      "title": "Focus",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_joinable": {
+      "title": "Is Joinable",
+      "type": "boolean"
+    },
+    "max_members": {
+      "default": 5,
+      "maximum": 50.0,
+      "minimum": 2.0,
+      "title": "Max Members",
+      "type": "integer"
+    },
+    "max_ship_rate": {
+      "anyOf": [
+        {
+          "maximum": 7.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Ship Rate"
+    },
+    "members": {
+      "items": {
+        "$ref": "#/components/schemas/GroupMemberRead"
+      },
+      "title": "Members",
+      "type": "array"
+    },
+    "min_ship_rate": {
+      "anyOf": [
+        {
+          "maximum": 7.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Min Ship Rate"
+    },
+    "owner": {
+      "$ref": "#/components/schemas/UserReferenceRead"
+    },
+    "owner_id": {
+      "title": "Owner Id",
+      "type": "integer"
+    },
+    "scheduled_end_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scheduled End At"
+    },
+    "scheduled_start_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scheduled Start At"
+    },
+    "spots_left": {
+      "title": "Spots Left",
+      "type": "integer"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 140,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "id",
+    "owner_id",
+    "status",
+    "created_at",
+    "updated_at",
+    "expires_at",
+    "owner",
+    "active_members_count",
+    "spots_left",
+    "is_joinable"
+  ],
+  "title": "GroupRead",
+  "type": "object"
+}

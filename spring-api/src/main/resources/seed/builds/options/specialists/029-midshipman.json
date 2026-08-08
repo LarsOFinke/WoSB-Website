@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "midshipman",
+  "name": "Midshipman",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Military. During boarding, Musketeers start defending. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "boarding_musketeer_defense_enabled": 1
+  },
+  "image_url": "/build-assets/options/specialists/midshipman.png"
+}

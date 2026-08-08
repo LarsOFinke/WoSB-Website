@@ -1,0 +1,14 @@
+{
+  "key": "strong_wind_cruising_speed_bonus_knots",
+  "label": "Strong-wind cruising speed",
+  "category": "mobility",
+  "base_field": null,
+  "unit": "kn",
+  "pct_effect": null,
+  "flat_effect": "strong_wind_cruising_speed_bonus_knots",
+  "calculation_flat_effect": null,
+  "precision": 1,
+  "positive_is_good": true,
+  "source": "equipment_modifiers",
+  "pct_base_field": null
+}

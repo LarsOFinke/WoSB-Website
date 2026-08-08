@@ -2,13 +2,16 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  BUILD_PRINT_RENDERER_VERSION,
   buildPrintFileName,
   createBuildPrintDocument,
   createBuildPrintHtml,
   createEmbeddedBuildPrintDocument,
   createBuildPrintModel,
   createBuildPrintSvg,
+  inlinePrintImageResources,
 } from '../src/modules/builds/buildPrintExport.js'
+import { createBuildPrintCacheDescriptor, fetchBuildPrintPngBlob } from '../src/modules/builds/buildPrintCache.js'
 
 const translations = {
   'builds.statLabels.durability': 'Durability',
@@ -148,7 +151,7 @@ test('build print svg contains the key build identifiers', () => {
   assert.match(svg, /https:\/\/fleet\.example\/builds\/42/)
   assert.match(svg, /Weapon loadout/)
   assert.match(svg, /Copper Sheathing/)
-  assert.match(svg, /data-build-sheet-version="2"/)
+  assert.match(svg, /data-build-sheet-version="3"/)
   assert.match(svg, /data-build-sheet-theme="dark"/)
   assert.match(svg, /data-build-performance-panel="true"/)
   assert.match(svg, /data-performance-stat="maneuverability"/)
@@ -380,4 +383,104 @@ test('build print falls back to same-origin image rasterization when fetch conve
   assert.ok(drawCalls.length > 0)
   assert.ok(document.svg.includes(`href="${['data:image/png', 'base64,RkFMTEJBQ0s='].join(';')}"`))
   assert.doesNotMatch(document.svg, /href="https:\/\/fleet\.example\/icons\//)
+})
+
+
+test('build print embedding uses HTTP cache and bounds parallel image fetches', async () => {
+  let active = 0
+  let peakActive = 0
+  const requested = []
+  const hrefs = Array.from({ length: 24 }, (_, index) => `https://fleet.example/api/files/${index + 1}/content`)
+  const svg = `<svg>${hrefs.map((href) => `<image href="${href}" />`).join('')}</svg>`
+
+  const embedded = await inlinePrintImageResources(svg, {
+    fetchImpl: async (url, options) => {
+      assert.equal(options.cache, 'force-cache')
+      assert.equal(options.credentials, 'same-origin')
+      assert.equal(options.mode, 'same-origin')
+      requested.push(url)
+      active += 1
+      peakActive = Math.max(peakActive, active)
+      await new Promise((resolve) => setTimeout(resolve, 2))
+      active -= 1
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }),
+      }
+    },
+  })
+
+  assert.equal(requested.length, hrefs.length)
+  assert.ok(peakActive <= 6, `expected at most 6 concurrent fetches, got ${peakActive}`)
+  assert.doesNotMatch(embedded, /href="https:\/\/fleet\.example\/api\/files\//)
+})
+
+test('build print embedding reuses a supplied resource cache across renders', async () => {
+  const cache = new Map()
+  let requests = 0
+  const svg = '<svg><image href="https://fleet.example/api/files/7/content" /></svg>'
+  const options = {
+    cache,
+    fetchImpl: async () => {
+      requests += 1
+      return {
+        ok: true,
+        status: 200,
+        blob: async () => new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }),
+      }
+    },
+  }
+
+  await inlinePrintImageResources(svg, options)
+  await inlinePrintImageResources(svg, options)
+  assert.equal(requests, 1)
+})
+
+
+test('build print cache descriptor is stable for the same rendered build version', async () => {
+  const current = { ...build, updated_at: '2026-08-08T10:00:00' }
+  const helpers = { t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' } }
+  const first = await createBuildPrintCacheDescriptor(current, helpers)
+  const second = await createBuildPrintCacheDescriptor({ ...current }, helpers)
+
+  assert.equal(BUILD_PRINT_RENDERER_VERSION, '3')
+  assert.equal(first.sourceUpdatedAt, current.updated_at)
+  assert.equal(first.cacheKey, second.cacheKey)
+  assert.match(first.cacheKey, /^print-v3:[a-f0-9]{64}$/)
+})
+
+test('build print cache descriptor changes with build content or rendered language', async () => {
+  const current = { ...build, updated_at: '2026-08-08T10:00:00' }
+  const english = await createBuildPrintCacheDescriptor(current, {
+    t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' },
+  })
+  const changedBuild = await createBuildPrintCacheDescriptor({ ...current, sailors: 81 }, {
+    t, optionLabel: (value) => value, locationObject: { origin: 'https://fleet.example' },
+  })
+  const localized = await createBuildPrintCacheDescriptor(current, {
+    t: (key, params = {}) => `DE:${t(key, params)}`,
+    optionLabel: (value) => `DE:${value}`,
+    locationObject: { origin: 'https://fleet.example' },
+  })
+
+  assert.notEqual(english.cacheKey, changedBuild.cacheKey)
+  assert.notEqual(english.cacheKey, localized.cacheKey)
+})
+
+
+test('server-wide build print cache fetch uses the versioned URL and browser cache', async () => {
+  const calls = []
+  const url = 'https://fleet.example/api/builds/42/printout?cache_key=print-v3%3Aabc'
+  const blob = new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' })
+  const result = await fetchBuildPrintPngBlob(url, async (requestedUrl, options) => {
+    calls.push({ requestedUrl, options })
+    return { ok: true, status: 200, blob: async () => blob }
+  })
+
+  assert.equal(result, blob)
+  assert.deepEqual(calls, [{
+    requestedUrl: url,
+    options: { credentials: 'include', cache: 'force-cache' },
+  }])
 })

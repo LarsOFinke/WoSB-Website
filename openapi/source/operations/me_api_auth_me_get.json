@@ -1,0 +1,59 @@
+{
+  "path": "/api/auth/me",
+  "method": "get",
+  "operation": {
+    "operationId": "me_api_auth_me_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UserRead"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Response Me Api Auth Me Get"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Me",
+    "tags": [
+      "auth"
+    ]
+  }
+}

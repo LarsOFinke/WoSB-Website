@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/build-roles/{slug}",
+  "method": "delete",
+  "operation": {
+    "operationId": "admin_delete_build_role_api_admin_build_roles__slug__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "slug",
+        "required": true,
+        "schema": {
+          "title": "Slug",
+          "type": "string"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Delete Build Role",
+    "tags": [
+      "admin",
+      "admin-content"
+    ]
+  }
+}

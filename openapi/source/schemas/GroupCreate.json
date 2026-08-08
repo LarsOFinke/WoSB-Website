@@ -1,0 +1,143 @@
+{
+  "properties": {
+    "activity_plan": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Activity Plan"
+    },
+    "allow_guests": {
+      "default": true,
+      "title": "Allow Guests",
+      "type": "boolean"
+    },
+    "contact_note": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Contact Note"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "expectations": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Expectations"
+    },
+    "fleet_restriction": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Fleet Restriction"
+    },
+    "focus": {
+      "default": "pve_general",
+      "maxLength": 80,
+      "title": "Focus",
+      "type": "string"
+    },
+    "max_members": {
+      "default": 5,
+      "maximum": 50.0,
+      "minimum": 2.0,
+      "title": "Max Members",
+      "type": "integer"
+    },
+    "max_ship_rate": {
+      "anyOf": [
+        {
+          "maximum": 7.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Max Ship Rate"
+    },
+    "min_ship_rate": {
+      "anyOf": [
+        {
+          "maximum": 7.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Min Ship Rate"
+    },
+    "scheduled_end_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scheduled End At"
+    },
+    "scheduled_start_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Scheduled Start At"
+    },
+    "title": {
+      "maxLength": 140,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "title"
+  ],
+  "title": "GroupCreate",
+  "type": "object"
+}

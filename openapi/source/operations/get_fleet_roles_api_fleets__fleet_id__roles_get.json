@@ -1,0 +1,104 @@
+{
+  "path": "/api/fleets/{fleet_id}/roles",
+  "method": "get",
+  "operation": {
+    "operationId": "get_fleet_roles_api_fleets__fleet_id__roles_get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "fleet_id",
+        "required": true,
+        "schema": {
+          "title": "Fleet Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "include_inactive",
+        "required": false,
+        "schema": {
+          "default": false,
+          "title": "Include Inactive",
+          "type": "boolean"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FleetRoleRead"
+              },
+              "title": "Response Get Fleet Roles Api Fleets  Fleet Id  Roles Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "401": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Authentication required"
+      },
+      "403": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Fleet management access required"
+      },
+      "404": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Fleet not found"
+      }
+    },
+    "summary": "Get Fleet Roles",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

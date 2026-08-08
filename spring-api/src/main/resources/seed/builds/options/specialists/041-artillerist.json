@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "artillerist",
+  "name": "Artillerist",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Military. Mortar aiming speed +25%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "mortar_aiming_pct": 25
+  },
+  "image_url": "/build-assets/options/specialists/artillerist.png"
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Bonhomme Richard",
+  "rate": 2,
+  "ship_type": "Frigate",
+  "durability": 2800,
+  "speed_min_knots": 8.5,
+  "speed_knots": 8.5,
+  "maneuverability": 74,
+  "armor": 5.6,
+  "hold_capacity": 39000,
+  "crew_capacity": 180,
+  "sailor_minimum": 72,
+  "displacement_tons": 3330,
+  "source": "WoSB in-game shipyard screenshot audit 2026-07",
+  "sail_slots": 1,
+  "upgrade_slots": 5,
+  "has_lantern": true,
+  "seed_id": "Bonhomme Richard",
+  "image_url": null,
+  "is_active": true,
+  "mortar_modification": null,
+  "weapon_mounts": [
+    {
+      "slot_type": "weapon_front",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_rear",
+      "capacity": 6,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_port",
+      "capacity": 32,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_starboard",
+      "capacity": 32,
+      "max_weapon_class": "heavy",
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_mortar",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    },
+    {
+      "slot_type": "weapon_special",
+      "capacity": 0,
+      "max_weapon_class": null,
+      "max_caliber_inches": null,
+      "special_weapon_capacity": 0
+    }
+  ]
+}

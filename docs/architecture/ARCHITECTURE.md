@@ -24,7 +24,7 @@ The gateway is the only public container. PostgreSQL binds to loopback for admin
 
 ## Backend boundaries
 
-`openapi/openapi.json` is the versioned external HTTP specification. The DTO
+`openapi/source/` is the versioned, modular external HTTP specification. `openapi/openapi.json` is its deterministic assembled compatibility artifact. The DTO
 generator creates immutable transport records under `api/dto`; it does not create
 a runtime contract layer. Module-owned `@RestController` classes own their Spring
 MVC mappings and bind/validate generated request DTOs directly.
@@ -101,3 +101,27 @@ Spring HTTP behavior is exercised against PostgreSQL Testcontainers, while
 Playwright covers critical browser navigation, accessibility and form contracts.
 The measurable repository-wide requirements and definition of done are maintained
 in `docs/development/QUALITY_STANDARDS.md`.
+
+## Derived build-print cache
+
+Build printouts are derived data and have a separate lifecycle from business
+build state. The browser creates a deterministic SVG source and hashes it with an
+explicit renderer version; the resulting key identifies the visible render while
+`builds.updated_at` identifies the business revision. The server accepts a cache
+write only for the still-current business revision and serializes writes on the
+build row.
+
+The active database metadata points to a checksum-versioned PNG. The new file is
+written before the database commit, rollback removes it, and commit removes the
+previous file. Downloads require the cache key in the URL, so browser HTTP caches
+are version-addressed as well. A build mutation clears the active cache metadata;
+a scheduled reconciler removes stale metadata, legacy/orphan files and abandoned
+temporary writes with a grace window for in-flight transactions.
+
+The cache is shared across users but is not an authorization bypass: authenticated
+viewers may reuse a valid cache entry, while only the build owner or staff may
+populate or repair it because the server does not independently rasterize and
+compare the client-produced PNG. Printouts consume the same global storage budget
+and minimum-free-space reserve as ordinary uploads. Only one cache variant is
+active per build, deliberately bounding persistent storage; locale or renderer
+variants may replace each other rather than accumulate.

@@ -16,7 +16,7 @@ Richtigkeit einer Beschreibung.
 | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Kalender und Events | ISO-Datumsbindung, `CalendarService` |
 | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Composition, Properties, Security, Errors | `application.yml`, Start-/Bindingfehler |
 | `spring-api/src/main/java/eu/royalblackwater/api/content/` | sichere Content-Embeds | Validator plus Aufrufer |
-| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | `openapi/openapi.json` + DTO-Generator, nie direkt editieren |
+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | `openapi/source/` + Assembler/DTO-Generator; generierte DTOs nie direkt editieren |
 | `spring-api/src/main/java/eu/royalblackwater/api/core/` | Health/Readiness/Kernoperationen | Health plus DB/Flyway |
 | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Quoten, Typen, Eigentum | Storage-/Pfadgrenzen |
 | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotte, Memberships, Rollen/Fähigkeiten | AccessPolicy und Bootstrap-Membership |

@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "base_damage": {
+      "minimum": 0.0,
+      "title": "Base Damage",
+      "type": "number"
+    },
+    "reload_seconds": {
+      "exclusiveMinimum": 0.0,
+      "title": "Reload Seconds",
+      "type": "number"
+    }
+  },
+  "required": [
+    "base_damage",
+    "reload_seconds"
+  ],
+  "title": "MasterDataWeaponPerformance",
+  "type": "object"
+}

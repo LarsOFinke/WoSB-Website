@@ -1,0 +1,36 @@
+{
+  "properties": {
+    "active": {
+      "default": 0,
+      "title": "Active",
+      "type": "integer"
+    },
+    "expired": {
+      "default": 0,
+      "title": "Expired",
+      "type": "integer"
+    },
+    "permanent": {
+      "default": 0,
+      "title": "Permanent",
+      "type": "integer"
+    },
+    "temporary": {
+      "default": 0,
+      "title": "Temporary",
+      "type": "integer"
+    },
+    "total": {
+      "default": 0,
+      "title": "Total",
+      "type": "integer"
+    },
+    "unblocked": {
+      "default": 0,
+      "title": "Unblocked",
+      "type": "integer"
+    }
+  },
+  "title": "IpBlockSummary",
+  "type": "object"
+}

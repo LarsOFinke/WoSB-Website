@@ -1,0 +1,44 @@
+{
+  "properties": {
+    "block_type": {
+      "enum": [
+        "text",
+        "resources"
+      ],
+      "title": "Block Type",
+      "type": "string"
+    },
+    "body": {
+      "anyOf": [
+        {
+          "maxLength": 20000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Body"
+    },
+    "resources": {
+      "items": {
+        "$ref": "#/components/schemas/NewcomerGuideResourceInput"
+      },
+      "maxItems": 30,
+      "title": "Resources",
+      "type": "array"
+    },
+    "title": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    }
+  },
+  "required": [
+    "block_type",
+    "title"
+  ],
+  "title": "NewcomerGuideBlockInput",
+  "type": "object"
+}

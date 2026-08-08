@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "fleet_membership_id": {
+      "title": "Fleet Membership Id",
+      "type": "integer"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "maxLength": 1000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Note"
+    },
+    "role": {
+      "default": "member",
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fleet_membership_id"
+  ],
+  "title": "SquadMemberCreate",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "key": "explosive_fire_ship_protection_pct",
+  "label": "Gunpowder barrel and fire-ship protection",
+  "category": "survivability",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "explosive_fire_ship_protection_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

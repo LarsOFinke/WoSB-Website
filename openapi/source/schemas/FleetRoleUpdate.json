@@ -1,0 +1,76 @@
+{
+  "properties": {
+    "can_manage_fleet": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Can Manage Fleet"
+    },
+    "can_manage_members": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Can Manage Members"
+    },
+    "is_active": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Is Active"
+    },
+    "is_leadership": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Is Leadership"
+    },
+    "label": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "minLength": 2,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Label"
+    },
+    "rank": {
+      "anyOf": [
+        {
+          "maximum": 79.0,
+          "minimum": 1.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Rank"
+    }
+  },
+  "title": "FleetRoleUpdate",
+  "type": "object"
+}

@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/master-data/options/{option_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "put_option_api_admin_master_data_options__option_id__put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "option_id",
+        "required": true,
+        "schema": {
+          "title": "Option Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/MasterDataOptionUpdate"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MasterDataOptionRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Put Option",
+    "tags": [
+      "admin",
+      "admin-master-data"
+    ]
+  }
+}

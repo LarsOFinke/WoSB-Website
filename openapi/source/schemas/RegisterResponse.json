@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "message": {
+      "default": "Registration request submitted for admin review.",
+      "title": "Message",
+      "type": "string"
+    },
+    "request": {
+      "$ref": "#/components/schemas/RegistrationRequestPublic"
+    }
+  },
+  "required": [
+    "request"
+  ],
+  "title": "RegisterResponse",
+  "type": "object"
+}

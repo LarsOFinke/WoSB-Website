@@ -1,0 +1,55 @@
+{
+  "path": "/api/fleets/memberships/me",
+  "method": "get",
+  "operation": {
+    "operationId": "get_my_fleet_memberships_api_fleets_memberships_me_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/FleetMembershipSelfRead"
+              },
+              "title": "Response Get My Fleet Memberships Api Fleets Memberships Me Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get My Fleet Memberships",
+    "tags": [
+      "fleets"
+    ]
+  }
+}

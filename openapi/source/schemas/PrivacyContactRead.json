@@ -1,0 +1,88 @@
+{
+  "properties": {
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "handled_by_user_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Handled By User Id"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "reply_email": {
+      "title": "Reply Email",
+      "type": "string"
+    },
+    "resolution_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolution Note"
+    },
+    "resolved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Resolved At"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "subject": {
+      "title": "Subject",
+      "type": "string"
+    },
+    "user_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "User Id"
+    }
+  },
+  "required": [
+    "id",
+    "user_id",
+    "reply_email",
+    "subject",
+    "message",
+    "status",
+    "resolution_note",
+    "handled_by_user_id",
+    "created_at",
+    "resolved_at"
+  ],
+  "title": "PrivacyContactRead",
+  "type": "object"
+}

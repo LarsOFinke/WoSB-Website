@@ -1,0 +1,14 @@
+{
+  "category": "sail",
+  "seed_id": "reefed",
+  "name": "Reefed Sails",
+  "source": "tooltip-sail-catalog-2026-07-v3",
+  "notes": "Verified in-game tooltip: +2.9 kn speed, -100% running-before-the-wind speed bonus and -50% broad-reach cruising-speed bonus.",
+  "option_kind": "sail",
+  "stat_effects": {
+    "speed_knots": 2.9,
+    "running_before_wind_speed_penalty_pct": -100,
+    "broad_reach_cruising_speed_bonus_pct": -50
+  },
+  "image_url": "/build-assets/options/sails/reefed.svg"
+}

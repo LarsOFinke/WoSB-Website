@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers(disabledWithoutDocker = true)
 class ApplicationIntegrationTest {
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestContainerFactory.create();
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
@@ -39,6 +39,7 @@ class ApplicationIntegrationTest {
         registry.add("rbf.bootstrap-admin.password", () -> "Integration-Test-Admin-Password-42!");
         registry.add("rbf.session.secure", () -> false);
         registry.add("rbf.scheduling.enabled", () -> false);
+        registry.add("rbf.diagnostics.http-lifecycle-logging", () -> true);
         registry.add("rbf.storage.upload-root", () -> runtime.resolve("uploads").toString());
         registry.add("rbf.operations.control-root", () -> runtime.resolve("control").toString());
     }
@@ -68,6 +69,13 @@ class ApplicationIntegrationTest {
                 .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from flyway_schema_history where version='7'", Map.of()))
                 .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='8'", Map.of()))
+                .isEqualTo(1);
+        assertThat(jdbc.count("""
+                select count(*) from information_schema.columns
+                 where table_schema=current_schema() and table_name='builds'
+                   and column_name in ('printout_cache_key','printout_source_updated_at')
+                """, Map.of())).isEqualTo(2);
         assertThat(jdbc.count("select count(*) from site_roles", Map.of())).isPositive();
         assertThat(jdbc.count("select count(*) from users where is_bootstrap_admin=true", Map.of()))
                 .isEqualTo(1);

@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "default_template": {
+      "title": "Default Template",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "group": {
+      "title": "Group",
+      "type": "string"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    }
+  },
+  "required": [
+    "key",
+    "group",
+    "description",
+    "default_template"
+  ],
+  "title": "OutboundWebhookEventCatalogItem",
+  "type": "object"
+}

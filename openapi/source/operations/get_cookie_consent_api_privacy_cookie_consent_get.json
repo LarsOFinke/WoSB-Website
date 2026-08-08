@@ -1,0 +1,51 @@
+{
+  "path": "/api/privacy/cookie-consent",
+  "method": "get",
+  "operation": {
+    "operationId": "get_cookie_consent_api_privacy_cookie_consent_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_cookie_consent",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Cookie Consent"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CookieConsentRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Cookie Consent",
+    "tags": [
+      "privacy"
+    ]
+  }
+}

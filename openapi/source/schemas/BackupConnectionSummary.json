@@ -1,0 +1,109 @@
+{
+  "properties": {
+    "configured": {
+      "default": false,
+      "title": "Configured",
+      "type": "boolean"
+    },
+    "host": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Host"
+    },
+    "host_key_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Host Key Fingerprint"
+    },
+    "managed_server": {
+      "default": false,
+      "title": "Managed Server",
+      "type": "boolean"
+    },
+    "port": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Port"
+    },
+    "private_key_configured": {
+      "default": false,
+      "title": "Private Key Configured",
+      "type": "boolean"
+    },
+    "remote_directory": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Remote Directory"
+    },
+    "upload_key_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upload Key Fingerprint"
+    },
+    "upload_public_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upload Public Key"
+    },
+    "username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Username"
+    },
+    "write_tested_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Write Tested At"
+    }
+  },
+  "title": "BackupConnectionSummary",
+  "type": "object"
+}

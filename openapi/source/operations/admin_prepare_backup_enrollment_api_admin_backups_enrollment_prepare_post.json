@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/backups/enrollment/prepare",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_prepare_backup_enrollment_api_admin_backups_enrollment_prepare_post",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "202": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BackupControlRequestResult"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Prepare Backup Enrollment",
+    "tags": [
+      "admin",
+      "admin-backups"
+    ]
+  }
+}

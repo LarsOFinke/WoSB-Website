@@ -1,0 +1,119 @@
+{
+  "path": "/api/admin/discord-webhooks/deliveries/history",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_list_webhook_deliveries_api_admin_discord_webhooks_deliveries_history_get",
+    "parameters": [
+      {
+        "in": "query",
+        "name": "webhook_id",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Webhook Id"
+        }
+      },
+      {
+        "in": "query",
+        "name": "status",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "pattern": "^(queued|success|failed|processing)$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Status"
+        }
+      },
+      {
+        "in": "query",
+        "name": "event_type",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Event Type"
+        }
+      },
+      {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 100,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/OutboundWebhookDeliveryRead"
+              },
+              "title": "Response Admin List Webhook Deliveries Api Admin Discord Webhooks Deliveries History Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin List Webhook Deliveries",
+    "tags": [
+      "admin",
+      "admin-discord-webhooks"
+    ]
+  }
+}

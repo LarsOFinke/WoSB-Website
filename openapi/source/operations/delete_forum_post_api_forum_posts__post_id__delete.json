@@ -1,0 +1,53 @@
+{
+  "path": "/api/forum/posts/{post_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_forum_post_api_forum_posts__post_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "post_id",
+        "required": true,
+        "schema": {
+          "title": "Post Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Forum Post",
+    "tags": [
+      "forum"
+    ]
+  }
+}

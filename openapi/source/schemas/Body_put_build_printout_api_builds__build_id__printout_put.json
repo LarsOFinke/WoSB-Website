@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "image": {
+      "format": "binary",
+      "title": "Image",
+      "type": "string"
+    }
+  },
+  "required": [
+    "image"
+  ],
+  "title": "Body_put_build_printout_api_builds__build_id__printout_put",
+  "type": "object"
+}

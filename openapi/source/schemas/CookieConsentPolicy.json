@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "categories": {
+      "default": [
+        "necessary",
+        "preferences",
+        "analytics",
+        "external_media"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "version"
+  ],
+  "title": "CookieConsentPolicy",
+  "type": "object"
+}

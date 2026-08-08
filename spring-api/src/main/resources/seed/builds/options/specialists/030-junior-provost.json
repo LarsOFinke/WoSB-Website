@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "junior-provost",
+  "name": "Junior provost",
+  "source": "B20-in-game-screenshots-2026-07-26",
+  "notes": "Group: Military. Large-fire damage -50%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "large_fire_damage_pct": -50
+  },
+  "image_url": "/build-assets/options/specialists/junior-provost.png"
+}

@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "analytics": {
+      "default": false,
+      "title": "Analytics",
+      "type": "boolean"
+    },
+    "external_media": {
+      "default": false,
+      "title": "External Media",
+      "type": "boolean"
+    },
+    "necessary": {
+      "default": true,
+      "title": "Necessary",
+      "type": "boolean"
+    },
+    "preferences": {
+      "default": false,
+      "title": "Preferences",
+      "type": "boolean"
+    }
+  },
+  "title": "CookieConsentChoice",
+  "type": "object"
+}

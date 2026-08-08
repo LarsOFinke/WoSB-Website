@@ -1,0 +1,110 @@
+{
+  "properties": {
+    "base_field": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Base Field"
+    },
+    "calculation_flat_effect": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Calculation Flat Effect"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "flat_effect": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Flat Effect"
+    },
+    "key": {
+      "title": "Key",
+      "type": "string"
+    },
+    "label": {
+      "title": "Label",
+      "type": "string"
+    },
+    "pct_base_field": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pct Base Field"
+    },
+    "pct_effect": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Pct Effect"
+    },
+    "positive_is_good": {
+      "default": true,
+      "title": "Positive Is Good",
+      "type": "boolean"
+    },
+    "precision": {
+      "default": 0,
+      "title": "Precision",
+      "type": "integer"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unit"
+    }
+  },
+  "required": [
+    "key",
+    "label",
+    "category"
+  ],
+  "title": "BuildStatDefinitionRead",
+  "type": "object"
+}

@@ -11,7 +11,7 @@
 
     <groupId>eu.royalblackwater</groupId>
     <artifactId>rbf-api</artifactId>
-    <version>1.0.11</version>
+    <version>1.1.0</version>
     <name>Royal Blackwater Fleet API</name>
     <description>Production backend for the Royal Blackwater Fleet portal.</description>
 

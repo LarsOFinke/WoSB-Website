@@ -1,0 +1,55 @@
+{
+  "path": "/api/privacy/requests",
+  "method": "get",
+  "operation": {
+    "operationId": "list_my_data_subject_requests_api_privacy_requests_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/DataSubjectRequestRead"
+              },
+              "title": "Response List My Data Subject Requests Api Privacy Requests Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "List My Data Subject Requests",
+    "tags": [
+      "privacy"
+    ]
+  }
+}

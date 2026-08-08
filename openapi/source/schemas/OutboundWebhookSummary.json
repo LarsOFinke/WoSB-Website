@@ -1,0 +1,31 @@
+{
+  "properties": {
+    "active": {
+      "default": 0,
+      "title": "Active",
+      "type": "integer"
+    },
+    "failed_deliveries": {
+      "default": 0,
+      "title": "Failed Deliveries",
+      "type": "integer"
+    },
+    "failing": {
+      "default": 0,
+      "title": "Failing",
+      "type": "integer"
+    },
+    "successful_deliveries": {
+      "default": 0,
+      "title": "Successful Deliveries",
+      "type": "integer"
+    },
+    "total": {
+      "default": 0,
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "title": "OutboundWebhookSummary",
+  "type": "object"
+}

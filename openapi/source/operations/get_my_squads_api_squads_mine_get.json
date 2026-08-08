@@ -1,0 +1,55 @@
+{
+  "path": "/api/squads/mine",
+  "method": "get",
+  "operation": {
+    "operationId": "get_my_squads_api_squads_mine_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/SquadSummaryRead"
+              },
+              "title": "Response Get My Squads Api Squads Mine Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get My Squads",
+    "tags": [
+      "fleet squads"
+    ]
+  }
+}

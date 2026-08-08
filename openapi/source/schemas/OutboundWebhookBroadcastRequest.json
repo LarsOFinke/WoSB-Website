@@ -1,0 +1,38 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "discord_username": {
+      "anyOf": [
+        {
+          "maxLength": 80,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Discord Username"
+    },
+    "message": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Message",
+      "type": "string"
+    },
+    "webhook_ids": {
+      "items": {
+        "type": "integer"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Webhook Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "webhook_ids",
+    "message"
+  ],
+  "title": "OutboundWebhookBroadcastRequest",
+  "type": "object"
+}

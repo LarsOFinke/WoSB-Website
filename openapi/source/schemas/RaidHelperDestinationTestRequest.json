@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "template_id": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Template Id"
+    },
+    "use_minimal_payload": {
+      "default": false,
+      "title": "Use Minimal Payload",
+      "type": "boolean"
+    }
+  },
+  "title": "RaidHelperDestinationTestRequest",
+  "type": "object"
+}

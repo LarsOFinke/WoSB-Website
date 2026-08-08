@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "scout",
+  "name": "Scout",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Adventurers. More captives from the total crew count when boarding +30%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "boarding_captives_pct": 30
+  },
+  "image_url": "/build-assets/options/specialists/scout.png"
+}

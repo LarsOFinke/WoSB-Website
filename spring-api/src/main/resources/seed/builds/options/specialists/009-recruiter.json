@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "recruiter",
+  "name": "Recruiter",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Pirates. Crew limit above the normal threshold when picking crew up at sea or during boarding +10. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "crew_pickup_limit": 10
+  },
+  "image_url": "/build-assets/options/specialists/recruiter.png"
+}

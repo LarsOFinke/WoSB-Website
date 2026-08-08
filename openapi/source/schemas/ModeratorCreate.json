@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "password": {
+      "maxLength": 200,
+      "minLength": 12,
+      "title": "Password",
+      "type": "string"
+    },
+    "username": {
+      "maxLength": 80,
+      "minLength": 3,
+      "title": "Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "password",
+    "display_name"
+  ],
+  "title": "ModeratorCreate",
+  "type": "object"
+}

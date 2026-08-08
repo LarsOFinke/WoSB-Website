@@ -1,0 +1,53 @@
+{
+  "path": "/api/calendar/events/{event_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_event_api_calendar_events__event_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "event_id",
+        "required": true,
+        "schema": {
+          "title": "Event Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Event",
+    "tags": [
+      "fleet calendar"
+    ]
+  }
+}

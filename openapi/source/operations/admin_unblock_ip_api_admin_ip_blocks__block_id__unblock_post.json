@@ -1,0 +1,71 @@
+{
+  "path": "/api/admin/ip-blocks/{block_id}/unblock",
+  "method": "post",
+  "operation": {
+    "operationId": "admin_unblock_ip_api_admin_ip_blocks__block_id__unblock_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "block_id",
+        "required": true,
+        "schema": {
+          "title": "Block Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/IpBlockUnblock"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/IpBlockRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Unblock Ip",
+    "tags": [
+      "admin",
+      "admin-security"
+    ]
+  }
+}

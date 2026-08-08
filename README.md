@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.0.0
+# Royal Blackwater Fleet v1.1.0
 
 Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
@@ -9,8 +9,9 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
 Browser → NGINX → Spring Boot API → PostgreSQL
 ```
 
-Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/openapi.json`
-ist die externe HTTP-Spezifikation und erzeugt ausschließlich immutable
+Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/source/`
+ist die kanonische Autorenquelle der externen HTTP-Spezifikation; `openapi/openapi.json`
+wird daraus deterministisch für Generatoren und Werkzeuge zusammengesetzt und erzeugt ausschließlich immutable
 Request-/Response-DTOs. Die Modul-Controller besitzen ihre Spring-MVC-Routen und
 validieren diese DTOs direkt; Services besitzen Fachlogik und Transaktionen,
 Repositories kapseln JDBC/JPA und SQL, und Mapper bilden die einzige
@@ -101,8 +102,8 @@ kompilierten Spring-Boot-JAR und dem Vue-`dist`:
 
 ```bash
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.0.0.tar.gz \
-  --checksum rbf-deployment-1.0.0.tar.gz.sha256 \
+  --artifact rbf-deployment-1.1.0.tar.gz \
+  --checksum rbf-deployment-1.1.0.tar.gz.sha256 \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -114,7 +115,7 @@ Terminal abgefragt.
 Updates werden durch ein neues Release-Artefakt ausgelöst:
 
 ```bash
-sudo ./update.sh --artifact /path/to/rbf-deployment-1.0.0.tar.gz
+sudo ./update.sh --artifact /path/to/rbf-deployment-1.1.0.tar.gz
 ```
 
 `/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente
@@ -131,7 +132,7 @@ verschlüsselten Recovery-Bundle mitgeführt.
 ```text
 spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
 frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
-openapi/         versionierte externe OpenAPI-Spezifikation
+openapi/         modulare OpenAPI-Quellen plus generiertes Kompatibilitätsartefakt
 infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
 tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
 docs/            Architektur-, Entwicklungs- und Betriebsdokumentation

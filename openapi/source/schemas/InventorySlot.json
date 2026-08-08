@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "item": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Item",
+      "type": "string"
+    },
+    "quantity": {
+      "default": 1,
+      "maximum": 999999.0,
+      "minimum": 1.0,
+      "title": "Quantity",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "item"
+  ],
+  "title": "InventorySlot",
+  "type": "object"
+}

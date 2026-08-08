@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Iron Plating",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Water-fire protection +45%. Armor -10%.",
+  "option_kind": "ship_upgrade_protection",
+  "stat_effects": {
+    "water_fire_protection_pct": 45,
+    "armor_pct": -10
+  },
+  "seed_id": "iron-plating",
+  "image_url": "/build-assets/options/upgrades/iron-plating.png"
+}

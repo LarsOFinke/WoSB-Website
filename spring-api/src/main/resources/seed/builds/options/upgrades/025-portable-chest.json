@@ -1,0 +1,12 @@
+{
+  "category": "upgrade",
+  "name": "Portable Chest",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Winning boarding attempts grants +5% gold.",
+  "option_kind": "ship_upgrade_unusual",
+  "stat_effects": {
+    "boarding_gold_pct": 5
+  },
+  "seed_id": "portable-chest",
+  "image_url": "/build-assets/options/upgrades/portable-chest.png"
+}

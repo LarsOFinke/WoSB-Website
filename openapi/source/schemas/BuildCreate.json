@@ -1,0 +1,280 @@
+{
+  "properties": {
+    "ammunition_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 16,
+      "title": "Ammunition Slots",
+      "type": "array"
+    },
+    "build_name": {
+      "maxLength": 140,
+      "minLength": 1,
+      "title": "Build Name",
+      "type": "string"
+    },
+    "build_type": {
+      "default": "balanced",
+      "maxLength": 32,
+      "title": "Build Type",
+      "type": "string"
+    },
+    "classification_tags": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 6,
+      "title": "Classification Tags",
+      "type": "array"
+    },
+    "consumable_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 3,
+      "title": "Consumable Slots",
+      "type": "array"
+    },
+    "details": {
+      "anyOf": [
+        {
+          "maxLength": 3000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Details"
+    },
+    "front_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 12,
+      "title": "Front Weapon Slots",
+      "type": "array"
+    },
+    "hold_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 32,
+      "title": "Hold Slots",
+      "type": "array"
+    },
+    "lantern": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lantern"
+    },
+    "mercenaries": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Mercenaries",
+      "type": "integer"
+    },
+    "mortar_modification_installed": {
+      "default": false,
+      "title": "Mortar Modification Installed",
+      "type": "boolean"
+    },
+    "mortar_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 8,
+      "title": "Mortar Weapon Slots",
+      "type": "array"
+    },
+    "musketeers": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Musketeers",
+      "type": "integer"
+    },
+    "port_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 12,
+      "title": "Port Weapon Slots",
+      "type": "array"
+    },
+    "rear_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 12,
+      "title": "Rear Weapon Slots",
+      "type": "array"
+    },
+    "research_upgrade_slot_unlocked": {
+      "default": false,
+      "title": "Research Upgrade Slot Unlocked",
+      "type": "boolean"
+    },
+    "sailors": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Sailors",
+      "type": "integer"
+    },
+    "sails": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Sails"
+    },
+    "ship_id": {
+      "title": "Ship Id",
+      "type": "integer"
+    },
+    "soldiers": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Soldiers",
+      "type": "integer"
+    },
+    "special_crew_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 5,
+      "title": "Special Crew Slots",
+      "type": "array"
+    },
+    "special_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 8,
+      "title": "Special Weapon Slots",
+      "type": "array"
+    },
+    "starboard_weapon_slots": {
+      "items": {
+        "$ref": "#/components/schemas/InventorySlot"
+      },
+      "maxItems": 12,
+      "title": "Starboard Weapon Slots",
+      "type": "array"
+    },
+    "upgrade_1": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 1"
+    },
+    "upgrade_2": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 2"
+    },
+    "upgrade_3": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 3"
+    },
+    "upgrade_4": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 4"
+    },
+    "upgrade_5": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 5"
+    },
+    "upgrade_6": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 6"
+    },
+    "upgrade_7": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 7"
+    },
+    "upgrade_8": {
+      "anyOf": [
+        {
+          "maxLength": 140,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Upgrade 8"
+    }
+  },
+  "required": [
+    "build_name",
+    "ship_id"
+  ],
+  "title": "BuildCreate",
+  "type": "object"
+}

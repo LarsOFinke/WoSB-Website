@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Reinforced Centre-Line",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Mortar aiming speed +40%. Mortar dead-zone reduction +30%.",
+  "option_kind": "ship_upgrade_mortar",
+  "stat_effects": {
+    "mortar_aiming_pct": 40,
+    "mortar_dead_zone_reduction_pct": 30
+  },
+  "seed_id": "reinforced-centre-line",
+  "image_url": "/build-assets/options/upgrades/reinforced-centre-line.png"
+}

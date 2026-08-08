@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "host": {
+      "maxLength": 253,
+      "minLength": 1,
+      "title": "Host",
+      "type": "string"
+    },
+    "host_key": {
+      "maxLength": 8192,
+      "minLength": 32,
+      "title": "Host Key",
+      "type": "string"
+    },
+    "port": {
+      "default": 22,
+      "maximum": 65535.0,
+      "minimum": 1.0,
+      "title": "Port",
+      "type": "integer"
+    },
+    "private_key": {
+      "anyOf": [
+        {
+          "maxLength": 32768,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Private Key"
+    },
+    "remote_directory": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Remote Directory",
+      "type": "string"
+    },
+    "username": {
+      "maxLength": 64,
+      "minLength": 1,
+      "title": "Username",
+      "type": "string"
+    }
+  },
+  "required": [
+    "host",
+    "username",
+    "remote_directory",
+    "host_key"
+  ],
+  "title": "BackupConfigurationRequest",
+  "type": "object"
+}

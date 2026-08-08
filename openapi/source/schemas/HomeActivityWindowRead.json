@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "timezone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "main": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "port_battles": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  },
+  "required": [
+    "timezone",
+    "main",
+    "port_battles"
+  ],
+  "type": "object",
+  "title": "HomeActivityWindowRead"
+}

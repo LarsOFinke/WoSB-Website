@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayMigrationCompatibilityTest {
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestContainerFactory.create();
 
     @TempDir
     Path legacyMigrationDirectory;
@@ -48,7 +48,10 @@ class FlywayMigrationCompatibilityTest {
                 .schemas(schema)
                 .locations("classpath:db/migration")
                 .load();
-        assertThat(current.migrate().migrationsExecuted).isEqualTo(5);
+        int pendingBeforeUpgrade = current.info().pending().length;
+        assertThat(pendingBeforeUpgrade).isPositive();
+        assertThat(current.migrate().migrationsExecuted).isEqualTo(pendingBeforeUpgrade);
+        assertThat(current.migrate().migrationsExecuted).isZero();
         current.validate();
 
         try (var connection = DriverManager.getConnection(
@@ -64,9 +67,17 @@ class FlywayMigrationCompatibilityTest {
                     "select count(*) from " + schema + ".flyway_schema_history where version = '7'"))
                     .isEqualTo(1);
             assertThat(count(statement,
+                    "select count(*) from " + schema + ".flyway_schema_history where version = '8'"))
+                    .isEqualTo(1);
+            assertThat(count(statement,
                     "select count(*) from information_schema.tables where table_schema = '" + schema
                             + "' and table_name = 'users'"))
                     .isEqualTo(1);
+            assertThat(count(statement,
+                    "select count(*) from information_schema.columns where table_schema = '" + schema
+                            + "' and table_name = 'builds' and column_name in "
+                            + "('printout_cache_key','printout_source_updated_at')"))
+                    .isEqualTo(2);
         }
     }
 

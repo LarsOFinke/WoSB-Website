@@ -1,0 +1,56 @@
+{
+  "path": "/api/admin/raid-helper/destinations",
+  "method": "get",
+  "operation": {
+    "operationId": "destinations_api_admin_raid_helper_destinations_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RaidHelperDestinationRead"
+              },
+              "title": "Response Destinations Api Admin Raid Helper Destinations Get",
+              "type": "array"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Destinations",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

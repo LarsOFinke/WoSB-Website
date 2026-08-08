@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "option_id": {
+      "minimum": 1.0,
+      "title": "Option Id",
+      "type": "integer"
+    },
+    "stat_effects": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Stat Effects",
+      "type": "object"
+    }
+  },
+  "required": [
+    "option_id"
+  ],
+  "title": "MasterDataShipUpgradeOverride",
+  "type": "object"
+}

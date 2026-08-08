@@ -20,10 +20,21 @@ require(not (ROOT/'scripts').exists(),'top-level scripts directory must not be r
 root_shell_scripts={path.name for path in ROOT.glob('*.sh')}
 require(root_shell_scripts=={'deploy.sh','update.sh'},
         f'root shell entrypoints must be deploy.sh/update.sh, found {sorted(root_shell_scripts)}')
-for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','openapi/openapi.json','spring-api/src/main/reference/build-stat-catalog.json','spring-api/src/main/reference/webhook-events.json'):
+for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','openapi/source/root.json','openapi/openapi.json','spring-api/src/main/reference/webhook-events.json'):
     text(path)
+require((ROOT/'openapi/source/operations').is_dir(),'missing modular OpenAPI operations')
+require((ROOT/'openapi/source/schemas').is_dir(),'missing modular OpenAPI schemas')
+require((ROOT/'spring-api/src/main/reference/build-stats').is_dir(),'missing modular build-stat catalog')
+require(not (ROOT/'spring-api/src/main/reference/build-stat-catalog.json').exists(),
+        'retired build-stat JSON monolith must not return')
+require(not any((ROOT/'spring-api/src/main/resources/seed/builds/options').glob('*.json')),
+        'build-option seed monoliths must not return')
+require(not any((ROOT/'spring-api/src/main/resources/seed/ships/rates').glob('*.json')),
+        'ship-rate seed monoliths must not return')
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/assemble_openapi.py'),'--check'],check=True)
 
 contract=json.loads(text('openapi/openapi.json'))
+require(contract.get('info',{}).get('version')==version,'OpenAPI contract version differs from VERSION')
 schemas=contract.get('components',{}).get('schemas',{})
 require('ApiError' in schemas,'API contract must define the Spring ApiError response schema')
 require('HTTPValidationError' not in schemas and 'ValidationError' not in schemas,
@@ -130,6 +141,14 @@ for path in (*frontend_source.rglob('*.js'),*frontend_source.rglob('*.mjs')):
     require(len(path.read_text(encoding='utf-8').splitlines())<=420,f'JavaScript file exceeds 420 lines: {path.relative_to(ROOT)}')
 for migration in (ROOT/'spring-api/src/main/resources/db/migration').glob('*.sql'):
     require(re.fullmatch(r'[BV]\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
+
+# Hand-maintained JSON follows the same readability ceiling as executable source.
+# Generated compatibility/lock artifacts are intentionally excluded.
+for source_root in (ROOT/'openapi/source', ROOT/'spring-api/src/main/reference',
+                    ROOT/'spring-api/src/main/resources/seed', ROOT/'frontend/tests/fixtures'):
+    for path in source_root.rglob('*.json'):
+        require(len(path.read_text(encoding='utf-8').splitlines()) <= 420,
+                f'hand-maintained JSON exceeds 420 lines: {path.relative_to(ROOT)}')
 
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_controller_contract.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_spring_backend.py')],check=True)

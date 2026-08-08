@@ -1,0 +1,70 @@
+{
+  "path": "/api/groups/{group_id}/join",
+  "method": "post",
+  "operation": {
+    "operationId": "post_group_join_api_groups__group_id__join_post",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "group_id",
+        "required": true,
+        "schema": {
+          "title": "Group Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/GroupJoinRequest"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GroupRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Post Group Join",
+    "tags": [
+      "groups"
+    ]
+  }
+}

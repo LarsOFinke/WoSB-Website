@@ -39,7 +39,7 @@ class ApiSurfaceIntegrationTest {
     private static final List<String> HTTP_METHODS = List.of("get", "post", "put", "delete", "patch");
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestContainerFactory.create();
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
@@ -52,6 +52,7 @@ class ApiSurfaceIntegrationTest {
         registry.add("rbf.bootstrap-admin.password", () -> ADMIN_PASSWORD);
         registry.add("rbf.session.secure", () -> false);
         registry.add("rbf.scheduling.enabled", () -> false);
+        registry.add("rbf.diagnostics.http-lifecycle-logging", () -> true);
         registry.add("rbf.storage.upload-root", () -> runtime.resolve("uploads").toString());
         registry.add("rbf.operations.control-root", () -> runtime.resolve("control").toString());
     }

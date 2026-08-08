@@ -1,0 +1,53 @@
+{
+  "path": "/api/files/{file_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_own_file_api_files__file_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "file_id",
+        "required": true,
+        "schema": {
+          "title": "File Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Delete Own File",
+    "tags": [
+      "files"
+    ]
+  }
+}

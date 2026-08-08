@@ -1,0 +1,16 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "response_json": {
+      "maxLength": 32768,
+      "minLength": 2,
+      "title": "Response Json",
+      "type": "string"
+    }
+  },
+  "required": [
+    "response_json"
+  ],
+  "title": "BackupEnrollmentResponseRequest",
+  "type": "object"
+}

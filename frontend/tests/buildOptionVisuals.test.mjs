@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import test from 'node:test'
 
 const buildEditor = readFileSync(new URL('../src/modules/builds/pages/BuildCreatePage.vue', import.meta.url), 'utf8')
@@ -7,7 +7,11 @@ const picker = readFileSync(new URL('../src/modules/builds/components/BuildOptio
 const pickerCss = readFileSync(new URL('../src/modules/builds/styles/buildOptionPicker.css', import.meta.url), 'utf8')
 
 function catalog(name) {
-  return JSON.parse(readFileSync(new URL(`../../spring-api/src/main/resources/seed/builds/options/${name}.json`, import.meta.url), 'utf8'))
+  const directory = new URL(`../../spring-api/src/main/resources/seed/builds/options/${name}/`, import.meta.url)
+  return readdirSync(directory)
+    .filter(filename => filename.endsWith('.json'))
+    .sort()
+    .map(filename => JSON.parse(readFileSync(new URL(filename, directory), 'utf8')))
 }
 
 function publicAsset(imageUrl) {
@@ -29,7 +33,7 @@ test('build editor uses an icon-aware option picker for equipment and specialist
 
 test('every screenshot-backed visual catalog item resolves to a committed public asset', () => {
   for (const filename of ['sails', 'upgrades', 'lanterns', 'specialists']) {
-    const rows = catalog(filename).items
+    const rows = catalog(filename)
     assert.ok(rows.length > 0)
     for (const row of rows) {
       assert.match(row.image_url, /^\/build-assets\/options\//)

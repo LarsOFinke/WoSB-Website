@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "categories": {
+      "minimum": 0.0,
+      "title": "Categories",
+      "type": "integer"
+    },
+    "custom_records_preserved": {
+      "default": true,
+      "title": "Custom Records Preserved",
+      "type": "boolean"
+    },
+    "options": {
+      "minimum": 0.0,
+      "title": "Options",
+      "type": "integer"
+    },
+    "overrides_discarded": {
+      "minimum": 0.0,
+      "title": "Overrides Discarded",
+      "type": "integer"
+    },
+    "ships": {
+      "minimum": 0.0,
+      "title": "Ships",
+      "type": "integer"
+    },
+    "total": {
+      "minimum": 0.0,
+      "title": "Total",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "categories",
+    "options",
+    "ships",
+    "total",
+    "overrides_discarded"
+  ],
+  "title": "MasterDataSeedRestoreSummary",
+  "type": "object"
+}

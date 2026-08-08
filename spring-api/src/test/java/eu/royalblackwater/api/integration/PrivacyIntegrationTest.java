@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers(disabledWithoutDocker = true)
 class PrivacyIntegrationTest {
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestContainerFactory.create();
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
@@ -42,6 +42,7 @@ class PrivacyIntegrationTest {
         registry.add("rbf.bootstrap-admin.password", () -> "Privacy-Test-Admin-Password-42!");
         registry.add("rbf.session.secure", () -> false);
         registry.add("rbf.scheduling.enabled", () -> false);
+        registry.add("rbf.diagnostics.http-lifecycle-logging", () -> true);
         registry.add("rbf.storage.upload-root", () -> runtime.resolve("uploads").toString());
         registry.add("rbf.operations.control-root", () -> runtime.resolve("control").toString());
     }

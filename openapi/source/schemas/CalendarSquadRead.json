@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "slug"
+  ],
+  "title": "CalendarSquadRead",
+  "type": "object"
+}

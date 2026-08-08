@@ -1,0 +1,60 @@
+{
+  "path": "/api/calendar/events/{event_id}",
+  "method": "get",
+  "operation": {
+    "operationId": "get_event_detail_api_calendar_events__event_id__get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "event_id",
+        "required": true,
+        "schema": {
+          "title": "Event Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FleetEventRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get Event Detail",
+    "tags": [
+      "fleet calendar"
+    ]
+  }
+}

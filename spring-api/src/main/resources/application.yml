@@ -56,6 +56,8 @@ management:
     db:
       enabled: true
 rbf:
+  diagnostics:
+    http-lifecycle-logging: ${RBF_HTTP_LIFECYCLE_LOGGING:false}
   scheduling:
     enabled: ${RBF_SCHEDULING_ENABLED:true}
   privacy:
@@ -80,6 +82,8 @@ rbf:
     per-user-total-mb: ${UPLOAD_PER_USER_TOTAL_MB:250}
     global-total-mb: ${UPLOAD_GLOBAL_TOTAL_MB:4096}
     minimum-free-mb: ${UPLOAD_MINIMUM_FREE_MB:512}
+    printout-cleanup-interval: ${BUILD_PRINTOUT_CLEANUP_INTERVAL:PT24H}
+    printout-cleanup-initial-delay: ${BUILD_PRINTOUT_CLEANUP_INITIAL_DELAY:PT5M}
   raid-helper:
     delivery-delay: ${RAID_HELPER_DELIVERY_DELAY:PT15S}
   operations:

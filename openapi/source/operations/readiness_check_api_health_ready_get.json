@@ -1,0 +1,23 @@
+{
+  "path": "/api/health/ready",
+  "method": "get",
+  "operation": {
+    "operationId": "readiness_check_api_health_ready_get",
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/HealthStatusRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      }
+    },
+    "summary": "Readiness Check",
+    "tags": [
+      "health"
+    ]
+  }
+}

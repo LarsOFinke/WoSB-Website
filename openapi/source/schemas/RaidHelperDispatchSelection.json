@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "destination_id": {
+      "title": "Destination Id",
+      "type": "integer"
+    },
+    "leader_id": {
+      "anyOf": [
+        {
+          "maxLength": 32,
+          "minLength": 5,
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Leader Id"
+    },
+    "template_id": {
+      "title": "Template Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "destination_id",
+    "template_id"
+  ],
+  "title": "RaidHelperDispatchSelection",
+  "type": "object"
+}

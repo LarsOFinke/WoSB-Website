@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "sailmaker",
+  "name": "Sail Handler",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Sailors. Speed +4%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "speed_pct": 4
+  },
+  "image_url": "/build-assets/options/specialists/sailmaker.png"
+}

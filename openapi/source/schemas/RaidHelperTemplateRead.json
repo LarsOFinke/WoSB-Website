@@ -1,0 +1,106 @@
+{
+  "properties": {
+    "announcement_template": {
+      "default": "",
+      "maxLength": 2000,
+      "title": "Announcement Template",
+      "type": "string"
+    },
+    "categories": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "description_template": {
+      "default": "{{event.description}}",
+      "maxLength": 4000,
+      "title": "Description Template",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_default": {
+      "default": false,
+      "title": "Is Default",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "payload_template_json": {
+      "default": "{\n  \"title\": \"{{rendered.title}}\",\n  \"description\": \"{{rendered.description}}\",\n  \"date\": \"{{event.date}}\",\n  \"time\": \"{{event.time}}\",\n  \"duration\": \"{{event.duration_minutes}}\"\n}",
+      "maxLength": 12000,
+      "minLength": 2,
+      "title": "Payload Template Json",
+      "type": "string"
+    },
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "integer"
+    },
+    "profile_name": {
+      "title": "Profile Name",
+      "type": "string"
+    },
+    "raid_template_id": {
+      "default": "",
+      "maxLength": 80,
+      "title": "Raid Template Id",
+      "type": "string"
+    },
+    "scope_type": {
+      "default": "both",
+      "enum": [
+        "both",
+        "fleet",
+        "squad"
+      ],
+      "title": "Scope Type",
+      "type": "string"
+    },
+    "title_template": {
+      "default": "{{event.title}}",
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Title Template",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    },
+    "uses_premium_features": {
+      "default": false,
+      "title": "Uses Premium Features",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "profile_id",
+    "name",
+    "id",
+    "profile_name",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "RaidHelperTemplateRead",
+  "type": "object"
+}

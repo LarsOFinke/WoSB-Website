@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "focus": {
+      "title": "Focus",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_active": {
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "focus",
+    "is_active"
+  ],
+  "title": "FleetMembershipFleetRead",
+  "type": "object"
+}

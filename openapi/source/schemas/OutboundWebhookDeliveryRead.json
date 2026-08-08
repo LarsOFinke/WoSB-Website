@@ -1,0 +1,122 @@
+{
+  "properties": {
+    "attempts": {
+      "title": "Attempts",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "delivered_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Delivered At"
+    },
+    "delivery_id": {
+      "title": "Delivery Id",
+      "type": "string"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error Message"
+    },
+    "event_type": {
+      "title": "Event Type",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "last_attempt_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Last Attempt At"
+    },
+    "resource_id": {
+      "title": "Resource Id",
+      "type": "string"
+    },
+    "resource_type": {
+      "title": "Resource Type",
+      "type": "string"
+    },
+    "response_body": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Response Body"
+    },
+    "response_status": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Response Status"
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "processing",
+        "success",
+        "failed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "webhook_id": {
+      "title": "Webhook Id",
+      "type": "integer"
+    },
+    "webhook_name": {
+      "title": "Webhook Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "webhook_id",
+    "webhook_name",
+    "delivery_id",
+    "event_type",
+    "resource_type",
+    "resource_id",
+    "status",
+    "attempts",
+    "created_at"
+  ],
+  "title": "OutboundWebhookDeliveryRead",
+  "type": "object"
+}

@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "rate": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "rate"
+  ],
+  "type": "object",
+  "title": "ProfileShipOptionRead"
+}

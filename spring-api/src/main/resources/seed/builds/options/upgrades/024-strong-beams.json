@@ -1,0 +1,14 @@
+{
+  "category": "upgrade",
+  "name": "Strong Beams",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Durability +5%. Mortar protection +30%. Speed -5%.",
+  "option_kind": "ship_upgrade_unusual",
+  "stat_effects": {
+    "hull_hp_pct": 5,
+    "mortar_protection_pct": 30,
+    "speed_pct": -5
+  },
+  "seed_id": "strong-beams",
+  "image_url": "/build-assets/options/upgrades/strong-beams.png"
+}

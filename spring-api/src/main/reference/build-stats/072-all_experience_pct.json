@@ -1,0 +1,14 @@
+{
+  "key": "all_experience_pct",
+  "label": "All experience",
+  "category": "rewards",
+  "base_field": null,
+  "unit": "%",
+  "pct_effect": null,
+  "flat_effect": "all_experience_pct",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "specialist_modifiers",
+  "pct_base_field": null
+}

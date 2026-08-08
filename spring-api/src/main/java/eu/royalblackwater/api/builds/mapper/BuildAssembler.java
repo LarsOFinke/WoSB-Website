@@ -62,6 +62,12 @@ public class BuildAssembler {
         BuildRuntime runtime = runtime(aggregate, cache);
         Map<String, Object> row = aggregate.row();
         ShipStats shipStats = stats.calculate(runtime.payload(), runtime.ship(), runtime.feature(), runtime.selections());
+        String printoutCacheKey = RowValues.string(row, "printout_cache_key");
+        String printoutChecksum = RowValues.string(row, "printout_checksum");
+        java.time.LocalDateTime printoutSourceUpdatedAt = RowValues.nullableDateTime(row, "printout_source_updated_at");
+        java.time.LocalDateTime buildUpdatedAt = RowValues.dateTime(row, "updated_at");
+        boolean currentPrintout = printoutCacheKey != null && printoutChecksum != null
+                && printoutSourceUpdatedAt != null && printoutSourceUpdatedAt.equals(buildUpdatedAt);
         return new BuildRead(
                 slots(aggregate, "ammunition"), RowValues.requiredString(row, "build_name"),
                 RowValues.requiredString(row, "build_role_label"), RowValues.requiredString(row, "build_type"),
@@ -70,13 +76,15 @@ public class BuildAssembler {
                 slots(aggregate, "hold"), RowValues.longValue(row, "id"), bool(row, "is_official_template"),
                 single(aggregate, "lantern"), longValue(row, "mercenaries"), bool(row, "mortar_modification_installed"),
                 slots(aggregate, "weapon_mortar"), longValue(row, "musketeers"), RowValues.nullableLong(row, "owner_id"),
-                slots(aggregate, "weapon_port"), RowValues.string(row, "printout_checksum"),
-                RowValues.string(row, "printout_checksum") == null ? null : printoutUrl(RowValues.longValue(row, "id")),
+                slots(aggregate, "weapon_port"), currentPrintout ? printoutCacheKey : null,
+                currentPrintout ? printoutChecksum : null,
+                currentPrintout ? printoutUrl(RowValues.longValue(row, "id"), printoutCacheKey) : null,
+                currentPrintout ? printoutSourceUpdatedAt : null,
                 slots(aggregate, "weapon_rear"), row.get("research_upgrade_feature_id") != null,
                 longValue(row, "sailors"), single(aggregate, "sail"), runtime.ship().read(),
                 RowValues.longValue(row, "ship_id"), shipStats, longValue(row, "soldiers"),
                 slots(aggregate, "special_crew"), slots(aggregate, "weapon_special"),
-                slots(aggregate, "weapon_starboard"), RowValues.dateTime(row, "updated_at"),
+                slots(aggregate, "weapon_starboard"), buildUpdatedAt,
                 upgrade(aggregate, 1), upgrade(aggregate, 2), upgrade(aggregate, 3), upgrade(aggregate, 4),
                 upgrade(aggregate, 5), upgrade(aggregate, 6), upgrade(aggregate, 7), upgrade(aggregate, 8),
                 longValue(row, "upvote_count"));
@@ -226,7 +234,10 @@ public class BuildAssembler {
         return Boolean.TRUE.equals(row.get(key));
     }
 
-    private static String printoutUrl(long id) { return "/api/builds/" + id + "/printout"; }
+    private static String printoutUrl(long id, String cacheKey) {
+        return "/api/builds/" + id + "/printout?cache_key="
+                + java.net.URLEncoder.encode(cacheKey, java.nio.charset.StandardCharsets.UTF_8);
+    }
 
     private record BuildRuntime(BuildPayload payload, BuildShipSnapshot ship, BuildFeatureSnapshot feature,
                                 List<BuildSlotSelection> selections, UpgradeSlotAccess access) { }

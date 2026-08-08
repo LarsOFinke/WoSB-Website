@@ -1,0 +1,38 @@
+{
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "is_default": {
+      "title": "Is Default",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "integer"
+    },
+    "profile_name": {
+      "title": "Profile Name",
+      "type": "string"
+    },
+    "raid_template_id": {
+      "title": "Raid Template Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "profile_id",
+    "profile_name",
+    "raid_template_id",
+    "is_default"
+  ],
+  "title": "RaidHelperOptionTemplate",
+  "type": "object"
+}

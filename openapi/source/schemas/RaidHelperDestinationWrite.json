@@ -1,0 +1,65 @@
+{
+  "properties": {
+    "categories": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "channel_id": {
+      "maxLength": 32,
+      "minLength": 5,
+      "pattern": "^[0-9]+$",
+      "title": "Channel Id",
+      "type": "string"
+    },
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "is_default": {
+      "default": false,
+      "title": "Is Default",
+      "type": "boolean"
+    },
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "integer"
+    },
+    "scope_type": {
+      "enum": [
+        "fleet",
+        "squad"
+      ],
+      "title": "Scope Type",
+      "type": "string"
+    },
+    "squad_id": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Squad Id"
+    }
+  },
+  "required": [
+    "profile_id",
+    "name",
+    "channel_id",
+    "scope_type"
+  ],
+  "title": "RaidHelperDestinationWrite",
+  "type": "object"
+}

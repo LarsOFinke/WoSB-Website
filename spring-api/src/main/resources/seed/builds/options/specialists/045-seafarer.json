@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "seafarer",
+  "name": "Seafarer",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Adventurers. Chance to find and save unique crew after mode completion +50%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "unique_crew_save_after_mode_pct": 50
+  },
+  "image_url": "/build-assets/options/specialists/seafarer.png"
+}

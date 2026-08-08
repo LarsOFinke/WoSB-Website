@@ -1,0 +1,62 @@
+{
+  "path": "/api/files/{file_id}/content",
+  "method": "get",
+  "operation": {
+    "operationId": "get_file_content_api_files__file_id__content_get",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "file_id",
+        "required": true,
+        "schema": {
+          "title": "File Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "Successful Response",
+        "content": {
+          "application/octet-stream": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Get File Content",
+    "tags": [
+      "files",
+      "files"
+    ]
+  }
+}

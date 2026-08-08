@@ -1,0 +1,14 @@
+{
+  "key": "quick_sinking_by_ramming_enabled",
+  "label": "Quick sinking by ramming",
+  "category": "combat",
+  "base_field": null,
+  "unit": null,
+  "pct_effect": null,
+  "flat_effect": "quick_sinking_by_ramming_enabled",
+  "calculation_flat_effect": null,
+  "precision": 0,
+  "positive_is_good": true,
+  "source": "upgrade_modifiers",
+  "pct_base_field": null
+}

@@ -1,0 +1,14 @@
+{
+  "category": "upgrade",
+  "name": "Sturdy Frames",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Durability +10%. Hold +12%. Speed -15%.",
+  "option_kind": "ship_upgrade_expeditionary",
+  "stat_effects": {
+    "hull_hp_pct": 10,
+    "hold_capacity_pct": 12,
+    "speed_pct": -15
+  },
+  "seed_id": "sturdy-frames",
+  "image_url": "/build-assets/options/upgrades/sturdy-frames.png"
+}

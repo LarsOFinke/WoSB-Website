@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "is_active": {
+      "default": true,
+      "title": "Is Active",
+      "type": "boolean"
+    },
+    "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "sort_order": {
+      "default": 100,
+      "maximum": 100000.0,
+      "minimum": 0.0,
+      "title": "Sort Order",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "label"
+  ],
+  "title": "MasterDataCategoryUpdate",
+  "type": "object"
+}

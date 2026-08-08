@@ -1,0 +1,13 @@
+{
+  "category": "upgrade",
+  "name": "Reinforced Masts",
+  "source": "WoSB in-game upgrade panels 2026-07",
+  "notes": "Speed +0.5 kn. Additional sail efficiency +1.",
+  "option_kind": "ship_upgrade_speed",
+  "stat_effects": {
+    "speed_knots": 0.5,
+    "sail_efficiency": 1
+  },
+  "seed_id": "reinforced-masts",
+  "image_url": "/build-assets/options/upgrades/reinforced-masts.png"
+}

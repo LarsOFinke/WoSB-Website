@@ -64,8 +64,10 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
   durch den generischen Handler zu 500 werden.
 - Cookie-Einstellungen öffnen ohne gespeicherte Entscheidung absichtlich nicht
   automatisch, solange keine optionale Integration aktiv ist.
-- Bei API-500ern zuerst in Surefire/Serverausgabe `api_error status=500` und den
-  ersten eigenen Stack-Frame lesen. Der generische Response-Body ist keine Root Cause.
+- Bei API-500ern die `X-Request-Id` der Antwort mit `api_error status=500 request_id=...`
+  in Surefire/Serverausgabe korrelieren und den ersten eigenen Stack-Frame lesen. Der
+  generische Response-Body ist keine Root Cause. Erfolgreiche Lifecycle-Logs nur gezielt
+  mit `RBF_HTTP_LIFECYCLE_LOGGING=true` aktivieren; keine Payload-/Query-/IP-Daten loggen.
 - Zusammengesetztes JDBC-SQL kann trotz gültigem Java erst zur Laufzeit scheitern:
   Fragmentgrenzen, Named-Parameter/Bindings und Alias/Spalten mit
   `python3 infrastructure/scripts/quality/audit_sql_runtime.py` prüfen; danach den
@@ -83,6 +85,11 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
 - Interne Seed-/Relationsfelder vor strikter Contract-Konvertierung entfernen.
 - Generierte Controller und Contracts nie direkt korrigieren; Generatorquelle
   ändern und `--check` ausführen.
+- Flyway-Upgrade-Regressionen dürfen die Anzahl zukünftiger Migrationen nicht hart codieren.
+  Vor dem Upgrade `Flyway.info().pending()` als erwartete Menge verwenden, danach einen
+  zweiten `migrate()`-Lauf mit `0` Änderungen und die fachlich wichtigen Versionen/Spalten
+  explizit auf genau einmalige Anwendung prüfen. Fresh-DB und V1-Upgrade bleiben getrennte
+  Testpfade.
 - Legacy-Build-Daten als logische Migration behandeln: exakt dieselbe geprüfte SQL-Datei
   zuerst testseitig Dry-Run -> Commit -> UI/API verifizieren und danach productionseitig
   erneut Dry-Run -> Commit. Schiffe/Optionen/Rollen/Features semantisch auflösen; historische
@@ -97,3 +104,41 @@ Neue wiederkehrende Ursache erst nach reproduziertem Fehler, Root-Cause-Fix und
 Regressionstest hier knapp ergänzen; die ausführliche Begründung gehört in ein
 Runbook. Anschließend `bash .agents/scripts/check-cache.sh` und
 `bash .agents/scripts/check-docs.sh` ausführen.
+
+### Build print/image preparation
+- Build print preparation may embed dozens of master-data images from `/api/files/<id>/content`.
+- These media reads must not consume the interactive `api_general` NGINX rate budget. They use the dedicated bounded `file_content` zone.
+- The frontend embedding path must retain HTTP caching and bounded concurrency (currently 6); do not restore `cache: 'no-store'` or unbounded `Promise.all()` fetching for image resources.
+- Symptom pattern: one prepare succeeds, later prepares fail, browser cache clearing does not help, gateway/server restart temporarily helps. Check gateway access logs for file-content HTTP 429/503 before changing application caches.
+- Preserve the global API limiter; fix media routing/embedding behavior rather than weakening general anti-abuse controls.
+
+### Build-Printout-Cache (seit v1.0.13)
+
+Build-PNGs sind ein serverweiter **Derived Cache**. Diagnose niemals als
+Benutzer-/Browsercache beginnen. Der Client bildet aus Renderer-Version +
+tatsächlich gerendertem SVG den Key `print-v<version>:<sha256>` und darf einen
+Server-Hit nur verwenden, wenn `printout_cache_key` und
+`printout_source_updated_at == updated_at` zum frisch geladenen Build passen.
+Die URL trägt den `cache_key`, damit der HTTP-Cache keine alte Revision unter
+einer unveränderten URL wiederverwenden kann.
+
+Invarianten:
+
+- Cache-Speichern darf `builds.updated_at` niemals verändern.
+- PUT sperrt die Build-Zeile (`FOR UPDATE`), prüft die Quellrevision und lässt
+  Cache-Population nur durch Owner/Staff zu.
+- PNG-Dateien sind checksum-versioniert; DB-Commit wählt die gültige Datei.
+  Rollback löscht die neue Datei, Commit löscht die vorige Datei.
+- Build-Update/Rollenänderung invalidiert Metadaten und Datei nach Commit;
+  Build-Löschung entfernt alle zugehörigen Printout-Dateien nach Commit.
+- Global-Quota und `UPLOAD_MINIMUM_FREE_MB` gelten auch für Printouts.
+- Scheduled Cleanup entfernt stale DB-Metadaten, Orphans, alte stabile
+  `build-<id>.png`-Dateien und `.upload`-Fragmente; frische Orphan-Kandidaten
+  erhalten eine Stunde Grace Window gegen Rennen mit laufenden Cache-Commits.
+- Layout-, Semantik- oder sonstige Renderänderungen müssen
+  `BUILD_PRINT_RENDERER_VERSION` bumpen. Gleiche Cache-Keys dürfen nie
+  unterschiedliche PNG-Inhalte ergeben; der Server antwortet sonst 409.
+
+Symptom `Prepare einmal erfolgreich, danach Fehler` zuerst getrennt prüfen:
+Media-Rate-Limit (429/503, v1.0.12) versus Cache-Lifecycle (404/409/Quota).
+Ein Container-Neustart ist keine Cache-Bereinigungsstrategie.

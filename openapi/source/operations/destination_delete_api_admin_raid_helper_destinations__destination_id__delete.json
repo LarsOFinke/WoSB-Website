@@ -1,0 +1,54 @@
+{
+  "path": "/api/admin/raid-helper/destinations/{destination_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "destination_delete_api_admin_raid_helper_destinations__destination_id__delete",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "destination_id",
+        "required": true,
+        "schema": {
+          "title": "Destination Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "204": {
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Destination Delete",
+    "tags": [
+      "admin",
+      "admin-raid-helper"
+    ]
+  }
+}

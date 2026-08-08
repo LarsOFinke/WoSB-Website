@@ -1,0 +1,52 @@
+{
+  "path": "/api/admin/ip-blocks/summary",
+  "method": "get",
+  "operation": {
+    "operationId": "admin_ip_block_summary_api_admin_ip_blocks_summary_get",
+    "parameters": [
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/IpBlockSummary"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      }
+    },
+    "summary": "Admin Ip Block Summary",
+    "tags": [
+      "admin",
+      "admin-security"
+    ]
+  }
+}

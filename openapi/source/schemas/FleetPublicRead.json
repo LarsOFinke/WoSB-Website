@@ -1,0 +1,62 @@
+{
+  "properties": {
+    "active_members_count": {
+      "default": 0,
+      "title": "Active Members Count",
+      "type": "integer"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Description"
+    },
+    "focus": {
+      "title": "Focus",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    },
+    "leaders": {
+      "items": {
+        "$ref": "#/components/schemas/FleetPublicLeaderRead"
+      },
+      "title": "Leaders",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    },
+    "standing_orders": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Standing Orders"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "slug",
+    "focus"
+  ],
+  "title": "FleetPublicRead",
+  "type": "object"
+}

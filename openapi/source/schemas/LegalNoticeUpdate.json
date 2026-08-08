@@ -1,0 +1,144 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "additional_information": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Additional Information",
+      "type": "string"
+    },
+    "business_id": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Business Id",
+      "type": "string"
+    },
+    "city": {
+      "default": "",
+      "maxLength": 120,
+      "title": "City",
+      "type": "string"
+    },
+    "country": {
+      "default": "Deutschland",
+      "maxLength": 120,
+      "title": "Country",
+      "type": "string"
+    },
+    "dispute_resolution_text": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Dispute Resolution Text",
+      "type": "string"
+    },
+    "editorial_responsible_city": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Editorial Responsible City",
+      "type": "string"
+    },
+    "editorial_responsible_country": {
+      "default": "Deutschland",
+      "maxLength": 120,
+      "title": "Editorial Responsible Country",
+      "type": "string"
+    },
+    "editorial_responsible_name": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Editorial Responsible Name",
+      "type": "string"
+    },
+    "editorial_responsible_postal_code": {
+      "default": "",
+      "maxLength": 32,
+      "title": "Editorial Responsible Postal Code",
+      "type": "string"
+    },
+    "editorial_responsible_street": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Editorial Responsible Street",
+      "type": "string"
+    },
+    "email": {
+      "default": "",
+      "maxLength": 254,
+      "title": "Email",
+      "type": "string"
+    },
+    "legal_form": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Legal Form",
+      "type": "string"
+    },
+    "phone": {
+      "default": "",
+      "maxLength": 80,
+      "title": "Phone",
+      "type": "string"
+    },
+    "postal_code": {
+      "default": "",
+      "maxLength": 32,
+      "title": "Postal Code",
+      "type": "string"
+    },
+    "provider_name": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Provider Name",
+      "type": "string"
+    },
+    "published": {
+      "default": false,
+      "title": "Published",
+      "type": "boolean"
+    },
+    "register_court": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Register Court",
+      "type": "string"
+    },
+    "register_name": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Register Name",
+      "type": "string"
+    },
+    "register_number": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Register Number",
+      "type": "string"
+    },
+    "represented_by": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Represented By",
+      "type": "string"
+    },
+    "street": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Street",
+      "type": "string"
+    },
+    "supervisory_authority": {
+      "default": "",
+      "maxLength": 500,
+      "title": "Supervisory Authority",
+      "type": "string"
+    },
+    "vat_id": {
+      "default": "",
+      "maxLength": 80,
+      "title": "Vat Id",
+      "type": "string"
+    }
+  },
+  "title": "LegalNoticeUpdate",
+  "type": "object"
+}

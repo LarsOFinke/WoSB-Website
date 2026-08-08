@@ -1,0 +1,121 @@
+{
+  "path": "/api/builds/{build_id}/printout",
+  "method": "put",
+  "operation": {
+    "operationId": "put_build_printout_api_builds__build_id__printout_put",
+    "parameters": [
+      {
+        "in": "path",
+        "name": "build_id",
+        "required": true,
+        "schema": {
+          "title": "Build Id",
+          "type": "integer"
+        }
+      },
+      {
+        "in": "query",
+        "name": "cache_key",
+        "required": true,
+        "schema": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Cache Key",
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "source_updated_at",
+        "required": true,
+        "schema": {
+          "format": "date-time",
+          "title": "Source Updated At",
+          "type": "string"
+        }
+      },
+      {
+        "in": "query",
+        "name": "notify_discord",
+        "required": false,
+        "schema": {
+          "default": false,
+          "title": "Notify Discord",
+          "type": "boolean"
+        }
+      },
+      {
+        "in": "cookie",
+        "name": "rbf_hub_session",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rbf Hub Session"
+        }
+      }
+    ],
+    "requestBody": {
+      "content": {
+        "multipart/form-data": {
+          "schema": {
+            "$ref": "#/components/schemas/Body_put_build_printout_api_builds__build_id__printout_put"
+          }
+        }
+      },
+      "required": true
+    },
+    "responses": {
+      "200": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BuildPrintoutRead"
+            }
+          }
+        },
+        "description": "Successful Response"
+      },
+      "400": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Invalid request"
+      },
+      "415": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Unsupported media type"
+      },
+      "409": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "description": "Build changed or printout cache identity conflicts"
+      }
+    },
+    "summary": "Put Build Printout",
+    "tags": [
+      "builds"
+    ]
+  }
+}

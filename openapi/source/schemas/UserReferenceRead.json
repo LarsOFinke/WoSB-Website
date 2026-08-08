@@ -1,0 +1,19 @@
+{
+  "description": "Minimal identity embedded in shared content responses.",
+  "properties": {
+    "display_name": {
+      "title": "Display Name",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "id",
+    "display_name"
+  ],
+  "title": "UserReferenceRead",
+  "type": "object"
+}

@@ -1,0 +1,12 @@
+{
+  "category": "special_crew",
+  "seed_id": "old-hand",
+  "name": "Old Hand",
+  "source": "B20-in-game-screenshots-2026-07-11-v2",
+  "notes": "Group: Adventurers. Restores durability when examining a shipwreck +5%. Catalog status: verified-from-project-owner-screenshots.",
+  "option_kind": "crew_specialist",
+  "stat_effects": {
+    "shipwreck_durability_restore_pct": 5
+  },
+  "image_url": "/build-assets/options/specialists/old-hand.png"
+}

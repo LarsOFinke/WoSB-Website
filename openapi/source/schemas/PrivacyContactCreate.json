@@ -1,0 +1,35 @@
+{
+  "properties": {
+    "message": {
+      "maxLength": 4000,
+      "minLength": 10,
+      "title": "Message",
+      "type": "string"
+    },
+    "reply_email": {
+      "maxLength": 254,
+      "minLength": 3,
+      "title": "Reply Email",
+      "type": "string"
+    },
+    "subject": {
+      "maxLength": 160,
+      "minLength": 3,
+      "title": "Subject",
+      "type": "string"
+    },
+    "website": {
+      "default": "",
+      "maxLength": 0,
+      "title": "Website",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reply_email",
+    "subject",
+    "message"
+  ],
+  "title": "PrivacyContactCreate",
+  "type": "object"
+}
