@@ -29,42 +29,39 @@ An update is accepted only when a checksummed artifact is already staged in
 `/srv/rbf/shared/releases/inbox`; the host runner then uses the same coordinated
 backup, migration, activation and rollback path as a normal release.
 
-Für lokale Wartungsaktionen auf dem Zielserver bleiben die versionierten
-Runner unter `/srv/rbf/current/infrastructure/scripts/services/` verfügbar.
+For local maintenance actions on the target server, the versioned runners under
+`/srv/rbf/current/infrastructure/scripts/services/` remain available.
 
 The target host exposes operation status and a guarded staff-panel request path.
 
 ## Logs
 
-Vom vertrauenswürdigen Ursprungssystem ist der bevorzugte Einstieg:
+From the trusted origin system, the preferred entry point is:
 
 ```bash
 ./infrastructure/scripts/diagnostics/debug.sh
 
-# Nicht-interaktiv und bereits stark eingegrenzt:
+# Non-interactive and already tightly scoped:
 ./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m --tail 400
 ./infrastructure/scripts/diagnostics/debug.sh --area staff --category errors --since 1h --match MethodArgumentTypeMismatchException
 ```
 
-Der Wrapper verwendet standardmäßig die von `deploy.sh --configure` gepflegte
-`.env.origin.test`. Production-Diagnosen erfordern `--production` und verwenden
-`.env.origin.production`; beide Profile enthalten ihren eigenen SSH-Key-/Host-
-Kontext und `sudo -n`. Bereiche sind `overview`,
-`staff`, `calendar`, `api`, `security`, `gateway`, `database`, `deployment` und
-`all`; Kategorien sind `errors`, `warnings`, `http-500`, `auth`, `migration`
-und `all`. Zeitraum und Zeilenlimit sind validiert und begrenzt. `--match`
-ergänzt einen literalen Suchtext.
+By default, the wrapper uses `.env.origin.test`, which is maintained by
+`deploy.sh --configure`. Production diagnostics require `--production` and use
+`.env.origin.production`; each profile contains its own SSH key/host context and
+`sudo -n`. Areas are `overview`, `staff`, `calendar`, `api`, `security`, `gateway`,
+`database`, `deployment`, and `all`; categories are `errors`, `warnings`, `http-500`,
+`auth`, `migration`, and `all`. Time window and line limit are validated and bounded.
+`--match` adds a literal search string.
 
-Die Rohdaten werden nur gestreamt. Auf dem Zielsystem entsteht kein
-Diagnosearchiv. Am Ursprung entfernt der Collector ANSI-Steuerzeichen,
-IP-/E-Mail-Adressen, Querywerte und typische Credential-Felder und speichert das
-Ergebnis standardmäßig mit Modus `0600` unter `.diagnostics/*.log`. Der Pfad wird
-am Ende ausgegeben und kann einem Agenten für eine gezielte Analyse genannt
-werden. Vor externer Weitergabe trotzdem manuell prüfen; niemals Rohlogs,
-Secrets, Cookies, Authorization-Header oder personenbezogene Payloads in Tickets
-kopieren.
+Raw data is streamed only. No diagnostic archive is created on the target system.
+On the origin, the collector removes ANSI control sequences, IP/email addresses,
+query values, and typical credential fields and stores the result by default with mode
+`0600` under `.diagnostics/*.log`. The path is printed at the end and can be given to
+an agent for focused analysis. Still review it manually before external sharing; never
+copy raw logs, secrets, cookies, Authorization headers, or personal payloads into tickets.
 
-Direkt auf dem Zielserver bleiben für einen Operator verfügbar:
+Operators can still use these commands directly on the target server:
 
 ```bash
 sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh

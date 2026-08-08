@@ -1,6 +1,6 @@
 # RBF Frontend
 
-Vue-3-/Vite-Anwendung mit fachlichen Modulen und sieben Sprachen.
+Vue 3/Vite application with domain modules and seven languages.
 
 ```bash
 cp .env.example .env
@@ -11,14 +11,14 @@ npm test
 npm run build
 ```
 
-API-Regeln werden serverseitig durchgesetzt; das Frontend liefert Interaktion und frühes Feedback.
-Siehe [Systemarchitektur](../docs/architecture/ARCHITECTURE.md),
-[Entwicklung](../docs/development/DEVELOPMENT.md) und
+API rules are enforced server-side; the frontend provides interaction and early feedback.
+See [System Architecture](../docs/architecture/ARCHITECTURE.md),
+[Development](../docs/development/DEVELOPMENT.md), and
 [Tests](../docs/development/TESTING.md).
 
-## Struktur
+## Structure
 
-Route-Seiten bleiben bewusst dünn: Zustandsbehaftete Use-Cases liegen in
-`composables/`, reine Regeln und Payload-Mappings in `domain/`, HTTP-Transport in
-`api/`. Details, Modulgrenzen und Erweiterungsregeln stehen in
+Route pages intentionally remain thin: stateful use cases live in `composables/`,
+pure rules and payload mappings in `domain/`, and HTTP transport in `api/`.
+Details, module boundaries, and extension rules are documented in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).

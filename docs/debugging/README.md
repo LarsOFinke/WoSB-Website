@@ -1,32 +1,25 @@
-# Debugging und Incident-Runbooks
+# Debugging and Incident Runbooks
 
-Diese Runbooks dokumentieren die Fehlerbilder, die beim Spring-Boot-Deployment
-und beim Betrieb des Website-Servers tatsächlich aufgetreten sind. Sie sind
-bewusst auf Diagnose und sichere nächste Schritte beschränkt; keine Anleitung
-kopiert Secrets, Cookies oder Authorization-Header in Tickets.
+These runbooks document failure patterns that actually occurred during Spring Boot deployment
+and operation of the website server. They are deliberately limited to diagnostics and safe next
+steps; no guide copies secrets, cookies, or Authorization headers into tickets.
 
-- [Modulorientiertes Debugging](MODULE_DEBUGGING.md) – Schichtentrennung,
-  Evidenzminimum und passende Regressionstest-Ebene
-- [Deployment-Incidents](DEPLOYMENT_INCIDENTS.md) – bekannte konkrete Symptome,
-  Ursachen und sichere nächste Schritte
-- [Legacy-Build-Datenmigration](LEGACY_BUILD_DATA_MIGRATION.md) – geprüfter
-  Build-only Python→Java-Teilrestore mit Dry-Run, semantischer FK-Auflösung und
-  Test→Production-Promotion
+- [Module-oriented debugging](MODULE_DEBUGGING.md) – layer separation, minimum evidence, and matching regression-test level
+- [Deployment incidents](DEPLOYMENT_INCIDENTS.md) – known concrete symptoms, causes, and safe next steps
+- [Legacy build data migration](LEGACY_BUILD_DATA_MIGRATION.md) – reviewed build-only Python→Java partial restore with dry run, semantic FK resolution, and test→production promotion
 
-## Schnelle Eingrenzung
+## Quick narrowing
 
-Vom Ursprungssystem zuerst den interaktiven, redigierenden Collector verwenden:
+From the origin system, use the interactive redacting collector first:
 
 ```bash
 ./infrastructure/scripts/diagnostics/debug.sh
 ./infrastructure/scripts/diagnostics/debug.sh --area calendar --category http-500 --since 30m --tail 400
 ```
 
-Ohne Flag nutzt er `.env.origin.test`; Production wird nur mit
-`--production` und `.env.origin.production` ausgewählt. Die agententaugliche
-Ausgabe landet lokal unter `.diagnostics/` und verändert das Zielsystem nicht.
-Direkte Zielserverbefehle
-sind nur der manuelle Fallback:
+Without a flag it uses `.env.origin.test`; production is selected only with `--production`
+and `.env.origin.production`. Agent-suitable output is stored locally under `.diagnostics/`
+and does not modify the target system. Direct target-server commands are only the manual fallback:
 
 ```bash
 sudo systemctl status rbf-hub.service --no-pager
@@ -36,14 +29,11 @@ sudo /srv/rbf/current/infrastructure/scripts/checks/doctor.sh
 sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh api gateway
 ```
 
-Bei einem fehlgeschlagenen Release zuerst die Aktivierungsdiagnose unter
-`/srv/rbf/shared/deployments/failed-*.log` sichern. Container und Netzwerke erst
-danach bereinigen; die Diagnose darf nicht durch `docker compose down` verloren
-gehen.
+For a failed release, first preserve the activation diagnostics under
+`/srv/rbf/shared/deployments/failed-*.log`. Clean up containers and networks only afterward;
+the diagnostics must not be lost through `docker compose down`.
 
-Die ausführliche Sammlung steht in
-[`DEPLOYMENT_INCIDENTS.md`](DEPLOYMENT_INCIDENTS.md).
-
+The detailed collection is in [`DEPLOYMENT_INCIDENTS.md`](DEPLOYMENT_INCIDENTS.md).
 
 ## Build image preparation fails after one successful render
 

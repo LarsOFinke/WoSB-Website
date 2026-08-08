@@ -3,35 +3,35 @@ set -Eeuo pipefail
 export LC_ALL=C
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "Der Host-Security-Check benötigt root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "The host security check requires root privileges."
 
 systemctl is-enabled --quiet apt-daily.timer \
-  || die "Automatische Paketlisten-Aktualisierung ist nicht aktiviert."
+  || die "Automatic package-list updates are not enabled."
 systemctl is-enabled --quiet apt-daily-upgrade.timer \
-  || die "Automatische Security-Installation ist nicht aktiviert."
+  || die "Automatic security installation is not enabled."
 grep -Eq 'APT::Periodic::Unattended-Upgrade[[:space:]]+"1"' /etc/apt/apt.conf.d/20auto-upgrades \
-  || die "unattended-upgrades ist nicht täglich konfiguriert."
-success "Automatische Security-Updates sind aktiviert."
+  || die "unattended-upgrades is not configured to run daily."
+success "Automatic security updates are enabled."
 
 if command -v ufw >/dev/null 2>&1; then
-  ufw status | grep -q '^Status: active' || die "UFW ist nicht aktiv."
+  ufw status | grep -q '^Status: active' || die "UFW is not active."
   ufw status verbose | grep -Eq '^Default: deny \(incoming\), allow \(outgoing\)' \
-    || die "UFW verwendet nicht die erwarteten Default-Policies."
-  success "Host-Firewall ist mit deny-incoming aktiv."
+    || die "UFW does not use the expected default policies."
+  success "Host firewall is active with deny-incoming."
 fi
 
 docker_members="$(getent group docker | cut -d: -f4)"
 if [[ -n "$docker_members" ]]; then
-  warn "Docker-Gruppe enthält root-äquivalente Konten: $docker_members"
+  warn "Docker group contains root-equivalent accounts: $docker_members"
 else
-  success "Keine interaktiven Konten besitzen Docker-Gruppenrechte."
+  success "No interactive accounts have Docker-group privileges."
 fi
 
 if command -v sshd >/dev/null 2>&1; then
   ssh_password="$(sshd -T 2>/dev/null | awk '$1 == "passwordauthentication" {print $2; exit}' || true)"
   ssh_root="$(sshd -T 2>/dev/null | awk '$1 == "permitrootlogin" {print $2; exit}' || true)"
   [[ "$ssh_password" == no ]] \
-    || warn "SSH-Passwortauthentifizierung ist aktiv. Erst nach geprüftem Schlüsselzugang manuell deaktivieren."
+    || warn "SSH password authentication is active. Disable it manually only after verified key access."
   [[ "$ssh_root" == no ]] \
-    || warn "SSH-Root-Login ist nicht vollständig deaktiviert (${ssh_root:-unbekannt}). Vor öffentlicher Freigabe prüfen."
+    || warn "SSH root login is not fully disabled (${ssh_root:-unknown}). Review before public exposure."
 fi

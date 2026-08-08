@@ -6,4 +6,4 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib/quiet-gate.sh"
 
 cd "$ROOT_DIR"
-agent_run_quiet 'vollständiges Repository-Gate (make validate)' make validate
+agent_run_quiet 'complete repository gate (make validate)' make validate

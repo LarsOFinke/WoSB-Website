@@ -1,77 +1,69 @@
-# Dokumentation
+# Documentation
 
-Dieser Index ist der Einstieg für Entwicklung, Deployment und Betrieb. Die Dokumente sind nach
-Verantwortung gruppiert; die alten Dateinamen wurden bewusst nicht als zweite
-Quelle dupliziert.
+This index is the entry point for development, deployment, and operations. Documents are grouped by
+responsibility; the old filenames were deliberately not duplicated as a second source.
 
-## Agenten-Einstieg
+## Agent entry point
 
-- [Agent Onboarding](../.agents/ONBOARDING.md) – tokenarmer Schnellstart und
-  Aufgabennavigation
-- [Projekt-Cache](../.agents/PROJECT_CACHE.md) – stabile Systemlandkarte und
-  bekannte Debugging-Grundlage
-- [Modul-Cache](../.agents/MODULE_CACHE.md) – vollständiger Quick-Overview für
-  Backend-, Frontend- und Infrastrukturmodule
-- [Debugging-Cache](../.agents/DEBUGGING_CACHE.md) – tokenarme Symptomnavigation
-- [`AGENTS.md`](../AGENTS.md) – verbindliche Arbeitsregeln
+- [Agent Onboarding](../.agents/ONBOARDING.md) – token-efficient quick start and task navigation
+- [Project Cache](../.agents/PROJECT_CACHE.md) – stable system map and known debugging foundation
+- [Module Cache](../.agents/MODULE_CACHE.md) – complete quick overview for backend, frontend, and infrastructure modules
+- [Debugging Cache](../.agents/DEBUGGING_CACHE.md) – token-efficient symptom navigation
+- [`AGENTS.md`](../AGENTS.md) – binding working rules
 
-Die `.agents`-Dokumente sind Navigationshilfen. Verbindliche Qualitäts-,
-Architektur-, Security-, Datenschutz- und Betriebsregeln bleiben in den unten
-aufgeführten Primärdokumenten.
+The `.agents` documents are navigation aids. Binding quality, architecture, security,
+privacy, and operations rules remain in the primary documents listed below.
 
-## Frischeinrichtung (zwei Server)
+## Fresh setup (two servers)
 
-1. [Webseiten-Server installieren](deployment/INSTALLATION.md)
-2. [Backup-Server per Enrollment einrichten](deployment/BACKUP_SETUP_QUICKSTART.md)
-3. [Go-Live-Prüfung](deployment/GO_LIVE.md)
-4. [Betrieb und Updates](deployment/OPERATIONS.md)
-5. [Disaster Recovery](deployment/DISASTER_RECOVERY.md)
+1. [Install the website server](deployment/INSTALLATION.md)
+2. [Set up the backup server through enrollment](deployment/BACKUP_SETUP_QUICKSTART.md)
+3. [Go-live checks](deployment/GO_LIVE.md)
+4. [Operations and updates](deployment/OPERATIONS.md)
+5. [Disaster recovery](deployment/DISASTER_RECOVERY.md)
 
-Der Ablauf ist für einen frischen Webseiten-Server und einen getrennten
-Backup-/Recovery-Server ausgelegt. Die Installationsanleitung enthält
-Voraussetzungen, sichere Defaults, Smoke-Tests und die erwarteten Ergebnisse.
+The workflow is designed for a fresh website server and a separate backup/recovery server.
+The installation guide contains prerequisites, safe defaults, smoke tests, and expected results.
 
-## Architektur und Sicherheit
+## Architecture and security
 
-- [Architektur](architecture/ARCHITECTURE.md)
-- [Modulkatalog](architecture/MODULE_CATALOG.md)
-- [Backup-Architektur](architecture/BACKUP_ARCHITECTURE.md)
-- [Container-Sicherheit und Isolation](architecture/CONTAINER_SECURITY.md)
+- [Architecture](architecture/ARCHITECTURE.md)
+- [Module catalog](architecture/MODULE_CATALOG.md)
+- [Backup architecture](architecture/BACKUP_ARCHITECTURE.md)
+- [Container security and isolation](architecture/CONTAINER_SECURITY.md)
 
-## Entwicklung und Qualitätsgates
+## Development and quality gates
 
-- [Entwicklung](development/DEVELOPMENT.md)
+- [Development](development/DEVELOPMENT.md)
 - [Tests](development/TESTING.md)
-- [Datenbank und Migrationen](development/DATABASE.md)
-- [Qualitätsstandards](development/QUALITY_STANDARDS.md)
-- [JSON-Quellen und Kataloge](development/JSON_CATALOGS.md)
-- [Versionierung](development/VERSIONING.md)
-- [Technische Reviews](development/reviews/) – zeitgebundene Refactoring- und Prüfnachweise
+- [Database and migrations](development/DATABASE.md)
+- [Quality standards](development/QUALITY_STANDARDS.md)
+- [JSON sources and catalogs](development/JSON_CATALOGS.md)
+- [Versioning](development/VERSIONING.md)
+- [Technical reviews](development/reviews/) – time-scoped refactoring and verification records
 
-## Deployment und Betrieb
+## Deployment and operations
 
-- [CI/CD und Deployment](deployment/DEPLOYMENT.md)
-- [Betrieb](deployment/OPERATIONS.md)
-- [Backup-Server-Enrollment (Details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
-- [Modulorientiertes Debugging](debugging/MODULE_DEBUGGING.md)
+- [CI/CD and deployment](deployment/DEPLOYMENT.md)
+- [Operations](deployment/OPERATIONS.md)
+- [Backup server enrollment (details)](deployment/BACKUP_SERVER_ENROLLMENT.md)
+- [Module-oriented debugging](debugging/MODULE_DEBUGGING.md)
 
-Uptime Kuma gehört nicht mehr zum Produktionsstack. Historische Ursache und
-Entfernung sind im [Deployment-Incident-Index](debugging/DEPLOYMENT_INCIDENTS.md)
-dokumentiert.
+Uptime Kuma is no longer part of the production stack. The historical cause and removal
+are documented in the [deployment incident index](debugging/DEPLOYMENT_INCIDENTS.md).
 
-## Referenz und Integrationen
+## Reference and integrations
 
-- [Referenzdokumente](reference/)
-- [API-Nutzung und Sicherheit](reference/API.md)
-- [Generierte API-Endpunktreferenz](reference/API_ENDPOINTS.md)
-- [Outbound-Webhooks](integrations/outbound-webhooks.md)
-- [Webhook-Templates](integrations/webhook-templates/README.md)
-- [Ingame-Screenshot-Katalog](ingame-screenshots/README.md)
+- [Reference documents](reference/)
+- [API usage and security](reference/API.md)
+- [Generated API endpoint reference](reference/API_ENDPOINTS.md)
+- [Outbound webhooks](integrations/outbound-webhooks.md)
+- [Webhook templates](integrations/webhook-templates/README.md)
+- [In-game screenshot catalog](ingame-screenshots/README.md)
 
-## Pflegevertrag
+## Maintenance contract
 
-Verhaltensänderungen aktualisieren Implementierung, Tests und zugehörige Doku im
-selben Arbeitsschritt. Änderungen an Topologie, Modulgrenzen, Gates oder zentralen
-Debugging-Einstiegen aktualisieren zusätzlich Agent-Onboarding und Projekt-Cache.
-Flüchtige Werte wie Branch, Revision und Dateizahlen werden nicht abgeschrieben,
-sondern mit `bash .agents/scripts/project-context.sh` live ermittelt.
+Behavior changes update implementation, tests, and the associated documentation in the same
+work step. Changes to topology, module boundaries, gates, or central debugging entry points also
+update agent onboarding and the project cache. Ephemeral values such as branch, revision, and file
+counts are not copied into docs; obtain them live with `bash .agents/scripts/project-context.sh`.

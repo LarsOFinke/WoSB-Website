@@ -8,12 +8,12 @@ source_revision=""
 
 usage() {
   echo "Usage: build-artifact.sh [--output-dir DIR] [--source-revision REVISION]" >&2
-  echo "       Ohne Flags interaktiver Dialog im Terminal." >&2
+  echo "       Without flags, an interactive dialog opens in the terminal." >&2
   exit 2
 }
 
 interactive_setup() {
-  [[ -t 0 && -t 1 ]] || { echo "[release] Ohne Flags benötigt build-artifact.sh ein interaktives Terminal." >&2; exit 2; }
+  [[ -t 0 && -t 1 ]] || { echo "[release] Without flags, build-artifact.sh requires an interactive terminal." >&2; exit 2; }
   local answer
   read -r -p "Ausgabeverzeichnis [${output_dir}]: " answer
   [[ -z "$answer" ]] || output_dir="$answer"

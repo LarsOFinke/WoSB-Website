@@ -1,24 +1,22 @@
-# Deployment-Incidents und bekannte Fehlerbilder
+# Deployment Incidents and Known Failure Patterns
 
-Für Fehler in lokalen API-, Frontend- oder Domänenabläufen zuerst
-[`MODULE_DEBUGGING.md`](MODULE_DEBUGGING.md) verwenden. Dieses Dokument ergänzt
-den Ablauf um produktions- und releasebezogene Fehlerbilder.
+For failures in local API, frontend, or domain flows, use
+[`MODULE_DEBUGGING.md`](MODULE_DEBUGGING.md) first. This document supplements that
+workflow with production- and release-related failure patterns.
 
-Für die erste Eingrenzung vom Ursprung `./infrastructure/scripts/diagnostics/debug.sh` verwenden und Bereich,
-Kategorie, Zeitraum sowie Zeilenlimit möglichst eng wählen. Die lokal redigierte
-Datei unter `.diagnostics/` ist die bevorzugte Grundlage für Agentenanalyse;
-Rohlogs vom Ziel weder dauerhaft sammeln noch ungeprüft weitergeben.
+For initial narrowing from the origin, use `./infrastructure/scripts/diagnostics/debug.sh`
+and keep area, category, time range, and line limit as narrow as possible. The locally
+redacted file under `.diagnostics/` is the preferred basis for agent analysis; do not
+persistently collect raw logs from the target or forward them without review.
 
-## 1. `Permission denied` bei Skripten
+## 1. `Permission denied` for scripts
 
-**Symptom:** Ausgelieferte Runtime-Skripte wie `install-artifact.sh`, `stop.sh`
-oder `install-systemd.sh` lassen sich nach SCP oder einem Root-Build nicht
-ausführen.
+**Symptom:** Delivered runtime scripts such as `install-artifact.sh`, `stop.sh`, or
+`install-systemd.sh` cannot be executed after SCP or a root build.
 
-**Ursache:** Ausführungsbits oder Eigentümer wurden beim Kopieren bzw. durch
-`sudo ./deploy.sh` verändert.
+**Cause:** Execute bits or ownership changed during copying or through `sudo ./deploy.sh`.
 
-**Diagnose und Behebung:**
+**Diagnosis and fix:**
 
 ```bash
 find infrastructure/scripts -type f -name '*.sh' ! -perm -u+x -print
@@ -26,47 +24,40 @@ sudo chown -R root:root /opt/rbf/releases/<version>/infrastructure/scripts
 sudo find /opt/rbf/releases/<version>/infrastructure/scripts -type f -name '*.sh' -exec chmod 0755 {} +
 ```
 
-Der Origin-Build repariert generierte Verzeichnisse für den aufrufenden Benutzer;
-Release-Pakete normalisieren die Skript-Rechte. Nicht den gesamten Installationsroot
-pauschal auf `0777` setzen.
+The origin build repairs generated directories for the invoking user; release packages
+normalize script permissions. Do not set the entire installation root to `0777`.
 
-## 2. Falsches Artefakt trotz neuer Version
+## 2. Wrong artifact despite a new version
 
-**Symptom:** Docker trägt `rbf-hub-api:1.0.1`, Spring Boot meldet aber `v1.0.0`.
+**Symptom:** Docker shows `rbf-hub-api:1.0.1`, but Spring Boot reports `v1.0.0`.
 
-**Ursache:** Im Maven-Target lagen mehrere JARs und das älteste bzw. ein
-stales JAR wurde gepackt.
+**Cause:** Multiple JARs remained in the Maven target and the oldest or a stale JAR was packaged.
 
-**Lösung:** `build-artifact.sh` löscht alte `rbf-api-*.jar` (außer `.original`)
-und akzeptiert ausschließlich `rbf-api-${VERSION}.jar`. Danach neu bauen und
-mit `./update.sh` übertragen; kein altes Archiv wiederverwenden.
+**Solution:** `build-artifact.sh` deletes old `rbf-api-*.jar` files (except `.original`)
+and accepts only `rbf-api-${VERSION}.jar`. Rebuild and transfer with `./update.sh`; do not
+reuse an old archive.
 
-## 3. Gleiche Version wird als immutable abgewiesen
+## 3. Same version rejected as immutable
 
 **Symptom:** `Immutable release already exists and is active`.
 
-**Ursache:** Die Versionsnummer wurde nach der Aktivierung erneut verwendet.
-Aktivierte Releases sind unveränderlich; auch ein nachträglicher Hotfix oder eine
-Dokumentationskorrektur benötigt deshalb eine neue Patch-Version.
+**Cause:** The version number was reused after activation. Activated releases are immutable;
+even a later hotfix or documentation correction therefore needs a new patch version.
 
-**Lösung:** Die Änderung nach
-[`VERSIONING.md`](../development/VERSIONING.md) klassifizieren, `VERSION` und die
-gekoppelten Versionsquellen erhöhen und ein neues Artefakt bauen. Den aktiven
-Release, seine Metadaten, `shared/.env` oder `shared/data` niemals manuell
-löschen, um dieselbe Versionsnummer erneut zu verwenden.
+**Solution:** Classify the change according to [`VERSIONING.md`](../development/VERSIONING.md),
+increment `VERSION` and the coupled version sources, and build a new artifact. Never manually
+delete the active release, its metadata, `shared/.env`, or `shared/data` to reuse the same version.
 
-## 4. NGINX startet in einer Restart-Schleife
+## 4. NGINX starts in a restart loop
 
-**Symptom:** `could not open error log file` oder
+**Symptom:** `could not open error log file` or
 `chown(/var/cache/nginx/client_temp) ... Operation not permitted`.
 
-**Ursache:** Der Container lief nicht mit den Rechten, die das Standard-Image
-für Cache-Verzeichnisse erwartet, während Root-Dateisysteme read-only gemountet
-waren.
+**Cause:** The container did not run with the permissions expected by the default image for
+cache directories while root filesystems were mounted read-only.
 
-**Lösung:** Die Release-Konfiguration nutzt einen direkten NGINX-Start,
-stderr-Logs und beschreibbare, passend besessene Runtime-Verzeichnisse. Nach
-einer Änderung immer prüfen:
+**Solution:** Release configuration uses a direct NGINX start, stderr logging, and writable,
+correctly owned runtime directories. After a change, always check:
 
 ```bash
 sudo docker compose --env-file /opt/rbf/shared/.env \
@@ -75,173 +66,158 @@ sudo docker compose --env-file /opt/rbf/shared/.env \
   -f /opt/rbf/current/infrastructure/compose.release.yml logs --tail=200 gateway
 ```
 
-## 5. systemd schlägt fehl und Logs scheinen verschwunden
+## 5. systemd fails and logs appear to disappear
 
-**Symptom:** `rbf-hub.service` endet mit `status=2/INVALIDARGUMENT`; danach sind
-API/Postgres-Container entfernt.
+**Symptom:** `rbf-hub.service` exits with `status=2/INVALIDARGUMENT`; afterward the
+API/Postgres containers are gone.
 
-**Ursache:** Der Aktivierungsfehler wurde vor dem Compose-Cleanup nicht dauerhaft
-gesichert oder ein Netzwerk blieb durch einen verwaisten Container belegt.
+**Cause:** Activation failure diagnostics were not persisted before Compose cleanup, or a
+network remained occupied by an orphaned container.
 
-**Lösung:** Die aktuelle Aktivierung schreibt zuerst
-`/opt/rbf/shared/deployments/failed-<version>-<timestamp>.log`. Erst diese Datei,
-`journalctl` und `docker compose ps -a` sichern, dann gezielt bereinigen:
+**Solution:** Current activation first writes
+`/opt/rbf/shared/deployments/failed-<version>-<timestamp>.log`. Preserve this file,
+`journalctl`, and `docker compose ps -a` first, then clean up deliberately:
 
 ```bash
 sudo docker ps -aq --filter label=com.docker.compose.project=rbf-hub | xargs -r sudo docker rm -f
 sudo docker network ls --filter name=rbf-hub_ --format '{{.ID}}' | xargs -r sudo docker network rm
 ```
 
-Danach erneut mit `./update.sh` deployen. `docker compose down` nicht als ersten
-Diagnoseschritt verwenden.
+Then redeploy with `./update.sh`. Do not use `docker compose down` as the first diagnostic step.
 
-## 6. PostgreSQL meldet „database system is shutting down“
+## 6. PostgreSQL reports “database system is shutting down”
 
-**Symptom:** systemd beendet sich unmittelbar nach dem Start des Postgres-
-Containers mit `psql ... FATAL: the database system is shutting down`.
+**Symptom:** systemd exits immediately after starting the Postgres container with
+`psql ... FATAL: the database system is shutting down`.
 
-**Ursache:** Ein einfacher Port-/Container-Check war positiv, bevor PostgreSQL
-Verbindungen tatsächlich annahm.
+**Cause:** A simple port/container check passed before PostgreSQL was actually accepting connections.
 
-**Lösung:** Der Readiness-Pfad wartet auf `pg_isready` und eine erfolgreiche
-`psql -c 'select 1'`-Abfrage. Bei einem Einzeltest einige Sekunden warten und
-anschließend den API-Readiness-Endpunkt prüfen.
+**Solution:** The readiness path waits for `pg_isready` and a successful
+`psql -c 'select 1'` query. For an isolated test, wait a few seconds and then check the API
+readiness endpoint.
 
-## 7. Backup-Manifest verweist außerhalb des Release-Baums
+## 7. Backup manifest references outside the release tree
 
-**Symptom:** `Artifact is outside the infrastructure tree` für eine Datei unter
+**Symptom:** `Artifact is outside the infrastructure tree` for a file under
 `/opt/rbf/shared/data/backups`.
 
-**Ursache:** Der Manifest-Generator erwartete fälschlich, dass gemeinsam genutzte
-Backups unter `/opt/rbf/<release>/infrastructure` liegen.
+**Cause:** The manifest generator incorrectly expected shared backups to live under
+`/opt/rbf/<release>/infrastructure`.
 
-**Aktueller Betriebsentscheid:** Origin-Deployments verwenden vorübergehend
-`--skip-backup`; der Backup-Runner bleibt für manuelle Tests verfügbar, bis die
-Pfadmodellierung separat korrigiert und ein Restore erneut validiert wurde.
+**Current operational decision:** Origin deployments temporarily use `--skip-backup`; the backup
+runner remains available for manual testing until path modeling is corrected separately and a
+restore is revalidated.
 
-## 8. 401 bei Registrierung oder anonymen Endpunkten
+## 8. 401 on registration or anonymous endpoints
 
-**Symptom:** `POST /api/auth/register` oder Cookie-/Privacy-Endpunkte liefern 401;
-NGINX zeigt den Request, der API-Log aber keinen passenden Security-Eintrag.
+**Symptom:** `POST /api/auth/register` or cookie/privacy endpoints return 401; NGINX shows the
+request, but the API log contains no matching security entry.
 
-**Diagnose:**
+**Diagnosis:**
 
 ```bash
 sudo docker compose --env-file /opt/rbf/shared/.env \
   -f /opt/rbf/current/infrastructure/compose.release.yml logs --since=10m api gateway
 ```
 
-Prüfe, dass das laufende JAR zur Release-Version passt. Die Security-Konfiguration
-erlaubt die anonymen Methoden explizit und ignoriert CSRF nur für diese Routen;
-401/403-Logs enthalten nur Methode, Pfad und boolesche Kontextmerkmale.
+Verify that the running JAR matches the release version. Security configuration explicitly allows
+the anonymous methods and ignores CSRF only for those routes; 401/403 logs contain only method,
+path, and boolean context indicators.
 
-## 9. 401 trotz Session-Cookie auf geschützten Routen
+## 9. 401 despite a session cookie on protected routes
 
-**Symptom:** Eingeloggte Requests liefern 401; im API-Log steht zusätzlich
-`LazyInitializationException` für `SiteRoleEntity` und danach ein 401 für
-`/error`.
+**Symptom:** Logged-in requests return 401; the API log also contains a
+`LazyInitializationException` for `SiteRoleEntity`, followed by a 401 for `/error`.
 
-**Ursache:** Der Session-Filter erstellt die Spring-Authentifizierung nach dem
-Ende des Repository-Aufrufs. Wird die Site-Rolle dabei nur als lazy Proxy
-zurückgegeben, kann der Filter deren Berechtigungen nicht mehr laden. Der
-geschützte Fehlerpfad verdeckt anschließend die eigentliche Ausnahme.
+**Cause:** The session filter creates Spring authentication after the repository call has ended.
+If the site role is returned only as a lazy proxy, the filter can no longer load its permissions.
+The protected error path then hides the original exception.
 
-**Lösung:** Die Authentifizierungsabfrage muss Benutzer und Site-Rolle mit
-einem expliziten Fetch-Join laden. `/error` bleibt öffentlich, damit Folgefehler
-nicht als irreführender 401 erscheinen. Nach dem Deployment Browser-Session
-beibehalten; ein erneuter Login ist nur nötig, wenn die Session abgelaufen ist.
+**Solution:** The authentication query must load user and site role with an explicit fetch join.
+`/error` remains public so follow-up failures do not appear as a misleading 401. Keep the browser
+session after deployment; logging in again is necessary only when the session has expired.
 
-## 10. Cookie-Einstellungen werden nicht automatisch eingeblendet
+## 10. Cookie settings are not shown automatically
 
-Das ist der erwartete Zustand, solange keine optionale Cookie- oder Tracking-
-Integration aktiv ist. Eine fehlende gespeicherte Entscheidung und ein Fehler beim
-Abruf der Entscheidung öffnen den Dialog nicht automatisch. Damit erzeugt die
-reine Anzeige des Banners nicht erst selbst ein Consent-Cookie. Die Einstellungen
-bleiben über den Footer und das Datenschutzcenter erreichbar. Keine Produktions-
-Cookies per Ticket teilen.
+This is expected while no optional cookie or tracking integration is active. A missing stored
+decision and an error while fetching the decision do not open the dialog automatically. This
+prevents merely displaying the banner from creating a consent cookie itself. Settings remain
+available through the footer and privacy center. Do not share production cookies in tickets.
 
-## 11. Versionen stimmen nicht überein
+## 11. Versions do not match
 
-`VERSION`, `spring-api/pom.xml` sowie Frontend `package.json` und Lockfile müssen
-denselben Stand tragen. `infrastructure/scripts/quality/check_repository.py --strict-tree` und der
-Origin-Build brechen bei Abweichungen absichtlich ab.
+`VERSION`, `spring-api/pom.xml`, frontend `package.json`, and the lockfile must carry the same
+version. `infrastructure/scripts/quality/check_repository.py --strict-tree` and the origin build
+intentionally fail on mismatches.
 
-## 12. Erststart scheitert während eines Monitoring-Image-Pulls
+## 12. First start fails during a monitoring image pull
 
-**Symptom:** API und PostgreSQL sind bereit, aber der Release-Start endet während
-des Downloads von `louislam/uptime-kuma` mit einem fehlgeschlagenen Healthcheck.
+**Symptom:** API and PostgreSQL are ready, but release startup ends during download of
+`louislam/uptime-kuma` with a failed health check.
 
-**Ursache:** Der optionale Monitoring-Stack blockierte den kritischen systemd-
-Startpfad und konnte das Aktivierungszeitfenster überschreiten.
+**Cause:** The optional monitoring stack blocked the critical systemd startup path and could exceed
+the activation window.
 
-**Aktueller Stand:** Uptime Kuma und sein separates Gateway sind aus dem
-Produktions-Compose, Setup, Backup-Restore und Frontend entfernt. Ein neuer
-Deploy startet nur PostgreSQL, Spring Boot und das Haupt-Gateway. Verwaiste
-Monitoring-Container werden durch `--remove-orphans` beim nächsten Start entfernt.
+**Current state:** Uptime Kuma and its separate gateway have been removed from production Compose,
+setup, backup/restore, and the frontend. A new deployment starts only PostgreSQL, Spring Boot, and
+the main gateway. Orphaned monitoring containers are removed by `--remove-orphans` on the next start.
 
-## 12. `current` ist kein Symlink
+## 12. `current` is not a symlink
 
 **Symptom:** `Current installation entry is not a symbolic link.`
 
-**Ursache:** Ein früherer, abgebrochener Setup-Lauf hat ein echtes
-`/opt/rbf/current`-Verzeichnis hinterlassen.
+**Cause:** An earlier aborted setup run left a real `/opt/rbf/current` directory behind.
 
-**Lösung:** Der Origin-Deploy ruft den Cleanup nun mit
-`--replace-active --yes` auf. Ein solcher Eintrag wird nur entfernt, wenn darin
-`infrastructure/compose.release.yml` liegt; `/opt/rbf/shared` bleibt unangetastet.
-Unbekannte oder unsichere Einträge werden weiterhin fail-closed abgewiesen.
+**Solution:** Origin deployment now calls cleanup with `--replace-active --yes`. Such an entry is
+removed only when it contains `infrastructure/compose.release.yml`; `/opt/rbf/shared` remains
+untouched. Unknown or unsafe entries continue to be rejected fail-closed.
 
-## 13. HTTP 500 bei Kalender- oder Staff-Datumsfiltern
+## 13. HTTP 500 for calendar or staff date filters
 
-**Symptom:** Kalender, Staff-Übersicht oder die Datumsfilter für Registrierungen,
-Audit-Logs und Security-Dashboard liefern HTTP 500. Im API-Log steht
-`MethodArgumentTypeMismatchException` für `LocalDate` oder `LocalDateTime`.
+**Symptom:** Calendar, staff overview, or date filters for registrations, audit logs, and the
+security dashboard return HTTP 500. The API log shows `MethodArgumentTypeMismatchException` for
+`LocalDate` or `LocalDateTime`.
 
-**Ursache:** Browser senden vertragskonforme ISO-Werte (`YYYY-MM-DD` beziehungsweise
-UTC-Zeitpunkte mit `Z`), während die generierten Spring-Controller zuvor den
-localeabhängigen Standardkonverter verwendeten. Der globale Fehlerhandler stufte
-den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
+**Cause:** Browsers send contract-compliant ISO values (`YYYY-MM-DD` or UTC timestamps with `Z`),
+while generated Spring controllers previously used the locale-dependent default converter. The
+global error handler also classified the expected binding failure as an unexpected server error.
 
-**Lösung:** Der Routengenerator versieht `date`- und `date-time`-Queryparameter
-mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
-Antwort. Generierte Controller nicht direkt korrigieren; stets
-`openapi/openapi.json` und die Controller-Bindings gemeinsam korrigieren und mit `audit_controller_contract.py` prüfen.
+**Solution:** The route generator annotates `date` and `date-time` query parameters with explicit
+ISO format. Invalid parameters return a bounded HTTP 400 response. Do not fix generated controllers
+directly; always correct `openapi/openapi.json` and controller bindings together and verify with
+`audit_controller_contract.py`.
 
-## 14. HTTP 500 bei Master-Data-Kategorien
+## 14. HTTP 500 for master-data categories
 
-**Symptom:** `/api/admin/master-data/categories` liefert HTTP 500; im API-Log
-steht `UnrecognizedPropertyException` für `seed_checksum`.
+**Symptom:** `/api/admin/master-data/categories` returns HTTP 500; the API log contains
+`UnrecognizedPropertyException` for `seed_checksum`.
 
-**Ursache:** Die Datenbankabfrage enthält interne Seed-Metadaten, die bewusst
-nicht Teil des öffentlichen Read-Contracts sind. Die strikte Contract-
-Konvertierung weist unbekannte Eigenschaften korrekt zurück.
+**Cause:** The database query includes internal seed metadata that intentionally is not part of the
+public read contract. Strict contract conversion correctly rejects unknown properties.
 
-**Lösung:** Interne Seed-Prüfsummen, relationale IDs und Hilfsspalten werden am
-Master-Data-Mapping-Rand entfernt, bevor Kategorien, Optionen oder Schiffe in
-API-Contracts konvertiert werden. Den Contract nicht um interne Datenbankfelder
-erweitern und Jackson nicht global auf das Ignorieren unbekannter Felder
-umstellen.
+**Solution:** Remove internal seed checksums, relational IDs, and helper columns at the master-data
+mapping boundary before converting categories, options, or ships into API contracts. Do not extend
+the contract with internal database fields and do not globally configure Jackson to ignore unknown fields.
 
-## 15. HTTP 500 im Security-Dashboard
+## 15. HTTP 500 in the security dashboard
 
-**Symptom:** `/api/admin/logs/security-dashboard` liefert HTTP 500; im API-Log
-steht `ClassCastException: java.sql.Date cannot be cast to java.time.LocalDate`.
+**Symptom:** `/api/admin/logs/security-dashboard` returns HTTP 500; the API log contains
+`ClassCastException: java.sql.Date cannot be cast to java.time.LocalDate`.
 
-**Ursache:** PostgreSQL-DATE-Werte kommen über JDBC als `java.sql.Date`, während
-der Service sie direkt zu `LocalDate` castete.
+**Cause:** PostgreSQL `DATE` values arrive through JDBC as `java.sql.Date`, while the service cast
+them directly to `LocalDate`.
 
-**Lösung:** Datumstypen am gemeinsamen Persistence-Rand über `RowValues.date`
-normalisieren. Der Regressionstest verwendet ausdrücklich `java.sql.Date`, damit
-ein reiner Mock mit bereits konvertiertem `LocalDate` den Fehler nicht verdeckt.
+**Solution:** Normalize date types at the shared persistence boundary through `RowValues.date`.
+The regression test deliberately uses `java.sql.Date` so a pure mock with an already-converted
+`LocalDate` cannot hide the failure.
 
-## 16. NGINX kann den Maintenance-Marker nicht prüfen
+## 16. NGINX cannot inspect the maintenance marker
 
-**Symptom:** Gateway-Logs enthalten bei Requests `stat() ... maintenance-mode.json
-failed (13: Permission denied)`.
+**Symptom:** Gateway logs contain `stat() ... maintenance-mode.json failed (13: Permission denied)`
+for requests.
 
-**Ursache:** Der nicht privilegierte Gateway-Prozess mit UID 101 konnte das auf
-Gruppe 10001 begrenzte Control-Verzeichnis nicht durchlaufen.
+**Cause:** The unprivileged gateway process with UID 101 could not traverse the control directory
+restricted to group 10001.
 
-**Lösung:** Der Gateway erhält in beiden Compose-Dateien ausschließlich die
-zusätzliche numerische Runtime-Gruppe 10001. Status bleibt read-only gemountet;
-die Verzeichnisrechte werden nicht global geöffnet.
+**Solution:** In both Compose files, the gateway receives only the additional numeric runtime group
+10001. Status remains mounted read-only; directory permissions are not opened globally.

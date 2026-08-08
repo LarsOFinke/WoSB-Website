@@ -6,6 +6,6 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib/quiet-gate.sh"
 
 cd "$ROOT_DIR"
-agent_run_quiet 'Dokumentationslinks und Befehle' python3 infrastructure/scripts/quality/check_documentation.py
-agent_run_quiet 'Agenten-Modulcache' bash .agents/scripts/check-cache.sh
-agent_run_quiet 'generierte Doku und Repository-Hygiene' python3 infrastructure/scripts/quality/check_repository.py --strict-tree
+agent_run_quiet 'documentation links and commands' python3 infrastructure/scripts/quality/check_documentation.py
+agent_run_quiet 'agent module cache' bash .agents/scripts/check-cache.sh
+agent_run_quiet 'generated docs and repository hygiene' python3 infrastructure/scripts/quality/check_repository.py --strict-tree

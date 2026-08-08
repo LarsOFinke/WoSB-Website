@@ -1,62 +1,50 @@
-# API-Diagnostik, Flyway-Regression und JSON-Modularisierung – 2026-08-08
+# API Diagnostics, Flyway Regression, and JSON Modularization – 2026-08-08
 
-## Ausgangslage
+## Starting point
 
-Der vollständige Maven-Testlauf brach in
-`FlywayMigrationCompatibilityTest.upgradesAnExistingV1HistoryWithoutChangingOrReapplyingIt`
-ab. Der Test erwartete fünf auszuführende Migrationen nach einer bestehenden V1-
-Historie. Mit `V8__build_printout_cache.sql` existieren jedoch sechs ausstehende
-Vorwärtsmigrationen (V3 bis V8). Flyway arbeitete korrekt; die feste Testzahl war
-veraltet.
+The complete Maven test run failed in
+`FlywayMigrationCompatibilityTest.upgradesAnExistingV1HistoryWithoutChangingOrReapplyingIt`.
+The test expected five migrations to execute after an existing V1 history. With
+`V8__build_printout_cache.sql`, however, six forward migrations (V3 through V8) were pending.
+Flyway behaved correctly; the fixed test count was stale.
 
-## Korrektur
+## Correction
 
-Der Upgrade-Test leitet die erwartete Anzahl nun aus `Flyway.info().pending()` ab,
-führt anschließend einen zweiten idempotenten `migrate()`-Lauf aus und prüft V1,
-V7, V8 sowie die V8-Spalten explizit. Der Fresh-DB-Integrationspfad prüft V8 und
-die neuen Printout-Cache-Spalten ebenfalls.
+The upgrade test now derives the expected count from `Flyway.info().pending()`, then performs a
+second idempotent `migrate()` run and explicitly checks V1, V7, V8, and the V8 columns. The fresh-DB
+integration path also checks V8 and the new printout-cache columns.
 
-Die Build-Printout-Abdeckung wurde um Cache-Reuse und Invalidierung auf Service-
-Ebene sowie einen echten HTTP/PostgreSQL/Dateisystem-Lifecycle erweitert. Damit
-werden Build-Erzeugung, PNG-Speicherung, Download, identische Wiederverwendung,
-Build-Versionierung, Cache-Invalidierung und Regeneration gemeinsam geprüft.
+Build-printout coverage was extended with service-level cache reuse and invalidation plus a real
+HTTP/PostgreSQL/filesystem lifecycle. This jointly verifies build creation, PNG storage, download,
+identical reuse, build versioning, cache invalidation, and regeneration.
 
-## API-Diagnostik
+## API diagnostics
 
-Jede `/api/`-Antwort erhält eine servergenerierte `X-Request-Id`. Zentral geloggte
-`api_error`, `security_401` und `security_403` tragen dieselbe ID. Optionales
-Lifecycle-Logging wird mit `RBF_HTTP_LIFECYCLE_LOGGING=true` aktiviert und enthält
-nur Request-ID, Methode, normalisierte Route, Status und Laufzeit. Payloads,
-Querywerte, Cookies, Client-IP und User-Agent bleiben ausgeschlossen. Die
-Integrationstests aktivieren diese Diagnoseeigenschaft ausdrücklich; im normalen
-Betrieb ist sie standardmäßig aus.
+Every `/api/` response receives a server-generated `X-Request-Id`. Centrally logged `api_error`,
+`security_401`, and `security_403` entries carry the same ID. Optional lifecycle logging is enabled
+with `RBF_HTTP_LIFECYCLE_LOGGING=true` and contains only request ID, method, normalized route, status,
+and duration. Payloads, query values, cookies, client IP, and user agent remain excluded. Integration
+tests enable this diagnostic property explicitly; it is off by default in normal operation.
 
-## JSON-KISS/SOLID
+## JSON KISS/SOLID
 
-Große handgepflegte JSON-Monolithen wurden in verantwortungsbezogene Quellen
-zerlegt:
+Large hand-maintained JSON monoliths were split into responsibility-specific sources:
 
-- OpenAPI: eine Operation bzw. ein Schema pro Datei unter `openapi/source/`;
-  `openapi/openapi.json` wird deterministisch zusammengesetzt.
-- Build-Stats: eine Definition pro Datei unter `main/reference/build-stats/`.
-- Build-Optionen und Schiffe: ein Seed-Eintrag pro Datei, gruppiert nach Kategorie
-  bzw. Rate; numerische Präfixe konservieren die bisherige Katalogreihenfolge.
+- OpenAPI: one operation or schema per file under `openapi/source/`; `openapi/openapi.json` is assembled deterministically.
+- Build stats: one definition per file under `main/reference/build-stats/`.
+- Build options and ships: one seed entry per file, grouped by category or rate; numeric prefixes preserve the existing catalog order.
 
-Ein Repository-Gate begrenzt diese handgepflegten JSON-Quellen auf 420 Zeilen und
-verhindert die Rückkehr der entfernten Monolithen. Der Datenvergleich gegen das
-Ausgangsrepository bestätigte identische Build-Stats (127), Build-Optionen (230)
-und Schiffe (67); OpenAPI ist bis auf den Release-Versionssprung 1.0.13 → 1.1.0
-semantisch identisch.
+A repository gate limits these hand-maintained JSON sources to 420 lines and prevents the removed
+monoliths from returning. Data comparison against the starting repository confirmed identical build
+stats (127), build options (230), and ships (67); OpenAPI is semantically identical except for the
+release version jump from 1.0.13 → 1.1.0.
 
-## Validierung
+## Validation
 
-Erfolgreich ausgeführt wurden die Repository-, Dokumentations-, Security-,
-Spring-Struktur-, Controller/OpenAPI-, SQL-Runtime-, Generator-, Java-21-Syntax-,
-Infrastruktur-, Update-/Artifact-, TLS-, Python/Recovery- sowie Frontend-Gates.
-Die Frontend-Suite meldete 167 Unit-Tests ohne Fehler und der Produktionsbuild war
-erfolgreich.
+Repository, documentation, security, Spring structure, controller/OpenAPI, SQL runtime, generator,
+Java 21 syntax, infrastructure, update/artifact, TLS, Python/recovery, and frontend gates all succeeded.
+The frontend suite reported 167 unit tests without errors and the production build succeeded.
 
-Die aktuelle Ausführungsumgebung enthält kein Maven-3.9-Binary. Deshalb konnten
-`mvn verify` und die neuen Testcontainers-Tests hier nicht erneut gestartet werden.
-Der nächste CI-/Entwicklungsrechner mit Maven muss `mvn -f spring-api/pom.xml verify`
-ausführen; dieser Lauf bleibt die autoritative Java-/Spring-/PostgreSQL-Prüfung.
+The current execution environment contains no Maven 3.9 binary. Therefore `mvn verify` and the new
+Testcontainers tests could not be started again here. The next CI/development machine with Maven must run
+`mvn -f spring-api/pom.xml verify`; that run remains the authoritative Java/Spring/PostgreSQL verification.

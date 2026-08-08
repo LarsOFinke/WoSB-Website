@@ -1,77 +1,75 @@
-# Datenaufbewahrung und Löschkonzept
+# Data Retention and Deletion Concept
 
-Dieses Dokument beschreibt die Standardaufbewahrung. Die Fristen für Cookie-Einwilligungen sowie
-abgeschlossene Datenschutzanträge und -kontakte werden von der Anwendung technisch erzwungen.
-Die übrigen Tabellenzeilen sind verbindliche Sollfristen für die jeweiligen Betriebsabläufe.
-Abweichende gesetzliche
-oder vertragliche Anforderungen müssen vor dem Produktivbetrieb durch den Verantwortlichen geprüft
-und über die Spring-Konfiguration und Infrastruktur-Umgebungsdatei konfiguriert werden.
+This document describes the default retention policy. The retention periods for cookie consent decisions as well as
+resolved privacy requests and contacts are technically enforced by the application.
+The remaining table rows are binding target retention periods for the respective operational processes.
+Any differing statutory
+or contractual requirements must be reviewed by the controller before production use
+and configured through the Spring configuration and infrastructure environment file.
 
-| Datenklasse | Standard | Zweck | Löschung |
+| Data class | Default | Purpose | Deletion |
 |---|---:|---|---|
-| Aggregierte IP-Sperrsignale | 7 Kalendertage | Ausschließlich Entscheidung über eine konkrete IP-Sperre | täglicher Maintenance-Lauf; sofort bei Sperrung |
-| Abgelaufene/aufgehobene IP-Sperren | 90 Tage | Begrenzte Nachvollziehbarkeit der Zugriffskontrolle | täglicher Maintenance-Lauf |
-| Audit-Historie | 365 Tage | Nachvollziehbarkeit administrativer Änderungen | täglicher Maintenance-Lauf |
-| Discord-Webhook-Deliveries | 30 Tage | Zustellfehler, Wiederholung und Support | täglicher Maintenance-Lauf |
-| Cookie-Einwilligungsentscheidungen | 400 Tage | Nachweis und Wiederherstellung der Auswahl | täglicher Maintenance-Lauf |
-| Abgeschlossene Datenschutzanträge | 400 Tage | Nachweis von Export-, Berichtigungs- und Löschbearbeitung | täglicher Maintenance-Lauf; offene Anträge bleiben erhalten |
-| Abgeschlossene Datenschutz-Kontakte | 400 Tage | Rückfragen und Nachweis der Bearbeitung | täglicher Maintenance-Lauf; offene Nachrichten bleiben bis zur Bearbeitung erhalten |
-| Offene Registrierungsanträge | 30 Tage | Accountprüfung | täglicher Maintenance-Lauf |
-| Geprüfte Registrierungsanträge | 90 Tage | Nachvollziehbarkeit der Entscheidung | täglicher Maintenance-Lauf |
-| Abgelaufene Sessions | bis Ablaufzeitpunkt | Anmeldung und Sicherheit | täglicher Maintenance-Lauf |
+| Aggregated IP blocking signals | 7 calendar days | Solely for deciding on a specific IP block | daily maintenance run; immediately when blocked |
+| Expired/revoked IP blocks | 90 days | Limited traceability of access control | daily maintenance run |
+| Audit history | 365 days | Traceability of administrative changes | daily maintenance run |
+| Discord webhook deliveries | 30 days | Delivery errors, retries, and support | daily maintenance run |
+| Cookie consent decisions | 400 days | Evidence and restoration of the selection | daily maintenance run |
+| Resolved privacy requests | 400 days | Evidence of export, rectification, and deletion handling | daily maintenance run; open requests are retained |
+| Resolved privacy contacts | 400 days | Follow-up questions and evidence of handling | daily maintenance run; open messages are retained until handled |
+| Open registration requests | 30 days | Account review | daily maintenance run |
+| Reviewed registration requests | 90 days | Traceability of the decision | daily maintenance run |
+| Expired sessions | until expiration | Authentication and security | daily maintenance run |
 
-Passworthashes in Registrierungsanträgen werden direkt nach Genehmigung oder Ablehnung überschrieben.
-Genehmigte Accounts behalten ausschließlich den Hash im eigentlichen Benutzerkonto.
+Password hashes in registration requests are overwritten immediately after approval or rejection.
+Approved accounts retain only the hash in the actual user account.
 
-## Zweckgebundene IP-Sperrsignale
+## Purpose-Limited IP Blocking Signals
 
-Die Anwendung führt **keine allgemeine Request- oder Besucherprotokollierung** in der Datenbank.
-Gespeichert werden nur folgende grobe Ereigniskategorien, wenn sie für eine IP-Sperrentscheidung
-relevant sind:
+The application performs **no general request or visitor logging** in the database.
+Only the following broad event categories are stored when they are relevant to an IP-blocking decision:
 
-- verdächtige Scan-/Reconnaissance-Versuche,
-- fehlgeschlagene Anmeldungen,
-- Rate-Limit-Treffer.
+- suspicious scan/reconnaissance attempts,
+- failed logins,
+- rate-limit hits.
 
-Die Ereignisse werden bereits beim Schreiben auf **Tagesebene aggregiert**. Pro IP,
-Signalkategorie, Begründung, sicherem Ziel und UTC-Tag existiert höchstens ein Datensatz mit:
+Events are aggregated at **daily granularity** when written. For each IP,
+signal category, reason, safe target, and UTC day there is at most one record containing:
 
-- normalisierter einzelner IP-Adresse,
-- UTC-Kalendertag,
-- einer der oben genannten groben Signalkategorien,
-- einer festen Begründung wie abgelehnte Anmeldung, überschrittenes Rate-Limit oder verdächtiger Scan,
-- bei bekannten API-Endpunkten dem normalisierten Spring-Routen-Template ohne konkrete Objekt-IDs oder bei
-  Scans einer festen Zielkategorie wie „Git-Metadaten“ oder „Umgebungsdatei“,
-- Tageszähler der Signale.
+- a normalized individual IP address,
+- the UTC calendar day,
+- one of the broad signal categories listed above,
+- a fixed reason such as rejected login, exceeded rate limit, or suspicious scan,
+- for known API endpoints, the normalized Spring route template without concrete object IDs, or for
+  scans a fixed target category such as “Git metadata” or “environment file”,
+- the daily signal count.
 
-Nicht gespeichert werden freie oder nicht zugeordnete Request-Pfade, Query-String, User-Agent,
-Referrer, Request-ID, HTTP-Methode,
-Request-/Response-Inhalt, Statusdetails, Laufzeit, Accountname, genauer Request-Zeitpunkt, Exception
-oder Stacktrace. Die Admin-Webseite liefert ausschließlich diese Aggregationen pro IP und Tag
-einschließlich Begründung und sicherem Routen-/Scan-Ziel.
-Einzelereignisse oder Rohlogs existieren weder in der Datenbank noch über eine API.
+Free-form or unassigned request paths, query strings, user agents,
+referrers, request IDs, HTTP methods,
+request/response content, status details, runtime, account name, exact request timestamp, exceptions,
+or stack traces are not stored. The admin page exposes only these aggregations per IP and day,
+including the reason and safe route/scan target.
+Individual events or raw logs exist neither in the database nor through an API.
 
-Wird eine IP gesperrt, werden ihre temporären Sperrsignale in derselben Datenbanktransaktion sofort
-gelöscht. Die aktive Sperre behält die exakte IP nur so lange, wie sie für die Zugriffskontrolle
-benötigt wird. Abgelaufene oder aufgehobene Sperren werden nach der begrenzten Historienfrist gelöscht.
-Audittexte enthalten keine Kopie der IP-Adresse.
+When an IP is blocked, its temporary blocking signals are deleted immediately in the same database
+transaction. The active block retains the exact IP only as long as it is required for access control.
+Expired or revoked blocks are deleted after the limited history period.
+Audit text does not contain a copy of the IP address.
 
-## Infrastruktur-Logs
+## Infrastructure Logs
 
-Der produktive NGINX-Gateway schreibt keine Access-Logs. Damit werden dort insbesondere keine
-Routen, IP-Adressen oder User-Agents als normale Besuchsprotokolle aufgezeichnet. Das Backend
-führt ebenfalls keine persistente Request-Telemetrie. Für Fehler und Security-Ablehnungen darf das
-flüchtige Betriebslogging eine servergenerierte Request-ID, HTTP-Methode, normalisiertes
-Spring-Routen-Template, Status-/Fehlerklasse und den begrenzten Exception-Kontext enthalten.
-Client-IP, Querywerte, User-Agent, Cookies sowie Request-/Response-Payloads bleiben ausgeschlossen.
+The production NGINX gateway does not write access logs. In particular, routes, IP addresses, and
+user agents are therefore not recorded there as normal visitor logs. The backend also does not keep
+persistent request telemetry. For errors and security rejections, ephemeral operational logging may
+contain a server-generated request ID, HTTP method, normalized Spring route template, status/error
+class, and bounded exception context.
+Client IPs, query values, user agents, cookies, and request/response payloads remain excluded.
 
-Erfolgreiche Request-Lifecycle-Telemetrie ist standardmäßig deaktiviert.
-`RBF_HTTP_LIFECYCLE_LOGGING=true` darf für automatisierte Tests oder kurze gezielte Diagnosefenster
-aktiviert werden und protokolliert ausschließlich Request-ID, Methode, normalisierte Route, Status
-und Laufzeit. Diese Logs werden nicht in der Anwendungsdatenbank gespeichert und nicht über die
-Staff-API angezeigt.
+Successful request lifecycle telemetry is disabled by default.
+`RBF_HTTP_LIFECYCLE_LOGGING=true` may be enabled for automated tests or short, targeted diagnostic
+windows and logs only request ID, method, normalized route, status, and duration. These logs are not
+stored in the application database and are not exposed through the staff API.
 
-## Konfiguration
+## Configuration
 
 ```yaml
 rbf:
@@ -81,41 +79,40 @@ rbf:
     retention-interval: PT24H
 ```
 
-Im Produktivbetrieb werden diese Werte über `COOKIE_CONSENT_RETENTION`,
-`RESOLVED_PRIVACY_REQUEST_RETENTION` und `PRIVACY_RETENTION_INTERVAL` gesetzt. Es gelten
-Spring-`Duration`-Werte, beispielsweise `400d` oder `PT24H`; alle Aufbewahrungsfristen müssen
-positiv sein. Der Datenschutzlauf startet einmal nach erfolgreicher Anwendungsinitialisierung und
-danach im konfigurierten Intervall. `RBF_SCHEDULING_ENABLED=false` deaktiviert beide Ausführungen,
-etwa für isolierte Integrationstests.
+In production, these values are set through `COOKIE_CONSENT_RETENTION`,
+`RESOLVED_PRIVACY_REQUEST_RETENTION`, and `PRIVACY_RETENTION_INTERVAL`. Spring `Duration` values
+apply, for example `400d` or `PT24H`; all retention periods must be positive. The privacy maintenance
+run starts once after successful application initialization and then at the configured interval.
+`RBF_SCHEDULING_ENABLED=false` disables both executions, for example for isolated integration tests.
 
-Eine Verkürzung ist grundsätzlich vorzuziehen. Eine Verlängerung braucht einen dokumentierten Zweck,
-eine Rechtsgrundlage und einen Termin zur erneuten Prüfung. Änderungen wirken beim nächsten
-Datenschutzlauf; vor einer deutlichen Verkürzung ist ein kontrolliertes Backup sinnvoll.
+Shorter retention is generally preferable. Extending a period requires a documented purpose,
+a legal basis, and a date for renewed review. Changes take effect during the next privacy maintenance
+run; before a significant reduction, a controlled backup is advisable.
 
-## Nicht automatisch gelöschte Inhalte
+## Content Not Deleted Automatically
 
-Forumbeiträge, Guides, Builds und andere veröffentlichte fachliche Inhalte können Referenzen und
-berechtigte Interessen weiterer Community-Mitglieder berühren. Bei einer bestätigten Accountlöschung
-bleiben solche Inhalte deshalb unter einer neutralen, nicht mehr anmeldbaren Identität erhalten.
-Profil, Präferenzen, Sessions, Flotten- und Gruppenmitgliedschaften sowie Abstimmungen werden
-entfernt; nullable Erstellerbezüge werden entkoppelt.
+Forum posts, guides, builds, and other published domain content can affect references and legitimate
+interests of other community members. After confirmed account deletion, such content therefore
+remains under a neutral identity that can no longer log in.
+Profile data, preferences, sessions, fleet and group memberships, and votes are removed; nullable
+creator references are detached.
 
-## Betroffenenworkflow
+## Data Subject Workflow
 
-Im Profil steht ein maschinenlesbarer JSON-Export bereit. Er enthält Account- und Profildaten,
-Einwilligungen, Mitgliedschaften und selbst erstellte Inhalte, aber keine Passwort-, Session- oder
-Consent-Schlüssel und keine Daten anderer Nutzer.
+A machine-readable JSON export is available in the profile. It contains account and profile data,
+consents, memberships, and self-created content, but no password, session, or consent keys and no
+data belonging to other users.
 
-Direkt änderbare Profildaten werden ohne Antrag über den Profileditor berichtigt. Für nicht direkt
-änderbare Daten kann ein formaler Berichtigungsantrag gestellt werden. Löschanträge erfordern die
-erneute Eingabe des Benutzernamens und werden erst nach administrativer Identitäts- und
-Folgenprüfung ausgeführt. Bootstrap-Administratoren sind aus Gründen der Betriebsfähigkeit von der
-Accountlöschung ausgeschlossen.
+Profile data that can be changed directly is corrected through the profile editor without a request.
+A formal rectification request can be submitted for data that cannot be changed directly. Deletion
+requests require the username to be entered again and are executed only after an administrative
+identity and impact review. Bootstrap administrators are excluded from account deletion for
+operational-continuity reasons.
 
-Admins bearbeiten offene Vorgänge unter `/admin/privacy-requests`. Entscheidung, Bearbeiter,
-Zeitpunkt und Begründung werden am Antrag gespeichert und zusätzlich im Audit-Log protokolliert.
+Admins handle open cases under `/admin/privacy-requests`. The decision, handler, timestamp, and
+reason are stored with the request and additionally recorded in the audit log.
 
-Die öffentliche Route `/privacy` stellt die Cookie-Einstellungen, eine verständliche Übersicht der
-Verarbeitung und ein datensparsames Kontaktformular bereit. Das Formular speichert keine IP-Adresse
-und keinen User-Agent. E-Mail-Adresse und Nachrichteninhalt verbleiben in der Anwendung und werden
-nicht über Discord-Webhooks versendet; Administratoren bearbeiten sie im Datenschutz-Postfach.
+The public `/privacy` route provides cookie settings, an understandable overview of processing, and
+a data-minimizing contact form. The form stores neither an IP address nor a user agent. Email address
+and message content remain inside the application and are not sent through Discord webhooks;
+administrators handle them in the privacy inbox.

@@ -1,56 +1,40 @@
 # Spring Boot API
 
-Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus der unter `openapi/source/` gepflegten und nach `openapi/openapi.json` zusammengesetzten Spezifikation nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
+The Spring application is the portal's complete backend. It natively implements every operation in the specification maintained under `openapi/source/` and assembled into `openapi/openapi.json`, and owns authentication, authorization, domain logic, persistence, Flyway, seeding, audit, integrations, and operational APIs.
 
-Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
-Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
+Usage, the cookie/CSRF security boundary, error semantics, and the generated endpoint index are documented under `docs/reference/API.md`.
 
-## Modularchitektur
+## Module Architecture
 
-`openapi/source/` ist die Autorenquelle der externen HTTP-Spezifikation; `openapi/openapi.json` ist das deterministisch zusammengesetzte Artefakt. Daraus werden nur die
-Transport-DTOs unter `api/dto/` generiert. Die Spring-MVC-Bindings liegen bewusst
-direkt in den Modul-Controllern: `@GetMapping`/`@PostMapping`,
-`@PathVariable`, `@RequestParam` sowie `@Valid @RequestBody` sind Controller-
-Verantwortung und werden mit `audit_controller_contract.py` gegen OpenAPI geprüft.
+`openapi/source/` is the authoring source for the external HTTP specification; `openapi/openapi.json` is the deterministically assembled artifact. Only the transport DTOs under `api/dto/` are generated from it. Spring MVC bindings intentionally live directly in the module controllers: `@GetMapping`/`@PostMapping`, `@PathVariable`, `@RequestParam`, and `@Valid @RequestBody` are controller responsibilities and are checked against OpenAPI by `audit_controller_contract.py`.
 
-Jedes Fachmodul gliedert seinen Code nach Bedarf in `controller`, `filter`,
-`service`, `mapper`, `dto`, `entity` und `repository`. Generische `model`- oder
-`contract`-Pakete sind verboten. Modulinterne DTOs kapseln typisierte Übergaben
-für Fachabläufe; API-DTOs bilden ausschließlich den HTTP-Rand.
+Each domain module organizes its code as needed into `controller`, `filter`, `service`, `mapper`, `dto`, `entity`, and `repository`. Generic `model` or `contract` packages are forbidden. Module-internal DTOs encapsulate typed handoffs for domain workflows; API DTOs represent only the HTTP boundary.
 
-Controller sind HTTP-orientiert, validieren typisierte Request-DTOs und delegieren
-fachliche Arbeit an Services. Öffentliche Service-Grenzen geben keine Entities,
-JDBC-Zeilen oder `Map<String,Object>` weiter. Mapper besitzen
-Entity-/Zeilen-/DTO-Konvertierung; generische ObjectMapper-basierte
-"Contract-Conversion" ist kein Anwendungs-Layer. Repositories kapseln Persistenz;
-SQL-Definitionen liegen innerhalb der jeweiligen Repository-Schicht unter
-`repository/queries`. Services enthalten weder SQL-Literale noch Zugriffe auf den
-generischen JDBC-Executor.
+Controllers are HTTP-oriented, validate typed request DTOs, and delegate domain work to services. Public service boundaries do not expose entities, JDBC rows, or `Map<String,Object>`. Mappers own entity/row/DTO conversion; generic ObjectMapper-based “contract conversion” is not an application layer. Repositories encapsulate persistence; SQL definitions live within the respective repository layer under `repository/queries`. Services contain neither SQL literals nor access to the generic JDBC executor.
 
-Der Laufzeitpfad ist damit bewusst eindeutig:
+The runtime path is therefore intentionally unambiguous:
 
 ```text
 HTTP -> Filter/Security -> Controller -> Service -> Repository -> PostgreSQL
                            |           |
-                           |           +-> Mapper <-> API-/Modul-DTO/Entity/Row
-                           +-> DTO-Validierung + HTTP-Status/Header/Cookies
+                           |           +-> Mapper <-> API/module DTO/entity/row
+                           +-> DTO validation + HTTP status/headers/cookies
 ```
 
-Import- und Typkonsistenz werden zusätzlich im Spring-Strukturaudit geprüft;
-`mvn verify` bleibt die autoritative Prüfung für vollständige Java-/MapStruct-
-Kompilierung und Spring-Integration.
+Import and type consistency are additionally checked by the Spring structural audit;
+`mvn verify` remains the authoritative check for complete Java/MapStruct compilation and Spring integration.
 
 ```bash
 mvn -f spring-api/pom.xml verify
 mvn -f spring-api/pom.xml spring-boot:run
 ```
 
-Wichtige Regeln:
+Important rules:
 
-- Java 21 und Spring Boot 4.1.
-- PostgreSQL als Produktionsdatenbank.
-- Flyway ist alleiniger Schemabesitzer.
-- Hibernate validiert nur; Open Session in View ist aus.
-- MapStruct bricht bei nicht zugeordneten Zielfeldern ab.
-- Spring Security und CSRF schützen alle privaten Operationen.
-- Listenabfragen müssen gebündelt und paginationstauglich sein.
+- Java 21 and Spring Boot 4.1.
+- PostgreSQL as the production database.
+- Flyway is the sole schema owner.
+- Hibernate validates only; Open Session in View is disabled.
+- MapStruct fails on unmapped target fields.
+- Spring Security and CSRF protect all private operations.
+- List queries must be batched and pagination-ready.

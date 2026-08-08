@@ -20,8 +20,8 @@ agent_run_quiet() (
     exit_code=$?
   fi
 
-  printf '[agent-gate] FEHLER: %s (Exit %d)\n' "$label" "$exit_code" >&2
-  printf '[agent-gate] Letzte %s Logzeilen:\n' "${AGENT_GATE_FAILURE_LINES:-200}" >&2
+  printf '[agent-gate] ERROR: %s (Exit %d)\n' "$label" "$exit_code" >&2
+  printf '[agent-gate] Last %s log lines:\n' "${AGENT_GATE_FAILURE_LINES:-200}" >&2
   tail -n "${AGENT_GATE_FAILURE_LINES:-200}" "$output" >&2
   return "$exit_code"
 )

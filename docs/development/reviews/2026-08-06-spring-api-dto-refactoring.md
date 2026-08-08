@@ -1,68 +1,61 @@
-# Spring-API DTO-Refactoring
+# Spring API DTO Refactoring
 
-## Zielbild
+## Target architecture
 
-Die Spring-API besitzt jetzt eine explizite und durch Gates erzwungene
-Übersetzungsgrenze zwischen HTTP-Vertrag, Fachlogik und Persistenz:
+The Spring API now has an explicit translation boundary between HTTP contract, business
+logic, and persistence that is enforced by gates:
 
 ```text
-OpenAPI-Vertrag
-  -> generiertes API-Interface
-  -> generiertes Request-/Response-DTO
-  -> Modul-Controller
-  -> Modul-Service
-  -> Modul-Repository
-  -> Modul-Mapper
-  -> API-DTO / Modul-DTO / Entity / Datenbankzeile
+OpenAPI contract
+  -> generated API interface
+  -> generated request/response DTO
+  -> module controller
+  -> module service
+  -> module repository
+  -> module mapper
+  -> API DTO / module DTO / entity / database row
 ```
 
-Controller und öffentliche Service-Methoden transportieren keine Entities,
-JDBC-Zeilen oder frei weitergereichten `Map<String, Object>`-Strukturen. Mapper
-sind die einzige Schicht, die API-Repräsentationen erzeugt oder zwischen
-Repository-/Entity-Daten und DTOs übersetzt.
+Controllers and public service methods transport no entities, JDBC rows, or freely passed
+`Map<String, Object>` structures. Mappers are the only layer that creates API representations
+or translates between repository/entity data and DTOs.
 
-## Umgesetzte Änderungen
+## Implemented changes
 
-- Der OpenAPI-Vertrag erzeugt **179 immutable Java-Records** unter
+- The OpenAPI contract generates **179 immutable Java records** under
   `eu.royalblackwater.api.dto`.
-- Alle **34 generierten API-Interfaces** besitzen konkrete
-  `ResponseEntity<T>`-, `ResponseEntity<List<T>>`-, `ResponseEntity<Resource>`-
-  oder `ResponseEntity<Void>`-Signaturen; Wildcards wurden entfernt.
-- Alle **177 API-Operationen** sind weiterhin eindeutig über **26 Controller**
-  verdrahtet.
-- Die 20 HTTP-Fachmodule besitzen jeweils eine Mapper-Schicht.
-- Request-Bodies bleiben vom generierten Interface bis zum Service typisiert;
-  Controller degradieren DTOs nicht mehr zu `Object` und casten sie nicht erneut.
-- Controller erzeugen keine API-Repräsentationen mehr selbst.
-- Services instanziieren keine generierten API-DTOs mehr selbst; sie delegieren
-  Repräsentationsbildung an Modul-Mapper.
-- Öffentliche Service-Signaturen geben weder Entities noch Datenbank-/JSON-Zeilen
-  als Roh-Maps weiter.
-- Binärdownloads werden über `BinaryDownloadDto` statt untypisierter Responses
-  transportiert.
-- Persistierte Dateimetadaten, Fleet-Zielmitgliedschaften und Raid-Helper-
-  Integrationsdaten besitzen benannte Modul-DTOs.
-- Die bewusst dynamische Raid-Helper-JSON-Nutzlast ist in
-  `RaidHelperJsonPayloadDto` gekapselt; freie JSON-Strukturen werden nicht mit
-  Datenbankzeilen gleichgesetzt.
-- Masterdata-Zeilen, Backup-/Update-Control-Dateien, Security-Aggregate,
-  Build-Statistiken, Legal-Environment-Fallbacks sowie Webhook-, Privacy-, Fleet-
-  und Account-Repräsentationen werden über fachmodulbezogene Mapper aufgebaut.
+- All **34 generated API interfaces** have concrete `ResponseEntity<T>`,
+  `ResponseEntity<List<T>>`, `ResponseEntity<Resource>`, or `ResponseEntity<Void>`
+  signatures; wildcards were removed.
+- All **177 API operations** remain uniquely wired through **26 controllers**.
+- Each of the 20 HTTP business modules has a mapper layer.
+- Request bodies remain typed from the generated interface to the service; controllers no
+  longer degrade DTOs to `Object` and cast them again.
+- Controllers no longer create API representations themselves.
+- Services no longer instantiate generated API DTOs themselves; they delegate representation
+  construction to module mappers.
+- Public service signatures expose neither entities nor database/JSON rows as raw maps.
+- Binary downloads are transported through `BinaryDownloadDto` instead of untyped responses.
+- Persisted file metadata, fleet target memberships, and Raid Helper integration data have
+  named module DTOs.
+- The intentionally dynamic Raid Helper JSON payload is encapsulated in
+  `RaidHelperJsonPayloadDto`; free JSON structures are not treated as database rows.
+- Master-data rows, backup/update control files, security aggregates, build statistics,
+  legal environment fallbacks, and webhook, privacy, fleet, and account representations are
+  built through domain-specific mappers.
 
-## DTO-Kategorien
+## DTO categories
 
-### Generierte API-DTOs
+### Generated API DTOs
 
 `spring-api/src/main/java/eu/royalblackwater/api/dto/`
 
-Diese Records bilden ausschließlich den versionierten HTTP-Vertrag ab und werden
-mit `generate_java_contracts.py` aus `contracts/api-contract.json` erzeugt. Sie
-werden nicht manuell editiert.
+These records represent only the versioned HTTP contract and are generated with
+`generate_java_contracts.py` from `contracts/api-contract.json`. They are not edited manually.
 
-### Modulinterne DTOs
+### Module-internal DTOs
 
-Benannte Übergabeobjekte liegen im jeweiligen `<domain>/dto`-Paket. Aktuell sind
-unter anderem vorhanden:
+Named transfer objects live in the relevant `<domain>/dto` package. Current examples include:
 
 - `files/dto/StoredFileDto`
 - `fleet/dto/FleetMembershipTargetDto`
@@ -74,57 +67,53 @@ unter anderem vorhanden:
 - `raidhelper/dto/RaidHelperJsonPayloadDto`
 - `shared/dto/BinaryDownloadDto`
 
-Diese DTOs kapseln fachliche oder integrationsbezogene Übergaben, die nicht Teil
-des öffentlichen HTTP-Vertrags sind.
+These DTOs encapsulate business- or integration-related transfers that are not part of the
+public HTTP contract.
 
-## Erzwungene Architekturregeln
+## Enforced architecture rules
 
-`audit_spring_backend.py` und `check_repository.py` verhindern künftig:
+`audit_spring_backend.py` and `check_repository.py` now prevent:
 
-- `ResponseEntity<?>` in generierten Interfaces oder Controllern;
-- Entity-, Repository-, JDBC- oder SQL-Zugriffe aus Controllern;
-- das Zurückstufen typisierter Request-DTOs auf `Object`;
-- API-DTO-Konstruktion in Controllern oder Services;
-- Entities oder Roh-Maps an öffentlichen Service-Grenzen;
-- DTO-Abhängigkeiten auf Controller, Service, Repository oder Entity;
-- HTTP-Module ohne Mapper-Schicht;
-- veraltete, fehlende oder falsch platzierte generierte API-DTOs;
-- Legacy-Transportmodelle im früheren Contract-Paket.
+- `ResponseEntity<?>` in generated interfaces or controllers;
+- entity, repository, JDBC, or SQL access from controllers;
+- degrading typed request DTOs to `Object`;
+- API DTO construction in controllers or services;
+- entities or raw maps at public service boundaries;
+- DTO dependencies on controllers, services, repositories, or entities;
+- HTTP modules without a mapper layer;
+- stale, missing, or incorrectly placed generated API DTOs;
+- legacy transport models in the former contract package.
 
-Der DTO-Generator besitzt nun einen fail-closed `--check`-Modus. Das
-Repository-Gate vergleicht alle generierten Quellen bytegenau mit dem aktuellen
-OpenAPI-Vertrag.
+The DTO generator now has a fail-closed `--check` mode. The repository gate compares all
+generated sources byte-for-byte with the current OpenAPI contract.
 
-## Validierung
+## Validation
 
-Erfolgreich ausgeführt wurden:
+Successfully executed:
 
-- Spring-Architekturaudit: 177 Operationen, 34 API-Interfaces, 26 Controller und
-  466 Produktions-Javaquellen;
-- DTO-Generatorprüfung: 179 aktuelle API-DTOs;
-- Java-21-Syntaxprüfung: 487 Produktions- und Testquellen;
-- Repository-, Dokumentations-, Security-, CSS- und Strict-Tree-Gates;
-- Infrastruktur- und Update-/Artifact-Tests;
-- Recovery-Tests: 8 bestanden;
-- dependency-freie Frontendtests: 157 bestanden.
+- Spring architecture audit: 177 operations, 34 API interfaces, 26 controllers, and
+  466 production Java sources;
+- DTO generator check: 179 current API DTOs;
+- Java 21 syntax check: 487 production and test sources;
+- repository, documentation, security, CSS, and strict-tree gates;
+- infrastructure and update/artifact tests;
+- recovery tests: 8 passed;
+- dependency-free frontend tests: 157 passed.
 
-## Umgebungsgrenze
+## Environment limit
 
-Maven 3.9 ist im bereitgestellten Ausführungsumfeld nicht installiert und ein
-externer Dependency-Download steht nicht zur Verfügung. Deshalb konnten
-`mvn -f spring-api/pom.xml verify`, ein echter Spring-Kontextstart und
-PostgreSQL-Testcontainers hier nicht erneut ausgeführt werden. Die vorhandenen
-Java-Syntax-, Architektur-, Generator-, Repository- und Integration-Gates sind
-grün; der reguläre Maven-/Runtime-Lauf bleibt Aufgabe der CI beziehungsweise
-einer Entwicklungsumgebung mit Maven-Toolchain.
+Maven 3.9 is not installed in the provided execution environment and external dependency
+downloads are unavailable. Therefore `mvn -f spring-api/pom.xml verify`, a real Spring
+context start, and PostgreSQL Testcontainers could not be run again here. Existing Java
+syntax, architecture, generator, repository, and integration gates are green; the normal
+Maven/runtime run remains a CI task or a task for a development environment with the Maven
+toolchain.
 
+## Subsequent repository cleanup
 
-## Nachgelagerter Repository-Cleanup
-
-Der anschließende Strukturputz entfernte die verbliebenen generischen `model`-Pakete.
-Interne Build- und Security-Übergabeobjekte liegen nun in Modul-`dto`-Paketen,
-Seed- und Eventkataloge in der verantwortlichen Repository-/Service-Schicht. Zudem
-wurden ein ungenutztes Spring-Data-Repository, tote Controller-Helper und der
-Map-basierte `RequestParameters`-Zwischenschritt entfernt. Das Architektur-Gate
-verhindert leere Quellverzeichnisse, generische `model`-Pakete, rohe Parameter-Maps
-in Controllern und Repository-Typen ohne Anwendungskonsumenten.
+The following structural cleanup removed the remaining generic `model` packages. Internal
+build and security transfer objects now live in module `dto` packages, while seed and event
+catalogs live in the responsible repository/service layer. It also removed an unused Spring
+Data repository, dead controller helpers, and the map-based `RequestParameters` intermediate
+step. The architecture gate prevents empty source directories, generic `model` packages, raw
+parameter maps in controllers, and repository types without application consumers.

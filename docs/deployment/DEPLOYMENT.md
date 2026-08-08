@@ -10,86 +10,79 @@ bash ./deploy.sh
 
 The resulting `rbf-deployment-<version>.tar.gz` contains compiled artifacts, minimal runtime Dockerfiles, Compose configuration and version-matched operations scripts. Every file is listed with size and SHA-256 in `manifest.json` and `SHA256SUMS`.
 
-Vom Ursprungsserver aus ist der **Testserver das Standardziel**. `./deploy.sh`
-und `./update.sh` laden `.env.origin.test`; Production wird ausschließlich durch
-das explizite Flag `--production` ausgewählt und lädt
-`.env.origin.production`. Dabei werden Artefakt, Prüfsumme, Website-Setup-Wrapper
-und Verifier per SSH zum gewählten Zielserver übertragen. Für CI stehen dieselben
-Flags zur Verfügung.
+From the origin server, the **test server is the default target**. `./deploy.sh`
+and `./update.sh` load `.env.origin.test`; production is selected exclusively by the
+explicit `--production` flag and loads `.env.origin.production`. The artifact,
+checksum, website setup wrapper, and verifier are transferred over SSH to the selected
+target server. The same flags are available in CI.
 
 ```bash
-# Test (Standard)
+# Test (default)
 ./deploy.sh
 ./update.sh
 
-# Production (immer explizit)
+# Production (always explicit)
 ./deploy.sh --production
 ./update.sh --production
 ```
 
-Der Zielserver-Bootstrap installiert fehlende Docker-/Compose-Abhängigkeiten
-über den bestehenden Host-Paketpfad; `--skip-host` deaktiviert dies explizit.
-Die beiden privaten Origin-Dateien werden mit Modus `0600` gepflegt. Vorlagen:
-`.env.origin.test.example` und `.env.origin.production.example`.
+The target-server bootstrap installs missing Docker/Compose dependencies through the
+existing host package path; `--skip-host` disables this explicitly. Both private origin
+files are maintained with mode `0600`. Templates: `.env.origin.test.example` and
+`.env.origin.production.example`.
 
-`deploy.sh` und `update.sh` werden auf dem Ursprungsrechner als normaler Benutzer
-und ohne `sudo` ausgeführt. Sobald das ausgewählte Profil existiert, läuft der
-Aufruf nicht-interaktiv. Test wird mit `./deploy.sh --configure` eingerichtet;
-Production bewusst nur mit `./deploy.sh --production --configure`. Vor dem Build
-prüft der Dispatcher Schlüsselzugang und `sudo -n`; dadurch scheitert eine
-unvollständige Zielprovisionierung sofort und ohne Passwortabfrage.
+Run `deploy.sh` and `update.sh` on the origin machine as a normal user and without
+`sudo`. Once the selected profile exists, invocation is non-interactive. Configure test
+with `./deploy.sh --configure`; configure production deliberately only with
+`./deploy.sh --production --configure`. Before the build, the dispatcher checks key
+access and `sudo -n`; incomplete target provisioning therefore fails immediately without
+a password prompt.
 
-`./infrastructure/scripts/diagnostics/debug.sh` folgt derselben Zielauswahl:
-Test ohne Flag, Production mit `--production`. Es verwendet den jeweils
-zugehörigen dedizierten SSH-Key für ausschließlich lesende Zielsystemdiagnosen.
-Im Unterschied zum Deployment
-streamt es einen kleinen Collector über SSH, legt auf dem Ziel keine Datei ab und
-speichert nur die begrenzte, redigierte Ausgabe lokal am Ursprung. Bedienung und
-Filter stehen in [OPERATIONS.md](OPERATIONS.md#logs).
+`./infrastructure/scripts/diagnostics/debug.sh` follows the same target selection: test
+without a flag, production with `--production`. It uses the dedicated SSH key associated
+with that target for read-only target-system diagnostics. Unlike deployment, it streams a
+small collector over SSH, creates no file on the target, and stores only bounded, redacted
+output locally on the origin. Usage and filters are documented in
+[OPERATIONS.md](OPERATIONS.md#logs).
 
-Der Dialog `./deploy.sh --configure` deckt den vollständigen First Run ab. Er
-fragt Zielhost, dauerhaften SSH-Admin, dessen Identity, optionalen
-Initialbenutzer samt VPS-Key, Port, Staging-Verzeichnis und Artefakt ab. Fehlt der
-dedizierte Deploy-Key, kann der Dialog einen Ed25519-Key mit restriktiven
-Dateirechten erzeugen. Dieser Key ist absichtlich ohne Passphrase, damit spätere
-automatisierte Updates keinen interaktiven Secret-Dialog benötigen; der
-Ursprungsrechner und sein Benutzerkonto müssen entsprechend geschützt sein.
-Initialbenutzer und Bootstrap-Identity gelten nur für diesen Einrichtungslauf
-und werden weder in `.env.origin.test` noch `.env.origin.production` gespeichert.
-Auf einer wirklich neuen
-Anwendungsinstallation verifiziert der Release-Installer zusätzlich die erzeugten
-`SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` direkt über `/api/auth/login`. Diese
-Prüfung wird bei Updates bewusst nicht wiederholt, weil das Seed-Passwort nach der
-Erstanlage kein Passwort-Reset-Mechanismus ist.
+The `./deploy.sh --configure` dialog covers the complete first run. It asks for the target
+host, persistent SSH admin and identity, optional initial user and VPS key, port, staging
+directory, and artifact. If the dedicated deployment key is missing, the dialog can create
+an Ed25519 key with restrictive file permissions. This key intentionally has no passphrase
+so later automated updates do not require an interactive secret prompt; protect the origin
+machine and its user account accordingly. Initial user and bootstrap identity apply only to
+that setup run and are stored in neither `.env.origin.test` nor `.env.origin.production`.
+On a genuinely new application installation, the release installer additionally verifies
+the generated `SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` directly through
+`/api/auth/login`. This check is deliberately not repeated on updates because the seed
+password is not a password-reset mechanism after initial creation.
 
-Auf einem frisch installierten Zielsystem darf `rbfadmin` zunächst fehlen. Der
-Dispatcher fragt dann im interaktiven Lauf einmalig nach dem vorhandenen
-Initialbenutzer oder akzeptiert `--bootstrap-user USER`. OpenSSH verwendet dafür
-automatisch die Host-Konfiguration, den SSH-Agenten und Standard-Keys; nur wenn
-der Server es anbietet, bleibt das Passwort als Fallback möglich. Ein bestimmter
-VPS-Key kann mit `--bootstrap-identity-file FILE` erzwungen werden; dann sind
-`IdentitiesOnly=yes` und `BatchMode=yes` aktiv und es gibt keine Passwortabfrage.
-Ein initialer VPS-Account `root` wird direkt verwendet, andere Initialbenutzer
-führen den Provisioner über `sudo` aus. Über diese ausdrücklich freigegebene
-Verbindung überträgt der Dispatcher nur Provisioner und Public Key, richtet
-`rbfadmin` ein, lädt die geprüfte SSH-Konfiguration neu und verifiziert den
-Key-only-Zugang. Anschließend setzt derselbe `deploy.sh`-Lauf mit Build, Transfer
-und Installation fort. Der Initialbenutzer wird in keinem Origin-Profil gespeichert
-und nicht für spätere Updates verwendet.
+On a freshly installed target system, `rbfadmin` may not yet exist. In an interactive run,
+the dispatcher then asks once for the existing initial user or accepts
+`--bootstrap-user USER`. OpenSSH automatically uses host configuration, the SSH agent, and
+standard keys; only when the server offers it does password login remain a fallback. A
+specific VPS key can be forced with `--bootstrap-identity-file FILE`; then
+`IdentitiesOnly=yes` and `BatchMode=yes` are enabled and there is no password prompt. An
+initial VPS account named `root` is used directly; other initial users run the provisioner
+through `sudo`. Through this explicitly approved connection, the dispatcher transfers only
+the provisioner and public key, creates `rbfadmin`, reloads the verified SSH configuration,
+and verifies key-only access. The same `deploy.sh` invocation then continues with build,
+transfer, and installation. The initial user is stored in no origin profile and is not used
+for later updates.
 
-Beispiele:
+Examples:
 
 ```bash
-# VPS mit Key aus ~/.ssh/config oder SSH-Agent
+# VPS with key from ~/.ssh/config or SSH agent
 ./deploy.sh --bootstrap-user root
 
-# VPS mit explizitem Provider-Key und garantiert ohne Passwort-Fallback
+# VPS with explicit provider key and guaranteed no password fallback
 ./deploy.sh --bootstrap-user ubuntu \
   --bootstrap-identity-file ~/.ssh/provider-vps
 ```
 
-Die vollständigen First-Run-Dialoge legen den getrennten Host-Administrator und
-seinen Schlüsselzugang pro Ziel an:
+The complete first-run dialogs create the separate host administrator and its key access for
+each target:
 
 ```bash
 # Test
@@ -99,47 +92,39 @@ seinen Schlüsselzugang pro Ziel an:
 ./deploy.sh --production --configure
 ```
 
-### Migration von der bisherigen `.env.origin`
+### Migration from the former `.env.origin`
 
-Die alte Einzeldatei wird absichtlich **nicht automatisch übernommen**, weil ein
-Fallback den neuen Test-Default versehentlich auf Production zeigen lassen könnte.
-Wenn die bisherige `.env.origin` den Production-Server beschreibt, migriere sie
-einmalig bewusst:
+The old single file is deliberately **not imported automatically**, because a fallback could
+accidentally point the new test default at production. If the existing `.env.origin`
+describes the production server, migrate it once and deliberately:
 
 ```bash
 cp .env.origin .env.origin.production
 chmod 600 .env.origin.production
 cp .env.origin.test.example .env.origin.test
 chmod 600 .env.origin.test
-# anschließend Testwerte in .env.origin.test eintragen oder ./deploy.sh --configure verwenden
+# then enter test values in .env.origin.test or use ./deploy.sh --configure
 ```
 
-Danach kann die alte `.env.origin` lokal entfernt werden. Sie wird von den
-öffentlichen Deployment-/Update-Einstiegen nicht mehr als implizites Zielprofil
-verwendet.
+The old `.env.origin` can then be removed locally. Public deployment/update entry points no
+longer use it as an implicit target profile.
 
-Für nicht-interaktive Provider-Zugänge stehen zusätzlich `--bootstrap-user`
-und `--bootstrap-identity-file` zur Verfügung. Der interne
-`infrastructure/setup.sh`-Runner ist kein öffentlicher Deployment-Einstieg.
+For non-interactive provider access, `--bootstrap-user` and `--bootstrap-identity-file` are
+also available. The internal `infrastructure/setup.sh` runner is not a public deployment
+entry point.
 
-Der Account ist vom Anwendungsadministrator getrennt, erhält keinen
-Docker-Gruppenzugriff, wird per `publickey` authentifiziert und hat keinen
-Passwort-, Agent- oder Port-Forwarding-Zugriff. Der private Schlüssel bleibt
-ausschließlich beim Administrator und wird nie vom Setup gelesen oder kopiert.
-Vor einer öffentlichen SSH-Freigabe muss der neue Zugang in einer zweiten
-Sitzung getestet werden; erst danach dürfen globale Root-/Passwort-SSH-Zugänge
-deaktiviert werden.
+The account is separate from the application administrator, receives no Docker-group access,
+authenticates via `publickey`, and has no password, agent, or port-forwarding access. The
+private key remains exclusively with the administrator and is never read or copied by setup.
+Before disabling global root/password SSH access, test the new access in a second session.
 
-Der Ursprungs-Dispatcher verwendet für diesen Zugang `RBF_DEPLOY_USER` und
-`RBF_DEPLOY_IDENTITY_FILE` aus dem ausgewählten `.env.origin.test`- oder
-`.env.origin.production`-Profil (Dateimodus `0600`). Ohne explizite
-Werte wird `rbfadmin` und – sofern vorhanden – `$HOME/.ssh/rbfadmin` automatisch
-verwendet; bei einem abweichenden Zielbenutzer wird entsprechend
-`$HOME/.ssh/<zielbenutzer>` geprüft. Der private Schlüssel bleibt ausschließlich
-auf dem Ursprungsrechner. Alle SSH-/SCP-Aufrufe
-laufen mit `BatchMode=yes` und `IdentitiesOnly=yes`; bei fehlendem oder falschem
-Schlüssel wird daher sofort abgebrochen und nicht nach einem Passwort gefragt.
-Vor der Umstellung des Dispatchers den Zugang in einer zweiten Sitzung prüfen:
+The origin dispatcher uses `RBF_DEPLOY_USER` and `RBF_DEPLOY_IDENTITY_FILE` from the selected
+`.env.origin.test` or `.env.origin.production` profile (file mode `0600`). Without explicit
+values, it automatically uses `rbfadmin` and, when available, `$HOME/.ssh/rbfadmin`; for a
+different target user, `$HOME/.ssh/<target-user>` is checked accordingly. The private key
+remains exclusively on the origin machine. All SSH/SCP calls run with `BatchMode=yes` and
+`IdentitiesOnly=yes`; a missing or incorrect key therefore fails immediately rather than
+asking for a password. Before switching the dispatcher, verify access in a second session:
 
 ```bash
 ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
@@ -156,13 +141,12 @@ sudo ./setup_website.sh \
   --env /secure/rbf.env
 ```
 
-Der Ursprungs-Dispatcher führt vor der Übertragung automatisch einen Cleanup-Lauf
-nur für fehlgeschlagene oder unvollständige Releases aus. Der aktive Release wird
-niemals vor dem Backup entfernt; ein erneuter Deploy derselben bereits aktiven
-Versionsnummer wird daher sicher abgelehnt. `/srv/rbf/shared` mit Environment,
-Daten und Diagnosen bleibt erhalten.
+Before transfer, the origin dispatcher automatically performs cleanup only for failed or
+incomplete releases. The active release is never removed before the backup; redeploying the
+same already-active version is therefore rejected safely. `/srv/rbf/shared`, including
+environment, data, and diagnostics, is preserved.
 
-Der Installer:
+The installer:
 
 1. verifies outer checksum, safe archive paths and complete inventory;
 2. acquires the release lock;
@@ -192,12 +176,11 @@ override and is not part of the origin update path. Direct target-side artifact
 activation is not supported; use `./deploy.sh` for a new transfer and
 `./update.sh` for every subsequent release.
 
-Bestehende Hosts aus der früheren `/opt/rbf`-Struktur werden beim ersten
-Deployment mit dem Installer automatisch migriert. Dabei wird der Stack
-kontrolliert gestoppt, die vollständige Release-/Shared-Struktur nach `/srv/rbf`
-verschoben und systemd neu verlinkt. Der Installer bricht ab, wenn beide Roots
-gleichzeitig existieren oder `current` kein Release zeigt. Danach werden
-Artefakte nur noch unter `/tmp/rbf-release` gestaged.
+Existing hosts using the former `/opt/rbf` structure are migrated automatically by the
+installer during the first deployment. The stack is stopped in a controlled manner, the
+complete release/shared structure is moved to `/srv/rbf`, and systemd is relinked. The
+installer stops if both roots exist at the same time or `current` does not point to a release.
+Afterward, artifacts are staged only under `/tmp/rbf-release`.
 
 ## Promotion
 

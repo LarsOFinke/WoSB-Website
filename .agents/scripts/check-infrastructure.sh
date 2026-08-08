@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib/quiet-gate.sh"
 
 cd "$ROOT_DIR"
-agent_run_quiet 'Infrastrukturverträge' bash infrastructure/scripts/quality/tests/infrastructure.sh
-agent_run_quiet 'Update-/Releaseverträge' bash infrastructure/scripts/quality/tests/update-management.sh
-agent_run_quiet 'TLS-/Zielumgebungsverträge' bash infrastructure/scripts/quality/tests/tls-environment-safety.sh
-agent_run_quiet 'Repository-Hygiene' python3 infrastructure/scripts/quality/check_repository.py --strict-tree
+agent_run_quiet 'infrastructure contracts' bash infrastructure/scripts/quality/tests/infrastructure.sh
+agent_run_quiet 'update/release contracts' bash infrastructure/scripts/quality/tests/update-management.sh
+agent_run_quiet 'TLS/target-environment contracts' bash infrastructure/scripts/quality/tests/tls-environment-safety.sh
+agent_run_quiet 'repository hygiene' python3 infrastructure/scripts/quality/check_repository.py --strict-tree

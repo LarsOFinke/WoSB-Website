@@ -26,10 +26,10 @@ if (
   fail 'hostname mismatch was accepted'
 fi
 
-grep -Fq -- 'Production erfordert TLS_MODE=letsencrypt' "$ROOT_DIR/infrastructure/scripts/lib/env.sh" || fail 'production TLS mode is not enforced'
-grep -Fq -- "Production darf niemals Let's-Encrypt-Staging" "$ROOT_DIR/infrastructure/scripts/lib/env.sh" || fail 'production staging is not rejected'
+grep -Fq -- 'Production requires TLS_MODE=letsencrypt' "$ROOT_DIR/infrastructure/scripts/lib/env.sh" || fail 'production TLS mode is not enforced'
+grep -Fq -- "Production must never use Let's Encrypt staging" "$ROOT_DIR/infrastructure/scripts/lib/env.sh" || fail 'production staging is not rejected'
 grep -Eq -- '--target-environment.*target_environment' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh" || fail 'origin target is not forwarded to website setup'
 grep -Fq -- 'verify_tls_material' "$ROOT_DIR/infrastructure/scripts/tls/sync-certificate.sh" || fail 'certificate swap bypasses validation'
-grep -Fq -- 'Finalisiere öffentliches Production-TLS innerhalb der atomaren Aktivierung' "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh" || fail 'production TLS is outside activation rollback boundary'
+grep -Fq -- 'Finalize public production TLS within the atomic activation' "$ROOT_DIR/infrastructure/scripts/release/install-artifact.sh" || fail 'production TLS is outside activation rollback boundary'
 ! grep -Eq -- '127\.0\.0\.1:.*5432' "$ROOT_DIR/infrastructure/compose.release.yml" || fail 'release PostgreSQL still publishes a host port'
 printf '[tls-safety] OK: target isolation, certificate validation and release DB exposure\n'

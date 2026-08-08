@@ -1,96 +1,95 @@
-# Cached Quick Overview – Module
+# Cached Quick Overview – Modules
 
-Dieser Cache ist der schnelle Routing-Layer für Agenten. Fachlich verbindlich ist
-der [Modulkatalog](../docs/architecture/MODULE_CATALOG.md), anschließend der
-betroffene Quellcode. `bash .agents/scripts/check-cache.sh` stellt sicher, dass
-kein Modulverzeichnis in Docs oder Cache fehlt; es bewertet nicht die inhaltliche
-Richtigkeit einer Beschreibung.
+This cache is the fast routing layer for agents. The authoritative functional source is
+the [module catalog](../docs/architecture/MODULE_CATALOG.md), followed by the affected
+source code. `bash .agents/scripts/check-cache.sh` ensures no module directory is missing
+from docs or cache; it does not assess the factual accuracy of a description.
 
-## Backend in einem Blick
+## Backend at a glance
 
-| Pfad | Kurzverantwortung | Erster Prüfpunkt |
+| Path | Short responsibility | First checkpoint |
 | --- | --- | --- |
-| `spring-api/src/main/java/eu/royalblackwater/api/account/` | Auth, Session, Profil, Registrierung, Admin-Seed | `AuthService`, Bootstrap-/HTTP-Tests |
-| `spring-api/src/main/java/eu/royalblackwater/api/audit/` | datensparsames Änderungs-Audit | `AuditService`, Entität/Aktion/Feldliste |
-| `spring-api/src/main/java/eu/royalblackwater/api/builds/` | Build-Persistenz, Validierung, Berechnung, Druck | Calculator-/Contracttests |
-| `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Kalender und Events | ISO-Datumsbindung, `CalendarService` |
-| `spring-api/src/main/java/eu/royalblackwater/api/config/` | Composition, Properties, Security, Errors | `application.yml`, Start-/Bindingfehler |
-| `spring-api/src/main/java/eu/royalblackwater/api/content/` | sichere Content-Embeds | Validator plus Aufrufer |
-| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | `openapi/source/` + Assembler/DTO-Generator; generierte DTOs nie direkt editieren |
-| `spring-api/src/main/java/eu/royalblackwater/api/core/` | Health/Readiness/Kernoperationen | Health plus DB/Flyway |
-| `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Quoten, Typen, Eigentum | Storage-/Pfadgrenzen |
-| `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotte, Memberships, Rollen/Fähigkeiten | AccessPolicy und Bootstrap-Membership |
-| `spring-api/src/main/java/eu/royalblackwater/api/forum/` | Threads, Posts, Attachments | Eigentum/Moderation |
-| `spring-api/src/main/java/eu/royalblackwater/api/groups/` | Gruppen und Mitglieder | `GroupService` |
-| `spring-api/src/main/java/eu/royalblackwater/api/guides/` | Guides, Referenzen, Markdown | Service plus Print/Sanitizing |
-| `spring-api/src/main/java/eu/royalblackwater/api/legal/` | Impressum öffentlich/admin | Publish-Status und Properties |
-| `spring-api/src/main/java/eu/royalblackwater/api/masterdata/` | Seed, Overrides, Stammdaten | Seeder-/Mapper-/PostgreSQL-Tests |
-| `spring-api/src/main/java/eu/royalblackwater/api/onboarding/` | Newcomer-Guide | Blocksortierung/Embed-Validierung |
-| `spring-api/src/main/java/eu/royalblackwater/api/operations/` | Backup-/Update-Inbox | Control-Datei und Host-Runner |
-| `spring-api/src/main/java/eu/royalblackwater/api/persistence/` | JDBC-/Typ-Helfer | Nullparameter und `RowValues` |
-| `spring-api/src/main/java/eu/royalblackwater/api/privacy/` | Consent, Export, Anträge, Löschung/Retention | `PrivacyIntegrationTest`, keine Schlüssel loggen |
-| `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | externe Eventzustellung | Policy, Worker, Deliverystatus |
-| `spring-api/src/main/java/eu/royalblackwater/api/security/` | Session, CSRF, Host/Origin, Kryptografie | 401/403/CSRF separat prüfen |
-| `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Sperrsignale/IP-Blocks/Dashboard | Aggregation, `RowValues.date` |
-| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | gemeinsame Web-/Filter-/Mapper-Helfer | keine Fachlogik, mehrere Verbraucher |
-| `spring-api/src/main/java/eu/royalblackwater/api/ships/` | lesender Schiffskatalog | Query/Filter/Taxonomie |
-| `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squad/Roster auf Fleet-Membership | Fleet-ID, Status, Capability |
-| `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Webhook-Policy und Zustellung | Scope/Event/verschlüsseltes Secret |
+| `spring-api/src/main/java/eu/royalblackwater/api/account/` | auth, session, profile, registration, admin seed | `AuthService`, bootstrap/HTTP tests |
+| `spring-api/src/main/java/eu/royalblackwater/api/audit/` | data-minimized change audit | `AuditService`, entity/action/field list |
+| `spring-api/src/main/java/eu/royalblackwater/api/builds/` | build persistence, validation, calculation, print | calculator/contract tests |
+| `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | calendar and events | ISO date binding, `CalendarService` |
+| `spring-api/src/main/java/eu/royalblackwater/api/config/` | composition, properties, security, errors | `application.yml`, startup/binding failures |
+| `spring-api/src/main/java/eu/royalblackwater/api/content/` | secure content embeds | validator plus callers |
+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generated HTTP DTOs | `openapi/source/` + assembler/DTO generator; never edit generated DTOs directly |
+| `spring-api/src/main/java/eu/royalblackwater/api/core/` | health/readiness/core operations | health plus DB/Flyway |
+| `spring-api/src/main/java/eu/royalblackwater/api/files/` | uploads, quotas, types, ownership | storage/path boundaries |
+| `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | fleet, memberships, roles/capabilities | AccessPolicy and bootstrap membership |
+| `spring-api/src/main/java/eu/royalblackwater/api/forum/` | threads, posts, attachments | ownership/moderation |
+| `spring-api/src/main/java/eu/royalblackwater/api/groups/` | groups and members | `GroupService` |
+| `spring-api/src/main/java/eu/royalblackwater/api/guides/` | guides, references, Markdown | service plus print/sanitizing |
+| `spring-api/src/main/java/eu/royalblackwater/api/legal/` | public/admin legal notice | publish status and properties |
+| `spring-api/src/main/java/eu/royalblackwater/api/masterdata/` | seeds, overrides, master data | seeder/mapper/PostgreSQL tests |
+| `spring-api/src/main/java/eu/royalblackwater/api/onboarding/` | newcomer guide | block ordering/embed validation |
+| `spring-api/src/main/java/eu/royalblackwater/api/operations/` | backup/update inbox | control file and host runner |
+| `spring-api/src/main/java/eu/royalblackwater/api/persistence/` | JDBC/type helpers | null parameters and `RowValues` |
+| `spring-api/src/main/java/eu/royalblackwater/api/privacy/` | consent, export, requests, deletion/retention | `PrivacyIntegrationTest`, do not log keys |
+| `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | external event delivery | policy, worker, delivery status |
+| `spring-api/src/main/java/eu/royalblackwater/api/security/` | session, CSRF, host/origin, cryptography | test 401/403/CSRF separately |
+| `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | block signals/IP blocks/dashboard | aggregation, `RowValues.date` |
+| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | shared web/filter/mapper helpers | no business logic, multiple consumers |
+| `spring-api/src/main/java/eu/royalblackwater/api/ships/` | read-only ship catalog | query/filter/taxonomy |
+| `spring-api/src/main/java/eu/royalblackwater/api/squads/` | squad/roster on fleet membership | fleet ID, status, capability |
+| `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | webhook policy and delivery | scope/event/encrypted secret |
 
-## Frontend in einem Blick
+## Frontend at a glance
 
-Für alle Featuremodule gilt: `page -> composable -> api/domain`; Fehlerzustand im
-Composable, nicht in der Seite diagnostizieren.
+For every feature module: `page -> composable -> api/domain`; diagnose error state in
+the composable, not in the page.
 
-| Pfad | Kurzverantwortung | Erster Prüfpunkt |
+| Path | Short responsibility | First checkpoint |
 | --- | --- | --- |
-| `frontend/src/modules/accounts/` | Login, Registrierung, Profil, Privacy-Self-Service | Session/Redirect/Composable |
-| `frontend/src/modules/admin/` | Staff-/Admin-Arbeitsbereiche | aktiver Sub-Composable und Rollenmetadaten |
-| `frontend/src/modules/builds/` | Bibliothek, Designer, Berechnung, Druck | reine Domain-/Contracttests |
-| `frontend/src/modules/calendar/` | Kalender/Eventerstellung | UTC-Payload und Grid |
-| `frontend/src/modules/combat/` | lokale DPM-Analyse | Domainberechnung ohne Tipp-Requests |
-| `frontend/src/modules/files/` | Datei-API und Client-Typen | Uploadstatus, Backend bleibt autoritativ |
-| `frontend/src/modules/fleet/` | Landing, öffentlich, Verwaltung | Backend-Capabilities/Responsive |
-| `frontend/src/modules/forum/` | Threads/Posts | Composable, Eigentum, Bestätigung |
-| `frontend/src/modules/groups/` | Gruppenworkflows | Domain vs. Zustand trennen |
-| `frontend/src/modules/guides/` | Suche, Editor, Reader, Print | Sanitizing/Presentation/Responsive |
-| `frontend/src/modules/legal/` | Impressum und Editor | Publish-Status/Locale |
-| `frontend/src/modules/onboarding/` | Newcomer-Guide | Draft-/Ressourcenregeln |
-| `frontend/src/modules/privacy/` | Privacy-Center/Cookie-Banner | Retry, Payload, Fehler bleibt sichtbar |
-| `frontend/src/modules/ships/` | Schiffskatalog-Transport | Verbraucher in Builds/Combat |
-| `frontend/src/modules/squads/` | Listen, eigene Squads, Roster | Membership-ID/Managementregeln |
+| `frontend/src/modules/accounts/` | login, registration, profile, privacy self-service | session/redirect/composable |
+| `frontend/src/modules/admin/` | staff/admin workspaces | active sub-composable and role metadata |
+| `frontend/src/modules/builds/` | library, designer, calculation, print | pure domain/contract tests |
+| `frontend/src/modules/calendar/` | calendar/event creation | UTC payload and grid |
+| `frontend/src/modules/combat/` | local DPM analysis | domain calculation without typing requests |
+| `frontend/src/modules/files/` | file API and client types | upload status; backend remains authoritative |
+| `frontend/src/modules/fleet/` | landing, public, management | backend capabilities/responsive behavior |
+| `frontend/src/modules/forum/` | threads/posts | composable, ownership, confirmation |
+| `frontend/src/modules/groups/` | group workflows | separate domain from state |
+| `frontend/src/modules/guides/` | search, editor, reader, print | sanitizing/presentation/responsive behavior |
+| `frontend/src/modules/legal/` | legal notice and editor | publish status/locale |
+| `frontend/src/modules/onboarding/` | newcomer guide | draft/resource rules |
+| `frontend/src/modules/privacy/` | privacy center/cookie banner | retry, payload, keep errors visible |
+| `frontend/src/modules/ships/` | ship catalog transport | consumers in builds/combat |
+| `frontend/src/modules/squads/` | lists, own squads, roster | membership ID/management rules |
 
-Gemeinsame Bereiche: `frontend/src/assets/`, `frontend/src/config/`,
-`frontend/src/core/`, `frontend/src/locales/`, `frontend/src/router/`,
-`frontend/src/shared/` und `frontend/src/styles/`. Änderungen sind meist
-querschnittlich; Locale-Ausgaben und `dist/` bleiben generiert.
+Shared areas: `frontend/src/assets/`, `frontend/src/config/`, `frontend/src/core/`,
+`frontend/src/locales/`, `frontend/src/router/`, `frontend/src/shared/`, and
+`frontend/src/styles/`. Changes are usually cross-cutting; locale output and `dist/`
+remain generated.
 
-## Infrastruktur in einem Blick
+## Infrastructure at a glance
 
-| Pfad | Kurzverantwortung | Sicherer Einstieg |
+| Path | Short responsibility | Safe entry point |
 | --- | --- | --- |
-| `infrastructure/scripts/backup/` | Backup und Retention | Backup-/Recovery-Vertrag |
-| `infrastructure/scripts/checks/` | Readiness/Doctor | read-only prüfen |
-| `infrastructure/scripts/deployment/` | Zielinstallation/Aktivierung | Failed-Activation-Log sichern |
-| `infrastructure/scripts/diagnostics/` | Remote-Sammlung/lokale Redaktion | `debug.sh --help` |
-| `infrastructure/scripts/generation/` | deterministische Generatoren | jeweiliges `--check` |
-| `infrastructure/scripts/lib/` | gemeinsame Shell-/Host-Helfer | direkte Aufrufer und Exitcodes |
-| `infrastructure/scripts/migration/` | kontrollierte Legacy-Datenpfade | Quelle/Ziel/Recovery vorab prüfen |
-| `infrastructure/scripts/quality/` | kanonische Gates/Audits | `make validate` |
-| `infrastructure/scripts/release/` | Build, Transfer, Verify, Rollback | Origin-Wrapper und Artefaktmanifest |
-| `infrastructure/scripts/services/` | root-owned Runtime-Runner | Inbox/Status/systemd |
-| `infrastructure/scripts/setup/` | First Run | Optionen → Workflow → Composition |
-| `infrastructure/scripts/tls/` | Zertifikate | Metadaten, nie private Schlüssel ausgeben |
+| `infrastructure/scripts/backup/` | backup and retention | backup/recovery contract |
+| `infrastructure/scripts/checks/` | readiness/doctor | inspect read-only |
+| `infrastructure/scripts/deployment/` | target installation/activation | preserve failed-activation log |
+| `infrastructure/scripts/diagnostics/` | remote collection/local redaction | `debug.sh --help` |
+| `infrastructure/scripts/generation/` | deterministic generators | respective `--check` |
+| `infrastructure/scripts/lib/` | shared shell/host helpers | direct callers and exit codes |
+| `infrastructure/scripts/migration/` | controlled legacy-data paths | inspect source/target/recovery first |
+| `infrastructure/scripts/quality/` | canonical gates/audits | `make validate` |
+| `infrastructure/scripts/release/` | build, transfer, verify, rollback | origin wrapper and artifact manifest |
+| `infrastructure/scripts/services/` | root-owned runtime runners | inbox/status/systemd |
+| `infrastructure/scripts/setup/` | first run | options → workflow → composition |
+| `infrastructure/scripts/tls/` | certificates | metadata; never print private keys |
 
-## Cache-Regel
+## Cache rule
 
-Bei neuem, entferntem oder umbenanntem Modul immer:
+Whenever a module is added, removed, or renamed, run:
 
 ```bash
 bash .agents/scripts/check-cache.sh
 bash .agents/scripts/check-docs.sh
 ```
 
-Der Live-Snapshot `bash .agents/scripts/project-context.sh` zeigt
-`agent_cache_status=ok` oder `stale`. Ein grüner Bestandscheck ersetzt nicht die
-fachliche Aktualisierung dieser Kurzbeschreibung und des Modulkatalogs.
+The live snapshot from `bash .agents/scripts/project-context.sh` reports
+`agent_cache_status=ok` or `stale`. A green inventory check does not replace the
+functional maintenance of this summary and the module catalog.

@@ -8,11 +8,11 @@ source "$INFRA_DIR/scripts/backup/common.sh"
 if [[ "$EUID" -eq 0 ]]; then
   "$INFRA_DIR/scripts/checks/host-security.sh"
 else
-  warn "Host-Security-Check übersprungen; für die vollständige Prüfung sudo verwenden."
+  warn "Host security check skipped; use sudo for the complete check."
 fi
 validate_env
 bw_compose_with_profiles config >/dev/null
-success "Compose- und Umgebungs-Konfiguration sind gültig."
+success "Compose and environment configuration are valid."
 
 log "Containerstatus"
 bw_compose_with_profiles ps
@@ -21,7 +21,7 @@ log "Speicherbelegung"
 df -h "$INFRA_DIR"
 
 backup_count="$(find "$INFRA_DIR/data/backups" -mindepth 2 -type f ! -name '*.sha256' 2>/dev/null | wc -l | tr -d ' ')"
-log "Lokale Backup-Dateien: ${backup_count:-0}"
+log "Local backup files: ${backup_count:-0}"
 
 backup_health="$INFRA_DIR/data/control/status/backup-health.json"
 if [[ -f "$backup_health" ]]; then
@@ -46,39 +46,39 @@ if not backup_set:
     raise SystemExit("Backup health record has no committed backup set.")
 print(backup_set)
 PYHEALTH
-  )" || die "Backup-Health-Status ist ungültig oder veraltet."
-  [[ -f "$backup_set" ]] || die "Vom Backup-Health-Status referenziertes Set fehlt: $backup_set"
+  )" || die "Backup health status is invalid or stale."
+  [[ -f "$backup_set" ]] || die "Set referenced by backup health status is missing: $backup_set"
   manifest_root="$(backup_manifest_root)"
   python3 "$INFRA_DIR/scripts/backup/backup_set_manifest.py" validate --root "$manifest_root" "$backup_set" >/dev/null \
-    || die "Neuestes Backup-Set ist nicht vollständig oder nicht recovery-verifiziert."
-  success "Neuestes koordiniertes Backup-Set ist aktuell, vollständig und recovery-verifiziert."
+    || die "Latest backup set is incomplete or not recovery-verified."
+  success "Latest coordinated backup set is current, complete, and recovery-verified."
 else
-  warn "Es existiert noch kein maschinenlesbarer Backup-Health-Status. Führe sudo make -C infrastructure backup aus."
+  warn "No machine-readable backup health status exists yet. Run sudo make -C infrastructure backup."
 fi
 
 if is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then
   recipient="$(read_env BACKUP_AGE_RECIPIENT)"
-  [[ "$recipient" =~ ^age1[0-9a-z]{20,}$ ]]     || die "Recovery-Backup ist aktiviert, aber BACKUP_AGE_RECIPIENT ist ungültig."
+  [[ "$recipient" =~ ^age1[0-9a-z]{20,}$ ]]     || die "Recovery backup is enabled, but BACKUP_AGE_RECIPIENT is invalid."
   latest_recovery="$(find "$INFRA_DIR/data/backups/recovery" -maxdepth 1 -type f -name 'rbf-recovery-*.tar.gz.age' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)"
   if [[ -n "$latest_recovery" ]]; then
     verify_backup_checksum "$latest_recovery"
-    log "Neuestes verschlüsseltes Recovery-Bundle: $latest_recovery"
+    log "Latest encrypted recovery bundle: $latest_recovery"
   else
-    warn "Recovery-Backup ist aktiviert, aber es existiert noch kein Bundle."
+    warn "Recovery backup is enabled, but no bundle exists yet."
   fi
   export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
   export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
   if [[ -n "$export_dir" || -n "$export_user" ]]; then
-    [[ -n "$export_dir" && -n "$export_user" ]]       || die "BACKUP_PULL_EXPORT_DIR und BACKUP_PULL_EXPORT_USER müssen gemeinsam gesetzt sein."
-    [[ -d "$export_dir" ]] || warn "Pull-Export-Verzeichnis existiert noch nicht: $export_dir"
-    id "$export_user" >/dev/null 2>&1 || die "Pull-Export-Benutzer existiert nicht: $export_user"
+    [[ -n "$export_dir" && -n "$export_user" ]]       || die "BACKUP_PULL_EXPORT_DIR and BACKUP_PULL_EXPORT_USER must be set together."
+    [[ -d "$export_dir" ]] || warn "Pull export directory does not exist yet: $export_dir"
+    id "$export_user" >/dev/null 2>&1 || die "Pull export user does not exist: $export_user"
   fi
 else
-  warn "Vollständiges verschlüsseltes Disaster-Recovery ist deaktiviert."
+  warn "Complete encrypted disaster recovery is disabled."
 fi
 
 if bw_compose ps --status running api gateway postgres 2>/dev/null | grep -q .; then
   "$INFRA_DIR/scripts/checks/smoke-test.sh"
 else
-  warn "Mindestens ein Kernservice läuft nicht; Smoke-Test wurde übersprungen."
+  warn "At least one core service is not running; smoke test was skipped."
 fi

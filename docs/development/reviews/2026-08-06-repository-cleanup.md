@@ -1,89 +1,80 @@
-# Repository-Cleanup vom 6. August 2026
+# Repository Cleanup, August 6, 2026
 
-## Ziel
+## Goal
 
-Nach dem Schichten- und DTO-Refactoring wurde das Repository auf verwaiste
-Pakete, tote Klassen, leere Quellverzeichnisse, überholte Hilfsabstraktionen und
-inkonsistente Modulzuordnungen geprüft. Der Cleanup verändert keine API-Routen
-oder fachlichen Verträge, sondern schärft die bestehende Architektur:
+After the layer and DTO refactoring, the repository was reviewed for orphaned packages,
+dead classes, empty source directories, obsolete helper abstractions, and inconsistent
+module assignments. The cleanup changes no API routes or business contracts; it sharpens
+the existing architecture:
 
 ```text
 Controller -> Service -> Repository
                   |          |
                   v          v
-                Mapper <-> DTO / Entity / Datenbankzeile
+                Mapper <-> DTO / Entity / database row
 ```
 
-## Bereinigte Strukturen
+## Cleaned structures
 
-- Alle generischen Modul-`model`-Pakete wurden entfernt.
-- Interne Build- und Security-Übergabeobjekte liegen in fachlich eindeutigen
-  Modul-`dto`-Paketen.
-- Der generierte Build-Stat-Katalog liegt als serviceeigener Fachkatalog im
-  Build-Modul; der Generator schreibt direkt in dieses Zielpaket.
-- Der Masterdata-Seed-Katalog liegt in der Repository-Schicht.
-- Der Webhook-Ereigniskatalog liegt in der Service-Schicht und verwendet ein
-  internes, mapperbasiert übersetztes DTO.
-- Das leere `account/model`-Verzeichnis und alle weiteren leeren
-  Java-Quellverzeichnisse wurden entfernt.
-- Das ungenutzte `SiteRoleRepository` wurde gelöscht.
-- Zeitgebundene Refactoring-Berichte wurden unter `docs/development/reviews/`
-  zusammengeführt statt als lose Dateien im Repository-Root zu verbleiben.
+- All generic module `model` packages were removed.
+- Internal build and security transfer objects now live in functionally explicit module
+  `dto` packages.
+- The generated build-stat catalog now lives as a service-owned domain catalog in the
+  builds module; the generator writes directly into that target package.
+- The master-data seed catalog lives in the repository layer.
+- The webhook event catalog lives in the service layer and uses an internal DTO translated
+  through a mapper.
+- The empty `account/model` directory and all other empty Java source directories were removed.
+- The unused `SiteRoleRepository` was deleted.
+- Time-scoped refactoring reports were consolidated under `docs/development/reviews/`
+  instead of remaining as loose files in the repository root.
 
-## Bereinigte Codepfade
+## Cleaned code paths
 
-- Verbliebene Controller-Aufrufe des bereits entfernten generischen
-  `body(body, Type.class)`-Helpers wurden auf die typisierten Request-DTOs
-  umgestellt.
-- Tote Controller- und Parameter-Helfer wurden entfernt.
-- Der obsolete `RequestParameters`-Zwischenschritt wurde gelöscht.
-- Controller bauen typisierte Query-Parameter nicht mehr in
-  `Map<String, Object>` um. Modulfilter erhalten konkrete Werte wie `String`,
-  `Long`, `boolean`, `limit` und `offset`.
-- Überflüssige lokale `AuthenticatedUser`-Variablen wurden entfernt, wenn nur die
-  Authentifizierungsprüfung benötigt wird; `CurrentUser.require()` bleibt als
-  explizite Sicherheitsgrenze bestehen.
-- Imports und Tests wurden an die eindeutigen Paketverantwortungen angepasst.
-- Das Repository-Cleanup-Skript verwendet für Dateiartefakte keinen
-  widersprüchlichen `find -prune`/`-delete`-Pfad mehr; `make clean` beendet den
-  Hygiene-Lauf wieder zuverlässig mit Erfolg.
+- Remaining controller calls to the already-removed generic `body(body, Type.class)` helper
+  were converted to typed request DTOs.
+- Dead controller and parameter helpers were removed.
+- The obsolete `RequestParameters` intermediate step was deleted.
+- Controllers no longer convert typed query parameters into `Map<String, Object>`. Module
+  filters receive concrete values such as `String`, `Long`, `boolean`, `limit`, and `offset`.
+- Redundant local `AuthenticatedUser` variables were removed where only the authentication
+  check was needed; `CurrentUser.require()` remains as an explicit security boundary.
+- Imports and tests were adjusted to the unambiguous package responsibilities.
+- The repository cleanup script no longer uses a contradictory `find -prune`/`-delete` path
+  for file artifacts; `make clean` again completes the hygiene run reliably with success.
 
-## Neue Regression-Gates
+## New regression gates
 
-Das Spring-Architekturaudit blockiert nun zusätzlich:
+The Spring architecture audit now additionally blocks:
 
-- generische `model`-Pakete in Fachmodulen;
-- leere Java-Quellverzeichnisse;
-- den entfernten `RequestParameters`-Helper;
-- rohe Parameter-Maps und alte Body-Casts in Controllern;
-- Modul-Repositories ohne Anwendungskonsumenten.
+- generic `model` packages in business modules;
+- empty Java source directories;
+- the removed `RequestParameters` helper;
+- raw parameter maps and old body casts in controllers;
+- module repositories without application consumers.
 
-Die vorhandenen Regeln für typisierte API-Grenzen, Mapper-Verantwortung,
-Service-/Repository-Trennung, SQL-Platzierung und vollständige OpenAPI-Abdeckung
-bleiben bestehen.
+Existing rules for typed API boundaries, mapper responsibility, service/repository separation,
+SQL placement, and complete OpenAPI coverage remain in place.
 
-## Validierung
+## Validation
 
-Erfolgreich geprüft wurden:
+Successfully verified:
 
-- 177 OpenAPI-Operationen in 34 generierten API-Interfaces und 26
-  Modul-Controllern;
-- 179 generierte API-DTOs gegen den aktuellen OpenAPI-Vertrag;
-- Spring-Architekturaudit über 465 Produktions-Javaquellen;
-- Java-Syntax und internes Package-/Import-Geflecht;
-- Dokumentations-, Cache-, Infrastruktur- und Strict-Tree-Gates;
-- Recovery-Testpaket mit 8 bestandenen Tests;
-- 157 dependency-freie Frontendtests sowie die Build-Designer-Regression.
+- 177 OpenAPI operations across 34 generated API interfaces and 26 module controllers;
+- 179 generated API DTOs against the current OpenAPI contract;
+- Spring architecture audit across 465 production Java sources;
+- Java syntax and internal package/import graph;
+- documentation, cache, infrastructure, and strict-tree gates;
+- recovery test package with 8 passing tests;
+- 157 dependency-free frontend tests plus the build-designer regression.
 
-## Umgebungsgrenzen
+## Environment limits
 
-Maven war im bereitgestellten Ausführungsumfeld nicht installiert und konnte
-wegen fehlendem externem DNS-/Netzwerkzugriff nicht nachinstalliert werden.
-Deshalb wurden `mvn verify`, vollständige Spring-Kontextstarts und
-PostgreSQL-Testcontainers hier nicht ausgeführt.
+Maven was not installed in the provided execution environment and could not be installed
+because external DNS/network access was unavailable. Therefore `mvn verify`, full Spring
+context starts, and PostgreSQL Testcontainers were not run here.
 
-Der vollständige Frontend-Gate-Lauf erreicht nach den 157 dependency-freien Tests
-und der Build-Designer-Regression den SFC-Schritt, kann dort ohne installiertes
-`node_modules` beziehungsweise `@vue/compiler-sfc` jedoch nicht fortgesetzt
-werden. Generierte und ignorierte Frontend-Locale-Dateien sowie alle Python- und
-Pytest-Caches wurden vor der Auslieferung entfernt.
+The complete frontend gate reaches the SFC step after the 157 dependency-free tests and the
+build-designer regression, but cannot continue there without installed `node_modules` or
+`@vue/compiler-sfc`. Generated and ignored frontend locale files plus all Python and pytest
+caches were removed before delivery.

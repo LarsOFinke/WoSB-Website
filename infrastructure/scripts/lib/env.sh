@@ -151,7 +151,7 @@ ensure_runtime_secrets() {
   if [[ -z "$webhook_encryption_key" || "$webhook_encryption_key" == CHANGE_ME* ]]; then
     set_env_value WEBHOOK_ENCRYPTION_KEYS "$(random_fernet_key)"
     chmod 600 "$ENV_FILE"
-    log "Ein separater Schlüssel für verschlüsselte Discord-Webhook-Zugangsdaten wurde erzeugt."
+    log "A separate key for encrypted Discord webhook credentials was generated."
   fi
 }
 
@@ -161,33 +161,33 @@ validate_env() {
     [[ -z "$key" || "$key" == \#* ]] && continue
     [[ -n "$(read_env "$key")" ]] || missing+=("$key")
   done < "$INFRA_DIR/config/env/required.env.keys"
-  ((${#missing[@]} == 0)) || die "Fehlende .env-Werte: ${missing[*]}"
+  ((${#missing[@]} == 0)) || die "Missing .env values: ${missing[*]}"
 
-  [[ "$(read_env POSTGRES_PASSWORD)" != CHANGE_ME* ]] || die "POSTGRES_PASSWORD wurde nicht erzeugt."
-  [[ "$(read_env WEBHOOK_ENCRYPTION_KEYS)" != CHANGE_ME* ]] || die "WEBHOOK_ENCRYPTION_KEYS wurde nicht erzeugt."
-  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" =~ ^(true|false)$ ]] || die "FLYWAY_BASELINE_ON_MIGRATE muss true oder false sein."
-  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" == false ]] || die "Production verwendet den geprüften Cutover; baseline-on-migrate muss false bleiben."
-  [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE ist ungültig."
-  [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS muss positiv numerisch sein."
-  [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB muss positiv numerisch sein."
+  [[ "$(read_env POSTGRES_PASSWORD)" != CHANGE_ME* ]] || die "POSTGRES_PASSWORD was not generated."
+  [[ "$(read_env WEBHOOK_ENCRYPTION_KEYS)" != CHANGE_ME* ]] || die "WEBHOOK_ENCRYPTION_KEYS was not generated."
+  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" =~ ^(true|false)$ ]] || die "FLYWAY_BASELINE_ON_MIGRATE must be true or false."
+  [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" == false ]] || die "Production uses the verified cutover; baseline-on-migrate must remain false."
+  [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE is invalid."
+  [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS must be a positive number."
+  [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB must be a positive number."
 
   local tls_mode certificate_provider hostname deployment_environment
   tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"
   deployment_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
-  [[ -z "$deployment_environment" || "$deployment_environment" =~ ^(test|production)$ ]] || die "DEPLOYMENT_ENVIRONMENT muss test oder production sein."
-  [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE muss auto, letsencrypt oder self-signed sein."
-  [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER ist ungültig."
-  [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME ist ungültig."
+  [[ -z "$deployment_environment" || "$deployment_environment" =~ ^(test|production)$ ]] || die "DEPLOYMENT_ENVIRONMENT must be test or production."
+  [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE must be auto, letsencrypt, or self-signed."
+  [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER is invalid."
+  [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME is invalid."
   if [[ "$tls_mode" == letsencrypt ]]; then
-    [[ -n "$(read_env LETSENCRYPT_EMAIL)" ]] || die "TLS_MODE=letsencrypt benötigt LETSENCRYPT_EMAIL."
-    [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt benötigt einen öffentlichen Domainnamen."
+    [[ -n "$(read_env LETSENCRYPT_EMAIL)" ]] || die "TLS_MODE=letsencrypt requires LETSENCRYPT_EMAIL."
+    [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt requires a public domain name."
   fi
-  [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING muss true oder false sein."
+  [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING must be true or false."
   if [[ "$deployment_environment" == production ]]; then
-    [[ "$tls_mode" == letsencrypt ]] || die "Production erfordert TLS_MODE=letsencrypt; auto/self-signed ist dort nicht zulässig."
-    [[ "$(read_env LETSENCRYPT_STAGING)" == false ]] || die "Production darf niemals Let's-Encrypt-Staging verwenden."
-    [[ "$hostname" == *.* && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Production benötigt einen öffentlichen TLS-Hostnamen."
+    [[ "$tls_mode" == letsencrypt ]] || die "Production requires TLS_MODE=letsencrypt; auto/self-signed is not allowed there."
+    [[ "$(read_env LETSENCRYPT_STAGING)" == false ]] || die "Production must never use Let's Encrypt staging."
+    [[ "$hostname" == *.* && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Production requires a public TLS hostname."
   fi
   local retention="$(read_env BACKUP_RETENTION_DAYS)"
-  [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS muss positiv sein."
+  [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS must be positive."
 }

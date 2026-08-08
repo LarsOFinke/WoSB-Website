@@ -2,162 +2,162 @@ diff --git a/.agents/DEBUGGING_CACHE.md b/.agents/DEBUGGING_CACHE.md
 index 4a8776bb6d7818df64e82de5e5257535cbe37ec9..1afdd8ddf9d7ac019104f6cd521907e0bcccd3e1 100644
 --- a/.agents/DEBUGGING_CACHE.md
 +++ b/.agents/DEBUGGING_CACHE.md
-@@ -11,7 +11,7 @@ Arbeitskontext übernehmen.
+@@ -11,7 +11,7 @@ Adopt the working context.
  
- | Symptom | Zuerst prüfen | Danach |
+ | Symptom | Check first | Then |
  | --- | --- | --- |
 -| API 500 | zentrale `api_error`-Zeile, Methode/Pfad/Exceptiontyp | Route → operationId → `*Api`-Interface → Modul-Controller → Service → Repository/Mapper |
-+| API 500 | zentrale `api_error`-Zeile, Methode/Pfad/Exceptiontyp | Route → operationId → Modul-Controller → Service → Repository/Mapper |
- | 401 | `security_401`, Session-Cookie nur als vorhanden/nicht vorhanden | `SessionAuthenticationFilter`, aktiver User und Rollen-Fetch |
- | 403 | `security_403`, Origin-/CSRF-Merkmale | Authority, Domain-Policy, CSRF und Host/Origin getrennt |
- | 400/422 | Contractschema und `ApiExceptionHandler` | Transportbindung (400) von fachlicher Ablehnung (422) trennen |
++| API 500 | central `api_error` line, method/path/exception type | route → operationId → module controller → service → repository/mapper |
+ | 401 | `security_401`, session cookie only as present/not present | `SessionAuthenticationFilter`, active user, and role fetch |
+ | 403 | `security_403`, origin/CSRF indicators | authority, domain policy, CSRF, and host/origin separately |
+ | 400/422 | contract schema and `ApiExceptionHandler` | distinguish transport binding (400) from business rejection (422) |
 diff --git a/.agents/MODULE_CACHE.md b/.agents/MODULE_CACHE.md
 index 5b1ed47be2acb9101590ece7b6b553a4bad52d43..2de3e02de6785ce618f75243362bb8b36f25f803 100644
 --- a/.agents/MODULE_CACHE.md
 +++ b/.agents/MODULE_CACHE.md
-@@ -16,8 +16,7 @@ Richtigkeit einer Beschreibung.
- | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Kalender und Events | ISO-Datumsbindung, `CalendarService` |
- | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Composition, Properties, Security, Errors | `application.yml`, Start-/Bindingfehler |
- | `spring-api/src/main/java/eu/royalblackwater/api/content/` | sichere Content-Embeds | Validator plus Aufrufer |
--| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | generierte Spring-API-Interfaces | JSON-Vertrag/Routengenerator, nie direkt editieren |
--| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | DTO-Generator/Contract, nie direkt editieren |
-+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generierte HTTP-DTOs | `openapi/openapi.json` + DTO-Generator, nie direkt editieren |
- | `spring-api/src/main/java/eu/royalblackwater/api/core/` | Health/Readiness/Kernoperationen | Health plus DB/Flyway |
- | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Quoten, Typen, Eigentum | Storage-/Pfadgrenzen |
- | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotte, Memberships, Rollen/Fähigkeiten | AccessPolicy und Bootstrap-Membership |
+@@ -16,8 +16,7 @@ accuracy of a description.
+ | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | calendar and events | ISO date binding, `CalendarService` |
+ | `spring-api/src/main/java/eu/royalblackwater/api/config/` | composition, properties, security, errors | `application.yml`, startup/binding failures |
+ | `spring-api/src/main/java/eu/royalblackwater/api/content/` | secure content embeds | validator plus callers |
+-| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | generated Spring API interfaces | JSON contract/route generator, never edit directly |
+-| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generated HTTP DTOs | DTO generator/contract, never edit directly |
++| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generated HTTP DTOs | `openapi/openapi.json` + DTO generator, never edit directly |
+ | `spring-api/src/main/java/eu/royalblackwater/api/core/` | health/readiness/core operations | health plus DB/Flyway |
+ | `spring-api/src/main/java/eu/royalblackwater/api/files/` | uploads, quotas, types, ownership | storage/path boundaries |
+ | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | fleet, memberships, roles/capabilities | AccessPolicy and bootstrap membership |
 diff --git a/.agents/ONBOARDING.md b/.agents/ONBOARDING.md
 index 2c9eb5da2c3cddf90a9ece2ff838f0529d068b15..8ffaa8419564e095104a8a9c0c4eb682421e9702 100644
 --- a/.agents/ONBOARDING.md
 +++ b/.agents/ONBOARDING.md
-@@ -34,9 +34,10 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
- - `spring-api/` ist das einzige Backend; kein Python-Webbackend rekonstruieren.
- - Frontend: Seite orchestriert, Composable hält Ablauf/Zustand, API-Modul macht
-   Netzwerkzugriffe, Domain-Modul enthält reine Regeln.
--- Backend: OpenAPI-Vertrag -> generiertes `*Api`-Interface + API-DTO ->
--  Modul-Controller -> Service -> Repository -> PostgreSQL. Mapper übersetzen
--  ausschließlich zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
-+- Backend: OpenAPI-Spezifikation -> generiertes API-DTO -> Modul-Controller ->
-+  Service -> Repository -> PostgreSQL. Controller besitzen Spring-MVC-Bindings und
-+  validieren DTOs direkt; Mapper übersetzen ausschließlich zwischen API-/Modul-DTOs,
-+  Entities und Repository-Zeilen.
-   Fachlogik, Autorisierung und Transaktionen gehören in den Service; Controller
-   und öffentliche Service-Grenzen kennen weder Entities noch JDBC-Zeilen/Roh-Maps.
- - Schemaänderungen ausschließlich durch neue Flyway-Migrationen; veröffentlichte
-@@ -63,7 +64,7 @@ Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
- | Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
+@@ -34,9 +34,10 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
+ - `spring-api/` is the only backend; do not reconstruct a Python web backend.
+ - Frontend: the page orchestrates, the composable owns flow/state, the API module performs
+   network access, and the domain module contains pure rules.
+-- Backend: OpenAPI contract -> generated `*Api` interface + API DTO ->
+-  Module controller -> Service -> Repository -> PostgreSQL. Mappers translate
+-  only between API/module DTOs, entities, and repository rows.
++- Backend: OpenAPI specification -> generated API DTO -> module controller ->
++  Service -> Repository -> PostgreSQL. Controllers own Spring MVC bindings and
++  validate DTOs directly; mappers translate only between API/module DTOs,
++  entities and repository rows.
+   Domain logic, authorization, and transactions belong in the service; controllers
+   and public service boundaries know neither entities nor JDBC rows/raw maps.
+ - Schema changes only through new Flyway migrations; published
+@@ -63,7 +64,7 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
+ | Update/backup/DB preservation | `docs/debugging/2026-08-04-update-path-review.md` |
  | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
- | Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
--| API-Vertrag | `contracts/api-contract.json`, danach `api/dto/*`, `contract/api/*Api.java` und Modul-Controller |
-+| API-Spezifikation | `openapi/openapi.json`, danach `api/dto/*` und owning Modul-Controller |
- | API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
- | Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
- | Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
-@@ -80,8 +81,7 @@ Das Release-Artefakt verwendet eine explizite Runtime-Allowlist; `quality/` und
- `generation/` werden nicht auf das Ziel ausgeliefert. Modulgebundene Helfer unter
- `.agents/scripts/` und `frontend/scripts/` verbleiben bei ihren Eigentümern.
+ | Backend domain | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
+-| API contract | `contracts/api-contract.json`, then `api/dto/*`, `contract/api/*Api.java` and module controllers |
++| API specification | `openapi/openapi.json`, then `api/dto/*` and owning module controllers |
+ | API usage/endpoints | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
+ | Tests and gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
+ | Versioning/release class | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
+@@ -80,8 +81,7 @@ The release artifact uses an explicit runtime allowlist; `quality/` and
+ `generation/` are not shipped to the target. Module-bound helpers under
+ `.agents/scripts/` and `frontend/scripts/` remain with their owners.
  
--Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte
--Contract-Klassen, API-Interfaces und Locale-Ausgaben nicht von Hand bearbeiten.
-+Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte API-DTOs und Locale-Ausgaben nicht von Hand bearbeiten; Controller-Routen sind Modulcode und werden gegen OpenAPI auditiert.
+-For file searches, use `rg` or `rg --files` first. Generated
+-contract classes, API interfaces, and locale output must not be edited by hand.
++For file searches, use `rg` or `rg --files` first. Do not edit generated API DTOs or locale output by hand; controller routes are module code and are audited against OpenAPI.
  
- ## Bekannter stabiler Stand
+ ## Known stable state
  
 diff --git a/.agents/PROJECT_CACHE.md b/.agents/PROJECT_CACHE.md
 index 293cb2be962add60c041fe6ec750826a121e4b53..775821a506295241b5c81953dbf690bdb9355417 100644
 --- a/.agents/PROJECT_CACHE.md
 +++ b/.agents/PROJECT_CACHE.md
 @@ -37,8 +37,8 @@
- | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
- | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
- | Betrieb/Recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
--| HTTP-Vertrag | `contracts/api-contract.json` |
--| Webhooks/Build-Daten | `contracts/webhook-events.json`, `contracts/build-*.json` |
-+| HTTP-Vertrag | `openapi/openapi.json` |
-+| Webhooks/Build-Daten | `spring-api/src/main/reference/webhook-events.json`, `spring-api/src/main/reference/build-stat-catalog.json` |
+ | Broad quality cleanup | `.agents/REPOSITORY_SPRING_CLEANING.md` |
+ | Infrastructure | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
+ | Operations/recovery | `docs/deployment/OPERATIONS.md`, `docs/deployment/DISASTER_RECOVERY.md` |
+-| HTTP contract | `contracts/api-contract.json` |
+-| Webhooks/Build data | `contracts/webhook-events.json`, `contracts/build-*.json` |
++| HTTP contract | `openapi/openapi.json` |
++| Webhooks/Build data | `spring-api/src/main/reference/webhook-events.json`, `spring-api/src/main/reference/build-stat-catalog.json` |
  
- Der Dokumentationsindex ist `docs/README.md`. Änderungen an Verhalten oder
- Betriebsabläufen schließen die zugehörige Dokumentation ein.
-@@ -48,7 +48,7 @@ Betriebsabläufen schließen die zugehörige Dokumentation ein.
+ The documentation index is `docs/README.md`. Changes to behavior or operational
+ procedures include the associated documentation.
+@@ -48,7 +48,7 @@ operational workflows include the associated documentation.
  ```text
- spring-api/      alleinige Backend-Laufzeit, Security, Fachdomänen, Persistenz
- frontend/        Vue-Anwendung, Feature-Module, Lokalisierung und UI-Tests
--contracts/       versionierte HTTP-, Build-, Backup- und Webhook-Verträge
-+openapi/         versionierte externe HTTP-Spezifikation
- infrastructure/  Compose und zentrale Skriptmodule für Quality, Generation und Runtime
- tests/recovery/  sprachneutrale Recovery-/Remote-Sync-Vertragstests
- docs/            Architektur, Entwicklung, Betrieb, Referenz und Audits
-@@ -67,14 +67,15 @@ steht im `docs/architecture/MODULE_CATALOG.md`; die tokenarme Auswahl steht in
- `.agents/MODULE_CACHE.md`. Keine Modulverantwortung aus dem Verzeichnisnamen
- allein ableiten.
+ spring-api/      sole backend runtime, security, business domains, persistence
+ frontend/        Vue application, feature modules, localization, and UI tests
+-contracts/       versioned HTTP, Build, backup, and webhook contracts
++openapi/         versioned external HTTP specification
+ infrastructure/  Compose and central script modules for quality, generation, and runtime
+ tests/recovery/  language-neutral recovery/remote-sync contract tests
+ docs/            architecture, development, operations, reference, and audits
+@@ -67,14 +67,15 @@ is in `docs/architecture/MODULE_CATALOG.md`; the token-efficient selection is in
+ selection is in `.agents/MODULE_CACHE.md`. Do not infer module responsibility from
+ a directory name alone.
  
--- Composition/Querschnitt: `config`, `core`, `contract`, `operations`,
--  `persistence`, `shared`, die generierten `contract/api`-Interfaces und `api/dto`-Transportmodelle.
-+- Composition/Querschnitt: `config`, `core`, `operations`, `persistence`, `shared`
-+  und die generierten `api/dto`-Transportmodelle.
- - Fachdomänen: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
+-- Composition/cross-cutting: `config`, `core`, `contract`, `operations`,
+-  `persistence`, `shared`, the generated `contract/api` interfaces and `api/dto` transport models.
++- Composition/cross-cutting: `config`, `core`, `operations`, `persistence`, `shared`,
++  and the generated `api/dto` transport models.
+ - Business domains: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
    `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
    `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `webhooks`.
--- Generierte `contract/api/*Api`-Interfaces und `api/dto/*`-Records definieren
--  den typisierten HTTP-Transport. Genau ein Modul-Controller implementiert jedes Interface; fehlende
--  oder doppelte Implementierungen brechen das Architektur-Gate.
-+- `openapi/openapi.json` definiert den externen HTTP-Transport; generierte
-+  `api/dto/*`-Records bilden dessen Request-/Response-Typen. Modul-Controller besitzen
-+  die Spring-MVC-Bindings direkt; fehlende, doppelte oder abweichende Routen brechen
+-- Generated `contract/api/*Api` interfaces and `api/dto/*` records define
+-  the typed HTTP transport. Exactly one module controller implements each interface; missing
+-  or duplicate implementations fail the architecture gate.
++- `openapi/openapi.json` defines the external HTTP transport; generated
++  `api/dto/*` records represent its request/response types. Module controllers own
++  the Spring MVC bindings directly; missing, duplicate, or divergent routes fail
 +  `audit_controller_contract.py`.
- - Controller orchestrieren nur und kennen weder Entities noch Repositories.
-   Autorisierung, Fachlogik, Transaktionen und notwendiges Audit gehören in
-   Services; Persistenzzugriff erfolgt über Modul-Repositories. Öffentliche
-@@ -208,7 +209,7 @@ allein ableiten.
-   solange keine optionale Cookie-/Tracking-Integration aktiv ist. Manuelles Öffnen
-   bleibt über Footer und Datenschutzcenter möglich.
- - API-Nutzung und Sicherheitsgrenzen stehen in `docs/reference/API.md`; der
--  vollständige Endpunktindex wird aus `contracts/api-contract.json` nach
-+  vollständige Endpunktindex wird aus `openapi/openapi.json` nach
-   `docs/reference/API_ENDPOINTS.md` generiert.
- - Historische Audit-Snapshots werden nicht mehr als zweite Dokumentationsquelle
-   gepflegt. Aktuelle Soll-Regeln stehen ausschließlich in Architektur-,
-@@ -314,7 +315,7 @@ querschnittlichen Änderungen `make validate`.
+ - Controllers only orchestrate and know neither entities nor repositories.
+   Authorization, domain logic, transactions, and required audit belong in
+   services; persistence access goes through module repositories. Public
+@@ -208,7 +209,7 @@ infer on its own.
+   as long as no optional cookie/tracking integration is active. Manual opening
+   remains possible through the footer and privacy center.
+ - API usage and security boundaries are documented in `docs/reference/API.md`; the
+-  complete endpoint index is generated from `contracts/api-contract.json` to
++  complete endpoint index is generated from `openapi/openapi.json` to
+   `docs/reference/API_ENDPOINTS.md`.
+ - Historical audit snapshots are no longer maintained as a second documentation source
+   Current target rules live exclusively in architecture,
+@@ -314,7 +315,7 @@ cross-cutting changes, run `make validate`.
  
- ### API oder Backend-Domäne
+ ### API or backend domain
  
--1. Vertrag/Operation, API-DTO, generiertes API-Interface, Modul-Controller, Service,
-+1. OpenAPI-Operation, API-DTO, Modul-Controller, Service,
-    Repository/Mapper, Security und Audit gemeinsam verfolgen.
- 2. Erfolgs-, Fehler- und Berechtigungsfälle ergänzen; bei Listen auch Filter,
-    Grenzwerte und Query-Anzahl prüfen.
+-1. Contract/operation, API DTO, generated API interface, module controller, service,
++1. OpenAPI operation, API DTO, module controller, service,
+    trace repository/mapper, security, and audit together.
+ 2. Add success, error, and authorization cases; for lists also check filters,
+    limits, and query count.
 diff --git a/.agents/REPOSITORY_SPRING_CLEANING.md b/.agents/REPOSITORY_SPRING_CLEANING.md
 index 76bdb97d19d45156cbf5d5ae4ce0fbcf340ed31c..739c8bb8d69828e45bbbb4a756d0a5f128876b88 100644
 --- a/.agents/REPOSITORY_SPRING_CLEANING.md
 +++ b/.agents/REPOSITORY_SPRING_CLEANING.md
-@@ -38,7 +38,7 @@ Danach nur die Primärquellen des tatsächlichen Scopes lesen:
- | Gesamtqualität | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
- | Modulgrenzen | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
+@@ -38,7 +38,7 @@ Then read only the primary sources for the actual scope:
+ | Overall quality | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
+ | Module boundaries | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
  | Debugging | `docs/debugging/MODULE_DEBUGGING.md`, `.agents/DEBUGGING_CACHE.md` |
 -| Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `contracts/api-contract.json` |
 +| Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `openapi/openapi.json` |
  | Frontend/CSS | `frontend/ARCHITECTURE.md`, `docs/reference/CSS_ARCHITECTURE.md` |
- | Datenbank | `docs/development/DATABASE.md`, betroffene Migrationen und Upgrade-Tests |
- | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
-@@ -80,9 +80,9 @@ SOLID ist hier eine Entscheidungshilfe, kein Klassenzähler:
- - **Eine benennbare Verantwortung:** Transport bindet, Service entscheidet,
-   Repository persistiert, Mapper übersetzt. Frontend-Seiten komponieren,
-   Composables steuern Abläufe, API-Module transportieren, Domain-Module rechnen.
--- **Erweiterung am stabilen Vertrag:** vorhandene generierte API-Interfaces,
--  Modul-Controller, Services und Infrastruktur-Helper erweitern, statt parallele
--  Dispatch- oder Kompatibilitätspfade einzuführen.
-+- **Erweiterung am stabilen Vertrag:** die OpenAPI-Spezifikation, generierten
-+  API-DTOs, Modul-Controller, Services und Infrastruktur-Helper weiterentwickeln,
-+  statt parallele Dispatch-, Transport- oder Kompatibilitätspfade einzuführen.
- - **Austauschbarkeit:** Vererbung nur bei tatsächlich substituierbaren Typen;
-   meist sind kleine Komposition und Konstruktorinjektion klarer.
- - **Schmale Schnittstellen:** nur die Daten und Operationen übergeben, die ein
-@@ -107,7 +107,7 @@ KISS begrenzt die Umsetzung:
- Für jede betroffene Operation vom Vertrag bis zur Persistenz verfolgen:
+ | Database | `docs/development/DATABASE.md`, affected migrations and upgrade tests |
+ | Infrastructure | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
+@@ -80,9 +80,9 @@ SOLID is a decision aid here, not a class counter:
+ - **One nameable responsibility:** transport binds, service decides,
+   Repositories persist, mappers translate. Frontend pages compose,
+   composables control flows, API modules transport, and domain modules calculate.
+-- **Extension at the stable contract:** existing generated API interfaces,
+-  Extend module controllers, services, and infrastructure helpers instead of introducing parallel
+-  dispatch or compatibility paths.
++- **Extension at the stable contract:** the OpenAPI specification and generated
++  Evolve API DTOs, module controllers, services, and infrastructure helpers
++  instead of introducing parallel dispatch, transport, or compatibility paths.
+ - **Substitutability:** use inheritance only for genuinely substitutable types;
+   small composition and constructor injection are usually clearer.
+ - **Narrow interfaces:** pass only the data and operations that a
+@@ -107,7 +107,7 @@ KISS constrains the implementation:
+ For every affected operation, trace from contract to persistence:
  
  ```text
--api-contract -> generiertes API-Interface -> Modul-Controller -> Service
-+OpenAPI -> generiertes API-DTO -> Modul-Controller -> Service
-              -> Repository/Mapper -> Migration/Index -> Tests/Dokumentation
+-api-contract -> generated API interface -> module controller -> service
++OpenAPI -> generated API DTO -> module controller -> service
+              -> repository/mapper -> migration/index -> tests/documentation
  ```
  
 diff --git a/.agents/scripts/check-changes.sh b/.agents/scripts/check-changes.sh
@@ -201,39 +201,39 @@ diff --git a/README.md b/README.md
 index 57b2e560957e45df9fd30e1bffbec395cc68d7fd..3bbe9ea127a867edf8704874ee33e142fae71223 100644
 --- a/README.md
 +++ b/README.md
-@@ -9,14 +9,15 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
+@@ -9,14 +9,15 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX, and artifact-based deployment.
  Browser → NGINX → Spring Boot API → PostgreSQL
  ```
  
--Spring Security bildet die alleinige Sicherheitsgrenze. Der OpenAPI-Vertrag
--generiert typisierte `*Api`-Interfaces und immutable Request-/Response-DTOs. Die
--Fachmodule implementieren diese Verträge mit eigenen Controllern; Controller
--delegieren an Services, Repositories kapseln JDBC/JPA und SQL, und Mapper bilden
--die einzige Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und
--Repository-Zeilen. Generische `model`-Pakete, zentrale Dispatcher und
--Operation-Handler gehören nicht mehr zur Laufzeitarchitektur. Flyway besitzt das
--Schema; das frühere Python-Backend ist vollständig entfernt.
-+Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/openapi.json`
-+ist die externe HTTP-Spezifikation und erzeugt ausschließlich immutable
-+Request-/Response-DTOs. Die Modul-Controller besitzen ihre Spring-MVC-Routen und
-+validieren diese DTOs direkt; Services besitzen Fachlogik und Transaktionen,
-+Repositories kapseln JDBC/JPA und SQL, und Mapper bilden die einzige
-+Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
-+Generische `model`-/`contract`-Laufzeitschichten, zentrale Dispatcher und
-+Operation-Handler gehören nicht zur Backendarchitektur. Flyway besitzt das Schema;
-+das frühere Python-Backend ist vollständig entfernt.
+-Spring Security forms the sole security boundary. The OpenAPI contract
+-generates typed `*Api` interfaces and immutable request/response DTOs. The
+-domain modules implement these contracts with their own controllers; controllers
+-delegate to services, repositories encapsulate JDBC/JPA and SQL, and mappers form
+-the only conversion boundary between API/module DTOs, entities, and
+-repository rows. Generic `model` packages, central dispatchers, and
+-operation handlers are no longer part of the runtime architecture. Flyway owns the
+-schema; the former Python backend is fully removed.
++Spring Security forms the sole security boundary. `openapi/openapi.json`
++is the external HTTP specification and generates only immutable
++request/response DTOs. Module controllers own their Spring MVC routes and
++validate these DTOs directly; services own domain logic and transactions,
++repositories encapsulate JDBC/JPA and SQL, and mappers form the only
++conversion boundary between API/module DTOs, entities, and repository rows.
++Generic `model`/`contract` runtime layers, central dispatchers, and
++operation handlers are not part of the backend architecture. Flyway owns the schema;
++the former Python backend is fully removed.
  
- ## Lokale Entwicklung
+ ## Local development
  
-@@ -124,7 +125,7 @@ verschlüsselten Recovery-Bundle mitgeführt.
+@@ -124,7 +125,7 @@ carried in the encrypted recovery bundle.
  ```text
- spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
- frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
--contracts/       versionierter HTTP-, Build-Stat- und Webhook-Vertrag
-+openapi/         versionierte externe OpenAPI-Spezifikation
- infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
- tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
- docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
+ spring-api/      Spring Boot, Security, Flyway, MapStruct, and business domains
+ frontend/        Vue 3, modular UI, localization, and deterministic tests
+-contracts/       versioned HTTP, Build-stat, and webhook contract
++openapi/         versioned external OpenAPI specification
+ infrastructure/  Compose plus modular quality, generator, release, and runtime scripts
+ tests/           language-neutral recovery and infrastructure contract tests
+ docs/            architecture, development, and operations documentation
 diff --git a/VERSION b/VERSION
 index 90a27f9cea6e8f02e05a8bbab5d14650e3e932af..af0b7ddbffd5d5a877581ba8ba10deed158da14d 100644
 --- a/VERSION
@@ -7958,109 +7958,109 @@ diff --git a/docs/architecture/MODULE_CATALOG.md b/docs/architecture/MODULE_CATA
 index 9bb291eb85ceaaf7b913c587f819703aec52eea7..5d4371df09b6392f55cdf328a020bb15bc204de7 100644
 --- a/docs/architecture/MODULE_CATALOG.md
 +++ b/docs/architecture/MODULE_CATALOG.md
-@@ -14,10 +14,10 @@ Dokumentationsgate gleicht beide Bestände automatisch mit dem Dateisystem ab.
+@@ -14,10 +14,10 @@ The documentation gate automatically reconciles both inventories with the filesystem.
  
- Alle Backendmodule liegen unter
- `spring-api/src/main/java/eu/royalblackwater/api/`. Der normale Ablauf ist
--OpenAPI-Vertrag → generiertes API-Interface + API-DTO → Modul-Controller → Service →
--Repository → Mapper → API-/Modul-DTO. Bei API-Fehlern zuerst Route/`operationId`, implementierendes
--Interface, Controller, Service und serverseitige Berechtigungsentscheidung zusammen
--verfolgen.
-+OpenAPI-Spezifikation → generiertes API-DTO → Modul-Controller → Service →
-+Repository/Mapper → API-/Modul-DTO. Bei API-Fehlern zuerst Route/`operationId`,
-+Controller, Service und serverseitige Berechtigungsentscheidung zusammen verfolgen.
-+Die Spring-MVC-Bindings liegen direkt im Controller und werden gegen OpenAPI auditiert.
+ All backend modules live under
+ `spring-api/src/main/java/eu/royalblackwater/api/`. The normal flow is
+-OpenAPI contract → generated API interface + API DTO → module controller → service →
+-Repository → Mapper → API/module DTO. For API errors, first check route/`operationId`, implementing
+-interface, controller, service, and server-side authorization decision together
+-trace.
++OpenAPI specification → generated API DTO → module controller → service →
++Repository/mapper → API/module DTO. For API errors, first check route/`operationId`,
++trace controller, service, and server-side authorization decision together.
++Spring MVC bindings live directly in the controller and are audited against OpenAPI.
  
- | Modul | Verantwortung und Grenzen | Diagnose und zentrale Tests |
+ | Module | Responsibility and boundaries | Diagnostics and central tests |
  | --- | --- | --- |
-@@ -27,7 +27,6 @@ verfolgen.
- | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Flotten-/Squad-Kalender und Eventzugriff; Raid-Helper-Zustellung bleibt eine nachgelagerte Integration. | `CalendarService`; ISO-`date`/`date-time`-Bindung und `MethodArgumentTypeMismatchException` prüfen. |
- | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Spring-Komposition, typisierte Konfiguration, Security- und Fehlergrenzen, Scheduling. Keine Fachlogik. | `application.yml`, `SecurityConfiguration`, `ApiExceptionHandler`; Bindingfehler beim Start und zentrale `api_error`-Zeilen prüfen. |
- | `spring-api/src/main/java/eu/royalblackwater/api/content/` | Gemeinsame Validierung sicher eingebetteter Inhalte. | `ContentEmbedValidator` und aufrufende Guides-/Forum-Services; abgelehnte Schemes und Hosts gezielt testen. |
--| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | Generierte typisierte Spring-MVC-Interfaces des versionierten HTTP-Vertrags. Niemals manuell bearbeiten. | `contracts/api-contract.json`, Routengenerator-`--check`, `audit_spring_backend.py`. |
- | `spring-api/src/main/java/eu/royalblackwater/api/dto/` | Generierte Request-/Response-DTOs des HTTP-Vertrags. Fachmodulinterne Übergabe-DTOs liegen separat unter `<domain>/dto`. | DTO-Generator, Contract-Schema und DTO-Grenzprüfungen im Spring-Audit. |
- | `spring-api/src/main/java/eu/royalblackwater/api/core/` | Kleine, domänenübergreifende Kernoperationen wie Health/Readiness in Controller, Service und Repository getrennt. | `CoreController`, `CoreService` und `/api/health*`; bei Readiness zusätzlich DB und Flyway prüfen. |
- | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Inhaltsabruf, Quoten, Typ- und Eigentumsprüfung. Metadaten liegen in PostgreSQL, Binärdaten im konfigurierten Storage. | `FileAssetService`, Storage-Konfiguration und Upload-Grenztests; Pfadnormalisierung und freien Speicher prüfen. |
-@@ -44,7 +43,7 @@ verfolgen.
- | `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | Profile, Ziele, Templates, Payload-Rendering und verzögerte externe Zustellung. Fehler dürfen den Kalenderablauf nicht unkontrolliert blockieren. | `RaidHelperDeliveryWorker`, Probe-/Policy-Services und [Integrationsreferenz](../reference/RAID_HELPER_CALENDAR.md). |
- | `spring-api/src/main/java/eu/royalblackwater/api/security/` | Authenticated Principal, Sessionfilter, CSRF, Passwort- und Secret-Kryptografie sowie Host-/Origin-Grenze. | Security-Unit-Tests und `ApplicationIntegrationTest`; 401, 403 und CSRF getrennt diagnostizieren. |
- | `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Zweckgebundene aggregierte Sperrsignale, IP-Sperren und Security-Dashboard. Keine allgemeine Requesthistorie. | `SecurityDashboardServiceTest`, [Aufbewahrung](../reference/DATA_RETENTION.md); JDBC-`DATE` über `RowValues` lesen. |
--| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Schmale modulübergreifende Web-, Filter- und Mapping-Helfer ohne Fachlogik. | `ApiControllerSupport`, `ListFilter`, `ContractConversionService`; neue Helfer nur bei mehreren echten Verbrauchern. |
-+| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Schmale modulübergreifende Web-, Filter- und Mapping-Helfer ohne Fachlogik. | `ApiControllerSupport`, `ListFilter`; neue Helfer nur bei mehreren echten Verbrauchern und ohne Fachlogik. |
- | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | Lesender Schiffskatalog, Waffenklassen, Mounts und Leistungsprofile. Mutationen laufen über Stammdaten. | `ShipQueryService`, Listenfilter und Master-Data-Seedtests; Taxonomie-IDs und aktive Datensätze prüfen. |
- | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squads innerhalb einer Flotte, Roster, Rollen, Leitung und Mitgliedschaften auf Basis gültiger Fleet-Memberships. | `SquadAccessPolicyTest` und PostgreSQL-HTTP-Test; Fleet-Zugehörigkeit, Membership-Status und Rollenfähigkeit gemeinsam prüfen. |
- | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Website-Webhooks, Eventkatalog, Policy, Zustellhistorie und knappe ausgehende Hinweise. Secrets bleiben verschlüsselt. | Webhook-Policy-/Payloadtests und Lieferstatus; Zielscope, Eventtyp und redigierte Fehler prüfen. |
+@@ -27,7 +27,6 @@ trace.
+ | `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Fleet/squad calendar and event access; Raid Helper delivery remains a downstream integration. | `CalendarService`; inspect ISO `date`/`date-time` binding and `MethodArgumentTypeMismatchException`. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/config/` | Spring composition, typed configuration, security and error boundaries, scheduling. No business logic. | `application.yml`, `SecurityConfiguration`, `ApiExceptionHandler`; inspect startup binding failures and central `api_error` lines. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/content/` | Shared validation of safely embedded content. | `ContentEmbedValidator` and calling guide/forum services; test rejected schemes and hosts directly. |
+-| `spring-api/src/main/java/eu/royalblackwater/api/contract/` | Generated typed Spring MVC interfaces for the versioned HTTP contract. Never edit manually. | `contracts/api-contract.json`, route generator `--check`, `audit_spring_backend.py`. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/dto/` | Generated request/response DTOs for the HTTP contract. Domain-internal transfer DTOs live separately under `<domain>/dto`. | DTO generator, contract schema, and DTO boundary checks in the Spring audit. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/core/` | Small cross-domain core operations such as health/readiness, separated into controller, service, and repository. | `CoreController`, `CoreService`, and `/api/health*`; for readiness also inspect DB and Flyway. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/files/` | Uploads, content retrieval, quotas, type and ownership checks. Metadata lives in PostgreSQL; binary data in configured storage. | `FileAssetService`, storage configuration, and upload boundary tests; inspect path normalization and free space. |
+@@ -44,7 +43,7 @@ trace.
+ | `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | Profiles, targets, templates, payload rendering, and delayed external delivery. Failures must not block the calendar flow uncontrollably. | `RaidHelperDeliveryWorker`, probe/policy services, and [integration reference](../reference/RAID_HELPER_CALENDAR.md). |
+ | `spring-api/src/main/java/eu/royalblackwater/api/security/` | Authenticated principal, session filter, CSRF, password/secret cryptography, and host/origin boundary. | Security unit tests and `ApplicationIntegrationTest`; diagnose 401, 403, and CSRF separately. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Purpose-bound aggregate block signals, IP blocks, and security dashboard. No general request history. | `SecurityDashboardServiceTest`, [retention](../reference/DATA_RETENTION.md); read JDBC `DATE` through `RowValues`. |
+-| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Narrow cross-module web, filter, and mapping helpers without domain logic. | `ApiControllerSupport`, `ListFilter`, `ContractConversionService`; new helpers only for multiple genuine consumers. |
++| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Narrow cross-module web, filter, and mapping helpers without business logic. | `ApiControllerSupport`, `ListFilter`; add helpers only for multiple genuine consumers and without business logic. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | Read-only ship catalog, weapon classes, mounts, and performance profiles. Mutations go through master data. | `ShipQueryService`, list filters, and master-data seed tests; inspect taxonomy IDs and active records. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squads within a fleet, roster, roles, leadership, and memberships based on valid fleet memberships. | `SquadAccessPolicyTest` and PostgreSQL HTTP test; inspect fleet membership, membership status, and role capability together. |
+ | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Website webhooks, event catalog, policy, delivery history, and concise outgoing notifications. Secrets remain encrypted. | Webhook policy/payload tests and delivery status; inspect target scope, event type, and redacted error. |
 diff --git a/docs/debugging/DEPLOYMENT_INCIDENTS.md b/docs/debugging/DEPLOYMENT_INCIDENTS.md
 index ff012857e2184787636cb47b7533da6fad0aff36..aa5da520d5fbc0291692d18581de7ec2b02c2911 100644
 --- a/docs/debugging/DEPLOYMENT_INCIDENTS.md
 +++ b/docs/debugging/DEPLOYMENT_INCIDENTS.md
-@@ -205,7 +205,7 @@ den erwartbaren Bindungsfehler außerdem als unerwarteten Serverfehler ein.
- **Lösung:** Der Routengenerator versieht `date`- und `date-time`-Queryparameter
- mit explizitem ISO-Format. Ungültige Parameter liefern eine begrenzte HTTP-400-
- Antwort. Generierte Controller nicht direkt korrigieren; stets
--`infrastructure/scripts/generation/generate_spring_routes.py` ändern und neu generieren.
-+`openapi/openapi.json` und die Controller-Bindings gemeinsam korrigieren und mit `audit_controller_contract.py` prüfen.
+@@ -205,7 +205,7 @@ the expected binding error as an unexpected server error as well.
+ **Solution:** The route generator annotates `date` and `date-time` query parameters with explicit
+ ISO format. Invalid parameters return a bounded HTTP 400 response. Do not fix generated controllers
+ directly; always correct `openapi/openapi.json` and controller bindings together and verify with
+-`infrastructure/scripts/generation/generate_spring_routes.py` change and regenerate.
++`audit_controller_contract.py`.
  
- ## 14. HTTP 500 bei Master-Data-Kategorien
+ ## 14. HTTP 500 for master-data categories
  
 diff --git a/docs/debugging/MODULE_DEBUGGING.md b/docs/debugging/MODULE_DEBUGGING.md
 index ebacccc3f0c2ff1eb9bef25f4052c1c994302971..d3b48cd287443bd7b3aa4b0003a634c1b422ed75 100644
 --- a/docs/debugging/MODULE_DEBUGGING.md
 +++ b/docs/debugging/MODULE_DEBUGGING.md
-@@ -26,9 +26,9 @@ IP-Adressen oder unredigierte Datenbankauszüge.
+@@ -26,9 +26,9 @@ IP addresses or unredacted database extracts.
  
- ### API und Backend
+ ### API and backend
  
--1. Route und `operationId` in `contracts/api-contract.json` bestimmen.
--2. Generiertes `contract/api/*Api.java` nur lesen und den implementierenden
--   Modul-Controller über dessen `implements`-Klausel finden.
-+1. Route und `operationId` in `openapi/openapi.json` bestimmen.
-+2. Die Route direkt im Modul-Controller (`@*Mapping`) finden; Request-DTO,
-+   `@PathVariable`/`@RequestParam` und `@Valid @RequestBody` dort gegen OpenAPI prüfen.
- 3. Vom Controller zum Service, zur Policy und zum Repository-/Mapper-Rand verfolgen.
- 4. HTTP-Status einordnen: Transport-/Bean-Binding 400, Authentifizierung 401,
-    Autorisierung/CSRF/Origin 403, Zustandskonflikt 409, fachliche Validierung 422.
-@@ -36,7 +36,7 @@ IP-Adressen oder unredigierte Datenbankauszüge.
-    HTTP-Test gegen PostgreSQL ergänzen.
+-1. Determine the route and `operationId` in `contracts/api-contract.json` determine.
+-2. Read generated `contract/api/*Api.java` only and find the implementing
+-   module controller through its `implements` clause.
++1. Determine the route and `operationId` in `openapi/openapi.json` determine.
++2. Find the route directly in the module controller (`@*Mapping`); request DTO,
++   Check `@PathVariable`/`@RequestParam` and `@Valid @RequestBody` there against OpenAPI.
+ 3. Trace from controller to service, policy, and repository/mapper boundary.
+ 4. Classify HTTP status: transport/bean binding 400, authentication 401,
+    authorization/CSRF/origin 403, state conflict 409, domain validation 422.
+@@ -36,7 +36,7 @@ IP addresses or unredacted database extracts.
+    Add an HTTP test against PostgreSQL.
  
  ```bash
 -rg -n 'operation_id|operationId|Fehlertext' contracts spring-api/src/main/java
-+rg -n 'operation_id|operationId|Fehlertext' openapi spring-api/src/main/java
++rg -n 'operation_id|operationId|error text' openapi spring-api/src/main/java
  rg -n 'api_error|security_401|security_403' spring-api/src/main/java docs/debugging
- mvn -f spring-api/pom.xml -Dtest='<Testklasse>' test
+ mvn -f spring-api/pom.xml -Dtest='<TestClass>' test
  ```
-@@ -118,7 +118,7 @@ erste serverseitige Root Cause verfolgt:
- 2. In Surefire-/Server-Ausgabe die erste `api_error status=500`-Zeile suchen und
-    Exceptiontyp sowie den ersten eigenen Stack-Frame notieren. Nicht beim äußeren
-    Assertion-Fehler stehen bleiben.
--3. Die Route über Contract/operationId → generiertes `*Api` → Controller → Service →
-+3. Die Route über OpenAPI/operationId → Controller → Service →
-    Repository/Mapper verfolgen. Nur den tatsächlich ausgeführten Pfad untersuchen.
- 4. Bei Spring-JDBC-Fehlern die **fertig zusammengesetzte SQL-Bedeutung** prüfen:
-    Fragmentgrenzen, Named-Parameter und Bindings sowie Alias/Spalte gegen Flyway.
+@@ -118,7 +118,7 @@ trace the first server-side root cause:
+ 2. In Surefire/server output, find the first `api_error status=500` line and
+    record the exception type and first project-owned stack frame. Do not stop at the outer
+    assertion failure.
+-3. Trace the route through contract/operationId → generated `*Api` → controller → service →
++3. Trace the route through OpenAPI/operationId → controller → service → repository/mapper.
+    Investigate only the path that actually executed.
+ 4. For Spring JDBC failures, inspect the **fully composed SQL meaning**: fragment
+    boundaries, named parameters and bindings, and aliases/columns against Flyway.
 diff --git a/docs/development/DEVELOPMENT.md b/docs/development/DEVELOPMENT.md
 index 52ada593c835e1888e181b0c4e48dce0c0daefa4..6d313f625dd0c806c28bf575fd3d9b2fd353ac47 100644
 --- a/docs/development/DEVELOPMENT.md
 +++ b/docs/development/DEVELOPMENT.md
-@@ -30,13 +30,13 @@ Flyway migriert das Schema; Hibernate prüft es mit `ddl-auto=validate`.
- Backend-Änderungen folgen der aktuellen Modulgrenze:
+@@ -30,13 +30,13 @@ Flyway migrates the schema; Hibernate validates it with `ddl-auto=validate`.
+ Backend changes follow the current module boundary:
  
  ```text
--OpenAPI -> generiertes *Api-Interface + API-DTO -> Controller -> Service -> Repository
+-OpenAPI -> generated *Api interface + API DTO -> Controller -> Service -> Repository
 -                                                        |            |
 -                                                        |            +-> PostgreSQL
 -                                                        +-> Mapper <-> DTO/Entity/Row
-+OpenAPI -> generiertes API-DTO -> Controller -> Service -> Repository
++OpenAPI -> generated API DTO -> Controller -> Service -> Repository
 +                                  |            |
 +                                  |            +-> PostgreSQL
 +                                  +-> Mapper <-> DTO/Entity/Row
  ```
  
--Controller bleiben HTTP-orientiert und verwenden typisierte DTOs. Services
-+Controller besitzen die Spring-MVC-Routen, bleiben HTTP-orientiert und validieren typisierte DTOs direkt. Services
- besitzen Fachlogik, Autorisierung und Transaktionen, aber weder SQL noch rohe
- HTTP-/DB-Repräsentationen. Repositories besitzen Persistenz und Query-Kataloge;
- Mapper besitzen die Repräsentationswechsel. Fachmodulinterne Übergabeobjekte
+-Controllers remain HTTP-oriented and use typed DTOs. Services
++Controllers own the Spring MVC routes, remain HTTP-oriented, and validate typed DTOs directly. Services
+ own domain logic, authorization, and transactions, but neither SQL nor raw
+ HTTP/DB representations. Repositories own persistence and query catalogs;
+ mappers own representation changes. Domain-module-internal transfer objects
 diff --git a/docs/development/QUALITY_STANDARDS.md b/docs/development/QUALITY_STANDARDS.md
 index 9e4da3513cee3b2cf19d17f4a5640b8f422eded0..274425047e237792e43d860cb8e58ff09cc511bf 100644
 --- a/docs/development/QUALITY_STANDARDS.md
@@ -8146,93 +8146,93 @@ index 0000000000000000000000000000000000000000..bd18ce0c19a2c2a6ba0fd66aac5143e5
 --- /dev/null
 +++ b/docs/development/reviews/2026-08-07-controller-dto-transport-refactoring.md
 @@ -0,0 +1,87 @@
-+# Controller-/DTO-Transportrefactoring
++# Controller/DTO Transport Refactoring
 +
-+Datum: 2026-08-07
++Date: 2026-08-07
 +
-+## Anlass
++## Reason
 +
-+Nach der vollständigen Spring-Migration existierten noch zwei historische
-+Transportstrukturen parallel zur eigentlichen Modularchitektur:
++After the complete Spring migration, two historical transport structures still existed in parallel
++with the actual module architecture:
 +
-+- der Root-Ordner `contracts/`, der OpenAPI, Referenzdaten, Test-Fixtures und ein
-+  Backup-Protokoll ohne gemeinsamen fachlichen Owner vermischte;
-+- generierte Java-`*Api`-Interfaces unter `api/contract/api`, die zwischen
-+  OpenAPI und den Modul-Controllern eine zweite Runtime-Transportebene bildeten.
++- the root `contracts/` directory, which mixed OpenAPI, reference data, test fixtures, and a backup
++  protocol without a shared functional owner;
++- generated Java `*Api` interfaces under `api/contract/api`, which formed a second runtime transport
++  layer between OpenAPI and module controllers.
 +
-+Die Anwendung verwendet bereits immutable API-DTOs und modulare Controller,
-+Services, Mapper und Repositories. Die zusätzliche Interface-Schicht lieferte
-+keine eigene Fachverantwortung und erschwerte Navigation und Ownership.
++The application already uses immutable API DTOs and modular controllers, services, mappers, and
++repositories. The additional interface layer had no independent functional responsibility and made
++navigation and ownership harder.
 +
-+## Entscheidung
++## Decision
 +
-+Die externe HTTP-Spezifikation bleibt erhalten, ist aber **kein Backend-Layer**.
-+Sie liegt nun als `openapi/openapi.json` außerhalb der Java-Runtime-Struktur und
-+ist die kanonische Quelle für HTTP-Schema, Operationen und API-DTO-Generation.
++The external HTTP specification remains, but it is **not a backend layer**. It now lives as
++`openapi/openapi.json` outside the Java runtime structure and is the canonical source for HTTP schema,
++operations, and API DTO generation.
 +
-+Generiert werden ausschließlich API-DTOs unter
-+`spring-api/src/main/java/eu/royalblackwater/api/dto/`. Die 26 Modul-Controller
-+besitzen ihre Spring-MVC-Mappings und Bean-Validation-Bindings direkt. Ein
-+statischer Audit vergleicht alle 177 Controlleroperationen mit OpenAPI und
-+verhindert Drift.
++Only API DTOs are generated under
++`spring-api/src/main/java/eu/royalblackwater/api/dto/`. The 26 module controllers
++own their Spring MVC mappings and Bean Validation bindings directly. A
++static audit compares all 177 controller operations with OpenAPI and
++prevents drift.
 +
-+Die Runtime-Abhängigkeit lautet damit:
++The runtime dependency is therefore:
 +
 +```text
 +HTTP
 +  -> Filter / Security
-+  -> Controller (Routing + Binding + @Valid API-DTO)
-+  -> Service (Fachlogik, Policy, Transaktion)
-+  -> Repository (Persistenz)
++  -> Controller (routing + binding + @Valid API DTO)
++  -> Service (business logic, policy, transaction)
++  -> Repository (persistence)
 +
-+Mapper <-> API-/Modul-DTO / Entity / DB-Row
++Mapper <-> API/module DTO / entity / DB row
 +```
 +
-+Entities bleiben Persistenztypen. API-DTOs bleiben Transporttypen. Services
-+konstruieren keine API-Repräsentationen; diese Verantwortung liegt in expliziten
-+Mappern.
++Entities remain persistence types. API DTOs remain transport types. Services
++do not construct API representations; that responsibility lies in explicit
++mappers.
 +
-+## Entfernte Altstrukturen
++## Removed legacy structures
 +
 +- `spring-api/.../api/contract/api/*Api.java`
 +- `generate_spring_routes.py`
 +- `ContractConversionService`
-+- Root-Sammelordner `contracts/`
-+- unreferenzierte `database-metadata.json`
++- root catch-all directory `contracts/`
++- unreferenced `database-metadata.json`
 +
-+Die weiterhin benötigten Inhalte wurden ihrem Owner zugeordnet:
++Content still required was assigned to its owner:
 +
 +- OpenAPI: `openapi/openapi.json`
-+- Build-/Webhook-Referenzdaten: `spring-api/src/main/reference/`
-+- Build-Berechnungs-Fixtures: `frontend/tests/fixtures/`
-+- Backup-Protokoll: `infrastructure/scripts/backup/`
++- build/webhook reference data: `spring-api/src/main/reference/`
++- build-calculation fixtures: `frontend/tests/fixtures/`
++- backup protocol: `infrastructure/scripts/backup/`
 +
-+## Mapper-Bereinigung
++## Mapper cleanup
 +
-+Der generische `ContractConversionService` wurde entfernt. Build-, Ship-,
-+Master-Data- und Webhook-Konvertierungen sind wieder explizite, typisierte
-+Mapper. Dynamische Jackson-Konvertierung ist nur innerhalb eines konkreten
-+Mappers zulässig, wenn die Quelle selbst bewusst dynamisches Integrations-JSON
-+ist (z. B. Backup-Control-Status).
++The generic `ContractConversionService` was removed. Build, Ship,
++Master Data, and webhook conversions are explicit, typed
++mappers again. Dynamic Jackson conversion is allowed only inside a concrete
++mapper when the source itself intentionally contains dynamic integration JSON
++(for example backup-control status).
 +
-+## Neue Gates
++## New gates
 +
-+`audit_controller_contract.py` prüft OpenAPI gegen die tatsächlichen
-+Controllerbindungen. Zusätzlich verbietet `audit_spring_backend.py` die
-+Wiedereinführung eines Java-`contract`-Layers oder eines generischen
++`audit_controller_contract.py` checks OpenAPI against the actual
++controller bindings. In addition, `audit_spring_backend.py` forbids
++reintroducing a Java `contract` layer or a generic
 +Contract-Konvertierungsservices.
 +
-+Für API-Änderungen gilt künftig:
++For future API changes:
 +
-+1. `openapi/openapi.json` ändern;
++1. change `openapi/openapi.json`;
 +2. API-DTOs generieren;
-+3. den zuständigen Modul-Controller direkt anpassen;
-+4. Controller-/OpenAPI-Audit ausführen;
-+5. Service, Mapper, Repository und Tests nur entsprechend ihrer Verantwortung
-+   ändern.
++3. adjust the responsible module controller directly;
++4. run the controller/OpenAPI audit;
++5. change service, mapper, repository, and tests only according to their responsibility
++   change them.
 +
-+Damit ist die OpenAPI-Spezifikation weiterhin ein stabiler externer Vertrag,
-+ohne als parallele Runtime-Architektur missverstanden zu werden.
++This keeps the OpenAPI specification as a stable external contract without mistaking it for a parallel
++runtime architecture.
 diff --git a/docs/integrations/webhook-templates/all-message-templates.md b/docs/integrations/webhook-templates/all-message-templates.md
 index b6befa669aee876a0e6cd4d7815a2a63aec7274c..03eb76a358a96e0d2e89c9229e522473c31b83d6 100644
 --- a/docs/integrations/webhook-templates/all-message-templates.md
@@ -9262,62 +9262,62 @@ index 413a33641b472bfdb5db4c747a58e229b1af5f11..d0ea26c68cade056a3a1e19dde3ec697
 @@ -1,35 +1,39 @@
  # Spring Boot API
  
--Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `contracts/api-contract.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
-+Die Spring-Anwendung ist das vollständige Backend des Portals. Sie implementiert alle Operationen aus `openapi/openapi.json` nativ und besitzt Authentifizierung, Autorisierung, Fachlogik, Persistenz, Flyway, Seed, Audit, Integrationen und Betriebs-APIs.
+-The Spring application is the portal’s complete backend. It implements all operations from `contracts/api-contract.json` natively and owns authentication, authorization, domain logic, persistence, Flyway, seeding, audit, integrations, and operational APIs.
++The Spring application is the portal’s complete backend. It implements all operations from `openapi/openapi.json` natively and owns authentication, authorization, domain logic, persistence, Flyway, seeding, audit, integrations, and operational APIs.
  
- Die Nutzung, Cookie-/CSRF-Sicherheitsgrenze, Fehlersemantik und der generierte
- Endpunktindex sind unter `docs/reference/API.md` dokumentiert.
+ Usage, the cookie/CSRF security boundary, error semantics, and the generated
+ endpoint index are documented under `docs/reference/API.md`.
  
- ## Modularchitektur
+ ## Module Architecture
  
--Der HTTP-Vertrag wird als typisierte Interfaces unter `contract/api/` und als
--Transport-DTOs unter `api/dto/` generiert. Jedes Fachmodul implementiert die
--zugehörigen Interfaces mit eigenen Controllern und gliedert seinen Code in
--`controller`, `filter`, `service`, `mapper`, `dto`, `entity` und `repository`.
--Generische `model`-Pakete sind verboten. Modulinterne DTOs kapseln Übergaben zu
--Integrationen oder komplexen Fachabläufen; sie ersetzen keine generierten API-DTOs.
+-The HTTP contract is generated as typed interfaces under `contract/api/` and as
+-transport DTOs generated under `api/dto/`. Each domain module implements the
+-associated interfaces with its own controllers and organizes its code into
+-`controller`, `filter`, `service`, `mapper`, `dto`, `entity`, and `repository`.
+-Generic `model` packages are forbidden. Module-internal DTOs encapsulate handoffs to
+-integrations or complex domain workflows; they do not replace generated API DTOs.
 -
--Controller implementieren die generierten `*Api`-Interfaces, binden ausschließlich
--typisierte Request-/Response-DTOs und delegieren fachliche Arbeit an Services.
--Öffentliche Service-Grenzen geben keine Entities, JDBC-Zeilen oder
--`Map<String,Object>` weiter. Mapper sind die einzige Stelle für
--Entity-/Zeilen-/DTO-Konvertierung. Repositories kapseln Persistenz; SQL-Definitionen
--liegen innerhalb der jeweiligen Repository-Schicht unter `repository/queries`.
--Services enthalten weder SQL-Literale noch Zugriffe auf den generischen JDBC-Executor.
--Es gibt keinen zentralen Dispatcher und keine Operation-Handler.
-+`openapi/openapi.json` ist die externe HTTP-Spezifikation. Daraus werden nur die
-+Transport-DTOs unter `api/dto/` generiert. Die Spring-MVC-Bindings liegen bewusst
-+direkt in den Modul-Controllern: `@GetMapping`/`@PostMapping`,
-+`@PathVariable`, `@RequestParam` sowie `@Valid @RequestBody` sind Controller-
-+Verantwortung und werden mit `audit_controller_contract.py` gegen OpenAPI geprüft.
+-Controllers implement the generated `*Api` interfaces, bind only
+-typed request/response DTOs, and delegate domain work to services.
+-Public service boundaries expose no entities, JDBC rows, or
+-`Map<String,Object>`. Mappers are the only place for
+-entity/row/DTO conversion. Repositories encapsulate persistence; SQL definitions
+-live within the respective repository layer under `repository/queries`.
+-Services contain neither SQL literals nor access to the generic JDBC executor.
+-There is no central dispatcher and no operation handlers.
++`openapi/openapi.json` is the external HTTP specification. Only the
++transport DTOs generated under `api/dto/`. The Spring MVC bindings deliberately live
++directly in the module controllers: `@GetMapping`/`@PostMapping`,
++`@PathVariable`, `@RequestParam`, and `@Valid @RequestBody` are controller
++responsibilities and are checked against OpenAPI with `audit_controller_contract.py`.
 +
-+Jedes Fachmodul gliedert seinen Code nach Bedarf in `controller`, `filter`,
-+`service`, `mapper`, `dto`, `entity` und `repository`. Generische `model`- oder
-+`contract`-Pakete sind verboten. Modulinterne DTOs kapseln typisierte Übergaben
-+für Fachabläufe; API-DTOs bilden ausschließlich den HTTP-Rand.
++Each domain module organizes its code as needed into `controller`, `filter`,
++`service`, `mapper`, `dto`, `entity`, and `repository`. Generic `model` or
++`contract` packages are forbidden. Module-internal DTOs encapsulate typed handoffs
++for domain workflows; API DTOs represent only the HTTP boundary.
 +
-+Controller sind HTTP-orientiert, validieren typisierte Request-DTOs und delegieren
-+fachliche Arbeit an Services. Öffentliche Service-Grenzen geben keine Entities,
-+JDBC-Zeilen oder `Map<String,Object>` weiter. Mapper besitzen
-+Entity-/Zeilen-/DTO-Konvertierung; generische ObjectMapper-basierte
-+"Contract-Conversion" ist kein Anwendungs-Layer. Repositories kapseln Persistenz;
-+SQL-Definitionen liegen innerhalb der jeweiligen Repository-Schicht unter
-+`repository/queries`. Services enthalten weder SQL-Literale noch Zugriffe auf den
-+generischen JDBC-Executor.
++Controllers are HTTP-oriented, validate typed request DTOs, and delegate
++domain work to services. Public service boundaries expose no entities,
++JDBC rows or `Map<String,Object>`. Mappers own
++Entity-/Zeilen-/DTO-Konvertierung; generic ObjectMapper-based
++"Contract conversion" is not an application layer. Repositories encapsulate persistence;
++SQL definitions live within the respective repository layer under
++`repository/queries`. Services contain neither SQL literals nor access to the
++generic JDBC executor.
  
- Der Laufzeitpfad ist damit bewusst eindeutig:
+ The runtime path is therefore intentionally unambiguous:
  
  ```text
  HTTP -> Filter/Security -> Controller -> Service -> Repository -> PostgreSQL
 -                                  |          |
--                                  |          +-> Mapper -> API-/Modul-DTO
--                                  +-> HTTP-Status/Header/Cookies
+-                                  |          +-> Mapper -> API/module DTO
+-                                  +-> HTTP status/headers/cookies
 +                           |           |
-+                           |           +-> Mapper <-> API-/Modul-DTO/Entity/Row
-+                           +-> DTO-Validierung + HTTP-Status/Header/Cookies
++                           |           +-> Mapper <-> API/module DTO/entity/row
++                           +-> DTO validation + HTTP status/headers/cookies
  ```
  
- Import- und Typkonsistenz werden zusätzlich im Spring-Strukturaudit geprüft;
+ Import and type consistency are additionally checked in the Spring structural audit;
 diff --git a/spring-api/pom.xml b/spring-api/pom.xml
 index 35db58205269f107e66c625cce1a5f4c32f831b9..6f81f4696f01e8d56ab764ab5474edf8e11ff5e2 100644
 --- a/spring-api/pom.xml

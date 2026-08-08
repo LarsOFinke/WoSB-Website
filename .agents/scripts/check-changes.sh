@@ -16,7 +16,7 @@ mapfile -t changed_files < <(
 )
 
 if ((${#changed_files[@]} == 0)); then
-  echo '[agent-check] Keine geänderten Dateien.'
+  echo '[agent-check] No changed files.'
   exit 0
 fi
 
@@ -62,9 +62,9 @@ else
 fi
 [[ "$documentation" != true ]] || commands+=("bash .agents/scripts/check-docs.sh")
 
-printf '[agent-check] Geänderte Dateien: %d\n' "${#changed_files[@]}"
+printf '[agent-check] Changed files: %d\n' "${#changed_files[@]}"
 printf '  %s\n' "${changed_files[@]}"
-printf '[agent-check] Empfohlene Prüfungen:\n'
+printf '[agent-check] Recommended checks:\n'
 printf '  %s\n' "${commands[@]}"
 
 [[ "$run" != true ]] || for command in "${commands[@]}"; do

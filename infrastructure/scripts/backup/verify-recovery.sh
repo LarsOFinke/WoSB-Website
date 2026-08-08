@@ -13,7 +13,7 @@ while (($#)); do
       echo "Usage: $0 --identity /path/age-key.txt --bundle /path/rbf-recovery-*.tar.gz.age"
       exit 0
       ;;
-    *) die "Unbekannte Option: $1" ;;
+    *) die "Unknown option: $1" ;;
   esac
 done
 
@@ -21,9 +21,9 @@ require_command age
 require_command python3
 identity="$(realpath "$identity")"
 bundle="$(realpath "$bundle")"
-[[ -f "$identity" ]] || die "age-Identität fehlt: $identity"
-[[ -f "$bundle" ]] || die "Recovery-Bundle fehlt: $bundle"
-[[ -f "${bundle}.sha256" ]] || die "Recovery-Prüfsumme fehlt: ${bundle}.sha256"
+[[ -f "$identity" ]] || die "age identity is missing: $identity"
+[[ -f "$bundle" ]] || die "Recovery bundle is missing: $bundle"
+[[ -f "${bundle}.sha256" ]] || die "Recovery checksum is missing: ${bundle}.sha256"
 verify_backup_checksum "$bundle"
 
 temporary_dir="$(mktemp -d)"
@@ -40,10 +40,10 @@ import json
 import sys
 payload = json.loads(sys.argv[1])
 application = payload.get("application") or {}
-print("Recovery-Bundle ist vollständig und kryptografisch lesbar.")
+print("Recovery bundle is complete and cryptographically readable.")
 print(f"Schema: {payload.get('schema_version')}")
 print(f"Erstellt: {payload.get('created_at')}")
-print(f"Anwendungsversion: {application.get('version') or 'unbekannt'}")
-print(f"Git-Commit: {application.get('git_commit') or 'unbekannt'}")
-print(f"Dateien im Manifest: {len(payload.get('files') or [])}")
+print(f"Anwendungsversion: {application.get('version') or 'unknown'}")
+print(f"Git-Commit: {application.get('git_commit') or 'unknown'}")
+print(f"Files in manifest: {len(payload.get('files') or [])}")
 PY

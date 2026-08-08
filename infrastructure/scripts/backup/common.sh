@@ -5,7 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 backup_manifest_root() {
   local candidate="${RBF_INSTALL_ROOT:-}" runtime_data shared_data
   [[ -n "$candidate" ]] || candidate="$(realpath -m "$INFRA_DIR/../../..")"
-  [[ "$candidate" == /* ]] || die "Backup-Installationsroot muss absolut sein: $candidate"
+  [[ "$candidate" == /* ]] || die "Backup installation root must be absolute: $candidate"
   candidate="$(realpath -m "$candidate")"
   if [[ -d "$INFRA_DIR/data" && -d "$candidate/shared/data" ]]; then
     runtime_data="$(realpath "$INFRA_DIR/data")"
@@ -21,7 +21,7 @@ backup_manifest_root() {
 backup_finalize() {
   local output="$1" category="$2"
   require_command sha256sum
-  [[ -f "$output" && ! -L "$output" ]] || die "Backup-Artefakt fehlt oder ist kein reguläres File: $output"
+  [[ -f "$output" && ! -L "$output" ]] || die "Backup artifact is missing or is not a regular file: $output"
   local directory filename checksum
   directory="$(dirname "$output")"
   filename="$(basename "$output")"
@@ -33,30 +33,30 @@ backup_finalize() {
   chmod 600 "$output" "$checksum"
   local metadata="${output}.restore.json" metadata_checksum="${output}.restore.json.sha256"
   if [[ -f "$metadata" ]]; then
-    [[ -f "$metadata_checksum" ]] || die "Restore-Metadaten haben keine Prüfsumme: $metadata_checksum"
+    [[ -f "$metadata_checksum" ]] || die "Restore metadata has no checksum: $metadata_checksum"
     chmod 600 "$metadata" "$metadata_checksum"
     (
       cd "$directory"
       sha256sum -c "$(basename "$metadata_checksum")" >/dev/null
-    ) || die "Restore-Metadaten-Prüfsumme ist ungültig: $metadata"
+    ) || die "Restore metadata checksum is invalid: $metadata"
   fi
 
   local offsite
   offsite="$(read_env BACKUP_OFFSITE_DIR)"
   if [[ -z "$offsite" ]]; then
     if [[ -f "$INFRA_DIR/data/control/secrets/backup-remote/config.json" ]]; then
-      log "Kein lokales BACKUP_OFFSITE_DIR konfiguriert; der konfigurierte SFTP-Transfer erfolgt atomar auf Backup-Set-Ebene."
+      log "No local BACKUP_OFFSITE_DIR is configured; the configured SFTP transfer is performed atomically at backup-set level."
     else
-      warn "Weder BACKUP_OFFSITE_DIR noch ein SFTP-Backupziel ist konfiguriert; Backup bleibt ausschließlich lokal."
+      warn "Neither BACKUP_OFFSITE_DIR nor an SFTP backup target is configured; the backup remains local only."
     fi
     return 0
   fi
-  [[ "$offsite" == /* ]] || die "BACKUP_OFFSITE_DIR muss ein absoluter Pfad sein."
+  [[ "$offsite" == /* ]] || die "BACKUP_OFFSITE_DIR must be an absolute path."
   local resolved_offsite resolved_local
   resolved_offsite="$(realpath -m "$offsite")"
   resolved_local="$(realpath -m "$INFRA_DIR/data/backups")"
   [[ "$resolved_offsite" != "$resolved_local" && "$resolved_offsite" != "$resolved_local"/* ]] \
-    || die "BACKUP_OFFSITE_DIR muss außerhalb des lokalen Backup-Verzeichnisses liegen."
+    || die "BACKUP_OFFSITE_DIR must be outside the local backup directory."
 
   local destination="$resolved_offsite/$category" source target temporary
   install -d -m 0700 "$destination"
@@ -80,21 +80,21 @@ backup_finalize() {
     if [[ -f "${filename}.restore.json.sha256" ]]; then
       sha256sum -c "${filename}.restore.json.sha256" >/dev/null
     fi
-  ) || die "Offsite-Kopie konnte nicht vollständig verifiziert werden: $destination/$filename"
+  ) || die "Offsite copy could not be fully verified: $destination/$filename"
 
   local retention_days
   retention_days="$(read_env BACKUP_RETENTION_DAYS)"
   retention_days="${retention_days:-14}"
   find "$destination" -type f -mtime "+$retention_days" -delete
-  success "Atomare Offsite-Kopie mit Prüfsummen erstellt: $destination/$filename"
+  success "Atomic offsite copy with checksums created: $destination/$filename"
 }
 
 verify_backup_checksum() {
   local backup_file="$1" checksum_file="${1}.sha256"
-  [[ -f "$backup_file" && ! -L "$backup_file" ]] || die "Backup fehlt oder ist kein reguläres File: $backup_file"
-  [[ -f "$checksum_file" && ! -L "$checksum_file" ]] || die "Verpflichtende Backup-Prüfsumme fehlt: $checksum_file"
+  [[ -f "$backup_file" && ! -L "$backup_file" ]] || die "Backup is missing or is not a regular file: $backup_file"
+  [[ -f "$checksum_file" && ! -L "$checksum_file" ]] || die "Required backup checksum is missing: $checksum_file"
   (
     cd "$(dirname "$backup_file")"
     sha256sum -c "$(basename "$checksum_file")"
-  ) >/dev/null || die "Backup-Prüfsumme ist ungültig: $backup_file"
+  ) >/dev/null || die "Backup checksum is invalid: $backup_file"
 }

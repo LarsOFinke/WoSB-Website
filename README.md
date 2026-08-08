@@ -1,36 +1,35 @@
 # Royal Blackwater Fleet v1.1.0
 
-Produktionsreifes Fleet-Operations-Portal für **World of Sea Battle** mit Vue 3,
-Spring Boot 4, PostgreSQL, Flyway, NGINX und einem artefaktbasierten Deployment.
+Production-ready fleet operations portal for **World of Sea Battle** using Vue 3,
+Spring Boot 4, PostgreSQL, Flyway, NGINX, and artifact-based deployment.
 
-## Architektur in Kürze
+## Architecture at a glance
 
 ```text
 Browser → NGINX → Spring Boot API → PostgreSQL
 ```
 
-Spring Security bildet die alleinige Sicherheitsgrenze. `openapi/source/`
-ist die kanonische Autorenquelle der externen HTTP-Spezifikation; `openapi/openapi.json`
-wird daraus deterministisch für Generatoren und Werkzeuge zusammengesetzt und erzeugt ausschließlich immutable
-Request-/Response-DTOs. Die Modul-Controller besitzen ihre Spring-MVC-Routen und
-validieren diese DTOs direkt; Services besitzen Fachlogik und Transaktionen,
-Repositories kapseln JDBC/JPA und SQL, und Mapper bilden die einzige
-Konvertierungsgrenze zwischen API-/Modul-DTOs, Entities und Repository-Zeilen.
-Generische `model`-/`contract`-Laufzeitschichten, zentrale Dispatcher und
-Operation-Handler gehören nicht zur Backendarchitektur. Flyway besitzt das Schema;
-das frühere Python-Backend ist vollständig entfernt.
+Spring Security is the sole security boundary. `openapi/source/` is the canonical
+authoring source for the external HTTP specification; `openapi/openapi.json` is built
+from it deterministically for generators and tooling and generates only immutable
+request/response DTOs. Module controllers own their Spring MVC routes and validate those
+DTOs directly; services own business logic and transactions, repositories encapsulate
+JDBC/JPA and SQL, and mappers form the only conversion boundary between API/module DTOs,
+entities, and repository rows. Generic `model`/`contract` runtime layers, central
+dispatchers, and operation handlers are not part of the backend architecture. Flyway owns
+the schema; the former Python backend has been removed completely.
 
-## Lokale Entwicklung
+## Local development
 
-Voraussetzungen: Java 21, Maven 3.9+, Node.js 22, npm und PostgreSQL beziehungsweise
-Docker für die Integrationstests.
+Requirements: Java 21, Maven 3.9+, Node.js 22, npm, and PostgreSQL, or Docker for the
+integration tests.
 
 ```bash
 cp infrastructure/.env.example infrastructure/.env
 mvn -f spring-api/pom.xml spring-boot:run
 ```
 
-In einem zweiten Terminal:
+In a second terminal:
 
 ```bash
 cd frontend
@@ -39,66 +38,66 @@ npm ci
 npm run dev
 ```
 
-## Qualitätsprüfung
+## Quality checks
 
 ```bash
-make test          # schnelle deterministische Prüfungen
-make test-full     # vollständiger Java-/Frontend-/Infrastruktur-Gate
-make validate      # identisch zum vollständigen Release-Gate
-make check-tree    # sauberer Repository-Baum
+make test          # fast deterministic checks
+make test-full     # complete Java/frontend/infrastructure gate
+make validate      # identical to the complete release gate
+make check-tree    # clean repository tree
 ```
 
-Ein Release gilt nur dann als auslieferbar, wenn Maven-Kompilierung, Spring- und
-PostgreSQL-Integrationstests, Frontend-Tests und Produktionsbuild sowie die
-Infrastruktur- und Recovery-Vertragstests erfolgreich waren.
+A release is considered deliverable only when Maven compilation, Spring and PostgreSQL
+integration tests, frontend tests and production build, plus the infrastructure and
+recovery contract tests have all passed.
 
-## Release bauen und deployen
+## Build and deploy a release
 
-CI beziehungsweise eine vollständige Build-Umgebung erzeugt ein source-freies,
-prüfsummenbewehrtes Release-Artefakt:
+CI, or a complete build environment, creates a source-free, checksum-protected release
+artifact:
 
 ```bash
 bash ./infrastructure/scripts/release/build-artifact.sh
 ```
 
-Für den Ursprung-zu-Zielserver-Ablauf ist der **Testserver das sichere Standardziel**:
+For the origin-to-target-server workflow, the **test server is the safe default target**:
 
 ```bash
 ./deploy.sh
 ./update.sh
 ```
 
-Production wird ausschließlich explizit ausgewählt:
+Production is selected only explicitly:
 
 ```bash
 ./deploy.sh --production
 ./update.sh --production
 ```
 
-Der Ursprung überträgt das geprüfte Artefakt und `setup_website.sh` per SSH.
-Auf dem Zielserver verifiziert `setup_website.sh` das Paket und startet die
-atomare Installation. Test und Production besitzen getrennte, private
-Origin-Konfigurationen: `.env.origin.test` und `.env.origin.production`; Vorlagen
-sind `.env.origin.test.example` und `.env.origin.production.example`.
+The origin transfers the verified artifact and `setup_website.sh` over SSH. On the target
+server, `setup_website.sh` verifies the package and starts the atomic installation. Test
+and production use separate private origin configurations: `.env.origin.test` and
+`.env.origin.production`; templates are `.env.origin.test.example` and
+`.env.origin.production.example`.
 
-Eine neue Testmaschine wird mit `./deploy.sh --configure` eingerichtet, eine neue
-Production-Maschine nur mit `./deploy.sh --production --configure`. Spätere
-Aufrufe verwenden das jeweils ausgewählte Profil ohne private Anwendungsaccounts.
+A new test machine is configured with `./deploy.sh --configure`; a new production machine
+only with `./deploy.sh --production --configure`. Later invocations use the selected
+profile without private application accounts.
 
-Diagnostics verwenden dieselbe sichere Zielauswahl: ohne Flag Test, für
-Production ausdrücklich `--production`.
+Diagnostics use the same safe target selection: test without a flag, and explicit
+`--production` for production.
 
 ```bash
 ./infrastructure/scripts/diagnostics/debug.sh
 ./infrastructure/scripts/diagnostics/debug.sh --production --area calendar --category http-500 --since 30m
 ```
 
-Die Ausgabe wird auf dem Ursprung redigiert und lokal unter `.diagnostics/`
-gespeichert; auf dem Zielsystem entstehen keine dauerhaften Debug-Dateien.
+Output is redacted on the origin and stored locally under `.diagnostics/`; no persistent
+debug files are created on the target system.
 
-Das Zielsystem benötigt weder Git noch Maven, npm oder Zugriff auf Paketregistries.
-Es prüft das Bundle und baut nur die minimalen Runtime-Container aus dem bereits
-kompilierten Spring-Boot-JAR und dem Vue-`dist`:
+The target system needs neither Git nor Maven, npm, or access to package registries. It
+verifies the bundle and builds only the minimal runtime containers from the already
+compiled Spring Boot JAR and Vue `dist`:
 
 ```bash
 sudo ./setup_website.sh \
@@ -108,54 +107,54 @@ sudo ./setup_website.sh \
   --env /secure/rbf.env
 ```
 
-Alternativ genügt `sudo ./setup_website.sh`; dann werden Artefakt, Prüfsumme,
-Installationsroot, Environment-Datei und die Erstinstallationsbestätigung im
-Terminal abgefragt.
+Alternatively, `sudo ./setup_website.sh` is sufficient; the artifact, checksum,
+installation root, environment file, and first-installation confirmation are then
+requested in the terminal.
 
-Updates werden durch ein neues Release-Artefakt ausgelöst:
+Updates are triggered by a new release artifact:
 
 ```bash
 sudo ./update.sh --artifact /path/to/rbf-deployment-1.1.0.tar.gz
 ```
 
-`/tmp/rbf-release` dient nur als kurzlebiges Transfer-Staging. Die persistente
-Release-, Konfigurations- und Datenstruktur liegt unter `/srv/rbf`. Eine
-bestehende Installation unter `/opt/rbf` wird beim ersten Deployment automatisch
-und fail-closed nach `/srv/rbf` migriert.
+`/tmp/rbf-release` is used only as short-lived transfer staging. Persistent release,
+configuration, and data structures live under `/srv/rbf`. An existing installation under
+`/opt/rbf` is migrated automatically and fail-closed to `/srv/rbf` during the first
+deployment.
 
-Rollback, Backup und Restore wechseln Anwendung, Flyway-Schema und persistente
-Dateien kontrolliert gemeinsam. Das zum Backup gehörende Release-Artefakt wird im
-verschlüsselten Recovery-Bundle mitgeführt.
+Rollback, backup, and restore switch the application, Flyway schema, and persistent files
+together in a controlled manner. The release artifact associated with the backup is
+included in the encrypted recovery bundle.
 
-## Projektstruktur
+## Project structure
 
 ```text
-spring-api/      Spring Boot, Security, Flyway, MapStruct und Fachdomänen
-frontend/        Vue 3, modulare UI, Lokalisierung und deterministische Tests
-openapi/         modulare OpenAPI-Quellen plus generiertes Kompatibilitätsartefakt
-infrastructure/  Compose sowie modulare Quality-, Generator-, Release- und Runtime-Skripte
-tests/           sprachneutrale Recovery- und Infrastruktur-Vertragstests
-docs/            Architektur-, Entwicklungs- und Betriebsdokumentation
-.github/         CI, Release-Erstellung und Deployment-Promotion
+spring-api/      Spring Boot, Security, Flyway, MapStruct, and business domains
+frontend/        Vue 3, modular UI, localization, and deterministic tests
+openapi/         modular OpenAPI sources plus generated compatibility artifact
+infrastructure/  Compose plus modular quality, generator, release, and runtime scripts
+tests/           language-neutral recovery and infrastructure contract tests
+docs/            architecture, development, and operations documentation
+.github/         CI, release creation, and deployment promotion
 ```
 
-## Dokumentation
+## Documentation
 
-- [Architektur](docs/architecture/ARCHITECTURE.md)
-- [Qualitätsstandards](docs/development/QUALITY_STANDARDS.md)
-- [Versionierung](docs/development/VERSIONING.md)
-- [Entwicklung](docs/development/DEVELOPMENT.md)
-- [Datenbank und Flyway](docs/development/DATABASE.md)
-- [API-Nutzung und Sicherheit](docs/reference/API.md)
+- [Architecture](docs/architecture/ARCHITECTURE.md)
+- [Quality standards](docs/development/QUALITY_STANDARDS.md)
+- [Versioning](docs/development/VERSIONING.md)
+- [Development](docs/development/DEVELOPMENT.md)
+- [Database and Flyway](docs/development/DATABASE.md)
+- [API usage and security](docs/reference/API.md)
 - [Tests](docs/development/TESTING.md)
 - [Deployment](docs/deployment/DEPLOYMENT.md)
 - [Installation](docs/deployment/INSTALLATION.md)
-- [Betrieb](docs/deployment/OPERATIONS.md)
+- [Operations](docs/deployment/OPERATIONS.md)
 - [Disaster Recovery](docs/deployment/DISASTER_RECOVERY.md)
-- [Sicherheit](SECURITY.md)
-- [Änderungsverlauf](CHANGELOG.md)
-- [Agent Onboarding](.agents/ONBOARDING.md)
+- [Security](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [Agent onboarding](.agents/ONBOARDING.md)
 
-## Lizenz und Hinweise
+## License and notices
 
-Siehe [NOTICE.md](NOTICE.md).
+See [NOTICE.md](NOTICE.md).

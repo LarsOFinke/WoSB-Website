@@ -14,7 +14,7 @@ rbf_origin_select_target() {
       --production|--test)
         requested_target="${args[$index]#--}"
         if [[ -n "$target_flag_seen" && "$target_flag_seen" != "$requested_target" ]]; then
-          echo '[origin] --test und --production dürfen nicht kombiniert werden.' >&2
+          echo '[origin] --test and --production cannot be combined.' >&2
           return 2
         fi
         target_environment="$requested_target"
@@ -22,7 +22,7 @@ rbf_origin_select_target() {
         ;;
       --config)
         if ((index + 1 >= ${#args[@]})); then
-          echo '[origin] --config benötigt eine Datei.' >&2
+          echo '[origin] --config requires a file.' >&2
           return 2
         fi
         config_file="${args[$((index + 1))]}"

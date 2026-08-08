@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "systemd-Installation benötigt root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "systemd installation requires root privileges."
 require_command systemctl
 
 units=(
@@ -46,4 +46,4 @@ systemctl enable --now rbf-hub-backup.timer
 systemctl enable --now rbf-hub-backup-admin.path
 systemctl enable --now rbf-hub-cert-renew.timer
 systemctl enable --now rbf-hub-update.path
-success "RBF systemd-Startdienst sowie Backup-/TLS-/Update-Watcher wurden installiert."
+success "RBF systemd startup service and backup/TLS/update watchers were installed."

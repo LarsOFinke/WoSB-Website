@@ -1,67 +1,64 @@
-# Infrastruktur-Architektur
+# Infrastructure Architecture
 
-## Stabile Einstiegspunkte
+## Stable Entry Points
 
-Die öffentlichen Befehle liegen im übergeordneten Repository:
+The public commands live in the parent repository:
 
-- `<repo>/deploy.sh --configure` richtet den Testserver ein; Test ist das Standardziel.
-- `<repo>/deploy.sh --production --configure` richtet Production explizit ein.
-- `<repo>/deploy.sh` und `<repo>/update.sh` delegieren an den Ursprungstransfer;
-  `--production` ist für jeden Production-Lauf erforderlich.
-- `scripts/diagnostics/debug.sh` folgt derselben Zielauswahl und schreibt
-  redigierte Ausgaben lokal am Ursprung.
+- `<repo>/deploy.sh --configure` configures the test server; test is the default target.
+- `<repo>/deploy.sh --production --configure` explicitly configures production.
+- `<repo>/deploy.sh` and `<repo>/update.sh` delegate to the origin transfer;
+  `--production` is required for every production run.
+- `scripts/diagnostics/debug.sh` follows the same target selection and writes
+  redacted output locally at the origin.
 
-Die Ziele innerhalb von `infrastructure/` bleiben absichtlich bestehen. Dadurch können die
-internen Runtime- und Recovery-Abläufe versioniert und aus dem Dispatcher aufgerufen werden.
-Alle gemeinsamen Skripte liegen unter `infrastructure/scripts/`. `quality/` und
-`generation/` sind ursprungs-/CI-seitige Module; Host- und Runtime-Module werden
-über eine explizite Allowlist gepackt. Im Root bleiben nur `deploy.sh` und
-`update.sh`. Eigentümergebundene Helfer in `.agents/scripts/` und
-`frontend/scripts/` bleiben bei ihren Modulen.
+The targets inside `infrastructure/` intentionally remain in place. This allows the
+internal runtime and recovery workflows to be versioned and invoked from the dispatcher.
+All shared scripts live under `infrastructure/scripts/`. `quality/` and
+`generation/` are origin/CI-side modules; host and runtime modules are packaged
+through an explicit allowlist. Only `deploy.sh` and `update.sh` remain at the root.
+Owner-bound helpers in `.agents/scripts/` and `frontend/scripts/` remain with their modules.
 
-### Diagnosegrenze
+### Diagnostic Boundary
 
-Der Origin-Collector verwendet Host, Benutzer, Port, Installationsroot und
-Identity aus dem ausgewählten `.env.origin.test`- beziehungsweise
-`.env.origin.production`-Profil. Ohne Flag ist Test aktiv; Production verlangt
-`--production`. Er streamt den geprüften Remote-Collector per SSH an
-`sudo -n bash`, ohne ihn oder Rohlogs auf dem Ziel zu speichern. Der Remote-Teil
-liest nur systemd- und Compose-Logs beziehungsweise Dienststatus. Erst am
-Ursprung werden IP-Adressen, E-Mail-Adressen, Querywerte und Zugangsdaten
-redigiert; die begrenzte Ausgabe landet mit restriktiven Rechten unter
-`.diagnostics/` oder einem expliziten lokalen Pfad.
+The origin collector uses the host, user, port, installation root, and identity from the
+selected `.env.origin.test` or `.env.origin.production` profile. Test is active without a
+flag; production requires `--production`. It streams the verified remote collector over SSH
+to `sudo -n bash` without storing it or raw logs on the target. The remote portion reads only
+systemd and Compose logs or service status. Only at the origin are IP addresses, email
+addresses, query values, and credentials redacted; the bounded output is written with
+restrictive permissions under `.diagnostics/` or an explicit local path.
 
-## Verantwortlichkeiten
+## Responsibilities
 
-### Internes Host-Setup
+### Internal Host Setup
 
-- `setup.sh`: interner Runner für lokale Entwicklung und Artefaktinstallation;
-  kein öffentlicher Root-Wrapper.
-- `scripts/setup/options.sh`: CLI, Standardwerte und Eingabevalidierung.
-- `scripts/setup/workflow.sh`: Reihenfolge des First-Run-Setups.
-- `scripts/setup/main.sh`: Composition Root; verbindet Optionen, Host und Docker.
+- `setup.sh`: internal runner for local development and artifact installation;
+  not a public root wrapper.
+- `scripts/setup/options.sh`: CLI, defaults, and input validation.
+- `scripts/setup/workflow.sh`: first-run setup order.
+- `scripts/setup/main.sh`: composition root; connects options, host, and Docker.
 
-### Host-Provisionierung
+### Host Provisioning
 
-`scripts/lib/host.sh` ist eine kompatible Fassade. Die Implementierung ist getrennt nach:
+`scripts/lib/host.sh` is a compatible facade. The implementation is split into:
 
-- `scripts/lib/host/packages.sh`: Betriebssystempakete und Docker.
-- `scripts/lib/host/storage.sh`: Runtime-Verzeichnisse, Besitzer und Rechte.
-- `scripts/lib/host/firewall.sh`: UFW-Regeln.
-- `scripts/lib/host/tls.sh`: Bootstrap- und Let's-Encrypt-Zertifikate.
+- `scripts/lib/host/packages.sh`: operating-system packages and Docker.
+- `scripts/lib/host/storage.sh`: runtime directories, owners, and permissions.
+- `scripts/lib/host/firewall.sh`: UFW rules.
+- `scripts/lib/host/tls.sh`: bootstrap and Let's Encrypt certificates.
 
-### Quality und Generierung
+### Quality and Generation
 
-- `scripts/quality/validate.sh`: vollständiges Repository-Gate.
-- `scripts/quality/tests/`: Infrastruktur-, Update- und Diagnoseverträge.
-- `scripts/generation/`: API-Referenz, Java-Contracts/-Routen, Build-Katalog,
-  Flyway-Baseline und Webhook-Vorlagen.
+- `scripts/quality/validate.sh`: complete repository gate.
+- `scripts/quality/tests/`: infrastructure, update, and diagnostic contracts.
+- `scripts/generation/`: API reference, Java contracts/routes, Build catalog,
+  Flyway baseline, and webhook templates.
 
-### Kontrollierte Server-Aktionen
+### Controlled Server Actions
 
-- `scripts/services/update.sh`: root-owned Host-Runner für geprüfte Inbox-Artefakte sowie lokale `restart`-/`rollback`-Recovery; normale Artefakte werden weiterhin am Ursprung gebaut und übertragen.
-- `scripts/services/restart-application.sh`: startet ausschließlich API und Gateway neu, wartet auf Readiness und lässt PostgreSQL online.
+- `scripts/services/update.sh`: root-owned host runner for verified inbox artifacts and local `restart`/`rollback` recovery; normal artifacts continue to be built and transferred at the origin.
+- `scripts/services/restart-application.sh`: restarts only API and gateway, waits for readiness, and keeps PostgreSQL online.
 
-### Direct Discord channel webhooks
+### Direct Discord Channel Webhooks
 
 The API container sends selected application events directly to official Discord channel webhook URLs over the outbound network.

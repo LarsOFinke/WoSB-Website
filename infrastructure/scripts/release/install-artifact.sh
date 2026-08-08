@@ -20,7 +20,7 @@ env_source=""; no_backup=false; skip_backup=false; requested_by="cli"; interacti
 usage() {
   cat >&2 <<'USAGE'
 Usage: sudo install-artifact.sh --artifact FILE [options]
-       Ohne Flags interaktiver Installationsdialog im Terminal.
+       Without flags, an interactive installation dialog opens in the terminal.
 
 Options:
   --checksum FILE       Outer SHA-256 file (default: FILE.sha256)
@@ -34,19 +34,19 @@ USAGE
 }
 
 interactive_setup() {
-  [[ -t 0 && -t 1 ]] || { echo "[release] Ohne Flags benötigt install-artifact.sh ein interaktives Terminal." >&2; exit 2; }
+  [[ -t 0 && -t 1 ]] || { echo "[release] Without flags, install-artifact.sh requires an interactive terminal." >&2; exit 2; }
   local answer
   read -r -p "Release-Artefakt: " artifact
-  [[ -n "$artifact" ]] || { echo "[release] Ein Release-Artefakt ist erforderlich." >&2; exit 2; }
-  read -r -p "Äußere Prüfsumme [${artifact}.sha256]: " answer
+  [[ -n "$artifact" ]] || { echo "[release] A release artifact is required." >&2; exit 2; }
+  read -r -p "Outer checksum [${artifact}.sha256]: " answer
   checksum="${answer:-${artifact}.sha256}"
   answer=""
   read -r -p "Installationsroot [${install_root}]: " answer
   [[ -z "$answer" ]] || install_root="$answer"
   answer=""
-  read -r -p "Private Environment-Datei (bei Erstinstallation erforderlich): " env_source
+  read -r -p "Private environment file (required for first installation): " env_source
   answer=""
-  read -r -p "Angefordert von [interactive]: " answer
+  read -r -p "Requested by [interactive]: " answer
   requested_by="${answer:-interactive}"
 }
 
@@ -131,10 +131,10 @@ elif [[ -e "$install_root/current" ]]; then
 fi
 
 if [[ "$interactive_mode" == true && -z "$previous_release" ]]; then
-  read -r -p "Keine aktive Installation gefunden. Als Erstinstallation ohne Backup fortfahren? [j/N]: " answer
+  read -r -p "No active installation found. Continue as a first installation without a backup? [y/N]: " answer
   case "${answer,,}" in
-    j|ja|y|yes) no_backup=true ;;
-    *) die "Erstinstallation abgebrochen; ein Backup ist hier nicht möglich." ;;
+    y|yes) no_backup=true ;;
+    *) die "First installation aborted; a backup is not possible here." ;;
   esac
 fi
 
@@ -163,7 +163,7 @@ if [[ -n "$previous_release" && "$skip_backup" != true ]]; then
   [[ -f "$backup_postgres" && -f "$backup_files" && -s "$set_result" ]] \
     || die "Coordinated pre-deployment backup did not return all required artifacts."
 fi
-[[ "$skip_backup" != true ]] || echo "[release] Koordiniertes Pre-Deployment-Backup ist für diesen Lauf deaktiviert."
+[[ "$skip_backup" != true ]] || echo "[release] Coordinated pre-deployment backup is disabled for this run."
 
 rollback_failed_install() {
   local code=$?
@@ -184,7 +184,7 @@ rollback_failed_install() {
     journalctl -u rbf-hub.service -n 240 --no-pager || true
   } > "$failure_log" 2>&1 || true
   chmod 0600 "$failure_log" 2>/dev/null || true
-  echo "[release] Aktivierungsdiagnose wurde gesichert: $failure_log" >&2
+  echo "[release] Activation diagnostics were saved: $failure_log" >&2
   if [[ "$switched" == true ]]; then
     if [[ -n "$previous_release" ]]; then
       ln -sfn "$previous_release" "$install_root/.current.rollback"
@@ -291,21 +291,21 @@ mv -Tf "$install_root/.current.next" "$install_root/current"
 switched=true
 RBF_SYSTEMD_INFRA_DIR="$install_root/current/infrastructure" \
   "$install_root/current/infrastructure/scripts/deployment/install-systemd.sh"
-echo "[release] Starte rbf-hub.service neu und warte auf Spring Boot/Compose."
+echo "[release] Restarting rbf-hub.service and waiting for Spring Boot/Compose."
 timeout 120s systemctl restart rbf-hub.service
-echo "[release] Führe Readiness- und Gateway-Smoke-Test aus (max. 60 Sekunden)."
+echo "[release] Running readiness and gateway smoke tests (max. 60 seconds)."
 smoke_args=()
 [[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
 timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
 
 if [[ "$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$/, "", $2); gsub(/^"|"$/, "", $2); print $2; exit}' "$shared/.env")" == production ]]; then
-  echo "[release] Finalisiere öffentliches Production-TLS innerhalb der atomaren Aktivierung."
+  echo "[release] Finalize public production TLS within the atomic activation."
   RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
     set -Eeuo pipefail
     source "$1/scripts/lib/env.sh"
     source "$1/scripts/lib/host/tls.sh"
     configure_production_tls
-    [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production-TLS wurde nicht aktiviert."
+    [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production TLS was not activated."
     "$1/scripts/checks/smoke-test.sh"
   ' _ "$install_root/current/infrastructure"
 fi

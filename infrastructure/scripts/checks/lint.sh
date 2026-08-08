@@ -6,7 +6,7 @@ source "$INFRA_DIR/scripts/lib/common.sh"
 
 require_command bash
 
-log "Prüfe Bash-Syntax."
+log "Checking Bash syntax."
 while IFS= read -r -d '' script; do
   bash -n "$script"
 done < <(find "$INFRA_DIR" \
@@ -14,4 +14,4 @@ done < <(find "$INFRA_DIR" \
   -path "$INFRA_DIR/.git" -prune -o \
   -type f -name '*.sh' -print0)
 
-success "Statische Infrastruktur-Prüfungen erfolgreich."
+success "Static infrastructure checks succeeded."

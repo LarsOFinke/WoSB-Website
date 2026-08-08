@@ -11,7 +11,7 @@ compose_binary() {
 bw_compose() {
   ensure_env_file
   local compose
-  compose="$(compose_binary)" || die "Docker Compose wurde nicht gefunden."
+  compose="$(compose_binary)" || die "Docker Compose was not found."
   local env_files=(--env-file "$ENV_FILE")
   [[ ! -f "$RELEASE_ENV_FILE" ]] || env_files+=(--env-file "$RELEASE_ENV_FILE")
   (cd "$INFRA_DIR" && env -u POSTGRES_USER -u POSTGRES_PASSWORD -u POSTGRES_DB \
@@ -35,21 +35,21 @@ wait_for_postgres() {
     sleep 2
   done
   bw_compose logs --tail=160 postgres >&2 || true
-  die "PostgreSQL wurde nicht rechtzeitig bereit."
+  die "PostgreSQL did not become ready in time."
 }
 
 wait_for_api() {
-  log "Warte auf die Spring-Boot-Readiness."
+  log "Waiting for Spring Boot readiness."
   for attempt in $(seq 1 90); do
     if bw_compose exec -T api wget -qO- http://127.0.0.1:8080/actuator/health/readiness >/dev/null 2>&1; then
-      success "Spring Boot und PostgreSQL sind bereit."
+      success "Spring Boot and PostgreSQL are ready."
       return 0
     fi
-    (( attempt % 15 )) || log "API startet noch (${attempt}/90)."
+    (( attempt % 15 )) || log "API is still starting (${attempt}/90)."
     sleep 2
   done
   bw_compose logs --tail=160 api >&2 || true
-  die "Spring Boot wurde nicht rechtzeitig bereit."
+  die "Spring Boot did not become ready in time."
 }
 
 ensure_postgres_service() { bw_compose up -d postgres; wait_for_postgres; }
@@ -63,22 +63,22 @@ prepare_flyway_cutover() {
   local state
   state="$(postgres_sql -Atqc "select case when to_regclass(current_schema()||'.flyway_schema_history') is not null then 'flyway' when to_regclass(current_schema()||'.alembic_version') is not null then 'alembic' else 'empty' end")"
   case "$state" in
-    flyway) success "Flyway-Schemahistorie ist vorhanden." ;;
-    empty) log "Leere Datenbank; Flyway erstellt das Schema beim API-Start." ;;
+    flyway) success "Flyway schema history is present." ;;
+    empty) log "Empty database; Flyway creates the schema when the API starts." ;;
     alembic)
-      log "Verifiziere den einmaligen Alembic-0025-zu-Flyway-Cutover."
+      log "Verifying the one-time Alembic-0025-to-Flyway cutover."
       postgres_sql -f - < "$INFRA_DIR/scripts/migration/verify-alembic-head.sql"
       postgres_sql -f - < "$INFRA_DIR/scripts/migration/adopt-flyway.sql"
-      success "Bestehende Datenbank wurde kontrolliert von Alembic auf Flyway übernommen."
+      success "Existing database was migrated from Alembic to Flyway in a controlled manner."
       ;;
-    *) die "Unbekannter Datenbankschema-Zustand: $state" ;;
+    *) die "Unknown database schema state: $state" ;;
   esac
 }
 
 verify_flyway_schema() {
   local failed
   failed="$(postgres_sql -Atqc "select count(*) from flyway_schema_history where not success" 2>/dev/null || printf 1)"
-  [[ "$failed" == 0 ]] || die "Flyway-Schemahistorie enthält fehlgeschlagene Migrationen."
+  [[ "$failed" == 0 ]] || die "Flyway schema history contains failed migrations."
 }
 
 quiesce_api_for_database_update() {
@@ -103,5 +103,5 @@ deploy_stack() {
   # let Compose reconcile its dependency again: that can recreate/terminate a
   # healthy API container while bringing up the gateway (exit 143).
   bw_compose up -d --no-deps --remove-orphans gateway
-  success "Spring-Boot-Stack wurde gestartet."
+  success "Spring Boot stack was started."
 }

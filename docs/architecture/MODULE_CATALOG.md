@@ -1,116 +1,109 @@
-# Modulkatalog
+# Module Catalog
 
-Dieser Katalog ist die fachliche Navigationsquelle für alle Laufzeit- und
-Werkzeugmodule. Er beschreibt Verantwortung, wichtige Grenzen und den kürzesten
-Diagnoseeinstieg. Einzelne Klassen und Endpunkte bleiben im Quellcode und in der
-[API-Referenz](../reference/API.md) verbindlich; dieser Katalog ersetzt keine
-Detailanalyse des betroffenen Ablaufs.
+This catalog is the functional navigation source for all runtime and tooling modules.
+It describes responsibility, important boundaries, and the shortest diagnostic entry point.
+Individual classes and endpoints remain authoritative in source code and in the
+[API reference](../reference/API.md); this catalog does not replace detailed analysis
+of the affected flow.
 
-Neue Verzeichnisse unter den drei katalogisierten Modulwurzeln müssen hier und im
-[Agenten-Modulcache](../../.agents/MODULE_CACHE.md) ergänzt werden. Das
-Dokumentationsgate gleicht beide Bestände automatisch mit dem Dateisystem ab.
+New directories below the three cataloged module roots must be added here and to the
+[agent module cache](../../.agents/MODULE_CACHE.md). The documentation gate automatically
+compares both inventories with the file system.
 
-## Backend-Module
+## Backend modules
 
-Alle Backendmodule liegen unter
-`spring-api/src/main/java/eu/royalblackwater/api/`. Der normale Ablauf ist
-OpenAPI-Spezifikation → generiertes API-DTO → Modul-Controller → Service →
-Repository/Mapper → API-/Modul-DTO. Bei API-Fehlern zuerst Route/`operationId`,
-Controller, Service und serverseitige Berechtigungsentscheidung zusammen verfolgen.
-Die Spring-MVC-Bindings liegen direkt im Controller und werden gegen OpenAPI auditiert.
+All backend modules live under `spring-api/src/main/java/eu/royalblackwater/api/`.
+The normal flow is OpenAPI specification → generated API DTO → module controller →
+service → repository/mapper → API/module DTO. For API failures, trace route/`operationId`,
+controller, service, and the server-side permission decision together first. Spring MVC
+bindings live directly in the controller and are audited against OpenAPI.
 
-| Modul | Verantwortung und Grenzen | Diagnose und zentrale Tests |
+| Module | Responsibility and boundaries | Diagnostics and central tests |
 | --- | --- | --- |
-| `spring-api/src/main/java/eu/royalblackwater/api/account/` | Login, Sessions, Profile, Registrierung, Benutzerverwaltung und Bootstrap-Admin. Passwörter und Sessiontokens verlassen den Sicherheitsrand nicht. | `AuthService`, `BootstrapAdministratorInitializer`, `ApplicationIntegrationTest`; bei 401 zuerst `security_401` und Session-/Rollen-Fetch prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/audit/` | Datensparsame Historie administrativer Änderungen. Audittexte enthalten keine Payloads, Secrets oder vollständigen IP-Adressen. | `AuditService`, `AuditLogQueryService`; Entitätstyp, Akteur und geänderte Feldnamen prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/builds/` | Build-Katalog, Validierung, Berechnung, Rollen, Votes und Druckausgabe. Berechnung und Persistenz bleiben getrennt. | `BuildStatCalculatorTest`, Contract-Fixtures und Build-API-Regressionen; bei 500 Mapper- und Katalog-Snapshots prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Flotten-/Squad-Kalender und Eventzugriff; Raid-Helper-Zustellung bleibt eine nachgelagerte Integration. | `CalendarService`; ISO-`date`/`date-time`-Bindung und `MethodArgumentTypeMismatchException` prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/config/` | Spring-Komposition, typisierte Konfiguration, Security- und Fehlergrenzen, Scheduling. Keine Fachlogik. | `application.yml`, `SecurityConfiguration`, `ApiExceptionHandler`; Bindingfehler beim Start und zentrale `api_error`-Zeilen prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/content/` | Gemeinsame Validierung sicher eingebetteter Inhalte. | `ContentEmbedValidator` und aufrufende Guides-/Forum-Services; abgelehnte Schemes und Hosts gezielt testen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | Generierte Request-/Response-DTOs des HTTP-Vertrags. Fachmodulinterne Übergabe-DTOs liegen separat unter `<domain>/dto`. | DTO-Generator, Contract-Schema und DTO-Grenzprüfungen im Spring-Audit. |
-| `spring-api/src/main/java/eu/royalblackwater/api/core/` | Kleine, domänenübergreifende Kernoperationen wie Health/Readiness in Controller, Service und Repository getrennt. | `CoreController`, `CoreService` und `/api/health*`; bei Readiness zusätzlich DB und Flyway prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/files/` | Upload, Inhaltsabruf, Quoten, Typ- und Eigentumsprüfung. Metadaten liegen in PostgreSQL, Binärdaten im konfigurierten Storage. | `FileAssetService`, Storage-Konfiguration und Upload-Grenztests; Pfadnormalisierung und freien Speicher prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Flotten, Rollen, Mitgliedschaften, Führung und serverseitige Fähigkeiten. Bootstrap-Flottenleitung wird durch die Account-Initialisierung sichergestellt. | `FleetAccessPolicyTest`, `BootstrapAdministratorInitializerTest`, HTTP-Squad-Test; Rollen-Code, Status und Fleet-ID gemeinsam prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/forum/` | Threads, Beiträge, Anhänge, Eigentümer- und Moderationsoperationen. | `ForumService` und Frontend-Forumtests; bei Löschung Referenzen und Berechtigung getrennt prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/groups/` | Nutzergruppen, Mitgliedschaften, Rollen und Beitrittsabläufe außerhalb der offiziellen Flotte. | `GroupService`, Gruppen-Composables und echte Benutzerreferenzen prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/guides/` | Guide-Erstellung, Darstellung, Anhänge, Build-Referenzen und Administration. | `GuideService`, Markdown-/Printtests; Rich-Text-Sanitizing und Eigentum prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/legal/` | Veröffentlichbares Impressum und administrativer Entwurf aus typisierter Konfiguration/Persistenz. | `LegalNoticeService`, `docs/reference/LEGAL_NOTICE.md`, öffentliche und Admin-Sicht getrennt testen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/masterdata/` | Seed-Katalog, idempotente Synchronisierung, lokale Overrides und administrative Stammdatenpflege. Interne Seed-Metadaten sind kein API-Vertrag. | `SeedCatalogTest`, `MasterDataQueryServiceTest`, PostgreSQL-Integration; bei `UnrecognizedPropertyException` Mapper-Rand prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/onboarding/` | Strukturierter Newcomer-Guide mit Seiten, Blöcken und sicheren Ressourcen. | `NewcomerGuideService` und Frontend-Drafttests; Sortierung und Embed-Validierung prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/operations/` | Unprivilegierte API für Backup-/Update-Anforderungen über kontrollierte Inbox-Dateien. Führt keine Hostbefehle aus. | `ControlFileStore`, Operations-Integration und systemd-Runner; Statusdatei, Request-ID und Dateirechte prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/persistence/` | Gemeinsame JDBC-Abfragen, Nullparameter und sichere Typkonvertierung. Keine domänenspezifischen Queries sammeln. | `JdbcQueryService`, `RowValues`, `SqlParameters`; JDBC-/Java-Typen am Rand normalisieren. |
-| `spring-api/src/main/java/eu/royalblackwater/api/privacy/` | Cookie-Consent, Kontaktpostfach, Datenexport, Betroffenenanträge, Pseudonymisierung und Aufbewahrung. Keine IP/User-Agent-Erfassung im Kontaktworkflow. | `CookieConsentServiceTest`, `PrivacyServiceTest`, `PrivacyIntegrationTest`, [Aufbewahrung](../reference/DATA_RETENTION.md); Consent-Key nie ausgeben. |
-| `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | Profile, Ziele, Templates, Payload-Rendering und verzögerte externe Zustellung. Fehler dürfen den Kalenderablauf nicht unkontrolliert blockieren. | `RaidHelperDeliveryWorker`, Probe-/Policy-Services und [Integrationsreferenz](../reference/RAID_HELPER_CALENDAR.md). |
-| `spring-api/src/main/java/eu/royalblackwater/api/security/` | Authenticated Principal, Sessionfilter, CSRF, Passwort- und Secret-Kryptografie sowie Host-/Origin-Grenze. | Security-Unit-Tests und `ApplicationIntegrationTest`; 401, 403 und CSRF getrennt diagnostizieren. |
-| `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Zweckgebundene aggregierte Sperrsignale, IP-Sperren und Security-Dashboard. Keine allgemeine Requesthistorie. | `SecurityDashboardServiceTest`, [Aufbewahrung](../reference/DATA_RETENTION.md); JDBC-`DATE` über `RowValues` lesen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Schmale modulübergreifende Web-, Filter- und Mapping-Helfer ohne Fachlogik. | `ApiControllerSupport`, `ListFilter`; neue Helfer nur bei mehreren echten Verbrauchern und ohne Fachlogik. |
-| `spring-api/src/main/java/eu/royalblackwater/api/ships/` | Lesender Schiffskatalog, Waffenklassen, Mounts und Leistungsprofile. Mutationen laufen über Stammdaten. | `ShipQueryService`, Listenfilter und Master-Data-Seedtests; Taxonomie-IDs und aktive Datensätze prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squads innerhalb einer Flotte, Roster, Rollen, Leitung und Mitgliedschaften auf Basis gültiger Fleet-Memberships. | `SquadAccessPolicyTest` und PostgreSQL-HTTP-Test; Fleet-Zugehörigkeit, Membership-Status und Rollenfähigkeit gemeinsam prüfen. |
-| `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Website-Webhooks, Eventkatalog, Policy, Zustellhistorie und knappe ausgehende Hinweise. Secrets bleiben verschlüsselt. | Webhook-Policy-/Payloadtests und Lieferstatus; Zielscope, Eventtyp und redigierte Fehler prüfen. |
+| `spring-api/src/main/java/eu/royalblackwater/api/account/` | Login, sessions, profiles, registration, user management, and bootstrap admin. Passwords and session tokens never leave the security boundary. | `AuthService`, `BootstrapAdministratorInitializer`, `ApplicationIntegrationTest`; for 401, inspect `security_401` and session/role fetch first. |
+| `spring-api/src/main/java/eu/royalblackwater/api/audit/` | Data-minimized history of administrative changes. Audit text contains no payloads, secrets, or full IP addresses. | `AuditService`, `AuditLogQueryService`; inspect entity type, actor, and changed field names. |
+| `spring-api/src/main/java/eu/royalblackwater/api/builds/` | Build catalog, validation, calculation, roles, votes, and print output. Calculation and persistence remain separated. | `BuildStatCalculatorTest`, contract fixtures, and build API regressions; for 500, inspect mapper and catalog snapshots. |
+| `spring-api/src/main/java/eu/royalblackwater/api/calendar/` | Fleet/squad calendar and event access; Raid Helper delivery remains a downstream integration. | `CalendarService`; inspect ISO `date`/`date-time` binding and `MethodArgumentTypeMismatchException`. |
+| `spring-api/src/main/java/eu/royalblackwater/api/config/` | Spring composition, typed configuration, security and error boundaries, scheduling. No business logic. | `application.yml`, `SecurityConfiguration`, `ApiExceptionHandler`; inspect startup binding failures and central `api_error` lines. |
+| `spring-api/src/main/java/eu/royalblackwater/api/content/` | Shared validation of safely embedded content. | `ContentEmbedValidator` and calling guide/forum services; test rejected schemes and hosts directly. |
+| `spring-api/src/main/java/eu/royalblackwater/api/dto/` | Generated request/response DTOs for the HTTP contract. Domain-internal transfer DTOs live separately under `<domain>/dto`. | DTO generator, contract schema, and DTO boundary checks in the Spring audit. |
+| `spring-api/src/main/java/eu/royalblackwater/api/core/` | Small cross-domain core operations such as health/readiness, separated into controller, service, and repository. | `CoreController`, `CoreService`, and `/api/health*`; for readiness also inspect DB and Flyway. |
+| `spring-api/src/main/java/eu/royalblackwater/api/files/` | Uploads, content retrieval, quotas, type and ownership checks. Metadata lives in PostgreSQL; binary data in configured storage. | `FileAssetService`, storage configuration, and upload boundary tests; inspect path normalization and free space. |
+| `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | Fleets, roles, memberships, leadership, and server-side capabilities. Bootstrap fleet leadership is guaranteed by account initialization. | `FleetAccessPolicyTest`, `BootstrapAdministratorInitializerTest`, HTTP squad test; inspect role code, status, and fleet ID together. |
+| `spring-api/src/main/java/eu/royalblackwater/api/forum/` | Threads, posts, attachments, ownership, and moderation operations. | `ForumService` and frontend forum tests; for deletion inspect references and permissions separately. |
+| `spring-api/src/main/java/eu/royalblackwater/api/groups/` | User groups, memberships, roles, and join flows outside the official fleet. | `GroupService`, group composables, and real user references. |
+| `spring-api/src/main/java/eu/royalblackwater/api/guides/` | Guide creation, presentation, attachments, build references, and administration. | `GuideService`, Markdown/print tests; inspect rich-text sanitizing and ownership. |
+| `spring-api/src/main/java/eu/royalblackwater/api/legal/` | Publishable legal notice and administrative draft from typed configuration/persistence. | `LegalNoticeService`, `docs/reference/LEGAL_NOTICE.md`; test public and admin views separately. |
+| `spring-api/src/main/java/eu/royalblackwater/api/masterdata/` | Seed catalog, idempotent synchronization, local overrides, and administrative master-data maintenance. Internal seed metadata is not an API contract. | `SeedCatalogTest`, `MasterDataQueryServiceTest`, PostgreSQL integration; for `UnrecognizedPropertyException`, inspect mapper boundary. |
+| `spring-api/src/main/java/eu/royalblackwater/api/onboarding/` | Structured newcomer guide with pages, blocks, and safe resources. | `NewcomerGuideService` and frontend draft tests; inspect ordering and embed validation. |
+| `spring-api/src/main/java/eu/royalblackwater/api/operations/` | Unprivileged API for backup/update requests through controlled inbox files. Executes no host commands. | `ControlFileStore`, operations integration, and systemd runners; inspect status file, request ID, and file permissions. |
+| `spring-api/src/main/java/eu/royalblackwater/api/persistence/` | Shared JDBC access, null parameters, and safe type conversion. Do not collect domain-specific queries here. | `JdbcQueryService`, `RowValues`, `SqlParameters`; normalize JDBC/Java types at the boundary. |
+| `spring-api/src/main/java/eu/royalblackwater/api/privacy/` | Cookie consent, contact inbox, data export, data-subject requests, pseudonymization, and retention. No IP/user-agent collection in the contact workflow. | `CookieConsentServiceTest`, `PrivacyServiceTest`, `PrivacyIntegrationTest`, [retention](../reference/DATA_RETENTION.md); never print consent keys. |
+| `spring-api/src/main/java/eu/royalblackwater/api/raidhelper/` | Profiles, targets, templates, payload rendering, and delayed external delivery. Failures must not block the calendar flow uncontrollably. | `RaidHelperDeliveryWorker`, probe/policy services, and [integration reference](../reference/RAID_HELPER_CALENDAR.md). |
+| `spring-api/src/main/java/eu/royalblackwater/api/security/` | Authenticated principal, session filter, CSRF, password/secret cryptography, and host/origin boundary. | Security unit tests and `ApplicationIntegrationTest`; diagnose 401, 403, and CSRF separately. |
+| `spring-api/src/main/java/eu/royalblackwater/api/securityops/` | Purpose-bound aggregate block signals, IP blocks, and security dashboard. No general request history. | `SecurityDashboardServiceTest`, [retention](../reference/DATA_RETENTION.md); read JDBC `DATE` through `RowValues`. |
+| `spring-api/src/main/java/eu/royalblackwater/api/shared/` | Narrow cross-module web, filter, and mapping helpers without business logic. | `ApiControllerSupport`, `ListFilter`; add helpers only for multiple genuine consumers and without business logic. |
+| `spring-api/src/main/java/eu/royalblackwater/api/ships/` | Read-only ship catalog, weapon classes, mounts, and performance profiles. Mutations go through master data. | `ShipQueryService`, list filters, and master-data seed tests; inspect taxonomy IDs and active records. |
+| `spring-api/src/main/java/eu/royalblackwater/api/squads/` | Squads within a fleet, roster, roles, leadership, and memberships based on valid fleet memberships. | `SquadAccessPolicyTest` and PostgreSQL HTTP test; inspect fleet membership, membership status, and role capability together. |
+| `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | Website webhooks, event catalog, policy, delivery history, and concise outgoing notifications. Secrets remain encrypted. | Webhook policy/payload tests and delivery status; inspect target scope, event type, and redacted error. |
 
-## Frontend-Featuremodule
+## Frontend feature modules
 
-Featuremodule liegen unter `frontend/src/modules/`. Seiten orchestrieren,
-Composables besitzen Zustand und Abläufe, API-Dateien den Transport und
-Domain-Dateien reine Regeln. Ein fehlender UI-Guard ist ein UX-Fehler; echte
-Berechtigungen werden ausschließlich im Backend entschieden.
+Feature modules live under `frontend/src/modules/`. Pages orchestrate, composables own
+state and flows, API files own transport, and domain files own pure rules. A missing UI
+guard is a UX defect; real permissions are decided exclusively by the backend.
 
-| Modul | Verantwortung | Diagnose und Tests |
+| Module | Responsibility | Diagnostics and tests |
 | --- | --- | --- |
-| `frontend/src/modules/accounts/` | Login, Registrierung, Profil, Präferenzen und Datenschutz-Self-Service. | Sessionzustand, Redirect und `usePrivacySelfService`; Browser-Smokes plus Account-Domaintests. |
-| `frontend/src/modules/admin/` | Gemeinsamer Staff/Admin-Workspace für Benutzer, Logs, Stammdaten, Privacy, Webhooks, Raid Helper und Operations. | Betroffenen Composable statt `AdminPage.vue` isolieren; Rollen-Sichtbarkeit, Page-Bindings und API-Status prüfen. |
-| `frontend/src/modules/builds/` | Build-Bibliothek, Designer, Berechnung, Suche, Druck und Teilen. | Reine Calculation-/Domain-Tests, Contract-Fixtures, Build und Browser; Katalogladen von Eingabeänderungen trennen. |
-| `frontend/src/modules/calendar/` | Kalenderansicht und Eventerstellung einschließlich expliziter Raid-Helper-Auswahl. | `calendarGrid` und Page-Composables; UTC-/Local-Date-Konvertierung und Requestpayload prüfen. |
-| `frontend/src/modules/combat/` | Lokale DPM-/Panzerungsanalyse auf Basis des geladenen Katalogs. | `combatDpm`-Unit-Tests; keine API-Aufrufe pro Eingabeänderung. |
-| `frontend/src/modules/files/` | Dateitransport und gemeinsame Client-Typregeln. | Uploadstatus, erlaubte Typen und Backendgrenzen; Server bleibt autoritativ. |
-| `frontend/src/modules/fleet/` | Landingpage, öffentliche Flotte und Verwaltungsworkspace. | Backendgelieferte Fähigkeiten, Filter und Responsive-Tests; keine Rollen aus Namen ableiten. |
-| `frontend/src/modules/forum/` | Threadliste, Erstellung, Detail, Antworten und Eigentümeraktionen. | Page-Composables, Löschbestätigung und Attachmentpfad prüfen. |
-| `frontend/src/modules/groups/` | Gruppenlisten, eigene Gruppen, Erstellung, Detail und Mitgliedschaft. | `groupDetail`-Regeln und Composable-Zustände getrennt testen. |
-| `frontend/src/modules/guides/` | Guide-Suche, Editor, Reader, Inhaltsverzeichnis und Druck. | Presentation-/Discovery-/Printtests, Markdown-Sanitizing und responsive Reader-Stile. |
-| `frontend/src/modules/legal/` | Öffentliches Impressum und Admin-Editor. | Veröffentlichungsstatus, Textdarstellung und Rollen-Sichtbarkeit in allen Locales. |
-| `frontend/src/modules/onboarding/` | Newcomer-Guide-Darstellung und administrative Ressourcenaufbereitung. | Draft-Normalisierung, sichere Ressourcen und Seitenbindung prüfen. |
-| `frontend/src/modules/privacy/` | Datenschutzcenter und Cookie-Banner; fehlende Entscheidung öffnet ohne optionale Integration nicht automatisch. | `cookieConsentVisibility.test.mjs` und Browser-Smokes für Retry, Payload und Fehlerzustand. |
-| `frontend/src/modules/ships/` | Schlanker lesender API-Zugriff auf Schiffsstammdaten. | Verbraucher in Builds/Combat prüfen; keine zweite Kataloglogik einführen. |
-| `frontend/src/modules/squads/` | Squad-Liste, eigene Squads, Erstellung, Detail und Rosterverwaltung. | `squadManagement`, Page-Composables und Fleet-Membership-IDs im Payload prüfen. |
+| `frontend/src/modules/accounts/` | Login, registration, profile, preferences, and privacy self-service. | Session state, redirect, and `usePrivacySelfService`; browser smoke tests plus account-domain tests. |
+| `frontend/src/modules/admin/` | Shared staff/admin workspace for users, logs, master data, privacy, webhooks, Raid Helper, and operations. | Isolate the affected composable instead of `AdminPage.vue`; inspect role visibility, page bindings, and API status. |
+| `frontend/src/modules/builds/` | Build library, designer, calculation, search, print, and sharing. | Pure calculation/domain tests, contract fixtures, build, and browser; separate catalog loading from input changes. |
+| `frontend/src/modules/calendar/` | Calendar view and event creation including explicit Raid Helper selection. | `calendarGrid` and page composables; inspect UTC/local date conversion and request payload. |
+| `frontend/src/modules/combat/` | Local DPM/armor analysis based on the loaded catalog. | `combatDpm` unit tests; no API calls per input change. |
+| `frontend/src/modules/files/` | File transport and shared client type rules. | Upload status, allowed types, and backend boundaries; the server remains authoritative. |
+| `frontend/src/modules/fleet/` | Landing page, public fleet, and management workspace. | Backend-provided capabilities, filters, and responsive tests; do not infer roles from names. |
+| `frontend/src/modules/forum/` | Thread list, creation, detail, replies, and owner actions. | Page composables, deletion confirmation, and attachment path. |
+| `frontend/src/modules/groups/` | Group lists, own groups, creation, detail, and membership. | Test `groupDetail` rules and composable state separately. |
+| `frontend/src/modules/guides/` | Guide search, editor, reader, table of contents, and print. | Presentation/discovery/print tests, Markdown sanitizing, and responsive reader styles. |
+| `frontend/src/modules/legal/` | Public legal notice and admin editor. | Publish status, text presentation, and role visibility in all locales. |
+| `frontend/src/modules/onboarding/` | Newcomer guide presentation and administrative resource preparation. | Inspect draft normalization, safe resources, and page binding. |
+| `frontend/src/modules/privacy/` | Privacy center and cookie banner; without a saved decision it does not open automatically while no optional integration is active. | `cookieConsentVisibility.test.mjs` and browser smoke tests for retry, payload, and error state. |
+| `frontend/src/modules/ships/` | Thin read-only API access to ship master data. | Inspect consumers in builds/combat; do not introduce a second catalog logic. |
+| `frontend/src/modules/squads/` | Squad list, own squads, creation, detail, and roster management. | `squadManagement`, page composables, and fleet-membership IDs in the payload. |
 
-Die gemeinsamen Frontendbereiche `frontend/src/assets/`, `frontend/src/config/`,
+The shared frontend areas `frontend/src/assets/`, `frontend/src/config/`,
 `frontend/src/core/`, `frontend/src/locales/`, `frontend/src/router/`,
-`frontend/src/shared/` und `frontend/src/styles/` sind keine Fachmodule. Sie
-besitzen jeweils nur Assets, Laufzeitkonfiguration, App-Shell, Übersetzungen,
-Routing, wiederverwendbare Bausteine beziehungsweise die globale CSS-Kaskade.
-Änderungen dort sind querschnittlich und benötigen mindestens Frontend-Gate und
-bei Routing/Security zusätzlich passende Backendtests.
+`frontend/src/shared/`, and `frontend/src/styles/` are not business modules. They own
+only assets, runtime configuration, app shell, translations, routing, reusable building
+blocks, and the global CSS cascade respectively. Changes there are cross-cutting and
+require at least the frontend gate; routing/security changes also require matching backend tests.
 
-## Infrastrukturmodule
+## Infrastructure modules
 
-Die Verzeichnisse unter `infrastructure/scripts/` sind nach Lebenszyklus statt
-nach Dateityp getrennt. Öffentliche Root-Orchestratoren bleiben `deploy.sh` und
-`update.sh`; Produktionsdiagnosen beginnen mit dem Diagnostics-Modul.
+Directories under `infrastructure/scripts/` are separated by lifecycle rather than file type.
+Public root orchestrators remain `deploy.sh` and `update.sh`; production diagnostics begin
+with the diagnostics module.
 
-| Modul | Verantwortung und sicherer Diagnoseeinstieg |
+| Module | Responsibility and safe diagnostic entry point |
 | --- | --- |
-| `infrastructure/scripts/backup/` | Konsistente PostgreSQL-/Datei-Backups, Aufbewahrung und Manifeste; mit Recovery-Vertragstests prüfen. |
-| `infrastructure/scripts/checks/` | Zielseitige Readiness-/Doctor-Prüfungen ohne Reparatur durch Datenlöschung. |
-| `infrastructure/scripts/deployment/` | Zielseitige Installation und Aktivierung versionierter Artefakte. Fehlgeschlagene Aktivierungsdiagnose zuerst sichern. |
-| `infrastructure/scripts/diagnostics/` | Begrenzter Remote-Collector und lokale Redaktion; [Debugging-Runbook](../debugging/MODULE_DEBUGGING.md) verwenden. |
-| `infrastructure/scripts/generation/` | Deterministische Generatoren für API, Java, Seed-/Buildkataloge und Referenzdoku; stets mit `--check` validieren. |
-| `infrastructure/scripts/lib/` | Wiederverwendbare Shell-Helfer und Hostmodule; Aufrufer, Idempotenz und Exitcodes gemeinsam testen. |
-| `infrastructure/scripts/migration/` | Kontrollierte Legacy-/Datenmigrationen außerhalb unveränderlicher Flyway-Dateien. |
-| `infrastructure/scripts/quality/` | Kanonische Repository-, Security-, Dokumentations- und Full-Gates; Agentenskripte delegieren nur hierhin. |
-| `infrastructure/scripts/release/` | Artefaktbau, Transfer, Verifikation, Rollback und Origin-Deployment. Keine Produktionsdaten ins Artefakt aufnehmen. |
-| `infrastructure/scripts/services/` | Root-eigene Zielrunner für kontrollierte Inbox-Aktionen und Service-Lifecycle. |
-| `infrastructure/scripts/setup/` | Interaktiver First Run und Host-Komposition; wiederholbar und fail-closed halten. |
-| `infrastructure/scripts/tls/` | Zertifikatsbereitstellung und Erneuerung; private Schlüssel nie in Diagnose oder Repository lesen. |
+| `infrastructure/scripts/backup/` | Consistent PostgreSQL/file backups, retention, and manifests; verify with recovery contract tests. |
+| `infrastructure/scripts/checks/` | Target-side readiness/doctor checks without repair through data deletion. |
+| `infrastructure/scripts/deployment/` | Target-side installation and activation of versioned artifacts. Preserve failed-activation diagnostics first. |
+| `infrastructure/scripts/diagnostics/` | Bounded remote collector and local redaction; use the [debugging runbook](../debugging/MODULE_DEBUGGING.md). |
+| `infrastructure/scripts/generation/` | Deterministic generators for API, Java, seed/build catalogs, and reference docs; always validate with `--check`. |
+| `infrastructure/scripts/lib/` | Reusable shell helpers and host modules; test callers, idempotency, and exit codes together. |
+| `infrastructure/scripts/migration/` | Controlled legacy/data migrations outside immutable Flyway files. |
+| `infrastructure/scripts/quality/` | Canonical repository, security, documentation, and full gates; agent scripts delegate only here. |
+| `infrastructure/scripts/release/` | Artifact build, transfer, verification, rollback, and origin deployment. Never include production data in the artifact. |
+| `infrastructure/scripts/services/` | Root-owned target runners for controlled inbox actions and service lifecycle. |
+| `infrastructure/scripts/setup/` | Interactive first run and host composition; keep repeatable and fail-closed. |
+| `infrastructure/scripts/tls/` | Certificate provisioning and renewal; never read private keys into diagnostics or the repository. |
 
-## Moduländerung vollständig abschließen
+## Complete a module change fully
 
-1. Primärvertrag, Aufrufer, Persistenz, Konfiguration und Modulzeile dieses
-   Katalogs lesen.
-2. Verhalten am verantwortlichen Rand ändern und fokussierte Erfolgs-, Fehler-
-   und Berechtigungstests ergänzen.
-3. Den Diagnosepfad so aktualisieren, dass Fehler ohne Payloads oder Secrets
-   lokalisierbar bleiben.
-4. Bei neuem/umbenanntem Modul Docs und Agenten-Cache ergänzen und
-   `bash .agents/scripts/check-cache.sh` ausführen.
-5. Betroffene Gates und bei querschnittlicher Änderung `make validate`
-   ausführen.
+1. Read the primary contract, callers, persistence, configuration, and the module row in this catalog.
+2. Change behavior at the responsible boundary and add focused success, failure, and permission tests.
+3. Update the diagnostic path so failures remain locatable without payloads or secrets.
+4. For a new/renamed module, update docs and the agent cache and run
+   `bash .agents/scripts/check-cache.sh`.
+5. Run affected gates and, for a cross-cutting change, `make validate`.

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$INFRA_DIR/scripts/lib/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "Die Installationsroot-Migration benötigt root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "Installation-root migration requires root privileges."
 require_command systemctl
 require_command mv
 require_command readlink
@@ -16,13 +16,13 @@ source_root="${1:-/opt/rbf}"
 target_root="${2:-/srv/rbf}"
 source_root="$(realpath -m "$source_root")"
 target_root="$(realpath -m "$target_root")"
-[[ "$source_root" != / && "$target_root" != / ]] || die "Installationsroot darf nicht / sein."
-[[ "$source_root" != "$target_root" ]] || die "Quell- und Zielroot müssen verschieden sein."
-[[ -d "$source_root" ]] || die "Alte Installationsroot fehlt: $source_root"
-[[ ! -e "$target_root" && ! -L "$target_root" ]] || die "Zielroot existiert bereits: $target_root"
-[[ -L "$source_root/current" ]] || die "Die alte Installation besitzt keinen gültigen current-Symlink."
+[[ "$source_root" != / && "$target_root" != / ]] || die "Installation root must not be /."
+[[ "$source_root" != "$target_root" ]] || die "Source and target roots must differ."
+[[ -d "$source_root" ]] || die "Old installation root is missing: $source_root"
+[[ ! -e "$target_root" && ! -L "$target_root" ]] || die "Target root already exists: $target_root"
+[[ -L "$source_root/current" ]] || die "The old installation has no valid current symlink."
 current="$(readlink -f "$source_root/current")"
-[[ "$current" == "$source_root/releases/"* ]] || die "current zeigt außerhalb der alten Releaseverwaltung."
+[[ "$current" == "$source_root/releases/"* ]] || die "current points outside the old release management tree."
 
 was_active=false
 if systemctl is-active --quiet rbf-hub.service; then

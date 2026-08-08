@@ -3,16 +3,16 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "Das Freigeben eines Datenbank-Restores erfordert root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "Arming a database restore requires root privileges."
 require_command python3
 
 minutes=10
 if [[ $# -gt 0 ]]; then
-  [[ $# -eq 2 && "$1" == "--minutes" ]] || die "Aufruf: sudo $0 [--minutes 1-30]"
+  [[ $# -eq 2 && "$1" == "--minutes" ]] || die "Usage: sudo $0 [--minutes 1-30]"
   minutes="$2"
 fi
-[[ "$minutes" =~ ^[0-9]+$ ]] || die "Die Gültigkeitsdauer muss eine ganze Zahl sein."
-(( minutes >= 1 && minutes <= 30 )) || die "Die Gültigkeitsdauer muss zwischen 1 und 30 Minuten liegen."
+[[ "$minutes" =~ ^[0-9]+$ ]] || die "The validity period must be an integer."
+(( minutes >= 1 && minutes <= 30 )) || die "The validity period must be between 1 and 30 minutes."
 
 secret_dir="$INFRA_DIR/data/control/secrets"
 approval_file="$secret_dir/database-restore-approval.json"
@@ -53,11 +53,11 @@ PY
 token="$(printf '%s\n' "$result" | sed -n '1p')"
 expires_at="$(printf '%s\n' "$result" | sed -n '2p')"
 cat <<EOF
-Einmalige Datenbank-Restore-Freigabe erstellt.
+One-time database restore approval created.
 
 Token: $token
-Gültig bis: $expires_at
+Valid until: $expires_at
 
-Den Token ausschließlich in das Bootstrap-Admin-Formular einfügen.
-Er verfällt nach einem Restore-Versuch oder spätestens nach Ablauf der Zeit.
+Enter the token only in the bootstrap-admin form.
+It expires after one restore attempt or, at the latest, when the time limit is reached.
 EOF

@@ -1,85 +1,83 @@
-# Docker- und Container-Sicherheitsstandard
+# Docker and Container Security Standard
 
-Stand: 2. August 2026
+Status: August 2, 2026
 
-Container sind eine zusätzliche Isolationsschicht, keine Sicherheitsgrenze wie eine
-eigene VM. Docker Engine, containerd und runc teilen den Host-Kernel; deshalb werden
-Runtime, Kernel, Images und Container-Konfiguration gemeinsam gehärtet.
+Containers are an additional isolation layer, not a security boundary equivalent to a
+separate VM. Docker Engine, containerd, and runc share the host kernel; runtime, kernel,
+images, and container configuration must therefore be hardened together.
 
-## Aktuelle Risikolage
+## Current risk landscape
 
-Für den produktiven Linux-Server sind insbesondere diese Upstream-Fixes relevant:
+For the production Linux server, these upstream fixes are particularly relevant:
 
-- Docker Engine 29.5.1 behob mit CVE-2026-41567, CVE-2026-41568 und
-  CVE-2026-42306 mehrere Wege, über `docker cp` Code oder Dateien als Host-root zu
-  beeinflussen. Bis zum Update darf `docker cp` nicht mit nicht vertrauenswürdigen
-  oder kompromittierten Containern verwendet werden.
-- Docker Engine 29.5.0 begrenzte mit CVE-2026-32288 die Speicherausschöpfung durch
-  präparierte Image-Archive. Unbekannte Images und `docker load` aus fremden Quellen
-  bleiben untersagt.
-- Aktuelle runc-Releases enthalten Nachbesserungen für die Container-Escapes
-  CVE-2025-31133, CVE-2025-52565 und CVE-2025-52881 sowie CVE-2026-41579.
-- containerd veröffentlichte unter anderem eine kritische Lücke beim Image-Unpack
-  (GHSA-cm76-qm8v-3j95) und 2026 einen UID-Prüfungsbypass. Maßgeblich sind die
-  sicherheitsgepflegten Pakete der eingesetzten Linux-Distribution, nicht allein ein
-  Vergleich nackter Upstream-Versionsnummern, weil Distributionen Fixes backporten.
-- Docker-Desktop-CVEs betreffen den Produktionsserver nicht: Das Projekt verwendet
-  dort Docker Engine auf Linux, nicht Docker Desktop oder Model Runner.
+- Docker Engine 29.5.1 fixed several ways to influence host-root code or files via
+  `docker cp` with CVE-2026-41567, CVE-2026-41568, and CVE-2026-42306. Until the
+  update is installed, do not use `docker cp` with untrusted or compromised containers.
+- Docker Engine 29.5.0 limited memory exhaustion through crafted image archives with
+  CVE-2026-32288. Unknown images and `docker load` from third-party sources remain prohibited.
+- Current runc releases contain follow-up fixes for the container escapes
+  CVE-2025-31133, CVE-2025-52565, and CVE-2025-52881 as well as CVE-2026-41579.
+- containerd published, among other issues, a critical image-unpack vulnerability
+  (GHSA-cm76-qm8v-3j95) and a UID-check bypass in 2026. The security-maintained packages
+  of the deployed Linux distribution are authoritative, not a bare comparison of upstream
+  version numbers, because distributions backport fixes.
+- Docker Desktop CVEs do not affect the production server: the project uses Docker Engine
+  on Linux there, not Docker Desktop or Model Runner.
 
-Primärquellen: [Docker-Sicherheitsmeldungen](https://docs.docker.com/security/security-announcements/),
-[Docker-Engine-29-Release-Notes](https://docs.docker.com/engine/release-notes/29/),
-[runc-Releases](https://github.com/opencontainers/runc/releases) und
-[containerd-Advisories](https://github.com/containerd/containerd/security/advisories).
+Primary sources: [Docker security announcements](https://docs.docker.com/security/security-announcements/),
+[Docker Engine 29 release notes](https://docs.docker.com/engine/release-notes/29/),
+[runc releases](https://github.com/opencontainers/runc/releases), and
+[containerd advisories](https://github.com/containerd/containerd/security/advisories).
 
-## Verbindliche Schutzschichten
+## Mandatory protection layers
 
-### Host und Runtime
+### Host and runtime
 
-1. Kernel, `docker.io`/Docker CE, containerd und runc über eine unterstützte
-   Distribution beziehen und Security-Updates täglich installieren. Nach Runtime-
-   oder Kernel-Updates Host bzw. Daemon kontrolliert neu starten; nur die
-   Paketversion zu aktualisieren ersetzt den laufenden verwundbaren Prozess nicht.
-2. `sudo apt update && sudo apt full-upgrade` und `sudo make -C infrastructure doctor`
-   vor Freigabe ausführen. Distributions-Security-Tracker prüfen, wenn eine
-   Upstream-CVE trotz scheinbar älterer Versionsnummer als gefixt gilt.
-3. Docker-API niemals unverschlüsselt per TCP veröffentlichen. Der Socket wird in
-   keinen Container gemountet; Mitglieder der `docker`-Gruppe gelten als root.
-4. Default-seccomp und AppArmor (beziehungsweise SELinux) aktiviert lassen. Niemals
-   `seccomp=unconfined`, `apparmor=unconfined`, `privileged: true` oder Host-PID-/
-   Netzwerk-Namespace als bequemen Workaround einführen.
-5. Rootless Docker reduziert das Risiko eines Daemon-/Runtime-Exploits und ist für
-   neue Installationen zu evaluieren. Die Umstellung ist wegen Ports, systemd,
-   Backup-Dateirechten und cgroup-Limits eine geplante Migration, kein stilles
-   Setup-Upgrade. Bis dahin schützt die bestehende Trennung: keine Docker-Gruppe,
-   minimaler Host und ausschließlich administrative root-Aufrufe.
+1. Obtain the kernel, `docker.io`/Docker CE, containerd, and runc from a supported
+   distribution and install security updates daily. After runtime or kernel updates,
+   restart the host or daemon in a controlled manner; merely updating the package version
+   does not replace the still-running vulnerable process.
+2. Run `sudo apt update && sudo apt full-upgrade` and `sudo make -C infrastructure doctor`
+   before approval. Check the distribution security tracker when an upstream CVE is marked
+   fixed despite an apparently older package version.
+3. Never expose the Docker API unencrypted over TCP. The socket is not mounted into any
+   container; membership in the `docker` group is treated as root access.
+4. Keep default seccomp and AppArmor (or SELinux) enabled. Never introduce
+   `seccomp=unconfined`, `apparmor=unconfined`, `privileged: true`, or host PID/network
+   namespaces as a convenience workaround.
+5. Rootless Docker reduces the risk of daemon/runtime exploits and should be evaluated for
+   new installations. Because ports, systemd, backup file permissions, and cgroup limits are
+   affected, migration is planned work rather than a silent setup upgrade. Until then, the
+   existing separation protects the host: no Docker-group membership, minimal host surface,
+   and administrative root calls only.
 
-### Images und Build
+### Images and build
 
-1. Nur die im Repository definierten Dockerfiles und vertrauenswürdige Official
-   Images bauen. Keine fremden Dockerfiles, BuildKit-Frontends, `docker load`-
-   Archive oder unkontrollierten Compose-Overrides auf dem Produktionshost nutzen.
-2. Basisimages sind auf konkrete Versionslinien festgelegt. Renovierung erfolgt als
-   geprüfte Änderung mit Build, Trivy-Scan und Smoke-Test; `latest` ist unzulässig.
-3. Der Security-Workflow baut die Core-Images bei Push, manuellem Lauf und wöchentlich
-   neu. Trivy blockiert bekannte `HIGH`- und `CRITICAL`-Schwachstellen mit verfügbarem
-   Fix. OSV bleibt ergänzend für Python- und Node-Lockfiles zuständig.
-4. Build-Secrets gehören nicht in `ARG`, Image-Layer oder Build-Kontext. Das
-   Frontend erhält nur ausdrücklich öffentliche `VITE_*`-Werte.
+1. Build only the Dockerfiles defined in the repository and trusted official images. Do not
+   use third-party Dockerfiles, BuildKit frontends, `docker load` archives, or uncontrolled
+   Compose overrides on the production host.
+2. Base images are pinned to concrete version lines. Updates are reviewed changes with build,
+   Trivy scan, and smoke test; `latest` is prohibited.
+3. The security workflow rebuilds core images on push, manual runs, and weekly. Trivy blocks
+   known `HIGH` and `CRITICAL` vulnerabilities with an available fix. OSV remains a complementary
+   check for Python and Node lockfiles.
+4. Build secrets do not belong in `ARG`, image layers, or build context. The frontend receives
+   only explicitly public `VITE_*` values.
 
-### Laufende Container
+### Running containers
 
-- API, Migration und Seed laufen non-root, read-only, ohne Linux-Capabilities und
-  mit `no-new-privileges`.
-- Schreibzugriffe sind auf benannte Datenverzeichnisse und `tmpfs` begrenzt.
-- Datenbank und interne Dienste werden nicht öffentlich veröffentlicht; lokale
-  Diagnoseports binden an `127.0.0.1`.
-- PID-Limits, getrennte Netze, Log-Rotation und Healthchecks begrenzen Fehlverhalten.
-- Neue Services müssen diese Eigenschaften übernehmen oder ihre minimale Ausnahme
-  mit Bedrohung, benötigter Capability und Rückbau dokumentieren.
+- API, migration, and seed run non-root, read-only, without Linux capabilities, and with
+  `no-new-privileges`.
+- Write access is limited to named data directories and `tmpfs`.
+- The database and internal services are not publicly published; local diagnostic ports bind
+  to `127.0.0.1`.
+- PID limits, separate networks, log rotation, and health checks limit failure impact.
+- New services must inherit these properties or document the minimum exception, including the
+  threat, required capability, and removal plan.
 
-## Reaktion auf eine neue Runtime-Lücke
+## Response to a new runtime vulnerability
 
-1. Betroffene Komponente und laufende Version erfassen:
+1. Record the affected component and running version:
 
    ```bash
    sudo docker version
@@ -89,18 +87,17 @@ Primärquellen: [Docker-Sicherheitsmeldungen](https://docs.docker.com/security/s
    dpkg-query -W docker.io docker-ce containerd containerd.io runc 2>/dev/null
    ```
 
-2. Exponierung prüfen: Werden fremde Images gebaut/geladen, `docker cp`, Docker-API,
-   privilegierte Container, Socket-Mounts oder untrusted Admin-Zugänge verwendet?
-3. Paketquellen und Distributions-Advisory prüfen, Security-Update installieren und
-   Daemon/Host neu starten. Danach Container mit den neu gebauten Images neu
-   erstellen; ein bloßer Image-Pull aktualisiert laufende Container nicht.
-4. Bis zur Behebung den betroffenen Pfad deaktivieren. Bei möglichem Escape Host als
-   kompromittiert behandeln: isolieren, Zugangsdaten und Backup-Schlüssel rotieren,
-   Logs sichern und aus vertrauenswürdigem Stand neu aufsetzen.
-5. `make validate`, Security-Workflow und Restore-/Readiness-Prüfung ausführen und
-   Entscheidung sowie Advisory im Security-Audit dokumentieren.
+2. Check exposure: are third-party images built/loaded, is `docker cp` used, is the Docker API
+   exposed, are there privileged containers, socket mounts, or untrusted admin accounts?
+3. Check package sources and the distribution advisory, install the security update, and restart
+   the daemon/host. Then recreate containers from newly built images; merely pulling an image does
+   not update running containers.
+4. Disable the affected path until remediation. If escape is possible, treat the host as compromised:
+   isolate it, rotate credentials and backup keys, preserve logs, and rebuild from a trusted state.
+5. Run `make validate`, the security workflow, and restore/readiness checks, and document the
+   decision and advisory in the security audit.
 
-## Freigabecheck
+## Approval check
 
 ```bash
 sudo make -C infrastructure doctor
@@ -109,9 +106,8 @@ sudo docker compose --env-file infrastructure/.env \
 sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 ```
 
-Ein grüner Image-Scan beweist nicht, dass Runtime und Kernel sicher sind. Umgekehrt
-ist eine ältere, aber von Debian/Ubuntu gepatchte Paketversion nicht automatisch
-verwundbar; entscheidend ist das jeweilige Distribution-Advisory.
+A green image scan does not prove that runtime and kernel are secure. Conversely, an older package
+version patched by Debian/Ubuntu is not automatically vulnerable; the distribution advisory is decisive.
 
 ### Runtime exposure and upload boundary
 

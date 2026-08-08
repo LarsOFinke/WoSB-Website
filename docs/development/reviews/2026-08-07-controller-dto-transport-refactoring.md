@@ -1,87 +1,79 @@
-# Controller-/DTO-Transportrefactoring
+# Controller/DTO Transport Refactoring
 
-Datum: 2026-08-07
+Date: 2026-08-07
 
-## Anlass
+## Reason
 
-Nach der vollständigen Spring-Migration existierten noch zwei historische
-Transportstrukturen parallel zur eigentlichen Modularchitektur:
+After the complete Spring migration, two historical transport structures still existed in parallel
+with the actual module architecture:
 
-- der Root-Ordner `contracts/`, der OpenAPI, Referenzdaten, Test-Fixtures und ein
-  Backup-Protokoll ohne gemeinsamen fachlichen Owner vermischte;
-- generierte Java-`*Api`-Interfaces unter `api/contract/api`, die zwischen
-  OpenAPI und den Modul-Controllern eine zweite Runtime-Transportebene bildeten.
+- the root `contracts/` directory, which mixed OpenAPI, reference data, test fixtures, and a backup
+  protocol without a shared functional owner;
+- generated Java `*Api` interfaces under `api/contract/api`, which formed a second runtime transport
+  layer between OpenAPI and module controllers.
 
-Die Anwendung verwendet bereits immutable API-DTOs und modulare Controller,
-Services, Mapper und Repositories. Die zusätzliche Interface-Schicht lieferte
-keine eigene Fachverantwortung und erschwerte Navigation und Ownership.
+The application already uses immutable API DTOs and modular controllers, services, mappers, and
+repositories. The additional interface layer had no independent functional responsibility and made
+navigation and ownership harder.
 
-## Entscheidung
+## Decision
 
-Die externe HTTP-Spezifikation bleibt erhalten, ist aber **kein Backend-Layer**.
-Sie liegt nun als `openapi/openapi.json` außerhalb der Java-Runtime-Struktur und
-ist die kanonische Quelle für HTTP-Schema, Operationen und API-DTO-Generation.
+The external HTTP specification remains, but it is **not a backend layer**. It now lives as
+`openapi/openapi.json` outside the Java runtime structure and is the canonical source for HTTP schema,
+operations, and API DTO generation.
 
-Generiert werden ausschließlich API-DTOs unter
-`spring-api/src/main/java/eu/royalblackwater/api/dto/`. Die 26 Modul-Controller
-besitzen ihre Spring-MVC-Mappings und Bean-Validation-Bindings direkt. Ein
-statischer Audit vergleicht alle 177 Controlleroperationen mit OpenAPI und
-verhindert Drift.
+Only API DTOs under `spring-api/src/main/java/eu/royalblackwater/api/dto/` are generated. The 26 module
+controllers own their Spring MVC mappings and Bean Validation bindings directly. A static audit compares
+all 177 controller operations with OpenAPI and prevents drift.
 
-Die Runtime-Abhängigkeit lautet damit:
+The runtime dependency is therefore:
 
 ```text
 HTTP
   -> Filter / Security
-  -> Controller (Routing + Binding + @Valid API-DTO)
-  -> Service (Fachlogik, Policy, Transaktion)
-  -> Repository (Persistenz)
+  -> Controller (routing + binding + @Valid API DTO)
+  -> Service (business logic, policy, transaction)
+  -> Repository (persistence)
 
-Mapper <-> API-/Modul-DTO / Entity / DB-Row
+Mapper <-> API/module DTO / entity / DB row
 ```
 
-Entities bleiben Persistenztypen. API-DTOs bleiben Transporttypen. Services
-konstruieren keine API-Repräsentationen; diese Verantwortung liegt in expliziten
-Mappern.
+Entities remain persistence types. API DTOs remain transport types. Services do not construct API
+representations; that responsibility belongs to explicit mappers.
 
-## Entfernte Altstrukturen
+## Removed legacy structures
 
 - `spring-api/.../api/contract/api/*Api.java`
 - `generate_spring_routes.py`
 - `ContractConversionService`
-- Root-Sammelordner `contracts/`
-- unreferenzierte `database-metadata.json`
+- root catch-all directory `contracts/`
+- unreferenced `database-metadata.json`
 
-Die weiterhin benötigten Inhalte wurden ihrem Owner zugeordnet:
+Content still required was assigned to its owner:
 
 - OpenAPI: `openapi/openapi.json`
-- Build-/Webhook-Referenzdaten: `spring-api/src/main/reference/`
-- Build-Berechnungs-Fixtures: `frontend/tests/fixtures/`
-- Backup-Protokoll: `infrastructure/scripts/backup/`
+- build/webhook reference data: `spring-api/src/main/reference/`
+- build-calculation fixtures: `frontend/tests/fixtures/`
+- backup protocol: `infrastructure/scripts/backup/`
 
-## Mapper-Bereinigung
+## Mapper cleanup
 
-Der generische `ContractConversionService` wurde entfernt. Build-, Ship-,
-Master-Data- und Webhook-Konvertierungen sind wieder explizite, typisierte
-Mapper. Dynamische Jackson-Konvertierung ist nur innerhalb eines konkreten
-Mappers zulässig, wenn die Quelle selbst bewusst dynamisches Integrations-JSON
-ist (z. B. Backup-Control-Status).
+The generic `ContractConversionService` was removed. Build, ship, master-data, and webhook conversions
+are explicit typed mappers again. Dynamic Jackson conversion is permitted only inside a concrete mapper
+when the source itself intentionally contains dynamic integration JSON (for example backup control status).
 
-## Neue Gates
+## New gates
 
-`audit_controller_contract.py` prüft OpenAPI gegen die tatsächlichen
-Controllerbindungen. Zusätzlich verbietet `audit_spring_backend.py` die
-Wiedereinführung eines Java-`contract`-Layers oder eines generischen
-Contract-Konvertierungsservices.
+`audit_controller_contract.py` checks OpenAPI against the actual controller bindings. In addition,
+`audit_spring_backend.py` prevents reintroducing a Java `contract` layer or generic contract-conversion service.
 
-Für API-Änderungen gilt künftig:
+For future API changes:
 
-1. `openapi/openapi.json` ändern;
-2. API-DTOs generieren;
-3. den zuständigen Modul-Controller direkt anpassen;
-4. Controller-/OpenAPI-Audit ausführen;
-5. Service, Mapper, Repository und Tests nur entsprechend ihrer Verantwortung
-   ändern.
+1. change `openapi/openapi.json`;
+2. generate API DTOs;
+3. adapt the responsible module controller directly;
+4. run the controller/OpenAPI audit;
+5. change service, mapper, repository, and tests only according to their responsibilities.
 
-Damit ist die OpenAPI-Spezifikation weiterhin ein stabiler externer Vertrag,
-ohne als parallele Runtime-Architektur missverstanden zu werden.
+This keeps the OpenAPI specification as a stable external contract without mistaking it for a parallel
+runtime architecture.

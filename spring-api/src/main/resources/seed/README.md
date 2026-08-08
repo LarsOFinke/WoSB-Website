@@ -1,11 +1,11 @@
-# JSON-Stammdaten
+# JSON Master Data
 
-Dieses Verzeichnis ist die einzige Quelle für repository-eigene Stammdaten.
-Die Java-Anwendung validiert und synchronisiert diese Dateien idempotent.
-Das erste Administratorkonto wird ausschließlich aus der Laufzeitumgebung
-angelegt; installationsabhängige Daten gehören nicht in den Katalog.
+This directory is the sole source for repository-owned master data.
+The Java application validates and synchronizes these files idempotently.
+The first administrator account is created exclusively from the runtime environment;
+installation-specific data does not belong in the catalog.
 
-## Struktur
+## Structure
 
 ```text
 seeds/
@@ -32,62 +32,40 @@ seeds/
         └── … rate-7.json
 ```
 
-`manifest.json` listet jedes JSON-Dokument mit seinem Typ auf. Nicht gelistete,
-fehlende oder doppelt eingetragene Dateien brechen den Ladevorgang ab. Damit
-kann keine neue Datei unbemerkt neben dem tatsächlich geladenen Katalog liegen.
+`manifest.json` lists every JSON document with its type. Unlisted, missing, or duplicate files abort loading. This prevents a new file from silently sitting beside the catalog that is actually loaded.
 
-Jedes Dokument besitzt `schema_version` und `catalog`. Unbekannte Felder,
-ungültige Typen, doppelte IDs und widersprüchliche Referenzen werden vor der
-ersten Datenbankänderung abgewiesen.
+Every document has `schema_version` and `catalog`. Unknown fields, invalid types, duplicate IDs, and contradictory references are rejected before the first database change.
 
-## Wartungsregeln
+## Maintenance Rules
 
-- `seed_id` ist die dauerhafte technische Identität. Eine Umbenennung ändert
-  nur `name`, niemals `seed_id`.
-- Jede Build-Option gehört in genau eine Datei unter `builds/options`.
-- Umbenannte Upgrade-Bezeichnungen werden über `aliases` in `upgrades.json`
-  migriert, damit bestehende Builds verbunden bleiben.
-- Neue Schiffe werden in die Datei ihrer Rate eingetragen.
-- Neue JSON-Dateien werden zusätzlich im Manifest registriert.
-- Geheimnisse und installationsabhängige Werte gehören nicht in diesen
-  Katalog. Das initiale Administratorkonto kommt weiterhin aus der Umgebung.
-- Produktionsläufe bleiben idempotent: unveränderte Datensätze werden nicht
-  neu geschrieben, Admin-Overrides bleiben geschützt und entfernte Defaults
-  werden deaktiviert statt gelöscht.
+- `seed_id` is the permanent technical identity. Renaming changes only `name`, never `seed_id`.
+- Every Build option belongs in exactly one file under `builds/options`.
+- Renamed upgrade labels are migrated through `aliases` in `upgrades.json` so existing Builds remain connected.
+- New ships are added to the file for their rate.
+- New JSON files are additionally registered in the manifest.
+- Secrets and installation-specific values do not belong in this catalog. The initial administrator account continues to come from the environment.
+- Production runs remain idempotent: unchanged records are not rewritten, admin overrides stay protected, and removed defaults are disabled rather than deleted.
 
-## Schiffe und Waffen-Mounts
+## Ships and Weapon Mounts
 
-`ships/definitions.json` enthält die normalisierten Waffenklassen und Slottypen.
-Jedes Schiff definiert genau sechs Mounts, auch wenn deren `capacity` null ist:
+`ships/definitions.json` contains normalized weapon classes and slot types.
+Every ship defines exactly six mounts even when their `capacity` is null:
 
-- `weapon_front`: Bugwaffen
-- `weapon_rear`: Heckwaffen
-- `weapon_port`: Backbord-Breitseite
-- `weapon_starboard`: Steuerbord-Breitseite
-- `weapon_mortar`: Mörser und Fasswerfer
-- `weapon_special`: optionaler dedizierter Spezialwaffen-Mount
+- `weapon_front`: bow weapons
+- `weapon_rear`: stern weapons
+- `weapon_port`: port broadside
+- `weapon_starboard`: starboard broadside
+- `weapon_mortar`: mortars and barrel launchers
+- `weapon_special`: optional dedicated special-weapon mount
 
-`special_weapon_capacity` ist eine Obergrenze innerhalb der normalen
-`capacity`. Spezialwaffen sind nur an Bug, Heck oder einem dedizierten
-Spezialmount erlaubt. Ein bestückbarer Mörser-Mount benötigt zusätzlich
-`max_caliber_inches`.
+`special_weapon_capacity` is an upper bound within normal `capacity`. Special weapons are allowed only at the bow, stern, or a dedicated special mount. An equipable mortar mount additionally requires `max_caliber_inches`.
 
-Reguläre Breitseiten- **und** Bug-/Heckwaffen besitzen eine normalisierte
-`weapon_class` (`light`, `medium`, `heavy`). Für ihre Auswahl müssen sowohl der
-Slottyp als auch die maximale Waffenklasse des konkreten Mounts passen. Mörser
-und echte Spezialwaffen verwenden weiterhin ihre getrennten Regeln.
+Regular broadside **and** bow/stern weapons have a normalized `weapon_class` (`light`, `medium`, `heavy`). Selection requires both the slot type and the maximum weapon class of the concrete mount to match. Mortars and true special weapons continue to use their separate rules.
 
-`mortar_modification` bildet den permanenten Schiffsumbau ab und ist kein
-normales Upgrade. `null` bedeutet, dass der Umbau nicht verfügbar ist. Aktuell
-ist er für `Black Wind`, `Falmouth` und `Friede` hinterlegt. Das Build speichert
-nur die Auswahl; Kapazitäten und Stat-Effekte stammen immer aus dem
-Schiffskatalog.
+`mortar_modification` represents the permanent ship conversion and is not a normal upgrade. `null` means the conversion is unavailable. It is currently defined for `Black Wind`, `Falmouth`, and `Friede`. A Build stores only the selection; capacities and stat effects always come from the ship catalog.
 
-## Ausführen
+## Execution
 
-Die Anwendung synchronisiert die validierten Stammdaten nach erfolgreicher
-Flyway-Migration idempotent beim Start. Administratorische Overrides bleiben dabei
-erhalten. Eine bewusste Wiederherstellung der Repository-Defaults erfolgt über die
-geschützte Stammdaten-Administration und wird auditiert.
+The application idempotently synchronizes validated master data at startup after a successful Flyway migration. Administrative overrides remain intact. Deliberate restoration of repository defaults is performed through protected master-data administration and is audited.
 
-Es werden keine Beispiel-Builds, Guides, Termine oder Nutzeraktivitäten erzeugt.
+No sample Builds, guides, appointments, or user activity are generated.

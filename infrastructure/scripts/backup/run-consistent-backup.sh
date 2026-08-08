@@ -31,10 +31,10 @@ while (($#)); do
     --verification-result) verification_result="${2:-}"; shift 2 ;;
     --backup-set-result) set_result="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
-    *) die "Unbekannte Backup-Option: $1" ;;
+    *) die "Unknown backup option: $1" ;;
   esac
 done
-[[ "$EUID" -eq 0 ]] || die "Koordinierte Backups benötigen root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "Coordinated backups require root privileges."
 require_command flock
 require_command python3
 require_command sha256sum
@@ -54,16 +54,16 @@ export_verified_recovery_set() {
   export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
   export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
   [[ -n "$export_dir" || -n "$export_user" ]] || return 0
-  [[ -n "$recovery" ]] || die "Pull-Export ist konfiguriert, aber es wurde kein Recovery-Bundle erzeugt."
-  [[ -n "$export_dir" && -n "$export_user" ]] || die "BACKUP_PULL_EXPORT_DIR und BACKUP_PULL_EXPORT_USER müssen gemeinsam gesetzt sein."
-  [[ "$export_dir" == /* ]] || die "BACKUP_PULL_EXPORT_DIR muss absolut sein."
-  id "$export_user" >/dev/null 2>&1 || die "BACKUP_PULL_EXPORT_USER existiert nicht: $export_user"
+  [[ -n "$recovery" ]] || die "Pull export is configured, but no recovery bundle was created."
+  [[ -n "$export_dir" && -n "$export_user" ]] || die "BACKUP_PULL_EXPORT_DIR and BACKUP_PULL_EXPORT_USER must be set together."
+  [[ "$export_dir" == /* ]] || die "BACKUP_PULL_EXPORT_DIR must be absolute."
+  id "$export_user" >/dev/null 2>&1 || die "BACKUP_PULL_EXPORT_USER does not exist: $export_user"
   export_group="$(id -gn "$export_user")"
   install -d -m 0700 -o "$export_user" -g "$export_group" "$export_dir"
 
   copy_atomic() {
     source="$1"
-    [[ -f "$source" && ! -L "$source" ]] || die "Pull-Exportquelle fehlt oder ist unsicher: $source"
+    [[ -f "$source" && ! -L "$source" ]] || die "Pull export source is missing or unsafe: $source"
     target="$export_dir/$(basename "$source")"
     temporary="$export_dir/.$(basename "$source").part.$$"
     rm -f "$temporary"
@@ -89,7 +89,7 @@ export_verified_recovery_set() {
        -o -name 'rbf-postgres-preflight-*.json' -o -name 'rbf-postgres-preflight-*.json.sha256' \
        -o -name 'rbf-backup-set-*.json' -o -name 'rbf-backup-set-*.json.sha256' \) \
     -mtime "+$retention_days" -delete
-  success "Verschlüsselter, recovery-verifizierter Pull-Export committed: $export_dir/$(basename "$set_manifest")"
+  success "Encrypted, recovery-verified pull export committed: $export_dir/$(basename "$set_manifest")"
 }
 
 own_postgres_result=false; own_files_result=false; own_recovery_result=false; own_verification_result=false; own_set_result=false
@@ -107,13 +107,13 @@ quiesce="$(read_env BACKUP_QUIESCE_APPLICATION)"; quiesce="${quiesce:-true}"
 consistency="no-running-api"
 if [[ "$api_was_running" == true ]]; then
   if is_true "$quiesce"; then
-    log "Stoppe die API kurz als anwendungsweite Backup-Konsistenzgrenze."
+    log "Briefly stop the API as the application-wide backup consistency boundary."
     bw_compose stop api
     api_stopped=true
     consistency="application-quiesced"
   else
     consistency="best-effort-live"
-    die "Produktions-Backup abgelehnt: BACKUP_QUIESCE_APPLICATION=false erzeugt keinen verifizierbaren Recovery-Punkt."
+    die "Production backup rejected: BACKUP_QUIESCE_APPLICATION=false does not produce a verifiable recovery point."
   fi
 fi
 
@@ -126,7 +126,7 @@ restore_api() {
     api_stopped=false
   fi
   if [[ "$backup_completed" != true ]]; then
-    warn "Koordinierter Backup-Lauf wurde abgebrochen; es wurde kein Backup-Set-Commit erzeugt."
+    warn "Coordinated backup run was aborted; no backup-set commit was created."
   fi
   [[ "$own_postgres_result" == true ]] && rm -f "$postgres_result"
   [[ "$own_files_result" == true ]] && rm -f "$files_result"
@@ -162,7 +162,7 @@ fi
 
 recovery_backup=""
 if [[ "$include_recovery" == true ]]; then
-  [[ -n "$postgres_backup" ]] || die "Recovery-Bundle benötigt ein PostgreSQL-Backup."
+  [[ -n "$postgres_backup" ]] || die "Recovery bundle requires a PostgreSQL backup."
   BACKUP_RESULT_FILE="$recovery_result" \
     /usr/bin/env bash "$SCRIPT_DIR/backup-recovery.sh" \
     --postgres "$postgres_backup" --files "$files_backup"
@@ -184,4 +184,4 @@ printf '%s\n' "$set_path" > "$set_result"; chmod 600 "$set_result"
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
 find "$INFRA_DIR/data/backups/sets" -type f -mtime "+$retention_days" -delete
 backup_completed=true
-success "Koordinierter und vollständig verifizierter Backup-Punkt erstellt: $set_path"
+success "Coordinated and fully verified backup point created: $set_path"

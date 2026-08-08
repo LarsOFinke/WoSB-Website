@@ -7,7 +7,7 @@ ensure_env_file
 cert_name="$(read_env LETSENCRYPT_CERT_NAME)"
 [[ -n "$cert_name" ]] || cert_name="$(read_env APP_HOSTNAME)"
 lineage="${RENEWED_LINEAGE:-$CERTBOT_CONFIG_DIR/live/$cert_name}"
-[[ -s "$lineage/fullchain.pem" && -s "$lineage/privkey.pem" ]] || die "Let's-Encrypt-Zertifikat nicht gefunden: $lineage"
+[[ -s "$lineage/fullchain.pem" && -s "$lineage/privkey.pem" ]] || die "Let's Encrypt certificate not found: $lineage"
 hostname="$(read_env APP_HOSTNAME)"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib/host" && pwd)/tls.sh"
 verify_tls_material "$lineage/fullchain.pem" "$lineage/privkey.pem" "$hostname" 604800
@@ -30,4 +30,4 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     bw_compose exec -T gateway nginx -s reload >/dev/null 2>&1 || bw_compose restart gateway >/dev/null
   fi
 fi
-success "Let's-Encrypt-Zertifikat wurde installiert und die Gateways wurden neu geladen."
+success "Let's Encrypt certificate was installed and the gateways were reloaded."

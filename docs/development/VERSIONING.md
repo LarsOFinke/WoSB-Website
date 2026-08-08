@@ -1,36 +1,30 @@
-# Versionierung
+# Versioning
 
-Royal Blackwater Fleet verwendet `MAJOR.MINOR.PATCH`. Die höchste zutreffende
-Änderungsklasse bestimmt die nächste Version; niedrigere Stellen werden beim
-Erhöhen zurückgesetzt.
+Royal Blackwater Fleet uses `MAJOR.MINOR.PATCH`. The highest applicable change class
+determines the next version; lower positions reset when a higher position is incremented.
 
-| Klasse | Form | Verwenden für | Beispiel ab `1.0.0` |
+| Class | Form | Use for | Example from `1.0.0` |
 | --- | --- | --- | --- |
-| Patch | `x.y.Z` | Hotfixes, Fehler-, Sicherheits- und Dokumentationskorrekturen sowie kompatible interne Verbesserungen | `1.0.1` |
-| Minor | `x.Y.0` | Rückwärtskompatible Features, neue optionale API-Felder und additive Funktionen oder Migrationen | `1.1.0` |
-| Major | `X.0.0` | Inkompatible Verträge, Konfigurationen oder Migrationen sowie ausdrücklich große Produkterweiterungen | `2.0.0` |
+| Patch | `x.y.Z` | hotfixes, bug, security, and documentation corrections, plus compatible internal improvements | `1.0.1` |
+| Minor | `x.Y.0` | backward-compatible features, new optional API fields, and additive functions or migrations | `1.1.0` |
+| Major | `X.0.0` | incompatible contracts, configurations, or migrations, plus explicitly large product expansions | `2.0.0` |
 
-Ein Feature mit zusätzlichem Patch-Anteil bleibt ein Minor-Release; eine
-inkompatible Änderung bleibt ein Major-Release. Reine Größe allein macht eine
-Änderung nicht inkompatibel, kann bei einer bewusst als Produktmeilenstein
-geplanten Erweiterung aber einen Major-Sprung begründen.
+A feature that also contains patch-level work remains a minor release; an incompatible change
+remains a major release. Size alone does not make a change incompatible, but it may justify a
+major jump for an expansion deliberately planned as a product milestone.
 
-Jeder Stand, der über den Update-Mechanismus ausgerollt werden soll, erhält eine
-neue, höhere Releaseversion. Ein deploybarer Fehlerfix wird daher mindestens um
-`0.0.1` erhöht; eine bereits aktivierte Versionsnummer wird auch für kleine
-Folgepatches nicht wiederverwendet.
+Every state intended for rollout through the update mechanism receives a new, higher release
+version. A deployable bug fix therefore increments at least `0.0.1`; an already-activated
+version number is not reused even for small follow-up patches.
 
-Vor jedem Release:
+Before every release:
 
-1. Änderungsklasse anhand des gesamten Release-Inhalts bestimmen.
-2. Nächste Nummer mit `bash .agents/scripts/next-version.sh patch|minor|major`
-   prüfen.
-3. `VERSION` sowie Maven-, Frontend- und API-Vertragsversion gemeinsam ändern;
-   generierte Referenzen anschließend über ihren Generator aktualisieren.
-4. Vollständiges Release-Gate ausführen, committen und erst aus diesem sauberen
-   Commit das Artefakt bauen.
+1. Determine the change class from the complete release contents.
+2. Verify the next number with `bash .agents/scripts/next-version.sh patch|minor|major`.
+3. Change `VERSION` plus Maven, frontend, and API contract versions together; then update
+   generated references through their generator.
+4. Run the complete release gate, commit, and build the artifact only from that clean commit.
 
-Aktivierte oder anderweitig veröffentlichte Release-Versionen und ihre
-Artefakte sind unveränderlich und werden niemals wiederverwendet. Vorabstände
-verwenden bei Bedarf SemVer-Suffixe wie `-rc.1`; Produktionsartefakte bleiben
-bei der dreiteiligen Version aus `VERSION`.
+Activated or otherwise published release versions and their artifacts are immutable and never
+reused. Pre-releases may use SemVer suffixes such as `-rc.1`; production artifacts keep the
+three-part version from `VERSION`.

@@ -1,65 +1,48 @@
-# Infrastruktur-Skripte
+# Infrastructure Scripts
 
-Die Skripte sind nach Betriebsgrenzen organisiert. Einstiegspunkte bleiben
-stabil; interne Helfer werden nicht direkt aus systemd oder der CI aufgerufen.
+The scripts are organized by operational boundaries. Entry points remain stable; internal helpers
+are not invoked directly from systemd or CI.
 
-## Einstiegspunkte
+## Entry Points
 
-- `../../deploy.sh --configure` richtet den Testserver ein; Test ist Standard.
-- `../../deploy.sh --production --configure` richtet Production explizit ein.
-- `../../deploy.sh` und `../../update.sh` delegieren an `release/deploy-from-origin.sh`;
-  Production erfordert bei jedem Lauf `--production`.
-- `diagnostics/debug.sh` folgt derselben Zielauswahl und sammelt begrenzte,
-  redigierte Zielsystemdiagnosen ausschließlich am Ursprung.
-- `../setup.sh` delegiert intern an `setup/` und wird nur von lokalen
-  Entwicklungs- und Artefaktabläufen aufgerufen.
-- `release/build-artifact.sh` baut und validiert das kompilierte Deployment-Artefakt.
-- `services/boot.sh`, `services/start.sh`, `services/stop.sh` und
-  `services/systemd-stop.sh` bilden den Container-Lebenszyklus.
+- `../../deploy.sh --configure` configures the test server; test is the default.
+- `../../deploy.sh --production --configure` explicitly configures production.
+- `../../deploy.sh` and `../../update.sh` delegate to `release/deploy-from-origin.sh`;
+  production requires `--production` on every run.
+- `diagnostics/debug.sh` follows the same target selection and collects bounded, redacted target-system diagnostics only at the origin.
+- `../setup.sh` delegates internally to `setup/` and is invoked only by local development and artifact workflows.
+- `release/build-artifact.sh` builds and validates the compiled deployment artifact.
+- `services/boot.sh`, `services/start.sh`, `services/stop.sh`, and `services/systemd-stop.sh` form the container lifecycle.
 
-## Bereiche
+## Areas
 
-- `backup/`: konsistente Sicherungen, Wiederherstellung, Recovery-Bundles und
-  der Admin-Runner. Die `backup_runner_*.py`-Dateien sind Import-Module des
-  `backup-admin-runner.py`, auch wenn sie nicht als Shell-Aufrufer erscheinen.
-- `checks/`: Preflight-, Host-Sicherheits-, Smoke- und Diagnoseprüfungen.
-- `deployment/`: systemd-Installation.
-- `diagnostics/`: Origin-Collector, flüchtiger Remote-Collector und lokale
-  Redaktion für agententaugliche Betriebsdiagnosen.
-- `generation/`: deterministische API-, Java-, Flyway-, Build- und
-  Dokumentationsgeneratoren. Veröffentlichte Flyway-Dateien bleiben trotz
-  verschobenem Generator unveränderlich.
-- `lib/`: gemeinsam genutzte Shell-Bibliotheken für Docker, Umgebung, Host,
-  Speicher, TLS, JSON und Wartungsstatus.
-- `quality/`: Repository-Audits, Hygiene, Security-Prüfung und das vollständige
-  Validierungs-Gate; fokussierte Vertragsprüfungen liegen in `quality/tests/`.
-- `release/`: Artefaktbau und -prüfung, Packaging, Origin-Transfer,
-  Installation, Rollback und TLS-/Host-Vorbereitung.
-- `services/`: laufender Anwendungsbetrieb und kontrollierte Admin-Operationen.
-- `setup/`: CLI-Optionen und Setup-Orchestrierung.
-- `tls/`: Zertifikatserneuerung und Synchronisierung.
+- `backup/`: consistent backups, restores, recovery bundles, and the admin runner. The `backup_runner_*.py` files are import modules of `backup-admin-runner.py`, even though they do not appear as shell callers.
+- `checks/`: preflight, host-security, smoke, and diagnostic checks.
+- `deployment/`: systemd installation.
+- `diagnostics/`: origin collector, ephemeral remote collector, and local redaction for agent-friendly operational diagnostics.
+- `generation/`: deterministic API, Java, Flyway, Build, and documentation generators. Published Flyway files remain immutable despite the relocated generator.
+- `lib/`: shared shell libraries for Docker, environment, host, storage, TLS, JSON, and maintenance status.
+- `quality/`: repository audits, hygiene, security checks, and the complete validation gate; focused contract checks live in `quality/tests/`.
+- `release/`: artifact build and verification, packaging, origin transfer, installation, rollback, and TLS/host preparation.
+- `services/`: running application operations and controlled admin actions.
+- `setup/`: CLI options and setup orchestration.
+- `tls/`: certificate renewal and synchronization.
 
-## Ablage- und Ownership-Regel
+## Placement and Ownership Rule
 
-Im Repository-Root bleiben ausschließlich die öffentlichen Bedienverträge
-`deploy.sh` und `update.sh`. Alle gemeinsamen Skripte liegen in diesem Baum und
-werden nach Verantwortung einem Modul zugeordnet; ein neues top-level `scripts/`
-ist unzulässig. `.agents/scripts/` und `frontend/scripts/` sind eng an ihre
-jeweiligen Eigentümermodule gebunden und keine allgemeinen Skriptsammlungen.
+Only the public operating contracts `deploy.sh` and `update.sh` remain at the repository root.
+All shared scripts live in this tree and are assigned to a module by responsibility; a new top-level
+`scripts/` directory is not allowed. `.agents/scripts/` and `frontend/scripts/` are tightly bound
+to their owner modules and are not general script collections.
 
-Die gemeinsame Ablage bedeutet nicht, dass jedes Modul Produktionsbestandteil
-ist. `release/package_deployment_artifact.py` verwendet eine explizite
-Runtime-Allowlist. `quality/`, `generation/` und die Packaging-Programme selbst
-bleiben auf dem Ursprung beziehungsweise in CI und werden nicht ausgeliefert.
+Shared placement does not mean every module is part of production.
+`release/package_deployment_artifact.py` uses an explicit runtime allowlist. `quality/`,
+`generation/`, and the packaging programs themselves remain at the origin or in CI and are not shipped.
 
-## Aufräumprüfung (2026-08-04)
+## Cleanup Review (2026-08-04)
 
-- Alle versionierten Shell-Skripte bestehen `bash -n`.
-- Alle versionierten Python-Skripte bestehen `python3 -m compileall`.
-- Öffentliche Wrapper (`deploy.sh`, `update.sh`) wurden nicht
-  zusammengelegt, weil sie bestehende Betriebsverträge darstellen.
-- Manuelle Recovery-Helfer (`merge-encryption-keyring.sh`,
-  `verify-recovery.sh`) wurden nicht gelöscht: fehlende Quelltextverweise sind
-  bei bewusst manuellen Notfallwerkzeugen kein Beweis für Nichtverwendung.
-- `release/package_release.py` bleibt erhalten, da der Release-Workflow es
-  weiterhin für das zusätzliche Quellarchiv aufruft.
+- All versioned shell scripts pass `bash -n`.
+- All versioned Python scripts pass `python3 -m compileall`.
+- Public wrappers (`deploy.sh`, `update.sh`) were not merged because they represent existing operational contracts.
+- Manual recovery helpers (`merge-encryption-keyring.sh`, `verify-recovery.sh`) were not deleted: missing source-code references are not evidence of non-use for deliberately manual emergency tools.
+- `release/package_release.py` remains because the release workflow still invokes it for the additional source archive.

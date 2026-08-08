@@ -2,25 +2,25 @@ diff --git a/.agents/DEBUGGING_CACHE.md b/.agents/DEBUGGING_CACHE.md
 index 7471dbe..700d544 100644
 --- a/.agents/DEBUGGING_CACHE.md
 +++ b/.agents/DEBUGGING_CACHE.md
-@@ -18,6 +18,7 @@ Arbeitskontext übernehmen.
- | leere/falsche API-Antwort | Contract-Mapper und interne DB-Spalten | unbekannte Felder nicht durch Contractlockerung kaschieren |
- | Startfehler | Properties-Binding, Flyway, Hibernate-`validate` | Readiness und erster Root-Cause-Stacktrace |
- | Seed/Stammdaten | Seed-Key, Checksum, Override-Flag | Seeder idempotent erneut ausführen; keine Migration editieren |
-+| Legacy-Teilrestore/Migration | zuerst Dry-Run + erste Preflight-Exception | semantische FK-Auflösung prüfen; keine alten IDs oder kompletten Python-Dumps über Java-DB restaurieren |
- | Fleet/Squad | Fleet-ID, Membership-Status, Rollen-Code/Capabilities | Bootstrap-Repair und AccessPolicy/HTTP-Test |
- | Privacy/Cookie | Policy-Version, Entscheidung vorhanden, keine Schlüsselwerte | Retention, Exportausschlüsse, geschützte Route nach Löschung |
- | Frontend lädt nicht | Browser-Konsole, fehlgeschlagener API-Status, Route | Page → Composable → API/Domain; Vite-Build und Browser-Smoke |
-@@ -82,6 +83,11 @@ legt nur die lokal redigierte Ausgabe unter `.diagnostics/` ab.
- - Interne Seed-/Relationsfelder vor strikter Contract-Konvertierung entfernen.
- - Generierte Controller und Contracts nie direkt korrigieren; Generatorquelle
-   ändern und `--check` ausführen.
-+- Legacy-Build-Daten als logische Migration behandeln: exakt dieselbe geprüfte SQL-Datei
-+  zuerst testseitig Dry-Run -> Commit -> UI/API verifizieren und danach productionseitig
-+  erneut Dry-Run -> Commit. Schiffe/Optionen/Rollen/Features semantisch auflösen; historische
-+  numerische IDs, User-/Auth-Daten und Masterdata niemals aus dem Python-Komplettdump übernehmen.
+@@ -18,6 +18,7 @@ Adopt the working context.
+ | empty/wrong API response | contract mapper and internal DB columns | do not hide unknown fields by loosening the contract |
+ | startup failure | property binding, Flyway, Hibernate `validate` | readiness and first root-cause stack trace |
+ | seed/master data | seed key, checksum, override flag | rerun seeder idempotently; do not edit a migration |
++| legacy partial restore/migration | dry run + first preflight exception | verify semantic FK resolution; never restore old IDs or complete Python dumps into the Java DB |
+ | fleet/squad | fleet ID, membership status, role code/capabilities | bootstrap repair and AccessPolicy/HTTP test |
+ | privacy/cookie | policy version, decision present, no key values | retention, export exclusions, protected route after deletion |
+ | frontend does not load | browser console, failed API status, route | page → composable → API/domain; Vite build and browser smoke test |
+@@ -82,6 +83,11 @@ stores only the locally redacted output under `.diagnostics/`.
+ - Remove internal seed/relation fields before strict contract conversion.
+ - Never edit generated controllers and contracts directly; change the generator source
+   and run `--check`.
++- Treat legacy Build data as a logical migration: use exactly the same verified SQL file
++  first on test: dry run -> commit -> verify UI/API, and then on production
++  again as dry run -> commit. Resolve ships/options/roles/features semantically; never import historical
++  numeric IDs, user/auth data, or master data from the full Python dump.
 +  Runbook: `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md`.
- - Produktionsdaten, Volumes, `shared/data` und aktive Releases sind keine
-   zulässigen Debug-Cleanup-Ziele.
+ - Production data, volumes, `shared/data`, and active releases are not
+   valid debugging cleanup targets.
  
 diff --git a/.agents/PROJECT_CACHE.md b/.agents/PROJECT_CACHE.md
 index be178d0..a8c5b16 100644
@@ -29,22 +29,22 @@ index be178d0..a8c5b16 100644
 @@ -33,6 +33,7 @@
  | Backend | `spring-api/README.md`, `spring-api/pom.xml`, `spring-api/src/main/resources/application.yml` |
  | Frontend | `frontend/ARCHITECTURE.md`, `frontend/package.json`, `docs/reference/CSS_ARCHITECTURE.md` |
- | Datenbank | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
-+| Legacy-Datenmigration | `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md` |
+ | Database | `docs/development/DATABASE.md`, `spring-api/src/main/resources/db/migration/` |
++| Legacy data migration | `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md` |
  | Tests | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
- | Breiter Qualitätsputz | `.agents/REPOSITORY_SPRING_CLEANING.md` |
- | Infrastruktur | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
+ | Broad quality cleanup | `.agents/REPOSITORY_SPRING_CLEANING.md` |
+ | Infrastructure | `infrastructure/ARCHITECTURE.md`, `infrastructure/README.md`, `infrastructure/compose.yml` |
 @@ -170,6 +171,11 @@ allein ableiten.
-   Verifier und Rollback liegen unter `infrastructure/scripts/release/`.
- - Backup/Restore koppeln Anwendung, Flyway-Schema, persistente Dateien und das
-   zugehörige Release-Artefakt. Restore ist gestaged und fail-closed.
-+- Ein bewusst begrenzter Legacy-Teilrestore (z. B. Python→Java Builds) ist dagegen eine
-+  logische Datenmigration gegen das bereits aktuelle Flyway-Schema: keine alten numerischen
-+  FKs, User/Auth-/Masterdata oder DDL übernehmen. Referenzen semantisch auflösen, exakt dieselbe
-+  Importdatei erst auf Test und danach Production verwenden und auf beiden Zielen vor Commit einen
-+  vollständigen transaktionalen Dry-Run verlangen.
- - Outbound-Netzwerk ist auf explizite Integrationen begrenzt. Webhooks enthalten
-   knappe Audit-/Aktionshinweise und dürfen den Hauptablauf nicht unkontrolliert
+   Verifier and rollback live under `infrastructure/scripts/release/`.
+ - Backup/restore bind the application, Flyway schema, persistent files, and the
+   associated release artifact. Restore is staged and fail-closed.
++- A deliberately bounded legacy partial restore (for example Python→Java Builds) is instead a
++  logical data migration against the already-current Flyway schema: no old numeric
++  Do not carry over FKs, user/auth/master data, or DDL. Resolve references semantically, use exactly the same
++  Use the import file first on test and then production, and require a dry run on both targets before commit
++  complete transactional dry run.
+ - Outbound networking is limited to explicit integrations. Webhooks contain
+   concise audit/action notices and must not disrupt the main flow uncontrollably
    blockieren.
 diff --git a/docs/architecture/BACKUP_ARCHITECTURE.md b/docs/architecture/BACKUP_ARCHITECTURE.md
 index 0fc7869..f702a3f 100644
@@ -293,15 +293,15 @@ diff --git a/docs/debugging/README.md b/docs/debugging/README.md
 index 9168802..48e57dc 100644
 --- a/docs/debugging/README.md
 +++ b/docs/debugging/README.md
-@@ -9,6 +9,9 @@ kopiert Secrets, Cookies oder Authorization-Header in Tickets.
-   Evidenzminimum und passende Regressionstest-Ebene
+@@ -9,6 +9,9 @@ copies secrets, cookies, or Authorization headers into tickets.
+   minimum evidence and appropriate regression-test level
  - [Deployment-Incidents](DEPLOYMENT_INCIDENTS.md) – bekannte konkrete Symptome,
-   Ursachen und sichere nächste Schritte
-+- [Legacy-Build-Datenmigration](LEGACY_BUILD_DATA_MIGRATION.md) – geprüfter
-+  Build-only Python→Java-Teilrestore mit Dry-Run, semantischer FK-Auflösung und
+   causes and safe next steps
++- [Legacy Build Data Migration](LEGACY_BUILD_DATA_MIGRATION.md) – verified
++  Build-only Python→Java partial restore with dry run, semantic FK resolution, and
 +  Test→Production-Promotion
  
- ## Schnelle Eingrenzung
+ ## Quick narrowing
  
 diff --git a/docs/development/DATABASE.md b/docs/development/DATABASE.md
 index 71b8447..5bf45e5 100644

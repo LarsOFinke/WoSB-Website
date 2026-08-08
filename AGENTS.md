@@ -1,88 +1,85 @@
-# Arbeitsleitfaden für Repository-Agenten
+# Working Guide for Repository Agents
 
-Diese Datei gilt für das gesamte Repository. Spezifischere Regeln in einem tiefer
-liegenden `AGENTS.md` haben für ihren Teilbaum Vorrang. Verbindliche technische
-Details stehen in [docs/development/QUALITY_STANDARDS.md](docs/development/QUALITY_STANDARDS.md) und den
-dort verlinkten Architekturdokumenten.
+This file applies to the entire repository. More specific rules in an `AGENTS.md`
+located deeper in the tree take precedence for that subtree. Binding technical
+details are defined in [docs/development/QUALITY_STANDARDS.md](docs/development/QUALITY_STANDARDS.md) and the
+architecture documents linked there.
 
-> **Agenten-Schnellstart:** Vor einer breiten Repository-Analyse zuerst
-> [`.agents/ONBOARDING.md`](.agents/ONBOARDING.md) lesen und
-> `bash .agents/scripts/project-context.sh` ausführen. Der Einstieg verweist auf
-> den gepflegten Projekt-Cache, bekannte Fehlerbilder und scopeabhängige
-> Prüfungen, damit bereits geklärte Architektur nicht erneut ermittelt wird.
+> **Agent quick start:** Before a broad repository analysis, first read
+> [`.agents/ONBOARDING.md`](.agents/ONBOARDING.md) and run
+> `bash .agents/scripts/project-context.sh`. The entry point references the
+> maintained project cache, known failure patterns, and scope-dependent checks so
+> already-established architecture does not have to be rediscovered.
 
-## Arbeitsweise
+## Working approach
 
-1. Vor Änderungen den betroffenen Ablauf, seine Aufrufer, Tests, Konfiguration und
-   Dokumentation lesen. Bei querschnittlichen Aufgaben zuerst einen kurzen Plan
-   erstellen.
-2. Vorhandene, nicht zum Auftrag gehörende Änderungen erhalten. Keine fremden
-   Änderungen zurücksetzen, überschreiben oder ungefragt committen.
-3. Die kleinste fachlich vollständige Lösung umsetzen. Bestehende Abstraktionen
-   wiederverwenden und neue nur einführen, wenn sie Verantwortung, Lebenszyklus
-   oder Austauschbarkeit tatsächlich klären.
-4. Fehlerursachen beheben statt Symptome zu kaschieren. Sicherheits-, Datenschutz-,
-   Migrations- und Betriebsfolgen immer mitprüfen.
-5. Erst gezielt testen, danach die passenden Repository-Gates ausführen. Geändertes
-   Verhalten und neue Betriebsabläufe im selben Arbeitsschritt dokumentieren.
+1. Before making changes, read the affected flow, its callers, tests, configuration,
+   and documentation. For cross-cutting tasks, create a short plan first.
+2. Preserve existing changes that are unrelated to the task. Do not reset,
+   overwrite, or commit other people's changes without being asked.
+3. Implement the smallest functionally complete solution. Reuse existing
+   abstractions and introduce new ones only when they genuinely clarify
+   responsibility, lifecycle, or replaceability.
+4. Fix root causes instead of hiding symptoms. Always consider security, privacy,
+   migration, and operational consequences as well.
+5. Run focused tests first, then the appropriate repository gates. Document changed
+   behavior and new operational procedures in the same work step.
 
-## Architektur und Quellcode
+## Architecture and source code
 
-- Backend-Domänen bleiben unter `spring-api/src/main/java/eu/royalblackwater/api/<domain>/`
-  in `controller`, `filter`, `service`, `mapper`, `dto`, `entity` und `repository`
-  getrennt. Generische `model`-Pakete sind unzulässig: fachmodulinterne Übergabe- und Wertobjekte
-  gehören nach `<domain>/dto`, Persistenztypen nach `<domain>/entity` und deklarative Kataloge
-  in die verantwortliche Service- oder Repository-Schicht. Generierte API-Interfaces definieren ausschließlich den HTTP-Vertrag; Controller
-  binden Requests und delegieren direkt an Services. Fachlogik, Autorisierung und Transaktionen
-  gehören in Services, Persistenz ausschließlich hinter Modul-Repositories. SQL-Definitionen
-  liegen in modulbezogenen `repository/queries`-Katalogen; SQL in Services ist unzulässig.
-  Generierte Transport-DTOs liegen ausschließlich unter `api/dto`; fachmodulinterne
-  Übergabeobjekte unter `<domain>/dto`. Controller und öffentliche Service-Grenzen
-  geben weder Entities noch Datenbankzeilen/Roh-Maps weiter. Nur Mapper übersetzen
-  zwischen API-DTOs, internen DTOs, Entities und Repository-Zeilen.
-- Abhängigkeiten werden per Konstruktor injiziert. Feldinjektion und Service-Locator sind
-  unzulässig. Reine, kleine Funktionen benötigen keinen Spring-Bean-Lebenszyklus.
-- Frontend-Seiten orchestrieren. Wiederverwendbare Darstellung gehört in
-  Komponenten, Zustand und Abläufe in Composables, Netzwerkzugriff in API-Module.
-- Infrastruktur-Skripte orchestrieren robuste, idempotente Helper. Kritische
-  Dateiänderungen erfolgen möglichst atomar; Fehler müssen einen eindeutigen
-  Exit-Code und eine handlungsorientierte Meldung liefern.
-- Eine Datei hat eine klar benennbare Hauptverantwortung, die aus ihrem Namen
-  hervorgeht. Ab etwa 300–400 Zeilen ist eine Aufteilung in Orchestrator, Service,
-  Helper, Transport oder Datenkatalog zu prüfen. Die automatisierte Obergrenze für
-  ausführbare Verantwortlichkeiten beträgt grundsätzlich 420 Zeilen; begründete,
-  kohäsive deklarative Kataloge sind keine Einladung zu weiteren Sammeldateien.
-- KISS vor vorsorglicher Generalisierung; SOLID sinngemäß anwenden. Keine Wrapper,
-  Manager oder Basisklassen ohne mindestens einen konkreten Wartbarkeitsgewinn.
-- Datenbankschema ausschließlich mit unveränderlichen Flyway-Migrationen ändern. Modell,
-  Migration, Upgrade- und Recovery-Pfad gemeinsam prüfen; Hibernate bleibt auf `validate`.
+- Backend domains remain separated below `spring-api/src/main/java/eu/royalblackwater/api/<domain>/`
+  into `controller`, `filter`, `service`, `mapper`, `dto`, `entity`, and `repository`.
+  Generic `model` packages are not permitted: domain-module transfer and value objects
+  belong in `<domain>/dto`, persistence types in `<domain>/entity`, and declarative catalogs
+  in the responsible service or repository layer. Generated API interfaces define only the
+  HTTP contract; controllers bind requests and delegate directly to services. Business logic,
+  authorization, and transactions belong in services, while persistence belongs exclusively
+  behind module repositories. SQL definitions live in module-specific `repository/queries`
+  catalogs; SQL in services is not permitted. Generated transport DTOs live exclusively under
+  `api/dto`; domain-module transfer objects live under `<domain>/dto`. Controllers and public
+  service boundaries must not expose entities, database rows, or raw maps. Only mappers translate
+  between API DTOs, internal DTOs, entities, and repository rows.
+- Dependencies are injected through constructors. Field injection and service locators are not
+  permitted. Small, pure functions do not need a Spring bean lifecycle.
+- Frontend pages orchestrate. Reusable presentation belongs in components, state and flows in
+  composables, and network access in API modules.
+- Infrastructure scripts orchestrate robust, idempotent helpers. Critical file changes should be
+  atomic whenever possible; failures must return an unambiguous exit code and an actionable message.
+- A file has one clearly nameable primary responsibility that is evident from its name. At roughly
+  300–400 lines, consider splitting it into orchestrator, service, helper, transport, or data catalog.
+  The automated upper limit for executable responsibilities is generally 420 lines; justified,
+  cohesive declarative catalogs are not an invitation to create more catch-all files.
+- Prefer KISS over speculative generalization; apply SOLID pragmatically. Do not add wrappers,
+  managers, or base classes without at least one concrete maintainability benefit.
+- Change the database schema only with immutable Flyway migrations. Review model, migration,
+  upgrade, and recovery paths together; Hibernate remains set to `validate`.
 
-## Frontend, Sicherheit und Datenschutz
+## Frontend, security, and privacy
 
-- Für CSS, Responsive-Verhalten, Barrierefreiheit und Design-Tokens gilt
+- For CSS, responsive behavior, accessibility, and design tokens, follow
   [docs/reference/CSS_ARCHITECTURE.md](docs/reference/CSS_ARCHITECTURE.md).
-- Berechtigungen werden serverseitig erzwungen. Frontend-Guards sind nur UX.
-- Keine Secrets, Tokens, personenbezogenen Inhalte oder vollständigen IP-Adressen
-  in Quellcode, Fixtures, Logs, Webhooks oder Fehlermeldungen aufnehmen.
-- Neue personenbezogene Daten brauchen Zweck, Rechts-/Betriebsgrundlage,
-  Aufbewahrung sowie Export-, Berichtigungs- und Löschpfad.
-- Webhooks sind sparsame Audit- und Aktionshinweise, kein Überwachungsinstrument.
-  Zustellung darf den primären Geschäftsablauf nicht unkontrolliert blockieren.
+- Permissions are enforced server-side. Frontend guards are UX only.
+- Do not place secrets, tokens, personal data, or complete IP addresses in source code,
+  fixtures, logs, webhooks, or error messages.
+- New personal data requires a purpose, legal/operational basis, retention policy, and
+  export, correction, and deletion paths.
+- Webhooks are concise audit and action notifications, not a surveillance mechanism.
+  Delivery must not be able to block the primary business flow uncontrollably.
 
-## Prüfungen und Abschluss
+## Checks and completion
 
-Gezielte Tests während der Entwicklung ausführen. Vor Abschluss einer
-querschnittlichen Änderung gilt, soweit lokal verfügbar:
+Run focused tests during development. Before completing a cross-cutting change, run the
+following where locally available:
 
 ```bash
 make validate
 ```
 
-Mindestens müssen die direkt betroffenen Linter und Tests sowie
-`python3 infrastructure/scripts/quality/check_repository.py --strict-tree` erfolgreich sein. Generierte
-Artefakte (`dist`, Caches, virtuelle Umgebungen, lokale `.env`- und Betriebsdaten)
-nicht versionieren und generierte Dateien nicht von Hand bearbeiten.
+At minimum, the directly affected linters and tests as well as
+`python3 infrastructure/scripts/quality/check_repository.py --strict-tree` must pass. Do not
+version generated artifacts (`dist`, caches, virtual environments, local `.env` files, and
+operational data), and do not edit generated files by hand.
 
-Ein Auftrag ist fertig, wenn Implementierung, Migration/Konfiguration,
-Fehlerbehandlung, Tests und Dokumentation zusammenpassen. Commit oder Push erfolgen
-nur auf ausdrücklichen Wunsch; niemals fremde Historie umschreiben.
+A task is complete when implementation, migration/configuration, error handling, tests, and
+documentation are consistent. Commit or push only when explicitly requested; never rewrite
+someone else's history.

@@ -1,139 +1,137 @@
 # Agent Onboarding – Royal Blackwater Fleet
 
-Diese Datei ist der tokenarme Einstieg für neue Repository-Agenten. Sie ersetzt
-nicht `AGENTS.md` oder technische Primärquellen. Ziel ist, bekannte Architektur
-und Debugging-Grundlagen nicht bei jedem Auftrag erneut vollständig zu suchen.
+This file is the token-efficient entry point for new repository agents. It does
+not replace `AGENTS.md` or primary technical sources. Its purpose is to avoid
+rediscovering established architecture and debugging fundamentals for every task.
 
-## Start in unter einer Minute
+## Start in under a minute
 
 ```bash
-# 1. Aktuellen, geheimnisfreien Zustand ausgeben
+# 1. Print the current state without secrets
 bash .agents/scripts/project-context.sh
 
-# 2. Gepflegte Systemlandkarte lesen
+# 2. Read the maintained system map
 sed -n '1,260p' .agents/PROJECT_CACHE.md
 
-# 3. Betroffenes Modul und bei Fehlern den Debugging-Cache öffnen
+# 3. Open the affected module and, for failures, the debugging cache
 sed -n '1,260p' .agents/MODULE_CACHE.md
 sed -n '1,220p' .agents/DEBUGGING_CACHE.md
 
-# 4. Nach der Änderung passende Gates ermitteln
+# 4. Determine the appropriate gates after the change
 bash .agents/scripts/check-changes.sh
 ```
 
-Danach nur die vom Auftrag betroffenen Primärdateien, deren direkte Aufrufer,
-Tests, Konfiguration und Dokumentation lesen. Keine pauschale Volltextanalyse des
-gesamten Repositorys beginnen, wenn der Cache bereits den Einstieg nennt.
+Then read only the primary files affected by the task, their direct callers,
+tests, configuration, and documentation. Do not start a blanket full-text
+analysis of the entire repository when the cache already identifies the entry point.
 
-Für einen ausdrücklich breiten Qualitäts- und Strukturputz gilt der tokenarme
-Ablauf in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
+For an explicitly broad quality and structure cleanup, follow the token-efficient
+workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 
-## Feste Systemgrenzen
+## Fixed system boundaries
 
-- Laufzeit: `Browser -> NGINX -> Spring Boot -> PostgreSQL`.
-- `spring-api/` ist das einzige Backend; kein Python-Webbackend rekonstruieren.
-- Frontend: Seite orchestriert, Composable hält Ablauf/Zustand, API-Modul macht
-  Netzwerkzugriffe, Domain-Modul enthält reine Regeln.
-- Backend: OpenAPI-Spezifikation -> generiertes API-DTO -> Modul-Controller ->
-  Service -> Repository -> PostgreSQL. Controller besitzen Spring-MVC-Bindings und
-  validieren DTOs direkt; Mapper übersetzen ausschließlich zwischen API-/Modul-DTOs,
-  Entities und Repository-Zeilen.
-  Fachlogik, Autorisierung und Transaktionen gehören in den Service; Controller
-  und öffentliche Service-Grenzen kennen weder Entities noch JDBC-Zeilen/Roh-Maps.
-- Schemaänderungen ausschließlich durch neue Flyway-Migrationen; veröffentlichte
-  Migrationen nie bearbeiten. Hibernate bleibt auf `validate`.
-- Deployment und Update starten am Ursprung über `deploy.sh`/`update.sh` und
-  verwenden Artefakte, Backups, Flyway und Rollback. **Test ist immer das
-  Standardziel**; Production darf nur mit `--production` angesprochen werden.
-  Die Profile liegen getrennt in `.env.origin.test` und `.env.origin.production`.
-  Produktionsdaten oder Docker-Volumes niemals als Diagnosemaßnahme löschen.
-- Diagnostics starten am Ursprung über `infrastructure/scripts/diagnostics/debug.sh`
-  und folgen derselben Zielauswahl: Test ohne Flag, Production mit
-  `--production`. Remote wird begrenzt, lokal redigiert; keine Rohlogs oder
-  Diagnosearchive auf dem Ziel erzeugen.
-- Lokale `.env`, private Schlüssel, Tokens, personenbezogene Daten und
-  vollständige IP-Adressen weder lesen/ausgeben noch versionieren, wenn sie für
-  den konkreten Auftrag nicht zwingend erforderlich sind.
+- Runtime: `Browser -> NGINX -> Spring Boot -> PostgreSQL`.
+- `spring-api/` is the only backend; do not reconstruct a Python web backend.
+- Frontend: a page orchestrates, a composable owns flow/state, an API module makes
+  network requests, and a domain module contains pure rules.
+- Backend: OpenAPI specification -> generated API DTO -> module controller ->
+  service -> repository -> PostgreSQL. Controllers own Spring MVC bindings and
+  validate DTOs directly; mappers translate only between API/module DTOs,
+  entities, and repository rows. Business logic, authorization, and transactions
+  belong in the service; controllers and public service boundaries know neither
+  entities nor JDBC rows/raw maps.
+- Schema changes only through new Flyway migrations; never edit published
+  migrations. Hibernate remains set to `validate`.
+- Deployment and update start at the origin through `deploy.sh`/`update.sh` and
+  use artifacts, backups, Flyway, and rollback. **Test is always the default
+  target**; production may only be addressed with `--production`. Profiles are
+  separated into `.env.origin.test` and `.env.origin.production`. Never delete
+  production data or Docker volumes as a diagnostic measure.
+- Diagnostics start at the origin through `infrastructure/scripts/diagnostics/debug.sh`
+  and follow the same target selection: test without a flag, production with
+  `--production`. Collection is bounded remotely and redacted locally; do not
+  create raw logs or diagnostic archives on the target.
+- Do not read, print, or version local `.env` files, private keys, tokens, personal
+  data, or full IP addresses unless they are strictly required for the specific task.
 
-## Direkte Einstiege nach Aufgabentyp
+## Direct entry points by task type
 
-| Aufgabe | Primärer Einstieg |
+| Task | Primary entry point |
 | --- | --- |
-| Produktionsfehler | `infrastructure/scripts/diagnostics/debug.sh`, danach `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
-| Lokaler Modulfehler | `.agents/DEBUGGING_CACHE.md`, `docs/debugging/MODULE_DEBUGGING.md` |
-| Modulverantwortung | `.agents/MODULE_CACHE.md`, danach `docs/architecture/MODULE_CATALOG.md` |
+| Production failure | `infrastructure/scripts/diagnostics/debug.sh`, then `docs/debugging/DEPLOYMENT_INCIDENTS.md` |
+| Local module failure | `.agents/DEBUGGING_CACHE.md`, `docs/debugging/MODULE_DEBUGGING.md` |
+| Module responsibility | `.agents/MODULE_CACHE.md`, then `docs/architecture/MODULE_CATALOG.md` |
 | Deployment/SSH | `docs/deployment/DEPLOYMENT.md`, `infrastructure/scripts/release/deploy-from-origin.sh` |
-| Update/Backup/DB-Erhalt | `docs/debugging/2026-08-04-update-path-review.md` |
+| Update/backup/DB preservation | `docs/debugging/2026-08-04-update-path-review.md` |
 | Recovery | `docs/deployment/DISASTER_RECOVERY.md`, `tests/recovery/` |
-| Backend-Domäne | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
-| API-Spezifikation | `openapi/source/`, danach zusammengesetztes `openapi/openapi.json`, `api/dto/*` und owning Modul-Controller |
-| API-Nutzung/Endpunkte | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
-| Tests und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
-| Versionierung/Releaseklasse | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
-| Frontend-Funktion | `frontend/src/modules/<feature>/` |
-| CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, betroffene Modulstile |
-| Sicherheit | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
-| Datenschutz | `privacy/`, `docs/reference/DATA_RETENTION.md` |
+| Backend domain | `spring-api/src/main/java/eu/royalblackwater/api/<domain>/` |
+| API specification | `openapi/source/`, then composed `openapi/openapi.json`, `api/dto/*`, and the owning module controller |
+| API usage/endpoints | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
+| Tests and gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
+| Versioning/release class | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
+| Frontend feature | `frontend/src/modules/<feature>/` |
+| CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, affected module styles |
+| Security | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
+| Privacy | `privacy/`, `docs/reference/DATA_RETENTION.md` |
 
-Skript-Ownership: Im Root liegen ausschließlich die öffentlichen Orchestratoren
-`deploy.sh` und `update.sh`. Sämtliche gemeinsame Skriptlogik liegt modular unter
-`infrastructure/scripts/`: `quality/` für Gates und Audits, `generation/` für
-Generatoren, `release/` für Packaging/Deployment sowie fachliche Runtime-Module.
-Das Release-Artefakt verwendet eine explizite Runtime-Allowlist; `quality/` und
-`generation/` werden nicht auf das Ziel ausgeliefert. Modulgebundene Helfer unter
-`.agents/scripts/` und `frontend/scripts/` verbleiben bei ihren Eigentümern.
+Script ownership: only the public orchestrators `deploy.sh` and `update.sh` live in
+the repository root. All shared script logic is modularized under
+`infrastructure/scripts/`: `quality/` for gates and audits, `generation/` for
+generators, `release/` for packaging/deployment, plus domain-specific runtime
+modules. The release artifact uses an explicit runtime allowlist; `quality/` and
+`generation/` are not shipped to the target. Module-bound helpers under
+`.agents/scripts/` and `frontend/scripts/` remain with their owners.
 
-Für Dateisuche zuerst `rg` beziehungsweise `rg --files` verwenden. Generierte API-DTOs und Locale-Ausgaben nicht von Hand bearbeiten; Controller-Routen sind Modulcode und werden gegen OpenAPI auditiert.
+Use `rg` or `rg --files` first for file searches. Do not edit generated API DTOs or
+locale output by hand; controller routes are module code and are audited against OpenAPI.
 
-## Bekannter stabiler Stand
+## Known stable state
 
-- Version: aus `VERSION` lesen; keine Zahl aus diesem Dokument übernehmen.
-- Nächste Version tokenarm mit `bash .agents/scripts/next-version.sh
-  patch|minor|major` bestimmen: Patch für Fixes, Minor für kompatible Features,
-  Major für inkompatible oder ausdrücklich große Erweiterungen.
-- Der interaktive First Run ist `./deploy.sh --configure`. Er kann den
-  dedizierten `rbfadmin` samt Key über einen einmaligen VPS-Bootstrap-Zugang
-  einrichten und danach im selben Lauf deployen.
-- Folgedeployments verwenden den fest konfigurierten Key und `sudo -n`; der
-  private Bootstrap-Account wird nicht persistiert.
-- Zentrale API-Fehler erscheinen als `api_error`; Authentifizierungs- und
-  Autorisierungsablehnungen als `security_401` beziehungsweise `security_403`.
-  Keine Payloads oder Secrets zum Logging hinzufügen.
-- `ApplicationIntegrationTest` prüft die laufende Spring-Anwendung über echtes
-  HTTP gegen PostgreSQL/Testcontainers. Browser-Verträge liegen unter
-  `frontend/tests/browser/` und mocken ausschließlich `/api/`-Anfragen.
-- Ausführbare Java- und Frontend-JavaScript-Dateien sind auf 420 Zeilen begrenzt.
-  Nur die dokumentierten deklarativen Locale-Kataloge sind ausgenommen.
-- Cookie-Einstellungen öffnen ohne vorhandene Entscheidung nicht automatisch,
-  solange keine optionale Cookie-/Tracking-Integration aktiv ist. Der manuelle
-  Einstieg bleibt über Footer und Datenschutzcenter erhalten.
-- Bestehende Datenbanken behalten die unveränderte Flyway-V1-Historie; neue
-  Datenbanken starten über B2 und die modularen V3–V7-Dateien. Neue Änderungen
-  werden ab V8 als kleine fachliche Vorwärtsmigration ergänzt.
+- Version: read it from `VERSION`; do not copy a number from this document.
+- Determine the next version token-efficiently with `bash .agents/scripts/next-version.sh
+  patch|minor|major`: patch for fixes, minor for compatible features, major for
+  incompatible or explicitly large extensions.
+- The interactive first run is `./deploy.sh --configure`. It can set up the dedicated
+  `rbfadmin` account and key through a one-time VPS bootstrap account and then deploy
+  in the same run.
+- Subsequent deployments use the configured key and `sudo -n`; the private bootstrap
+  account is not persisted.
+- Central API failures appear as `api_error`; authentication and authorization
+  rejections as `security_401` and `security_403`. Do not add payloads or secrets to logs.
+- `ApplicationIntegrationTest` tests the running Spring application over real HTTP
+  against PostgreSQL/Testcontainers. Browser contracts live under
+  `frontend/tests/browser/` and mock only `/api/` requests.
+- Executable Java and frontend JavaScript files are limited to 420 lines. Only the
+  documented declarative locale catalogs are exempt.
+- Cookie settings do not open automatically without an existing decision while no
+  optional cookie/tracking integration is active. Manual entry remains available
+  through the footer and privacy center.
+- Existing databases retain the unchanged Flyway V1 history; new databases start
+  through B2 and the modular V3–V7 files. New changes from V8 onward are added as
+  small domain-specific forward migrations.
 
-## Prüfung ohne erneute Gate-Recherche
+## Verification without researching gates again
 
 ```bash
-# Empfehlung nur anzeigen
+# Show recommendation only
 bash .agents/scripts/check-changes.sh
 
-# Empfehlung ausführen
+# Run recommendation
 bash .agents/scripts/check-changes.sh --run
 
-# Vollständiges Gate bei querschnittlichen Änderungen
+# Complete gate for cross-cutting changes
 bash .agents/scripts/check-all.sh
 ```
 
-Der Scope-Helfer delegiert an bestehende Repository-Gates. Frontend-Tests nutzen
-`bash .agents/scripts/check-frontend.sh`, das eine fehlende lokale `.env` nur
-temporär aus `.env.example` erzeugt und garantiert wieder entfernt. Das Gate
-enthält Chromium-Browser-Smokes; den Browser lokal einmalig mit
-`cd frontend && npx playwright install chromium` bereitstellen.
+The scope helper delegates to existing repository gates. Frontend tests use
+`bash .agents/scripts/check-frontend.sh`, which creates a missing local `.env`
+temporarily from `.env.example` and guarantees its removal. The gate includes
+Chromium browser smoke tests; install the browser locally once with
+`cd frontend && npx playwright install chromium`.
 
-Die Agenten-Gates sind absichtlich tokenarm: Bei Erfolg geben sie nur eine
-Statuszeile aus, bei Fehlern einen begrenzten Log-Ausschnitt. Vollständige
-Werkzeugausgabe lässt sich bei Bedarf mit `AGENT_GATE_VERBOSE=1` einschalten.
-Direkte Einstiege sind:
+The agent gates are intentionally token-efficient: on success they print only a
+status line, and on failure a bounded log excerpt. Full tool output can be enabled
+when needed with `AGENT_GATE_VERBOSE=1`. Direct entry points are:
 
 ```bash
 bash .agents/scripts/check-backend.sh
@@ -144,25 +142,24 @@ bash .agents/scripts/check-cache.sh
 bash .agents/scripts/check-all.sh
 ```
 
-Lang laufende Befehle in ihrer bestehenden Prozess-Session weiterlaufen lassen.
-Nicht durch enges Polling oder wiederholte Vollausgaben Tokens verbrauchen;
-stattdessen auf Abschluss oder eine handlungsrelevante Fehlermeldung warten und
-erst mit diesem Ergebnis weiterarbeiten. Einen noch laufenden Prozess nicht nur
-wegen ausbleibender neuer Ausgabe neu starten.
+Let long-running commands continue in their existing process session. Do not waste
+tokens through tight polling or repeated full output; instead wait for completion
+or an actionable failure message and continue with that result. Do not restart a
+still-running process merely because no new output has appeared.
 
-Lokale, fachlich abgeschlossene Änderungen dürfen auf ausdrücklichen Wunsch als
-kleine nachvollziehbare Einheiten committed werden. Commit und Push bleiben zwei
-getrennte Entscheidungen: Pushes bewusst bündeln und nur ausdrücklich ausführen,
-weil ein Push nach `main` externe CI einschließlich des aufwendigen NVD-
-Dependency-Checks startet. Ein lokaler Commit benötigt keinen sofortigen Push.
+Local, functionally complete changes may be committed as small traceable units when
+explicitly requested. Commit and push remain two separate decisions: batch pushes
+deliberately and perform them only when explicitly requested, because a push to
+`main` starts external CI including the expensive NVD dependency check. A local
+commit does not require an immediate push.
 
-## Cache aktualisieren
+## Updating the cache
 
-`PROJECT_CACHE.md` und diese Datei im selben Auftrag aktualisieren, wenn sich
-Runtime-Topologie, Deployment-/Recovery-Ablauf, verbindliche Gates oder zentrale
-Einstiege ändern. Neue/umbenannte Module aktualisieren zusätzlich
-`MODULE_CACHE.md` und `docs/architecture/MODULE_CATALOG.md`; reproduzierte,
-dauerhaft hilfreiche Fehlerursachen aktualisieren `DEBUGGING_CACHE.md` und das
-passende Runbook. `check-cache.sh` prüft die Bestandsvollständigkeit. Flüchtige
-Fakten wie Branch, Revision, Datei- oder Testanzahl bleiben aus dem Textcache
-heraus und werden über `project-context.sh` live ermittelt.
+Update `PROJECT_CACHE.md` and this file in the same task when runtime topology,
+deployment/recovery flow, binding gates, or central entry points change. New or
+renamed modules additionally require updates to `MODULE_CACHE.md` and
+`docs/architecture/MODULE_CATALOG.md`; reproduced, persistently useful root causes
+require updates to `DEBUGGING_CACHE.md` and the appropriate runbook.
+`check-cache.sh` verifies inventory completeness. Ephemeral facts such as branch,
+revision, file count, or test count stay out of the text cache and are obtained live
+through `project-context.sh`.

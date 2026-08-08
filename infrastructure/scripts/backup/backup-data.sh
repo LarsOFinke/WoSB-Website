@@ -14,17 +14,17 @@ install -d -m 0750 "$INFRA_DIR/data/uploads"
 minimum_bytes="${BACKUP_MIN_FILES_BYTES:-$(read_env BACKUP_MIN_FILES_BYTES)}"; minimum_bytes="${minimum_bytes:-64}"
 backup_paths=(uploads)
 for optional_path in certs letsencrypt; do
-  if [[ -e "$INFRA_DIR/data/$optional_path" ]]; then backup_paths+=("$optional_path"); else warn "Optionaler Backup-Pfad fehlt und wird übersprungen: $optional_path"; fi
+  if [[ -e "$INFRA_DIR/data/$optional_path" ]]; then backup_paths+=("$optional_path"); else warn "Optional backup path is missing and will be skipped: $optional_path"; fi
 done
 rm -f "$temporary"
 tar --exclude='backups' -czf "$temporary" -C "$INFRA_DIR/data" "${backup_paths[@]}"
 chmod 600 "$temporary"
-tar -tzf "$temporary" >/dev/null || die "Datei-Backup ist kein gültiges tar.gz-Archiv."
-[[ "$(stat -c %s "$temporary")" -ge "$minimum_bytes" ]] || die "Datei-Backup ist ungewöhnlich klein."
+tar -tzf "$temporary" >/dev/null || die "File backup is not a valid tar.gz archive."
+[[ "$(stat -c %s "$temporary")" -ge "$minimum_bytes" ]] || die "File backup is unusually small."
 mv "$temporary" "$output"
 backup_finalize "$output" "files"
 committed=true
 if [[ -n "${BACKUP_RESULT_FILE:-}" ]]; then printf '%s\n' "$output" > "$BACKUP_RESULT_FILE"; chmod 600 "$BACKUP_RESULT_FILE"; fi
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
 find "$backup_dir" -type f -mtime "+$retention_days" -delete
-success "Datei-Backup erstellt: $output"
+success "File backup created: $output"

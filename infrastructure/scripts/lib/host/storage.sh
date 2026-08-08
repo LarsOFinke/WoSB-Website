@@ -15,7 +15,7 @@ prepare_postgres_directory() {
     local unexpected_entry=""
     unexpected_entry="$(find "$INFRA_DIR/data/postgres" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null || true)"
     [[ -z "$unexpected_entry" ]] \
-      || die "PostgreSQL-Datenverzeichnis ist vor der Initialisierung nicht leer: $unexpected_entry"
+      || die "PostgreSQL data directory is not empty before initialization: $unexpected_entry"
   fi
 }
 

@@ -17,8 +17,8 @@ Usage: infrastructure/scripts/diagnostics/debug.sh [OPTIONS]
 Collects a bounded, redacted diagnostic log on the origin system through the
 existing deployment SSH identity. Without --area an interactive menu is shown.
 
-  --test               Testserver verwenden (Standard)
-  --production         Production-Server verwenden
+  --test               Use test server (default)
+  --production         Use production server
   --area AREA          overview|staff|calendar|api|security|gateway|database|deployment|all
   --category CATEGORY  errors|warnings|http-500|auth|migration|all (default: errors)
   --since DURATION     positive duration such as 15m, 2h or 1d (default: 30m)
@@ -48,20 +48,20 @@ choose_area() {
   local choice
   printf '%s\n' \
     'Diagnosebereich:' \
-    '  1) Übersicht / Dienststatus' \
+    '  1) Overview / service status' \
     '  2) Staff-Panel' \
-    '  3) Kalender und Raid-Helper' \
+    '  3) Calendar and Raid Helper' \
     '  4) Spring API' \
     '  5) Security / 401 / 403' \
     '  6) Gateway / NGINX' \
     '  7) PostgreSQL' \
     '  8) Deployment / systemd' \
-    '  9) Alle Laufzeitdienste'
-  read -r -p 'Auswahl [3]: ' choice
+    '  9) All runtime services'
+  read -r -p 'Selection [3]: ' choice
   case "${choice:-3}" in
     1) area=overview ;; 2) area=staff ;; 3) area=calendar ;; 4) area=api ;;
     5) area=security ;; 6) area=gateway ;; 7) area=database ;;
-    8) area=deployment ;; 9) area=all ;; *) echo '[debug] Ungültige Auswahl.' >&2; exit 2 ;;
+    8) area=deployment ;; 9) area=all ;; *) echo '[debug] Invalid selection.' >&2; exit 2 ;;
   esac
 }
 
@@ -69,39 +69,39 @@ choose_category() {
   local choice
   printf '%s\n' \
     'Logkategorie:' \
-    '  1) Fehler' \
-    '  2) Warnungen und Fehler' \
-    '  3) Nur HTTP 500' \
+    '  1) Errors' \
+    '  2) Warnings and errors' \
+    '  3) HTTP 500 only' \
     '  4) Authentifizierung / Autorisierung' \
     '  5) Migration / Schema' \
-    '  6) Alle Einträge im Bereich'
-  read -r -p 'Auswahl [1]: ' choice
+    '  6) All entries in area'
+  read -r -p 'Selection [1]: ' choice
   case "${choice:-1}" in
     1) category=errors ;; 2) category=warnings ;; 3) category=http-500 ;;
     4) category=auth ;; 5) category=migration ;; 6) category=all ;;
-    *) echo '[debug] Ungültige Auswahl.' >&2; exit 2 ;;
+    *) echo '[debug] Invalid selection.' >&2; exit 2 ;;
   esac
 }
 
 if [[ -z "$area" ]]; then
-  [[ -t 0 && -t 1 ]] || { echo '[debug] Ohne interaktives Terminal ist --area erforderlich.' >&2; exit 2; }
+  [[ -t 0 && -t 1 ]] || { echo '[debug] Without an interactive terminal, --area is required.' >&2; exit 2; }
   choose_area
   [[ "$area" == overview ]] || choose_category
   read -r -p "Zeitraum [${since}]: " answer; since="${answer:-$since}"
-  read -r -p "Maximale Zeilen je Quelle [${tail_lines}]: " answer; tail_lines="${answer:-$tail_lines}"
-  read -r -p 'Zusätzlicher Suchtext (optional): ' match
+  read -r -p "Maximum lines per source [${tail_lines}]: " answer; tail_lines="${answer:-$tail_lines}"
+  read -r -p 'Additional search text (optional): ' match
 fi
 category="${category:-errors}"
 
-case "$area" in overview|staff|calendar|api|security|gateway|database|deployment|all) ;; *) echo "[debug] Ungültiger Bereich: $area" >&2; exit 2 ;; esac
-case "$category" in errors|warnings|http-500|auth|migration|all) ;; *) echo "[debug] Ungültige Kategorie: $category" >&2; exit 2 ;; esac
-[[ "$since" =~ ^[1-9][0-9]*(m|h|d)$ ]] || { echo "[debug] Ungültiger Zeitraum: $since" >&2; exit 2; }
+case "$area" in overview|staff|calendar|api|security|gateway|database|deployment|all) ;; *) echo "[debug] Invalid area: $area" >&2; exit 2 ;; esac
+case "$category" in errors|warnings|http-500|auth|migration|all) ;; *) echo "[debug] Invalid category: $category" >&2; exit 2 ;; esac
+[[ "$since" =~ ^[1-9][0-9]*(m|h|d)$ ]] || { echo "[debug] Invalid time range: $since" >&2; exit 2; }
 [[ "$tail_lines" =~ ^[0-9]+$ && "$tail_lines" -ge 1 && "$tail_lines" -le 2000 ]] \
-  || { echo '[debug] --tail muss zwischen 1 und 2000 liegen.' >&2; exit 2; }
-[[ "$match" != *$'\n'* && ${#match} -le 120 ]] || { echo '[debug] --match ist zu lang oder mehrzeilig.' >&2; exit 2; }
+  || { echo '[debug] --tail must be between 1 and 2000.' >&2; exit 2; }
+[[ "$match" != *$'\n'* && ${#match} -le 120 ]] || { echo '[debug] --match is too long or contains multiple lines.' >&2; exit 2; }
 [[ -f "$config_file" ]] || {
-  echo "[debug:$target_environment] Origin-Konfiguration fehlt: $config_file" >&2
-  echo "[debug:$target_environment] Richte das Ziel zuerst mit ./deploy.sh${target_cli_flag} --configure ein." >&2
+  echo "[debug:$target_environment] Origin configuration is missing: $config_file" >&2
+  echo "[debug:$target_environment] Configure the target first with ./deploy.sh${target_cli_flag} --configure." >&2
   exit 1
 }
 
@@ -112,12 +112,12 @@ host="${RBF_DEPLOY_HOST:-}"; user="${RBF_DEPLOY_USER:-rbfadmin}"
 port="${RBF_DEPLOY_PORT:-22}"; identity_file="${RBF_DEPLOY_IDENTITY_FILE:-}"
 install_root="${RBF_DEPLOY_INSTALL_ROOT:-/srv/rbf}"
 if [[ -z "$identity_file" && -n "${HOME:-}" && -f "$HOME/.ssh/$user" ]]; then identity_file="$HOME/.ssh/$user"; fi
-[[ -n "$host" ]] || { echo '[debug] RBF_DEPLOY_HOST fehlt in der Origin-Konfiguration.' >&2; exit 1; }
-[[ "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo '[debug] Ungültiger SSH-Benutzer.' >&2; exit 2; }
-[[ "$port" =~ ^[0-9]+$ && "$port" -le 65535 ]] || { echo '[debug] Ungültiger SSH-Port.' >&2; exit 2; }
-[[ "$install_root" == /* ]] || { echo '[debug] Installationsroot muss absolut sein.' >&2; exit 2; }
-[[ -z "$identity_file" || -f "$identity_file" ]] || { echo "[debug] SSH-Identity fehlt: $identity_file" >&2; exit 1; }
-for command in ssh python3; do command -v "$command" >/dev/null 2>&1 || { echo "[debug] Kommando fehlt: $command" >&2; exit 1; }; done
+[[ -n "$host" ]] || { echo '[debug] RBF_DEPLOY_HOST is missing from the origin configuration.' >&2; exit 1; }
+[[ "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo '[debug] Invalid SSH user.' >&2; exit 2; }
+[[ "$port" =~ ^[0-9]+$ && "$port" -le 65535 ]] || { echo '[debug] Invalid SSH port.' >&2; exit 2; }
+[[ "$install_root" == /* ]] || { echo '[debug] Installation root must be absolute.' >&2; exit 2; }
+[[ -z "$identity_file" || -f "$identity_file" ]] || { echo "[debug] SSH identity is missing: $identity_file" >&2; exit 1; }
+for command in ssh python3; do command -v "$command" >/dev/null 2>&1 || { echo "[debug] Command is missing: $command" >&2; exit 1; }; done
 
 ssh_args=(-o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=10 -p "$port")
 [[ -z "$identity_file" ]] || ssh_args+=(-i "$identity_file")
@@ -141,7 +141,7 @@ if [[ "$output" == '-' ]]; then
   exit 0
 fi
 [[ "$output" == /* ]] || output="$ROOT_DIR/$output"
-[[ ! -e "$output" ]] || { echo "[debug] Ausgabedatei existiert bereits: $output" >&2; exit 1; }
+[[ ! -e "$output" ]] || { echo "[debug] Output file already exists: $output" >&2; exit 1; }
 install -d -m 0700 "$(dirname "$output")"
 umask 077
 temporary="${output}.tmp.$$"
@@ -151,4 +151,4 @@ collect | python3 "$SCRIPT_DIR/redact.py" > "$temporary"
 mv -f "$temporary" "$output"
 trap - EXIT
 line_count="$(wc -l < "$output")"
-printf '[debug] Redigierte Diagnose lokal gespeichert: %s (%s Zeilen)\n' "$output" "$line_count" >&2
+printf '[debug] Redacted diagnostics saved locally: %s (%s lines)\n' "$output" "$line_count" >&2

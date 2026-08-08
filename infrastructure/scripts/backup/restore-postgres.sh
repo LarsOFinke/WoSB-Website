@@ -16,7 +16,7 @@ while (($#)); do
     *) backup="${backup:-$1}"; shift ;;
   esac
 done
-[[ "$EUID" -eq 0 ]] || die "Restore benötigt root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "Restore requires root privileges."
 [[ -n "${backup:-}" && -f "$backup" ]] || usage
 require_command flock
 verify_backup_checksum "$backup"
@@ -43,13 +43,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bw_compose exec -T postgres pg_restore --list < "$backup" >/dev/null || die "Backup ist kein gültiger PostgreSQL-Custom-Dump."
+bw_compose exec -T postgres pg_restore --list < "$backup" >/dev/null || die "Backup is not a valid PostgreSQL custom dump."
 ensure_postgres_service
 bw_compose exec -T postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 -c "create database \"$staging\" owner \"$user\" template template0"
 bw_compose exec -T postgres pg_restore --exit-on-error --no-owner --no-privileges -U "$user" -d "$staging" < "$backup"
 
 project="$(read_effective_env COMPOSE_PROJECT_NAME)"; image="$(read_effective_env RBF_API_IMAGE)"
-[[ -n "$project" && -n "$image" ]] || die "Release-Umgebung enthält kein Compose-Projekt oder API-Image."
+[[ -n "$project" && -n "$image" ]] || die "Release environment contains no Compose project or API image."
 docker run -d --rm --name "$container" --network "${project}_backend" --env-file "$ENV_FILE" \
   -e "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/$staging" \
   -e RBF_SCHEDULING_ENABLED=false -e CONTROL_DIR=/tmp/rbf-control \
@@ -60,7 +60,7 @@ for _ in $(seq 1 90); do
   docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null | grep -q true || break
   sleep 2
 done
-[[ "$ready" == true ]] || { docker logs "$container" >&2 || true; die "Restore-Preflight erreichte keine Spring-Boot-Readiness."; }
+[[ "$ready" == true ]] || { docker logs "$container" >&2 || true; die "Restore preflight did not reach Spring Boot readiness."; }
 docker rm -f "$container" >/dev/null 2>&1 || true
 flyway="$(bw_compose exec -T postgres psql -U "$user" -d "$staging" -Atqc "select coalesce(max(version),'') from flyway_schema_history where success")"
 backup_sha="$(sha256sum "$backup" | awk '{print $1}')"
@@ -87,7 +87,7 @@ JSON
 chmod 600 "$report"; backup_finalize "$report" reports
 if [[ "$preflight_only" == true ]]; then success "Restore-Preflight bestanden: $report"; exit 0; fi
 
-log "Erzeuge vor Aktivierung einen koordinierten Sicherheits-Backup-Punkt."
+log "Create a coordinated safety backup point before activation."
 RBF_ALL_BACKUP_LOCKS_HELD=true "$SCRIPT_DIR/run-consistent-backup.sh" --all-locks-held --reason pre-restore
 maintenance_enable restore 300
 bw_compose stop api
@@ -100,10 +100,10 @@ SQL
 staging=""
 if bw_compose up -d --no-deps api && wait_for_api && "$INFRA_DIR/scripts/checks/smoke-test.sh"; then
   bw_compose exec -T postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 -c "drop database if exists \"$rollback\" with (force)"
-  maintenance_disable succeeded "Datenbank-Restore erfolgreich."
-  success "Validiertes Backup wurde atomar aktiviert."
+  maintenance_disable succeeded "Database restore succeeded."
+  success "Validated backup was activated atomically."
 else
-  warn "Aktivierung fehlgeschlagen; stelle vorherige Datenbank wieder her."
+  warn "Activation failed; restoring the previous database."
   bw_compose stop api || true
   bw_compose exec -T postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 <<SQL
 select pg_terminate_backend(pid) from pg_stat_activity where datname in ('$database','$rollback') and pid <> pg_backend_pid();
@@ -111,6 +111,6 @@ drop database if exists "$database" with (force);
 alter database "$rollback" rename to "$database";
 SQL
   bw_compose up -d --no-deps api || true
-  maintenance_disable failed "Restore fehlgeschlagen; Rollback aktiviert."
-  die "Restore fehlgeschlagen; vorherige Datenbank wurde reaktiviert."
+  maintenance_disable failed "Restore failed; rollback activated."
+  die "Restore failed; the previous database was reactivated."
 fi

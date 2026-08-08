@@ -1,41 +1,40 @@
-# Impressum / Anbieterkennzeichnung
+# Legal Notice / Provider Identification
 
-## Zweck
+## Purpose
 
-Die öffentliche Route `/impressum` bereitet die Anwendung auf eine deutsche
-Anbieterkennzeichnung vor. Sie kann als unveröffentlichter Entwurf betrieben werden und enthält
-keine automatisch erfundenen Betreiberangaben.
+The public `/impressum` route prepares the application for German provider-identification
+requirements. It can operate as an unpublished draft and does not invent operator details
+automatically.
 
-## Datenquellen und Priorität
+## Data Sources and Priority
 
-1. Beim erstmaligen Anlegen werden Werte aus `LEGAL_NOTICE_*` übernommen.
-2. Solange keine Admin-Anpassung erfolgt ist, darf ein Neustart aktualisierte Umgebungswerte
-   übernehmen.
-3. Nach einer Bearbeitung im Staff-Panel ist die Datenbankfassung maßgeblich und bleibt bei Updates
-   erhalten.
-4. „Auf Umgebungswerte zurücksetzen“ verwirft die Adminfassung bewusst und übernimmt die aktuell aus der konfigurierten Env-Datei und der Prozessumgebung lesbaren Werte. Bei Docker Compose ist nach Änderungen an der Host-`.env` zuvor ein Neustart beziehungsweise eine Neuerstellung des API-Containers erforderlich.
+1. On initial creation, values are taken from `LEGAL_NOTICE_*`.
+2. As long as no admin customization has been made, a restart may adopt updated environment values.
+3. After editing in the staff panel, the database version is authoritative and persists across updates.
+4. “Reset to environment values” intentionally discards the admin version and adopts the values that
+   can currently be read from the configured env file and process environment. With Docker Compose,
+   changes to the host `.env` require the API container to be restarted or recreated first.
 
-## Entwurfsmodus
+## Draft Mode
 
-`LEGAL_NOTICE_PUBLISHED=false` beziehungsweise ein deaktivierter Veröffentlichungsschalter zeigt
-öffentlich nur einen neutralen Entwurfshinweis. Anbietername, Anschrift und Kontaktdaten des
-Entwurfs werden nicht über die öffentliche API ausgeliefert.
+`LEGAL_NOTICE_PUBLISHED=false`, or a disabled publication toggle, exposes only a neutral draft notice
+publicly. Provider name, address, and contact details from the draft are not returned through the
+public API.
 
-Beim Veröffentlichen werden mindestens Anbietername, Straße, Postleitzahl, Ort, Land und E-Mail
-validiert. Register-, Umsatzsteuer-, Aufsichts-, redaktionelle und
-Streitbeilegungsangaben sind optional und müssen nur ausgefüllt werden, wenn sie für den Betreiber
-tatsächlich zutreffen.
+Publishing validates at least the provider name, street, postal code, city, country, and email
+address. Registration, VAT, supervisory, editorial, and dispute-resolution details are optional and
+must only be filled in when they actually apply to the operator.
 
-## Betrieb
+## Operations
 
-Nach Migration `0013_legal_notice` ist kein Seed erforderlich. Die Seite ist öffentlich erreichbar;
-der Editor und das Zurücksetzen auf Umgebungswerte sind ausschließlich Administratoren erlaubt.
-Änderungen werden im Audit-Log erfasst.
+No seed is required after migration `0013_legal_notice`. The page is publicly accessible; editing
+and resetting to environment values are restricted to administrators. Changes are recorded in the
+audit log.
 
-## Rechtlicher Hinweis
+## Legal Note
 
-Die bereitgestellten Felder sind eine technische Vorlage und keine Rechtsberatung. Die Pflicht zur
-Anbieterkennzeichnung hängt nicht allein davon ab, ob Einnahmen erzielt werden. Vor der
-Veröffentlichung sollten Inhalt, anwendbare Vorschriften und gegebenenfalls die Benennung einer
-redaktionell verantwortlichen Person für das konkrete Angebot geprüft werden. Eine separate
-Datenschutzerklärung bleibt erforderlich, sobald personenbezogene Daten verarbeitet werden.
+The provided fields are a technical template and do not constitute legal advice. Provider-identification
+obligations do not depend solely on whether revenue is generated. Before publication, the content,
+applicable requirements, and, where relevant, designation of a person responsible for editorial
+content should be reviewed for the specific offering. A separate privacy notice remains necessary
+whenever personal data is processed.

@@ -27,8 +27,8 @@ Royal Blackwater Fleet - Raspberry Pi First-Run Setup
 Usage:
   sudo ./infrastructure/setup.sh [options]
 
-Der öffentliche Produktions- und First-Run-Einstieg ist
-./deploy.sh --configure. Dieses Setup bleibt ein interner Quellbaum-Runner.
+The public production and first-run entry point is
+./deploy.sh --configure. This setup remains an internal source-tree runner.
 
 Options:
   --profile core|full       core: app stack, full: app stack + Uptime Kuma (default)
@@ -55,7 +55,7 @@ USAGE
 
 setup_require_option_value() {
   local option="$1" value="${2:-}"
-  [[ -n "$value" ]] || die "$option benötigt einen Wert."
+  [[ -n "$value" ]] || die "$option requires a value."
 }
 
 setup_parse_options() {
@@ -77,20 +77,20 @@ setup_parse_options() {
       --no-start) NO_START=true; shift ;;
       --regenerate-secrets) REGENERATE_SECRETS=true; shift ;;
       -h|--help) setup_usage; exit 0 ;;
-      *) die "Unbekannte Option: $1" ;;
+      *) die "Unknown option: $1" ;;
     esac
   done
 }
 
 setup_validate_options() {
-  [[ "$PROFILE" == core || "$PROFILE" == full ]] || die "--profile muss core oder full sein."
-  [[ "$ADMIN_USERNAME" =~ ^[A-Za-z0-9_.-]{3,40}$ ]] || die "Ungültiger Admin-Benutzername."
-  [[ "$SSH_ADMIN_USERNAME" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || die "Ungültiger SSH-Admin-Benutzername."
+  [[ "$PROFILE" == core || "$PROFILE" == full ]] || die "--profile must be core or full."
+  [[ "$ADMIN_USERNAME" =~ ^[A-Za-z0-9_.-]{3,40}$ ]] || die "Invalid admin username."
+  [[ "$SSH_ADMIN_USERNAME" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || die "Invalid SSH admin username."
   if [[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" && "$SKIP_HOST" == true ]]; then
-    die "--ssh-admin-public-key-file benötigt Host-Provisionierung; --skip-host entfernen."
+    die "--ssh-admin-public-key-file requires host provisioning; remove --skip-host."
   fi
   [[ -z "$REQUESTED_TLS_MODE" || "$REQUESTED_TLS_MODE" =~ ^(auto|letsencrypt|self-signed)$ ]] \
-    || die "--tls-mode muss auto, letsencrypt oder self-signed sein."
+    || die "--tls-mode must be auto, letsencrypt, or self-signed."
 }
 
 setup_require_root_if_needed() {
@@ -98,7 +98,7 @@ setup_require_root_if_needed() {
   shift
 
   if [[ "$SKIP_HOST" == false && "$EUID" -ne 0 ]]; then
-    command -v sudo >/dev/null 2>&1 || die "Bitte als root starten oder --skip-host verwenden."
+    command -v sudo >/dev/null 2>&1 || die "Please run as root or use --skip-host."
     exec sudo --preserve-env=DEBUG /usr/bin/env bash "$entrypoint" "$@"
   fi
 }

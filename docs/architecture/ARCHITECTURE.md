@@ -1,7 +1,7 @@
 # System architecture
 
-Die Verantwortungen und Diagnoseeinstiege jedes Backend-, Frontend- und
-Infrastrukturmoduls sind im [Modulkatalog](MODULE_CATALOG.md) zusammengeführt.
+The responsibilities and diagnostic entry points of every backend, frontend, and
+infrastructure module are consolidated in the [module catalog](MODULE_CATALOG.md).
 
 ## Runtime
 

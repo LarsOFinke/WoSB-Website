@@ -1,174 +1,172 @@
-# Modulorientiertes Debugging
+# Module-Oriented Debugging
 
-Dieses Runbook beschreibt den wiederholbaren Weg von einem sichtbaren Fehler bis
-zum verantwortlichen Modul. Ziel ist eine kleine, redigierte Evidenzkette und ein
-Regressionstest am richtigen Rand. Die Modulverantwortungen stehen im
-[Modulkatalog](../architecture/MODULE_CATALOG.md), bereits bekannte
-Produktionsursachen im [Incident-Index](DEPLOYMENT_INCIDENTS.md).
+This runbook describes a repeatable path from a visible failure to the responsible
+module. The goal is a small, redacted evidence chain and a regression test at the
+correct boundary. Module responsibilities are listed in the
+[module catalog](../architecture/MODULE_CATALOG.md), and already-known production
+causes in the [incident index](DEPLOYMENT_INCIDENTS.md).
 
-## Diagnosevertrag
+## Diagnostic contract
 
-Eine brauchbare Fehleranalyse beantwortet in dieser Reihenfolge:
+A useful failure analysis answers, in this order:
 
-1. Welcher öffentliche Ablauf ist betroffen (Methode, Routen-Template,
-   Benutzerklasse, erwarteter Status)?
-2. Scheitert Transport, Authentifizierung, Autorisierung, Fachlogik, Persistenz,
-   Integration oder Darstellung?
-3. Welche kleinste reproduzierbare Eingabe zeigt den Fehler ohne Secrets oder
-   personenbezogene Daten?
-4. Welcher Test verhindert genau diese Ursache künftig?
+1. Which public flow is affected (method, route template, user class, expected status)?
+2. Does transport, authentication, authorization, business logic, persistence,
+   integration, or presentation fail?
+3. What is the smallest reproducible input that demonstrates the failure without
+   secrets or personal data?
+4. Which test will prevent exactly this cause in the future?
 
-Nicht in Diagnoseartefakte gehören Request-/Response-Payloads mit Nutzerdaten,
-Cookies, CSRF-/Sessiontokens, Webhook-URLs, private Schlüssel, vollständige
-IP-Adressen oder unredigierte Datenbankauszüge.
+Diagnostic artifacts must not contain request/response payloads with user data,
+cookies, CSRF/session tokens, webhook URLs, private keys, full IP addresses, or
+unredacted database extracts.
 
-## Lokale Eingrenzung nach Schicht
+## Local narrowing by layer
 
-### API und Backend
+### API and backend
 
-1. Route und `operationId` in `openapi/source/operations/` bestimmen; `openapi/openapi.json` nur als zusammengesetztes Kontrollartefakt verwenden.
-2. Die Route direkt im Modul-Controller (`@*Mapping`) finden; Request-DTO,
-   `@PathVariable`/`@RequestParam` und `@Valid @RequestBody` dort gegen OpenAPI prüfen.
-3. Vom Controller zum Service, zur Policy und zum Repository-/Mapper-Rand verfolgen.
-4. HTTP-Status einordnen: Transport-/Bean-Binding 400, Authentifizierung 401,
-   Autorisierung/CSRF/Origin 403, Zustandskonflikt 409, fachliche Validierung 422.
-5. Erst Service-/Policy-Test, bei Security, SQL oder Mapping zusätzlich echten
-   HTTP-Test gegen PostgreSQL ergänzen.
+1. Determine the route and `operationId` in `openapi/source/operations/`; use
+   `openapi/openapi.json` only as the assembled verification artifact.
+2. Find the route directly in the module controller (`@*Mapping`) and compare the
+   request DTO, `@PathVariable`/`@RequestParam`, and `@Valid @RequestBody` there with OpenAPI.
+3. Trace from the controller to the service, policy, and repository/mapper boundary.
+4. Classify the HTTP status: transport/bean binding 400, authentication 401,
+   authorization/CSRF/origin 403, state conflict 409, business validation 422.
+5. Add a service/policy test first; for security, SQL, or mapping, also add a real
+   HTTP test against PostgreSQL.
 
 ```bash
-rg -n 'operation_id|operationId|Fehlertext' openapi spring-api/src/main/java
+rg -n 'operation_id|operationId|error text' openapi spring-api/src/main/java
 rg -n 'api_error|security_401|security_403|api_request_complete' spring-api/src/main/java docs/debugging
-mvn -f spring-api/pom.xml -Dtest='<Testklasse>' test
+mvn -f spring-api/pom.xml -Dtest='<TestClass>' test
 ```
 
-Mocktests reichen nicht aus, wenn PostgreSQL-Typen, Constraints, Transaktionen,
-Spring Security, CSRF, Cookieattribute oder generierte API-Bindings Teil der
-Ursache sind. Dafür liegt der Integrationsrand unter
+Mock tests are insufficient when PostgreSQL types, constraints, transactions,
+Spring Security, CSRF, cookie attributes, or generated API bindings are part of
+the cause. The integration boundary for those cases lives under
 `spring-api/src/test/java/eu/royalblackwater/api/integration/`.
 
-### Datenbank, Seed und Retention
+### Database, seed, and retention
 
-- Schema ausschließlich über die aktuelle Flyway-Historie erklären; bestehende
-  Migrationen nicht zum Debuggen verändern.
-- Bei Seedfehlern `seed_key`, gespeicherte Prüfsumme und
-  `is_seed_overridden` gemeinsam prüfen. Wiederholung muss idempotent sein.
-- JDBC-Werte am Persistence-Rand normalisieren; keine Testfixtures verwenden,
-  die PostgreSQL-spezifische Typen unbemerkt ersetzen.
-- Retention mit alten, aktuellen, offenen und abgeschlossenen Zeilen testen.
-  Eine Löschabfrage darf offene Betroffenenanträge nicht erfassen.
-- Vor produktiver Datenkorrektur Upgrade-, Backup- und Recovery-Pfad festlegen;
-  Diagnose allein autorisiert keine Mutation.
+- Explain the schema only through the current Flyway history; do not alter existing
+  migrations for debugging.
+- For seed failures, inspect `seed_key`, stored checksum, and `is_seed_overridden`
+  together. Repetition must remain idempotent.
+- Normalize JDBC values at the persistence boundary; do not use test fixtures that
+  silently replace PostgreSQL-specific types.
+- Test retention with old, current, open, and closed rows. A deletion query must not
+  include open data-subject requests.
+- Before production data correction, establish the upgrade, backup, and recovery path;
+  diagnostics alone do not authorize mutation.
 
 ### Frontend
 
-1. Fehlgeschlagenen Request und HTTP-Status in den Browser-Tools feststellen,
-   ohne Header oder Cookies zu kopieren.
-2. Route-Page → Page-Composable → API-/Domain-Modul verfolgen.
-3. Reine Abbildung/Validierung als Node-Test, Zustandswechsel im Composable und
-   kritische Bedienung als Playwright-Smoke absichern.
-4. Fehlerzustände müssen sichtbar und wiederholbar bleiben; ein fehlgeschlagenes
-   Speichern darf Dialog oder Nutzereingabe nicht voreilig schließen.
+1. Identify the failed request and HTTP status in browser tools without copying headers or cookies.
+2. Trace route page → page composable → API/domain module.
+3. Cover pure mapping/validation with a Node test, state transitions in the composable,
+   and critical interaction with a Playwright smoke test.
+4. Error states must remain visible and retryable; a failed save must not close a dialog
+   or discard user input prematurely.
 
 ```bash
 cd frontend
 npm run test:unit
-npm run test:browser -- --grep '<sichtbarer Ablauf>'
+npm run test:browser -- --grep '<visible flow>'
 ```
 
-Playwright mockt nur `/api/` und beweist UI-Verhalten. Echte Cookie-, Session-,
-CSRF-, Rollen- und SQL-Grenzen gehören in Spring-Integrationstests.
+Playwright mocks only `/api/` and proves UI behavior. Real cookie, session, CSRF,
+role, and SQL boundaries belong in Spring integration tests.
 
-### Infrastruktur, Deployment und Recovery
+### Infrastructure, deployment, and recovery
 
-Vom Ursprungssystem sammeln:
+Collect from the origin system:
 
 ```bash
 ./infrastructure/scripts/diagnostics/debug.sh --area deployment --category errors --since 2h --tail 600
 ```
 
-Der Collector verwendet standardmäßig `.env.origin.test`; Production wird
-explizit mit `--production` und `.env.origin.production` gewählt. Er begrenzt die
-Remote-Ausgabe und redigiert sie lokal. Bei fehlgeschlagener Aktivierung zuerst
-das `failed-*.log`, Servicezustand und Compose-Status sichern. Erst danach darf
-eine gezielte, dokumentierte Recovery-Aktion erfolgen. `docker compose down`,
-Volume-Löschung oder Änderungen an `shared/data` sind keine ersten
-Diagnoseschritte.
+The collector uses `.env.origin.test` by default; production is selected explicitly
+with `--production` and `.env.origin.production`. It bounds remote output and redacts
+it locally. For failed activation, first preserve the `failed-*.log`, service state,
+and Compose status. Only then may a focused, documented recovery action occur.
+`docker compose down`, volume deletion, or changes to `shared/data` are not first-line
+diagnostic steps.
 
-## Fehlerklasse → Evidenz → Regressionstest
+## Failure class → evidence → regression test
 
-| Fehlerklasse | Minimale Evidenz | Erwartete Absicherung |
+| Failure class | Minimum evidence | Expected protection |
 | --- | --- | --- |
-| Transport/Contract | Methode, Routen-Template, Status, Bindingdetail | Generator- und Architektur-Check plus Controller-/HTTP-Test |
-| Auth/Permission | 401/403, boolesche Cookie-/Origin-/CSRF-Merkmale, Rolle | Security-/Policy-Test und geschützte HTTP-Route |
-| SQL/Persistenz | Query-Verantwortung, SQL-State/Constraint, abstrahierte Parameterform | Service-Test plus PostgreSQL-Test |
-| Seed/Bootstrap | Seed-Key/Rollen-Code/Status, Wiederholungsablauf | idempotenter Initializer-/PostgreSQL-Test |
-| Privacy | Vorgangstyp/Status, keine Inhalte/Identifier | Export-, Pseudonymisierungs- und Retentiontest |
-| Frontend-Zustand | Seite, Aktion, HTTP-Status, sichtbarer Zustand | Domain-/Composable-Test und ggf. Browser-Smoke |
-| externe Integration | Zielscope, Eventtyp, Delivery-Status, begrenzter Fehler | Policy-/Renderer-Test; Hauptablauf bleibt kontrolliert |
-| Deployment | Releaseversion, Phase, Readiness, redigierter Root Cause | Infrastruktur-/Update-/Recovery-Vertragstest |
+| Transport/contract | method, route template, status, binding detail | generator and architecture check plus controller/HTTP test |
+| Auth/permission | 401/403, boolean cookie/origin/CSRF indicators, role | security/policy test and protected HTTP route |
+| SQL/persistence | query responsibility, SQL state/constraint, abstracted parameter form | service test plus PostgreSQL test |
+| Seed/bootstrap | seed key/role code/status, repeat workflow | idempotent initializer/PostgreSQL test |
+| Privacy | process type/status, no contents/identifiers | export, pseudonymization, and retention test |
+| Frontend state | page, action, HTTP status, visible state | domain/composable test and browser smoke test where needed |
+| External integration | target scope, event type, delivery status, bounded error | policy/renderer test; primary flow remains controlled |
+| Deployment | release version, phase, readiness, redacted root cause | infrastructure/update/recovery contract test |
 
-## Runbook: unerwarteter API-500
+## Runbook: unexpected API 500
 
-Ein generischer `{"detail":"Internal server error."}`-Body ist nur das Symptom.
-Für einen 500er wird immer der reale Spring-/PostgreSQL-Pfad reproduziert und der
-erste serverseitige Root Cause verfolgt:
+A generic `{"detail":"Internal server error."}` body is only the symptom. For a
+500, always reproduce the real Spring/PostgreSQL path and trace the first server-side
+root cause:
 
-1. Den konkreten HTTP-Aufruf in einem Spring-Boot-Integrationstest gegen einen
-   PostgreSQL-Testcontainer reproduzieren. Methode, Pfad, Status und einen begrenzten
-   Response-Ausschnitt in die Assertion aufnehmen.
-2. Die `X-Request-Id` aus der fehlgeschlagenen Testantwort verwenden und in
-   Surefire-/Server-Ausgabe die korrespondierende `api_error status=500 request_id=...`-
-   Zeile suchen. Exceptiontyp sowie den ersten eigenen Stack-Frame notieren; nicht
-   beim äußeren Assertion-Fehler stehen bleiben.
-3. Die Route über OpenAPI/operationId → Controller → Service →
-   Repository/Mapper verfolgen. Nur den tatsächlich ausgeführten Pfad untersuchen.
-4. Bei Spring-JDBC-Fehlern die **fertig zusammengesetzte SQL-Bedeutung** prüfen:
-   Fragmentgrenzen, Named-Parameter und Bindings sowie Alias/Spalte gegen Flyway.
-   Ein Fehler wie ein zusammengezogener Parametername zeigt häufig fehlenden
-   Whitespace zwischen zwei Java-SQL-Fragmenten.
-5. `python3 infrastructure/scripts/quality/audit_sql_runtime.py` ausführen und
-   benachbarte Query-Kataloge auf dieselbe Fehlerklasse prüfen.
-6. Den konkreten Endpoint als dauerhaften Happy-Path-/Regressionstest behalten. Bei
-   Filter-/Sortier-SQL zusätzlich den gefilterten Query-Zweig testen.
-7. Bei Review-, Admin- oder sonstigen Zustandsautomaten nicht bei einem isolierten
-   Request stehen bleiben: echte Voraussetzung erzeugen, Listen-/Detail-Read ausführen,
-   Transition durchführen und anschließend den neuen Zustand über HTTP erneut lesen.
-   Approve/Reject beziehungsweise Complete/Reject getrennt testen. Eine wiederholte
-   bereits verbrauchte Transition muss kontrolliert 4xx liefern und niemals 500.
-8. Bei Mapper-/Referenzauflösung optionale Fremdschlüssel ausdrücklich als nullable behandeln.
-   Insbesondere niemals `Map.get(RowValues.nullableLong(...))` direkt verwenden: leere
-   immutable Maps aus `Map.of()` akzeptieren keinen `null`-Key und können einen normalen
-   pending/unreviewed Zustand als `NullPointerException` in einen 500er verwandeln. Erst
-   auf `null` prüfen, dann den Lookup ausführen.
-9. Danach `ApiSurfaceIntegrationTest` und schließlich `mvn verify` ausführen. Der
-   contractweite No-5xx-Sweep, der statische SQL-Audit und die stateful Lifecycle-Tests
-   sind drei unabhängige Absicherungen gegen unterschiedliche Laufzeitfehler.
+1. Reproduce the concrete HTTP call in a Spring Boot integration test against a
+   PostgreSQL test container. Include method, path, status, and a bounded response
+   excerpt in the assertion.
+2. Use the `X-Request-Id` from the failed test response and find the corresponding
+   `api_error status=500 request_id=...` line in Surefire/server output. Note the
+   exception type and first application-owned stack frame; do not stop at the outer
+   assertion failure.
+3. Trace the route through OpenAPI/operationId → controller → service → repository/mapper.
+   Investigate only the path that actually executed.
+4. For Spring JDBC failures, inspect the **fully composed SQL meaning**: fragment
+   boundaries, named parameters and bindings, and aliases/columns against Flyway.
+   An error such as a merged parameter name often indicates missing whitespace between
+   two Java SQL fragments.
+5. Run `python3 infrastructure/scripts/quality/audit_sql_runtime.py` and inspect nearby
+   query catalogs for the same failure class.
+6. Keep the concrete endpoint as a permanent happy-path/regression test. For filter/sort
+   SQL, also test the filtered query branch.
+7. For review, admin, or other state machines, do not stop at an isolated request:
+   create a real prerequisite, perform list/detail reads, execute the transition, and
+   then read the new state again over HTTP. Test approve/reject or complete/reject
+   separately. Repeating an already-consumed transition must return a controlled 4xx,
+   never 500.
+8. For mapper/reference resolution, treat optional foreign keys explicitly as nullable.
+   In particular, never call `Map.get(RowValues.nullableLong(...))` directly: empty
+   immutable maps from `Map.of()` do not accept a `null` key and can turn a normal
+   pending/unreviewed state into a `NullPointerException` and thus a 500. Check for
+   `null` first, then perform the lookup.
+9. Then run `ApiSurfaceIntegrationTest` and finally `mvn verify`. The contract-wide
+   no-5xx sweep, static SQL audit, and stateful lifecycle tests are three independent
+   protections against different runtime failures.
 
-Referenz für Access Review:
-`register -> pending -> status=all -> approve -> login -> approved` sowie separat
-`register -> pending -> reject -> rejected`. Sentinel-IDs sind für reine Transporttests
-zulässig; für stateful Regressionen echte IDs/Datensätze verwenden, damit Repository,
-Mapper und Folgeabfragen tatsächlich ausgeführt werden.
+Access Review reference:
+`register -> pending -> status=all -> approve -> login -> approved`, and separately
+`register -> pending -> reject -> rejected`. Sentinel IDs are acceptable for pure
+transport tests; use real IDs/records for stateful regressions so repository, mapper,
+and follow-up queries actually execute.
 
-Ein 4xx kann im Surface-Sweep fachlich korrekt sein; ein unerwarteter 5xx ist es nie.
-Bei einem neuen 500er wird zuerst die Exception behoben, nicht der Test abgeschwächt.
+A 4xx may be functionally correct in the surface sweep; an unexpected 5xx never is.
+For a new 500, fix the exception first rather than weakening the test.
 
-Direkte Diagnosebefehle:
+Direct diagnostic commands:
 
 ```bash
 grep -R -n -A100 -B20 'api_error status=500' spring-api/target/surefire-reports/
-# Für einen konkreten Testfehler bevorzugt nach dessen X-Request-Id suchen.
+# For a concrete test failure, prefer searching for its X-Request-Id.
 python3 infrastructure/scripts/quality/audit_sql_runtime.py
 mvn -f spring-api/pom.xml -Dtest=ApiSurfaceIntegrationTest test
 ```
 
-## Abschluss einer Debugging-Änderung
+## Completing a debugging change
 
-- Root Cause statt Symptom behoben.
-- Erfolgs-, Fehler- und Berechtigungspfad getestet.
-- Kein zusätzlicher sensibler Loginhalt eingeführt.
-- Betroffene Modulzeile und dauerhaft relevantes Runbook aktualisiert.
-- Wiederkehrende, stabile Erkenntnis knapp in
-  [`.agents/DEBUGGING_CACHE.md`](../../.agents/DEBUGGING_CACHE.md) gespiegelt.
-- `bash .agents/scripts/check-changes.sh --run` und bei querschnittlicher Änderung
-  `make validate` erfolgreich.
+- Root cause fixed rather than the symptom.
+- Success, failure, and permission paths tested.
+- No additional sensitive logging introduced.
+- Affected module row and permanently relevant runbook updated.
+- Recurring, stable insight mirrored concisely into
+  [`.agents/DEBUGGING_CACHE.md`](../../.agents/DEBUGGING_CACHE.md).
+- `bash .agents/scripts/check-changes.sh --run` and, for a cross-cutting change,
+  `make validate` succeeded.

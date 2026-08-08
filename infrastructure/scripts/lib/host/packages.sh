@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 install_host_dependencies() {
-  [[ "$EUID" -eq 0 ]] || die "Host-Provisioning benötigt root-Rechte."
+  [[ "$EUID" -eq 0 ]] || die "Host provisioning requires root privileges."
   export DEBIAN_FRONTEND=noninteractive
 
   apt-get update
@@ -22,5 +22,5 @@ install_host_dependencies() {
   install -m 0644 "$INFRA_DIR/config/host/20auto-upgrades" /etc/apt/apt.conf.d/20auto-upgrades
   install -m 0644 "$INFRA_DIR/config/host/52rbf-unattended-upgrades" /etc/apt/apt.conf.d/52rbf-unattended-upgrades
   systemctl enable --now apt-daily.timer apt-daily-upgrade.timer
-  success "Automatische Security-Updates sind aktiv; notwendige Neustarts bleiben administrativ kontrolliert."
+  success "Automatic security updates are active; required restarts remain administratively controlled."
 }

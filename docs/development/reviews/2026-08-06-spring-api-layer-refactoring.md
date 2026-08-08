@@ -1,108 +1,100 @@
-# Spring-API-Refactoring
+# Spring API Refactoring
 
-## Ziel
+## Goal
 
-Die Spring-API wurde von einer zentral dispatchenden, handlerbasierten Struktur auf
-klassische, fachmodular getrennte Spring-Schichten umgestellt:
+The Spring API was converted from a centrally dispatched, handler-based structure to classic,
+domain-modular Spring layers:
 
 ```text
-OpenAPI-Vertrag
-  -> generiertes API-Interface + API-DTO
-  -> Modul-Controller
-  -> Modul-Service
-  -> Modul-Repository
-  -> Modul-Mapper
-  -> API-/Modul-DTO oder Entity / PostgreSQL
+OpenAPI contract
+  -> generated API interface + API DTO
+  -> module controller
+  -> module service
+  -> module repository
+  -> module mapper
+  -> API/module DTO or entity / PostgreSQL
 ```
 
-Die Pakete `controller`, `filter`, `service`, `mapper`, `dto`, `entity` und
-`repository` liegen innerhalb der jeweiligen Fachdomäne. Mehrdeutige generische
-`model`-Pakete sind nicht Teil des Zielbilds: Transportdaten gehören nach `dto`,
-Persistenzobjekte nach `entity` und Kataloge in die verantwortliche Service- oder
-Repository-Schicht. Ein Layer wird nur angelegt, wenn das Modul dafür eine reale
-Verantwortung besitzt; leere Platzhalter oder künstliche Abstraktionen werden nicht
-erzeugt.
+The `controller`, `filter`, `service`, `mapper`, `dto`, `entity`, and `repository` packages
+live inside the corresponding business domain. Ambiguous generic `model` packages are not part
+of the target architecture: transport data belongs in `dto`, persistence objects in `entity`,
+and catalogs in the responsible service or repository layer. A layer is created only when the
+module has a real responsibility for it; empty placeholders or artificial abstractions are not added.
 
-## Bereinigter Ausgangszustand
+## Cleaned starting state
 
-Vor dem Refactoring waren HTTP-Routen über einen zentralen Dispatcher und
-modulbezogene Operation-Handler verdrahtet. Fachmodule waren teilweise flach
-organisiert, Services griffen auf einen generischen JDBC-Dienst zu, und SQL war in
-43 Serviceklassen verteilt. Dadurch waren Transport, Fachlogik und Persistenz nur
-unzureichend getrennt.
+Before the refactoring, HTTP routes were wired through a central dispatcher and module-specific
+operation handlers. Business modules were partly organized flatly, services accessed a generic
+JDBC service, and SQL was distributed across 43 service classes. Transport, business logic, and
+persistence were therefore insufficiently separated.
 
-## Umgesetzte Änderungen
+## Implemented changes
 
-- 177 OpenAPI-Operationen werden durch 34 generierte, typisierte API-Interfaces
-  beschrieben und eindeutig von 26 Modul-Controllern implementiert.
-- 179 generierte Request-/Response-DTOs bilden den HTTP-Vertrag ab; benannte
-  Modul-DTOs kapseln interne Persistenz- und Integrationsübergaben.
-- Controller und öffentliche Service-Grenzen transportieren weder Entities noch
-  JDBC-Zeilen oder Roh-Maps. Nur Mapper erzeugen API-Repräsentationen.
-- Zentraler API-Dispatcher, Operation-Handler-Basisklassen, 26 konkrete
-  Operation-Handler und die alten generierten Controller wurden entfernt.
-- Controller enthalten ausschließlich HTTP-Bindung und delegieren an Services.
-- Fachlogik, Autorisierung und Transaktionsgrenzen liegen in Modul-Services.
-- Generischer JDBC-Zugriff ist nur noch aus Persistenz- und Repository-Klassen
-  erreichbar.
-- SQL-Definitionen wurden aus 43 Services in fachmodulbezogene Query-Kataloge
-  unter `repository/queries` verschoben. Services enthalten keine SQL-Literale.
-- Mapper, DTOs, Entities, Filter und Repositories wurden den jeweiligen
-  Fachmodulen und eindeutigen Layer-Paketen zugeordnet.
-- Auch die Core-Health-/Readiness-Pfade folgen Controller -> Service -> Repository.
-- Architektur- und Generierungsgates wurden auf das neue Schichtenmodell
-  umgestellt und verhindern Rückfälle in Dispatcher-, Handler- oder
-  Service-zu-JDBC-Strukturen.
-- Betroffene Tests und Dokumentation wurden auf die neuen Pakete und
-  Repository-Abhängigkeiten angepasst.
+- 177 OpenAPI operations are described by 34 generated typed API interfaces and implemented
+  uniquely by 26 module controllers.
+- 179 generated request/response DTOs represent the HTTP contract; named module DTOs encapsulate
+  internal persistence and integration transfers.
+- Controllers and public service boundaries transport neither entities nor JDBC rows or raw maps.
+  Only mappers create API representations.
+- The central API dispatcher, operation-handler base classes, 26 concrete operation handlers, and
+  old generated controllers were removed.
+- Controllers contain only HTTP binding and delegate to services.
+- Business logic, authorization, and transaction boundaries live in module services.
+- Generic JDBC access is reachable only from persistence and repository classes.
+- SQL definitions were moved from 43 services into domain-specific query catalogs under
+  `repository/queries`. Services contain no SQL literals.
+- Mappers, DTOs, entities, filters, and repositories were assigned to their respective business
+  modules and unambiguous layer packages.
+- Core health/readiness paths also follow Controller -> Service -> Repository.
+- Architecture and generation gates were adapted to the new layer model and prevent regressions
+  to dispatcher, handler, or service-to-JDBC structures.
+- Affected tests and documentation were updated for the new packages and repository dependencies.
 
-## Erzwungene Architekturregeln
+## Enforced architecture rules
 
-`infrastructure/scripts/quality/audit_spring_backend.py` prüft unter anderem:
+`infrastructure/scripts/quality/audit_spring_backend.py` checks, among other things:
 
-- vollständige und eindeutige Implementierung aller Vertragsoperationen;
-- keine zentralen Dispatcher oder Operation-Handler;
-- keine Route-Mappings außerhalb der generierten API-Interfaces;
-- keine Controller-Zugriffe auf Repository, Entity, JDBC, Flyway oder SQL;
-- keine Service-Zugriffe auf generischen JDBC und keine SQL-Literale in Services;
-- keine Repository-Abhängigkeiten auf obere Schichten;
-- explizite Layer-Pakete für ausführbare Fachmodulklassen;
-- bestehende Batch-, Security- und Größeninvarianten.
+- complete and unique implementation of all contract operations;
+- no central dispatchers or operation handlers;
+- no route mappings outside generated API interfaces;
+- no controller access to repository, entity, JDBC, Flyway, or SQL;
+- no service access to generic JDBC and no SQL literals in services;
+- no repository dependencies on upper layers;
+- explicit layer packages for executable business-module classes;
+- existing batch, security, and size invariants.
 
-## Lokale Validierung
+## Local validation
 
-Erfolgreich ausgeführt wurden:
+Successfully executed:
 
-- Vertragsgenerierung: 34 Interfaces und 177 Operationen konsistent;
-- Spring-Architekturaudit: 26 Controller und 466 Produktions-Javaquellen konsistent;
-- internes Package-/Import-Konsistenz-Gate;
-- Security-Audit;
-- Agent-/Modul-Cache-Gate;
-- strukturelle Java-21-Kompilierung des ursprünglichen Layer-Refactorings gegen isolierte
-  Spring-/JPA-Schnittstellenstubs;
-- strukturelle Kompilierung aller 21 Testquellen gegen dieselben Stubs.
+- contract generation: 34 interfaces and 177 operations consistent;
+- Spring architecture audit: 26 controllers and 466 production Java sources consistent;
+- internal package/import consistency gate;
+- security audit;
+- agent/module cache gate;
+- structural Java 21 compilation of the original layer refactoring against isolated
+  Spring/JPA interface stubs;
+- structural compilation of all 21 test sources against the same stubs.
 
-## Umgebungsgrenze
+## Environment limit
 
-Im bereitgestellten Ausführungsumfeld war Maven nicht installiert und externer
-Netzwerk-/DNS-Zugriff stand nicht zur Verfügung. Deshalb konnten
-`mvn -f spring-api/pom.xml verify`, echte Spring-Kontextstarts und
-PostgreSQL-Testcontainers hier nicht ausgeführt werden. Die Stub-Kompilierung
-prüft Java-Typen, Signaturen, Pakete und interne Abhängigkeiten, ersetzt aber keinen
-abschließenden Maven-/Runtime-Test in der regulären CI- oder Entwicklungsumgebung.
-## DTO-Transition
+Maven was not installed in the provided execution environment and external network/DNS access
+was unavailable. Therefore `mvn -f spring-api/pom.xml verify`, real Spring context starts, and
+PostgreSQL Testcontainers could not be run here. Stub compilation checks Java types, signatures,
+packages, and internal dependencies, but does not replace a final Maven/runtime test in normal
+CI or a development environment.
 
-Das anschließende DTO-Refactoring ist vollständig im
-[DTO-Refactoring-Bericht](2026-08-06-spring-api-dto-refactoring.md) dokumentiert. Die aktuelle Zielarchitektur erzwingt typisierte HTTP-DTOs,
-modulbezogene Übergabe-DTOs und Mapper als einzige Repräsentationsgrenze.
+## DTO transition
 
+The subsequent DTO refactoring is documented completely in the
+[DTO refactoring report](2026-08-06-spring-api-dto-refactoring.md). The current target architecture
+enforces typed HTTP DTOs, module-specific transfer DTOs, and mappers as the only representation boundary.
 
-## Nachgelagerter Repository-Cleanup
+## Subsequent repository cleanup
 
-Der anschließende Strukturputz entfernte die verbliebenen generischen `model`-Pakete.
-Interne Build- und Security-Übergabeobjekte liegen nun in Modul-`dto`-Paketen,
-Seed- und Eventkataloge in der verantwortlichen Repository-/Service-Schicht. Zudem
-wurden ein ungenutztes Spring-Data-Repository, tote Controller-Helper und der
-Map-basierte `RequestParameters`-Zwischenschritt entfernt. Das Architektur-Gate
-verhindert leere Quellverzeichnisse, generische `model`-Pakete, rohe Parameter-Maps
-in Controllern und Repository-Typen ohne Anwendungskonsumenten.
+The following structural cleanup removed the remaining generic `model` packages. Internal build and
+security transfer objects now live in module `dto` packages, seed and event catalogs in the responsible
+repository/service layer. An unused Spring Data repository, dead controller helpers, and the map-based
+`RequestParameters` intermediate step were also removed. The architecture gate prevents empty source
+directories, generic `model` packages, raw parameter maps in controllers, and repository types without
+application consumers.

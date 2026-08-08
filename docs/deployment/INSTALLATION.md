@@ -8,25 +8,22 @@ Create a private environment file from `infrastructure/.env.example`, replace ev
 
 ## First artifact install
 
-Der empfohlene Ursprungspfad ist `./deploy.sh`. Auf dem Zielserver kann
-`setup_website.sh` alternativ direkt interaktiv oder mit Flags ausgeführt werden.
-Fehlen Docker oder Compose, verwendet der Assistent automatisch den vorhandenen
-Host-Bootstrap aus `infrastructure/scripts/lib/host/packages.sh`. Mit
-`--skip-host` kann dieser Schritt bewusst deaktiviert werden.
-Wird keine Environment-Datei angegeben, erzeugt der Assistent automatisch
-`/srv/rbf/shared/.env` mit neuen Secrets und legt die einmaligen Zugangsdaten in
-`/srv/rbf/shared/first-run-credentials.txt` ab. Bei einer neuen Installation
-prüft der Aktivierungslauf diese Zugangsdaten anschließend über die öffentliche
-`POST /api/auth/login`-Route. Ein 401 beendet die Erstinstallation fail-closed,
-statt eine nicht nutzbare Bootstrap-Identität auszuliefern. Die Seed-Zugangsdaten
-sind ausschließlich für die erstmalige Anlage bestimmt und setzen das Passwort
-eines bereits vorhandenen Bootstrap-Administrators niemals zurück.
+The recommended origin path is `./deploy.sh`. On the target server,
+`setup_website.sh` can alternatively be run directly, either interactively or with flags.
+If Docker or Compose is missing, the assistant automatically uses the existing host
+bootstrap from `infrastructure/scripts/lib/host/packages.sh`. `--skip-host` can be used
+to disable this step deliberately. If no environment file is specified, the assistant
+automatically creates `/srv/rbf/shared/.env` with new secrets and stores the one-time
+credentials in `/srv/rbf/shared/first-run-credentials.txt`. On a new installation, the
+activation run then verifies these credentials through the public `POST /api/auth/login`
+route. A 401 causes first installation to fail closed instead of delivering an unusable
+bootstrap identity. Seed credentials are intended exclusively for initial creation and
+never reset the password of an already-existing bootstrap administrator.
 
-Bei einer wirklich leeren Zielinstallation erkennt `setup_website.sh` den
-Erstinstallationsfall automatisch und setzt intern die notwendige Bestätigung.
-Sobald aktive oder nicht eindeutig verwaiste Release-Daten vorhanden sind,
-bleibt der Backup-Schutz aktiv und der Lauf bricht ohne manuelle Entscheidung
-ab.
+For a genuinely empty target installation, `setup_website.sh` detects the first-install
+case automatically and sets the required confirmation internally. As soon as active or
+not-clearly-orphaned release data exists, backup protection remains active and the run
+stops without a manual decision.
 
 ```bash
 sudo ./setup_website.sh \
@@ -37,18 +34,16 @@ sudo ./setup_website.sh \
   --no-backup
 ```
 
-Für einen manuellen Lauf ohne Flags kann `sudo ./setup_website.sh` verwendet
-werden. Der Dialog fragt alle Werte ab und verlangt bei einer Erstinstallation
-eine ausdrückliche Bestätigung für den fehlenden Backup-Punkt.
+For a manual run without flags, use `sudo ./setup_website.sh`. The dialog asks for all
+values and, for a first installation, requires explicit confirmation that no backup point exists.
 
 `--no-backup` remains restricted to a genuinely new installation without an
 existing database. Normal updates always create the coordinated backup before
 the release switch.
 
-Der öffentliche First-Run-Einstieg ist `./deploy.sh --configure`. Das interne
-Quellbaum-Setup unter `infrastructure/setup.sh` wird nur noch von lokalen
-Entwicklungs- und Artefaktabläufen verwendet und ist kein stabiler
-Produktionsvertrag.
+The public first-run entry point is `./deploy.sh --configure`. The internal source-tree
+setup under `infrastructure/setup.sh` is used only by local development and artifact
+workflows and is not a stable production contract.
 
 ## Existing database adoption
 

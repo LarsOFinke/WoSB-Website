@@ -15,7 +15,7 @@ detect_ssh_port() {
 
 configure_firewall() {
   if [[ "$EUID" -ne 0 ]]; then
-    warn "Firewall-Konfiguration übersprungen (keine root-Rechte)."
+    warn "Firewall configuration skipped (no root privileges)."
     return 0
   fi
 

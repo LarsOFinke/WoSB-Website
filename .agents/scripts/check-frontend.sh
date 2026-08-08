@@ -18,4 +18,4 @@ if [[ ! -f "$FRONTEND_DIR/.env" ]]; then
 fi
 
 cd "$FRONTEND_DIR"
-agent_run_quiet 'Frontend-Tests, Build und Chromium-Smokes' npm run test:ci
+agent_run_quiet 'frontend tests, build, and Chromium smoke tests' npm run test:ci

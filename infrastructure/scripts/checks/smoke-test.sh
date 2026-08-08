@@ -11,7 +11,7 @@ while (($#)); do
   case "$1" in
     --insecure) force_insecure=true ;;
     --bootstrap-login) verify_bootstrap_login=true ;;
-    *) die "Unbekannte Option: $1" ;;
+    *) die "Unknown option: $1" ;;
   esac
   shift
 done
@@ -42,19 +42,19 @@ for _ in $(seq 1 20); do
 done
 
 if [[ "$ready" != true ]]; then
-  echo "[smoke] Healthcheck fehlgeschlagen; letzter Containerstatus:" >&2
+  echo "[smoke] Health check failed; latest container status:" >&2
   bw_compose_with_profiles ps >&2 || true
-  echo "[smoke] Letzte API-/Gateway-Logs:" >&2
+  echo "[smoke] Last API/gateway logs:" >&2
   bw_compose_with_profiles logs --tail=120 api gateway >&2 || true
-  die "Healthcheck ist fehlgeschlagen. Logs: infrastructure/scripts/services/logs.sh api gateway"
+  die "Health check failed. Logs: infrastructure/scripts/services/logs.sh api gateway"
 fi
-success "Gateway, Spring Boot, Flyway und PostgreSQL sind bereit."
+success "Gateway, Spring Boot, Flyway, and PostgreSQL are ready."
 
 if [[ "$verify_bootstrap_login" == true ]]; then
   admin_username="$(read_env SEED_ADMIN_USERNAME)"
   admin_password="$(read_env SEED_ADMIN_PASSWORD)"
   [[ -n "$admin_username" && -n "$admin_password" && "$admin_password" != CHANGE_ME* ]] \
-    || die "Bootstrap-Admin-Zugangsdaten fehlen für die First-Run-Prüfung."
+    || die "Bootstrap-admin credentials are missing for the first-run check."
 
   payload="{\"username\":\"$(json_escape "$admin_username")\",\"password\":\"$(json_escape "$admin_password")\"}"
   cookie_jar="$(mktemp)"
@@ -68,25 +68,25 @@ if [[ "$verify_bootstrap_login" == true ]]; then
     --output /dev/null \
     --write-out '%{http_code}' \
     "https://${hostname}/api/auth/login")" \
-    || die "Bootstrap-Admin-Anmeldung konnte beim First-Run-Smoke-Test nicht ausgeführt werden."
+    || die "Bootstrap-admin login could not be executed during the first-run smoke test."
   [[ "$login_status" == 200 ]] \
-    || die "Bootstrap-Admin-Anmeldung ist fehlgeschlagen (HTTP ${login_status}); SEED_ADMIN_USERNAME/SEED_ADMIN_PASSWORD passen nicht zum initialisierten Benutzer."
-  success "Bootstrap-Admin-Zugangsdaten wurden über die öffentliche Login-API verifiziert."
+    || die "Bootstrap-admin login failed (HTTP ${login_status}); SEED_ADMIN_USERNAME/SEED_ADMIN_PASSWORD do not match the initialized user."
+  success "Bootstrap-admin credentials were verified through the public login API."
 
   manageable_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
     "https://${hostname}/api/fleets/manageable")" \
-    || die "Fleet-Management-Preflight ist bei /api/fleets/manageable fehlgeschlagen."
+    || die "Fleet-management preflight failed at /api/fleets/manageable."
   fleet_id="$(printf '%s' "$manageable_body" | grep -o '"id":[0-9][0-9]*' | head -n1 | cut -d: -f2 || true)"
-  [[ -n "$fleet_id" ]] || die "Fleet-Management-Preflight hat keine verwaltbare Flotte geliefert."
+  [[ -n "$fleet_id" ]] || die "Fleet-management preflight returned no manageable fleet."
 
   management_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
     "https://${hostname}/api/fleets/${fleet_id}/manage")" \
-    || die "Fleet-Management-Preflight ist bei /api/fleets/${fleet_id}/manage fehlgeschlagen."
+    || die "Fleet-management preflight failed at /api/fleets/${fleet_id}/manage."
   [[ "$management_body" == *'"memberships":'* && "$management_body" == *'"protected":'* ]] \
-    || die "Fleet-Management-Response entspricht nicht dem erwarteten DTO-Vertrag."
+    || die "Fleet-management response does not match the expected DTO contract."
 
   curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
     "https://${hostname}/api/fleets/${fleet_id}/roles?include_inactive=true" >/dev/null \
-    || die "Fleet-Management-Preflight ist beim Laden der Rollen fehlgeschlagen."
-  success "Fleet-Management-API wurde mit dem Bootstrap-Administrator end-to-end verifiziert."
+    || die "Fleet-management preflight failed while loading roles."
+  success "Fleet-management API was verified end-to-end with the bootstrap administrator."
 fi

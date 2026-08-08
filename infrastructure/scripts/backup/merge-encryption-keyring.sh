@@ -2,11 +2,11 @@
 set -Eeuo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "Das Zusammenführen von Verschlüsselungsschlüsseln benötigt root-Rechte."
-[[ $# -eq 1 ]] || die "Aufruf: sudo $0 /pfad/zur/alten-infrastructure.env"
+[[ "$EUID" -eq 0 ]] || die "Merging encryption keys requires root privileges."
+[[ $# -eq 1 ]] || die "Usage: sudo $0 /path/to/old-infrastructure.env"
 require_command python3
 source_env="$(realpath "$1")"
-[[ -f "$source_env" ]] || die "Quell-.env nicht gefunden: $source_env"
+[[ -f "$source_env" ]] || die "Source .env not found: $source_env"
 ensure_env_file
 
 backup_env="$INFRA_DIR/.env.before-keyring-merge-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -98,6 +98,6 @@ current_path.chmod(0o600)
 print(f"Encryption key ring merged safely; active key count: {len(merged)}")
 PY
 
-success "Verschlüsselungsschlüssel wurden ohne Ausgabe der Schlüsselwerte zusammengeführt."
-warn "Sicherung der vorherigen .env: $backup_env"
-warn "API anschließend mit 'docker compose ... up -d --force-recreate api' neu erstellen."
+success "Encryption keys were merged without printing key values."
+warn "Backup of the previous .env: $backup_env"
+warn "Recreate the API afterward with 'docker compose ... up -d --force-recreate api'."

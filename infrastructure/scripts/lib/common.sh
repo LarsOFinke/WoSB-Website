@@ -30,11 +30,11 @@ warn() { printf '%b[warn]%b %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
 die() { printf '%b[error]%b %s\n' "$C_RED" "$C_RESET" "$*" >&2; exit 1; }
 
 require_command() {
-  command -v "$1" >/dev/null 2>&1 || die "Benötigtes Kommando fehlt: $1"
+  command -v "$1" >/dev/null 2>&1 || die "Required command is missing: $1"
 }
 
 ensure_env_file() {
-  [[ -f "$ENV_FILE" ]] || die "Fehlende Konfiguration: $ENV_FILE. Erstinstallation über ./deploy.sh --configure am Ursprung oder setup_website.sh am Ziel ausführen."
+  [[ -f "$ENV_FILE" ]] || die "Missing configuration: $ENV_FILE. Run initial installation through ./deploy.sh --configure at the origin or setup_website.sh at the target."
 }
 
 read_env() {

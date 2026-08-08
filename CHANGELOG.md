@@ -118,27 +118,27 @@
 - Made the locale completeness check directly executable with Node instead of requiring a Vite server.
 - Pinned GitHub workflows to the published v6 releases of checkout, setup-node, setup-python, and upload-artifact.
 
-- Admin-exklusive Datenbank-Backup-Verwaltung ergänzt: SSH-/SFTP-Ziel inklusive verifizierter Host-Key-Pinierung über die Webseite einrichten, Verbindung testen und komprimierte PostgreSQL-Backups per Knopfdruck übertragen sowie remote per SHA-256 verifizieren. Private Schlüssel verbleiben im root-geschützten Host-Control-Verzeichnis und werden nie von der API zurückgegeben.
-- Frontend-Release-Gate repariert: vollständige Übersetzungen für die neue Broadcast-Navigation ergänzt und die Route-Page-Invarianten an die Backup-Unterseite angepasst; GitHub Actions auf veröffentlichte, runner-kompatible Major-Versionen zurückgeführt.
-- Discord-Verwaltung fachlich getrennt: automatische Website-Webhooks bleiben unter „Discord-Webhooks“, während externe Partnerflotten- und Diplomatieziele eine eigene Broadcast-Unterseite erhalten; der Zustellmonitor ist standardmäßig eingeklappt und seine Historie kann einzeln oder gefiltert gelöscht werden.
-- Forum-Antworten können nach Inline-Bestätigung durch Autor oder Staff gelöscht werden; neue Webhook-Events und versionierte Templates decken Antworten, Thread-Löschungen sowie Flotten-, Mitgliedschafts-, Führungs- und Rollenänderungen ab.
-- Staff-Systemlogs in einen eigenen responsiven Arbeitsbereich ausgelagert; aktive IP-Sperren werden standardmäßig aus Liste, Kennzahlen und Threat-Auswertung entfernt und können bewusst wieder eingeblendet werden. Admins können einzelne oder den aktuellen Filterbereich nach Bestätigung löschen; jede Löschung bleibt im Audit-Log nachvollziehbar.
-- Alle Route-Pages auf verbindliche Page-Composables umgestellt; direkte API-Imports, Lifecycle-Ladevorgänge und eigene asynchrone Workflows in Seiten werden repositoryweit verhindert.
-- Globales Frontend-CSS unter Beibehaltung der Kaskadenreihenfolge in acht größenbegrenzte Layer zerlegt und mit CSS-Budgets abgesichert.
-- Python-, Node-, NGINX-, PostgreSQL- und Uptime-Kuma-Basisimages auf konkrete Versionen festgeschrieben; unversioniertes pip-Self-Upgrade aus dem Backend-Build entfernt.
-- Upload-Auslieferung durch API-Zugriffspolitik und private No-Store-Header gehärtet: Guide-, Forum- und Master-Data-Dateien bleiben öffentlich, sonstige Dateien sind auf Eigentümer und Staff begrenzt; bestehende `/uploads/...`-Links bleiben kompatibel.
-- Build-Editor um eine abgesicherte Löschaktion für eigene Builds ergänzt; nach Bestätigung wird der Build entfernt und zur persönlichen Build-Bibliothek zurück navigiert.
-- Discord-Webhook-Editor als isolierten, responsiven Body-Drawer umgesetzt; Checkboxen, Formularelemente und Aktionen überlagern sich nicht mehr, der Hintergrund wird während der Bearbeitung gesperrt.
-- Webhook-Zustellungen atomar beansprucht und um automatische Wiederaufnahme verwaister `queued`-/`processing`-Einträge mit begrenzten Versuchen ergänzt.
-- Produktionslogging gibt strukturierte Meldungen zusätzlich auf der Konsole aus, damit Datenbankausfälle nicht gleichzeitig die Laufzeitdiagnose abschalten.
-- Release-Prüfungen gegen plattformabhängige Zeilenenden und einen veralteten Alembic-Head gehärtet; mehrere testreihenfolgeabhängige Fixtures korrigiert.
-- Ursprüngliche Upload-Dateinamen werden vor der Persistierung auf die Datenbankgrenze gekürzt.
-- Webhook-Template-Autofill und Backend-Standardnachrichten verwenden nun exakt die vollständigen englischen Repository-Templates mit Kontextfeldern und Deep-Links; eine Release-Invariante verhindert erneute Abweichungen.
-- Staff-Overview mit eigenem responsivem Dashboard-Layout repariert; Kennzahlen, Warteschlangen und Administratorhinweise bleiben auf Desktop, Tablet und Mobilgeräten klar getrennt.
-- Discord-Webhook-Editor um Template-Autofill aus dem versionierten Event-Katalog und eine kompakte, durchsuchbare Mehrfachauswahl für abonnierte Events erweitert.
-- Discord-Chat-Webhooks um unabhängige Mehrkanal-Abonnements und ein manuelles Broadcast-Panel erweitert; Broadcast-only-Ziele, Mehrfachauswahl, eigene Zustellhistorie und Retry werden direkt vom Backend unterstützt.
-- Discord-Channel-Webhooks als einzige Discord-Integration beibehalten; Staff-Navigation, API und Infrastruktur auf direkte Backend-Zustellung bereinigt.
-- Alembic-Schema für den vorgesehenen Clean-Setup in einer aktuellen `0001_baseline` konsolidiert.
+- Added admin-only database backup management: configure an SSH/SFTP target through the website with verified host-key pinning, test the connection, transfer compressed PostgreSQL backups at the push of a button, and verify them remotely with SHA-256. Private keys remain in the root-protected host-control directory and are never returned by the API.
+- Repaired the frontend release gate: added complete translations for the new broadcast navigation and adjusted route-page invariants for the backup subpage; moved GitHub Actions back to published, runner-compatible major versions.
+- Split Discord administration by responsibility: automatic website webhooks remain under “Discord Webhooks”, while external partner-fleet and diplomacy targets have their own broadcast subpage; the delivery monitor is collapsed by default and its history can be deleted individually or by filter.
+- Forum replies can be deleted after inline confirmation by the author or staff; new webhook events and versioned templates cover replies, thread deletions, and fleet, membership, leadership, and role changes.
+- Moved staff system logs into their own responsive workspace; active IP blocks are excluded from the list, metrics, and threat analysis by default and can be deliberately shown again. Admins can delete individual entries or the current filtered range after confirmation; every deletion remains traceable in the audit log.
+- Migrated all route pages to mandatory page composables; direct API imports, lifecycle loading, and custom asynchronous workflows in pages are now prevented repository-wide.
+- Split global frontend CSS into eight size-bounded layers while preserving cascade order and enforcing CSS budgets.
+- Pinned Python, Node, NGINX, PostgreSQL, and Uptime Kuma base images to concrete versions; removed the unversioned pip self-upgrade from the backend build.
+- Hardened upload delivery with API access policy and private no-store headers: guide, forum, and master-data files remain public, while other files are restricted to owners and staff; existing `/uploads/...` links remain compatible.
+- Added a protected delete action for users' own builds to the Build Editor; after confirmation, the build is removed and navigation returns to the personal build library.
+- Implemented the Discord webhook editor as an isolated, responsive body drawer; checkboxes, form controls, and actions no longer overlap, and the background is locked while editing.
+- Made webhook deliveries claimable atomically and added automatic recovery of orphaned `queued`/`processing` entries with bounded attempts.
+- Production logging now emits structured messages to the console as well, so database failures do not disable runtime diagnostics at the same time.
+- Hardened release checks against platform-dependent line endings and a stale Alembic head; corrected several fixtures whose behavior depended on test order.
+- Original upload filenames are truncated to the database boundary before persistence.
+- Webhook template autofill and backend default messages now use the complete English repository templates exactly, including context fields and deep links; a release invariant prevents renewed drift.
+- Repaired the staff overview with its own responsive dashboard layout; metrics, queues, and administrator notices remain clearly separated on desktop, tablet, and mobile.
+- Extended the Discord webhook editor with template autofill from the versioned event catalog and a compact, searchable multi-select for subscribed events.
+- Extended Discord chat webhooks with independent multi-channel subscriptions and a manual broadcast panel; broadcast-only targets, multi-selection, dedicated delivery history, and retry are supported directly by the backend.
+- Retained Discord channel webhooks as the only Discord integration; cleaned staff navigation, API, and infrastructure around direct backend delivery.
+- Consolidated the Alembic schema for the intended clean setup into a current `0001_baseline`.
 - Gateway builds now normalize frontend directory permissions to `0755` and file permissions to `0644`, ensuring bundled assets such as `rbf-fleet-icon.png` remain publicly readable.
 
 
@@ -150,83 +150,83 @@
 - Restores the shared CSS to one deterministic stylesheet to match the pre-refactor cascade and prevent production layout drift.
 - Adds repository and frontend regression checks for default discovery loading and CSS delivery order.
 
-## 1.0.0 — Produktionsbaseline
+## 1.0.0 — Production baseline
 
 ### Fixed
 
-- Echte Build-CRUD-Ereignisse serialisieren nun das öffentliche `BuildRead`-Schema statt eines SQLAlchemy-Objekts; `build.created`, `build.updated` und `build.removed` werden dadurch zuverlässig eingeplant und zugestellt.
-- Fleet-/Squad-Scope-Metadaten für Registrierungen, Kalender, Builds, Guides, Forum und Einsteiger-Guide vereinheitlicht, sodass reale Ereignisse dieselben Abonnements erreichen wie vorgesehen.
-- Event-spezifische Testzustellungen verwenden realistische Payloads; Repository-Prüfungen erzwingen für jedes Event genau einen Publisher, einen serialisierbaren Test-Payload und gültige Template-Felder.
-- Unerwartete Fehler in Webhook-Hintergrundaufgaben werden als fehlgeschlagene Zustellung persistiert, statt Einträge dauerhaft im Status `queued` zu belassen.
-- Englische Webhook-Nachrichtenvorlagen um vollständige Ressourcendaten und anklickbare Deep-Links erweitert; Webhook-Envelopes qualifizieren relative Ressourcenpfade nun gegen die öffentliche Website-Origin.
-- Gelöschte Builds und Guides verlinken in Benachrichtigungen auf ihre weiterhin erreichbaren Übersichtsseiten.
-- Alembic-Head-Erkennung im gebauten API-Image korrigiert: Schema-Prüfungen verwenden nun explizit `/app/alembic.ini` statt eines nicht vorhandenen Pfads im installierten Python-Paket.
-- Direkt kopierbare, versionierte Nachrichten-Templates für alle unterstützten Webhook-Events unter `docs/integrations/webhook-templates/message-templates/` ergänzt.
-- Standardnachrichten für Build-Webhooks auf das tatsächliche Feld `data.build_name` korrigiert.
-- Update-Erkennung von Git-Diffs auf einen Laufzeitvergleich zwischen Alembic-Head des neu gebauten API-Images und der tatsächlichen PostgreSQL-Revision umgestellt; fehlgeschlagene Migrationen werden im Folgelauf sicher erneut erkannt.
-- Admin-Updateanforderungen werden erst nach Erwerb des exklusiven Locks übernommen; parallele Runner verlieren keine Requests und überschreiben keinen laufenden Status mehr.
-- Update-Heartbeat und Recovery für verwaiste `queued`-/`running`-Zustände ergänzt; abgebrochene Host-Läufe blockieren keine neuen Anforderungen dauerhaft.
-- `--seed` impliziert jetzt immer `--migrate`; `--no-auto-migrate` bricht bei abweichendem Schema vor dem API-Deployment ab.
-- Laufende API- und Gateway-Image-IDs werden als exakter Rollback-Punkt erfasst und gegenüber einem nicht reproduzierbaren Rebuild bevorzugt.
-- PostgreSQL-Restore um exklusiven Lock, Pre-Restore-Backup, Wartungsmodus, Verbindungsabbruch, Alembic-Upgrade und Readiness-/Smoke-Prüfung erweitert.
-- Backup-Zähler im Doctor-Skript auf die tatsächlichen Unterverzeichnisse korrigiert und Backend-Testmodule mit Prozessgruppen-Timeout abgesichert.
+- Real Build CRUD events now serialize the public `BuildRead` schema instead of a SQLAlchemy object, so `build.created`, `build.updated`, and `build.removed` are scheduled and delivered reliably.
+- Unified Fleet/Squad scope metadata for registrations, calendar, builds, guides, forum, and New Captain Guide so real events reach the same subscriptions as intended.
+- Event-specific test deliveries use realistic payloads; repository checks enforce exactly one publisher, one serializable test payload, and valid template fields for every event.
+- Unexpected errors in webhook background tasks are persisted as failed deliveries instead of leaving entries permanently in `queued` status.
+- Expanded English webhook message templates with complete resource data and clickable deep links; webhook envelopes now qualify relative resource paths against the public website origin.
+- Notifications for deleted builds and guides link to their still-accessible overview pages.
+- Corrected Alembic head detection in the built API image: schema checks now explicitly use `/app/alembic.ini` instead of a nonexistent path in the installed Python package.
+- Added directly copyable, versioned message templates for all supported webhook events under `docs/integrations/webhook-templates/message-templates/`.
+- Corrected default messages for Build webhooks to use the actual `data.build_name` field.
+- Reworked update detection from Git diffs to a runtime comparison between the Alembic head of the newly built API image and the actual PostgreSQL revision; failed migrations are safely detected again on the next run.
+- Admin update requests are accepted only after acquiring the exclusive lock; parallel runners no longer lose requests or overwrite an active status.
+- Added update heartbeat and recovery for orphaned `queued`/`running` states; interrupted host runs no longer block new requests indefinitely.
+- `--seed` now always implies `--migrate`; `--no-auto-migrate` aborts before API deployment when the schema differs.
+- Running API and gateway image IDs are captured as the exact rollback point and preferred over a non-reproducible rebuild.
+- Extended PostgreSQL restore with an exclusive lock, pre-restore backup, maintenance mode, connection termination, Alembic upgrade, and readiness/smoke checks.
+- Corrected backup counters in the doctor script to use the actual subdirectories and protected backend test modules with process-group timeouts.
 
-- Alembic-Revisions-ID der Registrierungs-Flottenbewerbung auf PostgreSQL-kompatible 26 Zeichen gekürzt und eine 32-Zeichen-Repository-Invariante ergänzt.
-- Repository- und Infrastrukturprüfungen an die modularen Setup-/Update-Runner sowie die `.cfg`-Konfiguration angepasst.
-- Frontend-Backend-Contract-Test ergänzt, der API-Pfade und gemeinsam verwendete Fachwerte gegen OpenAPI und Backend-Regeln prüft.
-- Veralteten internen Registry-Verweis aus dem Frontend-Lockfile entfernt und Fleet-Fokuswerte zwischen Frontend und Backend synchronisiert.
-- DNS-/Transportfehler ausgehender Webhooks liefern nun eine konkrete Diagnose für den tatsächlichen Compose-Service `api`.
-- Staff-Systemlogs um Tagesfilter, sortierbare IP-Übersicht und ein heuristisches Threat-Level-Dashboard erweitert.
-- Audit-Historie für Builds, Forum-Threads/-Beiträge, Leitfäden und den Starter-Leitfaden ergänzt.
-- Ingame-Waffenlayout-Konvention als Heck–Breitseite–Bug vereinheitlicht und dadurch vertauschte Bug-/Heck-Kapazitäten katalogweit korrigiert.
-- Lange Build-Notizen werden im Offline-Build-Bild vollständig und mit dynamischer Seitenhöhe ausgegeben.
-- Build-Manager um Schiffsvorschau, Crew-Rollenbilder und kategoriespezifische Bildplatzhalter erweitert; Stammdaten-Bilder bleiben hochladbar.
-- Schiffsgeschwindigkeiten als getrennte Basis- und Cruise-Maximalwerte modelliert; Prozent- und Flachboni verwenden die verifizierte Ingame-Formel.
+- Shortened the Alembic revision ID for registration fleet applications to PostgreSQL-compatible 26 characters and added a 32-character repository invariant.
+- Adapted repository and infrastructure checks to the modular setup/update runners and `.cfg` configuration.
+- Added a frontend-backend contract test that validates API paths and shared domain values against OpenAPI and backend rules.
+- Removed the stale internal registry reference from the frontend lockfile and synchronized fleet focus values between frontend and backend.
+- DNS/transport errors from outgoing webhooks now provide a concrete diagnosis for the actual Compose service `api`.
+- Extended staff system logs with a day filter, sortable IP overview, and heuristic threat-level dashboard.
+- Added audit history for builds, forum threads/posts, guides, and the Starter Guide.
+- Standardized the in-game weapon-layout convention to stern–broadside–bow, correcting swapped bow/stern capacities across the catalog.
+- Long Build notes are rendered completely in the offline Build image with dynamic page height.
+- Extended Build Manager with ship previews, crew-role images, and category-specific image placeholders; master-data images remain uploadable.
+- Modeled ship speeds as separate base and cruise maximum values; percentage and flat bonuses use the verified in-game formula.
 
-- Build-Designer auf bis zu acht Upgrade-Slots erweitert: 4 Standard + 1 Forschungsbelohnung + 2 durch Structural Expansion + 1 schiffsspezifischer Extra-Slot
-- Upgrade-Katalog auf 32 aktuelle Ingame-Upgrades aus den Bereichen Geschwindigkeit, Expedition, Schutz, Kampf, Ungewöhnlich und Mörser re-auditiert
-- globale Upgrade-Werte als Standard beibehalten; schiffsspezifische Sparse-Overrides bleiben für jeden einzelnen Schiffsstammdatensatz editierbar
-- Upgrade-Auswahl im Build-Designer nach den Ingame-Bereichen gruppiert
-- erfolgreiche `/api/health`- und `/api/health/ready`-Probes aus System- und NGINX-Zugriffslogs ausgeblendet; fehlgeschlagene Checks bleiben sichtbar
-- Systemlog-Ansicht um einen serverseitigen IP-Filter einschließlich gefilterter Kennzahlen erweitert
-- schiffsspezifische Upgrade-Effektwerte als wartbare Sparse-Overrides in API, Datenmodell und Stammdatenverwaltung ergänzt
-- Build-Designer und serverseitige Build-Berechnung verwenden automatisch die Upgrade-Werte des gewählten Schiffs
-- Spezialisten auf genau einen Eintrag je Art vereinheitlicht; Mengen-Counter und stapelbare Effekte entfernt
-- Matrosenwert als zu erfüllendes Minimum statt als Obergrenze umgesetzt und Speichersperren transparent aufgelistet
-- „Share Build“-Aktion zum Kopieren öffentlicher Build-Links ergänzt
-- HTTP-500-Fehler der Staff-API-Logs durch Schema-Reparaturmigration und robuste Summenabfragen behoben
-- Build-Designer-Schiffskatalog auf 67 Datensätze aktualisiert, inklusive Event-Schiff Leopard
-- Ice Lantern mit +5% Geschwindigkeit, Laderaum und Haltbarkeit ergänzt
-- De Zeven Provincien und Sovereign gegen aktuelle Ingame-Panels re-auditiert
-- alle 67 Schiffsstammdaten durch Ingame-Screenshots beziehungsweise Event-Tooltips verifiziert
-- La Creole, Black Wind, Russia, San Martin und Le Requin final korrigiert
-- Vite-Hauptchunk durch Rolldown-Code-Splitting unter die Warnschwelle aufgeteilt
-- Schiff-Seeds nach Rate modularisiert und durch gemeinsame Factory/Qualitätsregeln abgesichert
-- Stammdatenverwaltung optisch und responsiv zu einem Katalog-Arbeitsbereich überarbeitet
-- Upgrade-Slot-Grenze in API, Datenbank und Build-Designer auf maximal acht vereinheitlicht
-- stabile FastAPI-/Vue-Modulstruktur und PostgreSQL/Alembic-Produktionspfad
-- produktive Seeds von Beispiel-Builds, Guides, Forenbeiträgen, Gruppen, Events und Demo-Dateien befreit
-- v1-Datenmigration entfernt bekannte unveränderte 0.x-Mockdaten und bewahrt eigene Inhalte
-- Seed-Manager nach System-, Schiff- und Build-Option-Verantwortung aufgeteilt
-- kleine Node-Unit-Testbasis für Build-Rechnung, Crew, Präferenzen und Datum ergänzt
-- isolierter Backend-Test-Runner und getesteter pre-v1→v1-Datenmigrationspfad
-- normalisierte Rollen-, Flotten-, Profil-, Squad- und Build-Designer-Daten
-- idempotente, versionierte Stammdaten-Seeds mit geschützten Admin-Overrides
-- vollständige Stammdatenverwaltung, Markdown-Inhalte und Bearbeitungsabläufe
-- Build-Designer mit verifizierten Segel-, Laternen-, Spezialisten- und Waffenregeln
-- Cookie-Consent-Historie und bereinigte öffentliche Assets
-- Raspberry-Pi-Einrichtung, TLS, Firewall, systemd, Backups und Diagnosewerkzeug
-- konsolidierte v1.0-Dokumentation; historische Zwischenstands-Dokumente entfernt
-- getrennte GitHub-CI-Jobs, reproduzierbare Release-Artefakte, Dependabot und optionales CD
-- zentrale UTC-Zeitquelle ohne veraltete `datetime.utcnow()`-Verwendung
-- große Verantwortungsblöcke aus Build-Statistik, Build-Formular und Systembetrieb extrahiert
+- Expanded Build Designer to up to eight upgrade slots: 4 standard + 1 research reward + 2 from Structural Expansion + 1 ship-specific extra slot
+- Re-audited the upgrade catalog to 32 current in-game upgrades across Speed, Expedition, Protection, Combat, Unusual, and Mortar categories
+- Retained global upgrade values as defaults; ship-specific sparse overrides remain editable for every individual ship master-data record
+- Grouped upgrade selection in Build Designer by in-game category
+- Hid successful `/api/health` and `/api/health/ready` probes from system and NGINX access logs; failed checks remain visible
+- Extended the system-log view with a server-side IP filter including filtered metrics
+- Added ship-specific upgrade effect values as maintainable sparse overrides in the API, data model, and master-data administration
+- Build Designer and server-side Build calculation automatically use the upgrade values of the selected ship
+- Standardized specialists to exactly one entry per type; removed quantity counters and stackable effects
+- Implemented sailor count as a minimum requirement rather than an upper bound and made save blockers transparent
+- Added a “Share Build” action for copying public Build links
+- Fixed HTTP 500 errors in staff API logs through a schema repair migration and robust aggregate queries
+- Updated the Build Designer ship catalog to 67 records, including the event ship Leopard
+- Added Ice Lantern with +5% speed, cargo capacity, and durability
+- Re-audited De Zeven Provincien and Sovereign against current in-game panels
+- Verified all 67 ship master-data records using in-game screenshots or event tooltips
+- Finalized corrections for La Creole, Black Wind, Russia, San Martin, and Le Requin
+- Split the main Vite chunk with Rolldown code splitting to below the warning threshold
+- Modularized ship seeds by rate and protected them with shared factory/quality rules
+- Reworked master-data administration visually and responsively into a catalog workspace
+- Unified the upgrade-slot limit across API, database, and Build Designer at a maximum of eight
+- Stable FastAPI/Vue module structure and PostgreSQL/Alembic production path
+- Removed sample builds, guides, forum posts, groups, events, and demo files from production seeds
+- v1 data migration removes known unchanged 0.x mock data while preserving user-created content
+- Split Seed Manager by system, ship, and Build-option responsibility
+- Added a small Node unit-test base for Build calculation, crew, preferences, and dates
+- Isolated backend test runner and tested pre-v1→v1 data-migration path
+- Normalized role, fleet, profile, squad, and Build Designer data
+- Idempotent, versioned master-data seeds with protected admin overrides
+- Complete master-data administration, Markdown content, and editing workflows
+- Build Designer with verified sail, lantern, specialist, and weapon rules
+- Cookie consent history and cleaned public assets
+- Raspberry Pi setup, TLS, firewall, systemd, backups, and diagnostic tooling
+- Consolidated v1.0 documentation; removed historical interim-state documents
+- Separate GitHub CI jobs, reproducible release artifacts, Dependabot, and optional CD
+- Central UTC time source without deprecated `datetime.utcnow()` usage
+- Extracted large responsibility blocks from Build statistics, Build form, and system operations
 
-Frühere 0.x-Stände waren interne Entwicklungsstände und werden ab v1.0 nicht mehr separat
-dokumentiert. Das Produktionsschema ist in `0001_baseline` konsolidiert und für einen frischen Clean-Setup ausgelegt.
-Historische Entwicklungsdatenbanken werden nicht per In-Place-Migration übernommen.
+Earlier 0.x states were internal development states and are no longer documented separately from v1.0 onward.
+The production schema is consolidated in `0001_baseline` and designed for a fresh clean setup.
+Historical development databases are not carried forward through in-place migration.
 
-- Build-Persistenz als strikt referenzbasiertes 3NF-Modell abgesichert: Endwerte werden nie gespeichert, alte Builds werden bei jedem Lesen aus aktuellen Schiff-/Optionsreferenzen neu berechnet.
-- Repository-Invariante und Integrationstest verhindern künftig berechnete Ergebnisfelder beziehungsweise Build-Snapshots in der Datenbank.
+- Secured Build persistence as a strictly reference-based 3NF model: final values are never stored, and old Builds are recalculated from current ship/option references on every read.
+- A repository invariant and integration test now prevent calculated result fields or Build snapshots from being stored in the database.
 ## 1.0.0
 
 - New Captain Guide supports linked guides and builds.

@@ -1,53 +1,41 @@
-# Auth- und API-Vertragsprüfung vom 7. August 2026
+# Authentication and API Contract Review, August 7, 2026
 
-## Anlass
+## Reason
 
-Nach dem Spring-Layer-/DTO-Umbau lieferte die produktive Anmeldung mit den
-vermeintlichen First-Run-Zugangsdaten HTTP 401. Deshalb wurde die komplette
-Kette vom Browserrequest über OpenAPI, generierte DTOs und Controller bis zur
-Bootstrap-Initialisierung und Passwortprüfung erneut geprüft.
+After the Spring layer/DTO restructuring, production login with the supposed first-run credentials
+returned HTTP 401. The entire chain from browser request through OpenAPI, generated DTOs, and controller
+to bootstrap initialization and password verification was therefore reviewed again.
 
-## Ergebnis der Login-Prüfung
+## Login review result
 
-Der Login-Request war bereits synchron: Frontend, `LoginRequest`, generiertes
-`AuthApi`, `AuthController` und `AuthService` verwenden durchgehend die Felder
-`username` und `password`. Die Passwortprüfung unterstützt außerdem das beim
-vorherigen Backend verwendete PBKDF2-Format. Der PostgreSQL-Integrationstest
-meldet einen frisch erzeugten Bootstrap-Administrator erfolgreich mit dem
-konfigurierten First-Run-Passwort an.
+The login request was already synchronized: frontend, `LoginRequest`, generated `AuthApi`,
+`AuthController`, and `AuthService` consistently use the fields `username` and `password`. Password
+verification also supports the PBKDF2 format used by the previous backend. The PostgreSQL integration
+test successfully logs in a freshly created bootstrap administrator with the configured first-run password.
 
-Ein 401 mit einem vorhandenen Datenbestand bedeutet deshalb nicht, dass das
-Login-DTO vertauscht ist. `SEED_ADMIN_PASSWORD` ist absichtlich nur das Secret
-für die erstmalige Benutzeranlage. Existiert bereits ein Bootstrap-Admin, wird
-sein aktueller Passwort-Hash bei Neustarts und Deployments nicht aus der
-Environment-Datei überschrieben.
+A 401 with an existing dataset therefore does not mean the login DTO fields are swapped.
+`SEED_ADMIN_PASSWORD` is deliberately only the secret for initial user creation. If a bootstrap admin
+already exists, its current password hash is not overwritten from the environment file on restarts or deployments.
 
-## Gefundener Vertragsdrift
+## Contract drift found
 
-Der OpenAPI-Vertrag enthielt noch das alte generische Validation-Fehlerformat:
-172 Operationen dokumentierten HTTP 422 mit einer strukturierten
-`HTTPValidationError`-Antwort, obwohl Spring Bean-Validation und Bindingfehler
-HTTP 400 mit einem öffentlichen `detail`-Text zurückgeben. Der Login dokumentierte
-außerdem seinen realen HTTP-401-Fall nicht.
+The OpenAPI contract still contained the old generic validation-error format: 172 operations documented
+HTTP 422 with a structured `HTTPValidationError` response, although Spring Bean Validation and binding
+failures return HTTP 400 with a public `detail` text. Login also did not document its real HTTP 401 case.
 
-Der Vertrag verwendet nun `ApiError` mit `detail` als gemeinsame öffentliche
-Fehlerrepräsentation. Die 172 generischen Validation-Responses sind HTTP 400.
-HTTP 422 bleibt nur bei sechs fachlich semantischen Prüfungen explizit erhalten.
-`POST /api/auth/login` dokumentiert 200, 400 und 401 mit den tatsächlich
-verwendeten Schemas.
+The contract now uses `ApiError` with `detail` as the shared public error representation. The 172 generic
+validation responses are HTTP 400. HTTP 422 remains explicitly only for six semantically business-specific
+validations. `POST /api/auth/login` documents 200, 400, and 401 with the schemas actually used.
 
-## First-Run-Invariante
+## First-run invariant
 
-Frische Installationen verifizieren die generierten
-`SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` nach Readiness über die öffentliche
-Login-API. Ein abweichender Benutzer oder Passwort-Hash bricht die Aktivierung
-ab. Updates bestehender Installationen führen diese Prüfung nicht aus, damit ein
-später geändertes Administratorpasswort niemals gegen das alte Seed-Secret
-getestet oder zurückgesetzt wird.
+Fresh installations verify the generated `SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD` after readiness
+through the public login API. A mismatched user or password hash aborts activation. Updates of existing
+installations do not run this check so a later-changed administrator password is never tested against or
+reset to the old seed secret.
 
-## Release-Baseline
+## Release baseline
 
-Nach dem Architektur-Cutover wird die Produktversion bewusst auf `1.0.0`
-zurückgesetzt. Maven-, Frontend-, OpenAPI-, Referenz- und Deploymentversion sind
-wieder an dieser gemeinsamen Basis ausgerichtet. Weitere kompatible Fixes starten
-bei `1.0.1`.
+After the architecture cutover, the product version is deliberately reset to `1.0.0`. Maven, frontend,
+OpenAPI, reference, and deployment versions are aligned again to this shared baseline. Further compatible
+fixes start at `1.0.1`.

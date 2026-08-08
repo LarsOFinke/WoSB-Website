@@ -93,8 +93,8 @@ onUnmounted(() => window.clearTimeout(pollTimer))
         <div><dt>{{ t('admin.system.startedAt') }}</dt><dd>{{ formatDateTime(update.started_at) }}</dd></div>
         <div><dt>{{ t('admin.system.finishedAt') }}</dt><dd>{{ formatDateTime(update.finished_at) }}</dd></div>
       </dl>
-      <small>Updates verwenden nur geprüfte Artefakte aus dem geschützten Host-Inbox-
-        Verzeichnis; Backups, Migrationen und Readiness-Prüfung laufen vor der Aktivierung.</small>
+      <small>Updates use only verified artifacts from the protected host inbox
+        directory; backups, migrations, and readiness checks run before activation.</small>
       <div class="system-update-actions">
         <button class="primary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('update')">
           {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}

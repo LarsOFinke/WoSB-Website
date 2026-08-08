@@ -1,28 +1,27 @@
-# How-to: Frühjahrsputz des Repositorys
+# How-to: Repository Spring Cleaning
 
-Dieser Leitfaden organisiert einen breiten Qualitätsdurchgang mit wenig
-Analysewiederholung. Er ist ein Arbeitsablauf, keine zweite technische
-Spezifikation. Bei Widersprüchen gelten `AGENTS.md`,
-`docs/development/QUALITY_STANDARDS.md` und die dort verlinkten Primärquellen.
+This guide organizes a broad quality pass with minimal repeated analysis. It is a
+workflow, not a second technical specification. In case of conflicts,
+`AGENTS.md`, `docs/development/QUALITY_STANDARDS.md`, and the primary sources
+linked there take precedence.
 
-## 1. Ziel und Grenzen festhalten
+## 1. Define goals and boundaries
 
-Ein Frühjahrsputz verbessert nachweisbar Wartbarkeit, Sicherheit,
-Reproduzierbarkeit oder Betriebsstabilität, ohne Produktverhalten beiläufig zu
-ändern. Vor dem ersten Edit festhalten:
+A spring cleaning pass should measurably improve maintainability, security,
+reproducibility, or operational stability without casually changing product
+behavior. Before the first edit, record:
 
-- betroffene Qualitätsmerkmale und Teilbäume;
-- messbare Symptome wie Duplikate, falsche Abhängigkeitsrichtung, unklare
-  Zuständigkeit, ungebundene Listen, unzuverlässige CI oder veraltete Doku;
-- ausdrücklich unverändertes Verhalten und externe Verträge;
-- benötigte gezielte Tests und das abschließende Gate.
+- affected quality attributes and subtrees;
+- measurable symptoms such as duplication, wrong dependency direction, unclear
+  ownership, unbounded lists, unreliable CI, or outdated documentation;
+- behavior and external contracts that must explicitly remain unchanged;
+- required focused tests and the final gate.
 
-Keine kosmetische Großumsortierung, vorsorgliche Abstraktionsschicht oder
-gleichzeitige fachliche Erweiterung als „Cleanup“ tarnen. Fremde Änderungen,
-generierte Ausgaben, veröffentlichte Flyway-Migrationen und Historie bleiben
-unangetastet.
+Do not disguise cosmetic mass reshuffling, speculative abstraction layers, or
+simultaneous product expansion as “cleanup.” Other people's changes, generated
+output, published Flyway migrations, and history remain untouched.
 
-## 2. Tokenarmer Einstieg
+## 2. Token-efficient entry
 
 ```bash
 bash .agents/scripts/project-context.sh
@@ -31,204 +30,192 @@ sed -n '1,260p' .agents/MODULE_CACHE.md
 bash .agents/scripts/check-changes.sh
 ```
 
-Danach nur die Primärquellen des tatsächlichen Scopes lesen:
+Then read only the primary sources for the actual scope:
 
-| Scope | Primärquellen |
+| Scope | Primary sources |
 | --- | --- |
-| Gesamtqualität | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
-| Modulgrenzen | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
+| Overall quality | `AGENTS.md`, `docs/development/QUALITY_STANDARDS.md` |
+| Module boundaries | `docs/architecture/MODULE_CATALOG.md`, `.agents/MODULE_CACHE.md` |
 | Debugging | `docs/debugging/MODULE_DEBUGGING.md`, `.agents/DEBUGGING_CACHE.md` |
 | Backend/API | `docs/architecture/ARCHITECTURE.md`, `docs/reference/API.md`, `openapi/openapi.json` |
 | Frontend/CSS | `frontend/ARCHITECTURE.md`, `docs/reference/CSS_ARCHITECTURE.md` |
-| Datenbank | `docs/development/DATABASE.md`, betroffene Migrationen und Upgrade-Tests |
-| Infrastruktur | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
-| CI und Gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh`, `.github/workflows/` |
+| Database | `docs/development/DATABASE.md`, affected migrations and upgrade tests |
+| Infrastructure | `infrastructure/ARCHITECTURE.md`, `docs/deployment/OPERATIONS.md` |
+| CI and gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh`, `.github/workflows/` |
 
-Mit `rg` zuerst Aufrufer, Tests, Konfiguration und Dokumentation einer
-Verantwortung finden. Keine breite Dateifür-Datei-Lektüre, wenn Cache und
-Primärquelle den Einstieg bereits nennen.
+Use `rg` first to find callers, tests, configuration, and documentation for a
+responsibility. Do not read files broadly one by one when the cache and primary
+source already identify the entry point.
 
-Skripte nach ausführender Verantwortung innerhalb der zentralen Modularchitektur
-ablegen: Im Root bleiben nur `deploy.sh` und `update.sh`; Quality-Gates liegen
-unter `infrastructure/scripts/quality/`, Generatoren unter `generation/`,
-Packaging/Deployment unter `release/` und Host-/Runtime-/Recovery-Logik in den
-fachlichen Modulen. Das Runtime-Artefakt nimmt nur explizit freigegebene Module
-mit. `.agents/scripts/` und `frontend/scripts/` sind eigentümergebundene Helfer,
-keine allgemeinen Parallelbäume.
+Place scripts according to executable responsibility inside the central module
+architecture: only `deploy.sh` and `update.sh` remain in the root; quality gates
+live under `infrastructure/scripts/quality/`, generators under `generation/`,
+packaging/deployment under `release/`, and host/runtime/recovery logic in the
+respective domain modules. The runtime artifact includes only explicitly approved
+modules. `.agents/scripts/` and `frontend/scripts/` are owner-bound helpers, not
+general-purpose parallel trees.
 
-## 3. Befunde priorisieren
+## 3. Prioritize findings
 
-Jeden Befund einer Priorität und einem Beweis zuordnen:
+Assign every finding a priority and evidence:
 
-1. **P0 – Daten/Sicherheit:** Datenverlust, Authentifizierungs- oder
-   Autorisierungsumgehung, Secret-/PII-Leak, unsicherer Restore oder Supply Chain.
-2. **P1 – Korrektheit/Betrieb:** gebrochener Vertrag, Migration, Deployment,
-   Rollback, reproduzierbarer Build oder verpflichtendes Gate.
-3. **P2 – Wartbarkeit/Leistung:** vermischte Verantwortung, falsche
-   Abhängigkeitsrichtung, N+1, ungebundene Liste, schwer testbare Kopplung.
-4. **P3 – Ordnung:** Benennung, lokale Duplikate oder Ablage ohne unmittelbares
-   Fehlerrisiko.
+1. **P0 – Data/security:** data loss, authentication or authorization bypass,
+   secret/PII leak, unsafe restore, or supply-chain issue.
+2. **P1 – Correctness/operations:** broken contract, migration, deployment,
+   rollback, reproducible build, or mandatory gate.
+3. **P2 – Maintainability/performance:** mixed responsibilities, wrong dependency
+   direction, N+1, unbounded list, or hard-to-test coupling.
+4. **P3 – Order:** naming, local duplication, or placement without immediate
+   failure risk.
 
-Nur belegte Befunde bearbeiten. Ein großer oder ungewöhnlicher Dateiumfang ist
-ein Prüfsignal, aber allein noch kein Refactoring-Grund. P0/P1 zuerst in kleinen,
-einzeln prüfbaren Änderungen schließen.
+Work only on substantiated findings. A large or unusual file size is a review
+signal, but not by itself a reason to refactor. Close P0/P1 first in small,
+individually verifiable changes.
 
-## 4. SOLID und KISS projektgerecht anwenden
+## 4. Apply SOLID and KISS appropriately to the project
 
-SOLID ist hier eine Entscheidungshilfe, kein Klassenzähler:
+SOLID is a decision aid here, not a class counter:
 
-- **Eine benennbare Verantwortung:** Transport bindet, Service entscheidet,
-  Repository persistiert, Mapper übersetzt. Frontend-Seiten komponieren,
-  Composables steuern Abläufe, API-Module transportieren, Domain-Module rechnen.
-- **Erweiterung am stabilen Vertrag:** die OpenAPI-Spezifikation, generierten
-  API-DTOs, Modul-Controller, Services und Infrastruktur-Helper weiterentwickeln,
-  statt parallele Dispatch-, Transport- oder Kompatibilitätspfade einzuführen.
-- **Austauschbarkeit:** Vererbung nur bei tatsächlich substituierbaren Typen;
-  meist sind kleine Komposition und Konstruktorinjektion klarer.
-- **Schmale Schnittstellen:** nur die Daten und Operationen übergeben, die ein
-  Verbraucher benötigt; keine generischen Manager-, Context- oder Utility-
-  Sammelobjekte.
-- **Abhängigkeiten nach innen:** Fachregeln kennen HTTP, Vue, Dateisystem oder
-  konkrete Clients nur, wenn dies ihre echte Verantwortung ist.
+- **One nameable responsibility:** transport binds, service decides, repository
+  persists, mapper translates. Frontend pages compose, composables control flows,
+  API modules transport, domain modules calculate.
+- **Extend at the stable contract:** evolve the OpenAPI specification, generated
+  API DTOs, module controllers, services, and infrastructure helpers instead of
+  adding parallel dispatch, transport, or compatibility paths.
+- **Substitutability:** use inheritance only for genuinely substitutable types;
+  small composition and constructor injection are usually clearer.
+- **Narrow interfaces:** pass only the data and operations a consumer needs; no
+  generic manager, context, or utility catch-all objects.
+- **Dependencies point inward:** business rules know HTTP, Vue, the file system,
+  or concrete clients only when that is their actual responsibility.
 
-KISS begrenzt die Umsetzung:
+KISS constrains implementation:
 
-- zunächst die kleinste fachlich vollständige Ursache beheben;
-- vorhandene Abstraktionen wiederverwenden;
-- Extraktion nur bei klarerer Verantwortung, Lebensdauer oder Testbarkeit;
-- zwei lesbare lokale Zeilen nicht durch ein allgemeines Framework ersetzen;
-- tote Pfade erst nach Aufrufer-, Konfigurations-, Doku- und Migrationprüfung
-  entfernen;
-- Dateien um 300–400 Zeilen auf Trennstellen prüfen, die 420-Zeilen-Grenze aber
-  nicht durch inhaltslose Wrapper umgehen.
+- first fix the smallest functionally complete cause;
+- reuse existing abstractions;
+- extract only when responsibility, lifetime, or testability becomes clearer;
+- do not replace two readable local lines with a general framework;
+- remove dead paths only after caller, configuration, documentation, and migration review;
+- inspect files around 300–400 lines for meaningful split points, but do not evade
+  the 420-line limit with content-free wrappers.
 
-## 5. API-, Sicherheits- und Datenschutzdurchgang
+## 5. API, security, and privacy pass
 
-Für jede betroffene Operation vom Vertrag bis zur Persistenz verfolgen:
+For every affected operation, trace from contract to persistence:
 
 ```text
-OpenAPI -> generiertes API-DTO -> Modul-Controller -> Service
-             -> Repository/Mapper -> Migration/Index -> Tests/Dokumentation
+OpenAPI -> generated API DTO -> module controller -> service
+             -> repository/mapper -> migration/index -> tests/documentation
 ```
 
-Dabei prüfen:
+Check:
 
-- serverseitige Authentifizierung und Autorisierung, einschließlich Objekt- und
-  Flottenbezug; Frontend-Guards zählen nicht als Sicherheitsgrenze;
-- Session/JWT, CSRF, Host, Origin und CORS für mutierende Browserzugriffe;
-- typisierte Eingabevalidierung, erlaubte Sortierfelder, parametrisierte Queries,
-  begrenzte Pagination, Payloadgröße und Uploadtypen;
-- Transaktionsgrenze einschließlich erforderlichem Audit-Eintrag;
-- keine Lazy Loads außerhalb der Transaktion, N+1 oder ungebundene Collections;
-- knappe 4xx-Fehler und zentrale 5xx-Diagnose ohne Payloads, Secrets, Tokens,
-  vollständige IP-Adressen oder personenbezogene Inhalte;
-- Zweck, Aufbewahrung sowie Export-, Berichtigungs- und Löschpfad für neue
-  personenbezogene Daten;
-- sparsame, nicht blockierende Webhooks und explizit erlaubter Outbound-Zugriff.
+- server-side authentication and authorization, including object and fleet scope;
+  frontend guards do not count as a security boundary;
+- session/JWT, CSRF, host, origin, and CORS for mutating browser requests;
+- typed input validation, allowed sort fields, parameterized queries, bounded
+  pagination, payload size, and upload types;
+- transaction boundary including required audit entries;
+- no lazy loads outside the transaction, N+1, or unbounded collections;
+- concise 4xx errors and centralized 5xx diagnostics without payloads, secrets,
+  tokens, complete IP addresses, or personal content;
+- purpose, retention, and export/correction/deletion paths for new personal data;
+- sparse, non-blocking webhooks and explicitly allowed outbound access.
 
-Schemaänderungen nur als neue kleine Flyway-Vorwärtsmigration umsetzen. Entity,
-Index, leere Datenbank, unterstütztes Upgrade, Backup und Restore gemeinsam
-prüfen; Hibernate bleibt auf `validate`.
+Implement schema changes only as new, small Flyway forward migrations. Review
+entity, index, empty database, supported upgrade, backup, and restore together;
+Hibernate remains set to `validate`.
 
-## 6. CI/CD- und Supply-Chain-Durchgang
+## 6. CI/CD and supply-chain pass
 
-Workflows als ausführbaren Produktionsvertrag behandeln:
+Treat workflows as executable production contracts:
 
-- Actions, Laufzeiten, Scanner und Testabhängigkeiten fest versionieren;
-- jede verwendete Toolchain und Testabhängigkeit explizit installieren;
-- Secrets nur über Secret-/Environment-Grenzen übergeben und leere optionale
-  Secrets nicht als echte Zugangsdaten an Tools reichen;
-- Cache ist Beschleunigung, nie Voraussetzung für Korrektheit;
-- kompilierte JAR-/Frontend-Artefakte vor Image- oder Release-Build erzeugen und
-  sicherstellen, dass `.dockerignore` sie nicht aus dem Build-Kontext entfernt;
-- Release-Artefakte bleiben source-frei, inventarisiert, checksummiert und vor
-  Installation fail-closed verifiziert;
-- Container bleiben read-only, capability-dropped und ohne eingebettete Secrets;
-- Migration, Backup, Readiness, Umschaltung und Rollback als einen Ablauf prüfen;
-- keine Scanner- oder Testfehler mit `continue-on-error`, `failOnError=false` oder
-  permissiven Fallbacks verdecken;
-- Zeitlimits für dokumentierte Cold-Start-Pfade realistisch wählen, ohne Hänger
-  unbegrenzt laufen zu lassen.
+- pin actions, runtimes, scanners, and test dependencies;
+- install every used toolchain and test dependency explicitly;
+- pass secrets only through secret/environment boundaries and do not pass empty
+  optional secrets to tools as if they were real credentials;
+- a cache is an acceleration, never a correctness prerequisite;
+- create compiled JAR/frontend artifacts before image or release builds and ensure
+  `.dockerignore` does not exclude them from build context;
+- release artifacts remain source-free, inventoried, checksummed, and verified
+  fail-closed before installation;
+- containers remain read-only, capability-dropped, and free of embedded secrets;
+- treat migration, backup, readiness, switch-over, and rollback as one workflow;
+- do not hide scanner or test failures with `continue-on-error`, `failOnError=false`,
+  or permissive fallbacks;
+- choose realistic time limits for documented cold-start paths without allowing
+  hangs to run indefinitely.
 
-Spezifisch für OWASP/NVD: Ein leerer Cache umfasst mehrere hunderttausend
-Datensätze. Ohne API-Key lokal nur Verbindung und korrekte Key-Behandlung
-verifizieren; den vollständigen verpflichtenden Scan im GitHub-Workflow mit
-Maven-Cache und möglichst `NVD_API_KEY` ausführen.
-Das Setzen dieses GitHub-Secrets erfordert keinen Repository-Push: anschließend
-den Security-Workflow per `gh workflow run security.yml` neu starten oder den
-fehlgeschlagenen Lauf wiederholen.
+Specifically for OWASP/NVD: an empty cache contains several hundred thousand
+records. Without an API key, verify only connectivity and correct key handling
+locally; run the complete mandatory scan in the GitHub workflow with Maven cache
+and preferably `NVD_API_KEY`.
+Setting this GitHub secret requires no repository push: afterward restart the
+security workflow with `gh workflow run security.yml` or rerun the failed run.
 
-Commits bilden kleine, geprüfte Aufräumschritte; Pushes bilden bewusst gebündelte
-CI-Grenzen. Da jeder Push nach `main` den NVD-Dependency-Check anstößt, nicht jeden
-lokalen Commit sofort pushen. Vor dem Push prüfen, ob der Stand als gemeinsame
-CI-Einheit sinnvoll abgeschlossen ist und der externe Scan wirklich erneut
-benötigt wird.
+Commits are small, verified cleanup units; pushes are deliberately batched CI
+boundaries. Because every push to `main` starts the NVD Dependency-Check, do not
+push every local commit immediately. Before pushing, verify that the state forms
+a meaningful complete CI unit and that the external scan actually needs to run again.
 
-Für jeden reparierten CI-Vertrag eine kleine statische oder dynamische
-Regressionprüfung ergänzen. Workflow-Syntax prüfen und den konkreten vormals
-fehlgeschlagenen Befehl lokal reproduzieren, soweit die Umgebung es erlaubt.
+For every repaired CI contract, add a small static or dynamic regression check.
+Validate workflow syntax and reproduce the exact previously failing command locally
+where the environment allows it.
 
-## 7. Strukturieren ohne Großumbau
+## 7. Structure without a large rewrite
 
-In dieser Reihenfolge arbeiten:
+Work in this order:
 
-1. veraltete oder widersprüchliche Einstiege und Verträge korrigieren;
-2. falsche Abhängigkeitsrichtungen an der kleinsten fachlichen Grenze beheben;
-3. überladene Dateien entlang bestehender Verantwortungen teilen;
-4. echte Duplikate nach Tests in die bereits zuständige Schicht ziehen;
-5. Namen und Verzeichnisse nur ändern, wenn Navigation und Ownership klarer
-   werden;
-6. tote Dateien erst nach `rg`, Build-, Runtime-, Packaging- und Dokuprüfung
-   entfernen;
-7. Architektur-, Betriebs-, Test- und `.agents`-Navigation im selben Schritt
-   aktualisieren.
-8. Modulbestand mit `bash .agents/scripts/check-cache.sh` gegen Docs und
-   Quick-Cache prüfen.
+1. correct outdated or contradictory entry points and contracts;
+2. fix wrong dependency directions at the smallest functional boundary;
+3. split overloaded files along existing responsibilities;
+4. move real duplicates into the already-responsible layer after tests;
+5. rename files/directories only when navigation and ownership become clearer;
+6. remove dead files only after `rg`, build, runtime, packaging, and documentation review;
+7. update architecture, operations, test, and `.agents` navigation in the same step;
+8. compare module inventory against docs and quick cache with
+   `bash .agents/scripts/check-cache.sh`.
 
-Keine mechanische „Layer-Vervollständigung“: Ein Feature braucht nur die
-Verzeichnisse und Typen, für die es reale Verantwortung gibt.
+Do not mechanically “complete layers”: a feature needs only the directories and
+types for which it has real responsibilities.
 
-## 8. Änderungen in prüfbaren Pässen umsetzen
+## 8. Implement changes in verifiable passes
 
-Pro Pass nur eine Ursache oder eng gekoppelte Invariante bearbeiten:
+Handle only one cause or tightly coupled invariant per pass:
 
-1. Ausgangsfehler mit kleinstem passenden Befehl reproduzieren.
-2. Aufrufer, Test, Konfiguration und Doku lesen.
-3. Ursache mit minimalem vollständigem Diff beheben.
-4. Regressiontest ergänzen und fokussiert ausführen.
-5. `bash .agents/scripts/check-changes.sh --run` verwenden.
-6. Nach mehreren Pässen erst dann das Voll-Gate starten:
+1. Reproduce the original failure with the smallest suitable command.
+2. Read callers, test, configuration, and documentation.
+3. Fix the cause with the smallest complete diff.
+4. Add a regression test and run it in focused form.
+5. Use `bash .agents/scripts/check-changes.sh --run`.
+6. Only after several passes, run the full gate:
 
 ```bash
 python3 -m pip install -r requirements-ci.txt
 bash .agents/scripts/check-all.sh
 ```
 
-Lang laufende Prozesse in derselben Session beenden lassen. Nicht eng pollen,
-nicht wegen stiller Phasen neu starten und keine wiederholten Vollausgaben
-anfordern. Erst Abschluss oder handlungsrelevanten Fehler auswerten.
+Let long-running processes finish in the same session. Do not poll tightly,
+restart because of quiet phases, or request repeated full output. Evaluate only
+completion or an actionable failure.
 
-Bei fehlender lokaler Toolchain, Docker-/Port-Sandbox oder externem Dienst den
-Umgebungsblocker ausdrücklich vom Produktfehler trennen und nur den fehlenden
-Teil in einer unterstützten Umgebung erneut ausführen.
+When a local toolchain, Docker/port sandbox, or external service is unavailable,
+explicitly distinguish the environment blocker from a product failure and rerun
+only the missing part in a supported environment.
 
-## 9. Abschlusskriterien
+## 9. Completion criteria
 
-Der Frühjahrsputz ist abgeschlossen, wenn:
+The spring cleaning is complete when:
 
-- jeder umgesetzte Befund eine belegte Ursache und passende Regressionprüfung
-  besitzt;
-- Verhalten, Vertrag, Konfiguration, Migration und Dokumentation übereinstimmen;
-- Sicherheits-, Datenschutz-, Performance- und Recovery-Folgen geprüft sind;
-- gezielte Gates und `make validate` ohne versteckte Skips erfolgreich waren;
-- generierte Dateien, lokale Umgebungen und fremde Änderungen unberührt bleiben;
-- `git diff --check`, strikte Repository-Prüfung und Arbeitsbaumkontrolle sauber
-  sind;
-- verbleibende Befunde nach Priorität, Beleg und nächstem sicheren Schritt
-  dokumentiert sind.
+- every implemented finding has a substantiated cause and matching regression check;
+- behavior, contract, configuration, migration, and documentation agree;
+- security, privacy, performance, and recovery consequences were reviewed;
+- focused gates and `make validate` pass without hidden skips;
+- generated files, local environments, and other people's changes remain untouched;
+- `git diff --check`, strict repository validation, and working-tree checks are clean;
+- remaining findings are documented with priority, evidence, and the next safe step.
 
-Commit oder Push gehören nicht zum Frühjahrsputz, solange sie nicht ausdrücklich
-beauftragt wurden.
+Commit or push are not part of spring cleaning unless explicitly requested.
 
 ### Vulnerability suppressions are temporary architecture debt
 

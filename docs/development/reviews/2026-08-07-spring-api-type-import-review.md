@@ -1,82 +1,67 @@
-# Spring-API Typ- und Importprüfung vom 7. August 2026
+# Spring API Type and Import Review, August 7, 2026
 
-## Anlass
+## Reason
 
-Nach dem Layer-, DTO- und Repository-Cleanup wurden IDE-/Compilerfehler zu
-fehlenden Imports und inkompatiblen Konvertierungen gemeldet. Die vorherige
-Java-Prüfung war bewusst nur ein Parsercheck und konnte solche Symbol- und
-Generikfehler ohne vollständige Maven-Abhängigkeiten nicht erkennen.
+After the layer, DTO, and repository cleanup, IDE/compiler errors were reported for missing
+imports and incompatible conversions. The previous Java check was intentionally only a parser
+check and could not detect such symbol and generic-type errors without complete Maven dependencies.
 
-## Gefundene und behobene Fehler
+## Errors found and fixed
 
-- `RegistrationService` verwendete `AccountDtoMapper`, ohne den Mapper zu
-  importieren.
-- `UserAdministrationService` verwendete `AccountDtoMapper`, ohne den Mapper zu
-  importieren.
-- `PersonalDataExportService` deklarierte die Exportkategorien als
-  `Map<String,Object>`, obwohl `PrivacyDtoMapper` und der generierte
-  `PersonalDataExportRead` einen
-  `Map<String,List<Map<String,Object>>>` erwarten. Die Servicevariable ist nun
-  exakt auf den DTO-Vertrag typisiert.
-- `RaidHelperProbeService` rief nach dem Mapper-Refactoring noch die entfernte
-  Hilfsmethode `result(...)` auf. Der Erfolgsfall verwendet jetzt wie alle
-  anderen Probe-Ergebnisse `RaidHelperDtoMapper.profileTestResult(...)`.
-- Der letzte nachweislich ungenutzte Import (`HttpStatus.FORBIDDEN` in
-  `CalendarService`) wurde entfernt.
+- `RegistrationService` used `AccountDtoMapper` without importing the mapper.
+- `UserAdministrationService` used `AccountDtoMapper` without importing the mapper.
+- `PersonalDataExportService` declared export categories as `Map<String,Object>`, although
+  `PrivacyDtoMapper` and the generated `PersonalDataExportRead` expect a
+  `Map<String,List<Map<String,Object>>>`. The service variable is now typed exactly to the DTO contract.
+- `RaidHelperProbeService` still called the removed helper method `result(...)` after the mapper
+  refactoring. The success case now uses `RaidHelperDtoMapper.profileTestResult(...)` like all
+  other probe results.
+- The last demonstrably unused import (`HttpStatus.FORBIDDEN` in `CalendarService`) was removed.
 
-## Verbindliche Zielarchitektur
+## Binding target architecture
 
 ```text
-OpenAPI-Vertrag
-  -> generierte API-DTOs + generierte *Api-Interfaces
-  -> Modul-Controller
-  -> Service
-  -> Repository -> PostgreSQL
+OpenAPI contract
+  -> generated API DTOs + generated *Api interfaces
+  -> module controller
+  -> service
+  -> repository -> PostgreSQL
        |
-       +-> Mapper -> API-/Modul-DTO
+       +-> mapper -> API/module DTO
 ```
 
-Filter und Spring Security liegen vor dem Controller. Controller besitzen die
-HTTP-Bindung und delegieren fachliche Arbeit. Services besitzen Fachlogik,
-Autorisierung und Transaktionen. Repositories besitzen Persistenz und SQL.
-Mapper sind die einzige Repräsentationsgrenze zwischen API-/Modul-DTOs,
-Entities und Repository-Zeilen. Generische `model`-Pakete und Operation-Handler
-gehören nicht mehr zur Architektur.
+Filters and Spring Security execute before the controller. Controllers own HTTP binding and delegate
+business work. Services own business logic, authorization, and transactions. Repositories own
+persistence and SQL. Mappers are the only representation boundary between API/module DTOs, entities,
+and repository rows. Generic `model` packages and operation handlers are no longer part of the architecture.
 
-## Neue Regression-Sicherung
+## New regression protection
 
-`infrastructure/scripts/quality/audit_spring_backend.py` prüft zusätzlich alle
-Java-Quellen in `src/main` und `src/test` auf:
+`infrastructure/scripts/quality/audit_spring_backend.py` additionally checks all Java sources in
+`src/main` and `src/test` for:
 
-- Wildcard-Imports;
-- doppelte Imports;
-- eindeutig ungenutzte Imports;
-- Imports auf nicht vorhandene projektinterne Typen;
-- häufige fehlende projektinterne Imports bei statischen Typzugriffen.
+- wildcard imports;
+- duplicate imports;
+- clearly unused imports;
+- imports of nonexistent project-internal types;
+- common missing project-internal imports for static type references.
 
-Diese Offline-Prüfung ergänzt Maven, ersetzt es aber nicht. Generische
-Konvertierungen, Konstruktor-/Record-Signaturen, MapStruct-generierter Code und
-Framework-APIs werden autoritativ durch `mvn verify` geprüft.
+This offline check complements Maven but does not replace it. Generic conversions, constructor/record
+signatures, MapStruct-generated code, and framework APIs are authoritatively checked by `mvn verify`.
 
-## Prüfung
+## Verification
 
-Die Produktionsquellen wurden mit Java 21 und lokalen Framework-Signaturstubs
-vollständig symbolisch typgeprüft. Ergebnis: 465 Produktionsquellen, keine
-Compilerfehler. Die 21 Testquellen wurden gegen denselben symbolisch geprüften
-Produktionsstand ebenfalls ohne Typfehler kompiliert. Ein AST-basierter
-Importcheck über Produktions- und Testquellen meldete keine ungenutzten Imports.
-Die verbliebenen 13 statischen `RowValues.*`-Wildcard-Imports wurden auf exakt
-die tatsächlich verwendeten Konvertierungsfunktionen reduziert; ein vollständig
-ungenutzter Wildcard-Import in `IpBlockService` entfiel dabei komplett. Das
-Spring-Architekturaudit ist grün und verbietet Wildcard-Imports künftig.
+Production sources were fully symbolically type-checked with Java 21 and local framework signature stubs.
+Result: 465 production sources, no compiler errors. The 21 test sources were also compiled without type
+errors against the same symbolically checked production state. An AST-based import check over production
+and test sources reported no unused imports. The remaining 13 static `RowValues.*` wildcard imports were
+reduced to exactly the conversion functions actually used; a completely unused wildcard import in
+`IpBlockService` disappeared entirely. The Spring architecture audit is green and now forbids wildcard imports.
 
-Zusätzlich wurden fehlende `serialVersionUID`-Deklarationen in den drei eigenen
-serialisierbaren Exception-Typen ergänzt. Der erweiterte `-Xlint`-Lauf meldet im
-Projektcode nur noch den bekannten Konstruktorhinweis in `UserEntity`, weil dort
-die bidirektionale JPA-Profilbeziehung beim Aufbau des Aggregats auf `this`
-verweist; dies ist keine inkompatible Konvertierung und kein Importfehler.
+Missing `serialVersionUID` declarations were also added to the three custom serializable exception types.
+The extended `-Xlint` run now reports only the known constructor warning in project code in `UserEntity`,
+where the bidirectional JPA profile relationship references `this` while constructing the aggregate; this is
+not an incompatible conversion or import error.
 
-Die reguläre Maven-/MapStruct-/Spring-Kompilierung bleibt in einer Umgebung mit
-Maven 3.9+ und auflösbaren Dependencies erforderlich; das bereitgestellte
-Ausführungsumfeld enthält weiterhin keine Maven-Toolchain und keinen externen
-Dependency-Zugriff.
+Regular Maven/MapStruct/Spring compilation remains required in an environment with Maven 3.9+ and resolvable
+dependencies; the provided execution environment still contains no Maven toolchain and no external dependency access.

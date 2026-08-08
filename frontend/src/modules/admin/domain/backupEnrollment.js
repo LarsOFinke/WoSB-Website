@@ -135,7 +135,7 @@ export function buildBackupEnrollmentCommand(options = {}) {
 RESPONSE="$HOME/Downloads/rbf-backup-enrollment-response.json"
 
 test -r "$REQUEST" || {
-  echo "FEHLER: Enrollment-Datei fehlt: $REQUEST"
+  echo "ERROR: Enrollment file is missing: $REQUEST"
   exit 1
 }
 
@@ -143,7 +143,7 @@ PROVISIONER="$HOME/Downloads/provision-rbf-backup-server.sh"
 CHECKSUM="$PROVISIONER.sha256"
 
 test -r "$PROVISIONER" -a -r "$CHECKSUM" || {
-  echo "FEHLER: Provisioner oder Prüfsumme fehlt in ~/Downloads."
+  echo "ERROR: Provisioner or checksum is missing from ~/Downloads."
   exit 1
 }
 ( cd "$(dirname "$PROVISIONER")" && sha256sum -c "$(basename "$CHECKSUM")" ) || exit 1

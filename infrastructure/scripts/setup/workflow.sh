@@ -8,10 +8,10 @@ migrate_legacy_runtime_names() {
   legacy_project="$(read_env COMPOSE_PROJECT_NAME)"
   [[ "$legacy_project" == rbv-hub || "$legacy_project" == blackwater-hub ]] || return 0
 
-  log "Migriere den früheren Docker-Projektnamen ${legacy_project} auf rbf-hub."
+  log "Migrating the former Docker project name ${legacy_project} to rbf-hub."
   if command -v docker >/dev/null 2>&1 && compose_binary >/dev/null 2>&1; then
     bw_compose_with_profiles down --remove-orphans \
-      || warn "Der alte Stack konnte nicht vollständig gestoppt werden; Setup setzt die Migration fort."
+      || warn "The old stack could not be stopped completely; setup will continue the migration."
   fi
   set_env_value COMPOSE_PROJECT_NAME rbf-hub
 }
@@ -23,13 +23,13 @@ setup_prepare_host() {
       /usr/bin/env bash "$SETUP_LIB_DIR/provision-ssh-admin.sh" \
         "$SSH_ADMIN_USERNAME" "$SSH_ADMIN_PUBLIC_KEY_FILE"
     else
-      warn "Kein SSH-Public-Key angegeben; der getrennte SSH-Admin wird nicht eingerichtet."
+      warn "No SSH public key provided; the separate SSH admin will not be configured."
     fi
     return
   fi
 
   require_command docker
-  compose_binary >/dev/null || die "Docker Compose fehlt."
+  compose_binary >/dev/null || die "Docker Compose is missing."
   require_command openssl
 }
 
@@ -38,7 +38,7 @@ setup_prepare_configuration() {
     VERIFY_BOOTSTRAP_LOGIN=true
   fi
   if [[ "$REGENERATE_SECRETS" == true && -f "$INFRA_DIR/data/postgres/PG_VERSION" ]]; then
-    die "--regenerate-secrets ist nur vor der ersten PostgreSQL-Initialisierung erlaubt. Nutze für bestehende Installationen die dokumentierte Secret-Rotation."
+    die "--regenerate-secrets is allowed only before the first PostgreSQL initialization. Use the documented secret rotation for existing installations."
   fi
 
   migrate_legacy_runtime_names
@@ -76,12 +76,12 @@ setup_prepare_runtime() {
   fi
 
   bw_compose_with_profiles config >/dev/null
-  success "Compose-Konfiguration ist gültig."
+  success "Compose configuration is valid."
 }
 
 setup_deploy() {
   if [[ "$NO_START" == true ]]; then
-    warn "Containerstart wurde mit --no-start übersprungen."
+    warn "Container startup was skipped with --no-start."
     return
   fi
 
@@ -102,35 +102,35 @@ setup_print_summary() {
   cat <<SUMMARY
 
 ============================================================
- Royal Blackwater Fleet ist eingerichtet
+ Royal Blackwater Fleet is configured
 ============================================================
  Fleet Hub:       https://${app_hostname}
  LAN fallback:    https://${app_ip}
  API readiness:  https://${app_hostname}/api/health/ready
- PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (nur Loopback)
- Monitoring:      entfernt (Uptime Kuma)
+ PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (loopback only)
+ Monitoring:      removed (Uptime Kuma)
  TLS provider:    $(read_env CERTIFICATE_PROVIDER)
  Credentials:     $INFRA_DIR/first-run-credentials.txt
  SSH administration: $([[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" ]] && echo "$SSH_ADMIN_USERNAME (publickey)" || echo "not configured")
 
- Für Let's Encrypt müssen DNS sowie TCP-Port 80 und 443 auf diesen Pi zeigen.
- Ohne erfolgreiche Domainvalidierung bleibt das Bootstrap-Zertifikat aktiv und
- die Installation ist nicht für einen öffentlichen Produktivbetrieb freigegeben.
+ For Let's Encrypt, DNS and TCP ports 80 and 443 must point to this Pi.
+ Without successful domain validation, the bootstrap certificate remains active and
+ the installation is not approved for public production operation.
 
  Verbleibende Administrator-Gates:
- - Erstanmeldung durchführen und Bootstrap-Zugangsdaten sicher entfernen
- - Impressum und Datenschutzerklärung rechtlich prüfen und veröffentlichen
- - DNS, öffentliches TLS und extern erreichbare Ports unabhängig verifizieren
- - SSH-Schlüsselzugang testen; erst danach Passwort-/Root-Login deaktivieren
- - Backup-System enrollen und einen vollständigen Restore-Test protokollieren
+ - Complete the first login and securely remove bootstrap credentials
+ - Legally review and publish the legal notice and privacy policy
+ - Independently verify DNS, public TLS, and externally reachable ports
+ - Test SSH key access; only then disable password/root login
+ - Enroll the backup system and record a complete restore test
 ============================================================
 SUMMARY
 }
 
 setup_run() {
-  log "RBF First-Run Setup wird vorbereitet."
+  log "Preparing RBF first-run setup."
   "$INFRA_DIR/scripts/checks/preflight.sh" setup
-  log "Profil: $PROFILE | Host-Provisioning: $([[ "$SKIP_HOST" == true ]] && echo aus || echo an)"
+  log "Profile: $PROFILE | Host provisioning: $([[ "$SKIP_HOST" == true ]] && echo off || echo on)"
 
   setup_prepare_host
   setup_prepare_configuration

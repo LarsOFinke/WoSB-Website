@@ -2,10 +2,10 @@ diff --git a/.agents/PROJECT_CACHE.md b/.agents/PROJECT_CACHE.md
 index b4ed39d..e58af5c 100644
 --- a/.agents/PROJECT_CACHE.md
 +++ b/.agents/PROJECT_CACHE.md
-@@ -367,3 +367,16 @@ dadurch müssen Branch, Version, Arbeitsbaum und Debugging-Einstiege nicht aus
- `bash .agents/scripts/check-cache.sh` ausführen und die fehlenden Einträge
- fachlich ergänzen. Ein grüner Check beweist Bestandsvollständigkeit, nicht die
- inhaltliche Aktualität der Beschreibung.
+@@ -367,3 +367,16 @@ so branch, version, working tree, and debugging entry points do not have to be
+ run `bash .agents/scripts/check-cache.sh` and add the missing entries
+ with domain-appropriate content. A green check proves inventory completeness, not the
+ content freshness of the description.
 +
 +### Daily dependency cache check and CVE-2026-66299 suppression
 +
@@ -23,10 +23,10 @@ diff --git a/.agents/REPOSITORY_SPRING_CLEANING.md b/.agents/REPOSITORY_SPRING_C
 index 739c8bb..5f517c3 100644
 --- a/.agents/REPOSITORY_SPRING_CLEANING.md
 +++ b/.agents/REPOSITORY_SPRING_CLEANING.md
-@@ -229,3 +229,9 @@ Der Frühjahrsputz ist abgeschlossen, wenn:
+@@ -229,3 +229,9 @@ The spring clean is complete when:
  
- Commit oder Push gehören nicht zum Frühjahrsputz, solange sie nicht ausdrücklich
- beauftragt wurden.
+ Commit or push are not part of the spring clean unless they are explicitly
+ requested.
 +
 +### Vulnerability suppressions are temporary architecture debt
 +

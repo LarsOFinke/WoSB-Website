@@ -5,12 +5,12 @@ SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$(cd "$SETUP_DIR/../.." && pwd)"
 source "$INFRA_DIR/scripts/lib/common.sh"
 
-[[ "$EUID" -eq 0 ]] || die "Die SSH-Admin-Provisionierung benötigt root-Rechte."
+[[ "$EUID" -eq 0 ]] || die "SSH admin provisioning requires root privileges."
 
 username="${1:-}"
 public_key_file="${2:-}"
-[[ "$username" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || die "Ungültiger SSH-Admin-Benutzername."
-[[ -f "$public_key_file" && ! -L "$public_key_file" ]] || die "SSH-Public-Key-Datei fehlt oder ist ein Symlink."
+[[ "$username" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || die "Invalid SSH admin username."
+[[ -f "$public_key_file" && ! -L "$public_key_file" ]] || die "SSH public-key file is missing or is a symlink."
 
 require_command getent
 require_command useradd
@@ -24,11 +24,11 @@ require_command systemctl
 
 public_key="$(tr -d '\r' < "$public_key_file")"
 [[ "$public_key" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)[[:space:]]+[A-Za-z0-9+/=]+([[:space:]]+[^[:space:]]+)?$ ]] \
-  || die "Die SSH-Public-Key-Datei enthält keinen unterstützten einzelnen OpenSSH-Schlüssel."
+  || die "The SSH public-key file does not contain exactly one supported OpenSSH key."
 
 if getent passwd "$username" >/dev/null; then
   existing_home="$(getent passwd "$username" | cut -d: -f6)"
-  [[ -n "$existing_home" && "$existing_home" != "/" ]] || die "Der vorhandene SSH-Admin besitzt kein sicheres Home-Verzeichnis."
+  [[ -n "$existing_home" && "$existing_home" != "/" ]] || die "The existing SSH admin does not have a safe home directory."
   home="$existing_home"
 else
   useradd --create-home --shell /bin/bash "$username"
@@ -37,7 +37,7 @@ fi
 usermod --lock "$username"
 primary_group="$(id -gn "$username")"
 
-[[ "$home" != "/srv/rbf" && "$home" != "$INFRA_DIR" ]] || die "Der SSH-Admin darf kein Anwendungsdatenverzeichnis verwenden."
+[[ "$home" != "/srv/rbf" && "$home" != "$INFRA_DIR" ]] || die "The SSH admin must not use an application data directory."
 
 ssh_dir="$home/.ssh"
 authorized_keys="$ssh_dir/authorized_keys"
@@ -54,7 +54,7 @@ umask 022
 printf '%s ALL=(ALL:ALL) NOPASSWD: ALL\n' "$username" > "$sudoers"
 chmod 0440 "$sudoers"
 chown root:root "$sudoers"
-visudo -cf "$sudoers" >/dev/null || { rm -f "$sudoers"; die "Die sudoers-Konfiguration ist ungültig."; }
+visudo -cf "$sudoers" >/dev/null || { rm -f "$sudoers"; die "The sudoers configuration is invalid."; }
 
 dropin_dir="/etc/ssh/sshd_config.d"
 dropin="$dropin_dir/90-rbf-ssh-admin-$username.conf"
@@ -89,12 +89,12 @@ if ! sshd -t; then
     rm -f "$dropin"
   fi
   rm -f "$previous_dropin"
-  die "Die SSHD-Konfiguration ist ungültig; die vorherige Konfiguration wurde wiederhergestellt."
+  die "The SSHD configuration is invalid; the previous configuration was restored."
 fi
 rm -f "$previous_dropin"
 
 if ! systemctl reload ssh.service 2>/dev/null && ! systemctl reload sshd.service 2>/dev/null; then
-  die "Die geprüfte SSH-Konfiguration konnte nicht neu geladen werden."
+  die "The verified SSH configuration could not be reloaded."
 fi
 
-success "SSH-Administrationsnutzer eingerichtet: $username (Schlüsselzugang, kein Passwort-/Forwarding-Zugriff)."
+success "SSH administration user configured: $username (key access, no password/forwarding access)."

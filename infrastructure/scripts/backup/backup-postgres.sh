@@ -18,8 +18,8 @@ minimum_bytes="${BACKUP_MIN_POSTGRES_BYTES:-$(read_env BACKUP_MIN_POSTGRES_BYTES
 log "Erzeuge atomaren PostgreSQL-Custom-Dump."
 bw_compose exec -T postgres pg_dump --format=custom --compress=9 --no-owner --no-privileges -U "$user" "$database" > "$temporary"
 chmod 600 "$temporary"
-[[ "$(stat -c %s "$temporary")" -ge "$minimum_bytes" ]] || die "PostgreSQL-Backup ist ungewöhnlich klein."
-bw_compose exec -T postgres pg_restore --list < "$temporary" >/dev/null || die "PostgreSQL-Dump ist nicht lesbar."
+[[ "$(stat -c %s "$temporary")" -ge "$minimum_bytes" ]] || die "PostgreSQL backup is unusually small."
+bw_compose exec -T postgres pg_restore --list < "$temporary" >/dev/null || die "PostgreSQL dump is not readable."
 mv "$temporary" "$output"
 
 flyway_version="$(bw_compose exec -T postgres psql -U "$user" -d "$database" -Atqc \
@@ -56,4 +56,4 @@ committed=true
 [[ -z "${BACKUP_RESULT_FILE:-}" ]] || { printf '%s\n' "$output" > "$BACKUP_RESULT_FILE"; chmod 600 "$BACKUP_RESULT_FILE"; }
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
 find "$backup_dir" -type f -mtime "+$retention_days" -delete
-success "PostgreSQL-Backup erstellt: $output"
+success "PostgreSQL backup created: $output"

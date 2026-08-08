@@ -4,17 +4,17 @@ set -Eeuo pipefail
 
 verify_tls_material() {
   local certificate="$1" private_key="$2" hostname="$3" minimum_seconds="${4:-604800}"
-  [[ -s "$certificate" && -s "$private_key" ]] || die "TLS-Zertifikat oder privater Schlüssel fehlt."
+  [[ -s "$certificate" && -s "$private_key" ]] || die "TLS certificate or private key is missing."
   require_command openssl
   openssl x509 -in "$certificate" -noout -checkhost "$hostname" >/dev/null 2>&1 \
-    || die "TLS-Zertifikat gilt nicht für APP_HOSTNAME=$hostname."
+    || die "TLS certificate is not valid for APP_HOSTNAME=$hostname."
   local cert_key private_key_fingerprint
   cert_key="$(openssl x509 -in "$certificate" -pubkey -noout | openssl pkey -pubin -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
   private_key_fingerprint="$(openssl pkey -in "$private_key" -pubout -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
   [[ -n "$cert_key" && "$cert_key" == "$private_key_fingerprint" ]] \
-    || die "TLS-Zertifikat und privater Schlüssel gehören nicht zusammen."
+    || die "TLS certificate and private key do not match."
   openssl x509 -in "$certificate" -checkend "$minimum_seconds" -noout >/dev/null 2>&1 \
-    || die "TLS-Zertifikat ist abgelaufen oder unterschreitet die Mindestrestlaufzeit."
+    || die "TLS certificate is expired or below the minimum remaining validity."
 }
 
 generate_self_signed_certificate() {
@@ -24,7 +24,7 @@ generate_self_signed_certificate() {
   cert_dir="$INFRA_DIR/data/certs"
 
   if [[ -s "$cert_dir/fullchain.pem" && -s "$cert_dir/privkey.pem" ]]; then
-    log "Vorhandenes TLS-Zertifikat wird als Bootstrap-Zertifikat weiterverwendet."
+    log "Existing TLS certificate will continue to be used as the bootstrap certificate."
     return 0
   fi
 
@@ -53,7 +53,7 @@ CERTCFG
       -config "$config_file" 2>"$error_file"; then
     cat "$error_file" >&2
     rm -f "$config_file" "$error_file"
-    die "TLS-Bootstrap-Zertifikat konnte nicht erzeugt werden."
+    die "TLS bootstrap certificate could not be created."
   fi
 
   rm -f "$config_file" "$error_file"
@@ -61,7 +61,7 @@ CERTCFG
   chmod 640 "$cert_dir/privkey.pem"
   chmod 644 "$cert_dir/fullchain.pem"
   set_env_value CERTIFICATE_PROVIDER self-signed
-  success "Selbstsigniertes Bootstrap-Zertifikat für ${hostname} / ${ip} erstellt."
+  success "Self-signed bootstrap certificate created for ${hostname} / ${ip}."
 }
 
 is_public_certificate_hostname() {
@@ -77,23 +77,23 @@ request_letsencrypt_certificate() {
   [[ -n "$cert_name" ]] || cert_name="$hostname"
 
   if ! command -v certbot >/dev/null 2>&1; then
-    warn "Let's Encrypt wurde übersprungen: certbot ist nicht installiert."
+    warn "Let's Encrypt skipped: certbot is not installed."
     return 1
   fi
   if ! is_public_certificate_hostname "$hostname"; then
-    warn "Let's Encrypt wurde übersprungen: ${hostname} ist keine öffentliche Domain."
+    warn "Let's Encrypt skipped: ${hostname} is not a public domain."
     return 1
   fi
   if [[ -z "$email" ]]; then
-    warn "Let's Encrypt wurde übersprungen: Kontakt-E-Mail fehlt."
+    warn "Let's Encrypt skipped: contact email is missing."
     return 1
   fi
   if is_true "$(read_env LETSENCRYPT_STAGING)"; then
     staging_args+=(--staging)
-    warn "Let's Encrypt Staging ist aktiv; das Zertifikat ist nicht öffentlich vertrauenswürdig."
+    warn "Let's Encrypt staging is active; the certificate is not publicly trusted."
   fi
 
-  log "Fordere ein Let's-Encrypt-Zertifikat für ${hostname} an."
+  log "Requesting a Let's Encrypt certificate for ${hostname}."
   if ! certbot certonly \
       --non-interactive \
       --agree-tos \
@@ -107,7 +107,7 @@ request_letsencrypt_certificate() {
       --keep-until-expiring \
       "${staging_args[@]}" \
       -d "$hostname"; then
-    warn "Let's Encrypt konnte das Zertifikat nicht ausstellen. Prüfe DNS sowie die Weiterleitung von TCP-Port 80 auf diesen Pi."
+    warn "Let's Encrypt could not issue the certificate. Check DNS and forwarding of TCP port 80 to this Pi."
     return 1
   fi
 
@@ -122,17 +122,17 @@ configure_production_tls() {
   case "$mode" in
     self-signed)
       set_env_value CERTIFICATE_PROVIDER self-signed
-      warn "TLS_MODE=self-signed: Browser zeigen eine Zertifikatswarnung."
+      warn "TLS_MODE=self-signed: browsers display a certificate warning."
       ;;
     letsencrypt)
-      request_letsencrypt_certificate || die "Let's-Encrypt-Einrichtung ist fehlgeschlagen."
+      request_letsencrypt_certificate || die "Let's Encrypt setup failed."
       ;;
     auto)
       if request_letsencrypt_certificate; then
-        success "Öffentlich vertrauenswürdiges TLS ist aktiv."
+        success "Publicly trusted TLS is active."
       else
         set_env_value CERTIFICATE_PROVIDER self-signed
-        warn "Automatischer TLS-Modus verwendet vorerst das selbstsignierte Zertifikat."
+        warn "Automatic TLS mode is using the self-signed certificate for now."
       fi
       ;;
   esac
