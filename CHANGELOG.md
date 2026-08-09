@@ -8,6 +8,12 @@
 
 # Changelog
 
+## 1.3.0 - 2026-08-09
+
+- Prepared the compatible beta deployment release with the recovery-tool workflow,
+  founder fleet role, neutral/game asset switch, dependency safety checks, and the
+  Java test-surface generic compatibility fixes included in the release baseline.
+
 ### Fixed
 
 - Repaired the fleet-management API contract: Java keyword-backed DTO fields now retain their OpenAPI wire names, fleet-role routes validate their fleet scope and management authorization, and first-run/integration smoke coverage exercises the complete manageable-fleet → management-detail → roles request chain.

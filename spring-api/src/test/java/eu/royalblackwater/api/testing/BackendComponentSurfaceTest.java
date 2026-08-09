@@ -70,9 +70,9 @@ class BackendComponentSurfaceTest {
                     .map(MAIN_JAVA::relativize)
                     .map(Path::toString)
                     .map(name -> name.substring(0, name.length() - 5).replace('/', '.').replace('\\', '.'))
-                    .map(BackendComponentSurfaceTest::load)
+                    .<Class<?>>map(BackendComponentSurfaceTest::load)
                     .filter(type -> type.isInterface() || !Modifier.isAbstract(type.getModifiers()))
-                    .sorted(Comparator.comparing(Class::getName))
+                    .sorted(Comparator.comparing((Class<?> type) -> type.getName()))
                     .toList();
         }
     }

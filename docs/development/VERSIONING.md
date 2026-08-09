@@ -26,6 +26,11 @@ Before every release:
 4. Run the complete release gate, inspect the diff/status, commit the verified tree, push the
    exact release commit, and build/deploy only from that commit.
 
+For an interactive coordinated update, run `./set-version.py` from the project root. It offers
+patch/minor/major increments or an exact three-part version, updates the canonical metadata and
+lockfile, regenerates OpenAPI references, and runs the strict repository consistency check. It
+does not replace the final `make validate` release gate or create a commit.
+
 `patches/` is deliberately a local transfer/download workspace rather than a release archive.
 Patch payloads are ignored by Git and must not be committed; only `patches/.gitkeep` keeps the
 directory in fresh clones. If historical patch payloads were already tracked, remove them from

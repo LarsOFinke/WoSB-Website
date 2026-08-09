@@ -117,7 +117,7 @@ class BackendServiceBranchMatrixTest {
                             suffix -> path.getFileName().toString().endsWith(suffix)))
                     .map(BackendServiceBranchMatrixTest::className)
                     .sorted()
-                    .map(BackendServiceBranchMatrixTest::load)
+                    .<Class<?>>map(BackendServiceBranchMatrixTest::load)
                     .toList();
         }
     }

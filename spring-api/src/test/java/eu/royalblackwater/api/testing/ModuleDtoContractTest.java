@@ -73,8 +73,8 @@ class ModuleDtoContractTest {
                     .map(SOURCE_ROOT::relativize)
                     .map(Path::toString)
                     .map(name -> name.substring(0, name.length() - 5).replace('/', '.').replace('\\', '.'))
-                    .map(ModuleDtoContractTest::load)
-                    .sorted(Comparator.comparing(Class::getName))
+                    .<Class<?>>map(ModuleDtoContractTest::load)
+                    .sorted(Comparator.comparing((Class<?> type) -> type.getName()))
                     .toList();
         }
     }

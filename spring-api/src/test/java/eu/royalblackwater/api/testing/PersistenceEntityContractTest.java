@@ -54,8 +54,8 @@ class PersistenceEntityContractTest {
                     .map(SOURCE_ROOT::relativize)
                     .map(Path::toString)
                     .map(name -> name.substring(0, name.length() - 5).replace('/', '.').replace('\\', '.'))
-                    .map(PersistenceEntityContractTest::load)
-                    .sorted(Comparator.comparing(Class::getName))
+                    .<Class<?>>map(PersistenceEntityContractTest::load)
+                    .sorted(Comparator.comparing((Class<?> type) -> type.getName()))
                     .toList();
         }
     }

@@ -28,8 +28,8 @@ class GeneratedDtoContractTest {
         try (Stream<Path> files = Files.list(DTO_SOURCE)) {
             types = files.filter(path -> path.getFileName().toString().endsWith(".java"))
                     .map(path -> "eu.royalblackwater.api.dto." + path.getFileName().toString().replaceFirst("\\.java$", ""))
-                    .map(GeneratedDtoContractTest::load)
-                    .sorted(Comparator.comparing(Class::getName))
+                    .<Class<?>>map(GeneratedDtoContractTest::load)
+                    .sorted(Comparator.comparing((Class<?> type) -> type.getName()))
                     .toList();
         }
         assertThat(types).isNotEmpty().allMatch(Class::isRecord);

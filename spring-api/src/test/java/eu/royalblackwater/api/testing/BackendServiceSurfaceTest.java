@@ -157,9 +157,9 @@ class BackendServiceSurfaceTest {
                     .map(Path::toString)
                     .map(name -> name.substring(0, name.length() - ".java".length()).replace('/', '.').replace('\\', '.'))
                     .filter(name -> name.startsWith(API_PREFIX))
-                    .map(BackendServiceSurfaceTest::load)
+                    .<Class<?>>map(BackendServiceSurfaceTest::load)
                     .filter(type -> !Throwable.class.isAssignableFrom(type))
-                    .sorted(Comparator.comparing(Class::getName))
+                    .sorted(Comparator.comparing((Class<?> type) -> type.getName()))
                     .toList();
         }
     }
