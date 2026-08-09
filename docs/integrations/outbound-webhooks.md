@@ -92,6 +92,11 @@ transaction commits. Delivery runs asynchronously and failures cannot roll back
 the completed website action. The repository check validates that every event
 has one distinct catalog template and that every referenced placeholder is supported.
 
+Webhooks saved while the catalog exposed the former generic
+`RBF event **{event}** ...` value are migrated back to per-event defaults. The
+migration matches only that exact legacy value; administrator-authored custom
+templates are retained.
+
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
 
 Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; it regenerates the grouped reference and Spring catalog. The repository check enforces an exact match between the maintained event catalog, runtime defaults and documentation.

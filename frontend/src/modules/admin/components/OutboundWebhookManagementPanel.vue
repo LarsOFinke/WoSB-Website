@@ -14,6 +14,7 @@ import {
 } from '@/modules/admin/api/admin'
 import {
   outboundWebhookPayload,
+  webhookEventTemplate,
   webhookDraftIssues,
 } from '@/modules/admin/domain/outboundWebhook'
 
@@ -78,6 +79,7 @@ const selectedEventsLabel = computed(() => form.event_types.length
 const visibleSelectedEvents = computed(() => form.event_types.slice(0, 5))
 const hiddenSelectedEventCount = computed(() => Math.max(0, form.event_types.length - visibleSelectedEvents.value.length))
 const formIsReady = computed(() => webhookDraftIssues(form, { editing: Boolean(form.id) }).length === 0)
+const selectedDefaultTemplate = computed(() => webhookEventTemplate(events.value, templateEventKey.value))
 
 const filteredWebhooks = computed(() => {
   const term = webhookSearch.value.trim().toLowerCase()
@@ -172,9 +174,8 @@ function applyChannelPreset(preset) {
 }
 
 function applyTemplatePreset() {
-  const selected = events.value.find((event) => event.key === templateEventKey.value)
-  if (!selected) return
-  form.message_template = selected.default_template
+  if (!selectedDefaultTemplate.value) return
+  form.message_template = selectedDefaultTemplate.value
 }
 
 function clearMessageTemplate() {
@@ -324,6 +325,7 @@ onMounted(load)
           <button v-if="form.message_template" class="small-action" type="button" @click="clearMessageTemplate">{{ t('admin.webhooks.templatePicker.useDefaults') }}</button>
           </div>
           <small>{{ t('admin.webhooks.templatePicker.hint') }}</small>
+          <textarea v-if="selectedDefaultTemplate" :value="selectedDefaultTemplate" rows="6" readonly></textarea>
           </label>
           <label class="input-panel embedded-field">
           <span>{{ t('admin.webhooks.fields.template') }}</span>

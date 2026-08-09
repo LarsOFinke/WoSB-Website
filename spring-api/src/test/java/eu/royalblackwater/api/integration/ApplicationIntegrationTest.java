@@ -79,6 +79,8 @@ class ApplicationIntegrationTest {
                 .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from flyway_schema_history where version='8'", Map.of()))
                 .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='9'", Map.of()))
+                .isEqualTo(1);
         assertThat(jdbc.count("""
                 select count(*) from information_schema.columns
                  where table_schema=current_schema() and table_name='builds'

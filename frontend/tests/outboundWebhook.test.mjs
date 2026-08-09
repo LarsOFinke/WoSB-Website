@@ -4,8 +4,20 @@ import test from 'node:test'
 import {
   normalizeDiscordWebhookUrl,
   outboundWebhookPayload,
+  webhookEventTemplate,
   webhookDraftIssues,
 } from '../src/modules/admin/domain/outboundWebhook.js'
+
+test('event template selection resolves the matching event instead of reusing one default', () => {
+  const events = [
+    { key: 'build.created', default_template: 'Build {resource.id} created' },
+    { key: 'fleet.updated', default_template: 'Fleet {resource.id} updated' },
+  ]
+
+  assert.equal(webhookEventTemplate(events, 'build.created'), 'Build {resource.id} created')
+  assert.equal(webhookEventTemplate(events, 'fleet.updated'), 'Fleet {resource.id} updated')
+  assert.equal(webhookEventTemplate(events, 'missing.event'), '')
+})
 
 test('Discord webhook drafts accept copied and versioned official URLs', () => {
   const copied = '<https://discord.com/api/webhooks/123/copied-token>'

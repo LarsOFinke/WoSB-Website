@@ -8,6 +8,33 @@
 
 # Changelog
 
+## 1.3.4 - 2026-08-09
+
+- Restored event-specific Discord webhook defaults for existing installations by
+  removing only the exact legacy generic template override during migration.
+- Added an immediate selected-event template preview while keeping the optional
+  webhook-wide custom override visibly separate.
+- Added migration and frontend regression coverage for both behaviors.
+
+## 1.3.3 - 2026-08-09
+
+- Removed noisy Dependabot version-update pull requests while retaining the daily
+  NVD/OWASP, npm audit, Trivy, and repository security gates; routine upgrades are
+  now explicitly reviewed maintenance changes.
+- Fixed production frontend API configuration by using Vite's statically replaced
+  environment access and added a regression test that forbids dynamic access.
+
+## 1.3.2 - 2026-08-09
+
+- Fixed coordinated backup verification on deployment by accepting PostgreSQL's
+  supported 63-character identifier limit for generated restore-preflight
+  database names.
+- Added boundary tests for generated, maximum-length, unsafe, and overlong
+  database identifiers.
+- Kept restore-preflight staging database names within the historical identifier
+  boundary so an incoming release can validate backups through an older active
+  schema image before activation.
+
 ## 1.3.1 - 2026-08-09
 
 - Promoted the hardened deployment baseline after production beta activation.

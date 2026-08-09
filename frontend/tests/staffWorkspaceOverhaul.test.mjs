@@ -99,6 +99,8 @@ test('webhook editor offers compact subscriptions and repository template autofi
     assert.ok(webhookSource.includes(`v-model="${binding}"`), binding)
   }
   assert.ok(webhookSource.includes('applyTemplatePreset'))
+  assert.ok(webhookSource.includes(':value="selectedDefaultTemplate"'))
+  assert.ok(webhookSource.includes('readonly'))
   assert.ok(webhookSource.includes('<details class="webhook-event-dropdown">'))
   assert.ok(webhookSource.includes('filteredEventGroups'))
   assert.ok(webhookSource.includes('selectVisibleEvents'))

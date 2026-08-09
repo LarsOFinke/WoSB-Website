@@ -6,6 +6,10 @@ export function normalizeDiscordWebhookUrl(value) {
   return trimmed
 }
 
+export function webhookEventTemplate(events, eventKey) {
+  return (events || []).find((event) => event.key === eventKey)?.default_template || ''
+}
+
 export function webhookDraftIssues(form, { editing = false } = {}) {
   const issues = []
   const name = String(form.name || '').trim()
@@ -34,4 +38,3 @@ export function outboundWebhookPayload(form) {
     event_types: [...new Set(form.event_types || [])].sort(),
   }
 }
-
