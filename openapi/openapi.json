@@ -12046,7 +12046,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.3.5"
+    "version": "1.3.6"
   },
   "openapi": "3.1.0",
   "paths": {

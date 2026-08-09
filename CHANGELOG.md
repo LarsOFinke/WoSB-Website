@@ -8,6 +8,15 @@
 
 # Changelog
 
+## 1.3.6 - 2026-08-10
+
+- Wired maintenance mode into update, rollback, restart, and database restore
+  lifecycles so the gateway serves a controlled HTTP 503 page until readiness
+  and smoke checks complete.
+- Added configurable MAINTENANCE_URL support with a backward-compatible
+  /maintenance.html default and documented the remote deployment behavior.
+
+
 ## 1.3.5 - 2026-08-09
 
 - Added the canonical public Royal Blackwater Fleet icon as the fixed Discord

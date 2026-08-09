@@ -8,5 +8,5 @@ maintenance_enable restart 60
 trap 'code=$?; [[ $code -eq 0 ]] || maintenance_disable failed "Spring Boot restart failed."' EXIT
 bw_compose restart api
 wait_for_api
-maintenance_disable succeeded "Spring-Boot-Neustart abgeschlossen."
 "$INFRA_DIR/scripts/checks/smoke-test.sh"
+maintenance_disable succeeded "Spring-Boot-Neustart abgeschlossen."

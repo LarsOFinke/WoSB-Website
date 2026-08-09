@@ -28,6 +28,24 @@ files="${values[3]:-}"; previous_env="${values[4]:-}"
 
 install -d -m 0700 "$shared/data/control/run"
 exec 8>"$shared/data/control/run/update.lock"; flock 8
+maintenance_active=false
+maintenance_runtime="$install_root/current/infrastructure"
+maintenance_enable_for_rollback() {
+  ( INFRA_DIR="$maintenance_runtime" source "$maintenance_runtime/scripts/lib/maintenance.sh"; maintenance_enable rollback 300 )
+  maintenance_active=true
+}
+maintenance_disable_for_rollback() {
+  local outcome="$1" message="$2"
+  if [[ "$maintenance_active" == true ]]; then
+    ( INFRA_DIR="$install_root/current/infrastructure" source "$install_root/current/infrastructure/scripts/lib/maintenance.sh"; maintenance_disable "$outcome" "$message" ) || true
+    maintenance_active=false
+  fi
+}
+cleanup() {
+  if [[ "$maintenance_active" == true ]]; then maintenance_disable_for_rollback failed "Release rollback did not complete."; fi
+}
+trap cleanup EXIT
+maintenance_enable_for_rollback
 "$install_root/current/infrastructure/scripts/services/stop.sh"
 ln -sfn "$previous" "$install_root/.current.rollback"
 mv -Tf "$install_root/.current.rollback" "$install_root/current"
@@ -41,6 +59,7 @@ systemctl restart rbf-hub.service
 "$install_root/current/infrastructure/scripts/backup/restore-data.sh" --yes "$files"
 RBF_UPDATE_LOCK_HELD=true "$install_root/current/infrastructure/scripts/backup/restore-postgres.sh" "$postgres"
 "$install_root/current/infrastructure/scripts/checks/smoke-test.sh"
+maintenance_disable_for_rollback succeeded "Release rollback completed successfully."
 
 rolled_back="$shared/deployments/rolled-back-$(date -u +%Y%m%dT%H%M%SZ).json"
 install -m 0600 "$state" "$rolled_back"

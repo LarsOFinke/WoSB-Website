@@ -100,8 +100,26 @@ exec 9>"$shared/locks/release.lock"; flock 9
 
 stage="$(mktemp -d "$releases/.incoming.XXXXXX")"
 previous_release=""; previous_env=""; switched=false; backup_postgres=""; backup_files=""
-deployment_record=""; artifact_copy=""
-cleanup() { rm -rf "$stage"; }
+deployment_record=""; artifact_copy=""; maintenance_active=false; maintenance_runtime=""
+maintenance_enable_for() {
+  local runtime="$1" reason="${2:-update}"
+  [[ -f "$runtime/scripts/lib/maintenance.sh" ]] || die "Maintenance helper is missing from active release: $runtime"
+  ( INFRA_DIR="$runtime"; source "$runtime/scripts/lib/maintenance.sh"; maintenance_enable "$reason" 300 )
+  maintenance_runtime="$runtime"
+  maintenance_active=true
+}
+maintenance_disable_for() {
+  local outcome="${1:-succeeded}" message="${2:-Update completed.}" runtime="$install_root/current/infrastructure"
+  [[ -f "$runtime/scripts/lib/maintenance.sh" ]] || runtime="$maintenance_runtime"
+  if [[ "$maintenance_active" == true && -f "$runtime/scripts/lib/maintenance.sh" ]]; then
+    ( INFRA_DIR="$runtime"; source "$runtime/scripts/lib/maintenance.sh"; maintenance_disable "$outcome" "$message" ) || true
+  fi
+  maintenance_active=false
+}
+cleanup() {
+  if [[ "$maintenance_active" == true ]]; then maintenance_disable_for failed "Release activation did not complete."; fi
+  rm -rf "$stage"
+}
 trap cleanup EXIT
 
 manifest_json="$(python3 "$VERIFIER" "$artifact" "$stage/bundle")"
@@ -128,6 +146,10 @@ if [[ -L "$install_root/current" ]]; then
     || die "Current release link escapes the release root."
 elif [[ -e "$install_root/current" ]]; then
   die "Current installation entry is not a symbolic link."
+fi
+
+if [[ -n "$previous_release" ]]; then
+  maintenance_enable_for "$previous_release/infrastructure" update
 fi
 
 if [[ "$interactive_mode" == true && -z "$previous_release" ]]; then
@@ -212,6 +234,7 @@ rollback_failed_install() {
   if [[ -n "$artifact_copy" ]]; then rm -f -- "$artifact_copy" "$artifact_copy.sha256"; fi
   [[ -z "$deployment_record" || ! -f "$deployment_record" ]] || \
     python3 -c 'import json,sys; from pathlib import Path; p=Path(sys.argv[1]); d=json.loads(p.read_text()); d["state"]="failed"; p.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n"); p.chmod(0o600)' "$deployment_record"
+  maintenance_disable_for failed "Release activation failed; the previous release was restored."
   echo "[release] Activation failed; previous release and coordinated backup were restored where available." >&2
   exit "$code"
 }
@@ -331,5 +354,6 @@ printf '%s\n' "$version" > "$shared/current-version"
 chmod 0644 "$shared/current-version"
 python3 -c 'import json,sys; from pathlib import Path; p=Path(sys.argv[1]); d=json.loads(p.read_text()); d["state"]="active"; p.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n"); p.chmod(0o600)' "$deployment_record"
 install -m 0600 "$deployment_record" "$shared/deployment-state.json"
+maintenance_disable_for succeeded "Royal Blackwater Fleet update completed successfully."
 trap - ERR
 echo "[release] Activated Royal Blackwater Fleet $version from a verified compiled artifact."

@@ -178,6 +178,7 @@ services:
       args:
         VITE_API_BASE_URL: /api
         GATEWAY_MAX_BODY_MB: ${GATEWAY_MAX_BODY_MB:-90}
+        MAINTENANCE_URL: ${MAINTENANCE_URL:-/maintenance.html}
     restart: unless-stopped
     init: true
     pids_limit: 128

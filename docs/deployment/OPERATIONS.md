@@ -42,6 +42,14 @@ backup, migration, activation and rollback path as a normal release.
 
 For local maintenance actions on the target server, the versioned runners under
 `/srv/rbf/current/infrastructure/scripts/services/` remain available.
+Every update, rollback, application restart, and database restore activates the
+shared maintenance marker before interrupting the API and removes it only after
+readiness and smoke checks succeed. The gateway returns HTTP 503 for application
+routes while that marker exists and serves the public maintenance page at
+MAINTENANCE_URL (default /maintenance.html). Set MAINTENANCE_URL in the target
+environment to an absolute path or HTTPS status URL before the next release;
+existing environments keep the default automatically.
+
 
 The target host exposes operation status and a guarded staff-panel request path.
 

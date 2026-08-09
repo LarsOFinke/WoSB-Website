@@ -7,6 +7,7 @@ const source = await readFile(new URL('../public/maintenance.html', import.meta.
 test('maintenance response is self-contained, responsive and recognizably branded', () => {
   assert.match(source, /Royal Blackwater Fleet/)
   assert.match(source, /HTTP 503/)
+  assert.match(source, /__RBF_MAINTENANCE_URL__/)
   assert.match(source, /We’ll be back on course shortly/)
   assert.match(source, /@media \(max-width: 34rem\)/)
   assert.match(source, /prefers-reduced-motion/)

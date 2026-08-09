@@ -190,6 +190,8 @@ validate_env() {
   [[ "$(read_env SESSION_COOKIE_SAMESITE)" =~ ^(Lax|Strict|None|lax|strict|none)$ ]] || die "SESSION_COOKIE_SAMESITE is invalid."
   [[ "$(read_env SESSION_TTL_HOURS)" =~ ^[1-9][0-9]*$ ]] || die "SESSION_TTL_HOURS must be a positive number."
   [[ "$(read_env GATEWAY_MAX_BODY_MB)" =~ ^[1-9][0-9]*$ ]] || die "GATEWAY_MAX_BODY_MB must be a positive number."
+  local maintenance_url="$(read_env MAINTENANCE_URL)"
+  [[ -z "$maintenance_url" || "$maintenance_url" =~ ^(/|https://)[^[:space:]]*$ ]] || die "MAINTENANCE_URL must be an absolute path or HTTPS URL."
 
   local tls_mode certificate_provider hostname deployment_environment
   tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"

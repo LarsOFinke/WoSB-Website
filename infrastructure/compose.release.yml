@@ -172,6 +172,7 @@ services:
       dockerfile: infrastructure/docker/gateway-runtime.Dockerfile
       args:
         GATEWAY_MAX_BODY_MB: ${GATEWAY_MAX_BODY_MB:-90}
+        MAINTENANCE_URL: ${MAINTENANCE_URL:-/maintenance.html}
     restart: unless-stopped
     init: true
     pids_limit: 128
