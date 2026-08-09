@@ -66,12 +66,19 @@ Primary sources: [Docker security announcements](https://docs.docker.com/securit
 
 ### Running containers
 
-- API, migration, and seed run non-root, read-only, without Linux capabilities, and with
-  `no-new-privileges`.
+- PostgreSQL, API, schema migration, and gateway run non-root, read-only, without
+  Linux capabilities, with `no-new-privileges`, PID limits, memory limits, and CPU limits.
 - Write access is limited to named data directories and `tmpfs`.
+- PostgreSQL ownership/migration credentials and the restricted API database credential
+  are separate root-materialized secret mounts. Containers never receive the complete
+  deployment `.env`; the API cannot create roles, databases, or schema objects.
 - The database and internal services are not publicly published; local diagnostic ports bind
   to `127.0.0.1`.
 - PID limits, separate networks, log rotation, and health checks limit failure impact.
+- Compose CPU defaults are valid on a 1-vCPU VPS (`1.0` for PostgreSQL and API) and can
+  be increased explicitly through target environment overrides on larger hosts. A host
+  with unavailable memory cgroups will log that memory limits are discarded; this is a
+  host capability warning, not permission to remove the other isolation controls.
 - New services must inherit these properties or document the minimum exception, including the
   threat, required capability, and removal plan.
 
@@ -114,3 +121,14 @@ version patched by Debian/Ubuntu is not automatically vulnerable; the distributi
 The release stack publishes only the HTTP/HTTPS gateway. PostgreSQL has no host port in `compose.release.yml`; the backend bridge is internal, while only the API receives the dedicated outbound network. API and gateway run non-root, read-only, with `no-new-privileges` and all Linux capabilities dropped. Operational debugging uses bounded service logs/diagnostics rather than routine `docker exec -it` sessions.
 
 `POST /api/files` has three independent limits: nginx request/rate limiting, Spring multipart size limits, and the file service's per-type/per-user/global/free-space quotas. The backend validates extension + declared MIME + file signature and normalizes display filenames; frontend validation is only early feedback and is never the trust boundary.
+
+The one-shot schema container is the only runtime component that receives the
+database-owner credential or executes Flyway. The long-running API starts with
+Flyway disabled, validates its ORM schema during context initialization, and uses
+only the restricted application role for runtime readiness checks.
+
+API-written control requests are untrusted input. Every non-restore request that can
+reach a root host runner carries the digest of an operation-specific, root-owned,
+short-lived, single-use capability. The runner consumes the matching capability before
+reporting `running` and never exposes the plaintext token in status or logs. Restore
+approvals remain separately scoped.

@@ -292,7 +292,11 @@ switched=true
 RBF_SYSTEMD_INFRA_DIR="$install_root/current/infrastructure" \
   "$install_root/current/infrastructure/scripts/deployment/install-systemd.sh"
 echo "[release] Restarting rbf-hub.service and waiting for Spring Boot/Compose."
-timeout 120s systemctl restart rbf-hub.service
+# rbf-hub.service owns its complete startup deadline. Wrapping systemctl in a
+# shorter timeout can cancel a healthy first activation while PostgreSQL is
+# initializing, Flyway is migrating, or Spring is still inside its readiness
+# budget.
+systemctl restart rbf-hub.service
 echo "[release] Running readiness and gateway smoke tests (max. 60 seconds)."
 smoke_args=()
 [[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
@@ -308,6 +312,17 @@ if [[ "$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$/, "", $2); g
     [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production TLS was not activated."
     "$1/scripts/checks/smoke-test.sh"
   ' _ "$install_root/current/infrastructure"
+fi
+
+if [[ -z "$previous_release" ]]; then
+  RBF_RUNTIME_INFRA_DIR="$release_dir/infrastructure" /usr/bin/env bash -c '
+    set -Eeuo pipefail
+    source "$1/scripts/lib/env.sh"
+    source "$1/scripts/lib/host/storage.sh"
+    set_env_value SEED_ADMIN_PASSWORD ""
+    materialize_runtime_secrets
+  ' _ "$release_dir/infrastructure"
+  echo "[release] Retired the bootstrap password from the persistent runtime environment."
 fi
 
 install -m 0600 "$artifact_copy" "$shared/release-artifacts/current.tar.gz"

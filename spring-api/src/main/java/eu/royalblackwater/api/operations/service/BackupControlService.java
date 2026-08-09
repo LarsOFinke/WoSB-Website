@@ -77,13 +77,13 @@ public class BackupControlService {
         return mapper.backupStatus(status);
     }
 
-    public BackupControlRequestResult prepareKey(AuthenticatedUser actor){return request(actor,"prepare_key",Map.of(),"upload_key_prepared");}
-    public BackupControlRequestResult prepareEnrollment(AuthenticatedUser actor){return request(actor,"prepare_enrollment",Map.of(),"enrollment_prepared");}
-    public BackupControlRequestResult discover(AuthenticatedUser actor,BackupDiscoveryRequest input){
+    public BackupControlRequestResult prepareKey(AuthenticatedUser actor,String capability){return request(actor,"prepare_key",Map.of(),"upload_key_prepared",capability);}
+    public BackupControlRequestResult prepareEnrollment(AuthenticatedUser actor,String capability){return request(actor,"prepare_enrollment",Map.of(),"enrollment_prepared",capability);}
+    public BackupControlRequestResult discover(AuthenticatedUser actor,BackupDiscoveryRequest input,String capability){
         String host=host(input.host());long port=input.port()==null?22:input.port();
-        return request(actor,"discover",Map.of("host",host,"port",port),"discover_requested");
+        return request(actor,"discover",Map.of("host",host,"port",port),"discover_requested",capability);
     }
-    public BackupControlRequestResult configure(AuthenticatedUser actor,BackupConfigurationRequest input){
+    public BackupControlRequestResult configure(AuthenticatedUser actor,BackupConfigurationRequest input,String capability){
         String host=host(input.host());String username=input.username().strip();
         if(!USER.matcher(username).matches())throw bad("Invalid SSH username.");
         String remote=input.remoteDirectory().strip();if(!remote.startsWith("/")||remote.contains("..")||!remote.matches("/[A-Za-z0-9._/-]+"))throw bad("Invalid remote backup directory.");
@@ -92,20 +92,20 @@ public class BackupControlService {
         Map<String,Object> payload=new LinkedHashMap<>();payload.put("host",host);payload.put("port",input.port()==null?22:input.port());
         payload.put("username",username);payload.put("remote_directory",remote);payload.put("host_key",key);
         if(privateKey!=null&&!privateKey.isBlank())payload.put("private_key",privateKey.strip());
-        return request(actor,"configure",payload,"configuration_requested");
+        return request(actor,"configure",payload,"configuration_requested",capability);
     }
-    public BackupControlRequestResult deleteConfiguration(AuthenticatedUser actor){return request(actor,"delete_configuration",Map.of(),"delete_requested");}
-    public BackupControlRequestResult test(AuthenticatedUser actor){return request(actor,"test",Map.of(),"test_requested");}
-    public BackupControlRequestResult run(AuthenticatedUser actor){return request(actor,"backup",Map.of(),"backup_requested");}
-    public BackupControlRequestResult scan(AuthenticatedUser actor){return request(actor,"scan_local_backups",Map.of(),"catalog_scan_requested");}
+    public BackupControlRequestResult deleteConfiguration(AuthenticatedUser actor,String capability){return request(actor,"delete_configuration",Map.of(),"delete_requested",capability);}
+    public BackupControlRequestResult test(AuthenticatedUser actor,String capability){return request(actor,"test",Map.of(),"test_requested",capability);}
+    public BackupControlRequestResult run(AuthenticatedUser actor,String capability){return request(actor,"backup",Map.of(),"backup_requested",capability);}
+    public BackupControlRequestResult scan(AuthenticatedUser actor,String capability){return request(actor,"scan_local_backups",Map.of(),"catalog_scan_requested",capability);}
 
-    public BackupControlRequestResult applyEnrollment(AuthenticatedUser actor,BackupEnrollmentResponseRequest input){
+    public BackupControlRequestResult applyEnrollment(AuthenticatedUser actor,BackupEnrollmentResponseRequest input,String capability){
         Map<String,Object> response;
         try{response=json.readValue(input.responseJson(),MAP);}catch(JacksonException exception){throw bad("Enrollment response must contain valid JSON.");}
         Object request=status().enrollmentRequest();String expected=request instanceof Map<?,?> map?String.valueOf(map.get("enrollment_id")):"";
         if(expected.isBlank())throw conflict("Create a fresh enrollment request before importing a response.");
         if(!expected.equals(String.valueOf(response.get("enrollment_id"))))throw conflict("Enrollment response does not belong to the active request.");
-        return request(actor,"apply_enrollment",Map.of("response_json",input.responseJson()),"enrollment_apply_requested");
+        return request(actor,"apply_enrollment",Map.of("response_json",input.responseJson()),"enrollment_apply_requested",capability);
     }
 
     public BackupControlRequestResult restoreDatabase(AuthenticatedUser actor,DatabaseRestoreRequest input){
@@ -128,6 +128,14 @@ public class BackupControlService {
         try{files.publishRequest("backup.request",payload);}catch(ControlFileStore.ControlConflictException exception){throw conflict(exception.getMessage());}
         audit.record(actor,"backup_control",operation,action,"Requested host backup operation: "+operation,Set.of("operation"));
         return mapper.backupRequest(true, status());
+    }
+
+    private BackupControlRequestResult request(AuthenticatedUser actor,String operation,Map<String,Object> values,String action,String capability){
+        String token=capability==null?"":capability.strip();
+        if(!TOKEN.matcher(token).matches())throw bad("Enter a valid one-time host approval token.");
+        Map<String,Object> protectedValues=new LinkedHashMap<>(values);
+        protectedValues.put("host_capability_sha256",sha256(token));
+        return request(actor,operation,protectedValues,action);
     }
 
     private boolean stale(String state,Map<String,Object> payload,boolean requestExists,Duration running,Duration queued){

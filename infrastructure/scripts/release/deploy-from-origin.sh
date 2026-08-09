@@ -22,7 +22,7 @@ if [[ "$EUID" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != root ]]; then
   done
   exec sudo -u "$SUDO_USER" -H -- bash "$0" "$@"
 fi
-artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; no_backup=false; automated=false
+artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; app_hostname=""; letsencrypt_email=""; no_backup=false; automated=false
 interactive=false; configure=false
 usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE]" >&2; exit 2; }
 discover_identity_file() {
@@ -86,6 +86,7 @@ if [[ -e "$config_file" ]]; then
   port="${port:-${RBF_DEPLOY_PORT:-22}}"; remote_dir="${remote_dir:-${RBF_DEPLOY_REMOTE_DIR:-/tmp/rbf-release}}"
   identity_file="${identity_file:-${RBF_DEPLOY_IDENTITY_FILE:-}}"
   install_root="${install_root:-${RBF_DEPLOY_INSTALL_ROOT:-}}"; env_source="${env_source:-${RBF_DEPLOY_ENV_SOURCE:-}}"
+  app_hostname="${app_hostname:-${RBF_DEPLOY_APP_HOSTNAME:-}}"; letsencrypt_email="${letsencrypt_email:-${RBF_DEPLOY_LETSENCRYPT_EMAIL:-}}"
 fi
 port="${port:-22}"; remote_dir="${remote_dir:-/tmp/rbf-release}"
 if [[ "$configure" == true || ( "$target_environment" == test && "$initial_argument_count" -eq 0 && ! -f "$config_file" ) ]]; then
@@ -109,6 +110,11 @@ if [[ "$interactive" == true ]]; then
   read -r -p "Remote-Arbeitsverzeichnis [${remote_dir}]: " answer; remote_dir="${answer:-$remote_dir}"
   read -r -p "Vorhandenes Artefakt (leer = neu bauen): " artifact
   read -r -p "Quellrevision [HEAD]: " source_revision
+  if [[ "$target_environment" == production ]]; then
+    read -r -p "Öffentlicher Produktions-DNS-Name [${app_hostname}]: " answer; app_hostname="${answer:-$app_hostname}"
+    read -r -p "Let's-Encrypt-Kontakt-E-Mail [${letsencrypt_email}]: " answer; letsencrypt_email="${answer:-$letsencrypt_email}"
+    [[ -n "$app_hostname" && -n "$letsencrypt_email" ]] || { echo "[origin] Production DNS name and Let's Encrypt email are required." >&2; exit 2; }
+  fi
 fi
 [[ -n "$host" ]] || usage; user="${user:-rbfadmin}"
 discover_identity_file
@@ -128,6 +134,8 @@ RBF_DEPLOY_REMOTE_DIR=$(printf '%q' "$remote_dir")
 RBF_DEPLOY_IDENTITY_FILE=$(printf '%q' "$identity_file")
 RBF_DEPLOY_INSTALL_ROOT=$(printf '%q' "$install_root")
 RBF_DEPLOY_ENV_SOURCE=$(printf '%q' "$env_source")
+RBF_DEPLOY_APP_HOSTNAME=$(printf '%q' "$app_hostname")
+RBF_DEPLOY_LETSENCRYPT_EMAIL=$(printf '%q' "$letsencrypt_email")
 EOF
   mv -f "$temporary" "$config_file"
   chmod 0600 "$config_file"
@@ -243,6 +251,8 @@ echo "$origin_prefix Cleaning up failed inactive releases on the target server (
 ssh "${ssh_args[@]}" "$user@$host" "$cleanup_line"
 remote_command=(sudo -n bash "$remote_dir/setup_website.sh" --target-environment "$target_environment")
 remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
+[[ -z "$app_hostname" ]] || remote_command+=(--hostname "$app_hostname")
+[[ -z "$letsencrypt_email" ]] || remote_command+=(--letsencrypt-email "$letsencrypt_email")
 if [[ "$automated" == true ]]; then
   [[ -z "$install_root" ]] || remote_command+=(--install-root "$install_root")
   [[ -z "$env_source" ]] || remote_command+=(--env "$env_source")

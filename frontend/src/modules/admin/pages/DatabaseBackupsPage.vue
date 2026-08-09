@@ -1,9 +1,10 @@
 <script setup>
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
+import HostCapabilityField from '@/modules/admin/components/HostCapabilityField.vue'
 import { useDatabaseBackupsPage } from '@/modules/admin/composables/useDatabaseBackupsPage'
 
 const {
-  t, isAdmin, user, navigationGroups, status, loading, error, success,
+  t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
   inProgress, configured, connectionReady, canSubmit, stateLabel, operationLabel,
   formatDateTime, formatBytes, loadStatus, runBackup,
 } = useDatabaseBackupsPage()
@@ -72,10 +73,11 @@ const {
             <h2>{{ t('admin.backups.run.title') }}</h2>
             <p>{{ t('admin.backups.run.subtitle') }}</p>
           </div>
-          <button class="form-button primary-action" type="button" :disabled="!canSubmit || !connectionReady" @click="runBackup">
+          <button class="form-button primary-action" type="button" :disabled="!canSubmit || !connectionReady || hostApproval.length < 24" @click="runBackup">
             {{ inProgress ? t('admin.backups.actions.running') : t('admin.backups.actions.run') }}
           </button>
         </div>
+        <HostCapabilityField v-model="hostApproval" />
         <div v-if="status.artifacts?.length" class="backup-artifact-list">
           <article v-for="artifact in status.artifacts" :key="artifact.remote_path" class="home-status-card refined-status-card backup-artifact-card">
             <span>{{ t(`admin.backups.artifacts.${artifact.artifact_type}`) }}</span>

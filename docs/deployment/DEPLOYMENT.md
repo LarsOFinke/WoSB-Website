@@ -92,6 +92,12 @@ each target:
 ./deploy.sh --production --configure
 ```
 
+During the production dialog, enter the public DNS name and Let's Encrypt contact email.
+The target then generates its fresh database, encryption and bootstrap secrets locally and
+writes the private runtime environment with mode `0600`; no production secrets are entered
+into or stored in the origin profile. The same run requests the certificate after the API
+and gateway are ready. Later deployments reuse that target-local environment automatically.
+
 ### Migration from the former `.env.origin`
 
 The old single file is deliberately **not imported automatically**, because a fallback could
@@ -163,6 +169,12 @@ The installer:
    the previous release where possible on failure.
 
 No Git checkout, Maven, npm or package-registry access is needed on the target host.
+
+The systemd startup deadline covers the complete PostgreSQL initialization,
+isolated Flyway migration and Spring readiness sequence. The release installer
+must not wrap that sequence in a shorter timeout: first activation on a small VPS
+can legitimately take several minutes even when every bounded readiness check is
+making progress.
 
 The origin dispatcher does not pass `--skip-backup` or `--no-backup` for normal
 updates. The target installer therefore invokes the coordinated backup before

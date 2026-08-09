@@ -59,7 +59,7 @@ initialize_env() {
     created=true
   fi
 
-  local app_hostname app_ip postgres_user postgres_database postgres_password admin_password webhook_encryption_key secrets_changed=false
+  local app_hostname app_ip postgres_user postgres_database postgres_password app_database_user app_database_password admin_password webhook_encryption_key secrets_changed=false
   if [[ -n "$requested_hostname" ]]; then
     app_hostname="$requested_hostname"
   elif [[ "$created" == true ]]; then
@@ -85,6 +85,13 @@ initialize_env() {
   else
     postgres_password="$(read_env POSTGRES_PASSWORD)"
     admin_password="$(read_env SEED_ADMIN_PASSWORD)"
+  fi
+  app_database_user="$(read_env APP_DATABASE_USER)"
+  [[ "$app_database_user" =~ ^[A-Za-z_][A-Za-z0-9_]{1,31}$ ]] || app_database_user=rbf_app
+  if [[ "$created" == true || "$regenerate" == true || -z "$(read_env APP_DATABASE_PASSWORD)" || "$(read_env APP_DATABASE_PASSWORD)" == CHANGE_ME* ]]; then
+    app_database_password="$(random_hex 24)"
+    set_env_value APP_DATABASE_PASSWORD "$app_database_password"
+    secrets_changed=true
   fi
 
   webhook_encryption_key="$(read_env WEBHOOK_ENCRYPTION_KEYS)"
@@ -121,6 +128,7 @@ initialize_env() {
   [[ -n "$(read_env GATEWAY_MAX_BODY_MB)" ]] || set_env_value GATEWAY_MAX_BODY_MB 90
   set_env_value POSTGRES_USER "$postgres_user"
   set_env_value POSTGRES_DB "$postgres_database"
+  set_env_value APP_DATABASE_USER "$app_database_user"
   # Keep the canonical HTTPS origins and the local/IP fallbacks usable during
   # first-run setup and on test hosts without working DNS yet.
   set_env_value CORS_ORIGINS "https://${app_hostname},https://${app_ip},http://${app_hostname},http://${app_ip},http://localhost,http://127.0.0.1,https://localhost,https://127.0.0.1"
@@ -135,8 +143,6 @@ Primary URL: https://${app_hostname}
 LAN fallback: https://${app_ip}
 Admin user: ${admin_username}
 Admin password: ${admin_password}
-PostgreSQL user: ${postgres_user}
-PostgreSQL password: ${postgres_password}
 
 Protect this file and delete it after storing the credentials securely.
 CREDS
@@ -153,6 +159,18 @@ ensure_runtime_secrets() {
     chmod 600 "$ENV_FILE"
     log "A separate key for encrypted Discord webhook credentials was generated."
   fi
+  local app_database_user app_database_password
+  app_database_user="$(read_env APP_DATABASE_USER)"
+  [[ "$app_database_user" =~ ^[A-Za-z_][A-Za-z0-9_]{1,31}$ ]] || {
+    app_database_user=rbf_app
+    set_env_value APP_DATABASE_USER "$app_database_user"
+  }
+  app_database_password="$(read_env APP_DATABASE_PASSWORD)"
+  if [[ -z "$app_database_password" || "$app_database_password" == CHANGE_ME* ]]; then
+    set_env_value APP_DATABASE_PASSWORD "$(random_hex 24)"
+    log "A separate restricted database runtime credential was generated."
+  fi
+  chmod 600 "$ENV_FILE"
 }
 
 validate_env() {
@@ -164,6 +182,8 @@ validate_env() {
   ((${#missing[@]} == 0)) || die "Missing .env values: ${missing[*]}"
 
   [[ "$(read_env POSTGRES_PASSWORD)" != CHANGE_ME* ]] || die "POSTGRES_PASSWORD was not generated."
+  [[ "$(read_env APP_DATABASE_USER)" =~ ^[A-Za-z_][A-Za-z0-9_]{1,31}$ ]] || die "APP_DATABASE_USER is invalid."
+  [[ -n "$(read_env APP_DATABASE_PASSWORD)" && "$(read_env APP_DATABASE_PASSWORD)" != CHANGE_ME* ]] || die "APP_DATABASE_PASSWORD was not generated."
   [[ "$(read_env WEBHOOK_ENCRYPTION_KEYS)" != CHANGE_ME* ]] || die "WEBHOOK_ENCRYPTION_KEYS was not generated."
   [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" =~ ^(true|false)$ ]] || die "FLYWAY_BASELINE_ON_MIGRATE must be true or false."
   [[ "$(read_env FLYWAY_BASELINE_ON_MIGRATE)" == false ]] || die "Production uses the verified cutover; baseline-on-migrate must remain false."

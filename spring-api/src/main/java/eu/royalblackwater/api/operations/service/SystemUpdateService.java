@@ -11,9 +11,13 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class SystemUpdateService {
     private static final Set<String> ACTIVE=Set.of("queued","running");
     private static final Set<String> OPERATIONS=Set.of("update","restart","rollback");
+    private static final Pattern TOKEN=Pattern.compile("^[A-Za-z0-9_-]{24,128}$");
     private final ControlFileStore files;
     private final AuditService audit;
     private final OperationsDtoMapper mapper;
@@ -51,12 +56,15 @@ public class SystemUpdateService {
                 string(status.get("started_at")), state);
     }
 
-    public SystemUpdateRequestResult request(AuthenticatedUser actor,String rawOperation){
+    public SystemUpdateRequestResult request(AuthenticatedUser actor,String rawOperation,String capability){
         String operation=rawOperation==null||rawOperation.isBlank()?"update":rawOperation.strip().toLowerCase();
         if(!OPERATIONS.contains(operation))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Operation must be update, restart, or rollback.");
         SystemUpdateStatus current=status();
         if(files.requestExists("update.request")||ACTIVE.contains(current.state()))throw new ResponseStatusException(HttpStatus.CONFLICT,"A server operation is already queued or running.");
-        Map<String,Object> payload=Map.of("requested_by",actor.username(),"requested_at",clock.instant().toString(),"operation",operation);
+        String token=capability==null?"":capability.strip();
+        if(!TOKEN.matcher(token).matches())throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Enter a valid one-time host approval token.");
+        Map<String,Object> payload=Map.of("requested_by",actor.username(),"requested_at",clock.instant().toString(),"operation",operation,
+                "host_capability_sha256",sha256(token));
         try{files.publishRequest("update.request",payload);}catch(ControlFileStore.ControlConflictException exception){throw new ResponseStatusException(HttpStatus.CONFLICT,exception.getMessage());}
         audit.record(actor,"system_update",operation,"request","Requested host operation: "+operation,Set.of("operation"));
         return mapper.systemUpdateRequest(true, status());
@@ -78,4 +86,5 @@ public class SystemUpdateService {
     private static Instant parse(Object value){if(!(value instanceof String text)||text.isBlank())return null;try{return Instant.parse(text.replace("+00:00","Z"));}catch(DateTimeParseException exception){return null;}}
     private static String text(Object value,String fallback){String result=string(value);return result==null||result.isBlank()?fallback:result;}
     private static String string(Object value){return value==null?null:String.valueOf(value);}
+    private static String sha256(String value){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}catch(Exception exception){throw new IllegalStateException(exception);}}
 }

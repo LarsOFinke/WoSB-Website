@@ -11,11 +11,25 @@ services:
     restart: unless-stopped
     init: true
     pids_limit: 256
-    env_file: ["${RBF_ENV_FILE:-.env}"]
+    user: "70:70"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres.password
+    secrets:
+      - source: postgres_owner_password
+        target: postgres.password
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:${POSTGRES_LOCAL_PORT:-15432}:5432"
+    read_only: true
+    tmpfs:
+      - /tmp:uid=70,gid=70,mode=1777
+      - /var/run/postgresql:uid=70,gid=70,mode=0775
+    shm_size: 128m
+    mem_limit: 768m
+    cpus: ${POSTGRES_CPU_LIMIT:-1.0}
     healthcheck:
       test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
@@ -24,6 +38,44 @@ services:
       start_period: 20s
     networks: [backend]
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  schema:
+    image: ${RBF_API_IMAGE:-rbf-hub-api:local}
+    logging: *default-logging
+    build:
+      context: ../spring-api
+      dockerfile: Dockerfile
+    restart: "no"
+    init: true
+    pids_limit: 128
+    entrypoint:
+      - java
+      - -Dloader.main=eu.royalblackwater.api.persistence.DatabaseMigrationMain
+      - -cp
+      - /app/application.jar
+      - org.springframework.boot.loader.launch.PropertiesLauncher
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_OWNER_USER: ${POSTGRES_USER}
+      DATABASE_APP_USER: ${APP_DATABASE_USER}
+    secrets:
+      - source: schema_owner_password
+        target: database.owner.password
+      - source: schema_app_password
+        target: database.app.password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend]
+    read_only: true
+    tmpfs:
+      - /tmp:uid=10001,gid=10001,mode=1777
+    mem_limit: 512m
+    cpus: 1.0
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
 
   api:
     image: ${RBF_API_IMAGE:-rbf-hub-api:local}
@@ -34,22 +86,79 @@ services:
     restart: unless-stopped
     init: true
     pids_limit: 384
-    env_file: ["${RBF_ENV_FILE:-.env}"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${APP_DATABASE_USER}
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_CONFIG_IMPORT: optional:configtree:/run/secrets/
       CONTROL_DIR: /var/lib/rbf/control
       ALLOWED_HOSTS: ${APP_HOSTNAME},${APP_IP},localhost,127.0.0.1
+      APP_ENV: ${APP_ENV:-production}
+      RBF_HTTP_LIFECYCLE_LOGGING: ${RBF_HTTP_LIFECYCLE_LOGGING:-false}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-12}
+      DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-1}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/var/lib/rbf/uploads}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-rbf_hub_session}
+      SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-Lax}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-24}
+      COOKIE_CONSENT_RETENTION: ${COOKIE_CONSENT_RETENTION:-400d}
+      RESOLVED_PRIVACY_REQUEST_RETENTION: ${RESOLVED_PRIVACY_REQUEST_RETENTION:-400d}
+      PRIVACY_RETENTION_INTERVAL: ${PRIVACY_RETENTION_INTERVAL:-PT24H}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_DISPLAY_NAME: ${SEED_ADMIN_DISPLAY_NAME:-RBF Command}
+      UPLOAD_MAX_FILE_SIZE: ${UPLOAD_MAX_FILE_SIZE:-50MB}
+      UPLOAD_MAX_REQUEST_SIZE: ${UPLOAD_MAX_REQUEST_SIZE:-52MB}
+      UPLOAD_IMAGE_LIMIT_MB: ${UPLOAD_IMAGE_LIMIT_MB:-12}
+      UPLOAD_DOCUMENT_LIMIT_MB: ${UPLOAD_DOCUMENT_LIMIT_MB:-24}
+      UPLOAD_VIDEO_LIMIT_MB: ${UPLOAD_VIDEO_LIMIT_MB:-50}
+      UPLOAD_PER_USER_TOTAL_MB: ${UPLOAD_PER_USER_TOTAL_MB:-250}
+      UPLOAD_GLOBAL_TOTAL_MB: ${UPLOAD_GLOBAL_TOTAL_MB:-4096}
+      UPLOAD_MINIMUM_FREE_MB: ${UPLOAD_MINIMUM_FREE_MB:-512}
+      LEGAL_NOTICE_PUBLISHED: ${LEGAL_NOTICE_PUBLISHED:-false}
+      LEGAL_NOTICE_PROVIDER_NAME: ${LEGAL_NOTICE_PROVIDER_NAME:-}
+      LEGAL_NOTICE_LEGAL_FORM: ${LEGAL_NOTICE_LEGAL_FORM:-}
+      LEGAL_NOTICE_REPRESENTED_BY: ${LEGAL_NOTICE_REPRESENTED_BY:-}
+      LEGAL_NOTICE_STREET: ${LEGAL_NOTICE_STREET:-}
+      LEGAL_NOTICE_POSTAL_CODE: ${LEGAL_NOTICE_POSTAL_CODE:-}
+      LEGAL_NOTICE_CITY: ${LEGAL_NOTICE_CITY:-}
+      LEGAL_NOTICE_COUNTRY: ${LEGAL_NOTICE_COUNTRY:-Deutschland}
+      LEGAL_NOTICE_EMAIL: ${LEGAL_NOTICE_EMAIL:-}
+      LEGAL_NOTICE_PHONE: ${LEGAL_NOTICE_PHONE:-}
+      LEGAL_NOTICE_REGISTER_NAME: ${LEGAL_NOTICE_REGISTER_NAME:-}
+      LEGAL_NOTICE_REGISTER_COURT: ${LEGAL_NOTICE_REGISTER_COURT:-}
+      LEGAL_NOTICE_REGISTER_NUMBER: ${LEGAL_NOTICE_REGISTER_NUMBER:-}
+      LEGAL_NOTICE_VAT_ID: ${LEGAL_NOTICE_VAT_ID:-}
+      LEGAL_NOTICE_BUSINESS_ID: ${LEGAL_NOTICE_BUSINESS_ID:-}
+      LEGAL_NOTICE_SUPERVISORY_AUTHORITY: ${LEGAL_NOTICE_SUPERVISORY_AUTHORITY:-}
+      LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_NAME: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_NAME:-}
+      LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_STREET: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_STREET:-}
+      LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_POSTAL_CODE: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_POSTAL_CODE:-}
+      LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_CITY: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_CITY:-}
+      LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_COUNTRY: ${LEGAL_NOTICE_EDITORIAL_RESPONSIBLE_COUNTRY:-Deutschland}
+      LEGAL_NOTICE_DISPUTE_RESOLUTION_TEXT: ${LEGAL_NOTICE_DISPUTE_RESOLUTION_TEXT:-}
+      LEGAL_NOTICE_ADDITIONAL_INFORMATION: ${LEGAL_NOTICE_ADDITIONAL_INFORMATION:-}
+    secrets:
+      - source: api_app_password
+        target: spring.datasource.password
+      - source: api_encryption_keys
+        target: rbf.secrets.encryption-keys
+      - source: api_bootstrap_password
+        target: rbf.bootstrap-admin.password
     volumes:
       - ./data/uploads:/var/lib/rbf/uploads
       - ./data/control:/var/lib/rbf/control
     depends_on:
-      postgres:
-        condition: service_healthy
+      schema:
+        condition: service_completed_successfully
     expose: ["8080"]
     networks: [backend, outbound]
     read_only: true
     tmpfs:
       - /tmp
+    mem_limit: 768m
+    cpus: ${API_CPU_LIMIT:-1.0}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health/readiness >/dev/null 2>&1"]
       interval: 30s
@@ -72,6 +181,8 @@ services:
     restart: unless-stopped
     init: true
     pids_limit: 128
+    mem_limit: 256m
+    cpus: 0.75
     ports:
       - "${HTTP_PORT:-80}:8080"
       - "${HTTPS_PORT:-443}:8443"
@@ -107,3 +218,17 @@ networks:
     internal: true
   outbound:
     driver: bridge
+
+secrets:
+  postgres_owner_password:
+    file: ./data/runtime-secrets/postgres-owner-password
+  schema_owner_password:
+    file: ./data/runtime-secrets/schema-owner-password
+  schema_app_password:
+    file: ./data/runtime-secrets/schema-app-password
+  api_app_password:
+    file: ./data/runtime-secrets/api-app-password
+  api_encryption_keys:
+    file: ./data/runtime-secrets/api-encryption-keys
+  api_bootstrap_password:
+    file: ./data/runtime-secrets/api-bootstrap-password

@@ -64,7 +64,7 @@ prepare_flyway_cutover() {
   state="$(postgres_sql -Atqc "select case when to_regclass(current_schema()||'.flyway_schema_history') is not null then 'flyway' when to_regclass(current_schema()||'.alembic_version') is not null then 'alembic' else 'empty' end")"
   case "$state" in
     flyway) success "Flyway schema history is present." ;;
-    empty) log "Empty database; Flyway creates the schema when the API starts." ;;
+    empty) log "Empty database; the isolated schema migration boundary will create the schema." ;;
     alembic)
       log "Verifying the one-time Alembic-0025-to-Flyway cutover."
       postgres_sql -f - < "$INFRA_DIR/scripts/migration/verify-alembic-head.sql"
@@ -81,6 +81,12 @@ verify_flyway_schema() {
   [[ "$failed" == 0 ]] || die "Flyway schema history contains failed migrations."
 }
 
+run_schema_migrations() {
+  log "Running the isolated schema migration boundary."
+  bw_compose run --rm --no-deps schema
+  verify_flyway_schema
+}
+
 quiesce_api_for_database_update() {
   bw_compose ps --status running -q api 2>/dev/null | grep -q . && bw_compose stop api || true
 }
@@ -89,16 +95,16 @@ deploy_application_update() {
   local _migrate="${1:-true}" _seed="${2:-true}" _restore="${3:-false}" _components="${4:-api,gateway}"
   ensure_postgres_service
   prepare_flyway_cutover
-  case ",${_components}," in *,api,*) bw_compose up -d --no-deps api; wait_for_api; verify_flyway_schema ;; esac
+  case ",${_components}," in *,api,*) run_schema_migrations; bw_compose up -d --no-deps api; wait_for_api ;; esac
   case ",${_components}," in *,gateway,*) bw_compose up -d --no-deps gateway ;; esac
 }
 
 deploy_stack() {
   ensure_postgres_service
   prepare_flyway_cutover
-  bw_compose up -d api
+  run_schema_migrations
+  bw_compose up -d --no-deps api
   wait_for_api
-  verify_flyway_schema
   # The API was already started, waited for, and schema-verified above. Do not
   # let Compose reconcile its dependency again: that can recreate/terminate a
   # healthy API container while bringing up the gateway (exit 143).

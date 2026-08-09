@@ -5,6 +5,17 @@
     "operationId": "admin_configure_backup_host_api_admin_backups_configuration_put",
     "parameters": [
       {
+        "in": "header",
+        "name": "X-RBF-Host-Capability",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 24,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+"
+        }
+      },
+      {
         "in": "cookie",
         "name": "rbf_hub_session",
         "required": false,

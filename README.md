@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.3.0
+# Royal Blackwater Fleet v1.3.1
 
 Production-ready fleet operations portal for **World of Sea Battle** using Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX, and artifact-based deployment.

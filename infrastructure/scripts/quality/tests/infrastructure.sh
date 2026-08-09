@@ -19,17 +19,20 @@ for raw in sys.argv[1:]:
     path=Path(raw); text=path.read_text()
     service_block=re.split(r'(?m)^networks:\s*$',text,maxsplit=1)[0]
     services=set(re.findall(r'(?m)^  ([A-Za-z0-9_-]+):\n',service_block))
-    required={'postgres','api','gateway'}
+    required={'postgres','schema','api','gateway'}
     if not required <= services: raise SystemExit(f'{path}: missing {sorted(required-services)}')
     forbidden={'secure-api','migrate','seed'} & services
     if forbidden: raise SystemExit(f'{path}: legacy services {sorted(forbidden)}')
-    for service in ('api','gateway'):
+    for service in ('postgres','schema','api','gateway'):
         match=re.search(rf'(?ms)^  {service}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)',text)
         section=match.group(1) if match else ''
         for token in ('read_only: true','no-new-privileges:true','cap_drop: [ALL]'):
             if token not in section: raise SystemExit(f'{path}: {service} missing {token}')
         if service == 'gateway' and 'group_add: ["10001"]' not in section:
             raise SystemExit(f'{path}: gateway cannot traverse the shared control status directory')
+        for token in ('mem_limit:','cpus:','pids_limit:'):
+            if token not in section: raise SystemExit(f'{path}: {service} missing {token}')
+        if 'env_file:' in section: raise SystemExit(f'{path}: {service} receives the complete environment file')
 PY
 
 [[ ! -d "$ROOT_DIR/backend" ]] || fail 'Python backend directory still exists'

@@ -31,8 +31,7 @@ fi
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
 staging="rbf_restore_${stamp//[^0-9A-Za-z_]/_}"
 rollback="rbf_rollback_${stamp//[^0-9A-Za-z_]/_}"
-container="rbf-restore-preflight-${stamp,,}"
-container="${container//_/-}"
+container="rbf-restore-preflight-${stamp,,}"; container="${container//_/-}"
 report="${report:-$INFRA_DIR/data/backups/reports/rbf-restore-${stamp}.json}"
 install -d -m 0700 "$(dirname "$report")"
 cleanup() {
@@ -48,12 +47,11 @@ ensure_postgres_service
 bw_compose exec -T postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 -c "create database \"$staging\" owner \"$user\" template template0"
 bw_compose exec -T postgres pg_restore --exit-on-error --no-owner --no-privileges -U "$user" -d "$staging" < "$backup"
 
-project="$(read_effective_env COMPOSE_PROJECT_NAME)"; image="$(read_effective_env RBF_API_IMAGE)"
-[[ -n "$project" && -n "$image" ]] || die "Release environment contains no Compose project or API image."
-docker run -d --rm --name "$container" --network "${project}_backend" --env-file "$ENV_FILE" \
+bw_compose run --rm --no-deps \
+  -e "DATABASE_URL=jdbc:postgresql://postgres:5432/$staging" -e "DATABASE_NAME=$staging" schema
+bw_compose run -d --rm --no-deps --name "$container" \
   -e "SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/$staging" \
-  -e RBF_SCHEDULING_ENABLED=false -e CONTROL_DIR=/tmp/rbf-control \
-  -v "$INFRA_DIR/data/uploads:/var/lib/rbf/uploads:ro" "$image" >/dev/null
+  -e RBF_SCHEDULING_ENABLED=false -e CONTROL_DIR=/tmp/rbf-control api >/dev/null
 ready=false
 for _ in $(seq 1 90); do
   if docker exec "$container" wget -qO- http://127.0.0.1:8080/actuator/health/readiness >/dev/null 2>&1; then ready=true; break; fi

@@ -31,7 +31,7 @@ class BackupControlServiceBehaviorTest {
         BackupControlService service = service(mock(ControlFileStore.class), mock(OperationsDtoMapper.class));
         AuthenticatedUser actor = new AuthenticatedUser(7, "captain", "admin", true, true, true);
 
-        assertThatThrownBy(() -> service.discover(actor, new BackupDiscoveryRequest("localhost", 22L)))
+        assertThatThrownBy(() -> service.discover(actor, new BackupDiscoveryRequest("localhost", 22L), "a".repeat(32)))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Invalid public backup host");
     }

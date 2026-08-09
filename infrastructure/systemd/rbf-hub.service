@@ -10,7 +10,9 @@ RemainAfterExit=yes
 WorkingDirectory=@INFRA_DIR@
 ExecStart=/usr/bin/env bash @INFRA_DIR@/scripts/services/boot.sh
 ExecStop=/usr/bin/env bash @INFRA_DIR@/scripts/services/systemd-stop.sh
-TimeoutStartSec=0
+# Includes PostgreSQL initialization, the isolated Flyway boundary and the
+# bounded Spring readiness loop. Keep this above all nested startup budgets.
+TimeoutStartSec=10min
 
 [Install]
 WantedBy=multi-user.target

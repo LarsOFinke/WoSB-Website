@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -33,45 +34,45 @@ public class OperationsController extends ApiControllerSupport {
     public OperationsController(BackupControlService backups,SystemUpdateService updates){this.backups=backups;this.updates=updates;}
 
     @DeleteMapping("/api/admin/backups/configuration")
-    public ResponseEntity<BackupControlRequestResult> adminDeleteBackupConfiguration() {
+    public ResponseEntity<BackupControlRequestResult> adminDeleteBackupConfiguration(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.deleteConfiguration(actor), 202);
+        return respond(backups.deleteConfiguration(actor,xRBFHostCapability), 202);
     }
 
     @PutMapping("/api/admin/backups/configuration")
     public ResponseEntity<BackupControlRequestResult> adminConfigureBackupHost(
-            @Valid @RequestBody BackupConfigurationRequest body
+            @Valid @RequestBody BackupConfigurationRequest body,@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability
     ) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.configure(actor,body), 202);
+        return respond(backups.configure(actor,body,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/discover")
     public ResponseEntity<BackupControlRequestResult> adminDiscoverBackupHost(
-            @Valid @RequestBody BackupDiscoveryRequest body
+            @Valid @RequestBody BackupDiscoveryRequest body,@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability
     ) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.discover(actor,body), 202);
+        return respond(backups.discover(actor,body,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/enrollment/apply")
     public ResponseEntity<BackupControlRequestResult> adminApplyBackupEnrollment(
-            @Valid @RequestBody BackupEnrollmentResponseRequest body
+            @Valid @RequestBody BackupEnrollmentResponseRequest body,@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability
     ) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.applyEnrollment(actor,body), 202);
+        return respond(backups.applyEnrollment(actor,body,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/enrollment/prepare")
-    public ResponseEntity<BackupControlRequestResult> adminPrepareBackupEnrollment() {
+    public ResponseEntity<BackupControlRequestResult> adminPrepareBackupEnrollment(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.prepareEnrollment(actor), 202);
+        return respond(backups.prepareEnrollment(actor,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/key/prepare")
-    public ResponseEntity<BackupControlRequestResult> adminPrepareBackupUploadKey() {
+    public ResponseEntity<BackupControlRequestResult> adminPrepareBackupUploadKey(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.prepareKey(actor), 202);
+        return respond(backups.prepareKey(actor,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/local/files/restore")
@@ -91,15 +92,15 @@ public class OperationsController extends ApiControllerSupport {
     }
 
     @PostMapping("/api/admin/backups/local/scan")
-    public ResponseEntity<BackupControlRequestResult> adminScanLocalDatabaseBackups() {
+    public ResponseEntity<BackupControlRequestResult> adminScanLocalDatabaseBackups(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.scan(actor), 202);
+        return respond(backups.scan(actor,xRBFHostCapability), 202);
     }
 
     @PostMapping("/api/admin/backups/run")
-    public ResponseEntity<BackupControlRequestResult> adminRunApplicationBackup() {
+    public ResponseEntity<BackupControlRequestResult> adminRunApplicationBackup(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.run(actor), 202);
+        return respond(backups.run(actor,xRBFHostCapability), 202);
     }
 
     @GetMapping("/api/admin/backups/status")
@@ -109,9 +110,9 @@ public class OperationsController extends ApiControllerSupport {
     }
 
     @PostMapping("/api/admin/backups/test")
-    public ResponseEntity<BackupControlRequestResult> adminTestBackupConnection() {
+    public ResponseEntity<BackupControlRequestResult> adminTestBackupConnection(@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(backups.test(actor), 202);
+        return respond(backups.test(actor,xRBFHostCapability), 202);
     }
 
     @GetMapping("/api/admin/system/update")
@@ -122,9 +123,9 @@ public class OperationsController extends ApiControllerSupport {
 
     @PostMapping("/api/admin/system/update")
     public ResponseEntity<SystemUpdateRequestResult> adminRequestSystemUpdate(
-            @Valid @RequestBody SystemUpdateRequest body
+            @Valid @RequestBody SystemUpdateRequest body,@RequestHeader("X-RBF-Host-Capability") String xRBFHostCapability
     ) {
         AuthenticatedUser actor=CurrentUser.require();
-        return respond(updates.request(actor,body.operation()), 202);
+        return respond(updates.request(actor,body.operation(),xRBFHostCapability), 202);
     }
 }

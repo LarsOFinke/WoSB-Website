@@ -37,15 +37,25 @@ for forbidden in ('Runtime.getRuntime().exec','ProcessBuilder(', 'TrustAll', 'Ho
     require(forbidden not in all_java,f'forbidden Java security pattern: {forbidden}')
 require('SKIP LOCKED' in all_java.upper(),'persistent delivery workers must claim rows without duplicate work')
 
-compose=read('infrastructure/compose.yml')
-for service in ('api','gateway'):
-    match=re.search(rf'(?ms)^  {re.escape(service)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)', compose)
-    require(match is not None,f'missing compose service {service}')
-    section=match.group(1)
-    require('read_only: true' in section,f'{service} filesystem is not read-only')
-    require('no-new-privileges:true' in section,f'{service} lacks no-new-privileges')
-    require('cap_drop: [ALL]' in section or '- ALL' in section,f'{service} does not drop capabilities')
-require('127.0.0.1:${POSTGRES_LOCAL_PORT' in compose,'PostgreSQL may not bind publicly')
+for compose_path in ('infrastructure/compose.yml','infrastructure/compose.release.yml'):
+    compose=read(compose_path)
+    sections={}
+    for service in ('postgres','schema','api','gateway'):
+        match=re.search(rf'(?ms)^  {re.escape(service)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)', compose)
+        require(match is not None,f'{compose_path}: missing service {service}')
+        sections[service]=match.group(1)
+        for contract in ('read_only: true','no-new-privileges:true','cap_drop: [ALL]','mem_limit:','cpus:','pids_limit:'):
+            require(contract in sections[service],f'{compose_path}: {service} lacks {contract}')
+        require('env_file:' not in sections[service],f'{compose_path}: {service} receives the complete environment file')
+    require('SPRING_FLYWAY_ENABLED: "false"' in sections['api'],'runtime API may not own schema migrations')
+    require('api_app_password' in sections['api'],'runtime API lacks isolated database secret')
+    require('schema_owner_password' in sections['schema'],'schema job lacks owner-only credential')
+    require('POSTGRES_PASSWORD_FILE' in sections['postgres'],'PostgreSQL password must use a mounted secret')
+require('127.0.0.1:${POSTGRES_LOCAL_PORT' in read('infrastructure/compose.yml'),'development PostgreSQL may only bind loopback')
+require('ports:' not in re.search(r'(?ms)^  postgres:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n)',read('infrastructure/compose.release.yml')).group(1),'release PostgreSQL may not publish a port')
+host_approval=read('infrastructure/scripts/services/host-operation-approval.py')
+for contract in ('O_NOFOLLOW','metadata.st_uid != 0','hmac.compare_digest','path.unlink(missing_ok=True)'):
+    require(contract in host_approval,f'host-operation approval lost fail-closed contract: {contract}')
 installer=read('infrastructure/scripts/release/verify-artifact.py')
 for contract in ('Links and special files are forbidden','Artifact checksum mismatch','Artifact inventory mismatch','path.is_absolute()','".." in path.parts'):
     require(contract in installer,f'artifact verifier lost safety contract: {contract}')

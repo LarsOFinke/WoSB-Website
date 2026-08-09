@@ -37,6 +37,17 @@ class Runner(
         self.request = self.read_json(self.request_file)
         self.request_file.unlink(missing_ok=True)
         operation = str(self.request.get("operation") or "")
+        if operation not in {"restore_postgresql", "restore_files"}:
+            capability = str(self.request.pop("host_capability_sha256", ""))
+            try:
+                subprocess.run(
+                    [sys.executable, str(self.infra_dir / "scripts/services/host-operation-approval.py"),
+                     "consume", str(self.infra_dir), operation, capability],
+                    check=True, timeout=10,
+                )
+            except Exception:
+                self.write_status("failed", self.public_failure_message(operation), finished_at=now())
+                raise
         started_at = now()
         self.write_status(
             ACTIVE_STATE,

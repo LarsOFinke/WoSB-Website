@@ -6,8 +6,12 @@ export function getSystemUpdateStatus() {
   return get('/admin/system/update')
 }
 
-export function requestSystemUpdate(operation = 'update') {
-  return post('/admin/system/update', { operation })
+function hostApproval(token) {
+  return { headers: { 'X-RBF-Host-Capability': token } }
+}
+
+export function requestSystemUpdate(operation = 'update', token = '') {
+  return post('/admin/system/update', { operation }, hostApproval(token))
 }
 
 export function listRegistrationRequests({ status = 'pending', search = '', fromDate = '', toDate = '' } = {}) {
@@ -275,36 +279,36 @@ export function getBackupControlStatus() {
   return get('/admin/backups/status')
 }
 
-export function prepareBackupUploadKey() {
-  return post('/admin/backups/key/prepare', {})
+export function prepareBackupUploadKey(token = '') {
+  return post('/admin/backups/key/prepare', {}, hostApproval(token))
 }
 
-export function prepareBackupEnrollment() {
-  return post('/admin/backups/enrollment/prepare', {})
+export function prepareBackupEnrollment(token = '') {
+  return post('/admin/backups/enrollment/prepare', {}, hostApproval(token))
 }
 
-export function applyBackupEnrollment(payload) {
-  return post('/admin/backups/enrollment/apply', payload)
+export function applyBackupEnrollment(payload, token = '') {
+  return post('/admin/backups/enrollment/apply', payload, hostApproval(token))
 }
 
-export function discoverBackupHost(payload) {
-  return post('/admin/backups/discover', payload)
+export function discoverBackupHost(payload, token = '') {
+  return post('/admin/backups/discover', payload, hostApproval(token))
 }
 
-export function configureBackupConnection(payload) {
-  return put('/admin/backups/configuration', payload)
+export function configureBackupConnection(payload, token = '') {
+  return put('/admin/backups/configuration', payload, hostApproval(token))
 }
 
-export function testBackupConnection() {
-  return post('/admin/backups/test', {})
+export function testBackupConnection(token = '') {
+  return post('/admin/backups/test', {}, hostApproval(token))
 }
 
-export function runApplicationBackup() {
-  return post('/admin/backups/run', {})
+export function runApplicationBackup(token = '') {
+  return post('/admin/backups/run', {}, hostApproval(token))
 }
 
-export function scanLocalDatabaseBackups() {
-  return post('/admin/backups/local/scan', {})
+export function scanLocalDatabaseBackups(token = '') {
+  return post('/admin/backups/local/scan', {}, hostApproval(token))
 }
 
 export function restoreLocalDatabaseBackup(payload) {
@@ -315,8 +319,8 @@ export function restoreLocalFilesBackup(payload) {
   return post('/admin/backups/local/files/restore', payload)
 }
 
-export function deleteBackupConnection() {
-  return deleteRequest('/admin/backups/configuration')
+export function deleteBackupConnection(token = '') {
+  return deleteRequest('/admin/backups/configuration', hostApproval(token))
 }
 
 export function listRaidHelperProfiles() {

@@ -11,6 +11,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,10 +31,17 @@ class ApplicationIntegrationTest {
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .cleanDisabled(true)
+                .validateMigrationNaming(true)
+                .load()
+                .migrate();
         Path runtime = Path.of(System.getProperty("java.io.tmpdir"), "rbf-integration-test");
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.flyway.enabled", () -> false);
         registry.add("rbf.secrets.encryption-keys",
                 () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
         registry.add("rbf.bootstrap-admin.password", () -> "Integration-Test-Admin-Password-42!");

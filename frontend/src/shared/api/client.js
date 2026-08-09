@@ -66,22 +66,22 @@ export function get(path) {
   return request(path)
 }
 
-export function post(path, payload) {
-  return request(path, { method: 'POST', body: JSON.stringify(payload) })
+export function post(path, payload, options = {}) {
+  return request(path, { ...options, method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function postForm(path, formData) {
   return request(path, { method: 'POST', body: formData })
 }
 
-export function put(path, payload) {
-  return request(path, { method: 'PUT', body: JSON.stringify(payload) })
+export function put(path, payload, options = {}) {
+  return request(path, { ...options, method: 'PUT', body: JSON.stringify(payload) })
 }
 
 export function putForm(path, formData) {
   return request(path, { method: 'PUT', body: formData })
 }
 
-export function deleteRequest(path) {
-  return request(path, { method: 'DELETE' })
+export function deleteRequest(path, options = {}) {
+  return request(path, { ...options, method: 'DELETE' })
 }

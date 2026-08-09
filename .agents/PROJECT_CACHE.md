@@ -146,8 +146,11 @@ a directory name alone.
   start directly through `infrastructure/scripts/diagnostics/debug.sh`.
 - `./deploy.sh --configure` is the complete interactive first run for the **test
   server**. Production is configured exclusively with
-  `./deploy.sh --production --configure`. Bootstrap credentials are not persisted;
-  normal subsequent runs use only verified key access and `sudo -n`.
+  `./deploy.sh --production --configure`; that dialog collects the public DNS name
+  and Let's Encrypt email, then generates fresh production secrets and the private
+  target environment locally on the target before continuing the deployment.
+  Bootstrap credentials are not persisted in origin profiles; normal subsequent
+  runs use only verified key access and `sudo -n`.
 - Origin targets are strictly separated: `.env.origin.test` is the default for
   `deploy.sh`, `update.sh`, and diagnostics; `.env.origin.production` is loaded only
   after explicit `--production`. Do not allow automatic legacy fallback selection
@@ -171,6 +174,10 @@ a directory name alone.
   separately in `.env.origin.test` and `.env.origin.production`; the corresponding
   `.example` files are templates. Verifier and rollback live under
   `infrastructure/scripts/release/`.
+- Release Compose defaults are valid on a 1-vCPU VPS: PostgreSQL and API use CPU
+  quotas of `1.0`, with `POSTGRES_CPU_LIMIT` and `API_CPU_LIMIT` available for larger
+  targets. Memory cgroup warnings are host capability diagnostics; do not weaken the
+  remaining read-only, capability, PID, network, and secret-file controls.
 - Backup/restore couples the application, Flyway schema, persistent files, and the
   associated release artifact. Restore is staged and fail-closed.
 - A deliberately limited legacy partial restore (for example Python→Java builds) is,
@@ -376,6 +383,18 @@ Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, 
 ### 2026-08-08 deployment-host quality-tool portability
 
 Mandatory `update.sh`/deployment quality gates must not depend on optional developer utilities. In particular, TLS/environment safety checks use baseline `grep` plus `openssl`; `ripgrep` (`rg`) is not a deployment-host prerequisite. If a new mandatory gate needs an external command, either declare/install it explicitly as an infrastructure prerequisite or implement the check with the existing baseline toolset.
+
+### 2026-08-09 production bootstrap and 1-vCPU deployment corrections
+
+Production origin configuration now remains UX-first while keeping secrets target-local:
+`./deploy.sh --production --configure` asks for the public DNS name and Let's Encrypt
+contact email, and the target creates its fresh private environment and bootstrap
+credentials before installation. Subsequent production deploys reuse the target-local
+environment. The runtime API starts with Flyway disabled because the one-shot schema
+container owns migration execution; the API uses only the restricted database role.
+Compose CPU defaults are valid on a 1-vCPU VPS: PostgreSQL and API use quotas of `1.0`.
+Larger targets may override those quotas through `POSTGRES_CPU_LIMIT` and
+`API_CPU_LIMIT`.
 
 ### Server-wide build printout cache
 

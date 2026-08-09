@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { getSystemUpdateStatus, requestSystemUpdate } from '@/modules/admin/api/admin'
+import HostCapabilityField from '@/modules/admin/components/HostCapabilityField.vue'
 
 const props = defineProps({
   apiStatus: { type: String, required: true },
@@ -14,6 +15,7 @@ const { locale, t } = useLocale()
 const update = ref({ state: 'idle', operation: 'update', message: '', request_available: false })
 const loading = ref(false)
 const error = ref('')
+const hostApproval = ref('')
 let pollTimer = null
 
 const inProgress = computed(() => ['queued', 'running'].includes(update.value.state))
@@ -60,7 +62,8 @@ async function requestOperation(operation) {
   loading.value = true
   error.value = ''
   try {
-    update.value = (await requestSystemUpdate(operation)).status
+    update.value = (await requestSystemUpdate(operation, hostApproval.value)).status
+    hostApproval.value = ''
     schedulePoll()
   } catch (err) {
     error.value = err.message || t('admin.system.requestError')
@@ -95,14 +98,15 @@ onUnmounted(() => window.clearTimeout(pollTimer))
       </dl>
       <small>Updates use only verified artifacts from the protected host inbox
         directory; backups, migrations, and readiness checks run before activation.</small>
+      <HostCapabilityField v-model="hostApproval" />
       <div class="system-update-actions">
-        <button class="primary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('update')">
+        <button class="primary-action" type="button" :disabled="loading || !update.request_available || inProgress || hostApproval.length < 24" @click="requestOperation('update')">
           {{ inProgress ? t('admin.system.updateRunning') : t('admin.system.updateButton') }}
         </button>
-        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('restart')">
+        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress || hostApproval.length < 24" @click="requestOperation('restart')">
           {{ t('admin.system.restartButton') }}
         </button>
-        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress" @click="requestOperation('rollback')">
+        <button class="secondary-action" type="button" :disabled="loading || !update.request_available || inProgress || hostApproval.length < 24" @click="requestOperation('rollback')">
           {{ t('admin.system.rollbackButton') }}
         </button>
       </div>

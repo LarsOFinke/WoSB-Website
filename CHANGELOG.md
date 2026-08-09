@@ -8,6 +8,14 @@
 
 # Changelog
 
+## 1.3.1 - 2026-08-09
+
+- Promoted the hardened deployment baseline after production beta activation.
+- Made production bootstrap interactive from the origin host while generating
+  secrets and the private environment only on the target.
+- Separated runtime API startup from Flyway bean creation and made Compose CPU
+  defaults compatible with 1-vCPU VPS hosts.
+
 ## 1.3.0 - 2026-08-09
 
 - Prepared the compatible beta deployment release with the recovery-tool workflow,

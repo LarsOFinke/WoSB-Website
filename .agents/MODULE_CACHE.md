@@ -16,7 +16,7 @@ from docs or cache; it does not assess the factual accuracy of a description.
 | `spring-api/src/main/java/eu/royalblackwater/api/config/` | composition, properties, security, errors | `application.yml`, startup/binding failures |
 | `spring-api/src/main/java/eu/royalblackwater/api/content/` | secure content embeds | validator plus callers |
 | `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generated HTTP DTOs | `openapi/source/` + assembler/DTO generator; never edit generated DTOs directly |
-| `spring-api/src/main/java/eu/royalblackwater/api/core/` | health/readiness/core operations | health plus DB/Flyway |
+| `spring-api/src/main/java/eu/royalblackwater/api/core/` | health/readiness/core operations | restricted DB readiness; schema/Flyway boundary is external |
 | `spring-api/src/main/java/eu/royalblackwater/api/files/` | uploads, quotas, types, ownership | storage/path boundaries |
 | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | fleet, memberships, roles/capabilities | AccessPolicy and bootstrap membership |
 | `spring-api/src/main/java/eu/royalblackwater/api/forum/` | threads, posts, attachments | ownership/moderation |

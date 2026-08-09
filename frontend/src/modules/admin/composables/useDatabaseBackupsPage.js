@@ -23,6 +23,7 @@ export function useDatabaseBackupsPage() {
   const loading = ref(false)
   const error = ref('')
   const success = ref('')
+  const hostApproval = ref('')
   let pollTimer = null
 
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
@@ -72,7 +73,8 @@ export function useDatabaseBackupsPage() {
     error.value = ''
     success.value = ''
     try {
-      const response = await runApplicationBackup()
+      const response = await runApplicationBackup(hostApproval.value)
+      hostApproval.value = ''
       status.value = response.status
       success.value = t('admin.backups.messages.backupQueued')
       schedulePoll()
@@ -90,7 +92,7 @@ export function useDatabaseBackupsPage() {
   onUnmounted(() => window.clearTimeout(pollTimer))
 
   return {
-    t, isAdmin, user, navigationGroups, status, loading, error, success,
+    t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
     inProgress, configured, connectionReady, canSubmit, stateLabel, operationLabel,
     formatDateTime, formatBytes, loadStatus, runBackup,
   }

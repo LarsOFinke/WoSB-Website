@@ -95,9 +95,12 @@ release notes, and commits are the durable history.
 - Determine the next version token-efficiently with `bash .agents/scripts/next-version.sh
   patch|minor|major`: patch for fixes, minor for compatible features, major for
   incompatible or explicitly large extensions.
-- The interactive first run is `./deploy.sh --configure`. It can set up the dedicated
-  `rbfadmin` account and key through a one-time VPS bootstrap account and then deploy
-  in the same run.
+- The interactive first run is `./deploy.sh --configure` for test and
+  `./deploy.sh --production --configure` for production. The production dialog asks
+  for the public DNS name and Let's Encrypt email; the target generates its fresh
+  runtime secrets and private environment locally, then deploys in the same run.
+  It can also set up the dedicated `rbfadmin` account and key through a one-time VPS
+  bootstrap account.
 - Subsequent deployments use the configured key and `sudo -n`; the private bootstrap
   account is not persisted.
 - Central API failures appear as `api_error`; authentication and authorization

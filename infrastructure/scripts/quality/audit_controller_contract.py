@@ -126,6 +126,8 @@ def expected_parameter(parameter: dict) -> str:
     name = camel(raw)
     if location == "path":
         return f'@PathVariable("{raw}") {value_type} {name}'
+    if location == "header":
+        return f'@RequestHeader("{raw}") {value_type} {name}'
     if location != "query":
         raise ValueError(location)
     default = schema.get("default")

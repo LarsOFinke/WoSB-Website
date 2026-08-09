@@ -5,7 +5,7 @@ source "$INFRA_DIR/scripts/lib/host/control.sh"
 INSTALL_ROOT="${RBF_INSTALL_ROOT:-/srv/rbf}"
 REQUEST="$INFRA_DIR/data/control/inbox/update.request"; STATUS="$INFRA_DIR/data/control/status/update-status.json"
 RUN_DIR="$INFRA_DIR/data/control/run"; install -d -m 0700 "$RUN_DIR" "$(dirname "$STATUS")"
-artifact=""; operation=""; requested_by="cli"
+artifact=""; operation=""; requested_by="cli"; from_control_request=false; host_capability_sha256=""
 while (($#)); do
   case "$1" in --artifact) artifact="${2:-}"; shift 2;; --requested-by) requested_by="${2:-}"; shift 2;; --restart) operation=restart; shift;; --rollback) operation=rollback; shift;; -h|--help) echo "Usage: update.sh [--artifact FILE|--restart|--rollback] [--requested-by NAME]"; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac
 done
@@ -15,11 +15,11 @@ if [[ -z "$artifact" && -z "$operation" && -f "$REQUEST" ]]; then
   claim_control_request "$REQUEST" "$claimed" 10001
   mapfile -d '' -t request < <(python3 - "$claimed" <<'PY'
 import json,sys
-p=json.load(open(sys.argv[1])); print(p.get('operation','update'),end='\0'); print(p.get('requested_by','admin-panel'),end='\0')
+p=json.load(open(sys.argv[1])); print(p.get('operation','update'),end='\0'); print(p.get('requested_by','admin-panel'),end='\0'); print(p.get('host_capability_sha256',''),end='\0')
 PY
   )
   rm -f "$claimed"
-  operation="${request[0]:-update}"; requested_by="${request[1]:-admin-panel}"
+  operation="${request[0]:-update}"; requested_by="${request[1]:-admin-panel}"; host_capability_sha256="${request[2]:-}"; from_control_request=true
 fi
 operation="${operation:-update}"
 write_status(){
@@ -36,6 +36,10 @@ payload={"state":os.environ['STATE'],"operation":os.environ['OPERATION'],"messag
 t=p.with_name('.'+p.name+'.tmp'); t.write_text(json.dumps(payload,indent=2)+'\n'); t.replace(p); p.chmod(0o644)
 PY
 }
+if [[ "$from_control_request" == true ]] && ! python3 "$INFRA_DIR/scripts/services/host-operation-approval.py" consume "$INFRA_DIR" "$operation" "$host_capability_sha256"; then
+  write_status failed "Host approval was invalid, expired, or already consumed."
+  exit 1
+fi
 write_status running "Host operation started."
 trap 'write_status failed "Host operation failed."' ERR
 case "$operation" in

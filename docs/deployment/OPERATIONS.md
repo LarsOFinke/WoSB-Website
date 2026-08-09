@@ -2,7 +2,8 @@
 
 ## Services
 
-Core services are `postgres`, `api` and `gateway`. The former Uptime Kuma
+Core services are `postgres`, `schema`, `api` and `gateway`. `schema` is a
+short-lived migration job and is not kept running. The former Uptime Kuma
 monitoring profile has been removed from the production stack.
 
 ```bash
@@ -25,6 +26,16 @@ sudo ./update.sh --artifact /srv/releases/rbf-deployment-1.0.0.tar.gz
 The dispatcher cleans failed releases and replaces an active release with the
 same version before installing the verified artifact. The staff panel can also
 queue `update`, `restart`, or `rollback` through the root-owned systemd watcher.
+Before using a panel action, arm that exact operation on the target host and paste
+the displayed one-time token into the panel:
+
+```bash
+sudo /srv/rbf/current/infrastructure/scripts/services/arm-host-operation.sh update
+```
+
+Use `restart` or `rollback` instead of `update` for those actions. The root-owned
+approval stores only a token digest, expires after at most 30 minutes, and is
+consumed before the first attempt.
 An update is accepted only when a checksummed artifact is already staged in
 `/srv/rbf/shared/releases/inbox`; the host runner then uses the same coordinated
 backup, migration, activation and rollback path as a normal release.
@@ -33,6 +44,28 @@ For local maintenance actions on the target server, the versioned runners under
 `/srv/rbf/current/infrastructure/scripts/services/` remain available.
 
 The target host exposes operation status and a guarded staff-panel request path.
+
+### Interactive production bootstrap
+
+For a new production target, run the complete origin-side bootstrap interactively:
+
+```bash
+./deploy.sh --production --configure
+```
+
+The dialog asks for the public DNS name and Let's Encrypt contact email. The target
+generates fresh database, encryption, and bootstrap secrets locally and creates the
+private environment file with mode `0600`. Production secrets are not stored in
+`.env.origin.production` or transferred through the origin. The same run continues
+with Compose startup and public certificate issuance; later runs reuse the
+target-local environment with `./deploy.sh --production`.
+
+The release Compose defaults are valid on a 1-vCPU VPS: PostgreSQL and API each use
+a maximum CPU quota of `1.0`. Larger hosts may override these with
+`POSTGRES_CPU_LIMIT` and `API_CPU_LIMIT` in the target environment. Memory limits
+remain defense-in-depth; Docker may report them as unavailable when the host kernel
+does not expose memory cgroups. A pending kernel upgrade is administrative and
+should be activated with a planned reboot before production approval.
 
 ## Logs
 
@@ -70,7 +103,11 @@ sudo journalctl -u rbf-hub.service -u rbf-hub-backup.service
 
 ## Database changes
 
-Flyway runs during API startup before readiness. Failed or checksum-inconsistent migrations keep the API unready. Published migrations are immutable; destructive cleanup is delayed until all supported releases no longer depend on the old shape.
+Flyway runs in the isolated one-shot `schema` service with the database-owner
+credential before the runtime API starts. The API receives only a restricted
+application role and has Flyway disabled. Failed or checksum-inconsistent migrations
+prevent activation. Published migrations are immutable; destructive cleanup is
+delayed until all supported releases no longer depend on the old shape.
 
 ## Backup routine
 
@@ -84,6 +121,14 @@ sudo /srv/rbf/current/infrastructure/scripts/backup/run-consistent-backup.sh --r
 A backup is healthy only if its manifest references a passed isolated restore
 preflight. If this preflight fails, the update stops before `current` changes.
 Periodically perform a full recovery exercise on a separate host.
+
+Panel-triggered backup operations use the same host approval boundary. For example:
+
+```bash
+sudo /srv/rbf/current/infrastructure/scripts/services/arm-host-operation.sh backup
+```
+
+Database and file restores retain their separate bootstrap-admin restore approval.
 
 ## Test/Production TLS and target isolation
 
