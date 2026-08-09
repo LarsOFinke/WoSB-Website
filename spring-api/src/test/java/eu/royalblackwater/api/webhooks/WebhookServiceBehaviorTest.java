@@ -96,7 +96,10 @@ class WebhookServiceBehaviorTest {
         ArgumentCaptor<Map<String, Object>> parameters = ArgumentCaptor.forClass(Map.class);
         verify(repository).insertReturningId(anyString(), parameters.capture());
         String payload = String.valueOf(parameters.getValue().get("payload"));
-        assertThat(payload).contains("Fleet 42: Fleet Aurora was created.", "allowed_mentions");
+        assertThat(payload).contains(
+                "Fleet 42: Fleet Aurora was created.",
+                "allowed_mentions",
+                "\"avatar_url\":\"https://royal-blackwater-fleet.eu/rbf-fleet-icon.png\"");
     }
 
     private static WebhookService service(WebhookRepository repository, WebhookPolicy policy) {

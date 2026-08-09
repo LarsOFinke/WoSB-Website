@@ -111,6 +111,8 @@ https://royal-blackwater-fleet.eu/rbf-fleet-icon.png
 
 The delivery backend sets this URL for every Discord request. The obsolete
 `discord_avatar_url` API and database fields were removed; callers cannot override the fleet icon.
+No webhook-specific setup is required: automatic notifications, connectivity tests,
+manual broadcasts and retries all retain this fixed avatar in their stored Discord payload.
 
 The gateway image normalizes all built frontend directories to mode `0755` and files to `0644`, preventing unreadable static assets from producing HTTP 403 responses.
 

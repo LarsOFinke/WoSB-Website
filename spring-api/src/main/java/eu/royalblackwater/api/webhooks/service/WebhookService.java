@@ -42,6 +42,8 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Service
 public class WebhookService {
     private static final TypeReference<List<String>> STRINGS=new TypeReference<>() { };
+    private static final String FLEET_AVATAR_URL=
+            "https://royal-blackwater-fleet.eu/rbf-fleet-icon.png";
     private final WebhookRepository repository;
     private final WebhookPolicy policy;
     private final WebhookHttpClient http;
@@ -196,6 +198,7 @@ public class WebhookService {
         String deliveryId=UUID.randomUUID().toString();
         Map<String,Object> payload=new LinkedHashMap<>();payload.put("content",message);
         payload.put("allowed_mentions",Map.of("parse",List.of()));
+        payload.put("avatar_url",FLEET_AVATAR_URL);
         if(username!=null) payload.put("username",username);
         String payloadJson=write(payload);
         long id=repository.insertReturningId(WebhookQueries.DELIVER_INSERT_01,Map.of("webhook",longValue(webhook,"id"),"delivery",deliveryId,"event",event.eventType(),"type",event.resourceType(),

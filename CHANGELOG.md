@@ -8,6 +8,14 @@
 
 # Changelog
 
+## 1.3.5 - 2026-08-09
+
+- Added the canonical public Royal Blackwater Fleet icon as the fixed Discord
+  avatar for automatic webhook events, connectivity tests, manual broadcasts,
+  and stored delivery retries.
+- Kept avatar configuration out of the browser and webhook records so every
+  destination uses the same project-owned identity by default.
+
 ## 1.3.4 - 2026-08-09
 
 - Restored event-specific Discord webhook defaults for existing installations by
