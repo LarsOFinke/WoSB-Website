@@ -17,7 +17,7 @@
         upgrade that makes this rule unused intentionally fails the security job until this entry
         is deleted. The explicit expiry is a second fail-closed review deadline.
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-core@11\.0\.24$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-websocket@11\.0\.24$</packageUrl>
         <cve>CVE-2026-66299</cve>
     </suppress>
 </suppressions>

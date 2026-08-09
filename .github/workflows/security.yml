@@ -38,6 +38,10 @@ jobs:
           fi
           mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress \
             org.owasp:dependency-check-maven:12.2.2:update-only "${dependency_check_args[@]}"
+      - name: Validate temporary suppressions against NVD
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: python infrastructure/scripts/quality/check_dependency_suppressions.py
       - name: Scan Spring dependencies
         run: |
           mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress \
