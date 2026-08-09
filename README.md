@@ -157,4 +157,8 @@ docs/            architecture, development, and operations documentation
 
 ## License and notices
 
-See [NOTICE.md](NOTICE.md).
+The original project code and neutral artwork are licensed under
+[AGPL-3.0-or-later](LICENSE.md). See [NOTICE.md](NOTICE.md) and the
+[asset licensing policy](docs/ASSET_LICENSING.md) for the separate treatment of
+in-game screenshots and game-derived assets, which are not licensed for
+publication pending written permission.

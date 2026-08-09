@@ -2,39 +2,11 @@
 
 Generated from `spring-api/src/main/reference/webhook-events.json`.
 
-## `backup.configuration.deleted`
+This is the single copy-ready reference. Runtime defaults and the staff-panel autofill are derived from the same event catalog.
 
-The protected backup connection configuration was removed.
+## Builds
 
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `backup.configuration.updated`
-
-The protected backup connection configuration changed.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `backup.restore.requested`
-
-A bootstrap administrator requested a database restore.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `backup.run.requested`
-
-An administrator requested a protected application backup.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `build.created`
+### `build.created`
 
 A new build was created.
 
@@ -42,7 +14,7 @@ A new build was created.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `build.printout.published`
+### `build.printout.published`
 
 A public build printout was published to Discord.
 
@@ -50,7 +22,7 @@ A public build printout was published to Discord.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `build.removed`
+### `build.removed`
 
 A build was removed.
 
@@ -58,7 +30,7 @@ A build was removed.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `build.updated`
+### `build.updated`
 
 A build was updated.
 
@@ -66,7 +38,9 @@ A build was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `calendar.event.cancelled`
+## Calendar
+
+### `calendar.event.cancelled`
 
 A fleet or squad event was cancelled.
 
@@ -74,7 +48,7 @@ A fleet or squad event was cancelled.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `calendar.event.created`
+### `calendar.event.created`
 
 A fleet or squad event was created.
 
@@ -82,7 +56,7 @@ A fleet or squad event was created.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `calendar.event.updated`
+### `calendar.event.updated`
 
 A fleet or squad event was updated.
 
@@ -90,143 +64,9 @@ A fleet or squad event was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `fleet.application.created`
+## Content
 
-A fleet application was submitted.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.created`
-
-A fleet was created.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.leader.assigned`
-
-A fleet leadership role was assigned.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.membership.updated`
-
-A fleet membership was updated.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.role.created`
-
-A fleet role was created.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.role.removed`
-
-A fleet role was removed.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.role.updated`
-
-A fleet role was updated.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `fleet.updated`
-
-A fleet profile was updated.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.post.created`
-
-A new forum reply was posted.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.post.removed`
-
-A forum reply was removed.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.post.updated`
-
-A forum reply was updated.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.thread.created`
-
-A new forum thread was created.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.thread.removed`
-
-A forum thread was removed.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `forum.thread.updated`
-
-A forum thread was updated.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `group.closed`
-
-A group-search listing was closed.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `group.created`
-
-A new group-search listing was created.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `group.member.joined`
-
-A member joined a group-search listing.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `guide.created`
+### `guide.created`
 
 A new guide was published.
 
@@ -234,7 +74,7 @@ A new guide was published.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `guide.removed`
+### `guide.removed`
 
 A guide was removed from publication.
 
@@ -242,7 +82,7 @@ A guide was removed from publication.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `guide.updated`
+### `guide.updated`
 
 A published guide was updated.
 
@@ -250,15 +90,7 @@ A published guide was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `integration.test`
-
-Manual connectivity and payload test.
-
-```text
-RBF event **{event}** for {resource.type} #{resource.id}.
-```
-
-## `newcomer_guide.updated`
+### `newcomer_guide.updated`
 
 The starter guide was updated.
 
@@ -266,7 +98,161 @@ The starter guide was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `privacy.request.created`
+## Fleet
+
+### `fleet.application.created`
+
+A fleet application was submitted.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.created`
+
+A fleet was created.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.leader.assigned`
+
+A fleet leadership role was assigned.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.membership.updated`
+
+A fleet membership was updated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.role.created`
+
+A fleet role was created.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.role.removed`
+
+A fleet role was removed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.role.updated`
+
+A fleet role was updated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `fleet.updated`
+
+A fleet profile was updated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## Forum
+
+### `forum.post.created`
+
+A new forum reply was posted.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `forum.post.removed`
+
+A forum reply was removed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `forum.post.updated`
+
+A forum reply was updated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `forum.thread.created`
+
+A new forum thread was created.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `forum.thread.removed`
+
+A forum thread was removed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `forum.thread.updated`
+
+A forum thread was updated.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## Groups
+
+### `group.closed`
+
+A group-search listing was closed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `group.created`
+
+A new group-search listing was created.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `group.member.joined`
+
+A member joined a group-search listing.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## Integration
+
+### `integration.test`
+
+Manual connectivity and payload test.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## Moderation
+
+### `privacy.request.created`
 
 A data-subject request requires an administrator response.
 
@@ -274,7 +260,7 @@ A data-subject request requires an administrator response.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `privacy.request.resolved`
+### `privacy.request.resolved`
 
 A data-subject request was resolved by an administrator.
 
@@ -282,7 +268,43 @@ A data-subject request was resolved by an administrator.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `registration.request.approved`
+## Operations
+
+### `backup.configuration.deleted`
+
+The protected backup connection configuration was removed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `backup.configuration.updated`
+
+The protected backup connection configuration changed.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `backup.restore.requested`
+
+A bootstrap administrator requested a database restore.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+### `backup.run.requested`
+
+An administrator requested a protected application backup.
+
+```text
+RBF event **{event}** for {resource.type} #{resource.id}.
+```
+
+## Registrations
+
+### `registration.request.approved`
 
 An access request was approved.
 
@@ -290,7 +312,7 @@ An access request was approved.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `registration.request.created`
+### `registration.request.created`
 
 A new access request was submitted.
 
@@ -298,7 +320,7 @@ A new access request was submitted.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `registration.request.rejected`
+### `registration.request.rejected`
 
 An access request was rejected.
 
@@ -306,7 +328,9 @@ An access request was rejected.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.archived`
+## Squads
+
+### `squad.archived`
 
 A squad was archived.
 
@@ -314,7 +338,7 @@ A squad was archived.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.created`
+### `squad.created`
 
 A squad was created.
 
@@ -322,7 +346,7 @@ A squad was created.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.member.added`
+### `squad.member.added`
 
 A member was added to a squad.
 
@@ -330,7 +354,7 @@ A member was added to a squad.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.member.removed`
+### `squad.member.removed`
 
 A member was removed from a squad.
 
@@ -338,7 +362,7 @@ A member was removed from a squad.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.member.updated`
+### `squad.member.updated`
 
 A squad membership was updated.
 
@@ -346,7 +370,7 @@ A squad membership was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `squad.updated`
+### `squad.updated`
 
 A squad was updated.
 
@@ -354,7 +378,9 @@ A squad was updated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `system.maintenance.ended`
+## System
+
+### `system.maintenance.ended`
 
 A maintenance window ended or failed.
 
@@ -362,7 +388,7 @@ A maintenance window ended or failed.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `system.maintenance.started`
+### `system.maintenance.started`
 
 A maintenance window was activated.
 
@@ -370,7 +396,7 @@ A maintenance window was activated.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `system.update.result`
+### `system.update.result`
 
 A controlled server operation completed or failed.
 
@@ -378,7 +404,7 @@ A controlled server operation completed or failed.
 RBF event **{event}** for {resource.type} #{resource.id}.
 ```
 
-## `system.update.started`
+### `system.update.started`
 
 A controlled server operation was requested and queued.
 

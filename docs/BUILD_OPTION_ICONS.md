@@ -1,19 +1,20 @@
 # Build-option icon catalog
 
 The Build Designer uses versioned, repository-owned assets under
-`frontend/public/build-assets/neutral/` and the authorized game-only source
-tree `frontend/game-assets/`. Seed records reference these assets via
+`frontend/public/build-assets/neutral/` and an inactive, authorization-gated
+game-derived source tree `frontend/game-assets/`. Seed records reference these assets via
 `image_url`; builds continue to store only option references and never copy an
 icon or calculated value.
 
 ## Asset modes
 
 The frontend reads `VITE_BUILD_ASSET_MODE` and accepts `neutral` or `game`.
-`neutral` is the default and is safe for public deployments without permission
-to publish game-derived imagery. It uses the original neutral SVG catalog and
-category visuals for specialists and upgrades. `game` is an explicit opt-in for
-deployments where use of the game-derived crops is authorized; Vite emits the
-game source tree only for that mode. The central
+`neutral` is the default and is the only approved mode for public deployments
+while permission to publish game-derived imagery is pending. It uses the neutral
+SVG catalog and category visuals for specialists and upgrades. `game` is an
+explicit opt-in reserved for a documented authorization; Vite emits the game
+source tree only for that mode. It must not be used in hosted or release builds
+before that authorization exists. The central
 `buildOptionVisual` resolver prevents game paths from being rendered in neutral
 mode.
 
@@ -31,7 +32,8 @@ mode.
 - **Large and Small Additional Sails:** SVG redraws based on the supplied sail
   inventory screenshot.
 
-The assets are presentation data only. Gameplay effects remain normalized in
+The game-derived assets are not covered by the repository license. The assets
+are presentation data only. Gameplay effects remain normalized in
 seed JSON and are displayed next to each option in the icon-aware picker.
 
 ## UI contract

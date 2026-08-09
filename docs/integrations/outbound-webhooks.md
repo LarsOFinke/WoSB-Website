@@ -75,18 +75,17 @@ The delivery monitor is collapsed by default, so tests and refreshes do not shif
 
 ## Message templates
 
-Copy-ready English templates live in:
+The grouped, copy-ready English template reference lives in:
 
 ```text
-docs/webhook-templates/message-templates/
+docs/integrations/webhook-templates/all-message-templates.md
 ```
 
-Templates support Discord Markdown and event-specific placeholders such as `{data.build_name}` or `{resource.url}`. The repository check validates that every automatic event has a template and that all referenced placeholders exist in the event preview payload.
+Templates support Discord Markdown and event-specific placeholders such as `{data.build_name}` or `{resource.url}`. The repository check validates that every automatic event has exactly one catalog entry and that all referenced placeholders exist in the event preview payload.
 
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
 
-Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; the repository
-check enforces an exact match between the event catalog, preview payloads and documentation.
+Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; it regenerates the grouped reference. The repository check enforces an exact match between the event catalog, preview payloads and documentation.
 
 ## Webhook avatar
 
@@ -121,7 +120,7 @@ retired keys from the environment. Never remove an old key before the rotation p
 
 ## Forum and fleet events
 
-Automatic website webhooks include forum replies and removals as well as fleet creation, applications, profile changes, membership updates, leadership assignments and role changes. Every supported event has a versioned English template under `docs/webhook-templates/message-templates/`. Forum reply deletion is available to the reply author and Staff after explicit confirmation; the opening post remains tied to thread deletion.
+Automatic website webhooks include forum replies and removals as well as fleet creation, applications, profile changes, membership updates, leadership assignments and role changes. Every supported event has one versioned English entry in the grouped reference at `docs/integrations/webhook-templates/all-message-templates.md`. Forum reply deletion is available to the reply author and Staff after explicit confirmation; the opening post remains tied to thread deletion.
 
 ## Group-search events
 

@@ -1,1 +1,0 @@
-RBF event **{event}** for {resource.type} #{resource.id}.

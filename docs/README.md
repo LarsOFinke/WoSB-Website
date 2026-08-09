@@ -57,6 +57,7 @@ are documented in the [deployment incident index](debugging/DEPLOYMENT_INCIDENTS
 
 ## Reference and integrations
 
+- [License and asset licensing](ASSET_LICENSING.md)
 - [Reference documents](reference/)
 - [API usage and security](reference/API.md)
 - [Generated API endpoint reference](reference/API_ENDPOINTS.md)

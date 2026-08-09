@@ -14,6 +14,13 @@
     <version>1.3.1</version>
     <name>Royal Blackwater Fleet API</name>
     <description>Production backend for the Royal Blackwater Fleet portal.</description>
+    <licenses>
+        <license>
+            <name>GNU Affero General Public License v3.0 or later</name>
+            <url>https://www.gnu.org/licenses/agpl-3.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <properties>
         <java.version>21</java.version>

@@ -1,8 +1,10 @@
+// Generated from spring-api/src/main/reference/webhook-events.json; do not edit manually.
 package eu.royalblackwater.api.webhooks.service;
 
 import eu.royalblackwater.api.webhooks.dto.WebhookEventDefinition;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class WebhookEventCatalog {
     public static final List<WebhookEventDefinition> ALL = List.of(
@@ -55,7 +57,8 @@ public final class WebhookEventCatalog {
             new WebhookEventDefinition("RBF event **{event}** for {resource.type} #{resource.id}.", "A fleet role was updated.", "fleet", "fleet.role.updated"),
             new WebhookEventDefinition("RBF event **{event}** for {resource.type} #{resource.id}.", "A fleet role was removed.", "fleet", "fleet.role.removed")
     );
-    public static final Set<String> TYPES = ALL.stream().map(WebhookEventDefinition::key).collect(java.util.stream.Collectors.toUnmodifiableSet());
+    public static final Set<String> TYPES = ALL.stream().map(WebhookEventDefinition::key)
+            .collect(Collectors.toUnmodifiableSet());
 
     private WebhookEventCatalog() { }
 }
