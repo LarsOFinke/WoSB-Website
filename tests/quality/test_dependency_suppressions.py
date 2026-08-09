@@ -63,3 +63,46 @@ def test_policy_fails_when_nvd_fix_is_fetchable():
         policy, None, lambda cve, key: {"vulnerabilities": [{"cve": record}]},
         lambda package, version, repository: True,
     ) == ["CVE-1: NVD reports a fetchable patched version (11.0.25)"]
+
+
+def test_policy_checks_all_embedded_artifacts_before_allowing_suppression():
+    policy = {"policies": [{
+        "cve": "CVE-1", "vendor": "apache", "product": "tomcat",
+        "package_urls": [
+            "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@11.0.24",
+            "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24",
+        ],
+        "current_version": "11.0.24", "action": "allow-unfixed-only",
+        "availability": {"type": "maven", "repository": "https://repo.example.invalid/maven2"},
+    }]}
+    record = cve_record(match("cpe:2.3:a:apache:tomcat:*:*:*:*:*:*:*:*", versionEndExcluding="11.0.25"))
+    calls = []
+
+    def available(package, version, repository):
+        calls.append(package)
+        return package.endswith("tomcat-embed-core@11.0.24")
+
+    assert validate_policy(
+        policy, None, lambda cve, key: {"vulnerabilities": [{"cve": record}]}, available,
+    ) == []
+    assert calls == [
+        "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@11.0.24",
+        "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24",
+    ]
+
+
+def test_policy_fails_when_every_embedded_artifact_is_fetchable():
+    policy = {"policies": [{
+        "cve": "CVE-1", "vendor": "apache", "product": "tomcat",
+        "package_urls": [
+            "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@11.0.24",
+            "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24",
+        ],
+        "current_version": "11.0.24", "action": "allow-unfixed-only",
+        "availability": {"type": "maven", "repository": "https://repo.example.invalid/maven2"},
+    }]}
+    record = cve_record(match("cpe:2.3:a:apache:tomcat:*:*:*:*:*:*:*:*", versionEndExcluding="11.0.25"))
+    assert validate_policy(
+        policy, None, lambda cve, key: {"vulnerabilities": [{"cve": record}]},
+        lambda package, version, repository: True,
+    ) == ["CVE-1: NVD reports a fetchable patched version (11.0.25)"]

@@ -2,7 +2,11 @@
   "policies": [
     {
       "cve": "CVE-2026-66299",
-      "package_url": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24",
+      "package_urls": [
+        "pkg:maven/org.apache.tomcat.embed/tomcat-embed-core@11.0.24",
+        "pkg:maven/org.apache.tomcat.embed/tomcat-embed-el@11.0.24",
+        "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24"
+      ],
       "vendor": "apache",
       "product": "tomcat",
       "current_version": "11.0.24",

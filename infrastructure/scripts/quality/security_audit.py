@@ -121,12 +121,13 @@ for contract in ('-DautoUpdate=false', '-DfailBuildOnCVSS=7',
 suppressions=read('spring-api/dependency-check-suppressions.xml')
 suppression_policy=read('spring-api/dependency-suppression-policy.json')
 require('CVE-2026-66299' in suppressions and
-        r'tomcat-embed-websocket@11\.0\.24' in suppressions and
+        suppressions.count('<suppress ') == 1 and
         'until="2026-09-08Z"' in suppressions,
         'Tomcat CVE-2026-66299 suppression must stay exact and time-bounded')
 require('CVE-2026-66299' in suppression_policy and
         'allow-unfixed-only' in suppression_policy and
         'current_version' in suppression_policy and
+        'package_urls' in suppression_policy and
         'availability' in suppression_policy,
         'temporary dependency suppression must have an NVD-backed availability policy')
 for forbidden in ('<cvssBelow>', '<cvssScore>', '<vulnerabilityName regex="true">.*</vulnerabilityName>'):

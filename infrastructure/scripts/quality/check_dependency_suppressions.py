@@ -121,14 +121,14 @@ def validate_policy(policy: dict, api_key: str | None, fetch=fetch_cve,
         current = version_key(item["current_version"])
         newer_fixes = sorted(fix for fix in fixes if version_key(fix) > current)
         if newer_fixes:
-            package_url = item.get("package_url")
+            package_urls = item.get("package_urls") or ([item["package_url"]] if item.get("package_url") else [])
             availability = item.get("availability")
-            if package_url and availability:
+            if package_urls and availability:
                 repository = availability.get("repository", MAVEN_CENTRAL_URL)
-                newer_fixes = [fix for fix in newer_fixes
-                               if available(package_url, fix, repository)]
+                newer_fixes = [fix for fix in newer_fixes if all(
+                    available(package_url, fix, repository) for package_url in package_urls)]
             if newer_fixes:
-                label = "fetchable patched" if package_url and availability else "patched"
+                label = "fetchable patched" if package_urls and availability else "patched"
                 failures.append(f"{cve_id}: NVD reports a {label} version ({', '.join(newer_fixes)})")
     return failures
 
