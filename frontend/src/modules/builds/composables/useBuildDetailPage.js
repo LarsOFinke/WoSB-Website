@@ -1,6 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
 import slotPlaceholderSrc from '@/assets/slot-placeholder.svg'
-import { buildCategoryVisuals, buildCrewVisuals } from '@/modules/builds/buildVisuals'
+import { buildCategoryVisuals, buildCrewVisuals, buildOptionVisual } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 import { useLocale } from '@/locales'
 import { addBuildUpvote, getBuild, getBuildOptions, removeBuildUpvote } from '@/modules/builds/api/builds'
@@ -68,8 +68,7 @@ export function useBuildDetailPage(props) {
 
   function optionImage(categoryKey, name) {
     if (!name) return categoryFallbackImages[categoryKey] || slotPlaceholderSrc
-    return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url)
-      || categoryFallbackImages[categoryKey]
+    return buildOptionVisual(absoluteFileUrl(optionMeta(categoryKey, name)?.image_url), categoryKey, categoryFallbackImages[categoryKey])
       || slotPlaceholderSrc
   }
 

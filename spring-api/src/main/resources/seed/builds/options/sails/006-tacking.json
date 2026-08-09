@@ -10,5 +10,5 @@
     "turning_cruising_speed_bonus_knots": 2,
     "cruising_maneuverability_pct": -20
   },
-  "image_url": "/build-assets/options/sails/tacking.svg"
+  "image_url": "/build-assets/neutral/options/sails/tacking.svg"
 }

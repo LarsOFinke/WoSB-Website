@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import { buildCategoryVisuals, buildCrewVisuals, buildVisualUrl } from '@/modules/builds/buildVisuals'
+import { buildCategoryVisuals, buildCrewVisuals, buildOptionVisual, buildVisualUrl } from '@/modules/builds/buildVisuals'
 import { absoluteFileUrl } from '@/modules/files/api/files'
 
 export function useBuildCatalog({ ships, optionCatalog, selectedShip, optionLabel, t, slotPlaceholderSrc }) {
@@ -30,8 +30,7 @@ export function useBuildCatalog({ ships, optionCatalog, selectedShip, optionLabe
   }
 
   function optionImage(categoryKey, name) {
-    return absoluteFileUrl(optionMeta(categoryKey, name)?.image_url)
-      || buildCategoryVisuals[categoryKey]
+    return buildOptionVisual(absoluteFileUrl(optionMeta(categoryKey, name)?.image_url), categoryKey, buildCategoryVisuals[categoryKey])
       || slotPlaceholderSrc
   }
 

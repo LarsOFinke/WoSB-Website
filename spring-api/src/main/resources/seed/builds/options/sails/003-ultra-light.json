@@ -10,5 +10,5 @@
     "cruising_maneuverability_pct": 15,
     "cruising_turn_speed_penalty_pct": -30
   },
-  "image_url": "/build-assets/options/sails/ultra-light.svg"
+  "image_url": "/build-assets/neutral/options/sails/ultra-light.svg"
 }

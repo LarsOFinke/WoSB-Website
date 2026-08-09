@@ -1,16 +1,28 @@
 # Build-option icon catalog
 
 The Build Designer uses versioned, repository-owned assets under
-`frontend/public/build-assets/options/`. Seed records reference these assets via
+`frontend/public/build-assets/neutral/` and the authorized game-only source
+tree `frontend/game-assets/`. Seed records reference these assets via
 `image_url`; builds continue to store only option references and never copy an
 icon or calculated value.
 
+## Asset modes
+
+The frontend reads `VITE_BUILD_ASSET_MODE` and accepts `neutral` or `game`.
+`neutral` is the default and is safe for public deployments without permission
+to publish game-derived imagery. It uses the original neutral SVG catalog and
+category visuals for specialists and upgrades. `game` is an explicit opt-in for
+deployments where use of the game-derived crops is authorized; Vite emits the
+game source tree only for that mode. The central
+`buildOptionVisual` resolver prevents game paths from being rendered in neutral
+mode.
+
 ## Sources
 
-- **32 ship upgrades:** direct crops from the owned-ship upgrade screenshots in
+- **32 ship upgrades (game mode):** direct crops from the owned-ship upgrade screenshots in
   `docs/ingame-screenshots/ships/`. The ordinary categories use the De Zeven
   Provincien panels; mortar upgrades use the Adventure panel.
-- **51 specialists:** direct portrait crops from the four roster screenshots in
+- **51 specialists (game mode):** direct portrait crops from the four roster screenshots in
   `docs/ingame-screenshots/specialists/`.
 - **Sails and lanterns:** small SVG redraws using the shapes, dark framing and
   gold-accent visual language shown in the supplied inventory screenshots. The
@@ -32,6 +44,6 @@ seed JSON and are displayed next to each option in the icon-aware picker.
 - keyboard navigation, Escape handling and outside-click closing;
 - a mobile bottom-sheet layout that does not overflow the viewport.
 
-Adding a new screenshot-backed option requires both an `image_url` in its seed
-record and a committed public asset. Backend and frontend tests enforce this
-contract.
+Adding a new game-derived option requires an `image_url` under the `game`
+asset tree and a committed public asset. Neutral-mode options must resolve to a
+neutral category visual. Backend and frontend tests enforce this contract.

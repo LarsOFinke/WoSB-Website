@@ -10,7 +10,8 @@ The screenshots are intentionally versioned with the repository as source eviden
 
 ## Derived website assets
 
-Cropped upgrade and specialist icons derived from these originals live under
-`frontend/public/build-assets/options/`. Their source mapping and the rules for
+Derived upgrade and specialist icons live in the authorized game-only source
+tree `frontend/game-assets/`. Neutral redraws live under
+`frontend/public/build-assets/neutral/`. Their source mapping and the rules for
 adding new assets are documented in [`../BUILD_OPTION_ICONS.md`](../BUILD_OPTION_ICONS.md).
 The original screenshots in this directory remain the audit source of truth.

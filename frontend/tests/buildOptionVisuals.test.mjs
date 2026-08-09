@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import test from 'node:test'
+import { buildAssetMode, buildOptionVisual } from '../src/modules/builds/buildVisuals.js'
 
 const buildEditor = readFileSync(new URL('../src/modules/builds/pages/BuildCreatePage.vue', import.meta.url), 'utf8')
 const picker = readFileSync(new URL('../src/modules/builds/components/BuildOptionPicker.vue', import.meta.url), 'utf8')
@@ -18,6 +19,10 @@ function publicAsset(imageUrl) {
   return new URL(`../public/${String(imageUrl).replace(/^\//, '')}`, import.meta.url)
 }
 
+function gameAsset(imageUrl) {
+  return new URL(`../${String(imageUrl).replace(/^\/build-assets\/game\//, 'game-assets/')}`, import.meta.url)
+}
+
 test('build editor uses an icon-aware option picker for equipment and specialists', () => {
   assert.match(buildEditor, /import BuildOptionPicker/)
   assert.match(buildEditor, /v-model="form\.sails"[\s\S]*:options="sailPickerOptions"/)
@@ -31,13 +36,22 @@ test('build editor uses an icon-aware option picker for equipment and specialist
   assert.match(pickerCss, /\.build-option-picker-menu\s*\{[\s\S]*max-height:/)
 })
 
-test('every screenshot-backed visual catalog item resolves to a committed public asset', () => {
+test('catalog visual paths are separated into neutral and game asset trees', () => {
   for (const filename of ['sails', 'upgrades', 'lanterns', 'specialists']) {
     const rows = catalog(filename)
     assert.ok(rows.length > 0)
     for (const row of rows) {
-      assert.match(row.image_url, /^\/build-assets\/options\//)
-      assert.equal(existsSync(publicAsset(row.image_url)), true, `${filename}: ${row.name}`)
+      const expectedTree = ['upgrades', 'specialists'].includes(filename) ? 'game' : 'neutral'
+      assert.match(row.image_url, new RegExp(`^/build-assets/${expectedTree}/options/`))
+      const asset = expectedTree === 'game' ? gameAsset(row.image_url) : publicAsset(row.image_url)
+      assert.equal(existsSync(asset), true, `${filename}: ${row.name}`)
     }
   }
+})
+
+test('neutral mode replaces game-derived specialist and upgrade imagery', () => {
+  assert.equal(buildAssetMode, 'neutral')
+  assert.match(buildOptionVisual('/build-assets/game/options/specialists/corsair.png', 'special_crew'), /specialist\.svg$/)
+  assert.match(buildOptionVisual('/build-assets/game/options/upgrades/iron-plating.png', 'upgrade'), /upgrade\.svg$/)
+  assert.match(buildOptionVisual('/build-assets/neutral/options/sails/cheap.svg', 'sail'), /cheap\.svg$/)
 })

@@ -12,6 +12,17 @@ const specialistVisual = new URL('../../assets/build-visuals/specialist.svg', im
 const upgradeVisual = new URL('../../assets/build-visuals/upgrade.svg', import.meta.url).href
 const weaponVisual = new URL('../../assets/build-visuals/weapon.svg', import.meta.url).href
 
+export const BUILD_ASSET_MODES = Object.freeze({
+  NEUTRAL: 'neutral',
+  GAME: 'game',
+})
+
+const configuredAssetMode = import.meta.env?.VITE_BUILD_ASSET_MODE
+export const buildAssetMode = configuredAssetMode === BUILD_ASSET_MODES.GAME
+  ? BUILD_ASSET_MODES.GAME
+  : BUILD_ASSET_MODES.NEUTRAL
+export const isGameAssetMode = buildAssetMode === BUILD_ASSET_MODES.GAME
+
 export const BUILD_VISUAL_URLS = Object.freeze({
   ammunition: ammunitionVisual,
   consumable: consumableVisual,
@@ -58,4 +69,15 @@ export function buildCategoryVisualUrl(categoryKey, fallback = '') {
 
 export function buildCrewVisualUrl(roleKey, fallback = '') {
   return buildCrewVisuals[roleKey] ?? fallback
+}
+
+function isGameAssetUrl(imageUrl) {
+  return String(imageUrl || '').includes('/build-assets/game/')
+}
+
+export function buildOptionVisual(imageUrl, categoryKey, fallback = '') {
+  const neutralVisual = buildCategoryVisuals[categoryKey] ?? fallback
+  if (isGameAssetMode && imageUrl && isGameAssetUrl(imageUrl)) return imageUrl
+  if (!isGameAssetMode && isGameAssetUrl(imageUrl)) return neutralVisual
+  return imageUrl || neutralVisual
 }
