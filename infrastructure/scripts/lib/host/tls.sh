@@ -6,8 +6,14 @@ verify_tls_material() {
   local certificate="$1" private_key="$2" hostname="$3" minimum_seconds="${4:-604800}"
   [[ -s "$certificate" && -s "$private_key" ]] || die "TLS certificate or private key is missing."
   require_command openssl
-  openssl x509 -in "$certificate" -noout -checkhost "$hostname" >/dev/null 2>&1 \
-    || die "TLS certificate is not valid for APP_HOSTNAME=$hostname."
+  # OpenSSL versions differ in whether `x509 -checkhost` returns a non-zero
+  # status for a hostname mismatch. Fail closed unless the command both succeeds
+  # and explicitly reports a positive hostname match.
+  local hostname_check
+  if ! hostname_check="$(openssl x509 -in "$certificate" -noout -checkhost "$hostname" 2>&1)" \
+      || [[ "$hostname_check" != *"does match certificate"* ]]; then
+    die "TLS certificate is not valid for APP_HOSTNAME=$hostname."
+  fi
   local cert_key private_key_fingerprint
   cert_key="$(openssl x509 -in "$certificate" -pubkey -noout | openssl pkey -pubin -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"
   private_key_fingerprint="$(openssl pkey -in "$private_key" -pubout -outform DER 2>/dev/null | sha256sum | awk '{print $1}')"

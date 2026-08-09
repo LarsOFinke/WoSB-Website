@@ -129,6 +129,7 @@ behavior that static analysis cannot resolve.
   Avoid multiple bag fetches and eager collections.
 - Query-count tests cover critical list/detail assemblers;
   `infrastructure/scripts/quality/audit_spring_backend.py` enforces static invariants.
+- Go-live backend coverage is fail-closed: every production module owns a module-local test, the recursively discovered business layer and complete OpenAPI surface have executable global safety nets, module-local DTOs and JPA entities have runtime contracts, and JaCoCo enforces 80% line / 65% branch / 80% method coverage overall plus 60% line coverage and zero entirely missed classes per analyzed package. Only generator-owned root OpenAPI DTOs and static SQL catalogs are excluded from percentage coverage because dedicated generator/schema/SQL audits own those declarative surfaces.
 - New sort/filter paths include matching indexes or a documented reason why the
   existing access path is sufficient.
 

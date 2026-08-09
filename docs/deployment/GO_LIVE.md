@@ -1,6 +1,9 @@
 # Go-live checklist
 
-- Full CI is green for the exact release commit.
+- `VERSION`, Maven, frontend metadata and the OpenAPI contract carry the same release version.
+- `mvn clean verify` is green from `spring-api/` for the exact release tree, including Surefire, packaging and all JaCoCo checks.
+- `make validate` and full CI are green for the exact release commit; no required toolchain/integration/container stage was skipped.
+- `git status --short` was reviewed before commit; local `patches/*.patch` payloads are not tracked or staged.
 - Deployment artifact checksum and provenance are stored.
 - Staging installed the same artifact and passed smoke tests.
 - Flyway builds an empty database and upgrades the supported predecessor snapshot.

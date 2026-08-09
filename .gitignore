@@ -102,3 +102,7 @@ rbf-backup-enrollment-*.json
 rbf-recovery-identity*.txt
 rbf-recovery-readonly-ed25519
 rbf-recovery-readonly-ed25519.pub
+
+# Local patch transfer/download workspace (directory retained, payloads unversioned)
+/patches/*
+!/patches/.gitkeep

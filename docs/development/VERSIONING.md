@@ -23,7 +23,29 @@ Before every release:
 2. Verify the next number with `bash .agents/scripts/next-version.sh patch|minor|major`.
 3. Change `VERSION` plus Maven, frontend, and API contract versions together; then update
    generated references through their generator.
-4. Run the complete release gate, commit, and build the artifact only from that clean commit.
+4. Run the complete release gate, inspect the diff/status, commit the verified tree, push the
+   exact release commit, and build/deploy only from that commit.
+
+`patches/` is deliberately a local transfer/download workspace rather than a release archive.
+Patch payloads are ignored by Git and must not be committed; only `patches/.gitkeep` keeps the
+directory in fresh clones. If historical patch payloads were already tracked, remove them from
+the index with `git rm --cached` while leaving the local files in place. The source commits and
+`CHANGELOG.md` are the authoritative history, avoiding a second patch-based history that can drift
+from the code it once modified.
+
+Before committing a release, verify the four version sources agree and that no local patch payload
+is staged:
+
+```bash
+cat VERSION
+mvn -q -f spring-api/pom.xml help:evaluate -Dexpression=project.version -DforceStdout
+node -p "require('./frontend/package.json').version"
+python3 - <<'PY'
+import json
+print(json.load(open('openapi/source/root.json'))['info']['version'])
+PY
+git status --short
+```
 
 Activated or otherwise published release versions and their artifacts are immutable and never
 reused. Pre-releases may use SemVer suffixes such as `-rc.1`; production artifacts keep the

@@ -1,5 +1,4 @@
 ## 2026-07-28 - Repository spring clean and security audit
-
 - Discord webhook credentials are now stored as authenticated, versioned ciphertext with automatic plaintext migration and key rotation; deployment setup generates a database-independent key, and decrypted targets are revalidated against the Discord allowlist immediately before delivery.
 - Removed the obsolete Discord avatar override from API, service, model and database; all webhook deliveries keep the public fleet icon.
 - Added offline repository-specific security invariants plus OSV pull-request, main-branch and weekly dependency scans.
@@ -18,6 +17,16 @@
 
 ## Unreleased
 
+## 1.2.0 - 2026-08-09
+
+- Raised the deployable application release to 1.2.0 across Maven, frontend metadata and the OpenAPI contract. The `patches/` directory remains available as a local transfer/download workspace, while patch payloads are ignored by Git so release history stays in commits and the changelog instead of duplicated patch archives.
+
+
+
+- Expanded the post-Surefire JaCoCo pass with authenticated controller execution, empty/populated business dependency matrices, type-aware populated synthetic rows/collections/optionals, transaction cleanup-hook coverage, and an isolated application-bootstrap delegation test; coverage thresholds remain unchanged and must be satisfied by additional executed production paths rather than by lowering release gates.
+- Repaired the first full Maven backend-test pass after the go-live coverage expansion: synthetic surface tests now build type-correct nested generic/record values and neutral collaborator returns instead of producing harness-only `NullPointerException`/`ClassCastException` failures, resource-backed binary DTOs are no longer forced through JSON serialization, and the Build-service bulk-ID regression uses a null-tolerant input list. The run also exposed and fixed real numeric-normalization defects in Build effect/stat/catalog handling so mathematically integral values remain `Long` rather than being silently retained as `Double`; dynamic specialist effects are normalized before their first map insertion as well as during later merges, while genuinely fractional values remain `Double`.
+- Expanded and independently hardened the Spring backend go-live test strategy so every production class belongs to exactly one enforced test strategy and every production module has module-local coverage. Every discovered business component now requires a module-local focused semantic test in addition to the recursive executable public-entry-point safety net; controllers, repositories, mappers, configuration, persistence/shared helpers, filters, generated/module DTOs, entities and SQL catalogs each have explicit executable or structural contracts. The complete OpenAPI surface retains anonymous/CSRF boundary coverage, and Maven verification fails below 80% line, 65% branch, 80% method or 60% per-package line coverage with no completely missed analyzed production class. JaCoCo exclusions remain restricted to generator-owned root OpenAPI DTOs and static SQL catalogs so executable entity/module-DTO logic cannot disappear behind broad exclusions.
+- Hardened TLS certificate hostname validation across OpenSSL versions that may print a mismatch while still returning success; certificate activation now fails closed unless `openssl x509 -checkhost` explicitly reports a positive hostname match, with a regression test for the legacy exit-status behavior.
 - Added correlation-first API diagnostics: every API response receives `X-Request-Id`, central error/security records carry the same ID, and opt-in payload-free request lifecycle logging exposes normalized route, status and duration for automated tests and short debugging windows.
 - Expanded Build printout cache regression coverage across Flyway V1-to-current upgrades, fresh V8 schema application, service-level cache reuse/invalidation and a real HTTP/PostgreSQL/filesystem lifecycle; migration compatibility tests now derive pending migration counts instead of hard-coding them.
 - Split hand-maintained OpenAPI operations/schemas, Build stat definitions, Build option seeds and ship-rate seeds into responsibility-scoped JSON files while retaining deterministic generated compatibility artifacts and stable catalog order; the repository gate now caps hand-maintained JSON at 420 lines.

@@ -12,6 +12,7 @@ python3 "$ROOT_DIR/infrastructure/scripts/quality/check_repository.py"
 python3 "$ROOT_DIR/infrastructure/scripts/quality/check_documentation.py"
 python3 "$ROOT_DIR/infrastructure/scripts/quality/security_audit.py"
 python3 "$ROOT_DIR/infrastructure/scripts/quality/audit_spring_backend.py"
+python3 "$ROOT_DIR/infrastructure/scripts/quality/check_backend_test_coverage.py"
 python3 "$ROOT_DIR/infrastructure/scripts/quality/audit_css.py"
 if command -v javac >/dev/null 2>&1; then
   java_check_dir="$(mktemp -d)"

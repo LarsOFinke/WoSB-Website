@@ -207,7 +207,8 @@ public class BuildCatalogRepository {
 
     private static Number normalized(Number value) {
         double decimal = value.doubleValue();
-        return decimal == Math.rint(decimal) ? value.longValue() : decimal;
+        if (decimal == Math.rint(decimal)) return Long.valueOf(value.longValue());
+        return Double.valueOf(decimal);
     }
     private static Number number(Object value) { return (Number) value; }
     private static String string(Map<String, Object> row, String key) { return String.valueOf(row.get(key)); }

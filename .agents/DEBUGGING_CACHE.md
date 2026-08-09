@@ -90,6 +90,13 @@ output under `.diagnostics/`.
   ships/options/roles/features semantically; never import historical numeric IDs, user/auth data, or
   master data from the complete Python dump. Runbook: `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md`.
 - Production data, volumes, `shared/data`, and active releases are never valid debug cleanup targets.
+- When Maven reports stale source lines or impossible old test behavior, trust the absolute path it
+  prints for `target`/Surefire reports. Verify `pwd -P` and `realpath pom.xml`; a shell can remain
+  inside a directory that was later moved to Trash, and `mvn clean` only cleans that physical tree.
+- Generic coverage/surface harness failures are actionable only after synthetic objects are internally
+  valid. Constructor validation should trigger a second type-correct construction attempt rather than
+  a partial Mockito object with null internals. Mockito stubs/verifications must use matchers for all
+  arguments once any matcher is used.
 
 ## Cache maintenance
 

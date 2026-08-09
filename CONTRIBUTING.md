@@ -16,3 +16,5 @@ make validate
 ```
 
 Commits and pull requests should state the problem, solution, migration/seed impact, and test evidence.
+
+`patches/` is a local transfer/download workspace. Patch payloads in that directory are intentionally ignored by Git; the committed source tree and changelog are the authoritative project history. Keep only `patches/.gitkeep` versioned.

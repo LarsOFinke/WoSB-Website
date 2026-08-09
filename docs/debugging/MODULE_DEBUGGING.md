@@ -160,6 +160,34 @@ python3 infrastructure/scripts/quality/audit_sql_runtime.py
 mvn -f spring-api/pom.xml -Dtest=ApiSurfaceIntegrationTest test
 ```
 
+## Maven and generic test-harness failures
+
+When a Maven result appears to contradict the checked-out source, first prove which physical project
+was built:
+
+```bash
+cd spring-api
+pwd -P
+realpath pom.xml
+mvn help:evaluate -Dexpression=project.basedir -q -DforceStdout
+mvn help:evaluate -Dexpression=project.build.directory -q -DforceStdout
+```
+
+The absolute Surefire-report path in Maven output is decisive evidence for the active build tree. A
+terminal can continue using a directory inode after that directory was moved elsewhere (for example
+into a desktop Trash folder); `mvn clean` then rebuilds that same moved project and does not search for
+a newer extraction. Open a fresh shell or `cd` explicitly to the intended tree before investigating
+apparently stale source failures.
+
+Generic component/service surface tests and branch-matrix tests are coverage/safety nets, not permission
+to create impossible object state. Their synthetic constructors, records, rows, collections and mocked
+returns must preserve declared runtime types and required invariants. If an empty constructor probe is
+rejected legitimately, retry with type-correct populated values before falling back to a mock; do not
+accept a partial object whose internal fields are null. Expected domain exceptions may be probed, but
+unsafe harness-caused `NullPointerException`, `ClassCastException`, linkage/verification errors remain
+failures. With Mockito, never mix raw arguments and matchers in one invocation: use `eq(...)` together
+with `any*()` consistently.
+
 ## Completing a debugging change
 
 - Root cause fixed rather than the symptom.

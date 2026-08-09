@@ -1,6 +1,6 @@
 # Project Cache for Repository Agents
 
-> Reviewed on 2026-08-08. This cache is a navigation index, not an authoritative
+> Reviewed on 2026-08-09. This cache is a navigation index, not an authoritative
 > source. Before making changes, always read `AGENTS.md`, the affected files,
 > callers, tests, configuration, and documentation. In case of conflict, the
 > source code or the primary source named below takes precedence.
@@ -53,13 +53,16 @@ openapi/         versioned external HTTP specification
 infrastructure/  Compose and central script modules for quality, generation, and runtime
 tests/recovery/  language-neutral recovery/remote-sync contract tests
 docs/            architecture, development, operations, reference, and audits
+patches/         local patch/download workspace; only `.gitkeep` is versioned
 .github/         CI, security, release, and deployment workflows
 ```
 
 Do not edit or version by hand: `frontend/src/locales/generated/`,
 `frontend/dist/`, `node_modules/`, `spring-api/target/`, Python caches, local
-`.env` files, runtime data, and release artifacts. The existing `release/` and
-`release-arm64/` directories are generated/ignored output.
+`.env` files, runtime data, release artifacts, or patch payloads under `patches/`.
+The existing `release/` and `release-arm64/` directories are generated/ignored
+output. `patches/` intentionally remains present for local transfer/download use,
+but Git history and `CHANGELOG.md` are the authoritative record of applied work.
 
 ## Backend navigation
 
@@ -96,7 +99,11 @@ a directory name alone.
   modules and `autoLocalizationCatalog.js` are exempt.
 - Mockito is loaded in the Maven test process as an explicit startup agent; the
   dependency property resolves the path even when the local Maven repository differs.
-  Dynamic self-attach is not part of the test workflow.
+  Dynamic self-attach is not part of the test workflow. Generic surface/branch harnesses
+  must construct internally valid objects and type-correct collaborator returns; expected
+  domain validation exceptions are acceptable probes, but harness-caused `NullPointerException`,
+  `ClassCastException`, linkage errors, or mixed Mockito raw/matcher arguments are test defects
+  to fix rather than production failures to suppress.
 - Schema changes only as new immutable Flyway migrations. Existing systems retain
   the unchanged V1 history; new databases use the B2 marker and the domain-separated
   V3–V7 migrations. New schema work starts as a small forward migration from V8 onward.
@@ -294,9 +301,9 @@ The security scan of August 5, 2026 required targeted Spring Boot dependency ove
 verified set that must be updated together; check new scanner findings against vendor advisories
 first and do not suppress them indiscriminately.
 
-`infrastructure/scripts/quality/validate.sh full` runs static repository, security, Spring,
+`infrastructure/scripts/quality/validate.sh full` runs static repository, security, Spring, backend-test-completeness,
 SQL-runtime, and CSS audits, Java syntax validation, infrastructure/update tests, recovery pytest,
-`mvn verify`, frontend tests/build/Chromium smoke tests, and finally `--strict-tree`.
+`mvn verify`, frontend tests/build/Chromium smoke tests, and finally `--strict-tree`. The backend completeness gate requires a module-local test for every production module, classifies every production Java class into exactly one explicit test strategy, and rejects any business component that lacks a module-local focused semantic test in addition to the recursive executable public-entry-point surface. It inventories controllers, repositories, mappers, entities, generated/module DTOs, filters, configuration and persistence/shared helpers. Maven/JaCoCo then enforces the go-live floor of 80% lines, 65% branches and 80% methods overall, at least 60% lines per analyzed package, and no completely missed analyzed production class. Only generator-owned root OpenAPI DTOs and static SQL catalogs are excluded from the percentage metric; module-local DTOs, JPA entities and infrastructure-facing Java helpers remain covered by executable tests.
 Install Playwright Chromium locally once with `npx playwright install chromium` inside `frontend/`.
 For small changes, run focused tests first and then the affected gates; for cross-cutting changes,
 run `make validate`.
@@ -362,7 +369,7 @@ The security workflow sets `failBuildOnUnusedSuppressionRule=true`. Therefore a 
 
 ### 2026-08-08 security/TLS backlog closure
 
-The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. Production must use a public hostname, `TLS_MODE=letsencrypt` and `LETSENCRYPT_STAGING=false`; test may use staging/self-signed. Never copy certificates from test to production: each target owns `shared/data/{certs,letsencrypt}` and obtains its own certificate. `sync-certificate.sh` validates hostname, key pairing and remaining lifetime before atomic replacement.
+The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. Production must use a public hostname, `TLS_MODE=letsencrypt` and `LETSENCRYPT_STAGING=false`; test may use staging/self-signed. Never copy certificates from test to production: each target owns `shared/data/{certs,letsencrypt}` and obtains its own certificate. `sync-certificate.sh` validates hostname, key pairing and remaining lifetime before atomic replacement. Hostname validation fails closed across OpenSSL versions: `x509 -checkhost` must both execute successfully and explicitly report a positive certificate match, because older versions may print a mismatch while returning status 0.
 
 Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, Spring multipart and service quota/type/signature layers. Frontend route guards and upload checks are defense-in-depth only; backend authorization and validation remain authoritative. Update activation still requires coordinated pre-deployment backups and restores the previous release/data on failed activation. Debug API 500s through the stateful HTTP integration suites and SQL runtime audit rather than ad-hoc production container sessions.
 

@@ -6,6 +6,7 @@ fail(){ echo "[tls-safety] $*" >&2; exit 1; }
 for command in openssl grep; do
   command -v "$command" >/dev/null 2>&1 || fail "missing baseline command: $command"
 done
+real_openssl="$(command -v openssl)"
 
 # Functional certificate/key/hostname check.
 openssl req -x509 -nodes -newkey rsa:2048 -days 30 \
@@ -24,6 +25,32 @@ if (
   verify_tls_material "$work/cert.pem" "$work/key.pem" production.example.org 3600
 ) >/dev/null 2>&1; then
   fail 'hostname mismatch was accepted'
+fi
+
+# Some OpenSSL versions historically reported a hostname mismatch in output while
+# still returning status 0. Simulate that behavior so validation must fail closed
+# based on the positive match result, not only the process exit status.
+mkdir -p "$work/bin"
+cat > "$work/bin/openssl" <<'WRAPPER'
+#!/usr/bin/env bash
+set -u
+if [[ " $* " == *" x509 "* && " $* " == *" -checkhost "* ]]; then
+  output="$($REAL_OPENSSL "$@" 2>&1)"
+  printf '%s\n' "$output"
+  exit 0
+fi
+exec "$REAL_OPENSSL" "$@"
+WRAPPER
+chmod +x "$work/bin/openssl"
+if (
+  export REAL_OPENSSL="$real_openssl"
+  export PATH="$work/bin:$PATH"
+  INFRA_DIR="$ROOT_DIR/infrastructure"
+  source "$ROOT_DIR/infrastructure/scripts/lib/common.sh"
+  source "$ROOT_DIR/infrastructure/scripts/lib/host/tls.sh"
+  verify_tls_material "$work/cert.pem" "$work/key.pem" production.example.org 3600
+) >/dev/null 2>&1; then
+  fail 'hostname mismatch was accepted when OpenSSL returned status 0'
 fi
 
 grep -Fq -- 'Production requires TLS_MODE=letsencrypt' "$ROOT_DIR/infrastructure/scripts/lib/env.sh" || fail 'production TLS mode is not enforced'

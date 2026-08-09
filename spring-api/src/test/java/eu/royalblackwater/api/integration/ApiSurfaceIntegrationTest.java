@@ -110,6 +110,57 @@ class ApiSurfaceIntegrationTest {
     }
 
     @TestFactory
+    Stream<DynamicTest> everyContractOperationEnforcesItsAnonymousSecurityBoundary() throws Exception {
+        SessionCookies anonymousCsrf = anonymousCsrf();
+        List<DynamicTest> tests = new ArrayList<>();
+        for (ContractOperation operation : contractOperations()) {
+            String path = requestPath(operation, false);
+            tests.add(DynamicTest.dynamicTest("anonymous " + operation.method() + " " + operation.template(), () -> {
+                String mediaType = requestBodyMediaType(operation);
+                SessionCookies csrf = "GET".equals(operation.method()) ? null : anonymousCsrf;
+                HttpResponse<String> response = "multipart/form-data".equals(mediaType)
+                        ? sendEmptyMultipart(operation.method(), path, csrf)
+                        : send(operation.method(), path, mediaType == null ? null : "{", csrf, true);
+                if (isPublicOperation(operation)) {
+                    assertThat(response.statusCode())
+                            .as("public %s %s must remain anonymously reachable; response=%s",
+                                    operation.method(), path, excerpt(response.body()))
+                            .isNotIn(401, 403);
+                } else {
+                    assertThat(response.statusCode())
+                            .as("protected %s %s must reject anonymous access after CSRF has been satisfied; response=%s",
+                                    operation.method(), path, excerpt(response.body()))
+                            .isEqualTo(401);
+                }
+            }));
+        }
+        assertThat(tests).as("anonymous security cases").hasSize(177);
+        return tests.stream();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> everyAuthenticatedWriteRequiresCsrf() throws Exception {
+        SessionCookies administrator = login();
+        List<DynamicTest> tests = new ArrayList<>();
+        for (ContractOperation operation : contractOperations()) {
+            if ("GET".equals(operation.method()) || isCsrfBootstrapOperation(operation)) continue;
+            String path = requestPath(operation, false);
+            tests.add(DynamicTest.dynamicTest("missing CSRF " + operation.method() + " " + operation.template(), () -> {
+                String mediaType = requestBodyMediaType(operation);
+                HttpResponse<String> response = "multipart/form-data".equals(mediaType)
+                        ? sendEmptyMultipartWithoutCsrf(operation.method(), path, administrator)
+                        : sendWithoutCsrf(operation.method(), path, mediaType == null ? null : "{}", administrator);
+                assertThat(response.statusCode())
+                        .as("authenticated write without CSRF must be rejected: %s %s response=%s",
+                                operation.method(), path, excerpt(response.body()))
+                        .isEqualTo(403);
+            }));
+        }
+        assertThat(tests).as("authenticated CSRF boundary cases").isNotEmpty();
+        return tests.stream();
+    }
+
+    @TestFactory
     Stream<DynamicTest> multipartOperationsRejectWrongContentTypesWithoutServerErrors() throws Exception {
         SessionCookies administrator = login();
         List<DynamicTest> tests = new ArrayList<>();
@@ -335,6 +386,32 @@ class ApiSurfaceIntegrationTest {
         return http.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    private HttpResponse<String> sendWithoutCsrf(String method, String path, String body, SessionCookies session)
+            throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(origin() + path))
+                .header("Origin", origin())
+                .header("Cookie", session.cookieHeader());
+        if (body != null) {
+            request.header("Content-Type", "application/json");
+            request.method(method, HttpRequest.BodyPublishers.ofString(body));
+        } else {
+            request.method(method, HttpRequest.BodyPublishers.noBody());
+        }
+        return http.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> sendEmptyMultipartWithoutCsrf(String method, String path, SessionCookies session)
+            throws Exception {
+        String boundary = "rbf-api-surface-csrf-boundary";
+        HttpRequest request = HttpRequest.newBuilder(URI.create(origin() + path))
+                .header("Origin", origin())
+                .header("Cookie", session.cookieHeader())
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .method(method, HttpRequest.BodyPublishers.ofString("--" + boundary + "--\r\n"))
+                .build();
+        return http.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
     private HttpResponse<String> sendEmptyMultipart(String method, String path, SessionCookies session) throws Exception {
         String boundary = "rbf-api-surface-boundary";
         HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(origin() + path))
@@ -348,6 +425,13 @@ class ApiSurfaceIntegrationTest {
         return http.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
+    private SessionCookies anonymousCsrf() throws Exception {
+        HttpResponse<String> response = send("GET", "/api/auth/me", null, null, true);
+        assertThat(response.statusCode()).as("anonymous CSRF bootstrap response=%s", excerpt(response.body())).isEqualTo(200);
+        String csrf = cookieValue(response, "XSRF-TOKEN");
+        return new SessionCookies("XSRF-TOKEN=" + csrf, csrf);
+    }
+
     private SessionCookies login() throws Exception {
         HttpResponse<String> login = send("POST", "/api/auth/login",
                 "{\"username\":\"admin\",\"password\":\"" + ADMIN_PASSWORD + "\"}", null, true);
@@ -355,6 +439,25 @@ class ApiSurfaceIntegrationTest {
         String session = "rbf_hub_session=" + cookieValue(login, "rbf_hub_session");
         HttpResponse<String> me = send("GET", "/api/auth/me", null, new SessionCookies(session, ""), true);
         return new SessionCookies(session, cookieValue(me, "XSRF-TOKEN"));
+    }
+
+    private static boolean isCsrfBootstrapOperation(ContractOperation operation) {
+        return "POST".equals(operation.method()) && List.of(
+                "/api/auth/login", "/api/auth/register",
+                "/api/privacy/cookie-consent", "/api/privacy/contact").contains(operation.template());
+    }
+
+    private static boolean isPublicOperation(ContractOperation operation) {
+        String path = operation.template();
+        if ("GET".equals(operation.method())) {
+            return List.of(
+                    "/api/health", "/api/health/ready", "/api/auth/me", "/api/legal-notice",
+                    "/api/privacy/cookie-consent", "/api/privacy/cookie-policy", "/api/fleets/public/official",
+                    "/api/files/{file_id}/content").contains(path);
+        }
+        return "POST".equals(operation.method()) && List.of(
+                "/api/auth/login", "/api/auth/logout", "/api/auth/register",
+                "/api/privacy/cookie-consent", "/api/privacy/contact").contains(path);
     }
 
     private static void assertNoServerError(HttpResponse<String> response, String method, String path) {

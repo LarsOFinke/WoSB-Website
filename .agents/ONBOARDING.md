@@ -69,6 +69,7 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | API usage/endpoints | `docs/reference/API.md`, `docs/reference/API_ENDPOINTS.md` |
 | Tests and gates | `docs/development/TESTING.md`, `Makefile`, `infrastructure/scripts/quality/validate.sh` |
 | Versioning/release class | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
+| Patch transfer/release prep | `patches/`, `docs/development/VERSIONING.md`, `docs/deployment/GO_LIVE.md` |
 | Frontend feature | `frontend/src/modules/<feature>/` |
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, affected module styles |
 | Security | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
@@ -84,6 +85,9 @@ modules. The release artifact uses an explicit runtime allowlist; `quality/` and
 
 Use `rg` or `rg --files` first for file searches. Do not edit generated API DTOs or
 locale output by hand; controller routes are module code and are audited against OpenAPI.
+`patches/` is a local transfer/download workspace: patch payloads are ignored and must not
+be staged or committed. Keep only `patches/.gitkeep` versioned; applied source changes,
+release notes, and commits are the durable history.
 
 ## Known stable state
 
@@ -148,10 +152,12 @@ or an actionable failure message and continue with that result. Do not restart a
 still-running process merely because no new output has appeared.
 
 Local, functionally complete changes may be committed as small traceable units when
-explicitly requested. Commit and push remain two separate decisions: batch pushes
-deliberately and perform them only when explicitly requested, because a push to
-`main` starts external CI including the expensive NVD dependency check. A local
-commit does not require an immediate push.
+explicitly requested. Before a release commit, run the complete required gate, confirm
+version synchronization, inspect `git status --short`, and ensure no `patches/*.patch`
+payload is staged. Commit and push remain two separate decisions: batch pushes deliberately
+and perform them only when explicitly requested, because a push to `main` starts external
+CI including the expensive NVD dependency check. A local commit does not require an immediate
+push; deploy only from the exact verified release commit after the requested push succeeds.
 
 ## Updating the cache
 

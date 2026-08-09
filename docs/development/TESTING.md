@@ -28,8 +28,35 @@ It includes:
 9. Release artifact inventory, tamper and safe-extraction tests.
 10. Backup-set and recovery-bundle contract tests.
 11. Shell syntax, Compose, container and repository hygiene checks.
+12. Backend test-completeness auditing: every production Java class must belong to exactly one explicit test strategy and every production backend module must own module-local tests. Every discovered business component additionally requires a module-local focused semantic test; the global executable surfaces then invoke every discovered business-layer public entry point (including components outside a direct `service/` directory), every OpenAPI operation, every generated DTO runtime contract, every module-local DTO record and every JPA entity read surface. Focused regressions cover stateful entity transitions, request/session filters, controller response helpers, persistence primitives and Build payload/snapshot normalization.
+13. JaCoCo go-live gates: at least 80% line coverage, 65% branch coverage and 80% method coverage across analyzed backend code, at least 60% line coverage per analyzed package, and zero completely missed production classes in those packages. Only generator-owned root OpenAPI DTOs and static SQL catalogs are excluded from the percentage metric because they have dedicated generated-contract and SQL/schema audits; module-local DTOs, JPA entities, filters, configuration, controllers, repositories, mappers and business components remain in executable coverage.
 
-A release is not production-ready when Maven, frontend build, PostgreSQL integration tests or container builds were skipped. Local quick mode may skip unavailable toolchains, but CI may not.
+A release is not production-ready when Maven, frontend build, PostgreSQL integration tests or container builds were skipped. Local quick mode may skip unavailable toolchains, but CI may not. The JaCoCo thresholds are release floors, not a claim that a numeric percentage proves correctness; focused success, failure, permission and state-transition tests remain mandatory for changed business behavior.
+
+## Release verification after local patch application
+
+Patch files under `patches/` are transport artifacts only. After applying a patch, verify the
+working tree itself; do not treat a successful `git apply` as test evidence. For backend or
+cross-cutting release work, the final local Maven proof is a clean run from the physical Spring
+project directory:
+
+```bash
+cd spring-api
+pwd -P
+realpath pom.xml
+mvn clean verify
+```
+
+The run must reach Surefire, packaging, the JaCoCo report and the JaCoCo check. A Surefire
+success followed by a JaCoCo failure is still a failed release gate. Do not lower thresholds or
+broaden exclusions to make a release pass; add focused tests for the missing behavior. Generic
+surface and branch-matrix tests supplement semantic module tests and may probe expected domain
+validation errors, but they must not manufacture invalid internal objects or tolerate unsafe JVM
+errors such as harness-caused `NullPointerException`/`ClassCastException`.
+
+If Maven output names an unexpected absolute `target` or Surefire-report path, stop and verify
+`pwd -P`/`realpath pom.xml` before debugging source code. `mvn clean` cleans the project it is
+actually invoked against; it does not discover or switch to a newly extracted repository tree.
 
 ## NVD API key for the security workflow
 
@@ -107,7 +134,7 @@ request ID, method, normalized route, status and duration. This is intended for
 automated correlation and short diagnostic runs, not persistent visitor analytics.
 
 `ApiSurfaceIntegrationTest` reads the assembled OpenAPI compatibility artifact and turns the
-complete operation inventory into a runtime no-5xx sweep. Every GET is executed
+complete operation inventory into a runtime no-5xx sweep. It also executes every operation anonymously to verify the public/protected authentication boundary and sends every authenticated non-bootstrap write without a CSRF token to require HTTP 403 before controller mutation logic. Every GET is executed
 against the real Spring application and PostgreSQL at least once; GETs with optional
 query parameters are executed again with the optional filters populated to activate
 dynamic SQL branches. Non-GET operations are exercised at the transport boundary
@@ -138,6 +165,14 @@ administration regression also round-trips user moderation, Build-role CRUD, pri
 review and IP block/unblock. Together, the contract surface sweep, SQL runtime audit
 and stateful lifecycle tests are three independent layers; none replaces either of
 the others.
+
+Backend test inventory also has a dependency-free structural gate:
+
+```bash
+python3 infrastructure/scripts/quality/check_backend_test_coverage.py
+```
+
+It discovers backend modules directly from `spring-api/src/main/java`, requires a module-local test for every production module, classifies every production Java class into exactly one explicit test strategy, inventories controllers, repositories, mappers, entities, generated and module-local DTOs, filters and business components, and rejects any business component that is only present in the generic surface without a module-local focused semantic test. It also verifies the global business/API/DTO/entity/integration strategy files and that the Maven JaCoCo release floors and narrow exclusion policy cannot silently regress. The executable `BackendServiceSurfaceTest` discovers business-layer classes recursively across the backend (not only direct `service/` packages), creates deterministic type-correct record/DTO boundary values and invokes every public entry point with mocked collaborators whose collection, array, save-style and record returns preserve the declared runtime shape. `ModuleDtoContractTest` and `PersistenceEntityContractTest` keep hand-written DTO/entity classes executable, while focused tests own semantic state-transition and validation assertions. These global tests are crash/wiring safety nets; module-focused tests still own business correctness.
 
 SQL assembly also has a dependency-free static gate:
 

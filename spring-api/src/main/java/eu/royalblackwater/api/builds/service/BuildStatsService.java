@@ -167,6 +167,9 @@ public class BuildStatsService {
     }
     private static int integer(Number value) { return value == null ? 0 : value.intValue(); }
     private static double decimal(Number value) { return value == null ? 0 : value.doubleValue(); }
-    private static Number normalized(double value) { return value == Math.rint(value) ? (long) value : value; }
+    private static Number normalized(double value) {
+        if (value == Math.rint(value)) return Long.valueOf((long) value);
+        return Double.valueOf(value);
+    }
     private static Number sum(Number left, Number right) { return normalized(left.doubleValue() + right.doubleValue()); }
 }
