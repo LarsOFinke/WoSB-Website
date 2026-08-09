@@ -96,7 +96,8 @@ class PrivacyServiceTest {
 
 
     private static PrivacyService service(PrivacyDataRepository repository) {
-        return new PrivacyService(repository, CLOCK, new PrivacyDtoMapper());
+        return new PrivacyService(repository, CLOCK, new PrivacyDtoMapper(),
+                mock(eu.royalblackwater.api.audit.service.AuditService.class));
     }
     private static void assertStatus(int status, ThrowingCall call) {
         assertThatThrownBy(call::run)

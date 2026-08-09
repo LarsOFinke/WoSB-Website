@@ -117,6 +117,8 @@ public class FleetCommandService {
                             "fleetId", fleetId, "status", status, "note", blank(payload.note()),
                             "now", now(), "id", membershipId));
         }
+        audit.record(actor, "fleet_application", fleetId, "create",
+                "A fleet application was submitted.", List.of("status"), "fleet", fleetId);
         return views.membership(membershipId, null);
     }
 
@@ -137,7 +139,7 @@ public class FleetCommandService {
             update.set("updated_at", now());
             repository.update(update.sql(), update.parameters());
             audit.record(actor, "fleet_membership", membershipId, "update",
-                    "Updated fleet membership for user #" + target.userId() + ".", update.columns());
+                    "Updated fleet membership for user #" + target.userId() + ".", update.columns(), "fleet", fleetId);
         }
         return views.membership(membershipId, actor);
     }
@@ -166,7 +168,8 @@ public class FleetCommandService {
             repository.update(FleetCommandQueries.ASSIGN_LEADER_UPDATE_01, Map.of("fleetId", fleetId, "roleId", roleId, "now", now(), "id", membershipId));
         }
         audit.record(actor, "fleet_membership", membershipId, "update",
-                "Assigned fleet leadership role " + role + " to user #" + userId + ".", List.of("role", "status"));
+                "Assigned fleet leadership role " + role + " to user #" + userId + ".",
+                List.of("role", "status"), "fleet", fleetId);
         return views.membership(membershipId, null);
     }
 

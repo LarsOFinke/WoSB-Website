@@ -65,7 +65,8 @@ public class FleetRoleService {
                         "leadership", leadership, "manageFleet", manageFleet,
                         "manageMembers", manageMembers, "now", now));
         audit.record(actor, "fleet_role", id, "create", "Fleet role “" + payload.label().strip() + "” created.",
-                List.of("code", "label", "rank", "is_leadership", "can_manage_fleet", "can_manage_members"));
+                List.of("code", "label", "rank", "is_leadership", "can_manage_fleet", "can_manage_members"),
+                "fleet", fleetId);
         return find(id);
     }
 
@@ -99,7 +100,7 @@ public class FleetRoleService {
             update.set("updated_at", now());
             repository.update(update.sql(), update.parameters());
             audit.record(actor, "fleet_role", roleId, "update", "Fleet role #" + roleId + " updated.",
-                    update.columns());
+                    update.columns(), "fleet", fleetId);
         }
         return find(roleId);
     }
@@ -116,7 +117,8 @@ public class FleetRoleService {
             throw bad("Reassign all members before deleting this fleet role.");
         }
         repository.update(FleetRoleQueries.DELETE_DELETE_01, Map.of("id", roleId));
-        audit.record(actor, "fleet_role", roleId, "delete", "Fleet role #" + roleId + " deleted.", List.of());
+        audit.record(actor, "fleet_role", roleId, "delete", "Fleet role #" + roleId + " deleted.",
+                List.of(), "fleet", fleetId);
     }
 
     private void requireFleet(long fleetId) {

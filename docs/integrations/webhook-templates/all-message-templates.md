@@ -11,7 +11,13 @@ This is the single copy-ready reference. Runtime defaults and the staff-panel au
 A new build was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🧰 **A new build was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `build.printout.published`
@@ -19,7 +25,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A public build printout was published to Discord.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🧰 **A public build printout was published to Discord**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `build.removed`
@@ -27,7 +39,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A build was removed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🧰 **A build was removed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `build.updated`
@@ -35,7 +53,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A build was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🧰 **A build was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Calendar
@@ -45,7 +69,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet or squad event was cancelled.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📅 **A fleet or squad event was cancelled**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `calendar.event.created`
@@ -53,7 +83,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet or squad event was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📅 **A fleet or squad event was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `calendar.event.updated`
@@ -61,7 +97,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet or squad event was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📅 **A fleet or squad event was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Content
@@ -71,7 +113,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A new guide was published.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📘 **A new guide was published**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `guide.removed`
@@ -79,7 +127,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A guide was removed from publication.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📘 **A guide was removed from publication**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `guide.updated`
@@ -87,7 +141,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A published guide was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📘 **A published guide was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `newcomer_guide.updated`
@@ -95,7 +155,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 The starter guide was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+📘 **The starter guide was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Fleet
@@ -105,7 +171,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet application was submitted.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet application was submitted**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.created`
@@ -113,7 +185,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.leader.assigned`
@@ -121,7 +199,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet leadership role was assigned.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet leadership role was assigned**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.membership.updated`
@@ -129,7 +213,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet membership was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet membership was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.role.created`
@@ -137,7 +227,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet role was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet role was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.role.removed`
@@ -145,7 +241,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet role was removed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet role was removed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.role.updated`
@@ -153,7 +255,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet role was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet role was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `fleet.updated`
@@ -161,7 +269,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A fleet profile was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🏴‍☠️ **A fleet profile was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Forum
@@ -171,7 +285,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A new forum reply was posted.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A new forum reply was posted**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `forum.post.removed`
@@ -179,7 +299,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A forum reply was removed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A forum reply was removed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `forum.post.updated`
@@ -187,7 +313,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A forum reply was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A forum reply was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `forum.thread.created`
@@ -195,7 +327,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A new forum thread was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A new forum thread was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `forum.thread.removed`
@@ -203,7 +341,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A forum thread was removed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A forum thread was removed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `forum.thread.updated`
@@ -211,7 +355,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A forum thread was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💬 **A forum thread was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Groups
@@ -221,7 +371,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A group-search listing was closed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔎 **A group-search listing was closed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `group.created`
@@ -229,7 +385,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A new group-search listing was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔎 **A new group-search listing was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `group.member.joined`
@@ -237,7 +399,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A member joined a group-search listing.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔎 **A member joined a group-search listing**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Integration
@@ -247,7 +415,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 Manual connectivity and payload test.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🧪 **Manual connectivity and payload test**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Moderation
@@ -257,7 +431,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A data-subject request requires an administrator response.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛡️ **A data-subject request requires an administrator response**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `privacy.request.resolved`
@@ -265,7 +445,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A data-subject request was resolved by an administrator.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛡️ **A data-subject request was resolved by an administrator**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Operations
@@ -275,7 +461,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 The protected backup connection configuration was removed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💾 **The protected backup connection configuration was removed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `backup.configuration.updated`
@@ -283,7 +475,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 The protected backup connection configuration changed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💾 **The protected backup connection configuration changed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `backup.restore.requested`
@@ -291,7 +489,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A bootstrap administrator requested a database restore.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💾 **A bootstrap administrator requested a database restore**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `backup.run.requested`
@@ -299,7 +503,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 An administrator requested a protected application backup.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+💾 **An administrator requested a protected application backup**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Registrations
@@ -309,7 +519,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 An access request was approved.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔔 **An access request was approved**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `registration.request.created`
@@ -317,7 +533,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A new access request was submitted.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔔 **A new access request was submitted**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `registration.request.rejected`
@@ -325,7 +547,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 An access request was rejected.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🔔 **An access request was rejected**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## Squads
@@ -335,7 +563,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A squad was archived.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A squad was archived**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `squad.created`
@@ -343,7 +577,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A squad was created.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A squad was created**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `squad.member.added`
@@ -351,7 +591,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A member was added to a squad.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A member was added to a squad**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `squad.member.removed`
@@ -359,7 +605,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A member was removed from a squad.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A member was removed from a squad**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `squad.member.updated`
@@ -367,7 +619,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A squad membership was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A squad membership was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `squad.updated`
@@ -375,7 +633,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A squad was updated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+⚓ **A squad was updated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ## System
@@ -385,7 +649,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A maintenance window ended or failed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛠️ **A maintenance window ended or failed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `system.maintenance.started`
@@ -393,7 +663,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A maintenance window was activated.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛠️ **A maintenance window was activated**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `system.update.result`
@@ -401,7 +677,13 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A controlled server operation completed or failed.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛠️ **A controlled server operation completed or failed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
 
 ### `system.update.started`
@@ -409,5 +691,11 @@ RBF event **{event}** for {resource.type} #{resource.id}.
 A controlled server operation was requested and queued.
 
 ```text
-RBF event **{event}** for {resource.type} #{resource.id}.
+🛠️ **A controlled server operation was requested and queued**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```

@@ -188,7 +188,9 @@ public class SquadService {
                             "now", now(), "id", memberId));
         }
         if ("leader".equals(role)) transferLeadership(squadId, memberId);
-        audit.record(actor, "squad_member", memberId, "upsert", "Squad member updated.", List.of("role", "note"));
+        audit.record(actor, "squad_member", memberId, existing == null ? "create" : "update",
+                existing == null ? "Squad member added." : "Squad member updated.",
+                List.of("role", "note"), "squad", squadId);
         return get(squadId, actor);
     }
     @Transactional
@@ -210,7 +212,8 @@ public class SquadService {
         if (payload.note() != null) update.set("note", blank(payload.note()));
         if (!update.isEmpty()) {
             update.set("updated_at", now()); repository.update(update.sql(), update.parameters());
-            audit.record(actor, "squad_member", memberId, "update", "Squad member updated.", update.columns());
+            audit.record(actor, "squad_member", memberId, "update", "Squad member updated.",
+                    update.columns(), "squad", squadId);
         }
         return get(squadId, actor);
     }
@@ -224,7 +227,8 @@ public class SquadService {
         if ("leader".equals(role)) throw bad("Transfer squad leadership before removing the current leader.");
         if ("officer".equals(role)) policy.requireAdminister(actor, squadId, fleetId);
         repository.update(SquadQueries.REMOVE_MEMBER_DELETE_01, Map.of("id", memberId));
-        audit.record(actor, "squad_member", memberId, "delete", "Squad member removed.", List.of());
+        audit.record(actor, "squad_member", memberId, "delete", "Squad member removed.",
+                List.of(), "squad", squadId);
         return get(squadId, actor);
     }
     private SquadDetailRead detail(Map<String, Object> squad, AuthenticatedUser actor) {

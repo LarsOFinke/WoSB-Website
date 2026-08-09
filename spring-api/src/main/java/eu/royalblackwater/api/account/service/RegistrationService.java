@@ -5,6 +5,7 @@ import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.mapper.RegistrationRequestMapper;
 import eu.royalblackwater.api.account.repository.RegistrationRequestRepository;
 import eu.royalblackwater.api.account.repository.UserRepository;
+import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.RegisterRequest;
 import eu.royalblackwater.api.dto.RegisterResponse;
 import eu.royalblackwater.api.fleet.entity.FleetEntity;
@@ -27,15 +28,18 @@ public class RegistrationService {
     private final FleetRepository fleets;
     private final PasswordHasher passwords;
     private final Clock clock;
+    private final AuditService audit;
 
     public RegistrationService(RegistrationRequestRepository requests, RegistrationRequestMapper mapper,
-                               UserRepository users, FleetRepository fleets, PasswordHasher passwords, Clock clock) {
+                               UserRepository users, FleetRepository fleets, PasswordHasher passwords, Clock clock,
+                               AuditService audit) {
         this.requests = requests;
         this.mapper = mapper;
         this.users = users;
         this.fleets = fleets;
         this.passwords = passwords;
         this.clock = clock;
+        this.audit = audit;
     }
 
     @Transactional
@@ -62,6 +66,8 @@ public class RegistrationService {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         RegistrationRequestEntity saved = requests.save(new RegistrationRequestEntity(
                 username, passwords.hash(payload.password()), displayName, wantsFleet, fleetId, note, now));
+        audit.record(null, "registration_request", saved.getId(), "create",
+                "A new access request was submitted.", java.util.List.of("status"));
         return AccountDtoMapper.registrationSubmitted(mapper.toPublic(saved));
     }
 

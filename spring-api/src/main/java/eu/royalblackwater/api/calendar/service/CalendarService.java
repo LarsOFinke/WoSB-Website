@@ -105,7 +105,8 @@ public class CalendarService {
         raidHelper.configure(id, value.category(), value.squadId(),
                 value.raidHelperEnabled() ? value.dispatches() : List.of(), actor);
         audit.record(actor, "calendar_event", id, "create", "Calendar event created.",
-                List.of("title", "category", "start_at", "end_at", "squad_id", "raid_helper"));
+                List.of("title", "category", "start_at", "end_at", "squad_id", "raid_helper"),
+                value.squadId() == null ? null : "squad", value.squadId());
         return get(id, actor);
     }
 
@@ -121,7 +122,8 @@ public class CalendarService {
         raidHelper.configure(eventId, value.category(), value.squadId(),
                 value.raidHelperEnabled() ? value.dispatches() : List.of(), actor);
         audit.record(actor, "calendar_event", eventId, "update", "Calendar event updated.",
-                List.of("title", "category", "start_at", "end_at", "squad_id", "raid_helper"));
+                List.of("title", "category", "start_at", "end_at", "squad_id", "raid_helper"),
+                value.squadId() == null ? null : "squad", value.squadId());
         return get(eventId, actor);
     }
 
@@ -143,7 +145,8 @@ public class CalendarService {
                 Map.of("now", now(), "id", eventId));
         raidHelper.queueCancellation(eventId);
         audit.record(actor, "calendar_event", eventId, "cancel", "Calendar event cancelled.",
-                List.of("is_cancelled"));
+                List.of("is_cancelled"), nullableLong(current, "squad_id") == null ? null : "squad",
+                nullableLong(current, "squad_id"));
     }
 
     private Map<String, Object> visibleRow(long id, AuthenticatedUser actor) {

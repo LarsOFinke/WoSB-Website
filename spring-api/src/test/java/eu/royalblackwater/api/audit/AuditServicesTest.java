@@ -54,7 +54,8 @@ class AuditServicesTest {
     @Test
     void recordNormalizesChangedFieldsAndCapsSummaryLength() {
         AuditDataRepository repository = mock(AuditDataRepository.class);
-        AuditService service = new AuditService(repository, new ObjectMapper(), CLOCK);
+        AuditService service = new AuditService(repository, new ObjectMapper(), CLOCK,
+                mock(org.springframework.context.ApplicationEventPublisher.class));
         String summary = "x".repeat(700);
 
         service.record(ACTOR, "user", 9, "update", summary,

@@ -10,6 +10,9 @@ public final class WebhookQueries {
 
     public static final String LIST_ORDER_BY_01 = " order by name,id";
 
+    public static final String AUTOMATION_SELECT_01 =
+            "select * from outbound_webhooks where is_active=true and broadcast_enabled=false order by id";
+
     public static final String SUMMARY_AND_01 = " and broadcast_enabled=true";
 
     public static final String SUMMARY_SELECT_01 = "select count(*) from outbound_webhooks where is_active=true";

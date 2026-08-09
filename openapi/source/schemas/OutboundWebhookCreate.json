@@ -40,7 +40,7 @@
     "message_template": {
       "anyOf": [
         {
-          "maxLength": 4000,
+          "maxLength": 2000,
           "type": "string"
         },
         {

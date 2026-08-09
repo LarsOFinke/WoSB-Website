@@ -13,14 +13,14 @@ The templates are intended only for direct Discord delivery by this backend. The
 
 - `{event}`
 - `{occurred_at}`
-- `{actor.display_name}`
+- `{actor.display_name}` and `{actor.username}`
 - `{resource.id}`
-- `{resource.url}`
-- event-specific values under `{data...}`
+- `{resource.type}`
+- `{data.summary}`
 
 The catalog is grouped by event area so operational, moderation, content, and
 community notifications can be found without scanning one unstructured list.
 
-Repository checks ensure that each supported event has exactly one catalog
-entry, every placeholder exists in that event's preview payload, and rendered
+Repository checks ensure that each supported event has one distinct catalog
+entry, every placeholder is supported by the Spring renderer, and rendered
 messages stay within Discord's content limit.

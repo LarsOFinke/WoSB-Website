@@ -27,6 +27,14 @@ class WebhookPolicyTest {
         assertBad(() -> policy.scope("unknown", 1L));
         assertBad(() -> policy.endpoint("https://example.com/api/webhooks/1/token"));
         assertBad(() -> policy.endpoint("http://discord.com/api/webhooks/1/token"));
+        assertBad(() -> policy.template("Hello {data.private_note}"));
+    }
+
+    @Test
+    void acceptsOnlyDocumentedTemplatePlaceholders() {
+        assertThat(policy.template("{event}: {data.summary} by {actor.display_name}"))
+                .isEqualTo("{event}: {data.summary} by {actor.display_name}");
+        assertThat(policy.template("  ")).isNull();
     }
 
     private static void assertBad(org.assertj.core.api.ThrowableAssert.ThrowingCallable call) {

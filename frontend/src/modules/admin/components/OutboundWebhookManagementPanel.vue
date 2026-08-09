@@ -327,7 +327,7 @@ onMounted(load)
           </label>
           <label class="input-panel embedded-field">
           <span>{{ t('admin.webhooks.fields.template') }}</span>
-          <textarea v-model="form.message_template" rows="6" maxlength="4000" :placeholder="t('admin.webhooks.placeholders.template')"></textarea>
+          <textarea v-model="form.message_template" rows="6" maxlength="2000" :placeholder="t('admin.webhooks.placeholders.template')"></textarea>
           <small>{{ t('admin.webhooks.templateHint') }}</small>
           </label>
           </section>

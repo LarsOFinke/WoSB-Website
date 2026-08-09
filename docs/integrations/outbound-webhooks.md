@@ -81,11 +81,20 @@ The grouped, copy-ready English template reference lives in:
 docs/integrations/webhook-templates/all-message-templates.md
 ```
 
-Templates support Discord Markdown and event-specific placeholders such as `{data.build_name}` or `{resource.url}`. The repository check validates that every automatic event has exactly one catalog entry and that all referenced placeholders exist in the event preview payload.
+Templates support Discord Markdown and the deliberately bounded placeholders
+`{event}`, `{occurred_at}`, `{actor.display_name}`, `{actor.username}`,
+`{resource.type}`, `{resource.id}`, and `{data.summary}`. Unknown placeholders
+are rejected when a webhook is saved. Messages are limited to Discord's
+2,000-character content boundary, and automatic mentions are disabled.
+
+The application emits automatic notifications only after the owning database
+transaction commits. Delivery runs asynchronously and failures cannot roll back
+the completed website action. The repository check validates that every event
+has one distinct catalog template and that every referenced placeholder is supported.
 
 Broadcast messages are written directly in the Broadcast panel and do not use event templates.
 
-Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; it regenerates the grouped reference. The repository check enforces an exact match between the event catalog, preview payloads and documentation.
+Run `python3 infrastructure/scripts/generation/sync_webhook_templates.py` after changing runtime defaults; it regenerates the grouped reference and Spring catalog. The repository check enforces an exact match between the maintained event catalog, runtime defaults and documentation.
 
 ## Webhook avatar
 

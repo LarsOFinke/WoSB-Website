@@ -51,6 +51,17 @@ public class WebhookPolicy {
         return result.stream().sorted().toList();
     }
 
+    public String template(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String value = raw.strip();
+        if (value.length() > 2000) throw bad("Webhook message templates are limited to 2000 characters.");
+        Set<String> unsupported = WebhookTemplateRenderer.placeholders(value).stream()
+                .filter(placeholder -> !WebhookTemplateRenderer.supports(placeholder))
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+        if (!unsupported.isEmpty()) throw bad("Unsupported webhook template placeholders: " + String.join(", ", unsupported));
+        return value;
+    }
+
     public Scope scope(String raw,Long id) {
         String type=raw==null?"global":raw.strip().toLowerCase(Locale.ROOT);
         if(!SCOPES.contains(type)) throw bad("Unsupported webhook scope.");

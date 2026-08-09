@@ -49,7 +49,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Paste a template from docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "The Discord URL is treated like a password and is masked after saving.",
-        "templateHint": "Discord supports Markdown. The available placeholders depend on the selected event.",
+        "templateHint": "Discord Markdown; placeholders: {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Choose the events posted to this channel. The same event can be assigned to any number of webhooks and channels.",
         "templatePicker": {
           "label": "Autofill from event template",
@@ -256,7 +256,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Vorlage aus docs/integrations/webhook-templates/message-templates/ einfügen"
         },
         "endpointHint": "Die Discord-URL wird wie ein Passwort behandelt und nach dem Speichern maskiert.",
-        "templateHint": "Discord unterstützt Markdown. Die verfügbaren Platzhalter hängen vom gewählten Event ab.",
+        "templateHint": "Discord-Markdown; Platzhalter: {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Wähle die Events für diesen Channel. Dasselbe Event kann beliebig vielen Webhooks und Channels zugeordnet werden.",
         "templatePicker": {
           "label": "Aus Event-Template vorausfüllen",
@@ -463,7 +463,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Coller un modèle depuis docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "L’URL Discord est traitée comme un mot de passe et masquée après enregistrement.",
-        "templateHint": "Discord prend en charge Markdown. Les variables dépendent de l’événement choisi.",
+        "templateHint": "Markdown Discord ; variables : {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Choisissez les événements de ce salon. Un même événement peut être associé à plusieurs webhooks et salons.",
         "templatePicker": {
           "label": "Préremplir avec un modèle d’événement",
@@ -632,7 +632,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Pega una plantilla de docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "La URL de Discord se trata como una contraseña y se oculta después de guardar.",
-        "templateHint": "Discord admite Markdown. Los marcadores dependen del evento elegido.",
+        "templateHint": "Markdown de Discord; marcadores: {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Selecciona los eventos de este canal. El mismo evento puede asignarse a varios webhooks y canales.",
         "templatePicker": {
           "label": "Autocompletar desde una plantilla de evento",
@@ -801,7 +801,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Cole um modelo de docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "O URL do Discord é tratado como palavra-passe e fica oculto após guardar.",
-        "templateHint": "O Discord suporta Markdown. Os marcadores dependem do evento escolhido.",
+        "templateHint": "Markdown do Discord; marcadores: {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Escolha os eventos deste canal. O mesmo evento pode ser associado a vários webhooks e canais.",
         "templatePicker": {
           "label": "Preencher com modelo de evento",
@@ -970,7 +970,7 @@ export const outboundWebhookManagementMessages = {
           "template": "Вставьте шаблон из docs/integrations/webhook-templates/message-templates/"
         },
         "endpointHint": "URL Discord хранится как пароль и после сохранения маскируется.",
-        "templateHint": "Discord поддерживает Markdown. Доступные поля зависят от события.",
+        "templateHint": "Discord Markdown; поля: {event}, {occurred_at}, {actor.display_name}, {resource.type}, {resource.id}, {data.summary}.",
         "eventsHint": "Выберите события для канала. Одно событие можно назначить нескольким вебхукам и каналам.",
         "templatePicker": {
           "label": "Заполнить из шаблона события",
@@ -1139,7 +1139,7 @@ export const outboundWebhookManagementMessages = {
           "template": "从 docs/integrations/webhook-templates/message-templates/ 粘贴模板"
         },
         "endpointHint": "Discord 地址按密码处理，保存后会被隐藏。",
-        "templateHint": "Discord 支持 Markdown，可用占位符取决于所选事件。",
+        "templateHint": "Discord Markdown；占位符：{event}、{occurred_at}、{actor.display_name}、{resource.type}、{resource.id}、{data.summary}。",
         "eventsHint": "选择此频道接收的事件。同一事件可以配置到多个 Webhook 和频道。",
         "templatePicker": {
           "label": "从事件模板自动填充",

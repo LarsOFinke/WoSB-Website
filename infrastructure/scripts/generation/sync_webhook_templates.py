@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -12,6 +13,11 @@ DOCS = ROOT / 'docs/integrations/webhook-templates'
 TARGET = DOCS / 'all-message-templates.md'
 LEGACY_DIRECTORY = DOCS / 'message-templates'
 JAVA_TARGET = ROOT / 'spring-api/src/main/java/eu/royalblackwater/api/webhooks/service/WebhookEventCatalog.java'
+PLACEHOLDER = re.compile(r'\{([a-z][a-z0-9_.]*)}')
+SUPPORTED_PLACEHOLDERS = {
+    'actor.display_name', 'actor.username', 'data.summary', 'event',
+    'occurred_at', 'resource.id', 'resource.type',
+}
 
 
 def title(value: str) -> str:
@@ -44,6 +50,11 @@ public final class WebhookEventCatalog {{
     public static final Set<String> TYPES = ALL.stream().map(WebhookEventDefinition::key)
             .collect(Collectors.toUnmodifiableSet());
 
+    public static WebhookEventDefinition required(String key) {{
+        return ALL.stream().filter(event -> event.key().equals(key)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown webhook event: " + key));
+    }}
+
     private WebhookEventCatalog() {{ }}
 }}
 '''
@@ -58,6 +69,16 @@ def main() -> None:
     keys = [row.get('key') for row in events]
     if any(not key for key in keys) or len(keys) != len(set(keys)):
         raise SystemExit('Webhook keys must be unique')
+    messages = [str(row.get('default_message') or '').strip() for row in events]
+    if any(not message or len(message) > 2000 for message in messages):
+        raise SystemExit('Webhook default messages must contain 1 to 2000 characters')
+    if len(messages) != len(set(messages)):
+        raise SystemExit('Webhook default messages must be event-specific')
+    unsupported = sorted({placeholder for message in messages
+                          for placeholder in PLACEHOLDER.findall(message)
+                          if placeholder not in SUPPORTED_PLACEHOLDERS})
+    if unsupported:
+        raise SystemExit('Unsupported webhook placeholders: ' + ', '.join(unsupported))
 
     # These files were generated duplicates of the source catalog. Remove them
     # so copy-ready documentation has one maintained location.

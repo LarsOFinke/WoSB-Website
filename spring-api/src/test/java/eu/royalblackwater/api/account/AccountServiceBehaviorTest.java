@@ -65,7 +65,7 @@ class AccountServiceBehaviorTest {
         RegistrationRequestRepository requests = mock(RegistrationRequestRepository.class);
         UserRepository users = mock(UserRepository.class);
         RegistrationService service = new RegistrationService(requests, mock(RegistrationRequestMapper.class), users,
-                mock(FleetRepository.class), mock(PasswordHasher.class), CLOCK);
+                mock(FleetRepository.class), mock(PasswordHasher.class), CLOCK, mock(AuditService.class));
         RegisterRequest payload = new RegisterRequest("Captain", "Please accept", 3L,
                 "correct-horse-battery", " Captain ", false);
 
@@ -83,7 +83,7 @@ class AccountServiceBehaviorTest {
         UserRepository users = mock(UserRepository.class);
         when(users.existsByUsername("captain")).thenReturn(true);
         RegistrationService service = new RegistrationService(requests, mock(RegistrationRequestMapper.class), users,
-                mock(FleetRepository.class), mock(PasswordHasher.class), CLOCK);
+                mock(FleetRepository.class), mock(PasswordHasher.class), CLOCK, mock(AuditService.class));
         RegisterRequest payload = new RegisterRequest("Captain", null, null,
                 "correct-horse-battery", "  CAPTAIN  ", false);
 

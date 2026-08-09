@@ -4,6 +4,7 @@ import eu.royalblackwater.api.dto.DataSubjectRequestCreate;
 import eu.royalblackwater.api.dto.DataSubjectRequestRead;
 import eu.royalblackwater.api.dto.PrivacyContactCreate;
 import eu.royalblackwater.api.dto.PrivacyContactReceipt;
+import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.privacy.mapper.PrivacyDtoMapper;
 import eu.royalblackwater.api.privacy.repository.PrivacyDataRepository;
 import eu.royalblackwater.api.privacy.repository.queries.PrivacyQueries;
@@ -29,11 +30,14 @@ public class PrivacyService {
     private final PrivacyDataRepository repository;
     private final Clock clock;
     private final PrivacyDtoMapper mapper;
+    private final AuditService audit;
 
-    public PrivacyService(PrivacyDataRepository repository, Clock clock, PrivacyDtoMapper mapper) {
+    public PrivacyService(PrivacyDataRepository repository, Clock clock, PrivacyDtoMapper mapper,
+                          AuditService audit) {
         this.repository = repository;
         this.clock = clock;
         this.mapper = mapper;
+        this.audit = audit;
     }
 
     @Transactional
@@ -80,6 +84,8 @@ public class PrivacyService {
                         "type", type,
                         "details", blankToNull(payload.details()),
                         "createdAt", now()));
+        audit.record(user, "privacy_request", id, "create",
+                "A data-subject request requires administrator review.", List.of("request_type", "status"));
         return repository.optional(PrivacyQueries.CREATE_REQUEST_SELECT_02, Map.of("id", id)).map(mapper::request).orElseThrow();
     }
 

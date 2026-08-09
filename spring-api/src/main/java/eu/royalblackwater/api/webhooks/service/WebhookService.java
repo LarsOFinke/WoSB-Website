@@ -14,6 +14,7 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.FernetSecretBox;
 import eu.royalblackwater.api.webhooks.mapper.WebhookDtoMapper;
+import eu.royalblackwater.api.webhooks.dto.WebhookDomainEvent;
 import eu.royalblackwater.api.webhooks.repository.WebhookRepository;
 import eu.royalblackwater.api.webhooks.repository.queries.WebhookQueries;
 import java.time.Clock;
@@ -82,7 +83,7 @@ public class WebhookService {
         WebhookPolicy.Scope scope=validatedScope(input.scopeType(),input.scopeId());
         List<String> events=policy.events(input.eventTypes(),value(input.broadcastEnabled(),false));
         long id=repository.insertReturningId(WebhookQueries.CREATE_INSERT_01,SqlParameters.ofNullable("name",input.name().strip(),"endpoint",secrets.encrypt(policy.endpoint(input.endpointUrl())),
-                        "events",write(events),"scope",scope.type(),"scopeId",scope.id(),"template",blank(input.messageTemplate()),
+                        "events",write(events),"scope",scope.type(),"scopeId",scope.id(),"template",policy.template(input.messageTemplate()),
                         "username",blank(input.discordUsername()),"broadcast",value(input.broadcastEnabled(),false),
                         "active",value(input.isActive(),true),"now",now(),"actorId",actor.id(),"actor",actor.username()));
         audit.record(actor,"outbound_webhook",id,"create","Created outbound Discord webhook",Set.of("name","scope","event_types"));
@@ -98,7 +99,7 @@ public class WebhookService {
         String encrypted=input.endpointUrl()==null||input.endpointUrl().isBlank()?requiredString(current,"endpoint_url")
                 :secrets.encrypt(policy.endpoint(input.endpointUrl()));
         repository.update(WebhookQueries.UPDATE_UPDATE_01,SqlParameters.ofNullable("id",id,"name",input.name().strip(),"endpoint",encrypted,"events",write(events),
-                        "scope",scope.type(),"scopeId",scope.id(),"template",blank(input.messageTemplate()),
+                        "scope",scope.type(),"scopeId",scope.id(),"template",policy.template(input.messageTemplate()),
                         "username",blank(input.discordUsername()),"broadcast",broadcast,"active",value(input.isActive(),true),"now",now()));
         audit.record(actor,"outbound_webhook",id,"update","Updated outbound Discord webhook",Set.of("configuration"));
         return requiredRead(id);
@@ -116,8 +117,9 @@ public class WebhookService {
         Map<String,Object> webhook=required(id);
         String event=input.eventType()==null||input.eventType().isBlank()?"integration.test":input.eventType().strip();
         policy.events(List.of(event),false);
-        String message="🧪 RBF webhook test by "+actor.username()+" · event `"+event+"`";
-        return deliver(webhook,event,"integration",String.valueOf(id),message,blank(string(webhook,"discord_username")));
+        WebhookDomainEvent context=new WebhookDomainEvent(event,"integration",String.valueOf(id),
+                "global",null,actor,"Manual connectivity and template rendering test.",now());
+        return deliver(webhook,context,render(webhook,context),blank(string(webhook,"discord_username")));
     }
 
     @Transactional
@@ -127,7 +129,9 @@ public class WebhookService {
             Map<String,Object> webhook=required(id);
             if(!booleanValue(webhook,"is_active")||!booleanValue(webhook,"broadcast_enabled"))
                 throw new ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,"Selected webhook is not an active broadcast target.");
-            deliveries.add(deliver(webhook,"integration.test","broadcast",UUID.randomUUID().toString(),input.message(),
+            WebhookDomainEvent context=new WebhookDomainEvent("integration.test","broadcast",UUID.randomUUID().toString(),
+                    "global",null,actor,input.message(),now());
+            deliveries.add(deliver(webhook,context,input.message(),
                     blank(input.discordUsername())==null?blank(string(webhook,"discord_username")):blank(input.discordUsername())));
         }
         audit.record(actor,"outbound_webhook","broadcast","broadcast","Sent Discord broadcast",Set.of("message","targets"));
@@ -173,17 +177,45 @@ public class WebhookService {
         return WebhookDtoMapper.deleted(count);
     }
 
-    private OutboundWebhookDeliveryRead deliver(Map<String,Object> webhook,String event,String resourceType,String resourceId,
+    @Transactional
+    public void publish(WebhookDomainEvent event) {
+        policy.events(List.of(event.eventType()), false);
+        for (Map<String, Object> webhook : repository.query(WebhookQueries.AUTOMATION_SELECT_01, Map.of())) {
+            if (!events(requiredString(webhook, "event_types_json")).contains(event.eventType())
+                    || !matchesScope(webhook, event)) continue;
+            try {
+                deliver(webhook, event, render(webhook, event), blank(string(webhook, "discord_username")));
+            } catch (RuntimeException ignored) {
+                // One invalid destination must not prevent delivery to the remaining subscriptions.
+            }
+        }
+    }
+
+    private OutboundWebhookDeliveryRead deliver(Map<String,Object> webhook,WebhookDomainEvent event,
             String message,String username){
         String deliveryId=UUID.randomUUID().toString();
         Map<String,Object> payload=new LinkedHashMap<>();payload.put("content",message);
+        payload.put("allowed_mentions",Map.of("parse",List.of()));
         if(username!=null) payload.put("username",username);
         String payloadJson=write(payload);
-        long id=repository.insertReturningId(WebhookQueries.DELIVER_INSERT_01,Map.of("webhook",longValue(webhook,"id"),"delivery",deliveryId,"event",event,"type",resourceType,
-                        "resource",resourceId,"payload",payloadJson,"now",now()));
+        long id=repository.insertReturningId(WebhookQueries.DELIVER_INSERT_01,Map.of("webhook",longValue(webhook,"id"),"delivery",deliveryId,"event",event.eventType(),"type",event.resourceType(),
+                        "resource",event.resourceId(),"payload",payloadJson,"now",now()));
         WebhookHttpClient.Result result=send(requiredString(webhook,"endpoint_url"),payloadJson);
         updateDelivery(id,result);
         return delivery(id);
+    }
+
+    private String render(Map<String, Object> webhook, WebhookDomainEvent event) {
+        String custom = blank(string(webhook, "message_template"));
+        String template = custom == null ? WebhookEventCatalog.required(event.eventType()).defaultTemplate() : custom;
+        return WebhookTemplateRenderer.render(template, event);
+    }
+
+    private static boolean matchesScope(Map<String, Object> webhook, WebhookDomainEvent event) {
+        String type = requiredString(webhook, "scope_type");
+        if ("global".equals(type)) return true;
+        Long id = eu.royalblackwater.api.persistence.RowValues.nullableLong(webhook, "scope_id");
+        return type.equals(event.scopeType()) && id != null && id.equals(event.scopeId());
     }
 
     private WebhookHttpClient.Result send(String storedEndpoint,String payload){
