@@ -68,6 +68,10 @@ public class FleetAccessPolicy {
             throw new ResponseStatusException(FORBIDDEN, message);
         }
         if (payload.role() != null) {
+            if ("founder".equals(payload.role()) && !actor.bootstrapAdmin()) {
+                throw new ResponseStatusException(FORBIDDEN,
+                        "Only the bootstrap administrator can assign the founder role.");
+            }
             if (!Boolean.TRUE.equals(allowed.canChangeRole())) {
                 String message = "last_admiral".equals(allowed.reason())
                         ? "The last active fleet admiral cannot be demoted."
@@ -91,8 +95,11 @@ public class FleetAccessPolicy {
         boolean lastAdmiral = "fleet_admiral".equals(targetRole)
                 && "active".equals(targetStatus) && activeAdmirals <= 1;
 
+        if ("founder".equals(targetRole) && !actor.bootstrapAdmin()) {
+            return result(false, false, false, List.of(), "founder");
+        }
         if (actor.isAdmin()) {
-            List<String> roles = lastAdmiral ? List.of() : allAssignableRoles();
+            List<String> roles = lastAdmiral ? List.of() : allAssignableRoles(actor.bootstrapAdmin());
             return result(true, !lastAdmiral, !lastAdmiral, roles,
                     lastAdmiral ? "last_admiral" : null);
         }
@@ -132,9 +139,15 @@ public class FleetAccessPolicy {
                 .map(row -> String.valueOf(row.get("code"))).toList();
     }
 
-    private List<String> allAssignableRoles() {
-        return repository.query(FleetAccessQueries.ALL_ASSIGNABLE_ROLES_SELECT_01, Map.of()).stream()
+    private List<String> allAssignableRoles(boolean bootstrapAdmin) {
+        List<String> roles = repository.query(FleetAccessQueries.ALL_ASSIGNABLE_ROLES_SELECT_01, Map.of()).stream()
                 .map(row -> String.valueOf(row.get("code"))).toList();
+        return bootstrapAdmin ? appendFounder(roles) : roles;
+    }
+
+    private static List<String> appendFounder(List<String> roles) {
+        return roles.contains("founder") ? roles : java.util.stream.Stream.concat(
+                roles.stream(), java.util.stream.Stream.of("founder")).toList();
     }
 
     private static FleetMembershipManagementRead result(

@@ -11,7 +11,7 @@ export const FLEET_FOCUS_VALUES = [
   'support',
   'mixed',
 ]
-export const FLEET_ROLES = ['member', 'fleet_lieutenant', 'fleet_admiral']
+export const FLEET_ROLES = ['member', 'fleet_lieutenant', 'fleet_admiral', 'founder']
 export const FLEET_MEMBER_STATUSES = ['pending', 'active', 'inactive']
 
 export function listFleets() {

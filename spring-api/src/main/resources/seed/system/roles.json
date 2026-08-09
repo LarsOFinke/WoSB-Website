@@ -54,6 +54,16 @@
       "can_manage_members": true,
       "is_system": true,
       "is_active": true
+    },
+    {
+      "code": "founder",
+      "label": "Founder",
+      "rank": 90,
+      "is_leadership": true,
+      "can_manage_fleet": false,
+      "can_manage_members": false,
+      "is_system": true,
+      "is_active": true
     }
   ],
   "squad_roles": [

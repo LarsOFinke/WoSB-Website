@@ -151,6 +151,10 @@ public class FleetCommandService {
             throw bad("Fleet or user not found.");
         }
         String role = payload.role() == null ? "fleet_admiral" : normalizeRole(payload.role());
+        if ("founder".equals(role) && !actor.bootstrapAdmin()) {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN,
+                    "Only the bootstrap administrator can assign the founder role.");
+        }
         long roleId = roleId(role);
         Map<String, Object> existing = repository.optional(
                 FleetCommandQueries.ASSIGN_LEADER_SELECT_02, Map.of("userId", userId)).orElse(null);

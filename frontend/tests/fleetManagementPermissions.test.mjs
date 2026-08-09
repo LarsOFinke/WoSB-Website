@@ -11,3 +11,15 @@ test('fleet admirals receive a dedicated custom role administration area', async
   assert.ok(api.includes('createFleetRole'))
   assert.ok(api.includes('deleteFleetRole'))
 })
+
+test('founder is a seeded special role and is exposed by the public leadership route', async () => {
+  const [api, seed, publicPage] = await Promise.all([
+    readFile(new URL('../src/modules/fleet/api/fleet.js', import.meta.url), 'utf8'),
+    readFile(new URL('../../spring-api/src/main/resources/seed/system/roles.json', import.meta.url), 'utf8'),
+    readFile(new URL('../src/modules/fleet/pages/FleetPublicPage.vue', import.meta.url), 'utf8'),
+  ])
+  assert.match(api, /'founder'/)
+  assert.match(seed, /"code": "founder"/)
+  assert.match(seed, /"is_leadership": true/)
+  assert.match(publicPage, /leader\.role_label \|\| t\(`fleets\.roles\.\$\{leader\.role\}`\)/)
+})

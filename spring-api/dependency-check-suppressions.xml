@@ -2,4 +2,21 @@
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.4.xsd https://dependency-check.github.io/DependencyCheck/dependency-suppression.1.4.xsd">
+    <suppress until="2026-09-08Z">
+        <notes><![CDATA[
+        Reviewed 2026-08-09.
+        NVD reports a fix in Tomcat 11.0.25, but Maven Central does not currently expose
+        the required embedded Tomcat artifacts. The NVD policy check probes the exact fixed
+        package before allowing this temporary exception to remain.
+
+        Removal condition:
+        - remove this suppression and upgrade embedded Tomcat as soon as 11.0.25 is fetchable, or
+        - remove/review it immediately if Apache broadens the affected scope.
+
+        CI runs Dependency-Check with failBuildOnUnusedSuppressionRule=true. This exact package
+        selector and explicit expiry are independent fail-closed controls.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-websocket@11\.0\.24$</packageUrl>
+        <cve>CVE-2026-66299</cve>
+    </suppress>
 </suppressions>

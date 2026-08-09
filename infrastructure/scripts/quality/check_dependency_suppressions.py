@@ -15,6 +15,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_POLICY = ROOT / "spring-api/dependency-suppression-policy.json"
 NVD_CVE_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+MAVEN_CENTRAL_URL = "https://repo.maven.apache.org/maven2"
 
 
 def version_key(value: str) -> tuple[tuple[int, object], ...]:
@@ -79,7 +80,31 @@ def fetch_cve(cve_id: str, api_key: str | None = None) -> dict:
         raise RuntimeError(f"NVD lookup failed for {cve_id}: {error}") from error
 
 
-def validate_policy(policy: dict, api_key: str | None, fetch=fetch_cve) -> list[str]:
+def maven_artifact_url(package_url: str, version: str, repository: str = MAVEN_CENTRAL_URL) -> str:
+    match = re.fullmatch(r"pkg:maven/([^/@]+)/([^/@]+)@[^?]+", package_url)
+    if not match:
+        raise RuntimeError(f"unsupported Maven package URL: {package_url}")
+    group, artifact = match.groups()
+    group_path = group.replace(".", "/")
+    return f"{repository.rstrip('/')}/{group_path}/{artifact}/{version}/{artifact}-{version}.pom"
+
+
+def artifact_available(package_url: str, version: str, repository: str = MAVEN_CENTRAL_URL) -> bool:
+    """Return whether a fixed Maven artifact can actually be fetched."""
+    request = Request(maven_artifact_url(package_url, version, repository), method="HEAD")
+    try:
+        with urlopen(request, timeout=30):
+            return True
+    except HTTPError as error:
+        if error.code == 404:
+            return False
+        raise RuntimeError(f"Maven artifact lookup failed ({error.code})") from error
+    except (URLError, TimeoutError) as error:
+        raise RuntimeError(f"Maven artifact lookup failed: {error}") from error
+
+
+def validate_policy(policy: dict, api_key: str | None, fetch=fetch_cve,
+                    available=artifact_available) -> list[str]:
     failures: list[str] = []
     for item in policy.get("policies", []):
         cve_id = item["cve"]
@@ -96,7 +121,15 @@ def validate_policy(policy: dict, api_key: str | None, fetch=fetch_cve) -> list[
         current = version_key(item["current_version"])
         newer_fixes = sorted(fix for fix in fixes if version_key(fix) > current)
         if newer_fixes:
-            failures.append(f"{cve_id}: NVD reports a patched version ({', '.join(newer_fixes)})")
+            package_url = item.get("package_url")
+            availability = item.get("availability")
+            if package_url and availability:
+                repository = availability.get("repository", MAVEN_CENTRAL_URL)
+                newer_fixes = [fix for fix in newer_fixes
+                               if available(package_url, fix, repository)]
+            if newer_fixes:
+                label = "fetchable patched" if package_url and availability else "patched"
+                failures.append(f"{cve_id}: NVD reports a {label} version ({', '.join(newer_fixes)})")
     return failures
 
 

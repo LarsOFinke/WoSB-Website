@@ -39,12 +39,12 @@ public final class FleetAccessQueries {
     public static final String ROLE_RANK_SELECT_01 = "select rank from fleet_roles where code = :code";
 
     public static final String ASSIGNABLE_ROLES_SELECT_01 = """
-                select code from fleet_roles where is_active = true and rank < :rank
+                select code from fleet_roles where is_active = true and code <> 'founder' and rank < :rank
                 order by rank asc, code asc
                 """;
 
     public static final String ALL_ASSIGNABLE_ROLES_SELECT_01 = """
-                select code from fleet_roles where is_active = true
+                select code from fleet_roles where is_active = true and code <> 'founder'
                 order by rank asc, code asc
                 """;
 

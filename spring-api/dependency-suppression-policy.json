@@ -1,3 +1,17 @@
 {
-  "policies": []
+  "policies": [
+    {
+      "cve": "CVE-2026-66299",
+      "package_url": "pkg:maven/org.apache.tomcat.embed/tomcat-embed-websocket@11.0.24",
+      "vendor": "apache",
+      "product": "tomcat",
+      "current_version": "11.0.24",
+      "action": "allow-unfixed-only",
+      "availability": {
+        "type": "maven",
+        "repository": "https://repo.maven.apache.org/maven2"
+      },
+      "until": "2026-09-08"
+    }
+  ]
 }

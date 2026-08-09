@@ -70,4 +70,45 @@ class FleetAccessPolicyTest {
                 new FleetMembershipUpdate(null, null, null, null, "inactive")))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("last active fleet admiral");
     }
+
+    @Test
+    void onlyTheBootstrapAdministratorCanAssignFounder() {
+        FleetDataRepository repository = mock(FleetDataRepository.class);
+        when(repository.count(anyString(), anyMap())).thenReturn(0L);
+        when(repository.query(anyString(), anyMap())).thenReturn(List.of(Map.of("code", "member")));
+        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
+        AuthenticatedUser administrator = new AuthenticatedUser(1, "admin", "admin", true, true, false);
+        FleetMembershipTargetDto member = new FleetMembershipTargetDto(
+                2L, "member", 10L, "active", "user");
+
+        assertThatThrownBy(() -> policy.validateMembershipUpdate(administrator, 42L, member,
+                new FleetMembershipUpdate(null, null, null, "founder", null)))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("bootstrap administrator");
+    }
+
+    @Test
+    void bootstrapAdministratorSeesFounderAsAssignable() {
+        FleetDataRepository repository = mock(FleetDataRepository.class);
+        when(repository.count(anyString(), anyMap())).thenReturn(0L);
+        when(repository.query(anyString(), anyMap())).thenReturn(List.of(Map.of("code", "member")));
+        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
+        AuthenticatedUser bootstrap = new AuthenticatedUser(1, "admin", "admin", true, true, true);
+        FleetMembershipTargetDto member = new FleetMembershipTargetDto(
+                2L, "member", 10L, "active", "user");
+
+        assertThat(policy.permissions(bootstrap, 42L, member).assignableRoles())
+                .contains("founder");
+    }
+
+    @Test
+    void nonBootstrapAdministratorsCannotModifyFounderMemberships() {
+        FleetDataRepository repository = mock(FleetDataRepository.class);
+        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
+        AuthenticatedUser administrator = new AuthenticatedUser(1, "admin", "admin", true, true, false);
+        FleetMembershipTargetDto founder = new FleetMembershipTargetDto(
+                2L, "founder", 90L, "active", "user");
+
+        assertThat(policy.permissions(administrator, 42L, founder).reason()).isEqualTo("founder");
+    }
 }

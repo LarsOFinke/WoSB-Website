@@ -27,7 +27,7 @@
         <coverage.method.minimum>0.80</coverage.method.minimum>
         <coverage.package.line.minimum>0.60</coverage.package.line.minimum>
         <argLine></argLine>
-        <tomcat.version>11.0.25</tomcat.version>
+        <tomcat.version>11.0.24</tomcat.version>
     </properties>
 
     <dependencyManagement>
