@@ -20,8 +20,8 @@
         <log4j2.version>2.25.5</log4j2.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <postgresql.version>42.7.12</postgresql.version>
-        <testcontainers.version>1.21.4</testcontainers.version>
-        <jacoco.version>0.8.13</jacoco.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
+        <jacoco.version>0.8.15</jacoco.version>
         <coverage.line.minimum>0.80</coverage.line.minimum>
         <coverage.branch.minimum>0.65</coverage.branch.minimum>
         <coverage.method.minimum>0.80</coverage.method.minimum>
