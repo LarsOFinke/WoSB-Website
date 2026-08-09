@@ -22,6 +22,9 @@ privacy, and operations rules remain in the primary documents listed below.
 4. [Operations and updates](deployment/OPERATIONS.md)
 5. [Disaster recovery](deployment/DISASTER_RECOVERY.md)
 
+The [RBF Recovery Tool](../tools/recovery-tool/README.md) provides the target-aware
+test/production pull, catalog and bundle-verification workflow used after enrollment.
+
 The workflow is designed for a fresh website server and a separate backup/recovery server.
 The installation guide contains prerequisites, safe defaults, smoke tests, and expected results.
 

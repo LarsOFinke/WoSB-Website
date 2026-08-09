@@ -17,6 +17,13 @@
 
 ## Unreleased
 
+- Reintroduced the recovery client after the Spring Boot migration as a focused
+  target-aware tool. Test and production profiles are isolated, setup imports
+  the public enrollment response while retaining private recovery material
+  locally, and pulls require the current Spring/Flyway preflight plus the exact
+  release artifact before a bundle is accepted. Added Linux/Windows packaging
+  wrappers and CI coverage for the client protocol.
+
 ## 1.2.0 - 2026-08-09
 
 - Raised the deployable application release to 1.2.0 across Maven, frontend metadata and the OpenAPI contract. The `patches/` directory remains available as a local transfer/download workspace, while patch payloads are ignored by Git so release history stays in commits and the changelog instead of duplicated patch archives.

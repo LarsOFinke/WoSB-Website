@@ -30,6 +30,13 @@ jobs:
         run: |
           cp tools/backup-server/provision-rbf-backup-server.sh release/
           (cd release && sha256sum provision-rbf-backup-server.sh > provision-rbf-backup-server.sh.sha256)
+      - name: Build Linux recovery client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes age
+          bash tools/linux/recovery-tool/Build-RbfRecoveryTool.sh
+          cp tools/linux/recovery-tool/dist/RBF-Recovery-Tool-Linux-x86_64 release/
+          cp tools/linux/recovery-tool/dist/RBF-Recovery-Tool-Linux-x86_64.sha256 release/
       - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be
         with: {subject-path: 'release/rbf-deployment-*.tar.gz'}
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f

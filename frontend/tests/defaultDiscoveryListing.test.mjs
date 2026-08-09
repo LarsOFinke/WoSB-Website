@@ -43,7 +43,7 @@ test('large integration workspaces keep their styles with the owning feature', a
     '../src/modules/admin/styles/adminRaidHelper.css',
   ], import.meta.url)
   assert.match(adminStyles, /\.webhook-editor-layer\s*\{/)
-  assert.match(adminStyles, /\.backup-enrollment-wizard\s*\{/)
+  assert.match(adminStyles, /\.backup-workspace\s*\{/)
   assert.match(buildStyles, /\.build-detail-command-frame\s*\{/)
   assert.match(discoveryStyles, /\.discovery-tile-grid\s*\{/)
 })
