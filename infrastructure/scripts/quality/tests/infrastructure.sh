@@ -65,6 +65,20 @@ resolved_override="$(RBF_RUNTIME_INFRA_DIR="$runtime_override" bash -c 'source "
 [[ "$resolved_override" == "$(realpath "$runtime_override")" ]] || fail 'incoming release helpers cannot bind to the active runtime infrastructure'
 manifest_root="$(RBF_RUNTIME_INFRA_DIR="$runtime_override" RBF_INSTALL_ROOT="$runtime_root" bash -c 'source "$1"; backup_manifest_root' _ "$INFRA_DIR/scripts/backup/common.sh")"
 [[ "$manifest_root" == "$(realpath "$runtime_root")" ]] || fail 'versioned release backup manifest root does not resolve to the installation root'
+restore_name="$(bash -c 'source "$1"; restore_database_identifier rbf_restore 99999999999 4194304' _ "$INFRA_DIR/scripts/backup/common.sh")"
+rollback_name="$(bash -c 'source "$1"; restore_database_identifier rbf_rollback 99999999999 4194304' _ "$INFRA_DIR/scripts/backup/common.sh")"
+[[ "$restore_name" == 'rbf_restore_99999999999_4194304' && ${#restore_name} -le 32 ]] \
+  || fail 'restore preflight database names are not compatible with older active releases'
+[[ "$rollback_name" == 'rbf_rollback_99999999999_4194304' && ${#rollback_name} -le 32 ]] \
+  || fail 'restore rollback database names are not compatible with older active releases'
+if bash -c 'source "$1"; restore_database_identifier rbf_restore 99999999999 10000000' \
+    _ "$INFRA_DIR/scripts/backup/common.sh" >/dev/null 2>&1; then
+  fail 'restore database names must reject nonces outside the compatibility boundary'
+fi
+if bash -c 'source "$1"; restore_database_identifier "rbf-restore" 9999999999 1' \
+    _ "$INFRA_DIR/scripts/backup/common.sh" >/dev/null 2>&1; then
+  fail 'restore database names must reject unsafe prefixes'
+fi
 rm -rf -- "$runtime_root"
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then

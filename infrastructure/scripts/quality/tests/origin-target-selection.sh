@@ -34,6 +34,8 @@ if (rbf_origin_select_target "$work" --config >/dev/null 2>&1); then
   fail 'missing --config value was accepted'
 fi
 
+bash "$ROOT_DIR/infrastructure/scripts/quality/tests/build-restore.sh"
+
 grep -q -- '--test|--production' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh" \
   || fail 'deploy dispatcher does not consume target flags'
 grep -q -- '--production' "$ROOT_DIR/infrastructure/scripts/diagnostics/collect-from-origin.sh" \

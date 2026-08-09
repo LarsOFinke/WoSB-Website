@@ -123,6 +123,9 @@ a directory name alone.
   lifecycle, and flows in composables, and reusable UI in components.
 - Shared infrastructure: `core/`, `shared/`, `config/`, `router/`, `locales/`,
   and `styles/`.
+- Vite environment values used by production code must be referenced statically
+  (`import.meta.env.VITE_*`), never through `import.meta.env[name]`; dynamic access
+  can pass `.env` validation but is not replaced in the production bundle.
 - Frontend guards check guest/user/staff/admin/fleet-management state but never
   replace server-side authorization.
 - Localization sources: `frontend/src/locales/messages/`; generator:
@@ -373,6 +376,14 @@ Removal is mandatory when one of these conditions is reached:
 3. the suppression reaches its hard expiry on **2026-09-08 UTC**.
 
 The security workflow sets `failBuildOnUnusedSuppressionRule=true`. Therefore a dependency upgrade that fixes/removes the finding deliberately turns this suppression into a CI failure until the rule is deleted. Agents must **remove** an unused suppression, not weaken that check. Extending the expiry requires a fresh upstream advisory review and an updated explanation in both `.agents/` and `docs/development/TESTING.md`.
+
+Automated Dependabot version-update pull requests are disabled. The daily NVD/OWASP
+scan, frontend `npm audit`, container Trivy scan, and repository security audit remain
+the vulnerability boundary. They intentionally do not act as a general dependency
+freshness service. Routine Maven/npm upgrades, container runtime changes, and updates
+to SHA-pinned GitHub Actions are reviewed maintenance changes and must pass the full
+gate; do not reintroduce broad automated major-version PRs as a substitute for that
+review.
 
 ### 2026-08-08 security/TLS backlog closure
 

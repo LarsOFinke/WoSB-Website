@@ -14,7 +14,11 @@ import org.flywaydb.core.Flyway;
 
 /** One-shot database ownership boundary used before the runtime API starts. */
 public final class DatabaseMigrationMain {
-    private static final Pattern IDENTIFIER=Pattern.compile("[A-Za-z_][A-Za-z0-9_]{1,31}");
+    // PostgreSQL identifiers are limited to NAMEDATALEN - 1 bytes (63 in the
+    // supported image). Restore preflight names include a UTC timestamp and a
+    // process id, so the previous 32-character application limit rejected
+    // valid generated staging databases.
+    private static final Pattern IDENTIFIER=Pattern.compile("[A-Za-z_][A-Za-z0-9_]{0,62}");
     private static final Path SECRETS=Path.of("/run/secrets");
 
     private DatabaseMigrationMain(){ }
@@ -81,7 +85,7 @@ public final class DatabaseMigrationMain {
             statement.setString(1,value);try(ResultSet result=statement.executeQuery()){result.next();return result.getString(1);}
         }
     }
-    private static String identifier(String value){
+    static String identifier(String value){
         if(!IDENTIFIER.matcher(value).matches())throw new IllegalArgumentException("Invalid database identifier.");return value;
     }
     private static String requiredEnvironment(String name){

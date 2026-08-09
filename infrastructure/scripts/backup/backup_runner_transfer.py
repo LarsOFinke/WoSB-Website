@@ -186,8 +186,10 @@ class BackupTransferMixin:
             commands.extend(
                 [
                     f"put {checksum_file} {checksum_name}.part",
+                    f"chmod 0640 {checksum_name}.part",
                     f"rename {checksum_name}.part {checksum_name}",
                     f"put {backup_file} {filename}.part",
+                    f"chmod 0640 {filename}.part",
                     f"rename {filename}.part {filename}",
                 ]
             )
@@ -195,8 +197,10 @@ class BackupTransferMixin:
             commands.extend(
                 [
                     f"put {backup_file} {filename}.part",
+                    f"chmod 0640 {filename}.part",
                     f"rename {filename}.part {filename}",
                     f"put {checksum_file} {checksum_name}.part",
+                    f"chmod 0640 {checksum_name}.part",
                     f"rename {checksum_name}.part {checksum_name}",
                 ]
             )
@@ -206,8 +210,10 @@ class BackupTransferMixin:
             commands.extend(
                 [
                     f"put {metadata_file} {metadata_name}.part",
+                    f"chmod 0640 {metadata_name}.part",
                     f"rename {metadata_name}.part {metadata_name}",
                     f"put {metadata_checksum} {metadata_checksum_name}.part",
+                    f"chmod 0640 {metadata_checksum_name}.part",
                     f"rename {metadata_checksum_name}.part {metadata_checksum_name}",
                 ]
             )

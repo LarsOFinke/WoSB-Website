@@ -268,6 +268,10 @@ PY
 install -d -m 2750 -o "$USERNAME" -g "$READ_GROUP" "$DATA_DIRECTORY"
 chown "$USERNAME:$READ_GROUP" "$DATA_DIRECTORY"
 chmod 2750 "$DATA_DIRECTORY"
+# SFTP preserves restrictive source modes such as 0600, while its umask can
+# only remove permissions. Reconcile existing top-level artifacts so the
+# dedicated read-only recovery account can consume them through its group.
+find "$DATA_DIRECTORY" -mindepth 1 -maxdepth 1 -type f -exec chmod 0640 {} +
 
 AUTH_ROOT="/etc/ssh/authorized_keys"
 install -d -m 0755 -o root -g root "$AUTH_ROOT"

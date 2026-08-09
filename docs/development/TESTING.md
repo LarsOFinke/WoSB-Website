@@ -243,6 +243,16 @@ CI uses `failBuildOnUnusedSuppressionRule=true`, so an upgrade that makes this e
 
 The normal high-severity gate remains `failBuildOnCVSS=7`. Before Dependency-Check runs, `check_dependency_suppressions.py` reads the versioned `spring-api/dependency-suppression-policy.json` and queries the NVD CVE API. A policy with `action: allow-unfixed-only` fails when NVD explicitly reports a newer fixed version for the named product; it also fails closed when NVD cannot be queried. NVD version metadata is not guaranteed to be complete, so the XML expiry and the exact package selector remain mandatory second controls. Never suppress by broad CVSS range, wildcard vulnerability name, entire Tomcat family, or generic CPE just to make CI green.
 
+Dependabot version-update pull requests are intentionally disabled. They previously
+mixed routine library updates with unsupported major runtime jumps and generated
+obsolete branches for removed components. This does not weaken vulnerability
+handling: OWASP Dependency-Check/NVD, `npm audit`, Trivy, and the repository security
+audit remain scheduled fail-closed gates. These checks identify security exposure;
+they do not promise that every dependency is current. Routine Maven, npm, base-image,
+and SHA-pinned GitHub Actions upgrades therefore remain explicit reviewed maintenance
+changes, performed before releases as appropriate and validated through the normal
+full repository gate.
+
 ### Security operations fixtures
 
 `infrastructure/scripts/quality/tests/tls-environment-safety.sh` is the regression gate for Test/Production TLS isolation. It functionally validates certificate/key/hostname matching and statically requires Production to reject self-signed/ACME-staging configuration. `frontend/tests/fileUploadSecurity.test.mjs` keeps browser-side upload limits aligned with the backend envelope; backend type/signature/quota checks remain authoritative. Mandatory infrastructure quality gates must only depend on declared baseline host tools; the TLS gate uses `grep` rather than optional developer tooling such as `ripgrep`, because `update.sh` executes the same gate on deployment hosts.

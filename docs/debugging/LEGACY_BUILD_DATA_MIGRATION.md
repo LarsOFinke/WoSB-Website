@@ -90,78 +90,57 @@ Before inserting data, a logical migration must verify at least:
 Do not weaken one of these checks merely to make an old dump importable. Resolve
 and document the actual Python -> Java semantic difference instead.
 
-## Copy the migration to the target
+## Run the guided restore from the origin system
 
-The SSH deployment user should not be able to write directly into `/srv/rbf`.
-Upload to its home directory first:
-
-```bash
-scp rbf-builds-partial-20260731-java-v3.sql rbfadmin@TESTSERVER:~/
-```
-
-Then install the file with root ownership:
+Use the origin-side restore script with the same separate SSH profiles as deploy,
+update and diagnostics. Test is the default target:
 
 ```bash
-sudo install -d -m 0750 /srv/rbf/shared/imports
-sudo install -o root -g root -m 0600 \
-  ~/rbf-builds-partial-20260731-java-v3.sql \
-  /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
-rm ~/rbf-builds-partial-20260731-java-v3.sql
+infrastructure/scripts/migration/restore-builds-from-origin.sh
 ```
 
-Do not make `/srv/rbf/shared` generally writable and do not use `chmod 777` as
-an upload workaround.
+The script discovers a portable `rbf-builds-partial-*.sql` artifact in
+`backups/`, asks how each historical owner maps to an existing target username,
+uploads the exact artifact, verifies its SHA-256 checksum and runs the complete
+import as a transaction that is rolled back. If more than one matching artifact
+exists, select one explicitly with `--backup`.
 
-## Mandatory test-server dry-run
-
-Run the migration through the repository Docker helper so credentials remain in
-the target environment. The outer `rbfadmin` user may not be able to `cd` into
-`/srv/rbf/current`; perform that step inside the root shell:
+Mappings can also be supplied up front:
 
 ```bash
-sudo bash -lc '
-cd /srv/rbf/current
-source infrastructure/scripts/lib/docker.sh
-
-postgres_sql \
-  -v ON_ERROR_STOP=1 \
-  -v dry_run=1 \
-  -v owner_puszpang=admin \
-  -v owner_nostrapi=admin \
-  -f - < /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
-'
+infrastructure/scripts/migration/restore-builds-from-origin.sh \
+  --owner puszpang=admin \
+  --owner nostrapi=admin
 ```
 
-`dry_run=1` is the safe default. The script performs the full import and
-verification in one transaction and finishes with a rollback. A successful run
-must explicitly report:
+Use `--dry-run-only` when only validation is wanted. This mode also works without
+an interactive terminal and can never commit data.
+
+The SSH deployment user never receives write access to `/srv/rbf`. The remote
+helper installs the checksummed artifact as root with mode `0600` below
+`/srv/rbf/shared/imports`, acquires the update lock and uses the target-local
+Docker/environment helpers. Database credentials are never copied to the origin.
+
+A successful dry run must explicitly report:
 
 ```text
 DRY RUN successful; rolling back all changes.
 ```
 
 Any `ERROR`, missing/ambiguous reference, compatibility failure or conflicting
-existing build stops the procedure. Do not proceed to a committed import until
-the dry-run is completely green.
+existing build stops the procedure. The script does not offer the commit prompt
+until the dry run is completely green.
 
 ## Commit the test-server import
 
-Before a committed import, create a current backup using the normal backup path.
-Then rerun the exact same migration with only `dry_run=0` changed:
-
-```bash
-sudo bash -lc '
-cd /srv/rbf/current
-source infrastructure/scripts/lib/docker.sh
-
-postgres_sql \
-  -v ON_ERROR_STOP=1 \
-  -v dry_run=0 \
-  -v owner_puszpang=admin \
-  -v owner_nostrapi=admin \
-  -f - < /srv/rbf/shared/imports/rbf-builds-partial-20260731-java-v3.sql
-'
-```
+After the dry run, type the displayed target-specific confirmation. The remote
+helper creates an atomic PostgreSQL custom-format safety dump, verifies its
+checksum and `pg_restore` inventory, and then executes the same SQL artifact with
+`dry_run=0`. A failed safety dump prevents the import. The update and backup locks
+remain held across dump and import so neither a deployment nor a scheduled backup
+can race the migration. Because this operation changes only transactional database
+rows, it deliberately does not run the much slower full recovery preflight, file
+backup, staging-database restore, or application restart.
 
 The current Spring API reads build state from PostgreSQL on request; a server
 restart is normally not required after this build-only import. Verify several
@@ -176,11 +155,19 @@ Only promote a migration file after the **same file** has passed the complete
 Dry-Run -> Commit -> UI/API verification cycle on the test server.
 
 Use the identical SQL file on production. Environment-specific differences
-must be passed only through explicit variables such as owner mappings. Do not
-regenerate a second production-specific data dump after test verification, as
-that removes the exact-artifact guarantee.
+must be passed only through explicit owner mappings. Do not regenerate a second
+production-specific data dump after test verification, as that removes the
+exact-artifact guarantee:
 
-Production still requires:
+```bash
+infrastructure/scripts/migration/restore-builds-from-origin.sh --production
+```
+
+Production selection and commit are separate explicit decisions: the command
+requires `--production`, performs another rollback-only dry run, and then asks
+for the exact production confirmation phrase.
+
+The guided workflow enforces:
 
 1. current coordinated backup before import;
 2. production-specific owner mapping to existing users;

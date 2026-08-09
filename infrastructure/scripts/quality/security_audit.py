@@ -107,6 +107,8 @@ for dockerfile in ('spring-api/Dockerfile','infrastructure/docker/api-runtime.Do
     require('apk upgrade --no-cache' in read(dockerfile),
             f'{dockerfile} must apply Alpine security updates during the image build')
 security_workflow=read('.github/workflows/security.yml')
+require(not (ROOT/'.github/dependabot.yml').exists(),
+        'automated dependency version-update pull requests must remain disabled')
 require('org.owasp:dependency-check-maven:12.2.2:check' in security_workflow,
         'OWASP dependency-check must use the reviewed pinned version')
 require('NVD_API_KEY: ${{ secrets.NVD_API_KEY }}' in security_workflow and

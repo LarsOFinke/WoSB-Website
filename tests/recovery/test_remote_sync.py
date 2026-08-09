@@ -134,11 +134,17 @@ def test_backup_set_manifest_is_last_file_in_sftp_batch(tmp_path, monkeypatch) -
         "backup_set",
     )
     assert batches
-    upload_lines = [line for line in batches[0].splitlines() if line.startswith(("put ", "rename "))]
+    batch_lines = batches[0].splitlines()
+    upload_lines = [line for line in batch_lines if line.startswith(("put ", "rename "))]
     assert upload_lines[-1] == f"rename {artifact.name}.part {artifact.name}"
     assert upload_lines.index(f"rename {checksum.name}.part {checksum.name}") < upload_lines.index(
         f"rename {artifact.name}.part {artifact.name}"
     )
+    for source in (checksum, artifact):
+        name = source.name
+        put_index = batch_lines.index(f"put {source} {name}.part")
+        assert batch_lines[put_index + 1] == f"chmod 0640 {name}.part"
+        assert batch_lines[put_index + 2] == f"rename {name}.part {name}"
 
 
 def test_connection_test_requires_sftp_write_read_delete_roundtrip(tmp_path, monkeypatch) -> None:

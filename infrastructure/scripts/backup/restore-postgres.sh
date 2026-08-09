@@ -29,8 +29,8 @@ if [[ "${RBF_BACKUP_LOCK_HELD:-false}" != true && "${RBF_RESTORE_LOCK_HELD:-fals
   exec 8>"$run_dir/backup.lock"; flock 8
 fi
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
-staging="rbf_restore_${stamp//[^0-9A-Za-z_]/_}"
-rollback="rbf_rollback_${stamp//[^0-9A-Za-z_]/_}"
+staging="$(restore_database_identifier rbf_restore)"
+rollback="$(restore_database_identifier rbf_rollback)"
 container="rbf-restore-preflight-${stamp,,}"; container="${container//_/-}"
 report="${report:-$INFRA_DIR/data/backups/reports/rbf-restore-${stamp}.json}"
 install -d -m 0700 "$(dirname "$report")"

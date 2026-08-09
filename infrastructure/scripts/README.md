@@ -10,6 +10,9 @@ are not invoked directly from systemd or CI.
 - `../../deploy.sh` and `../../update.sh` delegate to `release/deploy-from-origin.sh`;
   production requires `--production` on every run.
 - `diagnostics/debug.sh` follows the same target selection and collects bounded, redacted target-system diagnostics only at the origin.
+- `migration/restore-builds-from-origin.sh` maps and restores a portable build-only
+  SQL artifact from `backups/`; it defaults to test, requires explicit production
+  selection, and gates every commit behind a complete transactional dry run.
 - `../setup.sh` delegates internally to `setup/` and is invoked only by local development and artifact workflows.
 - `release/build-artifact.sh` builds and validates the compiled deployment artifact.
 - `services/boot.sh`, `services/start.sh`, `services/stop.sh`, and `services/systemd-stop.sh` form the container lifecycle.
@@ -22,6 +25,7 @@ are not invoked directly from systemd or CI.
 - `diagnostics/`: origin collector, ephemeral remote collector, and local redaction for agent-friendly operational diagnostics.
 - `generation/`: deterministic API, Java, Flyway, Build, and documentation generators. Published Flyway files remain immutable despite the relocated generator.
 - `lib/`: shared shell libraries for Docker, environment, host, storage, TLS, JSON, and maintenance status.
+- `migration/`: controlled legacy-schema adoption and logical build-data migration helpers.
 - `quality/`: repository audits, hygiene, security checks, and the complete validation gate; focused contract checks live in `quality/tests/`.
 - `release/`: artifact build and verification, packaging, origin transfer, installation, rollback, and TLS/host preparation.
 - `services/`: running application operations and controlled admin actions.

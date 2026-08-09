@@ -18,6 +18,20 @@ backup_manifest_root() {
   printf '%s' "$INFRA_DIR"
 }
 
+restore_database_identifier() {
+  local prefix="${1:-}" epoch="${2:-$(date -u +%s)}" process_id="${3:-$$}" identifier
+  [[ "$prefix" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "Unsafe restore database prefix."
+  [[ "$epoch" =~ ^[0-9]{10,11}$ && "$process_id" =~ ^[0-9]{1,7}$ ]] \
+    || die "Unsafe restore database nonce."
+  identifier="${prefix}_${epoch}_${process_id}"
+  # Keep generated names within the historical 32-character application
+  # boundary so an incoming release can verify backups through an older active
+  # schema image before the new release is activated.
+  [[ "$identifier" =~ ^[A-Za-z_][A-Za-z0-9_]{1,31}$ ]] \
+    || die "Generated restore database identifier exceeds the compatibility boundary."
+  printf '%s\n' "$identifier"
+}
+
 backup_finalize() {
   local output="$1" category="$2"
   require_command sha256sum
