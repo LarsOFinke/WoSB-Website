@@ -8,6 +8,22 @@
 
 # Changelog
 
+## 1.5.7 - 2026-08-11
+
+- Added a two-layer Port-Battle strategy planner that preserves uploaded charts
+  while keeping scalable and rotatable ship markers, freehand drawings, lines, arrows,
+  formations, and text independently editable.
+- Added optional player assignments and website-backed build and guide links to
+  ship markers, with server-side validation that referenced resources exist.
+- Added private strategy storage, revocable read-only share links, SVG export,
+  and print/PDF support with privacy, retention, and ownership enforcement.
+- Added bounded, loss-aware JPEG/PNG optimization for all persisted uploads and
+  derived build printouts, including strategy backgrounds and accurate post-optimization
+  quota, size, and checksum accounting.
+- Corrected strategy freehand coordinates for responsive and letterboxed canvases,
+  and restricted linked builds to the ship represented by each marker in both the
+  editor and server-side validation.
+
 ## 1.3.6 - 2026-08-10
 
 - Wired maintenance mode into update, rollback, restart, and database restore

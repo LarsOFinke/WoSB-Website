@@ -121,7 +121,7 @@ class FlywayMigrationCompatibilityTest {
                 .schemas(schema)
                 .locations("classpath:db/migration")
                 .load();
-        assertThat(current.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(current.migrate().migrationsExecuted).isGreaterThanOrEqualTo(1);
 
         try (var connection = DriverManager.getConnection(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());

@@ -149,3 +149,172 @@ test('cookie settings remain open with an accessible error after a failed save',
   await expect(dialog).toBeVisible()
   await expect(dialog.getByRole('alert')).toBeVisible()
 })
+
+test('strategy planner keeps the chart separate and saves website-backed markers without a player', async ({ page }) => {
+  const browserErrors = []
+  page.on('pageerror', (error) => browserErrors.push(error.message))
+  const publicId = '4f30d366-5d04-4bc1-ae1a-4df5b88c0834'
+  let savedPayload
+  let published = false
+  const background = {
+    id: 9, owner_id: 7, original_name: 'harbor.png', stored_name: 'harbor.png',
+    relative_path: 'strategy/7/harbor.png', public_url: '/api/files/9/content',
+    mime_type: 'image/png', size_bytes: 68, usage_context: 'strategy',
+    is_public: false, created_at: '2030-01-15T12:00:00',
+  }
+  const strategyResponse = () => ({
+    id: 41, owner_id: 7, ...savedPayload, public_id: publicId, is_published: published,
+    background_file: { ...background, is_public: published },
+    created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:10:00',
+    published_at: published ? '2030-01-15T12:10:00' : null,
+  })
+
+  await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
+    json: { id: 7, username: 'planner', display_name: 'Planner', role: 'member' },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/ships$/, (route) => route.fulfill({
+    json: [{ id: 11, name: 'Leopard', ship_type: 'Frigate', rate: 3 }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/builds\?/, (route) => route.fulfill({
+    json: { items: [
+      { id: 21, build_name: 'Boarding Leopard', ship: { id: 11, name: 'Leopard' } },
+      { id: 22, build_name: 'Wrong ship build', ship: { id: 12, name: 'Brig' } },
+    ], total: 2 },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/guides\?/, (route) => route.fulfill({
+    json: [{ id: 31, title: 'Eastern harbor approach' }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/files\?usage_context=strategy$/, (route) => route.fulfill({ json: background }))
+  await page.route(/^https?:\/\/[^/]+\/api\/files\/9\/content$/, (route) => route.fulfill({
+    contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="800" height="500" fill="#16324a"/></svg>',
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/strategies$/, async (route) => {
+    savedPayload = route.request().postDataJSON()
+    await route.fulfill({ status: 201, json: strategyResponse() })
+  })
+  await page.route(/^https?:\/\/[^/]+\/api\/strategies\/41\/publication$/, async (route) => {
+    published = true
+    await route.fulfill({ json: strategyResponse() })
+  })
+
+  await page.goto('/strategies/new')
+  await page.getByLabel('Strategy title').fill('North harbor approach')
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'harbor.png', mimeType: 'image/png', buffer: Buffer.from('planner-image'),
+  })
+  await expect(page.locator('.strategy-command-bar')).toHaveCSS('display', 'flex')
+  await expect(page.locator('.strategy-tool-rail')).toHaveCSS('position', 'absolute')
+  const workspaceBox = await page.locator('.strategy-planner-workspace').boundingBox()
+  const chartBox = await page.locator('.strategy-chart-column').boundingBox()
+  expect(chartBox.width).toBeGreaterThan(workspaceBox.width * 0.95)
+  expect(chartBox.height).toBeGreaterThan(500)
+  const markerSelects = page.locator('.strategy-tool-rail select')
+  await markerSelects.nth(0).selectOption('11')
+  await expect(markerSelects.nth(1).locator('option')).toHaveCount(2)
+  await markerSelects.nth(1).selectOption('21')
+  await markerSelects.nth(2).selectOption('31')
+  await page.getByRole('button', { name: 'Add ship marker' }).click()
+  await expect(page.locator('.strategy-marker-disc')).toHaveAttribute('r', '18')
+  await expect(page.locator('.strategy-marker-meta')).toHaveCount(0)
+  await expect(page.locator('.strategy-legend')).toContainText('Leopard')
+  await expect(page.locator('.strategy-legend')).toContainText('Frigate · Rate 3')
+  await expect(page.locator('.strategy-legend')).toContainText('Boarding Leopard')
+  await expect(page.locator('.strategy-legend')).toContainText('Eastern harbor approach')
+  const canvasShellBox = await page.locator('.strategy-canvas-shell').boundingBox()
+  const legendBox = await page.locator('.strategy-legend').boundingBox()
+  expect(legendBox.y).toBeGreaterThanOrEqual(canvasShellBox.y + canvasShellBox.height)
+  await page.locator('.strategy-selection-panel input[type="range"]').first().fill('1.5')
+  const markerBox = await page.locator('.strategy-ship-marker').boundingBox()
+  await page.mouse.move(markerBox.x + markerBox.width / 2, markerBox.y + markerBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(markerBox.x + markerBox.width / 2 + 40, markerBox.y + markerBox.height / 2 + 20)
+  await page.mouse.up()
+  await page.getByRole('button', { name: 'Arrow', exact: true }).click()
+  await page.locator('.strategy-selection-panel input[type="range"]').first().fill('2')
+  await page.locator('.strategy-selection-panel input[type="range"]').nth(1).fill('45')
+  await expect(page.locator('.strategy-line')).toHaveAttribute('transform', /rotate\(45\) scale\(2\)/)
+  await expect(page.locator('.strategy-arrow-head')).toBeVisible()
+  await page.getByRole('button', { name: 'Formation', exact: true }).click()
+  await page.getByRole('button', { name: 'Freehand', exact: true }).click()
+  await expect(page.locator('.strategy-canvas')).toHaveClass(/is-drawing/)
+  const stroke = await page.locator('.strategy-canvas').evaluate((svg) => {
+    const matrix = svg.getScreenCTM()
+    const height = svg.viewBox.baseVal.height
+    const screen = (x, y) => new DOMPoint(x * 1000, y * height).matrixTransform(matrix)
+    return { start: screen(0.15, 0.35), middle: screen(0.2, 0.4), end: screen(0.25, 0.45) }
+  })
+  await page.mouse.move(stroke.start.x, stroke.start.y)
+  await page.mouse.down()
+  await page.mouse.move(stroke.middle.x, stroke.middle.y, { steps: 3 })
+  await page.mouse.move(stroke.end.x, stroke.end.y, { steps: 3 })
+  await page.mouse.up()
+  await page.getByRole('button', { name: 'Save strategy' }).click()
+
+  await expect(page).toHaveURL(/\/strategies\/41\/edit$/)
+  await expect(page.getByRole('status')).toContainText('Strategy saved')
+  const overlay = JSON.parse(savedPayload.overlay_json)
+  expect(savedPayload.background_file_id).toBe(9)
+  expect(overlay.objects.map((item) => item.type)).toEqual(['ship', 'arrow', 'formation', 'freehand'])
+  expect(overlay.objects[0]).toMatchObject({ shipId: 11, playerName: null, buildId: 21, guideId: 31, scale: 1.5 })
+  expect(overlay.objects[0].x).toBeGreaterThan(0.5)
+  expect(overlay.objects[0].y).toBeGreaterThan(0.5)
+  expect(overlay.objects[1]).toMatchObject({ rotation: 45, scale: 2 })
+  expect(overlay.objects[3].points[0]).toBeCloseTo(0.15, 2)
+  expect(overlay.objects[3].points[1]).toBeCloseTo(0.35, 2)
+  expect(browserErrors).toEqual([])
+
+  await page.getByRole('button', { name: 'Publish share link' }).click()
+  await expect(page.getByText('Published', { exact: true })).toBeVisible()
+  await expect(page.locator('.strategy-canvas image')).toHaveAttribute('href', '/api/files/9/content')
+  await expect(page.locator('.strategy-overlay-layer')).toBeVisible()
+  await page.locator('.strategy-tools-toggle').click()
+  await expect(page.locator('.strategy-tool-rail')).toBeHidden()
+  await expect(page.locator('.strategy-tools-toggle')).toHaveText('Show tools')
+})
+
+test('published strategies have a dedicated read-only view for other users', async ({ page }) => {
+  const publicId = '4f30d366-5d04-4bc1-ae1a-4df5b88c0834'
+  const overlay = JSON.stringify({
+    version: 1,
+    objects: [{
+      id: 'ship-1', type: 'ship', shipId: 11, shipName: 'Leopard', shipType: 'Frigate', shipRate: 3,
+      playerName: null, buildId: 21, guideId: 31, x: 0.4, y: 0.45, scale: 1, rotation: 0, color: '#d6b35a',
+    }],
+  })
+  const strategy = {
+    id: 41, owner_id: 7, title: 'North harbor approach', description: 'Hold the eastern entrance.',
+    overlay_json: overlay, public_id: publicId, is_published: true,
+    background_file: { id: 9, public_url: '/api/files/9/content', original_name: 'harbor.png' },
+    created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:10:00', published_at: '2030-01-15T12:10:00',
+  }
+
+  await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
+    json: { id: 8, username: 'viewer', display_name: 'Viewer', role: 'member' },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/strategies\/shared\//, (route) => route.fulfill({ json: strategy }))
+  await page.route(/^https?:\/\/[^/]+\/api\/ships$/, (route) => route.fulfill({
+    json: [{ id: 11, name: 'Leopard', ship_type: 'Frigate', rate: 3 }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/builds\?/, (route) => route.fulfill({
+    json: { items: [{ id: 21, build_name: 'Boarding Leopard' }], total: 1 },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/guides\?/, (route) => route.fulfill({
+    json: [{ id: 31, title: 'Eastern harbor approach' }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/files\/9\/content$/, (route) => route.fulfill({
+    contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="800" height="500" fill="#16324a"/></svg>',
+  }))
+
+  await page.goto(`/strategies/shared/${publicId}`)
+
+  await expect(page.getByRole('heading', { name: 'North harbor approach' })).toBeVisible()
+  await expect(page.getByText('Hold the eastern entrance.')).toBeVisible()
+  await expect(page.locator('.strategy-legend')).toContainText('Boarding Leopard')
+  await expect(page.locator('.strategy-legend')).toContainText('Eastern harbor approach')
+  await expect(page.locator('.strategy-command-bar')).toHaveCount(0)
+  await expect(page.locator('.strategy-tool-rail')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Save strategy' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Edit' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Print / save PDF' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Download SVG' })).toBeVisible()
+})

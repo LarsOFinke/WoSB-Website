@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.files.repository.FileAssetRepository;
 import eu.royalblackwater.api.files.service.FileAssetService;
+import eu.royalblackwater.api.files.service.ImageAssetOptimizer;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ class FileAssetServiceBehaviorTest {
     private final FileAssetRepository repository = mock(FileAssetRepository.class);
     private final FileAssetService service = new FileAssetService(repository,
             new StorageProperties(Path.of("/tmp/rbf-file-test"), 12, 24, 50, 250, 4096, 1),
+            new ImageAssetOptimizer(),
             Clock.fixed(Instant.parse("2030-01-15T12:00:00Z"), ZoneOffset.UTC));
 
     @Test

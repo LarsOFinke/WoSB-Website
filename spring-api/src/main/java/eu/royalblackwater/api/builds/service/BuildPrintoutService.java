@@ -6,6 +6,7 @@ import eu.royalblackwater.api.builds.repository.BuildDataRepository;
 import eu.royalblackwater.api.builds.repository.queries.BuildPrintoutQueries;
 import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
+import eu.royalblackwater.api.files.service.ImageAssetOptimizer;
 import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.shared.dto.BinaryDownloadDto;
@@ -65,11 +66,14 @@ public class BuildPrintoutService {
     private static final Duration CLIENT_CACHE_MAX_AGE = Duration.ofDays(30);
     private final BuildDataRepository repository;
     private final StorageProperties storage;
+    private final ImageAssetOptimizer imageOptimizer;
     private final AuditService audit;
     private final Clock clock;
 
-    BuildPrintoutService(BuildDataRepository repository, StorageProperties storage, AuditService audit, Clock clock) {
-        this.repository = repository; this.storage = storage; this.audit = audit; this.clock = clock;
+    BuildPrintoutService(BuildDataRepository repository, StorageProperties storage,
+                         ImageAssetOptimizer imageOptimizer, AuditService audit, Clock clock) {
+        this.repository = repository; this.storage = storage; this.imageOptimizer = imageOptimizer;
+        this.audit = audit; this.clock = clock;
     }
 
     @Transactional
@@ -85,7 +89,8 @@ public class BuildPrintoutService {
         Path temporary = folder.resolve("." + UUID.randomUUID() + ".upload");
         try {
             Files.createDirectories(folder);
-            Result result = copyAndValidate(upload, temporary, maximumBytes(build));
+            long maximum = maximumBytes(build);
+            Result result = copyAndValidate(upload, temporary, maximum);
             String existingKey = RowValues.string(build, "printout_cache_key");
             String existingChecksum = RowValues.string(build, "printout_checksum");
             Path existingTarget = existingChecksum == null ? null : cachePath(buildId, existingChecksum);
@@ -276,7 +281,6 @@ public class BuildPrintoutService {
     }
 
     private Result copyAndValidate(MultipartFile upload, Path target, long maximum) throws IOException {
-        MessageDigest digest = sha256();
         byte[] header = new byte[24];
         int headerSize = 0;
         long size = 0;
@@ -292,11 +296,19 @@ public class BuildPrintoutService {
                 }
                 size += count;
                 if (size > maximum) throw bad("Build printout exceeds the configured image/storage limit.");
-                digest.update(buffer, 0, count); output.write(buffer, 0, count);
+                output.write(buffer, 0, count);
             }
         }
         validateHeader(header, headerSize);
-        return new Result(HexFormat.of().formatHex(digest.digest()), size);
+        imageOptimizer.optimize(target, MediaType.IMAGE_PNG_VALUE);
+        long optimizedSize = Files.size(target);
+        if (optimizedSize > maximum) throw bad("Optimized build printout exceeds the configured storage limit.");
+        MessageDigest digest = sha256();
+        try (InputStream input = Files.newInputStream(target)) {
+            byte[] buffer = new byte[1024 * 1024]; int count;
+            while ((count = input.read(buffer)) >= 0) if (count > 0) digest.update(buffer, 0, count);
+        }
+        return new Result(HexFormat.of().formatHex(digest.digest()), optimizedSize);
     }
 
     private static void validateHeader(byte[] header, int size) {

@@ -1,0 +1,118 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+
+import {
+  buildMatchesShip,
+  buildsForShip,
+  createFormation,
+  createLine,
+  createShipMarker,
+  emptyStrategyDocument,
+  invalidShipMarkers,
+  invalidBuildMarkers,
+  moveStrategyObject,
+  parseStrategyDocument,
+  repairShipMarkerReferences,
+  serializeStrategyDocument,
+  snapshotStrategyObject,
+  strategyShareUrl,
+} from '../src/modules/strategy-planner/domain/strategyDocument.js'
+import { strategyCanvasPoint } from '../src/modules/strategy-planner/domain/canvasCoordinates.js'
+
+test('strategy ship markers require website ships while player names remain optional', () => {
+  assert.throws(() => createShipMarker(null), /ship is required/i)
+  const marker = createShipMarker({ id: 17, name: 'Leopard', ship_type: 'Frigate', rate: 3 }, { buildId: 42, guideId: 8 })
+  assert.equal(marker.shipId, 17)
+  assert.equal(marker.shipName, 'Leopard')
+  assert.equal(marker.shipType, 'Frigate')
+  assert.equal(marker.shipRate, 3)
+  assert.equal(marker.playerName, null)
+  assert.equal(marker.buildId, 42)
+  assert.equal(marker.guideId, 8)
+})
+
+test('strategy documents preserve the drawing layer independently', () => {
+  const document = emptyStrategyDocument()
+  document.objects.push({ ...createFormation('wedge'), vueOnlyState: { selected: true } })
+  const serialized = serializeStrategyDocument(document)
+  const restored = parseStrategyDocument(serialized)
+  assert.equal(restored.version, 1)
+  assert.equal(restored.objects[0].formation, 'wedge')
+  assert.equal(serialized.includes('vueOnlyState'), false)
+})
+
+test('legacy reference names are normalized and invalid ship markers are found before saving', () => {
+  const restored = parseStrategyDocument('{"version":1,"objects":[{"id":"ship-1","type":"ship","x":0.5,"y":0.5,"ship_id":17,"ship_name":"Leopard","ship_type":"Frigate","ship_rate":3,"player_name":"Captain","build_id":42}]}')
+  assert.equal(restored.objects[0].shipId, 17)
+  assert.equal(restored.objects[0].shipName, 'Leopard')
+  assert.equal(restored.objects[0].playerName, 'Captain')
+  assert.equal(restored.objects[0].buildId, 42)
+  assert.equal(invalidShipMarkers(restored).length, 0)
+  assert.equal(invalidShipMarkers({ version: 1, objects: [{ id: 'ship-2', type: 'ship', x: 0.5, y: 0.5 }] }).length, 1)
+  assert.equal(serializeStrategyDocument(restored).includes('ship_id'), false)
+})
+
+test('legacy ship markers are repaired only from an unambiguous catalog match', () => {
+  const legacy = { version: 1, objects: [{ id: 'ship-1', type: 'ship', x: 0.5, y: 0.5, shipName: 'Leopard', shipType: 'Frigate', shipRate: 3 }] }
+  const repaired = repairShipMarkerReferences(legacy, [
+    { id: 17, name: 'Leopard', ship_type: 'Frigate', rate: 3 },
+    { id: 18, name: 'Defiance', ship_type: 'Frigate', rate: 3 },
+  ])
+  assert.equal(repaired.objects[0].shipId, 17)
+  assert.equal(invalidShipMarkers(repaired).length, 0)
+})
+
+test('moving strategy objects keeps normalized coordinates in bounds', () => {
+  const moved = moveStrategyObject({ id: 'line-1', type: 'line', x: 0.9, y: 0.1, x2: 1, y2: 0.2 }, 0.5, -0.5)
+  assert.deepEqual({ x: moved.x, y: moved.y, x2: moved.x2, y2: moved.y2 }, { x: 1, y: 0, x2: 1, y2: 0 })
+})
+
+test('strategy objects are scalable and reactive proxies can be snapshotted for dragging', () => {
+  const line = createLine()
+  const reactiveLikeObject = new Proxy({ ...line, points: [0.1, 0.2, 0.3, 0.4] }, {})
+  const snapshot = snapshotStrategyObject(reactiveLikeObject)
+
+  assert.equal(line.scale, 1)
+  assert.equal(line.rotation, 0)
+  assert.notEqual(snapshot.points, reactiveLikeObject.points)
+  assert.deepEqual(snapshot.points, reactiveLikeObject.points)
+  const legacy = parseStrategyDocument('{"version":1,"objects":[{"id":"legacy","type":"line","x":0.2,"y":0.5,"x2":0.8,"y2":0.5}]}').objects[0]
+  assert.equal(legacy.scale, 1)
+  assert.equal(legacy.rotation, 0)
+})
+
+test('strategy sharing uses the non-sequential public identifier', () => {
+  assert.equal(strategyShareUrl('8dbca839-49eb-49cc-a732-118d17802dcb', { origin: 'https://fleet.example' }),
+    'https://fleet.example/strategies/shared/8dbca839-49eb-49cc-a732-118d17802dcb')
+})
+
+test('canvas coordinates follow the rendered SVG transform instead of its letterboxed CSS bounds', () => {
+  const svg = {
+    createSVGPoint: () => ({
+      x: 0,
+      y: 0,
+      matrixTransform(transform) { return transform.map(this.x, this.y) },
+    }),
+    getScreenCTM: () => ({
+      inverse: () => ({ map: (x, y) => ({ x: (x - 100) / 2, y: (y - 250) / 2 }) }),
+    }),
+    getBoundingClientRect: () => ({ left: 100, top: 0, width: 2000, height: 1000 }),
+  }
+
+  assert.deepEqual(strategyCanvasPoint(svg, { clientX: 600, clientY: 500 }, 500), { x: 0.25, y: 0.25 })
+})
+
+test('strategy build references are limited to builds for the marker ship', () => {
+  const leopard = { id: 21, build_name: 'Leopard broadside', ship: { id: 11, name: 'Leopard' } }
+  const brig = { id: 22, build_name: 'Brig pursuit', ship: { id: 12, name: 'Brig' } }
+  assert.equal(buildMatchesShip(leopard, 11), true)
+  assert.deepEqual(buildsForShip([leopard, brig], 11), [leopard])
+  assert.equal(invalidBuildMarkers({
+    version: 1,
+    objects: [{ id: 'ship-1', type: 'ship', shipId: 11, buildId: 22 }],
+  }, [leopard, brig]).length, 1)
+  assert.equal(invalidBuildMarkers({
+    version: 1,
+    objects: [{ id: 'ship-1', type: 'ship', shipId: 11, buildId: 21 }],
+  }, [leopard, brig]).length, 0)
+})

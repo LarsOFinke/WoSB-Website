@@ -1,0 +1,14 @@
+{
+  "path": "/api/strategies/{strategy_id}/publication", "method": "put", "operation": {
+    "operationId": "put_strategy_publication_api_strategies__strategy_id__publication_put",
+    "parameters": [
+      { "in": "path", "name": "strategy_id", "required": true, "schema": { "type": "integer" } },
+      { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }
+    ],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StrategyRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Publish Strategy", "tags": ["strategies"]
+  }
+}

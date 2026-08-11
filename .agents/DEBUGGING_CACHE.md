@@ -19,6 +19,7 @@ cookies, tokens, personal data, or full IP addresses into the working context.
 | legacy partial restore/migration | dry run + first preflight exception | verify semantic FK resolution; never restore old IDs or complete Python dumps into the Java DB |
 | fleet/squad | fleet ID, membership status, role code/capabilities | bootstrap repair and AccessPolicy/HTTP test |
 | privacy/cookie | policy version, decision present, no key values | retention, export exclusions, protected route after deletion |
+| strategy planner | SVG screen matrix, overlay JSON keys, referenced IDs | ship/build compatibility, ownership, publication state |
 | frontend does not load | browser console, failed API status, route | page → composable → API/domain; Vite build and browser smoke test |
 | deployment/update | locally redacted diagnostics, failed activation log | artifact version, Compose, readiness, rollback; never delete data |
 
@@ -80,6 +81,17 @@ output under `.diagnostics/`.
   and masks a valid state as an API 500.
 - JDBC can return `DATE` as `java.sql.Date`; normalize it at the `RowValues` boundary.
 - Remove internal seed/relation fields before strict contract conversion.
+- JSON documents embedded inside string-valued API fields still use the application `ObjectMapper`
+  and therefore inherit global `SNAKE_CASE`. If their internal browser contract is camelCase,
+  pin every multiword record component with `@JsonProperty`, retain snake-case aliases for stored
+  legacy documents, and test with the production naming strategy rather than `new ObjectMapper()`.
+- Strategy pointer coordinates cannot be derived from the SVG element's bounding rectangle when
+  `preserveAspectRatio` introduces letterboxing or CSS scales the canvas. Transform `clientX/Y`
+  through the inverse `getScreenCTM()` into viewBox coordinates and retain a bounded fallback for
+  detached SVGs; cover non-uniform screen matrices in a regression test.
+- A valid strategy build reference is a pair, not two independent existing IDs: query each selected
+  build's `ship_id` and require it to equal the marker's numeric `shipId`. Filter the editor choices
+  by the same relation, but retain the server check because overlay JSON is an untrusted boundary.
 - Never fix generated controllers or contracts directly; change the generator source and run `--check`.
 - Flyway upgrade regressions must not hard-code the number of future migrations. Before upgrading,
   use `Flyway.info().pending()` as the expected count; afterward run `migrate()` a second time with

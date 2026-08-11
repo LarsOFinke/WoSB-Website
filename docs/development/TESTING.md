@@ -201,7 +201,7 @@ python3 infrastructure/scripts/quality/audit_controller_contract.py
 python3 infrastructure/scripts/generation/generate_api_dtos.py --check
 ```
 
-The controller audit covers all 177 operations and compares HTTP method/path,
+The controller audit covers all 185 operations and compares HTTP method/path,
 path/query bindings, request DTO/media type and successful response type against
 OpenAPI. DTOs remain generator-owned; controller mappings are handwritten and
 module-owned, so there is no route-generator regeneration step.

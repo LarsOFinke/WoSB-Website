@@ -1,0 +1,98 @@
+.strategy-legend {
+  min-width: 0;
+  max-height: 16rem;
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.75rem;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.strategy-legend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.strategy-legend-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.strategy-legend-head span {
+  min-width: 1.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-align: center;
+}
+
+.strategy-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 0.55rem;
+}
+
+.strategy-legend-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--surface-soft);
+}
+
+.strategy-legend-symbol {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.25rem;
+  border: 2px solid var(--text);
+  border-radius: 50%;
+  background: var(--strategy-color, var(--accent));
+}
+
+.strategy-legend-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.strategy-legend-copy > span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.strategy-legend-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.65rem;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+}
+
+.strategy-legend-links a {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .strategy-legend {
+    max-height: 14rem;
+  }
+}
+
+@media print {
+  .strategy-legend {
+    position: static;
+    max-height: none;
+    margin-top: 0.5rem;
+    box-shadow: none;
+  }
+}

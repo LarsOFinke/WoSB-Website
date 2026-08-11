@@ -26,6 +26,7 @@ import { masterDataMessages } from './masterData.js'
 import { staffPanelMessages } from './staffPanel.js'
 import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul.js'
 import { systemOperationsMessages } from './systemOperations.js'
+import { strategyPlannerMessages } from './strategyPlanner.js'
 import { systemLogManagementMessages } from './systemLogManagement.js'
 import { securityAuditDashboardMessages } from './securityAuditDashboard.js'
 import { securitySignalReasonsMessages } from './securitySignalReasons.js'
@@ -67,6 +68,7 @@ const messageLayers = [
   staffPanelMessages,
   staffWorkspaceOverhaulMessages,
   systemOperationsMessages,
+  strategyPlannerMessages,
   systemLogManagementMessages,
   securityAuditDashboardMessages,
   securitySignalReasonsMessages,

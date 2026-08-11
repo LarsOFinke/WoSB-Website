@@ -17,7 +17,7 @@ from docs or cache; it does not assess the factual accuracy of a description.
 | `spring-api/src/main/java/eu/royalblackwater/api/content/` | secure content embeds | validator plus callers |
 | `spring-api/src/main/java/eu/royalblackwater/api/dto/` | generated HTTP DTOs | `openapi/source/` + assembler/DTO generator; never edit generated DTOs directly |
 | `spring-api/src/main/java/eu/royalblackwater/api/core/` | health/readiness/core operations | restricted DB readiness; schema/Flyway boundary is external |
-| `spring-api/src/main/java/eu/royalblackwater/api/files/` | uploads, quotas, types, ownership | storage/path boundaries |
+| `spring-api/src/main/java/eu/royalblackwater/api/files/` | uploads, quotas, types, ownership, JPEG/PNG optimization | storage/path and bounded-decode boundaries |
 | `spring-api/src/main/java/eu/royalblackwater/api/fleet/` | fleet, memberships, roles/capabilities | AccessPolicy and bootstrap membership |
 | `spring-api/src/main/java/eu/royalblackwater/api/forum/` | threads, posts, attachments | ownership/moderation |
 | `spring-api/src/main/java/eu/royalblackwater/api/groups/` | groups and members | `GroupService` |
@@ -34,6 +34,7 @@ from docs or cache; it does not assess the factual accuracy of a description.
 | `spring-api/src/main/java/eu/royalblackwater/api/shared/` | shared web/filter/mapper helpers | no business logic, multiple consumers |
 | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | read-only ship catalog | query/filter/taxonomy |
 | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | squad/roster on fleet membership | fleet ID, status, capability |
+| `spring-api/src/main/java/eu/royalblackwater/api/strategies/` | strategy overlays, references, sharing | ownership, JSON validation, build/ship pairing, file publication |
 | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | webhook policy and delivery | scope/event/encrypted secret |
 
 ## Frontend at a glance
@@ -58,6 +59,7 @@ the composable, not in the page.
 | `frontend/src/modules/privacy/` | privacy center/cookie banner | retry, payload, keep errors visible |
 | `frontend/src/modules/ships/` | ship catalog transport | consumers in builds/combat |
 | `frontend/src/modules/squads/` | lists, own squads, roster | membership ID/management rules |
+| `frontend/src/modules/strategy-planner/` | SVG chart overlays and sharing | screen-matrix coordinates, compatible references, serialization, print |
 
 Shared areas: `frontend/src/assets/`, `frontend/src/config/`, `frontend/src/core/`,
 `frontend/src/locales/`, `frontend/src/router/`, `frontend/src/shared/`, and

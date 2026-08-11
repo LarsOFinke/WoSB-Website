@@ -5,9 +5,8 @@ import eu.royalblackwater.api.builds.repository.BuildDataRepository;
 import eu.royalblackwater.api.builds.repository.queries.BuildPrintoutQueries;
 import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.dto.BuildPrintoutRead;
+import eu.royalblackwater.api.files.service.ImageAssetOptimizer;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -55,7 +54,7 @@ class BuildPrintoutServiceTest {
         assertTrue(result.changed());
         assertEquals(CACHE_KEY, result.cacheKey());
         assertEquals(BUILD_VERSION, result.sourceUpdatedAt());
-        String checksum = sha256(pngBytes());
+        String checksum = sha256(optimizedPngBytes());
         assertTrue(Files.isRegularFile(temporaryRoot.resolve("build-printouts/build-42-" + checksum + ".png")));
         assertTrue(result.url().contains("cache_key=print-v3%3A"));
         verify(repository).update(eq(BuildPrintoutQueries.SAVE_UPDATE_01), org.mockito.ArgumentMatchers.argThat(values ->
@@ -128,7 +127,8 @@ class BuildPrintoutServiceTest {
         BuildDataRepository repository = mock(BuildDataRepository.class);
         AuditService audit = mock(AuditService.class);
         BuildPrintoutService service = service(repository, audit);
-        String checksum = sha256(pngBytes());
+        byte[] optimized = optimizedPngBytes();
+        String checksum = sha256(optimized);
         Map<String, Object> row = buildRow();
         row.put("printout_cache_key", CACHE_KEY);
         row.put("printout_checksum", checksum);
@@ -136,10 +136,10 @@ class BuildPrintoutServiceTest {
         row.put("printout_updated_at", BUILD_VERSION.plusMinutes(1));
         when(repository.optional(BuildPrintoutQueries.CONTENT_LOCK_SELECT_01, Map.of("id", 42L)))
                 .thenReturn(Optional.of(row));
-        when(repository.count(BuildPrintoutQueries.GLOBAL_BYTES_SELECT_01, Map.of())).thenReturn((long) pngBytes().length);
+        when(repository.count(BuildPrintoutQueries.GLOBAL_BYTES_SELECT_01, Map.of())).thenReturn((long) optimized.length);
         Path folder = temporaryRoot.resolve("build-printouts");
         Files.createDirectories(folder);
-        Files.write(folder.resolve("build-42-" + checksum + ".png"), pngBytes());
+        Files.write(folder.resolve("build-42-" + checksum + ".png"), optimized);
 
         BuildPrintoutRead result = service.save(42L, png(), CACHE_KEY, BUILD_VERSION, OWNER);
 
@@ -207,7 +207,7 @@ class BuildPrintoutServiceTest {
     private BuildPrintoutService service(BuildDataRepository repository, AuditService audit) {
         StorageProperties storage = new StorageProperties(temporaryRoot, 12, 24, 50, 250, 4096, 0);
         Clock clock = Clock.fixed(Instant.parse("2026-08-08T10:05:00Z"), ZoneOffset.UTC);
-        return new BuildPrintoutService(repository, storage, audit, clock);
+        return new BuildPrintoutService(repository, storage, new ImageAssetOptimizer(), audit, clock);
     }
 
     private static Map<String, Object> buildRow() {
@@ -230,12 +230,25 @@ class BuildPrintoutServiceTest {
         }
     }
 
+    private byte[] optimizedPngBytes() throws Exception {
+        Path image = temporaryRoot.resolve("expected.png");
+        Files.write(image, pngBytes());
+        new ImageAssetOptimizer().optimize(image, "image/png");
+        byte[] result = Files.readAllBytes(image);
+        Files.delete(image);
+        return result;
+    }
+
     private static byte[] pngBytes() {
-        byte[] value = new byte[24];
-        byte[] signature = {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
-        System.arraycopy(signature, 0, value, 0, signature.length);
-        value[12] = 'I'; value[13] = 'H'; value[14] = 'D'; value[15] = 'R';
-        ByteBuffer.wrap(value, 16, 8).order(ByteOrder.BIG_ENDIAN).putInt(1400).putInt(1980);
-        return value;
+        try {
+            java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(64, 64,
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+                image.setRGB(x, y, new java.awt.Color(x * 4, y * 4, (x + y) * 2, 255).getRGB());
+            }
+            java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(image, "png", output);
+            return output.toByteArray();
+        } catch (java.io.IOException exception) { throw new IllegalStateException(exception); }
     }
 }

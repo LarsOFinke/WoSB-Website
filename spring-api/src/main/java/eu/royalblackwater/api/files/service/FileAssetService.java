@@ -43,14 +43,17 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 public class FileAssetService {
-    private static final Set<String> CONTEXTS = Set.of("general", "forum", "guide", "master-data");
+    private static final Set<String> CONTEXTS = Set.of("general", "forum", "guide", "master-data", "strategy");
     private final FileAssetRepository repository;
     private final StorageProperties properties;
+    private final ImageAssetOptimizer imageOptimizer;
     private final Clock clock;
 
-    public FileAssetService(FileAssetRepository repository, StorageProperties properties, Clock clock) {
+    public FileAssetService(FileAssetRepository repository, StorageProperties properties,
+                            ImageAssetOptimizer imageOptimizer, Clock clock) {
         this.repository = repository;
         this.properties = properties;
+        this.imageOptimizer = imageOptimizer;
         this.clock = clock;
     }
 
@@ -86,6 +89,8 @@ public class FileAssetService {
             Files.createDirectories(folder);
             copyLimited(upload, temporary, maximum);
             String detectedType = FileTypePolicy.validate(temporary, extension, declaredType);
+            imageOptimizer.optimize(temporary, detectedType);
+            if (Files.size(temporary) > maximum) throw bad("Optimized image exceeds the remaining storage quota.");
             moveAtomically(temporary, target);
             registerRollbackCleanup(target);
             String relativePath = root.relativize(target).toString().replace('\\', '/');
@@ -158,6 +163,16 @@ public class FileAssetService {
                 .map(byId::get)
                 .map(FileDtoMapper::stored)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public StoredFileDto ownedImage(long id, AuthenticatedUser actor) {
+        List<StoredFileDto> selected = ownedFiles(List.of(id), actor);
+        Map<String, Object> row = raw(id);
+        if (!RowValues.requiredString(row, "mime_type").startsWith("image/")) {
+            throw bad("Strategy backgrounds must be images.");
+        }
+        return selected.getFirst();
     }
 
     public void attach(String table, String ownerColumn, long ownerId, List<StoredFileDto> files, String context) {

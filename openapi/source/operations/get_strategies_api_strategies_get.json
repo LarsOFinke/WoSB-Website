@@ -1,0 +1,11 @@
+{
+  "path": "/api/strategies", "method": "get", "operation": {
+    "operationId": "get_strategies_api_strategies_get",
+    "parameters": [{ "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/StrategySummary" } } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "List Own Strategies", "tags": ["strategies"]
+  }
+}

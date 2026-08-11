@@ -7,8 +7,6 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
@@ -79,7 +77,11 @@ class BuildPrintoutIntegrationTest {
 
         HttpResponse<byte[]> downloaded = getPrintout(buildId, firstCacheKey, session);
         assertThat(downloaded.statusCode()).isEqualTo(200);
-        assertThat(downloaded.body()).containsExactly(pngBytes());
+        assertThat(downloaded.body()).startsWith((byte) 0x89, (byte) 0x50, (byte) 0x4e, (byte) 0x47);
+        java.awt.image.BufferedImage downloadedImage = javax.imageio.ImageIO.read(
+                new java.io.ByteArrayInputStream(downloaded.body()));
+        assertThat(downloadedImage.getWidth()).isEqualTo(64);
+        assertThat(downloadedImage.getHeight()).isEqualTo(64);
         assertRequestId(downloaded);
 
         HttpResponse<String> reused = putPrintout(buildId, firstCacheKey, sourceVersion, session);
@@ -165,12 +167,18 @@ class BuildPrintoutIntegrationTest {
     }
 
     private static byte[] pngBytes() {
-        byte[] value = new byte[24];
-        byte[] signature = {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
-        System.arraycopy(signature, 0, value, 0, signature.length);
-        value[12] = 'I'; value[13] = 'H'; value[14] = 'D'; value[15] = 'R';
-        ByteBuffer.wrap(value, 16, 8).order(ByteOrder.BIG_ENDIAN).putInt(1400).putInt(1980);
-        return value;
+        try {
+            java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(64, 64,
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+                image.setRGB(x, y, new java.awt.Color(x * 4, y * 4, (x + y) * 2, 255).getRGB());
+            }
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(image, "png", output);
+            return output.toByteArray();
+        } catch (java.io.IOException exception) {
+            throw new IllegalStateException(exception);
+        }
     }
 
     private static String jsonString(String body, String name) {

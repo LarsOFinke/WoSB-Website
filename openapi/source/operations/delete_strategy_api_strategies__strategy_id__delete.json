@@ -1,0 +1,14 @@
+{
+  "path": "/api/strategies/{strategy_id}", "method": "delete", "operation": {
+    "operationId": "delete_strategy_api_strategies__strategy_id__delete",
+    "parameters": [
+      { "in": "path", "name": "strategy_id", "required": true, "schema": { "type": "integer" } },
+      { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }
+    ],
+    "responses": {
+      "204": { "description": "Successful Response" },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Delete Strategy", "tags": ["strategies"]
+  }
+}
