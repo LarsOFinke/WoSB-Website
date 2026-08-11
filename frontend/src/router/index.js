@@ -17,6 +17,7 @@ import { onboardingRoutes } from '@/modules/onboarding/routes'
 import { privacyRoutes } from '@/modules/privacy/routes'
 import { legalRoutes } from '@/modules/legal/routes'
 import { squadRoutes } from '@/modules/squads/routes'
+import { strategyRoutes } from '@/modules/strategy-planner/routes'
 
 const routes = [
   ...fleetRoutes,
@@ -31,6 +32,7 @@ const routes = [
   ...squadRoutes,
   ...calendarRoutes,
   ...forumRoutes,
+  ...strategyRoutes,
   ...adminRoutes,
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

@@ -1,0 +1,92 @@
+.strategy-command-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0.55rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.75rem;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+  scrollbar-width: thin;
+}
+
+.strategy-command-group,
+.strategy-command-colors {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0 0.55rem 0 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+}
+
+.strategy-command-group button,
+.strategy-command-colors button {
+  min-height: var(--touch-target);
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--surface-soft);
+  color: var(--text);
+  padding: 0.45rem 0.7rem;
+  white-space: nowrap;
+}
+
+.strategy-command-group button.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-soft));
+  color: var(--accent);
+}
+
+.strategy-command-group input,
+.strategy-command-group select {
+  width: auto;
+  min-width: 8rem;
+  min-height: var(--touch-target);
+}
+
+.strategy-text-command input {
+  width: clamp(9rem, 16vw, 16rem);
+}
+
+.strategy-command-colors button {
+  width: 1.8rem;
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  background: var(--strategy-color, var(--accent));
+}
+
+.strategy-command-colors button.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.strategy-history-commands {
+  margin-left: auto;
+  padding-right: 0;
+  border-right: 0;
+}
+
+@media (max-width: 720px) {
+  .strategy-command-bar {
+    border-radius: 0.5rem;
+  }
+
+  .strategy-command-group input,
+  .strategy-command-group select {
+    min-width: 7rem;
+  }
+}
+
+@media print {
+  .strategy-command-bar {
+    display: none;
+  }
+}

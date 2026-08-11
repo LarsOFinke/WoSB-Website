@@ -34,7 +34,8 @@ public class SecurityConfiguration {
             "/api/health", "/api/health/ready", "/actuator/health/**",
             "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/register",
             "/api/legal-notice", "/api/privacy/cookie-consent", "/api/privacy/cookie-policy",
-            "/api/privacy/contact", "/api/fleets/public/official", "/api/files/*/content"
+            "/api/privacy/contact", "/api/fleets/public/official", "/api/files/*/content",
+            "/api/strategies/shared/*"
     };
 
     @Bean
@@ -80,7 +81,7 @@ public class SecurityConfiguration {
                                 "/api/health", "/api/health/ready", "/actuator/health/**",
                                 "/api/auth/me", "/api/legal-notice", "/api/privacy/cookie-consent",
                                 "/api/privacy/cookie-policy", "/api/fleets/public/official",
-                                "/api/files/*/content").permitAll()
+                                "/api/files/*/content", "/api/strategies/shared/*").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login", "/api/auth/logout", "/api/auth/register",
                                 "/api/privacy/cookie-consent", "/api/privacy/contact").permitAll()

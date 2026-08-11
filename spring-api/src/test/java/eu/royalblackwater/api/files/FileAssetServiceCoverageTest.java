@@ -4,6 +4,7 @@ import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.files.dto.StoredFileDto;
 import eu.royalblackwater.api.files.repository.FileAssetRepository;
 import eu.royalblackwater.api.files.service.FileAssetService;
+import eu.royalblackwater.api.files.service.ImageAssetOptimizer;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,6 +61,22 @@ class FileAssetServiceCoverageTest {
 
         assertThatThrownBy(() -> service.upload(upload, "master-data", OWNER))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Only administrators");
+    }
+
+    @Test
+    void uploadRoutesValidatedImagesThroughTheSharedOptimizer() throws Exception {
+        FileAssetRepository repository = mock(FileAssetRepository.class);
+        ImageAssetOptimizer optimizer = mock(ImageAssetOptimizer.class);
+        when(repository.count(anyString(), anyMap())).thenReturn(0L);
+        when(repository.insertReturningId(anyString(), anyMap())).thenReturn(12L);
+        when(repository.optional(anyString(), anyMap())).thenReturn(Optional.of(fileRow(12L, 7L, false, "stored/map.png")));
+        FileAssetService service = new FileAssetService(repository,
+                new StorageProperties(root, 12, 24, 50, 250, 4096, 0), optimizer, CLOCK);
+        MockMultipartFile upload = new MockMultipartFile("file", "map.png", "image/png", validPng());
+
+        service.upload(upload, "strategy", OWNER);
+
+        verify(optimizer).optimize(org.mockito.ArgumentMatchers.any(Path.class), eq("image/png"));
     }
 
     @Test
@@ -159,7 +178,8 @@ class FileAssetServiceCoverageTest {
     }
 
     private FileAssetService service(FileAssetRepository repository) {
-        return new FileAssetService(repository, new StorageProperties(root, 12, 24, 50, 250, 4096, 0), CLOCK);
+        return new FileAssetService(repository, new StorageProperties(root, 12, 24, 50, 250, 4096, 0),
+                new ImageAssetOptimizer(), CLOCK);
     }
 
     private static Map<String, Object> fileRow(long id, Long ownerId, boolean isPublic, String relativePath) {
@@ -175,5 +195,13 @@ class FileAssetServiceCoverageTest {
         row.put("usage_context", "general");
         row.put("created_at", LocalDateTime.of(2030, 1, 15, 12, 0));
         return row;
+    }
+
+    private static byte[] validPng() throws Exception {
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(8, 8,
+                java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(image, "png", output);
+        return output.toByteArray();
     }
 }

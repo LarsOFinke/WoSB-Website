@@ -1,6 +1,6 @@
 # Project Cache for Repository Agents
 
-> Reviewed on 2026-08-09. This cache is a navigation index, not an authoritative
+> Reviewed on 2026-08-11. This cache is a navigation index, not an authoritative
 > source. Before making changes, always read `AGENTS.md`, the affected files,
 > callers, tests, configuration, and documentation. In case of conflict, the
 > source code or the primary source named below takes precedence.
@@ -75,7 +75,8 @@ a directory name alone.
   and the generated `api/dto` transport models.
 - Business domains: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
   `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
-  `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `webhooks`.
+  `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `strategies`,
+  `webhooks`.
 - `openapi/source/` defines the external HTTP transport; `openapi/openapi.json` is
   composed deterministically, and generated `api/dto/*` records represent its
   request/response types. Module controllers own the Spring MVC bindings directly;
@@ -118,7 +119,7 @@ a directory name alone.
 - Dependency direction: `page -> composable -> api/domain` and `page -> component`.
   Pages do not call APIs directly and do not own asynchronous workflows.
 - Route modules exist for Accounts, Admin, Builds, Calendar, Combat, Fleet, Forum,
-  Groups, Guides, Onboarding, Privacy, Legal, and Squads.
+  Groups, Guides, Onboarding, Privacy, Legal, Squads, and the Strategy Planner.
 - Transport belongs in API modules, deterministic rules in `domain`, state,
   lifecycle, and flows in composables, and reusable UI in components.
 - Shared infrastructure: `core/`, `shared/`, `config/`, `router/`, `locales/`,
@@ -137,6 +138,10 @@ a directory name alone.
   (`buildPrintImageEmbedding.js`), and SVG/document orchestration (`buildPrintExport.js`).
   Localization behavior lives in `autoLocalization.js`, with the large translation
   catalog separately in `autoLocalizationCatalog.js`.
+- The Strategy Planner preserves its uploaded chart as a background layer and stores
+  editable SVG overlay objects separately. Pointer coordinates must be transformed
+  through the SVG screen matrix, and build references must match the marker ship on
+  both the client and server.
 - Browser smoke tests live under `frontend/tests/browser/`. They start Vite and mock
   only `/api/`; real security, session, CSRF, and origin boundaries are tested by
   `spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java`

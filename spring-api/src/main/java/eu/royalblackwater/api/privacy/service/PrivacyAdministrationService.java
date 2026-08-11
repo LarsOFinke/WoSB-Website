@@ -103,6 +103,8 @@ public class PrivacyAdministrationService {
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_DELETE_03, Map.of("id", userId));
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_DELETE_04, Map.of("id", userId));
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_DELETE_05, Map.of("id", userId));
+        repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_DELETE_06, Map.of("id", userId));
+        repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_UPDATE_04, Map.of("id", userId));
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_UPDATE_01, Map.of("id", userId));
         nullNullableUserReferences(userId);
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_UPDATE_02,

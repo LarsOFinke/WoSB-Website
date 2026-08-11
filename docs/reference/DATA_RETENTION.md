@@ -19,6 +19,7 @@ and configured through the Spring configuration and infrastructure environment f
 | Open registration requests | 30 days | Account review | daily maintenance run |
 | Reviewed registration requests | 90 days | Traceability of the decision | daily maintenance run |
 | Expired sessions | until expiration | Authentication and security | daily maintenance run |
+| Strategy plans and optional player labels | until owner deletion or manual deletion | Tactical planning, sharing and print preparation | owner deletion removes the strategy document; manual deletion is immediate |
 
 Password hashes in registration requests are overwritten immediately after approval or rejection.
 Approved accounts retain only the hash in the actual user account.
@@ -96,6 +97,12 @@ interests of other community members. After confirmed account deletion, such con
 remains under a neutral identity that can no longer log in.
 Profile data, preferences, sessions, fleet and group memberships, and votes are removed; nullable
 creator references are detached.
+
+Strategy plans are handled differently because their optional free-text labels may identify planned
+participants and their tactical value is tied to the planner who created them. Account deletion removes
+owned strategy documents and disables strategy-only background publication. Strategy owners can delete
+individual plans at any time. Plans are private by default; explicit publication exposes the plan to
+anyone holding its non-sequential public link until publication is revoked.
 
 ## Data Subject Workflow
 

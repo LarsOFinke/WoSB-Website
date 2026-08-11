@@ -1,0 +1,12 @@
+{
+  "path": "/api/strategies", "method": "post", "operation": {
+    "operationId": "post_strategy_api_strategies_post",
+    "parameters": [{ "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }] } }],
+    "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StrategyCreate" } } } },
+    "responses": {
+      "201": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StrategyRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Create Strategy", "tags": ["strategies"]
+  }
+}

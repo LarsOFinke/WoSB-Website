@@ -1,0 +1,11 @@
+{
+  "path": "/api/strategies/shared/{public_id}", "method": "get", "operation": {
+    "operationId": "get_shared_strategy_api_strategies_shared__public_id__get",
+    "parameters": [{ "in": "path", "name": "public_id", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StrategyRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Get Shared Strategy", "tags": ["strategies"]
+  }
+}

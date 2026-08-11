@@ -56,6 +56,8 @@ public final class PrivacyAdministrationQueries {
 
     public static final String PSEUDONYMIZE_DELETE_05 = "delete from user_profiles where user_id=:id";
 
+    public static final String PSEUDONYMIZE_DELETE_06 = "delete from strategy_plans where owner_id=:id";
+
     public static final String PSEUDONYMIZE_UPDATE_01 = """
                 update privacy_contact_requests set user_id=null,reply_email='deleted@example.invalid',
                     message='[removed with account deletion]' where user_id=:id
@@ -67,6 +69,14 @@ public final class PrivacyAdministrationQueries {
                 update users set username=:username,password_hash=:passwordHash,is_active=false,updated_at=:updatedAt
                 where id=:id
                 """;
+
+    public static final String PSEUDONYMIZE_UPDATE_04 = """
+            update stored_files f set is_public=false
+             where f.owner_id=:id and f.usage_context='strategy'
+               and not exists (select 1 from forum_post_attachments a where a.file_id=f.id)
+               and not exists (select 1 from guide_attachments a join guides g on g.id=a.guide_id
+                                where a.file_id=f.id and g.is_published=true)
+            """;
 
     public static final String NULL_NULLABLE_USER_REFERENCES_SELECT_01 = """
                 select tc.table_name,kcu.column_name

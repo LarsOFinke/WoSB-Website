@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "id": { "type": "integer", "title": "Id" },
+    "title": { "type": "string", "title": "Title" },
+    "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+    "is_published": { "type": "boolean", "title": "Is Published" },
+    "public_id": { "type": "string", "format": "uuid", "title": "Public Id" },
+    "background_file": { "$ref": "#/components/schemas/FileRead" },
+    "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+    "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" }
+  },
+  "required": ["id", "title", "is_published", "public_id", "background_file", "created_at", "updated_at"],
+  "title": "StrategySummary",
+  "type": "object"
+}

@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "id": { "type": "integer", "title": "Id" },
+    "owner_id": { "type": "integer", "title": "Owner Id" },
+    "title": { "type": "string", "title": "Title" },
+    "description": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Description" },
+    "overlay_json": { "type": "string", "title": "Overlay Json" },
+    "is_published": { "type": "boolean", "title": "Is Published" },
+    "public_id": { "type": "string", "format": "uuid", "title": "Public Id" },
+    "background_file": { "$ref": "#/components/schemas/FileRead" },
+    "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+    "updated_at": { "type": "string", "format": "date-time", "title": "Updated At" },
+    "published_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "Published At" }
+  },
+  "required": ["id", "owner_id", "title", "overlay_json", "is_published", "public_id", "background_file", "created_at", "updated_at"],
+  "title": "StrategyRead",
+  "type": "object"
+}

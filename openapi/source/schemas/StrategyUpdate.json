@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "title": { "type": "string", "minLength": 1, "maxLength": 180, "title": "Title" },
+    "description": { "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }], "title": "Description" },
+    "background_file_id": { "type": "integer", "minimum": 1, "title": "Background File Id" },
+    "overlay_json": { "type": "string", "minLength": 1, "maxLength": 200000, "title": "Overlay Json" }
+  },
+  "required": ["title", "background_file_id", "overlay_json"],
+  "title": "StrategyUpdate",
+  "type": "object"
+}

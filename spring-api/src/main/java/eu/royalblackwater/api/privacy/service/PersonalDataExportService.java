@@ -31,6 +31,7 @@ public class PersonalDataExportService {
             new Relation("builds", "owner_id"),
             new Relation("build_votes", "user_id"),
             new Relation("guides", "owner_id"),
+            new Relation("strategy_plans", "owner_id"),
             new Relation("forum_threads", "owner_id"),
             new Relation("forum_posts", "author_id"),
             new Relation("fleet_events", "owner_id"),

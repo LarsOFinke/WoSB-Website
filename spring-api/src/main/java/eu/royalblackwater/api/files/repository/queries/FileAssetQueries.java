@@ -37,6 +37,8 @@ public final class FileAssetQueries {
                     select (select count(*) from forum_post_attachments where file_id=:id)
                          + (select count(*) from guide_attachments ga join guides g on g.id=ga.guide_id
                             where ga.file_id=:id and g.is_published=true)
+                         + (select count(*) from strategy_plans s
+                            where s.background_file_id=:id and s.is_published=true)
                     """;
 
     public static final String REFRESH_PUBLICATION_UPDATE_01 = "update stored_files set is_public=(usage_context='master-data' or :referenced) where id=:id";
@@ -47,6 +49,7 @@ public final class FileAssetQueries {
                 select (select count(*) from forum_post_attachments where file_id=:id)
                      + (select count(*) from guide_attachments where file_id=:id)
                      + (select count(*) from build_file_attachments where file_id=:id)
+                     + (select count(*) from strategy_plans where background_file_id=:id)
                 """;
 
     public static final String EFFECTIVE_LIMIT_SELECT_01 = "select coalesce(sum(size_bytes),0) from stored_files where owner_id=:id";

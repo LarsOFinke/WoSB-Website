@@ -28,7 +28,7 @@ The gateway is the only public container. PostgreSQL binds to loopback for admin
 generator creates immutable transport records under `api/dto`; it does not create
 a runtime contract layer. Module-owned `@RestController` classes own their Spring
 MVC mappings and bind/validate generated request DTOs directly.
-`audit_controller_contract.py` compares all 177 controller routes, parameters,
+`audit_controller_contract.py` compares all 185 controller routes, parameters,
 request bodies, multipart media types and success response types against OpenAPI.
 The structural audit rejects missing/duplicate mappings and controller bypasses of
 the service layer.
@@ -125,3 +125,32 @@ compare the client-produced PNG. Printouts consume the same global storage budge
 and minimum-free-space reserve as ordinary uploads. Only one cache variant is
 active per build, deliberately bounding persistent storage; locale or renderer
 variants may replace each other rather than accumulate.
+
+## Port-Battle strategy documents
+
+Strategies keep an owned uploaded image as an immutable visual background and a
+versioned JSON document as the independently editable SVG overlay. The overlay
+contains ship markers, optional player labels, website build and guide references,
+freehand paths, lines, arrows, formations, and text. Build references are validated
+as `(build, marker ship)` pairs rather than merely as independently existing IDs.
+The browser applies the same compatibility rule when presenting build choices.
+
+The editor maps pointer positions through the SVG screen transformation into its
+normalized viewBox coordinates, so drawing and dragging remain aligned when the
+chart is responsive or letterboxed. A separate legend below the chart carries build
+and guide details for readable screen and print output. Strategies are private and
+owner-controlled by default; publication creates a revocable, non-sequential public
+identifier and exposes the associated background only while a published strategy
+references it. Shared routes are read-only.
+
+## Persisted image optimization
+
+The files boundary optimizes validated JPEG and PNG uploads before their final
+path and database size are committed. This applies uniformly to strategy
+backgrounds, guide and forum attachments, general uploads, and master-data
+images. Derived build-print PNGs use the same optimizer before checksums and
+quota accounting are calculated. Images are bounded to 4096 pixels on their
+longest edge, decode work is capped, JPEG metadata/orientation is normalized,
+and an optimized rewrite replaces the source only when it is smaller or a
+dimension reduction is required. GIF and WebP files remain byte-preserved
+because the JDK does not provide a safe animation-capable rewrite path.

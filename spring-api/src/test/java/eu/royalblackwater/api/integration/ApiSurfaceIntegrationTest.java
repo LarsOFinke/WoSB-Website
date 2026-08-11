@@ -105,7 +105,7 @@ class ApiSurfaceIntegrationTest {
                 assertNoServerError(response, operation.method(), path);
             }));
         }
-        assertThat(tests).as("contract write smoke cases").hasSize(107);
+        assertThat(tests).as("contract write smoke cases").hasSize(112);
         return tests.stream();
     }
 
@@ -134,7 +134,7 @@ class ApiSurfaceIntegrationTest {
                 }
             }));
         }
-        assertThat(tests).as("anonymous security cases").hasSize(177);
+        assertThat(tests).as("anonymous security cases").hasSize(185);
         return tests.stream();
     }
 
@@ -184,9 +184,9 @@ class ApiSurfaceIntegrationTest {
         long reads = operations.stream().filter(operation -> "GET".equals(operation.method())).count();
         long writes = operations.size() - reads;
         return Stream.of(
-                DynamicTest.dynamicTest("177 contract operations", () -> assertThat(operations).hasSize(177)),
-                DynamicTest.dynamicTest("70 GET operations", () -> assertThat(reads).isEqualTo(70)),
-                DynamicTest.dynamicTest("107 write operations", () -> assertThat(writes).isEqualTo(107)));
+                DynamicTest.dynamicTest("185 contract operations", () -> assertThat(operations).hasSize(185)),
+                DynamicTest.dynamicTest("73 GET operations", () -> assertThat(reads).isEqualTo(73)),
+                DynamicTest.dynamicTest("112 write operations", () -> assertThat(writes).isEqualTo(112)));
     }
 
     private List<ContractOperation> contractOperations() throws Exception {
@@ -453,7 +453,7 @@ class ApiSurfaceIntegrationTest {
             return List.of(
                     "/api/health", "/api/health/ready", "/api/auth/me", "/api/legal-notice",
                     "/api/privacy/cookie-consent", "/api/privacy/cookie-policy", "/api/fleets/public/official",
-                    "/api/files/{file_id}/content").contains(path);
+                    "/api/files/{file_id}/content", "/api/strategies/shared/{public_id}").contains(path);
         }
         return "POST".equals(operation.method()) && List.of(
                 "/api/auth/login", "/api/auth/logout", "/api/auth/register",
