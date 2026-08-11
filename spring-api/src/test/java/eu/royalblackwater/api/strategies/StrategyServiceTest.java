@@ -2,6 +2,7 @@ package eu.royalblackwater.api.strategies;
 
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.StrategyCreate;
+import eu.royalblackwater.api.dto.StrategyUpdate;
 import eu.royalblackwater.api.files.dto.StoredFileDto;
 import eu.royalblackwater.api.files.service.FileAssetService;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
@@ -18,6 +19,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
@@ -152,21 +155,84 @@ class StrategyServiceTest {
 
     @Test
     void mapperKeepsBackgroundAndPublicationMetadataInReadModels() {
+        var row = strategyRow(41, 9);
+
+        var detail = StrategyMapper.read(row);
+        var summary = StrategyMapper.summary(row);
+
+        assertThat(detail.id()).isEqualTo(41L);
+        assertThat(detail.backgroundFile().id()).isEqualTo(9L);
+        assertThat(detail.publishedAt()).isEqualTo(row.get("published_at"));
+        assertThat(summary.title()).isEqualTo(detail.title());
+        assertThat(summary.backgroundFile()).isEqualTo(detail.backgroundFile());
+    }
+
+    @Test
+    void publicationRefreshesTheBackgroundFileRatherThanTheStrategyId() {
+        StrategyRepository repository = mock(StrategyRepository.class);
+        FileAssetService files = mock(FileAssetService.class);
+        when(repository.optional(eq(StrategyQueries.OWNED), anyMap()))
+                .thenReturn(Optional.of(strategyRow(41, 9)));
+        StrategyService service = service(repository, files);
+
+        service.publication(41, true, OWNER);
+
+        verify(files).refreshPublication(Set.of(9L));
+    }
+
+    @Test
+    void deleteRefreshesTheBackgroundFileRatherThanTheStrategyId() {
+        StrategyRepository repository = mock(StrategyRepository.class);
+        FileAssetService files = mock(FileAssetService.class);
+        when(repository.optional(eq(StrategyQueries.OWNED), anyMap()))
+                .thenReturn(Optional.of(strategyRow(41, 9)));
+        when(repository.update(eq(StrategyQueries.DELETE), anyMap())).thenReturn(1);
+        StrategyService service = service(repository, files);
+
+        service.delete(41, OWNER);
+
+        verify(files).refreshPublication(Set.of(9L));
+    }
+
+    @Test
+    void updateRefreshesPreviousAndReplacementBackgroundFiles() {
+        StrategyRepository repository = mock(StrategyRepository.class);
+        FileAssetService files = mock(FileAssetService.class);
+        when(repository.optional(eq(StrategyQueries.OWNED), anyMap()))
+                .thenReturn(Optional.of(strategyRow(41, 9)));
+        when(files.ownedImage(10, OWNER)).thenReturn(new StoredFileDto(10, 7L));
+        when(repository.count(eq(StrategyQueries.EXISTING_SHIPS), anyMap())).thenReturn(1L);
+        when(repository.query(eq(StrategyQueries.BUILD_SHIPS), anyMap()))
+                .thenReturn(List.of(Map.of("id", 21L, "ship_id", 11L)));
+        when(repository.count(eq(StrategyQueries.EXISTING_GUIDES), anyMap())).thenReturn(1L);
+        when(repository.update(eq(StrategyQueries.UPDATE), anyMap())).thenReturn(1);
+        StrategyService service = service(repository, files);
+
+        service.update(41, new StrategyUpdate("Updated plan", null, 10, VALID), OWNER);
+
+        verify(files).refreshPublication(Set.of(9L, 10L));
+    }
+
+    private static StrategyService service(StrategyRepository repository, FileAssetService files) {
+        return new StrategyService(repository, new StrategyOverlayValidator(new ObjectMapper()), files,
+                mock(AuditService.class), Clock.fixed(Instant.parse("2030-01-15T12:00:00Z"), ZoneOffset.UTC));
+    }
+
+    private static Map<String, Object> strategyRow(long strategyId, long backgroundFileId) {
         LocalDateTime createdAt = LocalDateTime.of(2030, 1, 15, 12, 0);
-        LocalDateTime updatedAt = createdAt.plusHours(1);
-        LocalDateTime publishedAt = updatedAt.plusMinutes(10);
         var row = new LinkedHashMap<String, Object>();
-        row.put("strategy_id", 41L);
+        row.put("strategy_id", strategyId);
         row.put("owner_id", 7L);
+        row.put("background_file_id", backgroundFileId);
         row.put("title", "North harbor approach");
         row.put("description", "Hold the eastern line");
         row.put("overlay_json", VALID);
         row.put("is_published", true);
         row.put("public_id", "4f30d366-5d04-4bc1-ae1a-4df5b88c0834");
         row.put("strategy_created_at", createdAt);
-        row.put("strategy_updated_at", updatedAt);
-        row.put("published_at", publishedAt);
-        row.put("id", 9L);
+        row.put("strategy_updated_at", createdAt.plusHours(1));
+        row.put("published_at", createdAt.plusHours(1).plusMinutes(10));
+        row.put("id", backgroundFileId);
         row.put("created_at", createdAt.minusDays(1));
         row.put("is_public", true);
         row.put("mime_type", "image/png");
@@ -175,14 +241,6 @@ class StrategyServiceTest {
         row.put("size_bytes", 2048L);
         row.put("stored_name", "harbor.png");
         row.put("usage_context", "strategy");
-
-        var detail = StrategyMapper.read(row);
-        var summary = StrategyMapper.summary(row);
-
-        assertThat(detail.id()).isEqualTo(41L);
-        assertThat(detail.backgroundFile().id()).isEqualTo(9L);
-        assertThat(detail.publishedAt()).isEqualTo(publishedAt);
-        assertThat(summary.title()).isEqualTo(detail.title());
-        assertThat(summary.backgroundFile()).isEqualTo(detail.backgroundFile());
+        return row;
     }
 }

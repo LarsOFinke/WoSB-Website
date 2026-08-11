@@ -25,6 +25,10 @@ Pages must not call API modules directly or own asynchronous workflows. They bin
 
 Domain modules are framework-independent wherever practical. They receive their data and collaborators as arguments, return values without side effects, and can be tested with Node's built-in test runner.
 
+Browser-only presentation integration such as DOM serialization, downloads, and
+print orchestration stays outside `domain/`; keep it at the owning feature boundary
+or in a composable when it coordinates page state.
+
 Composables coordinate Vue state, lifecycle hooks, API calls and user-facing success/error state. A composable may combine smaller feature composables, as `useAdminWorkspace` and `useBuildDesigner` do.
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.

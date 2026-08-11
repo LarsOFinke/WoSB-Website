@@ -8,7 +8,7 @@ import { listGuides } from '@/modules/guides/api/guides'
 import { listShips } from '@/modules/ships/api/ships'
 import { getSharedStrategy, getStrategy } from '../api/strategies.js'
 import { emptyStrategyDocument, parseStrategyDocument, strategyShareUrl } from '../domain/strategyDocument.js'
-import { downloadStrategySvg } from '../domain/strategySvgExport.js'
+import { downloadStrategySvg } from '../strategySvgExport.js'
 
 export function useStrategyViewPage() {
   const route = useRoute()

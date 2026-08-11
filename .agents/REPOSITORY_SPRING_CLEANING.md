@@ -203,6 +203,35 @@ When a local toolchain, Docker/port sandbox, or external service is unavailable,
 explicitly distinguish the environment blocker from a product failure and rerun
 only the missing part in a supported environment.
 
+### Post-feature cleanup checklist
+
+After a large feature lands, use its sibling routes or flows as the primary
+comparison surface. This catches integration debt that a file-size inventory
+usually misses:
+
+- compare create/edit/view/print templates for repeated document structures; if
+  the structure is one presentation contract with multiple consumers, give it
+  one component owner;
+- inspect new `domain/` files for `window`, DOM, Vue, network, storage, or file
+  system access. Move browser or infrastructure integration to the feature root,
+  a composable, or the responsible service instead of weakening the domain
+  boundary;
+- inspect joined SQL row maps for generic collisions such as `id`, `created_at`,
+  and `owner_id`. Alias every value used for a business decision and test with
+  deliberately different aggregate and joined-resource IDs;
+- exercise public/share routes both anonymously and as a different signed-in
+  user. Confirm the intended authorization contract before making supporting
+  catalogs public or treating authenticated enrichment as anonymous behavior;
+- trace every new persisted file through upload optimization, publication,
+  deletion, backup, restore, and recovery-client validation;
+- prefer behavior regressions. Source-text assertions are appropriate only for
+  declarative or operational invariants that cannot reasonably execute in the
+  focused test environment.
+
+Finish the pass with `rg` for the removed path or responsibility, `git diff
+--check`, the focused module tests, strict-tree validation, cache validation, and
+the full gate. Record any deferred finding with evidence and a bounded next step.
+
 ## 9. Completion criteria
 
 The spring cleaning is complete when:

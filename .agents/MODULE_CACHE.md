@@ -59,7 +59,7 @@ the composable, not in the page.
 | `frontend/src/modules/privacy/` | privacy center/cookie banner | retry, payload, keep errors visible |
 | `frontend/src/modules/ships/` | ship catalog transport | consumers in builds/combat |
 | `frontend/src/modules/squads/` | lists, own squads, roster | membership ID/management rules |
-| `frontend/src/modules/strategy-planner/` | SVG chart overlays and sharing | screen-matrix coordinates, compatible references, serialization, print |
+| `frontend/src/modules/strategy-planner/` | SVG chart overlays and sharing | shared document presentation, screen-matrix coordinates, compatible references, serialization, export, print |
 
 Shared areas: `frontend/src/assets/`, `frontend/src/config/`, `frontend/src/core/`,
 `frontend/src/locales/`, `frontend/src/router/`, `frontend/src/shared/`, and

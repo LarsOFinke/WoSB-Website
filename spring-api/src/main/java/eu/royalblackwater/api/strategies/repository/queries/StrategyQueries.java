@@ -4,7 +4,7 @@ public final class StrategyQueries {
     private StrategyQueries() { }
 
     public static final String SELECT = """
-            select s.id strategy_id,s.owner_id,s.title,s.description,s.overlay_json,s.public_id,
+            select s.id strategy_id,s.owner_id,s.background_file_id,s.title,s.description,s.overlay_json,s.public_id,
                    s.is_published,s.created_at strategy_created_at,s.updated_at strategy_updated_at,
                    s.published_at,f.*
               from strategy_plans s join stored_files f on f.id=s.background_file_id
@@ -28,7 +28,6 @@ public final class StrategyQueries {
             update strategy_plans set is_published=:published,published_at=:publishedAt,updated_at=:now
              where id=:id and owner_id=:ownerId
             """;
-    public static final String BACKGROUND = "select background_file_id from strategy_plans where id=:id and owner_id=:ownerId";
     public static final String REFERENCES_DELETE = "delete from %s where strategy_id=:id";
     public static final String REFERENCE_INSERT = "insert into %s(strategy_id,%s) values(:id,:referenceId)";
     public static final String EXISTING_SHIPS = "select count(*) from ships where id in (:ids) and is_active=true";

@@ -83,7 +83,7 @@ public class StrategyService {
     @Transactional
     public StrategyRead update(long id, StrategyUpdate payload, AuthenticatedUser actor) {
         Map<String, Object> current = owned(id, actor);
-        long previousFileId = RowValues.longValue(current, "id");
+        long previousFileId = RowValues.longValue(current, "background_file_id");
         files.ownedImage(payload.backgroundFileId(), actor);
         PreparedStrategyOverlay overlay = prepare(payload.overlayJson());
         int changed = repository.update(StrategyQueries.UPDATE, SqlParameters.ofNullable(
@@ -104,7 +104,7 @@ public class StrategyService {
         LocalDateTime now = now();
         repository.update(StrategyQueries.PUBLISH, SqlParameters.ofNullable("id", id, "ownerId", actor.id(),
                 "published", published, "publishedAt", published ? now : null, "now", now));
-        files.refreshPublication(Set.of(RowValues.longValue(current, "id")));
+        files.refreshPublication(Set.of(RowValues.longValue(current, "background_file_id")));
         audit.record(actor, "strategy", id, published ? "publish" : "unpublish",
                 published ? "Strategy published." : "Strategy unpublished.", List.of("is_published"));
         return get(id, actor);
@@ -113,7 +113,7 @@ public class StrategyService {
     @Transactional
     public void delete(long id, AuthenticatedUser actor) {
         Map<String, Object> current = owned(id, actor);
-        long fileId = RowValues.longValue(current, "id");
+        long fileId = RowValues.longValue(current, "background_file_id");
         if (repository.update(StrategyQueries.DELETE, Map.of("id", id, "ownerId", actor.id())) == 0) throw notFound();
         files.refreshPublication(Set.of(fileId));
         audit.record(actor, "strategy", id, "delete", "Strategy deleted.", List.of());

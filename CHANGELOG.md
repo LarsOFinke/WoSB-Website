@@ -8,7 +8,19 @@
 
 # Changelog
 
-## 1.5.8 - 2026-08-11
+## 1.5.10 - 2026-08-11
+
+- Centralized the strategy editor and read-only briefing layout in one reusable
+  document presentation so on-screen, SVG, and print structures cannot drift.
+- Moved browser-only strategy SVG serialization out of the pure domain layer.
+- Hardened strategy background publication cleanup by using the explicit joined
+  background-file identifier, with mutation regressions for update, sharing, and
+  deletion.
+- Expanded the repository-agent spring-cleaning guide with a repeatable
+  post-feature audit for duplicate flows, dependency direction, joined-row key
+  collisions, public-route contracts, persisted files, and regression quality.
+
+## 1.5.9 - 2026-08-11
 
 - Made strategy SVG downloads portable by embedding the authorized background
   image and resolved presentation styles together with the drawing overlay.

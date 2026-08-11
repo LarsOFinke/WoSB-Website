@@ -12,7 +12,7 @@ import {
   parseStrategyDocument, repairShipMarkerReferences, serializeStrategyDocument,
   strategyShareUrl, STRATEGY_COLORS,
 } from '../domain/strategyDocument.js'
-import { downloadStrategySvg } from '../domain/strategySvgExport.js'
+import { downloadStrategySvg } from '../strategySvgExport.js'
 
 export function useStrategyPlannerPage() {
   const route = useRoute()
