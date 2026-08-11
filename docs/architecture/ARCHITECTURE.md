@@ -143,6 +143,12 @@ owner-controlled by default; publication creates a revocable, non-sequential pub
 identifier and exposes the associated background only while a published strategy
 references it. Shared routes are read-only.
 
+SVG export fetches the authorized background and embeds it as a data URL alongside
+inlined SVG presentation properties, producing one portable file instead of retaining
+an authenticated API reference. Browser printing uses a fixed two-section document:
+the briefing and chart occupy the first landscape page, and the player/build/guide
+legend starts on the second page with entries kept intact where space permits.
+
 ## Persisted image optimization
 
 The files boundary optimizes validated JPEG and PNG uploads before their final

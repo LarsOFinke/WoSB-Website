@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 async function mockAnonymousApi(page) {
   await page.route(/^https?:\/\/[^/]+\/api\//, async (route) => {
@@ -308,7 +309,7 @@ test('published strategies have a dedicated read-only view for other users', asy
   await page.goto(`/strategies/shared/${publicId}`)
 
   await expect(page.getByRole('heading', { name: 'North harbor approach' })).toBeVisible()
-  await expect(page.getByText('Hold the eastern entrance.')).toBeVisible()
+  await expect(page.locator('.strategy-view-header')).toContainText('Hold the eastern entrance.')
   await expect(page.locator('.strategy-legend')).toContainText('Boarding Leopard')
   await expect(page.locator('.strategy-legend')).toContainText('Eastern harbor approach')
   await expect(page.locator('.strategy-command-bar')).toHaveCount(0)
@@ -317,4 +318,21 @@ test('published strategies have a dedicated read-only view for other users', asy
   await expect(page.getByRole('link', { name: 'Edit' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Print / save PDF' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Download SVG' })).toBeVisible()
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download SVG' }).click(),
+  ])
+  const svg = await readFile(await download.path(), 'utf8')
+  expect(svg).toContain('data:image/svg+xml;base64,')
+  expect(svg).not.toContain('href="/api/files/9/content"')
+  expect(svg).toContain('strategy-overlay-layer')
+
+  await page.emulateMedia({ media: 'print' })
+  await expect(page.locator('.strategy-view-header')).toBeHidden()
+  await expect(page.locator('.strategy-print-summary')).toContainText('North harbor approach')
+  await expect(page.locator('.strategy-print-summary')).toContainText('Hold the eastern entrance.')
+  await expect(page.locator('.strategy-print-player-heading')).toContainText('Player list, builds and guides')
+  await expect(page.locator('.strategy-print-chart-page')).toHaveCSS('break-after', 'page')
+  await expect(page.locator('.strategy-legend-entry')).toHaveCSS('break-inside', 'avoid')
 })

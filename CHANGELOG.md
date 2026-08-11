@@ -8,6 +8,15 @@
 
 # Changelog
 
+## 1.5.8 - 2026-08-11
+
+- Made strategy SVG downloads portable by embedding the authorized background
+  image and resolved presentation styles together with the drawing overlay.
+- Reworked strategy printing into an A4 landscape briefing/chart page followed
+  by a dedicated player, build, and guide page with non-splitting legend entries.
+- Documented and regression-tested recovery coverage for strategy database rows,
+  catalog references, publication state, and uploaded chart backgrounds.
+
 ## 1.5.7 - 2026-08-11
 
 - Added a two-layer Port-Battle strategy planner that preserves uploaded charts

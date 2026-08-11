@@ -1,0 +1,132 @@
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@media print {
+  .strategy-planner-header,
+  .strategy-view-header,
+  .strategy-command-bar,
+  .strategy-tool-rail,
+  .strategy-status,
+  .strategy-object-help {
+    display: none;
+  }
+
+  .strategy-planner-page,
+  .strategy-chart-column,
+  .strategy-planner-workspace,
+  .strategy-view-page {
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    overflow: visible;
+    padding: 0;
+    max-width: none;
+    background: transparent;
+  }
+
+  .strategy-view-content {
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+
+  .strategy-print-chart-page,
+  .strategy-print-legend-page {
+    display: block;
+    width: 100%;
+    color: CanvasText;
+    background: Canvas;
+    print-color-adjust: exact;
+  }
+
+  .strategy-print-chart-page {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .strategy-print-summary,
+  .strategy-print-player-heading {
+    display: block;
+    margin: 0 0 5mm;
+  }
+
+  .strategy-print-summary h1,
+  .strategy-print-player-heading h2 {
+    margin: 1mm 0 0;
+    color: CanvasText;
+  }
+
+  .strategy-print-summary p,
+  .strategy-print-player-heading p {
+    max-width: 80%;
+    margin: 1.5mm 0 0;
+    color: CanvasText;
+  }
+
+  .strategy-print-player-heading {
+    padding-bottom: 3mm;
+    border-bottom: 1px solid ButtonBorder;
+  }
+
+  .strategy-canvas-shell,
+  .strategy-view-content .strategy-canvas-shell {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .strategy-canvas {
+    width: 100%;
+    height: auto;
+    max-height: 155mm;
+    min-height: 0;
+  }
+
+  .strategy-legend {
+    position: static;
+    max-height: none;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .strategy-legend-head {
+    display: none;
+  }
+
+  .strategy-legend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  .strategy-legend-entry {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-color: ButtonBorder;
+    color: CanvasText;
+    background: Canvas;
+  }
+
+  .strategy-legend-copy > span {
+    color: GrayText;
+  }
+
+  .strategy-legend-links a {
+    color: LinkText;
+    text-decoration: none;
+  }
+}

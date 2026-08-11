@@ -62,19 +62,3 @@
     justify-content: flex-start;
   }
 }
-
-@media print {
-  .strategy-view-page {
-    min-height: 0;
-    padding: 0;
-  }
-
-  .strategy-view-header {
-    margin-bottom: 0.5rem;
-  }
-
-  .strategy-view-back,
-  .strategy-view-actions {
-    display: none;
-  }
-}

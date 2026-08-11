@@ -14,6 +14,12 @@ Database restore always imports into a staging database first. The active Spring
 
 Recovery bundles are encrypted with `age`, contain a complete SHA-256 inventory, reject links and special entries during extraction, and can be verified without modifying production.
 
+The strategy planner remains inside this existing aggregate boundary. Its documents,
+publication state, and catalog references are included by the unrestricted PostgreSQL
+custom dump; its background assets are included by the complete `uploads/` archive.
+The recovery client therefore transfers and verifies both artifacts together rather
+than maintaining a strategy-specific inventory that could drift from the schema.
+
 ## Partial logical migration is not disaster recovery
 
 A build-only recovery from a legacy Python dump is handled as a reviewed logical

@@ -8,6 +8,7 @@ import StrategyToolbar from '../components/StrategyToolbar.vue'
 import { useStrategyPlannerPage } from '../composables/useStrategyPlanner.js'
 import '../styles/strategyPlanner.css'
 import '../styles/strategyToolbar.css'
+import '../styles/strategyPrint.css'
 
 const {
   t, strategy, background, document, ships, builds, guides, selectedId, selectedObject,
@@ -139,13 +140,26 @@ const toolsOpen = ref(true)
 
       <main class="strategy-chart-column">
         <p v-if="!backgroundUrl" class="strategy-empty-canvas">{{ t('strategyPlanner.missingBackground') }}</p>
-        <StrategyCanvas
-          v-else ref="canvas" :document="document" :background-url="backgroundUrl" :ships="ships"
-          :selected-id="selectedId" :mode="mode" :color="color" :read-only="false"
-          @update:document="setDocument" @select="selectedId = $event" @history="recordHistory"
-        />
+        <section v-else class="strategy-print-chart-page">
+          <header class="strategy-print-summary">
+            <p class="eyebrow">{{ t('strategyPlanner.eyebrow') }}</p>
+            <h1>{{ strategy.title || t('strategyPlanner.title') }}</h1>
+            <p v-if="strategy.description">{{ strategy.description }}</p>
+          </header>
+          <StrategyCanvas
+            ref="canvas" :document="document" :background-url="backgroundUrl" :ships="ships"
+            :selected-id="selectedId" :mode="mode" :color="color" :read-only="false"
+            @update:document="setDocument" @select="selectedId = $event" @history="recordHistory"
+          />
+        </section>
         <p class="strategy-object-help">{{ t('strategyPlanner.objectHelp') }}</p>
-        <StrategyLegend :document="document" :ships="ships" :builds="builds" :guides="guides" />
+        <section class="strategy-print-legend-page">
+          <header class="strategy-print-player-heading">
+            <p class="eyebrow">{{ strategy.title || t('strategyPlanner.title') }}</p>
+            <h2>{{ t('strategyPlanner.playerList') }}</h2>
+          </header>
+          <StrategyLegend :document="document" :ships="ships" :builds="builds" :guides="guides" />
+        </section>
       </main>
     </div>
   </section>

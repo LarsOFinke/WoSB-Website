@@ -181,3 +181,11 @@ textarea:focus-visible {
 .sidebar-scrim {
   display: none;
 }
+
+@media print {
+  .app-sidebar,
+  .app-topbar,
+  .app-footer {
+    display: none !important;
+  }
+}

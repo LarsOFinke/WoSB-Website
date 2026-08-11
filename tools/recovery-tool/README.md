@@ -6,6 +6,13 @@ the PostgreSQL dump passed the current Spring/Flyway recovery preflight. It then
 downloads the encrypted bundle atomically, checks every sidecar and verifies the
 bundle's manifest, including the exact release artifact.
 
+Strategy planner recovery needs no separate opt-in: strategy documents and their
+ship/build/guide references are part of the complete PostgreSQL dump, while chart
+backgrounds are stored under the fully archived `uploads/` tree. Pull and verify
+the committed recovery bundle as one unit; restoring only one of those artifacts
+would leave the strategy boundary incomplete and is intentionally unsupported by
+the disaster-recovery workflow.
+
 ## Setup
 
 The backup server's `rbf-recovery` account is deliberately loopback-only. Run the
@@ -42,4 +49,3 @@ The shared Python source runs on Linux and Windows with Python 3.11+,
 `paramiko`, and the native `age` tools. Native packaging wrappers are provided
 under `tools/linux/recovery-tool/` and `tools/windows/recovery-tool/`; they embed
 the platform's `age` and `age-keygen` binaries and emit a SHA-256 sidecar.
-

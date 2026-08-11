@@ -4,6 +4,7 @@ import StrategyLegend from '../components/StrategyLegend.vue'
 import { useStrategyViewPage } from '../composables/useStrategyView.js'
 import '../styles/strategyPlanner.css'
 import '../styles/strategyView.css'
+import '../styles/strategyPrint.css'
 
 const {
   t, strategy, document, ships, builds, guides, canvas, loading, error,
@@ -34,11 +35,24 @@ const {
       </header>
 
       <main class="strategy-view-content">
-        <StrategyCanvas
-          ref="canvas" :document="document" :background-url="backgroundUrl" :ships="ships"
-          selected-id="" mode="select" read-only
-        />
-        <StrategyLegend :document="document" :ships="ships" :builds="builds" :guides="guides" />
+        <section class="strategy-print-chart-page">
+          <header class="strategy-print-summary">
+            <p class="eyebrow">{{ t('strategyPlanner.eyebrow') }}</p>
+            <h1>{{ strategy.title }}</h1>
+            <p v-if="strategy.description">{{ strategy.description }}</p>
+          </header>
+          <StrategyCanvas
+            ref="canvas" :document="document" :background-url="backgroundUrl" :ships="ships"
+            selected-id="" mode="select" read-only
+          />
+        </section>
+        <section class="strategy-print-legend-page">
+          <header class="strategy-print-player-heading">
+            <p class="eyebrow">{{ strategy.title }}</p>
+            <h2>{{ t('strategyPlanner.playerList') }}</h2>
+          </header>
+          <StrategyLegend :document="document" :ships="ships" :builds="builds" :guides="guides" />
+        </section>
       </main>
     </template>
   </section>

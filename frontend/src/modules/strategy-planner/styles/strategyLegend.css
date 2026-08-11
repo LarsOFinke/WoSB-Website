@@ -87,12 +87,3 @@
     max-height: 14rem;
   }
 }
-
-@media print {
-  .strategy-legend {
-    position: static;
-    max-height: none;
-    margin-top: 0.5rem;
-    box-shadow: none;
-  }
-}

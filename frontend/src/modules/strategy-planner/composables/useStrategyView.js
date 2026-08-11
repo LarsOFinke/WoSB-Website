@@ -8,6 +8,7 @@ import { listGuides } from '@/modules/guides/api/guides'
 import { listShips } from '@/modules/ships/api/ships'
 import { getSharedStrategy, getStrategy } from '../api/strategies.js'
 import { emptyStrategyDocument, parseStrategyDocument, strategyShareUrl } from '../domain/strategyDocument.js'
+import { downloadStrategySvg } from '../domain/strategySvgExport.js'
 
 export function useStrategyViewPage() {
   const route = useRoute()
@@ -60,18 +61,15 @@ export function useStrategyViewPage() {
     if (shareUrl.value) await navigator.clipboard.writeText(shareUrl.value)
   }
 
-  function downloadSvg() {
+  async function downloadSvg() {
     const source = canvas.value?.element
     if (!source) return
-    const clone = source.cloneNode(true)
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const anchor = window.document.createElement('a')
-    anchor.href = url
-    anchor.download = `${String(strategy.value?.title || 'strategy').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-strategy.svg`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    error.value = ''
+    try {
+      await downloadStrategySvg(source, backgroundUrl.value, strategy.value?.title)
+    } catch (exception) {
+      error.value = exception.message || t('strategyPlanner.exportError')
+    }
   }
 
   onMounted(load)

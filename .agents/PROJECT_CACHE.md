@@ -188,6 +188,9 @@ a directory name alone.
   remaining read-only, capability, PID, network, and secret-file controls.
 - Backup/restore couples the application, Flyway schema, persistent files, and the
   associated release artifact. Restore is staged and fail-closed.
+- Strategy plans require no separate recovery channel: their rows and references are
+  inside the unrestricted PostgreSQL dump, while chart backgrounds are inside the
+  complete `uploads/` archive transferred by the recovery tool.
 - A deliberately limited legacy partial restore (for example Python→Java builds) is,
   by contrast, a logical data migration against the already-current Flyway schema:
   do not import old numeric FKs, user/auth/master data, or DDL. Resolve references
