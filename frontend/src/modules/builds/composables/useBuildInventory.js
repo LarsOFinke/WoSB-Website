@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 
 import { slotLimits, weaponArcFields } from '@/modules/builds/buildForm'
+import { isMortarOptionCompatible, isMortarOptionKind } from '@/modules/builds/domain/weaponOptionCompatibility'
 import {
   inventoryQuantityTotal,
   isWeaponInventoryField,
@@ -77,16 +78,14 @@ export function useBuildInventory({ form, optionCatalog, selectedShip, optionMet
         ? selectedShip.value?.mortar_modification?.max_caliber_inches
           ?? selectedShip.value?.max_mortar_caliber_inches
         : selectedShip.value?.max_mortar_caliber_inches)
-      const optionCaliber = Number(option.weapon_caliber_inches)
-      if (Number.isFinite(maxCaliber) && Number.isFinite(optionCaliber) && optionCaliber > maxCaliber) return false
-      return ['mortar', 'mortar_launcher'].includes(option.option_kind)
+      return isMortarOptionCompatible(option, maxCaliber)
     }
     if (slotType === 'weapon_special') return option.option_kind === 'special_weapon'
     if (option.option_kind === 'special_weapon') {
       return ['weapon_front', 'weapon_rear'].includes(slotType)
         && specialWeaponCapacityForField(fieldName) > 0
     }
-    return !['mortar', 'mortar_launcher'].includes(option.option_kind)
+    return !isMortarOptionKind(option.option_kind)
   }
 
   function weaponOptionsForField(fieldName, currentIndex) {

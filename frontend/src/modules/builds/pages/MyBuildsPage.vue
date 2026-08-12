@@ -7,6 +7,7 @@ const {
   builds,
   search,
   buildType,
+  shipRate,
   loading,
   error,
   pendingDeleteId,
@@ -14,6 +15,7 @@ const {
   shareError,
   searchTimer,
   buildTypeOptions,
+  shipRateOptions,
   buildCountLabel,
   pageNumber,
   pageCount,
@@ -57,6 +59,13 @@ const {
           <label class="filter-box type-filter-box">
             <select v-model="buildType">
               <option v-for="option in buildTypeOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+          <label class="filter-box type-filter-box">
+            <select v-model="shipRate" :aria-label="t('common.rate')">
+              <option v-for="option in shipRateOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
             </select>

@@ -12260,7 +12260,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.5.10"
+    "version": "1.5.12"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -18520,6 +18520,24 @@
           },
           {
             "in": "query",
+            "name": "ship_rate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 7,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ship Rate"
+            }
+          },
+          {
+            "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
@@ -18696,6 +18714,24 @@
                 }
               ],
               "title": "Classification"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ship_rate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 7,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ship Rate"
             }
           },
           {

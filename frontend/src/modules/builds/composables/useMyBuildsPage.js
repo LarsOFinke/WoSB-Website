@@ -10,6 +10,7 @@ export function useMyBuildsPage() {
   const buildRoles = ref([])
   const search = ref('')
   const buildType = ref('')
+  const shipRate = ref('')
   const loading = ref(false)
   const total = ref(0)
   const limit = 50
@@ -24,6 +25,13 @@ export function useMyBuildsPage() {
   const buildTypeOptions = computed(() => [
     { value: '', label: t('builds.types.all') },
     ...buildRoles.value.map((role) => ({ value: role.slug, label: role.label })),
+  ])
+  const shipRateOptions = computed(() => [
+    { value: '', label: t('common.rate') },
+    ...Array.from({ length: 7 }, (_, index) => ({
+      value: String(index + 1),
+      label: `${t('common.rate')} ${index + 1}`,
+    })),
   ])
 
   const buildCountLabel = computed(() =>
@@ -51,7 +59,7 @@ export function useMyBuildsPage() {
     error.value = ''
     try {
       const [nextBuilds, nextRoles] = await Promise.all([
-        listMyBuilds(search.value, buildType.value, '', limit, offset.value),
+        listMyBuilds(search.value, buildType.value, '', limit, offset.value, shipRate.value),
         buildRoles.value.length ? Promise.resolve(buildRoles.value) : listBuildRoles(),
       ])
       builds.value = nextBuilds.items || []
@@ -96,7 +104,7 @@ export function useMyBuildsPage() {
     }
   }
 
-  watch([search, buildType], () => {
+  watch([search, buildType, shipRate], () => {
     offset.value = 0
     window.clearTimeout(searchTimer)
     searchTimer = window.setTimeout(loadMyBuilds, 220)
@@ -116,6 +124,7 @@ export function useMyBuildsPage() {
     buildRoles,
     search,
     buildType,
+    shipRate,
     loading,
     error,
     total,
@@ -125,6 +134,7 @@ export function useMyBuildsPage() {
     shareError,
     searchTimer,
     buildTypeOptions,
+    shipRateOptions,
     buildCountLabel,
     pageNumber,
     pageCount,

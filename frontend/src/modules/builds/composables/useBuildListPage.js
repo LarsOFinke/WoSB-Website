@@ -9,6 +9,7 @@ export function useBuildListPage() {
   const roles = ref([])
   const search = ref('')
   const buildType = ref('')
+  const shipRate = ref('')
   const classification = ref('')
   const showAll = ref(true)
   const loading = ref(false)
@@ -19,13 +20,20 @@ export function useBuildListPage() {
   let searchTimer = null
 
   const discoveryGroups = computed(() => localizedBuildDiscoveryGroups(t))
-  const hasFilters = computed(() => Boolean(search.value.trim() || buildType.value || classification.value))
+  const hasFilters = computed(() => Boolean(search.value.trim() || buildType.value || shipRate.value || classification.value))
   const hasActiveDiscovery = computed(() => showAll.value || hasFilters.value)
   const buildTypeOptions = computed(() => [
     { value: '', label: t('builds.types.all') },
     ...roles.value.map((role) => ({ value: role.slug, label: role.label })),
   ])
   const buildTypeLabels = computed(() => Object.fromEntries(buildTypeOptions.value.map((option) => [option.value, option.label])))
+  const shipRateOptions = computed(() => [
+    { value: '', label: t('common.rate') },
+    ...Array.from({ length: 7 }, (_, index) => ({
+      value: String(index + 1),
+      label: `${t('common.rate')} ${index + 1}`,
+    })),
+  ])
   const buildCountLabel = computed(() => total.value === 1
     ? t('builds.list.summaryOne')
     : t('builds.list.summaryMany', { count: total.value }))
@@ -79,7 +87,7 @@ export function useBuildListPage() {
     error.value = ''
     try {
       const [nextBuilds, nextRoles] = await Promise.all([
-        listBuilds(search.value, buildType.value, classification.value, limit, offset.value),
+        listBuilds(search.value, buildType.value, classification.value, limit, offset.value, shipRate.value),
         roles.value.length ? Promise.resolve(roles.value) : listBuildRoles(),
       ])
       builds.value = nextBuilds.items || []
@@ -97,6 +105,7 @@ export function useBuildListPage() {
     const hadFilters = hasFilters.value
     search.value = ''
     buildType.value = ''
+    shipRate.value = ''
     classification.value = ''
     showAll.value = true
     error.value = ''
@@ -115,7 +124,7 @@ export function useBuildListPage() {
     resetDiscovery()
   }
 
-  watch([search, buildType, classification], () => {
+  watch([search, buildType, shipRate, classification], () => {
     offset.value = 0
     showAll.value = !hasFilters.value
     window.clearTimeout(searchTimer)
@@ -131,6 +140,7 @@ export function useBuildListPage() {
     roles,
     search,
     buildType,
+    shipRate,
     classification,
     showAll,
     loading,
@@ -142,6 +152,7 @@ export function useBuildListPage() {
     hasFilters,
     hasActiveDiscovery,
     buildTypeOptions,
+    shipRateOptions,
     buildTypeLabels,
     buildCountLabel,
     pageNumber,

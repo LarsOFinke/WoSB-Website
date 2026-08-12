@@ -72,6 +72,9 @@ public final class ReferenceDataQueries {
 
     public static final String SEED_OPTIONS_SELECT_01 = "select id from build_item_options where category_id=:category and name=:name";
 
+    public static final String SEED_OPTIONS_SELECT_BY_SEED_KEY_01 =
+            "select id from build_item_options where seed_key=:seed";
+
     public static final String REPLACE_OPTION_CHILDREN_DELETE_01 = "delete from build_item_effects where option_id=:id";
 
     public static final String REPLACE_OPTION_CHILDREN_INSERT_01 = """
@@ -124,6 +127,14 @@ public final class ReferenceDataQueries {
                     crew_capacity_delta,source)
                 values(:ship,:capacity,:caliber,:broadside,:durability,:speed,:maneuver,:hold,:crew,:source)
                 """;
+
+    public static final String REPLACE_SHIP_CHILDREN_DELETE_03 =
+            "delete from ship_upgrade_effect_overrides where ship_id=:id";
+
+    public static final String REPLACE_SHIP_CHILDREN_INSERT_03 = """
+            insert into ship_upgrade_effect_overrides(ship_id,option_id,effect_key,effect_value,created_at,updated_at)
+            values(:ship,:option,:key,:value,:now,:now)
+            """;
 
     public static final String SEED_BUILD_RULES_INSERT_01 = """
                     insert into build_features(code,label,upgrade_slots_granted,is_active)

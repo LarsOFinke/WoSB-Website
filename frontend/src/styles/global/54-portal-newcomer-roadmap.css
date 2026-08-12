@@ -1,40 +1,191 @@
 /* ========================================================================== */
-/* Editable newcomer roadmap                                                */
+/* New Captain Guide folder browser                                           */
 /* ========================================================================== */
 
-.newcomer-guide-frame {
-  display: grid;
-  gap: 1rem;
-}
-
+.newcomer-guide-frame,
 .newcomer-guide-content,
 .newcomer-guide-editor {
   display: grid;
   gap: 1rem;
 }
 
-.newcomer-guide-block {
-  position: relative;
-  overflow: hidden;
-  padding-top: 1.2rem;
+.newcomer-folder-workspace {
+  display: grid;
+  grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
 }
 
-.newcomer-guide-block-index {
-  position: absolute;
-  top: 0.8rem;
-  right: 1rem;
-  color: rgba(241, 184, 91, 0.12);
-  font-size: clamp(2.8rem, 7vw, 5.5rem);
-  font-weight: 1000;
-  line-height: 1;
-  pointer-events: none;
+.newcomer-folder-workspace--editor {
+  min-height: 36rem;
+}
+
+.newcomer-folder-sidebar,
+.newcomer-folder-navigation,
+.newcomer-folder-editor,
+.newcomer-folder-content,
+.newcomer-editor-basics {
+  min-width: 0;
+}
+
+.newcomer-folder-sidebar,
+.newcomer-folder-navigation {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.newcomer-folder-navigation,
+.newcomer-folder-create {
+  padding: 0.75rem;
+  border: 1px solid var(--line-domain);
+  border-radius: 1rem;
+  background: var(--panel-muted);
+}
+
+.newcomer-folder-navigation__heading,
+.newcomer-resource-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.newcomer-folder-navigation__heading > span,
+.newcomer-folder-create > .field-label {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.newcomer-folder-navigation__heading > small {
+  color: var(--muted);
+}
+
+.newcomer-folder-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.newcomer-folder-list__item {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.newcomer-folder-entry {
+  width: 100%;
+  min-height: var(--touch-target);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+}
+
+.newcomer-folder-entry:hover,
+.newcomer-folder-entry:focus-visible {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+
+.newcomer-folder-entry.is-active {
+  border-color: var(--line-bright);
+  background: var(--accent-glow);
+}
+
+.newcomer-folder-entry__icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.65rem;
+  color: var(--accent-strong);
+  background: var(--accent-tint);
+}
+
+.newcomer-folder-entry__copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.newcomer-folder-entry__copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.newcomer-folder-entry__copy small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.newcomer-folder-order {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0 0.25rem;
+}
+
+.newcomer-folder-order button,
+.newcomer-folder-create__shortcuts button,
+.newcomer-resource-editor-head .compact-actions button {
+  min-height: 2.25rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: 0.65rem;
+  color: var(--text);
+  background: var(--surface-faint);
+}
+
+.newcomer-folder-order button:disabled {
+  opacity: 0.35;
+}
+
+.newcomer-folder-order .is-danger {
+  color: var(--danger);
+}
+
+.newcomer-folder-create {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.newcomer-folder-create__shortcuts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.newcomer-folder-editor,
+.newcomer-folder-content,
+.newcomer-editor-basics {
+  display: grid;
+  gap: 1rem;
+}
+
+.newcomer-folder-editor--empty {
+  min-height: 22rem;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.newcomer-block-fields {
+  align-items: end;
 }
 
 .newcomer-resource-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   gap: 0.8rem;
-  margin-top: 1rem;
 }
 
 .newcomer-resource-card {
@@ -44,18 +195,18 @@
   grid-template-rows: auto auto 1fr auto;
   gap: 0.55rem 0.75rem;
   padding: 1rem;
-  border: 1px solid rgba(213, 228, 240, 0.13);
+  border: 1px solid var(--line-domain);
   border-radius: 1rem;
   color: var(--text);
-  background: rgba(5, 14, 24, 0.56);
+  background: var(--panel-muted);
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
 .newcomer-resource-card:hover,
 .newcomer-resource-card:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(241, 184, 91, 0.44);
-  background: rgba(241, 184, 91, 0.055);
+  border-color: var(--line-bright);
+  background: var(--accent-tint);
 }
 
 .newcomer-resource-card > strong,
@@ -83,32 +234,25 @@
   pointer-events: none;
 }
 
-.newcomer-editor-basics,
-.newcomer-editor-block {
-  display: grid;
-  gap: 1rem;
-}
-
-.newcomer-block-fields {
-  align-items: end;
-}
-
-.newcomer-resource-editor-list {
+.newcomer-resource-editor-list,
+.newcomer-resource-editor-row {
   display: grid;
   gap: 0.8rem;
 }
 
-.newcomer-resource-editor-row {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.9rem;
-  border: 1px solid rgba(213, 228, 240, 0.12);
-  border-radius: 0.9rem;
-  background: rgba(3, 10, 18, 0.42);
+.newcomer-resource-editor-list {
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--line-subtle);
 }
 
-.newcomer-resource-editor-head,
-.newcomer-editor-add-row {
+.newcomer-resource-editor-row {
+  padding: 0.9rem;
+  border: 1px solid var(--line-subtle);
+  border-radius: 0.9rem;
+  background: var(--panel-muted);
+}
+
+.newcomer-resource-editor-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -116,21 +260,56 @@
   gap: 0.65rem;
 }
 
-.newcomer-resource-editor-head .compact-actions button {
-  min-width: 2.25rem;
-  min-height: 2.25rem;
-  border: 1px solid rgba(213, 228, 240, 0.16);
-  border-radius: 0.65rem;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.03);
+.newcomer-resource-empty,
+.newcomer-folder-empty {
+  margin: 0;
+  padding: 0.75rem;
+  text-align: center;
 }
 
-@media (max-width: 720px) {
-  .newcomer-resource-grid {
+.newcomer-editor-actions {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: var(--z-local-sticky);
+  padding: 0.75rem;
+  border: 1px solid var(--line-domain);
+  border-radius: 0.9rem;
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(14px);
+}
+
+.newcomer-editor-actions > .muted {
+  margin-right: auto;
+}
+
+@media (max-width: 900px) {
+  .newcomer-folder-workspace {
     grid-template-columns: 1fr;
   }
 
-  .newcomer-editor-add-row > * {
+  .newcomer-folder-list {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .newcomer-resource-grid,
+  .newcomer-folder-list,
+  .newcomer-folder-create__shortcuts {
+    grid-template-columns: 1fr;
+  }
+
+  .newcomer-editor-actions {
+    position: static;
+  }
+
+  .newcomer-editor-actions > * {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .newcomer-resource-card {
+    transition: none;
   }
 }

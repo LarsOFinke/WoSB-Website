@@ -50,16 +50,16 @@ public class BuildService {
     }
 
     @Transactional(readOnly = true)
-    public BuildPage list(String search, String type, String classification, long limit, long offset,
+    public BuildPage list(String search, String type, String classification, Long shipRate, long limit, long offset,
                           AuthenticatedUser viewer) {
-        return assembler.page(builds.page(search, type, classification, null, (long) viewer.id(),
+        return assembler.page(builds.page(search, type, classification, shipRate, null, (long) viewer.id(),
                 boundedLimit(limit), Math.max(0, offset)));
     }
 
     @Transactional(readOnly = true)
-    public BuildPage mine(String search, String type, String classification, long limit, long offset,
+    public BuildPage mine(String search, String type, String classification, Long shipRate, long limit, long offset,
                           AuthenticatedUser actor) {
-        return assembler.page(builds.page(search, type, classification, (long) actor.id(), (long) actor.id(),
+        return assembler.page(builds.page(search, type, classification, shipRate, (long) actor.id(), (long) actor.id(),
                 boundedLimit(limit), Math.max(0, offset)));
     }
 
@@ -131,7 +131,7 @@ public class BuildService {
 
     @Transactional(readOnly = true)
     public List<BuildRead> allForAdministration(AuthenticatedUser actor) {
-        return builds.page(null, null, null, null, (long) actor.id(), 1000, 0).items().stream()
+        return builds.page(null, null, null, null, null, (long) actor.id(), 1000, 0).items().stream()
                 .map(assembler::detail).toList();
     }
 

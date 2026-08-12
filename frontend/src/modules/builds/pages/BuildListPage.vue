@@ -10,6 +10,7 @@ const {
   t,
   search,
   buildType,
+  shipRate,
   classification,
   loading,
   error,
@@ -17,6 +18,7 @@ const {
   hasFilters,
   hasActiveDiscovery,
   buildTypeOptions,
+  shipRateOptions,
   buildCountLabel,
   pageNumber,
   pageCount,
@@ -52,6 +54,11 @@ const {
         <label class="build-library-control">
           <select v-model="buildType">
             <option v-for="option in buildTypeOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+        </label>
+        <label class="build-library-control">
+          <select v-model="shipRate" :aria-label="t('common.rate')">
+            <option v-for="option in shipRateOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
         </label>
         <button type="button" :disabled="!hasFilters" @click="resetDiscovery">{{ t('discovery.reset') }}</button>

@@ -4,7 +4,7 @@ import test from 'node:test'
 import { dateFromRouteQuery, dateKey, daysInRange, eventsOnDate, filtersForScope, monthGridRange } from '../src/modules/calendar/domain/calendarGrid.js'
 import { profileCompletion, profileInitials, profileUpdatePayload } from '../src/modules/accounts/domain/profileForm.js'
 import { filterFleetMemberships, hasFleetMemberPermission, membershipFieldPayload } from '../src/modules/fleet/domain/fleetMemberships.js'
-import { createGuideDraft, guidePayload, moveArrayItem } from '../src/modules/onboarding/domain/newcomerGuideDraft.js'
+import { createGuideDraft, guidePayload, moveArrayItem, moveSelectedItem } from '../src/modules/onboarding/domain/newcomerGuideDraft.js'
 import { canRemoveSquadMember, squadUpdatePayload } from '../src/modules/squads/domain/squadManagement.js'
 import { groupJoinPayload, isGroupShipAllowed } from '../src/modules/groups/domain/groupDetail.js'
 import { formatBuildModifier, inventoryCategory, slotQuantity } from '../src/modules/builds/domain/buildDetailPresentation.js'
@@ -66,6 +66,9 @@ test('newcomer guide drafts normalize linked and external resources', () => {
   assert.equal(draft.blocks[0].resources[0].url, 'https://example.test')
   assert.equal(guidePayload(draft).blocks[0].resources[0].url, 'https://example.test')
   assert.equal(moveArrayItem([1, 2, 3], 0, 1), true)
+  const folders = ['briefing', 'builds', 'operations']
+  assert.equal(moveSelectedItem(folders, 1, 1, -1), 0)
+  assert.deepEqual(folders, ['builds', 'briefing', 'operations'])
 })
 
 test('squad and group rules stay outside view components', () => {

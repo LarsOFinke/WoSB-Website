@@ -33,6 +33,10 @@ defineProps({
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
       <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5z" />
     </template>
+    <template v-else-if="name === 'folder'">
+      <path d="M3 6.5h6l2 2h10v9.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M3 10h18" />
+    </template>
     <template v-else-if="name === 'groups'">
       <circle cx="8" cy="8" r="3" />
       <circle cx="17" cy="9" r="2.5" />

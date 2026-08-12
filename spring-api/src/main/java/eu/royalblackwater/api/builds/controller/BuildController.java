@@ -14,6 +14,8 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.core.io.Resource;
@@ -48,13 +50,14 @@ public class BuildController extends ApiControllerSupport {
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "build_type", required = false) String buildType,
             @RequestParam(name = "classification", required = false) String classification,
+            @Min(1) @Max(7) @RequestParam(name = "ship_rate", required = false) Long shipRate,
             @RequestParam(name = "limit", defaultValue = "50") long limit,
             @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.list(search,
-                            buildType, classification,
+                            buildType, classification, shipRate,
                             limit, offset, actor), 200);
     }
 
@@ -71,13 +74,14 @@ public class BuildController extends ApiControllerSupport {
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "build_type", required = false) String buildType,
             @RequestParam(name = "classification", required = false) String classification,
+            @Min(1) @Max(7) @RequestParam(name = "ship_rate", required = false) Long shipRate,
             @RequestParam(name = "limit", defaultValue = "50") long limit,
             @RequestParam(name = "offset", defaultValue = "0") long offset
     ) {
 
         AuthenticatedUser actor = CurrentUser.require();
         return respond(builds.mine(search,
-                            buildType, classification,
+                            buildType, classification, shipRate,
                             limit, offset, actor), 200);
     }
 

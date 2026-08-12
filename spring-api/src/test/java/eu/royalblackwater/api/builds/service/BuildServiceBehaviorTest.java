@@ -59,12 +59,12 @@ class BuildServiceBehaviorTest {
         BuildRepository builds = mock(BuildRepository.class);
         BuildAssembler assembler = mock(BuildAssembler.class);
         BuildPageResult page = mock(BuildPageResult.class);
-        when(builds.page(null, null, null, null, 7L, 100L, 0L)).thenReturn(page);
+        when(builds.page(null, null, null, null, null, 7L, 100L, 0L)).thenReturn(page);
         BuildService service = new BuildService(builds, mock(BuildValidationService.class), assembler,
                 mock(BuildDataRepository.class), mock(BuildPrintoutService.class), mock(AuditService.class), CLOCK);
 
-        service.list(null, null, null, 9_999, -20, ACTOR);
-        verify(builds).page(null, null, null, null, 7L, 100L, 0L);
+        service.list(null, null, null, null, 9_999, -20, ACTOR);
+        verify(builds).page(null, null, null, null, null, 7L, 100L, 0L);
         verify(assembler).page(page);
 
         when(builds.deleteOwned(99, 7)).thenReturn(false);

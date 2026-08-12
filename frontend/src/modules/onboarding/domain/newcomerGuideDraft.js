@@ -1,5 +1,12 @@
+let draftKey = 0
+
+function nextDraftKey(id) {
+  draftKey += 1
+  return `folder-${id || 'new'}-${draftKey}`
+}
+
 export function createGuideBlock(blockType = 'text') {
-  return { block_type: blockType, title: '', body: '', resources: [] }
+  return { _key: nextDraftKey(), block_type: blockType, title: '', body: '', resources: [] }
 }
 
 export function createGuideResource() {
@@ -11,6 +18,7 @@ export function createGuideDraft(source) {
     title: source.title,
     intro: source.intro,
     blocks: (source.blocks || []).map((block) => ({
+      _key: nextDraftKey(block.id),
       block_type: block.block_type,
       title: block.title,
       body: block.body || '',
@@ -52,6 +60,14 @@ export function moveArrayItem(items, index, delta) {
   const [item] = items.splice(index, 1)
   items.splice(target, 0, item)
   return true
+}
+
+export function moveSelectedItem(items, selectedIndex, index, delta) {
+  if (!moveArrayItem(items, index, delta)) return selectedIndex
+  const target = index + delta
+  if (selectedIndex === index) return target
+  if (selectedIndex === target) return index
+  return selectedIndex
 }
 
 export function resetGuideResource(resource) {

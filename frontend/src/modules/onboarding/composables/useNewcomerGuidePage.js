@@ -10,9 +10,8 @@ import {
   createGuideResource,
   guidePayload,
   moveArrayItem,
+  moveSelectedItem,
   resetGuideResource,
-  resourceComponent,
-  resourceTarget,
 } from '@/modules/onboarding/domain/newcomerGuideDraft'
 import { appendLinkedResource } from '@/modules/onboarding/services/newcomerGuideResources'
 
@@ -31,6 +30,10 @@ export function useNewcomerGuidePage() {
   const resourceOptionsLoading = ref(false)
   const resourceOptionsLoaded = ref(false)
   const resourceOptionsError = ref('')
+  const activeFolderIndex = ref(0)
+
+  const visibleFolders = computed(() => editing.value ? (draft.value?.blocks || []) : (page.value?.blocks || []))
+  const activeFolder = computed(() => visibleFolders.value[activeFolderIndex.value] || null)
 
   const resourceTypeOptions = computed(() => [
     { value: 'guide', label: t('newcomerGuide.editor.types.guide') },
@@ -38,12 +41,6 @@ export function useNewcomerGuidePage() {
     { value: 'internal', label: t('newcomerGuide.editor.types.internal') },
     { value: 'external', label: t('newcomerGuide.editor.types.external') },
   ])
-
-  const emptyTextBlock = () => createGuideBlock('text')
-  const emptyResourceBlock = () => createGuideBlock('resources')
-  const emptyResource = () => createGuideResource()
-  const toDraft = (source) => createGuideDraft(source)
-  const normalizePayload = () => guidePayload(draft.value)
 
   async function loadResourceOptions() {
     if (resourceOptionsLoaded.value || resourceOptionsLoading.value) return
@@ -65,6 +62,7 @@ export function useNewcomerGuidePage() {
     draft.value = createGuideDraft(page.value)
     editing.value = true
     success.value = ''
+    activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
     await loadResourceOptions()
   }
 
@@ -76,14 +74,17 @@ export function useNewcomerGuidePage() {
 
   function addBlock(type) {
     draft.value.blocks.push(createGuideBlock(type === 'resources' ? 'resources' : 'text'))
+    activeFolderIndex.value = draft.value.blocks.length - 1
   }
 
   function removeBlock(index) {
     draft.value.blocks.splice(index, 1)
+    if (activeFolderIndex.value > index) activeFolderIndex.value -= 1
+    activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
   }
 
   function moveBlock(index, delta) {
-    moveArrayItem(draft.value.blocks, index, delta)
+    activeFolderIndex.value = moveSelectedItem(draft.value.blocks, activeFolderIndex.value, index, delta)
   }
 
   function addResource(block) {
@@ -91,10 +92,11 @@ export function useNewcomerGuidePage() {
   }
 
   function addLinkedResource(resourceType) {
-    const block = appendLinkedResource(draft.value.blocks, resourceType)
+    const block = appendLinkedResource(draft.value.blocks, resourceType, activeFolder.value)
     if (!block) return
     if (!block.title) block.title = t('newcomerGuide.resourceSection')
     block.resources.at(-1).resource_id = null
+    activeFolderIndex.value = draft.value.blocks.indexOf(block)
   }
 
   function removeResource(block, index) {
@@ -114,6 +116,7 @@ export function useNewcomerGuidePage() {
     error.value = ''
     try {
       page.value = await getNewcomerGuide()
+      activeFolderIndex.value = 0
     } catch (err) {
       error.value = err.message || t('newcomerGuide.loadError')
     } finally {
@@ -127,6 +130,7 @@ export function useNewcomerGuidePage() {
     success.value = ''
     try {
       page.value = await updateNewcomerGuide(guidePayload(draft.value))
+      activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, page.value.blocks.length - 1))
       editing.value = false
       draft.value = null
       success.value = t('newcomerGuide.saved')
@@ -139,13 +143,16 @@ export function useNewcomerGuidePage() {
 
   onMounted(loadPage)
 
+  function selectFolder(index) {
+    if (index >= 0 && index < visibleFolders.value.length) activeFolderIndex.value = index
+  }
+
   return {
     t, isStaff, page, draft, guides, builds, loading, saving, editing, error,
-    success, resourceOptionsLoading, resourceOptionsLoaded, resourceOptionsError,
-    resourceTypeOptions, emptyTextBlock, emptyResourceBlock, emptyResource,
-    toDraft, normalizePayload, resourceComponent, resourceTarget, loadResourceOptions,
+    success, resourceOptionsLoading, resourceOptionsError,
+    resourceTypeOptions, activeFolderIndex, activeFolder, visibleFolders,
     startEditing, cancelEditing, addBlock, removeBlock, moveBlock, addResource,
     addLinkedResource, removeResource, moveResource, onResourceTypeChange,
-    loadPage, savePage,
+    loadPage, savePage, selectFolder,
   }
 }

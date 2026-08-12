@@ -1,6 +1,7 @@
 package eu.royalblackwater.api.builds.service;
 
 import eu.royalblackwater.api.builds.dto.BuildCatalogOption;
+import eu.royalblackwater.api.builds.filter.WeaponOptionCompatibility;
 import eu.royalblackwater.api.builds.dto.BuildEffects;
 import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
 import eu.royalblackwater.api.builds.dto.BuildPayload;
@@ -125,9 +126,11 @@ public class BuildValidationService {
 
     private void validateWeapon(BuildCatalogOption option, BuildShipSnapshot ship, String slotType, boolean mortarModified) {
         if ("weapon_mortar".equals(slotType)) {
-            if (!List.of("mortar", "mortar_launcher").contains(option.kind())) reject("Mortar slots only accept mortars.");
             Double max = ship.mortarCaliber(mortarModified);
-            if (option.caliber() != null && max != null && option.caliber() > max) reject("Mortar caliber exceeds this ship's limit.");
+            if (!WeaponOptionCompatibility.isMortarKind(option.kind())) reject("Mortar slots only accept mortars.");
+            if (!WeaponOptionCompatibility.isMortarCompatible(option.kind(), option.caliber(), max)) {
+                reject("Mortar caliber exceeds this ship's limit.");
+            }
         } else if ("weapon_special".equals(slotType) && !"special_weapon".equals(option.kind())) {
             reject("Dedicated special slots only accept special weapons.");
         }

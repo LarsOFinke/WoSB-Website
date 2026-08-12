@@ -2,7 +2,8 @@
   "category": "weapon",
   "name": "Heavy Mortar",
   "source": "WoSB wiki Basic Weapons audit 2026-07",
-  "option_kind": "mortar",
+  "notes": "Usable in every mortar slot regardless of the slot's caliber limit.",
+  "option_kind": "mortar_universal",
   "allowed_slot_types": [
     "weapon_mortar"
   ],

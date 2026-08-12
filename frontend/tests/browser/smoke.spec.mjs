@@ -151,6 +151,49 @@ test('cookie settings remain open with an accessible error after a failed save',
   await expect(dialog.getByRole('alert')).toBeVisible()
 })
 
+test('moderators organize the New Captain Guide through an ordered folder browser', async ({ page }) => {
+  let savedPayload
+  const guide = {
+    id: 1,
+    title: 'New Captain Guide',
+    intro: 'Start here.',
+    updated_at: '2030-01-15T12:00:00',
+    updated_by: 'Moderator',
+    blocks: [
+      { id: 10, block_type: 'text', title: 'Welcome aboard', body: 'Read this first.', resources: [] },
+      { id: 11, block_type: 'resources', title: 'Ready your ship', body: 'Choose a proven setup.', resources: [] },
+    ],
+  }
+  await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
+    json: { id: 8, username: 'moderator', display_name: 'Moderator', role: 'moderator' },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/newcomer-guide$/, async (route) => {
+    if (route.request().method() === 'PUT') {
+      savedPayload = route.request().postDataJSON()
+      await route.fulfill({ json: { ...guide, blocks: savedPayload.blocks.map((block, index) => ({ id: 20 + index, ...block })) } })
+      return
+    }
+    await route.fulfill({ json: guide })
+  })
+  await page.route(/^https?:\/\/[^/]+\/api\/guides/, (route) => route.fulfill({ json: [] }))
+  await page.route(/^https?:\/\/[^/]+\/api\/builds/, (route) => route.fulfill({ json: { items: [], total: 0 } }))
+
+  await page.goto('/new-captain')
+  await expect(page.getByRole('navigation', { name: 'Guide folders' })).toBeVisible()
+  await page.getByRole('button', { name: /Ready your ship/ }).click()
+  await expect(page.locator('.newcomer-folder-content')).toContainText('Choose a proven setup.')
+  await expect(page.locator('.newcomer-folder-content')).not.toContainText('Read this first.')
+
+  await page.getByRole('button', { name: 'Edit guide' }).click()
+  await expect(page.locator('.newcomer-folder-editor')).toHaveCount(1)
+  const secondFolder = page.locator('.newcomer-folder-list__item').nth(1)
+  await secondFolder.getByRole('button', { name: 'Move folder up' }).click()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+  await expect.poll(() => savedPayload?.blocks.map((block) => block.title)).toEqual(['Ready your ship', 'Welcome aboard'])
+  await expect(page.locator('.newcomer-folder-entry').first()).toContainText('Ready your ship')
+})
+
 test('strategy planner keeps the chart separate and saves website-backed markers without a player', async ({ page }) => {
   const browserErrors = []
   page.on('pageerror', (error) => browserErrors.push(error.message))

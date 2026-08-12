@@ -5,6 +5,7 @@ import eu.royalblackwater.api.dto.MasterDataCategoryUpdate;
 import eu.royalblackwater.api.masterdata.mapper.MasterDataDtoMapper;
 import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
 import eu.royalblackwater.api.masterdata.repository.SeedCatalog;
+import eu.royalblackwater.api.masterdata.repository.queries.ReferenceDataQueries;
 import eu.royalblackwater.api.masterdata.service.MasterDataMutationService;
 import eu.royalblackwater.api.masterdata.service.MasterDataQueryService;
 import eu.royalblackwater.api.masterdata.service.ReferenceDataSeeder;
@@ -22,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -76,5 +79,43 @@ class MasterDataMutationServiceBehaviorTest {
 
         assertThat(result).isEqualTo(new ReferenceDataSeeder.SeedResult(0, 0, 0, 0));
         verify(repository, atLeast(5)).update(anyString(), anyMap());
+    }
+
+    @Test
+    void referenceDataSeederPersistsShipUpgradeOverridesByOptionSeedKey() {
+        SeedCatalog catalog = mock(SeedCatalog.class);
+        when(catalog.systemRoles()).thenReturn(Map.of());
+        when(catalog.systemFleets()).thenReturn(List.of());
+        when(catalog.definitions()).thenReturn(Map.of());
+        when(catalog.categories()).thenReturn(List.of(Map.of("key", "upgrade", "label", "Upgrades")));
+        when(catalog.options()).thenReturn(List.of(Map.of(
+                "category", "upgrade", "name", "Teak Frames", "seed_id", "teak-frames",
+                "stat_effects", Map.of("crew_capacity", 10))));
+        when(catalog.ships()).thenReturn(List.of(Map.of(
+                "name", "De Zeven Provincien", "seed_id", "De Zeven Provincien",
+                "upgrade_effect_overrides", List.of(Map.of("upgrade_seed_id", "teak-frames",
+                        "stat_effects", Map.of("crew_capacity", 14))))));
+        when(catalog.buildRules()).thenReturn(Map.of());
+
+        MasterDataRepository repository = mock(MasterDataRepository.class);
+        when(repository.count(anyString(), anyMap())).thenReturn(0L);
+        when(repository.optional(anyString(), anyMap())).thenAnswer(invocation -> {
+            Map<String, ?> parameters = invocation.getArgument(1);
+            if (parameters.containsKey("name") && parameters.containsKey("category")) {
+                return java.util.Optional.of(Map.of("id", 12L));
+            }
+            if (parameters.containsKey("value")) return java.util.Optional.of(Map.of("id", 99L));
+            if (parameters.containsKey("seed")) return java.util.Optional.of(Map.of("id", 12L));
+            return java.util.Optional.of(Map.of("id", 1L));
+        });
+
+        ReferenceDataSeeder seeder = new ReferenceDataSeeder(catalog, repository, new ObjectMapper(), CLOCK);
+        seeder.synchronize(true);
+
+        verify(repository).update(eq(ReferenceDataQueries.REPLACE_SHIP_CHILDREN_INSERT_03),
+                argThat(parameters -> parameters.get("ship").equals(99L)
+                        && parameters.get("option").equals(12L)
+                        && parameters.get("key").equals("crew_capacity")
+                        && parameters.get("value").equals(14.0)));
     }
 }

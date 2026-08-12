@@ -3,6 +3,7 @@ package eu.royalblackwater.api.builds.repository;
 import eu.royalblackwater.api.builds.dto.BuildCatalogOption;
 import eu.royalblackwater.api.builds.dto.BuildFeatureSnapshot;
 import eu.royalblackwater.api.builds.dto.BuildShipSnapshot;
+import eu.royalblackwater.api.builds.filter.WeaponOptionCompatibility;
 import eu.royalblackwater.api.dto.ShipRead;
 import eu.royalblackwater.api.dto.WeaponPerformanceRead;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
@@ -182,16 +183,15 @@ public class BuildCatalogRepository {
         if (mount == null || ship.capacity(slot, true) <= 0) return false;
         String kind = nullable(option, "option_kind");
         if ("weapon_mortar".equals(slot)) {
-            if (!List.of("mortar", "mortar_launcher").contains(kind)) return false;
             Double caliber = decimal(option, "weapon_caliber_inches");
             Double max = ship.mortarCaliber(true);
-            return "mortar_launcher".equals(kind) || caliber == null || max != null && caliber <= max;
+            return WeaponOptionCompatibility.isMortarCompatible(kind, caliber, max);
         }
         if ("special_weapon".equals(kind)) {
             return List.of("weapon_front", "weapon_rear", "weapon_special").contains(slot)
                     && mount.specialCapacity() > 0;
         }
-        if (List.of("mortar", "mortar_launcher").contains(kind)) return false;
+        if (WeaponOptionCompatibility.isMortarKind(kind)) return false;
         Integer rank = integer(option, "weapon_class_rank");
         return List.of("cannon", "bow_stern").contains(kind) && rank != null
                 && mount.maxClassRank() != null && rank <= mount.maxClassRank();

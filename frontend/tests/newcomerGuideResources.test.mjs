@@ -17,3 +17,14 @@ test('invalid resource types are ignored', () => {
   assert.equal(appendLinkedResource(blocks, 'external'), null)
   assert.deepEqual(blocks, [])
 })
+
+test('links are added to the selected resource folder', () => {
+  const first = { block_type: 'resources', resources: [] }
+  const selected = { block_type: 'resources', resources: [] }
+
+  const target = appendLinkedResource([first, selected], 'build', selected)
+
+  assert.equal(target, selected)
+  assert.equal(first.resources.length, 0)
+  assert.equal(selected.resources[0].resource_type, 'build')
+})

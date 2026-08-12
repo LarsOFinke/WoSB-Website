@@ -57,6 +57,24 @@
       },
       {
         "in": "query",
+        "name": "ship_rate",
+        "required": false,
+        "schema": {
+          "anyOf": [
+            {
+              "maximum": 7,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ship Rate"
+        }
+      },
+      {
+        "in": "query",
         "name": "limit",
         "required": false,
         "schema": {

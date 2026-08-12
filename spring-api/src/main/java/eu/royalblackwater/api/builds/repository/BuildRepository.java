@@ -56,9 +56,9 @@ public class BuildRepository {
         return normalized.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
     }
 
-    public BuildPageResult page(String search, String type, String classification, Long ownerId,
+    public BuildPageResult page(String search, String type, String classification, Long shipRate, Long ownerId,
                          Long viewerId, long limit, long offset) {
-        Filter filter = filter(search, type, classification, ownerId);
+        Filter filter = filter(search, type, classification, shipRate, ownerId);
         Map<String, Object> parameters = new LinkedHashMap<>(filter.parameters());
         parameters.put("viewer_id", viewerId);
         parameters.put("limit", limit);
@@ -165,7 +165,7 @@ public class BuildRepository {
         }).toList();
     }
 
-    private static Filter filter(String search, String type, String classification, Long ownerId) {
+    private static Filter filter(String search, String type, String classification, Long shipRate, Long ownerId) {
         StringBuilder where = new StringBuilder(" where 1=1");
         Map<String, Object> parameters = new LinkedHashMap<>();
         if (search != null && !search.isBlank()) {
@@ -176,6 +176,10 @@ public class BuildRepository {
         if (classification != null && !classification.isBlank()) {
             where.append(" and exists(select 1 from build_classifications c where c.build_id=b.id and c.tag=:classification)");
             parameters.put("classification", classification.strip().toLowerCase());
+        }
+        if (shipRate != null) {
+            where.append(" and exists(select 1 from ships s where s.id=b.ship_id and s.rate=:shipRate)");
+            parameters.put("shipRate", shipRate);
         }
         if (ownerId != null) { where.append(" and b.owner_id=:ownerId"); parameters.put("ownerId", ownerId); }
         return new Filter(where.toString(), Map.copyOf(parameters));

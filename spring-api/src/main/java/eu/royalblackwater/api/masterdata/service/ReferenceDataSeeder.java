@@ -181,6 +181,16 @@ public class ReferenceDataSeeder {
                         "durability",integer(mortar,"durability_delta",0),"speed",number(mortar,"speed_pct"),
                         "maneuver",number(mortar,"maneuverability_delta"),"hold",number(mortar,"hold_capacity_pct"),
                         "crew",integer(mortar,"crew_capacity_delta",0),"source",text(mortar,"source")));
+        repository.update(ReferenceDataQueries.REPLACE_SHIP_CHILDREN_DELETE_03, Map.of("id", shipId));
+        for (Map<String, Object> override : SeedCatalog.listOfMaps(item.get("upgrade_effect_overrides"))) {
+            String seedId = text(override, "upgrade_seed_id");
+            long optionId = requiredOptionId("option:upgrade:" + seedId);
+            for (Map.Entry<String, Object> effect : map(override.get("stat_effects")).entrySet()) {
+                repository.update(ReferenceDataQueries.REPLACE_SHIP_CHILDREN_INSERT_03,
+                        Map.of("ship", shipId, "option", optionId, "key", effect.getKey(),
+                                "value", ((Number) effect.getValue()).doubleValue(), "now", now()));
+            }
+        }
     }
 
     private void seedBuildRules() {
@@ -223,6 +233,13 @@ public class ReferenceDataSeeder {
                 || !List.of("key","name","code").contains(column)) throw new IllegalArgumentException("Unsupported lookup");
         return repository.optional(ReferenceDataQueries.REQUIRED_ID_SELECT_01 + table + ReferenceDataQueries.REQUIRED_ID_WHERE_01 + column + "=:value", Map.of("value",value))
                 .map(row -> longValue(row,"id")).orElseThrow(() -> new IllegalStateException("Required seed dependency is missing."));
+    }
+
+    private long requiredOptionId(String seedKey) {
+        return repository.optional(ReferenceDataQueries.SEED_OPTIONS_SELECT_BY_SEED_KEY_01,
+                        Map.of("seed", seedKey))
+                .map(row -> longValue(row, "id"))
+                .orElseThrow(() -> new IllegalStateException("Required upgrade seed dependency is missing: " + seedKey));
     }
 
     private Long optionalId(String table, String column, String value) {

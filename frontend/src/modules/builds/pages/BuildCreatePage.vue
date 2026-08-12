@@ -78,10 +78,6 @@ function specialistPickerOptions(index) {
   return pickerOptions('special_crew', regularSpecialistOptions.value, selectedElsewhere)
 }
 
-function updateClassificationTags(tags) {
-  if (tags.length <= 6) form.classification_tags = tags
-}
-
 function updateRegularSpecialist(index, value) {
   const next = regularSpecialistRows.value.map((slot) => ({ ...slot }))
   next[index].item = value
@@ -169,11 +165,10 @@ function toggleGinger() {
           <div v-for="group in discoveryGroups" :key="group.key" class="discovery-group">
             <h3>{{ group.label }}</h3>
             <DiscoveryTileGrid
-              :model-value="form.classification_tags"
+              v-model="form.classification_tags"
               :items="group.items"
               multiple
               compact
-              @update:model-value="updateClassificationTags"
             />
           </div>
         </div>
