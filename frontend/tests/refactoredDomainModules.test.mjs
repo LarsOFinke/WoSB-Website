@@ -5,6 +5,7 @@ import { dateFromRouteQuery, dateKey, daysInRange, eventsOnDate, filtersForScope
 import { profileCompletion, profileInitials, profileUpdatePayload } from '../src/modules/accounts/domain/profileForm.js'
 import { filterFleetMemberships, hasFleetMemberPermission, membershipFieldPayload } from '../src/modules/fleet/domain/fleetMemberships.js'
 import { createGuideDraft, guidePayload, moveArrayItem, moveSelectedItem } from '../src/modules/onboarding/domain/newcomerGuideDraft.js'
+import { resourceIcon, topicKind, topicResourceCount, topicSummary } from '../src/modules/onboarding/domain/newcomerGuidePresentation.js'
 import { canRemoveSquadMember, squadUpdatePayload } from '../src/modules/squads/domain/squadManagement.js'
 import { groupJoinPayload, isGroupShipAllowed } from '../src/modules/groups/domain/groupDetail.js'
 import { formatBuildModifier, inventoryCategory, slotQuantity } from '../src/modules/builds/domain/buildDetailPresentation.js'
@@ -69,6 +70,14 @@ test('newcomer guide drafts normalize linked and external resources', () => {
   const folders = ['briefing', 'builds', 'operations']
   assert.equal(moveSelectedItem(folders, 1, 1, -1), 0)
   assert.deepEqual(folders, ['builds', 'briefing', 'operations'])
+})
+
+test('newcomer topics expose concise explorer metadata', () => {
+  const topic = { block_type: 'resources', body: '## Prepare\nRead the **fleet orders** before sailing.', resources: [{ resource_type: 'build' }] }
+  assert.equal(topicSummary(topic, 'Fallback'), 'Prepare Read the fleet orders before sailing.')
+  assert.equal(topicResourceCount(topic), 1)
+  assert.equal(topicKind(topic), 'resources')
+  assert.equal(resourceIcon(topic.resources[0]), 'builds')
 })
 
 test('squad and group rules stay outside view components', () => {

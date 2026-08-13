@@ -8,6 +8,16 @@
 
 # Changelog
 
+## 1.5.13 - 2026-08-13
+
+- Reworked the New Captain Guide into one Explorer-style knowledge workspace with
+  persistent topic navigation, address and status bars, a details list, and an
+  integrated long-form preview pane.
+- Combined compact Build-library search and content-type filters with native
+  briefings and curated Guide, Build, internal-page, and external-link resources.
+- Aligned moderator organization and editing with the same ordered folder and
+  resource hierarchy members browse, including read-after-save browser coverage.
+
 ## 1.5.10 - 2026-08-11
 
 - Centralized the strategy editor and read-only briefing layout in one reusable

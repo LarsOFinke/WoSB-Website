@@ -45,6 +45,28 @@ The editable translation sources live in `src/locales/messages/`. Before develop
 
 English is the synchronous fallback in the application entry path. Every other locale is loaded through a dynamic import before it becomes active. This keeps untranslated keys safe, prevents mixed-language rendering during a switch and avoids shipping all seven languages on the first visit. Generated locale modules must not be edited or committed.
 
+## New Captain Guide workspace
+
+The onboarding route deliberately combines established interaction patterns instead
+of presenting a second conventional article library:
+
+- an Explorer-style folder tree, address bar, details list, preview pane, and status bar
+  preserve the user's location while they browse;
+- compact Build-library search and type refinement narrow topics and linked resources;
+- the Guide reader's long-form presentation renders each folder's native Markdown
+  briefing in the persistent preview pane;
+- Guides, Builds, internal pages, and external references appear as items inside their
+  owning topic folder and receive a preview before navigation; and
+- moderators organize and edit the same ordered folder/resource hierarchy that members
+  browse, rather than maintaining a separate presentation model.
+
+`NewcomerGuidePage.vue` remains the route orchestrator,
+`useNewcomerGuidePage.js` owns loading/editing/selection state,
+`NewcomerTopicExplorer.vue` owns the reader workspace, and the pure draft and
+presentation rules remain under `src/modules/onboarding/domain/`. Preserve this shared
+mental model when extending onboarding: a new content type should become a typed folder
+item with a safe resolved target and preview, not a parallel page-level navigation system.
+
 ## Extension guide
 
 When adding a page capability:

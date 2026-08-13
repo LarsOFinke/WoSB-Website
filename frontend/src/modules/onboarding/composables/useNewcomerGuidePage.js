@@ -30,7 +30,7 @@ export function useNewcomerGuidePage() {
   const resourceOptionsLoading = ref(false)
   const resourceOptionsLoaded = ref(false)
   const resourceOptionsError = ref('')
-  const activeFolderIndex = ref(0)
+  const activeFolderIndex = ref(-1)
 
   const visibleFolders = computed(() => editing.value ? (draft.value?.blocks || []) : (page.value?.blocks || []))
   const activeFolder = computed(() => visibleFolders.value[activeFolderIndex.value] || null)
@@ -62,7 +62,9 @@ export function useNewcomerGuidePage() {
     draft.value = createGuideDraft(page.value)
     editing.value = true
     success.value = ''
-    activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
+    activeFolderIndex.value = activeFolderIndex.value < 0
+      ? 0
+      : Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
     await loadResourceOptions()
   }
 
@@ -116,7 +118,7 @@ export function useNewcomerGuidePage() {
     error.value = ''
     try {
       page.value = await getNewcomerGuide()
-      activeFolderIndex.value = 0
+      activeFolderIndex.value = -1
     } catch (err) {
       error.value = err.message || t('newcomerGuide.loadError')
     } finally {
@@ -147,12 +149,16 @@ export function useNewcomerGuidePage() {
     if (index >= 0 && index < visibleFolders.value.length) activeFolderIndex.value = index
   }
 
+  function showTopicOverview() {
+    if (!editing.value) activeFolderIndex.value = -1
+  }
+
   return {
     t, isStaff, page, draft, guides, builds, loading, saving, editing, error,
     success, resourceOptionsLoading, resourceOptionsError,
     resourceTypeOptions, activeFolderIndex, activeFolder, visibleFolders,
     startEditing, cancelEditing, addBlock, removeBlock, moveBlock, addResource,
     addLinkedResource, removeResource, moveResource, onResourceTypeChange,
-    loadPage, savePage, selectFolder,
+    loadPage, savePage, selectFolder, showTopicOverview,
   }
 }

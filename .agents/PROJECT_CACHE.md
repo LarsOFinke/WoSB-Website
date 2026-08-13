@@ -142,6 +142,12 @@ a directory name alone.
   editable SVG overlay objects separately. Pointer coordinates must be transformed
   through the SVG screen matrix, and build references must match the marker ship on
   both the client and server.
+- The New Captain Guide is one Explorer-style knowledge workspace: its persistent
+  folder tree and details list combine Build-style search/type filters with a
+  Guide-style preview pane. A topic contains its native Markdown briefing plus typed
+  Guide, Build, internal, or external resources. Moderator editing operates on that
+  same ordered folder/resource hierarchy; do not add a parallel reader navigation or
+  separate presentation model.
 - Browser smoke tests live under `frontend/tests/browser/`. They start Vite and mock
   only `/api/`; real security, session, CSRF, and origin boundaries are tested by
   `spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java`

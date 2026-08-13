@@ -55,7 +55,7 @@ the composable, not in the page.
 | `frontend/src/modules/groups/` | group workflows | separate domain from state |
 | `frontend/src/modules/guides/` | search, editor, reader, print | sanitizing/presentation/responsive behavior |
 | `frontend/src/modules/legal/` | legal notice and editor | publish status/locale |
-| `frontend/src/modules/onboarding/` | newcomer guide | draft/resource rules |
+| `frontend/src/modules/onboarding/` | Explorer-style newcomer topics, briefings, and linked Guide/Build resources | `NewcomerTopicExplorer`, draft/resource rules, reader/editor browser test |
 | `frontend/src/modules/privacy/` | privacy center/cookie banner | retry, payload, keep errors visible |
 | `frontend/src/modules/ships/` | ship catalog transport | consumers in builds/combat |
 | `frontend/src/modules/squads/` | lists, own squads, roster | membership ID/management rules |

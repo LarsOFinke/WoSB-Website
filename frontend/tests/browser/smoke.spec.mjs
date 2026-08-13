@@ -161,7 +161,9 @@ test('moderators organize the New Captain Guide through an ordered folder browse
     updated_by: 'Moderator',
     blocks: [
       { id: 10, block_type: 'text', title: 'Welcome aboard', body: 'Read this first.', resources: [] },
-      { id: 11, block_type: 'resources', title: 'Ready your ship', body: 'Choose a proven setup.', resources: [] },
+      { id: 11, block_type: 'resources', title: 'Ready your ship', body: 'Choose a proven setup.', resources: [
+        { id: 30, resource_type: 'internal', resource_id: null, label: 'Build library', description: 'Browse proven fleet builds.', href: '/builds', available: true },
+      ] },
     ],
   }
   await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
@@ -170,7 +172,19 @@ test('moderators organize the New Captain Guide through an ordered folder browse
   await page.route(/^https?:\/\/[^/]+\/api\/newcomer-guide$/, async (route) => {
     if (route.request().method() === 'PUT') {
       savedPayload = route.request().postDataJSON()
-      await route.fulfill({ json: { ...guide, blocks: savedPayload.blocks.map((block, index) => ({ id: 20 + index, ...block })) } })
+      await route.fulfill({ json: {
+        ...guide,
+        blocks: savedPayload.blocks.map((block, index) => ({
+          id: 20 + index,
+          ...block,
+          resources: block.resources.map((resource, resourceIndex) => ({
+            id: 40 + resourceIndex,
+            ...resource,
+            href: resource.url || '/builds',
+            available: true,
+          })),
+        })),
+      } })
       return
     }
     await route.fulfill({ json: guide })
@@ -180,9 +194,18 @@ test('moderators organize the New Captain Guide through an ordered folder browse
 
   await page.goto('/new-captain')
   await expect(page.getByRole('navigation', { name: 'Guide folders' })).toBeVisible()
-  await page.getByRole('button', { name: /Ready your ship/ }).click()
+  await expect(page.locator('.newcomer-explorer-address')).toContainText('New Captain Guide')
+  await expect(page.locator('.newcomer-directory-row')).toHaveCount(2)
+  await page.locator('.newcomer-explorer-search input').fill('Ready')
+  await expect(page.locator('.newcomer-directory-row')).toHaveCount(1)
+  await expect(page.locator('.newcomer-directory-row')).toContainText('Ready your ship')
+  await page.locator('.newcomer-explorer-search input').fill('')
+  await page.locator('.newcomer-directory-row').filter({ hasText: 'Ready your ship' }).click()
   await expect(page.locator('.newcomer-folder-content')).toContainText('Choose a proven setup.')
   await expect(page.locator('.newcomer-folder-content')).not.toContainText('Read this first.')
+  await page.locator('.newcomer-directory-row').filter({ hasText: 'Build library' }).click()
+  await expect(page.locator('.newcomer-resource-preview')).toContainText('Build library')
+  await expect(page.locator('.newcomer-resource-preview')).toContainText('Browse proven fleet builds.')
 
   await page.getByRole('button', { name: 'Edit guide' }).click()
   await expect(page.locator('.newcomer-folder-editor')).toHaveCount(1)
@@ -191,7 +214,7 @@ test('moderators organize the New Captain Guide through an ordered folder browse
   await page.getByRole('button', { name: 'Save', exact: true }).click()
 
   await expect.poll(() => savedPayload?.blocks.map((block) => block.title)).toEqual(['Ready your ship', 'Welcome aboard'])
-  await expect(page.locator('.newcomer-folder-entry').first()).toContainText('Ready your ship')
+  await expect(page.locator('.newcomer-folder-list__item .newcomer-folder-entry').first()).toContainText('Ready your ship')
 })
 
 test('strategy planner keeps the chart separate and saves website-backed markers without a player', async ({ page }) => {

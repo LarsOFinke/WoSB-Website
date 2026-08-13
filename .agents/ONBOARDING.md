@@ -71,6 +71,7 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | Versioning/release class | `docs/development/VERSIONING.md`, `.agents/scripts/next-version.sh` |
 | Patch transfer/release prep | `patches/`, `docs/development/VERSIONING.md`, `docs/deployment/GO_LIVE.md` |
 | Frontend feature | `frontend/src/modules/<feature>/` |
+| New Captain Guide UX | `frontend/src/modules/onboarding/components/NewcomerTopicExplorer.vue`, then `frontend/ARCHITECTURE.md` |
 | CSS/UI | `docs/reference/CSS_ARCHITECTURE.md`, affected module styles |
 | Security | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
 | Privacy | `privacy/`, `docs/reference/DATA_RETENTION.md` |

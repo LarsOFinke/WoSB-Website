@@ -6,9 +6,11 @@ defineProps({
   folders: { type: Array, default: () => [] },
   activeIndex: { type: Number, default: 0 },
   editable: { type: Boolean, default: false },
+  showRoot: { type: Boolean, default: false },
+  rootActive: { type: Boolean, default: false },
 })
 
-defineEmits(['select', 'move', 'remove'])
+defineEmits(['select', 'move', 'remove', 'root'])
 const { t } = useLocale()
 </script>
 
@@ -18,6 +20,21 @@ const { t } = useLocale()
       <span>{{ t('newcomerGuide.folders') }}</span>
       <small>{{ t('newcomerGuide.folderCount', { count: folders.length }) }}</small>
     </div>
+    <button
+      v-if="showRoot"
+      class="newcomer-folder-entry newcomer-folder-entry--root"
+      :class="{ 'is-active': rootActive }"
+      type="button"
+      :aria-current="rootActive ? 'page' : undefined"
+      @click="$emit('root')"
+    >
+      <span class="newcomer-folder-entry__icon"><AppIcon name="home" :size="18" /></span>
+      <span class="newcomer-folder-entry__copy">
+        <strong>{{ t('newcomerGuide.explorer.home') }}</strong>
+        <small>{{ t('newcomerGuide.explorer.allTopics') }}</small>
+      </span>
+      <AppIcon name="chevron-right" :size="16" />
+    </button>
     <ol v-if="folders.length" class="newcomer-folder-list">
       <li v-for="(folder, index) in folders" :key="folder._key || folder.id" class="newcomer-folder-list__item">
         <button

@@ -1,10 +1,11 @@
 <script setup>
 import AppIcon from '@/core/components/AppIcon.vue'
 import PageHeader from '@/core/components/PageHeader.vue'
-import NewcomerFolderContent from '@/modules/onboarding/components/NewcomerFolderContent.vue'
 import NewcomerFolderEditor from '@/modules/onboarding/components/NewcomerFolderEditor.vue'
 import NewcomerFolderNavigation from '@/modules/onboarding/components/NewcomerFolderNavigation.vue'
+import NewcomerTopicExplorer from '@/modules/onboarding/components/NewcomerTopicExplorer.vue'
 import { useNewcomerGuidePage } from '@/modules/onboarding/composables/useNewcomerGuidePage.js'
+import '@/modules/onboarding/styles/newcomerExplorer.css'
 
 const {
   t, isStaff, page, draft, guides, builds, loading, saving, editing, error, success,
@@ -12,6 +13,7 @@ const {
   activeFolderIndex, activeFolder, visibleFolders, startEditing, cancelEditing,
   addBlock, removeBlock, moveBlock, addResource, addLinkedResource, removeResource,
   moveResource, onResourceTypeChange, savePage, selectFolder,
+  showTopicOverview,
 } = useNewcomerGuidePage()
 </script>
 
@@ -57,40 +59,48 @@ const {
           </div>
         </section>
 
-        <div class="newcomer-folder-workspace newcomer-folder-workspace--editor">
-          <aside class="newcomer-folder-sidebar">
-            <NewcomerFolderNavigation
-              :folders="visibleFolders"
-              :active-index="activeFolderIndex"
-              editable
-              @select="selectFolder"
-              @move="moveBlock"
-              @remove="removeBlock"
-            />
-            <div class="newcomer-folder-create">
-              <p class="field-label">{{ t('newcomerGuide.editor.addFolder') }}</p>
-              <button class="form-button secondary-action" type="button" @click="addBlock('text')">{{ t('newcomerGuide.editor.addTextBlock') }}</button>
-              <button class="form-button secondary-action" type="button" @click="addBlock('resources')">{{ t('newcomerGuide.editor.addResourceBlock') }}</button>
-              <div class="newcomer-folder-create__shortcuts">
-                <button type="button" @click="addLinkedResource('guide')">+ {{ t('newcomerGuide.editor.linkGuide') }}</button>
-                <button type="button" @click="addLinkedResource('build')">+ {{ t('newcomerGuide.editor.linkBuild') }}</button>
+        <div class="newcomer-editor-browser">
+          <header class="newcomer-editor-browser__toolbar">
+            <AppIcon name="folder" :size="18" />
+            <strong>{{ draft.title }}</strong>
+            <AppIcon name="chevron-right" :size="14" />
+            <span>{{ activeFolder?.title || t('newcomerGuide.editor.untitled') }}</span>
+          </header>
+          <div class="newcomer-folder-workspace newcomer-folder-workspace--editor">
+            <aside class="newcomer-folder-sidebar">
+              <NewcomerFolderNavigation
+                :folders="visibleFolders"
+                :active-index="activeFolderIndex"
+                editable
+                @select="selectFolder"
+                @move="moveBlock"
+                @remove="removeBlock"
+              />
+              <div class="newcomer-folder-create">
+                <p class="field-label">{{ t('newcomerGuide.editor.addFolder') }}</p>
+                <button class="form-button secondary-action" type="button" @click="addBlock('text')">{{ t('newcomerGuide.editor.addTextBlock') }}</button>
+                <button class="form-button secondary-action" type="button" @click="addBlock('resources')">{{ t('newcomerGuide.editor.addResourceBlock') }}</button>
+                <div class="newcomer-folder-create__shortcuts">
+                  <button type="button" @click="addLinkedResource('guide')">+ {{ t('newcomerGuide.editor.linkGuide') }}</button>
+                  <button type="button" @click="addLinkedResource('build')">+ {{ t('newcomerGuide.editor.linkBuild') }}</button>
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
 
-          <NewcomerFolderEditor
-            :folder="activeFolder"
-            :folder-index="activeFolderIndex"
-            :guides="guides"
-            :builds="builds"
-            :resource-type-options="resourceTypeOptions"
-            :resource-options-loading="resourceOptionsLoading"
-            :resource-options-error="resourceOptionsError"
-            @add-resource="addResource"
-            @remove-resource="removeResource"
-            @move-resource="moveResource"
-            @resource-type-change="onResourceTypeChange"
-          />
+            <NewcomerFolderEditor
+              :folder="activeFolder"
+              :folder-index="activeFolderIndex"
+              :guides="guides"
+              :builds="builds"
+              :resource-type-options="resourceTypeOptions"
+              :resource-options-loading="resourceOptionsLoading"
+              :resource-options-error="resourceOptionsError"
+              @add-resource="addResource"
+              @remove-resource="removeResource"
+              @move-resource="moveResource"
+              @resource-type-change="onResourceTypeChange"
+            />
+          </div>
         </div>
 
         <div class="form-actions newcomer-editor-actions">
@@ -101,10 +111,14 @@ const {
       </form>
 
       <div v-else-if="page" class="newcomer-guide-content">
-        <div class="newcomer-folder-workspace">
-          <NewcomerFolderNavigation :folders="visibleFolders" :active-index="activeFolderIndex" @select="selectFolder" />
-          <NewcomerFolderContent :folder="activeFolder" />
-        </div>
+        <NewcomerTopicExplorer
+          :title="page.title"
+          :intro="page.intro"
+          :folders="visibleFolders"
+          :active-index="activeFolderIndex"
+          @home="showTopicOverview"
+          @select="selectFolder"
+        />
       </div>
     </div>
   </section>

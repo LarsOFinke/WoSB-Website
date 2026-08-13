@@ -67,7 +67,7 @@ guard is a UX defect; real permissions are decided exclusively by the backend.
 | `frontend/src/modules/groups/` | Group lists, own groups, creation, detail, and membership. | Test `groupDetail` rules and composable state separately. |
 | `frontend/src/modules/guides/` | Guide search, editor, reader, table of contents, and print. | Presentation/discovery/print tests, Markdown sanitizing, and responsive reader styles. |
 | `frontend/src/modules/legal/` | Public legal notice and admin editor. | Publish status, text presentation, and role visibility in all locales. |
-| `frontend/src/modules/onboarding/` | Newcomer guide presentation and administrative resource preparation. | Inspect draft normalization, safe resources, and page binding. |
+| `frontend/src/modules/onboarding/` | Explorer-style newcomer knowledge workspace combining ordered topic folders, native Markdown briefings, Build-style discovery filters, Guide/Build/link previews, and administration of the same hierarchy. | Inspect `NewcomerTopicExplorer`, composable selection/editing state, draft normalization, safe resolved resources, responsive styles, and the browser read/edit/save flow. |
 | `frontend/src/modules/privacy/` | Privacy center and cookie banner; without a saved decision it does not open automatically while no optional integration is active. | `cookieConsentVisibility.test.mjs` and browser smoke tests for retry, payload, and error state. |
 | `frontend/src/modules/ships/` | Thin read-only API access to ship master data. | Inspect consumers in builds/combat; do not introduce a second catalog logic. |
 | `frontend/src/modules/squads/` | Squad list, own squads, creation, detail, and roster management. | `squadManagement`, page composables, and fleet-membership IDs in the payload. |
