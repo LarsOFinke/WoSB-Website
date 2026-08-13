@@ -20,9 +20,18 @@ jobs:
       - name: Validate tag version
         if: github.ref_type == 'tag'
         run: test "$GITHUB_REF_NAME" = "v$(cat VERSION)"
-      - run: mvn -f spring-api/pom.xml --batch-mode --no-transfer-progress clean verify
-      - run: cp frontend/.env.example frontend/.env && cd frontend && npm ci && npm run test:ci
-      - run: bash infrastructure/scripts/quality/validate.sh
+      - run: cp frontend/.env.example frontend/.env && cd frontend && npm ci
+      - run: cd frontend && npx playwright install --with-deps chromium
+      - run: bash infrastructure/scripts/quality/validate.sh full
+      - name: Prepare version release notes
+        run: |
+          version="$(cat VERSION)"
+          awk -v prefix="## $version " '
+            index($0, prefix) == 1 { active = 1 }
+            active && /^## / && index($0, prefix) != 1 { exit }
+            active { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
       - name: Package compiled release
         run: python infrastructure/scripts/release/package_deployment_artifact.py --version "$(cat VERSION)" --jar "$(find spring-api/target -name 'rbf-api-*.jar' ! -name '*.original' | head -1)" --frontend-dist frontend/dist --output-dir release --source-revision "$GITHUB_SHA"
       - run: python infrastructure/scripts/release/package_release.py --version "$(cat VERSION)" --output-dir release
@@ -43,4 +52,4 @@ jobs:
         with: {name: "rbf-${{ github.ref_name }}", path: 'release/*', if-no-files-found: error}
       - if: github.ref_type == 'tag'
         env: {GH_TOKEN: '${{ github.token }}'}
-        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "Royal Blackwater Fleet $GITHUB_REF_NAME" --notes-file CHANGELOG.md
+        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "Royal Blackwater Fleet $GITHUB_REF_NAME" --notes-file release-notes.md

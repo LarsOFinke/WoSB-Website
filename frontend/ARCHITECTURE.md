@@ -33,7 +33,7 @@ Composables coordinate Vue state, lifecycle hooks, API calls and user-facing suc
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
 
-Executable JavaScript modules are capped at 420 lines by `infrastructure/scripts/quality/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module.
+Executable JavaScript modules and Vue single-file components are capped at 420 lines by `infrastructure/scripts/quality/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module. Build crew and inventory fields are presentation components beneath `BuildCreatePage.vue`; Master Data workspace styling is owned by `styles/masterDataWorkspace.css` rather than its route page.
 
 ## Global style layers
 

@@ -1,4 +1,4 @@
-# Royal Blackwater Fleet v1.3.6
+# Royal Blackwater Fleet
 
 Production-ready fleet operations portal for **World of Sea Battle** using Vue 3,
 Spring Boot 4, PostgreSQL, Flyway, NGINX, and artifact-based deployment.
@@ -100,9 +100,10 @@ verifies the bundle and builds only the minimal runtime containers from the alre
 compiled Spring Boot JAR and Vue `dist`:
 
 ```bash
+release_version="$(cat VERSION)"
 sudo ./setup_website.sh \
-  --artifact rbf-deployment-1.3.0.tar.gz \
-  --checksum rbf-deployment-1.3.0.tar.gz.sha256 \
+  --artifact "rbf-deployment-${release_version}.tar.gz" \
+  --checksum "rbf-deployment-${release_version}.tar.gz.sha256" \
   --install-root /srv/rbf \
   --env /secure/rbf.env
 ```
@@ -114,7 +115,8 @@ requested in the terminal.
 Updates are triggered by a new release artifact:
 
 ```bash
-sudo ./update.sh --artifact /path/to/rbf-deployment-1.3.0.tar.gz
+release_version="$(cat VERSION)"
+sudo ./update.sh --artifact "/path/to/rbf-deployment-${release_version}.tar.gz"
 ```
 
 `/tmp/rbf-release` is used only as short-lived transfer staging. Persistent release,

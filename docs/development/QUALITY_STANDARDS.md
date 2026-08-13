@@ -36,8 +36,8 @@ for a verified backup and recovery path.
 - Prefer the smallest complete change and existing abstractions. Fix root causes;
   do not hide failures through broad exception handling, permissive fallbacks or
   duplicated compatibility paths.
-- A source file has one nameable main responsibility. Executable Java and
-  JavaScript responsibilities should be split around 300–400 lines and must stay
+- A source file has one nameable main responsibility. Executable Java,
+  JavaScript, and Vue single-file component responsibilities should be split around 300–400 lines and must stay
   within the enforced 420-line repository limit. The locale message modules and
   `autoLocalizationCatalog.js` are explicit declarative exceptions; they are
   reviewed separately and must not accumulate executable or unrelated logic.

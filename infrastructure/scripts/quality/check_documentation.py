@@ -19,6 +19,8 @@ FORBIDDEN_COMMANDS = {
 MODULE_CATALOG = ROOT / "docs/architecture/MODULE_CATALOG.md"
 MODULE_CACHE = ROOT / ".agents/MODULE_CACHE.md"
 DEBUGGING_CACHE = ROOT / ".agents/DEBUGGING_CACHE.md"
+CHANGELOG = ROOT / "CHANGELOG.md"
+README = ROOT / "README.md"
 
 
 def repository_markdown_files() -> list[Path]:
@@ -92,6 +94,15 @@ def main() -> None:
     if sys.argv[1:]:
         raise SystemExit("Usage: check_documentation.py [--cache-only]")
     markdown_files = repository_markdown_files()
+    changelog = CHANGELOG.read_text(encoding="utf-8")
+    changelog_headings = re.findall(r"(?m)^#{1,2} .+$", changelog)
+    if not changelog_headings or changelog_headings[0] != "# Changelog":
+        failures.append("CHANGELOG.md: the document title must be the first heading")
+    if len(changelog_headings) < 2 or changelog_headings[1] != "## Unreleased":
+        failures.append("CHANGELOG.md: Unreleased must precede versioned release sections")
+    readme_title = README.read_text(encoding="utf-8").splitlines()[0]
+    if re.search(r"\bv?\d+\.\d+\.\d+\b", readme_title):
+        failures.append("README.md: title must not duplicate the release version")
     for path in markdown_files:
         content = path.read_text(encoding="utf-8")
         for raw_target in LINK_PATTERN.findall(content):

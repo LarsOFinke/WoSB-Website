@@ -49,6 +49,20 @@ fi
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" ]] || fail 'website setup wrapper is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/release/cleanup-failed-release.sh" ]] || fail 'failed-release cleanup is not executable'
 [[ -x "$ROOT_DIR/infrastructure/scripts/services/systemd-stop.sh" ]] || fail 'systemd stop helper is not executable'
+deploy_workflow="$ROOT_DIR/.github/workflows/deploy.yml"
+release_workflow="$ROOT_DIR/.github/workflows/release.yml"
+grep -q -- '--install-root /srv/rbf' "$deploy_workflow" \
+  || fail 'production workflow must deploy to the current /srv/rbf installation root'
+! grep -q -- '--install-root /opt/rbf' "$deploy_workflow" \
+  || fail 'production workflow must not perpetuate the legacy /opt/rbf installation root'
+grep -q 'npx playwright install --with-deps chromium' "$release_workflow" \
+  || fail 'release workflow must install its Chromium test dependency explicitly'
+grep -q 'bash infrastructure/scripts/quality/validate.sh full' "$release_workflow" \
+  || fail 'release workflow must use the complete repository gate'
+grep -q -- '--notes-file release-notes.md' "$release_workflow" \
+  || fail 'release workflow must publish only the current version changelog section'
+! grep -q -- '--notes-file CHANGELOG.md' "$release_workflow" \
+  || fail 'release workflow must not publish the complete changelog as one release note'
 grep -q 'ExecStop=/usr/bin/env bash @INFRA_DIR@/scripts/services/systemd-stop.sh' "$INFRA_DIR/systemd/rbf-hub.service" \
   || fail 'systemd service must preserve failed-start containers for diagnostics'
 if find "$INFRA_DIR/scripts" -type f -name '*.sh' ! -perm /111 -print -quit | grep -q .; then

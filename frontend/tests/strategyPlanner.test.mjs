@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import {
   buildMatchesShip,
@@ -18,6 +19,20 @@ import {
   strategyShareUrl,
 } from '../src/modules/strategy-planner/domain/strategyDocument.js'
 import { strategyCanvasPoint } from '../src/modules/strategy-planner/domain/canvasCoordinates.js'
+
+const toolbarSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyToolbar.vue', import.meta.url), 'utf8')
+const inspectorSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyInspector.vue', import.meta.url), 'utf8')
+const plannerPageSource = await readFile(new URL('../src/modules/strategy-planner/pages/StrategyPlannerPage.vue', import.meta.url), 'utf8')
+
+test('strategy tools are grouped into independently collapsible command and inspector sections', () => {
+  assert.equal(toolbarSource.match(/<details\b/g)?.length, 4)
+  assert.equal(inspectorSource.match(/<details\b/g)?.length, 4)
+  assert.match(toolbarSource, /strategy-command-sections/)
+  assert.match(inspectorSource, /strategy-selection-section/)
+  assert.match(plannerPageSource, /class="strategy-tools-toggle"/)
+  assert.match(plannerPageSource, /aria-controls="strategy-tool-rail"/)
+  assert.match(plannerPageSource, /:aria-expanded="toolsOpen"/)
+})
 
 test('strategy ship markers require website ships while player names remain optional', () => {
   assert.throws(() => createShipMarker(null), /ship is required/i)

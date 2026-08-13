@@ -71,7 +71,7 @@ guard is a UX defect; real permissions are decided exclusively by the backend.
 | `frontend/src/modules/privacy/` | Privacy center and cookie banner; without a saved decision it does not open automatically while no optional integration is active. | `cookieConsentVisibility.test.mjs` and browser smoke tests for retry, payload, and error state. |
 | `frontend/src/modules/ships/` | Thin read-only API access to ship master data. | Inspect consumers in builds/combat; do not introduce a second catalog logic. |
 | `frontend/src/modules/squads/` | Squad list, own squads, creation, detail, and roster management. | `squadManagement`, page composables, and fleet-membership IDs in the payload. |
-| `frontend/src/modules/strategy-planner/` | SVG strategy editing over preserved uploaded chart images, screen-to-viewBox coordinate mapping, compatible reference selection, sharing, export, and print. | `strategyPlanner.test.mjs`, page-model boundaries, responsive/letterboxed canvas coordinates, and browser flow. |
+| `frontend/src/modules/strategy-planner/` | SVG strategy editing over preserved uploaded chart images, with a collapsible command deck and independently toggleable inspector sections for chart setup, markers, selection, and sharing. It also owns screen-to-viewBox coordinate mapping, compatible reference selection, export, and print. | `strategyPlanner.test.mjs`, page-model boundaries, grouped-tool source contract, responsive/letterboxed canvas coordinates, and browser flow. |
 
 The shared frontend areas `frontend/src/assets/`, `frontend/src/config/`,
 `frontend/src/core/`, `frontend/src/locales/`, `frontend/src/router/`,

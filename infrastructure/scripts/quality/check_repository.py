@@ -139,6 +139,9 @@ declarative_javascript_roots=(frontend_source/'locales/messages',)
 for path in (*frontend_source.rglob('*.js'),*frontend_source.rglob('*.mjs')):
     if path in declarative_javascript_files or any(root in path.parents for root in declarative_javascript_roots): continue
     require(len(path.read_text(encoding='utf-8').splitlines())<=420,f'JavaScript file exceeds 420 lines: {path.relative_to(ROOT)}')
+for path in frontend_source.rglob('*.vue'):
+    require(len(path.read_text(encoding='utf-8').splitlines())<=420,
+            f'Vue component exceeds 420 lines: {path.relative_to(ROOT)}')
 for migration in (ROOT/'spring-api/src/main/resources/db/migration').glob('*.sql'):
     require(re.fullmatch(r'[BV]\d+__[A-Za-z0-9_]+\.sql',migration.name) is not None,f'invalid Flyway migration name: {migration.name}')
 

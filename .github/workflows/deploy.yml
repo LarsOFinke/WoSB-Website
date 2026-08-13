@@ -26,4 +26,4 @@ jobs:
           port="${PORT:-22}"; artifact="$(find release -name 'rbf-deployment-*.tar.gz' | head -1)"
           gh attestation verify "$artifact" --repo "$GITHUB_REPOSITORY"
           scp -i ~/.ssh/rbf_deploy -P "$port" "$artifact" "$artifact.sha256" infrastructure/scripts/release/install-artifact.sh infrastructure/scripts/release/verify-artifact.py "$USER@$HOST:/tmp/"
-          ssh -i ~/.ssh/rbf_deploy -p "$port" "$USER@$HOST" "sudo bash /tmp/install-artifact.sh --artifact /tmp/$(basename "$artifact") --checksum /tmp/$(basename "$artifact.sha256") --install-root /opt/rbf --requested-by github-actions"
+          ssh -i ~/.ssh/rbf_deploy -p "$port" "$USER@$HOST" "sudo bash /tmp/install-artifact.sh --artifact /tmp/$(basename "$artifact") --checksum /tmp/$(basename "$artifact.sha256") --install-root /srv/rbf --requested-by github-actions"

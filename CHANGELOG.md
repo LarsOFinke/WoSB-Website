@@ -1,12 +1,36 @@
-## 2026-07-28 - Repository spring clean and security audit
-- Discord webhook credentials are now stored as authenticated, versioned ciphertext with automatic plaintext migration and key rotation; deployment setup generates a database-independent key, and decrypted targets are revalidated against the Discord allowlist immediately before delivery.
-- Removed the obsolete Discord avatar override from API, service, model and database; all webhook deliveries keep the public fleet icon.
-- Added offline repository-specific security invariants plus OSV pull-request, main-branch and weekly dependency scans.
-- Hardened GitHub checkout usage, NGINX cross-origin headers, and the read-only migration/seed container posture.
-- Added a reviewed Uptime Kuma 1→2 migration runbook instead of applying an unsafe unattended major upgrade.
-- Refreshed security, privacy, operations and webhook documentation and removed stale compatibility guidance.
-
 # Changelog
+
+## Unreleased
+
+- Reintroduced the recovery client after the Spring Boot migration as a focused
+  target-aware tool. Test and production profiles are isolated, setup imports
+  the public enrollment response while retaining private recovery material
+  locally, and pulls require the current Spring/Flyway preflight plus the exact
+  release artifact before a bundle is accepted. Added Linux/Windows packaging
+  wrappers and CI coverage for the client protocol.
+
+## 1.6.0 - 2026-08-13
+
+- Reorganized the Strategy Planner drawing tools into four clearly labeled,
+  independently collapsible command sections with persistent undo and redo
+  controls.
+- Replaced the undifferentiated toolbox with a focused inspector for briefing,
+  ship markers, selected objects, and sharing, plus an adjacent workspace-edge
+  control that keeps show/hide behavior visible and accessible.
+- Added localized labels and desktop/mobile browser coverage for grouped tools,
+  section toggling, inspector visibility, and narrow-screen containment.
+
+## 1.5.14 - 2026-08-13
+
+- Aligned GitHub production deployment with the current `/srv/rbf` installation
+  root and added an infrastructure regression that rejects the legacy target.
+- Made tag releases reproducible by installing Chromium explicitly, running one
+  complete repository gate, and publishing only the current version's notes.
+- Removed stale release numbers from the README and restored predictable
+  changelog heading and release ordering with documentation checks.
+- Split Build crew and inventory presentation into focused components, moved the
+  Master Data workspace styles to their owning stylesheet, and extended the
+  source-size gate to Vue single-file components.
 
 ## 1.5.13 - 2026-08-13
 
@@ -119,15 +143,6 @@
 - Made Spring `@Repository` beans and shared JDBC repository methods CGLIB-proxyable after the real Spring Boot/Testcontainers integration run exposed final-class proxy failures.
 - Replaced deprecated Spring 7 `HttpStatus.UNPROCESSABLE_ENTITY` usages with `UNPROCESSABLE_CONTENT`.
 - Scoped MapStruct annotation-processor compiler options to main compilation to avoid false test-compile processor warnings.
-
-## Unreleased
-
-- Reintroduced the recovery client after the Spring Boot migration as a focused
-  target-aware tool. Test and production profiles are isolated, setup imports
-  the public enrollment response while retaining private recovery material
-  locally, and pulls require the current Spring/Flyway preflight plus the exact
-  release artifact before a bundle is accepted. Added Linux/Windows packaging
-  wrappers and CI coverage for the client protocol.
 
 ## 1.2.0 - 2026-08-09
 
@@ -261,8 +276,14 @@
 - Retained Discord channel webhooks as the only Discord integration; cleaned staff navigation, API, and infrastructure around direct backend delivery.
 - Consolidated the Alembic schema for the intended clean setup into a current `0001_baseline`.
 - Gateway builds now normalize frontend directory permissions to `0755` and file permissions to `0644`, ensuring bundled assets such as `rbf-fleet-icon.png` remain publicly readable.
+## 2026-07-28 - Repository spring clean and security audit
 
-
+- Discord webhook credentials are now stored as authenticated, versioned ciphertext with automatic plaintext migration and key rotation; deployment setup generates a database-independent key, and decrypted targets are revalidated against the Discord allowlist immediately before delivery.
+- Removed the obsolete Discord avatar override from API, service, model and database; all webhook deliveries keep the public fleet icon.
+- Added offline repository-specific security invariants plus OSV pull-request, main-branch and weekly dependency scans.
+- Hardened GitHub checkout usage, NGINX cross-origin headers, and the read-only migration/seed container posture.
+- Added a reviewed Uptime Kuma 1→2 migration runbook instead of applying an unsafe unattended major upgrade.
+- Refreshed security, privacy, operations and webhook documentation and removed stale compatibility guidance.
 
 ## 2026-07-28 - Default discovery results and CSS cascade restoration
 
