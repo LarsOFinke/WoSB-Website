@@ -74,6 +74,9 @@ public class WebhookAuditEventListener {
             case "system_update:request" -> "system.update.started";
             case "privacy_request:create" -> "privacy.request.created";
             case "registration_request:create" -> "registration.request.created";
+            case "warehouse_entry:create", "warehouse_entry:update", "warehouse_entry:delete" ->
+                    "warehouse.stock.changed";
+            case "warehouse_entry:reservation" -> "warehouse.reservation.changed";
             default -> conditionalEvent(audit);
         };
     }

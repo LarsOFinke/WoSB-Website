@@ -33,7 +33,18 @@ Composables coordinate Vue state, lifecycle hooks, API calls and user-facing suc
 
 API modules contain transport concerns only. File type policy is therefore kept in `src/modules/files/fileTypes.js` rather than coupled to file endpoints.
 
+Shared-content authoring is a staff capability. Route metadata uses
+`requiresContentAuthor`, while pages and navigation use `canAuthorContent`; both resolve
+to moderator or administrator in the session model. Fleet-management UI uses the same
+staff threshold. These controls keep ordinary accounts in a clear read-only experience,
+but Spring Security remains the authoritative mutation boundary.
+
 Executable JavaScript modules and Vue single-file components are capped at 420 lines by `infrastructure/scripts/quality/check_repository.py` and should normally split at 300–400 lines along these dependency boundaries. Locale message modules and `src/locales/autoLocalizationCatalog.js` are declarative exceptions; executable localization behavior remains in the small `autoLocalization.js` module. Build crew and inventory fields are presentation components beneath `BuildCreatePage.vue`; Master Data workspace styling is owned by `styles/masterDataWorkspace.css` rather than its route page.
+
+Application source remains JavaScript. `jsconfig.json` applies incremental TypeScript
+checking to the Strategy Planner's document and geometry domain modules, where dynamic
+persisted data makes refactoring risk highest; expand that checked boundary deliberately
+as adjacent modules gain stable domain shapes.
 
 ## Global style layers
 
@@ -45,27 +56,56 @@ The editable translation sources live in `src/locales/messages/`. Before develop
 
 English is the synchronous fallback in the application entry path. Every other locale is loaded through a dynamic import before it becomes active. This keeps untranslated keys safe, prevents mixed-language rendering during a switch and avoids shipping all seven languages on the first visit. Generated locale modules must not be edited or committed.
 
+## Strategy Planner geometry
+
+The Strategy Planner stores normalized editable objects independently from the
+uploaded chart. `strategyDocument.js` owns the versioned serialized contract and
+`strategyGeometry.js` converts normalized dimensions into rendered SVG geometry.
+Scaling a line, arrow, or formation changes its geometric extent without scaling
+stroke weight or arrowhead legibility. A circle uses one physical diameter; the
+independently sized legacy shape is an oval. Version-1 circle formations migrate
+to `oval` when read, while new version-2 `circle` objects remain round.
+
+Keep object creation in `StrategyToolbar.vue`. Properties of the selected object
+belong in the inspector's selection section, while size and rotation remain in a
+separate transform section. This distinction must also be preserved in responsive
+and browser tests.
+
 ## New Captain Guide workspace
 
 The onboarding route deliberately combines established interaction patterns instead
 of presenting a second conventional article library:
 
-- an Explorer-style folder tree, address bar, details list, preview pane, and status bar
-  preserve the user's location while they browse;
-- compact Build-library search and type refinement narrow topics and linked resources;
-- the Guide reader's long-form presentation renders each folder's native Markdown
-  briefing in the persistent preview pane;
-- Guides, Builds, internal pages, and external references appear as items inside their
-  owning topic folder and receive a preview before navigation; and
-- moderators organize and edit the same ordered folder/resource hierarchy that members
-  browse, rather than maintaining a separate presentation model.
+- an Explorer-style address bar, topic navigation, reader, and status bar preserve the
+  user's location without squeezing the briefing into a third preview column;
+- the home view provides compact search and type refinement over scannable topic cards;
+- selecting a topic opens its complete Markdown briefing and typed resources in a wide,
+  readable article, with adjacent-topic navigation and a compact mobile topic picker;
+- Guides, Builds, internal pages, and external references remain grouped inside their
+  owning topic; and
+- moderators use a separate two-pane workspace over that same content model: ordered
+  structure on the left, focused section editing on the right, and collapsible resource
+  cards that keep large guides manageable.
 
 `NewcomerGuidePage.vue` remains the route orchestrator,
 `useNewcomerGuidePage.js` owns loading/editing/selection state,
 `NewcomerTopicExplorer.vue` owns the reader workspace, and the pure draft and
 presentation rules remain under `src/modules/onboarding/domain/`. Preserve this shared
-mental model when extending onboarding: a new content type should become a typed folder
-item with a safe resolved target and preview, not a parallel page-level navigation system.
+content model when extending onboarding: a new content type should become a typed topic
+resource with a safe resolved target, not a parallel page-level navigation system.
+
+## Guild Warehouse workspace
+
+The administrator-only warehouse route follows the same page-model boundary. The page
+renders spreadsheet-style filters, totals, and rows; `useWarehousePage.js` coordinates
+loading and mutations; `warehouse.js` owns transport; and the domain module owns draft
+validation and payload mapping. An entry belongs to one fleet and identifies its holder
+as either an active fleet member or a custom operational name, never both.
+
+The API-provided row version must accompany updates and deletes. A `409` is a real
+concurrent-edit signal: keep the error visible and reload the authoritative row instead
+of silently overwriting newer stock. Frontend admin guards only shape navigation; the
+backend remains the authorization and membership boundary.
 
 ## Extension guide
 

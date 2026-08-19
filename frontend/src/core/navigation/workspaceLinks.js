@@ -27,10 +27,10 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
 }
 
 
-export function createPersonalLinks(t, { isAuthenticated = false } = {}) {
+export function createPersonalLinks(t, { isAuthenticated = false, canAuthorContent = false } = {}) {
   if (!isAuthenticated) return []
   return [
-    { to: '/profile/builds', label: t('common.myBuilds'), icon: 'builds' },
+    ...(canAuthorContent ? [{ to: '/profile/builds', label: t('common.myBuilds'), icon: 'builds' }] : []),
     { to: '/profile/groups', label: t('common.myGroupSearches'), icon: 'groups' },
     { to: '/profile/squads', label: t('common.mySquads'), icon: 'users' },
   ]

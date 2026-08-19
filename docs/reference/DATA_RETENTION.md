@@ -20,6 +20,7 @@ and configured through the Spring configuration and infrastructure environment f
 | Reviewed registration requests | 90 days | Traceability of the decision | daily maintenance run |
 | Expired sessions | until expiration | Authentication and security | daily maintenance run |
 | Strategy plans and optional player labels | until owner deletion or manual deletion | Tactical planning, sharing and print preparation | owner deletion removes the strategy document; manual deletion is immediate |
+| Warehouse entries and holder labels | until administrator deletion | Fleet stock allocation and logistics | immediate administrator deletion; linked accounts follow profile correction and account pseudonymization |
 
 Password hashes in registration requests are overwritten immediately after approval or rejection.
 Approved accounts retain only the hash in the actual user account.
@@ -103,6 +104,14 @@ participants and their tactical value is tied to the planner who created them. A
 owned strategy documents and disables strategy-only background publication. Strategy owners can delete
 individual plans at any time. Plans are private by default; explicit publication exposes the plan to
 anyone holding its non-sequential public link until publication is revoked.
+
+Warehouse entries are operational fleet records. Prefer linking an active fleet member: the UI then
+uses the account's current display name, profile corrections are reflected automatically, and the
+entry is included in that account's personal-data export. Account deletion pseudonymizes the linked
+identity. A custom holder label is available for external or shared holdings, should use an operational
+alias instead of unnecessary personal data, and must be corrected or deleted manually when a verified
+data-subject request identifies it. Warehouse events send only the bounded audit summary to explicitly
+subscribed Discord webhooks; webhook URLs and delivery credentials remain server-side.
 
 ## Data Subject Workflow
 

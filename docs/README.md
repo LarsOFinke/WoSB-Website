@@ -60,6 +60,7 @@ are documented in the [deployment incident index](debugging/DEPLOYMENT_INCIDENTS
 - [License and asset licensing](ASSET_LICENSING.md)
 - [Reference documents](reference/)
 - [API usage and security](reference/API.md)
+- [Guild Warehouse](reference/GUILD_WAREHOUSE.md)
 - [Generated API endpoint reference](reference/API_ENDPOINTS.md)
 - [Outbound webhooks](integrations/outbound-webhooks.md)
 - [Webhook templates](integrations/webhook-templates/README.md)

@@ -9,13 +9,13 @@ export const guideRoutes = [
     path: '/guides/new',
     name: 'guides-new',
     component: () => import('./pages/GuideCreatePage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.guides' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.guides' },
   },
   {
     path: '/guides/:id/edit',
     name: 'guides-edit',
     component: () => import('./pages/GuideCreatePage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.guides' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.guides' },
   },
   {
     path: '/guides/:id',

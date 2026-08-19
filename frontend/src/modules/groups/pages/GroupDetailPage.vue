@@ -9,7 +9,7 @@ const props = defineProps({
 })
 
 const {
-  t, isAuthenticated, isStaff, user, group,
+  t, isAuthenticated, group,
   ships, builds, loading, joining, closing,
   error, joinError, joinSuccess, joinForm, canManage,
   canJoin, selectedBuild, selectedShip, allowedShips, allowedBuilds,

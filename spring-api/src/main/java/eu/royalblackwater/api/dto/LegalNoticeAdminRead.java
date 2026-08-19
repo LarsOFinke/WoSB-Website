@@ -2,6 +2,7 @@
 package eu.royalblackwater.api.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -22,6 +23,7 @@ public record LegalNoticeAdminRead(
         @Size(max = 32) String postalCode,
         @Size(max = 200) String providerName,
         Boolean published,
+        @Size(max = 2048) @Pattern(regexp = "^$|^https://(?![^/]*@)[^\\s]+$") String publicRepositoryUrl,
         @Size(max = 200) String registerCourt,
         @Size(max = 160) String registerName,
         @Size(max = 120) String registerNumber,

@@ -18,6 +18,7 @@ import { privacyRoutes } from '@/modules/privacy/routes'
 import { legalRoutes } from '@/modules/legal/routes'
 import { squadRoutes } from '@/modules/squads/routes'
 import { strategyRoutes } from '@/modules/strategy-planner/routes'
+import { warehouseRoutes } from '@/modules/warehouse/routes'
 
 const routes = [
   ...fleetRoutes,
@@ -33,6 +34,7 @@ const routes = [
   ...calendarRoutes,
   ...forumRoutes,
   ...strategyRoutes,
+  ...warehouseRoutes,
   ...adminRoutes,
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
@@ -50,14 +52,14 @@ const router = createRouter({
 installDeploymentChunkRecovery(router)
 
 router.beforeEach(async (to) => {
-  const { canManageFleet, isAdmin, isAuthenticated, isStaff, sessionState } = useSession()
+  const { canAuthorContent, canManageFleet, isAdmin, isAuthenticated, isStaff, sessionState } = useSession()
   if (!sessionState.isReady) await loadSession()
 
   if (to.meta.guestOnly && isAuthenticated.value) {
     return typeof to.query.redirect === 'string' ? to.query.redirect : '/profile'
   }
 
-  if ((to.meta.requiresUser || to.meta.requiresStaff || to.meta.requiresAdmin || to.meta.requiresFleetManagement) && !isAuthenticated.value) {
+  if ((to.meta.requiresUser || to.meta.requiresStaff || to.meta.requiresContentAuthor || to.meta.requiresAdmin || to.meta.requiresFleetManagement) && !isAuthenticated.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
@@ -66,6 +68,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresStaff && !isStaff.value) {
+    return { name: 'profile' }
+  }
+
+  if (to.meta.requiresContentAuthor && !canAuthorContent.value) {
     return { name: 'profile' }
   }
 

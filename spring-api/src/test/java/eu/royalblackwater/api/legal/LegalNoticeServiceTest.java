@@ -46,6 +46,20 @@ class LegalNoticeServiceTest {
         verify(repository).optional(anyString(), anyMap());
     }
 
+    @Test
+    void publishedNoticeExposesTheMaintainedPublicRepository() {
+        LegalNoticeRepository repository = mock(LegalNoticeRepository.class);
+        when(repository.optional(anyString(), anyMap())).thenReturn(Optional.of(java.util.Map.of(
+                "published", true,
+                "public_repository_url", "https://github.com/example/community-project",
+                "updated_at", java.time.LocalDateTime.of(2030, 1, 15, 12, 0))));
+
+        var notice = service(repository).publicNotice();
+
+        assertThat(notice.publicRepositoryUrl())
+                .isEqualTo("https://github.com/example/community-project");
+    }
+
     private static LegalNoticeService service(LegalNoticeRepository repository) {
         return new LegalNoticeService(repository, mock(LegalNoticeProperties.class), mock(AuditService.class), CLOCK);
     }

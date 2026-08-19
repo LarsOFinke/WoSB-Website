@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "available_stock": { "title": "Available Stock", "type": "integer" },
+    "holders": { "items": { "type": "string" }, "title": "Holders", "type": "array" },
+    "items": {
+      "items": { "$ref": "#/components/schemas/WarehouseEntryRead" },
+      "title": "Items",
+      "type": "array"
+    },
+    "matching_stock": { "title": "Matching Stock", "type": "integer" },
+    "ports": { "items": { "type": "string" }, "title": "Ports", "type": "array" },
+    "reserved_stock": { "title": "Reserved Stock", "type": "integer" },
+    "resources": { "items": { "type": "string" }, "title": "Resources", "type": "array" },
+    "total": { "title": "Total", "type": "integer" }
+  },
+  "required": [
+    "items", "total", "matching_stock", "reserved_stock", "available_stock",
+    "holders", "ports", "resources"
+  ],
+  "title": "WarehousePage",
+  "type": "object"
+}

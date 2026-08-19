@@ -11,11 +11,11 @@ defineProps({
   <dl class="workspace-stat-rail" :aria-label="label || undefined">
     <div v-for="item in items" :key="item.key || item.label" class="workspace-stat-item">
       <AppIcon v-if="item.icon" :name="item.icon" :size="19" />
-      <span>
+      <div>
         <dt>{{ item.label }}</dt>
         <dd>{{ item.value }}</dd>
         <small v-if="item.hint">{{ item.hint }}</small>
-      </span>
+      </div>
     </div>
   </dl>
 </template>

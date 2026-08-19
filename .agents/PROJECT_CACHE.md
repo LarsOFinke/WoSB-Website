@@ -16,7 +16,8 @@
 - Backend: Java 21, Spring Boot 4.1, Maven 3.9, Spring Security, JPA/JDBC,
   MapStruct, Flyway, PostgreSQL, and Testcontainers.
 - Frontend: Vue 3.5, Vue Router 4, Vite 8, Node 22, and Playwright Chromium;
-  JavaScript without TypeScript.
+  application code remains JavaScript, with incremental TypeScript checking for
+  complex domain modules.
 - Operations: Docker Compose, NGINX, systemd runners, and artifact-based release,
   update, backup, and restore workflows.
 - The former Python backend is no longer part of the runtime. Python is used for
@@ -76,7 +77,7 @@ a directory name alone.
 - Business domains: `account`, `audit`, `builds`, `calendar`, `content`, `files`,
   `fleet`, `forum`, `groups`, `guides`, `legal`, `masterdata`, `onboarding`,
   `privacy`, `raidhelper`, `security`, `securityops`, `ships`, `squads`, `strategies`,
-  `webhooks`.
+  `warehouse`, `webhooks`.
 - `openapi/source/` defines the external HTTP transport; `openapi/openapi.json` is
   composed deterministically, and generated `api/dto/*` records represent its
   request/response types. Module controllers own the Spring MVC bindings directly;
@@ -119,7 +120,7 @@ a directory name alone.
 - Dependency direction: `page -> composable -> api/domain` and `page -> component`.
   Pages do not call APIs directly and do not own asynchronous workflows.
 - Route modules exist for Accounts, Admin, Builds, Calendar, Combat, Fleet, Forum,
-  Groups, Guides, Onboarding, Privacy, Legal, Squads, and the Strategy Planner.
+  Groups, Guides, Onboarding, Privacy, Legal, Squads, the Strategy Planner, and Warehouse.
 - Transport belongs in API modules, deterministic rules in `domain`, state,
   lifecycle, and flows in composables, and reusable UI in components.
 - Shared infrastructure: `core/`, `shared/`, `config/`, `router/`, `locales/`,
@@ -127,27 +128,38 @@ a directory name alone.
 - Vite environment values used by production code must be referenced statically
   (`import.meta.env.VITE_*`), never through `import.meta.env[name]`; dynamic access
   can pass `.env` validation but is not replaced in the production bundle.
-- Frontend guards check guest/user/staff/admin/fleet-management state but never
-  replace server-side authorization.
+- Frontend guards check guest/user/content-author/staff/admin/fleet-management state
+  but never replace server-side authorization. Shared-content mutation routes are
+  reserved at the Spring Security boundary for `ROLE_MODERATOR` and `ROLE_ADMIN`;
+  ordinary users retain visible-content reads plus profile, password, privacy,
+  group-join, and fleet-application self-service flows. Mirror the boundary through
+  `canAuthorContent`/`requiresContentAuthor`, while keeping the backend authoritative.
+  Fleet/squad management reads and capability flags also require staff in their domain
+  services; legacy leadership membership metadata never elevates an ordinary account.
 - Localization sources: `frontend/src/locales/messages/`; generator:
   `frontend/scripts/generate-locales.mjs`. English is the synchronous fallback;
   other locales load dynamically.
 - Global CSS cascade: eight ordered imports from `frontend/src/styles/global/index.js`;
   order is an architecture contract. Feature styles remain with their modules.
-- Build printing separates model construction (`buildPrintModel.js`), image embedding
-  (`buildPrintImageEmbedding.js`), and SVG/document orchestration (`buildPrintExport.js`).
+- Build printing separates model construction (`buildPrintModel.js`), visual catalogs
+  (`buildPrintVisualCatalog.js`), image embedding (`buildPrintImageEmbedding.js`), and
+  SVG/document orchestration (`buildPrintExport.js`).
   Localization behavior lives in `autoLocalization.js`, with the large translation
   catalog separately in `autoLocalizationCatalog.js`.
 - The Strategy Planner preserves its uploaded chart as a background layer and stores
   editable SVG overlay objects separately. Pointer coordinates must be transformed
   through the SVG screen matrix, and build references must match the marker ship on
-  both the client and server.
-- The New Captain Guide is one Explorer-style knowledge workspace: its persistent
-  folder tree and details list combine Build-style search/type filters with a
-  Guide-style preview pane. A topic contains its native Markdown briefing plus typed
-  Guide, Build, internal, or external resources. Moderator editing operates on that
-  same ordered folder/resource hierarchy; do not add a parallel reader navigation or
-  separate presentation model.
+  both the client and server. Its versioned document migrates legacy circle formations
+  to ovals; new circles use one physical diameter. `strategyGeometry.js` changes object
+  extent independently from fixed tactical strokes and arrowheads. Creation commands,
+  selected-object properties, and size/rotation controls remain separate UI sections.
+- The New Captain Guide is one Explorer-style knowledge workspace: a compact topic
+  navigator opens each Markdown briefing and its typed Guide, Build, internal, or
+  external resources in a wide reader. Search/type filters and topic cards live on the
+  home view; mobile uses a topic picker instead of compressing the desktop navigator.
+  Moderator editing operates on the same ordered hierarchy through a separate two-pane
+  structure/editor workspace with collapsible resource cards; do not add a parallel
+  content model.
 - Browser smoke tests live under `frontend/tests/browser/`. They start Vite and mock
   only `/api/`; real security, session, CSRF, and origin boundaries are tested by
   `spring-api/src/test/java/eu/royalblackwater/api/integration/ApplicationIntegrationTest.java`

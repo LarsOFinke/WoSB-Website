@@ -1,5 +1,6 @@
 package eu.royalblackwater.api.config;
 
+import java.net.URI;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("rbf.legal-notice")
@@ -26,7 +27,8 @@ public record LegalNoticeProperties(
         String editorialResponsibleCity,
         String editorialResponsibleCountry,
         String disputeResolutionText,
-        String additionalInformation) {
+        String additionalInformation,
+        String publicRepositoryUrl) {
 
     public LegalNoticeProperties {
         providerName = value(providerName);
@@ -51,6 +53,7 @@ public record LegalNoticeProperties(
         editorialResponsibleCountry = defaultValue(editorialResponsibleCountry, "Deutschland");
         disputeResolutionText = value(disputeResolutionText);
         additionalInformation = value(additionalInformation);
+        publicRepositoryUrl = secureUrl(publicRepositoryUrl);
     }
 
     private static String value(String value) {
@@ -60,5 +63,16 @@ public record LegalNoticeProperties(
     private static String defaultValue(String value, String fallback) {
         String normalized = value(value);
         return normalized.isEmpty() ? fallback : normalized;
+    }
+
+    private static String secureUrl(String value) {
+        String normalized = value(value);
+        try {
+            URI uri = URI.create(normalized);
+            return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null
+                    && uri.getUserInfo() == null ? normalized : "";
+        } catch (IllegalArgumentException ignored) {
+            return "";
+        }
     }
 }

@@ -38,7 +38,10 @@ export function useBuildDetailPage(props) {
   const voteError = ref('')
   const categoryFallbackImages = buildCategoryVisuals
   const crewFallbackImages = buildCrewVisuals
-  const canEdit = computed(() => Number(build.value?.owner_id) === Number(user.value?.id) && !build.value?.is_official_template)
+  const canEdit = computed(() => isStaff.value
+    && Number(build.value?.owner_id) === Number(user.value?.id)
+    && !build.value?.is_official_template)
+  const canVote = computed(() => isStaff.value)
   const canCachePrintout = computed(() => canEdit.value || isStaff.value)
   const printActions = useBuildPrintActions(build, { t, optionLabel, optionImage, canCache: canCachePrintout })
 
@@ -139,7 +142,7 @@ export function useBuildDetailPage(props) {
   return {
     optionLabel, t, user, build, optionCatalog, loading, error, shareStatus, voteBusy, voteError,
     ...printActions,
-    categoryFallbackImages, crewFallbackImages, weaponArcRows, crewTotal, canEdit,
+    categoryFallbackImages, crewFallbackImages, weaponArcRows, crewTotal, canEdit, canVote,
     upgrades, commandDeckUpgradeSlots, specialCrewSlots, regularSpecialCrewSlots,
     gingerSpecialCrewSlot, classificationLabels, ammunitionSlots,
     consumableSlots, holdSlots, crewDistributionRows, optionMeta, optionImage,

@@ -1,0 +1,172 @@
+import { computed, onMounted, reactive, ref } from 'vue'
+
+import { useLocale } from '@/locales'
+import { useSession } from '@/modules/accounts/session'
+import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
+import {
+  createWarehouseEntry,
+  deleteWarehouseEntry,
+  listWarehouseEntries,
+  listWarehouseFleets,
+  listWarehouseMembers,
+  updateWarehouseEntry,
+} from '@/modules/warehouse/api/warehouse'
+import {
+  createWarehouseDraft,
+  formatWarehouseAmount,
+  warehouseDraftFromEntry,
+  warehouseDraftIssue,
+  warehousePayload,
+} from '@/modules/warehouse/domain/warehouse'
+
+const EMPTY_PAGE = {
+  items: [], total: 0, matching_stock: 0, reserved_stock: 0, available_stock: 0,
+  holders: [], ports: [], resources: [],
+}
+
+export function useWarehousePage() {
+  const { locale, t } = useLocale()
+  const { isAdmin, user } = useSession()
+  const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
+  const page = ref({ ...EMPTY_PAGE })
+  const fleets = ref([])
+  const members = ref([])
+  const loading = ref(false)
+  const saving = ref(false)
+  const error = ref('')
+  const success = ref('')
+  const editorOpen = ref(false)
+  const editingId = ref(null)
+  const draft = reactive(createWarehouseDraft())
+  const filters = reactive({ fleet_id: '', holder: '', port: '', resource: '', reserved: '' })
+
+  const editorTitle = computed(() => editingId.value
+    ? t('warehouse.editor.editTitle')
+    : t('warehouse.editor.createTitle'))
+  const formatAmount = (value) => formatWarehouseAmount(value, locale.value)
+  const formatDateTime = (value) => value ? new Date(value).toLocaleString() : '—'
+
+  async function loadEntries() {
+    loading.value = true
+    error.value = ''
+    try {
+      page.value = await listWarehouseEntries({
+        fleet_id: filters.fleet_id,
+        holder: filters.holder,
+        port: filters.port,
+        resource: filters.resource,
+        reserved: filters.reserved,
+        limit: 500,
+        offset: 0,
+      })
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.load')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function loadMembers(fleetId) {
+    members.value = []
+    if (!fleetId) return
+    try {
+      members.value = await listWarehouseMembers(fleetId)
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.members')
+    }
+  }
+
+  function resetDraft(values) {
+    Object.assign(draft, createWarehouseDraft(), values)
+  }
+
+  async function openCreate() {
+    editingId.value = null
+    const fleetId = filters.fleet_id || fleets.value[0]?.id || ''
+    resetDraft(createWarehouseDraft(fleetId))
+    await loadMembers(fleetId)
+    editorOpen.value = true
+    error.value = ''
+    success.value = ''
+  }
+
+  async function openEdit(entry) {
+    editingId.value = entry.id
+    resetDraft(warehouseDraftFromEntry(entry))
+    await loadMembers(entry.fleet_id)
+    editorOpen.value = true
+    error.value = ''
+    success.value = ''
+  }
+
+  function closeEditor() {
+    editorOpen.value = false
+    editingId.value = null
+  }
+
+  async function changeDraftFleet() {
+    draft.member_user_id = ''
+    await loadMembers(draft.fleet_id)
+  }
+
+  async function saveEntry() {
+    const issue = warehouseDraftIssue(draft)
+    if (issue) {
+      error.value = t(`warehouse.validation.${issue}`)
+      return
+    }
+    saving.value = true
+    error.value = ''
+    success.value = ''
+    try {
+      if (editingId.value) {
+        await updateWarehouseEntry(editingId.value, warehousePayload(draft, { updating: true }))
+        success.value = t('warehouse.messages.updated')
+      } else {
+        await createWarehouseEntry(warehousePayload(draft))
+        success.value = t('warehouse.messages.created')
+      }
+      closeEditor()
+      await loadEntries()
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.save')
+    } finally {
+      saving.value = false
+    }
+  }
+
+  async function removeEntry(entry) {
+    if (!window.confirm(t('warehouse.actions.confirmDelete', { holder: entry.holder_name }))) return
+    error.value = ''
+    success.value = ''
+    try {
+      await deleteWarehouseEntry(entry.id, entry.version)
+      success.value = t('warehouse.messages.deleted')
+      await loadEntries()
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.delete')
+    }
+  }
+
+  async function clearFilters() {
+    Object.assign(filters, { fleet_id: '', holder: '', port: '', resource: '', reserved: '' })
+    await loadEntries()
+  }
+
+  onMounted(async () => {
+    loading.value = true
+    try {
+      fleets.value = (await listWarehouseFleets()).filter((fleet) => fleet.is_active)
+      await loadEntries()
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.load')
+      loading.value = false
+    }
+  })
+
+  return {
+    t, isAdmin, user, navigationGroups, page, fleets, members, loading, saving, error, success,
+    editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
+    formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
+  }
+}

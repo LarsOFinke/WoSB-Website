@@ -82,6 +82,22 @@ const {
         </fieldset>
 
         <fieldset>
+          <legend>{{ t('legalNotice.sections.transparency') }}</legend>
+          <p class="legal-notice-fieldset-hint">{{ t('legalNotice.admin.repositoryHint') }}</p>
+          <label class="is-wide">
+            <span>{{ t('legalNotice.fields.publicRepositoryUrl') }}</span>
+            <input
+              v-model.trim="form.public_repository_url"
+              type="url"
+              inputmode="url"
+              maxlength="2048"
+              pattern="https://(?![^/]*@).*"
+              placeholder="https://github.com/organization/project"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>{{ t('legalNotice.sections.additional') }}</legend>
           <label class="is-wide"><span>{{ t('legalNotice.fields.disputeResolution') }}</span><textarea v-model.trim="form.dispute_resolution_text" rows="5" maxlength="4000"></textarea><small>{{ t('legalNotice.admin.disputeHint') }}</small></label>
           <label class="is-wide"><span>{{ t('legalNotice.fields.additionalInformation') }}</span><textarea v-model.trim="form.additional_information" rows="5" maxlength="4000"></textarea></label>

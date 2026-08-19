@@ -56,7 +56,8 @@ class PrivacyServiceBehaviorTest {
 
         PersonalDataExportRead result = service.build(USER);
 
-        assertEquals(21, result.categories().size());
+        assertEquals(22, result.categories().size());
+        assertTrue(result.categories().containsKey("warehouse_entries"));
         assertEquals(LocalDateTime.of(2026, 8, 8, 12, 0), result.exportedAt());
         assertFalse(result.subject().containsKey("password_hash"));
         assertFalse(result.subject().containsKey("token_hash"));

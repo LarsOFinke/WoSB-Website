@@ -10,12 +10,13 @@ public final class LegalNoticeQueries {
                     city,country,email,phone,register_name,register_court,register_number,vat_id,business_id,
                     supervisory_authority,editorial_responsible_name,editorial_responsible_street,
                     editorial_responsible_postal_code,editorial_responsible_city,editorial_responsible_country,
-                    dispute_resolution_text,additional_information,updated_by_username,updated_at)
+                    dispute_resolution_text,additional_information,public_repository_url,
+                    updated_by_username,updated_at)
                 values(1,:published,:customized,:providerName,:legalForm,:representedBy,:street,:postalCode,
                     :city,:country,:email,:phone,:registerName,:registerCourt,:registerNumber,:vatId,:businessId,
                     :supervisoryAuthority,:editorialResponsibleName,:editorialResponsibleStreet,
                     :editorialResponsiblePostalCode,:editorialResponsibleCity,:editorialResponsibleCountry,
-                    :disputeResolutionText,:additionalInformation,:updatedBy,:updatedAt)
+                    :disputeResolutionText,:additionalInformation,:publicRepositoryUrl,:updatedBy,:updatedAt)
                 on conflict(id) do nothing
                 """;
 
@@ -33,6 +34,7 @@ public final class LegalNoticeQueries {
                     editorial_responsible_city=:editorialResponsibleCity,
                     editorial_responsible_country=:editorialResponsibleCountry,
                     dispute_resolution_text=:disputeResolutionText,additional_information=:additionalInformation,
+                    public_repository_url=:publicRepositoryUrl,
                     updated_by_username=:updatedBy,updated_at=:updatedAt where id=:id
                 """;
 

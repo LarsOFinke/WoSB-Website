@@ -10,7 +10,7 @@ import '@/styles/workspaceRefresh.css'
 import '@/modules/accounts/styles/profileWorkspace.css'
 
 const {
-  t, loading, saving, changingPassword,
+  t, canAuthorContent, canManageFleet, loading, saving, changingPassword,
   error, success, passwordError, passwordSuccess,
   activeFleetMemberships, leadershipMemberships, primaryFleetMembership, hasOfficialFleetLink,
   displayInitials, preferredFocusLabel, preferredShipOptions, preferredRoleOptions, fleetStatusLabel,
@@ -38,7 +38,7 @@ const profileStats = computed(() => [
           </div>
         </div>
         <nav class="workspace-command-actions" :aria-label="t('common.personalArea')">
-          <RouterLink class="button-box" to="/profile/builds">{{ t('myBuilds.title') }}</RouterLink>
+          <RouterLink v-if="canAuthorContent" class="button-box" to="/profile/builds">{{ t('myBuilds.title') }}</RouterLink>
           <RouterLink class="button-box" to="/profile/groups">{{ t('myGroups.title') }}</RouterLink>
           <RouterLink class="button-box primary-action" to="/profile/squads">{{ t('mySquads.title') }}</RouterLink>
         </nav>
@@ -134,14 +134,14 @@ const profileStats = computed(() => [
               </div>
               <div class="form-actions compact-actions">
                 <RouterLink class="button-box" to="/fleet">{{ t('profile.fleetMemberships.browse') }}</RouterLink>
-                <RouterLink v-if="leadershipMemberships.length" class="button-box primary-action" to="/fleets">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
+                <RouterLink v-if="canManageFleet && leadershipMemberships.length" class="button-box primary-action" to="/fleets">{{ t('profile.fleetMemberships.manage') }}</RouterLink>
               </div>
             </section>
 
             <section>
               <div class="profile-refresh-side-heading"><h2>{{ t('common.modules') }}</h2></div>
               <nav class="profile-refresh-tools" :aria-label="t('common.modules')">
-                <RouterLink class="profile-refresh-tool" to="/profile/builds"><span><AppIcon name="builds" :size="18" /></span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><AppIcon name="chevron-right" :size="17" /></RouterLink>
+                <RouterLink v-if="canAuthorContent" class="profile-refresh-tool" to="/profile/builds"><span><AppIcon name="builds" :size="18" /></span><span><strong>{{ t('myBuilds.profileCardTitle') }}</strong><small>{{ t('myBuilds.profileCardText') }}</small></span><AppIcon name="chevron-right" :size="17" /></RouterLink>
                 <RouterLink class="profile-refresh-tool" to="/profile/groups"><span><AppIcon name="groups" :size="18" /></span><span><strong>{{ t('myGroups.profileCardTitle') }}</strong><small>{{ t('myGroups.profileCardText') }}</small></span><AppIcon name="chevron-right" :size="17" /></RouterLink>
                 <RouterLink class="profile-refresh-tool" to="/profile/squads"><span><AppIcon name="users" :size="18" /></span><span><strong>{{ t('mySquads.profileCardTitle') }}</strong><small>{{ t('mySquads.profileCardText') }}</small></span><AppIcon name="chevron-right" :size="17" /></RouterLink>
               </nav>

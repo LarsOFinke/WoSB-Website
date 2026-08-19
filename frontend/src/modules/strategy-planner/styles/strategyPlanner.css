@@ -142,11 +142,11 @@
   stroke: var(--bg);
   stroke-width: 5px;
   stroke-linejoin: round;
-  fill: var(--text);
   font-family: var(--font-editorial);
 }
 
 .strategy-marker-title {
+  fill: var(--text);
   font-size: 18px;
   font-weight: 800;
 }

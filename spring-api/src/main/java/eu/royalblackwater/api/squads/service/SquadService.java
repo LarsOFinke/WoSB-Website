@@ -103,8 +103,8 @@ public class SquadService {
     public List<SquadRosterMemberRead> roster(AuthenticatedUser actor) {
         Map<String, Object> fleet = officialFleet();
         long fleetId = RowValues.longValue(fleet, "id");
-        if (!fleetPolicy.canManageFleet(actor, fleetId) && !policy.hasManagedSquad(actor)) {
-            throw new ResponseStatusException(FORBIDDEN, "Squad leadership access required.");
+        if (!actor.staff()) {
+            throw new ResponseStatusException(FORBIDDEN, "Moderator access required for the fleet roster.");
         }
         return repository.query(SquadQueries.ROSTER_SELECT_01, Map.of("fleetId", fleetId)).stream()
                 .map(row -> SquadDtoMapper.roster(row, arrayLongs(row.get("squad_ids")))).toList();
@@ -244,8 +244,8 @@ public class SquadService {
         Map<String, Object> currentRow = rawMembers.stream()
                 .filter(row -> RowValues.longValue(row, "user_id") == actor.id()).findFirst().orElse(null);
         String currentRole = currentRow == null ? null : RowValues.requiredString(currentRow, "squad_role");
-        boolean manage = managesFleet || "leader".equals(currentRole) || "officer".equals(currentRole);
-        boolean administer = managesFleet || "leader".equals(currentRole);
+        boolean manage = managesFleet;
+        boolean administer = managesFleet;
         List<SquadMemberRead> members = rawMembers.stream().map(row -> member(row, manage)).toList();
         SquadMemberRead leader = members.stream().filter(m -> "leader".equals(m.squadRole())).findFirst().orElse(null);
         return SquadDtoMapper.summary(squad, currentRole, currentRow != null, manage, administer, leader, members.size());

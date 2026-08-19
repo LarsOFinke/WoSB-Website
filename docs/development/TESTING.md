@@ -106,6 +106,10 @@ The frontend gate requires the Playwright Chromium runtime. Install it once with
 `npx playwright install chromium` from `frontend/`; CI installs Chromium and its
 system dependencies explicitly before running the gate.
 
+`npm test` also runs `tsc --project jsconfig.json`. This is an incremental
+JavaScript type-safety boundary for the Strategy Planner domain modules, not a
+second compiled frontend or a repository-wide TypeScript migration.
+
 Agent wrappers suppress successful tool chatter to conserve context and print a
 bounded failure tail. Set `AGENT_GATE_VERBOSE=1` only when the complete underlying
 output is needed for diagnosis.
@@ -198,13 +202,18 @@ Controller/OpenAPI route drift can be diagnosed without starting Docker or Sprin
 
 ```bash
 python3 infrastructure/scripts/quality/audit_controller_contract.py
+python3 infrastructure/scripts/quality/audit_authorization_policy.py
 python3 infrastructure/scripts/generation/generate_api_dtos.py --check
 ```
 
-The controller audit covers all 185 operations and compares HTTP method/path,
+The controller audit covers all 189 operations and compares HTTP method/path,
 path/query bindings, request DTO/media type and successful response type against
 OpenAPI. DTOs remain generator-owned; controller mappings are handwritten and
 module-owned, so there is no route-generator regeneration step.
+
+The authorization audit classifies every mutating operation as public,
+administrator-only, staff-only, or an explicitly reviewed authenticated
+self-service operation. Adding an unclassified mutation fails the repository gate.
 
 The Playwright suite starts Vite and replaces only `/api/` requests with
 deterministic browser fixtures. It verifies browser-side navigation, cookie-setting

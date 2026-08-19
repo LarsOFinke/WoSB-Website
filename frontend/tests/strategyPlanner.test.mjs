@@ -17,18 +17,24 @@ import {
   serializeStrategyDocument,
   snapshotStrategyObject,
   strategyShareUrl,
+  STRATEGY_DOCUMENT_VERSION,
 } from '../src/modules/strategy-planner/domain/strategyDocument.js'
 import { strategyCanvasPoint } from '../src/modules/strategy-planner/domain/canvasCoordinates.js'
+import { strategyFormationPath, strategyLineGeometry } from '../src/modules/strategy-planner/domain/strategyGeometry.js'
 
 const toolbarSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyToolbar.vue', import.meta.url), 'utf8')
 const inspectorSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyInspector.vue', import.meta.url), 'utf8')
+const canvasSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyCanvas.vue', import.meta.url), 'utf8')
 const plannerPageSource = await readFile(new URL('../src/modules/strategy-planner/pages/StrategyPlannerPage.vue', import.meta.url), 'utf8')
 
 test('strategy tools are grouped into independently collapsible command and inspector sections', () => {
   assert.equal(toolbarSource.match(/<details\b/g)?.length, 4)
-  assert.equal(inspectorSource.match(/<details\b/g)?.length, 4)
+  assert.equal(inspectorSource.match(/<details\b/g)?.length, 5)
   assert.match(toolbarSource, /strategy-command-sections/)
   assert.match(inspectorSource, /strategy-selection-section/)
+  assert.match(inspectorSource, /strategy-transform-section/)
+  assert.doesNotMatch(inspectorSource.match(/strategy-selection-section[\s\S]*?<\/details>/)?.[0] || '', /type="range"/)
+  assert.match(inspectorSource, /strategy-text-color-field/)
   assert.match(plannerPageSource, /class="strategy-tools-toggle"/)
   assert.match(plannerPageSource, /aria-controls="strategy-tool-rail"/)
   assert.match(plannerPageSource, /:aria-expanded="toolsOpen"/)
@@ -51,9 +57,18 @@ test('strategy documents preserve the drawing layer independently', () => {
   document.objects.push({ ...createFormation('wedge'), vueOnlyState: { selected: true } })
   const serialized = serializeStrategyDocument(document)
   const restored = parseStrategyDocument(serialized)
-  assert.equal(restored.version, 1)
+  assert.equal(restored.version, STRATEGY_DOCUMENT_VERSION)
   assert.equal(restored.objects[0].formation, 'wedge')
   assert.equal(serialized.includes('vueOnlyState'), false)
+})
+
+test('legacy oval formations migrate without changing shape while new circles stay round', () => {
+  const legacy = parseStrategyDocument('{"version":1,"objects":[{"id":"formation-1","type":"formation","formation":"circle","x":0.5,"y":0.5,"width":0.32,"height":0.24}]}')
+  const current = parseStrategyDocument('{"version":2,"objects":[{"id":"formation-2","type":"formation","formation":"circle","x":0.5,"y":0.5,"width":0.32,"height":0.24}]}')
+  assert.equal(legacy.objects[0].formation, 'oval')
+  assert.equal(current.objects[0].formation, 'circle')
+  assert.match(strategyFormationPath(legacy.objects[0], 625), /A 160 75/)
+  assert.match(strategyFormationPath(current.objects[0], 625), /A 75 75/)
 })
 
 test('legacy reference names are normalized and invalid ship markers are found before saving', () => {
@@ -94,6 +109,14 @@ test('strategy objects are scalable and reactive proxies can be snapshotted for 
   const legacy = parseStrategyDocument('{"version":1,"objects":[{"id":"legacy","type":"line","x":0.2,"y":0.5,"x2":0.8,"y2":0.5}]}').objects[0]
   assert.equal(legacy.scale, 1)
   assert.equal(legacy.rotation, 0)
+})
+
+test('line scale changes its extent without shrinking arrowhead and stroke geometry', () => {
+  const geometry = strategyLineGeometry({ x: 0.3, y: 0.5, x2: 0.7, y2: 0.5, scale: 0.25 }, 625)
+  assert.deepEqual({ x1: geometry.x1, x2: geometry.x2, angle: geometry.angle }, { x1: 450, x2: 550, angle: 0 })
+  assert.match(canvasSource, /d="M 5 0 L -30 -17 L -22 0 L -30 17 Z"/)
+  assert.match(canvasSource, /stroke-width="7"/)
+  assert.doesNotMatch(canvasSource, /lineTransform\(object\)[\s\S]{0,120}scale/)
 })
 
 test('strategy sharing uses the non-sequential public identifier', () => {

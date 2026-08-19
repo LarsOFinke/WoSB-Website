@@ -12,8 +12,6 @@ import { useGuideDetailPage } from '@/modules/guides/composables/useGuideDetailP
 const props = defineProps({ id: { type: String, required: true } })
 const {
   t,
-  isStaff,
-  user,
   guide,
   loading,
   deleting,

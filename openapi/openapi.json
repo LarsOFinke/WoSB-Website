@@ -5873,6 +5873,13 @@
             "title": "Published",
             "type": "boolean"
           },
+          "public_repository_url": {
+            "default": "",
+            "maxLength": 2048,
+            "pattern": "^$|^https://(?![^/]*@)[^\\s]+$",
+            "title": "Public Repository URL",
+            "type": "string"
+          },
           "register_court": {
             "default": "",
             "maxLength": 200,
@@ -6035,6 +6042,13 @@
             "title": "Published",
             "type": "boolean"
           },
+          "public_repository_url": {
+            "default": "",
+            "maxLength": 2048,
+            "pattern": "^$|^https://(?![^/]*@)[^\\s]+$",
+            "title": "Public Repository URL",
+            "type": "string"
+          },
           "register_court": {
             "default": "",
             "maxLength": 200,
@@ -6190,6 +6204,13 @@
             "default": false,
             "title": "Published",
             "type": "boolean"
+          },
+          "public_repository_url": {
+            "default": "",
+            "maxLength": 2048,
+            "pattern": "^$|^https://(?![^/]*@)[^\\s]+$",
+            "title": "Public Repository URL",
+            "type": "string"
           },
           "register_court": {
             "default": "",
@@ -12189,6 +12210,300 @@
         "title": "UserReferenceRead",
         "type": "object"
       },
+      "WarehouseEntryCreate": {
+        "properties": {
+          "amount": {
+            "maximum": 999999999,
+            "minimum": 0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "custom_holder_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Holder Name"
+          },
+          "fleet_id": {
+            "minimum": 1,
+            "title": "Fleet Id",
+            "type": "integer"
+          },
+          "member_user_id": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member User Id"
+          },
+          "port": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Port",
+            "type": "string"
+          },
+          "reserved": {
+            "default": false,
+            "title": "Reserved",
+            "type": "boolean"
+          },
+          "resource": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Resource",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fleet_id",
+          "port",
+          "resource",
+          "amount"
+        ],
+        "title": "WarehouseEntryCreate",
+        "type": "object"
+      },
+      "WarehouseEntryRead": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "custom_holder_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Holder Name"
+          },
+          "fleet_id": {
+            "title": "Fleet Id",
+            "type": "integer"
+          },
+          "fleet_name": {
+            "title": "Fleet Name",
+            "type": "string"
+          },
+          "holder_name": {
+            "title": "Holder Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "member_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member User Id"
+          },
+          "port": {
+            "title": "Port",
+            "type": "string"
+          },
+          "reserved": {
+            "title": "Reserved",
+            "type": "boolean"
+          },
+          "resource": {
+            "title": "Resource",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "fleet_id",
+          "fleet_name",
+          "holder_name",
+          "port",
+          "resource",
+          "amount",
+          "reserved",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WarehouseEntryRead",
+        "type": "object"
+      },
+      "WarehouseEntryUpdate": {
+        "properties": {
+          "amount": {
+            "maximum": 999999999,
+            "minimum": 0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "custom_holder_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Holder Name"
+          },
+          "fleet_id": {
+            "minimum": 1,
+            "title": "Fleet Id",
+            "type": "integer"
+          },
+          "member_user_id": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member User Id"
+          },
+          "port": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Port",
+            "type": "string"
+          },
+          "reserved": {
+            "title": "Reserved",
+            "type": "boolean"
+          },
+          "resource": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Resource",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fleet_id",
+          "port",
+          "resource",
+          "amount",
+          "reserved",
+          "version"
+        ],
+        "title": "WarehouseEntryUpdate",
+        "type": "object"
+      },
+      "WarehousePage": {
+        "properties": {
+          "available_stock": {
+            "title": "Available Stock",
+            "type": "integer"
+          },
+          "holders": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Holders",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WarehouseEntryRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "matching_stock": {
+            "title": "Matching Stock",
+            "type": "integer"
+          },
+          "ports": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ports",
+            "type": "array"
+          },
+          "reserved_stock": {
+            "title": "Reserved Stock",
+            "type": "integer"
+          },
+          "resources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "matching_stock",
+          "reserved_stock",
+          "available_stock",
+          "holders",
+          "ports",
+          "resources"
+        ],
+        "title": "WarehousePage",
+        "type": "object"
+      },
       "WeaponClassRead": {
         "properties": {
           "code": {
@@ -12260,7 +12575,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.6.0"
+    "version": "1.7.2"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -18210,6 +18525,383 @@
         "tags": [
           "admin",
           "admin-users"
+        ]
+      }
+    },
+    "/api/admin/warehouse": {
+      "post": {
+        "operationId": "admin_create_warehouse_entry_api_admin_warehouse_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehouseEntryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseEntryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Admin Create Warehouse Entry",
+        "tags": [
+          "admin",
+          "warehouse"
+        ]
+      },
+      "get": {
+        "operationId": "admin_list_warehouse_entries_api_admin_warehouse_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fleet_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fleet Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "holder",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Holder"
+            }
+          },
+          {
+            "in": "query",
+            "name": "port",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Port"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reserved",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reserved"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 100000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehousePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Admin List Warehouse Entries",
+        "tags": [
+          "admin",
+          "warehouse"
+        ]
+      }
+    },
+    "/api/admin/warehouse/{entry_id}": {
+      "delete": {
+        "operationId": "admin_delete_warehouse_entry_api_admin_warehouse__entry_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Version conflict"
+          }
+        },
+        "summary": "Admin Delete Warehouse Entry",
+        "tags": [
+          "admin",
+          "warehouse"
+        ]
+      },
+      "put": {
+        "operationId": "admin_update_warehouse_entry_api_admin_warehouse__entry_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehouseEntryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseEntryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Version conflict"
+          }
+        },
+        "summary": "Admin Update Warehouse Entry",
+        "tags": [
+          "admin",
+          "warehouse"
         ]
       }
     },

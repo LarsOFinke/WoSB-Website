@@ -105,7 +105,7 @@ class ApiSurfaceIntegrationTest {
                 assertNoServerError(response, operation.method(), path);
             }));
         }
-        assertThat(tests).as("contract write smoke cases").hasSize(112);
+        assertThat(tests).as("contract write smoke cases").hasSize(115);
         return tests.stream();
     }
 
@@ -134,7 +134,7 @@ class ApiSurfaceIntegrationTest {
                 }
             }));
         }
-        assertThat(tests).as("anonymous security cases").hasSize(185);
+        assertThat(tests).as("anonymous security cases").hasSize(189);
         return tests.stream();
     }
 
@@ -184,9 +184,9 @@ class ApiSurfaceIntegrationTest {
         long reads = operations.stream().filter(operation -> "GET".equals(operation.method())).count();
         long writes = operations.size() - reads;
         return Stream.of(
-                DynamicTest.dynamicTest("185 contract operations", () -> assertThat(operations).hasSize(185)),
-                DynamicTest.dynamicTest("73 GET operations", () -> assertThat(reads).isEqualTo(73)),
-                DynamicTest.dynamicTest("112 write operations", () -> assertThat(writes).isEqualTo(112)));
+                DynamicTest.dynamicTest("189 contract operations", () -> assertThat(operations).hasSize(189)),
+                DynamicTest.dynamicTest("74 GET operations", () -> assertThat(reads).isEqualTo(74)),
+                DynamicTest.dynamicTest("115 write operations", () -> assertThat(writes).isEqualTo(115)));
     }
 
     private List<ContractOperation> contractOperations() throws Exception {

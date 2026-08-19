@@ -8,6 +8,7 @@ import { useBuildListPage } from '@/modules/builds/composables/useBuildListPage'
 
 const {
   t,
+  canAuthorContent,
   search,
   buildType,
   shipRate,
@@ -42,7 +43,7 @@ const {
           <p>{{ t('builds.list.subtitle') }}</p>
         </div>
         <div class="workspace-command-actions">
-          <RouterLink class="button-box primary-action" to="/builds/new">{{ t('builds.list.newBuild') }}</RouterLink>
+          <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/builds/new">{{ t('builds.list.newBuild') }}</RouterLink>
         </div>
       </header>
 

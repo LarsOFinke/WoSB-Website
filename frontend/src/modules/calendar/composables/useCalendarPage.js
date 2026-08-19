@@ -24,7 +24,7 @@ import { listSquads } from '@/modules/squads/api/squads'
 export function useCalendarPage() {
   const route = useRoute()
   const { locale, t } = useLocale()
-  const { canManageFleet } = useSession()
+  const { canAuthorContent, canManageFleet } = useSession()
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const initialDate = dateFromRouteQuery(route.query.date, today)
@@ -56,7 +56,7 @@ export function useCalendarPage() {
   const calendarDays = computed(() => daysInRange(monthRange.value))
   const visibleSquads = computed(() => squads.value.filter((squad) => squad.is_member || squad.can_manage))
   const managedSquads = computed(() => squads.value.filter((squad) => squad.can_manage && squad.is_active))
-  const canCreateEvent = computed(() => canManageFleet.value || managedSquads.value.length > 0)
+  const canCreateEvent = computed(() => canAuthorContent.value)
   const categoryOptions = computed(() => [
     { value: '', label: t('calendar.categories.all') },
     ...FLEET_EVENT_CATEGORIES.map((value) => ({ value, label: t(`calendar.categories.${value}`) })),

@@ -1,10 +1,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
+import { useSession } from '@/modules/accounts/session'
 import { listBuilds, listBuildRoles } from '@/modules/builds/api/builds'
 import { localizedBuildDiscoveryGroups } from '@/modules/builds/domain/buildDiscovery'
 
 export function useBuildListPage() {
   const { t } = useLocale()
+  const { canAuthorContent } = useSession()
   const builds = ref([])
   const roles = ref([])
   const search = ref('')
@@ -136,6 +138,7 @@ export function useBuildListPage() {
 
   return {
     t,
+    canAuthorContent,
     builds,
     roles,
     search,

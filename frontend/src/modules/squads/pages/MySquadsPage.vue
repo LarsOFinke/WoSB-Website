@@ -8,6 +8,7 @@ const {
   route,
   locale,
   t,
+  canManageFleet,
   squads,
   events,
   loading,
@@ -114,7 +115,7 @@ const {
                   <div class="my-squad-actions">
                     <RouterLink class="small-action" :to="`/squads/${squad.id}`">{{ t('mySquads.manageSquad') }}</RouterLink>
                     <RouterLink class="small-action" :to="{ path: '/calendar', query: { squad: squad.id } }">{{ t('mySquads.squadCalendar') }}</RouterLink>
-                    <RouterLink class="small-action primary-action" :to="{ path: '/calendar/new', query: { squad: squad.id } }">{{ t('mySquads.planEvent') }}</RouterLink>
+                    <RouterLink v-if="canManageFleet" class="small-action primary-action" :to="{ path: '/calendar/new', query: { squad: squad.id } }">{{ t('mySquads.planEvent') }}</RouterLink>
                   </div>
                 </article>
               </div>

@@ -16,7 +16,7 @@ export const fleetRoutes = [
     path: '/fleets',
     name: 'fleets',
     component: () => import('./pages/FleetManagePage.vue'),
-    meta: { requiresUser: true, requiresFleetManagement: true, titleKey: 'common.fleetManagement' },
+    meta: { requiresContentAuthor: true, requiresFleetManagement: true, titleKey: 'common.fleetManagement' },
   },
   { path: '/fleets/manage', redirect: '/fleets' },
 ]

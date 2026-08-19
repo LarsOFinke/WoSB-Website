@@ -3,7 +3,7 @@ import { useForumListPage } from '@/modules/forum/composables/useForumListPage'
 
 const {
   t,
-  isAuthenticated,
+  canAuthorContent,
   threads,
   search,
   category,
@@ -30,11 +30,8 @@ const {
         </div>
         <div class="hero-actions">
           <span class="summary-pill">{{ summary }}</span>
-          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/forum/new">
+          <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/forum/new">
             {{ t('forum.list.newThread') }}
-          </RouterLink>
-          <RouterLink v-else class="button-box primary-action" to="/login">
-            {{ t('forum.list.loginToCreate') }}
           </RouterLink>
         </div>
       </header>

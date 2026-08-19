@@ -32,6 +32,14 @@ export function useLegalNoticePage() {
   const hasRegisterDetails = computed(() => registerDetails.value.length > 0)
   const hasTaxDetails = computed(() => Boolean(notice.value.vat_id || notice.value.business_id))
   const hasEditorialResponsibility = computed(() => Boolean(notice.value.editorial_responsible_name))
+  const publicRepositoryUrl = computed(() => {
+    try {
+      const url = new URL(notice.value.public_repository_url || '')
+      return url.protocol === 'https:' ? url.href : ''
+    } catch {
+      return ''
+    }
+  })
   const lastUpdated = computed(() => {
     if (!notice.value.updated_at) return ''
     return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(notice.value.updated_at))
@@ -62,6 +70,7 @@ export function useLegalNoticePage() {
     hasRegisterDetails,
     hasTaxDetails,
     hasEditorialResponsibility,
+    publicRepositoryUrl,
     lastUpdated,
     loadNotice,
   }

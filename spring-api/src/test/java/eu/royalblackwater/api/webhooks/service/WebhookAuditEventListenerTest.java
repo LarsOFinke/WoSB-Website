@@ -32,6 +32,15 @@ class WebhookAuditEventListenerTest {
                 "Webhook created."))).isEmpty();
     }
 
+    @Test
+    void mapsWarehouseStockAndReservationActions() {
+        assertThat(WebhookAuditEventListener.map(audit("warehouse_entry", "41", "update",
+                "Warehouse stock updated.")).orElseThrow().eventType()).isEqualTo("warehouse.stock.changed");
+        assertThat(WebhookAuditEventListener.map(audit("warehouse_entry", "41", "reservation",
+                "Warehouse reservation changed.")).orElseThrow().eventType())
+                .isEqualTo("warehouse.reservation.changed");
+    }
+
     private static AuditRecordedEvent audit(String type, String id, String action, String summary) {
         String scopeType = "fleet".equals(type) ? "fleet" : null;
         Long scopeId = scopeType == null ? null : Long.valueOf(id);

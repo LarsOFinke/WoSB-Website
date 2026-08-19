@@ -92,6 +92,9 @@ behavior that static analysis cannot resolve.
 - Spring Security is the sole authentication and authorization boundary. Mutating
   browser requests retain session/JWT validation as applicable, CSRF, host and
   origin controls. Endpoint-local authentication shortcuts are prohibited.
+- Every mutating OpenAPI operation is classified fail-closed as anonymous,
+  administrator-only, staff-only, or an explicitly reviewed authenticated
+  self-service operation by `audit_authorization_policy.py`.
 - Transactions encompass a business mutation and its required audit record.
 - SQL remains parameterized and belongs to the owning module's repository layer.
   Services contain no SQL literals and do not access the generic JDBC executor.

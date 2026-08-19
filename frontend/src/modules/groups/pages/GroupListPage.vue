@@ -3,7 +3,7 @@ import { useGroupListPage } from '@/modules/groups/composables/useGroupListPage'
 
 const {
   t,
-  isAuthenticated,
+  canAuthorContent,
   groups,
   search,
   focus,
@@ -34,11 +34,8 @@ const {
         </div>
         <div class="hero-actions">
           <span class="summary-pill">{{ groupCountLabel }}</span>
-          <RouterLink v-if="isAuthenticated" class="button-box primary-action" to="/groups/new">
+          <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/groups/new">
             {{ t('groups.list.newGroup') }}
-          </RouterLink>
-          <RouterLink v-else class="button-box primary-action" to="/login">
-            {{ t('groups.list.loginToCreate') }}
           </RouterLink>
         </div>
       </header>

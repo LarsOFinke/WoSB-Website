@@ -53,13 +53,19 @@ GET  /api/auth/me                   Cookie: rbf_hub_session=...
 
 - Public health, registration, legal/privacy and explicitly public discovery
   endpoints are allow-listed in `SecurityConfiguration`.
-- Member endpoints require an authenticated active user.
-- Fleet/squad management is checked server-side against current memberships and
-  role capabilities in domain services.
+- Member read and self-service endpoints require an authenticated active user.
+  Ordinary users can browse content visible to them, update their own profile,
+  change their password, submit privacy requests, join groups, and apply to a fleet.
+- Shared-content mutations—including builds and votes, guides, forum content,
+  events, uploads, groups, fleets, squads, strategies, and the newcomer guide—require
+  `ROLE_MODERATOR` or `ROLE_ADMIN` at the Spring Security request boundary. Existing
+  ownership checks remain additional domain constraints. Fleet and squad management
+  reads enforce the same staff threshold in their domain services; historical
+  membership leadership labels do not grant ordinary accounts management access.
 - Staff and administrator operations under `/api/admin/**` require the matching
   authority; frontend route guards are not a security boundary.
 - Ownership checks for builds, guides, files, groups and forum content are domain
-  rules and may be stricter than the path prefix suggests.
+  rules and may be stricter than the moderator-level path boundary suggests.
 
 The OpenAPI snapshot does not duplicate dynamic authorization rules per endpoint.
 For a security-sensitive change, inspect `SecurityConfiguration`, the owning
@@ -102,6 +108,20 @@ Growing collections use the contract's bounded `search`, `limit`, `offset`, sort
 and domain filter parameters. Clients must not assume an unbounded complete list
 or invent undocumented query parameters. Defaults and maximums are defined by
 the OpenAPI parameter schemas and enforced again by the backend.
+
+## Guild warehouse administration
+
+`/api/admin/warehouse` is the authoritative warehouse collection. Administrators may
+filter its bounded list by fleet, holder, port, resource, and reservation state; the
+response includes matching stock totals and fleet-aware facet values. Creates and
+updates choose exactly one holder source: an active member of the selected fleet or a
+custom operational name. Updates and deletes include the current row version and return
+`409` when another client has already changed the entry.
+
+All mutations create fleet-scoped audit events. Existing website-webhook subscriptions
+may deliver `warehouse.stock.changed` and `warehouse.reservation.changed` to Discord;
+webhook URLs and credentials remain server-side. See the
+[Guild Warehouse reference](GUILD_WAREHOUSE.md) for the data and integration contract.
 
 ## OpenAPI change workflow
 

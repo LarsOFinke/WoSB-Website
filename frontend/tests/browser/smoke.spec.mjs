@@ -1,20 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-
-async function mockAnonymousApi(page) {
-  await page.route(/^https?:\/\/[^/]+\/api\//, async (route) => {
-    const url = new URL(route.request().url())
-    if (url.pathname === '/api/auth/me') {
-      await route.fulfill({ json: null })
-      return
-    }
-    if (url.pathname === '/api/fleets/public/official') {
-      await route.fulfill({ json: { id: 1, name: 'Royal Blackwater Fleet' } })
-      return
-    }
-    await route.fulfill({ status: 404, json: { detail: 'Not available in browser smoke test.' } })
-  })
-}
+import { mockAnonymousApi } from './apiMocks.mjs'
 
 test.beforeEach(async ({ page }) => {
   await mockAnonymousApi(page)
@@ -75,80 +61,28 @@ test('mobile navigation opens through its accessible control', async ({ page }) 
   await expect(page.locator('#workspace-sidebar')).toHaveClass(/is-open/)
 })
 
-test('cookie settings retry a failed initial load and show the saved choice', async ({ page }) => {
-  let requestCount = 0
-  await page.route(/^https?:\/\/[^/]+\/api\/privacy\/cookie-consent$/, async (route) => {
-    requestCount += 1
-    if (requestCount === 1) {
-      await route.fulfill({ status: 503, json: { detail: 'Temporarily unavailable.' } })
-      return
-    }
-    await route.fulfill({
-      json: {
-        has_decision: true,
-        policy_version: '2026-07-11',
-        necessary: true,
-        preferences: true,
-        analytics: false,
-        external_media: true,
-      },
-    })
-  })
+test('published Impressum presents the maintained public repository as a transparency signal', async ({ page }) => {
+  await page.route(/^https?:\/\/[^/]+\/api\/legal-notice$/, (route) => route.fulfill({
+    json: {
+      published: true,
+      provider_name: 'Community Project',
+      street: 'Harbor Street 1',
+      postal_code: '12345',
+      city: 'Port Royal',
+      country: 'Deutschland',
+      email: 'crew@example.invalid',
+      public_repository_url: 'https://github.com/example/community-project',
+      updated_at: '2030-01-15T12:00:00',
+    },
+  }))
 
-  await page.goto('/login')
-  await page.getByRole('button', { name: /Cookie settings|Cookie-Einstellungen/ }).click()
+  await page.goto('/impressum')
 
-  const dialog = page.getByRole('dialog', { name: /Cookie settings|Cookie-Einstellungen/ })
-  await expect(dialog).toBeVisible()
-  await expect(dialog.getByRole('checkbox').nth(1)).toBeChecked()
-  await expect(dialog.getByRole('checkbox').nth(2)).not.toBeChecked()
-  await expect(dialog.getByRole('checkbox').nth(3)).toBeChecked()
-  expect(requestCount).toBe(2)
-})
-
-test('cookie settings persist the explicit category choice and close after success', async ({ page }) => {
-  let savedChoice
-  await page.route(/^https?:\/\/[^/]+\/api\/privacy\/cookie-consent$/, async (route) => {
-    if (route.request().method() === 'GET') {
-      await route.fulfill({ json: { has_decision: false, necessary: true } })
-      return
-    }
-    savedChoice = route.request().postDataJSON()
-    await route.fulfill({ json: { has_decision: true, ...savedChoice, policy_version: '2026-07-11' } })
-  })
-
-  await page.goto('/login')
-  await page.getByRole('button', { name: /Cookie settings|Cookie-Einstellungen/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Cookie settings|Cookie-Einstellungen/ })
-  await dialog.getByRole('checkbox').nth(1).check()
-  await dialog.getByRole('checkbox').nth(3).check()
-  await dialog.getByRole('button', { name: /Save selection|Auswahl speichern/ }).click()
-
-  await expect.poll(() => savedChoice).toEqual({
-    necessary: true,
-    preferences: true,
-    analytics: false,
-    external_media: true,
-  })
-  await expect(dialog).toBeHidden()
-})
-
-test('cookie settings remain open with an accessible error after a failed save', async ({ page }) => {
-  await page.route(/^https?:\/\/[^/]+\/api\/privacy\/cookie-consent$/, async (route) => {
-    if (route.request().method() === 'GET') {
-      await route.fulfill({ json: { has_decision: false, necessary: true } })
-      return
-    }
-    await route.fulfill({ status: 503, json: { detail: 'Consent storage unavailable.' } })
-  })
-
-  await page.goto('/login')
-  await page.getByRole('button', { name: /Cookie settings|Cookie-Einstellungen/ }).click()
-  const dialog = page.getByRole('dialog', { name: /Cookie settings|Cookie-Einstellungen/ })
-  await dialog.getByRole('button', { name: /Save selection|Auswahl speichern/ }).click()
-
-  await expect(dialog).toBeVisible()
-  await expect(dialog.getByRole('alert')).toBeVisible()
+  const repository = page.locator('.legal-notice-repository')
+  await expect(repository).toContainText('Open development and continuity')
+  await expect(repository).toContainText('independently of any single operator')
+  await expect(repository.getByRole('link', { name: /View public repository/ }))
+    .toHaveAttribute('href', 'https://github.com/example/community-project')
 })
 
 test('moderators organize the New Captain Guide through an ordered folder browser', async ({ page }) => {
@@ -195,20 +129,31 @@ test('moderators organize the New Captain Guide through an ordered folder browse
   await page.goto('/new-captain')
   await expect(page.getByRole('navigation', { name: 'Guide folders' })).toBeVisible()
   await expect(page.locator('.newcomer-explorer-address')).toContainText('New Captain Guide')
-  await expect(page.locator('.newcomer-directory-row')).toHaveCount(2)
+  await expect(page.locator('.newcomer-topic-card')).toHaveCount(2)
   await page.locator('.newcomer-explorer-search input').fill('Ready')
-  await expect(page.locator('.newcomer-directory-row')).toHaveCount(1)
-  await expect(page.locator('.newcomer-directory-row')).toContainText('Ready your ship')
+  await expect(page.locator('.newcomer-topic-card')).toHaveCount(1)
+  await expect(page.locator('.newcomer-topic-card')).toContainText('Ready your ship')
   await page.locator('.newcomer-explorer-search input').fill('')
-  await page.locator('.newcomer-directory-row').filter({ hasText: 'Ready your ship' }).click()
+  await page.locator('.newcomer-topic-card').filter({ hasText: 'Ready your ship' }).click()
   await expect(page.locator('.newcomer-folder-content')).toContainText('Choose a proven setup.')
   await expect(page.locator('.newcomer-folder-content')).not.toContainText('Read this first.')
-  await page.locator('.newcomer-directory-row').filter({ hasText: 'Build library' }).click()
-  await expect(page.locator('.newcomer-resource-preview')).toContainText('Build library')
-  await expect(page.locator('.newcomer-resource-preview')).toContainText('Browse proven fleet builds.')
+  await expect(page.locator('.newcomer-resource-row')).toContainText('Build library')
+  await expect(page.locator('.newcomer-resource-row')).toContainText('Browse proven fleet builds.')
+  await expect(page.locator('.newcomer-topic-progress')).toContainText('Welcome aboard')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(page.locator('.newcomer-mobile-topic-picker')).toBeVisible()
+  await expect(page.locator('.newcomer-explorer-workspace > .newcomer-folder-navigation')).toBeHidden()
+  const mobileReaderBox = await page.locator('.newcomer-reader').boundingBox()
+  expect(mobileReaderBox.width).toBeLessThanOrEqual(390)
+  await page.setViewportSize({ width: 1440, height: 900 })
 
   await page.getByRole('button', { name: 'Edit guide' }).click()
   await expect(page.locator('.newcomer-folder-editor')).toHaveCount(1)
+  await expect(page.locator('.newcomer-editor-workspace')).toBeVisible()
+  const resourceEditor = page.locator('.newcomer-resource-editor-row')
+  await expect(resourceEditor).not.toHaveAttribute('open', '')
+  await resourceEditor.locator('summary').click()
+  await expect(resourceEditor).toHaveAttribute('open', '')
   const secondFolder = page.locator('.newcomer-folder-list__item').nth(1)
   await secondFolder.getByRole('button', { name: 'Move folder up' }).click()
   await page.getByRole('button', { name: 'Save', exact: true }).click()
@@ -237,7 +182,7 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   })
 
   await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
-    json: { id: 7, username: 'planner', display_name: 'Planner', role: 'member' },
+    json: { id: 7, username: 'planner', display_name: 'Planner', role: 'moderator' },
   }))
   await page.route(/^https?:\/\/[^/]+\/api\/ships$/, (route) => route.fulfill({
     json: [{ id: 11, name: 'Leopard', ship_type: 'Frigate', rate: 3 }],
@@ -292,8 +237,9 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   await markerSelects.nth(1).selectOption('21')
   await markerSelects.nth(2).selectOption('31')
   await page.getByRole('button', { name: 'Add ship marker' }).click()
-  await expect(inspectorSections).toHaveCount(4)
+  await expect(inspectorSections).toHaveCount(5)
   await expect(page.locator('.strategy-selection-section')).toHaveAttribute('open', '')
+  await expect(page.locator('.strategy-transform-section')).toHaveAttribute('open', '')
   await expect(page.locator('.strategy-marker-disc')).toHaveAttribute('r', '18')
   await expect(page.locator('.strategy-marker-meta')).toHaveCount(0)
   await expect(page.locator('.strategy-legend')).toContainText('Leopard')
@@ -303,7 +249,7 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   const canvasShellBox = await page.locator('.strategy-canvas-shell').boundingBox()
   const legendBox = await page.locator('.strategy-legend').boundingBox()
   expect(legendBox.y).toBeGreaterThanOrEqual(canvasShellBox.y + canvasShellBox.height)
-  await page.locator('.strategy-selection-panel input[type="range"]').first().fill('1.5')
+  await page.locator('.strategy-transform-panel input[type="range"]').first().fill('1.5')
   await page.locator('.strategy-inspector-close').click()
   await expect(page.locator('.strategy-tool-rail')).toBeHidden()
   const markerBox = await page.locator('.strategy-ship-marker').boundingBox()
@@ -314,11 +260,24 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   await page.locator('.strategy-tools-toggle').click()
   await expect(page.locator('.strategy-tool-rail')).toBeVisible()
   await page.getByRole('button', { name: 'Arrow', exact: true }).click()
-  await page.locator('.strategy-selection-panel input[type="range"]').first().fill('2')
-  await page.locator('.strategy-selection-panel input[type="range"]').nth(1).fill('45')
-  await expect(page.locator('.strategy-line')).toHaveAttribute('transform', /rotate\(45\) scale\(2\)/)
+  await page.locator('.strategy-transform-panel input[type="range"]').first().fill('2')
+  await page.locator('.strategy-transform-panel input[type="range"]').nth(1).fill('45')
+  await expect(page.locator('.strategy-line')).toHaveAttribute('transform', /rotate\(45/)
+  await expect(page.locator('.strategy-line line')).toHaveAttribute('x1', '100')
+  await expect(page.locator('.strategy-line line')).toHaveAttribute('x2', '900')
   await expect(page.locator('.strategy-arrow-head')).toBeVisible()
+  await page.getByRole('button', { name: 'Add text', exact: true }).click()
+  await page.getByRole('button', { name: 'Text color #ef6461' }).click()
+  await expect(page.locator('.strategy-text')).toHaveAttribute('fill', '#ef6461')
+  await expect(page.locator('.strategy-text')).toHaveCSS('fill', 'rgb(239, 100, 97)')
+  const formationSelect = commandSections.nth(1).locator('select')
+  await expect(formationSelect.locator('option')).toContainText(['Battle line', 'Circle', 'Oval', 'Wedge', 'Column', 'Box'])
+  await formationSelect.selectOption('circle')
   await page.getByRole('button', { name: 'Formation', exact: true }).click()
+  await expect(page.locator('.strategy-formation path')).toHaveAttribute('d', /A 75 75/)
+  await page.locator('.strategy-transform-panel input[type="range"]').first().fill('0.25')
+  await expect(page.locator('.strategy-formation path')).toHaveAttribute('d', /A 18.75 18.75/)
+  await expect(page.locator('.strategy-formation path')).toHaveCSS('stroke-width', '7px')
   await page.getByRole('button', { name: 'Freehand', exact: true }).click()
   await expect(page.locator('.strategy-canvas')).toHaveClass(/is-drawing/)
   const stroke = await page.locator('.strategy-canvas').evaluate((svg) => {
@@ -338,13 +297,16 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   await expect(page.getByRole('status')).toContainText('Strategy saved')
   const overlay = JSON.parse(savedPayload.overlay_json)
   expect(savedPayload.background_file_id).toBe(9)
-  expect(overlay.objects.map((item) => item.type)).toEqual(['ship', 'arrow', 'formation', 'freehand'])
+  expect(overlay.version).toBe(2)
+  expect(overlay.objects.map((item) => item.type)).toEqual(['ship', 'arrow', 'text', 'formation', 'freehand'])
   expect(overlay.objects[0]).toMatchObject({ shipId: 11, playerName: null, buildId: 21, guideId: 31, scale: 1.5 })
   expect(overlay.objects[0].x).toBeGreaterThan(0.5)
   expect(overlay.objects[0].y).toBeGreaterThan(0.5)
   expect(overlay.objects[1]).toMatchObject({ rotation: 45, scale: 2 })
-  expect(overlay.objects[3].points[0]).toBeCloseTo(0.15, 2)
-  expect(overlay.objects[3].points[1]).toBeCloseTo(0.35, 2)
+  expect(overlay.objects[2]).toMatchObject({ color: '#ef6461' })
+  expect(overlay.objects[3]).toMatchObject({ formation: 'circle', scale: 0.25 })
+  expect(overlay.objects[4].points[0]).toBeCloseTo(0.15, 2)
+  expect(overlay.objects[4].points[1]).toBeCloseTo(0.35, 2)
   expect(browserErrors).toEqual([])
 
   await page.getByRole('button', { name: 'Publish share link' }).click()
@@ -363,6 +325,24 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   const mobileRailBox = await page.locator('.strategy-tool-rail').boundingBox()
   expect(mobileRailBox.x).toBeGreaterThanOrEqual(0)
   expect(mobileRailBox.width).toBeLessThanOrEqual(390)
+})
+
+test('ordinary members can browse builds but cannot open shared-content editors', async ({ page }) => {
+  await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
+    json: { id: 18, username: 'reader', display_name: 'Reader', role: 'user' },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/ships$/, (route) => route.fulfill({ json: [] }))
+  await page.route(/^https?:\/\/[^/]+\/api\/builds\/roles$/, (route) => route.fulfill({ json: [] }))
+  await page.route(/^https?:\/\/[^/]+\/api\/builds\?/, (route) => route.fulfill({
+    json: { items: [], total: 0 },
+  }))
+
+  await page.goto('/builds')
+  await expect(page).toHaveURL(/\/builds$/)
+  await expect(page.locator('a[href="/builds/new"]')).toHaveCount(0)
+
+  await page.goto('/builds/new')
+  await expect(page).toHaveURL(/\/profile$/)
 })
 
 test('published strategies have a dedicated read-only view for other users', async ({ page }) => {

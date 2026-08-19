@@ -4,7 +4,8 @@ import '@/modules/legal/styles/legalNotice.css'
 
 const {
   t, notice, loading, error, providerAddress, editorialAddress, registerDetails,
-  hasRegisterDetails, hasTaxDetails, hasEditorialResponsibility, lastUpdated, loadNotice,
+  hasRegisterDetails, hasTaxDetails, hasEditorialResponsibility, publicRepositoryUrl,
+  lastUpdated, loadNotice,
 } = useLegalNoticePage()
 </script>
 
@@ -78,6 +79,18 @@ const {
           <strong>{{ notice.editorial_responsible_name }}</strong>
           <span v-for="line in editorialAddress" :key="line">{{ line }}</span>
         </address>
+      </section>
+
+      <section v-if="publicRepositoryUrl" class="wire-section legal-notice-card legal-notice-repository legal-notice-wide">
+        <div>
+          <p class="eyebrow">{{ t('legalNotice.sections.transparency') }}</p>
+          <h2>{{ t('legalNotice.public.repositoryTitle') }}</h2>
+          <p>{{ t('legalNotice.public.repositoryText') }}</p>
+        </div>
+        <a class="button-box" :href="publicRepositoryUrl" target="_blank" rel="noopener noreferrer">
+          {{ t('legalNotice.public.repositoryLink') }}
+          <span aria-hidden="true">↗</span>
+        </a>
       </section>
 
       <section v-if="notice.dispute_resolution_text" class="wire-section legal-notice-card legal-notice-wide">

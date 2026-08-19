@@ -96,6 +96,13 @@
       "title": "Published",
       "type": "boolean"
     },
+    "public_repository_url": {
+      "default": "",
+      "maxLength": 2048,
+      "pattern": "^$|^https://(?![^/]*@)[^\\s]+$",
+      "title": "Public Repository URL",
+      "type": "string"
+    },
     "register_court": {
       "default": "",
       "maxLength": 200,

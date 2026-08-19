@@ -1,4 +1,5 @@
-export const STRATEGY_DOCUMENT_VERSION = 1
+export const STRATEGY_DOCUMENT_VERSION = 2
+const LEGACY_STRATEGY_DOCUMENT_VERSION = 1
 export const STRATEGY_COLORS = ['#f4c76b', '#ef6461', '#5cc8ff', '#65d68a', '#ffffff']
 const STRATEGY_OBJECT_FIELDS = [
   'id', 'type', 'x', 'y', 'x2', 'y2', 'width', 'height', 'rotation', 'scale', 'color', 'text',
@@ -24,11 +25,14 @@ export function emptyStrategyDocument() {
 export function parseStrategyDocument(value) {
   try {
     const parsed = typeof value === 'string' ? JSON.parse(value) : value
-    if (parsed?.version !== STRATEGY_DOCUMENT_VERSION || !Array.isArray(parsed.objects)) return emptyStrategyDocument()
+    if (![LEGACY_STRATEGY_DOCUMENT_VERSION, STRATEGY_DOCUMENT_VERSION].includes(parsed?.version) || !Array.isArray(parsed.objects)) return emptyStrategyDocument()
     return {
       version: STRATEGY_DOCUMENT_VERSION,
       objects: parsed.objects.map((item) => {
         const normalized = { ...item, rotation: Number(item.rotation ?? 0), scale: Number(item.scale ?? 1) }
+        if (parsed.version === LEGACY_STRATEGY_DOCUMENT_VERSION && normalized.type === 'formation' && normalized.formation === 'circle') {
+          normalized.formation = 'oval'
+        }
         for (const [field, alias] of Object.entries(OBJECT_FIELD_ALIASES)) {
           if (normalized[field] == null && normalized[alias] != null) {
             normalized[field] = NUMERIC_OBJECT_FIELDS.has(field) ? Number(normalized[alias]) : normalized[alias]
@@ -124,7 +128,7 @@ export function createLine(type = 'arrow', color = STRATEGY_COLORS[0]) {
 }
 
 export function createFormation(formation = 'line', color = STRATEGY_COLORS[2]) {
-  return { id: objectId('formation'), type: 'formation', formation, x: 0.3, y: 0.35, width: 0.4, height: 0.3, rotation: 0, color, scale: 1 }
+  return { id: objectId('formation'), type: 'formation', formation, x: 0.5, y: 0.5, width: 0.32, height: 0.24, rotation: 0, color, scale: 1 }
 }
 
 export function createText(text = 'Strategy note', color = '#ffffff') {

@@ -7,7 +7,6 @@ import eu.royalblackwater.api.fleet.mapper.FleetDtoMapper;
 import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetAccessQueries;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,16 +26,11 @@ public class FleetAccessPolicy {
     public Set<Long> managedFleetIds(AuthenticatedUser actor, List<Long> fleetIds) {
         if (fleetIds == null || fleetIds.isEmpty()) return Set.of();
         if (actor.staff()) return Set.copyOf(fleetIds);
-        Set<Long> result = new LinkedHashSet<>();
-        for (Map<String, Object> row : repository.query(FleetAccessQueries.MANAGED_FLEET_IDS_SELECT_01, Map.of("fleetIds", fleetIds, "userId", actor.id()))) {
-            result.add(((Number) row.get("fleet_id")).longValue());
-        }
-        return Set.copyOf(result);
+        return Set.of();
     }
 
     public boolean canManageFleet(AuthenticatedUser actor, long fleetId) {
-        if (actor.staff()) return true;
-        return repository.count(FleetAccessQueries.CAN_MANAGE_FLEET_SELECT_01, Map.of("fleetId", fleetId, "userId", actor.id())) > 0;
+        return actor.staff();
     }
 
     public void requireFleetManager(AuthenticatedUser actor, long fleetId) {
@@ -46,6 +40,10 @@ public class FleetAccessPolicy {
     }
 
     public void requireRoleManager(AuthenticatedUser actor, long fleetId) {
+        if (!actor.staff()) {
+            throw new ResponseStatusException(FORBIDDEN,
+                    "Moderator access required to manage fleet roles.");
+        }
         if (actor.isAdmin()) return;
         long allowed = repository.count(FleetAccessQueries.REQUIRE_ROLE_MANAGER_SELECT_01, Map.of("fleetId", fleetId, "userId", actor.id()));
         if (allowed == 0) {
@@ -86,6 +84,7 @@ public class FleetAccessPolicy {
 
     public FleetMembershipManagementRead permissions(
             AuthenticatedUser actor, long fleetId, FleetMembershipTargetDto target) {
+        if (!actor.staff()) return result(false, false, false, List.of(), "insufficient");
         long targetUserId = target.userId();
         String targetRole = target.role();
         long targetRank = target.roleRank();

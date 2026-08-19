@@ -41,7 +41,7 @@ const {
             {{ t('squads.detail.openCalendar') }}
           </RouterLink>
           <RouterLink
-            v-if="squad?.can_manage && squad?.is_active"
+            v-if="canManageFleet && squad?.can_manage && squad?.is_active"
             class="button-box primary-action"
             :to="{ path: '/calendar/new', query: { squad: squad.id } }"
           >
@@ -76,7 +76,7 @@ const {
         <p v-if="error" class="wire-section error-text table-state">{{ error }}</p>
         <p v-if="success" class="wire-section success-text table-state">{{ success }}</p>
 
-        <section v-if="squad.can_manage" class="wire-section squad-editor-panel">
+        <section v-if="canManageFleet && squad.can_manage" class="wire-section squad-editor-panel">
           <div class="section-heading-row">
             <div>
               <p class="eyebrow">{{ t('squads.detail.managementEyebrow') }}</p>
@@ -124,7 +124,7 @@ const {
             <span class="summary-pill">{{ t('squads.detail.rosterCount', { count: squad.members.length }) }}</span>
           </div>
 
-          <form v-if="squad.can_manage && availableRoster.length" class="squad-add-member-form" @submit.prevent="addMember">
+          <form v-if="canManageFleet && squad.can_manage && availableRoster.length" class="squad-add-member-form" @submit.prevent="addMember">
             <label class="field-stack squad-member-select">
               <span class="field-label">{{ t('squads.detail.addMember') }}</span>
               <span class="select-shell full-select-shell">
@@ -163,7 +163,7 @@ const {
                 </div>
               </div>
 
-              <template v-if="squad.can_manage && memberDrafts[member.id]">
+              <template v-if="canManageFleet && squad.can_manage && memberDrafts[member.id]">
                 <label class="field-stack squad-member-role-field">
                   <span class="field-label">{{ t('squads.fields.role') }}</span>
                   <span class="select-shell full-select-shell">

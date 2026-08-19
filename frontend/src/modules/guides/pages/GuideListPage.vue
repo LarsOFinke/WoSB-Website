@@ -10,7 +10,7 @@ import { useGuideListPage } from '@/modules/guides/composables/useGuideListPage'
 
 const {
   t,
-  isAuthenticated,
+  canAuthorContent,
   guides,
   search,
   category,
@@ -34,9 +34,9 @@ const {
           <h1 id="guides-title">{{ t('guides.list.title') }}</h1>
           <p>{{ t('guides.list.subtitle') }}</p>
         </div>
-        <RouterLink class="guide-primary-action" :to="isAuthenticated ? '/guides/new' : '/login'">
+        <RouterLink v-if="canAuthorContent" class="guide-primary-action" to="/guides/new">
           <span aria-hidden="true">+</span>
-          {{ t(isAuthenticated ? 'guides.list.newGuide' : 'guides.list.loginToCreate') }}
+          {{ t('guides.list.newGuide') }}
         </RouterLink>
       </header>
 

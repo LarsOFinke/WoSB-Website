@@ -103,7 +103,8 @@ public class LegalNoticeService {
                 "editorialResponsibleCity", value(p.editorialResponsibleCity()),
                 "editorialResponsibleCountry", value(p.editorialResponsibleCountry()),
                 "disputeResolutionText", value(p.disputeResolutionText()),
-                "additionalInformation", value(p.additionalInformation()), "updatedBy", updatedBy,
+                "additionalInformation", value(p.additionalInformation()),
+                "publicRepositoryUrl", value(p.publicRepositoryUrl()), "updatedBy", updatedBy,
                 "updatedAt", now());
     }
 
@@ -133,7 +134,8 @@ public class LegalNoticeService {
                 Map.entry("editorialResponsibleCity","editorial_responsible_city"),
                 Map.entry("editorialResponsibleCountry","editorial_responsible_country"),
                 Map.entry("disputeResolutionText","dispute_resolution_text"),
-                Map.entry("additionalInformation","additional_information"));
+                Map.entry("additionalInformation","additional_information"),
+                Map.entry("publicRepositoryUrl","public_repository_url"));
         columns.forEach((parameter,column) -> {
             if (!java.util.Objects.equals(previous.get(column), next.get(parameter))) changed.add(column);
         });
