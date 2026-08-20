@@ -4,7 +4,7 @@ import { useWarehousePage } from '@/modules/warehouse/composables/useWarehousePa
 import '@/modules/warehouse/styles/warehouse.css'
 
 const {
-  t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
+  t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
   editorOpen, editorTitle, draft, filters, formatAmount, formatDateTime, loadEntries, openCreate,
   openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, loadAssignments, saveAssignment, publishOverview,
 } = useWarehousePage()
@@ -35,7 +35,7 @@ const {
           <label><span>{{ t('warehouse.fields.fleet') }}</span><select v-model="filters.fleet_id" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">{{ fleet.name }}</option></select></label>
           <label><span>{{ t('warehouse.fields.holder') }}</span><select v-model="filters.holder" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option v-for="holder in page.holders" :key="holder" :value="holder">{{ holder }}</option></select></label>
           <label><span>{{ t('warehouse.fields.port') }}</span><select v-model="filters.port" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option v-for="port in ports" :key="port.id" :value="port.name">{{ port.name }}</option></select></label>
-          <label><span>{{ t('warehouse.fields.resource') }}</span><select v-model="filters.resource" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option v-for="resource in page.resources" :key="resource" :value="resource">{{ resource }}</option></select></label>
+          <label><span>{{ t('warehouse.fields.resource') }}</span><select v-model="filters.resource" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option v-for="resource in resources" :key="resource" :value="resource">{{ resource }}</option></select></label>
           <label><span>{{ t('warehouse.fields.status') }}</span><select v-model="filters.reserved" @change="loadEntries"><option value="">{{ t('warehouse.filters.all') }}</option><option value="false">{{ t('warehouse.status.available') }}</option><option value="true">{{ t('warehouse.status.reserved') }}</option></select></label>
         </div>
       </section>
@@ -81,6 +81,6 @@ const {
       </section>
     </div>
 
-    <WarehouseEntryEditor v-if="canManageWarehouse && editorOpen" :title="editorTitle" :draft="draft" :fleets="fleets" :members="members" :ports="ports" :saving="saving" :t="t" @cancel="closeEditor" @fleet-change="changeDraftFleet" @save="saveEntry" />
+    <WarehouseEntryEditor v-if="canManageWarehouse && editorOpen" :title="editorTitle" :draft="draft" :fleets="fleets" :members="members" :ports="ports" :resources="resources" :saving="saving" :t="t" @cancel="closeEditor" @fleet-change="changeDraftFleet" @save="saveEntry" />
   </section>
 </template>

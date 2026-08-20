@@ -8,6 +8,7 @@ import eu.royalblackwater.api.warehouse.repository.WarehouseRepository;
 import eu.royalblackwater.api.warehouse.repository.queries.WarehouseQueries;
 import eu.royalblackwater.api.warehouse.service.WarehouseService;
 import eu.royalblackwater.api.warehouse.service.WarehousePortService;
+import eu.royalblackwater.api.warehouse.service.WarehouseResourceService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -136,7 +137,9 @@ class WarehouseServiceTest {
     private static WarehouseService service(WarehouseRepository repository, AuditService audit) {
         WarehousePortService ports = mock(WarehousePortService.class);
         when(ports.requireActiveName(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        return new WarehouseService(repository, ports, audit, CLOCK);
+        WarehouseResourceService resources = mock(WarehouseResourceService.class);
+        when(resources.requireActiveName(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        return new WarehouseService(repository, ports, resources, audit, CLOCK);
     }
 
     private static Map<String, Object> row(long id, long version, long amount, boolean reserved) {

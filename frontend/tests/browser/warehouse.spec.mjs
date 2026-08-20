@@ -15,6 +15,9 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/ports$/, (route) => route.fulfill({
     json: [{ id: 1, name: 'Tortuga', sort_order: 10, is_active: true, created_at: '2030-01-01T00:00:00', updated_at: '2030-01-01T00:00:00' }],
   }))
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/resources$/, (route) => route.fulfill({
+    json: ['Battlemark', 'Captives', 'Coal', 'Construction License', 'Iron', 'Sailcloth', 'Wood'],
+  }))
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/port-assignments\?fleet_id=2$/, (route) => route.fulfill({
     json: [{ fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', port_id: 1, port_name: 'Tortuga', assignee_user_id: null, assignee_name: null, updated_at: '2030-01-01T00:00:00' }],
   }))
@@ -34,7 +37,7 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
       items, total: items.length, matching_stock: items.reduce((sum, item) => sum + item.amount, 0),
       reserved_stock: 0, available_stock: items.reduce((sum, item) => sum + item.amount, 0),
       holders: items.map((item) => item.holder_name), ports: items.map((item) => item.port),
-      resources: items.map((item) => item.resource),
+      resources: ['Iron'],
     } })
   })
 
@@ -46,7 +49,7 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
   await dialog.getByRole('combobox', { name: 'Fleet', exact: true }).selectOption('2')
   await dialog.getByRole('combobox', { name: 'Linked fleet member', exact: true }).selectOption('17')
   await dialog.getByRole('combobox', { name: 'Port' }).selectOption('Tortuga')
-  await dialog.getByLabel('Resource').fill('Iron')
+  await dialog.getByLabel('Resource').selectOption('Iron')
   await dialog.getByLabel('Amount').fill('1250')
   await dialog.getByRole('button', { name: 'Save entry' }).click()
 
@@ -68,6 +71,9 @@ test('ordinary member can browse warehouse without mutation controls', async ({ 
   }))
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/ports$/, (route) => route.fulfill({
     json: [{ id: 1, name: 'Tortuga', sort_order: 10, is_active: true, created_at: '2030-01-01T00:00:00', updated_at: '2030-01-01T00:00:00' }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/resources$/, (route) => route.fulfill({
+    json: ['Battlemark', 'Captives', 'Coal', 'Construction License', 'Iron', 'Sailcloth', 'Wood'],
   }))
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse(?:\?.*)?$/, (route) => route.fulfill({ json: {
     items: [{

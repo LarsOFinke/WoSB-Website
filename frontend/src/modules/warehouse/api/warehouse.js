@@ -9,6 +9,10 @@ export function listWarehousePorts() {
   return get('/warehouse/ports')
 }
 
+export function listWarehouseResources() {
+  return get('/warehouse/resources')
+}
+
 export function listAdminWarehousePorts() {
   return get('/admin/master-data/warehouse-ports')
 }

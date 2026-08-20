@@ -1,0 +1,20 @@
+{
+  "path": "/api/warehouse/resources",
+  "method": "get",
+  "operation": {
+    "operationId": "list_warehouse_resources_api_warehouse_resources_get",
+    "parameters": [],
+    "responses": {
+      "200": {
+        "description": "Successful Response",
+        "content": {
+          "application/json": {
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "summary": "List Active Warehouse Resources",
+    "tags": ["warehouse"]
+  }
+}

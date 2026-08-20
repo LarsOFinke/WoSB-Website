@@ -35,12 +35,15 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class WarehouseService {
     private final WarehouseRepository repository;
     private final WarehousePortService ports;
+    private final WarehouseResourceService resources;
     private final AuditService audit;
     private final Clock clock;
 
-    public WarehouseService(WarehouseRepository repository, WarehousePortService ports, AuditService audit, Clock clock) {
+    public WarehouseService(WarehouseRepository repository, WarehousePortService ports,
+                            WarehouseResourceService resources, AuditService audit, Clock clock) {
         this.repository = repository;
         this.ports = ports;
+        this.resources = resources;
         this.audit = audit;
         this.clock = clock;
     }
@@ -78,7 +81,7 @@ public class WarehouseService {
         long id = repository.insertReturningId(WarehouseQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                 "fleetId", payload.fleetId(), "memberUserId", holder.memberUserId(),
                 "customHolderName", holder.customName(), "port", port,
-                "resource", required(payload.resource(), "Resource"), "amount", payload.amount(),
+                "resource", resources.requireActiveName(payload.resource()), "amount", payload.amount(),
                 "reserved", Boolean.TRUE.equals(payload.reserved()), "collectionStatus", collectionStatus,
                 "now", now, "actorId", actor.id()));
         WarehouseEntryRead created = get(id);
@@ -97,7 +100,7 @@ public class WarehouseService {
         requireFleet(payload.fleetId());
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
         String port = ports.requireActiveName(payload.port());
-        String resource = required(payload.resource(), "Resource");
+        String resource = resources.requireActiveName(payload.resource());
         String collectionStatus = collectionStatus(payload.collectionStatus());
         List<String> changed = changedFields(previous, payload, holder, port, resource, collectionStatus);
         if (changed.isEmpty()) return WarehouseDtoMapper.entry(previous);

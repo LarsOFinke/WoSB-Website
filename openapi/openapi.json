@@ -12800,7 +12800,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.7.6"
+    "version": "1.7.11"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -25482,6 +25482,31 @@
           }
         },
         "summary": "List Active Warehouse Ports",
+        "tags": [
+          "warehouse"
+        ]
+      }
+    },
+    "/api/warehouse/resources": {
+      "get": {
+        "operationId": "list_warehouse_resources_api_warehouse_resources_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List Active Warehouse Resources",
         "tags": [
           "warehouse"
         ]

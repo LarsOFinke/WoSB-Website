@@ -25,15 +25,20 @@ warehouse. Its holder is exactly one of:
 Linked entries resolve the member's current display name when read. A custom name is
 stored as entered after whitespace normalization. Ports come from the dedicated,
 administrator-maintained `warehouse_ports` reference catalog; warehouse writes reject
-names that are not currently active. Resources remain normalized free text in this
-prototype. Amounts are limited to `999,999,999`.
+names that are not currently active. Resources come from the managed, seeded
+`warehouse_resources` catalog; warehouse writes reject resource names that are not active.
+The resource endpoint returns the catalog alphabetically. `V17__complete_world_of_sea_battle_item_catalog.sql`
+adds the known weapons, ammunition and consumable items as well as the material and trade goods.
+Amounts are limited to `999,999,999`.
 
 The `version` field implements optimistic concurrency. Every successful update advances
 it. Update and delete clients must send the version they read; stale mutations return
 `409 Conflict` and must reload before retrying. The immutable Flyway migration is
 `V12__guild_warehouse.sql`; `V13__warehouse_port_catalog.sql` adds the managed game-port
 catalog and its initial World of Sea Battle values. `V14__warehouse_collection_and_pickup_assignments.sql`
-adds collection state and the fleet/port pickup-assignee relation.
+adds collection state and the fleet/port pickup-assignee relation. `V15__warehouse_resource_catalog.sql`
+preserves existing resource names and adds the seeded game-resource catalog; `V16` adds the
+requested Construction License and Sailcloth entries; `V17` completes the item catalog.
 
 Each active fleet port may have one optional pickup assignee. The assignee must be an
 active member of that fleet; assignment changes are staff-only and are audited. Entries
@@ -55,6 +60,7 @@ administrator and CSRF protection:
 | --- | --- | --- |
 | `GET` | `/api/warehouse` | Member-visible bounded rows, aggregate totals, and filter facets |
 | `GET` | `/api/warehouse/ports` | Active game-port choices for authenticated members |
+| `GET` | `/api/warehouse/resources` | Active seeded game-resource choices for authenticated members |
 | `GET` | `/api/warehouse/port-assignments?fleet_id=...` | Fleet port pickup assignees (members may read their fleet) |
 | `PUT` | `/api/warehouse/port-assignments/{port_id}` | Staff assigns or clears a fleet-port pickup member |
 | `POST` | `/api/warehouse` | Staff-only entry creation |

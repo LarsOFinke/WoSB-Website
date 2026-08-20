@@ -10,6 +10,7 @@ import {
   listWarehouseMembers,
   listWarehousePortAssignments,
   listWarehousePorts,
+  listWarehouseResources,
   publishWarehouseOverviewWebhook,
   updateWarehouseEntry,
   updateWarehousePortAssignment,
@@ -35,6 +36,7 @@ export function useWarehousePage() {
   const fleets = ref([])
   const members = ref([])
   const ports = ref([])
+  const resources = ref([])
   const assignments = ref([])
   const assignmentFleetId = ref('')
   const loading = ref(false)
@@ -202,9 +204,12 @@ export function useWarehousePage() {
   onMounted(async () => {
     loading.value = true
     try {
-      const [fleetRows, portRows] = await Promise.all([listWarehouseFleets(), listWarehousePorts()])
+      const [fleetRows, portRows, resourceRows] = await Promise.all([
+        listWarehouseFleets(), listWarehousePorts(), listWarehouseResources(),
+      ])
       fleets.value = fleetRows.filter((fleet) => fleet.is_active)
       ports.value = portRows
+      resources.value = resourceRows
       if (canManageWarehouse.value) await loadAssignments(fleets.value[0]?.id || '')
       await loadEntries()
     } catch (err) {
@@ -214,7 +219,7 @@ export function useWarehousePage() {
   })
 
   return {
-    t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
+    t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
     editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
     formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
     loadAssignments, saveAssignment, publishOverview,

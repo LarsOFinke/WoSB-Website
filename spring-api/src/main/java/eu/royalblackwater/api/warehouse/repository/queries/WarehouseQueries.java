@@ -135,6 +135,13 @@ public final class WarehouseQueries {
             update warehouse_ports set is_active=false,updated_at=:now where id=:id
             """;
 
+    public static final String ACTIVE_RESOURCES_SELECT_01 = """
+            select name from warehouse_resources where is_active=true order by lower(name),id
+            """;
+    public static final String ACTIVE_RESOURCE_BY_NAME_SELECT_01 = """
+            select name from warehouse_resources where is_active=true and lower(name)=lower(:name)
+            """;
+
     public static final String ASSIGNMENTS_SELECT_01 = """
             select f.id fleet_id,f.name fleet_name,p.id port_id,p.name port_name,
                    coalesce(a.updated_at,p.updated_at) updated_at,

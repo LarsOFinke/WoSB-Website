@@ -2,7 +2,6 @@ package eu.royalblackwater.api.webhooks.service;
 
 import eu.royalblackwater.api.audit.dto.AuditRecordedEvent;
 import eu.royalblackwater.api.webhooks.dto.WebhookDomainEvent;
-import eu.royalblackwater.api.warehouse.service.WarehouseOverviewService;
 import java.util.Optional;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -12,11 +11,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class WebhookAuditEventListener {
     private final WebhookService webhooks;
-    private final WarehouseOverviewService warehouseOverview;
 
-    public WebhookAuditEventListener(WebhookService webhooks, WarehouseOverviewService warehouseOverview) {
+    public WebhookAuditEventListener(WebhookService webhooks) {
         this.webhooks = webhooks;
-        this.warehouseOverview = warehouseOverview;
     }
 
     @Async
@@ -25,21 +22,10 @@ public class WebhookAuditEventListener {
         map(audit).ifPresent(event -> {
             try {
                 webhooks.publish(event);
-                publishWarehouseOverview(audit, event);
             } catch (RuntimeException ignored) {
                 // The audited operation is already committed; integrations are best effort.
             }
         });
-    }
-
-    private void publishWarehouseOverview(AuditRecordedEvent audit, WebhookDomainEvent event) {
-        if (audit.scopeId() == null || !"fleet".equals(audit.scopeType())
-                || (!"warehouse.stock.changed".equals(event.eventType())
-                && !"warehouse.reservation.changed".equals(event.eventType()))) return;
-        String summary = warehouseOverview.format(warehouseOverview.overview(audit.scopeId()));
-        webhooks.publish(new WebhookDomainEvent("warehouse.stock.overview", "warehouse",
-                String.valueOf(audit.scopeId()), "fleet", audit.scopeId(), audit.actor(), summary,
-                audit.occurredAt()));
     }
 
     static Optional<WebhookDomainEvent> map(AuditRecordedEvent audit) {

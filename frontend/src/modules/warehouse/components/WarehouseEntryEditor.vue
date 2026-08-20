@@ -5,6 +5,7 @@ defineProps({
   fleets: { type: Array, default: () => [] },
   members: { type: Array, default: () => [] },
   ports: { type: Array, default: () => [] },
+  resources: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
   t: { type: Function, required: true },
 })
@@ -59,7 +60,14 @@ defineEmits(['cancel', 'fleet-change', 'save'])
               <option v-for="port in ports" :key="port.id" :value="port.name">{{ port.name }}</option>
             </select>
           </label>
-          <label class="input-panel"><span>{{ t('warehouse.fields.resource') }}</span><input v-model.trim="draft.resource" maxlength="120" required /></label>
+          <label class="input-panel">
+            <span>{{ t('warehouse.fields.resource') }}</span>
+            <select v-model="draft.resource" required>
+              <option value="" disabled>{{ t('warehouse.editor.selectResource') }}</option>
+              <option v-if="draft.resource && !resources.includes(draft.resource)" :value="draft.resource">{{ draft.resource }}</option>
+              <option v-for="resource in resources" :key="resource" :value="resource">{{ resource }}</option>
+            </select>
+          </label>
           <label class="input-panel"><span>{{ t('warehouse.fields.amount') }}</span><input v-model.number="draft.amount" type="number" min="0" max="999999999" step="1" required /></label>
           <label class="input-panel"><span>{{ t('warehouse.fields.collectionStatus') }}</span><select v-model="draft.collection_status" required><option value="up_for_collection">{{ t('warehouse.status.upForCollection') }}</option><option value="in_warehouse">{{ t('warehouse.status.inWarehouse') }}</option></select></label>
           <label class="warehouse-reserved-toggle"><input v-model="draft.reserved" type="checkbox" /><span>{{ t('warehouse.fields.reserved') }}</span></label>
