@@ -10,6 +10,7 @@ import {
   listWarehouseMembers,
   listWarehousePortAssignments,
   listWarehousePorts,
+  publishWarehouseOverviewWebhook,
   updateWarehouseEntry,
   updateWarehousePortAssignment,
 } from '@/modules/warehouse/api/warehouse'
@@ -40,6 +41,7 @@ export function useWarehousePage() {
   const saving = ref(false)
   const error = ref('')
   const success = ref('')
+  const publishingOverview = ref(false)
   const editorOpen = ref(false)
   const editingId = ref(null)
   const draft = reactive(createWarehouseDraft())
@@ -103,6 +105,20 @@ export function useWarehousePage() {
       success.value = t('warehouse.messages.assignmentUpdated')
     } catch (err) {
       error.value = err.message || t('warehouse.errors.assignments')
+    }
+  }
+
+  async function publishOverview(fleetId = filters.fleet_id || fleets.value[0]?.id) {
+    if (!fleetId) return
+    publishingOverview.value = true
+    error.value = ''
+    try {
+      await publishWarehouseOverviewWebhook(fleetId)
+      success.value = t('warehouse.messages.overviewPublished')
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.overviewPublish')
+    } finally {
+      publishingOverview.value = false
     }
   }
 
@@ -198,9 +214,9 @@ export function useWarehousePage() {
   })
 
   return {
-    t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, error, success,
+    t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
     editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
     formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
-    loadAssignments, saveAssignment,
+    loadAssignments, saveAssignment, publishOverview,
   }
 }

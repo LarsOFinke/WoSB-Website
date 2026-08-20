@@ -15,6 +15,7 @@ import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import eu.royalblackwater.api.warehouse.service.WarehouseService;
 import eu.royalblackwater.api.warehouse.service.WarehousePortService;
 import eu.royalblackwater.api.warehouse.service.WarehousePortAssignmentService;
+import eu.royalblackwater.api.warehouse.service.WarehouseOverviewWebhookService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +35,15 @@ public class WarehouseController extends ApiControllerSupport {
     private final WarehouseService warehouse;
     private final WarehousePortService ports;
     private final WarehousePortAssignmentService assignments;
+    private final WarehouseOverviewWebhookService overviewWebhook;
 
     public WarehouseController(WarehouseService warehouse, WarehousePortService ports,
-                               WarehousePortAssignmentService assignments) {
+                               WarehousePortAssignmentService assignments,
+                               WarehouseOverviewWebhookService overviewWebhook) {
         this.warehouse = warehouse;
         this.ports = ports;
         this.assignments = assignments;
+        this.overviewWebhook = overviewWebhook;
     }
 
     @GetMapping("/api/warehouse")
@@ -93,6 +97,13 @@ public class WarehouseController extends ApiControllerSupport {
             @PathVariable("port_id") long portId,
             @Valid @RequestBody WarehousePortAssignmentUpdate body) {
         return respond(assignments.update(portId, body, CurrentUser.require()), 200);
+    }
+
+    @PostMapping("/api/warehouse/overview/webhook")
+    public ResponseEntity<Void> publishWarehouseOverviewWebhook(
+            @RequestParam(name = "fleet_id", required = true) long fleetId) {
+        overviewWebhook.publish(fleetId, CurrentUser.require());
+        return noContent();
     }
 
     @GetMapping("/api/admin/master-data/warehouse-ports")

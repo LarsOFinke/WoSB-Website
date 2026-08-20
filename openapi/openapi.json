@@ -25300,6 +25300,59 @@
         ]
       }
     },
+    "/api/warehouse/overview/webhook": {
+      "post": {
+        "operationId": "publish_warehouse_overview_webhook_api_warehouse_overview_webhook_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fleet_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            },
+            "description": "Fleet whose current warehouse overview should be posted."
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Overview published to configured warehouse overview webhooks."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Fleet not found"
+          }
+        },
+        "summary": "Publish Warehouse Overview Webhook",
+        "tags": [
+          "warehouse"
+        ]
+      }
+    },
     "/api/warehouse/port-assignments": {
       "get": {
         "operationId": "list_warehouse_port_assignments_api_warehouse_port_assignments_get",

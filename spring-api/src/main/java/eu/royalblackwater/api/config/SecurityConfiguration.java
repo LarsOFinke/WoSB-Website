@@ -37,7 +37,8 @@ public class SecurityConfiguration {
             "/api/files", "/api/fleets", "/api/fleets/*/leaders/*", "/api/fleets/*/roles",
             "/api/forum/threads", "/api/forum/threads/*/posts",
             "/api/groups", "/api/groups/*/close", "/api/guides",
-            "/api/squads", "/api/squads/*/members", "/api/strategies", "/api/warehouse"
+            "/api/squads", "/api/squads/*/members", "/api/strategies", "/api/warehouse",
+            "/api/warehouse/overview/webhook"
     };
     private static final String[] STAFF_PUT_ENDPOINTS = {
             "/api/builds/mine/*", "/api/builds/*/printout", "/api/calendar/events/*",

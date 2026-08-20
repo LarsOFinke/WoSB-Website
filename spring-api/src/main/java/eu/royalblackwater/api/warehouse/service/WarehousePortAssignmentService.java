@@ -79,6 +79,10 @@ public class WarehousePortAssignmentService {
                 Map.of("fleetId", fleetId)).isEmpty()) throw notFound("Fleet");
     }
 
+    public void requireStaffFleet(long fleetId) {
+        requireFleet(fleetId);
+    }
+
     private LocalDateTime now() {
         return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }

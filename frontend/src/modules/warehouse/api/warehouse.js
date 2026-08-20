@@ -45,6 +45,10 @@ export function updateWarehousePortAssignment(portId, payload) {
   return put(`/warehouse/port-assignments/${portId}`, payload)
 }
 
+export function publishWarehouseOverviewWebhook(fleetId) {
+  return post(withQuery('/warehouse/overview/webhook', { fleet_id: fleetId }))
+}
+
 export function listWarehouseFleets() {
   return get('/fleets')
 }

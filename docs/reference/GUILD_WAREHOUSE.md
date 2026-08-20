@@ -40,6 +40,11 @@ active member of that fleet; assignment changes are staff-only and are audited. 
 show the current assignment for their fleet and port, so donations remain stacked by
 fleet while collection work can be distributed.
 
+Moderators and administrators can manually post the complete overview for a selected
+fleet from the warehouse tab. Delivery uses the configured active webhook subscriptions
+for `warehouse.stock.overview` and the matching fleet scope; no webhook URL is exposed
+to the browser.
+
 ## Member API and staff editing
 
 All endpoints require authentication and the normal host/origin boundary. Reading is

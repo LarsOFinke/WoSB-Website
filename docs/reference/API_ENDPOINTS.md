@@ -297,6 +297,7 @@ OpenAPI 3.1 contract. Access is enforced by Spring Security and documented in `A
 | --- | --- | --- | --- |
 | `GET` | `/api/warehouse` | List Warehouse Entries | `list_warehouse_entries_api_warehouse_get` |
 | `POST` | `/api/warehouse` | Create Warehouse Entry | `create_warehouse_entry_api_warehouse_post` |
+| `POST` | `/api/warehouse/overview/webhook` | Publish Warehouse Overview Webhook | `publish_warehouse_overview_webhook_api_warehouse_overview_webhook_post` |
 | `GET` | `/api/warehouse/port-assignments` | List Fleet Warehouse Port Assignments | `list_warehouse_port_assignments_api_warehouse_port_assignments_get` |
 | `PUT` | `/api/warehouse/port-assignments/{port_id}` | Assign Fleet Warehouse Port Pickup | `update_warehouse_port_assignment_api_warehouse_port_assignments__port_id__put` |
 | `GET` | `/api/warehouse/ports` | List Active Warehouse Ports | `list_warehouse_ports_api_warehouse_ports_get` |

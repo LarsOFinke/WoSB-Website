@@ -4,9 +4,9 @@ import { useWarehousePage } from '@/modules/warehouse/composables/useWarehousePa
 import '@/modules/warehouse/styles/warehouse.css'
 
 const {
-  t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, error, success,
+  t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
   editorOpen, editorTitle, draft, filters, formatAmount, formatDateTime, loadEntries, openCreate,
-  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, loadAssignments, saveAssignment,
+  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, loadAssignments, saveAssignment, publishOverview,
 } = useWarehousePage()
 </script>
 
@@ -20,6 +20,7 @@ const {
       </div>
       <div class="warehouse-hero-actions">
         <button class="button-box" type="button" :disabled="loading" @click="loadEntries">{{ t('warehouse.actions.refresh') }}</button>
+        <button v-if="canManageWarehouse" class="button-box" type="button" :disabled="publishingOverview" @click="publishOverview()">{{ publishingOverview ? t('warehouse.actions.publishingOverview') : t('warehouse.actions.publishOverview') }}</button>
         <button v-if="canManageWarehouse" class="button-box primary-action" type="button" @click="openCreate">{{ t('warehouse.actions.add') }}</button>
       </div>
     </header>
