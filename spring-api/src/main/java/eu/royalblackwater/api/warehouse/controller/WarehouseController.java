@@ -5,6 +5,8 @@ import eu.royalblackwater.api.dto.WarehouseEntryRead;
 import eu.royalblackwater.api.dto.WarehouseEntryUpdate;
 import eu.royalblackwater.api.dto.WarehousePage;
 import eu.royalblackwater.api.dto.WarehousePortCreate;
+import eu.royalblackwater.api.dto.WarehousePortAssignmentRead;
+import eu.royalblackwater.api.dto.WarehousePortAssignmentUpdate;
 import eu.royalblackwater.api.dto.WarehousePortRead;
 import eu.royalblackwater.api.dto.WarehousePortUpdate;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
@@ -12,6 +14,7 @@ import eu.royalblackwater.api.security.service.CurrentUser;
 import eu.royalblackwater.api.shared.web.ApiControllerSupport;
 import eu.royalblackwater.api.warehouse.service.WarehouseService;
 import eu.royalblackwater.api.warehouse.service.WarehousePortService;
+import eu.royalblackwater.api.warehouse.service.WarehousePortAssignmentService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +33,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class WarehouseController extends ApiControllerSupport {
     private final WarehouseService warehouse;
     private final WarehousePortService ports;
+    private final WarehousePortAssignmentService assignments;
 
-    public WarehouseController(WarehouseService warehouse, WarehousePortService ports) {
+    public WarehouseController(WarehouseService warehouse, WarehousePortService ports,
+                               WarehousePortAssignmentService assignments) {
         this.warehouse = warehouse;
         this.ports = ports;
+        this.assignments = assignments;
     }
 
     @GetMapping("/api/warehouse")
@@ -74,6 +80,19 @@ public class WarehouseController extends ApiControllerSupport {
     @GetMapping("/api/warehouse/ports")
     public ResponseEntity<List<WarehousePortRead>> listWarehousePorts() {
         return respond(ports.active(CurrentUser.require()), 200);
+    }
+
+    @GetMapping("/api/warehouse/port-assignments")
+    public ResponseEntity<List<WarehousePortAssignmentRead>> listWarehousePortAssignments(
+            @RequestParam(name = "fleet_id", required = true) long fleetId) {
+        return respond(assignments.list(fleetId, CurrentUser.require()), 200);
+    }
+
+    @PutMapping("/api/warehouse/port-assignments/{port_id}")
+    public ResponseEntity<WarehousePortAssignmentRead> updateWarehousePortAssignment(
+            @PathVariable("port_id") long portId,
+            @Valid @RequestBody WarehousePortAssignmentUpdate body) {
+        return respond(assignments.update(portId, body, CurrentUser.require()), 200);
     }
 
     @GetMapping("/api/admin/master-data/warehouse-ports")

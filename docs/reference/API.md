@@ -112,7 +112,7 @@ the OpenAPI parameter schemas and enforced again by the backend.
 ## Guild warehouse
 
 `/api/warehouse` is the authoritative warehouse collection. Authenticated members may
-filter its bounded list by fleet, holder, port, resource, and reservation state; the
+filter its bounded list by fleet, holder, port, resource, reservation, and collection state; the
 response includes matching stock totals and fleet-aware facet values. Moderators and
 administrators may create, update, and delete entries. Mutations choose exactly one
 holder source: an active member of the selected fleet or a custom operational name.
@@ -123,6 +123,10 @@ client has already changed the entry.
 filters and staff entry editors. Administrators maintain the catalog through
 `/api/admin/master-data/warehouse-ports`; arbitrary or inactive port names are rejected
 when stock is created or updated.
+
+`/api/warehouse/port-assignments` exposes the optional pickup member for each active
+fleet port. Members may read assignments for fleets they belong to; moderators and
+administrators may assign or clear an active member.
 
 All mutations create fleet-scoped audit events. Existing website-webhook subscriptions
 may deliver `warehouse.stock.changed`, `warehouse.reservation.changed`, and the full

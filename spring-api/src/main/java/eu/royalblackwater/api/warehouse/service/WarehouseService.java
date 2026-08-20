@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -72,15 +73,17 @@ public class WarehouseService {
         requireFleet(payload.fleetId());
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
         String port = ports.requireActiveName(payload.port());
+        String collectionStatus = collectionStatus(payload.collectionStatus());
         LocalDateTime now = now();
         long id = repository.insertReturningId(WarehouseQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                 "fleetId", payload.fleetId(), "memberUserId", holder.memberUserId(),
                 "customHolderName", holder.customName(), "port", port,
                 "resource", required(payload.resource(), "Resource"), "amount", payload.amount(),
-                "reserved", Boolean.TRUE.equals(payload.reserved()), "now", now, "actorId", actor.id()));
+                "reserved", Boolean.TRUE.equals(payload.reserved()), "collectionStatus", collectionStatus,
+                "now", now, "actorId", actor.id()));
         WarehouseEntryRead created = get(id);
         audit.record(actor, "warehouse_entry", id, "create", stockCreatedSummary(created),
-                List.of("fleet_id", "holder", "port", "resource", "amount", "reserved"),
+                List.of("fleet_id", "holder", "port", "resource", "amount", "reserved", "collection_status"),
                 "fleet", created.fleetId());
         return created;
     }
@@ -95,14 +98,16 @@ public class WarehouseService {
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
         String port = ports.requireActiveName(payload.port());
         String resource = required(payload.resource(), "Resource");
-        List<String> changed = changedFields(previous, payload, holder, port, resource);
+        String collectionStatus = collectionStatus(payload.collectionStatus());
+        List<String> changed = changedFields(previous, payload, holder, port, resource, collectionStatus);
         if (changed.isEmpty()) return WarehouseDtoMapper.entry(previous);
 
         int updated = repository.update(WarehouseQueries.UPDATE_UPDATE_01, SqlParameters.ofNullable(
                 "id", id, "version", payload.version(), "fleetId", payload.fleetId(),
                 "memberUserId", holder.memberUserId(), "customHolderName", holder.customName(),
                 "port", port, "resource", resource, "amount", payload.amount(),
-                "reserved", payload.reserved(), "now", now(), "actorId", actor.id()));
+                "reserved", payload.reserved(), "collectionStatus", collectionStatus,
+                "now", now(), "actorId", actor.id()));
         if (updated == 0) throw conflict();
 
         WarehouseEntryRead result = get(id);
@@ -187,7 +192,7 @@ public class WarehouseService {
     }
 
     private static List<String> changedFields(Map<String, Object> previous, WarehouseEntryUpdate payload,
-                                              Holder holder, String port, String resource) {
+                                              Holder holder, String port, String resource, String collectionStatus) {
         List<String> changed = new ArrayList<>();
         changed(changed, "fleet_id", RowValues.longValue(previous, "fleet_id"), payload.fleetId());
         changed(changed, "holder", RowValues.nullableLong(previous, "member_user_id"), holder.memberUserId());
@@ -196,6 +201,7 @@ public class WarehouseService {
         changed(changed, "resource", RowValues.requiredString(previous, "resource"), resource);
         changed(changed, "amount", RowValues.longValue(previous, "amount"), payload.amount());
         changed(changed, "reserved", RowValues.booleanValue(previous, "reserved"), payload.reserved());
+        changed(changed, "collection_status", RowValues.requiredString(previous, "collection_status"), collectionStatus);
         return changed.stream().distinct().toList();
     }
 
@@ -242,6 +248,14 @@ public class WarehouseService {
 
     private static String optional(String value) {
         return value == null || value.isBlank() ? null : value.strip();
+    }
+
+    private static String collectionStatus(String value) {
+        String normalized = value == null || value.isBlank() ? "up_for_collection" : value.strip().toLowerCase(Locale.ROOT);
+        if (!Set.of("up_for_collection", "in_warehouse").contains(normalized)) {
+            throw bad("Collection status must be up_for_collection or in_warehouse.");
+        }
+        return normalized;
     }
 
     private static void requireAuthenticated(AuthenticatedUser actor) {

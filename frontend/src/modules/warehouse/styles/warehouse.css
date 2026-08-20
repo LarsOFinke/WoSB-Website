@@ -22,7 +22,8 @@
 }
 
 .warehouse-filters,
-.warehouse-ledger {
+.warehouse-ledger,
+.warehouse-assignments {
   padding: var(--space-5);
 }
 
@@ -55,6 +56,10 @@
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
+
+.warehouse-assignments > header { margin-bottom: 0.75rem; }
+.warehouse-assignments > .input-panel { max-width: 24rem; }
+.warehouse-assignment-grid { display: grid; grid-template-columns: repeat(3, minmax(12rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
 
 .warehouse-filter-grid label,
 .warehouse-editor .input-panel {
@@ -283,7 +288,8 @@
   .warehouse-hero-actions { width: 100%; }
   .warehouse-hero-actions > * { flex: 1 1 auto; }
   .warehouse-filter-grid,
-  .warehouse-editor__grid {
+  .warehouse-editor__grid,
+  .warehouse-assignment-grid {
     grid-template-columns: 1fr;
   }
 

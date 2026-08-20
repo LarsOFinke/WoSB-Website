@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "assignee_user_id": {
+      "anyOf": [{ "minimum": 1, "type": "integer" }, { "type": "null" }],
+      "title": "Assignee User Id"
+    },
+    "fleet_id": { "minimum": 1, "title": "Fleet Id", "type": "integer" }
+  },
+  "required": ["fleet_id", "assignee_user_id"],
+  "title": "WarehousePortAssignmentUpdate",
+  "type": "object"
+}

@@ -1,0 +1,16 @@
+{
+  "path": "/api/warehouse/port-assignments/{port_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "update_warehouse_port_assignment_api_warehouse_port_assignments__port_id__put",
+    "parameters": [{ "in": "path", "name": "port_id", "required": true, "schema": { "minimum": 1, "type": "integer", "title": "Port Id" } }],
+    "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortAssignmentUpdate" } } } },
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortAssignmentRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
+      "403": { "description": "Staff access required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Assign Fleet Warehouse Port Pickup",
+    "tags": ["warehouse"]
+  }
+}

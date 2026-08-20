@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "assignee_name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Assignee Name" },
+    "assignee_user_id": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Assignee User Id" },
+    "fleet_id": { "title": "Fleet Id", "type": "integer" },
+    "fleet_name": { "title": "Fleet Name", "type": "string" },
+    "port_id": { "title": "Port Id", "type": "integer" },
+    "port_name": { "title": "Port Name", "type": "string" },
+    "updated_at": { "format": "date-time", "title": "Updated At", "type": "string" }
+  },
+  "required": ["fleet_id", "fleet_name", "port_id", "port_name", "updated_at"],
+  "title": "WarehousePortAssignmentRead",
+  "type": "object"
+}

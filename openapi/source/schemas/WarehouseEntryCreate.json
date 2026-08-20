@@ -6,6 +6,12 @@
       "title": "Amount",
       "type": "integer"
     },
+    "collection_status": {
+      "default": "up_for_collection",
+      "enum": ["up_for_collection", "in_warehouse"],
+      "title": "Collection Status",
+      "type": "string"
+    },
     "custom_holder_name": {
       "anyOf": [
         {

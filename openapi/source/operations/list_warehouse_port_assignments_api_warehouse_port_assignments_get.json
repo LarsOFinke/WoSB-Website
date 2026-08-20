@@ -1,0 +1,14 @@
+{
+  "path": "/api/warehouse/port-assignments",
+  "method": "get",
+  "operation": {
+    "operationId": "list_warehouse_port_assignments_api_warehouse_port_assignments_get",
+    "parameters": [{ "in": "query", "name": "fleet_id", "required": true, "schema": { "minimum": 1, "type": "integer", "title": "Fleet Id" } }],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WarehousePortAssignmentRead" } } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "List Fleet Warehouse Port Assignments",
+    "tags": ["warehouse"]
+  }
+}

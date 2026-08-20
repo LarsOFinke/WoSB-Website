@@ -15,13 +15,16 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/ports$/, (route) => route.fulfill({
     json: [{ id: 1, name: 'Tortuga', sort_order: 10, is_active: true, created_at: '2030-01-01T00:00:00', updated_at: '2030-01-01T00:00:00' }],
   }))
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/port-assignments\?fleet_id=2$/, (route) => route.fulfill({
+    json: [{ fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', port_id: 1, port_name: 'Tortuga', assignee_user_id: null, assignee_name: null, updated_at: '2030-01-01T00:00:00' }],
+  }))
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse(?:\?.*)?$/, async (route) => {
     if (route.request().method() === 'POST') {
       createdPayload = route.request().postDataJSON()
       items = [{
         id: 41, fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', member_user_id: 17,
         custom_holder_name: null, holder_name: 'Blackwater', port: 'Tortuga', resource: 'Iron',
-        amount: 1250, reserved: false, version: 1,
+        amount: 1250, reserved: false, collection_status: 'up_for_collection', version: 1,
         created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:00:00', updated_by: 'Lars',
       }]
       await route.fulfill({ status: 201, json: items[0] })
@@ -52,6 +55,7 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
   expect(createdPayload).toMatchObject({
     fleet_id: 2, member_user_id: 17, custom_holder_name: null,
     port: 'Tortuga', resource: 'Iron', amount: 1250, reserved: false,
+    collection_status: 'up_for_collection',
   })
 })
 
@@ -69,7 +73,7 @@ test('ordinary member can browse warehouse without mutation controls', async ({ 
     items: [{
       id: 41, fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', member_user_id: 17,
       custom_holder_name: null, holder_name: 'Blackwater', port: 'Nassau', resource: 'Iron',
-      amount: 1250, reserved: false, version: 1,
+      amount: 1250, reserved: false, collection_status: 'in_warehouse', version: 1,
       created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:00:00', updated_by: 'Quartermaster',
     }],
     total: 1, matching_stock: 1250, reserved_stock: 0, available_stock: 1250,

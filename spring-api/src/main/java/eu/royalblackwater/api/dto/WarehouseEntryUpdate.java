@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public record WarehouseEntryUpdate(
         @Min(0) @Max(999999999) long amount,
+        String collectionStatus,
         String customHolderName,
         @Min(1) long fleetId,
         Long memberUserId,

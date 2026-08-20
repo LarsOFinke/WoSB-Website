@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 public record WarehouseEntryRead(
         long amount,
+        @NotNull String collectionStatus,
         @NotNull LocalDateTime createdAt,
         String customHolderName,
         long fleetId,
@@ -17,5 +18,7 @@ public record WarehouseEntryRead(
         boolean reserved,
         @NotNull String resource,
         @NotNull LocalDateTime updatedAt,
+        String portAssigneeName,
+        Long portAssigneeUserId,
         String updatedBy,
         long version) { }

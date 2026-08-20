@@ -4,9 +4,9 @@ import { useWarehousePage } from '@/modules/warehouse/composables/useWarehousePa
 import '@/modules/warehouse/styles/warehouse.css'
 
 const {
-  t, canManageWarehouse, page, fleets, members, ports, loading, saving, error, success,
+  t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, error, success,
   editorOpen, editorTitle, draft, filters, formatAmount, formatDateTime, loadEntries, openCreate,
-  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
+  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, loadAssignments, saveAssignment,
 } = useWarehousePage()
 </script>
 
@@ -39,6 +39,14 @@ const {
         </div>
       </section>
 
+      <section v-if="canManageWarehouse" class="warehouse-assignments wire-section">
+        <header><div><h2>{{ t('warehouse.assignments.title') }}</h2><p>{{ t('warehouse.assignments.hint') }}</p></div></header>
+        <label class="input-panel"><span>{{ t('warehouse.fields.fleet') }}</span><select v-model="assignmentFleetId" @change="loadAssignments()"><option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">{{ fleet.name }}</option></select></label>
+        <div class="warehouse-assignment-grid">
+          <label v-for="assignment in assignments" :key="assignment.port_id" class="input-panel"><span>{{ assignment.port_name }}</span><select :value="assignment.assignee_user_id || ''" @change="saveAssignment(assignment, $event)"><option value="">{{ t('warehouse.assignments.unassigned') }}</option><option v-for="member in members" :key="member.id" :value="member.id">{{ member.display_name }}</option></select></label>
+        </div>
+      </section>
+
       <section class="warehouse-summary-grid" aria-live="polite">
         <article><span>{{ t('warehouse.summary.matchingStock') }}</span><strong>{{ formatAmount(page.matching_stock) }}</strong><small>{{ t('warehouse.summary.stockHint') }}</small></article>
         <article><span>{{ t('warehouse.summary.reserved') }}</span><strong>{{ formatAmount(page.reserved_stock) }}</strong><small>{{ t('warehouse.summary.reservedHint') }}</small></article>
@@ -55,12 +63,13 @@ const {
         <div v-else-if="!page.items.length" class="warehouse-empty"><strong>{{ t('warehouse.ledger.emptyTitle') }}</strong><p>{{ t('warehouse.ledger.emptyText') }}</p><button v-if="canManageWarehouse" class="button-box" type="button" @click="openCreate">{{ t('warehouse.actions.add') }}</button></div>
         <div v-else class="warehouse-table-shell" tabindex="0" :aria-label="t('warehouse.ledger.tableLabel')">
           <table class="warehouse-table">
-            <thead><tr><th>{{ t('warehouse.fields.holder') }}</th><th>{{ t('warehouse.fields.fleet') }}</th><th>{{ t('warehouse.fields.port') }}</th><th>{{ t('warehouse.fields.resource') }}</th><th>{{ t('warehouse.fields.amount') }}</th><th>{{ t('warehouse.fields.status') }}</th><th>{{ t('warehouse.fields.updated') }}</th><th v-if="canManageWarehouse"><span class="sr-only">{{ t('warehouse.fields.actions') }}</span></th></tr></thead>
+            <thead><tr><th>{{ t('warehouse.fields.holder') }}</th><th>{{ t('warehouse.fields.fleet') }}</th><th>{{ t('warehouse.fields.port') }}</th><th>{{ t('warehouse.fields.resource') }}</th><th>{{ t('warehouse.fields.amount') }}</th><th>{{ t('warehouse.fields.collectionStatus') }}</th><th>{{ t('warehouse.fields.status') }}</th><th>{{ t('warehouse.fields.updated') }}</th><th v-if="canManageWarehouse"><span class="sr-only">{{ t('warehouse.fields.actions') }}</span></th></tr></thead>
             <tbody>
               <tr v-for="entry in page.items" :key="entry.id">
                 <td><strong>{{ entry.holder_name }}</strong><small>{{ entry.member_user_id ? t('warehouse.holder.linked') : t('warehouse.holder.custom') }}</small></td>
-                <td>{{ entry.fleet_name }}</td><td>{{ entry.port }}</td><td>{{ entry.resource }}</td>
+                <td>{{ entry.fleet_name }}</td><td>{{ entry.port }}<small v-if="entry.port_assignee_name">{{ t('warehouse.fields.pickupAssignee') }}: {{ entry.port_assignee_name }}</small></td><td>{{ entry.resource }}</td>
                 <td class="warehouse-amount">{{ formatAmount(entry.amount) }}</td>
+                <td><span class="warehouse-status" :class="entry.collection_status === 'in_warehouse' ? 'is-available' : 'is-reserved'">{{ entry.collection_status === 'in_warehouse' ? t('warehouse.status.inWarehouse') : t('warehouse.status.upForCollection') }}</span></td>
                 <td><span class="warehouse-status" :class="entry.reserved ? 'is-reserved' : 'is-available'">{{ entry.reserved ? t('warehouse.status.reserved') : t('warehouse.status.available') }}</span></td>
                 <td><span>{{ formatDateTime(entry.updated_at) }}</span><small>{{ entry.updated_by || '—' }}</small></td>
                 <td v-if="canManageWarehouse"><div class="warehouse-row-actions"><button class="small-action" type="button" @click="openEdit(entry)">{{ t('warehouse.actions.edit') }}</button><button class="small-action danger" type="button" @click="removeEntry(entry)">{{ t('warehouse.actions.delete') }}</button></div></td>

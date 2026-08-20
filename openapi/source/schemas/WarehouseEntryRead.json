@@ -1,6 +1,7 @@
 {
   "properties": {
     "amount": { "title": "Amount", "type": "integer" },
+    "collection_status": { "enum": ["up_for_collection", "in_warehouse"], "title": "Collection Status", "type": "string" },
     "created_at": { "format": "date-time", "title": "Created At", "type": "string" },
     "custom_holder_name": {
       "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -18,6 +19,14 @@
     "reserved": { "title": "Reserved", "type": "boolean" },
     "resource": { "title": "Resource", "type": "string" },
     "updated_at": { "format": "date-time", "title": "Updated At", "type": "string" },
+    "port_assignee_name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Port Assignee Name"
+    },
+    "port_assignee_user_id": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Port Assignee User Id"
+    },
     "updated_by": {
       "anyOf": [{ "type": "string" }, { "type": "null" }],
       "title": "Updated By"
@@ -26,7 +35,7 @@
   },
   "required": [
     "id", "fleet_id", "fleet_name", "holder_name", "port", "resource", "amount",
-    "reserved", "version", "created_at", "updated_at"
+    "collection_status", "reserved", "version", "created_at", "updated_at"
   ],
   "title": "WarehouseEntryRead",
   "type": "object"

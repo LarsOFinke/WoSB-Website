@@ -37,6 +37,14 @@ export function deleteWarehouseEntry(id, version) {
   return deleteRequest(withQuery(`/warehouse/${id}`, { version }))
 }
 
+export function listWarehousePortAssignments(fleetId) {
+  return get(withQuery('/warehouse/port-assignments', { fleet_id: fleetId }))
+}
+
+export function updateWarehousePortAssignment(portId, payload) {
+  return put(`/warehouse/port-assignments/${portId}`, payload)
+}
+
 export function listWarehouseFleets() {
   return get('/fleets')
 }

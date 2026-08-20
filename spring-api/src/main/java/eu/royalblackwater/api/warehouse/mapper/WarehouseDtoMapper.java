@@ -3,6 +3,7 @@ package eu.royalblackwater.api.warehouse.mapper;
 import eu.royalblackwater.api.dto.WarehouseEntryRead;
 import eu.royalblackwater.api.dto.WarehousePage;
 import eu.royalblackwater.api.dto.WarehousePortRead;
+import eu.royalblackwater.api.dto.WarehousePortAssignmentRead;
 import eu.royalblackwater.api.persistence.RowValues;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ public final class WarehouseDtoMapper {
     public static WarehouseEntryRead entry(Map<String, Object> row) {
         return new WarehouseEntryRead(
                 RowValues.longValue(row, "amount"),
+                RowValues.requiredString(row, "collection_status"),
                 RowValues.dateTime(row, "created_at"),
                 RowValues.string(row, "custom_holder_name"),
                 RowValues.longValue(row, "fleet_id"),
@@ -25,6 +27,8 @@ public final class WarehouseDtoMapper {
                 RowValues.booleanValue(row, "reserved"),
                 RowValues.requiredString(row, "resource"),
                 RowValues.dateTime(row, "updated_at"),
+                RowValues.string(row, "port_assignee_name"),
+                RowValues.nullableLong(row, "port_assignee_user_id"),
                 RowValues.string(row, "updated_by"),
                 RowValues.longValue(row, "version"));
     }
@@ -50,5 +54,12 @@ public final class WarehouseDtoMapper {
                 RowValues.booleanValue(row, "is_active"),
                 RowValues.dateTime(row, "created_at"),
                 RowValues.dateTime(row, "updated_at"));
+    }
+
+    public static WarehousePortAssignmentRead assignment(Map<String, Object> row) {
+        return new WarehousePortAssignmentRead(RowValues.string(row, "assignee_name"),
+                RowValues.nullableLong(row, "assignee_user_id"), RowValues.longValue(row, "fleet_id"),
+                RowValues.requiredString(row, "fleet_name"), RowValues.longValue(row, "port_id"),
+                RowValues.requiredString(row, "port_name"), RowValues.dateTime(row, "updated_at"));
     }
 }

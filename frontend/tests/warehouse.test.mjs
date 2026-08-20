@@ -21,6 +21,7 @@ test('warehouse drafts enforce one holder source and integral bounded stock', ()
     resource: ' Iron ',
     amount: 1250,
     reserved: true,
+    collection_status: 'up_for_collection',
   })
 
   assert.equal(warehouseDraftIssue(draft), '')
@@ -32,6 +33,7 @@ test('warehouse drafts enforce one holder source and integral bounded stock', ()
     resource: 'Iron',
     amount: 1250,
     reserved: true,
+    collection_status: 'up_for_collection',
   })
 })
 
@@ -45,6 +47,7 @@ test('existing entries retain optimistic versions in update payloads', () => {
     amount: 650,
     reserved: false,
     version: 4,
+    collection_status: 'in_warehouse',
   })
 
   assert.equal(draft.holder_mode, 'member')

@@ -49,7 +49,7 @@ class WarehouseServiceTest {
                 .thenReturn(Optional.of(row(41, 1, 650, true)));
 
         var created = service(repository, audit).create(
-                new WarehouseEntryCreate(650, "Blackwater", 2, null, "Nassau", true, "Iron"), MODERATOR);
+                new WarehouseEntryCreate(650, "in_warehouse", "Blackwater", 2, null, "Nassau", true, "Iron"), MODERATOR);
 
         assertThat(created.holderName()).isEqualTo("Blackwater");
         assertThat(created.reserved()).isTrue();
@@ -59,7 +59,7 @@ class WarehouseServiceTest {
         assertThat(parameters.getValue()).containsEntry("customHolderName", "Blackwater")
                 .containsEntry("memberUserId", null);
         verify(audit).record(eq(MODERATOR), eq("warehouse_entry"), eq(41L), eq("create"),
-                anyString(), eq(List.of("fleet_id", "holder", "port", "resource", "amount", "reserved")),
+                anyString(), eq(List.of("fleet_id", "holder", "port", "resource", "amount", "reserved", "collection_status")),
                 eq("fleet"), eq(2L));
     }
 
@@ -71,7 +71,7 @@ class WarehouseServiceTest {
         when(repository.optional(eq(WarehouseQueries.MEMBER_SELECT_01), anyMap())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service(repository, mock(AuditService.class)).create(
-                new WarehouseEntryCreate(10, null, 2, 99L, "Nassau", false, "Iron"), ADMIN))
+                new WarehouseEntryCreate(10, "up_for_collection", null, 2, 99L, "Nassau", false, "Iron"), ADMIN))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("not an active member");
     }
@@ -89,7 +89,7 @@ class WarehouseServiceTest {
         when(repository.update(eq(WarehouseQueries.UPDATE_UPDATE_01), anyMap())).thenReturn(1);
 
         var updated = service(repository, audit).update(41,
-                new WarehouseEntryUpdate(650, "Blackwater", 2, null, "Nassau", true, "Iron", 1), ADMIN);
+                new WarehouseEntryUpdate(650, "in_warehouse", "Blackwater", 2, null, "Nassau", true, "Iron", 1), ADMIN);
 
         assertThat(updated.version()).isEqualTo(2);
         verify(audit).record(eq(ADMIN), eq("warehouse_entry"), eq(41L), eq("reservation"),
@@ -106,7 +106,7 @@ class WarehouseServiceTest {
         when(repository.update(eq(WarehouseQueries.UPDATE_UPDATE_01), anyMap())).thenReturn(0);
 
         assertThatThrownBy(() -> service(repository, mock(AuditService.class)).update(41,
-                new WarehouseEntryUpdate(900, "Blackwater", 2, null, "Nassau", false, "Iron", 1), ADMIN))
+                new WarehouseEntryUpdate(900, "in_warehouse", "Blackwater", 2, null, "Nassau", false, "Iron", 1), ADMIN))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(error -> assertThat(((ResponseStatusException) error).getStatusCode().value()).isEqualTo(409));
     }
@@ -128,7 +128,7 @@ class WarehouseServiceTest {
     @Test
     void serviceBoundaryRejectsMemberMutations() {
         assertThatThrownBy(() -> service(mock(WarehouseRepository.class), mock(AuditService.class))
-                .create(new WarehouseEntryCreate(10, "Blackwater", 2, null, "Nassau", false, "Iron"), MEMBER))
+                .create(new WarehouseEntryCreate(10, "in_warehouse", "Blackwater", 2, null, "Nassau", false, "Iron"), MEMBER))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("require staff access");
     }
@@ -151,6 +151,9 @@ class WarehouseServiceTest {
         row.put("resource", "Iron");
         row.put("amount", amount);
         row.put("reserved", reserved);
+        row.put("collection_status", "in_warehouse");
+        row.put("port_assignee_user_id", null);
+        row.put("port_assignee_name", null);
         row.put("version", version);
         row.put("created_at", LocalDateTime.of(2030, 1, 1, 12, 0));
         row.put("updated_at", LocalDateTime.of(2030, 1, 15, 12, 0));

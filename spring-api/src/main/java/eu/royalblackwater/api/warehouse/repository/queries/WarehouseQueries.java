@@ -7,11 +7,18 @@ public final class WarehouseQueries {
     public static final String ENTRY_SELECT = """
             select w.*, f.name fleet_name,
                    coalesce(nullif(up.display_name,''), member.username, w.custom_holder_name) holder_name,
+                   port_assignment.assignee_user_id port_assignee_user_id,
+                   coalesce(nullif(port_assignee_profile.display_name,''), port_assignee.username) port_assignee_name,
                    coalesce(nullif(editor_profile.display_name,''), editor.username) updated_by
             from warehouse_entries w
             join fleets f on f.id=w.fleet_id
             left join users member on member.id=w.member_user_id
             left join user_profiles up on up.user_id=member.id
+            left join fleet_warehouse_port_assignments port_assignment
+                   on port_assignment.fleet_id=w.fleet_id
+                  and port_assignment.port_id=(select id from warehouse_ports where lower(name)=lower(w.port) limit 1)
+            left join users port_assignee on port_assignee.id=port_assignment.assignee_user_id
+            left join user_profiles port_assignee_profile on port_assignee_profile.user_id=port_assignee.id
             left join users editor on editor.id=w.updated_by_id
             left join user_profiles editor_profile on editor_profile.user_id=editor.id
             """;
@@ -80,9 +87,9 @@ public final class WarehouseQueries {
 
     public static final String CREATE_INSERT_01 = """
             insert into warehouse_entries
-                (fleet_id,member_user_id,custom_holder_name,port,resource,amount,reserved,
+                (fleet_id,member_user_id,custom_holder_name,port,resource,amount,reserved,collection_status,
                  version,created_at,updated_at,updated_by_id)
-            values (:fleetId,:memberUserId,:customHolderName,:port,:resource,:amount,:reserved,
+            values (:fleetId,:memberUserId,:customHolderName,:port,:resource,:amount,:reserved,:collectionStatus,
                     1,:now,:now,:actorId)
             returning id
             """;
@@ -90,7 +97,7 @@ public final class WarehouseQueries {
     public static final String UPDATE_UPDATE_01 = """
             update warehouse_entries
             set fleet_id=:fleetId,member_user_id=:memberUserId,custom_holder_name=:customHolderName,
-                port=:port,resource=:resource,amount=:amount,reserved=:reserved,
+                port=:port,resource=:resource,amount=:amount,reserved=:reserved,collection_status=:collectionStatus,
                 version=version+1,updated_at=:now,updated_by_id=:actorId
             where id=:id and version=:version
             """;
@@ -107,6 +114,7 @@ public final class WarehouseQueries {
     public static final String ACTIVE_PORT_BY_NAME_SELECT_01 = """
             select id,name from warehouse_ports where is_active=true and lower(name)=lower(:name)
             """;
+    public static final String ACTIVE_PORT_BY_ID_SELECT_01 = "select count(*) from warehouse_ports where id=:portId and is_active=true";
     public static final String PORT_NAME_EXISTS_SELECT_01 = """
             select count(*) from warehouse_ports where lower(name)=lower(:name)
               and (cast(:id as bigint) is null or id<>:id)
@@ -125,5 +133,35 @@ public final class WarehouseQueries {
             """;
     public static final String DEACTIVATE_PORT_UPDATE_01 = """
             update warehouse_ports set is_active=false,updated_at=:now where id=:id
+            """;
+
+    public static final String ASSIGNMENTS_SELECT_01 = """
+            select f.id fleet_id,f.name fleet_name,p.id port_id,p.name port_name,
+                   coalesce(a.updated_at,p.updated_at) updated_at,
+                   a.assignee_user_id,
+                   coalesce(nullif(profile.display_name,''),u.username) assignee_name
+            from warehouse_ports p
+            join fleets f on f.id=:fleetId and f.is_active=true
+            left join fleet_warehouse_port_assignments a on a.fleet_id=f.id and a.port_id=p.id
+            left join users u on u.id=a.assignee_user_id
+            left join user_profiles profile on profile.user_id=u.id
+            where p.is_active=true
+            """;
+    public static final String ASSIGNMENTS_ORDER_BY_01 = " order by p.sort_order,lower(p.name),p.id";
+    public static final String ASSIGNMENT_SELECT_01 = ASSIGNMENTS_SELECT_01 + " and a.port_id=:portId";
+    public static final String ASSIGNMENT_UPSERT_01 = """
+            insert into fleet_warehouse_port_assignments
+                (fleet_id,port_id,assignee_user_id,updated_at,updated_by_id)
+            values (:fleetId,:portId,:assigneeUserId,:now,:actorId)
+            on conflict (fleet_id,port_id) do update set
+                assignee_user_id=excluded.assignee_user_id,updated_at=excluded.updated_at,
+                updated_by_id=excluded.updated_by_id
+            """;
+    public static final String ACTIVE_FLEET_MEMBER_SELECT_01 = """
+            select membership.user_id
+            from fleet_memberships membership
+            join users u on u.id=membership.user_id
+            where membership.fleet_id=:fleetId and membership.user_id=:userId
+              and membership.status='active' and u.is_active=true
             """;
 }

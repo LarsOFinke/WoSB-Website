@@ -61,6 +61,7 @@ defineEmits(['cancel', 'fleet-change', 'save'])
           </label>
           <label class="input-panel"><span>{{ t('warehouse.fields.resource') }}</span><input v-model.trim="draft.resource" maxlength="120" required /></label>
           <label class="input-panel"><span>{{ t('warehouse.fields.amount') }}</span><input v-model.number="draft.amount" type="number" min="0" max="999999999" step="1" required /></label>
+          <label class="input-panel"><span>{{ t('warehouse.fields.collectionStatus') }}</span><select v-model="draft.collection_status" required><option value="up_for_collection">{{ t('warehouse.status.upForCollection') }}</option><option value="in_warehouse">{{ t('warehouse.status.inWarehouse') }}</option></select></label>
           <label class="warehouse-reserved-toggle"><input v-model="draft.reserved" type="checkbox" /><span>{{ t('warehouse.fields.reserved') }}</span></label>
         </div>
 

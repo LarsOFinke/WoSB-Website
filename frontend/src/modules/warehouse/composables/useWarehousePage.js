@@ -8,8 +8,10 @@ import {
   listWarehouseEntries,
   listWarehouseFleets,
   listWarehouseMembers,
+  listWarehousePortAssignments,
   listWarehousePorts,
   updateWarehouseEntry,
+  updateWarehousePortAssignment,
 } from '@/modules/warehouse/api/warehouse'
 import {
   createWarehouseDraft,
@@ -32,6 +34,8 @@ export function useWarehousePage() {
   const fleets = ref([])
   const members = ref([])
   const ports = ref([])
+  const assignments = ref([])
+  const assignmentFleetId = ref('')
   const loading = ref(false)
   const saving = ref(false)
   const error = ref('')
@@ -74,6 +78,31 @@ export function useWarehousePage() {
       members.value = await listWarehouseMembers(fleetId)
     } catch (err) {
       error.value = err.message || t('warehouse.errors.members')
+    }
+  }
+
+  async function loadAssignments(fleetId = assignmentFleetId.value) {
+    assignments.value = []
+    if (!fleetId) return
+    assignmentFleetId.value = fleetId
+    try {
+      assignments.value = await listWarehousePortAssignments(fleetId)
+      await loadMembers(fleetId)
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.assignments')
+    }
+  }
+
+  async function saveAssignment(assignment, event) {
+    try {
+      await updateWarehousePortAssignment(assignment.port_id, {
+        fleet_id: Number(assignmentFleetId.value),
+        assignee_user_id: event.target.value ? Number(event.target.value) : null,
+      })
+      await loadAssignments()
+      success.value = t('warehouse.messages.assignmentUpdated')
+    } catch (err) {
+      error.value = err.message || t('warehouse.errors.assignments')
     }
   }
 
@@ -160,6 +189,7 @@ export function useWarehousePage() {
       const [fleetRows, portRows] = await Promise.all([listWarehouseFleets(), listWarehousePorts()])
       fleets.value = fleetRows.filter((fleet) => fleet.is_active)
       ports.value = portRows
+      if (canManageWarehouse.value) await loadAssignments(fleets.value[0]?.id || '')
       await loadEntries()
     } catch (err) {
       error.value = err.message || t('warehouse.errors.load')
@@ -168,8 +198,9 @@ export function useWarehousePage() {
   })
 
   return {
-    t, canManageWarehouse, page, fleets, members, ports, loading, saving, error, success,
+    t, canManageWarehouse, page, fleets, members, ports, assignments, assignmentFleetId, loading, saving, error, success,
     editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
     formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
+    loadAssignments, saveAssignment,
   }
 }

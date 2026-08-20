@@ -44,7 +44,8 @@ public class SecurityConfiguration {
             "/api/fleets/*", "/api/fleets/*/memberships/*", "/api/fleets/*/roles/*",
             "/api/forum/posts/*", "/api/forum/threads/*", "/api/guides/*", "/api/newcomer-guide",
             "/api/squads/*", "/api/squads/*/members/*",
-            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*"
+            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*",
+            "/api/warehouse/port-assignments/*"
     };
     private static final String[] STAFF_DELETE_ENDPOINTS = {
             "/api/builds/mine/*", "/api/builds/*/upvote", "/api/calendar/events/*", "/api/files/*",

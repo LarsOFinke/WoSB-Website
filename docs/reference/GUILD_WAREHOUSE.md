@@ -15,7 +15,9 @@ Future sheet ───┘                         |
 ## Data model
 
 Each entry belongs to one active fleet and contains a port, resource, non-negative
-whole-number amount, and whole-row reservation flag. Its holder is exactly one of:
+whole-number amount, whole-row reservation flag, and collection status. `up_for_collection`
+means the donation is waiting at the port; `in_warehouse` means it has reached the fleet
+warehouse. Its holder is exactly one of:
 
 - an active member of the selected fleet, linked by user ID; or
 - a custom operational name for an external player or unregistered holder.
@@ -30,7 +32,13 @@ The `version` field implements optimistic concurrency. Every successful update a
 it. Update and delete clients must send the version they read; stale mutations return
 `409 Conflict` and must reload before retrying. The immutable Flyway migration is
 `V12__guild_warehouse.sql`; `V13__warehouse_port_catalog.sql` adds the managed game-port
-catalog and its initial World of Sea Battle values.
+catalog and its initial World of Sea Battle values. `V14__warehouse_collection_and_pickup_assignments.sql`
+adds collection state and the fleet/port pickup-assignee relation.
+
+Each active fleet port may have one optional pickup assignee. The assignee must be an
+active member of that fleet; assignment changes are staff-only and are audited. Entries
+show the current assignment for their fleet and port, so donations remain stacked by
+fleet while collection work can be distributed.
 
 ## Member API and staff editing
 
@@ -42,12 +50,14 @@ administrator and CSRF protection:
 | --- | --- | --- |
 | `GET` | `/api/warehouse` | Member-visible bounded rows, aggregate totals, and filter facets |
 | `GET` | `/api/warehouse/ports` | Active game-port choices for authenticated members |
+| `GET` | `/api/warehouse/port-assignments?fleet_id=...` | Fleet port pickup assignees (members may read their fleet) |
+| `PUT` | `/api/warehouse/port-assignments/{port_id}` | Staff assigns or clears a fleet-port pickup member |
 | `POST` | `/api/warehouse` | Staff-only entry creation |
 | `PUT` | `/api/warehouse/{entry_id}` | Staff-only replacement using its version |
 | `DELETE` | `/api/warehouse/{entry_id}?version=...` | Staff-only deletion using its version |
 
 The list accepts `fleet_id`, exact case-insensitive `holder`, `port`, `resource`,
-`reserved`, `limit`, and `offset`. Totals describe the complete matching result, not
+`reserved`, `collection_status`, `limit`, and `offset`. Totals describe the complete matching result, not
 only the returned page: matching stock, reserved stock, available stock, and row count.
 Facet values are scoped to the selected fleet so the UI can reproduce the spreadsheet
 prototype's dropdown workflow.
