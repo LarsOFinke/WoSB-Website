@@ -74,11 +74,14 @@ webhook listener maps them to:
 
 - `warehouse.stock.changed` for creates, stock/detail changes, and deletes;
 - `warehouse.reservation.changed` when only reservation state changes.
+- `warehouse.stock.overview` after either event, containing the current fleet totals
+  and every port/resource line for a member-facing full overview.
 
 Events carry fleet scope, so administrators can subscribe different Discord targets by
 fleet and event type through the existing webhook administration. Delivery failures do
-not roll back inventory changes. Messages contain only the operational holder, port,
-resource, amount transition, and actor display name; they contain no webhook secret,
+not roll back inventory changes. The overview contains fleet name, total/available/
+reserved amounts, and port/resource totals. Messages contain only operational warehouse
+data and actor display name; they contain no webhook secret,
 session credential, private member note, or complete IP address. Discord webhook URLs
 remain encrypted server-side and never enter the frontend bundle.
 

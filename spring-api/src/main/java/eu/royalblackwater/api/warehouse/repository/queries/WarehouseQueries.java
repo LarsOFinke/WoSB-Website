@@ -58,6 +58,17 @@ public final class WarehouseQueries {
 
     public static final String FLEET_SELECT_01 = "select id,name from fleets where id=:fleetId and is_active=true";
 
+    public static final String OVERVIEW_SELECT_01 = """
+            select w.port,w.resource,
+                   coalesce(sum(w.amount),0) total,
+                   coalesce(sum(w.amount) filter (where not w.reserved),0) available,
+                   coalesce(sum(w.amount) filter (where w.reserved),0) reserved
+            from warehouse_entries w
+            where w.fleet_id=:fleetId
+            group by w.port,w.resource
+            order by lower(w.port),lower(w.resource)
+            """;
+
     public static final String MEMBER_SELECT_01 = """
             select u.id,coalesce(nullif(up.display_name,''),u.username) display_name
             from fleet_memberships membership

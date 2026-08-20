@@ -300,6 +300,12 @@
       "category": "warehouse",
       "description": "A guild warehouse reservation changed.",
       "default_message": "🔒 **Warehouse reservation changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`."
+    },
+    {
+      "key": "warehouse.stock.overview",
+      "category": "warehouse",
+      "description": "The complete current warehouse stock overview for a fleet.",
+      "default_message": "📊 **Guild warehouse stock overview**\n\n{data.summary}\n\nEvent: `{event}`\nUpdated at `{occurred_at}`."
     }
   ]
 }

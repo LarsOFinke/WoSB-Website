@@ -125,7 +125,8 @@ filters and staff entry editors. Administrators maintain the catalog through
 when stock is created or updated.
 
 All mutations create fleet-scoped audit events. Existing website-webhook subscriptions
-may deliver `warehouse.stock.changed` and `warehouse.reservation.changed` to Discord;
+may deliver `warehouse.stock.changed`, `warehouse.reservation.changed`, and the full
+fleet-scoped `warehouse.stock.overview` to Discord;
 webhook URLs and credentials remain server-side. See the
 [Guild Warehouse reference](GUILD_WAREHOUSE.md) for the data and integration contract.
 

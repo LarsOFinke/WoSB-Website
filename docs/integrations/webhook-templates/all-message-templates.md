@@ -729,3 +729,16 @@ Resource: `{resource.type} #{resource.id}`
 Event: `{event}`
 Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
+
+### `warehouse.stock.overview`
+
+The complete current warehouse stock overview for a fleet.
+
+```text
+📊 **Guild warehouse stock overview**
+
+{data.summary}
+
+Event: `{event}`
+Updated at `{occurred_at}`.
+```

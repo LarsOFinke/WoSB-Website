@@ -57,7 +57,8 @@ public final class WebhookEventCatalog {
             new WebhookEventDefinition("🏴‍☠️ **A fleet role was updated**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`.", "A fleet role was updated.", "fleet", "fleet.role.updated"),
             new WebhookEventDefinition("🏴‍☠️ **A fleet role was removed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`.", "A fleet role was removed.", "fleet", "fleet.role.removed"),
             new WebhookEventDefinition("📦 **Warehouse stock changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`.", "Guild warehouse stock was created, changed, or removed.", "warehouse", "warehouse.stock.changed"),
-            new WebhookEventDefinition("🔒 **Warehouse reservation changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`.", "A guild warehouse reservation changed.", "warehouse", "warehouse.reservation.changed")
+            new WebhookEventDefinition("🔒 **Warehouse reservation changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`.", "A guild warehouse reservation changed.", "warehouse", "warehouse.reservation.changed"),
+            new WebhookEventDefinition("📊 **Guild warehouse stock overview**\n\n{data.summary}\n\nEvent: `{event}`\nUpdated at `{occurred_at}`.", "The complete current warehouse stock overview for a fleet.", "warehouse", "warehouse.stock.overview")
     );
     public static final Set<String> TYPES = ALL.stream().map(WebhookEventDefinition::key)
             .collect(Collectors.toUnmodifiableSet());
