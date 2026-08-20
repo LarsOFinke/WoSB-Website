@@ -1,8 +1,8 @@
 export const warehouseRoutes = [
   {
-    path: '/admin/warehouse',
-    name: 'admin-warehouse',
+    path: '/warehouse',
+    name: 'warehouse',
     component: () => import('./pages/WarehousePage.vue'),
-    meta: { requiresAdmin: true, titleKey: 'warehouse.title' },
+    meta: { requiresUser: true, titleKey: 'warehouse.title' },
   },
 ]

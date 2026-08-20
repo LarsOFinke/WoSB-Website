@@ -20,7 +20,7 @@ and configured through the Spring configuration and infrastructure environment f
 | Reviewed registration requests | 90 days | Traceability of the decision | daily maintenance run |
 | Expired sessions | until expiration | Authentication and security | daily maintenance run |
 | Strategy plans and optional player labels | until owner deletion or manual deletion | Tactical planning, sharing and print preparation | owner deletion removes the strategy document; manual deletion is immediate |
-| Warehouse entries and holder labels | until administrator deletion | Fleet stock allocation and logistics | immediate administrator deletion; linked accounts follow profile correction and account pseudonymization |
+| Warehouse entries and holder labels | until staff deletion | Fleet stock allocation and logistics | immediate staff deletion; linked accounts follow profile correction and account pseudonymization |
 
 Password hashes in registration requests are overwritten immediately after approval or rejection.
 Approved accounts retain only the hash in the actual user account.

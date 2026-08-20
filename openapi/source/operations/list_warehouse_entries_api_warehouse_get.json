@@ -1,8 +1,8 @@
 {
-  "path": "/api/admin/warehouse",
+  "path": "/api/warehouse",
   "method": "get",
   "operation": {
-    "operationId": "admin_list_warehouse_entries_api_admin_warehouse_get",
+    "operationId": "list_warehouse_entries_api_warehouse_get",
     "parameters": [
       { "in": "query", "name": "fleet_id", "required": false, "schema": { "anyOf": [{ "minimum": 1, "type": "integer" }, { "type": "null" }], "title": "Fleet Id" } },
       { "in": "query", "name": "holder", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Holder" } },
@@ -17,7 +17,7 @@
       "200": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePage" } } }, "description": "Successful Response" },
       "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Invalid request" }
     },
-    "summary": "Admin List Warehouse Entries",
-    "tags": ["admin", "warehouse"]
+    "summary": "List Warehouse Entries",
+    "tags": ["warehouse"]
   }
 }

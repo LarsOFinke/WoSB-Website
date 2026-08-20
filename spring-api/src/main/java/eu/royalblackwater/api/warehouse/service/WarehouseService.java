@@ -33,11 +33,13 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @Service
 public class WarehouseService {
     private final WarehouseRepository repository;
+    private final WarehousePortService ports;
     private final AuditService audit;
     private final Clock clock;
 
-    public WarehouseService(WarehouseRepository repository, AuditService audit, Clock clock) {
+    public WarehouseService(WarehouseRepository repository, WarehousePortService ports, AuditService audit, Clock clock) {
         this.repository = repository;
+        this.ports = ports;
         this.audit = audit;
         this.clock = clock;
     }
@@ -45,7 +47,7 @@ public class WarehouseService {
     @Transactional(readOnly = true)
     public WarehousePage list(AuthenticatedUser actor, Long fleetId, String holder, String port,
                               String resource, Boolean reserved, long limit, long offset) {
-        requireAdmin(actor);
+        requireAuthenticated(actor);
         Long normalizedFleetId = ListFilter.optionalPositiveLong(fleetId, "fleet_id");
         ListFilter page = ListFilter.of(null, limit, offset, 500);
         Map<String, Object> parameters = new LinkedHashMap<>();
@@ -66,13 +68,14 @@ public class WarehouseService {
 
     @Transactional
     public WarehouseEntryRead create(WarehouseEntryCreate payload, AuthenticatedUser actor) {
-        requireAdmin(actor);
+        requireStaff(actor);
         requireFleet(payload.fleetId());
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
+        String port = ports.requireActiveName(payload.port());
         LocalDateTime now = now();
         long id = repository.insertReturningId(WarehouseQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                 "fleetId", payload.fleetId(), "memberUserId", holder.memberUserId(),
-                "customHolderName", holder.customName(), "port", required(payload.port(), "Port"),
+                "customHolderName", holder.customName(), "port", port,
                 "resource", required(payload.resource(), "Resource"), "amount", payload.amount(),
                 "reserved", Boolean.TRUE.equals(payload.reserved()), "now", now, "actorId", actor.id()));
         WarehouseEntryRead created = get(id);
@@ -84,13 +87,13 @@ public class WarehouseService {
 
     @Transactional
     public WarehouseEntryRead update(long id, WarehouseEntryUpdate payload, AuthenticatedUser actor) {
-        requireAdmin(actor);
+        requireStaff(actor);
         if (payload.version() < 1) throw bad("Version must be positive.");
         Map<String, Object> previous = raw(id);
         if (RowValues.longValue(previous, "version") != payload.version()) throw conflict();
         requireFleet(payload.fleetId());
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
-        String port = required(payload.port(), "Port");
+        String port = ports.requireActiveName(payload.port());
         String resource = required(payload.resource(), "Resource");
         List<String> changed = changedFields(previous, payload, holder, port, resource);
         if (changed.isEmpty()) return WarehouseDtoMapper.entry(previous);
@@ -113,7 +116,7 @@ public class WarehouseService {
 
     @Transactional
     public void delete(long id, long version, AuthenticatedUser actor) {
-        requireAdmin(actor);
+        requireStaff(actor);
         if (version < 1) throw bad("Version must be positive.");
         WarehouseEntryRead previous = WarehouseDtoMapper.entry(raw(id));
         if (repository.update(WarehouseQueries.DELETE_DELETE_01, Map.of("id", id, "version", version)) == 0) {
@@ -241,9 +244,15 @@ public class WarehouseService {
         return value == null || value.isBlank() ? null : value.strip();
     }
 
-    private static void requireAdmin(AuthenticatedUser actor) {
-        if (actor == null || !actor.isAdmin()) {
-            throw new ResponseStatusException(FORBIDDEN, "Warehouse administration requires an administrator.");
+    private static void requireAuthenticated(AuthenticatedUser actor) {
+        if (actor == null) {
+            throw new ResponseStatusException(FORBIDDEN, "Warehouse access requires authentication.");
+        }
+    }
+
+    private static void requireStaff(AuthenticatedUser actor) {
+        if (actor == null || !actor.staff()) {
+            throw new ResponseStatusException(FORBIDDEN, "Warehouse changes require staff access.");
         }
     }
 

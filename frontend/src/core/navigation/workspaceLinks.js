@@ -10,6 +10,7 @@ export function createWorkspaceLinks(t, { isAuthenticated = false, isStaff = fal
     { to: '/new-captain', label: t('common.newCaptainGuide'), icon: 'compass', section: 'member' },
     { to: '/builds', label: t('common.builds'), icon: 'builds', section: 'member' },
     { to: '/strategies', label: t('strategyPlanner.title'), icon: 'compass', section: 'member' },
+    { to: '/warehouse', label: t('warehouse.title'), icon: 'database', section: 'member' },
     { to: '/combat-analysis', label: t('common.combatAnalysis'), icon: 'swords', section: 'member' },
     { to: '/guides', label: t('common.guides'), icon: 'guides', section: 'member' },
     { to: '/groups', label: t('common.groups'), icon: 'groups', section: 'member' },

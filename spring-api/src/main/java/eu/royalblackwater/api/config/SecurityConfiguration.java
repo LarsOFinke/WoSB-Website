@@ -37,20 +37,20 @@ public class SecurityConfiguration {
             "/api/files", "/api/fleets", "/api/fleets/*/leaders/*", "/api/fleets/*/roles",
             "/api/forum/threads", "/api/forum/threads/*/posts",
             "/api/groups", "/api/groups/*/close", "/api/guides",
-            "/api/squads", "/api/squads/*/members", "/api/strategies"
+            "/api/squads", "/api/squads/*/members", "/api/strategies", "/api/warehouse"
     };
     private static final String[] STAFF_PUT_ENDPOINTS = {
             "/api/builds/mine/*", "/api/builds/*/printout", "/api/calendar/events/*",
             "/api/fleets/*", "/api/fleets/*/memberships/*", "/api/fleets/*/roles/*",
             "/api/forum/posts/*", "/api/forum/threads/*", "/api/guides/*", "/api/newcomer-guide",
             "/api/squads/*", "/api/squads/*/members/*",
-            "/api/strategies/*", "/api/strategies/*/publication"
+            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*"
     };
     private static final String[] STAFF_DELETE_ENDPOINTS = {
             "/api/builds/mine/*", "/api/builds/*/upvote", "/api/calendar/events/*", "/api/files/*",
             "/api/fleets/*/roles/*", "/api/forum/posts/*", "/api/guides/*",
             "/api/squads/*", "/api/squads/*/members/*",
-            "/api/strategies/*", "/api/strategies/*/publication"
+            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*"
     };
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/health", "/api/health/ready", "/actuator/health/**",

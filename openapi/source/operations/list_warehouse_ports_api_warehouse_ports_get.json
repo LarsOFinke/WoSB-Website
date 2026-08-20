@@ -1,0 +1,13 @@
+{
+  "path": "/api/warehouse/ports",
+  "method": "get",
+  "operation": {
+    "operationId": "list_warehouse_ports_api_warehouse_ports_get",
+    "parameters": [],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WarehousePortRead" } } } } }
+    },
+    "summary": "List Active Warehouse Ports",
+    "tags": ["warehouse"]
+  }
+}

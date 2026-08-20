@@ -52,16 +52,30 @@ test('existing entries retain optimistic versions in update payloads', () => {
   assert.equal(formatWarehouseAmount(1250, 'en'), '1,250')
 })
 
-test('warehouse route is administrator-only and pages delegate flows to a composable', async () => {
-  const [routes, page, composable, api] = await Promise.all([
+test('warehouse is member-visible while mutations remain staff-gated', async () => {
+  const [routes, page, editor, portManagement, composable, api, navigation] = await Promise.all([
     readFile(new URL('../src/modules/warehouse/routes.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/modules/warehouse/pages/WarehousePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/modules/warehouse/components/WarehouseEntryEditor.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/modules/admin/components/WarehousePortManagementPanel.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/modules/warehouse/composables/useWarehousePage.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/modules/warehouse/api/warehouse.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/core/navigation/workspaceLinks.js', import.meta.url), 'utf8'),
   ])
-  assert.match(routes, /requiresAdmin: true/)
+  assert.match(routes, /path: '\/warehouse'/)
+  assert.match(routes, /requiresUser: true/)
   assert.match(page, /useWarehousePage/)
   assert.doesNotMatch(page, /\/admin\/warehouse/)
+  assert.match(page, /v-if="canManageWarehouse"/)
+  assert.match(editor, /v-for="port in ports"/)
+  assert.doesNotMatch(editor, /draft\.port[^\n]*<input/)
+  assert.match(portManagement, /listAdminWarehousePorts/)
+  assert.match(composable, /canManageWarehouse/)
+  assert.match(composable, /listWarehousePorts/)
   assert.match(composable, /createWarehouseEntry/)
-  assert.match(api, /\/admin\/warehouse/)
+  assert.match(api, /\/warehouse/)
+  assert.match(api, /\/warehouse\/ports/)
+  assert.match(api, /\/admin\/master-data\/warehouse-ports/)
+  assert.doesNotMatch(api, /\/admin\/warehouse/)
+  assert.match(navigation, /to: '\/warehouse'/)
 })

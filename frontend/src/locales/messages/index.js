@@ -28,6 +28,7 @@ import { staffWorkspaceOverhaulMessages } from './staffWorkspaceOverhaul.js'
 import { systemOperationsMessages } from './systemOperations.js'
 import { strategyPlannerMessages } from './strategyPlanner.js'
 import { warehouseMessages } from './warehouse.js'
+import { warehousePortManagementMessages } from './warehousePortManagement.js'
 import { systemLogManagementMessages } from './systemLogManagement.js'
 import { securityAuditDashboardMessages } from './securityAuditDashboard.js'
 import { securitySignalReasonsMessages } from './securitySignalReasons.js'
@@ -71,6 +72,7 @@ const messageLayers = [
   systemOperationsMessages,
   strategyPlannerMessages,
   warehouseMessages,
+  warehousePortManagementMessages,
   systemLogManagementMessages,
   securityAuditDashboardMessages,
   securitySignalReasonsMessages,

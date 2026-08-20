@@ -2,6 +2,7 @@ package eu.royalblackwater.api.warehouse.mapper;
 
 import eu.royalblackwater.api.dto.WarehouseEntryRead;
 import eu.royalblackwater.api.dto.WarehousePage;
+import eu.royalblackwater.api.dto.WarehousePortRead;
 import eu.royalblackwater.api.persistence.RowValues;
 import java.util.List;
 import java.util.Map;
@@ -39,5 +40,15 @@ public final class WarehouseDtoMapper {
                 RowValues.longValue(summary, "reserved_stock"),
                 resources,
                 RowValues.longValue(summary, "total"));
+    }
+
+    public static WarehousePortRead port(Map<String, Object> row) {
+        return new WarehousePortRead(
+                RowValues.longValue(row, "id"),
+                RowValues.requiredString(row, "name"),
+                RowValues.longValue(row, "sort_order"),
+                RowValues.booleanValue(row, "is_active"),
+                RowValues.dateTime(row, "created_at"),
+                RowValues.dateTime(row, "updated_at"));
     }
 }

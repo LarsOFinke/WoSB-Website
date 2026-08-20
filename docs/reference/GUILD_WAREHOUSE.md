@@ -21,26 +21,30 @@ whole-number amount, and whole-row reservation flag. Its holder is exactly one o
 - a custom operational name for an external player or unregistered holder.
 
 Linked entries resolve the member's current display name when read. A custom name is
-stored as entered after whitespace normalization. Port and resource are deliberately
-validated free text in this prototype so the workflow does not depend on a new master
-data catalog. Amounts are limited to `999,999,999`.
+stored as entered after whitespace normalization. Ports come from the dedicated,
+administrator-maintained `warehouse_ports` reference catalog; warehouse writes reject
+names that are not currently active. Resources remain normalized free text in this
+prototype. Amounts are limited to `999,999,999`.
 
 The `version` field implements optimistic concurrency. Every successful update advances
 it. Update and delete clients must send the version they read; stale mutations return
 `409 Conflict` and must reload before retrying. The immutable Flyway migration is
-`V12__guild_warehouse.sql`.
+`V12__guild_warehouse.sql`; `V13__warehouse_port_catalog.sql` adds the managed game-port
+catalog and its initial World of Sea Battle values.
 
-## Administrator API and UI
+## Member API and staff editing
 
-All endpoints require an authenticated administrator, CSRF protection for mutations,
-and the normal host/origin boundary:
+All endpoints require authentication and the normal host/origin boundary. Reading is
+available to every authenticated member. Mutations additionally require a moderator or
+administrator and CSRF protection:
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/admin/warehouse` | Bounded rows, aggregate totals, and filter facets |
-| `POST` | `/api/admin/warehouse` | Create an entry |
-| `PUT` | `/api/admin/warehouse/{entry_id}` | Replace an entry using its version |
-| `DELETE` | `/api/admin/warehouse/{entry_id}?version=...` | Delete using its version |
+| `GET` | `/api/warehouse` | Member-visible bounded rows, aggregate totals, and filter facets |
+| `GET` | `/api/warehouse/ports` | Active game-port choices for authenticated members |
+| `POST` | `/api/warehouse` | Staff-only entry creation |
+| `PUT` | `/api/warehouse/{entry_id}` | Staff-only replacement using its version |
+| `DELETE` | `/api/warehouse/{entry_id}?version=...` | Staff-only deletion using its version |
 
 The list accepts `fleet_id`, exact case-insensitive `holder`, `port`, `resource`,
 `reserved`, `limit`, and `offset`. Totals describe the complete matching result, not
@@ -48,10 +52,19 @@ only the returned page: matching stock, reserved stock, available stock, and row
 Facet values are scoped to the selected fleet so the UI can reproduce the spreadsheet
 prototype's dropdown workflow.
 
-The route `/admin/warehouse` sits in the shared Staff shell but is visible only to
-administrators. It supports linked-member and custom-name entry, editing, deletion,
-reservation state, responsive table presentation, and the same summary cards as the
-prototype.
+The route `/warehouse` appears in member navigation. Every authenticated member can
+browse, filter, and review aggregate totals and reservation state. Create, edit, and
+delete controls render only for moderators and administrators; the backend enforces the
+same boundary independently. Staff member selection reuses the fleet-management view
+instead of exposing general user-administration data.
+
+Administrators manage ports through the **Warehouse ports** tab in
+`/admin/master-data`. The corresponding `/api/admin/master-data/warehouse-ports`
+collection supports listing, creation, updates, and deactivation. Deactivated ports
+disappear from warehouse dropdowns and cannot be submitted on new mutations, while
+historical stock rows remain readable. Renaming a catalog port updates matching stock
+rows and advances their optimistic versions so open editors fail safely instead of
+overwriting the rename.
 
 ## Audit and Discord delivery
 
@@ -75,10 +88,10 @@ A linked member ID is personal data used to associate inventory with the correct
 member. It is included in that account's personal-data export through the warehouse
 relation. Account deletion follows the existing pseudonymization workflow; the entry
 remains operational while its linked identity resolves to the pseudonymized account.
-Administrators delete entries when stock is no longer operationally relevant.
+Staff delete entries when stock is no longer operationally relevant.
 
 Custom holder names are operational aliases without a reliable account relation. If an
-alias identifies a person, correction, export, or deletion requires an administrator to
+alias identifies a person, correction, export, or deletion requires a staff member to
 locate it by name and handle it manually. Avoid real-world names or contact details when
 an in-game name is sufficient.
 

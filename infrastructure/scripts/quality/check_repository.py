@@ -84,7 +84,7 @@ operations=[]
 for item in contract.get('paths',{}).values():
     for operation in item.values():
         if isinstance(operation,dict) and operation.get('operationId'): operations.append(operation['operationId'])
-require(len(operations)==189 and len(set(operations))==189,f'API contract must expose 189 unique operations, found {len(operations)}/{len(set(operations))}')
+require(len(operations)==194 and len(set(operations))==194,f'API contract must expose 194 unique operations, found {len(operations)}/{len(set(operations))}')
 require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/dto').glob('*.java')))==len(contract['components']['schemas']),'generated Java DTO count is stale')
 require(not (ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').exists(),'obsolete generated contract layer remains')
 

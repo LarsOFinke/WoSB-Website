@@ -96,16 +96,20 @@ resource with a safe resolved target, not a parallel page-level navigation syste
 
 ## Guild Warehouse workspace
 
-The administrator-only warehouse route follows the same page-model boundary. The page
-renders spreadsheet-style filters, totals, and rows; `useWarehousePage.js` coordinates
-loading and mutations; `warehouse.js` owns transport; and the domain module owns draft
-validation and payload mapping. An entry belongs to one fleet and identifies its holder
-as either an active fleet member or a custom operational name, never both.
+The member-visible warehouse route follows the same page-model boundary. The page
+renders spreadsheet-style filters, totals, and rows for authenticated members;
+`useWarehousePage.js` coordinates loading and staff-only mutations; `warehouse.js` owns
+transport, including the active game-port catalog; and the domain module owns draft
+validation and payload mapping. The admin master-data page hosts the focused
+`WarehousePortManagementPanel.vue` rather than treating ports as ship-build equipment.
+An entry
+belongs to one fleet and identifies its holder as either an active fleet member or a
+custom operational name, never both.
 
 The API-provided row version must accompany updates and deletes. A `409` is a real
 concurrent-edit signal: keep the error visible and reload the authoritative row instead
-of silently overwriting newer stock. Frontend admin guards only shape navigation; the
-backend remains the authorization and membership boundary.
+of silently overwriting newer stock. Frontend staff guards only shape mutation controls;
+the backend remains the authorization and membership boundary.
 
 ## Extension guide
 

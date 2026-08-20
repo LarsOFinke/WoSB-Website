@@ -1,8 +1,8 @@
 {
-  "path": "/api/admin/warehouse/{entry_id}",
+  "path": "/api/warehouse/{entry_id}",
   "method": "put",
   "operation": {
-    "operationId": "admin_update_warehouse_entry_api_admin_warehouse__entry_id__put",
+    "operationId": "update_warehouse_entry_api_warehouse__entry_id__put",
     "parameters": [
       { "in": "path", "name": "entry_id", "required": true, "schema": { "minimum": 1, "title": "Entry Id", "type": "integer" } },
       { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rbf Hub Session" } }
@@ -17,7 +17,7 @@
       "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Not found" },
       "409": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Version conflict" }
     },
-    "summary": "Admin Update Warehouse Entry",
-    "tags": ["admin", "warehouse"]
+    "summary": "Update Warehouse Entry",
+    "tags": ["warehouse"]
   }
 }

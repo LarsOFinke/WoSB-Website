@@ -4,6 +4,7 @@ defineProps({
   draft: { type: Object, required: true },
   fleets: { type: Array, default: () => [] },
   members: { type: Array, default: () => [] },
+  ports: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
   t: { type: Function, required: true },
 })
@@ -51,7 +52,13 @@ defineEmits(['cancel', 'fleet-change', 'save'])
         </fieldset>
 
         <div class="warehouse-editor__grid">
-          <label class="input-panel"><span>{{ t('warehouse.fields.port') }}</span><input v-model.trim="draft.port" maxlength="120" required /></label>
+          <label class="input-panel">
+            <span>{{ t('warehouse.fields.port') }}</span>
+            <select v-model="draft.port" required>
+              <option value="" disabled>{{ t('warehouse.editor.selectPort') }}</option>
+              <option v-for="port in ports" :key="port.id" :value="port.name">{{ port.name }}</option>
+            </select>
+          </label>
           <label class="input-panel"><span>{{ t('warehouse.fields.resource') }}</span><input v-model.trim="draft.resource" maxlength="120" required /></label>
           <label class="input-panel"><span>{{ t('warehouse.fields.amount') }}</span><input v-model.number="draft.amount" type="number" min="0" max="999999999" step="1" required /></label>
           <label class="warehouse-reserved-toggle"><input v-model="draft.reserved" type="checkbox" /><span>{{ t('warehouse.fields.reserved') }}</span></label>

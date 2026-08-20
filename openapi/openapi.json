@@ -12504,6 +12504,100 @@
         "title": "WarehousePage",
         "type": "object"
       },
+      "WarehousePortCreate": {
+        "title": "WarehousePortCreate",
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 100
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "WarehousePortRead": {
+        "title": "WarehousePortRead",
+        "type": "object",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sort_order",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "WarehousePortUpdate": {
+        "title": "WarehousePortUpdate",
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "default": 100
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "WeaponClassRead": {
         "properties": {
           "code": {
@@ -12575,7 +12669,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.7.2"
+    "version": "1.7.4"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -16771,6 +16865,174 @@
         ]
       }
     },
+    "/api/admin/master-data/warehouse-ports": {
+      "post": {
+        "operationId": "create_warehouse_port_api_admin_master_data_warehouse_ports_post",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehousePortCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehousePortRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Port name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create Warehouse Port",
+        "tags": [
+          "admin",
+          "admin-master-data",
+          "warehouse"
+        ]
+      },
+      "get": {
+        "operationId": "list_admin_warehouse_ports_api_admin_master_data_warehouse_ports_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WarehousePortRead"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List Warehouse Port Master Data",
+        "tags": [
+          "admin",
+          "admin-master-data",
+          "warehouse"
+        ]
+      }
+    },
+    "/api/admin/master-data/warehouse-ports/{port_id}": {
+      "delete": {
+        "operationId": "deactivate_warehouse_port_api_admin_master_data_warehouse_ports__port_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "port_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Port Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Deactivate Warehouse Port",
+        "tags": [
+          "admin",
+          "admin-master-data",
+          "warehouse"
+        ]
+      },
+      "put": {
+        "operationId": "update_warehouse_port_api_admin_master_data_warehouse_ports__port_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "port_id",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Port Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehousePortUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehousePortRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Port name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update Warehouse Port",
+        "tags": [
+          "admin",
+          "admin-master-data",
+          "warehouse"
+        ]
+      }
+    },
     "/api/admin/moderators": {
       "post": {
         "operationId": "admin_create_moderator_api_admin_moderators_post",
@@ -18525,383 +18787,6 @@
         "tags": [
           "admin",
           "admin-users"
-        ]
-      }
-    },
-    "/api/admin/warehouse": {
-      "post": {
-        "operationId": "admin_create_warehouse_entry_api_admin_warehouse_post",
-        "parameters": [
-          {
-            "in": "cookie",
-            "name": "rbf_hub_session",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Rbf Hub Session"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WarehouseEntryCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseEntryRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Invalid request"
-          }
-        },
-        "summary": "Admin Create Warehouse Entry",
-        "tags": [
-          "admin",
-          "warehouse"
-        ]
-      },
-      "get": {
-        "operationId": "admin_list_warehouse_entries_api_admin_warehouse_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "fleet_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Fleet Id"
-            }
-          },
-          {
-            "in": "query",
-            "name": "holder",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 120,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Holder"
-            }
-          },
-          {
-            "in": "query",
-            "name": "port",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 120,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Port"
-            }
-          },
-          {
-            "in": "query",
-            "name": "resource",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 120,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Resource"
-            }
-          },
-          {
-            "in": "query",
-            "name": "reserved",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Reserved"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 100,
-              "maximum": 500,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "maximum": 100000,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "rbf_hub_session",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Rbf Hub Session"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehousePage"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Invalid request"
-          }
-        },
-        "summary": "Admin List Warehouse Entries",
-        "tags": [
-          "admin",
-          "warehouse"
-        ]
-      }
-    },
-    "/api/admin/warehouse/{entry_id}": {
-      "delete": {
-        "operationId": "admin_delete_warehouse_entry_api_admin_warehouse__entry_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "entry_id",
-            "required": true,
-            "schema": {
-              "minimum": 1,
-              "title": "Entry Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "version",
-            "required": true,
-            "schema": {
-              "minimum": 1,
-              "title": "Version",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "rbf_hub_session",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Rbf Hub Session"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Not found"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Version conflict"
-          }
-        },
-        "summary": "Admin Delete Warehouse Entry",
-        "tags": [
-          "admin",
-          "warehouse"
-        ]
-      },
-      "put": {
-        "operationId": "admin_update_warehouse_entry_api_admin_warehouse__entry_id__put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "entry_id",
-            "required": true,
-            "schema": {
-              "minimum": 1,
-              "title": "Entry Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "cookie",
-            "name": "rbf_hub_session",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Rbf Hub Session"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WarehouseEntryUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WarehouseEntryRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Invalid request"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Not found"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            },
-            "description": "Version conflict"
-          }
-        },
-        "summary": "Admin Update Warehouse Entry",
-        "tags": [
-          "admin",
-          "warehouse"
         ]
       }
     },
@@ -25067,6 +24952,404 @@
         "summary": "Publish Strategy",
         "tags": [
           "strategies"
+        ]
+      }
+    },
+    "/api/warehouse": {
+      "post": {
+        "operationId": "create_warehouse_entry_api_warehouse_post",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehouseEntryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseEntryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "Create Warehouse Entry",
+        "tags": [
+          "warehouse"
+        ]
+      },
+      "get": {
+        "operationId": "list_warehouse_entries_api_warehouse_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fleet_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fleet Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "holder",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Holder"
+            }
+          },
+          {
+            "in": "query",
+            "name": "port",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Port"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resource"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reserved",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Reserved"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 100000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehousePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          }
+        },
+        "summary": "List Warehouse Entries",
+        "tags": [
+          "warehouse"
+        ]
+      }
+    },
+    "/api/warehouse/ports": {
+      "get": {
+        "operationId": "list_warehouse_ports_api_warehouse_ports_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WarehousePortRead"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List Active Warehouse Ports",
+        "tags": [
+          "warehouse"
+        ]
+      }
+    },
+    "/api/warehouse/{entry_id}": {
+      "delete": {
+        "operationId": "delete_warehouse_entry_api_warehouse__entry_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Version conflict"
+          }
+        },
+        "summary": "Delete Warehouse Entry",
+        "tags": [
+          "warehouse"
+        ]
+      },
+      "put": {
+        "operationId": "update_warehouse_entry_api_warehouse__entry_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Entry Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "cookie",
+            "name": "rbf_hub_session",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rbf Hub Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WarehouseEntryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseEntryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Version conflict"
+          }
+        },
+        "summary": "Update Warehouse Entry",
+        "tags": [
+          "warehouse"
         ]
       }
     }

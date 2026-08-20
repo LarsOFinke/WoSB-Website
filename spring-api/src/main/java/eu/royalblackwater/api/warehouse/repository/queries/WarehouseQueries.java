@@ -85,4 +85,34 @@ public final class WarehouseQueries {
             """;
 
     public static final String DELETE_DELETE_01 = "delete from warehouse_entries where id=:id and version=:version";
+
+    public static final String ACTIVE_PORTS_SELECT_01 = """
+            select * from warehouse_ports where is_active=true order by sort_order,lower(name),id
+            """;
+    public static final String ALL_PORTS_SELECT_01 = """
+            select * from warehouse_ports order by sort_order,lower(name),id
+            """;
+    public static final String PORT_SELECT_01 = "select * from warehouse_ports where id=:id";
+    public static final String ACTIVE_PORT_BY_NAME_SELECT_01 = """
+            select id,name from warehouse_ports where is_active=true and lower(name)=lower(:name)
+            """;
+    public static final String PORT_NAME_EXISTS_SELECT_01 = """
+            select count(*) from warehouse_ports where lower(name)=lower(:name)
+              and (cast(:id as bigint) is null or id<>:id)
+            """;
+    public static final String CREATE_PORT_INSERT_01 = """
+            insert into warehouse_ports(name,sort_order,is_active,created_at,updated_at)
+            values (:name,:sortOrder,:active,:now,:now) returning id
+            """;
+    public static final String UPDATE_PORT_UPDATE_01 = """
+            update warehouse_ports set name=:name,sort_order=:sortOrder,is_active=:active,updated_at=:now
+            where id=:id
+            """;
+    public static final String RENAME_ENTRY_PORTS_UPDATE_01 = """
+            update warehouse_entries set port=:name,version=version+1,updated_at=:now,updated_by_id=:actorId
+            where lower(port)=lower(:previousName)
+            """;
+    public static final String DEACTIVATE_PORT_UPDATE_01 = """
+            update warehouse_ports set is_active=false,updated_at=:now where id=:id
+            """;
 }

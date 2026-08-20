@@ -2,11 +2,13 @@
 
 ## Unreleased
 
-- Added an administrator-only, fleet-scoped guild warehouse with member-linked or
-  custom holders, spreadsheet-style filtering and totals, reservation state,
+- Added a member-visible, staff-managed, fleet-scoped guild warehouse with
+  member-linked or custom holders, spreadsheet-style filtering and totals, reservation state,
   optimistic edit protection, privacy export coverage, and audit-driven Discord
   webhook events. The website/API and PostgreSQL remain the source of truth so a
-  future spreadsheet client can reuse the same business boundary.
+  future spreadsheet client can reuse the same business boundary. Warehouse ports now
+  use an administrator-maintained game-port catalog shared by the member filters and
+  staff entry editor, with server-side validation against active values.
 - Added a fail-closed authorization-policy audit for every mutating OpenAPI
   operation and incremental TypeScript checking for the Strategy Planner's
   JavaScript domain model.

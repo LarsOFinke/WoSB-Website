@@ -109,14 +109,20 @@ and domain filter parameters. Clients must not assume an unbounded complete list
 or invent undocumented query parameters. Defaults and maximums are defined by
 the OpenAPI parameter schemas and enforced again by the backend.
 
-## Guild warehouse administration
+## Guild warehouse
 
-`/api/admin/warehouse` is the authoritative warehouse collection. Administrators may
+`/api/warehouse` is the authoritative warehouse collection. Authenticated members may
 filter its bounded list by fleet, holder, port, resource, and reservation state; the
-response includes matching stock totals and fleet-aware facet values. Creates and
-updates choose exactly one holder source: an active member of the selected fleet or a
-custom operational name. Updates and deletes include the current row version and return
-`409` when another client has already changed the entry.
+response includes matching stock totals and fleet-aware facet values. Moderators and
+administrators may create, update, and delete entries. Mutations choose exactly one
+holder source: an active member of the selected fleet or a custom operational name.
+Updates and deletes include the current row version and return `409` when another staff
+client has already changed the entry.
+
+`GET /api/warehouse/ports` returns the active warehouse-port catalog used by member
+filters and staff entry editors. Administrators maintain the catalog through
+`/api/admin/master-data/warehouse-ports`; arbitrary or inactive port names are rejected
+when stock is created or updated.
 
 All mutations create fleet-scoped audit events. Existing website-webhook subscriptions
 may deliver `warehouse.stock.changed` and `warehouse.reservation.changed` to Discord;

@@ -31,8 +31,12 @@ class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
                 .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from flyway_schema_history where version='12'", Map.of()))
                 .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='13'", Map.of()))
+                .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from information_schema.tables where table_name='warehouse_entries'", Map.of()))
                 .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from warehouse_ports where is_active=true", Map.of()))
+                .isGreaterThanOrEqualTo(38);
         assertThat(jdbc.count("""
                 select count(*) from information_schema.columns
                  where table_schema=current_schema() and table_name='builds'
@@ -224,45 +228,85 @@ class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
     }
 
     @Test
-    void administratorManagesWarehouseStockWithVersionedAuditLifecycle() throws Exception {
-        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+    void membersReadWarehouseWhileStaffManageVersionedAuditLifecycle() throws Exception {
+        long nonce = Math.abs(System.nanoTime());
+        String moderatorPassword = "Warehouse-Moderator-Password-42!";
+        createUser("warehouse-moderator-" + nonce, moderatorPassword, "moderator");
+        SessionCookies moderator = login("warehouse-moderator-" + nonce, moderatorPassword);
+        String memberPassword = "Warehouse-Member-Password-42!";
+        createMember("warehouse-member-" + nonce, memberPassword);
+        SessionCookies member = login("warehouse-member-" + nonce, memberPassword);
         long fleetId = ((Number) bootstrapMembership().get("fleet_id")).longValue();
         String createBody = "{\"fleet_id\":" + fleetId
-                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Nassau\","
+                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Tortuga\","
                 + "\"resource\":\"Iron\",\"amount\":650,\"reserved\":false}";
-        HttpResponse<String> created = post("/api/admin/warehouse", createBody,
-                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
-        assertStatus(created, 201, "POST", "/api/admin/warehouse");
+        HttpResponse<String> created = post("/api/warehouse", createBody,
+                moderator.cookieHeader(), moderator.csrfToken(), localOrigin());
+        assertStatus(created, 201, "POST", "/api/warehouse");
         long entryId = jsonId(created.body());
         assertThat(created.body()).contains("\"holder_name\":\"Blackwater\"", "\"version\":1");
 
-        HttpResponse<String> listed = get("/api/admin/warehouse?fleet_id=" + fleetId,
-                administrator.sessionCookie());
-        assertStatus(listed, 200, "GET", "/api/admin/warehouse?fleet_id={fleet_id}");
+        HttpResponse<String> listed = get("/api/warehouse?fleet_id=" + fleetId,
+                member.sessionCookie());
+        assertStatus(listed, 200, "GET", "/api/warehouse?fleet_id={fleet_id}");
         assertThat(listed.body()).contains("\"matching_stock\":650", "\"available_stock\":650");
+        assertStatus(post("/api/warehouse", createBody,
+                        member.cookieHeader(), member.csrfToken(), localOrigin()),
+                403, "POST", "/api/warehouse member mutation");
 
         String updateBody = "{\"fleet_id\":" + fleetId
-                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Nassau\","
+                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Tortuga\","
                 + "\"resource\":\"Iron\",\"amount\":1250,\"reserved\":false,\"version\":1}";
-        HttpResponse<String> updated = put("/api/admin/warehouse/" + entryId, updateBody, administrator);
-        assertStatus(updated, 200, "PUT", "/api/admin/warehouse/{entry_id}");
+        HttpResponse<String> updated = put("/api/warehouse/" + entryId, updateBody, moderator);
+        assertStatus(updated, 200, "PUT", "/api/warehouse/{entry_id}");
         assertThat(updated.body()).contains("\"amount\":1250", "\"version\":2");
 
-        assertStatus(put("/api/admin/warehouse/" + entryId, updateBody, administrator),
-                409, "PUT", "/api/admin/warehouse/{entry_id} stale version");
+        assertStatus(put("/api/warehouse/" + entryId, updateBody, moderator),
+                409, "PUT", "/api/warehouse/{entry_id} stale version");
         String reserveBody = updateBody.replace("\"reserved\":false,\"version\":1",
                 "\"reserved\":true,\"version\":2");
-        HttpResponse<String> reserved = put("/api/admin/warehouse/" + entryId, reserveBody, administrator);
-        assertStatus(reserved, 200, "PUT", "/api/admin/warehouse/{entry_id} reservation");
+        HttpResponse<String> reserved = put("/api/warehouse/" + entryId, reserveBody, moderator);
+        assertStatus(reserved, 200, "PUT", "/api/warehouse/{entry_id} reservation");
         long version = jsonLong(reserved.body(), "version");
         assertThat(reserved.body()).contains("\"reserved\":true");
         assertThat(jdbc.count("select count(*) from audit_logs where entity_type='warehouse_entry' and action='reservation' and entity_id=:id",
                 Map.of("id", String.valueOf(entryId)))).isEqualTo(1);
 
-        assertStatus(delete("/api/admin/warehouse/" + entryId + "?version=" + version,
-                administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
-                204, "DELETE", "/api/admin/warehouse/{entry_id}");
+        assertStatus(delete("/api/warehouse/" + entryId + "?version=" + version,
+                moderator.cookieHeader(), moderator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/warehouse/{entry_id}");
         assertThat(jdbc.count("select count(*) from warehouse_entries where id=:id", Map.of("id", entryId))).isZero();
+    }
+
+    @Test
+    void administratorsManageWarehousePortsWhileMembersUseTheActiveCatalog() throws Exception {
+        long nonce = Math.abs(System.nanoTime());
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        String memberPassword = "Warehouse-Port-Member-Password-42!";
+        String memberName = "warehouse-port-member-" + nonce;
+        createMember(memberName, memberPassword);
+        SessionCookies member = login(memberName, memberPassword);
+
+        assertStatus(get("/api/admin/master-data/warehouse-ports", member.sessionCookie()),
+                403, "GET", "/api/admin/master-data/warehouse-ports member");
+        String name = "Integration Harbor " + nonce;
+        HttpResponse<String> created = post("/api/admin/master-data/warehouse-ports",
+                "{\"name\":\"" + name + "\",\"sort_order\":900,\"is_active\":true}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(created, 201, "POST", "/api/admin/master-data/warehouse-ports");
+        long portId = jsonId(created.body());
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).contains(name);
+
+        String renamed = "Renamed Harbor " + nonce;
+        assertStatus(put("/api/admin/master-data/warehouse-ports/" + portId,
+                "{\"name\":\"" + renamed + "\",\"sort_order\":901,\"is_active\":true}", administrator),
+                200, "PUT", "/api/admin/master-data/warehouse-ports/{port_id}");
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).contains(renamed).doesNotContain(name);
+
+        assertStatus(delete("/api/admin/master-data/warehouse-ports/" + portId,
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/admin/master-data/warehouse-ports/{port_id}");
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).doesNotContain(renamed);
     }
 
     @Test

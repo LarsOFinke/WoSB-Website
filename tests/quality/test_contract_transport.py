@@ -61,6 +61,6 @@ def test_controller_layer_owns_all_openapi_routes_without_generated_api_interfac
         if method in HTTP and isinstance(operation, dict)
     )
 
-    assert expected == 189
+    assert expected == 194
     assert len(mappings) == expected
     assert not (ROOT / "spring-api/src/main/java/eu/royalblackwater/api/contract").exists()

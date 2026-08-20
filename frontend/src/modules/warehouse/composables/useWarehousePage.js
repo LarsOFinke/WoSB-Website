@@ -2,13 +2,13 @@ import { computed, onMounted, reactive, ref } from 'vue'
 
 import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
-import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
 import {
   createWarehouseEntry,
   deleteWarehouseEntry,
   listWarehouseEntries,
   listWarehouseFleets,
   listWarehouseMembers,
+  listWarehousePorts,
   updateWarehouseEntry,
 } from '@/modules/warehouse/api/warehouse'
 import {
@@ -26,11 +26,12 @@ const EMPTY_PAGE = {
 
 export function useWarehousePage() {
   const { locale, t } = useLocale()
-  const { isAdmin, user } = useSession()
-  const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
+  const { isStaff } = useSession()
+  const canManageWarehouse = computed(() => isStaff.value)
   const page = ref({ ...EMPTY_PAGE })
   const fleets = ref([])
   const members = ref([])
+  const ports = ref([])
   const loading = ref(false)
   const saving = ref(false)
   const error = ref('')
@@ -156,7 +157,9 @@ export function useWarehousePage() {
   onMounted(async () => {
     loading.value = true
     try {
-      fleets.value = (await listWarehouseFleets()).filter((fleet) => fleet.is_active)
+      const [fleetRows, portRows] = await Promise.all([listWarehouseFleets(), listWarehousePorts()])
+      fleets.value = fleetRows.filter((fleet) => fleet.is_active)
+      ports.value = portRows
       await loadEntries()
     } catch (err) {
       error.value = err.message || t('warehouse.errors.load')
@@ -165,7 +168,7 @@ export function useWarehousePage() {
   })
 
   return {
-    t, isAdmin, user, navigationGroups, page, fleets, members, loading, saving, error, success,
+    t, canManageWarehouse, page, fleets, members, ports, loading, saving, error, success,
     editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
     formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
   }
