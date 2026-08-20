@@ -17,6 +17,7 @@ public final class LegalNoticeDtoMapper {
                 source.editorialResponsibleCountry(), source.editorialResponsibleName(),
                 source.editorialResponsiblePostalCode(), source.editorialResponsibleStreet(), source.email(),
                 source.legalForm(), source.phone(), source.postalCode(), source.providerName(), source.published(),
+                source.publicRepositoryUrl(),
                 source.registerCourt(), source.registerName(), source.registerNumber(), source.representedBy(),
                 source.street(), source.supervisoryAuthority(), source.vatId());
     }
@@ -28,7 +29,7 @@ public final class LegalNoticeDtoMapper {
                 s(row, "editorial_responsible_name"), s(row, "editorial_responsible_postal_code"),
                 s(row, "editorial_responsible_street"), s(row, "email"), s(row, "legal_form"),
                 s(row, "phone"), s(row, "postal_code"), s(row, "provider_name"),
-                RowValues.booleanValue(row, "published"), s(row, "register_court"),
+                RowValues.booleanValue(row, "published"), s(row, "public_repository_url"), s(row, "register_court"),
                 s(row, "register_name"), s(row, "register_number"), s(row, "represented_by"),
                 RowValues.booleanValue(row, "is_customized") ? "admin" : "environment", s(row, "street"),
                 s(row, "supervisory_authority"), RowValues.dateTime(row, "updated_at"),
@@ -42,6 +43,7 @@ public final class LegalNoticeDtoMapper {
                 s(row, "editorial_responsible_name"), s(row, "editorial_responsible_postal_code"),
                 s(row, "editorial_responsible_street"), s(row, "email"), s(row, "legal_form"),
                 s(row, "phone"), s(row, "postal_code"), s(row, "provider_name"), true,
+                s(row, "public_repository_url"),
                 s(row, "register_court"), s(row, "register_name"), s(row, "register_number"),
                 s(row, "represented_by"), s(row, "street"), s(row, "supervisory_authority"),
                 RowValues.dateTime(row, "updated_at"), s(row, "vat_id"));
@@ -49,7 +51,7 @@ public final class LegalNoticeDtoMapper {
 
     public static LegalNoticePublicRead unpublished(LocalDateTime updatedAt) {
         return new LegalNoticePublicRead(null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, false, null, null, null, null, null, null, updatedAt, null);
+                null, null, null, null, null, false, null, null, null, null, null, null, null, updatedAt, null);
     }
 
     private static String s(Map<String, Object> row, String key) {

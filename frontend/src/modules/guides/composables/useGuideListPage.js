@@ -6,7 +6,7 @@ import { localizedGuideDiscoveryGroups } from '@/modules/guides/domain/guideDisc
 
 export function useGuideListPage() {
   const { t } = useLocale()
-  const { isAuthenticated } = useSession()
+  const { canAuthorContent } = useSession()
   const guides = ref([])
   const search = ref('')
   const category = ref('')
@@ -66,7 +66,7 @@ export function useGuideListPage() {
 
   return {
     t,
-    isAuthenticated,
+    canAuthorContent,
     guides,
     search,
     category,

@@ -699,3 +699,33 @@ Resource: `{resource.type} #{resource.id}`
 Event: `{event}`
 Triggered by **{actor.display_name}** at `{occurred_at}`.
 ```
+
+## Warehouse
+
+### `warehouse.reservation.changed`
+
+A guild warehouse reservation changed.
+
+```text
+🔒 **Warehouse reservation changed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
+```
+
+### `warehouse.stock.changed`
+
+Guild warehouse stock was created, changed, or removed.
+
+```text
+📦 **Warehouse stock changed**
+
+{data.summary}
+
+Resource: `{resource.type} #{resource.id}`
+Event: `{event}`
+Triggered by **{actor.display_name}** at `{occurred_at}`.
+```

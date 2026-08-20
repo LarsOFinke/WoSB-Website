@@ -124,7 +124,7 @@ const {
               <p v-if="event.location" class="muted">{{ event.location }}</p>
               <p v-if="event.description" class="preserve-lines">{{ event.description }}</p>
               <p class="muted">{{ t('calendar.list.createdBy', { name: event.owner.display_name }) }}</p>
-              <div v-if="event.can_manage && event.raid_helper_links?.length" class="raid-helper-sync-list">
+              <div v-if="canCreateEvent && event.can_manage && event.raid_helper_links?.length" class="raid-helper-sync-list">
                 <p class="field-label">{{ t('raidHelper.calendar.syncStatus') }}</p>
                 <div v-for="link in event.raid_helper_links" :key="link.id" class="raid-helper-sync-row">
                   <span><strong>{{ link.destination_name }}</strong> · {{ link.profile_name }} · {{ link.template_name }}</span>
@@ -133,7 +133,7 @@ const {
                 </div>
               </div>
               <button
-                v-if="event.can_manage && event.raid_helper_links?.some((link) => link.status === 'failed')"
+                v-if="canCreateEvent && event.can_manage && event.raid_helper_links?.some((link) => link.status === 'failed')"
                 class="small-action"
                 type="button"
                 :disabled="retryingId === event.id"
@@ -142,7 +142,7 @@ const {
                 {{ retryingId === event.id ? t('raidHelper.calendar.retrying') : t('raidHelper.calendar.retry') }}
               </button>
               <button
-                v-if="event.can_manage"
+                v-if="canCreateEvent && event.can_manage"
                 class="danger-action calendar-cancel-action"
                 type="button"
                 :disabled="cancellingId === event.id"

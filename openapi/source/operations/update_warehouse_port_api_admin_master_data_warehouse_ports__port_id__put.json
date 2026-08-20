@@ -1,0 +1,16 @@
+{
+  "path": "/api/admin/master-data/warehouse-ports/{port_id}",
+  "method": "put",
+  "operation": {
+    "operationId": "update_warehouse_port_api_admin_master_data_warehouse_ports__port_id__put",
+    "parameters": [{ "in": "path", "name": "port_id", "required": true, "schema": { "type": "integer", "title": "Port Id" } }],
+    "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortUpdate" } } } },
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
+      "409": { "description": "Port name already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Update Warehouse Port",
+    "tags": ["admin", "admin-master-data", "warehouse"]
+  }
+}

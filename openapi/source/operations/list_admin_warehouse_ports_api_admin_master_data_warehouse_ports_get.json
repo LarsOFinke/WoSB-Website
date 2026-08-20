@@ -1,0 +1,13 @@
+{
+  "path": "/api/admin/master-data/warehouse-ports",
+  "method": "get",
+  "operation": {
+    "operationId": "list_admin_warehouse_ports_api_admin_master_data_warehouse_ports_get",
+    "parameters": [],
+    "responses": {
+      "200": { "description": "Successful Response", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/WarehousePortRead" } } } } }
+    },
+    "summary": "List Warehouse Port Master Data",
+    "tags": ["admin", "admin-master-data", "warehouse"]
+  }
+}

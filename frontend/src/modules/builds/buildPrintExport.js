@@ -1,6 +1,10 @@
-import { buildCrewVisualUrl, buildVisualUrl } from './buildVisuals.js'
 import { inlinePrintImageResources } from './buildPrintImageEmbedding.js'
 import { createBuildPrintModel, wrapText } from './buildPrintModel.js'
+import {
+  BUILD_PRINT_RENDERER_VERSION,
+  BUILD_PRINT_THEMES,
+  PRINT_VISUALS,
+} from './buildPrintVisualCatalog.js'
 import {
   formatBuildModifier,
   formatStatValue,
@@ -21,40 +25,6 @@ const COLUMN_GAP = 22
 const COLUMN_WIDTH = (CONTENT_WIDTH - COLUMN_GAP) / 2
 const SECTION_GAP = 22
 const FOOTER_HEIGHT = 86
-export const BUILD_PRINT_RENDERER_VERSION = '3'
-
-const BUILD_PRINT_THEMES = Object.freeze({
-  dark: Object.freeze({
-    page: '#07111a', panel: '#0d1a26', panelSoft: '#112231', border: '#263847',
-    borderStrong: '#8f713f', text: '#f4f7fa', muted: '#9babb9', faint: '#647889',
-    accent: '#e8be70', accentSoft: '#2c281f', danger: '#d88980',
-  }),
-  light: Object.freeze({
-    page: '#f8fafc', panel: '#ffffff', panelSoft: '#f1f4f7', border: '#c7d0d9',
-    borderStrong: '#a87516', text: '#10243d', muted: '#526170', faint: '#748391',
-    accent: '#94620b', accentSoft: '#fbf4e5', danger: '#a6413a',
-  }),
-})
-
-const PRINT_VISUALS = {
-  ship: buildVisualUrl('ship'),
-  sail: buildVisualUrl('sail'),
-  lantern: buildVisualUrl('lantern'),
-  upgrade: buildVisualUrl('upgrade'),
-  weapon: buildVisualUrl('weapon'),
-  specialist: buildVisualUrl('specialist'),
-  ammunition: buildVisualUrl('ammunition'),
-  consumable: buildVisualUrl('consumable'),
-  hold: buildVisualUrl('hold'),
-  notes: buildVisualUrl('specialist'),
-  crew: {
-    sailors: buildCrewVisualUrl('sailors'),
-    musketeers: buildCrewVisualUrl('musketeers'),
-    soldiers: buildCrewVisualUrl('soldiers'),
-    mercenaries: buildCrewVisualUrl('mercenaries'),
-  },
-}
-
 const escapeXml = escapePrintMarkup
 
 
@@ -413,4 +383,9 @@ export async function openBuildPrintWindow(build, helpers = {}) {
   }
 }
 
-export { createBuildPrintModel, createBuildPrintDocument, inlinePrintImageResources }
+export {
+  BUILD_PRINT_RENDERER_VERSION,
+  createBuildPrintModel,
+  createBuildPrintDocument,
+  inlinePrintImageResources,
+}

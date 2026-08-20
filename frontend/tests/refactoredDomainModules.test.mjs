@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFile } from 'node:fs/promises'
 
 import { dateFromRouteQuery, dateKey, daysInRange, eventsOnDate, filtersForScope, monthGridRange } from '../src/modules/calendar/domain/calendarGrid.js'
 import { profileCompletion, profileInitials, profileUpdatePayload } from '../src/modules/accounts/domain/profileForm.js'
@@ -59,13 +60,16 @@ test('newcomer guide drafts normalize linked and external resources', () => {
   const source = {
     title: 'Start', intro: 'Welcome', blocks: [{
       block_type: 'resources', title: 'Links', body: '', resources: [
-        { resource_type: 'external', href: 'https://example.test', label: 'Docs' },
+        { id: 1, resource_type: 'external', href: 'https://example.test', label: 'Docs' },
+        { resource_type: 'internal', href: '/calendar', label: 'Calendar' },
       ],
     }],
   }
   const draft = createGuideDraft(source)
   assert.equal(draft.blocks[0].resources[0].url, 'https://example.test')
+  assert.notEqual(draft.blocks[0].resources[0]._key, draft.blocks[0].resources[1]._key)
   assert.equal(guidePayload(draft).blocks[0].resources[0].url, 'https://example.test')
+  assert.equal('_key' in guidePayload(draft).blocks[0].resources[0], false)
   assert.equal(moveArrayItem([1, 2, 3], 0, 1), true)
   const folders = ['briefing', 'builds', 'operations']
   assert.equal(moveSelectedItem(folders, 1, 1, -1), 0)
@@ -93,4 +97,10 @@ test('build detail formatting is separated from page orchestration', () => {
   assert.equal(inventoryCategory('front_weapon_slots'), 'weapon')
   assert.equal(slotQuantity({ item: 'Rum', quantity: 3 }), 3)
   assert.equal(formatBuildModifier({ modifier: 12.5, modifier_kind: 'percent', precision: 1 }), '+12.5%')
+})
+
+test('workspace statistics keep definition-list terms in valid semantic containers', async () => {
+  const source = await readFile(new URL('../src/core/components/WorkspaceStatRail.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /<span>\s*<dt>/)
+  assert.match(source, /<div>\s*<dt>\{\{ item\.label \}\}<\/dt>/)
 })

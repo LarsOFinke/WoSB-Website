@@ -85,6 +85,27 @@
   grid-column: 1 / -1;
 }
 
+.legal-notice-repository {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+}
+
+.legal-notice-repository .eyebrow {
+  margin-bottom: .3rem;
+}
+
+.legal-notice-repository h2 {
+  margin-bottom: .4rem;
+}
+
+.legal-notice-repository .button-box {
+  flex: 0 0 auto;
+}
+
 .legal-notice-updated {
   margin: 0;
   color: var(--text-muted);
@@ -191,6 +212,15 @@
 }
 
 @media (max-width: 720px) {
+  .legal-notice-repository {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .legal-notice-repository .button-box {
+    justify-content: center;
+  }
+
   .legal-notice-grid,
   .legal-notice-admin-form fieldset {
     grid-template-columns: 1fr;

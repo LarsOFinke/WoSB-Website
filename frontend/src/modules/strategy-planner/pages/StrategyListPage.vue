@@ -2,7 +2,7 @@
 import { useStrategyListPage } from '../composables/useStrategyList.js'
 import '../styles/strategyPlanner.css'
 
-const { t, strategies, loading, error, remove, copy } = useStrategyListPage()
+const { t, canAuthorContent, strategies, loading, error, remove, copy } = useStrategyListPage()
 </script>
 
 <template>
@@ -14,13 +14,13 @@ const { t, strategies, loading, error, remove, copy } = useStrategyListPage()
           <h1 id="strategy-list-title">{{ t('strategyPlanner.title') }}</h1>
           <p>{{ t('strategyPlanner.subtitle') }}</p>
         </div>
-        <RouterLink class="button-box primary-action" to="/strategies/new">{{ t('strategyPlanner.create') }}</RouterLink>
+        <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/strategies/new">{{ t('strategyPlanner.create') }}</RouterLink>
       </header>
       <p v-if="loading" class="muted">{{ t('strategyPlanner.loading') }}</p>
       <p v-else-if="error" class="error-text">{{ error }}</p>
       <div v-else-if="!strategies.length" class="empty-state-block">
         <h2>{{ t('strategyPlanner.empty') }}</h2>
-        <RouterLink class="button-box primary-action" to="/strategies/new">{{ t('strategyPlanner.create') }}</RouterLink>
+        <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/strategies/new">{{ t('strategyPlanner.create') }}</RouterLink>
       </div>
       <div v-else class="strategy-card-grid">
         <article v-for="item in strategies" :key="item.id" class="strategy-card">
@@ -32,9 +32,9 @@ const { t, strategies, loading, error, remove, copy } = useStrategyListPage()
           </div>
           <footer>
             <RouterLink class="small-action" :to="`/strategies/${item.id}`">{{ t('strategyPlanner.view') }}</RouterLink>
-            <RouterLink class="small-action" :to="`/strategies/${item.id}/edit`">{{ t('strategyPlanner.edit') }}</RouterLink>
+            <RouterLink v-if="canAuthorContent" class="small-action" :to="`/strategies/${item.id}/edit`">{{ t('strategyPlanner.edit') }}</RouterLink>
             <button v-if="item.is_published" class="small-action" type="button" @click="copy(item)">{{ t('strategyPlanner.copyLink') }}</button>
-            <button class="danger-action" type="button" @click="remove(item)">{{ t('strategyPlanner.delete') }}</button>
+            <button v-if="canAuthorContent" class="danger-action" type="button" @click="remove(item)">{{ t('strategyPlanner.delete') }}</button>
           </footer>
         </article>
       </div>

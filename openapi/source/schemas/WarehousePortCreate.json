@@ -1,0 +1,10 @@
+{
+  "title": "WarehousePortCreate",
+  "type": "object",
+  "properties": {
+    "name": { "title": "Name", "type": "string", "minLength": 1, "maxLength": 120 },
+    "sort_order": { "title": "Sort Order", "type": "integer", "minimum": 0, "maximum": 100000, "default": 100 },
+    "is_active": { "title": "Is Active", "type": "boolean", "default": true }
+  },
+  "required": ["name"]
+}

@@ -15,7 +15,7 @@ const FIELD_NAMES = [
   'vat_id', 'business_id', 'supervisory_authority', 'editorial_responsible_name',
   'editorial_responsible_street', 'editorial_responsible_postal_code',
   'editorial_responsible_city', 'editorial_responsible_country', 'dispute_resolution_text',
-  'additional_information',
+  'additional_information', 'public_repository_url',
 ]
 
 function emptyForm() {
@@ -27,7 +27,7 @@ function emptyForm() {
     editorial_responsible_name: '', editorial_responsible_street: '',
     editorial_responsible_postal_code: '', editorial_responsible_city: '',
     editorial_responsible_country: 'Deutschland', dispute_resolution_text: '',
-    additional_information: '',
+    additional_information: '', public_repository_url: '',
   }
 }
 

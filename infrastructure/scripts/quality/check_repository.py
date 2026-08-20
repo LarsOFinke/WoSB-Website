@@ -84,7 +84,7 @@ operations=[]
 for item in contract.get('paths',{}).values():
     for operation in item.values():
         if isinstance(operation,dict) and operation.get('operationId'): operations.append(operation['operationId'])
-require(len(operations)==185 and len(set(operations))==185,f'API contract must expose 185 unique operations, found {len(operations)}/{len(set(operations))}')
+require(len(operations)==194 and len(set(operations))==194,f'API contract must expose 194 unique operations, found {len(operations)}/{len(set(operations))}')
 require(len(list((ROOT/'spring-api/src/main/java/eu/royalblackwater/api/dto').glob('*.java')))==len(contract['components']['schemas']),'generated Java DTO count is stale')
 require(not (ROOT/'spring-api/src/main/java/eu/royalblackwater/api/contract').exists(),'obsolete generated contract layer remains')
 
@@ -154,6 +154,7 @@ for source_root in (ROOT/'openapi/source', ROOT/'spring-api/src/main/reference',
                 f'hand-maintained JSON exceeds 420 lines: {path.relative_to(ROOT)}')
 
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_controller_contract.py')],check=True)
+subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_authorization_policy.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_spring_backend.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/quality/audit_sql_runtime.py')],check=True)
 subprocess.run([sys.executable,str(ROOT/'infrastructure/scripts/generation/generate_build_stat_catalog.py'),'--check'],check=True)

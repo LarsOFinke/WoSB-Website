@@ -1,9 +1,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLocale } from '@/locales'
+import { useSession } from '@/modules/accounts/session'
 import { closeGroup, listMyGroups } from '@/modules/groups/api/groups'
 
 export function useMyGroupsPage() {
   const { t } = useLocale()
+  const { canAuthorContent } = useSession()
   const groups = ref([])
   const search = ref('')
   const loading = ref(false)
@@ -49,6 +51,7 @@ export function useMyGroupsPage() {
 
   return {
     t,
+    canAuthorContent,
     groups,
     search,
     loading,

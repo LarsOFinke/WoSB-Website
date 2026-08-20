@@ -27,6 +27,7 @@ public class PersonalDataExportService {
             new Relation("registration_requests", "created_user_id"),
             new Relation("cookie_consent_decisions", "user_id"),
             new Relation("fleet_memberships", "user_id"),
+            new Relation("warehouse_entries", "member_user_id"),
             new Relation("stored_files", "owner_id"),
             new Relation("builds", "owner_id"),
             new Relation("build_votes", "user_id"),

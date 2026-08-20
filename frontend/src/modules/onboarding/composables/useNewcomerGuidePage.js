@@ -13,7 +13,6 @@ import {
   moveSelectedItem,
   resetGuideResource,
 } from '@/modules/onboarding/domain/newcomerGuideDraft'
-import { appendLinkedResource } from '@/modules/onboarding/services/newcomerGuideResources'
 
 export function useNewcomerGuidePage() {
   const { t } = useLocale()
@@ -93,14 +92,6 @@ export function useNewcomerGuidePage() {
     block.resources.push(createGuideResource())
   }
 
-  function addLinkedResource(resourceType) {
-    const block = appendLinkedResource(draft.value.blocks, resourceType, activeFolder.value)
-    if (!block) return
-    if (!block.title) block.title = t('newcomerGuide.resourceSection')
-    block.resources.at(-1).resource_id = null
-    activeFolderIndex.value = draft.value.blocks.indexOf(block)
-  }
-
   function removeResource(block, index) {
     block.resources.splice(index, 1)
   }
@@ -158,7 +149,7 @@ export function useNewcomerGuidePage() {
     success, resourceOptionsLoading, resourceOptionsError,
     resourceTypeOptions, activeFolderIndex, activeFolder, visibleFolders,
     startEditing, cancelEditing, addBlock, removeBlock, moveBlock, addResource,
-    addLinkedResource, removeResource, moveResource, onResourceTypeChange,
+    removeResource, moveResource, onResourceTypeChange,
     loadPage, savePage, selectFolder, showTopicOverview,
   }
 }

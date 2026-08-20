@@ -8,15 +8,14 @@ import { unembeddedAttachments, unembeddedBuilds } from '@/shared/content/richTe
 
 export function useGuideDetailPage(props) {
   const { t } = useLocale()
-  const { isStaff, user } = useSession()
+  const { isStaff } = useSession()
   const guide = ref(null)
   const loading = ref(false)
   const deleting = ref(false)
   const error = ref('')
   const { printBusy, printStatus, printGuide } = useGuidePrintActions(guide, { t })
 
-  const canManage = computed(() => guide.value && user.value
-    && (guide.value.owner_id === user.value.id || isStaff.value))
+  const canManage = computed(() => Boolean(guide.value && isStaff.value))
   const galleryAttachments = computed(() => guide.value
     ? unembeddedAttachments(guide.value.attachments || [], guide.value.body)
     : [])
@@ -55,8 +54,6 @@ export function useGuideDetailPage(props) {
 
   return {
     t,
-    isStaff,
-    user,
     guide,
     loading,
     deleting,

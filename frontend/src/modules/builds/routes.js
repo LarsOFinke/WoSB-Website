@@ -9,14 +9,14 @@ export const buildRoutes = [
     path: '/builds/new',
     name: 'builds-new',
     component: () => import('./pages/BuildCreatePage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.builds' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.builds' },
   },
   {
     path: '/builds/:id/edit',
     name: 'builds-edit',
     component: () => import('./pages/BuildCreatePage.vue'),
     props: true,
-    meta: { requiresUser: true, titleKey: 'builds.edit.title' },
+    meta: { requiresContentAuthor: true, titleKey: 'builds.edit.title' },
   },
   {
     path: '/builds/:id',
@@ -29,6 +29,6 @@ export const buildRoutes = [
     path: '/profile/builds',
     name: 'my-builds',
     component: () => import('./pages/MyBuildsPage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.builds' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.builds' },
   },
 ]

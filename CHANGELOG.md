@@ -2,12 +2,51 @@
 
 ## Unreleased
 
+- Added a member-visible, staff-managed, fleet-scoped guild warehouse with
+  member-linked or custom holders, spreadsheet-style filtering and totals, reservation state,
+  optimistic edit protection, privacy export coverage, and audit-driven Discord
+  webhook events. The website/API and PostgreSQL remain the source of truth so a
+  future spreadsheet client can reuse the same business boundary. Warehouse ports now
+  use an administrator-maintained game-port catalog shared by the member filters and
+  staff entry editor, with server-side validation against active values.
+- Added a fail-closed authorization-policy audit for every mutating OpenAPI
+  operation and incremental TypeScript checking for the Strategy Planner's
+  JavaScript domain model.
+- Split build-print visual and PNG-validation responsibilities, shared Spring
+  integration fixtures, and privacy browser scenarios into focused owners.
+
+## 1.7.2 - 2026-08-16
+
+- Reserved shared-content creation and management for moderators and administrators
+  across builds, guides, forum, calendar, uploads, groups, fleets, squads, strategies,
+  and newcomer content. Ordinary accounts remain read-only outside their profile,
+  privacy, group-join, and fleet-application self-service flows; fleet and squad
+  management reads no longer accept legacy membership leadership as authorization.
+- Added an administrator-managed public repository reference to the Impressum,
+  with HTTPS validation, environment fallback, audited persistence, and a
+  dedicated public transparency section for community-run project continuity.
 - Reintroduced the recovery client after the Spring Boot migration as a focused
   target-aware tool. Test and production profiles are isolated, setup imports
   the public enrollment response while retaining private recovery material
   locally, and pulls require the current Spring/Flyway preflight plus the exact
   release artifact before a bundle is accepted. Added Linux/Windows packaging
   wrappers and CI coverage for the client protocol.
+
+## 1.7.0 - 2026-08-13
+
+- Rebalanced the New Captain Guide from a crowded three-column preview into a
+  compact topic navigator and wide, readable briefing/resource reader, with
+  scannable home cards and dedicated mobile topic selection.
+- Rebuilt the maintainer experience as a focused two-pane structure and section
+  editor with persistent save controls and collapsible resource cards.
+- Moved the guide's visual rules into feature-owned styles and expanded unit,
+  source-contract, responsive, and browser coverage for the new flows.
+- Made Strategy Planner arrows and formations scale by geometric extent while
+  preserving legible arrowheads, strokes, and formation markers.
+- Renamed the legacy elliptical formation to Oval, added a true Circle with a
+  backward-compatible document migration, and enabled selected-text recoloring.
+- Separated selected-object properties from dedicated size and rotation controls
+  in the inspector.
 
 ## 1.6.0 - 2026-08-13
 

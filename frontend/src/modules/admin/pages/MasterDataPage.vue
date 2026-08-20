@@ -1,9 +1,10 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import FileUploadPanel from '@/core/components/FileUploadPanel.vue'
 import MetricCard from '@/core/components/MetricCard.vue'
 import StatEffectEditor from '@/modules/admin/components/StatEffectEditor.vue'
+import WarehousePortManagementPanel from '@/modules/admin/components/WarehousePortManagementPanel.vue'
 import StaffWorkspaceShell from '@/modules/admin/components/StaffWorkspaceShell.vue'
 import { useMasterDataWorkspace } from '@/modules/admin/composables/useMasterDataWorkspace'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
@@ -22,6 +23,7 @@ const {
 } = useMasterDataWorkspace()
 const { isAdmin, user } = useSession()
 const navigationGroups = computed(() => createStaffNavigationGroups(t, { isAdmin: isAdmin.value }))
+const portCount = ref(0)
 
 function setMortarModificationEnabled(enabled) {
   shipForm.mortar_modification = enabled
@@ -80,7 +82,7 @@ function setMortarModificationEnabled(enabled) {
 
       <nav class="master-data-tabs" aria-label="Master data catalogs">
         <button
-          v-for="tab in ['ships', 'options', 'categories']"
+          v-for="tab in ['ships', 'options', 'categories', 'ports']"
           :key="tab"
           type="button"
           class="catalog-tab"
@@ -89,7 +91,7 @@ function setMortarModificationEnabled(enabled) {
           @click="activeTab = tab"
         >
           <span>{{ t(`masterData.tabs.${tab}`) }}</span>
-          <strong>{{ tabCounts[tab] }}</strong>
+          <strong>{{ tab === 'ports' ? portCount : tabCounts[tab] }}</strong>
         </button>
       </nav>
 
@@ -142,6 +144,8 @@ function setMortarModificationEnabled(enabled) {
           <footer class="editor-actions"><button class="form-button primary-action" type="submit" :disabled="saving">{{ t('common.save') }}</button></footer>
         </form>
       </section>
+
+      <WarehousePortManagementPanel v-if="activeTab === 'ports'" @count-change="portCount = $event" />
 
       <section v-if="activeTab === 'options'" class="master-data-workspace">
         <aside class="catalog-panel">

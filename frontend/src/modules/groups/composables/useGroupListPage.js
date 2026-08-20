@@ -5,7 +5,7 @@ import { useSession } from '@/modules/accounts/session'
 
 export function useGroupListPage() {
   const { t } = useLocale()
-  const { isAuthenticated } = useSession()
+  const { canAuthorContent } = useSession()
 
   const groups = ref([])
   const search = ref('')
@@ -96,7 +96,7 @@ export function useGroupListPage() {
 
   return {
     t,
-    isAuthenticated,
+    canAuthorContent,
     groups,
     search,
     focus,

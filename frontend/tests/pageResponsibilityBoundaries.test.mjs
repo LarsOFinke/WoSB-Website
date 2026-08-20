@@ -25,7 +25,7 @@ function scriptSetup(source) {
 
 test('every route page delegates stateful work to a page model', async () => {
   const pages = await collectRoutePages()
-  assert.equal(pages.length, 41, 'update the architecture expectation when route pages are added or removed')
+  assert.equal(pages.length, 42, 'update the architecture expectation when route pages are added or removed')
 
   for (const page of pages) {
     const relativePath = path.relative(modulesRoot, page)

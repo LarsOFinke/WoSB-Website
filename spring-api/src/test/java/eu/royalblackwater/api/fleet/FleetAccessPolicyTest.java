@@ -32,6 +32,23 @@ class FleetAccessPolicyTest {
         verifyNoInteractions(repository);
     }
 
+    @Test
+    void ordinaryFleetLeadershipMetadataDoesNotGrantManagementAuthority() {
+        FleetDataRepository repository = mock(FleetDataRepository.class);
+        FleetAccessPolicy policy = new FleetAccessPolicy(repository);
+        AuthenticatedUser member = new AuthenticatedUser(7, "member", "user", false, false, false);
+        FleetMembershipTargetDto target = new FleetMembershipTargetDto(
+                8L, "member", 10L, "active", "user");
+
+        assertThat(policy.canManageFleet(member, 42L)).isFalse();
+        assertThat(policy.managedFleetIds(member, List.of(42L, 43L))).isEmpty();
+        assertThat(policy.permissions(member, 42L, target).reason()).isEqualTo("insufficient");
+        assertThatThrownBy(() -> policy.requireRoleManager(member, 42L))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Moderator access required");
+        verifyNoInteractions(repository);
+    }
+
 
     @Test
     void lastBootstrapAdmiralDoesNotLoadAssignableRolesForReadOnlyManagementMetadata() {

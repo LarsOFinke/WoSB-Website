@@ -6,7 +6,7 @@ import '../styles/strategyInspector.css'
 
 const { t } = useLocale()
 
-defineProps({
+const props = defineProps({
   strategy: { type: Object, required: true },
   background: { type: Object, default: null },
   ships: { type: Array, required: true },
@@ -16,12 +16,19 @@ defineProps({
   selectedObject: { type: Object, default: null },
   selectedBuilds: { type: Array, required: true },
   shareUrl: { type: String, default: '' },
+  colors: { type: Array, required: true },
 })
 
-defineEmits([
+const emit = defineEmits([
   'close', 'use-background', 'update-marker-ship', 'add-ship', 'update-selected-ship',
   'record-history', 'delete-selected', 'toggle-publication', 'copy-share-link',
 ])
+
+function setSelectedColor(value) {
+  if (!props.selectedObject) return
+  props.selectedObject.color = value
+  emit('record-history')
+}
 </script>
 
 <template>
@@ -103,16 +110,44 @@ defineEmits([
           <label v-if="selectedObject.type === 'ship'"><span>{{ t('strategyPlanner.build') }}</span><select v-model="selectedObject.buildId" @change="$emit('record-history')"><option :value="null">{{ t('strategyPlanner.noBuild') }}</option><option v-for="build in selectedBuilds" :key="build.id" :value="build.id">{{ build.build_name }}</option></select></label>
           <label v-if="selectedObject.type === 'ship'"><span>{{ t('strategyPlanner.guide') }}</span><select v-model="selectedObject.guideId" @change="$emit('record-history')"><option :value="null">{{ t('strategyPlanner.noGuide') }}</option><option v-for="guide in guides" :key="guide.id" :value="guide.id">{{ guide.title }}</option></select></label>
           <label v-if="selectedObject.type === 'text'"><span>{{ t('strategyPlanner.textValue') }}</span><input v-model="selectedObject.text" maxlength="500" @change="$emit('record-history')" /></label>
-          <label><span>{{ t('strategyPlanner.scale') }}</span><input v-model.number="selectedObject.scale" type="range" min="0.25" max="4" step="0.05" @change="$emit('record-history')" /></label>
-          <label v-if="selectedObject.rotation != null"><span>{{ t('strategyPlanner.rotation') }}</span><input v-model.number="selectedObject.rotation" type="range" min="-180" max="180" @change="$emit('record-history')" /></label>
+          <div v-if="selectedObject.type === 'text'" class="strategy-text-color-field">
+            <label><span>{{ t('strategyPlanner.textColor') }}</span><input v-model="selectedObject.color" class="strategy-native-color" type="color" @change="$emit('record-history')" /></label>
+            <div class="strategy-object-colors" :aria-label="t('strategyPlanner.textColor')">
+              <button
+                v-for="value in colors" :key="value" type="button"
+                :class="{ active: selectedObject.color === value }" :style="{ '--strategy-color': value }"
+                :aria-label="`${t('strategyPlanner.textColor')} ${value}`" :aria-pressed="selectedObject.color === value"
+                @click="setSelectedColor(value)"
+              ><span v-if="selectedObject.color === value" aria-hidden="true">✓</span></button>
+            </div>
+          </div>
           <button class="danger-action" type="button" @click="$emit('delete-selected')">{{ t('strategyPlanner.deleteObject') }}</button>
+        </section>
+      </div>
+    </details>
+
+    <details v-if="selectedObject" class="strategy-tool-section strategy-transform-section" open>
+      <summary>
+        <span class="strategy-section-index">04</span>
+        <span><strong>{{ t('strategyPlanner.transform') }}</strong><small>{{ t('strategyPlanner.transformHint') }}</small></span>
+      </summary>
+      <div class="strategy-tool-section-body">
+        <section class="strategy-panel strategy-transform-panel">
+          <div class="strategy-transform-control">
+            <label><span>{{ t('strategyPlanner.scale') }}</span><input v-model.number="selectedObject.scale" type="range" min="0.25" max="4" step="0.05" @change="$emit('record-history')" /></label>
+            <span class="strategy-transform-value">{{ Number(selectedObject.scale || 1).toFixed(2) }}×</span>
+          </div>
+          <div v-if="selectedObject.rotation != null" class="strategy-transform-control">
+            <label><span>{{ t('strategyPlanner.rotation') }}</span><input v-model.number="selectedObject.rotation" type="range" min="-180" max="180" @change="$emit('record-history')" /></label>
+            <span class="strategy-transform-value">{{ Number(selectedObject.rotation || 0) }}°</span>
+          </div>
         </section>
       </div>
     </details>
 
     <details class="strategy-tool-section" open>
       <summary>
-        <span class="strategy-section-index">{{ selectedObject ? '04' : '03' }}</span>
+        <span class="strategy-section-index">{{ selectedObject ? '05' : '03' }}</span>
         <span><strong>{{ t('strategyPlanner.sharing') }}</strong><small>{{ t('strategyPlanner.sharingHint') }}</small></span>
       </summary>
       <div class="strategy-tool-section-body">

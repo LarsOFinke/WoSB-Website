@@ -46,7 +46,7 @@ defineEmits([
           <label>
             <span>{{ t('strategyPlanner.formationType') }}</span>
             <select :value="formation" @change="$emit('update:formation', $event.target.value)">
-              <option v-for="name in ['line', 'circle', 'wedge', 'column', 'box']" :key="name" :value="name">{{ t(`strategyPlanner.formations.${name}`) }}</option>
+              <option v-for="name in ['line', 'circle', 'oval', 'wedge', 'column', 'box']" :key="name" :value="name">{{ t(`strategyPlanner.formations.${name}`) }}</option>
             </select>
           </label>
           <button type="button" class="strategy-command-create" :aria-label="t('strategyPlanner.formation')" @click="$emit('add-formation')">+ {{ t('strategyPlanner.formation') }}</button>
@@ -65,7 +65,7 @@ defineEmits([
       </details>
 
       <details class="strategy-command-section strategy-color-command" open>
-        <summary><span>04</span><strong>{{ t('strategyPlanner.color') }}</strong></summary>
+        <summary><span>04</span><strong>{{ t('strategyPlanner.creationColor') }}</strong></summary>
         <fieldset class="strategy-command-colors">
           <legend class="sr-only">{{ t('strategyPlanner.color') }}</legend>
           <button

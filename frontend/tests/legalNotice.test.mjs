@@ -35,6 +35,9 @@ test('legal notice drafts stay hidden and published values render as text', () =
   assert.ok(publicPage.includes('notice.provider_name'))
   assert.ok(publicPage.includes('mailto:'))
   assert.ok(!publicPage.includes('v-html'))
+  assert.ok(publicPage.includes('v-if="publicRepositoryUrl"'))
+  assert.ok(publicPage.includes('rel="noopener noreferrer"'))
+  assert.ok(publicPage.includes('legalNotice.public.repositoryLink'))
 })
 
 
@@ -43,6 +46,8 @@ test('only administrators receive the legal notice editor', () => {
   assert.ok(adminRoutes.includes('requiresAdmin: true'))
   assert.ok(adminNavigation.includes("key: 'legal-notice'"))
   assert.ok(adminPage.includes('form.published'))
+  assert.ok(adminPage.includes('form.public_repository_url'))
+  assert.ok(adminPage.includes('pattern="https://(?![^/]*@).*"'))
   assert.ok(adminPage.includes('resetToEnvironment'))
   assert.ok(api.includes("get('/admin/legal-notice')"))
   assert.ok(api.includes("put('/admin/legal-notice'"))
@@ -57,6 +62,8 @@ test('legal notice copy exists for every supported locale', () => {
     assert.ok(legalNoticeMessages[locale]?.legalNotice?.public?.title, locale)
     assert.ok(legalNoticeMessages[locale]?.legalNotice?.admin?.legalWarningText, locale)
     assert.ok(legalNoticeMessages[locale]?.legalNotice?.fields?.providerName, locale)
+    assert.ok(legalNoticeMessages[locale]?.legalNotice?.fields?.publicRepositoryUrl, locale)
+    assert.ok(legalNoticeMessages[locale]?.legalNotice?.public?.repositoryText, locale)
   }
 })
 

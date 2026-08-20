@@ -5,13 +5,14 @@ import NewcomerFolderEditor from '@/modules/onboarding/components/NewcomerFolder
 import NewcomerFolderNavigation from '@/modules/onboarding/components/NewcomerFolderNavigation.vue'
 import NewcomerTopicExplorer from '@/modules/onboarding/components/NewcomerTopicExplorer.vue'
 import { useNewcomerGuidePage } from '@/modules/onboarding/composables/useNewcomerGuidePage.js'
+import '@/modules/onboarding/styles/newcomerEditor.css'
 import '@/modules/onboarding/styles/newcomerExplorer.css'
 
 const {
   t, isStaff, page, draft, guides, builds, loading, saving, editing, error, success,
   resourceOptionsLoading, resourceOptionsError, resourceTypeOptions,
   activeFolderIndex, activeFolder, visibleFolders, startEditing, cancelEditing,
-  addBlock, removeBlock, moveBlock, addResource, addLinkedResource, removeResource,
+  addBlock, removeBlock, moveBlock, addResource, removeResource,
   moveResource, onResourceTypeChange, savePage, selectFolder,
   showTopicOverview,
 } = useNewcomerGuidePage()
@@ -43,10 +44,23 @@ const {
       <p v-if="success" class="success-text table-state">{{ success }}</p>
 
       <form v-if="editing && draft" class="newcomer-guide-editor" @submit.prevent="savePage">
-        <section class="wire-section newcomer-editor-basics">
-          <div class="workspace-section-heading compact-heading">
-            <div><p class="eyebrow">{{ t('newcomerGuide.editor.guideSettings') }}</p><h2>{{ t('newcomerGuide.editor.guideIdentity') }}</h2></div>
+        <header class="newcomer-editor-commandbar">
+          <div>
+            <p class="eyebrow">{{ t('newcomerGuide.editor.guideSettings') }}</p>
+            <h2>{{ draft.title || t('newcomerGuide.title') }}</h2>
+            <p>{{ t('newcomerGuide.editor.saveHint') }}</p>
           </div>
+          <div class="newcomer-editor-commandbar__actions">
+            <button class="form-button secondary-action" type="button" @click="cancelEditing">{{ t('common.cancel') }}</button>
+            <button class="form-button primary-action" type="submit" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button>
+          </div>
+        </header>
+
+        <details class="newcomer-editor-basics" open>
+          <summary>
+            <span><AppIcon name="guides" :size="18" /></span>
+            <span><strong>{{ t('newcomerGuide.editor.guideIdentity') }}</strong><small>{{ t('newcomerGuide.editor.guideSettings') }}</small></span>
+          </summary>
           <div class="directory-form-grid">
             <label class="input-panel embedded-field">
               <span>{{ t('newcomerGuide.editor.pageTitle') }}</span>
@@ -57,56 +71,32 @@ const {
               <textarea v-model="draft.intro" rows="3" maxlength="4000" />
             </label>
           </div>
-        </section>
+        </details>
 
-        <div class="newcomer-editor-browser">
-          <header class="newcomer-editor-browser__toolbar">
-            <AppIcon name="folder" :size="18" />
-            <strong>{{ draft.title }}</strong>
-            <AppIcon name="chevron-right" :size="14" />
-            <span>{{ activeFolder?.title || t('newcomerGuide.editor.untitled') }}</span>
-          </header>
-          <div class="newcomer-folder-workspace newcomer-folder-workspace--editor">
-            <aside class="newcomer-folder-sidebar">
-              <NewcomerFolderNavigation
-                :folders="visibleFolders"
-                :active-index="activeFolderIndex"
-                editable
-                @select="selectFolder"
-                @move="moveBlock"
-                @remove="removeBlock"
-              />
-              <div class="newcomer-folder-create">
-                <p class="field-label">{{ t('newcomerGuide.editor.addFolder') }}</p>
-                <button class="form-button secondary-action" type="button" @click="addBlock('text')">{{ t('newcomerGuide.editor.addTextBlock') }}</button>
-                <button class="form-button secondary-action" type="button" @click="addBlock('resources')">{{ t('newcomerGuide.editor.addResourceBlock') }}</button>
-                <div class="newcomer-folder-create__shortcuts">
-                  <button type="button" @click="addLinkedResource('guide')">+ {{ t('newcomerGuide.editor.linkGuide') }}</button>
-                  <button type="button" @click="addLinkedResource('build')">+ {{ t('newcomerGuide.editor.linkBuild') }}</button>
-                </div>
-              </div>
-            </aside>
-
-            <NewcomerFolderEditor
-              :folder="activeFolder"
-              :folder-index="activeFolderIndex"
-              :guides="guides"
-              :builds="builds"
-              :resource-type-options="resourceTypeOptions"
-              :resource-options-loading="resourceOptionsLoading"
-              :resource-options-error="resourceOptionsError"
-              @add-resource="addResource"
-              @remove-resource="removeResource"
-              @move-resource="moveResource"
-              @resource-type-change="onResourceTypeChange"
+        <div class="newcomer-editor-workspace">
+          <aside class="newcomer-editor-structure">
+            <div class="newcomer-editor-structure__heading">
+              <span><AppIcon name="folder" :size="18" /></span>
+              <div><strong>{{ t('newcomerGuide.folders') }}</strong><small>{{ t('newcomerGuide.editor.orderHint') }}</small></div>
+            </div>
+            <NewcomerFolderNavigation
+              :folders="visibleFolders" :active-index="activeFolderIndex" editable
+              @select="selectFolder" @move="moveBlock" @remove="removeBlock"
             />
-          </div>
-        </div>
+            <div class="newcomer-folder-create">
+              <p class="field-label">{{ t('newcomerGuide.editor.addFolder') }}</p>
+              <button class="form-button secondary-action" type="button" @click="addBlock('text')">+ {{ t('newcomerGuide.editor.addTextBlock') }}</button>
+              <button class="form-button secondary-action" type="button" @click="addBlock('resources')">+ {{ t('newcomerGuide.editor.addResourceBlock') }}</button>
+            </div>
+          </aside>
 
-        <div class="form-actions newcomer-editor-actions">
-          <span class="muted">{{ t('newcomerGuide.editor.saveHint') }}</span>
-          <button class="form-button primary-action" type="submit" :disabled="saving">{{ saving ? t('common.saving') : t('common.save') }}</button>
-          <button class="form-button secondary-action" type="button" @click="cancelEditing">{{ t('common.cancel') }}</button>
+          <NewcomerFolderEditor
+            :folder="activeFolder" :folder-index="activeFolderIndex" :guides="guides" :builds="builds"
+            :resource-type-options="resourceTypeOptions" :resource-options-loading="resourceOptionsLoading"
+            :resource-options-error="resourceOptionsError" @add-resource="addResource"
+            @remove-resource="removeResource" @move-resource="moveResource"
+            @resource-type-change="onResourceTypeChange"
+          />
         </div>
       </form>
 

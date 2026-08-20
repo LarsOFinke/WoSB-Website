@@ -59,7 +59,7 @@ const toolsOpen = ref(true)
       <StrategyInspector
         v-show="toolsOpen" :strategy="strategy" :background="background" :ships="ships" :guides="guides"
         :marker="marker" :marker-builds="markerBuilds" :selected-object="selectedObject"
-        :selected-builds="selectedBuilds" :share-url="shareUrl"
+        :selected-builds="selectedBuilds" :share-url="shareUrl" :colors="STRATEGY_COLORS"
         @close="toolsOpen = false" @use-background="useBackground"
         @update-marker-ship="updateMarkerShipReference" @add-ship="addShip"
         @update-selected-ship="updateSelectedShipReference" @record-history="recordHistory"

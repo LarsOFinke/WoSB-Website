@@ -1,8 +1,14 @@
 let draftKey = 0
+let resourceDraftKey = 0
 
 function nextDraftKey(id) {
   draftKey += 1
   return `folder-${id || 'new'}-${draftKey}`
+}
+
+function nextResourceDraftKey(id) {
+  resourceDraftKey += 1
+  return `resource-${id || 'new'}-${resourceDraftKey}`
 }
 
 export function createGuideBlock(blockType = 'text') {
@@ -10,7 +16,7 @@ export function createGuideBlock(blockType = 'text') {
 }
 
 export function createGuideResource() {
-  return { resource_type: 'guide', resource_id: null, label: '', description: '', url: '' }
+  return { _key: nextResourceDraftKey(), resource_type: 'guide', resource_id: null, label: '', description: '', url: '' }
 }
 
 export function createGuideDraft(source) {
@@ -23,6 +29,7 @@ export function createGuideDraft(source) {
       title: block.title,
       body: block.body || '',
       resources: (block.resources || []).map((resource) => ({
+        _key: nextResourceDraftKey(resource.id),
         resource_type: resource.resource_type,
         resource_id: resource.resource_id || null,
         label: resource.label || '',

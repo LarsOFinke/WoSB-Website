@@ -57,7 +57,7 @@ export function useSquadDetailPage(props) {
     try {
       squad.value = await getSquad(props.id)
       syncDrafts()
-      if (squad.value.can_manage) {
+      if (canManageFleet.value && squad.value.can_manage) {
         try {
           roster.value = await listSquadRoster()
         } catch {
@@ -120,7 +120,7 @@ export function useSquadDetailPage(props) {
   }
 
   function canRemove(member) {
-    return canRemoveSquadMember(squad.value, member)
+    return canManageFleet.value && canRemoveSquadMember(squad.value, member)
   }
 
   async function removeMember(member) {

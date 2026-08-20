@@ -5,7 +5,7 @@ import { useSession } from '@/modules/accounts/session'
 
 export function useForumListPage() {
   const { t } = useLocale()
-  const { isAuthenticated } = useSession()
+  const { canAuthorContent } = useSession()
 
   const threads = ref([])
   const search = ref('')
@@ -63,7 +63,7 @@ export function useForumListPage() {
 
   return {
     t,
-    isAuthenticated,
+    canAuthorContent,
     threads,
     search,
     category,

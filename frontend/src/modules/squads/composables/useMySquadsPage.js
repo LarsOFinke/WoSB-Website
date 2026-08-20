@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocale } from '@/locales'
+import { useSession } from '@/modules/accounts/session'
 import { listFleetEvents } from '@/modules/calendar/api/calendar'
 import { listMySquads } from '@/modules/squads/api/squads'
 import { upcomingEventsForSquads } from '@/modules/squads/mySquadsEvents'
@@ -8,6 +9,7 @@ import { upcomingEventsForSquads } from '@/modules/squads/mySquadsEvents'
 export function useMySquadsPage() {
   const route = useRoute()
   const { locale, t } = useLocale()
+  const { canManageFleet } = useSession()
 
   const squads = ref([])
   const events = ref([])
@@ -15,8 +17,8 @@ export function useMySquadsPage() {
   const error = ref('')
 
   const activeView = computed(() => route.query.view === 'events' ? 'events' : 'squads')
-  const commandSquads = computed(() => squads.value.filter((squad) => squad.can_manage))
-  const memberSquads = computed(() => squads.value.filter((squad) => !squad.can_manage))
+  const commandSquads = computed(() => canManageFleet.value ? squads.value.filter((squad) => squad.can_manage) : [])
+  const memberSquads = computed(() => squads.value.filter((squad) => !canManageFleet.value || !squad.can_manage))
   const upcomingSquadEvents = computed(() => upcomingEventsForSquads(events.value, squads.value))
 
   function eventsForSquad(squadId) {
@@ -67,6 +69,7 @@ export function useMySquadsPage() {
     route,
     locale,
     t,
+    canManageFleet,
     squads,
     events,
     loading,

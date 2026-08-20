@@ -1,0 +1,19 @@
+{
+  "path": "/api/warehouse/{entry_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "delete_warehouse_entry_api_warehouse__entry_id__delete",
+    "parameters": [
+      { "in": "path", "name": "entry_id", "required": true, "schema": { "minimum": 1, "title": "Entry Id", "type": "integer" } },
+      { "in": "query", "name": "version", "required": true, "schema": { "minimum": 1, "title": "Version", "type": "integer" } },
+      { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rbf Hub Session" } }
+    ],
+    "responses": {
+      "204": { "description": "Successful Response" },
+      "404": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Not found" },
+      "409": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Version conflict" }
+    },
+    "summary": "Delete Warehouse Entry",
+    "tags": ["warehouse"]
+  }
+}

@@ -1,10 +1,12 @@
 import { onMounted, ref } from 'vue'
 import { useLocale } from '@/locales'
+import { useSession } from '@/modules/accounts/session'
 import { deleteStrategy, listStrategies } from '../api/strategies.js'
 import { strategyShareUrl } from '../domain/strategyDocument.js'
 
 export function useStrategyListPage() {
   const { t } = useLocale()
+  const { canAuthorContent } = useSession()
   const strategies = ref([])
   const loading = ref(false)
   const error = ref('')
@@ -27,5 +29,5 @@ export function useStrategyListPage() {
   }
 
   onMounted(load)
-  return { t, strategies, loading, error, remove, copy }
+  return { t, canAuthorContent, strategies, loading, error, remove, copy }
 }

@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "amount": {
+      "maximum": 999999999,
+      "minimum": 0,
+      "title": "Amount",
+      "type": "integer"
+    },
+    "custom_holder_name": {
+      "anyOf": [
+        {
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Custom Holder Name"
+    },
+    "fleet_id": {
+      "minimum": 1,
+      "title": "Fleet Id",
+      "type": "integer"
+    },
+    "member_user_id": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Member User Id"
+    },
+    "port": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Port",
+      "type": "string"
+    },
+    "reserved": {
+      "title": "Reserved",
+      "type": "boolean"
+    },
+    "resource": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Resource",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "fleet_id",
+    "port",
+    "resource",
+    "amount",
+    "reserved",
+    "version"
+  ],
+  "title": "WarehouseEntryUpdate",
+  "type": "object"
+}

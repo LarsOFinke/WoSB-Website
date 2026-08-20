@@ -1,0 +1,20 @@
+{
+  "path": "/api/warehouse",
+  "method": "post",
+  "operation": {
+    "operationId": "create_warehouse_entry_api_warehouse_post",
+    "parameters": [
+      { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rbf Hub Session" } }
+    ],
+    "requestBody": {
+      "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehouseEntryCreate" } } },
+      "required": true
+    },
+    "responses": {
+      "201": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehouseEntryRead" } } }, "description": "Successful Response" },
+      "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Invalid request" }
+    },
+    "summary": "Create Warehouse Entry",
+    "tags": ["warehouse"]
+  }
+}

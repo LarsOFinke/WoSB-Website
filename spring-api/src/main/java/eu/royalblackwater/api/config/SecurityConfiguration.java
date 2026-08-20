@@ -30,6 +30,28 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
         BootstrapAdminProperties.class, PrivacyRetentionProperties.class, ApiDiagnosticsProperties.class})
 public class SecurityConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityConfiguration.class);
+    private static final String[] STAFF_AUTHORITIES = {"ROLE_MODERATOR", "ROLE_ADMIN"};
+    private static final String[] STAFF_POST_ENDPOINTS = {
+            "/api/builds", "/api/builds/*/upvote",
+            "/api/calendar/events", "/api/calendar/events/*/raid-helper/retry",
+            "/api/files", "/api/fleets", "/api/fleets/*/leaders/*", "/api/fleets/*/roles",
+            "/api/forum/threads", "/api/forum/threads/*/posts",
+            "/api/groups", "/api/groups/*/close", "/api/guides",
+            "/api/squads", "/api/squads/*/members", "/api/strategies", "/api/warehouse"
+    };
+    private static final String[] STAFF_PUT_ENDPOINTS = {
+            "/api/builds/mine/*", "/api/builds/*/printout", "/api/calendar/events/*",
+            "/api/fleets/*", "/api/fleets/*/memberships/*", "/api/fleets/*/roles/*",
+            "/api/forum/posts/*", "/api/forum/threads/*", "/api/guides/*", "/api/newcomer-guide",
+            "/api/squads/*", "/api/squads/*/members/*",
+            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*"
+    };
+    private static final String[] STAFF_DELETE_ENDPOINTS = {
+            "/api/builds/mine/*", "/api/builds/*/upvote", "/api/calendar/events/*", "/api/files/*",
+            "/api/fleets/*/roles/*", "/api/forum/posts/*", "/api/guides/*",
+            "/api/squads/*", "/api/squads/*/members/*",
+            "/api/strategies/*", "/api/strategies/*/publication", "/api/warehouse/*"
+    };
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/health", "/api/health/ready", "/actuator/health/**",
             "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/auth/register",
@@ -90,6 +112,12 @@ public class SecurityConfiguration {
                         // backend exception can be masked as a second 401.
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, STAFF_POST_ENDPOINTS)
+                            .hasAnyAuthority(STAFF_AUTHORITIES)
+                        .requestMatchers(HttpMethod.PUT, STAFF_PUT_ENDPOINTS)
+                            .hasAnyAuthority(STAFF_AUTHORITIES)
+                        .requestMatchers(HttpMethod.DELETE, STAFF_DELETE_ENDPOINTS)
+                            .hasAnyAuthority(STAFF_AUTHORITIES)
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())

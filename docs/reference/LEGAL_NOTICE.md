@@ -25,9 +25,20 @@ Publishing validates at least the provider name, street, postal code, city, coun
 address. Registration, VAT, supervisory, editorial, and dispute-resolution details are optional and
 must only be filled in when they actually apply to the operator.
 
+## Public Repository Reference
+
+Administrators can optionally maintain an HTTPS link to the project's public source repository.
+When configured, the published Impressum presents it in a dedicated transparency section so
+visitors can inspect the code and change history, report issues, and find the contribution path.
+This gives a community-run project a verifiable continuity signal without implying that a company
+operates or guarantees it. The value is stored with the other Impressum fields and participates in
+the same audit, persistence, and “Reset to environment values” workflow through
+`LEGAL_NOTICE_PUBLIC_REPOSITORY_URL`.
+
 ## Operations
 
-No seed is required after migration `0013_legal_notice`. The page is publicly accessible; editing
+No seed is required. Migration `V11__legal_notice_public_repository.sql` adds the optional
+repository reference without modifying existing legal-notice content. The page is publicly accessible; editing
 and resetting to environment values are restricted to administrators. Changes are recorded in the
 audit log.
 

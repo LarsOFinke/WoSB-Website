@@ -3,6 +3,7 @@ import { useMyGroupsPage } from '@/modules/groups/composables/useMyGroupsPage'
 
 const {
   t,
+  canAuthorContent,
   groups,
   search,
   loading,
@@ -26,7 +27,7 @@ const {
         </div>
         <div class="hero-actions">
           <span class="summary-pill">{{ countLabel }}</span>
-          <RouterLink class="button-box primary-action" to="/groups/new">{{ t('myGroups.create') }}</RouterLink>
+          <RouterLink v-if="canAuthorContent" class="button-box primary-action" to="/groups/new">{{ t('myGroups.create') }}</RouterLink>
         </div>
       </header>
 
@@ -55,13 +56,13 @@ const {
               </span>
             </RouterLink>
 
-            <div v-if="pendingCloseId === group.id" class="delete-confirmation">
+            <div v-if="canAuthorContent && pendingCloseId === group.id" class="delete-confirmation">
               <span>{{ t('myGroups.confirmClose') }}</span>
               <button class="danger-action" type="button" @click="confirmClose(group.id)">{{ t('myGroups.closeNow') }}</button>
               <button class="small-action" type="button" @click="pendingCloseId = null">{{ t('common.cancel') }}</button>
             </div>
 
-            <button v-else class="danger-action" type="button" :disabled="group.status === 'closed'" @click="pendingCloseId = group.id">
+            <button v-else-if="canAuthorContent" class="danger-action" type="button" :disabled="group.status === 'closed'" @click="pendingCloseId = group.id">
               {{ t('myGroups.close') }}
             </button>
           </article>

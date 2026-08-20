@@ -16,7 +16,7 @@ import { listMyFleetMemberships } from '@/modules/fleet/api/fleet'
 
 export function useProfilePage() {
   const { t } = useLocale()
-  const { setSessionUser } = useSession()
+  const { canAuthorContent, canManageFleet, setSessionUser } = useSession()
   const loading = ref(false)
   const saving = ref(false)
   const changingPassword = ref(false)
@@ -117,7 +117,7 @@ export function useProfilePage() {
   onMounted(loadProfile)
 
   return {
-    t, setSessionUser, loading, saving, changingPassword, error, success,
+    t, canAuthorContent, canManageFleet, setSessionUser, loading, saving, changingPassword, error, success,
     passwordError, passwordSuccess, fleetMemberships, preferenceOptions,
     activeFleetMemberships, leadershipMemberships, primaryFleetMembership,
     hasOfficialFleetLink, displayInitials, preferredFocusLabel, preferredShipOptions,

@@ -9,6 +9,6 @@ export const calendarRoutes = [
     path: '/calendar/new',
     name: 'calendar-new',
     component: () => import('./pages/CalendarCreatePage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.calendar' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.calendar' },
   },
 ]

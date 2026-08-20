@@ -35,6 +35,7 @@ from docs or cache; it does not assess the factual accuracy of a description.
 | `spring-api/src/main/java/eu/royalblackwater/api/ships/` | read-only ship catalog | query/filter/taxonomy |
 | `spring-api/src/main/java/eu/royalblackwater/api/squads/` | squad/roster on fleet membership | fleet ID, status, capability |
 | `spring-api/src/main/java/eu/royalblackwater/api/strategies/` | strategy overlays, references, sharing | ownership, JSON validation, build/ship pairing, file publication |
+| `spring-api/src/main/java/eu/royalblackwater/api/warehouse/` | fleet-scoped guild stock, reservations, and managed port reference data | holder membership, active port, row version, audit event |
 | `spring-api/src/main/java/eu/royalblackwater/api/webhooks/` | webhook policy and delivery | scope/event/encrypted secret |
 
 ## Frontend at a glance
@@ -60,6 +61,7 @@ the composable, not in the page.
 | `frontend/src/modules/ships/` | ship catalog transport | consumers in builds/combat |
 | `frontend/src/modules/squads/` | lists, own squads, roster | membership ID/management rules |
 | `frontend/src/modules/strategy-planner/` | SVG chart overlays and sharing | shared document presentation, screen-matrix coordinates, compatible references, serialization, export, print |
+| `frontend/src/modules/warehouse/` | member-readable, staff-managed guild-stock module | domain validation, composable state, conflict handling |
 
 Shared areas: `frontend/src/assets/`, `frontend/src/config/`, `frontend/src/core/`,
 `frontend/src/locales/`, `frontend/src/router/`, `frontend/src/shared/`, and

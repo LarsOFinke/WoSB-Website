@@ -81,6 +81,18 @@ class BuildPrintoutServiceTest {
     }
 
     @Test
+    void fileValidatorRejectsNonPngContentBeforeOptimization() {
+        MockMultipartFile invalid = new MockMultipartFile(
+                "image", "build-42.png", "image/png", "not-a-png".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        ResponseStatusException error = assertThrows(ResponseStatusException.class,
+                () -> BuildPrintoutFileValidator.copyAndValidate(
+                        invalid, temporaryRoot.resolve("invalid.png"), 1024, new ImageAssetOptimizer()));
+
+        assertEquals(400, error.getStatusCode().value());
+    }
+
+    @Test
     void contentRequiresTheCurrentVersionedCacheKey() throws Exception {
         BuildDataRepository repository = mock(BuildDataRepository.class);
         AuditService audit = mock(AuditService.class);

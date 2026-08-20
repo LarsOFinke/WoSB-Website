@@ -9,7 +9,7 @@ export const groupRoutes = [
     path: '/groups/new',
     name: 'groups-new',
     component: () => import('./pages/GroupCreatePage.vue'),
-    meta: { requiresUser: true, titleKey: 'common.groups' },
+    meta: { requiresContentAuthor: true, titleKey: 'common.groups' },
   },
   {
     path: '/groups/:id',

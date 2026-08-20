@@ -1,0 +1,16 @@
+{
+  "path": "/api/admin/master-data/warehouse-ports",
+  "method": "post",
+  "operation": {
+    "operationId": "create_warehouse_port_api_admin_master_data_warehouse_ports_post",
+    "parameters": [],
+    "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortCreate" } } } },
+    "responses": {
+      "201": { "description": "Successful Response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePortRead" } } } },
+      "400": { "description": "Invalid request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } },
+      "409": { "description": "Port name already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } } }
+    },
+    "summary": "Create Warehouse Port",
+    "tags": ["admin", "admin-master-data", "warehouse"]
+  }
+}

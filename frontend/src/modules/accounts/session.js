@@ -2,8 +2,6 @@ import { computed, reactive } from 'vue'
 
 import { getCurrentUser, login as loginRequest, logout as logoutRequest, register as registerRequest } from '@/modules/accounts/api/auth'
 
-const FLEET_MANAGEMENT_ROLES = new Set(['fleet_admiral', 'fleet_lieutenant'])
-
 const state = reactive({
   user: null,
   isReady: false,
@@ -53,11 +51,8 @@ export function setSessionUser(user) {
 
 export function useSession() {
   const isStaff = computed(() => ['admin', 'moderator'].includes(state.user?.role))
-  const canManageFleet = computed(() => {
-    if (isStaff.value) return true
-    return state.user?.fleet_membership_status === 'active'
-      && FLEET_MANAGEMENT_ROLES.has(state.user?.fleet_membership_role)
-  })
+  const canAuthorContent = computed(() => isStaff.value)
+  const canManageFleet = computed(() => isStaff.value)
 
   return {
     sessionState: state,
@@ -66,6 +61,7 @@ export function useSession() {
     isAdmin: computed(() => state.user?.role === 'admin'),
     isModerator: computed(() => state.user?.role === 'moderator'),
     isStaff,
+    canAuthorContent,
     canManageFleet,
     loadSession,
     login,

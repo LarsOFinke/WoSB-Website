@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { strategyCanvasPoint } from '../domain/canvasCoordinates.js'
 import { createFreehand, moveStrategyObject, snapshotStrategyObject, STRATEGY_COLORS } from '../domain/strategyDocument.js'
+import { strategyFormationPath, strategyLineGeometry, strategyObjectScale } from '../domain/strategyGeometry.js'
 
 const props = defineProps({
   document: { type: Object, required: true },
@@ -106,13 +107,7 @@ function shipLabel(object) {
 }
 
 function formationPath(object) {
-  const width = Number(object.width || 0.35) * 1000
-  const height = Number(object.height || 0.25) * canvasHeight.value
-  if (object.formation === 'circle') return `M ${-width / 2} 0 A ${width / 2} ${height / 2} 0 1 0 ${width / 2} 0 A ${width / 2} ${height / 2} 0 1 0 ${-width / 2} 0`
-  if (object.formation === 'wedge') return `M ${-width / 2} ${height / 2} L 0 ${-height / 2} L ${width / 2} ${height / 2}`
-  if (object.formation === 'column') return `M 0 ${-height / 2} L 0 ${height / 2}`
-  if (object.formation === 'box') return `M ${-width / 2} ${-height / 2} H ${width / 2} V ${height / 2} H ${-width / 2} Z`
-  return `M ${-width / 2} 0 L ${width / 2} 0`
+  return strategyFormationPath(object, canvasHeight.value)
 }
 
 function freehandPath(points) {
@@ -124,8 +119,7 @@ function freehandPath(points) {
 }
 
 function objectScale(object) {
-  const value = Number(object.scale ?? 1)
-  return Number.isFinite(value) ? Math.max(0.25, Math.min(4, value)) : 1
+  return strategyObjectScale(object)
 }
 
 function anchoredTransform(object) {
@@ -145,13 +139,18 @@ function anchoredTransform(object) {
   return `translate(${x} ${y}) rotate(${Number(object.rotation || 0)}) scale(${objectScale(object)}) translate(${-x} ${-y})`
 }
 
+function lineGeometry(object) {
+  return strategyLineGeometry(object, canvasHeight.value)
+}
+
+function lineTransform(object) {
+  const geometry = lineGeometry(object)
+  return `rotate(${Number(object.rotation || 0)} ${geometry.centerX} ${geometry.centerY})`
+}
+
 function arrowHeadTransform(object) {
-  const x = Number(object.x2) * 1000
-  const y = Number(object.y2) * canvasHeight.value
-  const deltaX = (Number(object.x2) - Number(object.x)) * 1000
-  const deltaY = (Number(object.y2) - Number(object.y)) * canvasHeight.value
-  const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI
-  return `translate(${x} ${y}) rotate(${angle})`
+  const geometry = lineGeometry(object)
+  return `translate(${geometry.x2} ${geometry.y2}) rotate(${geometry.angle})`
 }
 
 watch(() => props.backgroundUrl, loadBackgroundSize, { immediate: true })
@@ -202,24 +201,24 @@ defineExpose({ element: svgElement })
             v-else-if="object.type === 'line' || object.type === 'arrow'"
             class="strategy-object strategy-line"
             :class="{ 'is-selected': selectedId === object.id }"
-            :transform="anchoredTransform(object)"
+            :transform="lineTransform(object)"
             tabindex="0" @pointerdown="startObjectDrag($event, object)" @keydown="keyMove($event, object)"
           >
             <line
-              :x1="object.x * 1000" :y1="object.y * canvasHeight"
-              :x2="object.x2 * 1000" :y2="object.y2 * canvasHeight"
+              :x1="lineGeometry(object).x1" :y1="lineGeometry(object).y1"
+              :x2="lineGeometry(object).x2" :y2="lineGeometry(object).y2"
               :stroke="object.color" stroke-width="7" stroke-linecap="round"
             />
             <path
               v-if="object.type === 'arrow'" class="strategy-arrow-head"
-              d="M 4 0 L -25 -14 L -19 0 L -25 14 Z" :fill="object.color"
+              d="M 5 0 L -30 -17 L -22 0 L -30 17 Z" :fill="object.color"
               :transform="arrowHeadTransform(object)"
             />
           </g>
           <g
             v-else-if="object.type === 'formation'"
             class="strategy-object strategy-formation" :class="{ 'is-selected': selectedId === object.id }"
-            :transform="`translate(${object.x * 1000} ${object.y * canvasHeight}) rotate(${object.rotation || 0}) scale(${objectScale(object)})`"
+            :transform="`translate(${object.x * 1000} ${object.y * canvasHeight}) rotate(${object.rotation || 0})`"
             tabindex="0" @pointerdown="startObjectDrag($event, object)" @keydown="keyMove($event, object)"
           >
             <path :d="formationPath(object)" fill="none" :stroke="object.color" stroke-width="7" stroke-dasharray="18 11" />

@@ -13,7 +13,7 @@ import { downloadStrategySvg } from '../strategySvgExport.js'
 export function useStrategyViewPage() {
   const route = useRoute()
   const { t } = useLocale()
-  const { user } = useSession()
+  const { canAuthorContent, user } = useSession()
   const strategy = ref(null)
   const document = ref(emptyStrategyDocument())
   const ships = ref([])
@@ -26,7 +26,7 @@ export function useStrategyViewPage() {
   const publicId = computed(() => String(route.params.publicId || ''))
   const strategyId = computed(() => Number(route.params.id || 0))
   const isShared = computed(() => Boolean(publicId.value))
-  const canEdit = computed(() => Boolean(strategy.value && user.value
+  const canEdit = computed(() => Boolean(canAuthorContent.value && strategy.value && user.value
     && Number(strategy.value.owner_id) === Number(user.value.id)))
   const backgroundUrl = computed(() => absoluteFileUrl(strategy.value?.background_file?.public_url || ''))
   const shareUrl = computed(() => strategy.value?.is_published && strategy.value?.public_id

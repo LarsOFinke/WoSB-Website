@@ -1,71 +1,19 @@
 package eu.royalblackwater.api.integration;
 
-import eu.royalblackwater.api.account.service.BootstrapAdministratorInitializer;
-import eu.royalblackwater.api.masterdata.service.ReferenceDataSeeder;
-import eu.royalblackwater.api.persistence.JdbcQueryService;
-import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
-import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers(disabledWithoutDocker = true)
-class ApplicationIntegrationTest {
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = PostgresTestContainerFactory.create();
-
-    @DynamicPropertySource
-    static void properties(DynamicPropertyRegistry registry) {
-        Flyway.configure()
-                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
-                .cleanDisabled(true)
-                .validateMigrationNaming(true)
-                .load()
-                .migrate();
-        Path runtime = Path.of(System.getProperty("java.io.tmpdir"), "rbf-integration-test");
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("spring.flyway.enabled", () -> false);
-        registry.add("rbf.secrets.encryption-keys",
-                () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
-        registry.add("rbf.bootstrap-admin.password", () -> "Integration-Test-Admin-Password-42!");
-        registry.add("rbf.session.secure", () -> false);
-        registry.add("rbf.scheduling.enabled", () -> false);
-        registry.add("rbf.diagnostics.http-lifecycle-logging", () -> true);
-        registry.add("rbf.storage.upload-root", () -> runtime.resolve("uploads").toString());
-        registry.add("rbf.operations.control-root", () -> runtime.resolve("control").toString());
-    }
-
-    @Autowired
-    JdbcQueryService jdbc;
-
-    @Autowired
-    PasswordHasher passwords;
-
-    @Autowired
-    BootstrapAdministratorInitializer bootstrapAdministrator;
-
-    @Autowired
-    ReferenceDataSeeder referenceDataSeeder;
-
-    @LocalServerPort
-    int port;
+class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
 
     @Test
     void migratesSeedsAndStartsTheCompleteApplication() {
@@ -81,6 +29,14 @@ class ApplicationIntegrationTest {
                 .isEqualTo(1);
         assertThat(jdbc.count("select count(*) from flyway_schema_history where version='9'", Map.of()))
                 .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='12'", Map.of()))
+                .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from flyway_schema_history where version='13'", Map.of()))
+                .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from information_schema.tables where table_name='warehouse_entries'", Map.of()))
+                .isEqualTo(1);
+        assertThat(jdbc.count("select count(*) from warehouse_ports where is_active=true", Map.of()))
+                .isGreaterThanOrEqualTo(38);
         assertThat(jdbc.count("""
                 select count(*) from information_schema.columns
                  where table_schema=current_schema() and table_name='builds'
@@ -269,6 +225,88 @@ class ApplicationIntegrationTest {
                 204, "DELETE", "/api/admin/master-data/options/{option_id}");
         assertThat(jdbc.count("select count(*) from build_item_options where id=:id", Map.of("id", optionId)))
                 .isZero();
+    }
+
+    @Test
+    void membersReadWarehouseWhileStaffManageVersionedAuditLifecycle() throws Exception {
+        long nonce = Math.abs(System.nanoTime());
+        String moderatorPassword = "Warehouse-Moderator-Password-42!";
+        createUser("warehouse-moderator-" + nonce, moderatorPassword, "moderator");
+        SessionCookies moderator = login("warehouse-moderator-" + nonce, moderatorPassword);
+        String memberPassword = "Warehouse-Member-Password-42!";
+        createMember("warehouse-member-" + nonce, memberPassword);
+        SessionCookies member = login("warehouse-member-" + nonce, memberPassword);
+        long fleetId = ((Number) bootstrapMembership().get("fleet_id")).longValue();
+        String createBody = "{\"fleet_id\":" + fleetId
+                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Tortuga\","
+                + "\"resource\":\"Iron\",\"amount\":650,\"reserved\":false}";
+        HttpResponse<String> created = post("/api/warehouse", createBody,
+                moderator.cookieHeader(), moderator.csrfToken(), localOrigin());
+        assertStatus(created, 201, "POST", "/api/warehouse");
+        long entryId = jsonId(created.body());
+        assertThat(created.body()).contains("\"holder_name\":\"Blackwater\"", "\"version\":1");
+
+        HttpResponse<String> listed = get("/api/warehouse?fleet_id=" + fleetId,
+                member.sessionCookie());
+        assertStatus(listed, 200, "GET", "/api/warehouse?fleet_id={fleet_id}");
+        assertThat(listed.body()).contains("\"matching_stock\":650", "\"available_stock\":650");
+        assertStatus(post("/api/warehouse", createBody,
+                        member.cookieHeader(), member.csrfToken(), localOrigin()),
+                403, "POST", "/api/warehouse member mutation");
+
+        String updateBody = "{\"fleet_id\":" + fleetId
+                + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Tortuga\","
+                + "\"resource\":\"Iron\",\"amount\":1250,\"reserved\":false,\"version\":1}";
+        HttpResponse<String> updated = put("/api/warehouse/" + entryId, updateBody, moderator);
+        assertStatus(updated, 200, "PUT", "/api/warehouse/{entry_id}");
+        assertThat(updated.body()).contains("\"amount\":1250", "\"version\":2");
+
+        assertStatus(put("/api/warehouse/" + entryId, updateBody, moderator),
+                409, "PUT", "/api/warehouse/{entry_id} stale version");
+        String reserveBody = updateBody.replace("\"reserved\":false,\"version\":1",
+                "\"reserved\":true,\"version\":2");
+        HttpResponse<String> reserved = put("/api/warehouse/" + entryId, reserveBody, moderator);
+        assertStatus(reserved, 200, "PUT", "/api/warehouse/{entry_id} reservation");
+        long version = jsonLong(reserved.body(), "version");
+        assertThat(reserved.body()).contains("\"reserved\":true");
+        assertThat(jdbc.count("select count(*) from audit_logs where entity_type='warehouse_entry' and action='reservation' and entity_id=:id",
+                Map.of("id", String.valueOf(entryId)))).isEqualTo(1);
+
+        assertStatus(delete("/api/warehouse/" + entryId + "?version=" + version,
+                moderator.cookieHeader(), moderator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/warehouse/{entry_id}");
+        assertThat(jdbc.count("select count(*) from warehouse_entries where id=:id", Map.of("id", entryId))).isZero();
+    }
+
+    @Test
+    void administratorsManageWarehousePortsWhileMembersUseTheActiveCatalog() throws Exception {
+        long nonce = Math.abs(System.nanoTime());
+        SessionCookies administrator = login("admin", "Integration-Test-Admin-Password-42!");
+        String memberPassword = "Warehouse-Port-Member-Password-42!";
+        String memberName = "warehouse-port-member-" + nonce;
+        createMember(memberName, memberPassword);
+        SessionCookies member = login(memberName, memberPassword);
+
+        assertStatus(get("/api/admin/master-data/warehouse-ports", member.sessionCookie()),
+                403, "GET", "/api/admin/master-data/warehouse-ports member");
+        String name = "Integration Harbor " + nonce;
+        HttpResponse<String> created = post("/api/admin/master-data/warehouse-ports",
+                "{\"name\":\"" + name + "\",\"sort_order\":900,\"is_active\":true}",
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin());
+        assertStatus(created, 201, "POST", "/api/admin/master-data/warehouse-ports");
+        long portId = jsonId(created.body());
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).contains(name);
+
+        String renamed = "Renamed Harbor " + nonce;
+        assertStatus(put("/api/admin/master-data/warehouse-ports/" + portId,
+                "{\"name\":\"" + renamed + "\",\"sort_order\":901,\"is_active\":true}", administrator),
+                200, "PUT", "/api/admin/master-data/warehouse-ports/{port_id}");
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).contains(renamed).doesNotContain(name);
+
+        assertStatus(delete("/api/admin/master-data/warehouse-ports/" + portId,
+                administrator.cookieHeader(), administrator.csrfToken(), localOrigin()),
+                204, "DELETE", "/api/admin/master-data/warehouse-ports/{port_id}");
+        assertThat(get("/api/warehouse/ports", member.sessionCookie()).body()).doesNotContain(renamed);
     }
 
     @Test
@@ -491,6 +529,60 @@ class ApplicationIntegrationTest {
     }
 
     @Test
+    void reservesSharedContentMutationsForModeratorsAndAdministrators() throws Exception {
+        String memberPassword = "Read-Only-Member-Password-42!";
+        createUser("integration-read-only", memberPassword, "user");
+        SessionCookies member = login("integration-read-only", memberPassword);
+
+        for (String path : new String[] {
+                "/api/builds", "/api/builds/1/upvote", "/api/calendar/events", "/api/files",
+                "/api/fleets", "/api/forum/threads", "/api/forum/threads/1/posts",
+                "/api/groups", "/api/groups/1/close", "/api/guides", "/api/squads",
+                "/api/squads/1/members", "/api/strategies"
+        }) {
+            assertThat(post(path, "{}", member.cookieHeader(), member.csrfToken(), localOrigin()).statusCode())
+                    .as("member POST %s", path).isEqualTo(403);
+        }
+        for (String path : new String[] {
+                "/api/builds/mine/1", "/api/builds/1/printout", "/api/calendar/events/1",
+                "/api/fleets/1", "/api/forum/posts/1", "/api/forum/threads/1", "/api/guides/1",
+                "/api/newcomer-guide", "/api/squads/1", "/api/strategies/1",
+                "/api/strategies/1/publication"
+        }) {
+            assertThat(put(path, "{}", member).statusCode())
+                    .as("member PUT %s", path).isEqualTo(403);
+        }
+        for (String path : new String[] {
+                "/api/builds/mine/1", "/api/calendar/events/1", "/api/files/1",
+                "/api/forum/posts/1", "/api/guides/1", "/api/squads/1", "/api/strategies/1"
+        }) {
+            assertThat(delete(path, member.cookieHeader(), member.csrfToken(), localOrigin()).statusCode())
+                    .as("member DELETE %s", path).isEqualTo(403);
+        }
+
+        assertThat(put("/api/profile", "{}", member).statusCode()).isNotEqualTo(403);
+        assertThat(post("/api/fleets/join", "{}", member.cookieHeader(), member.csrfToken(), localOrigin()).statusCode())
+                .isNotEqualTo(403);
+        assertThat(post("/api/groups/999999/join", "{}", member.cookieHeader(), member.csrfToken(), localOrigin()).statusCode())
+                .isNotEqualTo(403);
+
+        long fleetId = ((Number) bootstrapMembership().get("fleet_id")).longValue();
+        assertThat(get("/api/fleets", member.sessionCookie()).statusCode()).isEqualTo(200);
+        assertThat(get("/api/squads", member.sessionCookie()).statusCode()).isEqualTo(200);
+        assertThat(get("/api/fleets/manageable", member.sessionCookie()).statusCode()).isEqualTo(403);
+        assertThat(get("/api/fleets/" + fleetId + "/manage", member.sessionCookie()).statusCode()).isEqualTo(403);
+        assertThat(get("/api/fleets/" + fleetId + "/roles", member.sessionCookie()).statusCode()).isEqualTo(403);
+        assertThat(get("/api/squads/roster", member.sessionCookie()).statusCode()).isEqualTo(403);
+
+        String moderatorPassword = "Content-Moderator-Password-42!";
+        createUser("integration-content-moderator", moderatorPassword, "moderator");
+        SessionCookies moderator = login("integration-content-moderator", moderatorPassword);
+        assertThat(post("/api/builds", "{}", moderator.cookieHeader(), moderator.csrfToken(), localOrigin()).statusCode())
+                .isNotEqualTo(403);
+        assertThat(get("/api/admin/users", moderator.sessionCookie()).statusCode()).isEqualTo(403);
+    }
+
+    @Test
     void rejectsInvalidPublicMutationWithoutLeakingImplementationDetails() throws Exception {
         HttpResponse<String> response = post("/api/auth/register", "{}", null, null, localOrigin());
 
@@ -579,138 +671,6 @@ class ApplicationIntegrationTest {
         assertThat(reloaded.statusCode()).isEqualTo(200);
         assertThat(reloaded.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"analytics\":false",
                 "\"external_media\":true");
-    }
-
-    private HttpResponse<String> submitPublicRegistration(
-            String username, String password, String displayName, boolean wantsFleetMembership,
-            Long fleetId, String fleetApplicationNote) throws Exception {
-        HttpResponse<String> csrfBootstrap = get("/api/auth/me");
-        String xsrf = cookieValue(csrfBootstrap, "XSRF-TOKEN");
-        String fleet = fleetId == null ? "null" : String.valueOf(fleetId);
-        String note = fleetApplicationNote == null
-                ? "null"
-                : "\"" + fleetApplicationNote.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
-        String body = "{\"username\":\"" + username + "\",\"password\":\"" + password
-                + "\",\"display_name\":\"" + displayName + "\",\"wants_fleet_membership\":"
-                + wantsFleetMembership + ",\"fleet_id\":" + fleet + ",\"fleet_application_note\":" + note + "}";
-        HttpRequest request = HttpRequest.newBuilder(URI.create(localOrigin() + "/api/auth/register"))
-                .header("Content-Type", "application/json")
-                .header("Origin", localOrigin())
-                .header("Cookie", "XSRF-TOKEN=" + xsrf)
-                .header("X-XSRF-TOKEN", xsrf)
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> get(String path) throws Exception {
-        return get(path, null);
-    }
-
-    private HttpResponse<String> get(String path, String cookie) throws Exception {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path)).GET();
-        if (cookie != null) request.header("Cookie", cookie);
-        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> post(String path, String body, String cookie, String csrf, String origin)
-            throws Exception {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path))
-                .header("Content-Type", "application/json")
-                .header("Origin", origin)
-                .POST(HttpRequest.BodyPublishers.ofString(body));
-        if (cookie != null) request.header("Cookie", cookie);
-        if (csrf != null) request.header("X-XSRF-TOKEN", csrf);
-        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> delete(String path, String cookie, String csrf, String origin) throws Exception {
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(localOrigin() + path))
-                .header("Origin", origin).DELETE();
-        if (cookie != null) request.header("Cookie", cookie);
-        if (csrf != null) request.header("X-XSRF-TOKEN", csrf);
-        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> put(String path, String body, SessionCookies session) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(localOrigin() + path)).header("Content-Type", "application/json")
-                .header("Origin", localOrigin()).header("Cookie", session.cookieHeader())
-                .header("X-XSRF-TOKEN", session.csrfToken()).PUT(HttpRequest.BodyPublishers.ofString(body)).build();
-        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private SessionCookies login(String username, String password) throws Exception {
-        HttpResponse<String> login = post("/api/auth/login",
-                "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}",
-                null, null, localOrigin());
-        assertThat(login.statusCode()).isEqualTo(200);
-        String sessionCookie = cookie(login, "rbf_hub_session");
-
-        HttpResponse<String> csrfBootstrap = get("/api/auth/me", sessionCookie);
-        String csrfToken = cookieValue(csrfBootstrap, "XSRF-TOKEN");
-        return new SessionCookies(sessionCookie, csrfToken);
-    }
-
-    private void createMember(String username, String password) {
-        jdbc.update("delete from users where username=:username", Map.of("username", username));
-        long userId = jdbc.insertReturningId("""
-                insert into users(username,password_hash,site_role_id,is_active,is_bootstrap_admin,created_at,updated_at)
-                values(:username,:password,(select id from site_roles where code='user'),true,false,current_timestamp,current_timestamp)
-                returning id
-                """, Map.of("username", username, "password", passwords.hash(password)));
-        jdbc.update("""
-                insert into user_profiles(user_id,display_name,created_at,updated_at)
-                values(:userId,'Integration Member',current_timestamp,current_timestamp)
-                """, Map.of("userId", userId));
-    }
-
-    private static String cookie(HttpResponse<String> response, String name) {
-        return name + "=" + cookieValue(response, name);
-    }
-
-    private static String cookieValue(HttpResponse<String> response, String name) {
-        Pattern pattern = Pattern.compile("(?:^|;\\s*)" + Pattern.quote(name) + "=([^;]+)");
-        return response.headers().allValues("set-cookie").stream()
-                .map(pattern::matcher)
-                .filter(java.util.regex.Matcher::find)
-                .map(matcher -> matcher.group(1))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Missing cookie " + name));
-    }
-
-    private static void assertStatus(
-            HttpResponse<String> response, int expectedStatus, String method, String path) {
-        String body = response.body() == null ? "" : response.body().replaceAll("[\\r\\n\\t]+", " ");
-        String excerpt = body.substring(0, Math.min(body.length(), 500));
-        assertThat(response.statusCode())
-                .as("%s %s expected status %s but received %s; response=%s",
-                        method, path, expectedStatus, response.statusCode(), excerpt)
-                .isEqualTo(expectedStatus);
-    }
-
-    private Map<String, Object> bootstrapMembership() {
-        return jdbc.required("""
-                select m.id,m.fleet_id,m.status,r.code role,r.can_manage_fleet,r.can_manage_members,f.slug
-                from users u join fleet_memberships m on m.user_id=u.id
-                join fleet_roles r on r.id=m.fleet_role_id join fleets f on f.id=m.fleet_id
-                where u.is_bootstrap_admin=true
-                """, Map.of());
-    }
-
-    private static long jsonId(String body) {
-        var matcher = Pattern.compile("\\\"id\\\":(\\d+)").matcher(body);
-        if (!matcher.find()) throw new AssertionError("Response does not contain a numeric id: " + body);
-        return Long.parseLong(matcher.group(1));
-    }
-
-    private String localOrigin() {
-        return "http://localhost:" + port;
-    }
-
-    private record SessionCookies(String sessionCookie, String csrfToken) {
-        String cookieHeader() {
-            return sessionCookie + "; XSRF-TOKEN=" + csrfToken;
-        }
     }
 
 }

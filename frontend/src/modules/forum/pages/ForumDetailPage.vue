@@ -10,9 +10,7 @@ import '@/modules/forum/styles/forumReplies.css'
 const props = defineProps({ id: { type: String, required: true } })
 const {
   t,
-  isAuthenticated,
   isStaff,
-  user,
   thread,
   loading,
   saving,
@@ -146,7 +144,7 @@ const {
           </template>
         </article>
 
-        <section v-if="isAuthenticated" class="wire-section form-section reply-panel">
+        <section v-if="isStaff" class="wire-section form-section reply-panel">
           <div class="section-title"><span>↳</span><h2>{{ t('forum.detail.replyTitle') }}</h2></div>
           <p class="section-helper-text">{{ t('markdown.editorHint') }}</p>
           <MarkdownEditor

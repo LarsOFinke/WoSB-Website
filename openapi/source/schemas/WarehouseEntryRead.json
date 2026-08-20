@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "amount": { "title": "Amount", "type": "integer" },
+    "created_at": { "format": "date-time", "title": "Created At", "type": "string" },
+    "custom_holder_name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Custom Holder Name"
+    },
+    "fleet_id": { "title": "Fleet Id", "type": "integer" },
+    "fleet_name": { "title": "Fleet Name", "type": "string" },
+    "holder_name": { "title": "Holder Name", "type": "string" },
+    "id": { "title": "Id", "type": "integer" },
+    "member_user_id": {
+      "anyOf": [{ "type": "integer" }, { "type": "null" }],
+      "title": "Member User Id"
+    },
+    "port": { "title": "Port", "type": "string" },
+    "reserved": { "title": "Reserved", "type": "boolean" },
+    "resource": { "title": "Resource", "type": "string" },
+    "updated_at": { "format": "date-time", "title": "Updated At", "type": "string" },
+    "updated_by": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "title": "Updated By"
+    },
+    "version": { "title": "Version", "type": "integer" }
+  },
+  "required": [
+    "id", "fleet_id", "fleet_name", "holder_name", "port", "resource", "amount",
+    "reserved", "version", "created_at", "updated_at"
+  ],
+  "title": "WarehouseEntryRead",
+  "type": "object"
+}

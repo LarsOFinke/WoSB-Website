@@ -6,7 +6,7 @@ import { useSession } from '@/modules/accounts/session'
 
 export function useForumDetailPage(props) {
   const { t } = useLocale()
-  const { isAuthenticated, isStaff, user } = useSession()
+  const { isStaff } = useSession()
 
   const thread = ref(null)
   const loading = ref(false)
@@ -23,19 +23,18 @@ export function useForumDetailPage(props) {
   const editEditor = ref(null)
   const editForm = reactive({ body: '' })
 
-  const canReply = computed(() => reply.body.trim() && !saving.value)
+  const canReply = computed(() => isStaff.value && reply.body.trim() && !saving.value)
   const replyGalleryAttachments = computed(() => unembeddedAttachments(replyAttachments.value, reply.body))
   const editGalleryAttachments = computed(() => unembeddedAttachments(editAttachments.value, editForm.body))
   const canSaveEdit = computed(() => editForm.body.trim() && !updating.value)
-  const canManageThread = computed(() => thread.value && user.value && (thread.value.owner_id === user.value.id || isStaff.value))
+  const canManageThread = computed(() => Boolean(thread.value && isStaff.value))
 
   function postGalleryAttachments(post) {
     return unembeddedAttachments(post.attachments || [], post.body)
   }
 
-  function canEditPost(post, index) {
-    if (index === 0 || !user.value) return false
-    return post.author_id === user.value.id || isStaff.value
+  function canEditPost(_post, index) {
+    return index !== 0 && isStaff.value
   }
 
   function canDeletePost(post, index) {
@@ -192,9 +191,7 @@ export function useForumDetailPage(props) {
 
   return {
     t,
-    isAuthenticated,
     isStaff,
-    user,
     thread,
     loading,
     saving,

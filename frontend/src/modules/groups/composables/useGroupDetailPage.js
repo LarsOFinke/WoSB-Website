@@ -28,7 +28,7 @@ export function useGroupDetailPage(props) {
   const joinSuccess = ref('')
   const joinForm = reactive(createGroupJoinForm())
 
-  const canManage = computed(() => group.value && user.value && (group.value.owner_id === user.value.id || isStaff.value))
+  const canManage = computed(() => Boolean(group.value && isStaff.value))
   const canJoin = computed(() => Boolean(group.value?.is_joinable))
   const selectedBuild = computed(() => builds.value.find((build) => String(build.id) === String(joinForm.build_id)) || null)
   const selectedShip = computed(() => selectedBuild.value?.ship
@@ -122,7 +122,7 @@ export function useGroupDetailPage(props) {
   })
 
   return {
-    locale, t, isAuthenticated, isStaff, user, group, ships, builds, loading,
+    locale, t, isAuthenticated, group, ships, builds, loading,
     joining, closing, error, joinError, joinSuccess, joinForm, canManage, canJoin,
     selectedBuild, selectedShip, allowedShips, allowedBuilds, rateRequirementText,
     scheduleText, formatDateTime, isShipAllowed, memberShipLabel, loadAuxiliaryData,

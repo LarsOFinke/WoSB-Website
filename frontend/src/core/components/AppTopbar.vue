@@ -21,7 +21,7 @@ const props = defineProps({
 
 const router = useRouter()
 const { locale, localeLoading, setLocale, supportedLocales, t } = useLocale()
-const { isAuthenticated, loadSession, logout, sessionState, user } = useSession()
+const { canAuthorContent, isAuthenticated, loadSession, logout, sessionState, user } = useSession()
 
 const profileLinkLabel = computed(() => user.value?.display_name || user.value?.username || t('common.profile'))
 const userInitials = computed(() => {
@@ -30,11 +30,13 @@ const userInitials = computed(() => {
 })
 const primaryLinks = computed(() => createPersonalLinks(t, {
   isAuthenticated: isAuthenticated.value,
+  canAuthorContent: canAuthorContent.value,
 }))
 
 async function handleLogout() {
   await logout()
-  if (router.currentRoute.value.meta.requiresStaff || router.currentRoute.value.meta.requiresUser) {
+  if (router.currentRoute.value.meta.requiresStaff || router.currentRoute.value.meta.requiresUser
+    || router.currentRoute.value.meta.requiresContentAuthor) {
     router.push('/')
   }
 }

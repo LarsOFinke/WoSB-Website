@@ -16,7 +16,7 @@ export const squadRoutes = [
     path: '/squads/new',
     name: 'squad-new',
     component: () => import('./pages/SquadCreatePage.vue'),
-    meta: { requiresUser: true, requiresFleetManagement: true, titleKey: 'squads.create.title' },
+    meta: { requiresContentAuthor: true, requiresFleetManagement: true, titleKey: 'squads.create.title' },
   },
   {
     path: '/squads/:id',

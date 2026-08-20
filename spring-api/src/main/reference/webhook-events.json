@@ -288,6 +288,18 @@
       "category": "fleet",
       "description": "A fleet role was removed.",
       "default_message": "🏴‍☠️ **A fleet role was removed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`."
+    },
+    {
+      "key": "warehouse.stock.changed",
+      "category": "warehouse",
+      "description": "Guild warehouse stock was created, changed, or removed.",
+      "default_message": "📦 **Warehouse stock changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`."
+    },
+    {
+      "key": "warehouse.reservation.changed",
+      "category": "warehouse",
+      "description": "A guild warehouse reservation changed.",
+      "default_message": "🔒 **Warehouse reservation changed**\n\n{data.summary}\n\nResource: `{resource.type} #{resource.id}`\nEvent: `{event}`\nTriggered by **{actor.display_name}** at `{occurred_at}`."
     }
   ]
 }

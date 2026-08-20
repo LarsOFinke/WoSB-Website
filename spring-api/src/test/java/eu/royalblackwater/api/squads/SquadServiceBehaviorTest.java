@@ -43,14 +43,11 @@ class SquadServiceBehaviorTest {
     }
 
     @Test
-    void rosterRequiresLeadershipBeforeReturningPrivateFleetRoster() {
+    void rosterRequiresStaffBeforeReturningPrivateFleetRoster() {
         SquadRepository repository = mock(SquadRepository.class);
-        FleetAccessPolicy fleets = mock(FleetAccessPolicy.class);
-        SquadAccessPolicy squads = mock(SquadAccessPolicy.class);
-        SquadService service = new SquadService(repository, fleets, squads, mock(AuditService.class), CLOCK);
+        SquadService service = new SquadService(repository, mock(FleetAccessPolicy.class),
+                mock(SquadAccessPolicy.class), mock(AuditService.class), CLOCK);
         when(repository.optional(anyString(), anyMap())).thenReturn(Optional.of(Map.of("id", 9L)));
-        when(fleets.canManageFleet(ACTOR, 9L)).thenReturn(false);
-        when(squads.hasManagedSquad(ACTOR)).thenReturn(false);
 
         ResponseStatusException error = assertThrows(ResponseStatusException.class, () -> service.roster(ACTOR));
 

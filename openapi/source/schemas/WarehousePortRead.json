@@ -1,0 +1,13 @@
+{
+  "title": "WarehousePortRead",
+  "type": "object",
+  "properties": {
+    "id": { "title": "Id", "type": "integer" },
+    "name": { "title": "Name", "type": "string" },
+    "sort_order": { "title": "Sort Order", "type": "integer" },
+    "is_active": { "title": "Is Active", "type": "boolean" },
+    "created_at": { "title": "Created At", "type": "string", "format": "date-time" },
+    "updated_at": { "title": "Updated At", "type": "string", "format": "date-time" }
+  },
+  "required": ["id", "name", "sort_order", "is_active", "created_at", "updated_at"]
+}

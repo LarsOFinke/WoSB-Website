@@ -1,0 +1,23 @@
+{
+  "path": "/api/warehouse",
+  "method": "get",
+  "operation": {
+    "operationId": "list_warehouse_entries_api_warehouse_get",
+    "parameters": [
+      { "in": "query", "name": "fleet_id", "required": false, "schema": { "anyOf": [{ "minimum": 1, "type": "integer" }, { "type": "null" }], "title": "Fleet Id" } },
+      { "in": "query", "name": "holder", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Holder" } },
+      { "in": "query", "name": "port", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Port" } },
+      { "in": "query", "name": "resource", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Resource" } },
+      { "in": "query", "name": "reserved", "required": false, "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Reserved" } },
+      { "in": "query", "name": "limit", "required": false, "schema": { "default": 100, "maximum": 500, "minimum": 1, "title": "Limit", "type": "integer" } },
+      { "in": "query", "name": "offset", "required": false, "schema": { "default": 0, "maximum": 100000, "minimum": 0, "title": "Offset", "type": "integer" } },
+      { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rbf Hub Session" } }
+    ],
+    "responses": {
+      "200": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WarehousePage" } } }, "description": "Successful Response" },
+      "400": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" } } }, "description": "Invalid request" }
+    },
+    "summary": "List Warehouse Entries",
+    "tags": ["warehouse"]
+  }
+}

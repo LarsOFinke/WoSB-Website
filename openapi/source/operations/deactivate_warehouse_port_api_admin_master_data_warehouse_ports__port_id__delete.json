@@ -1,0 +1,11 @@
+{
+  "path": "/api/admin/master-data/warehouse-ports/{port_id}",
+  "method": "delete",
+  "operation": {
+    "operationId": "deactivate_warehouse_port_api_admin_master_data_warehouse_ports__port_id__delete",
+    "parameters": [{ "in": "path", "name": "port_id", "required": true, "schema": { "type": "integer", "title": "Port Id" } }],
+    "responses": { "204": { "description": "Successful Response" } },
+    "summary": "Deactivate Warehouse Port",
+    "tags": ["admin", "admin-master-data", "warehouse"]
+  }
+}

@@ -12,7 +12,7 @@ const props = defineProps({
 
 const {
   optionLabel, t, build, loading, error, shareStatus, voteBusy, voteError, printStatus, printPreviewUrl,
-  printPreviewOpen, printBusy, weaponArcRows, crewTotal, canEdit, upgrades,
+  printPreviewOpen, printBusy, weaponArcRows, crewTotal, canEdit, canVote, upgrades,
   commandDeckUpgradeSlots, regularSpecialCrewSlots, gingerSpecialCrewSlot,
   classificationLabels, ammunitionSlots, consumableSlots, holdSlots,
   crewDistributionRows, optionMeta, optionImage, slotItem, slotLabel, slotQuantity,
@@ -51,6 +51,7 @@ function crewCapacity() {
             </div>
             <div class="detail-header-actions build-detail-command-actions">
               <button
+                v-if="canVote"
                 class="small-action build-upvote-action"
                 :class="{ 'is-active': build.has_upvoted }"
                 type="button"
