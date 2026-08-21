@@ -89,7 +89,7 @@ public class PrivacyController extends ApiControllerSupport {
 
     @GetMapping("/api/privacy/cookie-consent")
     public ResponseEntity<CookieConsentRead> getCookieConsent() {
-        return respond(consent.state(request), 200);
+        return noStore(respond(consent.state(request), 200));
     }
 
     @PostMapping("/api/privacy/cookie-consent")
@@ -124,8 +124,17 @@ public class PrivacyController extends ApiControllerSupport {
     private ResponseEntity<CookieConsentRead> saveConsent(CookieConsentChoice choice) {
         AuthenticatedUser user = CurrentUser.optional().orElse(null);
         CookieConsentService.SavedConsent saved = consent.save(choice, request, user);
-        return ResponseEntity.ok()
+        return noStore(ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, saved.cookie().toString())
-                .body(saved.body());
+                .body(saved.body()));
+    }
+
+    private static <T> ResponseEntity<T> noStore(ResponseEntity<T> response) {
+        return ResponseEntity.status(response.getStatusCode())
+                .headers(headers -> {
+                    headers.putAll(response.getHeaders());
+                    headers.setCacheControl("no-store, private");
+                })
+                .body(response.getBody());
     }
 }

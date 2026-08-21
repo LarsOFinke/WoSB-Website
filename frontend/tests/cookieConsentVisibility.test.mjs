@@ -19,6 +19,20 @@ const banner = await readFile(
 test('missing consent decision opens the cookie dialog automatically', () => {
   assert.match(consentComposable, /state\.visible\s*=\s*!Boolean\(payload\?\.has_decision\)/)
   assert.match(banner, /v-if="state\.visible \|\| state\.loading"/)
+  assert.match(banner, /class="rbf-choice-surface"/)
+  assert.doesNotMatch(banner, /class="[^"]*(?:cookie|consent)[^"]*"/)
+})
+
+test('privacy diagnostics stay out of production browser consoles', () => {
+  assert.match(consentComposable, /import\.meta\.env\?\.DEV !== true/)
+})
+
+test('consent reads bypass browser and intermediary caches', async () => {
+  const cookieApi = await readFile(
+    new URL('../src/modules/privacy/api/cookieConsent.js', import.meta.url),
+    'utf8',
+  )
+  assert.match(cookieApi, /get\('\/privacy\/cookie-consent',\s*\{\s*cache:\s*'no-store'\s*\}\)/)
 })
 
 test('failed consent initialization fails closed and keeps controls reachable', () => {

@@ -22,6 +22,12 @@ const state = reactive({
 
 let initializationPromise = null
 
+function logConsent(event, details = {}) {
+  if (import.meta.env?.DEV !== true) return
+  if (typeof console === 'undefined' || typeof console.info !== 'function') return
+  console.info(`[privacy] cookie_consent_${event}`, details)
+}
+
 function applyState(payload, { revealIfUndecided = true } = {}) {
   state.policyVersion = payload?.policy_version || ''
   state.choice = {
@@ -49,10 +55,17 @@ async function initialize({ force = false, revealIfUndecided = true } = {}) {
   }
   state.loading = true
   state.error = ''
+  logConsent('initialize_start', { force, revealIfUndecided })
   initializationPromise = getCookieConsent()
     .then((payload) => {
       applyState(payload, { revealIfUndecided })
       state.initialized = true
+      logConsent('initialize_complete', {
+        hasDecision: Boolean(payload?.has_decision),
+        policyVersion: payload?.policy_version || '',
+        visible: state.visible,
+        settingsOpen: state.settingsOpen,
+      })
     })
     .catch((error) => {
       state.error = error.message || 'Unable to load cookie settings.'
@@ -61,6 +74,11 @@ async function initialize({ force = false, revealIfUndecided = true } = {}) {
       // reachable when the consent endpoint is temporarily unavailable.
       state.visible = true
       state.settingsOpen = true
+      logConsent('initialize_failed', {
+        status: error.status || 0,
+        requestId: error.requestId || '',
+        message: state.error,
+      })
     })
     .finally(() => {
       state.loading = false
@@ -72,13 +90,20 @@ async function initialize({ force = false, revealIfUndecided = true } = {}) {
 async function persist(choice) {
   state.saving = true
   state.error = ''
+  logConsent('save_start', { settingsOpen: state.settingsOpen })
   try {
     const payload = await saveCookieConsent({ necessary: true, ...choice })
     applyState(payload)
     state.visible = false
     state.settingsOpen = false
+    logConsent('save_complete', { visible: state.visible })
   } catch (error) {
     state.error = error.message || 'Unable to save cookie settings.'
+    logConsent('save_failed', {
+      status: error.status || 0,
+      requestId: error.requestId || '',
+      message: state.error,
+    })
   } finally {
     state.saving = false
   }

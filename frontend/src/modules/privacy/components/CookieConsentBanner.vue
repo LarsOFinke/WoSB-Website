@@ -23,43 +23,44 @@ onMounted(initialize)
   <Teleport to="body">
     <section
       v-if="state.visible || state.loading"
-      class="cookie-consent"
+      class="rbf-choice-surface"
       :class="{ 'is-loading': state.loading }"
+      :data-consent-state="state.loading ? 'loading' : state.error ? 'error' : state.settingsOpen ? 'settings' : 'banner'"
       role="dialog"
       aria-modal="false"
       :aria-busy="state.loading ? 'true' : 'false'"
-      :aria-labelledby="'cookie-consent-title'"
+      :aria-labelledby="'rbf-choice-title'"
     >
-      <div class="cookie-consent__body">
+      <div class="rbf-choice-surface__body">
         <div>
-          <span class="cookie-consent__eyebrow">{{ t('privacy.cookies.eyebrow') }}</span>
-          <h2 id="cookie-consent-title">{{ t('privacy.cookies.title') }}</h2>
+          <span class="rbf-choice-surface__eyebrow">{{ t('privacy.cookies.eyebrow') }}</span>
+          <h2 id="rbf-choice-title">{{ t('privacy.cookies.title') }}</h2>
           <p>{{ t('privacy.cookies.description') }}</p>
         </div>
 
-        <div v-if="state.settingsOpen" class="cookie-consent__settings">
-          <label class="cookie-consent__category is-locked">
+        <div v-if="state.settingsOpen" class="rbf-choice-surface__settings">
+          <label class="rbf-choice-surface__category is-locked">
             <span>
               <strong>{{ t('privacy.cookies.categories.necessary.title') }}</strong>
               <small>{{ t('privacy.cookies.categories.necessary.description') }}</small>
             </span>
             <input type="checkbox" checked disabled />
           </label>
-          <label class="cookie-consent__category">
+          <label class="rbf-choice-surface__category">
             <span>
               <strong>{{ t('privacy.cookies.categories.preferences.title') }}</strong>
               <small>{{ t('privacy.cookies.categories.preferences.description') }}</small>
             </span>
             <input v-model="state.choice.preferences" type="checkbox" :disabled="disabled" />
           </label>
-          <label class="cookie-consent__category">
+          <label class="rbf-choice-surface__category">
             <span>
               <strong>{{ t('privacy.cookies.categories.analytics.title') }}</strong>
               <small>{{ t('privacy.cookies.categories.analytics.description') }}</small>
             </span>
             <input v-model="state.choice.analytics" type="checkbox" :disabled="disabled" />
           </label>
-          <label class="cookie-consent__category">
+          <label class="rbf-choice-surface__category">
             <span>
               <strong>{{ t('privacy.cookies.categories.externalMedia.title') }}</strong>
               <small>{{ t('privacy.cookies.categories.externalMedia.description') }}</small>
@@ -68,19 +69,19 @@ onMounted(initialize)
           </label>
         </div>
 
-        <p v-if="state.error" class="cookie-consent__error" role="alert">{{ state.error }}</p>
+        <p v-if="state.error" class="rbf-choice-surface__error" role="alert">{{ state.error }}</p>
 
-        <div class="cookie-consent__actions">
-          <button type="button" class="cookie-action cookie-action--choice" :disabled="disabled" @click="rejectOptional">
+        <div class="rbf-choice-surface__actions">
+          <button type="button" class="rbf-choice-action rbf-choice-action--choice" :disabled="disabled" @click="rejectOptional">
             {{ t('privacy.cookies.rejectOptional') }}
           </button>
-          <button type="button" class="cookie-action" :disabled="disabled" @click="toggleSettings">
+          <button type="button" class="rbf-choice-action" :disabled="disabled" @click="toggleSettings">
             {{ state.settingsOpen ? t('privacy.cookies.hideSettings') : t('privacy.cookies.settings') }}
           </button>
           <button
             v-if="state.settingsOpen"
             type="button"
-            class="cookie-action cookie-action--primary"
+            class="rbf-choice-action rbf-choice-action--primary"
             :disabled="disabled"
             @click="saveCustom"
           >
@@ -89,7 +90,7 @@ onMounted(initialize)
           <button
             v-else
             type="button"
-            class="cookie-action cookie-action--choice"
+            class="rbf-choice-action rbf-choice-action--choice"
             :disabled="disabled"
             @click="acceptAll"
           >
@@ -102,7 +103,7 @@ onMounted(initialize)
 </template>
 
 <style scoped>
-.cookie-consent {
+.rbf-choice-surface {
   position: fixed;
   /* Keep the consent surface above shell drawers even if a custom theme omits the token. */
   z-index: var(--z-consent, 900);
@@ -115,7 +116,7 @@ onMounted(initialize)
   pointer-events: none;
 }
 
-.cookie-consent__body {
+.rbf-choice-surface__body {
   width: min(60rem, 100%);
   max-height: min(80vh, 48rem);
   overflow: auto;
@@ -126,31 +127,31 @@ onMounted(initialize)
   pointer-events: auto;
 }
 
-.cookie-consent.is-loading .cookie-consent__body {
+.rbf-choice-surface.is-loading .rbf-choice-surface__body {
   pointer-events: none;
 }
 
-.cookie-consent__eyebrow,
-.cookie-consent__category small {
+.rbf-choice-surface__eyebrow,
+.rbf-choice-surface__category small {
   color: var(--text-muted, #a9b4bf);
 }
 
-.cookie-consent h2 {
+.rbf-choice-surface h2 {
   margin: 0.2rem 0 0.45rem;
 }
 
-.cookie-consent p {
+.rbf-choice-surface p {
   margin: 0;
   line-height: 1.55;
 }
 
-.cookie-consent__settings {
+.rbf-choice-surface__settings {
   display: grid;
   gap: 0.6rem;
   margin-top: 1rem;
 }
 
-.cookie-consent__category {
+.rbf-choice-surface__category {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -159,22 +160,22 @@ onMounted(initialize)
   border: 1px solid var(--line-soft, rgba(255, 255, 255, 0.12));
 }
 
-.cookie-consent__category span {
+.rbf-choice-surface__category span {
   display: grid;
   gap: 0.2rem;
 }
 
-.cookie-consent__category input {
+.rbf-choice-surface__category input {
   width: 1.25rem;
   height: 1.25rem;
   flex: 0 0 auto;
 }
 
-.cookie-consent__category.is-locked {
+.rbf-choice-surface__category.is-locked {
   opacity: 0.8;
 }
 
-.cookie-consent__actions {
+.rbf-choice-surface__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -182,7 +183,7 @@ onMounted(initialize)
   margin-top: 1rem;
 }
 
-.cookie-action {
+.rbf-choice-action {
   min-height: 2.75rem;
   padding: 0.65rem 1rem;
   border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.24));
@@ -191,38 +192,38 @@ onMounted(initialize)
   cursor: pointer;
 }
 
-.cookie-action--choice {
+.rbf-choice-action--choice {
   background: rgba(197, 164, 109, 0.14);
   border-color: var(--accent, #c5a46d);
 }
 
-.cookie-action--primary {
+.rbf-choice-action--primary {
   background: var(--accent, #c5a46d);
   color: #101318;
 }
 
-.cookie-action:disabled {
+.rbf-choice-action:disabled {
   cursor: wait;
   opacity: 0.6;
 }
 
-.cookie-consent__error {
+.rbf-choice-surface__error {
   margin-top: 0.75rem;
   color: var(--danger, #ff8a8a);
 }
 
 @media (max-width: 720px) {
-  .cookie-consent {
+  .rbf-choice-surface {
     right: 0.5rem;
     bottom: 0.5rem;
     left: 0.5rem;
   }
 
-  .cookie-consent__actions {
+  .rbf-choice-surface__actions {
     display: grid;
   }
 
-  .cookie-action {
+  .rbf-choice-action {
     width: 100%;
   }
 }

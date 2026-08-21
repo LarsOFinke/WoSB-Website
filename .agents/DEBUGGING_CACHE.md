@@ -60,7 +60,11 @@ output under `.diagnostics/`.
   must match. A missing/broken multipart body is 400, wrong Content-Type is 415, and a
   size limit is 413; none of these transport errors may become 500 through the generic handler.
 - Cookie settings open automatically without a saved decision; initialization failures keep
-  the settings controls visible in a fail-closed state.
+  the settings controls visible in a fail-closed state. Consent reads are cache-sensitive because
+  the decision is keyed by a cookie: the frontend and backend enforce `no-store`. For a missing
+  banner, inspect browser `[privacy] cookie_consent_initialize_complete` (`hasDecision`,
+  `visible`) and correlate the request ID with `privacy_cookie_consent_state`; never log or copy
+  the consent key.
 - For API 500s, correlate the response `X-Request-Id` with
   `api_error status=500 request_id=...` in Surefire/server output and read the first
   application-owned stack frame. The generic response body is not the root cause. Enable

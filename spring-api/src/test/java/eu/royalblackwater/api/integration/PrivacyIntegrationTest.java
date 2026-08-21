@@ -63,6 +63,7 @@ class PrivacyIntegrationTest {
                 "{\"necessary\":true,\"preferences\":true,\"analytics\":false,\"external_media\":true}",
                 null);
         assertStatus(saved, 200);
+        assertThat(saved.headers().firstValue("cache-control")).hasValue("no-store, private");
         assertThat(saved.body()).contains("\"has_decision\":true", "\"preferences\":true")
                 .doesNotContain("consent_key");
         String setCookie = saved.headers().allValues("set-cookie").stream()
@@ -70,7 +71,9 @@ class PrivacyIntegrationTest {
                 .findFirst().orElseThrow();
         assertThat(setCookie).contains("HttpOnly", "SameSite=Lax", "Path=/").doesNotContain("Domain=");
         String consentCookie = cookie(saved, "rbf_cookie_consent");
-        assertStatus(get("/api/privacy/cookie-consent", consentCookie), 200);
+        HttpResponse<String> reloaded = get("/api/privacy/cookie-consent", consentCookie);
+        assertStatus(reloaded, 200);
+        assertThat(reloaded.headers().firstValue("cache-control")).hasValue("no-store, private");
         assertThat(jdbc.count("select count(*) from cookie_consent_decisions where consent_key=:key",
                 Map.of("key", consentCookie.substring(consentCookie.indexOf('=') + 1)))).isEqualTo(1);
     }

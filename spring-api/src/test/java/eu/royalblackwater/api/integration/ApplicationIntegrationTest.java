@@ -657,6 +657,7 @@ class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
     void persistsAndReloadsAnonymousCookieConsent() throws Exception {
         HttpResponse<String> initial = get("/api/privacy/cookie-consent");
         assertThat(initial.statusCode()).isEqualTo(200);
+        assertThat(initial.headers().firstValue("cache-control")).hasValue("no-store, private");
         assertThat(initial.body()).contains("\"has_decision\":false");
 
         HttpResponse<String> saved = post(
@@ -664,11 +665,13 @@ class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
                 "{\"necessary\":true,\"preferences\":true,\"analytics\":false,\"external_media\":true}",
                 null, null, localOrigin());
         assertThat(saved.statusCode()).isEqualTo(200);
+        assertThat(saved.headers().firstValue("cache-control")).hasValue("no-store, private");
         assertThat(saved.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"external_media\":true");
 
         HttpResponse<String> reloaded = get(
                 "/api/privacy/cookie-consent", cookie(saved, "rbf_cookie_consent"));
         assertThat(reloaded.statusCode()).isEqualTo(200);
+        assertThat(reloaded.headers().firstValue("cache-control")).hasValue("no-store, private");
         assertThat(reloaded.body()).contains("\"has_decision\":true", "\"preferences\":true", "\"analytics\":false",
                 "\"external_media\":true");
     }

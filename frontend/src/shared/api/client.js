@@ -55,15 +55,18 @@ async function request(path, options = {}) {
     } catch {
       // Keep the status-based fallback.
     }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    error.requestId = response.headers.get('X-Request-Id') || ''
+    throw error
   }
 
   if (response.status === 204) return null
   return response.json()
 }
 
-export function get(path) {
-  return request(path)
+export function get(path, options = {}) {
+  return request(path, options)
 }
 
 export function post(path, payload, options = {}) {

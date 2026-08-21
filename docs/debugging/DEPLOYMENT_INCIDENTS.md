@@ -142,7 +142,16 @@ session after deployment; logging in again is necessary only when the session ha
 If the consent endpoint reports no stored decision, the dialog opens automatically. If the
 endpoint fails, the dialog remains visible with settings open so optional processing stays
 disabled and the user can retry or make an explicit choice. Settings also remain available
-through the footer and privacy center. Do not share production cookies in tickets.
+through the footer and privacy center. The consent GET and POST responses are deliberately
+`Cache-Control: no-store, private`, and the browser request also bypasses its cache; a cached
+`has_decision:true` response must not suppress a fresh user's banner. In browser diagnostics,
+inspect `[privacy] cookie_consent_initialize_*` events and correlate a failed request's status
+and `X-Request-Id` with `privacy_cookie_consent_state` or `api_error` server logs. These logs
+record only cookie presence/validity and decision state, never consent keys or payloads. They are
+development-only and must not appear in production builds. The rendered surface intentionally
+uses application-specific `rbf-choice-*` selectors: generic `cookie-consent`/`consent` selectors are
+commonly hidden by browser privacy extensions, which can leave the Vue state visible while
+removing the dialog from the screen. Do not share production cookies in tickets.
 
 ## 11. Versions do not match
 
