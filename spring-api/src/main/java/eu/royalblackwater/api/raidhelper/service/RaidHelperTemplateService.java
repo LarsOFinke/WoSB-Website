@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.raidhelper.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.RaidHelperTemplateRead;
 import eu.royalblackwater.api.dto.RaidHelperTemplateWrite;
@@ -11,7 +13,6 @@ import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperTemplateQu
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class RaidHelperTemplateService {
         requireAdmin(actor);
         ValidatedTemplate value = validate(payload);
         try {
-            long id = repository.insertReturningId(RaidHelperTemplateQueries.CREATE_INSERT_01, value.parameters(now()));
+            long id = repository.insertReturningId(RaidHelperTemplateQueries.CREATE_INSERT_01, value.parameters(UtcDateTimes.now(clock)));
             replaceCategories(id, value.categories());
             audit.record(actor, "raid_helper_template", id, "create", "Raid-Helper template created.",
                     changedFields());
@@ -75,7 +76,7 @@ public class RaidHelperTemplateService {
                     "A template used by synchronized events cannot move to another profile; create a new template instead.");
         }
         try {
-            repository.update(RaidHelperTemplateQueries.UPDATE_UPDATE_01, merge(value.parameters(now()), "id", templateId));
+            repository.update(RaidHelperTemplateQueries.UPDATE_UPDATE_01, merge(value.parameters(UtcDateTimes.now(clock)), "id", templateId));
             replaceCategories(templateId, value.categories());
             audit.record(actor, "raid_helper_template", templateId, "update", "Raid-Helper template updated.",
                     changedFields());
@@ -167,10 +168,6 @@ public class RaidHelperTemplateService {
         java.util.LinkedHashMap<String, Object> result = new java.util.LinkedHashMap<>(source);
         result.put(name, value);
         return result;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException duplicate(DataIntegrityViolationException exception) {

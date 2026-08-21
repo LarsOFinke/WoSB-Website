@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.builds.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.builds.mapper.BuildDtoMapper;
 import eu.royalblackwater.api.builds.repository.BuildDataRepository;
@@ -21,7 +23,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,7 +109,7 @@ public class BuildPrintoutService {
                     existingTarget != null && !existingTarget.equals(target) ? existingTarget : null);
             deleteAfterCommit(legacyCachePath(buildId));
 
-            LocalDateTime now = now();
+            LocalDateTime now = UtcDateTimes.now(clock);
             repository.update(BuildPrintoutQueries.SAVE_UPDATE_01,
                     Map.of("cacheKey", cacheKey, "checksum", result.checksum(), "size", result.size(),
                             "sourceUpdatedAt", sourceUpdatedAt, "now", now, "id", buildId));
@@ -325,7 +326,6 @@ public class BuildPrintoutService {
             }
         });
     }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static String url(long id, String cacheKey) {
         return "/api/builds/" + id + "/printout?cache_key="
                 + URLEncoder.encode(cacheKey, StandardCharsets.UTF_8);

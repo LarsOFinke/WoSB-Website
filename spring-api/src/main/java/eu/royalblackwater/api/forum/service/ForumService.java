@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.forum.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.content.service.ContentEmbedValidator;
 import eu.royalblackwater.api.dto.FileRead;
@@ -19,7 +21,6 @@ import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -85,7 +86,7 @@ public class ForumService {
     public ForumThreadRead create(ForumThreadCreate payload, AuthenticatedUser actor) {
         List<StoredFileDto> selected = files.ownedFiles(payload.fileIds(), actor);
         embeds.validateFiles(payload.body(), ids(selected));
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long threadId = repository.insertReturningId(ForumQueries.CREATE_INSERT_01, Map.of("title", payload.title().strip(), "category", category(payload.category()),
                         "ownerId", actor.id(), "now", now));
         long postId = repository.insertReturningId(ForumQueries.CREATE_INSERT_02, Map.of("threadId", threadId, "authorId", actor.id(), "body", payload.body(), "now", now));
@@ -104,7 +105,7 @@ public class ForumService {
         Set<Long> previous = attachmentIds(postId);
         List<StoredFileDto> selected = files.ownedFiles(payload.fileIds(), actor);
         embeds.validateFiles(payload.body(), ids(selected));
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(ForumQueries.UPDATE_THREAD_UPDATE_01, Map.of("title", payload.title().strip(), "category", category(payload.category()),
                         "now", now, "id", threadId));
         repository.update(ForumQueries.UPDATE_THREAD_UPDATE_02,
@@ -122,7 +123,7 @@ public class ForumService {
         rawThread(threadId);
         List<StoredFileDto> selected = files.ownedFiles(payload.fileIds(), actor);
         embeds.validateFiles(payload.body(), ids(selected));
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long postId = repository.insertReturningId(ForumQueries.CREATE_INSERT_02, Map.of("threadId", threadId, "authorId", actor.id(), "body", payload.body(), "now", now));
         files.attach("forum_post_attachments", "post_id", postId, selected, "forum");
         repository.update(ForumQueries.ADD_POST_UPDATE_01, Map.of("now", now, "id", threadId));
@@ -137,7 +138,7 @@ public class ForumService {
         Set<Long> previous = attachmentIds(postId);
         List<StoredFileDto> selected = files.ownedFiles(payload.fileIds(), actor);
         embeds.validateFiles(payload.body(), ids(selected));
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(ForumQueries.UPDATE_THREAD_UPDATE_02,
                 Map.of("body", payload.body(), "now", now, "id", postId));
         repository.update(ForumQueries.ADD_POST_UPDATE_01,
@@ -160,7 +161,7 @@ public class ForumService {
         if (openingId == postId) throw bad("The opening post must be removed by deleting the thread.");
         Set<Long> attachments = attachmentIds(postId);
         repository.update(ForumQueries.DELETE_POST_DELETE_01, Map.of("id", postId));
-        repository.update(ForumQueries.ADD_POST_UPDATE_01, Map.of("now", now(), "id", threadId));
+        repository.update(ForumQueries.ADD_POST_UPDATE_01, Map.of("now", UtcDateTimes.now(clock), "id", threadId));
         files.refreshPublication(attachments);
         audit.record(actor, "forum_post", postId, "delete", "Forum post removed.", List.of());
     }
@@ -207,6 +208,5 @@ public class ForumService {
     private static void requireOwnerOrStaff(long ownerId, AuthenticatedUser actor) {
         if (ownerId != actor.id() && !actor.staff()) throw new ResponseStatusException(NOT_FOUND, "Content not found.");
     }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
 }

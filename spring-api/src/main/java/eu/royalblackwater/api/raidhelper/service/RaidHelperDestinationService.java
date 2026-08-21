@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.raidhelper.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.RaidHelperDestinationRead;
 import eu.royalblackwater.api.dto.RaidHelperDestinationWrite;
@@ -10,7 +12,6 @@ import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperDestinatio
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -53,7 +54,7 @@ public class RaidHelperDestinationService {
     public RaidHelperDestinationRead create(AuthenticatedUser actor, RaidHelperDestinationWrite payload) {
         requireAdmin(actor);
         ValidatedDestination value = validate(payload);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         try {
             long id = repository.insertReturningId(RaidHelperDestinationQueries.CREATE_INSERT_01, value.parameters(now));
             replaceCategories(id, value.categories());
@@ -76,7 +77,7 @@ public class RaidHelperDestinationService {
                     "A destination with synchronized events cannot change profile, channel or scope; create a new destination instead.");
         }
         try {
-            repository.update(RaidHelperDestinationQueries.UPDATE_UPDATE_01, merge(value.parameters(now()), "id", destinationId));
+            repository.update(RaidHelperDestinationQueries.UPDATE_UPDATE_01, merge(value.parameters(UtcDateTimes.now(clock)), "id", destinationId));
             replaceCategories(destinationId, value.categories());
             audit.record(actor, "raid_helper_destination", destinationId, "update", "Raid-Helper destination updated.",
                     List.of("profile_id", "channel_id", "scope_type", "squad_id", "categories", "is_default", "is_active"));
@@ -167,10 +168,6 @@ public class RaidHelperDestinationService {
         java.util.LinkedHashMap<String, Object> result = new java.util.LinkedHashMap<>(source);
         result.put(name, value);
         return result;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException duplicate(DataIntegrityViolationException exception) {

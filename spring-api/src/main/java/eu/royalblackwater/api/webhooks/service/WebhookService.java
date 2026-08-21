@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.webhooks.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.OutboundWebhookBroadcastRequest;
 import eu.royalblackwater.api.dto.OutboundWebhookCreate;
@@ -19,7 +21,6 @@ import eu.royalblackwater.api.webhooks.repository.WebhookRepository;
 import eu.royalblackwater.api.webhooks.repository.queries.WebhookQueries;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -87,7 +88,7 @@ public class WebhookService {
         long id=repository.insertReturningId(WebhookQueries.CREATE_INSERT_01,SqlParameters.ofNullable("name",input.name().strip(),"endpoint",secrets.encrypt(policy.endpoint(input.endpointUrl())),
                         "events",write(events),"scope",scope.type(),"scopeId",scope.id(),"template",policy.template(input.messageTemplate()),
                         "username",blank(input.discordUsername()),"broadcast",value(input.broadcastEnabled(),false),
-                        "active",value(input.isActive(),true),"now",now(),"actorId",actor.id(),"actor",actor.username()));
+                        "active",value(input.isActive(),true),"now",UtcDateTimes.now(clock),"actorId",actor.id(),"actor",actor.username()));
         audit.record(actor,"outbound_webhook",id,"create","Created outbound Discord webhook",Set.of("name","scope","event_types"));
         return requiredRead(id);
     }
@@ -102,7 +103,7 @@ public class WebhookService {
                 :secrets.encrypt(policy.endpoint(input.endpointUrl()));
         repository.update(WebhookQueries.UPDATE_UPDATE_01,SqlParameters.ofNullable("id",id,"name",input.name().strip(),"endpoint",encrypted,"events",write(events),
                         "scope",scope.type(),"scopeId",scope.id(),"template",policy.template(input.messageTemplate()),
-                        "username",blank(input.discordUsername()),"broadcast",broadcast,"active",value(input.isActive(),true),"now",now()));
+                        "username",blank(input.discordUsername()),"broadcast",broadcast,"active",value(input.isActive(),true),"now",UtcDateTimes.now(clock)));
         audit.record(actor,"outbound_webhook",id,"update","Updated outbound Discord webhook",Set.of("configuration"));
         return requiredRead(id);
     }
@@ -120,7 +121,7 @@ public class WebhookService {
         String event=input.eventType()==null||input.eventType().isBlank()?"integration.test":input.eventType().strip();
         policy.events(List.of(event),false);
         WebhookDomainEvent context=new WebhookDomainEvent(event,"integration",String.valueOf(id),
-                "global",null,actor,"Manual connectivity and template rendering test.",now());
+                "global",null,actor,"Manual connectivity and template rendering test.",UtcDateTimes.now(clock));
         return deliver(webhook,context,render(webhook,context),blank(string(webhook,"discord_username")));
     }
 
@@ -132,7 +133,7 @@ public class WebhookService {
             if(!booleanValue(webhook,"is_active")||!booleanValue(webhook,"broadcast_enabled"))
                 throw new ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,"Selected webhook is not an active broadcast target.");
             WebhookDomainEvent context=new WebhookDomainEvent("integration.test","broadcast",UUID.randomUUID().toString(),
-                    "global",null,actor,input.message(),now());
+                    "global",null,actor,input.message(),UtcDateTimes.now(clock));
             deliveries.add(deliver(webhook,context,input.message(),
                     blank(input.discordUsername())==null?blank(string(webhook,"discord_username")):blank(input.discordUsername())));
         }
@@ -202,7 +203,7 @@ public class WebhookService {
         if(username!=null) payload.put("username",username);
         String payloadJson=write(payload);
         long id=repository.insertReturningId(WebhookQueries.DELIVER_INSERT_01,Map.of("webhook",longValue(webhook,"id"),"delivery",deliveryId,"event",event.eventType(),"type",event.resourceType(),
-                        "resource",event.resourceId(),"payload",payloadJson,"now",now()));
+                        "resource",event.resourceId(),"payload",payloadJson,"now",UtcDateTimes.now(clock)));
         WebhookHttpClient.Result result=send(requiredString(webhook,"endpoint_url"),payloadJson);
         updateDelivery(id,result);
         return delivery(id);
@@ -227,7 +228,7 @@ public class WebhookService {
     }
 
     private void updateDelivery(long id,WebhookHttpClient.Result result){
-        LocalDateTime timestamp=now();
+        LocalDateTime timestamp=UtcDateTimes.now(clock);
         repository.update(WebhookQueries.UPDATE_DELIVERY_UPDATE_01,SqlParameters.ofNullable("id",id,"status",result.success()?"delivered":"failed","response",result.status(),
                         "body",result.body(),"error",result.error(),"now",timestamp,"delivered",result.success()?timestamp:null));
         repository.update(WebhookQueries.UPDATE_DELIVERY_UPDATE_02,Map.of("id",id,"success",result.success(),"now",timestamp));
@@ -254,7 +255,6 @@ public class WebhookService {
     }
     private List<String> events(String value){try{return json.readValue(value,STRINGS);}catch(JacksonException exception){return List.of();}}
     private String write(Object value){try{return json.writeValueAsString(value);}catch(JacksonException exception){throw new IllegalStateException("Could not serialize webhook data",exception);}}
-    private LocalDateTime now(){return LocalDateTime.ofInstant(clock.instant(),ZoneOffset.UTC);}
     private static <T>T value(T value,T fallback){return value==null?fallback:value;}
     private static String blank(String value){return value==null||value.isBlank()?null:value.strip();}
     private static ResponseStatusException notFound(String subject){return new ResponseStatusException(NOT_FOUND,subject+" not found.");}

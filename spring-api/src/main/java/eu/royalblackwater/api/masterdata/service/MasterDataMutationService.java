@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.masterdata.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.MasterDataCategoryCreate;
 import eu.royalblackwater.api.dto.MasterDataCategoryRead;
@@ -21,8 +23,6 @@ import eu.royalblackwater.api.masterdata.repository.queries.MasterDataMutationQu
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,7 +51,7 @@ public class MasterDataMutationService {
     @Transactional
     public MasterDataCategoryRead createCategory(AuthenticatedUser actor, MasterDataCategoryCreate input) {
         long id=repository.insertReturningId(MasterDataMutationQueries.CREATE_CATEGORY_INSERT_01,Map.of("key",input.key(),"label",input.label(),"sort",value(input.sortOrder(),0L),
-                        "active",value(input.isActive(),true),"now",now()));
+                        "active",value(input.isActive(),true),"now",UtcDateTimes.now(clock)));
         audit.record(actor,"master_data_category",id,"create","Created master-data category",Set.of("key","label"));
         return queries.category(id);
     }
@@ -60,7 +60,7 @@ public class MasterDataMutationService {
     public MasterDataCategoryRead updateCategory(AuthenticatedUser actor,long id,MasterDataCategoryUpdate input) {
         require("build_item_categories",id);
         repository.update(MasterDataMutationQueries.UPDATE_CATEGORY_UPDATE_01,Map.of("id",id,"label",input.label(),"sort",value(input.sortOrder(),0L),
-                        "active",value(input.isActive(),true),"now",now()));
+                        "active",value(input.isActive(),true),"now",UtcDateTimes.now(clock)));
         audit.record(actor,"master_data_category",id,"update","Updated master-data category",Set.of("label","sort_order","is_active"));
         return queries.category(id);
     }
@@ -173,7 +173,7 @@ public class MasterDataMutationService {
         Long classId=lookup("weapon_classes",weaponClass);
         Map<String,Object> params=SqlParameters.ofNullable("id",id,"category",category,"name",name,"source",source,
                 "notes",notes,"image",image,"kind",kind,"class",classId,"caliber",caliber,
-                "sort",value(sort,0L),"active",value(active,true),"now",now());
+                "sort",value(sort,0L),"active",value(active,true),"now",UtcDateTimes.now(clock));
         if(id==null) return repository.insertReturningId(MasterDataMutationQueries.WRITE_OPTION_INSERT_01,params);
         repository.update(MasterDataMutationQueries.WRITE_OPTION_UPDATE_01,params);
         return id;
@@ -205,7 +205,7 @@ public class MasterDataMutationService {
                 "speedMin",value(speedMin,0D),"speed",value(speed,0D),"maneuver",value(maneuver,0D),"armor",value(armor,0D),
                 "hold",value(hold,0L),"crew",value(crew,0L),"sailors",value(sailors,0L),"displacement",value(displacement,0L),
                 "source",source,"image",image,"sails",value(sails,0L),"upgrades",value(upgrades,0L),
-                "lantern",value(lantern,false),"active",value(active,true),"now",now());
+                "lantern",value(lantern,false),"active",value(active,true),"now",UtcDateTimes.now(clock));
     }
 
     private void replaceShipChildren(long id,List<MasterDataShipMount> mounts,MasterDataShipMortarModification mortar,
@@ -221,7 +221,7 @@ public class MasterDataMutationService {
         repository.update(MasterDataMutationQueries.REPLACE_SHIP_CHILDREN_DELETE_03,Map.of("id",id));
         for(MasterDataShipUpgradeOverride override:value(overrides,List.<MasterDataShipUpgradeOverride>of()))
             for(Map.Entry<String,Double> effect:value(override.statEffects(),Map.<String,Double>of()).entrySet())
-                repository.update(MasterDataMutationQueries.REPLACE_SHIP_CHILDREN_INSERT_03,Map.of("ship",id,"option",override.optionId(),"key",effect.getKey(),"value",effect.getValue(),"now",now()));
+                repository.update(MasterDataMutationQueries.REPLACE_SHIP_CHILDREN_INSERT_03,Map.of("ship",id,"option",override.optionId(),"key",effect.getKey(),"value",effect.getValue(),"now",UtcDateTimes.now(clock)));
     }
 
     private void require(String table,long id) {
@@ -240,6 +240,5 @@ public class MasterDataMutationService {
         return repository.optional(MasterDataMutationQueries.LOOKUP_SELECT_01,Map.of("code",code))
                 .map(row->((Number)row.get("id")).longValue()).orElseThrow(()->new ResponseStatusException(CONFLICT,"Unknown weapon class."));
     }
-    private LocalDateTime now(){ return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static <T>T value(T value,T fallback){ return value==null?fallback:value; }
 }

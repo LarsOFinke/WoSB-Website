@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.fleet.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.FleetRoleCreate;
 import eu.royalblackwater.api.dto.FleetRoleRead;
@@ -12,7 +14,6 @@ import eu.royalblackwater.api.persistence.SqlUpdate;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class FleetRoleService {
         boolean manageFleet = Boolean.TRUE.equals(payload.canManageFleet());
         boolean manageMembers = Boolean.TRUE.equals(payload.canManageMembers());
         boolean leadership = Boolean.TRUE.equals(payload.isLeadership()) || manageFleet || manageMembers;
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(FleetRoleQueries.CREATE_INSERT_01, Map.of(
                         "code", code, "label", payload.label().strip(), "rank", payload.rank(),
                         "leadership", leadership, "manageFleet", manageFleet,
@@ -97,7 +98,7 @@ public class FleetRoleService {
                 ? payload.canManageMembers() : RowValues.booleanValue(existing, "can_manage_members");
         if (manageFleet || manageMembers) update.set("is_leadership", true);
         if (!update.isEmpty()) {
-            update.set("updated_at", now());
+            update.set("updated_at", UtcDateTimes.now(clock));
             repository.update(update.sql(), update.parameters());
             audit.record(actor, "fleet_role", roleId, "update", "Fleet role #" + roleId + " updated.",
                     update.columns(), "fleet", fleetId);
@@ -143,10 +144,6 @@ public class FleetRoleService {
             throw bad("Role code must use lowercase letters, numbers and underscores.");
         }
         return code;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException bad(String message) {

@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.legal.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.config.LegalNoticeProperties;
 import eu.royalblackwater.api.dto.LegalNoticeAdminRead;
@@ -12,8 +14,6 @@ import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +105,7 @@ public class LegalNoticeService {
                 "disputeResolutionText", value(p.disputeResolutionText()),
                 "additionalInformation", value(p.additionalInformation()),
                 "publicRepositoryUrl", value(p.publicRepositoryUrl()), "updatedBy", updatedBy,
-                "updatedAt", now());
+                "updatedAt", UtcDateTimes.now(clock));
     }
 
     private Map<String, Object> environmentValues(boolean customized, String updatedBy) {
@@ -141,7 +141,5 @@ public class LegalNoticeService {
         });
         return changed.isEmpty() ? List.of("source") : changed;
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static String value(String value) { return value == null ? "" : value.strip(); }
 }

@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.warehouse.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.WarehousePortAssignmentRead;
 import eu.royalblackwater.api.dto.WarehousePortAssignmentUpdate;
@@ -9,8 +11,6 @@ import eu.royalblackwater.api.warehouse.repository.WarehouseRepository;
 import eu.royalblackwater.api.warehouse.mapper.WarehouseDtoMapper;
 import eu.royalblackwater.api.warehouse.repository.queries.WarehouseQueries;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -54,7 +54,7 @@ public class WarehousePortAssignmentService {
         }
         repository.update(WarehouseQueries.ASSIGNMENT_UPSERT_01, SqlParameters.ofNullable(
                 "fleetId", input.fleetId(), "portId", portId, "assigneeUserId", input.assigneeUserId(),
-                "now", now(), "actorId", actor.id()));
+                "now", UtcDateTimes.now(clock), "actorId", actor.id()));
         audit.record(actor, "warehouse_port_assignment", input.fleetId(), "update",
                 "Updated warehouse pickup assignment for port #" + portId + ".",
                 List.of("fleet_id", "port_id", "assignee_user_id"), "fleet", input.fleetId());
@@ -81,10 +81,6 @@ public class WarehousePortAssignmentService {
 
     public void requireStaffFleet(long fleetId) {
         requireFleet(fleetId);
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static void requireStaff(AuthenticatedUser actor) {

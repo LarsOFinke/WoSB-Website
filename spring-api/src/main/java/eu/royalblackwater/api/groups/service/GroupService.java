@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.groups.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.GroupCreate;
 import eu.royalblackwater.api.dto.GroupJoinRequest;
@@ -15,7 +17,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.ships.service.ShipQueryService;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -88,7 +89,7 @@ public class GroupService {
                 && !payload.scheduledEndAt().isAfter(payload.scheduledStartAt())) {
             throw bad("End time must be after start time.");
         }
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(GroupQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                         "title", required(payload.title()), "focus", focus,
                         "description", blank(payload.description()), "expectations", blank(payload.expectations()),
@@ -108,7 +109,7 @@ public class GroupService {
         Map<String, Object> group = raw(groupId);
         long active = RowValues.longValue(group, "active_count");
         long maximum = RowValues.longValue(group, "max_members");
-        if (!"open".equals(group.get("status")) || !RowValues.dateTime(group, "expires_at").isAfter(now())) {
+        if (!"open".equals(group.get("status")) || !RowValues.dateTime(group, "expires_at").isAfter(UtcDateTimes.now(clock))) {
             throw bad("This group is not open for new members.");
         }
         if (active >= maximum) throw bad("This group is already full.");
@@ -121,7 +122,7 @@ public class GroupService {
         if (displayName.equals(actor.username())) {
             displayName = repository.optional(GroupQueries.JOIN_SELECT_02, Map.of("id", actor.id())).map(row -> String.valueOf(row.get("display_name"))).orElse(displayName);
         }
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.insertReturningId(GroupQueries.JOIN_INSERT_01, SqlParameters.ofNullable(
                         "groupId", groupId, "userId", actor.id(), "displayName", displayName,
                         "fleetName", blank(payload.fleetName()), "shipId", selection.shipId(),
@@ -142,7 +143,7 @@ public class GroupService {
             throw new ResponseStatusException(FORBIDDEN, "You can only close your own groups.");
         }
         if (!"closed".equals(group.get("status"))) {
-            LocalDateTime now = now();
+            LocalDateTime now = UtcDateTimes.now(clock);
             repository.update(GroupQueries.CLOSE_UPDATE_01,
                     Map.of("now", now, "id", groupId));
             audit.record(actor, "group", groupId, "close", "Group #" + groupId + " closed.", List.of("status"));
@@ -156,7 +157,7 @@ public class GroupService {
         String storedStatus = RowValues.requiredString(row, "status");
         String status = "closed".equals(storedStatus) ? storedStatus : active >= max ? "full" : "open";
         List<GroupMemberRead> members = repository.query(GroupQueries.READ_SELECT_01, Map.of("id", id)).stream().map(this::member).toList();
-        boolean joinable = "open".equals(status) && active < max && RowValues.dateTime(row, "expires_at").isAfter(now());
+        boolean joinable = "open".equals(status) && active < max && RowValues.dateTime(row, "expires_at").isAfter(UtcDateTimes.now(clock));
         return GroupDtoMapper.group(row, members, status, joinable);
     }
 
@@ -212,7 +213,6 @@ public class GroupService {
     }
 
     private static String blank(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
     private record ResolvedSelection(Long buildId, Long shipId, String shipName, Long shipRate) { }
 }

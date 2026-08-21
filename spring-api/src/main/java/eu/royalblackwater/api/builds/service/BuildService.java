@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.builds.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.builds.mapper.BuildAssembler;
 import eu.royalblackwater.api.builds.mapper.BuildDtoMapper;
@@ -18,8 +20,6 @@ import eu.royalblackwater.api.dto.BuildUpdate;
 import eu.royalblackwater.api.dto.BuildVoteState;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -121,7 +121,7 @@ public class BuildService {
     public BuildVoteState vote(long id, AuthenticatedUser actor, boolean enabled) {
         if (builds.find(id, (long) actor.id()).isEmpty()) throw notFound();
         if (enabled) {
-            data.update(BuildQueries.VOTE_INSERT_01, Map.of("buildId", id, "userId", actor.id(), "createdAt", now()));
+            data.update(BuildQueries.VOTE_INSERT_01, Map.of("buildId", id, "userId", actor.id(), "createdAt", UtcDateTimes.now(clock)));
         } else {
             data.update(BuildQueries.VOTE_DELETE_01,
                     Map.of("buildId", id, "userId", actor.id()));
@@ -170,8 +170,6 @@ public class BuildService {
                 Map.of("id", id, "userId", userId)) > 0;
         return BuildDtoMapper.voteState(id, selected, count);
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static long boundedLimit(long value) { return Math.max(1, Math.min(value, 100)); }
     private static ResponseStatusException notFound() { return new ResponseStatusException(NOT_FOUND, "Build not found."); }
 }

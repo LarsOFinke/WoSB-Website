@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.warehouse.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.WarehouseEntryCreate;
 import eu.royalblackwater.api.dto.WarehouseEntryRead;
@@ -14,7 +16,6 @@ import eu.royalblackwater.api.warehouse.repository.WarehouseRepository;
 import eu.royalblackwater.api.warehouse.repository.queries.WarehouseQueries;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -77,7 +78,7 @@ public class WarehouseService {
         Holder holder = resolveHolder(payload.fleetId(), payload.memberUserId(), payload.customHolderName());
         String port = ports.requireActiveName(payload.port());
         String collectionStatus = collectionStatus(payload.collectionStatus());
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(WarehouseQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                 "fleetId", payload.fleetId(), "memberUserId", holder.memberUserId(),
                 "customHolderName", holder.customName(), "port", port,
@@ -110,7 +111,7 @@ public class WarehouseService {
                 "memberUserId", holder.memberUserId(), "customHolderName", holder.customName(),
                 "port", port, "resource", resource, "amount", payload.amount(),
                 "reserved", payload.reserved(), "collectionStatus", collectionStatus,
-                "now", now(), "actorId", actor.id()));
+                "now", UtcDateTimes.now(clock), "actorId", actor.id()));
         if (updated == 0) throw conflict();
 
         WarehouseEntryRead result = get(id);
@@ -271,10 +272,6 @@ public class WarehouseService {
         if (actor == null || !actor.staff()) {
             throw new ResponseStatusException(FORBIDDEN, "Warehouse changes require staff access.");
         }
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException bad(String message) {

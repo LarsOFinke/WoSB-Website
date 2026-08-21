@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.raidhelper.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.RaidHelperProfileCreate;
 import eu.royalblackwater.api.dto.RaidHelperProfileRead;
@@ -13,7 +15,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.FernetSecretBox;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -55,7 +56,7 @@ public class RaidHelperProfileService {
     public RaidHelperProfileRead create(AuthenticatedUser actor, RaidHelperProfileCreate payload) {
         requireAdmin(actor);
         String apiKey = normalizedApiKey(payload.apiKey());
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         try {
             long id = repository.insertReturningId(RaidHelperProfileQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                     "name", policy.cleanName(payload.name(), "Profile name"),
@@ -96,7 +97,7 @@ public class RaidHelperProfileService {
                     "apiKey", encrypted, "baseUrl", policy.baseUrl(payload.apiBaseUrl()),
                     "timezone", policy.timezone(payload.timezone()),
                     "leaderId", policy.numericIdentifier(payload.defaultLeaderId(), "Default leader ID", false),
-                    "active", policy.flag(payload.isActive(), true), "now", now(), "id", profileId));
+                    "active", policy.flag(payload.isActive(), true), "now", UtcDateTimes.now(clock), "id", profileId));
             audit.record(actor, "raid_helper_profile", profileId, "update",
                     "Raid-Helper profile updated.", List.of("server_id", "api_key", "api_base_url", "timezone", "is_active"));
             return get(profileId);
@@ -147,10 +148,6 @@ public class RaidHelperProfileService {
             throw new ResponseStatusException(BAD_REQUEST, "Raid-Helper API key is empty or malformed.");
         }
         return value;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     static void requireAdmin(AuthenticatedUser actor) {

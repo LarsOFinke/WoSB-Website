@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.calendar.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.calendar.mapper.CalendarDtoMapper;
 import eu.royalblackwater.api.calendar.repository.CalendarRepository;
@@ -14,7 +16,6 @@ import eu.royalblackwater.api.raidhelper.service.RaidHelperPolicy;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +101,7 @@ public class CalendarService {
         ValidatedEvent value = validate(payload.title(), payload.category(), payload.description(), payload.location(),
                 payload.startAt(), payload.endAt(), payload.allDay(), payload.squadId(),
                 payload.raidHelperEnabled(), payload.raidHelperDispatches(), actor);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(CalendarQueries.CREATE_INSERT_01, value.parameters(actor.id(), now));
         raidHelper.configure(id, value.category(), value.squadId(),
                 value.raidHelperEnabled() ? value.dispatches() : List.of(), actor);
@@ -118,7 +119,7 @@ public class CalendarService {
         ValidatedEvent value = validate(payload.title(), payload.category(), payload.description(), payload.location(),
                 payload.startAt(), payload.endAt(), payload.allDay(), payload.squadId(),
                 payload.raidHelperEnabled(), payload.raidHelperDispatches(), actor);
-        repository.update(CalendarQueries.UPDATE_UPDATE_01, merge(value.parameters(actor.id(), now()), "id", eventId));
+        repository.update(CalendarQueries.UPDATE_UPDATE_01, merge(value.parameters(actor.id(), UtcDateTimes.now(clock)), "id", eventId));
         raidHelper.configure(eventId, value.category(), value.squadId(),
                 value.raidHelperEnabled() ? value.dispatches() : List.of(), actor);
         audit.record(actor, "calendar_event", eventId, "update", "Calendar event updated.",
@@ -142,7 +143,7 @@ public class CalendarService {
         if (booleanValue(current, "is_cancelled")) throw notFound();
         raidHelper.requireScopeManager(actor, nullableLong(current, "squad_id"));
         repository.update(CalendarQueries.CANCEL_UPDATE_01,
-                Map.of("now", now(), "id", eventId));
+                Map.of("now", UtcDateTimes.now(clock), "id", eventId));
         raidHelper.queueCancellation(eventId);
         audit.record(actor, "calendar_event", eventId, "cancel", "Calendar event cancelled.",
                 List.of("is_cancelled"), nullableLong(current, "squad_id") == null ? null : "squad",
@@ -212,10 +213,6 @@ public class CalendarService {
 
     private static Map<String, Object> merge(Map<String, Object> source, String name, Object value) {
         LinkedHashMap<String, Object> result = new LinkedHashMap<>(source); result.put(name, value); return result;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }

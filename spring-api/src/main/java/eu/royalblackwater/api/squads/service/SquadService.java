@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.squads.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.SquadCreate;
 import eu.royalblackwater.api.dto.SquadDetailRead;
@@ -21,7 +23,6 @@ import eu.royalblackwater.api.squads.repository.queries.SquadQueries;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -121,7 +122,7 @@ public class SquadService {
         Map<String, Object> leader = activeMembership(fleetId, payload.leaderMembershipId());
         String slug = uniqueSlug(fleetId, name, null);
         validateMaximum(payload.maxMembers(), 0);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(SquadQueries.CREATE_INSERT_01, SqlParameters.ofNullable(
                         "fleetId", fleetId, "name", name, "slug", slug,
                         "description", blank(payload.description()), "focus", blank(payload.focus()),
@@ -150,7 +151,7 @@ public class SquadService {
         if (payload.focus() != null) update.set("focus", blank(payload.focus()));
         if (payload.maxMembers() != null) update.set("max_members", payload.maxMembers());
         if (!update.isEmpty()) {
-            update.set("updated_at", now()); repository.update(update.sql(), update.parameters());
+            update.set("updated_at", UtcDateTimes.now(clock)); repository.update(update.sql(), update.parameters());
             audit.record(actor, "squad", squadId, "update", "Squad #" + squadId + " updated.", update.columns());
         }
         return get(squadId, actor);
@@ -163,7 +164,7 @@ public class SquadService {
             throw new ResponseStatusException(FORBIDDEN, "Fleet leadership access required to archive squads.");
         }
         repository.update(SquadQueries.ARCHIVE_UPDATE_01,
-                Map.of("now", now(), "id", squadId));
+                Map.of("now", UtcDateTimes.now(clock), "id", squadId));
         audit.record(actor, "squad", squadId, "archive", "Squad #" + squadId + " archived.", List.of("is_active"));
     }
     @Transactional
@@ -181,11 +182,11 @@ public class SquadService {
             validateMaximum(RowValues.nullableLong(squad, "max_members"), RowValues.longValue(squad, "member_count") + 1);
             memberId = repository.insertReturningId(SquadQueries.ADD_MEMBER_INSERT_01, SqlParameters.ofNullable(
                             "squadId", squadId, "membershipId", RowValues.longValue(membership, "id"),
-                            "roleId", roleId(role), "note", blank(payload.note()), "now", now()));
+                            "roleId", roleId(role), "note", blank(payload.note()), "now", UtcDateTimes.now(clock)));
         } else {
             memberId = RowValues.longValue(existing, "id");
             repository.update(SquadQueries.ADD_MEMBER_UPDATE_01, SqlParameters.ofNullable("roleId", roleId(role), "note", blank(payload.note()),
-                            "now", now(), "id", memberId));
+                            "now", UtcDateTimes.now(clock), "id", memberId));
         }
         if ("leader".equals(role)) transferLeadership(squadId, memberId);
         audit.record(actor, "squad_member", memberId, existing == null ? "create" : "update",
@@ -211,7 +212,7 @@ public class SquadService {
         }
         if (payload.note() != null) update.set("note", blank(payload.note()));
         if (!update.isEmpty()) {
-            update.set("updated_at", now()); repository.update(update.sql(), update.parameters());
+            update.set("updated_at", UtcDateTimes.now(clock)); repository.update(update.sql(), update.parameters());
             audit.record(actor, "squad_member", memberId, "update", "Squad member updated.",
                     update.columns(), "squad", squadId);
         }
@@ -284,7 +285,7 @@ public class SquadService {
     private void transferLeadership(long squadId, long memberId) {
         long leader = roleId("leader"), officer = roleId("officer");
         repository.update(SquadQueries.TRANSFER_LEADERSHIP_UPDATE_01, Map.of("memberId", memberId, "leader", leader, "officer", officer,
-                        "now", now(), "squadId", squadId));
+                        "now", UtcDateTimes.now(clock), "squadId", squadId));
     }
     private void ensureUniqueName(long fleetId, String name, Long excluded) {
         String exclusion = excluded == null ? "" : SquadQueries.ENSURE_UNIQUE_NAME_AND_01;
@@ -333,6 +334,5 @@ public class SquadService {
     }
     private static String required(String value) { if (value == null || value.isBlank()) throw bad("Name is required."); return value.strip(); }
     private static String blank(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
 }

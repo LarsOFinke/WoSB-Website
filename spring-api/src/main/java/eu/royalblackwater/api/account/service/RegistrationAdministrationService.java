@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.account.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.repository.AccountDataRepository;
 import eu.royalblackwater.api.account.repository.queries.RegistrationAdministrationQueries;
@@ -14,7 +16,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -82,7 +83,7 @@ public class RegistrationAdministrationService {
             throw bad("Username already exists.");
         }
         long userRoleId = roleId("user");
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long userId = repository.insertReturningId(RegistrationAdministrationQueries.APPROVE_INSERT_01, Map.of("username", username, "passwordHash", RowValues.requiredString(request,"password_hash"),
                 "roleId", userRoleId, "now", now));
         repository.update(RegistrationAdministrationQueries.APPROVE_INSERT_02, Map.of("userId", userId, "displayName", RowValues.requiredString(request,"display_name"),
@@ -101,7 +102,7 @@ public class RegistrationAdministrationService {
     @Transactional
     public RegistrationRequestRead reject(long requestId, RegistrationDecision payload, AuthenticatedUser actor) {
         Map<String, Object> request = pending(requestId);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(RegistrationAdministrationQueries.REJECT_UPDATE_01, SqlParameters.ofNullable("note", normalizedNote(payload.note()), "actorId", actor.id(),
                 "now", now, "redacted", REDACTED_HASH, "id", requestId));
         audit.record(actor, "registration_request", requestId, "update",
@@ -168,7 +169,5 @@ public class RegistrationAdministrationService {
     private static String normalizedNote(String note) {
         return note == null || note.isBlank() ? null : note.strip();
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
 }

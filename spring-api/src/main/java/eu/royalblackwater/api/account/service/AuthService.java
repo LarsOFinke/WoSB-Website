@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.account.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.account.entity.AuthSessionEntity;
 import eu.royalblackwater.api.account.entity.UserEntity;
 import eu.royalblackwater.api.account.mapper.AuthenticationDtoMapper;
@@ -11,7 +13,6 @@ import eu.royalblackwater.api.security.service.PasswordHasher;
 import eu.royalblackwater.api.security.service.SessionTokenService;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,7 @@ public class AuthService {
         Optional<AuthSessionEntity> found = sessions.findByTokenHash(tokens.hash(rawToken));
         if (found.isEmpty()) return Optional.empty();
         AuthSessionEntity session = found.get();
-        if (!session.getExpiresAt().isAfter(now())) {
+        if (!session.getExpiresAt().isAfter(UtcDateTimes.now(clock))) {
             sessions.delete(session);
             return Optional.empty();
         }
@@ -93,11 +94,9 @@ public class AuthService {
 
     private String createSession(UserEntity user) {
         String raw = tokens.create();
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         sessions.save(new AuthSessionEntity(tokens.hash(raw), user, now.plus(properties.ttl()), now));
         return raw;
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     public record LoginResult(int userId, String token) { }
 }

@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.builds.repository;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.builds.dto.BuildAggregate;
 import eu.royalblackwater.api.builds.dto.BuildPageResult;
 import eu.royalblackwater.api.builds.dto.BuildPayload;
@@ -10,7 +12,6 @@ import eu.royalblackwater.api.persistence.JdbcQueryService;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -73,7 +74,7 @@ public class BuildRepository {
 
     public long create(BuildPreparedPayload prepared, long ownerId) {
         BuildPayload value = prepared.payload();
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = jdbc.insertReturningId("""
                 insert into builds(build_name,build_type,ship_id,owner_id,is_official_template,
                                    research_upgrade_feature_id,mortar_modification_installed,sailors,soldiers,
@@ -100,11 +101,11 @@ public class BuildRepository {
                 "featureId", prepared.researchFeature() == null ? null : prepared.researchFeature().id(),
                 "mortar", value.mortarModification(), "sailors", value.sailors(), "soldiers", value.soldiers(),
                 "musketeers", value.musketeers(), "mercenaries", value.mercenaries(), "details", value.details(),
-                "now", now(), "id", id, "ownerId", ownerId));
+                "now", UtcDateTimes.now(clock), "id", id, "ownerId", ownerId));
         if (updated == 0) return false;
         jdbc.update("delete from build_slots where build_id=:id", Map.of("id", id));
         jdbc.update("delete from build_classifications where build_id=:id", Map.of("id", id));
-        replaceChildren(id, prepared, now());
+        replaceChildren(id, prepared, UtcDateTimes.now(clock));
         return true;
     }
 
@@ -119,7 +120,7 @@ public class BuildRepository {
 
     public void assignRole(long id, String role) {
         if (jdbc.update("update builds set build_type=:role,updated_at=:now where id=:id",
-                Map.of("role", role, "now", now(), "id", id)) == 0) throw new java.util.NoSuchElementException();
+                Map.of("role", role, "now", UtcDateTimes.now(clock), "id", id)) == 0) throw new java.util.NoSuchElementException();
     }
 
     private void replaceChildren(long id, BuildPreparedPayload prepared, LocalDateTime now) {
@@ -184,7 +185,5 @@ public class BuildRepository {
         if (ownerId != null) { where.append(" and b.owner_id=:ownerId"); parameters.put("ownerId", ownerId); }
         return new Filter(where.toString(), Map.copyOf(parameters));
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private record Filter(String joinAndWhere, Map<String, Object> parameters) { }
 }

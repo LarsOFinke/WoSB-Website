@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.onboarding.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.NewcomerGuideBlockInput;
 import eu.royalblackwater.api.dto.NewcomerGuideBlockRead;
@@ -17,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -60,7 +61,7 @@ public class NewcomerGuideService {
         String intro = payload.intro() == null ? "" : payload.intro().strip();
         List<NewcomerGuideBlockInput> blocks = payload.blocks() == null ? List.of() : payload.blocks();
         validate(blocks);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(NewcomerGuideQueries.REPLACE_UPDATE_01, Map.of("title", title, "intro", intro, "userId", actor.id(), "now", now, "id", PAGE_ID));
         repository.update(NewcomerGuideQueries.REPLACE_DELETE_01, Map.of("id", PAGE_ID));
         int blockOrder = 10;
@@ -165,7 +166,7 @@ public class NewcomerGuideService {
 
     private void ensurePage() {
         if (repository.count(NewcomerGuideQueries.ENSURE_PAGE_SELECT_01, Map.of("id", PAGE_ID)) > 0) return;
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(NewcomerGuideQueries.ENSURE_PAGE_INSERT_01, Map.of("id", PAGE_ID, "title", "New Captain Guide",
                         "intro", "A curated route from first login to prepared fleet participation.", "now", now));
     }
@@ -190,6 +191,5 @@ public class NewcomerGuideService {
     }
     private static String required(String value, String message) { if (value == null || value.isBlank()) throw bad(message); return value.strip(); }
     private static String blank(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
 }

@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.raidhelper.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.raidhelper.dto.RaidHelperDeliveryDto;
 import eu.royalblackwater.api.raidhelper.dto.RaidHelperJsonPayloadDto;
@@ -8,8 +10,6 @@ import eu.royalblackwater.api.raidhelper.mapper.RaidHelperPayloadRenderer;
 import eu.royalblackwater.api.raidhelper.repository.RaidHelperRepository;
 import eu.royalblackwater.api.raidhelper.repository.queries.RaidHelperDeliveryQueries;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,7 @@ public class RaidHelperDeliveryWorker {
 
     private Long claim() {
         return transactions.execute(status -> {
-            var row = repository.optional(RaidHelperDeliveryQueries.CLAIM_WITH_01, Map.of("now", now()));
+            var row = repository.optional(RaidHelperDeliveryQueries.CLAIM_WITH_01, Map.of("now", UtcDateTimes.now(clock)));
             return row.map(value -> longValue(value, "id")).orElse(null);
         });
     }
@@ -118,17 +118,17 @@ public class RaidHelperDeliveryWorker {
     }
 
     private void recoverAbandonedClaims() {
-        transactions.executeWithoutResult(status -> repository.update(RaidHelperDeliveryQueries.RECOVER_ABANDONED_CLAIMS_UPDATE_01, Map.of("now", now(), "cutoff", now().minusMinutes(15))));
+        transactions.executeWithoutResult(status -> repository.update(RaidHelperDeliveryQueries.RECOVER_ABANDONED_CLAIMS_UPDATE_01, Map.of("now", UtcDateTimes.now(clock), "cutoff", UtcDateTimes.now(clock).minusMinutes(15))));
     }
 
     private void succeed(long id, String externalId, int responseStatus, String operation) {
         transactions.executeWithoutResult(status -> repository.update(RaidHelperDeliveryQueries.SUCCEED_UPDATE_01, Map.of("externalId", externalId, "responseStatus", responseStatus,
-                "operation", operation, "now", now(), "id", id)));
+                "operation", operation, "now", UtcDateTimes.now(clock), "id", id)));
     }
 
     private void fail(long id, Integer responseStatus, String message) {
         transactions.executeWithoutResult(status -> repository.update(RaidHelperDeliveryQueries.FAIL_UPDATE_01, SqlParameters.ofNullable("responseStatus", responseStatus,
-                "message", truncate(message), "now", now(), "id", id)));
+                "message", truncate(message), "now", UtcDateTimes.now(clock), "id", id)));
     }
 
     private void deleteLink(long id) {
@@ -145,9 +145,5 @@ public class RaidHelperDeliveryWorker {
     private static String truncate(String value) {
         String clean = value.replaceAll("\\s+", " ").strip();
         return clean.length() > ERROR_LIMIT ? clean.substring(0, ERROR_LIMIT) : clean;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 }

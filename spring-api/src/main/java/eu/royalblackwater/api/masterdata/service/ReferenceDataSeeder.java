@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.masterdata.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.masterdata.repository.SeedCatalog;
 import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
 import eu.royalblackwater.api.masterdata.repository.queries.ReferenceDataQueries;
@@ -7,7 +9,6 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,7 +55,7 @@ public class ReferenceDataSeeder {
     }
 
     private void seedSystemData() {
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         Map<String, Object> roles = catalog.systemRoles();
         for (Map<String, Object> item : SeedCatalog.listOfMaps(roles.get("site_roles"))) {
             repository.update(ReferenceDataQueries.SEED_SYSTEM_DATA_INSERT_01, Map.of("code", text(item,"code"), "label", text(item,"label"),
@@ -97,7 +98,7 @@ public class ReferenceDataSeeder {
             String seedKey = "category:" + key;
             Map<String, Object> values = Map.of("key", key, "label", text(item,"label"),
                     "sort", integer(item,"sort_order",0), "seed", seedKey, "revision", REVISION,
-                    "checksum", checksum(item), "now", now(), "discard", discard);
+                    "checksum", checksum(item), "now", UtcDateTimes.now(clock), "discard", discard);
             changed += repository.update(ReferenceDataQueries.SEED_CATEGORIES_INSERT_01, values);
         }
         return changed;
@@ -114,7 +115,7 @@ public class ReferenceDataSeeder {
                     "source",nullable(item,"source"),"notes",nullable(item,"notes"),"image",nullable(item,"image_url"),
                     "kind",nullable(item,"option_kind"),"weaponClass",weaponClassId,
                     "caliber",number(item,"weapon_caliber_inches"),"sort",++sort,"seed",seedKey,
-                    "revision",REVISION,"checksum",checksum(item),"now",now(),"discard",discard);
+                    "revision",REVISION,"checksum",checksum(item),"now",UtcDateTimes.now(clock),"discard",discard);
             repository.update(ReferenceDataQueries.SEED_OPTIONS_INSERT_01, params);
             long optionId = repository.optional(ReferenceDataQueries.SEED_OPTIONS_SELECT_01,
                     Map.of("category",categoryId,"name",text(item,"name"))).map(row -> longValue(row,"id"))
@@ -129,7 +130,7 @@ public class ReferenceDataSeeder {
         repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_DELETE_01, Map.of("id",optionId));
         for (Map.Entry<String,Object> effect : map(item.get("stat_effects")).entrySet()) {
             repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_INSERT_01, Map.of("id",optionId,"key",effect.getKey(),
-                    "value",((Number)effect.getValue()).doubleValue(),"now",now()));
+                    "value",((Number)effect.getValue()).doubleValue(),"now",UtcDateTimes.now(clock)));
         }
         repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_DELETE_02, Map.of("id",optionId));
         for (String code : strings(item.get("allowed_slot_types"))) {
@@ -156,7 +157,7 @@ public class ReferenceDataSeeder {
                     "source",nullable(item,"source"),"image",nullable(item,"image_url"),"sails",integer(item,"sail_slots",0),
                     "upgrades",integer(item,"upgrade_slots",0),"lantern",flag(item,"has_lantern",false),
                     "active",flag(item,"is_active",true),"seed",seedKey,"revision",REVISION,"checksum",checksum(item),
-                    "now",now(),"discard",discard);
+                    "now",UtcDateTimes.now(clock),"discard",discard);
             repository.update(ReferenceDataQueries.SEED_SHIPS_INSERT_01, params);
             long shipId = requiredId("ships", "name", text(item,"name"));
             if (discard || !overridden("ships", shipId)) replaceShipChildren(shipId, item);
@@ -188,7 +189,7 @@ public class ReferenceDataSeeder {
             for (Map.Entry<String, Object> effect : map(override.get("stat_effects")).entrySet()) {
                 repository.update(ReferenceDataQueries.REPLACE_SHIP_CHILDREN_INSERT_03,
                         Map.of("ship", shipId, "option", optionId, "key", effect.getKey(),
-                                "value", ((Number) effect.getValue()).doubleValue(), "now", now()));
+                                "value", ((Number) effect.getValue()).doubleValue(), "now", UtcDateTimes.now(clock)));
             }
         }
     }
@@ -220,7 +221,7 @@ public class ReferenceDataSeeder {
                 Map.of("slug","gunnery","label","Gunnery","description","Weapon damage and reload","sort",30),
                 Map.of("slug","defensive","label","Defensive","description","Durability and survivability","sort",40));
         for (Map<String,Object> role : roles) repository.update(ReferenceDataQueries.SEED_BUILD_ROLES_INSERT_01, Map.of("slug",role.get("slug"),"label",role.get("label"),"description",role.get("description"),
-                        "sort",role.get("sort"),"now",now()));
+                        "sort",role.get("sort"),"now",UtcDateTimes.now(clock)));
     }
 
     private boolean overridden(String table, long id) {
@@ -259,8 +260,6 @@ public class ReferenceDataSeeder {
             throw new IllegalStateException("Could not checksum seed data", exception);
         }
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     static String text(Map<String,Object> map,String key) { return String.valueOf(map.get(key)); }
     static String nullable(Map<String,Object> map,String key) { Object value=map.get(key); return value==null?null:String.valueOf(value); }
     static int integer(Map<String,Object> map,String key,int fallback) { Object v=map.get(key); return v instanceof Number n?n.intValue():fallback; }

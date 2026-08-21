@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.strategies.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.StrategyCreate;
 import eu.royalblackwater.api.dto.StrategyRead;
@@ -16,7 +18,6 @@ import eu.royalblackwater.api.strategies.repository.StrategyRepository;
 import eu.royalblackwater.api.strategies.repository.queries.StrategyQueries;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,7 +69,7 @@ public class StrategyService {
     public StrategyRead create(StrategyCreate payload, AuthenticatedUser actor) {
         files.ownedImage(payload.backgroundFileId(), actor);
         PreparedStrategyOverlay overlay = prepare(payload.overlayJson());
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(StrategyQueries.CREATE, SqlParameters.ofNullable(
                 "ownerId", actor.id(), "backgroundFileId", payload.backgroundFileId(), "title", title(payload.title()),
                 "description", optional(payload.description()), "overlayJson", overlay.json(),
@@ -89,7 +90,7 @@ public class StrategyService {
         int changed = repository.update(StrategyQueries.UPDATE, SqlParameters.ofNullable(
                 "id", id, "ownerId", actor.id(), "backgroundFileId", payload.backgroundFileId(),
                 "title", title(payload.title()), "description", optional(payload.description()),
-                "overlayJson", overlay.json(), "now", now()));
+                "overlayJson", overlay.json(), "now", UtcDateTimes.now(clock)));
         if (changed == 0) throw notFound();
         replaceReferences(id, overlay);
         files.refreshPublication(fileIds(previousFileId, payload.backgroundFileId()));
@@ -101,7 +102,7 @@ public class StrategyService {
     @Transactional
     public StrategyRead publication(long id, boolean published, AuthenticatedUser actor) {
         Map<String, Object> current = owned(id, actor);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(StrategyQueries.PUBLISH, SqlParameters.ofNullable("id", id, "ownerId", actor.id(),
                 "published", published, "publishedAt", published ? now : null, "now", now));
         files.refreshPublication(Set.of(RowValues.longValue(current, "background_file_id")));
@@ -175,7 +176,6 @@ public class StrategyService {
         return result;
     }
     private static String optional(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
     private static ResponseStatusException notFound() { return new ResponseStatusException(NOT_FOUND, "Strategy not found."); }
 }

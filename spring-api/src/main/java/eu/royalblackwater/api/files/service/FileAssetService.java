@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.files.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.config.StorageProperties;
 import eu.royalblackwater.api.dto.FileRead;
 import eu.royalblackwater.api.files.dto.StoredFileDto;
@@ -18,7 +20,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -79,7 +80,7 @@ public class FileAssetService {
         String extension = FileTypePolicy.extension(upload.getOriginalFilename());
         String declaredType = normalizedType(upload.getContentType());
         long maximum = effectiveLimit(owner.id(), declaredType);
-        LocalDateTime createdAt = now();
+        LocalDateTime createdAt = UtcDateTimes.now(clock);
         Path root = normalizedRoot();
         Path folder = root.resolve(String.format("%04d/%02d", createdAt.getYear(), createdAt.getMonthValue()));
         String storedName = UUID.randomUUID().toString().replace("-", "") + extension;
@@ -300,7 +301,6 @@ public class FileAssetService {
         if (!allowed) throw new IllegalArgumentException("Unsupported attachment relation.");
     }
     private static long mb(long value) { return Math.multiplyExact(value, 1024L * 1024L); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static void deleteQuietly(Path path) { try { Files.deleteIfExists(path); } catch (IOException ignored) { } }
     private static void registerRollbackCleanup(Path path) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) return;

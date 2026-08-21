@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.privacy.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.DataSubjectRequestRead;
 import eu.royalblackwater.api.dto.DataSubjectRequestResolve;
@@ -13,8 +15,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.security.SecureRandom;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -68,7 +68,7 @@ public class PrivacyAdministrationService {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Privacy contact request not found."));
         requirePending(row, "Privacy contact request has already been resolved.");
         repository.update(PrivacyAdministrationQueries.RESOLVE_CONTACT_UPDATE_01, Map.of("status", status(decision), "note", payload.resolutionNote().strip(),
-                "actorId", actor.id(), "resolvedAt", now(), "id", id));
+                "actorId", actor.id(), "resolvedAt", UtcDateTimes.now(clock), "id", id));
         audit.record(actor, "privacy_contact_request", id, decision,
                 "Privacy contact request resolved.", List.of("status", "resolution_note"));
         return mapper.contact(repository.required(PrivacyAdministrationQueries.RESOLVE_CONTACT_SELECT_02, Map.of("id", id)));
@@ -84,7 +84,7 @@ public class PrivacyAdministrationService {
             pseudonymize(RowValues.longValue(row, "subject_user_id"), row);
         }
         repository.update(PrivacyAdministrationQueries.RESOLVE_REQUEST_UPDATE_01, Map.of("status", status(decision), "note", payload.resolutionNote().strip(),
-                "actorId", actor.id(), "resolvedAt", now(), "id", id));
+                "actorId", actor.id(), "resolvedAt", UtcDateTimes.now(clock), "id", id));
         audit.record(actor, "privacy_request", id, decision,
                 "Privacy " + RowValues.string(row, "request_type") + " request resolved.",
                 List.of("status", "resolution_note"));
@@ -110,7 +110,7 @@ public class PrivacyAdministrationService {
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_UPDATE_02,
                 Map.of("username", oldUsername));
         repository.update(PrivacyAdministrationQueries.PSEUDONYMIZE_UPDATE_03, Map.of("username", newUsername, "passwordHash", replacementPassword,
-                "updatedAt", now(), "id", userId));
+                "updatedAt", UtcDateTimes.now(clock), "id", userId));
     }
 
     private void nullNullableUserReferences(long userId) {
@@ -161,7 +161,4 @@ public class PrivacyAdministrationService {
             throw new ResponseStatusException(CONFLICT, message);
         }
     }
-
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
 }

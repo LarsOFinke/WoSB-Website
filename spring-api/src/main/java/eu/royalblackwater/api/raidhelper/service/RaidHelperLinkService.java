@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.raidhelper.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.dto.RaidHelperDispatchSelection;
 import eu.royalblackwater.api.dto.RaidHelperEventLinkRead;
 import eu.royalblackwater.api.dto.RaidHelperOptionDestination;
@@ -13,7 +15,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.squads.service.SquadAccessPolicy;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -105,7 +106,7 @@ public class RaidHelperLinkService {
                 RaidHelperLinkQueries.CONFIGURE_SELECT_01, Map.of("id", eventId))) {
             existing.put(longValue(row, "destination_id"), row);
         }
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         for (RaidHelperDispatchSelection selection : requested) {
             String leader = policy.numericIdentifier(selection.leaderId(), "Leader ID", false);
             Map<String, Object> row = existing.get(selection.destinationId());
@@ -149,7 +150,7 @@ public class RaidHelperLinkService {
 
     @Transactional
     public void queueRetry(long eventId) {
-        int updated = repository.update(RaidHelperLinkQueries.QUEUE_RETRY_UPDATE_01, Map.of("now", now(), "id", eventId));
+        int updated = repository.update(RaidHelperLinkQueries.QUEUE_RETRY_UPDATE_01, Map.of("now", UtcDateTimes.now(clock), "id", eventId));
         if (updated == 0) {
             throw new ResponseStatusException(BAD_REQUEST,
                     "This event has no Raid-Helper destinations to retry.");
@@ -158,7 +159,7 @@ public class RaidHelperLinkService {
 
     @Transactional
     public void queueCancellation(long eventId) {
-        repository.update(RaidHelperLinkQueries.QUEUE_CANCELLATION_UPDATE_01, Map.of("now", now(), "id", eventId));
+        repository.update(RaidHelperLinkQueries.QUEUE_CANCELLATION_UPDATE_01, Map.of("now", UtcDateTimes.now(clock), "id", eventId));
     }
 
     public boolean canManage(AuthenticatedUser actor, Long squadId) {
@@ -185,10 +186,6 @@ public class RaidHelperLinkService {
 
     private static String key(long destinationId, long templateId) {
         return destinationId + ":" + templateId;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private final class DestinationBuilder {

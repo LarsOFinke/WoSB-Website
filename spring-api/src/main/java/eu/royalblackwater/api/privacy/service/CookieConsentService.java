@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.privacy.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.config.SessionProperties;
 import eu.royalblackwater.api.dto.CookieConsentChoice;
 import eu.royalblackwater.api.dto.CookieConsentPolicy;
@@ -12,8 +14,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.SecureRandom;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -71,7 +71,7 @@ public class CookieConsentService {
                 Boolean.TRUE.equals(choice.preferences()),
                 Boolean.TRUE.equals(choice.analytics()),
                 Boolean.TRUE.equals(choice.externalMedia()),
-                now()));
+                UtcDateTimes.now(clock)));
         CookieConsentRead read = PrivacyDtoMapper.cookieConsent(saved);
         return new SavedConsent(read, ResponseCookie.from(COOKIE_NAME, key)
                 .httpOnly(true).secure(session.secure()).sameSite(session.sameSite()).path("/")
@@ -97,10 +97,6 @@ public class CookieConsentService {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     public record SavedConsent(CookieConsentRead body, ResponseCookie cookie) { }

@@ -25,6 +25,10 @@ Then read only the primary files affected by the task, their direct callers,
 tests, configuration, and documentation. Do not start a blanket full-text
 analysis of the entire repository when the cache already identifies the entry point.
 
+For Spring API helper extraction and duplication review, read
+[SPRING_API_UTILITIES.md](SPRING_API_UTILITIES.md) before adding a new date/time,
+text-normalization, formatter, or JDBC-row helper.
+
 For an explicitly broad quality and structure cleanup, follow the token-efficient
 workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 

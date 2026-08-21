@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.guides.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.account.service.UserReferenceService;
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.builds.service.BuildService;
@@ -21,7 +23,6 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -90,7 +91,7 @@ public class GuideService {
     @Transactional
     public GuideRead create(GuideCreate payload, AuthenticatedUser actor) {
         Prepared prepared = prepare(payload.body(), payload.fileIds(), payload.buildIds(), actor);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long id = repository.insertReturningId(GuideQueries.CREATE_INSERT_01, SqlParameters.ofNullable("title", payload.title().strip(), "category", normalizeCategory(payload.category()),
                 "summary", normalize(payload.summary()), "body", payload.body(), "ownerId", actor.id(), "now", now));
         replaceLinks(id, prepared);
@@ -105,7 +106,7 @@ public class GuideService {
         Prepared prepared = prepare(payload.body(), payload.fileIds(), payload.buildIds(), actor);
         Set<Long> previousFiles = attachmentIds(guideId);
         repository.update(GuideQueries.UPDATE_UPDATE_01, SqlParameters.ofNullable("title", payload.title().strip(), "category", normalizeCategory(payload.category()),
-                "summary", normalize(payload.summary()), "body", payload.body(), "now", now(), "id", guideId));
+                "summary", normalize(payload.summary()), "body", payload.body(), "now", UtcDateTimes.now(clock), "id", guideId));
         replaceLinks(guideId, prepared);
         Set<Long> refresh = new LinkedHashSet<>(previousFiles); refresh.addAll(prepared.fileIds());
         files.refreshPublication(refresh);
@@ -119,7 +120,7 @@ public class GuideService {
         if (!administrator) requireOwnerOrStaff(RowValues.longValue(guide, "owner_id"), actor);
         Set<Long> fileIds = attachmentIds(guideId);
         if (repository.update(GuideQueries.DELETE_UPDATE_01,
-                Map.of("now", now(), "id", guideId)) == 0) throw notFound();
+                Map.of("now", UtcDateTimes.now(clock), "id", guideId)) == 0) throw notFound();
         files.refreshPublication(fileIds);
         audit.record(actor, "guide", guideId, "delete", "Guide unpublished.", List.of("is_published"));
     }
@@ -187,7 +188,6 @@ public class GuideService {
     }
     private static String normalize(String value) { return value == null || value.isBlank() ? null : value.strip(); }
     private static void requireOwnerOrStaff(long ownerId, AuthenticatedUser actor) { if (ownerId != actor.id() && !actor.staff()) throw notFound(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException notFound() { return new ResponseStatusException(NOT_FOUND, "Guide not found."); }
     private record Prepared(List<StoredFileDto> files, List<Long> fileIds, List<Long> buildIds) { }
 }

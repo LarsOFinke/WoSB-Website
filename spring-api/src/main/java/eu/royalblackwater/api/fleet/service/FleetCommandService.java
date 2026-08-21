@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.fleet.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.FleetCreate;
 import eu.royalblackwater.api.dto.FleetJoinRequest;
@@ -15,8 +17,6 @@ import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.persistence.SqlUpdate;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class FleetCommandService {
                         "description", blank(payload.description()),
                         "standingOrders", blank(payload.standingOrders()),
                         "sortOrder", payload.sortOrder() == null ? 100 : payload.sortOrder(),
-                        "active", payload.isActive() == null || payload.isActive(), "now", now()));
+                        "active", payload.isActive() == null || payload.isActive(), "now", UtcDateTimes.now(clock)));
         audit.record(actor, "fleet", id, "create", "Fleet “" + name + "” created.",
                 List.of("name", "slug", "focus", "description", "standing_orders", "sort_order", "is_active"));
         return views.read(id, true);
@@ -87,7 +87,7 @@ public class FleetCommandService {
         if (payload.sortOrder() != null) update.set("sort_order", payload.sortOrder());
         if (payload.isActive() != null) update.set("is_active", payload.isActive());
         if (!update.isEmpty()) {
-            update.set("updated_at", now());
+            update.set("updated_at", UtcDateTimes.now(clock));
             repository.update(update.sql(), update.parameters());
             audit.record(actor, "fleet", fleetId, "update", "Fleet “" + name + "” updated.", update.columns());
         }
@@ -109,13 +109,13 @@ public class FleetCommandService {
         if (existing == null) {
             membershipId = repository.insertReturningId(FleetCommandQueries.JOIN_INSERT_01, SqlParameters.ofNullable(
                             "fleetId", fleetId, "userId", actor.id(), "roleId", roleId,
-                            "note", blank(payload.note()), "now", now()));
+                            "note", blank(payload.note()), "now", UtcDateTimes.now(clock)));
         } else {
             membershipId = ((Number) existing.get("id")).longValue();
             String status = "inactive".equals(existing.get("status")) ? "pending" : String.valueOf(existing.get("status"));
             repository.update(FleetCommandQueries.JOIN_UPDATE_01, SqlParameters.ofNullable(
                             "fleetId", fleetId, "status", status, "note", blank(payload.note()),
-                            "now", now(), "id", membershipId));
+                            "now", UtcDateTimes.now(clock), "id", membershipId));
         }
         audit.record(actor, "fleet_application", fleetId, "create",
                 "A fleet application was submitted.", List.of("status"), "fleet", fleetId);
@@ -136,7 +136,7 @@ public class FleetCommandService {
         if (normalized.assignment() != null) update.set("assignment", blank(normalized.assignment()));
         if (normalized.adminNote() != null) update.set("admin_note", blank(normalized.adminNote()));
         if (!update.isEmpty()) {
-            update.set("updated_at", now());
+            update.set("updated_at", UtcDateTimes.now(clock));
             repository.update(update.sql(), update.parameters());
             audit.record(actor, "fleet_membership", membershipId, "update",
                     "Updated fleet membership for user #" + target.userId() + ".", update.columns(), "fleet", fleetId);
@@ -162,10 +162,10 @@ public class FleetCommandService {
                 FleetCommandQueries.ASSIGN_LEADER_SELECT_02, Map.of("userId", userId)).orElse(null);
         long membershipId;
         if (existing == null) {
-            membershipId = repository.insertReturningId(FleetCommandQueries.ASSIGN_LEADER_INSERT_01, Map.of("fleetId", fleetId, "userId", userId, "roleId", roleId, "now", now()));
+            membershipId = repository.insertReturningId(FleetCommandQueries.ASSIGN_LEADER_INSERT_01, Map.of("fleetId", fleetId, "userId", userId, "roleId", roleId, "now", UtcDateTimes.now(clock)));
         } else {
             membershipId = ((Number) existing.get("id")).longValue();
-            repository.update(FleetCommandQueries.ASSIGN_LEADER_UPDATE_01, Map.of("fleetId", fleetId, "roleId", roleId, "now", now(), "id", membershipId));
+            repository.update(FleetCommandQueries.ASSIGN_LEADER_UPDATE_01, Map.of("fleetId", fleetId, "roleId", roleId, "now", UtcDateTimes.now(clock), "id", membershipId));
         }
         audit.record(actor, "fleet_membership", membershipId, "update",
                 "Assigned fleet leadership role " + role + " to user #" + userId + ".",
@@ -223,10 +223,6 @@ public class FleetCommandService {
 
     private static String blank(String value) {
         return value == null || value.isBlank() ? null : value.strip();
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static ResponseStatusException bad(String message) {

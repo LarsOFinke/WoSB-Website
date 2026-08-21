@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.account.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.account.filter.UserAdministrationFilter;
 import eu.royalblackwater.api.account.mapper.AccountDtoMapper;
 import eu.royalblackwater.api.account.repository.AccountDataRepository;
@@ -14,7 +16,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.security.service.PasswordHasher;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -74,7 +75,7 @@ public class UserAdministrationService {
             changed.add("is_active");
         }
         if (!changed.isEmpty()) {
-            repository.update(UserAdministrationQueries.UPDATE_UPDATE_03, Map.of("now", now(), "id", userId));
+            repository.update(UserAdministrationQueries.UPDATE_UPDATE_03, Map.of("now", UtcDateTimes.now(clock), "id", userId));
             repository.update(UserAdministrationQueries.UPDATE_DELETE_01, Map.of("id", userId));
             audit.record(actor, "user_account", userId, "update",
                     "Account “" + RowValues.requiredString(target, "username") + "” updated.", changed);
@@ -95,7 +96,7 @@ public class UserAdministrationService {
         if (duplicates > 0) throw bad("Username already exists or is waiting for review.");
         long roleId = RowValues.longValue(repository.required(
                 UserAdministrationQueries.CREATE_MODERATOR_SELECT_02, Map.of()), "id");
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         long userId = repository.insertReturningId(UserAdministrationQueries.CREATE_MODERATOR_INSERT_01, Map.of("username", username, "passwordHash", passwords.hash(payload.password()),
                 "roleId", roleId, "now", now));
         repository.update(UserAdministrationQueries.CREATE_MODERATOR_INSERT_02, Map.of("userId", userId, "displayName", displayName, "now", now));
@@ -163,8 +164,6 @@ public class UserAdministrationService {
         }
         return username;
     }
-
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException bad(String message) { return new ResponseStatusException(BAD_REQUEST, message); }
     private static ResponseStatusException forbidden(String message) { return new ResponseStatusException(FORBIDDEN, message); }
 }

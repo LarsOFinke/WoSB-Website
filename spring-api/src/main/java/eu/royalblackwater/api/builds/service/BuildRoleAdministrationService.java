@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.builds.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.builds.mapper.BuildDtoMapper;
 import eu.royalblackwater.api.builds.repository.BuildDataRepository;
@@ -11,7 +13,6 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class BuildRoleAdministrationService {
         if (repository.count(BuildRoleAdministrationQueries.CREATE_SELECT_01, Map.of("slug", slug)) > 0) {
             throw new ResponseStatusException(CONFLICT, "A build role with this slug already exists.");
         }
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(BuildRoleAdministrationQueries.CREATE_INSERT_01, SqlParameters.ofNullable("slug", slug,
                 "label", payload.label().strip(), "description", normalize(payload.description()),
                 "sortOrder", payload.sortOrder() == null ? 100L : Math.max(0L, payload.sortOrder()), "now", now));
@@ -58,7 +59,7 @@ public class BuildRoleAdministrationService {
         String normalized = normalizeSlug(slug);
         if (repository.update(BuildRoleAdministrationQueries.UPDATE_UPDATE_01, SqlParameters.ofNullable("label", payload.label().strip(),
                 "description", normalize(payload.description()), "sortOrder", payload.sortOrder() == null ? 100L : Math.max(0L, payload.sortOrder()),
-                "now", now(), "slug", normalized)) == 0) throw notFound();
+                "now", UtcDateTimes.now(clock), "slug", normalized)) == 0) throw notFound();
         audit.record(actor, "build_role", normalized, "update", "Build role updated.", List.of("label", "description", "sort_order"));
         return required(normalized);
     }
@@ -87,6 +88,5 @@ public class BuildRoleAdministrationService {
         return slug;
     }
     private static String normalize(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private LocalDateTime now() { return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC); }
     private static ResponseStatusException notFound() { return new ResponseStatusException(NOT_FOUND, "Build role not found."); }
 }

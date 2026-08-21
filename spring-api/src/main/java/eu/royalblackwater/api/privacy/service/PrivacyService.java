@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.privacy.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.dto.DataSubjectRequestCreate;
 import eu.royalblackwater.api.dto.DataSubjectRequestRead;
 import eu.royalblackwater.api.dto.PrivacyContactCreate;
@@ -10,8 +12,6 @@ import eu.royalblackwater.api.privacy.repository.PrivacyDataRepository;
 import eu.royalblackwater.api.privacy.repository.queries.PrivacyQueries;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class PrivacyService {
     @Transactional
     public PrivacyContactReceipt createContact(PrivacyContactCreate payload, AuthenticatedUser user) {
         String email = normalizedEmail(payload.replyEmail());
-        long recent = repository.count(PrivacyQueries.CREATE_CONTACT_SELECT_01, Map.of("email", email, "cutoff", now().minusMinutes(30)));
+        long recent = repository.count(PrivacyQueries.CREATE_CONTACT_SELECT_01, Map.of("email", email, "cutoff", UtcDateTimes.now(clock).minusMinutes(30)));
         if (recent >= 3) {
             throw new ResponseStatusException(TOO_MANY_REQUESTS,
                     "Too many recent privacy messages for this reply address.");
@@ -53,7 +53,7 @@ public class PrivacyService {
                         "email", email,
                         "subject", normalizeWhitespace(payload.subject()),
                         "message", payload.message().strip(),
-                        "createdAt", now()));
+                        "createdAt", UtcDateTimes.now(clock)));
         return mapper.contactReceipt(id);
     }
 
@@ -83,7 +83,7 @@ public class PrivacyService {
                         "userId", user.id(),
                         "type", type,
                         "details", blankToNull(payload.details()),
-                        "createdAt", now()));
+                        "createdAt", UtcDateTimes.now(clock)));
         audit.record(user, "privacy_request", id, "create",
                 "A data-subject request requires administrator review.", List.of("request_type", "status"));
         return repository.optional(PrivacyQueries.CREATE_REQUEST_SELECT_02, Map.of("id", id)).map(mapper::request).orElseThrow();
@@ -97,10 +97,6 @@ public class PrivacyService {
             throw new ResponseStatusException(UNPROCESSABLE_CONTENT, "Enter a valid reply email address.");
         }
         return email;
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private static String normalizeWhitespace(String value) {

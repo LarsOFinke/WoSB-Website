@@ -1,5 +1,7 @@
 package eu.royalblackwater.api.warehouse.service;
 
+import eu.royalblackwater.api.core.util.UtcDateTimes;
+
 import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.dto.WarehousePortCreate;
 import eu.royalblackwater.api.dto.WarehousePortRead;
@@ -12,7 +14,6 @@ import eu.royalblackwater.api.warehouse.repository.WarehouseRepository;
 import eu.royalblackwater.api.warehouse.repository.queries.WarehouseQueries;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,7 @@ public class WarehousePortService {
         requireUnique(null, name);
         long id = repository.insertReturningId(WarehouseQueries.CREATE_PORT_INSERT_01, Map.of(
                 "name", name, "sortOrder", value(payload.sortOrder(), 100L),
-                "active", value(payload.isActive(), true), "now", now()));
+                "active", value(payload.isActive(), true), "now", UtcDateTimes.now(clock)));
         audit.record(actor, "warehouse_port", id, "create", "Created warehouse port " + name,
                 Set.of("name", "sort_order", "is_active"));
         return get(id);
@@ -70,7 +71,7 @@ public class WarehousePortService {
         WarehousePortRead previous = get(id);
         String name = name(payload.name());
         requireUnique(id, name);
-        LocalDateTime now = now();
+        LocalDateTime now = UtcDateTimes.now(clock);
         repository.update(WarehouseQueries.UPDATE_PORT_UPDATE_01, Map.of(
                 "id", id, "name", name, "sortOrder", value(payload.sortOrder(), 100L),
                 "active", value(payload.isActive(), true), "now", now));
@@ -87,7 +88,7 @@ public class WarehousePortService {
     public void deactivate(long id, AuthenticatedUser actor) {
         requireAdmin(actor);
         WarehousePortRead previous = get(id);
-        repository.update(WarehouseQueries.DEACTIVATE_PORT_UPDATE_01, Map.of("id", id, "now", now()));
+        repository.update(WarehouseQueries.DEACTIVATE_PORT_UPDATE_01, Map.of("id", id, "now", UtcDateTimes.now(clock)));
         audit.record(actor, "warehouse_port", id, "update", "Deactivated warehouse port " + previous.name(),
                 Set.of("is_active"));
     }
@@ -136,9 +137,5 @@ public class WarehousePortService {
         if (actor == null || !actor.isAdmin()) {
             throw new ResponseStatusException(FORBIDDEN, "Warehouse port management requires administrator access.");
         }
-    }
-
-    private LocalDateTime now() {
-        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 }
