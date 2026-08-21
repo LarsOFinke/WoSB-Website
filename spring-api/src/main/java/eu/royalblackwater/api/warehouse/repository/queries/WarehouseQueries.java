@@ -67,14 +67,22 @@ public final class WarehouseQueries {
     public static final String FLEET_SELECT_01 = "select id,name from fleets where id=:fleetId and is_active=true";
 
     public static final String OVERVIEW_SELECT_01 = """
-            select w.port,w.resource,
-                   coalesce(sum(w.amount),0) total,
-                   coalesce(sum(w.amount) filter (where not w.reserved),0) available,
-                   coalesce(sum(w.amount) filter (where w.reserved),0) reserved
+            select w.port,w.resource,w.amount total,
+                   case when w.reserved then 0 else w.amount end available,
+                   case when w.reserved then w.amount else 0 end reserved,
+                   w.collection_status,
+                   coalesce(nullif(up.display_name,''),member.username,w.custom_holder_name) donor_name,
+                   coalesce(nullif(assignee_profile.display_name,''),assignee.username) assignee_name
             from warehouse_entries w
+            left join users member on member.id=w.member_user_id
+            left join user_profiles up on up.user_id=member.id
+            left join fleet_warehouse_port_assignments assignment
+                   on assignment.fleet_id=w.fleet_id
+                  and assignment.port_id=(select id from warehouse_ports where lower(name)=lower(w.port) limit 1)
+            left join users assignee on assignee.id=assignment.assignee_user_id
+            left join user_profiles assignee_profile on assignee_profile.user_id=assignee.id
             where w.fleet_id=:fleetId
-            group by w.port,w.resource
-            order by lower(w.port),lower(w.resource)
+            order by lower(w.port),lower(w.resource),w.id
             """;
 
     public static final String MEMBER_SELECT_01 = """

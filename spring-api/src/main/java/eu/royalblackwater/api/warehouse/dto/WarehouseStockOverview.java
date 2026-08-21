@@ -10,5 +10,10 @@ public record WarehouseStockOverview(
         long reserved,
         List<Line> lines) {
 
-    public record Line(String port, String resource, long total, long available, long reserved) { }
+    public record Line(String port, String resource, long total, long available, long reserved,
+                       String collectionStatus, String contactName) {
+        public Line(String port, String resource, long total, long available, long reserved) {
+            this(port, resource, total, available, reserved, "in_warehouse", "");
+        }
+    }
 }
