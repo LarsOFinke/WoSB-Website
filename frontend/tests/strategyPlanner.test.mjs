@@ -119,6 +119,12 @@ test('line scale changes its extent without shrinking arrowhead and stroke geome
   assert.doesNotMatch(canvasSource, /lineTransform\(object\)[\s\S]{0,120}scale/)
 })
 
+test('freehand strokes finalize on the canvas and pointer-capture fallback', () => {
+  assert.match(canvasSource, /if \(activePointerId\.value == null\) return/)
+  assert.match(canvasSource, /@pointerup="endPointer"/)
+  assert.match(canvasSource, /@lostpointercapture="endPointer"/)
+})
+
 test('strategy sharing uses the non-sequential public identifier', () => {
   assert.equal(strategyShareUrl('8dbca839-49eb-49cc-a732-118d17802dcb', { origin: 'https://fleet.example' }),
     'https://fleet.example/strategies/shared/8dbca839-49eb-49cc-a732-118d17802dcb')

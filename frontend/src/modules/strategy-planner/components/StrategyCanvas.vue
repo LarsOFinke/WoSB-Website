@@ -79,6 +79,7 @@ function movePointer(event) {
 }
 
 function endPointer(event) {
+  if (activePointerId.value == null) return
   if (event && activePointerId.value != null && event.pointerId !== activePointerId.value) return
   if (drag.value) {
     drag.value = null
@@ -87,7 +88,7 @@ function endPointer(event) {
   // Browsers may coalesce the final pointermove or deliver pointerup directly
   // to the window after capture. Preserve the final coordinate so a short,
   // intentional stroke is not silently discarded.
-  if (event?.type === 'pointerup' && freehandPoints.value.length) {
+  if ((event?.type === 'pointerup' || event?.type === 'lostpointercapture') && freehandPoints.value.length) {
     const current = point(event)
     const points = freehandPoints.value
     const previousX = points.at(-2)
@@ -189,6 +190,9 @@ defineExpose({ element: svgElement })
       role="img"
       aria-label="Strategy drawing canvas"
       @pointerdown="startCanvas"
+      @pointerup="endPointer"
+      @pointercancel="endPointer"
+      @lostpointercapture="endPointer"
     >
       <rect class="strategy-canvas-background" width="1000" :height="canvasHeight" />
       <image v-if="backgroundUrl" :href="backgroundUrl" width="1000" :height="canvasHeight" preserveAspectRatio="none" />
