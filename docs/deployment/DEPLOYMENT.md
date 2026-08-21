@@ -46,6 +46,16 @@ material. The same boundary applies to bootstrap, diagnostics, and build-restore
 When `--configure` reads an older profile that points below the repository, it ignores that
 legacy value and offers the external target-specific default so the replacement key can be
 generated safely.
+
+When `RBF_DEPLOY_ROTATE_SSH_KEY=true` (enabled in the supplied profile templates), each
+release performs a two-phase deployment-key rotation. A new Ed25519 key is generated in a
+temporary directory outside the repository, installed alongside the current key, and verified
+through a fresh `IdentitiesOnly` SSH connection. Only then is the old authorized key removed
+and the external private-key path replaced atomically. If any step fails, the old key remains
+authorized and deployment stops. Use `--no-rotate-ssh-key` only for a planned exception;
+`--rotate-ssh-key` explicitly enables the behavior for one invocation. Agent-only identities
+cannot be rotated automatically and are reported as skipped. Keep the configured bootstrap or
+break-glass account available for recovery and rollback.
 For a fresh target, the initial SSH account intentionally has no default identity: the new
 deployment key cannot authenticate that account until its public key is installed. Leave the
 bootstrap identity blank to use the account's SSH configuration, agent, or password, or enter

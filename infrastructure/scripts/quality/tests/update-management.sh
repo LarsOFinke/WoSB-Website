@@ -71,6 +71,11 @@ grep -q 'provision-ssh-admin.sh' "$ROOT_DIR/infrastructure/scripts/release/deplo
 grep -q 'bootstrap_user.*== root' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_deploy_identity' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_bootstrap_access' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'rotate_deployment_key' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q -- '--no-rotate-ssh-key' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'rotate-ssh-admin-key.sh' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'RBF_DEPLOY_ROTATE_SSH_KEY=true' "$ROOT_DIR/.env.origin.test.example"
+grep -q 'RBF_DEPLOY_ROTATE_SSH_KEY=true' "$ROOT_DIR/.env.origin.production.example"
 grep -q 'rbf_origin_default_identity_path' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'SSH public-key material must be supplied from outside the repository' \
   "$ROOT_DIR/infrastructure/scripts/setup/provision-ssh-admin.sh"

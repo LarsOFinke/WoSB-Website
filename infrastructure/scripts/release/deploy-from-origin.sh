@@ -22,9 +22,9 @@ if [[ "$EUID" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != root ]]; then
   done
   exec sudo -u "$SUDO_USER" -H -- bash "$0" "$@"
 fi
-artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; app_hostname=""; letsencrypt_email=""; no_backup=false; automated=false
+artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; app_hostname=""; letsencrypt_email=""; rotate_deploy_key=true; no_backup=false; automated=false
 interactive=false; configure=false
-usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE]" >&2; exit 2; }
+usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE] [--rotate-ssh-key|--no-rotate-ssh-key]" >&2; exit 2; }
 discover_identity_file() {
   [[ -n "$identity_file" ]] && return 0
   [[ -n "${HOME:-}" && -n "$user" ]] || return 0
@@ -83,6 +83,7 @@ while (($#)); do case "$1" in
   --identity-file) identity_file="${2:-}"; shift 2;;
   --source-revision) source_revision="${2:-}"; shift 2;; --env) env_source="${2:-}"; automated=true; shift 2;;
   --install-root) install_root="${2:-}"; automated=true; shift 2;; --no-backup) no_backup=true; automated=true; shift;;
+  --rotate-ssh-key) rotate_deploy_key=true; shift;; --no-rotate-ssh-key) rotate_deploy_key=false; shift;;
   --config) config_file="${2:-}"; shift 2;;
   -h|--help) usage;; *) usage;; esac; done
 if [[ -e "$config_file" ]]; then
@@ -96,6 +97,7 @@ if [[ -e "$config_file" ]]; then
   host="${host:-${RBF_DEPLOY_HOST:-}}"; user="${user:-${RBF_DEPLOY_USER:-rbfadmin}}"
   port="${port:-${RBF_DEPLOY_PORT:-22}}"; remote_dir="${remote_dir:-${RBF_DEPLOY_REMOTE_DIR:-/tmp/rbf-release}}"
   identity_file="${identity_file:-${RBF_DEPLOY_IDENTITY_FILE:-}}"
+  rotate_deploy_key="${RBF_DEPLOY_ROTATE_SSH_KEY:-$rotate_deploy_key}"
   install_root="${install_root:-${RBF_DEPLOY_INSTALL_ROOT:-}}"; env_source="${env_source:-${RBF_DEPLOY_ENV_SOURCE:-}}"
   app_hostname="${app_hostname:-${RBF_DEPLOY_APP_HOSTNAME:-}}"; letsencrypt_email="${letsencrypt_email:-${RBF_DEPLOY_LETSENCRYPT_EMAIL:-}}"
 fi
@@ -128,6 +130,7 @@ if [[ "$interactive" == true ]]; then
   fi
 fi
 [[ -n "$host" ]] || usage; user="${user:-rbfadmin}"
+case "$rotate_deploy_key" in true|false) ;; *) echo "[origin] RBF_DEPLOY_ROTATE_SSH_KEY must be true or false." >&2; exit 2;; esac
 discover_identity_file
 if [[ -n "$identity_file" ]]; then
   identity_file="$(rbf_origin_resolve_identity_path "$identity_file")"
@@ -151,6 +154,7 @@ RBF_DEPLOY_USER=$(printf '%q' "$user")
 RBF_DEPLOY_PORT=$(printf '%q' "$port")
 RBF_DEPLOY_REMOTE_DIR=$(printf '%q' "$remote_dir")
 RBF_DEPLOY_IDENTITY_FILE=$(printf '%q' "$identity_file")
+RBF_DEPLOY_ROTATE_SSH_KEY=$(printf '%q' "$rotate_deploy_key")
 RBF_DEPLOY_INSTALL_ROOT=$(printf '%q' "$install_root")
 RBF_DEPLOY_ENV_SOURCE=$(printf '%q' "$env_source")
 RBF_DEPLOY_APP_HOSTNAME=$(printf '%q' "$app_hostname")
@@ -243,6 +247,50 @@ if ! ssh "${ssh_args[@]}" "$user@$host" "sudo -n /usr/bin/true"; then
   ssh "${ssh_args[@]}" "$user@$host" "sudo -n /usr/bin/true" \
     || { echo "[origin] rbfadmin was provisioned, but key-only access is still not operational." >&2; exit 1; }
 fi
+rotate_deployment_key() (
+  set -Eeuo pipefail
+  [[ "$rotate_deploy_key" == true ]] || return 0
+  if [[ -z "$identity_file" ]]; then
+    echo "[origin] SSH key rotation skipped: deployment uses an agent/configuration identity; configure RBF_DEPLOY_IDENTITY_FILE to enable rotation." >&2
+    return 0
+  fi
+  command -v ssh-keygen >/dev/null 2>&1 || { echo "[origin] ssh-keygen is required for SSH key rotation." >&2; exit 1; }
+  local rotation_dir remote_rotation old_public replacement_identity
+  rotation_dir="$(mktemp -d /tmp/rbf-origin-key-rotation.XXXXXX)"
+  remote_rotation="/tmp/rbf-ssh-key-rotation-$$"
+  replacement_identity="$rotation_dir/replacement"
+  cleanup_rotation() {
+    ssh "${ssh_args[@]}" "$user@$host" "rm -rf -- $(printf '%q' "$remote_rotation")" >/dev/null 2>&1 || true
+    rm -rf -- "$rotation_dir"
+  }
+  trap cleanup_rotation EXIT
+  old_public="${identity_file}.pub"
+  if [[ ! -f "$old_public" ]]; then
+    old_public="$rotation_dir/old.pub"
+    ssh-keygen -y -f "$identity_file" > "$old_public"
+    chmod 0600 "$old_public"
+  fi
+  ssh-keygen -q -t ed25519 -a 100 -N "" -C "rbf-deployment-$user@$host" -f "$replacement_identity"
+  chmod 0600 "$replacement_identity"; chmod 0644 "$replacement_identity.pub"
+  echo "$origin_prefix Rotating deployment SSH key (old key remains until replacement access is verified)."
+  ssh "${ssh_args[@]}" "$user@$host" "mkdir -p -- $(printf '%q' "$remote_rotation")"
+  scp "${scp_args[@]}" "$ROOT_DIR/infrastructure/scripts/setup/rotate-ssh-admin-key.sh" "$old_public" "$replacement_identity.pub" \
+    "$user@$host:$remote_rotation/"
+  rotate_add=(sudo bash "$remote_rotation/rotate-ssh-admin-key.sh" "$user" "$remote_rotation/old.pub" "$remote_rotation/new.pub" add)
+  rotate_add_line=""; for word in "${rotate_add[@]}"; do printf -v quoted ' %q' "$word"; rotate_add_line+="$quoted"; done
+  ssh "${ssh_args[@]}" "$user@$host" "mv -- $(printf '%q' "$remote_rotation/$(basename "$old_public")") $(printf '%q' "$remote_rotation/old.pub"); mv -- $(printf '%q' "$remote_rotation/$(basename "$replacement_identity.pub")") $(printf '%q' "$remote_rotation/new.pub"); $rotate_add_line"
+  replacement_ssh_args=(-o BatchMode=yes -o IdentitiesOnly=yes -p "$port" -i "$replacement_identity")
+  echo "$origin_prefix Verifying replacement SSH key access."
+  ssh "${replacement_ssh_args[@]}" "$user@$host" "sudo -n /usr/bin/true" \
+    || { echo "[origin] Replacement key was installed but could not authenticate; old key was retained." >&2; exit 1; }
+  install -m 0600 "$replacement_identity" "$identity_file"
+  install -m 0644 "$replacement_identity.pub" "${identity_file}.pub"
+  rotate_remove=(sudo bash "$remote_rotation/rotate-ssh-admin-key.sh" "$user" "$remote_rotation/old.pub" "$remote_rotation/new.pub" remove)
+  rotate_remove_line=""; for word in "${rotate_remove[@]}"; do printf -v quoted ' %q' "$word"; rotate_remove_line+="$quoted"; done
+  ssh "${replacement_ssh_args[@]}" "$user@$host" "$rotate_remove_line"
+  echo "$origin_prefix Deployment SSH key rotation completed (fingerprint: $(ssh-keygen -lf "$replacement_identity.pub" | awk '{print $2}'))."
+)
+rotate_deployment_key
 if [[ -z "$artifact" ]]; then
   args=(--output-dir "$ROOT_DIR/release"); [[ -z "$source_revision" ]] || args+=(--source-revision "$source_revision")
   "$SCRIPT_DIR/build-artifact.sh" "${args[@]}"
