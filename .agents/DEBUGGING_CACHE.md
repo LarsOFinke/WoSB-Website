@@ -59,8 +59,8 @@ output under `.diagnostics/`.
 - Handle multipart endpoints separately: the OpenAPI media type and generated `consumes`
   must match. A missing/broken multipart body is 400, wrong Content-Type is 415, and a
   size limit is 413; none of these transport errors may become 500 through the generic handler.
-- Cookie settings intentionally do not open automatically without a saved decision while no
-  optional integration is active.
+- Cookie settings open automatically without a saved decision; initialization failures keep
+  the settings controls visible in a fail-closed state.
 - For API 500s, correlate the response `X-Request-Id` with
   `api_error status=500 request_id=...` in Surefire/server output and read the first
   application-owned stack frame. The generic response body is not the root cause. Enable

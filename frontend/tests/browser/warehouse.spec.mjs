@@ -7,6 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('moderator filters and creates a linked-member warehouse entry', async ({ page }) => {
   let createdPayload
+  let assignmentPayload
   let items = []
   await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
     json: { id: 7, username: 'quartermaster', display_name: 'Quartermaster', role: 'moderator', is_active: true },
@@ -65,6 +66,18 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
     port: 'Tortuga', resource: 'Iron', amount: 1250, reserved: false,
     collection_status: 'up_for_collection',
   })
+
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/port-assignments\/1$/, async (route) => {
+    assignmentPayload = route.request().postDataJSON()
+    await route.fulfill({ json: { fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', port_id: 1, port_name: 'Tortuga', assignee_user_id: 17, assignee_name: 'Blackwater', updated_at: '2030-01-15T12:00:00' } })
+  })
+  await page.getByRole('button', { name: 'Manage pickup assignments' }).click()
+  const assignmentDialog = page.getByRole('dialog', { name: 'Port pickup assignments' })
+  await expect(assignmentDialog).toBeVisible()
+  await assignmentDialog.locator('select').nth(1).selectOption('17')
+  await expect.poll(() => assignmentPayload).toMatchObject({ fleet_id: 2, assignee_user_id: 17 })
+  await assignmentDialog.getByRole('button', { name: 'Close', exact: true }).last().click()
+  await expect(assignmentDialog).toBeHidden()
 })
 
 test('ordinary member can browse warehouse without mutation controls', async ({ page }) => {

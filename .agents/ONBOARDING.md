@@ -115,9 +115,9 @@ release notes, and commits are the durable history.
   `frontend/tests/browser/` and mock only `/api/` requests.
 - Executable Java and frontend JavaScript files are limited to 420 lines. Only the
   documented declarative locale catalogs are exempt.
-- Cookie settings do not open automatically without an existing decision while no
-  optional cookie/tracking integration is active. Manual entry remains available
-  through the footer and privacy center.
+- Cookie settings open automatically when the server reports no existing decision,
+  and remain visible in a fail-closed settings state when the consent request fails.
+  Manual entry remains available through the footer and privacy center.
 - Existing databases retain the unchanged Flyway V1 history; new databases start
   through B2 and the modular V3–V7 files. New changes from V8 onward are added as
   small domain-specific forward migrations.

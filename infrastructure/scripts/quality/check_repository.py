@@ -126,6 +126,12 @@ for relative in repository_files:
     if path in scan_exclusions: continue
     if path in allowed_legacy or path.suffix.lower() in {'.png','.jpg','.jpeg','.webp','.ico','.zip','.gz','.age','.woff','.woff2'}: continue
     source=path.read_text(encoding='utf-8',errors='ignore').lower()
+    key_patterns = (
+        r'-----begin (?:[a-z0-9]+ )?(?:private|public) key-----\s+[a-z0-9+/=\s]{100,}-----end (?:[a-z0-9]+ )?(?:private|public) key-----',
+        r'(?m)^\s*ssh-(?:rsa|ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|dss)\s+[a-z0-9+/]{40,}={0,2}(?:\s+\S+)?\s*$',
+    )
+    require(not any(re.search(pattern, source) for pattern in key_patterns),
+            f'key material must not be committed: {path.relative_to(ROOT)}')
     for forbidden in ('fastapi','uvicorn','rbf-seed','secure-api'):
         require(forbidden not in source,f'legacy runtime token {forbidden!r} in {path.relative_to(ROOT)}')
     if 'alembic' in source:

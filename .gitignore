@@ -59,6 +59,9 @@ infrastructure/first-run-credentials.txt
 # Credentials, private keys and local trust stores
 *.pem
 *.key
+*.private
+*.openssh
+*.pub
 *.p12
 *.pfx
 *.jks

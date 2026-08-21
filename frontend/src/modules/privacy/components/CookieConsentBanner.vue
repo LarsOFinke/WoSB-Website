@@ -22,10 +22,12 @@ onMounted(initialize)
 <template>
   <Teleport to="body">
     <section
-      v-if="state.visible"
+      v-if="state.visible || state.loading"
       class="cookie-consent"
+      :class="{ 'is-loading': state.loading }"
       role="dialog"
       aria-modal="false"
+      :aria-busy="state.loading ? 'true' : 'false'"
       :aria-labelledby="'cookie-consent-title'"
     >
       <div class="cookie-consent__body">
@@ -122,6 +124,10 @@ onMounted(initialize)
   background: var(--panel-solid, #111820);
   box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.45);
   pointer-events: auto;
+}
+
+.cookie-consent.is-loading .cookie-consent__body {
+  pointer-events: none;
 }
 
 .cookie-consent__eyebrow,

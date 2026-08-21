@@ -11,9 +11,14 @@ const privacyCenter = await readFile(
   new URL('../src/modules/privacy/pages/PrivacyCenterPage.vue', import.meta.url),
   'utf8',
 )
+const banner = await readFile(
+  new URL('../src/modules/privacy/components/CookieConsentBanner.vue', import.meta.url),
+  'utf8',
+)
 
 test('missing consent decision opens the cookie dialog automatically', () => {
   assert.match(consentComposable, /state\.visible\s*=\s*!Boolean\(payload\?\.has_decision\)/)
+  assert.match(banner, /v-if="state\.visible \|\| state\.loading"/)
 })
 
 test('failed consent initialization fails closed and keeps controls reachable', () => {

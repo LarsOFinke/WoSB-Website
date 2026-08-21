@@ -84,6 +84,18 @@ function endPointer(event) {
     drag.value = null
     emit('history')
   }
+  // Browsers may coalesce the final pointermove or deliver pointerup directly
+  // to the window after capture. Preserve the final coordinate so a short,
+  // intentional stroke is not silently discarded.
+  if (event?.type === 'pointerup' && freehandPoints.value.length) {
+    const current = point(event)
+    const points = freehandPoints.value
+    const previousX = points.at(-2)
+    const previousY = points.at(-1)
+    if (Math.hypot(current.x - previousX, current.y - previousY) > 0.004) {
+      freehandPoints.value = [...points, current.x, current.y]
+    }
+  }
   if (freehandPoints.value.length >= 4) {
     emit('update:document', { ...props.document, objects: [...props.document.objects, createFreehand(freehandPoints.value, props.color)] })
     emit('history')

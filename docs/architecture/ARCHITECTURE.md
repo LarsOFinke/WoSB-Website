@@ -28,7 +28,7 @@ The gateway is the only public container. PostgreSQL binds to loopback for admin
 generator creates immutable transport records under `api/dto`; it does not create
 a runtime contract layer. Module-owned `@RestController` classes own their Spring
 MVC mappings and bind/validate generated request DTOs directly.
-`audit_controller_contract.py` compares all 197 controller routes, parameters,
+`audit_controller_contract.py` compares all 198 controller routes, parameters,
 request bodies, multipart media types and success response types against OpenAPI.
 The structural audit rejects missing/duplicate mappings and controller bypasses of
 the service layer.

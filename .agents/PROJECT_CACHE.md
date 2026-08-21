@@ -249,9 +249,9 @@ a directory name alone.
 - The release workflow keeps PostgreSQL data under the shared installation root, creates
   coordinated backups before updates, lets Flyway migrate, and restores release and backup
   on failed activation. Never delete volumes or data directories as an attempted fix.
-- The cookie-consent UI does not open automatically without a saved decision while no
-  optional cookie/tracking integration is active. Manual opening remains available through
-  the footer and privacy center.
+- The cookie-consent UI opens automatically without a saved decision and remains reachable
+  in a fail-closed settings state when initialization fails. Manual opening remains available
+  through the footer and privacy center.
 - API usage and security boundaries are documented in `docs/reference/API.md`; the complete
   endpoint index is generated from `openapi/openapi.json` into `docs/reference/API_ENDPOINTS.md`.
 - Historical audit snapshots are no longer maintained as a second documentation source.

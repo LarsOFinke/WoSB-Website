@@ -139,10 +139,10 @@ session after deployment; logging in again is necessary only when the session ha
 
 ## 10. Cookie settings are not shown automatically
 
-This is expected while no optional cookie or tracking integration is active. A missing stored
-decision and an error while fetching the decision do not open the dialog automatically. This
-prevents merely displaying the banner from creating a consent cookie itself. Settings remain
-available through the footer and privacy center. Do not share production cookies in tickets.
+If the consent endpoint reports no stored decision, the dialog opens automatically. If the
+endpoint fails, the dialog remains visible with settings open so optional processing stays
+disabled and the user can retry or make an explicit choice. Settings also remain available
+through the footer and privacy center. Do not share production cookies in tickets.
 
 ## 11. Versions do not match
 
