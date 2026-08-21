@@ -28,13 +28,21 @@ usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [-
 discover_identity_file() {
   [[ -n "$identity_file" ]] && return 0
   [[ -n "${HOME:-}" && -n "$user" ]] || return 0
-  local candidate="$HOME/.ssh/$user"
-  [[ -f "$candidate" ]] && identity_file="$candidate"
+  local candidate
+  for candidate in "$(rbf_origin_default_identity_path "$target_environment" "$user")" "$HOME/.ssh/$user"; do
+    if [[ -n "$candidate" && -f "$candidate" ]]; then
+      identity_file="$candidate"
+      return 0
+    fi
+  done
 }
 configure_deploy_identity() {
-  local answer suggested="${identity_file:-${HOME:-}/.ssh/$user}"
-  read -r -p "SSH identity file for $user [${suggested}]: " answer
-  identity_file="${answer:-$suggested}"
+  local answer suggested
+  suggested="$(rbf_origin_configure_identity_suggestion \
+    "$ROOT_DIR" "$identity_file" "$target_environment" "$user")"
+  read -r -p "SSH identity outside the repository for $user [${suggested}]: " answer
+  identity_file="$(rbf_origin_resolve_identity_path "${answer:-$suggested}")"
+  rbf_origin_require_external_identity "$ROOT_DIR" "$identity_file" "Deployment SSH identity"
   if [[ -n "$identity_file" && ! -f "$identity_file" ]]; then
     read -r -p "Deploy key is missing. Generate a dedicated Ed25519 key without a passphrase now? [Y/n]: " answer
     case "${answer,,}" in
@@ -51,15 +59,18 @@ configure_deploy_identity() {
   fi
 }
 configure_bootstrap_access() {
-  local answer suggested=""
+  local answer
   read -r -p "Initial SSH user for a fresh target server (blank = not required): " answer
   bootstrap_user="$answer"
   [[ -n "$bootstrap_user" ]] || return 0
   [[ "$bootstrap_user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] \
     || { echo "[origin] Invalid bootstrap username: $bootstrap_user" >&2; exit 2; }
-  if [[ -f "${HOME:-}/.ssh/$bootstrap_user" ]]; then suggested="${HOME:-}/.ssh/$bootstrap_user"; fi
-  read -r -p "Identity for $bootstrap_user (blank = SSH configuration/agent/password) [${suggested}]: " answer
-  bootstrap_identity_file="${answer:-$suggested}"
+  read -r -p "External identity for $bootstrap_user (blank = SSH configuration/agent/password): " answer
+  bootstrap_identity_file="$answer"
+  if [[ -n "$bootstrap_identity_file" ]]; then
+    bootstrap_identity_file="$(rbf_origin_resolve_identity_path "$bootstrap_identity_file")"
+    rbf_origin_require_external_identity "$ROOT_DIR" "$bootstrap_identity_file" "Bootstrap SSH identity"
+  fi
 }
 initial_argument_count=$#
 while (($#)); do case "$1" in
@@ -118,6 +129,14 @@ if [[ "$interactive" == true ]]; then
 fi
 [[ -n "$host" ]] || usage; user="${user:-rbfadmin}"
 discover_identity_file
+if [[ -n "$identity_file" ]]; then
+  identity_file="$(rbf_origin_resolve_identity_path "$identity_file")"
+  rbf_origin_require_external_identity "$ROOT_DIR" "$identity_file" "Deployment SSH identity"
+fi
+if [[ -n "$bootstrap_identity_file" ]]; then
+  bootstrap_identity_file="$(rbf_origin_resolve_identity_path "$bootstrap_identity_file")"
+  rbf_origin_require_external_identity "$ROOT_DIR" "$bootstrap_identity_file" "Bootstrap SSH identity"
+fi
 [[ "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo "[origin] Invalid SSH username: $user" >&2; exit 2; }
 [[ -z "$bootstrap_user" || "$bootstrap_user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo "[origin] Invalid bootstrap username: $bootstrap_user" >&2; exit 2; }
 [[ -z "$bootstrap_identity_file" || -f "$bootstrap_identity_file" ]] || { echo "[origin] Bootstrap identity file is missing: $bootstrap_identity_file" >&2; exit 2; }
@@ -209,10 +228,11 @@ bootstrap_deploy_access() (
 if ! ssh "${ssh_args[@]}" "$user@$host" "sudo -n /usr/bin/true"; then
   if [[ -z "$bootstrap_user" && -t 0 && -t 1 ]]; then
     read -r -p "Initial SSH user for the one-time rbfadmin setup: " bootstrap_user
-    bootstrap_identity_default=""
-    if [[ -f "${HOME:-}/.ssh/$bootstrap_user" ]]; then bootstrap_identity_default="${HOME:-}/.ssh/$bootstrap_user"; fi
-    read -r -p "Identity for $bootstrap_user (blank = SSH configuration/agent/password) [${bootstrap_identity_default}]: " bootstrap_identity_file
-    bootstrap_identity_file="${bootstrap_identity_file:-$bootstrap_identity_default}"
+    read -r -p "External identity for $bootstrap_user (blank = SSH configuration/agent/password): " bootstrap_identity_file
+    if [[ -n "$bootstrap_identity_file" ]]; then
+      bootstrap_identity_file="$(rbf_origin_resolve_identity_path "$bootstrap_identity_file")"
+      rbf_origin_require_external_identity "$ROOT_DIR" "$bootstrap_identity_file" "Bootstrap SSH identity"
+    fi
   fi
   [[ "$bootstrap_user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] \
     || { echo "[origin] Key access is missing; --bootstrap-user USER is required." >&2; exit 1; }

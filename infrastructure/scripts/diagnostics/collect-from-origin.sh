@@ -112,6 +112,10 @@ host="${RBF_DEPLOY_HOST:-}"; user="${RBF_DEPLOY_USER:-rbfadmin}"
 port="${RBF_DEPLOY_PORT:-22}"; identity_file="${RBF_DEPLOY_IDENTITY_FILE:-}"
 install_root="${RBF_DEPLOY_INSTALL_ROOT:-/srv/rbf}"
 if [[ -z "$identity_file" && -n "${HOME:-}" && -f "$HOME/.ssh/$user" ]]; then identity_file="$HOME/.ssh/$user"; fi
+if [[ -n "$identity_file" ]]; then
+  identity_file="$(rbf_origin_resolve_identity_path "$identity_file")"
+  rbf_origin_require_external_identity "$ROOT_DIR" "$identity_file" "Diagnostic SSH identity"
+fi
 [[ -n "$host" ]] || { echo '[debug] RBF_DEPLOY_HOST is missing from the origin configuration.' >&2; exit 1; }
 [[ "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo '[debug] Invalid SSH user.' >&2; exit 2; }
 [[ "$port" =~ ^[0-9]+$ && "$port" -le 65535 ]] || { echo '[debug] Invalid SSH port.' >&2; exit 2; }

@@ -71,6 +71,12 @@ grep -q 'provision-ssh-admin.sh' "$ROOT_DIR/infrastructure/scripts/release/deplo
 grep -q 'bootstrap_user.*== root' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_deploy_identity' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'configure_bootstrap_access' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'rbf_origin_default_identity_path' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q 'SSH public-key material must be supplied from outside the repository' \
+  "$ROOT_DIR/infrastructure/scripts/setup/provision-ssh-admin.sh"
+grep -q 'External identity for \$bootstrap_user (blank = SSH configuration/agent/password):' \
+  "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh" \
+  || exit 1
 
 grep -q -- '--target-environment "$target_environment"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'DEPLOYMENT_ENVIRONMENT' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh"

@@ -181,6 +181,9 @@ a directory name alone.
   `deploy.sh`, `update.sh`, and diagnostics; `.env.origin.production` is loaded only
   after explicit `--production`. Do not allow automatic legacy fallback selection
   to `.env.origin`.
+- Origin SSH identity material is external to the repository. Interactive relative names
+  resolve below `$HOME/.ssh`; deployment, diagnostics, and build migration fail closed for
+  any identity path that resolves below the source tree.
 - Internal setup is split across `infrastructure/scripts/setup/{options,workflow,main}.sh`.
 - Host helpers live under `infrastructure/scripts/lib/host/` (packages, storage,
   firewall, TLS, control); scripts must be robust, idempotent, and use clear exit

@@ -40,7 +40,7 @@ Options:
   --ssh-admin-username NAME
                            Host account for key-only SSH administration (default: rbfadmin)
   --ssh-admin-public-key-file PATH
-                           OpenSSH public-key file; provisions the host account when supplied
+                           External OpenSSH public-key file; repository paths are rejected
   --tls-mode MODE           auto, letsencrypt or self-signed (default: auto)
   --letsencrypt-email MAIL  Contact email required for public certificates
   --letsencrypt-staging     Use the Let's Encrypt staging CA for testing

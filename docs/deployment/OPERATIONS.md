@@ -90,7 +90,9 @@ From the trusted origin system, the preferred entry point is:
 By default, the wrapper uses `.env.origin.test`, which is maintained by
 `deploy.sh --configure`. Production diagnostics require `--production` and use
 `.env.origin.production`; each profile contains its own SSH key/host context and
-`sudo -n`. Areas are `overview`, `staff`, `calendar`, `api`, `security`, `gateway`,
+`sudo -n`. Identity paths are external credentials: bare names resolve below
+`$HOME/.ssh`, and any path inside the repository is rejected before SSH runs. Areas are
+`overview`, `staff`, `calendar`, `api`, `security`, `gateway`,
 `database`, `deployment`, and `all`; categories are `errors`, `warnings`, `http-500`,
 `auth`, `migration`, and `all`. Time window and line limit are validated and bounded.
 `--match` adds a literal search string.

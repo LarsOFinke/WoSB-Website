@@ -38,6 +38,19 @@ with `./deploy.sh --configure`; configure production deliberately only with
 access and `sudo -n`; incomplete target provisioning therefore fails immediately without
 a password prompt.
 
+Deployment identities are never stored below the repository. The configuration dialog uses
+`$HOME/.ssh/rbf-deploy-<target>-<user>` by default; a bare name entered at the prompt is
+resolved below `$HOME/.ssh`, and repository-local paths are rejected before a key can be
+read or generated. Origin profiles contain only the resulting external path, never key
+material. The same boundary applies to bootstrap, diagnostics, and build-restore identities.
+When `--configure` reads an older profile that points below the repository, it ignores that
+legacy value and offers the external target-specific default so the replacement key can be
+generated safely.
+For a fresh target, the initial SSH account intentionally has no default identity: the new
+deployment key cannot authenticate that account until its public key is installed. Leave the
+bootstrap identity blank to use the account's SSH configuration, agent, or password, or enter
+a separate pre-authorized external key explicitly.
+
 `./infrastructure/scripts/diagnostics/debug.sh` follows the same target selection: test
 without a flag, production with `--production`. It uses the dedicated SSH key associated
 with that target for read-only target-system diagnostics. Unlike deployment, it streams a
@@ -126,15 +139,17 @@ Before disabling global root/password SSH access, test the new access in a secon
 
 The origin dispatcher uses `RBF_DEPLOY_USER` and `RBF_DEPLOY_IDENTITY_FILE` from the selected
 `.env.origin.test` or `.env.origin.production` profile (file mode `0600`). Without explicit
-values, it automatically uses `rbfadmin` and, when available, `$HOME/.ssh/rbfadmin`; for a
-different target user, `$HOME/.ssh/<target-user>` is checked accordingly. The private key
-remains exclusively on the origin machine. All SSH/SCP calls run with `BatchMode=yes` and
+values, it automatically uses `rbfadmin` and checks the target-specific
+`$HOME/.ssh/rbf-deploy-<target>-<target-user>` before the legacy
+`$HOME/.ssh/<target-user>`. The private key remains exclusively on the origin machine,
+outside the source tree. Relative configured names are rooted below `$HOME/.ssh`, while
+any resolved repository path fails closed. All SSH/SCP calls run with `BatchMode=yes` and
 `IdentitiesOnly=yes`; a missing or incorrect key therefore fails immediately rather than
 asking for a password. Before switching the dispatcher, verify access in a second session:
 
 ```bash
 ssh -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
-  -o PasswordAuthentication=no -i ~/.ssh/rbfadmin rbfadmin@target true
+  -o PasswordAuthentication=no -i ~/.ssh/rbf-deploy-production-rbfadmin rbfadmin@target true
 ```
 
 ## Install atomically

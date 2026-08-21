@@ -130,6 +130,10 @@ install_root="${RBF_DEPLOY_INSTALL_ROOT:-/srv/rbf}"
 if [[ -z "$identity_file" && -n "${HOME:-}" && -f "$HOME/.ssh/$user" ]]; then
   identity_file="$HOME/.ssh/$user"
 fi
+if [[ -n "$identity_file" ]]; then
+  identity_file="$(rbf_origin_resolve_identity_path "$identity_file")"
+  rbf_origin_require_external_identity "$ROOT_DIR" "$identity_file" "Build-restore SSH identity"
+fi
 [[ -n "$host" && ! "$host" =~ [[:space:]] ]] || fail 'Invalid or missing deployment host.'
 [[ "$user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || fail 'Invalid SSH user.'
 [[ "$port" =~ ^[0-9]+$ && "$port" -le 65535 ]] || fail 'Invalid SSH port.'

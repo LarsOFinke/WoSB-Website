@@ -20,7 +20,18 @@ require_command install
 require_command sshd
 require_command visudo
 require_command mktemp
+require_command realpath
 require_command systemctl
+
+repository_root="$(realpath -m -- "$INFRA_DIR/..")"
+resolved_public_key="$(realpath -- "$public_key_file")"
+if [[ -e "$repository_root/.git" ]]; then
+  case "$resolved_public_key" in
+    "$repository_root"|"$repository_root"/*)
+      die "SSH public-key material must be supplied from outside the repository."
+      ;;
+  esac
+fi
 
 public_key="$(tr -d '\r' < "$public_key_file")"
 [[ "$public_key" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)[[:space:]]+[A-Za-z0-9+/=]+([[:space:]]+[^[:space:]]+)?$ ]] \

@@ -108,6 +108,8 @@ release notes, and commits are the durable history.
   bootstrap account.
 - Subsequent deployments use the configured key and `sudo -n`; the private bootstrap
   account is not persisted.
+- Origin SSH identities always live outside the repository. Bare configured names resolve
+  below `$HOME/.ssh`; deployment, diagnostics, and migration reject repository-local paths.
 - Central API failures appear as `api_error`; authentication and authorization
   rejections as `security_401` and `security_403`. Do not add payloads or secrets to logs.
 - `ApplicationIntegrationTest` tests the running Spring application over real HTTP
