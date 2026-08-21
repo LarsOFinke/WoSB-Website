@@ -35,7 +35,7 @@ const {
       <main class="strategy-view-content">
         <StrategyDocument
           ref="canvas" :title="strategy.title" :description="strategy.description" :document="document"
-          :background-url="backgroundUrl" :ships="ships" :builds="builds" :guides="guides" read-only
+          :background-url="backgroundUrl" :background-settings="document.background" :ships="ships" :builds="builds" :guides="guides" read-only
         />
       </main>
     </template>

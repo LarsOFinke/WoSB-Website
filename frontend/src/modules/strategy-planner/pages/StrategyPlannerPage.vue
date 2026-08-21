@@ -12,7 +12,7 @@ const {
   markerBuilds, selectedBuilds,
   mode, color, marker, formation, textValue, loading, saving, error, status, canvas,
   backgroundUrl, canUndo, canRedo, shareUrl, STRATEGY_COLORS,
-  setDocument, recordHistory, undo, redo, addShip, updateMarkerShipReference, updateSelectedShipReference,
+  setDocument, recordHistory, undo, redo, addShip, updateMarkerShipReference, updateSelectedShipReference, updateBackgroundSettings,
   addLine, addFormation, addText,
   deleteSelected, useBackground, save, togglePublication, copyShareLink, downloadSvg, printStrategy,
 } = useStrategyPlannerPage()
@@ -59,10 +59,11 @@ const toolsOpen = ref(true)
       <StrategyInspector
         v-show="toolsOpen" :strategy="strategy" :background="background" :ships="ships" :guides="guides"
         :marker="marker" :marker-builds="markerBuilds" :selected-object="selectedObject"
-        :selected-builds="selectedBuilds" :share-url="shareUrl" :colors="STRATEGY_COLORS"
+        :selected-builds="selectedBuilds" :share-url="shareUrl" :colors="STRATEGY_COLORS" :background-settings="document.background"
         @close="toolsOpen = false" @use-background="useBackground"
         @update-marker-ship="updateMarkerShipReference" @add-ship="addShip"
         @update-selected-ship="updateSelectedShipReference" @record-history="recordHistory"
+        @update-background-settings="updateBackgroundSettings"
         @delete-selected="deleteSelected" @toggle-publication="togglePublication" @copy-share-link="copyShareLink"
       />
 
@@ -72,7 +73,7 @@ const toolsOpen = ref(true)
           v-else ref="canvas" :title="strategy.title || t('strategyPlanner.title')"
           :description="strategy.description" :document="document" :background-url="backgroundUrl"
           :ships="ships" :builds="builds" :guides="guides" :selected-id="selectedId"
-          :mode="mode" :color="color"
+          :mode="mode" :color="color" :background-settings="document.background"
           @update:document="setDocument" @select="selectedId = $event" @history="recordHistory"
         >
           <template #after-canvas>

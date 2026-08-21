@@ -10,7 +10,7 @@ import {
   createFormation, createLine, createShipMarker, createText, emptyStrategyDocument,
   buildMatchesShip, buildsForShip, invalidBuildMarkers, invalidShipMarkers,
   parseStrategyDocument, repairShipMarkerReferences, serializeStrategyDocument,
-  strategyShareUrl, STRATEGY_COLORS,
+  strategyShareUrl, STRATEGY_COLORS, normalizeBackgroundSettings,
 } from '../domain/strategyDocument.js'
 import { downloadStrategySvg } from '../strategySvgExport.js'
 
@@ -61,6 +61,9 @@ export function useStrategyPlannerPage() {
   }
 
   function setDocument(value) { document.value = value }
+  function updateBackgroundSettings(value) {
+    document.value = { ...document.value, background: normalizeBackgroundSettings(value) }
+  }
   function commitDocument(value) { document.value = value; recordHistory() }
   function undo() {
     if (!canUndo.value) return
@@ -219,6 +222,7 @@ export function useStrategyPlannerPage() {
     mode, color, marker, formation, textValue, loading, saving, error, status, canvas,
     isEditing, backgroundUrl, canUndo, canRedo, shareUrl, STRATEGY_COLORS,
     setDocument, recordHistory, undo, redo, addShip, updateMarkerShipReference, updateSelectedShipReference,
+    updateBackgroundSettings,
     addLine, addFormation, addText,
     deleteSelected, useBackground, save, togglePublication, copyShareLink, downloadSvg, printStrategy,
   }

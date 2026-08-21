@@ -1,6 +1,9 @@
 export const STRATEGY_DOCUMENT_VERSION = 2
 const LEGACY_STRATEGY_DOCUMENT_VERSION = 1
 export const STRATEGY_COLORS = ['#f4c76b', '#ef6461', '#5cc8ff', '#65d68a', '#ffffff']
+export const DEFAULT_BACKGROUND_SETTINGS = Object.freeze({
+  fit: 'stretch', scale: 1, opacity: 0.82, brightness: 1, contrast: 1,
+})
 const STRATEGY_OBJECT_FIELDS = [
   'id', 'type', 'x', 'y', 'x2', 'y2', 'width', 'height', 'rotation', 'scale', 'color', 'text',
   'shipId', 'shipName', 'shipType', 'shipRate', 'playerName', 'buildId', 'guideId', 'formation', 'points',
@@ -19,7 +22,23 @@ function objectId(type) {
 }
 
 export function emptyStrategyDocument() {
-  return { version: STRATEGY_DOCUMENT_VERSION, objects: [] }
+  return { version: STRATEGY_DOCUMENT_VERSION, objects: [], background: { ...DEFAULT_BACKGROUND_SETTINGS } }
+}
+
+export function normalizeBackgroundSettings(value) {
+  const source = value && typeof value === 'object' ? value : {}
+  const fit = ['stretch', 'contain', 'cover'].includes(source.fit) ? source.fit : DEFAULT_BACKGROUND_SETTINGS.fit
+  const clamp = (number, minimum, maximum, fallback) => {
+    const parsed = Number(number)
+    return Number.isFinite(parsed) ? Math.max(minimum, Math.min(maximum, parsed)) : fallback
+  }
+  return {
+    fit,
+    scale: clamp(source.scale, 0.5, 2, DEFAULT_BACKGROUND_SETTINGS.scale),
+    opacity: clamp(source.opacity, 0.1, 1, DEFAULT_BACKGROUND_SETTINGS.opacity),
+    brightness: clamp(source.brightness, 0.5, 1.5, DEFAULT_BACKGROUND_SETTINGS.brightness),
+    contrast: clamp(source.contrast, 0.5, 2, DEFAULT_BACKGROUND_SETTINGS.contrast),
+  }
 }
 
 export function parseStrategyDocument(value) {
@@ -28,6 +47,7 @@ export function parseStrategyDocument(value) {
     if (![LEGACY_STRATEGY_DOCUMENT_VERSION, STRATEGY_DOCUMENT_VERSION].includes(parsed?.version) || !Array.isArray(parsed.objects)) return emptyStrategyDocument()
     return {
       version: STRATEGY_DOCUMENT_VERSION,
+      background: normalizeBackgroundSettings(parsed.background),
       objects: parsed.objects.map((item) => {
         const normalized = { ...item, rotation: Number(item.rotation ?? 0), scale: Number(item.scale ?? 1) }
         if (parsed.version === LEGACY_STRATEGY_DOCUMENT_VERSION && normalized.type === 'formation' && normalized.formation === 'circle') {
@@ -58,7 +78,7 @@ export function serializeStrategyDocument(document) {
     }
     return serialized
   }) : []
-  return JSON.stringify({ version: STRATEGY_DOCUMENT_VERSION, objects })
+  return JSON.stringify({ version: STRATEGY_DOCUMENT_VERSION, background: normalizeBackgroundSettings(document?.background), objects })
 }
 
 export function invalidShipMarkers(document) {

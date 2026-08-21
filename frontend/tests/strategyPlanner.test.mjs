@@ -18,12 +18,14 @@ import {
   snapshotStrategyObject,
   strategyShareUrl,
   STRATEGY_DOCUMENT_VERSION,
+  normalizeBackgroundSettings,
 } from '../src/modules/strategy-planner/domain/strategyDocument.js'
 import { strategyCanvasPoint } from '../src/modules/strategy-planner/domain/canvasCoordinates.js'
 import { strategyFormationPath, strategyLineGeometry } from '../src/modules/strategy-planner/domain/strategyGeometry.js'
 
 const toolbarSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyToolbar.vue', import.meta.url), 'utf8')
 const inspectorSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyInspector.vue', import.meta.url), 'utf8')
+const objectEditorSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyObjectEditor.vue', import.meta.url), 'utf8')
 const canvasSource = await readFile(new URL('../src/modules/strategy-planner/components/StrategyCanvas.vue', import.meta.url), 'utf8')
 const plannerPageSource = await readFile(new URL('../src/modules/strategy-planner/pages/StrategyPlannerPage.vue', import.meta.url), 'utf8')
 
@@ -34,7 +36,7 @@ test('strategy tools are grouped into independently collapsible command and insp
   assert.match(inspectorSource, /strategy-selection-section/)
   assert.match(inspectorSource, /strategy-transform-section/)
   assert.doesNotMatch(inspectorSource.match(/strategy-selection-section[\s\S]*?<\/details>/)?.[0] || '', /type="range"/)
-  assert.match(inspectorSource, /strategy-text-color-field/)
+  assert.match(objectEditorSource, /strategy-text-color-field/)
   assert.match(plannerPageSource, /class="strategy-tools-toggle"/)
   assert.match(plannerPageSource, /aria-controls="strategy-tool-rail"/)
   assert.match(plannerPageSource, /:aria-expanded="toolsOpen"/)
@@ -60,6 +62,14 @@ test('strategy documents preserve the drawing layer independently', () => {
   assert.equal(restored.version, STRATEGY_DOCUMENT_VERSION)
   assert.equal(restored.objects[0].formation, 'wedge')
   assert.equal(serialized.includes('vueOnlyState'), false)
+})
+
+test('strategy documents persist bounded background presentation settings', () => {
+  const document = emptyStrategyDocument()
+  document.background = { fit: 'cover', scale: 3, opacity: 0, brightness: 0.2, contrast: 4 }
+  const restored = parseStrategyDocument(serializeStrategyDocument(document))
+  assert.deepEqual(restored.background, { fit: 'cover', scale: 2, opacity: 0.1, brightness: 0.5, contrast: 2 })
+  assert.deepEqual(normalizeBackgroundSettings(), { fit: 'stretch', scale: 1, opacity: 0.82, brightness: 1, contrast: 1 })
 })
 
 test('legacy oval formations migrate without changing shape while new circles stay round', () => {

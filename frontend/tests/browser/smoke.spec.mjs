@@ -252,6 +252,7 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   await page.locator('.strategy-transform-panel input[type="range"]').first().fill('1.5')
   await page.locator('.strategy-inspector-close').click()
   await expect(page.locator('.strategy-tool-rail')).toBeHidden()
+  await page.locator('.strategy-canvas').scrollIntoViewIfNeeded()
   const markerBox = await page.locator('.strategy-ship-marker').boundingBox()
   await page.mouse.move(markerBox.x + markerBox.width / 2, markerBox.y + markerBox.height / 2)
   await page.mouse.down()
@@ -280,6 +281,7 @@ test('strategy planner keeps the chart separate and saves website-backed markers
   await expect(page.locator('.strategy-formation path')).toHaveCSS('stroke-width', '7px')
   await page.getByRole('button', { name: 'Freehand', exact: true }).click()
   await expect(page.locator('.strategy-canvas')).toHaveClass(/is-drawing/)
+  await page.locator('.strategy-canvas').scrollIntoViewIfNeeded()
   const stroke = await page.locator('.strategy-canvas').evaluate((svg) => {
     const matrix = svg.getScreenCTM()
     const height = svg.viewBox.baseVal.height

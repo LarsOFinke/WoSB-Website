@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { strategyCanvasPoint } from '../domain/canvasCoordinates.js'
 import { createFreehand, moveStrategyObject, snapshotStrategyObject, STRATEGY_COLORS } from '../domain/strategyDocument.js'
 import { strategyFormationPath, strategyLineGeometry, strategyObjectScale } from '../domain/strategyGeometry.js'
+import { normalizeBackgroundSettings } from '../domain/strategyDocument.js'
 
 const props = defineProps({
   document: { type: Object, required: true },
@@ -12,6 +13,7 @@ const props = defineProps({
   mode: { type: String, default: 'select' },
   color: { type: String, default: () => STRATEGY_COLORS[0] },
   readOnly: { type: Boolean, default: false },
+  backgroundSettings: { type: Object, default: () => ({}) },
 })
 const emit = defineEmits(['update:document', 'select', 'history'])
 const svgElement = ref(null)
@@ -21,6 +23,16 @@ const activePointerId = ref(null)
 const freehandPoints = ref([])
 const shipMap = computed(() => new Map(props.ships.map((ship) => [Number(ship.id), ship])))
 const viewBox = computed(() => `0 0 1000 ${canvasHeight.value}`)
+const backgroundPresentation = computed(() => normalizeBackgroundSettings(props.backgroundSettings))
+const backgroundImageStyle = computed(() => ({
+  opacity: backgroundPresentation.value.opacity,
+  filter: `brightness(${backgroundPresentation.value.brightness}) contrast(${backgroundPresentation.value.contrast})`,
+}))
+const backgroundTransform = computed(() => {
+  const scale = backgroundPresentation.value.scale
+  return `translate(${500 * (1 - scale)} ${canvasHeight.value / 2 * (1 - scale)}) scale(${scale})`
+})
+const backgroundAspect = computed(() => backgroundPresentation.value.fit === 'stretch' ? 'none' : `xMidYMid ${backgroundPresentation.value.fit}`)
 
 function loadBackgroundSize() {
   if (!props.backgroundUrl || typeof Image === 'undefined') return
@@ -195,7 +207,7 @@ defineExpose({ element: svgElement })
       @lostpointercapture="endPointer"
     >
       <rect class="strategy-canvas-background" width="1000" :height="canvasHeight" />
-      <image v-if="backgroundUrl" :href="backgroundUrl" width="1000" :height="canvasHeight" preserveAspectRatio="none" />
+      <image v-if="backgroundUrl" :href="backgroundUrl" width="1000" :height="canvasHeight" :preserveAspectRatio="backgroundAspect" :transform="backgroundTransform" :style="backgroundImageStyle" pointer-events="none" />
       <g class="strategy-overlay-layer">
         <template v-for="object in document.objects" :key="object.id">
           <g

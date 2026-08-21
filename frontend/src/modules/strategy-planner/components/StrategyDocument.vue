@@ -17,6 +17,7 @@ defineProps({
   mode: { type: String, default: 'select' },
   color: { type: String, default: '' },
   readOnly: { type: Boolean, default: false },
+  backgroundSettings: { type: Object, default: () => ({}) },
 })
 defineEmits(['update:document', 'select', 'history'])
 
@@ -38,6 +39,7 @@ defineExpose({
     <StrategyCanvas
       ref="canvas" :document="document" :background-url="backgroundUrl" :ships="ships"
       :selected-id="selectedId" :mode="mode" :color="color" :read-only="readOnly"
+      :background-settings="backgroundSettings"
       @update:document="$emit('update:document', $event)" @select="$emit('select', $event)"
       @history="$emit('history')"
     />
