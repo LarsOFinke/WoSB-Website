@@ -32,21 +32,26 @@
   backdrop-filter: blur(18px);
 }
 
-.strategy-marker-overlay {
+.strategy-canvas-tools {
   inset: 1rem 1rem auto auto;
 }
 
-.strategy-marker-overlay-head {
+.strategy-marker-tools {
+  inset: 1rem auto auto 1rem;
+}
+
+.strategy-canvas-tools-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.35rem 0.65rem 0.2rem;
 }
 
-.strategy-marker-overlay-head > div { display: grid; gap: 0.05rem; }
-.strategy-marker-overlay-head strong { font-family: var(--font-editorial); font-size: 1rem; }
+.strategy-canvas-tools-head > div { display: grid; gap: 0.05rem; }
+.strategy-canvas-tools-head strong { font-family: var(--font-editorial); font-size: 1rem; }
 
-.strategy-marker-overlay-close,
+.strategy-canvas-tools-close,
+.strategy-canvas-tools-toggle,
 .strategy-marker-tools-toggle {
   display: inline-flex;
   align-items: center;
@@ -59,9 +64,10 @@
   color: var(--accent-strong);
 }
 
-.strategy-marker-overlay-close { padding: 0; }
-.strategy-marker-overlay-close span { font-size: 1.25rem; line-height: 1; }
+.strategy-canvas-tools-close { padding: 0; }
+.strategy-canvas-tools-close span { font-size: 1.25rem; line-height: 1; }
 
+.strategy-canvas-tools-toggle,
 .strategy-marker-tools-toggle {
   position: absolute;
   z-index: var(--z-popover);
@@ -72,16 +78,25 @@
   box-shadow: var(--shadow-soft);
 }
 
+.strategy-marker-tools-toggle {
+  right: auto;
+  left: 1rem;
+}
+
+.strategy-canvas-tools-toggle span,
 .strategy-marker-tools-toggle span { font-size: 1.1rem; }
+.strategy-canvas-tools-toggle strong,
 .strategy-marker-tools-toggle strong { font-size: 0.78rem; }
 
-.strategy-marker-overlay-close:hover,
+.strategy-canvas-tools-close:hover,
+.strategy-canvas-tools-toggle:hover,
 .strategy-marker-tools-toggle:hover {
   border-color: var(--accent);
   background: var(--surface-highlight);
 }
 
-.strategy-marker-overlay-close:focus-visible,
+.strategy-canvas-tools-close:focus-visible,
+.strategy-canvas-tools-toggle:focus-visible,
 .strategy-marker-tools-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -137,14 +152,20 @@
   line-height: 1.45;
 }
 
-.strategy-inspector-sections {
+.strategy-management-grid {
   display: grid;
-  grid-template-columns: minmax(18rem, 1.35fr) minmax(18rem, 1.15fr) minmax(15rem, 0.8fr) minmax(15rem, 0.8fr);
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.28fr);
+  align-items: start;
   gap: 0.55rem;
   min-width: 0;
 }
 
-.strategy-inspector-sections > .strategy-tool-section {
+.strategy-management-panel.is-collapsed .strategy-management-grid {
+  grid-template-columns: minmax(16rem, 24rem);
+  justify-content: end;
+}
+
+.strategy-management-section {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 0.65rem;
@@ -152,27 +173,31 @@
   overflow: hidden;
 }
 
-.strategy-inspector-sections > .strategy-tool-section[open] {
-  border-color: var(--line-strong);
+.strategy-management-section > header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: var(--touch-target);
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid var(--line);
   background: var(--surface-soft);
 }
 
-.strategy-inspector-sections > .strategy-tool-section > summary {
-  min-height: 2.35rem;
-  padding: 0.35rem 0.55rem;
-  color: var(--text-muted);
+.strategy-management-section > header > div {
+  display: grid;
+  gap: 0.05rem;
 }
 
-.strategy-inspector-sections > .strategy-tool-section > summary:hover {
-  color: var(--text);
-  background: var(--surface-highlight);
-}
-
-.strategy-inspector-sections > .strategy-tool-section > summary strong {
+.strategy-management-section > header strong {
   font-size: 0.82rem;
 }
 
-.strategy-inspector-sections > .strategy-tool-section .strategy-tool-section-body {
+.strategy-management-section > header small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.strategy-management-section-body {
   padding: 0.55rem;
 }
 
@@ -190,6 +215,10 @@
 
 .strategy-inspector-control-card .strategy-inspector-toggle {
   flex: 1 1 auto;
+}
+
+.strategy-management-control-card {
+  align-self: stretch;
 }
 
 .strategy-tool-section {
@@ -279,21 +308,29 @@
 .strategy-transform-panel { display: grid; gap: 0.8rem; }
 .strategy-transform-control label { margin: 0; }
 .strategy-publication-panel { display: grid; gap: 0.55rem; }
+.strategy-publication-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.7rem; }
+.strategy-publication-summary p { margin: 0; }
+.strategy-publication-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.strategy-public-link { display: grid; gap: 0.3rem; margin: 0; }
+.strategy-public-link > span { color: var(--text-muted); font-size: 0.78rem; font-weight: 700; }
+.strategy-public-link input { width: 100%; min-width: 0; font-family: var(--font-mono); font-size: 0.78rem; }
 .strategy-publication-state { width: fit-content; padding: 0.3rem 0.55rem; border: 1px solid var(--line); border-radius: var(--radius-pill); color: var(--text-muted); font-size: 0.75rem; font-weight: 850; text-transform: uppercase; }
 .strategy-publication-state.is-published { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
 
 @media (max-width: 1180px) {
-  .strategy-inspector-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strategy-management-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {
-  .strategy-inspector-sections { grid-template-columns: 1fr; }
   .strategy-tool-rail {
     inset: 0.5rem 0.5rem 0.5rem auto;
     width: min(24rem, calc(100% - 1rem));
   }
 
+  .strategy-publication-summary { grid-template-columns: 1fr; }
+  .strategy-publication-actions > * { flex: 1 1 auto; }
   .strategy-inspector-toggle strong,
+  .strategy-canvas-tools-toggle strong,
   .strategy-marker-tools-toggle strong { display: none; }
   .strategy-field-pair { grid-template-columns: 1fr; }
 }

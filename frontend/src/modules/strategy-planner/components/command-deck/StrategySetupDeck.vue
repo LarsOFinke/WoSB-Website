@@ -16,6 +16,10 @@ const { t } = useLocale()
 
 <template>
   <section class="strategy-setup-deck" :aria-label="t('strategyPlanner.briefing')">
+    <header class="strategy-setup-heading">
+      <span>{{ t('strategyPlanner.strategyInfo') }}</span>
+      <strong>{{ t('strategyPlanner.briefing') }}</strong>
+    </header>
     <label class="strategy-setup-field strategy-title-field">
       <span class="strategy-setup-field-heading"><span>01</span><strong>{{ t('strategyPlanner.titleLabel') }}</strong></span>
       <input v-model="strategy.title" maxlength="180" required />

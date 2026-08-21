@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import StrategyDocument from '../components/canvas/StrategyDocument.vue'
-import StrategyInspector from '../components/inspector/StrategyInspector.vue'
-import StrategyMarkerOverlay from '../components/marker-deck/StrategyMarkerOverlay.vue'
+import StrategyCanvasTools from '../components/canvas-tools/StrategyCanvasTools.vue'
+import StrategyMarkerTools from '../components/canvas-tools/StrategyMarkerTools.vue'
 import StrategySetupDeck from '../components/command-deck/StrategySetupDeck.vue'
 import StrategyToolbar from '../components/command-deck/StrategyToolbar.vue'
+import StrategyManagement from '../components/management/StrategyManagement.vue'
 import { useStrategyPlannerPage } from '../composables/useStrategyPlanner.js'
 import '../styles/strategyPlanner.css'
 import '../styles/strategyToolbar.css'
@@ -19,8 +20,15 @@ const {
   deleteSelected, useBackground, save, togglePublication, copyShareLink, downloadSvg, printStrategy,
 } = useStrategyPlannerPage()
 
+const canvasToolsOpen = ref(true)
 const markerToolsOpen = ref(true)
-const inspectorOpen = ref(true)
+const managementOpen = ref(true)
+
+function addMarkerAndOpenObjectTools() {
+  addShip()
+  markerToolsOpen.value = false
+  canvasToolsOpen.value = true
+}
 </script>
 
 <template>
@@ -66,24 +74,45 @@ const inspectorOpen = ref(true)
 
     <div v-if="!loading" class="strategy-planner-workspace">
       <main class="strategy-chart-column">
-        <StrategyMarkerOverlay
+        <StrategyMarkerTools
           v-show="markerToolsOpen"
           :marker="marker"
           :ships="ships"
           :guides="guides"
           :marker-builds="markerBuilds"
           @update-marker-ship="updateMarkerShipReference"
-          @add-ship="addShip"
+          @add-ship="addMarkerAndOpenObjectTools"
           @close="markerToolsOpen = false"
         />
         <button
           v-if="!markerToolsOpen"
           type="button"
           class="strategy-marker-tools-toggle"
-          aria-controls="strategy-tool-rail"
+          aria-controls="strategy-marker-tools"
           :aria-expanded="markerToolsOpen"
           @click="markerToolsOpen = true"
         ><span aria-hidden="true">＋</span><strong>{{ t('strategyPlanner.showMarkerTools') }}</strong></button>
+        <StrategyCanvasTools
+          v-if="selectedObject"
+          v-show="canvasToolsOpen"
+          :ships="ships"
+          :guides="guides"
+          :selected-object="selectedObject"
+          :selected-builds="selectedBuilds"
+          :colors="STRATEGY_COLORS"
+          @update-selected-ship="updateSelectedShipReference"
+          @record-history="recordHistory"
+          @delete-selected="deleteSelected"
+          @close="canvasToolsOpen = false"
+        />
+        <button
+          v-if="selectedObject && !canvasToolsOpen"
+          type="button"
+          class="strategy-canvas-tools-toggle"
+          aria-controls="strategy-canvas-tools"
+          :aria-expanded="canvasToolsOpen"
+          @click="canvasToolsOpen = true"
+        ><span aria-hidden="true">＋</span><strong>{{ t('strategyPlanner.showObjectTools') }}</strong></button>
         <p v-if="!backgroundUrl" class="strategy-empty-canvas">{{ t('strategyPlanner.missingBackground') }}</p>
         <StrategyDocument
           v-else ref="canvas" :title="strategy.title || t('strategyPlanner.title')"
@@ -98,19 +127,11 @@ const inspectorOpen = ref(true)
         </StrategyDocument>
       </main>
       <section class="strategy-workspace-tools" :aria-label="t('strategyPlanner.tools')">
-        <StrategyInspector
-          :open="inspectorOpen"
+        <StrategyManagement
+          :open="managementOpen"
           :strategy="strategy"
-          :ships="ships"
-          :guides="guides"
-          :selected-object="selectedObject"
-          :selected-builds="selectedBuilds"
           :share-url="shareUrl"
-          :colors="STRATEGY_COLORS"
-          @toggle="inspectorOpen = !inspectorOpen"
-          @update-selected-ship="updateSelectedShipReference"
-          @record-history="recordHistory"
-          @delete-selected="deleteSelected"
+          @toggle="managementOpen = !managementOpen"
           @toggle-publication="togglePublication"
           @copy-share-link="copyShareLink"
         />

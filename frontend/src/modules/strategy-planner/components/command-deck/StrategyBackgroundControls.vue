@@ -20,9 +20,9 @@ function update(name, value) {
     <div class="strategy-setup-field-heading">
       <span>03</span>
       <strong>{{ t('strategyPlanner.background') }}</strong>
+      <small v-if="background" class="strategy-background-name">{{ background.original_name }}</small>
     </div>
     <FileUploadPanel usage-context="strategy" :accepted-types="IMAGE_MIME_TYPES" :multiple="false" @uploaded="emit('use-background', $event)" />
-    <small v-if="background" class="strategy-background-name">{{ background.original_name }}</small>
     <details class="strategy-background-adjustments">
       <summary>{{ t('strategyPlanner.backgroundFit') }}</summary>
       <div class="strategy-background-controls">

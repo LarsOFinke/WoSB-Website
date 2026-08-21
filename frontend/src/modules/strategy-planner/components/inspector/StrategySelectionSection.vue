@@ -3,6 +3,7 @@ import { useLocale } from '@/locales'
 import StrategyObjectEditor from './StrategyObjectEditor.vue'
 
 defineProps({
+  open: { type: Boolean, default: true },
   selectedObject: { type: Object, required: true },
   ships: { type: Array, required: true },
   guides: { type: Array, required: true },
@@ -11,12 +12,12 @@ defineProps({
   sectionIndex: { type: String, default: '03' },
 })
 
-const emit = defineEmits(['update-selected-ship', 'record-history', 'delete-selected'])
+const emit = defineEmits(['update-selected-ship', 'record-history', 'delete-selected', 'toggle'])
 const { t } = useLocale()
 </script>
 
 <template>
-  <details class="strategy-tool-section strategy-selection-section" open>
+  <details class="strategy-tool-section strategy-selection-section" :open="open" @toggle="emit('toggle', $event.target.open)">
     <summary>
       <span class="strategy-section-index">{{ sectionIndex }}</span>
       <span><strong>{{ t('strategyPlanner.selectedObject') }}</strong><small>{{ selectedObject.type }}</small></span>
