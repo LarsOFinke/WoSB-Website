@@ -9,7 +9,7 @@ export const warehouseMessages = {
     editor: { eyebrow: 'Warehouse record', createTitle: 'Add stock entry', editTitle: 'Edit stock entry', selectFleet: 'Select a fleet', member: 'Linked fleet member', custom: 'Custom name', selectMember: 'Select an active member', selectResource: 'Select a resource' },
     holder: { linked: 'Linked member', custom: 'Custom name' },
     status: { available: 'Available', reserved: 'Reserved', upForCollection: 'Up for collection', inWarehouse: 'Reached fleet warehouse' },
-    assignments: { title: 'Port pickup assignments', hint: 'Assign an active fleet member to collect donations at each port.', unassigned: 'No assignee' },
+    assignments: { eyebrow: 'Fleet logistics', title: 'Port pickup assignments', hint: 'Assign an active fleet member to collect donations at each port.', unassigned: 'No assignee', open: 'Manage pickup assignments' },
     messages: { created: 'Warehouse entry created.', updated: 'Warehouse entry updated.', deleted: 'Warehouse entry deleted.', assignmentUpdated: 'Pickup assignment updated.', overviewPublished: 'Warehouse overview posted to configured webhooks.' },
     errors: { load: 'The warehouse could not be loaded.', members: 'Fleet members could not be loaded.', assignments: 'Pickup assignments could not be loaded.', overviewPublish: 'The warehouse overview could not be posted.', save: 'The warehouse entry could not be saved.', delete: 'The warehouse entry could not be deleted.' },
     validation: { fleet: 'Select a fleet.', member: 'Select an active fleet member.', customHolder: 'Enter a custom holder name.', port: 'Enter a port.', resource: 'Enter a resource.', collectionStatus: 'Select a collection status.', amount: 'Enter a whole amount between 0 and 999,999,999.' },
@@ -22,7 +22,7 @@ export const warehouseMessages = {
     summary: { matchingStock: 'Passender Bestand', stockHint: 'Gesamtmenge im aktuellen Filter', reserved: 'Reserviert', reservedHint: 'Für Logistik zurückgestellter Bestand', available: 'Verfügbar', availableHint: 'Zur Zuteilung verfügbarer Bestand', rows: 'Passende Einträge', rowsHint: 'Einzelne Lagerpositionen' },
     ledger: { title: 'Lagereinträge', hint: 'Die Website ist die Datenquelle. Jede Änderung wird versioniert und protokolliert.', tableLabel: 'Scrollbare Tabelle der Lagereinträge', emptyTitle: 'Keine passenden Lagereinträge', emptyText: 'Filter anpassen oder den ersten Bestand anlegen.' },
     editor: { eyebrow: 'Lagerposition', createTitle: 'Bestand hinzufügen', editTitle: 'Bestand bearbeiten', selectFleet: 'Flotte auswählen', member: 'Verknüpftes Flottenmitglied', custom: 'Eigener Name', selectMember: 'Aktives Mitglied auswählen', selectResource: 'Ressource auswählen' },
-    holder: { linked: 'Verknüpftes Mitglied', custom: 'Eigener Name' }, status: { available: 'Verfügbar', reserved: 'Reserviert', upForCollection: 'Zur Abholung bereit', inWarehouse: 'Im Flottenlager eingetroffen' }, assignments: { title: 'Abholzuweisungen für Häfen', hint: 'Aktives Flottenmitglied für Spendenabholung zuweisen.', unassigned: 'Kein Abholer' },
+    holder: { linked: 'Verknüpftes Mitglied', custom: 'Eigener Name' }, status: { available: 'Verfügbar', reserved: 'Reserviert', upForCollection: 'Zur Abholung bereit', inWarehouse: 'Im Flottenlager eingetroffen' }, assignments: { eyebrow: 'Flottenlogistik', title: 'Abholzuweisungen für Häfen', hint: 'Aktives Flottenmitglied für Spendenabholung zuweisen.', unassigned: 'Kein Abholer', open: 'Abholzuweisungen verwalten' },
     messages: { created: 'Lagereintrag angelegt.', updated: 'Lagereintrag aktualisiert.', deleted: 'Lagereintrag gelöscht.', assignmentUpdated: 'Abholzuweisung aktualisiert.', overviewPublished: 'Lagerübersicht an konfigurierte Webhooks gepostet.' },
     errors: { load: 'Das Lager konnte nicht geladen werden.', members: 'Flottenmitglieder konnten nicht geladen werden.', assignments: 'Abholzuweisungen konnten nicht geladen werden.', overviewPublish: 'Die Lagerübersicht konnte nicht gepostet werden.', save: 'Der Lagereintrag konnte nicht gespeichert werden.', delete: 'Der Lagereintrag konnte nicht gelöscht werden.' },
     validation: { fleet: 'Flotte auswählen.', member: 'Aktives Flottenmitglied auswählen.', customHolder: 'Eigenen Besitzernamen eingeben.', port: 'Hafen eingeben.', resource: 'Ressource eingeben.', collectionStatus: 'Abholstatus auswählen.', amount: 'Eine ganze Menge zwischen 0 und 999.999.999 eingeben.' },
@@ -34,7 +34,7 @@ export const warehouseMessages = {
     summary: { reserved: 'Stock réservé', available: 'Stock disponible', rowsHint: 'Lignes individuelles de l’entrepôt' },
     ledger: { title: 'Lignes de l’entrepôt', tableLabel: 'Tableau déroulant des lignes de l’entrepôt' },
     messages: { updated: 'La ligne de l’entrepôt a été mise à jour.', assignmentUpdated: 'Responsable de collecte mis à jour.', overviewPublished: 'Aperçu publié vers les webhooks configurés.' },
-    status: { available: 'Disponible', reserved: 'Réservé' }, errors: { overviewPublish: 'Aperçu impossible à publier.' },
+    status: { available: 'Disponible', reserved: 'Réservé' }, assignments: { eyebrow: 'Logistique de flotte', title: 'Responsables de collecte par port', hint: 'Attribuez un membre actif pour récupérer les dons à chaque port.', unassigned: 'Aucun responsable', open: 'Gérer les responsables' }, errors: { overviewPublish: 'Aperçu impossible à publier.' },
   } },
   es: { warehouse: {
     eyebrow: 'Logística de flota', title: 'Almacén del gremio', subtitle: 'Controla existencias por titular, puerto y recurso.',
@@ -43,7 +43,7 @@ export const warehouseMessages = {
     summary: { reserved: 'Stock reservado', available: 'Stock disponible', rowsHint: 'Registros individuales del almacén' },
     ledger: { title: 'Registros del almacén', tableLabel: 'Tabla desplazable de registros del almacén' },
     messages: { updated: 'Registro del almacén actualizado.', assignmentUpdated: 'Responsable de recogida actualizado.', overviewPublished: 'Resumen publicado en los webhooks configurados.' },
-    status: { available: 'Disponible', reserved: 'Reservado' }, errors: { overviewPublish: 'No se pudo publicar el resumen.' },
+    status: { available: 'Disponible', reserved: 'Reservado' }, assignments: { eyebrow: 'Logística de flota', title: 'Responsables de recogida por puerto', hint: 'Asigna un miembro activo para recoger donaciones en cada puerto.', unassigned: 'Sin responsable', open: 'Gestionar responsables' }, errors: { overviewPublish: 'No se pudo publicar el resumen.' },
   } },
   pt: { warehouse: {
     eyebrow: 'Logística da frota', title: 'Armazém da guilda', subtitle: 'Acompanhe o stock por titular, porto e recurso.',
@@ -52,7 +52,7 @@ export const warehouseMessages = {
     summary: { reserved: 'Stock reservado', available: 'Stock disponível', rowsHint: 'Registos individuais do armazém' },
     ledger: { title: 'Registos do armazém', tableLabel: 'Tabela deslocável de registos do armazém' },
     messages: { updated: 'Registo do armazém atualizado.', assignmentUpdated: 'Responsável pela recolha atualizado.', overviewPublished: 'Resumo publicado nos webhooks configurados.' },
-    status: { available: 'Disponível', reserved: 'Reservado' }, errors: { overviewPublish: 'Não foi possível publicar o resumo.' },
+    status: { available: 'Disponível', reserved: 'Reservado' }, assignments: { eyebrow: 'Logística da frota', title: 'Responsáveis de recolha por porto', hint: 'Atribui um membro ativo para recolher doações em cada porto.', unassigned: 'Sem responsável', open: 'Gerir responsáveis' }, errors: { overviewPublish: 'Não foi possível publicar o resumo.' },
   } },
   ru: { warehouse: {
     eyebrow: 'Логистика флота', title: 'Склад гильдии', subtitle: 'Учитывайте запасы по владельцу, порту и ресурсу.',
@@ -61,7 +61,7 @@ export const warehouseMessages = {
     summary: { reserved: 'Резервный запас', available: 'Доступный запас', rowsHint: 'Отдельные складские позиции' },
     ledger: { title: 'Складские позиции', tableLabel: 'Прокручиваемая таблица складских позиций' },
     messages: { updated: 'Складская позиция обновлена.', assignmentUpdated: 'Ответственный за получение обновлён.', overviewPublished: 'Обзор опубликован в настроенные вебхуки.' },
-    status: { available: 'Доступно', reserved: 'Зарезервировано' }, errors: { overviewPublish: 'Не удалось опубликовать обзор.' },
+    status: { available: 'Доступно', reserved: 'Зарезервировано' }, assignments: { eyebrow: 'Логистика флота', title: 'Ответственные за получение в портах', hint: 'Назначьте активного участника для сбора пожертвований в каждом порту.', unassigned: 'Нет ответственного', open: 'Управлять ответственными' }, errors: { overviewPublish: 'Не удалось опубликовать обзор.' },
   } },
   cn: { warehouse: {
     eyebrow: '舰队后勤', title: '公会仓库', subtitle: '按持有人、港口和资源管理库存。',
@@ -70,6 +70,6 @@ export const warehouseMessages = {
     summary: { reserved: '预留库存', available: '可用库存', rowsHint: '单独的仓库条目' },
     ledger: { title: '仓库条目', tableLabel: '可滚动仓库条目表' },
     messages: { updated: '仓库条目已更新。', assignmentUpdated: '领取负责人已更新。', overviewPublished: '库存概览已发布到已配置的 Webhook。' },
-    status: { available: '可用', reserved: '已预留' }, errors: { overviewPublish: '无法发布库存概览。' },
+    status: { available: '可用', reserved: '已预留' }, assignments: { eyebrow: '舰队后勤', title: '港口领取负责人', hint: '为每个港口指定一名活跃成员领取捐赠。', unassigned: '未指定负责人', open: '管理领取负责人' }, errors: { overviewPublish: '无法发布库存概览。' },
   } },
 }

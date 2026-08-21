@@ -96,7 +96,7 @@ require('sum(printout_size_bytes)' in file_queries and 'sum(size_bytes)' in file
 for column in ('printout_cache_key', 'printout_source_updated_at'):
     require(column in printout_migration, f'build printout cache migration missing {column}')
 pom=read('spring-api/pom.xml')
-require('<tomcat.version>11.0.24</tomcat.version>' in pom,
+require('<tomcat.version>11.0.25</tomcat.version>' in pom,
         'embedded Tomcat must retain the reviewed security update')
 require('<log4j2.version>2.25.5</log4j2.version>' in pom,
         'Log4j API must retain the reviewed security update')
@@ -132,16 +132,10 @@ for contract in ('-DautoUpdate=false', '-DfailBuildOnCVSS=7',
     require(contract in security_workflow,f'missing Dependency-Check fail-closed contract: {contract}')
 suppressions=read('spring-api/dependency-check-suppressions.xml')
 suppression_policy=read('spring-api/dependency-suppression-policy.json')
-require('CVE-2026-66299' in suppressions and
-        suppressions.count('<suppress ') == 1 and
-        'until="2026-09-08Z"' in suppressions,
-        'Tomcat CVE-2026-66299 suppression must stay exact and time-bounded')
-require('CVE-2026-66299' in suppression_policy and
-        'allow-unfixed-only' in suppression_policy and
-        'current_version' in suppression_policy and
-        'package_urls' in suppression_policy and
-        'availability' in suppression_policy,
-        'temporary dependency suppression must have an NVD-backed availability policy')
+require(suppressions.count('<suppress ') == 0,
+        'patched dependency CVEs must not retain suppressions')
+require('"policies": []' in suppression_policy,
+        'dependency suppression policy must be empty when no temporary exception is active')
 for forbidden in ('<cvssBelow>', '<cvssScore>', '<vulnerabilityName regex="true">.*</vulnerabilityName>'):
     require(forbidden not in suppressions,f'broad Dependency-Check suppression forbidden: {forbidden}')
 print('[security] OK: Spring security, secret handling, containers and artifact boundaries')

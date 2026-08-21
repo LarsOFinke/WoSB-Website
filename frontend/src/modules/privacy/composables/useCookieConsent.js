@@ -22,7 +22,7 @@ const state = reactive({
 
 let initializationPromise = null
 
-function applyState(payload) {
+function applyState(payload, { revealIfUndecided = true } = {}) {
   state.policyVersion = payload?.policy_version || ''
   state.choice = {
     necessary: true,
@@ -30,9 +30,17 @@ function applyState(payload) {
     analytics: Boolean(payload?.analytics),
     external_media: Boolean(payload?.external_media),
   }
+  // A consent record is the only signal that optional processing was
+  // presented and decided. Necessary cookies remain available, but the
+  // banner must be shown until the server confirms a decision.
+  // An explicit settings request owns visibility. This also protects the
+  // button flow from an in-flight automatic initialization response.
+  if (revealIfUndecided && !state.settingsOpen) {
+    state.visible = !Boolean(payload?.has_decision)
+  }
 }
 
-async function initialize({ force = false } = {}) {
+async function initialize({ force = false, revealIfUndecided = true } = {}) {
   if (state.initialized && !force) return
   if (initializationPromise) {
     await initializationPromise
@@ -43,12 +51,16 @@ async function initialize({ force = false } = {}) {
   state.error = ''
   initializationPromise = getCookieConsent()
     .then((payload) => {
-      applyState(payload)
+      applyState(payload, { revealIfUndecided })
       state.initialized = true
     })
     .catch((error) => {
       state.error = error.message || 'Unable to load cookie settings.'
       state.initialized = false
+      // Fail closed for optional processing and keep the consent controls
+      // reachable when the consent endpoint is temporarily unavailable.
+      state.visible = true
+      state.settingsOpen = true
     })
     .finally(() => {
       state.loading = false
@@ -87,7 +99,7 @@ function saveCustom() {
 function openSettings() {
   state.visible = true
   state.settingsOpen = true
-  return initialize({ force: true })
+  return initialize({ force: true, revealIfUndecided: false })
 }
 
 function toggleSettings() {

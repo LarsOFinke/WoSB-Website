@@ -20,92 +20,96 @@ onMounted(initialize)
 </script>
 
 <template>
-  <section
-    v-if="state.visible"
-    class="cookie-consent"
-    role="dialog"
-    aria-modal="false"
-    :aria-labelledby="'cookie-consent-title'"
-  >
-    <div class="cookie-consent__body">
-      <div>
-        <span class="cookie-consent__eyebrow">{{ t('privacy.cookies.eyebrow') }}</span>
-        <h2 id="cookie-consent-title">{{ t('privacy.cookies.title') }}</h2>
-        <p>{{ t('privacy.cookies.description') }}</p>
-      </div>
+  <Teleport to="body">
+    <section
+      v-if="state.visible"
+      class="cookie-consent"
+      role="dialog"
+      aria-modal="false"
+      :aria-labelledby="'cookie-consent-title'"
+    >
+      <div class="cookie-consent__body">
+        <div>
+          <span class="cookie-consent__eyebrow">{{ t('privacy.cookies.eyebrow') }}</span>
+          <h2 id="cookie-consent-title">{{ t('privacy.cookies.title') }}</h2>
+          <p>{{ t('privacy.cookies.description') }}</p>
+        </div>
 
-      <div v-if="state.settingsOpen" class="cookie-consent__settings">
-        <label class="cookie-consent__category is-locked">
-          <span>
-            <strong>{{ t('privacy.cookies.categories.necessary.title') }}</strong>
-            <small>{{ t('privacy.cookies.categories.necessary.description') }}</small>
-          </span>
-          <input type="checkbox" checked disabled />
-        </label>
-        <label class="cookie-consent__category">
-          <span>
-            <strong>{{ t('privacy.cookies.categories.preferences.title') }}</strong>
-            <small>{{ t('privacy.cookies.categories.preferences.description') }}</small>
-          </span>
-          <input v-model="state.choice.preferences" type="checkbox" :disabled="disabled" />
-        </label>
-        <label class="cookie-consent__category">
-          <span>
-            <strong>{{ t('privacy.cookies.categories.analytics.title') }}</strong>
-            <small>{{ t('privacy.cookies.categories.analytics.description') }}</small>
-          </span>
-          <input v-model="state.choice.analytics" type="checkbox" :disabled="disabled" />
-        </label>
-        <label class="cookie-consent__category">
-          <span>
-            <strong>{{ t('privacy.cookies.categories.externalMedia.title') }}</strong>
-            <small>{{ t('privacy.cookies.categories.externalMedia.description') }}</small>
-          </span>
-          <input v-model="state.choice.external_media" type="checkbox" :disabled="disabled" />
-        </label>
-      </div>
+        <div v-if="state.settingsOpen" class="cookie-consent__settings">
+          <label class="cookie-consent__category is-locked">
+            <span>
+              <strong>{{ t('privacy.cookies.categories.necessary.title') }}</strong>
+              <small>{{ t('privacy.cookies.categories.necessary.description') }}</small>
+            </span>
+            <input type="checkbox" checked disabled />
+          </label>
+          <label class="cookie-consent__category">
+            <span>
+              <strong>{{ t('privacy.cookies.categories.preferences.title') }}</strong>
+              <small>{{ t('privacy.cookies.categories.preferences.description') }}</small>
+            </span>
+            <input v-model="state.choice.preferences" type="checkbox" :disabled="disabled" />
+          </label>
+          <label class="cookie-consent__category">
+            <span>
+              <strong>{{ t('privacy.cookies.categories.analytics.title') }}</strong>
+              <small>{{ t('privacy.cookies.categories.analytics.description') }}</small>
+            </span>
+            <input v-model="state.choice.analytics" type="checkbox" :disabled="disabled" />
+          </label>
+          <label class="cookie-consent__category">
+            <span>
+              <strong>{{ t('privacy.cookies.categories.externalMedia.title') }}</strong>
+              <small>{{ t('privacy.cookies.categories.externalMedia.description') }}</small>
+            </span>
+            <input v-model="state.choice.external_media" type="checkbox" :disabled="disabled" />
+          </label>
+        </div>
 
-      <p v-if="state.error" class="cookie-consent__error" role="alert">{{ state.error }}</p>
+        <p v-if="state.error" class="cookie-consent__error" role="alert">{{ state.error }}</p>
 
-      <div class="cookie-consent__actions">
-        <button type="button" class="cookie-action cookie-action--choice" :disabled="disabled" @click="rejectOptional">
-          {{ t('privacy.cookies.rejectOptional') }}
-        </button>
-        <button type="button" class="cookie-action" :disabled="disabled" @click="toggleSettings">
-          {{ state.settingsOpen ? t('privacy.cookies.hideSettings') : t('privacy.cookies.settings') }}
-        </button>
-        <button
-          v-if="state.settingsOpen"
-          type="button"
-          class="cookie-action cookie-action--primary"
-          :disabled="disabled"
-          @click="saveCustom"
-        >
-          {{ t('privacy.cookies.saveSelection') }}
-        </button>
-        <button
-          v-else
-          type="button"
-          class="cookie-action cookie-action--choice"
-          :disabled="disabled"
-          @click="acceptAll"
-        >
-          {{ t('privacy.cookies.acceptAll') }}
-        </button>
+        <div class="cookie-consent__actions">
+          <button type="button" class="cookie-action cookie-action--choice" :disabled="disabled" @click="rejectOptional">
+            {{ t('privacy.cookies.rejectOptional') }}
+          </button>
+          <button type="button" class="cookie-action" :disabled="disabled" @click="toggleSettings">
+            {{ state.settingsOpen ? t('privacy.cookies.hideSettings') : t('privacy.cookies.settings') }}
+          </button>
+          <button
+            v-if="state.settingsOpen"
+            type="button"
+            class="cookie-action cookie-action--primary"
+            :disabled="disabled"
+            @click="saveCustom"
+          >
+            {{ t('privacy.cookies.saveSelection') }}
+          </button>
+          <button
+            v-else
+            type="button"
+            class="cookie-action cookie-action--choice"
+            :disabled="disabled"
+            @click="acceptAll"
+          >
+            {{ t('privacy.cookies.acceptAll') }}
+          </button>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </Teleport>
 </template>
 
 <style scoped>
 .cookie-consent {
   position: fixed;
-  z-index: var(--z-consent);
+  /* Keep the consent surface above shell drawers even if a custom theme omits the token. */
+  z-index: var(--z-consent, 900);
   right: 1rem;
   bottom: 1rem;
   left: 1rem;
   display: flex;
   justify-content: center;
+  isolation: isolate;
   pointer-events: none;
 }
 

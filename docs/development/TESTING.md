@@ -246,7 +246,7 @@ migration or recovery changes also require the recovery tests.
 
 The `Security` GitHub Actions workflow refreshes OWASP Dependency-Check's NVD/cache data **daily at 04:17 UTC** and then scans the Spring dependency graph from that refreshed cache. The cache is stored under Maven's Dependency-Check data directory and uses a date-scoped GitHub Actions cache key so the previous day's database can be restored and incrementally refreshed instead of performing a cold NVD import on every run.
 
-Dependency suppressions are exceptional and must remain narrow, documented, time-bounded, and self-removing. **CVE-2026-66299** is temporarily tracked for embedded Tomcat **11.0.24** because NVD reports **11.0.25** as fixed but Maven Central does not currently expose the required artifacts. `check_dependency_suppressions.py` verifies both facts: NVD must report the fix, and the exact fixed Maven package must not yet be fetchable. Once it becomes available, CI fails and the dependency and suppression must be updated together.
+Dependency suppressions are exceptional and must remain narrow, documented, time-bounded, and self-removing. The embedded Tomcat **CVE-2026-66299** exception was removed after the patched **11.0.25** artifacts became fetchable; the API now pins Tomcat **11.0.25**. `check_dependency_suppressions.py` remains in CI to fail closed if a future temporary exception acquires a fetchable fix.
 
 CI uses `failBuildOnUnusedSuppressionRule=true`, so an upgrade that makes this exact suppression unused intentionally breaks the security job until the obsolete rule is deleted.
 

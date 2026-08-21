@@ -4,9 +4,9 @@ import { useWarehousePage } from '@/modules/warehouse/composables/useWarehousePa
 import '@/modules/warehouse/styles/warehouse.css'
 
 const {
-  t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
+  t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, assignmentOverlayOpen, loading, saving, publishingOverview, error, success,
   editorOpen, editorTitle, draft, filters, formatAmount, formatDateTime, loadEntries, openCreate,
-  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, loadAssignments, saveAssignment, publishOverview,
+  openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters, openAssignmentOverlay, closeAssignmentOverlay, loadAssignments, saveAssignment, publishOverview,
 } = useWarehousePage()
 </script>
 
@@ -40,12 +40,9 @@ const {
         </div>
       </section>
 
-      <section v-if="canManageWarehouse" class="warehouse-assignments wire-section">
-        <header><div><h2>{{ t('warehouse.assignments.title') }}</h2><p>{{ t('warehouse.assignments.hint') }}</p></div></header>
-        <label class="input-panel"><span>{{ t('warehouse.fields.fleet') }}</span><select v-model="assignmentFleetId" @change="loadAssignments()"><option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">{{ fleet.name }}</option></select></label>
-        <div class="warehouse-assignment-grid">
-          <label v-for="assignment in assignments" :key="assignment.port_id" class="input-panel"><span>{{ assignment.port_name }}</span><select :value="assignment.assignee_user_id || ''" @change="saveAssignment(assignment, $event)"><option value="">{{ t('warehouse.assignments.unassigned') }}</option><option v-for="member in members" :key="member.id" :value="member.id">{{ member.display_name }}</option></select></label>
-        </div>
+      <section v-if="canManageWarehouse" class="warehouse-assignment-launch wire-section">
+        <div><h2>{{ t('warehouse.assignments.title') }}</h2><p>{{ t('warehouse.assignments.hint') }}</p></div>
+        <button class="button-box" type="button" @click="openAssignmentOverlay">{{ t('warehouse.assignments.open') }}</button>
       </section>
 
       <section class="warehouse-summary-grid" aria-live="polite">
@@ -82,5 +79,20 @@ const {
     </div>
 
     <WarehouseEntryEditor v-if="canManageWarehouse && editorOpen" :title="editorTitle" :draft="draft" :fleets="fleets" :members="members" :ports="ports" :resources="resources" :saving="saving" :t="t" @cancel="closeEditor" @fleet-change="changeDraftFleet" @save="saveEntry" />
+
+    <div v-if="canManageWarehouse && assignmentOverlayOpen" class="warehouse-editor-backdrop" @click.self="closeAssignmentOverlay">
+      <section class="warehouse-editor warehouse-assignment-overlay" role="dialog" aria-modal="true" :aria-labelledby="'warehouse-assignment-title'">
+        <header class="warehouse-editor__header">
+          <div><p class="eyebrow">{{ t('warehouse.assignments.eyebrow') }}</p><h2 id="warehouse-assignment-title">{{ t('warehouse.assignments.title') }}</h2></div>
+          <button class="small-action" type="button" :aria-label="t('common.close')" @click="closeAssignmentOverlay">×</button>
+        </header>
+        <p class="warehouse-overlay-hint">{{ t('warehouse.assignments.hint') }}</p>
+        <label class="input-panel"><span>{{ t('warehouse.fields.fleet') }}</span><select v-model="assignmentFleetId" @change="loadAssignments()"><option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">{{ fleet.name }}</option></select></label>
+        <div class="warehouse-assignment-grid">
+          <label v-for="assignment in assignments" :key="assignment.port_id" class="input-panel"><span>{{ assignment.port_name }}</span><select :value="assignment.assignee_user_id || ''" @change="saveAssignment(assignment, $event)"><option value="">{{ t('warehouse.assignments.unassigned') }}</option><option v-for="member in members" :key="member.id" :value="member.id">{{ member.display_name }}</option></select></label>
+        </div>
+        <footer class="warehouse-editor__actions"><button class="button-box" type="button" @click="closeAssignmentOverlay">{{ t('common.close') }}</button></footer>
+      </section>
+    </div>
   </section>
 </template>

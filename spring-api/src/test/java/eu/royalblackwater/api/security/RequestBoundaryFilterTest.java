@@ -13,6 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 class RequestBoundaryFilterTest {
     private final IpBlockService ipBlocks = unblockedIpService();
@@ -67,6 +69,40 @@ class RequestBoundaryFilterTest {
         var response = new MockHttpServletResponse();
         localFilter.doFilter(request, response, new MockFilterChain());
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void blocksKnownIpBeforeAnyApplicationHandlerRuns() throws Exception {
+        IpBlockService blocked = mock(IpBlockService.class);
+        when(blocked.isBlocked("198.51.100.7")).thenReturn(true);
+        RequestBoundaryFilter localFilter = new RequestBoundaryFilter(new SecurityProperties(
+                List.of("app.example"), List.of()), blocked, signals);
+        var request = request("GET", "app.example");
+        request.setRemoteAddr("198.51.100.7");
+        var response = new MockHttpServletResponse();
+        var chain = new MockFilterChain();
+
+        localFilter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(chain.getRequest()).isNull();
+        verify(signals, never()).record(org.mockito.ArgumentMatchers.any(), anyString(), anyString());
+    }
+
+    @Test
+    void treatsSafeCrossSiteReadsAsReadOnlyAndRecordsMalformedOrigins() throws Exception {
+        var read = request("GET", "app.example");
+        read.addHeader("Sec-Fetch-Site", "cross-site");
+        var readResponse = new MockHttpServletResponse();
+        filter.doFilter(read, readResponse, new MockFilterChain());
+        assertThat(readResponse.getStatus()).isEqualTo(200);
+
+        var malformed = request("POST", "app.example");
+        malformed.addHeader("Origin", "not an origin");
+        var malformedResponse = new MockHttpServletResponse();
+        filter.doFilter(malformed, malformedResponse, new MockFilterChain());
+        assertThat(malformedResponse.getStatus()).isEqualTo(403);
+        verify(signals).record(malformed, "reconnaissance", "cross_site");
     }
 
     private static MockHttpServletRequest request(String method, String host) {

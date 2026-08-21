@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { mockAnonymousApi } from './apiMocks.mjs'
+
+test.beforeEach(async ({ page }) => {
+  await mockAnonymousApi(page)
+})
 
 test('moderator filters and creates a linked-member warehouse entry', async ({ page }) => {
   let createdPayload

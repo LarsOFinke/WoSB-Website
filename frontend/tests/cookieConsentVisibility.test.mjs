@@ -12,18 +12,26 @@ const privacyCenter = await readFile(
   'utf8',
 )
 
-test('missing consent storage does not open the cookie dialog automatically', () => {
+test('missing consent decision opens the cookie dialog automatically', () => {
+  assert.match(consentComposable, /state\.visible\s*=\s*!Boolean\(payload\?\.has_decision\)/)
+})
+
+test('failed consent initialization fails closed and keeps controls reachable', () => {
   const initializationFailure = consentComposable.match(/\.catch\(\(error\) => \{([\s\S]*?)\n    \}\)/)?.[1] || ''
-  assert.doesNotMatch(consentComposable, /state\.visible\s*=\s*!payload\?\.has_decision/)
   assert.notEqual(initializationFailure, '')
-  assert.doesNotMatch(initializationFailure, /state\.visible\s*=\s*true/)
+  assert.match(initializationFailure, /state\.visible\s*=\s*true/)
+  assert.match(initializationFailure, /state\.settingsOpen\s*=\s*true/)
 })
 
 test('cookie settings remain explicitly accessible', () => {
   assert.match(consentComposable, /function openSettings\(\)[\s\S]*?state\.visible\s*=\s*true/)
-  assert.match(consentComposable, /function openSettings\(\)[\s\S]*?initialize\(\{ force: true \}\)/)
+  assert.match(consentComposable, /function openSettings\(\)[\s\S]*?initialize\(\{ force: true, revealIfUndecided: false \}\)/)
   assert.match(footer, /@click="openSettings"/)
   assert.match(privacyCenter, /@click="openSettings"/)
+})
+
+test('automatic consent refresh cannot hide an explicitly opened dialog', () => {
+  assert.match(consentComposable, /if \(revealIfUndecided && !state\.settingsOpen\)/)
 })
 
 test('failed cookie settings initialization remains retryable', () => {

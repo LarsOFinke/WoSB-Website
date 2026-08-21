@@ -11,7 +11,7 @@
 
     <groupId>eu.royalblackwater</groupId>
     <artifactId>rbf-api</artifactId>
-    <version>1.7.12</version>
+    <version>1.7.16</version>
     <name>Royal Blackwater Fleet API</name>
     <description>Production backend for the Royal Blackwater Fleet portal.</description>
     <licenses>
@@ -34,7 +34,7 @@
         <coverage.method.minimum>0.80</coverage.method.minimum>
         <coverage.package.line.minimum>0.60</coverage.package.line.minimum>
         <argLine></argLine>
-        <tomcat.version>11.0.24</tomcat.version>
+        <tomcat.version>11.0.25</tomcat.version>
     </properties>
 
     <dependencyManagement>

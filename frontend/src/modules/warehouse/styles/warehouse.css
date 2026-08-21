@@ -23,9 +23,22 @@
 
 .warehouse-filters,
 .warehouse-ledger,
-.warehouse-assignments {
+.warehouse-assignment-launch {
   padding: var(--space-5);
 }
+
+.warehouse-assignment-launch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.warehouse-assignment-launch h2,
+.warehouse-assignment-launch p,
+.warehouse-overlay-hint { margin: 0; }
+.warehouse-assignment-launch p,
+.warehouse-overlay-hint { color: var(--muted); }
 
 .warehouse-filters > header,
 .warehouse-ledger > header,
@@ -60,6 +73,11 @@
 .warehouse-assignments > header { margin-bottom: 0.75rem; }
 .warehouse-assignments > .input-panel { max-width: 24rem; }
 .warehouse-assignment-grid { display: grid; grid-template-columns: repeat(3, minmax(12rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+
+.warehouse-assignment-overlay { width: min(58rem, 100%); }
+.warehouse-assignment-overlay > .input-panel { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+.warehouse-assignment-overlay > .input-panel > span { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.warehouse-assignment-overlay select { min-height: var(--control-height); border: 1px solid var(--field-border); border-radius: var(--radius-sm); background: var(--surface-field); color: var(--text); padding: .65rem .8rem; }
 
 .warehouse-filter-grid label,
 .warehouse-editor .input-panel {

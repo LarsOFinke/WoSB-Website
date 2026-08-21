@@ -39,6 +39,7 @@ export function useWarehousePage() {
   const resources = ref([])
   const assignments = ref([])
   const assignmentFleetId = ref('')
+  const assignmentOverlayOpen = ref(false)
   const loading = ref(false)
   const saving = ref(false)
   const error = ref('')
@@ -95,6 +96,15 @@ export function useWarehousePage() {
     } catch (err) {
       error.value = err.message || t('warehouse.errors.assignments')
     }
+  }
+
+  async function openAssignmentOverlay() {
+    assignmentOverlayOpen.value = true
+    if (!assignments.value.length && fleets.value.length) await loadAssignments(assignmentFleetId.value || fleets.value[0].id)
+  }
+
+  function closeAssignmentOverlay() {
+    assignmentOverlayOpen.value = false
   }
 
   async function saveAssignment(assignment, event) {
@@ -219,9 +229,9 @@ export function useWarehousePage() {
   })
 
   return {
-    t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, loading, saving, publishingOverview, error, success,
+    t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, assignmentOverlayOpen, loading, saving, publishingOverview, error, success,
     editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
     formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
-    loadAssignments, saveAssignment, publishOverview,
+    loadAssignments, openAssignmentOverlay, closeAssignmentOverlay, saveAssignment, publishOverview,
   }
 }

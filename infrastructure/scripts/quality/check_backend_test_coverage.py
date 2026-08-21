@@ -107,6 +107,10 @@ def classify_sources() -> dict[str, set[Path]]:
         path for path in all_sources
         if path.relative_to(MAIN).parts[:2] == ("shared", "web")
     }
+    core_utilities = {
+        path for path in all_sources
+        if path.relative_to(MAIN).parts[:2] == ("core", "util")
+    }
 
     groups = {
         "generated DTO": generated_dtos,
@@ -123,6 +127,7 @@ def classify_sources() -> dict[str, set[Path]]:
         "application": application,
         "persistence helper": persistence_helpers,
         "shared web helper": shared_web_helpers,
+        "core utility": core_utilities,
     }
 
     owners: dict[Path, list[str]] = defaultdict(list)
@@ -175,6 +180,10 @@ def main() -> None:
     for source in sorted(service_helpers):
         require(tests_mentioning(source.stem),
                 f"service helper lacks an explicit test reference: {source.relative_to(ROOT)}")
+
+    for source in sorted(groups["core utility"]):
+        require(tests_mentioning(source.stem, module="core"),
+                f"core utility lacks an explicit test reference: {source.relative_to(ROOT)}")
 
     component_surface = (TEST / "testing/BackendComponentSurfaceTest.java").read_text(encoding="utf-8")
     for token in ('"controller"', '"mapper"', '"repository"', '"config"', '"persistence"', '"shared"'):
