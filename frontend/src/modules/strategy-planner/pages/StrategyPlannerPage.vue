@@ -1,8 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import StrategyDocument from '../components/StrategyDocument.vue'
-import StrategyInspector from '../components/StrategyInspector.vue'
-import StrategyToolbar from '../components/StrategyToolbar.vue'
+import StrategyDocument from '../components/canvas/StrategyDocument.vue'
+import StrategyInspector from '../components/inspector/StrategyInspector.vue'
+import StrategyMarkerOverlay from '../components/marker-deck/StrategyMarkerOverlay.vue'
+import StrategySetupDeck from '../components/command-deck/StrategySetupDeck.vue'
+import StrategyToolbar from '../components/command-deck/StrategyToolbar.vue'
 import { useStrategyPlannerPage } from '../composables/useStrategyPlanner.js'
 import '../styles/strategyPlanner.css'
 import '../styles/strategyToolbar.css'
@@ -17,7 +19,8 @@ const {
   deleteSelected, useBackground, save, togglePublication, copyShareLink, downloadSvg, printStrategy,
 } = useStrategyPlannerPage()
 
-const toolsOpen = ref(true)
+const markerToolsOpen = ref(true)
+const inspectorOpen = ref(true)
 </script>
 
 <template>
@@ -42,8 +45,19 @@ const toolsOpen = ref(true)
     <p v-if="error" class="strategy-status error-text" role="alert">{{ error }}</p>
     <p v-if="status" class="strategy-status" role="status">{{ status }}</p>
 
+    <StrategySetupDeck
+      v-if="!loading"
+      :strategy="strategy"
+      :background="background"
+      :background-settings="document.background"
+      @use-background="useBackground"
+      @update-background-settings="updateBackgroundSettings"
+      @record-history="recordHistory"
+    />
+
     <StrategyToolbar
-      v-if="!loading" :mode="mode" :color="color" :colors="STRATEGY_COLORS" :formation="formation"
+      v-if="!loading"
+      :mode="mode" :color="color" :colors="STRATEGY_COLORS" :formation="formation"
       :text-value="textValue" :can-undo="canUndo" :can-redo="canRedo"
       @update:mode="mode = $event" @update:color="color = $event" @update:formation="formation = $event"
       @update:text-value="textValue = $event" @add-line="addLine" @add-formation="addFormation"
@@ -51,23 +65,25 @@ const toolsOpen = ref(true)
     />
 
     <div v-if="!loading" class="strategy-planner-workspace">
-      <button
-        type="button" class="strategy-tools-toggle" :class="{ 'is-open': toolsOpen }"
-        aria-controls="strategy-tool-rail" :aria-expanded="toolsOpen" @click="toolsOpen = !toolsOpen"
-      ><span aria-hidden="true">{{ toolsOpen ? '›' : '‹' }}</span><strong>{{ t(toolsOpen ? 'strategyPlanner.hideTools' : 'strategyPlanner.showTools') }}</strong></button>
-
-      <StrategyInspector
-        v-show="toolsOpen" :strategy="strategy" :background="background" :ships="ships" :guides="guides"
-        :marker="marker" :marker-builds="markerBuilds" :selected-object="selectedObject"
-        :selected-builds="selectedBuilds" :share-url="shareUrl" :colors="STRATEGY_COLORS" :background-settings="document.background"
-        @close="toolsOpen = false" @use-background="useBackground"
-        @update-marker-ship="updateMarkerShipReference" @add-ship="addShip"
-        @update-selected-ship="updateSelectedShipReference" @record-history="recordHistory"
-        @update-background-settings="updateBackgroundSettings"
-        @delete-selected="deleteSelected" @toggle-publication="togglePublication" @copy-share-link="copyShareLink"
-      />
-
       <main class="strategy-chart-column">
+        <StrategyMarkerOverlay
+          v-show="markerToolsOpen"
+          :marker="marker"
+          :ships="ships"
+          :guides="guides"
+          :marker-builds="markerBuilds"
+          @update-marker-ship="updateMarkerShipReference"
+          @add-ship="addShip"
+          @close="markerToolsOpen = false"
+        />
+        <button
+          v-if="!markerToolsOpen"
+          type="button"
+          class="strategy-marker-tools-toggle"
+          aria-controls="strategy-tool-rail"
+          :aria-expanded="markerToolsOpen"
+          @click="markerToolsOpen = true"
+        ><span aria-hidden="true">＋</span><strong>{{ t('strategyPlanner.showMarkerTools') }}</strong></button>
         <p v-if="!backgroundUrl" class="strategy-empty-canvas">{{ t('strategyPlanner.missingBackground') }}</p>
         <StrategyDocument
           v-else ref="canvas" :title="strategy.title || t('strategyPlanner.title')"
@@ -81,6 +97,24 @@ const toolsOpen = ref(true)
           </template>
         </StrategyDocument>
       </main>
+      <section class="strategy-workspace-tools" :aria-label="t('strategyPlanner.tools')">
+        <StrategyInspector
+          :open="inspectorOpen"
+          :strategy="strategy"
+          :ships="ships"
+          :guides="guides"
+          :selected-object="selectedObject"
+          :selected-builds="selectedBuilds"
+          :share-url="shareUrl"
+          :colors="STRATEGY_COLORS"
+          @toggle="inspectorOpen = !inspectorOpen"
+          @update-selected-ship="updateSelectedShipReference"
+          @record-history="recordHistory"
+          @delete-selected="deleteSelected"
+          @toggle-publication="togglePublication"
+          @copy-share-link="copyShareLink"
+        />
+      </section>
     </div>
   </section>
 </template>

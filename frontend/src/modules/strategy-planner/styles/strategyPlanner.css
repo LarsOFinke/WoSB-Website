@@ -1,6 +1,6 @@
 .strategy-planner-page {
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-auto-rows: auto;
   gap: 0.65rem;
   min-width: 0;
   min-height: calc(100dvh - 5rem);
@@ -47,10 +47,20 @@
 
 .strategy-planner-workspace {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0.75rem;
   isolation: isolate;
   min-width: 0;
-  min-height: 40rem;
-  height: calc(100dvh - 12rem);
+  min-height: 0;
+  height: auto;
+}
+
+.strategy-workspace-tools {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .strategy-panel,
@@ -68,8 +78,9 @@
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 0.75rem;
   min-width: 0;
-  height: 100%;
-  overflow: hidden;
+  height: calc(100dvh - 12rem);
+  min-height: 40rem;
+  overflow: visible;
 }
 
 .strategy-print-chart-page,
@@ -177,6 +188,38 @@
   text-align: center;
 }
 
+.strategy-transform-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5rem;
+  align-items: end;
+  gap: 0.65rem;
+}
+
+.strategy-transform-control label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.strategy-transform-control label > span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.strategy-transform-control input { width: 100%; min-width: 0; }
+
+.strategy-transform-value {
+  display: grid;
+  min-height: var(--touch-target);
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
 .strategy-object-help {
   position: absolute;
   z-index: var(--z-raised);
@@ -236,8 +279,11 @@
 
 @media (max-width: 1050px) {
   .strategy-planner-workspace {
-    height: calc(100dvh - 13rem);
+    grid-template-columns: minmax(0, 1fr);
   }
+
+  .strategy-chart-column { height: calc(100dvh - 13rem); }
+
 }
 
 @media (max-width: 720px) {
@@ -265,9 +311,11 @@
   }
 
   .strategy-planner-workspace {
-    min-height: 36rem;
-    height: calc(100dvh - 16rem);
+    min-height: 0;
+    height: auto;
   }
+
+  .strategy-chart-column { height: calc(100dvh - 16rem); min-height: 36rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

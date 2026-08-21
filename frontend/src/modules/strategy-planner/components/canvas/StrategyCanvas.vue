@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { strategyCanvasPoint } from '../domain/canvasCoordinates.js'
-import { createFreehand, moveStrategyObject, snapshotStrategyObject, STRATEGY_COLORS } from '../domain/strategyDocument.js'
-import { strategyFormationPath, strategyLineGeometry, strategyObjectScale } from '../domain/strategyGeometry.js'
-import { normalizeBackgroundSettings } from '../domain/strategyDocument.js'
+import { strategyCanvasPoint } from '../../domain/canvasCoordinates.js'
+import { createFreehand, moveStrategyObject, snapshotStrategyObject, STRATEGY_COLORS } from '../../domain/strategyDocument.js'
+import { strategyFormationPath, strategyLineGeometry, strategyObjectScale } from '../../domain/strategyGeometry.js'
+import { normalizeBackgroundSettings } from '../../domain/strategyDocument.js'
 
 const props = defineProps({
   document: { type: Object, required: true },

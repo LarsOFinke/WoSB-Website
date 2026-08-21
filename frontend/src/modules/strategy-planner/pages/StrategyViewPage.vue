@@ -1,5 +1,5 @@
 <script setup>
-import StrategyDocument from '../components/StrategyDocument.vue'
+import StrategyDocument from '../components/canvas/StrategyDocument.vue'
 import { useStrategyViewPage } from '../composables/useStrategyView.js'
 import '../styles/strategyPlanner.css'
 import '../styles/strategyView.css'

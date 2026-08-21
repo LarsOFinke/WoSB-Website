@@ -56,3 +56,16 @@ const backgroundPresentationMessages = {
 for (const [locale, values] of Object.entries(backgroundPresentationMessages)) {
   Object.assign(strategyPlannerMessages[locale].strategyPlanner, values)
 }
+
+const toolVisibilityMessages = {
+  en: { showMarkerTools: 'Show marker tools', hideMarkerTools: 'Hide marker tools', showInspector: 'Show inspector', hideInspector: 'Hide inspector' },
+  de: { showMarkerTools: 'Markierungswerkzeuge anzeigen', hideMarkerTools: 'Markierungswerkzeuge ausblenden', showInspector: 'Inspektor anzeigen', hideInspector: 'Inspektor ausblenden' },
+  fr: { showMarkerTools: 'Afficher les outils de marqueur', hideMarkerTools: 'Masquer les outils de marqueur', showInspector: 'Afficher l’inspecteur', hideInspector: 'Masquer l’inspecteur' },
+  es: { showMarkerTools: 'Mostrar herramientas de marcadores', hideMarkerTools: 'Ocultar herramientas de marcadores', showInspector: 'Mostrar inspector', hideInspector: 'Ocultar inspector' },
+  pt: { showMarkerTools: 'Mostrar ferramentas de marcadores', hideMarkerTools: 'Ocultar ferramentas de marcadores', showInspector: 'Mostrar inspetor', hideInspector: 'Ocultar inspetor' },
+  ru: { showMarkerTools: 'Показать инструменты маркеров', hideMarkerTools: 'Скрыть инструменты маркеров', showInspector: 'Показать инспектор', hideInspector: 'Скрыть инспектор' },
+  cn: { showMarkerTools: '显示标记工具', hideMarkerTools: '隐藏标记工具', showInspector: '显示检查器', hideInspector: '隐藏检查器' },
+}
+for (const [locale, values] of Object.entries(toolVisibilityMessages)) {
+  Object.assign(strategyPlannerMessages[locale].strategyPlanner, values)
+}

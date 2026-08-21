@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useLocale } from '@/locales'
-import '../styles/strategyLegend.css'
+import '../../styles/strategyLegend.css'
 
 const props = defineProps({
   document: { type: Object, required: true },

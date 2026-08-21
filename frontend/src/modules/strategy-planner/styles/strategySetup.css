@@ -1,0 +1,154 @@
+.strategy-setup-deck {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.8fr) minmax(20rem, 1.35fr) minmax(20rem, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.85rem;
+  background: linear-gradient(145deg, var(--panel), var(--surface-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.strategy-setup-field {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: var(--surface-faint);
+}
+
+.strategy-setup-field-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.5rem;
+}
+
+.strategy-setup-field-heading > span {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.strategy-setup-field-heading strong {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.strategy-setup-field > input,
+.strategy-setup-field > textarea {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.strategy-title-field input { min-height: var(--touch-target); }
+.strategy-description-field textarea { min-height: 4.5rem; resize: vertical; }
+
+.strategy-background-panel .file-drop-box {
+  min-height: 4.5rem;
+  padding: 0.55rem 0.7rem;
+}
+
+.strategy-background-panel .file-drop-box span { font-size: 0.8rem; }
+.strategy-background-panel .file-drop-box small { font-size: 0.75rem; }
+
+.strategy-background-name {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strategy-background-adjustments {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+}
+
+.strategy-background-adjustments > summary {
+  min-height: var(--touch-target);
+  padding: 0.5rem 0.1rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.strategy-background-adjustments > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.strategy-background-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  padding-top: 0.25rem;
+}
+
+.strategy-background-fit {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.strategy-background-fit legend {
+  grid-column: 1 / -1;
+  margin-bottom: 0.1rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.strategy-background-fit button {
+  min-height: var(--touch-target);
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 0.76rem;
+}
+
+.strategy-background-fit button:hover,
+.strategy-background-fit button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.strategy-background-controls .strategy-transform-control {
+  grid-template-columns: minmax(0, 1fr) 4rem;
+}
+
+.strategy-background-controls .strategy-transform-control label { margin: 0; }
+.strategy-background-controls output { background: var(--surface-faint); }
+
+@media (max-width: 1050px) {
+  .strategy-setup-deck { grid-template-columns: minmax(13rem, 0.8fr) minmax(18rem, 1.2fr); }
+  .strategy-background-panel { grid-column: 1 / -1; }
+}
+
+@media (max-width: 720px) {
+  .strategy-setup-deck { grid-template-columns: 1fr; }
+  .strategy-background-panel { grid-column: auto; }
+  .strategy-background-controls { grid-template-columns: 1fr; }
+  .strategy-background-fit { grid-column: auto; }
+}
+
+@media print { .strategy-setup-deck { display: none; } }

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useLocale } from '@/locales'
 import StrategyCanvas from './StrategyCanvas.vue'
 import StrategyLegend from './StrategyLegend.vue'
-import '../styles/strategyPrint.css'
+import '../../styles/strategyPrint.css'
 
 defineProps({
   title: { type: String, required: true },
