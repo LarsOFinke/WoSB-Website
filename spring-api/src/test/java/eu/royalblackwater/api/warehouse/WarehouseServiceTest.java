@@ -120,10 +120,27 @@ class WarehouseServiceTest {
                 "available_stock", 0L, "matching_stock", 0L, "reserved_stock", 0L, "total", 0L));
 
         var page = service(repository, mock(AuditService.class))
-                .list(MEMBER, null, null, null, null, null, 100, 0);
+                .list(MEMBER, null, null, null, null, null, null, 100, 0);
 
         assertThat(page.total()).isZero();
         assertThat(page.items()).isEmpty();
+    }
+
+    @Test
+    void listAppliesCollectionStatusFilterAndNormalizesIt() {
+        WarehouseRepository repository = mock(WarehouseRepository.class);
+        when(repository.query(anyString(), anyMap())).thenReturn(List.of());
+        when(repository.required(anyString(), anyMap())).thenReturn(Map.of(
+                "available_stock", 0L, "matching_stock", 0L, "reserved_stock", 0L, "total", 0L));
+
+        service(repository, mock(AuditService.class)).list(MEMBER, null, null, null, null,
+                null, " IN_WAREHOUSE ", 100, 0);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> parameters = ArgumentCaptor.forClass(Map.class);
+        verify(repository).query(eq(WarehouseQueries.ENTRY_SELECT + WarehouseQueries.FILTER_WHERE_01
+                + WarehouseQueries.FILTER_AND_COLLECTION_STATUS_01 + WarehouseQueries.LIST_ORDER_LIMIT_01), parameters.capture());
+        assertThat(parameters.getValue()).containsEntry("collectionStatus", "in_warehouse");
     }
 
     @Test

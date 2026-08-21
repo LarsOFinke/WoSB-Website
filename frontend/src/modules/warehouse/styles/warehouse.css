@@ -154,6 +154,21 @@
   border-radius: var(--radius-md);
 }
 
+.warehouse-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.warehouse-pagination > div {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .warehouse-table {
   width: 100%;
   min-width: 68rem;
@@ -315,6 +330,11 @@
   .warehouse-ledger > header,
   .warehouse-editor__header {
     align-items: flex-start;
+  }
+
+  .warehouse-pagination {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .warehouse-editor-backdrop {

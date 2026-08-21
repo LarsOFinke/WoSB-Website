@@ -27,7 +27,7 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/port-assignments\?fleet_id=2$/, (route) => route.fulfill({
     json: [{ fleet_id: 2, fleet_name: 'Royal Blackwater Fleet', port_id: 1, port_name: 'Tortuga', assignee_user_id: null, assignee_name: null, updated_at: '2030-01-01T00:00:00' }],
   }))
-  await page.route(/^https?:\/\/[^/]+\/api\/warehouse(?:\?.*)?$/, async (route) => {
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse(?:\/\d+)?(?:\?.*)?$/, async (route) => {
     if (route.request().method() === 'POST') {
       createdPayload = route.request().postDataJSON()
       items = [{
@@ -37,6 +37,10 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
         created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:00:00', updated_by: 'Lars',
       }]
       await route.fulfill({ status: 201, json: items[0] })
+      return
+    }
+    if (route.request().method() === 'PUT') {
+      await route.fulfill({ status: 409, json: { detail: 'Warehouse entry changed; reload before saving again.' } })
       return
     }
     await route.fulfill({ json: {
@@ -66,6 +70,11 @@ test('moderator filters and creates a linked-member warehouse entry', async ({ p
     port: 'Tortuga', resource: 'Iron', amount: 1250, reserved: false,
     collection_status: 'up_for_collection',
   })
+
+  await page.getByRole('button', { name: 'Edit' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Save entry' }).click()
+  await expect(page.getByRole('alert')).toContainText('changed in another staff session')
+  await expect(page.getByRole('dialog')).toBeHidden()
 
   await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/port-assignments\/1$/, async (route) => {
     assignmentPayload = route.request().postDataJSON()
@@ -111,4 +120,40 @@ test('ordinary member can browse warehouse without mutation controls', async ({ 
   await expect(page.getByRole('button', { name: 'Add stock entry' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Edit' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Delete' })).toHaveCount(0)
+})
+
+test('warehouse collection filters and pagination stay in sync with the API', async ({ page }) => {
+  await page.route(/^https?:\/\/[^/]+\/api\/auth\/me$/, (route) => route.fulfill({
+    json: { id: 8, username: 'member', display_name: 'Fleet Member', role: 'user', is_active: true },
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/fleets$/, (route) => route.fulfill({
+    json: [{ id: 2, name: 'Royal Blackwater Fleet', is_active: true }],
+  }))
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/ports$/, (route) => route.fulfill({ json: [] }))
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse\/resources$/, (route) => route.fulfill({ json: [] }))
+  const requests = []
+  await page.route(/^https?:\/\/[^/]+\/api\/warehouse(?:\?.*)?$/, (route) => {
+    const url = new URL(route.request().url())
+    requests.push(url.search)
+    const offset = Number(url.searchParams.get('offset') || 0)
+    const items = Array.from({ length: offset ? 1 : 100 }, (_, index) => ({
+      id: offset + index + 1, fleet_id: 2, fleet_name: 'Royal Blackwater Fleet',
+      member_user_id: null, custom_holder_name: 'Quartermaster', holder_name: 'Quartermaster',
+      port: 'Tortuga', resource: 'Iron', amount: 1, reserved: false,
+      collection_status: url.searchParams.get('collection_status') || 'in_warehouse', version: 1,
+      created_at: '2030-01-15T12:00:00', updated_at: '2030-01-15T12:00:00', updated_by: 'Quartermaster',
+    }))
+    return route.fulfill({ json: {
+      items, total: 101, matching_stock: 101, reserved_stock: 0, available_stock: 101,
+      holders: ['Quartermaster'], ports: ['Tortuga'], resources: ['Iron'],
+    } })
+  })
+
+  await page.goto('/warehouse')
+  await page.getByLabel('Collection status').selectOption('in_warehouse')
+  await expect.poll(() => requests.at(-1)).toContain('collection_status=in_warehouse')
+  await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect.poll(() => requests.at(-1)).toContain('offset=100')
+  await expect(page.getByText('101 / 101')).toBeVisible()
 })

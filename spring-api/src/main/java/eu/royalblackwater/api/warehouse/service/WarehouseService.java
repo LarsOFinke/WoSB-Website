@@ -51,12 +51,13 @@ public class WarehouseService {
 
     @Transactional(readOnly = true)
     public WarehousePage list(AuthenticatedUser actor, Long fleetId, String holder, String port,
-                              String resource, Boolean reserved, long limit, long offset) {
+                              String resource, Boolean reserved, String collectionStatus,
+                              long limit, long offset) {
         requireAuthenticated(actor);
         Long normalizedFleetId = ListFilter.optionalPositiveLong(fleetId, "fleet_id");
         ListFilter page = ListFilter.of(null, limit, offset, 500);
         Map<String, Object> parameters = new LinkedHashMap<>();
-        String filters = filters(parameters, normalizedFleetId, holder, port, resource, reserved);
+        String filters = filters(parameters, normalizedFleetId, holder, port, resource, reserved, collectionStatus);
         parameters.put("limit", page.limit());
         parameters.put("offset", page.offset());
 
@@ -145,7 +146,7 @@ public class WarehouseService {
     }
 
     private String filters(Map<String, Object> parameters, Long fleetId, String holder, String port,
-                           String resource, Boolean reserved) {
+                           String resource, Boolean reserved, String collectionStatus) {
         StringBuilder sql = new StringBuilder(WarehouseQueries.FILTER_WHERE_01);
         if (fleetId != null) {
             sql.append(WarehouseQueries.FILTER_AND_FLEET_01);
@@ -157,6 +158,12 @@ public class WarehouseService {
         if (reserved != null) {
             sql.append(WarehouseQueries.FILTER_AND_RESERVED_01);
             parameters.put("reserved", reserved);
+        }
+        String normalizedCollectionStatus = ListFilter.optionalEnum(collectionStatus, "collection_status",
+                Set.of("up_for_collection", "in_warehouse"));
+        if (normalizedCollectionStatus != null) {
+            sql.append(WarehouseQueries.FILTER_AND_COLLECTION_STATUS_01);
+            parameters.put("collectionStatus", normalizedCollectionStatus);
         }
         return sql.toString();
     }

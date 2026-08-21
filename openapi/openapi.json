@@ -12800,7 +12800,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.7.16"
+    "version": "1.7.33"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -25229,6 +25229,26 @@
                 }
               ],
               "title": "Reserved"
+            }
+          },
+          {
+            "in": "query",
+            "name": "collection_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "up_for_collection",
+                    "in_warehouse"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Collection Status"
             }
           },
           {

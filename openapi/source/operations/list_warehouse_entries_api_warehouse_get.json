@@ -9,6 +9,7 @@
       { "in": "query", "name": "port", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Port" } },
       { "in": "query", "name": "resource", "required": false, "schema": { "anyOf": [{ "maxLength": 120, "type": "string" }, { "type": "null" }], "title": "Resource" } },
       { "in": "query", "name": "reserved", "required": false, "schema": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Reserved" } },
+      { "in": "query", "name": "collection_status", "required": false, "schema": { "anyOf": [{ "enum": ["up_for_collection", "in_warehouse"], "type": "string" }, { "type": "null" }], "title": "Collection Status" } },
       { "in": "query", "name": "limit", "required": false, "schema": { "default": 100, "maximum": 500, "minimum": 1, "title": "Limit", "type": "integer" } },
       { "in": "query", "name": "offset", "required": false, "schema": { "default": 0, "maximum": 100000, "minimum": 0, "title": "Offset", "type": "integer" } },
       { "in": "cookie", "name": "rbf_hub_session", "required": false, "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Rbf Hub Session" } }

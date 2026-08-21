@@ -250,21 +250,31 @@ class ApplicationIntegrationTest extends ApplicationIntegrationSupport {
                 member.sessionCookie());
         assertStatus(listed, 200, "GET", "/api/warehouse?fleet_id={fleet_id}");
         assertThat(listed.body()).contains("\"matching_stock\":650", "\"available_stock\":650");
+        HttpResponse<String> filteredEmpty = get("/api/warehouse?fleet_id=" + fleetId
+                + "&collection_status=in_warehouse&limit=10&offset=0", member.sessionCookie());
+        assertStatus(filteredEmpty, 200, "GET", "/api/warehouse collection status filter");
+        assertThat(filteredEmpty.body()).contains("\"total\":0");
         assertStatus(post("/api/warehouse", createBody,
                         member.cookieHeader(), member.csrfToken(), localOrigin()),
                 403, "POST", "/api/warehouse member mutation");
 
         String updateBody = "{\"fleet_id\":" + fleetId
                 + ",\"custom_holder_name\":\"Blackwater\",\"port\":\"Tortuga\","
-                + "\"resource\":\"Iron\",\"amount\":1250,\"reserved\":false,\"version\":1}";
+                + "\"resource\":\"Iron\",\"amount\":1250,\"reserved\":false,"
+                + "\"collection_status\":\"in_warehouse\",\"version\":1}";
         HttpResponse<String> updated = put("/api/warehouse/" + entryId, updateBody, moderator);
         assertStatus(updated, 200, "PUT", "/api/warehouse/{entry_id}");
         assertThat(updated.body()).contains("\"amount\":1250", "\"version\":2");
+        HttpResponse<String> filteredUpdated = get("/api/warehouse?fleet_id=" + fleetId
+                + "&collection_status=in_warehouse&limit=10&offset=0", member.sessionCookie());
+        assertStatus(filteredUpdated, 200, "GET", "/api/warehouse collection status result");
+        assertThat(filteredUpdated.body()).contains("\"total\":1", "\"matching_stock\":1250");
 
         assertStatus(put("/api/warehouse/" + entryId, updateBody, moderator),
                 409, "PUT", "/api/warehouse/{entry_id} stale version");
-        String reserveBody = updateBody.replace("\"reserved\":false,\"version\":1",
-                "\"reserved\":true,\"version\":2");
+        String reserveBody = updateBody.replace(
+                "\"reserved\":false,\"collection_status\":\"in_warehouse\",\"version\":1",
+                "\"reserved\":true,\"collection_status\":\"in_warehouse\",\"version\":2");
         HttpResponse<String> reserved = put("/api/warehouse/" + entryId, reserveBody, moderator);
         assertStatus(reserved, 200, "PUT", "/api/warehouse/{entry_id} reservation");
         long version = jsonLong(reserved.body(), "version");

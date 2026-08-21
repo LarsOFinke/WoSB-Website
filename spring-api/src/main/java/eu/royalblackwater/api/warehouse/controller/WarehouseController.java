@@ -57,10 +57,11 @@ public class WarehouseController extends ApiControllerSupport {
             @RequestParam(name = "port", required = false) String port,
             @RequestParam(name = "resource", required = false) String resource,
             @RequestParam(name = "reserved", required = false) Boolean reserved,
+            @RequestParam(name = "collection_status", required = false) String collectionStatus,
             @RequestParam(name = "limit", defaultValue = "100") long limit,
             @RequestParam(name = "offset", defaultValue = "0") long offset) {
         return respond(warehouse.list(CurrentUser.require(), fleetId, holder, port, resource,
-                reserved, limit, offset), 200);
+                reserved, collectionStatus, limit, offset), 200);
     }
 
     @PostMapping("/api/warehouse")

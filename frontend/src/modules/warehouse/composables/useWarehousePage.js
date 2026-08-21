@@ -48,32 +48,55 @@ export function useWarehousePage() {
   const editorOpen = ref(false)
   const editingId = ref(null)
   const draft = reactive(createWarehouseDraft())
-  const filters = reactive({ fleet_id: '', holder: '', port: '', resource: '', reserved: '' })
+  const filters = reactive({ fleet_id: '', holder: '', port: '', resource: '', reserved: '', collection_status: '' })
+  const pageSize = 100
+  const offset = ref(0)
+  let loadSequence = 0
 
   const editorTitle = computed(() => editingId.value
     ? t('warehouse.editor.editTitle')
     : t('warehouse.editor.createTitle'))
   const formatAmount = (value) => formatWarehouseAmount(value, locale.value)
-  const formatDateTime = (value) => value ? new Date(value).toLocaleString() : '—'
+  const formatDateTime = (value) => value ? new Date(value).toLocaleString(locale.value) : '—'
+  const pageStart = computed(() => page.value.total ? offset.value + 1 : 0)
+  const pageEnd = computed(() => Math.min(offset.value + page.value.items.length, page.value.total))
+  const hasPreviousPage = computed(() => offset.value > 0)
+  const hasNextPage = computed(() => offset.value + page.value.items.length < page.value.total)
 
-  async function loadEntries() {
+  async function loadEntries({ resetOffset = false } = {}) {
+    if (resetOffset) offset.value = 0
+    const sequence = ++loadSequence
     loading.value = true
     error.value = ''
     try {
-      page.value = await listWarehouseEntries({
+      const result = await listWarehouseEntries({
         fleet_id: filters.fleet_id,
         holder: filters.holder,
         port: filters.port,
         resource: filters.resource,
         reserved: filters.reserved,
-        limit: 500,
-        offset: 0,
+        collection_status: filters.collection_status,
+        limit: pageSize,
+        offset: offset.value,
       })
+      if (sequence === loadSequence) page.value = result
     } catch (err) {
-      error.value = err.message || t('warehouse.errors.load')
+      if (sequence === loadSequence) error.value = err.message || t('warehouse.errors.load')
     } finally {
-      loading.value = false
+      if (sequence === loadSequence) loading.value = false
     }
+  }
+
+  function previousPage() {
+    if (!hasPreviousPage.value) return
+    offset.value = Math.max(0, offset.value - pageSize)
+    loadEntries()
+  }
+
+  function nextPage() {
+    if (!hasNextPage.value) return
+    offset.value += pageSize
+    loadEntries()
   }
 
   async function loadMembers(fleetId) {
@@ -185,9 +208,15 @@ export function useWarehousePage() {
         success.value = t('warehouse.messages.created')
       }
       closeEditor()
-      await loadEntries()
+      await loadEntries({ resetOffset: true })
     } catch (err) {
-      error.value = err.message || t('warehouse.errors.save')
+      if (err.status === 409) {
+        closeEditor()
+        await loadEntries({ resetOffset: true })
+        error.value = t('warehouse.errors.conflict')
+      } else {
+        error.value = err.message || t('warehouse.errors.save')
+      }
     } finally {
       saving.value = false
     }
@@ -200,15 +229,20 @@ export function useWarehousePage() {
     try {
       await deleteWarehouseEntry(entry.id, entry.version)
       success.value = t('warehouse.messages.deleted')
-      await loadEntries()
+      await loadEntries({ resetOffset: true })
     } catch (err) {
-      error.value = err.message || t('warehouse.errors.delete')
+      if (err.status === 409) {
+        await loadEntries({ resetOffset: true })
+        error.value = t('warehouse.errors.conflict')
+      } else {
+        error.value = err.message || t('warehouse.errors.delete')
+      }
     }
   }
 
   async function clearFilters() {
-    Object.assign(filters, { fleet_id: '', holder: '', port: '', resource: '', reserved: '' })
-    await loadEntries()
+    Object.assign(filters, { fleet_id: '', holder: '', port: '', resource: '', reserved: '', collection_status: '' })
+    await loadEntries({ resetOffset: true })
   }
 
   onMounted(async () => {
@@ -230,8 +264,9 @@ export function useWarehousePage() {
 
   return {
     t, canManageWarehouse, page, fleets, members, ports, resources, assignments, assignmentFleetId, assignmentOverlayOpen, loading, saving, publishingOverview, error, success,
-    editorOpen, editorTitle, editingId, draft, filters, formatAmount, loadEntries, openCreate,
-    formatDateTime, openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
+    editorOpen, editorTitle, editingId, draft, filters, formatAmount, formatDateTime, pageStart, pageEnd,
+    hasPreviousPage, hasNextPage, loadEntries, previousPage, nextPage, openCreate,
+    openEdit, closeEditor, changeDraftFleet, saveEntry, removeEntry, clearFilters,
     loadAssignments, openAssignmentOverlay, closeAssignmentOverlay, saveAssignment, publishOverview,
   }
 }

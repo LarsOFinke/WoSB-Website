@@ -39,6 +39,7 @@ public final class WarehouseQueries {
     public static final String FILTER_AND_PORT_01 = " and lower(w.port)=:port";
     public static final String FILTER_AND_RESOURCE_01 = " and lower(w.resource)=:resource";
     public static final String FILTER_AND_RESERVED_01 = " and w.reserved=:reserved";
+    public static final String FILTER_AND_COLLECTION_STATUS_01 = " and w.collection_status=:collectionStatus";
     public static final String LIST_ORDER_LIMIT_01 = " order by lower(f.name),lower(coalesce(nullif(up.display_name,''),member.username,w.custom_holder_name)),lower(w.port),lower(w.resource),w.id limit :limit offset :offset";
     public static final String RAW_WHERE_01 = " where w.id=:id";
 
