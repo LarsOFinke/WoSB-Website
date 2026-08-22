@@ -33,8 +33,8 @@ def _text(payload: dict[str, Any], key: str, pattern: re.Pattern[str], label: st
     return value
 
 
-def _remote_directory(payload: dict[str, Any]) -> str:
-    value = _text(payload, "remote_directory", _REMOTE_RE, "remote directory")
+def _remote_directory(payload: dict[str, Any], key: str = "remote_directory") -> str:
+    value = _text(payload, key, _REMOTE_RE, key.replace("_", " "))
     value = value.rstrip("/") or "/"
     if any(part in {"", ".", ".."} for part in value.split("/")[1:]):
         raise ValueError("Invalid remote directory path segments.")
@@ -60,6 +60,14 @@ def validate_response(payload: object) -> dict[str, Any]:
     recovery_username = str(source.get("recovery_username") or "").strip()
     if recovery_username and not _USER_RE.fullmatch(recovery_username):
         raise ValueError("Invalid recovery username.")
+    managed_server = source.get("managed_server") is True
+    remote_directory = _remote_directory(source)
+    recovery_directory = (
+        _remote_directory(source, "recovery_directory") if managed_server else remote_directory
+    )
+    trust_model = str(source.get("trust_model") or "").strip()
+    if managed_server and trust_model != "server-controlled-ingest-v1":
+        raise ValueError("Managed backup server has an unsupported trust model.")
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": RESPONSE_KIND,
@@ -69,13 +77,15 @@ def validate_response(payload: object) -> dict[str, Any]:
         "port": port,
         "username": _text(source, "username", _USER_RE, "SSH username"),
         "recovery_username": recovery_username,
-        "remote_directory": _remote_directory(source),
+        "remote_directory": remote_directory,
+        "recovery_directory": recovery_directory,
         "host_key": _text(source, "host_key", _HOST_KEY_RE, "SSH host key"),
         "host_key_fingerprint": _text(
             source, "host_key_fingerprint", _FINGERPRINT_RE, "SSH host-key fingerprint"
         ),
         "age_recipient": _text(source, "age_recipient", _AGE_RE, "age recipient"),
-        "managed_server": source.get("managed_server") is True,
+        "managed_server": managed_server,
+        "trust_model": trust_model,
     }
 
 

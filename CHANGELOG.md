@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## 1.8.1 - 2026-08-22
+
+- Made backup-server enrollment independent of separately published GitHub
+  Release assets. The exact deployed provisioner is now embedded in the public
+  enrollment request, checksum-verified on the backup server, and accompanied
+  by explicit website/target-server and backup-server command labels.
+- Made managed backup servers authoritative over committed storage: website
+  credentials can submit only to an isolated ingress area, while a root-owned
+  backup-server service validates recoverability, commits protected files, and
+  returns a checksum-bound acceptance receipt.
+
 - Added a member-visible, staff-managed, fleet-scoped guild warehouse with
   member-linked or custom holders, spreadsheet-style filtering and totals, reservation state,
   optimistic edit protection, privacy export coverage, and audit-driven Discord

@@ -7,6 +7,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import tempfile
+import time
 from typing import Any
 
 from backup_runner_core import HOST_RE, REMOTE_RE, USER_RE, now
@@ -24,12 +25,17 @@ class BackupTransferMixin:
         host = str(config.get("host") or "")
         username = str(config.get("username") or "")
         remote_directory = str(config.get("remote_directory") or "")
+        receipt_directory = str(config.get("receipt_directory") or "")
         port = int(config.get("port") or 22)
         if (
             not 1 <= port <= 65535
             or not HOST_RE.fullmatch(host)
             or not USER_RE.fullmatch(username)
             or not REMOTE_RE.fullmatch(remote_directory)
+            or (
+                config.get("managed_server") is True
+                and not REMOTE_RE.fullmatch(receipt_directory)
+            )
         ):
             raise RuntimeError("The stored backup configuration is invalid.")
         return config
@@ -149,8 +155,9 @@ class BackupTransferMixin:
         persist: bool = True,
     ) -> str:
         config = config or self.load_connection()
+        boundary = "isolated ingest" if config.get("managed_server") is True else "SFTP"
         self.log(
-            f"Testing SFTP write/read/delete access to "
+            f"Testing {boundary} write/read/delete access to "
             f"{config['host']}:{config['port']}{config['remote_directory']}."
         )
         self._sftp_roundtrip(
@@ -161,13 +168,74 @@ class BackupTransferMixin:
         tested_at = now()
         if persist and self.config_file.is_file():
             stored = self.read_json(self.config_file)
-            stored["verification_mode"] = "sftp-roundtrip"
+            stored["verification_mode"] = (
+                "server-controlled-ingest" if config.get("managed_server") is True
+                else "sftp-roundtrip"
+            )
             stored["write_tested_at"] = tested_at
             self._atomic_write(
                 self.config_file,
                 json.dumps(stored, ensure_ascii=False, indent=2) + "\n",
             )
         return tested_at
+
+    def _wait_for_ingest_receipt(
+        self,
+        config: dict[str, Any],
+        manifest_name: str,
+        manifest_sha256: str,
+    ) -> None:
+        receipt_directory = str(config.get("receipt_directory") or "")
+        if not REMOTE_RE.fullmatch(receipt_directory):
+            raise RuntimeError("Managed backup configuration has no safe receipt directory.")
+        receipt_name = f"{manifest_name}.receipt.json"
+        deadline = time.monotonic() + 180
+        last_detail = "receipt is not available yet"
+        while time.monotonic() < deadline:
+            with tempfile.NamedTemporaryFile(
+                prefix="rbf-ingest-receipt-", dir=self.run_dir, delete=False
+            ) as handle:
+                local_receipt = Path(handle.name)
+            try:
+                result = subprocess.run(
+                    ["sftp", "-q", "-b", "-", *self.ssh_base(config)],
+                    input=(
+                        f"cd {receipt_directory}\n"
+                        f"get {receipt_name} {local_receipt}\n"
+                        "quit\n"
+                    ),
+                    text=True,
+                    capture_output=True,
+                    timeout=30,
+                )
+                if result.returncode != 0:
+                    last_detail = self._sftp_error_detail(result)
+                    time.sleep(2)
+                    continue
+                payload = json.loads(local_receipt.read_text(encoding="utf-8"))
+                if (
+                    not isinstance(payload, dict)
+                    or payload.get("schema_version") != 1
+                    or payload.get("kind") != "rbf-backup-ingest-receipt"
+                    or payload.get("manifest") != manifest_name
+                ):
+                    raise RuntimeError("Backup server returned an invalid ingest receipt.")
+                if payload.get("status") != "accepted":
+                    detail = str(payload.get("detail") or "validation failed")[:500]
+                    raise RuntimeError(f"Backup server rejected the submitted set: {detail}")
+                if payload.get("manifest_sha256") != manifest_sha256:
+                    raise RuntimeError("Backup server receipt does not bind the submitted manifest.")
+                self.log(
+                    f"Backup server accepted and protected committed set {manifest_name}."
+                )
+                return
+            except json.JSONDecodeError as exc:
+                raise RuntimeError("Backup server returned a malformed ingest receipt.") from exc
+            finally:
+                local_receipt.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Backup server did not commit the submitted set within 180 seconds: {last_detail}"
+        )
 
     def transfer(
         self, config: dict[str, Any], backup_file: Path, artifact_type: str
@@ -235,6 +303,23 @@ class BackupTransferMixin:
             ]
             raise RuntimeError(f"Backup transfer failed: {detail[0]}")
 
+        digest_builder = hashlib.sha256()
+        with backup_file.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest_builder.update(chunk)
+        digest = digest_builder.hexdigest()
+
+        if config.get("managed_server") is True:
+            if artifact_type == "backup_set":
+                self._wait_for_ingest_receipt(config, filename, digest)
+            return {
+                "artifact_type": artifact_type,
+                "filename": filename,
+                "size_bytes": backup_file.stat().st_size,
+                "sha256": digest,
+                "remote_path": f"{config['remote_directory'].rstrip('/')}/{filename}",
+            }
+
         verification_sources = [backup_file, checksum_file]
         if metadata_file.is_file() and metadata_checksum.is_file():
             verification_sources.extend([metadata_file, metadata_checksum])
@@ -272,11 +357,6 @@ class BackupTransferMixin:
             finally:
                 verification_copy.unlink(missing_ok=True)
 
-        digest_builder = hashlib.sha256()
-        with backup_file.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                digest_builder.update(chunk)
-        digest = digest_builder.hexdigest()
         return {
             "artifact_type": artifact_type,
             "filename": filename,

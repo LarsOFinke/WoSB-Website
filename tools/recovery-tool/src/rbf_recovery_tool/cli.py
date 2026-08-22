@@ -43,7 +43,7 @@ def _profile_from_response(args: argparse.Namespace) -> Profile:
     profile.host = args.host or host
     profile.port = args.port or int(response["port"])
     profile.username = args.username or username
-    profile.remote_directory = args.remote_directory or response["remote_directory"]
+    profile.remote_directory = args.remote_directory or response["recovery_directory"]
     profile.host_fingerprint = response["host_key_fingerprint"]
     profile.enrollment_id = response["enrollment_id"]
     if args.ssh_key:

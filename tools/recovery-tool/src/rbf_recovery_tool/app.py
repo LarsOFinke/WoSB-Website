@@ -169,7 +169,7 @@ class RecoveryApp:
             self.vars["port"].set(str(response["port"]))
             username = (response.get("recovery_username") or "rbf-recovery") if local else response["username"]
             self.vars["username"].set(username)
-            self.vars["remote_directory"].set(response["remote_directory"])
+            self.vars["remote_directory"].set(response["recovery_directory"])
             self.vars["host_fingerprint"].set(response["host_key_fingerprint"])
             self._append_log(f"Imported enrollment {response['enrollment_id']}; private files were not copied or stored.")
             messagebox.showinfo("Response imported", "Now select the private read-only SSH key and age identity, then click Test host key.", parent=self.root)

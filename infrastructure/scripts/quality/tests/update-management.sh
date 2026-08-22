@@ -15,6 +15,8 @@ PY
 python3 "$ROOT_DIR/infrastructure/scripts/release/package_deployment_artifact.py" --version "$(cat "$ROOT_DIR/VERSION")" --jar "$work/rbf-api.jar" --frontend-dist "$work/frontend" --output-dir "$work/release" --source-revision test
 artifact="$(find "$work/release" -name 'rbf-deployment-*.tar.gz' -print -quit)"
 python3 "$ROOT_DIR/infrastructure/scripts/release/verify-artifact.py" "$artifact" "$work/extracted" >/dev/null
+test -f "$work/extracted/payload/tools/backup-server/provision-rbf-backup-server.sh"
+test -f "$work/extracted/payload/tools/backup-server/rbf-backup-ingest.py"
 if find "$work/extracted/payload/infrastructure/scripts" -type f \
     \( -path '*/quality/*' -o -path '*/generation/*' -o -name 'package_*.py' \) -print -quit | grep -q .; then
   echo '[updates] repository-only scripts leaked into the runtime artifact' >&2

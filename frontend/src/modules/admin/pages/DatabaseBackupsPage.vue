@@ -143,6 +143,7 @@ const {
               </div>
             </details>
             <p v-if="enrollmentSetupError" class="error-text backup-enrollment-validation">{{ enrollmentSetupError }}</p>
+            <strong>{{ t('admin.backups.restore.backupServerCommandTarget') }}</strong>
             <div class="backup-command-panel">
               <pre><code>{{ enrollmentCommand || t('admin.backups.enrollment.commandPlaceholder') }}</code></pre>
               <button class="small-action" type="button" :disabled="!canCopyEnrollmentCommand" @click="copyEnrollmentCommand">
@@ -155,7 +156,7 @@ const {
           <section class="input-panel embedded-field backup-private-key-field backup-setup-step">
             <span>{{ t('admin.backups.enrollment.stepThree') }}</span>
             <p>{{ t('admin.backups.enrollment.stepThreeText') }}</p>
-            <input type="file" accept="application/json,.json" :disabled="!canSubmit" @change="loadEnrollmentResponse" />
+            <input class="backup-enrollment-file-input" type="file" accept="application/json,.json" :disabled="!canSubmit" @change="loadEnrollmentResponse" />
             <small v-if="enrollmentFileName">{{ t('admin.backups.enrollment.selectedFile', { filename: enrollmentFileName }) }}</small>
             <p v-if="enrollmentResponseError" class="error-text backup-enrollment-validation">{{ enrollmentResponseError }}</p>
             <div v-else-if="enrollmentResponsePreview" class="backup-host-key-panel backup-enrollment-preview">

@@ -14,6 +14,23 @@ Database restore always imports into a staging database first. The active Spring
 
 Recovery bundles are encrypted with `age`, contain a complete SHA-256 inventory, reject links and special entries during extraction, and can be verified without modifying production.
 
+## Managed backup-server trust boundary
+
+The website server is an untrusted producer from the backup server's point of
+view. Its chrooted SFTP identity can work only in `/incoming` and read
+server-issued receipts from `/receipts`; filesystem ownership prevents it from
+traversing `/data`. A root-owned, resource-bounded ingest service on the backup
+server validates the complete set, re-hashes every file and sidecar, requires a
+successful Spring/Flyway recovery preflight, copies files to new root-owned
+inodes, and publishes the manifest last. Filename collisions are rejected, so
+the producer cannot replace a committed set.
+
+Only the backup server controls retention and deletion. Its recovery identity
+is SFTP read-only and loopback-only, and the private `age` identity never leaves
+the backup server except for an administrator-maintained encrypted offline
+copy. Consequently, compromise of the website can submit or withhold future
+sets but cannot read, alter, or delete already committed backups.
+
 The strategy planner remains inside this existing aggregate boundary. Its documents,
 publication state, and catalog references are included by the unrestricted PostgreSQL
 custom dump; its background assets are included by the complete `uploads/` archive.

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import base64
+import hashlib
 from pathlib import Path
 import sys
 
@@ -47,6 +49,45 @@ def test_enrollment_preparation_hides_stale_request_until_replacement_is_ready(
     assert running["enrollment_id"] is None
     assert running["enrollment_public_key"] is None
     assert statuses[-1][1]["enrollment_request"]["enrollment_id"] == "fresh"
+
+
+def test_enrollment_request_contains_the_exact_deployed_provisioner(
+    tmp_path, monkeypatch
+) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_embedded_provisioner", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    release = tmp_path / "release"
+    infra = release / "infrastructure"
+    provisioner_path = release / "tools/backup-server/provision-rbf-backup-server.sh"
+    ingest_path = release / "tools/backup-server/rbf-backup-ingest.py"
+    provisioner_path.parent.mkdir(parents=True)
+    infra.mkdir()
+    (release / "VERSION").write_text("1.8.0\n", encoding="utf-8")
+    provisioner = b"#!/usr/bin/env bash\nset -Eeuo pipefail\n"
+    provisioner_path.write_bytes(provisioner)
+    ingest = b"#!/usr/bin/env python3\n"
+    ingest_path.write_bytes(ingest)
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request)
+    runner.prepare()
+    monkeypatch.setattr(
+        runner,
+        "_public_key",
+        lambda: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestUploadKey= rbf@test",
+    )
+
+    result = runner.prepare_enrollment()["enrollment_request"]
+
+    assert base64.b64decode(result["provisioner_base64"], validate=True) == provisioner
+    assert result["provisioner_sha256"] == hashlib.sha256(provisioner).hexdigest()
+    assert base64.b64decode(result["ingest_script_base64"], validate=True) == ingest
+    assert result["ingest_script_sha256"] == hashlib.sha256(ingest).hexdigest()
+    assert result["requested_directory"] == "/incoming"
 
 
 def test_scheduled_remote_sync_publishes_commit_marker_last(tmp_path, monkeypatch) -> None:
@@ -294,6 +335,73 @@ def test_transfer_verification_never_requires_remote_shell(tmp_path, monkeypatch
     )
     assert commands
     assert set(commands) == {"sftp"}
+
+
+def test_managed_transfer_requires_backup_server_acceptance_receipt(tmp_path, monkeypatch) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_ingest_receipt", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    infra.mkdir()
+    request = tmp_path / "request.json"
+    request.write_text("{}", encoding="utf-8")
+    runner = module.Runner(infra, request)
+    runner.prepare()
+    manifest = tmp_path / "rbf-backup-set-20260822T100000Z-123.json"
+    manifest.write_text('{"committed":true}\n', encoding="utf-8")
+    digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    Path(f"{manifest}.sha256").write_text(
+        f"{digest}  {manifest.name}\n", encoding="ascii"
+    )
+    batches: list[str] = []
+
+    class Result:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(command, **kwargs):
+        assert command[0] == "sftp"
+        batch = str(kwargs.get("input") or "")
+        batches.append(batch)
+        if "/receipts" in batch:
+            get_line = next(line for line in batch.splitlines() if line.startswith("get "))
+            destination = Path(get_line.split(maxsplit=2)[2])
+            destination.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "kind": "rbf-backup-ingest-receipt",
+                        "status": "accepted",
+                        "manifest": manifest.name,
+                        "manifest_sha256": digest,
+                    }
+                ),
+                encoding="utf-8",
+            )
+        return Result()
+
+    import json
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    runner.transfer(
+        {
+            "host": "backup.example.net",
+            "port": 22,
+            "username": "rbf-backup",
+            "remote_directory": "/incoming",
+            "receipt_directory": "/receipts",
+            "managed_server": True,
+        },
+        manifest,
+        "backup_set",
+    )
+
+    assert any("cd /incoming" in batch for batch in batches)
+    assert any("cd /receipts" in batch for batch in batches)
+    assert not any(f"get {manifest.name} " in batch for batch in batches)
 
 
 def test_prepare_upload_key_exposes_only_public_identity(tmp_path, monkeypatch) -> None:

@@ -24,6 +24,8 @@ RUNTIME_FILES = (
     "infrastructure/nginx/upload-security-headers.conf",
     "infrastructure/docker/api-runtime.Dockerfile",
     "infrastructure/docker/gateway-runtime.Dockerfile",
+    "tools/backup-server/provision-rbf-backup-server.sh",
+    "tools/backup-server/rbf-backup-ingest.py",
 )
 RUNTIME_DIRS = (
     "infrastructure/config",

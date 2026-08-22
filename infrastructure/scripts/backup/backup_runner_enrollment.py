@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -149,6 +151,25 @@ class BackupEnrollmentMixin:
             character not in "0123456789." for character in release_version
         ):
             raise RuntimeError("The installed application version is unavailable.")
+        provisioner_path = (
+            self.infra_dir.parent
+            / "tools/backup-server/provision-rbf-backup-server.sh"
+        )
+        if (
+            not provisioner_path.is_file()
+            or provisioner_path.is_symlink()
+            or provisioner_path.stat().st_size > 256 * 1024
+        ):
+            raise RuntimeError("The installed backup-server provisioner is unavailable.")
+        provisioner = provisioner_path.read_bytes()
+        ingest_path = self.infra_dir.parent / "tools/backup-server/rbf-backup-ingest.py"
+        if (
+            not ingest_path.is_file()
+            or ingest_path.is_symlink()
+            or ingest_path.stat().st_size > 256 * 1024
+        ):
+            raise RuntimeError("The installed backup-server ingest service is unavailable.")
+        ingest_script = ingest_path.read_bytes()
         payload = {
             "schema_version": SCHEMA_VERSION,
             "kind": REQUEST_KIND,
@@ -156,9 +177,13 @@ class BackupEnrollmentMixin:
             "created_at": now(),
             "product_hostname": socket.gethostname(),
             "release_version": release_version,
+            "provisioner_base64": base64.b64encode(provisioner).decode("ascii"),
+            "provisioner_sha256": hashlib.sha256(provisioner).hexdigest(),
+            "ingest_script_base64": base64.b64encode(ingest_script).decode("ascii"),
+            "ingest_script_sha256": hashlib.sha256(ingest_script).hexdigest(),
             "ssh_public_key": public_key,
             "requested_username": "rbf-backup",
-            "requested_directory": "/data",
+            "requested_directory": "/incoming",
         }
         request = validate_request(payload)
         self._atomic_write(self.enrollment_request_file, canonical_json(request))
@@ -232,6 +257,7 @@ class BackupEnrollmentMixin:
         username: str,
         remote_directory: str,
         host_key: str,
+        receipt_directory: str | None = None,
         managed_server: bool = False,
         write_tested_at: str | None = None,
     ) -> dict[str, Any]:
@@ -243,6 +269,7 @@ class BackupEnrollmentMixin:
             "port": port,
             "username": username,
             "remote_directory": remote_directory,
+            "receipt_directory": receipt_directory,
             "host_key_fingerprint": fingerprint,
             "managed_server": managed_server,
             "verification_mode": "sftp-roundtrip",
@@ -295,6 +322,7 @@ class BackupEnrollmentMixin:
                 port=int(response["port"]),
                 username=str(response["username"]),
                 remote_directory=str(response["remote_directory"]),
+                receipt_directory=str(response["receipt_directory"]),
                 host_key=str(response["host_key"]),
                 managed_server=bool(response["managed_server"]),
             )

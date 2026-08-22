@@ -11,6 +11,7 @@ const AGE_RECIPIENT_PATTERN = /^age1[0-9a-z]{20,}$/
 const CIDR_PATTERN = /^[A-Fa-f0-9:.]+(?:\/(?:[0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?$/
 const REQUEST_FILENAME_PATTERN = /^rbf-backup-enrollment-(?:request-)?([A-Za-z0-9_-]{24,128})\.json$/
 const RELEASE_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
+const SHA256_PATTERN = /^[a-f0-9]{64}$/
 
 function normalizeText(value) {
   return String(value || '').replace(/^\uFEFF/, '').trim()
@@ -62,6 +63,10 @@ export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') 
   if (!hasSafeRemotePath(String(payload.remote_directory || ''))) {
     return { payload: null, error: 'invalidRemoteDirectory' }
   }
+  if (!hasSafeRemotePath(String(payload.receipt_directory || ''))
+    || !hasSafeRemotePath(String(payload.recovery_directory || ''))) {
+    return { payload: null, error: 'invalidRemoteDirectory' }
+  }
   if (!HOST_KEY_PATTERN.test(String(payload.host_key || ''))) {
     return { payload: null, error: 'invalidHostKey' }
   }
@@ -72,6 +77,9 @@ export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') 
     return { payload: null, error: 'invalidAgeRecipient' }
   }
   if (payload.managed_server !== true) {
+    return { payload: null, error: 'unmanagedServer' }
+  }
+  if (payload.trust_model !== 'server-controlled-ingest-v1') {
     return { payload: null, error: 'unmanagedServer' }
   }
   return { payload: { ...payload, port }, error: null }
@@ -95,6 +103,10 @@ export function validateBackupEnrollmentSetup({
   requestFilename = 'REQUEST.json',
   enrollmentId = '',
   releaseVersion = '',
+  provisionerBase64 = '',
+  provisionerSha256 = '',
+  ingestScriptBase64 = '',
+  ingestScriptSha256 = '',
 } = {}) {
   const normalizedHost = normalizeText(host).replace(/\.$/, '')
   const normalizedPort = Number(port)
@@ -104,6 +116,10 @@ export function validateBackupEnrollmentSetup({
   const normalizedFilename = normalizeText(requestFilename)
   const normalizedEnrollmentId = normalizeText(enrollmentId)
   const normalizedReleaseVersion = normalizeText(releaseVersion)
+  const normalizedProvisionerBase64 = normalizeText(provisionerBase64)
+  const normalizedProvisionerSha256 = normalizeText(provisionerSha256)
+  const normalizedIngestScriptBase64 = normalizeText(ingestScriptBase64)
+  const normalizedIngestScriptSha256 = normalizeText(ingestScriptSha256)
 
   if (!HOST_PATTERN.test(normalizedHost)) return { values: null, error: 'invalidHost' }
   if (!Number.isInteger(normalizedPort) || normalizedPort < 1 || normalizedPort > 65535) {
@@ -127,6 +143,22 @@ export function validateBackupEnrollmentSetup({
   if (!RELEASE_VERSION_PATTERN.test(normalizedReleaseVersion)) {
     return { values: null, error: 'invalidReleaseVersion' }
   }
+  if (
+    !normalizedProvisionerBase64
+    || normalizedProvisionerBase64.length > 350000
+    || !/^[A-Za-z0-9+/]+={0,2}$/.test(normalizedProvisionerBase64)
+    || !SHA256_PATTERN.test(normalizedProvisionerSha256)
+  ) {
+    return { values: null, error: 'invalidProvisioner' }
+  }
+  if (
+    !normalizedIngestScriptBase64
+    || normalizedIngestScriptBase64.length > 350000
+    || !/^[A-Za-z0-9+/]+={0,2}$/.test(normalizedIngestScriptBase64)
+    || !SHA256_PATTERN.test(normalizedIngestScriptSha256)
+  ) {
+    return { values: null, error: 'invalidProvisioner' }
+  }
 
   return {
     values: {
@@ -139,6 +171,8 @@ export function validateBackupEnrollmentSetup({
       enrollmentId: requestId,
       responseFilename: `rbf-backup-enrollment-response-${requestId}.json`,
       releaseVersion: normalizedReleaseVersion,
+      provisionerSha256: normalizedProvisionerSha256,
+      ingestScriptSha256: normalizedIngestScriptSha256,
     },
     error: null,
   }
@@ -160,7 +194,9 @@ REQUEST_ID=${shellQuote(values.enrollmentId)}
 RESPONSE="$HOME/Downloads/${values.responseFilename}"
 PROVISIONER="$HOME/Downloads/provision-rbf-backup-server.sh"
 CHECKSUM="$PROVISIONER.sha256"
-RELEASE="https://github.com/LarsOFinke/WoSB-Website/releases/download/v${values.releaseVersion}"
+PROVISIONER_SHA=${shellQuote(values.provisionerSha256)}
+INGEST="$HOME/Downloads/rbf-backup-ingest.py"
+INGEST_SHA=${shellQuote(values.ingestScriptSha256)}
 
 if [ ! -r "$REQUEST" ]; then
   REQUEST="$(python3 - "$HOME/Downloads" "$REQUEST_ID" <<'PY'
@@ -203,21 +239,94 @@ test -r "$REQUEST" || {
   exit 1
 }
 
-command -v curl >/dev/null || {
-  echo "ERROR: curl is required (sudo apt install curl)."
-  exit 1
-}
-curl --fail --location --output "$PROVISIONER" "$RELEASE/provision-rbf-backup-server.sh" || exit 1
-curl --fail --location --output "$CHECKSUM" "$RELEASE/provision-rbf-backup-server.sh.sha256" || exit 1
+python3 - "$REQUEST" "$REQUEST_ID" "$PROVISIONER_SHA" "$PROVISIONER" "$CHECKSUM" "$INGEST_SHA" "$INGEST" <<'PY'
+import base64
+import binascii
+import hashlib
+import json
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+request_path = Path(sys.argv[1])
+expected_id = sys.argv[2]
+expected_sha = sys.argv[3]
+provisioner_path = Path(sys.argv[4])
+checksum_path = Path(sys.argv[5])
+expected_ingest_sha = sys.argv[6]
+ingest_path = Path(sys.argv[7])
+try:
+    payload = json.loads(request_path.read_text(encoding="utf-8-sig"))
+    encoded = str(payload.get("provisioner_base64") or "")
+    provisioner = base64.b64decode(encoded, validate=True)
+    encoded_ingest = str(payload.get("ingest_script_base64") or "")
+    ingest_script = base64.b64decode(encoded_ingest, validate=True)
+except (OSError, UnicodeError, json.JSONDecodeError, ValueError, binascii.Error) as exc:
+    raise SystemExit(f"ERROR: Enrollment request has no valid embedded provisioner: {exc}") from exc
+if (
+    payload.get("schema_version") != 1
+    or payload.get("kind") != "rbf-backup-enrollment-request"
+    or payload.get("enrollment_id") != expected_id
+):
+    raise SystemExit("ERROR: Enrollment request does not match the active setup command.")
+actual_sha = hashlib.sha256(provisioner).hexdigest()
+if not provisioner or len(provisioner) > 256 * 1024 or actual_sha != expected_sha:
+    raise SystemExit("ERROR: Embedded provisioner checksum verification failed.")
+if payload.get("provisioner_sha256") != expected_sha:
+    raise SystemExit("ERROR: Enrollment request provisioner checksum does not match the active setup command.")
+actual_ingest_sha = hashlib.sha256(ingest_script).hexdigest()
+if not ingest_script or len(ingest_script) > 256 * 1024 or actual_ingest_sha != expected_ingest_sha:
+    raise SystemExit("ERROR: Embedded ingest service checksum verification failed.")
+if payload.get("ingest_script_sha256") != expected_ingest_sha:
+    raise SystemExit("ERROR: Enrollment request ingest checksum does not match the active setup command.")
+provisioner_path.parent.mkdir(parents=True, exist_ok=True)
+with tempfile.NamedTemporaryFile(dir=provisioner_path.parent, delete=False) as handle:
+    handle.write(provisioner)
+    temporary = Path(handle.name)
+os.chmod(temporary, 0o700)
+os.replace(temporary, provisioner_path)
+with tempfile.NamedTemporaryFile(
+    mode="w", encoding="ascii", dir=checksum_path.parent, delete=False
+) as handle:
+    handle.write(f"{actual_sha}  {provisioner_path.name}\\n")
+    temporary_checksum = Path(handle.name)
+os.chmod(temporary_checksum, 0o600)
+os.replace(temporary_checksum, checksum_path)
+with tempfile.NamedTemporaryFile(dir=ingest_path.parent, delete=False) as handle:
+    handle.write(ingest_script)
+    temporary_ingest = Path(handle.name)
+os.chmod(temporary_ingest, 0o700)
+os.replace(temporary_ingest, ingest_path)
+PY
 ( cd "$(dirname "$PROVISIONER")" && sha256sum -c "$(basename "$CHECKSUM")" ) || exit 1
 
 sudo bash "$PROVISIONER" \
   --request "$REQUEST" \
+  --ingest-script "$INGEST" \
   --host ${shellQuote(values.host)} \
   --port ${values.port} \
   --directory ${shellQuote(values.directory)} \
   --retention-days ${values.retentionDays} \
 ${allowFromLine}  --result "$RESPONSE"
+
+python3 - "$RESPONSE" "$REQUEST_ID" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
+except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"ERROR: Provisioning did not create a valid response JSON: {exc}") from exc
+if (
+    payload.get("schema_version") != 1
+    or payload.get("kind") != "rbf-backup-enrollment-response"
+    or payload.get("enrollment_id") != sys.argv[2]
+):
+    raise SystemExit("ERROR: Provisioning response does not match the active enrollment request.")
+PY
 
 echo "Antwortdatei: $RESPONSE"
 )`

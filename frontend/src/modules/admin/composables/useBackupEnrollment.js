@@ -62,10 +62,14 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     requestFilename: requestFilename.value,
     enrollmentId: enrollmentRequest.value?.enrollment_id,
     releaseVersion: enrollmentRequest.value?.release_version,
+    provisionerBase64: enrollmentRequest.value?.provisioner_base64,
+    provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
+    ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
+    ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
   }))
   const setupError = computed(() => {
     if (!setup.host.trim()) return t('admin.backups.enrollment.errors.hostRequired')
-    const errorKey = setupResult.value.error === 'invalidReleaseVersion'
+    const errorKey = ['invalidReleaseVersion', 'invalidProvisioner'].includes(setupResult.value.error)
       ? 'invalidRequestFilename'
       : setupResult.value.error
     return setupResult.value.error
@@ -77,6 +81,10 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     requestFilename: requestFilename.value,
     enrollmentId: enrollmentRequest.value?.enrollment_id,
     releaseVersion: enrollmentRequest.value?.release_version,
+    provisionerBase64: enrollmentRequest.value?.provisioner_base64,
+    provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
+    ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
+    ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
   }).command)
   const canCopyCommand = computed(() => (
     Boolean(enrollmentRequest.value) && !setupResult.value.error && Boolean(command.value)

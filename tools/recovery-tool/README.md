@@ -2,7 +2,7 @@
 
 > This tool is optional during backup-server setup. WoSB itself performs the
 > nightly and pre-update uploads after the one-time enrollment. Install this
-> client only on a recovery workstation when you need to inspect, download,
+> client on the backup server when you need to inspect, download,
 > verify, or restore those committed backup sets.
 
 The recovery client is a small, target-aware pull and verification tool for the
@@ -23,6 +23,8 @@ the disaster-recovery workflow.
 The backup server's `rbf-recovery` account is deliberately loopback-only. Run the
 tool on that backup host, or use a separately provisioned read-only recovery
 account when an off-host recovery workstation is required.
+
+Run these commands on the **backup server**:
 
 ```text
 rbf-recovery-tool setup --target test --local-backup-host
@@ -46,8 +48,8 @@ profiles have separate destination directories and can never overwrite each
 other by implicit target switching. `--offline` is available only for an
 explicitly deferred host-key check; use `test` before any pull.
 
-The response file is still created by the website enrollment workflow because
-that workflow authorizes the upload account and binds the host key. The recovery
+The response file is created during website enrollment because that workflow
+authorizes the submission account and binds the host key. The recovery
 tool no longer requires the website for routine pulls, catalog checks or local
 bundle verification. The website never receives the private recovery keys.
 

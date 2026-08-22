@@ -253,8 +253,12 @@ a directory name alone.
   coordinated backups before updates, lets Flyway migrate, and restores release and backup
   on failed activation. Never delete volumes or data directories as an attempted fix.
 - Backup-server setup is a one-time three-step enrollment in the admin backup page: download
-  the public request, run the generated checksum-verifying provisioner command on the backup
-  host, and import the public response with a fresh host capability. The application-host
+  the public request containing the exact deployed provisioner, run the generated command on
+  the backup host to extract and checksum-verify it, and import the public response with a
+  fresh host capability. Enrollment does not depend on a separately published GitHub release.
+  Managed backup servers expose `/incoming` to the website and read-only receipts
+  under `/receipts`; root-owned ingest independently validates and copies complete
+  recoverable sets into website-inaccessible `/data`. The application-host
   timer and release installer already provide nightly and pre-update uploads; the standalone
   Recovery Tool is optional for listing, pulling, verifying, or restoring backup sets and is
   not a prerequisite for automated backups.

@@ -16,11 +16,14 @@ def _response() -> dict[str, object]:
         "port": 22,
         "username": "rbf-backup",
         "recovery_username": "rbf-recovery",
-        "remote_directory": "/data",
+        "remote_directory": "/incoming",
+        "receipt_directory": "/receipts",
+        "recovery_directory": "/data",
         "host_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=",
         "host_key_fingerprint": "SHA256:" + "A" * 43,
         "age_recipient": "age1" + "a" * 58,
         "managed_server": True,
+        "trust_model": "server-controlled-ingest-v1",
     }
 
 
@@ -28,6 +31,7 @@ def test_response_preserves_loopback_recovery_account() -> None:
     response = validate_response(_response())
     assert response["username"] == "rbf-backup"
     assert response["recovery_username"] == "rbf-recovery"
+    assert response["recovery_directory"] == "/data"
 
 
 def test_response_json_is_validated(tmp_path) -> None:

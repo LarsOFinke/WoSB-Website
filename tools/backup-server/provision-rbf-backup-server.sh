@@ -15,6 +15,7 @@ RESULT=""
 ALLOW_FROM=""
 SKIP_PACKAGE_INSTALL=false
 RETENTION_DAYS=30
+INGEST_SCRIPT=""
 
 while (($#)); do
   case "$1" in
@@ -28,13 +29,14 @@ while (($#)); do
     --result) RESULT="$2"; shift 2 ;;
     --allow-from) ALLOW_FROM="$2"; shift 2 ;;
     --retention-days) RETENTION_DAYS="$2"; shift 2 ;;
+    --ingest-script) INGEST_SCRIPT="$2"; shift 2 ;;
     --skip-package-install) SKIP_PACKAGE_INSTALL=true; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
 
-[[ -f "$REQUEST" && -n "$HOST" && -n "$RESULT" ]] || {
-  echo "--request, --host, and --result are required." >&2
+[[ -f "$REQUEST" && -f "$INGEST_SCRIPT" && ! -L "$INGEST_SCRIPT" && -n "$HOST" && -n "$RESULT" ]] || {
+  echo "--request, --ingest-script, --host, and --result are required." >&2
   exit 2
 }
 [[ "$PORT" =~ ^[0-9]+$ ]] && ((PORT >= 1 && PORT <= 65535)) || { echo "Invalid SSH port." >&2; exit 2; }
@@ -84,6 +86,7 @@ enrollment_id = str(payload.get("enrollment_id") or "").strip()
 public_key = str(payload.get("ssh_public_key") or "").strip()
 requested_username = str(payload.get("requested_username") or "").strip()
 requested_directory = str(payload.get("requested_directory") or "").strip().rstrip("/") or "/"
+ingest_script_sha256 = str(payload.get("ingest_script_sha256") or "").strip()
 if not re.fullmatch(r"[A-Za-z0-9_-]{24,128}", enrollment_id):
     raise SystemExit("Invalid enrollment ID.")
 if not re.fullmatch(
@@ -93,25 +96,33 @@ if not re.fullmatch(
     raise SystemExit("Invalid SSH public key.")
 if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_username):
     raise SystemExit("Invalid requested SSH user.")
-if requested_directory != "/data":
-    raise SystemExit("Unsupported requested SFTP path; expected /data.")
+if requested_directory != "/incoming":
+    raise SystemExit("Unsupported requested SFTP path; expected /incoming.")
+if not re.fullmatch(r"[a-f0-9]{64}", ingest_script_sha256):
+    raise SystemExit("Invalid ingest script checksum.")
 print(enrollment_id)
 print(public_key)
 print(requested_username)
 print(requested_directory)
+print(ingest_script_sha256)
 PY
 )
-(( ${#request_fields[@]} == 4 )) || { echo "Enrollment request could not be read completely." >&2; exit 1; }
+(( ${#request_fields[@]} == 5 )) || { echo "Enrollment request could not be read completely." >&2; exit 1; }
 ENROLLMENT_ID="${request_fields[0]}"
 PUBLIC_KEY="${request_fields[1]}"
 REQUESTED_USERNAME="${request_fields[2]}"
 REQUESTED_DIRECTORY="${request_fields[3]}"
+INGEST_SCRIPT_SHA256="${request_fields[4]}"
 [[ "$USERNAME" == "$REQUESTED_USERNAME" ]] || {
   echo "The CLI user '$USERNAME' does not match the enrollment request '$REQUESTED_USERNAME'." >&2
   exit 1
 }
-[[ "$REQUESTED_DIRECTORY" == "/data" ]] || {
+[[ "$REQUESTED_DIRECTORY" == "/incoming" ]] || {
   echo "The enrollment request expects an unsupported SFTP path: $REQUESTED_DIRECTORY" >&2
+  exit 1
+}
+[[ "$(sha256sum "$INGEST_SCRIPT" | awk '{print $1}')" == "$INGEST_SCRIPT_SHA256" ]] || {
+  echo "The ingest script does not match the enrollment request checksum." >&2
   exit 1
 }
 
@@ -120,7 +131,7 @@ if [[ "$SKIP_PACKAGE_INSTALL" != true ]] && { ! command -v sshd >/dev/null 2>&1 
   apt-get update
   apt-get install -y openssh-server age
 fi
-for command_name in python3 sshd ssh-keygen age-keygen useradd usermod chpasswd groupadd getent; do
+for command_name in python3 sshd ssh-keygen age-keygen sha256sum stat useradd usermod chpasswd groupadd getent; do
   command -v "$command_name" >/dev/null 2>&1 || { echo "Required tool is missing: $command_name" >&2; exit 1; }
 done
 ssh-keygen -A
@@ -227,6 +238,9 @@ payload = {
     "recovery_username": sys.argv[5],
     "storage_directory": sys.argv[6],
     "data_directory": str(Path(sys.argv[6]) / "data"),
+    "incoming_directory": str(Path(sys.argv[6]) / "incoming"),
+    "receipt_directory": str(Path(sys.argv[6]) / "receipts"),
+    "trust_model": "server-controlled-ingest-v1",
     "retention_days": int(sys.argv[7]),
 }
 fd, name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".tmp", dir=out.parent, text=True)
@@ -269,9 +283,12 @@ set_unknown_password "$USERNAME"
 set_unknown_password "$RECOVERY_USERNAME"
 
 # OpenSSH requires every chroot path component to be root-owned and not writable
-# by group or others. The setgid child keeps uploaded files in the read group.
+# by group or others. The website can write only to incoming, can read only
+# server-issued receipts, and cannot traverse the protected committed store.
 CHROOT_DIRECTORY="$DIRECTORY"
 DATA_DIRECTORY="$DIRECTORY/data"
+INCOMING_DIRECTORY="$DIRECTORY/incoming"
+RECEIPT_DIRECTORY="$DIRECTORY/receipts"
 install -d -m 0755 -o root -g root "$CHROOT_DIRECTORY"
 python3 - "$CHROOT_DIRECTORY" <<'PY'
 from pathlib import Path
@@ -289,13 +306,52 @@ for part in requested.parts[1:]:
             f"Unsafe chroot parent directory: {current} must be owned by root and must not be group/world-writable."
         )
 PY
-install -d -m 2750 -o "$USERNAME" -g "$READ_GROUP" "$DATA_DIRECTORY"
-chown "$USERNAME:$READ_GROUP" "$DATA_DIRECTORY"
-chmod 2750 "$DATA_DIRECTORY"
-# SFTP preserves restrictive source modes such as 0600, while its umask can
-# only remove permissions. Reconcile existing top-level artifacts so the
-# dedicated read-only recovery account can consume them through its group.
+if [[ -d "$DATA_DIRECTORY" && ! -L "$DATA_DIRECTORY" && "$(stat -c %u "$DATA_DIRECTORY")" != 0 ]]; then
+  python3 - "$DATA_DIRECTORY" "$(getent group "$READ_GROUP" | cut -d: -f3)" <<'PY'
+from pathlib import Path
+import os
+import shutil
+import sys
+import tempfile
+
+source = Path(sys.argv[1])
+group_id = int(sys.argv[2])
+stage = Path(tempfile.mkdtemp(prefix=".data-protected-", dir=source.parent))
+legacy = source.with_name(f".data-untrusted-{os.getpid()}")
+try:
+    for candidate in source.iterdir():
+        details = candidate.lstat()
+        if not candidate.is_file() or candidate.is_symlink() or details.st_nlink != 1:
+            raise RuntimeError(f"Cannot migrate unsafe legacy backup entry: {candidate.name}")
+        target = stage / candidate.name
+        shutil.copyfile(candidate, target)
+        os.chown(target, 0, group_id)
+        os.chmod(target, 0o640)
+    os.chown(stage, 0, group_id)
+    os.chmod(stage, 0o750)
+    os.rename(source, legacy)
+    try:
+        os.rename(stage, source)
+    except Exception:
+        os.rename(legacy, source)
+        raise
+    shutil.rmtree(legacy)
+except Exception:
+    shutil.rmtree(stage, ignore_errors=True)
+    raise
+PY
+fi
+install -d -m 0750 -o root -g "$READ_GROUP" "$DATA_DIRECTORY"
+chown root:"$READ_GROUP" "$DATA_DIRECTORY"
+chmod 0750 "$DATA_DIRECTORY"
+find "$DATA_DIRECTORY" -mindepth 1 -maxdepth 1 -type f -exec chown root:"$READ_GROUP" {} +
 find "$DATA_DIRECTORY" -mindepth 1 -maxdepth 1 -type f -exec chmod 0640 {} +
+install -d -m 0700 -o "$USERNAME" -g "$USERNAME" "$INCOMING_DIRECTORY"
+chown "$USERNAME:$USERNAME" "$INCOMING_DIRECTORY"
+chmod 0700 "$INCOMING_DIRECTORY"
+install -d -m 0550 -o root -g "$USERNAME" "$RECEIPT_DIRECTORY"
+chown root:"$USERNAME" "$RECEIPT_DIRECTORY"
+chmod 0550 "$RECEIPT_DIRECTORY"
 
 AUTH_ROOT="/etc/ssh/authorized_keys"
 install -d -m 0755 -o root -g root "$AUTH_ROOT"
@@ -327,7 +383,7 @@ fi
 cat > "$SSHD_DROPIN" <<EOF_SSHD
 Match User $USERNAME
     ChrootDirectory $CHROOT_DIRECTORY
-    ForceCommand internal-sftp -u 0027 -d /data
+    ForceCommand internal-sftp -u 0077 -d /incoming
     AuthorizedKeysFile $AUTH_ROOT/%u
     PasswordAuthentication no
     KbdInteractiveAuthentication no
@@ -370,6 +426,55 @@ if command -v systemctl >/dev/null 2>&1; then
   systemctl reload ssh.service >/dev/null 2>&1 || systemctl reload sshd.service >/dev/null 2>&1
 fi
 
+INGEST_PROCESSOR="/usr/local/sbin/rbf-backup-ingest"
+python3 -m py_compile "$INGEST_SCRIPT"
+install -m 0755 -o root -g root "$INGEST_SCRIPT" "$INGEST_PROCESSOR"
+READ_GROUP_ID="$(getent group "$READ_GROUP" | cut -d: -f3)"
+UPLOAD_GROUP_ID="$(getent group "$USERNAME" | cut -d: -f3)"
+cat > /etc/systemd/system/rbf-backup-ingest.service <<EOF_INGEST_SERVICE
+[Unit]
+Description=Validate and commit RBF website backup submissions
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=$INGEST_PROCESSOR $INCOMING_DIRECTORY $DATA_DIRECTORY $RECEIPT_DIRECTORY --read-group-id $READ_GROUP_ID --upload-group-id $UPLOAD_GROUP_ID
+User=root
+Group=root
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=$INCOMING_DIRECTORY $DATA_DIRECTORY $RECEIPT_DIRECTORY
+ProtectHome=true
+MemoryMax=256M
+CPUQuota=50%
+TasksMax=32
+EOF_INGEST_SERVICE
+cat > /etc/systemd/system/rbf-backup-ingest.path <<EOF_INGEST_PATH
+[Unit]
+Description=Watch for completed RBF website backup submissions
+
+[Path]
+PathChanged=$INCOMING_DIRECTORY
+Unit=rbf-backup-ingest.service
+
+[Install]
+WantedBy=multi-user.target
+EOF_INGEST_PATH
+cat > /etc/systemd/system/rbf-backup-ingest.timer <<'EOF_INGEST_TIMER'
+[Unit]
+Description=Fallback scan for RBF website backup submissions
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target
+EOF_INGEST_TIMER
+
 RETENTION_SCRIPT="/usr/local/sbin/rbf-backup-retention"
 cat > "$RETENTION_SCRIPT" <<'RETENTION'
 #!/usr/bin/env python3
@@ -381,6 +486,7 @@ import time
 
 root = Path(sys.argv[1]).resolve()
 days = int(sys.argv[2])
+receipts = Path(sys.argv[3]).resolve()
 cutoff = time.time() - days * 86400
 for manifest in sorted(root.glob("rbf-backup-set-*.json")):
     try:
@@ -409,10 +515,10 @@ for manifest in sorted(root.glob("rbf-backup-set-*.json")):
                 candidate.unlink()
     except (OSError, ValueError, json.JSONDecodeError):
         continue
-for partial in root.glob("*.part"):
+for receipt in receipts.glob("rbf-backup-set-*.json.receipt.json"):
     try:
-        if partial.is_file() and not partial.is_symlink() and partial.stat().st_mtime < time.time() - 2 * 86400:
-            partial.unlink()
+        if receipt.is_file() and not receipt.is_symlink() and receipt.stat().st_mtime < cutoff:
+            receipt.unlink()
     except OSError:
         pass
 RETENTION
@@ -425,14 +531,14 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=$RETENTION_SCRIPT $DATA_DIRECTORY $RETENTION_DAYS
+ExecStart=$RETENTION_SCRIPT $DATA_DIRECTORY $RETENTION_DAYS $RECEIPT_DIRECTORY
 User=root
 Group=root
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=$DATA_DIRECTORY
+ReadWritePaths=$DATA_DIRECTORY $RECEIPT_DIRECTORY
 ProtectHome=true
 EOF_SERVICE
 cat > /etc/systemd/system/rbf-backup-retention.timer <<'EOF_TIMER'
@@ -449,6 +555,8 @@ WantedBy=timers.target
 EOF_TIMER
 if command -v systemctl >/dev/null 2>&1; then
   systemctl daemon-reload
+  systemctl enable --now rbf-backup-ingest.path rbf-backup-ingest.timer >/dev/null
+  systemctl start rbf-backup-ingest.service
   systemctl enable --now rbf-backup-retention.timer >/dev/null
 fi
 
@@ -479,11 +587,14 @@ payload = {
     "port": int(sys.argv[4]),
     "username": sys.argv[5],
     "recovery_username": sys.argv[6],
-    "remote_directory": "/data",
+    "remote_directory": "/incoming",
+    "receipt_directory": "/receipts",
+    "recovery_directory": "/data",
     "storage_directory": sys.argv[7],
     "host_key": sys.argv[8],
     "host_key_fingerprint": sys.argv[9],
     "managed_server": True,
+    "trust_model": "server-controlled-ingest-v1",
     "retention_days": int(sys.argv[10]),
     "age_recipient": sys.argv[11],
 }
@@ -496,7 +607,8 @@ os.chmod(name, 0o644)
 os.replace(name, out)
 PY
 
-echo "Backup upload ready: ${USERNAME}@${HOST}:${PORT}/data"
+echo "Website-server submission ready: ${USERNAME}@${HOST}:${PORT}/incoming"
+echo "Website-server receipt access: ${USERNAME}@${HOST}:${PORT}/receipts (read-only by filesystem ownership)"
 echo "Local recovery read access: ${RECOVERY_USERNAME}@127.0.0.1:${PORT}/data (read-only)"
 echo "Host-Key-Fingerprint: ${FINGERPRINT}"
 echo "Provisioning-Ergebnis: ${RESULT}"
