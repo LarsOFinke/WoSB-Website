@@ -31,6 +31,13 @@ the backup server except for an administrator-maintained encrypted offline
 copy. Consequently, compromise of the website can submit or withhold future
 sets but cannot read, alter, or delete already committed backups.
 
+Deployment identity is part of the enrollment contract. When test and
+production share a physical backup server, they receive different Unix
+accounts, chroot roots, authorization files, systemd units, state files, read
+groups, and recovery-key directories. No hostname inference or operator-entered
+storage path can collapse those boundaries; a cross-environment request or
+response fails validation.
+
 The strategy planner remains inside this existing aggregate boundary. Its documents,
 publication state, and catalog references are included by the unrestricted PostgreSQL
 custom dump; its background assets are included by the complete `uploads/` archive.

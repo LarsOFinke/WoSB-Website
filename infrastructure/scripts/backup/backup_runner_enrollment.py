@@ -146,6 +146,24 @@ class BackupEnrollmentMixin:
 
     def prepare_enrollment(self) -> dict[str, Any]:
         public_key = self._public_key()
+        environment = ""
+        env_file = self.infra_dir / ".env"
+        if env_file.is_file():
+            for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                if key.strip() == "DEPLOYMENT_ENVIRONMENT":
+                    environment = value.strip().strip("\"'").lower()
+                    break
+        if environment not in {"test", "production"}:
+            raise RuntimeError(
+                "DEPLOYMENT_ENVIRONMENT must be test or production before backup enrollment."
+            )
+        upload_username = f"rbf-backup-{environment}"
+        recovery_username = f"rbf-recovery-{environment}"
+        storage_directory = f"/backups/wosb/{environment}"
         release_version = (self.infra_dir.parent / "VERSION").read_text(encoding="utf-8").strip()
         if not release_version or any(
             character not in "0123456789." for character in release_version
@@ -176,13 +194,16 @@ class BackupEnrollmentMixin:
             "enrollment_id": secrets.token_urlsafe(32),
             "created_at": now(),
             "product_hostname": socket.gethostname(),
+            "deployment_environment": environment,
             "release_version": release_version,
             "provisioner_base64": base64.b64encode(provisioner).decode("ascii"),
             "provisioner_sha256": hashlib.sha256(provisioner).hexdigest(),
             "ingest_script_base64": base64.b64encode(ingest_script).decode("ascii"),
             "ingest_script_sha256": hashlib.sha256(ingest_script).hexdigest(),
             "ssh_public_key": public_key,
-            "requested_username": "rbf-backup",
+            "requested_username": upload_username,
+            "requested_recovery_username": recovery_username,
+            "requested_storage_directory": storage_directory,
             "requested_directory": "/incoming",
         }
         request = validate_request(payload)
@@ -229,7 +250,10 @@ class BackupEnrollmentMixin:
     def _set_env_values(path: Path, updates: dict[str, str]) -> None:
         if not path.is_file():
             raise RuntimeError("The infrastructure .env file is missing.")
-        lines = path.read_text(encoding="utf-8").splitlines()
+        target = path.resolve(strict=True)
+        if not target.is_file() or target.is_symlink():
+            raise RuntimeError("The infrastructure .env target is unsafe.")
+        lines = target.read_text(encoding="utf-8").splitlines()
         remaining = dict(updates)
         rendered: list[str] = []
         for line in lines:
@@ -244,10 +268,10 @@ class BackupEnrollmentMixin:
                 rendered.append(line)
         for key, value in remaining.items():
             rendered.append(f"{key}={value}")
-        temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        temporary = target.with_name(f".{target.name}.{os.getpid()}.tmp")
         temporary.write_text("\n".join(rendered) + "\n", encoding="utf-8")
         os.chmod(temporary, 0o600)
-        os.replace(temporary, path)
+        os.replace(temporary, target)
 
     def _store_connection(
         self,
@@ -292,7 +316,17 @@ class BackupEnrollmentMixin:
         response = validate_response(
             parse_json_document(raw_response, "Enrollment response"),
             expected_enrollment_id=str(request["enrollment_id"]),
+            expected_environment=str(request["deployment_environment"]),
         )
+        expected_identity = {
+            "username": request["requested_username"],
+            "recovery_username": request["requested_recovery_username"],
+            "storage_directory": request["requested_storage_directory"],
+        }
+        if any(response[key] != value for key, value in expected_identity.items()):
+            raise RuntimeError(
+                "Enrollment response identity does not match the active deployment environment."
+            )
         if response["managed_server"] is not True:
             raise RuntimeError(
                 "The automatic enrollment path accepts only Recovery-Tool managed backup servers."
@@ -307,10 +341,11 @@ class BackupEnrollmentMixin:
                 "The enrollment response contains a wrong SSH host-key fingerprint."
             )
 
+        env_path = (self.infra_dir / ".env").resolve(strict=True)
         protected_paths = [
             self.config_file,
             self.known_hosts_file,
-            self.infra_dir / ".env",
+            env_path,
         ]
         previous = {
             path: path.read_bytes() if path.is_file() else None
@@ -327,7 +362,7 @@ class BackupEnrollmentMixin:
                 managed_server=bool(response["managed_server"]),
             )
             self._set_env_values(
-                self.infra_dir / ".env",
+                env_path,
                 {
                     "BACKUP_RECOVERY_ENABLED": "true",
                     "BACKUP_AGE_RECIPIENT": str(response["age_recipient"]),

@@ -161,6 +161,19 @@
       "title": "Operation",
       "type": "string"
     },
+    "progress_percent": {
+      "anyOf": [
+        {
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Progress Percent"
+    },
     "request_available": {
       "default": false,
       "title": "Request Available",

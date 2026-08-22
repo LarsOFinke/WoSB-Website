@@ -25,6 +25,7 @@ public record BackupControlStatus(
         List<LocalFilesBackup> localFilesBackups,
         String message,
         String operation,
+        Long progressPercent,
         Boolean requestAvailable,
         String requestedAt,
         String requestedBy,

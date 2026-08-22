@@ -32,6 +32,10 @@ def _profile_from_response(args: argparse.Namespace) -> Profile:
     target = args.target
     response_path = args.response or discover_response()
     response = load_response(response_path)
+    if response["deployment_environment"] != target:
+        raise RuntimeError(
+            f"Enrollment response is for {response['deployment_environment']}, not {target}."
+        )
     args.response = response_path
     profile = load_profile(target)
     if args.local_backup_host:
@@ -55,7 +59,7 @@ def _profile_from_response(args: argparse.Namespace) -> Profile:
     return profile.normalized()
 
 
-def _legacy_secret(candidate: Path, current: str) -> str:
+def _available_secret(candidate: Path, current: str) -> str:
     if Path(current).is_file():
         return current
     return str(candidate) if candidate.is_file() else current
@@ -63,11 +67,11 @@ def _legacy_secret(candidate: Path, current: str) -> str:
 
 def _setup(args: argparse.Namespace) -> int:
     profile = _profile_from_response(args)
-    profile.ssh_key_path = _legacy_secret(
-        Path.home() / "RBF-Recovery" / "rbf-recovery-readonly-ed25519", profile.ssh_key_path
+    profile.ssh_key_path = _available_secret(
+        Path.home() / "RBF-Recovery" / args.target / "rbf-recovery-readonly-ed25519", profile.ssh_key_path
     )
-    profile.age_identity_path = _legacy_secret(
-        Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt", profile.age_identity_path
+    profile.age_identity_path = _available_secret(
+        Path.home() / "RBF-Recovery" / args.target / "rbf-recovery-identity.txt", profile.age_identity_path
     )
     profile.validate(require_fingerprint=True, require_files=True)
     if not args.offline:

@@ -7,6 +7,7 @@ const {
   t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
   inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
   operationElapsedSeconds, operationProgress,
+  statusPollingDelayed,
   enrollmentFileName, enrollmentSetup, enrollmentRequest,
   enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
   enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,
@@ -86,6 +87,9 @@ const {
               ? `${operationProgress}% · ${t('admin.backups.states.running')}`
               : t('admin.backups.statusHint') }}
           </small>
+          <small v-if="statusPollingDelayed" class="muted">
+            {{ t('admin.backups.statusPollingDelayed') }}
+          </small>
         </div>
       </section>
 
@@ -129,6 +133,13 @@ const {
               </button>
             </div>
             <small v-if="enrollmentRequest">{{ t('admin.backups.enrollment.requestFilenameHint') }}</small>
+            <div v-if="enrollmentRequest" class="backup-host-key-panel backup-enrollment-preview">
+              <div>
+                <span>{{ enrollmentRequest.deployment_environment.toUpperCase() }}</span>
+                <strong>{{ enrollmentRequest.requested_storage_directory }}</strong>
+                <small>{{ enrollmentRequest.requested_username }}</small>
+              </div>
+            </div>
           </section>
 
           <section class="input-panel embedded-field backup-directory-field backup-setup-step">
@@ -151,7 +162,7 @@ const {
                 </label>
                 <label class="backup-enrollment-wide-field">
                   <span>{{ t('admin.backups.enrollment.commandFields.directory') }}</span>
-                  <input v-model.trim="enrollmentSetup.directory" maxlength="512" />
+                  <input v-model.trim="enrollmentSetup.directory" maxlength="512" readonly />
                 </label>
                 <label class="backup-enrollment-wide-field">
                   <span>{{ t('admin.backups.enrollment.commandFields.allowFrom') }}</span>

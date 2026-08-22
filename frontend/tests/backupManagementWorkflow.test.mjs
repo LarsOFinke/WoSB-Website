@@ -47,6 +47,23 @@ test('backup connection API exposes no browser-side secret persistence', async (
   assert.match(messages, /recovery: 'Verschlüsseltes Disaster-Recovery-Bundle'/)
 })
 
+test('backup progress polling backs off through the planned consistency pause', async () => {
+  const [composable, polling, page] = await Promise.all([
+    read('src/modules/admin/composables/useDatabaseBackupsPage.js'),
+    read('src/modules/admin/domain/backupStatusPolling.js'),
+    read('src/modules/admin/pages/DatabaseBackupsPage.vue'),
+  ])
+
+  assert.match(composable, /statusPollFailures\.value \+= 1/)
+  assert.match(composable, /statusPollFailures\.value = 0/)
+  assert.match(composable, /backupStatusPollDelay/)
+  assert.match(composable, /status\.value\.progress_percent/)
+  assert.doesNotMatch(composable, /\}, 2500\)/)
+  assert.match(polling, /BACKUP_STATUS_MAX_BACKOFF_MS = 30000/)
+  assert.match(polling, /normalizedMessage\.includes\('preparing'\)/)
+  assert.match(page, /statusPollingDelayed/)
+})
+
 test('the browser surface does not expose recovery transfers or restore controls', async () => {
   const page = await read('src/modules/admin/pages/DatabaseBackupsPage.vue')
   assert.doesNotMatch(page, /local\/restore|restoreDatabase|restoreFiles|type="password"|approval_token/)

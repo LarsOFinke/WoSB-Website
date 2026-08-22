@@ -61,6 +61,7 @@ class Runner(
             "Backup operation is running.",
             started_at=started_at,
             finished_at=None,
+            progress_percent=0,
             **running_updates,
         )
         thread = threading.Thread(target=self.heartbeat, daemon=True)
@@ -107,6 +108,7 @@ class Runner(
                 message,
                 started_at=started_at,
                 finished_at=now(),
+                progress_percent=100,
                 **updates,
             )
         except Exception as exc:

@@ -20,7 +20,10 @@ function response(overrides = {}) {
     enrollment_id: 'A'.repeat(32),
     host: '192.168.2.107',
     port: 22,
-    username: 'rbf-backup',
+    deployment_environment: 'production',
+    username: 'rbf-backup-production',
+    recovery_username: 'rbf-recovery-production',
+    storage_directory: '/backups/wosb/production',
     remote_directory: '/incoming',
     receipt_directory: '/receipts',
     recovery_directory: '/data',
@@ -30,6 +33,16 @@ function response(overrides = {}) {
     managed_server: true,
     trust_model: 'server-controlled-ingest-v1',
     ...overrides,
+  }
+}
+
+function targetFields(environment = 'test') {
+  return {
+    deploymentEnvironment: environment,
+    requestedUsername: `rbf-backup-${environment}`,
+    requestedRecoveryUsername: `rbf-recovery-${environment}`,
+    requestedStorageDirectory: `/backups/wosb/${environment}`,
+    directory: `/backups/wosb/${environment}`,
   }
 }
 
@@ -64,9 +77,9 @@ test('enrollment response parser explains mismatched or incomplete files', () =>
 
 test('enrollment command builder produces a complete copy-and-paste provisioning block', () => {
   const result = buildBackupEnrollmentCommand({
+    ...targetFields('production'),
     host: '192.168.2.107',
     port: 22,
-    directory: '/srv/rbf-backups/wosb',
     retentionDays: 30,
     allowFrom: '192.168.2.36/32',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
@@ -88,7 +101,9 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
   assert.match(result.command, /sha256sum -c/)
   assert.match(result.command, /sudo bash \"\$PROVISIONER\"/)
   assert.match(result.command, /--host '192\.168\.2\.107'/)
-  assert.match(result.command, /--directory '\/srv\/rbf-backups\/wosb'/)
+  assert.match(result.command, /--user 'rbf-backup-production'/)
+  assert.match(result.command, /--recovery-user 'rbf-recovery-production'/)
+  assert.match(result.command, /--directory '\/backups\/wosb\/production'/)
   assert.match(result.command, /--allow-from '192\.168\.2\.36\/32'/)
   assert.match(result.command, /--result "\$RESPONSE"/)
   assert.match(result.command, /^\( # Run setup in an isolated shell/)
@@ -96,6 +111,7 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
 
 test('a provisioning failure cannot close the interactive parent shell', () => {
   const result = buildBackupEnrollmentCommand({
+    ...targetFields(),
     host: 'backup.local',
     releaseVersion: '1.7.33',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
@@ -120,12 +136,13 @@ result=''
 while (($#)); do
   if [[ "$1" == --result ]]; then result="$2"; shift 2; else shift; fi
 done
-printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_id":"${enrollmentId}"}\\n' > "$result"
+printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_id":"${enrollmentId}","deployment_environment":"test"}\\n' > "$result"
 `
   const provisionerSha256 = createHash('sha256').update(provisioner).digest('hex')
   const ingestScript = '#!/usr/bin/env python3\n'
   const ingestScriptSha256 = createHash('sha256').update(ingestScript).digest('hex')
   const result = buildBackupEnrollmentCommand({
+    ...targetFields(),
     host: 'backup.local',
     releaseVersion: '1.8.1',
     requestFilename: `rbf-backup-enrollment-request-${enrollmentId}.json`,
@@ -143,6 +160,7 @@ printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_
     schema_version: 1,
     kind: 'rbf-backup-enrollment-request',
     enrollment_id: enrollmentId,
+    deployment_environment: 'test',
     provisioner_base64: Buffer.from(provisioner).toString('base64'),
     provisioner_sha256: provisionerSha256,
     ingest_script_base64: Buffer.from(ingestScript).toString('base64'),
@@ -165,6 +183,7 @@ printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_
 
 test('enrollment setup validator blocks incomplete commands before copy', () => {
   const valid = {
+    ...targetFields(),
     host: 'backup.local',
     releaseVersion: '1.7.33',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,

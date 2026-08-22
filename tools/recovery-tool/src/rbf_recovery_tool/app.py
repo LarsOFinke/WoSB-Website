@@ -37,14 +37,6 @@ class RecoveryApp:
 
     def _load_target(self) -> None:
         profile = load_profile(self.target.get())
-        if not Path(profile.ssh_key_path).is_file():
-            legacy_key = Path.home() / "RBF-Recovery" / "rbf-recovery-readonly-ed25519"
-            if legacy_key.is_file():
-                profile.ssh_key_path = str(legacy_key)
-        if not Path(profile.age_identity_path).is_file():
-            legacy_identity = Path.home() / "RBF-Recovery" / "rbf-recovery-identity.txt"
-            if legacy_identity.is_file():
-                profile.age_identity_path = str(legacy_identity)
         for key in (
             "host", "port", "username", "remote_directory", "destination_directory",
             "ssh_key_path", "age_identity_path", "host_fingerprint",
@@ -164,6 +156,11 @@ class RecoveryApp:
             return
         try:
             response = load_response(Path(selected))
+            if response["deployment_environment"] != self.target.get():
+                raise RuntimeError(
+                    f"This response is for {response['deployment_environment']}, "
+                    f"not {self.target.get()}."
+                )
             local = self.vars["local_backup_host"].get()
             self.vars["host"].set("127.0.0.1" if local else response["host"])
             self.vars["port"].set(str(response["port"]))
@@ -171,6 +168,9 @@ class RecoveryApp:
             self.vars["username"].set(username)
             self.vars["remote_directory"].set(response["recovery_directory"])
             self.vars["host_fingerprint"].set(response["host_key_fingerprint"])
+            recovery_root = Path.home() / "RBF-Recovery" / self.target.get()
+            self.vars["ssh_key_path"].set(str(recovery_root / "rbf-recovery-readonly-ed25519"))
+            self.vars["age_identity_path"].set(str(recovery_root / "rbf-recovery-identity.txt"))
             self._append_log(f"Imported enrollment {response['enrollment_id']}; private files were not copied or stored.")
             messagebox.showinfo("Response imported", "Now select the private read-only SSH key and age identity, then click Test host key.", parent=self.root)
         except (RuntimeError, ValueError, OSError) as exc:

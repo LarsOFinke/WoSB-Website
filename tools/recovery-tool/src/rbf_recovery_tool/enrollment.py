@@ -61,6 +61,9 @@ def validate_response(payload: object) -> dict[str, Any]:
     if recovery_username and not _USER_RE.fullmatch(recovery_username):
         raise ValueError("Invalid recovery username.")
     managed_server = source.get("managed_server") is True
+    environment = str(source.get("deployment_environment") or "").strip().lower()
+    if environment not in {"test", "production"}:
+        raise ValueError("Invalid deployment environment.")
     remote_directory = _remote_directory(source)
     recovery_directory = (
         _remote_directory(source, "recovery_directory") if managed_server else remote_directory
@@ -68,15 +71,17 @@ def validate_response(payload: object) -> dict[str, Any]:
     trust_model = str(source.get("trust_model") or "").strip()
     if managed_server and trust_model != "server-controlled-ingest-v1":
         raise ValueError("Managed backup server has an unsupported trust model.")
-    return {
+    result = {
         "schema_version": SCHEMA_VERSION,
         "kind": RESPONSE_KIND,
         "enrollment_id": enrollment_id,
+        "deployment_environment": environment,
         "created_at": str(source.get("created_at") or "").strip(),
         "host": _text(source, "host", _HOST_RE, "backup host"),
         "port": port,
         "username": _text(source, "username", _USER_RE, "SSH username"),
         "recovery_username": recovery_username,
+        "storage_directory": _remote_directory(source, "storage_directory"),
         "remote_directory": remote_directory,
         "recovery_directory": recovery_directory,
         "host_key": _text(source, "host_key", _HOST_KEY_RE, "SSH host key"),
@@ -87,6 +92,17 @@ def validate_response(payload: object) -> dict[str, Any]:
         "managed_server": managed_server,
         "trust_model": trust_model,
     }
+    if (
+        result["username"],
+        result["recovery_username"],
+        result["storage_directory"],
+    ) != (
+        f"rbf-backup-{environment}",
+        f"rbf-recovery-{environment}",
+        f"/backups/wosb/{environment}",
+    ):
+        raise ValueError("Enrollment response identity does not match its deployment environment.")
+    return result
 
 
 def load_response(path) -> dict[str, Any]:

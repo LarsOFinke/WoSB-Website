@@ -26,7 +26,13 @@ def write_artifact(root: Path, name: str, content: bytes) -> dict[str, object]:
     return {"filename": name, "size_bytes": len(content), "sha256": digest}
 
 
-def create_submission(incoming: Path, *, valid_report: bool = True) -> tuple[Path, str]:
+def create_submission(
+    incoming: Path,
+    *,
+    valid_report: bool = True,
+    include_recovery: bool = True,
+    extra_artifact: bool = False,
+) -> tuple[Path, str]:
     files = write_artifact(incoming, "rbf-files-20260822T100000Z.tar.gz", b"files")
     postgres = write_artifact(incoming, "rbf-postgres-20260822T100000Z.dump", b"postgres")
     metadata = write_artifact(
@@ -35,9 +41,6 @@ def create_submission(incoming: Path, *, valid_report: bool = True) -> tuple[Pat
         b'{"schema_version":2}',
     )
     postgres["restore_metadata"] = metadata
-    recovery = write_artifact(
-        incoming, "rbf-recovery-20260822T100000Z.tar.gz.age", b"encrypted"
-    )
     checks = [
         "dump_inventory",
         "staging_database_restore",
@@ -57,6 +60,17 @@ def create_submission(incoming: Path, *, valid_report: bool = True) -> tuple[Pat
         "rbf-postgres-preflight-20260822T100000Z-123.json",
         json.dumps(report_payload).encode(),
     )
+    artifacts = {
+        "files": files,
+        "postgres": postgres,
+        "verification": verification,
+    }
+    if include_recovery:
+        artifacts["recovery"] = write_artifact(
+            incoming, "rbf-recovery-20260822T100000Z.tar.gz.age", b"encrypted"
+        )
+    if extra_artifact:
+        artifacts["unexpected"] = write_artifact(incoming, "unexpected.bin", b"unexpected")
     manifest = incoming / "rbf-backup-set-20260822T100000Z-123.json"
     manifest.write_text(
         json.dumps(
@@ -64,12 +78,7 @@ def create_submission(incoming: Path, *, valid_report: bool = True) -> tuple[Pat
                 "schema_version": 1,
                 "committed": True,
                 "consistency": "application-quiesced",
-                "artifacts": {
-                    "files": files,
-                    "postgres": postgres,
-                    "recovery": recovery,
-                    "verification": verification,
-                },
+                "artifacts": artifacts,
             }
         ),
         encoding="utf-8",
@@ -126,6 +135,47 @@ def test_backup_server_rejects_unrecoverable_submission_without_committing(
     assert not any(committed.iterdir())
 
 
+def test_backup_server_rejects_core_set_without_encrypted_recovery_bundle(
+    tmp_path, monkeypatch
+) -> None:
+    module = load_ingest()
+    incoming = tmp_path / "incoming"
+    committed = tmp_path / "data"
+    receipts = tmp_path / "receipts"
+    for path in (incoming, committed, receipts):
+        path.mkdir()
+    manifest, _digest = create_submission(incoming, include_recovery=False)
+    monkeypatch.setattr(module.os, "chown", lambda *_args: None)
+
+    module.process_manifest(incoming, committed, receipts, manifest, 1000, 1001)
+
+    receipt = json.loads(
+        (receipts / f"{manifest.name}.receipt.json").read_text(encoding="utf-8")
+    )
+    assert receipt["status"] == "rejected"
+    assert "recovery artifacts" in receipt["detail"]
+    assert not any(committed.iterdir())
+
+
+def test_backup_server_rejects_unknown_artifact_types(tmp_path, monkeypatch) -> None:
+    module = load_ingest()
+    incoming = tmp_path / "incoming"
+    committed = tmp_path / "data"
+    receipts = tmp_path / "receipts"
+    for path in (incoming, committed, receipts):
+        path.mkdir()
+    manifest, _digest = create_submission(incoming, extra_artifact=True)
+    monkeypatch.setattr(module.os, "chown", lambda *_args: None)
+
+    module.process_manifest(incoming, committed, receipts, manifest, 1000, 1001)
+
+    receipt = json.loads(
+        (receipts / f"{manifest.name}.receipt.json").read_text(encoding="utf-8")
+    )
+    assert receipt["status"] == "rejected"
+    assert not any(committed.iterdir())
+
+
 def test_provisioner_denies_website_access_to_committed_storage() -> None:
     provisioner = (ROOT / "tools/backup-server/provision-rbf-backup-server.sh").read_text()
     assert 'ForceCommand internal-sftp -u 0077 -d /incoming' in provisioner
@@ -133,3 +183,16 @@ def test_provisioner_denies_website_access_to_committed_storage() -> None:
     assert 'install -d -m 0700 -o "$USERNAME" -g "$USERNAME" "$INCOMING_DIRECTORY"' in provisioner
     assert 'install -d -m 0550 -o root -g "$USERNAME" "$RECEIPT_DIRECTORY"' in provisioner
     assert 'ForceCommand internal-sftp -R -d /data' in provisioner
+
+
+def test_provisioner_isolates_test_and_production_resources() -> None:
+    provisioner = (ROOT / "tools/backup-server/provision-rbf-backup-server.sh").read_text()
+    assert 'requested_username != f"rbf-backup-{deployment_environment}"' in provisioner
+    assert 'requested_storage_directory != f"/backups/wosb/{deployment_environment}"' in provisioner
+    assert 'STATE_FILE="$STATE_DIR/${USERNAME}.json"' in provisioner
+    assert 'READ_GROUP="${USERNAME}-readers"' in provisioner
+    assert 'SSHD_DROPIN="$SSHD_DROPIN_DIR/90-${USERNAME}-managed.conf"' in provisioner
+    assert 'INGEST_UNIT="rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"' in provisioner
+    assert 'RETENTION_UNIT="rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"' in provisioner
+    assert '$OPERATOR_HOME/RBF-Recovery/$DEPLOYMENT_ENVIRONMENT' in provisioner
+    assert '90-rbf-backup-managed.conf' not in provisioner

@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 import { applyBackupEnrollment, prepareBackupEnrollment } from '@/modules/admin/api/admin'
 import {
@@ -14,7 +14,7 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
   const setup = reactive({
     host: '',
     port: 22,
-    directory: '/srv/rbf-backups/wosb',
+    directory: '/backups/wosb',
     retentionDays: 30,
     allowFrom: '',
   })
@@ -33,6 +33,7 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
   const responseResult = computed(() => parseBackupEnrollmentResponse(
     response.value,
     String(enrollmentRequest.value?.enrollment_id || ''),
+    String(enrollmentRequest.value?.deployment_environment || ''),
   ))
   const responsePreview = computed(() => responseResult.value.payload)
   const responseError = computed(() => {
@@ -66,6 +67,10 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
     ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
     ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
+    deploymentEnvironment: enrollmentRequest.value?.deployment_environment,
+    requestedUsername: enrollmentRequest.value?.requested_username,
+    requestedRecoveryUsername: enrollmentRequest.value?.requested_recovery_username,
+    requestedStorageDirectory: enrollmentRequest.value?.requested_storage_directory,
   }))
   const setupError = computed(() => {
     if (!setup.host.trim()) return t('admin.backups.enrollment.errors.hostRequired')
@@ -85,7 +90,18 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
     ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
     ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
+    deploymentEnvironment: enrollmentRequest.value?.deployment_environment,
+    requestedUsername: enrollmentRequest.value?.requested_username,
+    requestedRecoveryUsername: enrollmentRequest.value?.requested_recovery_username,
+    requestedStorageDirectory: enrollmentRequest.value?.requested_storage_directory,
   }).command)
+  watch(
+    () => enrollmentRequest.value?.requested_storage_directory,
+    (directory) => {
+      if (directory) setup.directory = String(directory)
+    },
+    { immediate: true },
+  )
   const canCopyCommand = computed(() => (
     Boolean(enrollmentRequest.value) && !setupResult.value.error && Boolean(command.value)
   ))

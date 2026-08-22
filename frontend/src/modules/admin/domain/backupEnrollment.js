@@ -12,6 +12,7 @@ const CIDR_PATTERN = /^[A-Fa-f0-9:.]+(?:\/(?:[0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]
 const REQUEST_FILENAME_PATTERN = /^rbf-backup-enrollment-(?:request-)?([A-Za-z0-9_-]{24,128})\.json$/
 const RELEASE_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 const SHA256_PATTERN = /^[a-f0-9]{64}$/
+const DEPLOYMENT_ENVIRONMENTS = new Set(['test', 'production'])
 
 function normalizeText(value) {
   return String(value || '').replace(/^\uFEFF/, '').trim()
@@ -22,7 +23,7 @@ function hasSafeRemotePath(value) {
   return !value.split('/').slice(1).some((part) => ['', '.', '..'].includes(part))
 }
 
-export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') {
+export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '', expectedEnvironment = '') {
   const text = normalizeText(value)
   if (!text) return { payload: null, error: 'empty' }
 
@@ -50,6 +51,10 @@ export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') 
   if (expectedEnrollmentId && payload.enrollment_id !== expectedEnrollmentId) {
     return { payload: null, error: 'enrollmentMismatch' }
   }
+  if (!DEPLOYMENT_ENVIRONMENTS.has(String(payload.deployment_environment || ''))
+    || (expectedEnvironment && payload.deployment_environment !== expectedEnvironment)) {
+    return { payload: null, error: 'enrollmentMismatch' }
+  }
   if (!HOST_PATTERN.test(String(payload.host || ''))) {
     return { payload: null, error: 'invalidHost' }
   }
@@ -58,6 +63,12 @@ export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') 
     return { payload: null, error: 'invalidPort' }
   }
   if (!USERNAME_PATTERN.test(String(payload.username || ''))) {
+    return { payload: null, error: 'invalidUsername' }
+  }
+  const environment = String(payload.deployment_environment || '')
+  if (payload.username !== `rbf-backup-${environment}`
+    || payload.recovery_username !== `rbf-recovery-${environment}`
+    || payload.storage_directory !== `/backups/wosb/${environment}`) {
     return { payload: null, error: 'invalidUsername' }
   }
   if (!hasSafeRemotePath(String(payload.remote_directory || ''))) {
@@ -97,7 +108,7 @@ function shellQuote(value) {
 export function validateBackupEnrollmentSetup({
   host,
   port = 22,
-  directory = '/srv/rbf-backups/wosb',
+  directory = '/backups/wosb',
   retentionDays = 30,
   allowFrom = '',
   requestFilename = 'REQUEST.json',
@@ -107,6 +118,10 @@ export function validateBackupEnrollmentSetup({
   provisionerSha256 = '',
   ingestScriptBase64 = '',
   ingestScriptSha256 = '',
+  deploymentEnvironment = '',
+  requestedUsername = '',
+  requestedRecoveryUsername = '',
+  requestedStorageDirectory = '',
 } = {}) {
   const normalizedHost = normalizeText(host).replace(/\.$/, '')
   const normalizedPort = Number(port)
@@ -120,12 +135,26 @@ export function validateBackupEnrollmentSetup({
   const normalizedProvisionerSha256 = normalizeText(provisionerSha256)
   const normalizedIngestScriptBase64 = normalizeText(ingestScriptBase64)
   const normalizedIngestScriptSha256 = normalizeText(ingestScriptSha256)
+  const normalizedEnvironment = normalizeText(deploymentEnvironment).toLowerCase()
+  const normalizedUsername = normalizeText(requestedUsername)
+  const normalizedRecoveryUsername = normalizeText(requestedRecoveryUsername)
+  const normalizedRequestedStorage = normalizeText(requestedStorageDirectory).replace(/\/$/, '')
 
   if (!HOST_PATTERN.test(normalizedHost)) return { values: null, error: 'invalidHost' }
   if (!Number.isInteger(normalizedPort) || normalizedPort < 1 || normalizedPort > 65535) {
     return { values: null, error: 'invalidPort' }
   }
   if (!hasSafeRemotePath(normalizedDirectory)) return { values: null, error: 'invalidDirectory' }
+  if (!DEPLOYMENT_ENVIRONMENTS.has(normalizedEnvironment)
+    || !USERNAME_PATTERN.test(normalizedUsername)
+    || !USERNAME_PATTERN.test(normalizedRecoveryUsername)
+    || !hasSafeRemotePath(normalizedRequestedStorage)
+    || normalizedDirectory !== normalizedRequestedStorage
+    || normalizedUsername !== `rbf-backup-${normalizedEnvironment}`
+    || normalizedRecoveryUsername !== `rbf-recovery-${normalizedEnvironment}`
+    || normalizedRequestedStorage !== `/backups/wosb/${normalizedEnvironment}`) {
+    return { values: null, error: 'invalidDirectory' }
+  }
   if (!Number.isInteger(normalizedRetention) || normalizedRetention < 1 || normalizedRetention > 3650) {
     return { values: null, error: 'invalidRetention' }
   }
@@ -173,6 +202,9 @@ export function validateBackupEnrollmentSetup({
       releaseVersion: normalizedReleaseVersion,
       provisionerSha256: normalizedProvisionerSha256,
       ingestScriptSha256: normalizedIngestScriptSha256,
+      deploymentEnvironment: normalizedEnvironment,
+      requestedUsername: normalizedUsername,
+      requestedRecoveryUsername: normalizedRecoveryUsername,
     },
     error: null,
   }
@@ -191,6 +223,7 @@ trap 'status=$?; if [ "$status" -ne 0 ]; then echo "ERROR: Backup-server setup f
 
 REQUEST="$HOME/Downloads/${values.requestFilename}"
 REQUEST_ID=${shellQuote(values.enrollmentId)}
+DEPLOYMENT_ENVIRONMENT=${shellQuote(values.deploymentEnvironment)}
 RESPONSE="$HOME/Downloads/${values.responseFilename}"
 PROVISIONER="$HOME/Downloads/provision-rbf-backup-server.sh"
 CHECKSUM="$PROVISIONER.sha256"
@@ -304,13 +337,15 @@ PY
 sudo bash "$PROVISIONER" \
   --request "$REQUEST" \
   --ingest-script "$INGEST" \
+  --user ${shellQuote(values.requestedUsername)} \
+  --recovery-user ${shellQuote(values.requestedRecoveryUsername)} \
   --host ${shellQuote(values.host)} \
   --port ${values.port} \
   --directory ${shellQuote(values.directory)} \
   --retention-days ${values.retentionDays} \
 ${allowFromLine}  --result "$RESPONSE"
 
-python3 - "$RESPONSE" "$REQUEST_ID" <<'PY'
+python3 - "$RESPONSE" "$REQUEST_ID" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -324,6 +359,7 @@ if (
     payload.get("schema_version") != 1
     or payload.get("kind") != "rbf-backup-enrollment-response"
     or payload.get("enrollment_id") != sys.argv[2]
+    or payload.get("deployment_environment") != sys.argv[3]
 ):
     raise SystemExit("ERROR: Provisioning response does not match the active enrollment request.")
 PY

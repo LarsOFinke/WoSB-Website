@@ -25,6 +25,15 @@ _HOST_KEY_RE = re.compile(
 _FINGERPRINT_RE = re.compile(r"^SHA256:[A-Za-z0-9+/]{40,64}$")
 _AGE_RECIPIENT_RE = re.compile(r"^age1[0-9a-z]{20,}$")
 _SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
+_ENVIRONMENTS = {"test", "production"}
+
+
+def _target_identity(environment: str) -> tuple[str, str, str]:
+    return (
+        f"rbf-backup-{environment}",
+        f"rbf-recovery-{environment}",
+        f"/backups/wosb/{environment}",
+    )
 
 
 def _object(payload: object, label: str) -> dict[str, Any]:
@@ -51,13 +60,23 @@ def validate_request(payload: object) -> dict[str, Any]:
     source = _object(payload, "Enrollment request")
     if source.get("schema_version") != SCHEMA_VERSION or source.get("kind") != REQUEST_KIND:
         raise ValueError("Unsupported enrollment request schema.")
+    environment = str(source.get("deployment_environment") or "").strip().lower()
+    if environment not in _ENVIRONMENTS:
+        raise ValueError("Invalid deployment environment.")
     result = {
         "schema_version": SCHEMA_VERSION,
         "kind": REQUEST_KIND,
         "enrollment_id": _text(source, "enrollment_id", _ENROLLMENT_RE, "enrollment id"),
         "ssh_public_key": _text(source, "ssh_public_key", _SSH_PUBLIC_KEY_RE, "SSH public key"),
         "requested_username": _text(source, "requested_username", _USER_RE, "requested username"),
+        "requested_recovery_username": _text(
+            source, "requested_recovery_username", _USER_RE, "requested recovery username"
+        ),
+        "requested_storage_directory": _remote_directory(
+            {"remote_directory": source.get("requested_storage_directory")}
+        ),
         "requested_directory": _remote_directory({"remote_directory": source.get("requested_directory")}),
+        "deployment_environment": environment,
         "created_at": str(source.get("created_at") or "").strip(),
         "product_hostname": str(source.get("product_hostname") or "").strip()[:253],
         "release_version": str(source.get("release_version") or "").strip()[:32],
@@ -70,6 +89,12 @@ def validate_request(payload: object) -> dict[str, Any]:
             source, "ingest_script_sha256", _SHA256_RE, "ingest script checksum"
         ),
     }
+    if (
+        result["requested_username"],
+        result["requested_recovery_username"],
+        result["requested_storage_directory"],
+    ) != _target_identity(environment):
+        raise ValueError("Enrollment request identity does not match its deployment environment.")
     if result["release_version"] and not re.fullmatch(
         r"[0-9]+\.[0-9]+\.[0-9]+", result["release_version"]
     ):
@@ -95,13 +120,23 @@ def validate_request(payload: object) -> dict[str, Any]:
     return result
 
 
-def validate_response(payload: object, *, expected_enrollment_id: str | None = None) -> dict[str, Any]:
+def validate_response(
+    payload: object,
+    *,
+    expected_enrollment_id: str | None = None,
+    expected_environment: str | None = None,
+) -> dict[str, Any]:
     source = _object(payload, "Enrollment response")
     if source.get("schema_version") != SCHEMA_VERSION or source.get("kind") != RESPONSE_KIND:
         raise ValueError("Unsupported enrollment response schema.")
     enrollment_id = _text(source, "enrollment_id", _ENROLLMENT_RE, "enrollment id")
     if expected_enrollment_id and enrollment_id != expected_enrollment_id:
         raise ValueError("Enrollment response does not match the active request.")
+    environment = str(source.get("deployment_environment") or "").strip().lower()
+    if environment not in _ENVIRONMENTS:
+        raise ValueError("Invalid deployment environment.")
+    if expected_environment and environment != expected_environment:
+        raise ValueError("Enrollment response belongs to a different deployment environment.")
     try:
         port = int(source.get("port") or 22)
     except (TypeError, ValueError) as exc:
@@ -112,10 +147,17 @@ def validate_response(payload: object, *, expected_enrollment_id: str | None = N
         "schema_version": SCHEMA_VERSION,
         "kind": RESPONSE_KIND,
         "enrollment_id": enrollment_id,
+        "deployment_environment": environment,
         "created_at": str(source.get("created_at") or "").strip(),
         "host": _text(source, "host", _HOST_RE, "backup host"),
         "port": port,
         "username": _text(source, "username", _USER_RE, "SSH username"),
+        "recovery_username": _text(
+            source, "recovery_username", _USER_RE, "recovery SSH username"
+        ),
+        "storage_directory": _remote_directory(
+            {"remote_directory": source.get("storage_directory")}
+        ),
         "remote_directory": _remote_directory(source),
         "receipt_directory": _remote_directory(
             {"remote_directory": source.get("receipt_directory")}
@@ -131,6 +173,12 @@ def validate_response(payload: object, *, expected_enrollment_id: str | None = N
         "managed_server": source.get("managed_server") is True,
         "trust_model": str(source.get("trust_model") or "").strip(),
     }
+    if (
+        result["username"],
+        result["recovery_username"],
+        result["storage_directory"],
+    ) != _target_identity(environment):
+        raise ValueError("Enrollment response identity does not match its deployment environment.")
     if result["managed_server"] and result["trust_model"] != "server-controlled-ingest-v1":
         raise ValueError("Managed backup server has an unsupported trust model.")
     return result

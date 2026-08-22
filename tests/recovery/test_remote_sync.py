@@ -18,6 +18,7 @@ def test_enrollment_preparation_hides_stale_request_until_replacement_is_ready(
 
     infra = tmp_path / "infrastructure"
     infra.mkdir()
+    (infra / ".env").write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
     request = tmp_path / "request.json"
     request.write_text(
         '{"operation":"prepare_enrollment","requested_by":"captain",'
@@ -66,6 +67,7 @@ def test_enrollment_request_contains_the_exact_deployed_provisioner(
     ingest_path = release / "tools/backup-server/rbf-backup-ingest.py"
     provisioner_path.parent.mkdir(parents=True)
     infra.mkdir()
+    (infra / ".env").write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
     (release / "VERSION").write_text("1.8.0\n", encoding="utf-8")
     provisioner = b"#!/usr/bin/env bash\nset -Eeuo pipefail\n"
     provisioner_path.write_bytes(provisioner)
@@ -88,6 +90,41 @@ def test_enrollment_request_contains_the_exact_deployed_provisioner(
     assert base64.b64decode(result["ingest_script_base64"], validate=True) == ingest
     assert result["ingest_script_sha256"] == hashlib.sha256(ingest).hexdigest()
     assert result["requested_directory"] == "/incoming"
+    assert result["deployment_environment"] == "test"
+    assert result["requested_username"] == "rbf-backup-test"
+    assert result["requested_recovery_username"] == "rbf-recovery-test"
+    assert result["requested_storage_directory"] == "/backups/wosb/test"
+
+
+def test_enrollment_updates_shared_environment_without_replacing_release_symlink(
+    tmp_path,
+) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_shared_env", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    shared = tmp_path / "shared"
+    infra = tmp_path / "releases/1.8.3/infrastructure"
+    shared.mkdir()
+    infra.mkdir(parents=True)
+    shared_env = shared / ".env"
+    shared_env.write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
+    release_env = infra / ".env"
+    release_env.symlink_to(shared_env)
+
+    module.Runner._set_env_values(
+        release_env,
+        {
+            "BACKUP_RECOVERY_ENABLED": "true",
+            "BACKUP_AGE_RECIPIENT": "age1" + "a" * 58,
+        },
+    )
+
+    assert release_env.is_symlink()
+    assert "BACKUP_RECOVERY_ENABLED=true" in shared_env.read_text(encoding="utf-8")
+    assert "BACKUP_AGE_RECIPIENT=age1" in shared_env.read_text(encoding="utf-8")
 
 
 def test_scheduled_remote_sync_publishes_commit_marker_last(tmp_path, monkeypatch) -> None:

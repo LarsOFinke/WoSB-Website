@@ -12,10 +12,12 @@ def _response() -> dict[str, object]:
         "schema_version": 1,
         "kind": "rbf-backup-enrollment-response",
         "enrollment_id": "A" * 32,
+        "deployment_environment": "production",
         "host": "backup.example.net",
         "port": 22,
-        "username": "rbf-backup",
-        "recovery_username": "rbf-recovery",
+        "username": "rbf-backup-production",
+        "recovery_username": "rbf-recovery-production",
+        "storage_directory": "/backups/wosb/production",
         "remote_directory": "/incoming",
         "receipt_directory": "/receipts",
         "recovery_directory": "/data",
@@ -29,9 +31,15 @@ def _response() -> dict[str, object]:
 
 def test_response_preserves_loopback_recovery_account() -> None:
     response = validate_response(_response())
-    assert response["username"] == "rbf-backup"
-    assert response["recovery_username"] == "rbf-recovery"
+    assert response["username"] == "rbf-backup-production"
+    assert response["recovery_username"] == "rbf-recovery-production"
     assert response["recovery_directory"] == "/data"
+
+
+def test_response_rejects_cross_environment_identity() -> None:
+    payload = {**_response(), "deployment_environment": "test"}
+    with pytest.raises(ValueError, match="identity does not match"):
+        validate_response(payload)
 
 
 def test_response_json_is_validated(tmp_path) -> None:

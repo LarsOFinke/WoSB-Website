@@ -6,8 +6,9 @@ import os
 from pathlib import Path
 import secrets
 import subprocess
-import tempfile
+import threading
 import time
+import tempfile
 from typing import Any
 
 from backup_runner_core import HOST_RE, REMOTE_RE, USER_RE, now
@@ -427,9 +428,14 @@ class BackupTransferMixin:
 
     def create_and_transfer_backup(self) -> dict[str, Any]:
         config = self.load_connection()
+        recovery_enabled = self.recovery_enabled()
+        if config.get("managed_server") is True and not self.recovery_configuration_ready():
+            raise RuntimeError(
+                "Managed backup enrollment is incomplete; import a fresh enrollment response before running backups."
+            )
         result_files = {
             name: self.run_dir / f"backup-result-{name}.{os.getpid()}"
-            for name in ("postgres", "files", "recovery", "verification", "set")
+            for name in ("postgres", "files", "recovery", "verification", "set", "progress")
         }
         for path in result_files.values():
             path.unlink(missing_ok=True)
@@ -450,16 +456,26 @@ class BackupTransferMixin:
             str(result_files["verification"]),
             "--backup-set-result",
             str(result_files["set"]),
+            "--progress-result",
+            str(result_files["progress"]),
         ]
-        if self.recovery_enabled():
+        if recovery_enabled:
             command.append("--include-recovery")
         self.write_status(
             "running",
             "Preparing the coordinated backup set and recovery preflight.",
+            progress_percent=5,
         )
         self.log(
             "Creating one coordinated backup set and proving full recoverability before transfer."
         )
+        progress_stop = threading.Event()
+        progress_thread = threading.Thread(
+            target=self._watch_backup_progress,
+            args=(result_files["progress"], progress_stop),
+            daemon=True,
+        )
+        progress_thread.start()
         try:
             result = subprocess.run(
                 command,
@@ -484,7 +500,7 @@ class BackupTransferMixin:
                 name: Path(result_files[name].read_text(encoding="utf-8").strip())
                 for name in required
             }
-            if self.recovery_enabled():
+            if recovery_enabled:
                 if not result_files["recovery"].is_file():
                     raise RuntimeError(
                         "Encrypted recovery bundle was enabled but not returned."
@@ -495,6 +511,7 @@ class BackupTransferMixin:
             self.write_status(
                 "running",
                 "Local backup set verified; transferring PostgreSQL and file artifacts.",
+                progress_percent=84,
             )
             artifacts = [
                 self.transfer(config, paths["postgres"], "postgresql"),
@@ -504,21 +521,46 @@ class BackupTransferMixin:
                 self.write_status(
                     "running",
                     "Core artifacts transferred; transferring encrypted recovery material.",
+                    progress_percent=90,
                 )
                 artifacts.append(self.transfer(config, paths["recovery"], "recovery"))
             # The verification report is uploaded before the manifest. The manifest is
             # the remote commit marker and is deliberately transferred last.
             self.write_status(
                 "running",
-                "Recovery material transferred; uploading verification and commit manifest for remote validation.",
+                "Core backup artifacts transferred; uploading verification and commit manifest for remote validation.",
+                progress_percent=94,
             )
             self.transfer(config, paths["verification"], "verification")
             self.write_status(
                 "running",
                 "Remote ingest is validating the set and waiting for its acceptance receipt.",
+                progress_percent=97,
             )
             self.transfer(config, paths["set"], "backup_set")
             return {"artifacts": artifacts}
         finally:
+            progress_stop.set()
+            progress_thread.join(timeout=2)
             for path in result_files.values():
                 path.unlink(missing_ok=True)
+
+    def _watch_backup_progress(self, progress_file: Path, stop: threading.Event) -> None:
+        previous = ""
+        while not stop.wait(0.25):
+            try:
+                current = progress_file.read_text(encoding="utf-8").strip()
+                if not current or current == previous:
+                    continue
+                percent_text, message = current.split("\t", 1)
+                percent = int(percent_text)
+                if not 0 <= percent < 100 or not message.strip():
+                    continue
+                previous = current
+                self.write_status(
+                    "running",
+                    message.strip(),
+                    progress_percent=percent,
+                )
+            except (OSError, ValueError):
+                time.sleep(0.05)

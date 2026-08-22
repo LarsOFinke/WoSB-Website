@@ -25,6 +25,7 @@ HOST_KEY_RE = re.compile(
     r"^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]+$"
 )
 ACTIVE_STATE = "running"
+AGE_RECIPIENT_RE = re.compile(r"^age1[0-9a-z]{20,}$")
 
 
 def now() -> str:
@@ -101,6 +102,24 @@ class RunnerCore:
             "managed_server": config.get("managed_server") is True,
         }
 
+    def recovery_configuration_ready(self) -> bool:
+        env_file = self.infra_dir / ".env"
+        if not env_file.is_file():
+            return False
+        values: dict[str, str] = {}
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip("\"'")
+        enabled = values.get("BACKUP_RECOVERY_ENABLED", "").lower() in {
+            "1", "true", "yes", "on",
+        }
+        return enabled and bool(
+            AGE_RECIPIENT_RE.fullmatch(values.get("BACKUP_AGE_RECIPIENT", ""))
+        )
+
     def old_status(self) -> dict[str, Any]:
         if not self.status_file.is_file():
             return {}
@@ -122,6 +141,7 @@ class RunnerCore:
             "requested_by": self.request.get("requested_by") or old.get("requested_by"),
             "requested_at": self.request.get("requested_at") or old.get("requested_at"),
             "connection": self.connection_summary(),
+            "age_recipient_configured": self.recovery_configuration_ready(),
             **updates,
         }
         if state == ACTIVE_STATE:

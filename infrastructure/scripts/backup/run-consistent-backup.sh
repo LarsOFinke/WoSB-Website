@@ -9,7 +9,7 @@ usage() {
 Usage: sudo run-consistent-backup.sh [--reason TEXT] [--skip-postgres]
   [--include-recovery] [--lock-held|--all-locks-held]
   [--postgres-result FILE] [--files-result FILE] [--recovery-result FILE]
-  [--verification-result FILE] [--backup-set-result FILE]
+  [--verification-result FILE] [--backup-set-result FILE] [--progress-result FILE]
 USAGE
 }
 reason="scheduled"
@@ -17,7 +17,7 @@ skip_postgres=false
 include_recovery=false
 lock_held=false
 all_locks_held=false
-postgres_result=""; files_result=""; recovery_result=""; verification_result=""; set_result=""
+postgres_result=""; files_result=""; recovery_result=""; verification_result=""; set_result=""; progress_result=""
 while (($#)); do
   case "$1" in
     --reason) reason="${2:-}"; shift 2 ;;
@@ -30,6 +30,7 @@ while (($#)); do
     --recovery-result) recovery_result="${2:-}"; shift 2 ;;
     --verification-result) verification_result="${2:-}"; shift 2 ;;
     --backup-set-result) set_result="${2:-}"; shift 2 ;;
+    --progress-result) progress_result="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown backup option: $1" ;;
   esac
@@ -40,6 +41,15 @@ require_command python3
 require_command sha256sum
 run_dir="$INFRA_DIR/data/control/run"
 install -d -m 0700 "$run_dir" "$INFRA_DIR/data/backups/reports" "$INFRA_DIR/data/backups/sets"
+
+publish_progress() {
+  local percent="$1" message="$2" temporary
+  [[ -n "$progress_result" ]] || return 0
+  temporary="${progress_result}.tmp.$$"
+  printf '%s\t%s\n' "$percent" "$message" > "$temporary"
+  chmod 600 "$temporary"
+  mv -f "$temporary" "$progress_result"
+}
 if [[ "$lock_held" != true && "${RBF_BACKUP_LOCK_HELD:-false}" != true ]]; then
   exec 9>"$run_dir/update.lock"; flock 9
 fi
@@ -107,6 +117,7 @@ quiesce="$(read_env BACKUP_QUIESCE_APPLICATION)"; quiesce="${quiesce:-true}"
 consistency="no-running-api"
 if [[ "$api_was_running" == true ]]; then
   if is_true "$quiesce"; then
+    publish_progress 10 "Pausing the application briefly for a consistent snapshot."
     log "Briefly stop the API as the application-wide backup consistency boundary."
     bw_compose stop api
     api_stopped=true
@@ -139,14 +150,17 @@ trap restore_api EXIT
 
 postgres_backup=""
 if [[ "$skip_postgres" != true ]]; then
+  publish_progress 20 "Creating the consistent PostgreSQL snapshot."
   BACKUP_REASON="$reason" BACKUP_CONSISTENCY_MODE="$consistency" BACKUP_RESULT_FILE="$postgres_result" \
     /usr/bin/env bash "$SCRIPT_DIR/backup-postgres.sh"
   postgres_backup="$(cat "$postgres_result")"
 fi
+publish_progress 30 "Archiving uploaded files and operational data."
 BACKUP_RESULT_FILE="$files_result" /usr/bin/env bash "$SCRIPT_DIR/backup-data.sh"
 files_backup="$(cat "$files_result")"
 
 if [[ "$api_stopped" == true ]]; then
+  publish_progress 40 "The snapshot is complete; restarting the application API."
   bw_compose up -d --no-deps api
   wait_for_api
   api_stopped=false
@@ -154,6 +168,7 @@ fi
 
 verification_report=""
 if [[ -n "$postgres_backup" ]]; then
+  publish_progress 50 "Verifying the backup with a full isolated database restore and application startup."
   verification_report="$INFRA_DIR/data/backups/reports/rbf-postgres-preflight-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
   RBF_RESTORE_LOCK_HELD=true /usr/bin/env bash "$SCRIPT_DIR/restore-postgres.sh" \
     --preflight-only --report "$verification_report" "$postgres_backup"
@@ -162,6 +177,7 @@ fi
 
 recovery_backup=""
 if [[ "$include_recovery" == true ]]; then
+  publish_progress 70 "Creating the encrypted disaster-recovery bundle."
   [[ -n "$postgres_backup" ]] || die "Recovery bundle requires a PostgreSQL backup."
   BACKUP_RESULT_FILE="$recovery_result" \
     /usr/bin/env bash "$SCRIPT_DIR/backup-recovery.sh" \
@@ -169,6 +185,7 @@ if [[ "$include_recovery" == true ]]; then
   recovery_backup="$(cat "$recovery_result")"
 fi
 
+publish_progress 80 "Finalizing and validating the local backup-set manifest."
 set_path="$INFRA_DIR/data/backups/sets/rbf-backup-set-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
 # In a versioned installation data/ is a symlink into the installation's shared
 # tree. The helper verifies that relationship before widening the manifest root.
@@ -184,4 +201,5 @@ printf '%s\n' "$set_path" > "$set_result"; chmod 600 "$set_result"
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
 find "$INFRA_DIR/data/backups/sets" -type f -mtime "+$retention_days" -delete
 backup_completed=true
+publish_progress 82 "Local backup set verified; preparing protected transfer."
 success "Coordinated and fully verified backup point created: $set_path"

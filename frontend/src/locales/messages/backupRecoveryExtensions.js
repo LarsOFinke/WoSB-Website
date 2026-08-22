@@ -1,6 +1,7 @@
 export const backupRecoveryExtensionMessages = {
   en: { admin: { backups: {
     hostLogOnly: 'Detailed backup and restore output remains available only in the protected host log and is not returned to the website.',
+    statusPollingDelayed: 'The API is briefly paused for the consistent snapshot. Progress polling will retry automatically with a longer interval.',
     actions: { scanLocal: 'Scan local backups', restoreDatabase: 'Restore database', restoreFiles: 'Restore file modules' },
     operations: { scan_local_backups: 'Scan local backups', restore_postgresql: 'Restore PostgreSQL', restore_files: 'Restore file modules' },
     messages: { scanQueued: 'Local backup scan queued.', restoreQueued: 'Protected database restore queued.', filesRestoreQueued: 'Selected file-module restore queued.' },
@@ -43,6 +44,7 @@ export const backupRecoveryExtensionMessages = {
   } } },
   de: { admin: { backups: {
     hostLogOnly: 'Detaillierte Backup- und Restore-Ausgaben bleiben ausschließlich im geschützten Host-Protokoll und werden nicht an die Website zurückgegeben.',
+    statusPollingDelayed: 'Die API pausiert kurz für den konsistenten Snapshot. Die Fortschrittsabfrage versucht es automatisch in größeren Abständen erneut.',
     actions: { scanLocal: 'Lokale Backups scannen', restoreDatabase: 'Datenbank wiederherstellen', restoreFiles: 'Dateimodule wiederherstellen' },
     operations: { scan_local_backups: 'Lokale Backups scannen', restore_postgresql: 'PostgreSQL wiederherstellen', restore_files: 'Dateimodule wiederherstellen' },
     messages: { scanQueued: 'Scan der lokalen Backups eingeplant.', restoreQueued: 'Geschützte Datenbank-Wiederherstellung eingeplant.', filesRestoreQueued: 'Wiederherstellung der ausgewählten Dateimodule eingeplant.' },

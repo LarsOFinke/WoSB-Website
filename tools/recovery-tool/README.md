@@ -20,9 +20,10 @@ the disaster-recovery workflow.
 
 ## Optional recovery-workstation setup
 
-The backup server's `rbf-recovery` account is deliberately loopback-only. Run the
-tool on that backup host, or use a separately provisioned read-only recovery
-account when an off-host recovery workstation is required.
+The backup server's environment-specific `rbf-recovery-test` and
+`rbf-recovery-production` accounts are deliberately loopback-only. Run the tool
+on that backup host, or use a separately provisioned read-only recovery account
+when an off-host recovery workstation is required.
 
 Run these commands on the **backup server**:
 
@@ -41,8 +42,9 @@ The GUI's **Import enrollment response…** button and the website enrollment pa
 both use a file picker and apply the same content validation. Selecting a request
 file explains that provisioning must run first.
 
-The setup command imports the public response, selects the local private age
-identity and read-only SSH key from `~/RBF-Recovery` when present, verifies the
+The setup command imports the public response, requires its environment to
+match `--target`, selects the local private age identity and read-only SSH key
+from `~/RBF-Recovery/<target>` when present, verifies the
 live pinned host key, and writes a mode-0600 profile store. Test and production
 profiles have separate destination directories and can never overwrite each
 other by implicit target switching. `--offline` is available only for an

@@ -4,6 +4,7 @@ import { useLocale } from '@/locales'
 import { useSession } from '@/modules/accounts/session'
 import { getBackupControlStatus, runApplicationBackup } from '@/modules/admin/api/admin'
 import { formatBackupBytes, formatBackupDateTime } from '@/modules/admin/domain/backupPresentation'
+import { backupStatusPollDelay } from '@/modules/admin/domain/backupStatusPolling'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
 import { useBackupEnrollment } from './useBackupEnrollment'
 
@@ -25,14 +26,20 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const hostApproval = ref('')
+  const statusPollFailures = ref(0)
   const clock = ref(Date.now())
   let pollTimer = null
   let clockTimer = null
+  let statusRequest = null
+  let disposed = false
 
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
   const connectionReady = computed(() => (
-    configured.value && Boolean(status.value.connection?.write_tested_at)
+    configured.value
+      && Boolean(status.value.connection?.write_tested_at)
+      && (status.value.connection?.managed_server !== true
+        || status.value.age_recipient_configured === true)
   ))
   const canSubmit = computed(() => (
     !loading.value && !inProgress.value && status.value.request_available !== false
@@ -46,6 +53,8 @@ export function useDatabaseBackupsPage() {
     return Math.max(0, Math.floor((clock.value - started) / 1000))
   })
   const operationProgress = computed(() => {
+    const reported = Number(status.value.progress_percent)
+    if (Number.isInteger(reported) && reported >= 0 && reported <= 100) return reported
     const message = String(status.value.message || '').toLowerCase()
     if (message.includes('preparing') || message.includes('coordinated')) return 10
     if (message.includes('local backup set')) return 45
@@ -54,34 +63,51 @@ export function useDatabaseBackupsPage() {
     if (message.includes('remote ingest')) return 90
     return inProgress.value ? null : (status.value.state === 'succeeded' ? 100 : 0)
   })
+  const statusPollingDelayed = computed(() => statusPollFailures.value > 0)
 
   const formatDateTime = (value) => formatBackupDateTime(value, locale.value)
   const formatBytes = formatBackupBytes
 
   function schedulePoll() {
     window.clearTimeout(pollTimer)
-    if (!inProgress.value) return
+    if (disposed || !inProgress.value) return
+    const delay = backupStatusPollDelay({
+      message: status.value.message,
+      failures: statusPollFailures.value,
+    })
     pollTimer = window.setTimeout(async () => {
       await loadStatus({ quiet: true })
       schedulePoll()
-    }, 2500)
+    }, delay)
   }
 
   async function loadStatus({ quiet = false } = {}) {
+    if (statusRequest) return statusRequest
     if (!quiet) loading.value = true
     if (!quiet) error.value = ''
-    try {
-      const previousState = status.value.state
-      status.value = await getBackupControlStatus()
-      if (previousState && ['queued', 'running'].includes(previousState)
-        && status.value.state === 'succeeded') {
-        success.value = status.value.message
+    statusRequest = (async () => {
+      try {
+        const previousState = status.value.state
+        status.value = await getBackupControlStatus()
+        statusPollFailures.value = 0
+        if (previousState && ['queued', 'running'].includes(previousState)
+          && status.value.state === 'succeeded') {
+          success.value = status.value.message
+        }
+        if (status.value.state === 'failed') error.value = status.value.message
+        return true
+      } catch (err) {
+        statusPollFailures.value += 1
+        if (!quiet) error.value = err.message || t('admin.backups.errors.load')
+        return false
+      } finally {
+        if (!quiet) loading.value = false
       }
-      if (status.value.state === 'failed') error.value = status.value.message
-    } catch (err) {
-      if (!quiet) error.value = err.message || t('admin.backups.errors.load')
+    })()
+    try {
+      return await statusRequest
     } finally {
-      if (!quiet) loading.value = false
+      statusRequest = null
     }
   }
 
@@ -153,6 +179,7 @@ export function useDatabaseBackupsPage() {
     schedulePoll()
   })
   onUnmounted(() => {
+    disposed = true
     window.clearTimeout(pollTimer)
     window.clearInterval(clockTimer)
   })
@@ -161,6 +188,7 @@ export function useDatabaseBackupsPage() {
     t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
     inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
     operationElapsedSeconds, operationProgress,
+    statusPollingDelayed,
     enrollmentResponse, enrollmentFileName, enrollmentSetup, enrollmentRequest,
     enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
     enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,

@@ -10,7 +10,7 @@ PORT=22
 USERNAME="rbf-backup"
 RECOVERY_USERNAME="rbf-recovery"
 RECOVERY_PUBLIC_KEY=""
-DIRECTORY="/srv/rbf-backups/wosb"
+DIRECTORY="/backups/wosb"
 RESULT=""
 ALLOW_FROM=""
 SKIP_PACKAGE_INSTALL=false
@@ -85,7 +85,10 @@ if payload.get("schema_version") != 1 or payload.get("kind") != "rbf-backup-enro
 enrollment_id = str(payload.get("enrollment_id") or "").strip()
 public_key = str(payload.get("ssh_public_key") or "").strip()
 requested_username = str(payload.get("requested_username") or "").strip()
+requested_recovery_username = str(payload.get("requested_recovery_username") or "").strip()
+requested_storage_directory = str(payload.get("requested_storage_directory") or "").strip().rstrip("/")
 requested_directory = str(payload.get("requested_directory") or "").strip().rstrip("/") or "/"
+deployment_environment = str(payload.get("deployment_environment") or "").strip().lower()
 ingest_script_sha256 = str(payload.get("ingest_script_sha256") or "").strip()
 if not re.fullmatch(r"[A-Za-z0-9_-]{24,128}", enrollment_id):
     raise SystemExit("Invalid enrollment ID.")
@@ -96,6 +99,16 @@ if not re.fullmatch(
     raise SystemExit("Invalid SSH public key.")
 if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_username):
     raise SystemExit("Invalid requested SSH user.")
+if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_recovery_username):
+    raise SystemExit("Invalid requested recovery SSH user.")
+if deployment_environment not in {"test", "production"}:
+    raise SystemExit("Invalid deployment environment.")
+if requested_username != f"rbf-backup-{deployment_environment}":
+    raise SystemExit("Requested SSH user does not match the deployment environment.")
+if requested_recovery_username != f"rbf-recovery-{deployment_environment}":
+    raise SystemExit("Requested recovery user does not match the deployment environment.")
+if requested_storage_directory != f"/backups/wosb/{deployment_environment}":
+    raise SystemExit("Requested storage directory does not match the deployment environment.")
 if requested_directory != "/incoming":
     raise SystemExit("Unsupported requested SFTP path; expected /incoming.")
 if not re.fullmatch(r"[a-f0-9]{64}", ingest_script_sha256):
@@ -103,18 +116,32 @@ if not re.fullmatch(r"[a-f0-9]{64}", ingest_script_sha256):
 print(enrollment_id)
 print(public_key)
 print(requested_username)
+print(requested_recovery_username)
+print(requested_storage_directory)
 print(requested_directory)
+print(deployment_environment)
 print(ingest_script_sha256)
 PY
 )
-(( ${#request_fields[@]} == 5 )) || { echo "Enrollment request could not be read completely." >&2; exit 1; }
+(( ${#request_fields[@]} == 8 )) || { echo "Enrollment request could not be read completely." >&2; exit 1; }
 ENROLLMENT_ID="${request_fields[0]}"
 PUBLIC_KEY="${request_fields[1]}"
 REQUESTED_USERNAME="${request_fields[2]}"
-REQUESTED_DIRECTORY="${request_fields[3]}"
-INGEST_SCRIPT_SHA256="${request_fields[4]}"
+REQUESTED_RECOVERY_USERNAME="${request_fields[3]}"
+REQUESTED_STORAGE_DIRECTORY="${request_fields[4]}"
+REQUESTED_DIRECTORY="${request_fields[5]}"
+DEPLOYMENT_ENVIRONMENT="${request_fields[6]}"
+INGEST_SCRIPT_SHA256="${request_fields[7]}"
 [[ "$USERNAME" == "$REQUESTED_USERNAME" ]] || {
   echo "The CLI user '$USERNAME' does not match the enrollment request '$REQUESTED_USERNAME'." >&2
+  exit 1
+}
+[[ "$RECOVERY_USERNAME" == "$REQUESTED_RECOVERY_USERNAME" ]] || {
+  echo "The CLI recovery user '$RECOVERY_USERNAME' does not match the enrollment request '$REQUESTED_RECOVERY_USERNAME'." >&2
+  exit 1
+}
+[[ "$DIRECTORY" == "$REQUESTED_STORAGE_DIRECTORY" ]] || {
+  echo "The CLI storage directory '$DIRECTORY' does not match the enrollment request '$REQUESTED_STORAGE_DIRECTORY'." >&2
   exit 1
 }
 [[ "$REQUESTED_DIRECTORY" == "/incoming" ]] || {
@@ -150,7 +177,7 @@ EXISTING_MANAGED=false
 install -d -m 0700 -o root -g root "$STATE_DIR"
 if [[ -e "$STATE_FILE" ]]; then
   [[ -f "$STATE_FILE" && ! -L "$STATE_FILE" ]] || { echo "Unsafe provisioning state: $STATE_FILE" >&2; exit 1; }
-  python3 - "$STATE_FILE" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" <<'PY'
+  python3 - "$STATE_FILE" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
 import json
 import os
 import stat
@@ -166,6 +193,7 @@ expected = {
     "upload_username": sys.argv[2],
     "recovery_username": sys.argv[3],
     "storage_directory": sys.argv[4],
+    "deployment_environment": sys.argv[5],
 }
 for key, value in expected.items():
     if payload.get(key) != value:
@@ -174,7 +202,7 @@ PY
   EXISTING_MANAGED=true
 fi
 
-RECOVERY_DIR="${RBF_RECOVERY_DIRECTORY:-$OPERATOR_HOME/RBF-Recovery}"
+RECOVERY_DIR="${RBF_RECOVERY_DIRECTORY:-$OPERATOR_HOME/RBF-Recovery/$DEPLOYMENT_ENVIRONMENT}"
 install -d -m 0700 "$RECOVERY_DIR"
 if [[ -z "$RECOVERY_PUBLIC_KEY" ]]; then
   RECOVERY_KEY="$RECOVERY_DIR/rbf-recovery-readonly-ed25519"
@@ -220,7 +248,7 @@ fi
 
 write_state() {
   local status="$1"
-  python3 - "$STATE_FILE" "$status" "$ENROLLMENT_ID" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$RETENTION_DAYS" <<'PY'
+  python3 - "$STATE_FILE" "$status" "$ENROLLMENT_ID" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$RETENTION_DAYS" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
 import json
 import os
 import sys
@@ -242,6 +270,7 @@ payload = {
     "receipt_directory": str(Path(sys.argv[6]) / "receipts"),
     "trust_model": "server-controlled-ingest-v1",
     "retention_days": int(sys.argv[7]),
+    "deployment_environment": sys.argv[8],
 }
 fd, name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".tmp", dir=out.parent, text=True)
 with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -253,7 +282,7 @@ PY
 }
 write_state provisioning
 
-READ_GROUP="rbf-backup-readers"
+READ_GROUP="${USERNAME}-readers"
 getent group "$READ_GROUP" >/dev/null 2>&1 || groupadd --system "$READ_GROUP"
 if ! id "$USERNAME" >/dev/null 2>&1; then
   useradd --no-create-home --home-dir /data --shell /usr/sbin/nologin --user-group "$USERNAME"
@@ -368,7 +397,7 @@ chown root:"$RECOVERY_USERNAME" "$AUTHORIZED_RECOVERY"
 chmod 0640 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"
 
 SSHD_DROPIN_DIR="/etc/ssh/sshd_config.d"
-SSHD_DROPIN="$SSHD_DROPIN_DIR/90-rbf-backup-managed.conf"
+SSHD_DROPIN="$SSHD_DROPIN_DIR/90-${USERNAME}-managed.conf"
 install -d -m 0755 -o root -g root "$SSHD_DROPIN_DIR"
 SSHD_BACKUP="$(mktemp)"
 SSHD_EXISTED=false
@@ -426,12 +455,14 @@ if command -v systemctl >/dev/null 2>&1; then
   systemctl reload ssh.service >/dev/null 2>&1 || systemctl reload sshd.service >/dev/null 2>&1
 fi
 
-INGEST_PROCESSOR="/usr/local/sbin/rbf-backup-ingest"
+INGEST_PROCESSOR="/usr/local/sbin/rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"
 python3 -m py_compile "$INGEST_SCRIPT"
 install -m 0755 -o root -g root "$INGEST_SCRIPT" "$INGEST_PROCESSOR"
 READ_GROUP_ID="$(getent group "$READ_GROUP" | cut -d: -f3)"
 UPLOAD_GROUP_ID="$(getent group "$USERNAME" | cut -d: -f3)"
-cat > /etc/systemd/system/rbf-backup-ingest.service <<EOF_INGEST_SERVICE
+INGEST_UNIT="rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"
+RETENTION_UNIT="rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"
+cat > "/etc/systemd/system/${INGEST_UNIT}.service" <<EOF_INGEST_SERVICE
 [Unit]
 Description=Validate and commit RBF website backup submissions
 After=local-fs.target
@@ -451,18 +482,18 @@ MemoryMax=256M
 CPUQuota=50%
 TasksMax=32
 EOF_INGEST_SERVICE
-cat > /etc/systemd/system/rbf-backup-ingest.path <<EOF_INGEST_PATH
+cat > "/etc/systemd/system/${INGEST_UNIT}.path" <<EOF_INGEST_PATH
 [Unit]
 Description=Watch for completed RBF website backup submissions
 
 [Path]
 PathChanged=$INCOMING_DIRECTORY
-Unit=rbf-backup-ingest.service
+Unit=${INGEST_UNIT}.service
 
 [Install]
 WantedBy=multi-user.target
 EOF_INGEST_PATH
-cat > /etc/systemd/system/rbf-backup-ingest.timer <<'EOF_INGEST_TIMER'
+cat > "/etc/systemd/system/${INGEST_UNIT}.timer" <<'EOF_INGEST_TIMER'
 [Unit]
 Description=Fallback scan for RBF website backup submissions
 
@@ -475,7 +506,7 @@ AccuracySec=10s
 WantedBy=timers.target
 EOF_INGEST_TIMER
 
-RETENTION_SCRIPT="/usr/local/sbin/rbf-backup-retention"
+RETENTION_SCRIPT="/usr/local/sbin/rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"
 cat > "$RETENTION_SCRIPT" <<'RETENTION'
 #!/usr/bin/env python3
 from __future__ import annotations
@@ -524,7 +555,7 @@ for receipt in receipts.glob("rbf-backup-set-*.json.receipt.json"):
 RETENTION
 chmod 0755 "$RETENTION_SCRIPT"
 chown root:root "$RETENTION_SCRIPT"
-cat > /etc/systemd/system/rbf-backup-retention.service <<EOF_SERVICE
+cat > "/etc/systemd/system/${RETENTION_UNIT}.service" <<EOF_SERVICE
 [Unit]
 Description=RBF backup-server retention cleanup
 After=local-fs.target
@@ -541,7 +572,7 @@ ProtectSystem=strict
 ReadWritePaths=$DATA_DIRECTORY $RECEIPT_DIRECTORY
 ProtectHome=true
 EOF_SERVICE
-cat > /etc/systemd/system/rbf-backup-retention.timer <<'EOF_TIMER'
+cat > "/etc/systemd/system/${RETENTION_UNIT}.timer" <<'EOF_TIMER'
 [Unit]
 Description=Daily RBF backup-server retention cleanup
 
@@ -555,9 +586,9 @@ WantedBy=timers.target
 EOF_TIMER
 if command -v systemctl >/dev/null 2>&1; then
   systemctl daemon-reload
-  systemctl enable --now rbf-backup-ingest.path rbf-backup-ingest.timer >/dev/null
-  systemctl start rbf-backup-ingest.service
-  systemctl enable --now rbf-backup-retention.timer >/dev/null
+  systemctl enable --now "${INGEST_UNIT}.path" "${INGEST_UNIT}.timer" >/dev/null
+  systemctl start "${INGEST_UNIT}.service"
+  systemctl enable --now "${RETENTION_UNIT}.timer" >/dev/null
 fi
 
 if [[ -n "$ALLOW_FROM" ]] && command -v ufw >/dev/null 2>&1 && ufw status | grep -q '^Status: active'; then
@@ -570,7 +601,7 @@ HOST_KEY="$(awk '{print $1" "$2}' "$HOST_KEY_FILE")"
 FINGERPRINT="$(ssh-keygen -lf "$HOST_KEY_FILE" -E sha256 | awk '{print $2}')"
 write_state ready
 
-python3 - "$RESULT" "$ENROLLMENT_ID" "$HOST" "$PORT" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$HOST_KEY" "$FINGERPRINT" "$RETENTION_DAYS" "$AGE_RECIPIENT" <<'PY'
+python3 - "$RESULT" "$ENROLLMENT_ID" "$HOST" "$PORT" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$HOST_KEY" "$FINGERPRINT" "$RETENTION_DAYS" "$AGE_RECIPIENT" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
 import json
 import os
 import sys
@@ -582,6 +613,7 @@ payload = {
     "schema_version": 1,
     "kind": "rbf-backup-enrollment-response",
     "enrollment_id": sys.argv[2],
+    "deployment_environment": sys.argv[12],
     "created_at": datetime.now(timezone.utc).isoformat(),
     "host": sys.argv[3],
     "port": int(sys.argv[4]),

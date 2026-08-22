@@ -184,8 +184,19 @@
 
 .backup-enrollment-steps,
 .backup-setup-step {
+  display: grid;
   gap: 0.85rem;
   min-width: 0;
+  align-items: stretch;
+}
+
+.backup-setup-step > p {
+  max-width: 72ch;
+  margin: 0;
+  line-height: 1.55;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .backup-enrollment-file-input {
