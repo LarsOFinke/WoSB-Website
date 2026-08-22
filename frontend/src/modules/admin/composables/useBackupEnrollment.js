@@ -18,10 +18,16 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     retentionDays: 30,
     allowFrom: '',
   })
-  const enrollmentRequest = computed(() => status.value.enrollment_request || null)
+  const enrollmentPreparationActive = computed(() => (
+    status.value.operation === 'prepare_enrollment'
+    && ['queued', 'running'].includes(status.value.state)
+  ))
+  const enrollmentRequest = computed(() => (
+    enrollmentPreparationActive.value ? null : status.value.enrollment_request || null
+  ))
   const requestFilename = computed(() => (
     enrollmentRequest.value
-      ? `rbf-backup-enrollment-${enrollmentRequest.value.enrollment_id}.json`
+      ? `rbf-backup-enrollment-request-${enrollmentRequest.value.enrollment_id}.json`
       : 'REQUEST.json'
   ))
   const responseResult = computed(() => parseBackupEnrollmentResponse(
@@ -36,6 +42,7 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
       invalidJson: 'invalidJson',
       invalidObject: 'invalidJson',
       unsupportedSchema: 'wrongFile',
+      requestSelected: 'wrongFile',
       wrongKind: 'wrongFile',
       invalidEnrollmentId: 'invalidContent',
       enrollmentMismatch: 'enrollmentMismatch',
@@ -53,16 +60,23 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
   const setupResult = computed(() => validateBackupEnrollmentSetup({
     ...setup,
     requestFilename: requestFilename.value,
+    enrollmentId: enrollmentRequest.value?.enrollment_id,
+    releaseVersion: enrollmentRequest.value?.release_version,
   }))
   const setupError = computed(() => {
     if (!setup.host.trim()) return t('admin.backups.enrollment.errors.hostRequired')
+    const errorKey = setupResult.value.error === 'invalidReleaseVersion'
+      ? 'invalidRequestFilename'
+      : setupResult.value.error
     return setupResult.value.error
-      ? t(`admin.backups.enrollment.errors.${setupResult.value.error}`)
+      ? t(`admin.backups.enrollment.errors.${errorKey}`)
       : ''
   })
   const command = computed(() => buildBackupEnrollmentCommand({
     ...setup,
     requestFilename: requestFilename.value,
+    enrollmentId: enrollmentRequest.value?.enrollment_id,
+    releaseVersion: enrollmentRequest.value?.release_version,
   }).command)
   const canCopyCommand = computed(() => (
     Boolean(enrollmentRequest.value) && !setupResult.value.error && Boolean(command.value)
@@ -74,9 +88,10 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     connectionVerified: Boolean(status.value.connection?.write_tested_at)
       && Boolean(status.value.connection?.managed_server),
   }))
-  const canApply = computed(() => (
-    canSubmit.value && Boolean(enrollmentRequest.value) && Boolean(response.value.trim())
-  ))
+  // Keep the action available while the page is idle. Its click handler can
+  // then explain a missing file, mismatched response, or missing token instead
+  // of presenting a disabled button with no reason.
+  const canApply = computed(() => canSubmit.value)
 
   async function copyCommand() {
     if (!canCopyCommand.value) {
@@ -95,7 +110,10 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
   async function prepare() {
     response.value = ''
     responseFileName.value = ''
-    await request(prepareBackupEnrollment, 'admin.backups.messages.enrollmentPrepared')
+    await request(
+      (token) => prepareBackupEnrollment(token),
+      'admin.backups.messages.enrollmentPrepared',
+    )
   }
 
   function downloadRequest() {
@@ -105,7 +123,7 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `rbf-backup-enrollment-${enrollmentRequest.value.enrollment_id}.json`
+    link.download = requestFilename.value
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -134,12 +152,16 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
       error.value = t('admin.backups.enrollment.errors.noActiveRequest')
       return
     }
+    if (!response.value.trim()) {
+      error.value = t('admin.backups.enrollment.errors.selectResponse')
+      return
+    }
     if (responseResult.value.error) {
       error.value = responseError.value
       return
     }
     await request(
-      () => applyBackupEnrollment({ response_json: response.value.trim() }),
+      (token) => applyBackupEnrollment({ response_json: response.value.trim() }, token),
       'admin.backups.messages.enrollmentApplied',
     )
   }

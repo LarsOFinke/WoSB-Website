@@ -1,4 +1,5 @@
 const RESPONSE_KIND = 'rbf-backup-enrollment-response'
+const REQUEST_KIND = 'rbf-backup-enrollment-request'
 const SCHEMA_VERSION = 1
 const ENROLLMENT_ID_PATTERN = /^[A-Za-z0-9_-]{24,128}$/
 const HOST_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/
@@ -8,7 +9,8 @@ const HOST_KEY_PATTERN = /^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521))
 const FINGERPRINT_PATTERN = /^SHA256:[A-Za-z0-9+/]{40,64}$/
 const AGE_RECIPIENT_PATTERN = /^age1[0-9a-z]{20,}$/
 const CIDR_PATTERN = /^[A-Fa-f0-9:.]+(?:\/(?:[0-9]|[1-9][0-9]|1[01][0-9]|12[0-8]))?$/
-const REQUEST_FILENAME_PATTERN = /^[A-Za-z0-9._-]+\.json$/
+const REQUEST_FILENAME_PATTERN = /^rbf-backup-enrollment-(?:request-)?([A-Za-z0-9_-]{24,128})\.json$/
+const RELEASE_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
 
 function normalizeText(value) {
   return String(value || '').replace(/^\uFEFF/, '').trim()
@@ -34,6 +36,9 @@ export function parseBackupEnrollmentResponse(value, expectedEnrollmentId = '') 
   }
   if (payload.schema_version !== SCHEMA_VERSION) {
     return { payload: null, error: 'unsupportedSchema' }
+  }
+  if (payload.kind === REQUEST_KIND) {
+    return { payload: null, error: 'requestSelected' }
   }
   if (payload.kind !== RESPONSE_KIND) {
     return { payload: null, error: 'wrongKind' }
@@ -88,6 +93,8 @@ export function validateBackupEnrollmentSetup({
   retentionDays = 30,
   allowFrom = '',
   requestFilename = 'REQUEST.json',
+  enrollmentId = '',
+  releaseVersion = '',
 } = {}) {
   const normalizedHost = normalizeText(host).replace(/\.$/, '')
   const normalizedPort = Number(port)
@@ -95,6 +102,8 @@ export function validateBackupEnrollmentSetup({
   const normalizedRetention = Number(retentionDays)
   const normalizedAllowFrom = normalizeText(allowFrom)
   const normalizedFilename = normalizeText(requestFilename)
+  const normalizedEnrollmentId = normalizeText(enrollmentId)
+  const normalizedReleaseVersion = normalizeText(releaseVersion)
 
   if (!HOST_PATTERN.test(normalizedHost)) return { values: null, error: 'invalidHost' }
   if (!Number.isInteger(normalizedPort) || normalizedPort < 1 || normalizedPort > 65535) {
@@ -107,8 +116,16 @@ export function validateBackupEnrollmentSetup({
   if (normalizedAllowFrom && !CIDR_PATTERN.test(normalizedAllowFrom)) {
     return { values: null, error: 'invalidAllowFrom' }
   }
-  if (!REQUEST_FILENAME_PATTERN.test(normalizedFilename)) {
+  const filenameMatch = REQUEST_FILENAME_PATTERN.exec(normalizedFilename)
+  if (!filenameMatch) {
     return { values: null, error: 'invalidRequestFilename' }
+  }
+  const requestId = normalizedEnrollmentId || filenameMatch[1]
+  if (!ENROLLMENT_ID_PATTERN.test(requestId)) {
+    return { values: null, error: 'invalidEnrollmentId' }
+  }
+  if (!RELEASE_VERSION_PATTERN.test(normalizedReleaseVersion)) {
+    return { values: null, error: 'invalidReleaseVersion' }
   }
 
   return {
@@ -119,6 +136,9 @@ export function validateBackupEnrollmentSetup({
       retentionDays: normalizedRetention,
       allowFrom: normalizedAllowFrom,
       requestFilename: normalizedFilename,
+      enrollmentId: requestId,
+      responseFilename: `rbf-backup-enrollment-response-${requestId}.json`,
+      releaseVersion: normalizedReleaseVersion,
     },
     error: null,
   }
@@ -131,21 +151,64 @@ export function buildBackupEnrollmentCommand(options = {}) {
   const allowFromLine = values.allowFrom
     ? `  --allow-from ${shellQuote(values.allowFrom)} \\\n`
     : ''
-  const command = `REQUEST="$HOME/Downloads/${values.requestFilename}"
-RESPONSE="$HOME/Downloads/rbf-backup-enrollment-response.json"
+  const command = `( # Run setup in an isolated shell so an error cannot close this terminal.
+set -e
+trap 'status=$?; if [ "$status" -ne 0 ]; then echo "ERROR: Backup-server setup failed (status $status). The terminal remains open; review the message above." >&2; fi' EXIT
 
-test -r "$REQUEST" || {
-  echo "ERROR: Enrollment file is missing: $REQUEST"
-  exit 1
-}
-
+REQUEST="$HOME/Downloads/${values.requestFilename}"
+REQUEST_ID=${shellQuote(values.enrollmentId)}
+RESPONSE="$HOME/Downloads/${values.responseFilename}"
 PROVISIONER="$HOME/Downloads/provision-rbf-backup-server.sh"
 CHECKSUM="$PROVISIONER.sha256"
+RELEASE="https://github.com/LarsOFinke/WoSB-Website/releases/download/v${values.releaseVersion}"
 
-test -r "$PROVISIONER" -a -r "$CHECKSUM" || {
-  echo "ERROR: Provisioner or checksum is missing from ~/Downloads."
+if [ ! -r "$REQUEST" ]; then
+  REQUEST="$(python3 - "$HOME/Downloads" "$REQUEST_ID" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]).expanduser().resolve()
+expected = sys.argv[2]
+matches = []
+for candidate in sorted(root.glob("*.json")):
+    try:
+        if candidate.is_symlink() or not candidate.is_file() or candidate.stat().st_size > 1024 * 1024:
+            continue
+        payload = json.loads(candidate.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        continue
+    if (
+        isinstance(payload, dict)
+        and payload.get("schema_version") == 1
+        and payload.get("kind") == "rbf-backup-enrollment-request"
+        and payload.get("enrollment_id") == expected
+    ):
+        matches.append(candidate)
+if len(matches) == 1:
+    print(matches[0])
+elif not matches:
+    print(f"ERROR: No enrollment request with ID {expected} was found in {root}.", file=sys.stderr)
+    raise SystemExit(1)
+else:
+    names = ", ".join(path.name for path in matches)
+    print(f"ERROR: Multiple enrollment requests with ID {expected} were found: {names}", file=sys.stderr)
+    raise SystemExit(1)
+PY
+  )"
+fi
+
+test -r "$REQUEST" || {
+  echo "ERROR: Enrollment request could not be read: $REQUEST"
   exit 1
 }
+
+command -v curl >/dev/null || {
+  echo "ERROR: curl is required (sudo apt install curl)."
+  exit 1
+}
+curl --fail --location --output "$PROVISIONER" "$RELEASE/provision-rbf-backup-server.sh" || exit 1
+curl --fail --location --output "$CHECKSUM" "$RELEASE/provision-rbf-backup-server.sh.sha256" || exit 1
 ( cd "$(dirname "$PROVISIONER")" && sha256sum -c "$(basename "$CHECKSUM")" ) || exit 1
 
 sudo bash "$PROVISIONER" \
@@ -156,6 +219,7 @@ sudo bash "$PROVISIONER" \
   --retention-days ${values.retentionDays} \
 ${allowFromLine}  --result "$RESPONSE"
 
-echo "Antwortdatei: $RESPONSE"`
+echo "Antwortdatei: $RESPONSE"
+)`
   return { command, error: null }
 }

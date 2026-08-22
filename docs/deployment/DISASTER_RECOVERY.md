@@ -55,15 +55,15 @@ Configure each backup target explicitly. The provisioner response is public;
 the private read-only SSH key and age identity stay on the recovery host:
 
 ```text
-rbf-recovery-tool setup --target test \
-  --response ~/Downloads/rbf-backup-enrollment-response.json \
-  --local-backup-host
-rbf-recovery-tool setup --target production \
-  --response ~/Downloads/rbf-backup-enrollment-response.json \
-  --local-backup-host
+rbf-recovery-tool setup --target test --local-backup-host
+rbf-recovery-tool setup --target production --local-backup-host
 rbf-recovery-tool targets
 rbf-recovery-tool pull --target production
 ```
+
+Setup selects a single valid response from `~/Downloads` by JSON content. If
+multiple responses exist, pass `--response /path/to/file.json` to select the
+intended target explicitly.
 
 Test and production profiles use separate local directories and target-specific
 Linux timers. The setup command performs a live comparison with the response's

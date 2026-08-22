@@ -252,6 +252,12 @@ a directory name alone.
 - The release workflow keeps PostgreSQL data under the shared installation root, creates
   coordinated backups before updates, lets Flyway migrate, and restores release and backup
   on failed activation. Never delete volumes or data directories as an attempted fix.
+- Backup-server setup is a one-time three-step enrollment in the admin backup page: download
+  the public request, run the generated checksum-verifying provisioner command on the backup
+  host, and import the public response with a fresh host capability. The application-host
+  timer and release installer already provide nightly and pre-update uploads; the standalone
+  Recovery Tool is optional for listing, pulling, verifying, or restoring backup sets and is
+  not a prerequisite for automated backups.
 - The cookie-consent UI opens automatically without a saved decision and remains reachable
   in a fail-closed settings state when initialization fails. Manual opening remains available
   through the footer and privacy center.

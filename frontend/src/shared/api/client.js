@@ -36,8 +36,10 @@ async function request(path, options = {}) {
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: 'include',
-    headers,
     ...options,
+    // Keep the merged CSRF, content-type and caller-provided headers. Placing
+    // options last would replace this object whenever a caller adds a header.
+    headers,
   })
 
   if (!response.ok) {

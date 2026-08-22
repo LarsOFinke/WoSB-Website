@@ -5,6 +5,7 @@ import { useSession } from '@/modules/accounts/session'
 import { getBackupControlStatus, runApplicationBackup } from '@/modules/admin/api/admin'
 import { formatBackupBytes, formatBackupDateTime } from '@/modules/admin/domain/backupPresentation'
 import { createStaffNavigationGroups } from '@/modules/admin/domain/staffNavigation'
+import { useBackupEnrollment } from './useBackupEnrollment'
 
 const EMPTY_STATUS = {
   state: 'idle',
@@ -34,6 +35,7 @@ export function useDatabaseBackupsPage() {
   const canSubmit = computed(() => (
     !loading.value && !inProgress.value && status.value.request_available !== false
   ))
+  const hasHostApproval = computed(() => hostApproval.value.trim().length >= 24)
   const stateLabel = computed(() => t(`admin.backups.states.${status.value.state || 'idle'}`))
   const operationLabel = computed(() => t(`admin.backups.operations.${status.value.operation || 'idle'}`))
 
@@ -85,6 +87,50 @@ export function useDatabaseBackupsPage() {
     }
   }
 
+  async function request(action, successKey) {
+    if (!canSubmit.value) {
+      error.value = status.value.message || t('admin.backups.errors.request')
+      return
+    }
+    if (!hasHostApproval.value) {
+      error.value = `${t('admin.backups.restore.approvalToken')}: ${t('admin.backups.restore.approvalPlaceholder')}`
+      return
+    }
+    loading.value = true
+    error.value = ''
+    success.value = ''
+    try {
+      const response = await action(hostApproval.value.trim())
+      hostApproval.value = ''
+      status.value = response.status
+      success.value = t(successKey)
+      schedulePoll()
+    } catch (err) {
+      error.value = err.message || t('admin.backups.errors.request')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const {
+    response: enrollmentResponse,
+    responseFileName: enrollmentFileName,
+    setup: enrollmentSetup,
+    enrollmentRequest,
+    responsePreview: enrollmentResponsePreview,
+    setupError: enrollmentSetupError,
+    progress: enrollmentProgress,
+    responseError: enrollmentResponseError,
+    command: enrollmentCommand,
+    canCopyCommand: canCopyEnrollmentCommand,
+    canApply: canApplyEnrollment,
+    copyCommand: copyEnrollmentCommand,
+    prepare: prepareEnrollment,
+    downloadRequest: downloadEnrollmentRequest,
+    loadResponse: loadEnrollmentResponse,
+    apply: applyEnrollment,
+  } = useBackupEnrollment({ status, canSubmit, error, success, request, t })
+
   onMounted(async () => {
     await loadStatus()
     schedulePoll()
@@ -93,7 +139,12 @@ export function useDatabaseBackupsPage() {
 
   return {
     t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
-    inProgress, configured, connectionReady, canSubmit, stateLabel, operationLabel,
+    inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
+    enrollmentResponse, enrollmentFileName, enrollmentSetup, enrollmentRequest,
+    enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
+    enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,
+    canApplyEnrollment, copyEnrollmentCommand, prepareEnrollment,
+    downloadEnrollmentRequest, loadEnrollmentResponse, applyEnrollment,
     formatDateTime, formatBytes, loadStatus, runBackup,
   }
 }

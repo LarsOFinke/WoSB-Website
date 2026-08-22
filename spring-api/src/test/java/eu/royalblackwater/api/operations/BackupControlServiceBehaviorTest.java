@@ -69,6 +69,36 @@ class BackupControlServiceBehaviorTest {
         assertThat(String.valueOf(payload.getValue().get("message"))).contains("stopped reporting");
     }
 
+    @Test
+    void queuedEnrollmentPreparationDoesNotExposeThePreviousEnrollmentRequest() {
+        ControlFileStore files = mock(ControlFileStore.class);
+        OperationsDtoMapper mapper = mock(OperationsDtoMapper.class);
+        BackupControlStatus expected = mock(BackupControlStatus.class);
+        when(files.readStatus("backup-status.json")).thenReturn(Map.of(
+                "state", "succeeded",
+                "operation", "prepare_enrollment",
+                "enrollment_id", "old-enrollment-id-that-must-hide",
+                "enrollment_public_key", "old-public-key",
+                "enrollment_request", Map.of("enrollment_id", "old-enrollment-id-that-must-hide")));
+        when(files.readRequest("backup.request")).thenReturn(Map.of(
+                "operation", "prepare_enrollment",
+                "requested_by", "captain",
+                "requested_at", "2030-01-15T12:00:00Z"));
+        when(files.requestExists("backup.request")).thenReturn(true);
+        when(mapper.backupStatus(anyMap())).thenReturn(expected);
+        BackupControlService service = service(files, mapper);
+
+        assertThat(service.status()).isSameAs(expected);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> payload = ArgumentCaptor.forClass(Map.class);
+        org.mockito.Mockito.verify(mapper).backupStatus(payload.capture());
+        assertThat(payload.getValue()).containsEntry("state", "queued");
+        assertThat(payload.getValue()).containsEntry("operation", "prepare_enrollment");
+        assertThat(payload.getValue()).containsEntry("enrollment_request", null);
+        assertThat(payload.getValue()).containsEntry("enrollment_id", null);
+        assertThat(payload.getValue()).containsEntry("enrollment_public_key", null);
+    }
+
     private static BackupControlService service(ControlFileStore files, OperationsDtoMapper mapper) {
         return new BackupControlService(files, mapper, new ObjectMapper(), mock(AuditService.class), CLOCK);
     }

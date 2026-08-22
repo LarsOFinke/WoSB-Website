@@ -21,8 +21,13 @@ test('database backup administration is isolated in an admin-only subpage', asyn
   assert.match(composable, /runApplicationBackup/)
   assert.match(composable, /window\.confirm\(t\('admin\.backups\.confirmRun'\)\)/)
   assert.match(page, /connectionReady/)
-  assert.doesNotMatch(page, /enrollment|private_key|local\/restore|arm-admin-restore/)
-  assert.doesNotMatch(composable, /useBackupEnrollment|private_key|restoreLocal|configureBackup|discoverBackup/)
+  assert.match(page, /prepareEnrollment/)
+  assert.match(page, /downloadEnrollmentRequest/)
+  assert.match(page, /loadEnrollmentResponse/)
+  assert.match(composable, /useBackupEnrollment/)
+  assert.match(composable, /hasHostApproval/)
+  assert.doesNotMatch(page, /private_key|local\/restore|arm-admin-restore/)
+  assert.doesNotMatch(composable, /private_key|restoreLocal|configureBackup|discoverBackup/)
 })
 
 test('backup connection API exposes no browser-side secret persistence', async () => {
@@ -47,4 +52,40 @@ test('the browser surface does not expose recovery transfers or restore controls
   assert.doesNotMatch(page, /local\/restore|restoreDatabase|restoreFiles|type="password"|approval_token/)
   assert.match(page, /runBackup/)
   assert.match(page, /status\.artifacts/)
+})
+
+test('guided enrollment uses the host capability and keeps recovery tooling optional', async () => {
+  const [page, composable, pageComposable, enrollment, quickstart] = await Promise.all([
+    read('src/modules/admin/pages/DatabaseBackupsPage.vue'),
+    read('src/modules/admin/composables/useBackupEnrollment.js'),
+    read('src/modules/admin/composables/useDatabaseBackupsPage.js'),
+    read('src/modules/admin/domain/backupEnrollment.js'),
+    read('../docs/deployment/BACKUP_SETUP_QUICKSTART.md'),
+  ])
+
+  assert.match(page, /v-if="!connectionReady"/)
+  assert.match(page, /operation="prepare_enrollment"/)
+  assert.match(page, /operation="apply_enrollment"/)
+  assert.match(page, /operation="backup"/)
+  assert.match(composable, /prepareBackupEnrollment\(token\)/)
+  assert.match(composable, /applyBackupEnrollment\([^\n]+, token\)/)
+  assert.match(composable, /status\.value\.operation === 'prepare_enrollment'/)
+  assert.match(composable, /\['queued', 'running'\]\.includes\(status\.value\.state\)/)
+  assert.doesNotMatch(page, /!canApplyEnrollment \|\| !hasHostApproval/)
+  assert.match(pageComposable, /approvalPlaceholder/)
+  assert.match(enrollment, /releases\/download\/v\$\{values\.releaseVersion\}/)
+  assert.match(enrollment, /curl --fail --location/)
+  assert.match(enrollment, /sha256sum -c/)
+  assert.match(quickstart, /Recovery Tool is \*\*not\*\* required/)
+  assert.match(quickstart, /before every normal\s+update/)
+})
+
+test('host-approved requests retain CSRF and capability headers', async () => {
+  const [client, security] = await Promise.all([
+    read('src/shared/api/client.js'),
+    read('../spring-api/src/main/java/eu/royalblackwater/api/config/SecurityConfiguration.java'),
+  ])
+
+  assert.match(client, /\.\.\.options,[\s\S]*headers,[\s\S]*\}\)/)
+  assert.match(security, /"X-XSRF-TOKEN", "X-RBF-Host-Capability"/)
 })

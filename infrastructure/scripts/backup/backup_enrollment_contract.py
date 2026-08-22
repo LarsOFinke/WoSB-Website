@@ -55,7 +55,12 @@ def validate_request(payload: object) -> dict[str, Any]:
         "requested_directory": _remote_directory({"remote_directory": source.get("requested_directory")}),
         "created_at": str(source.get("created_at") or "").strip(),
         "product_hostname": str(source.get("product_hostname") or "").strip()[:253],
+        "release_version": str(source.get("release_version") or "").strip()[:32],
     }
+    if result["release_version"] and not re.fullmatch(
+        r"[0-9]+\.[0-9]+\.[0-9]+", result["release_version"]
+    ):
+        raise ValueError("Invalid release version.")
     return result
 
 

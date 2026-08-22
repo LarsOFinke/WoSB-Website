@@ -133,12 +133,49 @@ sshd -T 2>/dev/null | awk '$1 == "port" {print $2}' | grep -qx "$PORT" || {
 OPERATOR_USER="${SUDO_USER:-root}"
 OPERATOR_HOME="$(getent passwd "$OPERATOR_USER" | cut -d: -f6)"
 [[ -n "$OPERATOR_HOME" && "$OPERATOR_HOME" == /* ]] || { echo "Operator home could not be determined." >&2; exit 1; }
+STATE_DIR="/etc/rbf-backup-server"
+STATE_FILE="$STATE_DIR/${USERNAME}.json"
+EXISTING_MANAGED=false
+install -d -m 0700 -o root -g root "$STATE_DIR"
+if [[ -e "$STATE_FILE" ]]; then
+  [[ -f "$STATE_FILE" && ! -L "$STATE_FILE" ]] || { echo "Unsafe provisioning state: $STATE_FILE" >&2; exit 1; }
+  python3 - "$STATE_FILE" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" <<'PY'
+import json
+import os
+import stat
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+details = path.stat()
+if details.st_uid != 0 or stat.S_IMODE(details.st_mode) & 0o077:
+    raise SystemExit("Provisioning state must be owned by root with no group or world access.")
+payload = json.loads(path.read_text(encoding="utf-8"))
+expected = {
+    "managed_by": "rbf-backup-server-provisioner",
+    "upload_username": sys.argv[2],
+    "recovery_username": sys.argv[3],
+    "storage_directory": sys.argv[4],
+}
+for key, value in expected.items():
+    if payload.get(key) != value:
+        raise SystemExit(f"Existing managed state does not match {key}.")
+PY
+  EXISTING_MANAGED=true
+fi
+
 RECOVERY_DIR="${RBF_RECOVERY_DIRECTORY:-$OPERATOR_HOME/RBF-Recovery}"
 install -d -m 0700 "$RECOVERY_DIR"
 if [[ -z "$RECOVERY_PUBLIC_KEY" ]]; then
   RECOVERY_KEY="$RECOVERY_DIR/rbf-recovery-readonly-ed25519"
-  [[ ! -e "$RECOVERY_KEY" && ! -e "$RECOVERY_KEY.pub" ]] || { echo "Recovery read key already exists: $RECOVERY_KEY" >&2; exit 1; }
-  ssh-keygen -q -t ed25519 -N '' -C 'rbf-recovery-readonly' -f "$RECOVERY_KEY"
+  if [[ -e "$RECOVERY_KEY" || -e "$RECOVERY_KEY.pub" ]]; then
+    [[ "$EXISTING_MANAGED" == true && -f "$RECOVERY_KEY" && ! -L "$RECOVERY_KEY" \
+        && -f "$RECOVERY_KEY.pub" && ! -L "$RECOVERY_KEY.pub" ]] || {
+      echo "Existing recovery key material is incomplete or is not tied to this managed server." >&2
+      exit 1
+    }
+  else
+    ssh-keygen -q -t ed25519 -N '' -C 'rbf-recovery-readonly' -f "$RECOVERY_KEY"
+  fi
   RECOVERY_PUBLIC_KEY="$(cat "$RECOVERY_KEY.pub")"
 fi
 python3 - "$RECOVERY_PUBLIC_KEY" <<'PY'
@@ -148,32 +185,19 @@ if not re.fullmatch(r"(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Z
     raise SystemExit("Invalid recovery public key.")
 PY
 AGE_IDENTITY="$RECOVERY_DIR/rbf-recovery-identity.txt"
-[[ ! -e "$AGE_IDENTITY" ]] || { echo "age identity already exists: $AGE_IDENTITY" >&2; exit 1; }
-age-keygen -o "$AGE_IDENTITY" >/dev/null
+if [[ -e "$AGE_IDENTITY" ]]; then
+  [[ "$EXISTING_MANAGED" == true && -f "$AGE_IDENTITY" && ! -L "$AGE_IDENTITY" ]] || {
+    echo "Existing age identity is not tied to this managed server." >&2
+    exit 1
+  }
+else
+  age-keygen -o "$AGE_IDENTITY" >/dev/null
+fi
 AGE_RECIPIENT="$(age-keygen -y "$AGE_IDENTITY")"
 chmod 0600 "$AGE_IDENTITY" "${RECOVERY_KEY:-$AGE_IDENTITY}" 2>/dev/null || true
 chown -R "$OPERATOR_USER":"$(id -gn "$OPERATOR_USER")" "$RECOVERY_DIR"
 
-STATE_DIR="/etc/rbf-backup-server"
-STATE_FILE="$STATE_DIR/${USERNAME}.json"
-install -d -m 0700 -o root -g root "$STATE_DIR"
-if [[ -e "$STATE_FILE" ]]; then
-  [[ -f "$STATE_FILE" && ! -L "$STATE_FILE" ]] || { echo "Unsicherer Provisioning-Status: $STATE_FILE" >&2; exit 1; }
-  python3 - "$STATE_FILE" <<'PY'
-import json
-import os
-import stat
-import sys
-from pathlib import Path
-path = Path(sys.argv[1])
-details = path.stat()
-if details.st_uid != 0 or stat.S_IMODE(details.st_mode) & 0o077:
-    raise SystemExit("Provisioning status must be owned by root and have mode 0600.")
-payload = json.loads(path.read_text(encoding="utf-8"))
-if payload.get("managed_by") != "rbf-backup-server-provisioner":
-    raise SystemExit("Existing status was not created by the RBF Backup Server Provisioner.")
-PY
-else
+if [[ "$EXISTING_MANAGED" != true ]]; then
   for account in "$USERNAME" "$RECOVERY_USERNAME"; do
     if id "$account" >/dev/null 2>&1; then
       echo "User $account already exists but was not registered by this tool. Aborting to protect the existing account." >&2

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import re
 from typing import Any
 
 
 RESPONSE_KIND = "rbf-backup-enrollment-response"
+REQUEST_KIND = "rbf-backup-enrollment-request"
 SCHEMA_VERSION = 1
 _HOST_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
 _USER_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
@@ -41,6 +43,11 @@ def _remote_directory(payload: dict[str, Any]) -> str:
 
 def validate_response(payload: object) -> dict[str, Any]:
     source = _object(payload, "Enrollment response")
+    if source.get("kind") == REQUEST_KIND:
+        raise ValueError(
+            "This file is an enrollment request, not a response. "
+            "Run the backup-server provisioning command and select the JSON it creates."
+        )
     if source.get("schema_version") != SCHEMA_VERSION or source.get("kind") != RESPONSE_KIND:
         raise ValueError("Unsupported enrollment response schema.")
     try:
@@ -73,8 +80,6 @@ def validate_response(payload: object) -> dict[str, Any]:
 
 
 def load_response(path) -> dict[str, Any]:
-    from pathlib import Path
-
     resolved = Path(path).expanduser().resolve()
     if not resolved.is_file():
         raise RuntimeError(f"Enrollment response not found: {resolved}")
@@ -87,3 +92,51 @@ def load_response(path) -> dict[str, Any]:
     except ValueError as exc:
         raise RuntimeError(f"Invalid enrollment response {resolved}: {exc}") from exc
 
+
+def discover_response(directory: Path | None = None) -> Path:
+    root = (directory or (Path.home() / "Downloads")).expanduser().resolve()
+    if not root.is_dir():
+        raise RuntimeError(f"Enrollment response directory not found: {root}")
+    valid: list[Path] = []
+    requests: list[Path] = []
+    invalid_responses: list[tuple[Path, str]] = []
+    for candidate in root.glob("*.json"):
+        try:
+            if not candidate.is_file() or candidate.is_symlink() or candidate.stat().st_size > 1024 * 1024:
+                continue
+            payload = json.loads(candidate.read_text(encoding="utf-8-sig"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("kind") == REQUEST_KIND:
+            requests.append(candidate)
+            continue
+        if payload.get("kind") != RESPONSE_KIND:
+            continue
+        try:
+            validate_response(payload)
+            valid.append(candidate)
+        except ValueError as exc:
+            invalid_responses.append((candidate, str(exc)))
+    if len(valid) == 1:
+        return valid[0]
+    if len(valid) > 1:
+        names = ", ".join(sorted(path.name for path in valid))
+        raise RuntimeError(
+            f"Multiple valid enrollment responses were found in {root}: {names}. "
+            "Use --response to select the intended target explicitly."
+        )
+    if invalid_responses:
+        candidate, problem = max(invalid_responses, key=lambda item: item[0].stat().st_mtime_ns)
+        raise RuntimeError(f"The newest enrollment response is invalid ({candidate}): {problem}")
+    if requests:
+        request = max(requests, key=lambda path: path.stat().st_mtime_ns)
+        raise RuntimeError(
+            f"Only an enrollment request was found ({request}). Run the backup-server "
+            "provisioning command first; it creates the response JSON."
+        )
+    raise RuntimeError(
+        f"No valid enrollment response JSON was found in {root}. "
+        "Use --response to select one from another directory."
+    )

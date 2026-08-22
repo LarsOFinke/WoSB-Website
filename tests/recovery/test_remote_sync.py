@@ -5,6 +5,50 @@ from pathlib import Path
 import sys
 
 
+def test_enrollment_preparation_hides_stale_request_until_replacement_is_ready(
+    tmp_path, monkeypatch
+) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup-admin-runner.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_enrollment_status", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    infra = tmp_path / "infrastructure"
+    infra.mkdir()
+    request = tmp_path / "request.json"
+    request.write_text(
+        '{"operation":"prepare_enrollment","requested_by":"captain",'
+        '"requested_at":"2030-01-15T12:00:00Z","host_capability_sha256":"hash"}',
+        encoding="utf-8",
+    )
+    runner = module.Runner(infra, request)
+    statuses: list[tuple[str, dict]] = []
+
+    class Result:
+        returncode = 0
+
+    monkeypatch.setattr(module.subprocess, "run", lambda *_args, **_kwargs: Result())
+    monkeypatch.setattr(
+        runner,
+        "write_status",
+        lambda state, _message, **updates: statuses.append((state, updates)),
+    )
+    monkeypatch.setattr(
+        runner,
+        "prepare_enrollment",
+        lambda: {"enrollment_request": {"enrollment_id": "fresh"}},
+    )
+
+    runner.run()
+
+    running = next(updates for state, updates in statuses if state == module.ACTIVE_STATE)
+    assert running["enrollment_request"] is None
+    assert running["enrollment_id"] is None
+    assert running["enrollment_public_key"] is None
+    assert statuses[-1][1]["enrollment_request"]["enrollment_id"] == "fresh"
+
+
 def test_scheduled_remote_sync_publishes_commit_marker_last(tmp_path, monkeypatch) -> None:
     module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/sync-backup-set-remote.py"
     spec = importlib.util.spec_from_file_location("remote_sync_test", module_path)

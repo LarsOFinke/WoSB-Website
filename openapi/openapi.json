@@ -12800,7 +12800,7 @@
   "info": {
     "description": "Royal Blackwater Fleet API for newcomer guides, shared builds, forum Q&A, scheduled events and fleet operations.",
     "title": "Royal Blackwater Fleet",
-    "version": "1.7.33"
+    "version": "1.8.0"
   },
   "openapi": "3.1.0",
   "paths": {

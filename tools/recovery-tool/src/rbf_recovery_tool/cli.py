@@ -17,7 +17,7 @@ from .config import (
     save_profile,
     target_label,
 )
-from .enrollment import load_response
+from .enrollment import discover_response, load_response
 from .sftp_client import download_latest, fetch_host_fingerprint
 from .verification import verify_encrypted_bundle
 
@@ -30,7 +30,9 @@ def _target(value: str) -> str:
 
 def _profile_from_response(args: argparse.Namespace) -> Profile:
     target = args.target
-    response = load_response(args.response)
+    response_path = args.response or discover_response()
+    response = load_response(response_path)
+    args.response = response_path
     profile = load_profile(target)
     if args.local_backup_host:
         host = "127.0.0.1"
@@ -78,6 +80,7 @@ def _setup(args: argparse.Namespace) -> int:
     path = save_profile(profile, args.target)
     mode = "local backup-host access" if args.local_backup_host else "remote access"
     print(f"Configured {target_label(args.target)} recovery target ({mode}).")
+    print(f"Enrollment response: {Path(args.response).expanduser().resolve()}")
     print(f"Profile store: {path}")
     print(f"Pinned host key: {profile.host_fingerprint}")
     if args.offline:
@@ -151,7 +154,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
     setup = sub.add_parser("setup", help="Import one enrollment response into a named target")
     setup.add_argument("--target", required=True, type=_target)
-    setup.add_argument("--response", type=Path, required=True, help="Provisioning response JSON")
+    setup.add_argument(
+        "--response", type=Path,
+        help="Provisioning response JSON; defaults to the single valid response in ~/Downloads",
+    )
     setup.add_argument("--ssh-key", type=Path, help="Private read-only recovery SSH key")
     setup.add_argument("--identity", type=Path, help="Private age identity")
     setup.add_argument("--destination", type=Path, help="Local backup destination")
@@ -234,4 +240,3 @@ def entrypoint() -> None:
     except (RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
-

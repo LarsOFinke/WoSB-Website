@@ -159,7 +159,8 @@ public class SecurityConfiguration {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(securityProperties.normalizeOrigins());
         configuration.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Content-Type", "Accept", "X-Requested-With", "X-XSRF-TOKEN"));
+        configuration.setAllowedHeaders(List.of(
+                "Content-Type", "Accept", "X-Requested-With", "X-XSRF-TOKEN", "X-RBF-Host-Capability"));
         configuration.setExposedHeaders(List.of("Location", "Retry-After", ApiRequestAttributes.REQUEST_ID_HEADER));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

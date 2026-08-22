@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from rbf_recovery_tool.enrollment import load_response, validate_response
+from rbf_recovery_tool.enrollment import discover_response, load_response, validate_response
 
 
 def _response() -> dict[str, object]:
@@ -39,3 +39,34 @@ def test_response_json_is_validated(tmp_path) -> None:
     with pytest.raises(RuntimeError, match="Invalid enrollment response"):
         load_response(path)
 
+
+def test_request_file_explains_that_provisioning_must_run_first(tmp_path) -> None:
+    path = tmp_path / "whatever-name.json"
+    path.write_text(json.dumps({"schema_version": 1, "kind": "rbf-backup-enrollment-request"}))
+    with pytest.raises(RuntimeError, match="request, not a response"):
+        load_response(path)
+
+
+def test_response_discovery_uses_content_instead_of_filename(tmp_path) -> None:
+    request = tmp_path / "response-looking-name.json"
+    request.write_text(json.dumps({"schema_version": 1, "kind": "rbf-backup-enrollment-request"}))
+    response = tmp_path / "no-required-filename.json"
+    response.write_text(json.dumps(_response()))
+
+    assert discover_response(tmp_path) == response
+
+
+def test_response_discovery_requires_explicit_selection_for_multiple_targets(tmp_path) -> None:
+    (tmp_path / "test.json").write_text(json.dumps(_response()))
+    (tmp_path / "production.json").write_text(
+        json.dumps({**_response(), "enrollment_id": "B" * 32})
+    )
+    with pytest.raises(RuntimeError, match="Multiple valid enrollment responses"):
+        discover_response(tmp_path)
+
+
+def test_response_discovery_reports_when_only_a_request_exists(tmp_path) -> None:
+    request = tmp_path / "misnamed.json"
+    request.write_text(json.dumps({"schema_version": 1, "kind": "rbf-backup-enrollment-request"}))
+    with pytest.raises(RuntimeError, match="Only an enrollment request was found"):
+        discover_response(tmp_path)

@@ -49,11 +49,19 @@ class Runner(
                 self.write_status("failed", self.public_failure_message(operation), finished_at=now())
                 raise
         started_at = now()
+        running_updates: dict[str, Any] = {}
+        if operation == "prepare_enrollment":
+            running_updates = {
+                "enrollment_request": None,
+                "enrollment_id": None,
+                "enrollment_public_key": None,
+            }
         self.write_status(
             ACTIVE_STATE,
             "Backup operation is running.",
             started_at=started_at,
             finished_at=None,
+            **running_updates,
         )
         thread = threading.Thread(target=self.heartbeat, daemon=True)
         thread.start()

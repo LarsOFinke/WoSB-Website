@@ -71,6 +71,9 @@ public class BackupControlService {
             status.put("requested_by",request.get("requested_by"));status.put("requested_at",request.get("requested_at"));
             status.put("started_at",null);status.put("finished_at",null);
         }
+        if(ACTIVE.contains(state)&&"prepare_enrollment".equals(status.get("operation"))){
+            status.put("enrollment_request",null);status.put("enrollment_id",null);status.put("enrollment_public_key",null);
+        }
         status.putIfAbsent("state",state);status.putIfAbsent("operation","backup");status.putIfAbsent("message","No backup operation has been requested yet.");
         status.putIfAbsent("connection",Map.of());status.putIfAbsent("artifacts",List.of());status.putIfAbsent("local_database_backups",List.of());status.putIfAbsent("local_files_backups",List.of());
         status.put("request_available",!requestExists&&!ACTIVE.contains(state));

@@ -439,6 +439,8 @@ export const exactTranslations = {
 Object.assign(exactTranslations.de, {
   'SFTP write/read/delete verified: {date}': 'SFTP-Schreib-/Lese-/Löschtest erfolgreich: {date}',
   'Recommended': 'Empfohlen',
+  'One-time setup': 'Einmalige Einrichtung',
+  'Request downloaded': 'Anfrage heruntergeladen',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'JSON-Antwort: { "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': 'Anfrage herunterladen',
   'Prepare upload key': 'Upload-Schlüssel erzeugen',
@@ -453,6 +455,8 @@ Object.assign(exactTranslations.de, {
 Object.assign(exactTranslations.fr, {
   'SFTP write/read/delete verified: {date}': 'Test SFTP d’écriture/lecture/suppression réussi : {date}',
   'Recommended': 'Recommandé',
+  'One-time setup': 'Configuration unique',
+  'Request downloaded': 'Demande téléchargée',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'Réponse JSON : { "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': 'Télécharger la demande',
   'Prepare upload key': 'Créer la clé de téléversement',
@@ -467,6 +471,8 @@ Object.assign(exactTranslations.fr, {
 Object.assign(exactTranslations.es, {
   'SFTP write/read/delete verified: {date}': 'Prueba SFTP de escritura/lectura/eliminación superada: {date}',
   'Recommended': 'Recomendado',
+  'One-time setup': 'Configuración única',
+  'Request downloaded': 'Solicitud descargada',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'Respuesta JSON: { "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': 'Descargar solicitud',
   'Prepare upload key': 'Crear clave de carga',
@@ -481,6 +487,8 @@ Object.assign(exactTranslations.es, {
 Object.assign(exactTranslations.pt, {
   'SFTP write/read/delete verified: {date}': 'Teste SFTP de escrita/leitura/eliminação concluído: {date}',
   'Recommended': 'Recomendado',
+  'One-time setup': 'Configuração única',
+  'Request downloaded': 'Pedido transferido',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'Resposta JSON: { "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': 'Transferir pedido',
   'Prepare upload key': 'Criar chave de envio',
@@ -495,6 +503,8 @@ Object.assign(exactTranslations.pt, {
 Object.assign(exactTranslations.ru, {
   'SFTP write/read/delete verified: {date}': 'Проверка SFTP на запись, чтение и удаление пройдена: {date}',
   'Recommended': 'Рекомендуется',
+  'One-time setup': 'Однократная настройка',
+  'Request downloaded': 'Запрос скачан',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'Ответ JSON: { "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': 'Скачать запрос',
   'Prepare upload key': 'Создать ключ загрузки',
@@ -509,6 +519,8 @@ Object.assign(exactTranslations.ru, {
 Object.assign(exactTranslations.cn, {
   'SFTP write/read/delete verified: {date}': 'SFTP 写入、读取和删除测试已通过：{date}',
   'Recommended': '推荐',
+  'One-time setup': '一次性设置',
+  'Request downloaded': '请求已下载',
   '{ "kind": "rbf-backup-enrollment-response", ... }': 'JSON 响应：{ "kind": "rbf-backup-enrollment-response", ... }',
   'Download request': '下载请求',
   'Prepare upload key': '创建上传密钥',

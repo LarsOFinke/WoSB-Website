@@ -144,12 +144,18 @@ class BackupEnrollmentMixin:
 
     def prepare_enrollment(self) -> dict[str, Any]:
         public_key = self._public_key()
+        release_version = (self.infra_dir.parent / "VERSION").read_text(encoding="utf-8").strip()
+        if not release_version or any(
+            character not in "0123456789." for character in release_version
+        ):
+            raise RuntimeError("The installed application version is unavailable.")
         payload = {
             "schema_version": SCHEMA_VERSION,
             "kind": REQUEST_KIND,
             "enrollment_id": secrets.token_urlsafe(32),
             "created_at": now(),
             "product_hostname": socket.gethostname(),
+            "release_version": release_version,
             "ssh_public_key": public_key,
             "requested_username": "rbf-backup",
             "requested_directory": "/data",

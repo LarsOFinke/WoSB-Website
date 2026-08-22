@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { spawnSync } from 'node:child_process'
+import { join } from 'node:path'
 import test from 'node:test'
 
 import {
@@ -44,6 +48,10 @@ test('enrollment response parser explains mismatched or incomplete files', () =>
     'wrongKind',
   )
   assert.equal(
+    parseBackupEnrollmentResponse(JSON.stringify(response({ kind: 'rbf-backup-enrollment-request' }))).error,
+    'requestSelected',
+  )
+  assert.equal(
     parseBackupEnrollmentResponse(JSON.stringify(response({ managed_server: false }))).error,
     'unmanagedServer',
   )
@@ -57,22 +65,49 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
     directory: '/srv/rbf-backups/wosb',
     retentionDays: 30,
     allowFrom: '192.168.2.36/32',
-    requestFilename: `rbf-backup-enrollment-${'A'.repeat(32)}.json`,
+    requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
+    releaseVersion: '1.7.33',
   })
   assert.equal(result.error, null)
-  assert.match(result.command, /REQUEST="\$HOME\/Downloads\/rbf-backup-enrollment-/)
+  assert.match(result.command, /REQUEST="\$HOME\/Downloads\/rbf-backup-enrollment-request-/)
+  assert.match(result.command, /REQUEST_ID='A{32}'/)
+  assert.match(result.command, /python3 - "\$HOME\/Downloads" "\$REQUEST_ID"/)
+  assert.match(result.command, /RESPONSE="\$HOME\/Downloads\/rbf-backup-enrollment-response-/)
   assert.match(result.command, /provision-rbf-backup-server\.sh/)
+  assert.match(result.command, /releases\/download\/v1\.7\.33/)
+  assert.match(result.command, /curl --fail --location/)
   assert.match(result.command, /sha256sum -c/)
   assert.match(result.command, /sudo bash \"\$PROVISIONER\"/)
   assert.match(result.command, /--host '192\.168\.2\.107'/)
   assert.match(result.command, /--directory '\/srv\/rbf-backups\/wosb'/)
   assert.match(result.command, /--allow-from '192\.168\.2\.36\/32'/)
   assert.match(result.command, /--result "\$RESPONSE"/)
+  assert.match(result.command, /^\( # Run setup in an isolated shell/)
+})
+
+test('a provisioning failure cannot close the interactive parent shell', () => {
+  const result = buildBackupEnrollmentCommand({
+    host: 'backup.local',
+    releaseVersion: '1.7.33',
+    requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
+  })
+  const home = mkdtempSync(join(tmpdir(), 'rbf-enrollment-command-'))
+  const execution = spawnSync('bash', ['-c', `${result.command}\nprintf 'PARENT_STILL_RUNNING\\n'`], {
+    env: { ...process.env, HOME: home },
+    encoding: 'utf8',
+  })
+  assert.match(execution.stdout, /PARENT_STILL_RUNNING/)
 })
 
 test('enrollment setup validator blocks incomplete commands before copy', () => {
-  assert.equal(validateBackupEnrollmentSetup({ host: '' }).error, 'invalidHost')
-  assert.equal(validateBackupEnrollmentSetup({ host: 'backup.local', port: 70000 }).error, 'invalidPort')
-  assert.equal(validateBackupEnrollmentSetup({ host: 'backup.local', directory: '../backups' }).error, 'invalidDirectory')
-  assert.equal(validateBackupEnrollmentSetup({ host: 'backup.local', retentionDays: 0 }).error, 'invalidRetention')
+  const valid = {
+    host: 'backup.local',
+    releaseVersion: '1.7.33',
+    requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
+  }
+  assert.equal(validateBackupEnrollmentSetup({ ...valid, host: '' }).error, 'invalidHost')
+  assert.equal(validateBackupEnrollmentSetup({ ...valid, port: 70000 }).error, 'invalidPort')
+  assert.equal(validateBackupEnrollmentSetup({ ...valid, directory: '../backups' }).error, 'invalidDirectory')
+  assert.equal(validateBackupEnrollmentSetup({ ...valid, retentionDays: 0 }).error, 'invalidRetention')
+  assert.equal(validateBackupEnrollmentSetup({ ...valid, releaseVersion: 'latest' }).error, 'invalidReleaseVersion')
 })

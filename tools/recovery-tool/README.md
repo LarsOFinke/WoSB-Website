@@ -1,5 +1,10 @@
 # RBF Recovery Tool
 
+> This tool is optional during backup-server setup. WoSB itself performs the
+> nightly and pre-update uploads after the one-time enrollment. Install this
+> client only on a recovery workstation when you need to inspect, download,
+> verify, or restore those committed backup sets.
+
 The recovery client is a small, target-aware pull and verification tool for the
 Spring Boot deployment. It accepts only committed backup sets whose report proves
 the PostgreSQL dump passed the current Spring/Flyway recovery preflight. It then
@@ -13,23 +18,26 @@ the committed recovery bundle as one unit; restoring only one of those artifacts
 would leave the strategy boundary incomplete and is intentionally unsupported by
 the disaster-recovery workflow.
 
-## Setup
+## Optional recovery-workstation setup
 
 The backup server's `rbf-recovery` account is deliberately loopback-only. Run the
 tool on that backup host, or use a separately provisioned read-only recovery
 account when an off-host recovery workstation is required.
 
 ```text
-rbf-recovery-tool setup --target test \
-  --response ~/Downloads/rbf-backup-enrollment-response.json \
-  --local-backup-host
-rbf-recovery-tool setup --target production \
-  --response ~/Downloads/rbf-backup-enrollment-response.json \
-  --local-backup-host
+rbf-recovery-tool setup --target test --local-backup-host
+rbf-recovery-tool setup --target production --local-backup-host
 rbf-recovery-tool targets
 rbf-recovery-tool test --target production
 rbf-recovery-tool pull --target production
 ```
+
+Setup discovers a single valid response in `~/Downloads` by its JSON content,
+not its filename. If more than one response exists, use
+`--response /path/to/file.json` to select the intended target explicitly.
+The GUI's **Import enrollment response…** button and the website enrollment page
+both use a file picker and apply the same content validation. Selecting a request
+file explains that provisioning must run first.
 
 The setup command imports the public response, selects the local private age
 identity and read-only SSH key from `~/RBF-Recovery` when present, verifies the
@@ -42,6 +50,10 @@ The response file is still created by the website enrollment workflow because
 that workflow authorizes the upload account and binds the host key. The recovery
 tool no longer requires the website for routine pulls, catalog checks or local
 bundle verification. The website never receives the private recovery keys.
+
+Do not install a pull timer merely to make application backups automatic; those
+uploads already have their own application-host timer. A recovery-client timer
+is useful only when a separate workstation must maintain another verified copy.
 
 ## Build
 

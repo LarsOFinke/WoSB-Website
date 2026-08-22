@@ -31,9 +31,19 @@ def test_backup_set_accepts_shared_data_behind_a_versioned_release_symlink(tmp_p
     assert payload['artifacts']['files']['path']=='shared/data/backups/files/files.tar.gz'
 
 def test_backup_enrollment_response_is_request_bound() -> None:
-    request=validate_request({'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','requested_username':'rbf-backup','requested_directory':'/data','created_at':'2026-08-01T10:00:00+00:00','product_hostname':'rbf.example.net'})
+    request=validate_request({'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','requested_username':'rbf-backup','requested_directory':'/data','created_at':'2026-08-01T10:00:00+00:00','product_hostname':'rbf.example.net','release_version':'1.7.33'})
     response=validate_response({'schema_version':1,'kind':RESPONSE_KIND,'enrollment_id':request['enrollment_id'],'host':'backup.example.net','port':22,'username':'rbf-backup','remote_directory':'/data','host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=','host_key_fingerprint':'SHA256:'+'A'*43,'age_recipient':'age1'+'a'*58,'managed_server':True},expected_enrollment_id=str(request['enrollment_id']))
     assert response['managed_server'] is True
+
+def test_managed_backup_server_reenrollment_reuses_recovery_keys_safely() -> None:
+    provisioner = (ROOT / 'tools/backup-server/provision-rbf-backup-server.sh').read_text()
+    state_check = provisioner.index('EXISTING_MANAGED=false')
+    key_handling = provisioner.index('RECOVERY_KEY="$RECOVERY_DIR/rbf-recovery-readonly-ed25519"')
+    assert state_check < key_handling
+    assert 'Existing managed state does not match {key}.' in provisioner
+    assert '[[ "$EXISTING_MANAGED" == true && -f "$RECOVERY_KEY" && ! -L "$RECOVERY_KEY"' in provisioner
+    assert '[[ "$EXISTING_MANAGED" == true && -f "$AGE_IDENTITY" && ! -L "$AGE_IDENTITY" ]]' in provisioner
+    assert 'AGE_RECIPIENT="$(age-keygen -y "$AGE_IDENTITY")"' in provisioner
 
 def test_strategy_rows_and_backgrounds_remain_inside_full_recovery_scope() -> None:
     postgres_backup = (ROOT / 'infrastructure/scripts/backup/backup-postgres.sh').read_text()

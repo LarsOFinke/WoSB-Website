@@ -1,31 +1,46 @@
 # Backup-server quickstart
 
-1. Download `provision-rbf-backup-server.sh` and its `.sha256` sidecar from the same signed release as the application.
-2. In the application, create and download the enrollment request.
-3. Put all three files in `~/Downloads` on the Ubuntu/Debian backup host.
-4. Let the admin panel generate the complete provisioning command and run it as the normal operator account; the command uses `sudo` only for the provisioner.
-5. Compare the printed `SHA256:...` SSH host-key fingerprint independently.
-6. Import `~/Downloads/rbf-backup-enrollment-response.json` into the application and require the complete SFTP write test to pass.
-7. Trigger a manual coordinated backup.
-8. Store the private files under `~/RBF-Recovery` in a second encrypted offline location.
+You configure the backup server once. After the connection is verified, WoSB
+automatically creates and uploads a backup every night and before every normal
+update. Installing or scheduling the Recovery Tool is **not** required for this
+automation.
 
-## Configure routine recovery pulls
+## One-time setup
 
-On the backup host, use the shared recovery client to create a named profile.
-Repeat the command with `--target production` and `--target test` when both
-environments have independent backup responses:
+1. Open **Staff → Operations → Application backups**.
+2. On the website server, run the command shown beside the token field:
 
-```text
-rbf-recovery-tool setup --target production \
-  --response ~/Downloads/rbf-backup-enrollment-response.json \
-  --local-backup-host
-rbf-recovery-tool test --target production
-rbf-recovery-tool pull --target production
-```
+   ```bash
+   sudo /srv/rbf/current/infrastructure/scripts/services/arm-host-operation.sh prepare_enrollment
+   ```
 
-The client keeps test and production destinations separate, verifies the live
-host key, and performs the Spring/Flyway recovery checks locally after every
-pull. The website remains the enrollment authorization surface; it is not
-needed for routine catalog, pull or bundle verification operations.
+   Paste the printed one-time token, select **Create request**, wait for the
+   operation to finish, then select **Download request**.
+3. Copy that JSON file into `~/Downloads` on the Ubuntu or Debian backup server.
+4. Enter the backup server's reachable IP address or DNS name in the page and
+   copy the generated command. Run it as your normal user on the backup server.
+   The command downloads the provisioner and checksum matching the deployed
+   application release, verifies them,
+   and asks for `sudo` once.
+5. Upload the generated response JSON in the page. The filename includes the
+   enrollment ID, but the page validates its JSON content rather than trusting
+   its name. Run the
+   `apply_enrollment` token command shown there and paste the new token, compare
+   the shown SSH fingerprint with the provisioning output, then select
+   **Import and verify response**.
+6. Create one manual test backup. A successful upload confirms that nightly and
+   pre-update backups can use the same connection.
 
-The standard path does not copy private keys between hosts and does not grant shell access to either SFTP account.
+That is the complete automation setup. The application timer runs daily at
+03:15 with a randomized delay of up to 20 minutes, and missed runs are caught up
+after boot. Normal updates refuse to activate unless their coordinated backup
+succeeds.
+
+## Keep the recovery keys safe
+
+The backup server creates private recovery material under `~/RBF-Recovery`.
+Copy that directory to a second encrypted offline location. The website never
+receives these private keys.
+
+Use the [Recovery Tool](../../tools/recovery-tool/README.md) only when you want
+to list, pull, verify, or restore committed backup sets.
