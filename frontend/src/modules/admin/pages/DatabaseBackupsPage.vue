@@ -6,6 +6,7 @@ import { useDatabaseBackupsPage } from '@/modules/admin/composables/useDatabaseB
 const {
   t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
   inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
+  operationElapsedSeconds, operationProgress,
   enrollmentFileName, enrollmentSetup, enrollmentRequest,
   enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
   enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,
@@ -70,6 +71,22 @@ const {
         </div>
         <p v-if="success" class="success-text table-state">{{ success }}</p>
         <p v-if="error" class="error-text table-state">{{ error }}</p>
+        <div v-if="inProgress" class="backup-operation-progress" aria-live="polite">
+          <div class="backup-operation-progress-heading">
+            <strong>{{ status.message || t('admin.backups.states.running') }}</strong>
+            <span>{{ Math.floor(operationElapsedSeconds / 60) }}:{{ String(operationElapsedSeconds % 60).padStart(2, '0') }}</span>
+          </div>
+          <progress
+            :value="operationProgress || undefined"
+            max="100"
+            :aria-label="status.message || t('admin.backups.states.running')"
+          >{{ operationProgress || 0 }}%</progress>
+          <small>
+            {{ operationProgress
+              ? `${operationProgress}% · ${t('admin.backups.states.running')}`
+              : t('admin.backups.statusHint') }}
+          </small>
+        </div>
       </section>
 
       <section v-if="!connectionReady" class="wire-section admin-panel backup-configuration-panel backup-enrollment-wizard">

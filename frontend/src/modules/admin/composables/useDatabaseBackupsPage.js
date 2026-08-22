@@ -25,7 +25,9 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const hostApproval = ref('')
+  const clock = ref(Date.now())
   let pollTimer = null
+  let clockTimer = null
 
   const inProgress = computed(() => ['queued', 'running'].includes(status.value.state))
   const configured = computed(() => Boolean(status.value.connection?.configured))
@@ -38,6 +40,20 @@ export function useDatabaseBackupsPage() {
   const hasHostApproval = computed(() => hostApproval.value.trim().length >= 24)
   const stateLabel = computed(() => t(`admin.backups.states.${status.value.state || 'idle'}`))
   const operationLabel = computed(() => t(`admin.backups.operations.${status.value.operation || 'idle'}`))
+  const operationElapsedSeconds = computed(() => {
+    const started = Date.parse(status.value.started_at || '')
+    if (!Number.isFinite(started)) return 0
+    return Math.max(0, Math.floor((clock.value - started) / 1000))
+  })
+  const operationProgress = computed(() => {
+    const message = String(status.value.message || '').toLowerCase()
+    if (message.includes('preparing') || message.includes('coordinated')) return 10
+    if (message.includes('local backup set')) return 45
+    if (message.includes('core artifacts')) return 65
+    if (message.includes('recovery material')) return 80
+    if (message.includes('remote ingest')) return 90
+    return inProgress.value ? null : (status.value.state === 'succeeded' ? 100 : 0)
+  })
 
   const formatDateTime = (value) => formatBackupDateTime(value, locale.value)
   const formatBytes = formatBackupBytes
@@ -132,14 +148,19 @@ export function useDatabaseBackupsPage() {
   } = useBackupEnrollment({ status, canSubmit, error, success, request, t })
 
   onMounted(async () => {
+    clockTimer = window.setInterval(() => { clock.value = Date.now() }, 1000)
     await loadStatus()
     schedulePoll()
   })
-  onUnmounted(() => window.clearTimeout(pollTimer))
+  onUnmounted(() => {
+    window.clearTimeout(pollTimer)
+    window.clearInterval(clockTimer)
+  })
 
   return {
     t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
     inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
+    operationElapsedSeconds, operationProgress,
     enrollmentResponse, enrollmentFileName, enrollmentSetup, enrollmentRequest,
     enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
     enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,

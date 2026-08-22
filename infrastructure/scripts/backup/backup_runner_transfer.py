@@ -453,6 +453,10 @@ class BackupTransferMixin:
         ]
         if self.recovery_enabled():
             command.append("--include-recovery")
+        self.write_status(
+            "running",
+            "Preparing the coordinated backup set and recovery preflight.",
+        )
         self.log(
             "Creating one coordinated backup set and proving full recoverability before transfer."
         )
@@ -488,15 +492,31 @@ class BackupTransferMixin:
                 paths["recovery"] = Path(
                     result_files["recovery"].read_text(encoding="utf-8").strip()
                 )
+            self.write_status(
+                "running",
+                "Local backup set verified; transferring PostgreSQL and file artifacts.",
+            )
             artifacts = [
                 self.transfer(config, paths["postgres"], "postgresql"),
                 self.transfer(config, paths["files"], "files"),
             ]
             if "recovery" in paths:
+                self.write_status(
+                    "running",
+                    "Core artifacts transferred; transferring encrypted recovery material.",
+                )
                 artifacts.append(self.transfer(config, paths["recovery"], "recovery"))
             # The verification report is uploaded before the manifest. The manifest is
             # the remote commit marker and is deliberately transferred last.
+            self.write_status(
+                "running",
+                "Recovery material transferred; uploading verification and commit manifest for remote validation.",
+            )
             self.transfer(config, paths["verification"], "verification")
+            self.write_status(
+                "running",
+                "Remote ingest is validating the set and waiting for its acceptance receipt.",
+            )
             self.transfer(config, paths["set"], "backup_set")
             return {"artifacts": artifacts}
         finally:
