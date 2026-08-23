@@ -2,8 +2,7 @@
 Description=Watch for Recovery Tool backup requests
 
 [Path]
-PathChanged=/var/lib/rbf-backup-pull/test/requests
-PathChanged=/var/lib/rbf-backup-pull/production/requests
+PathChanged=/var/lib/rbf-backup-pull/@BACKUP_ENVIRONMENT@/requests
 Unit=rbf-hub-backup-pull.service
 
 [Install]

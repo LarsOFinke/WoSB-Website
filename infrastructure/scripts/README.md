@@ -48,5 +48,8 @@ Shared placement does not mean every module is part of production.
 - All versioned shell scripts pass `bash -n`.
 - All versioned Python scripts pass `python3 -m compileall`.
 - Public wrappers (`deploy.sh`, `update.sh`) were not merged because they represent existing operational contracts.
-- Manual recovery helpers (`merge-encryption-keyring.sh`, `verify-recovery.sh`) were not deleted: missing source-code references are not evidence of non-use for deliberately manual emergency tools.
+- The retired scheduled/push backup chain was removed after controller-pull became the
+  supported runtime path. Deliberately manual helpers (`arm-admin-restore.sh`,
+  `merge-encryption-keyring.sh`, `verify-recovery.sh`) remain for restore approval,
+  emergency recovery, and key migration.
 - `release/package_release.py` remains because the release workflow still invokes it for the additional source archive.

@@ -27,7 +27,7 @@ update:
 	sudo ../update.sh
 
 backup:
-	sudo ./scripts/backup/backup-all.sh
+	sudo ./scripts/backup/run-consistent-backup.sh --reason manual
 
 backup-db:
 	./scripts/backup/backup-postgres.sh

@@ -62,7 +62,7 @@ production_output="$(PATH="$work/bin:$PATH" RBF_BUILD_RESTORE_TEST_LOG="$work/pr
   "$RESTORE" --production --config "$work/origin.env" --dry-run-only)"
 [[ "$production_output" == *'[build-restore:production]'* ]] || fail 'explicit production target was not preserved'
 
-grep -q 'backup.lock' "$REMOTE" || fail 'commit does not serialize against scheduled backups'
+grep -q 'backup.lock' "$REMOTE" || fail 'commit does not serialize against concurrent backup operations'
 grep -q 'backup-postgres.sh' "$REMOTE" || fail 'commit does not create a PostgreSQL safety dump'
 if grep -q 'run-consistent-backup.sh' "$REMOTE"; then fail 'build restore still invokes the full recovery preflight'; fi
 grep -q 'dry_run=1' "$REMOTE" || fail 'remote helper lost rollback-only mode'

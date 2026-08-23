@@ -23,37 +23,27 @@ df -h "$INFRA_DIR"
 backup_count="$(find "$INFRA_DIR/data/backups" -mindepth 2 -type f ! -name '*.sha256' 2>/dev/null | wc -l | tr -d ' ')"
 log "Local backup files: ${backup_count:-0}"
 
-backup_health="$INFRA_DIR/data/control/status/backup-health.json"
-if [[ -f "$backup_health" ]]; then
-  backup_set="$(python3 - "$backup_health" "${BACKUP_MAX_AGE_HOURS:-$(read_env BACKUP_MAX_AGE_HOURS)}" <<'PYHEALTH'
+backup_set="$(find "$INFRA_DIR/data/backups/sets" -maxdepth 1 -type f \
+  -name 'rbf-backup-set-*.json' -printf '%T@ %p\n' 2>/dev/null \
+  | sort -nr | head -1 | cut -d' ' -f2-)"
+if [[ -n "$backup_set" ]]; then
+  python3 - "$backup_set" "${BACKUP_MAX_AGE_HOURS:-$(read_env BACKUP_MAX_AGE_HOURS)}" <<'PYHEALTH' \
+    || die "Latest backup set is stale."
 from datetime import datetime, timezone
-import json, sys
+import sys
 from pathlib import Path
 path = Path(sys.argv[1])
 max_age = float(sys.argv[2] or 36)
-payload = json.loads(path.read_text(encoding="utf-8"))
-if payload.get("schema_version") != 2 or payload.get("status") != "succeeded":
-    raise SystemExit("Latest coordinated backup did not finish successfully.")
-finished = datetime.fromisoformat(str(payload.get("finished_at") or "").replace("Z", "+00:00"))
-if finished.tzinfo is None:
-    finished = finished.replace(tzinfo=timezone.utc)
-age = (datetime.now(timezone.utc) - finished.astimezone(timezone.utc)).total_seconds() / 3600
+age = (datetime.now(timezone.utc).timestamp() - path.stat().st_mtime) / 3600
 if age > max_age:
     raise SystemExit(f"Latest committed backup set is stale ({age:.1f}h > {max_age:.1f}h).")
-artifacts = payload.get("artifacts")
-backup_set = artifacts.get("backup_set") if isinstance(artifacts, dict) else ""
-if not backup_set:
-    raise SystemExit("Backup health record has no committed backup set.")
-print(backup_set)
 PYHEALTH
-  )" || die "Backup health status is invalid or stale."
-  [[ -f "$backup_set" ]] || die "Set referenced by backup health status is missing: $backup_set"
   manifest_root="$(backup_manifest_root)"
   python3 "$INFRA_DIR/scripts/backup/backup_set_manifest.py" validate --root "$manifest_root" "$backup_set" >/dev/null \
     || die "Latest backup set is incomplete or not recovery-verified."
   success "Latest coordinated backup set is current, complete, and recovery-verified."
 else
-  warn "No machine-readable backup health status exists yet. Run sudo make -C infrastructure backup."
+  warn "No coordinated backup set exists yet. Run sudo make -C infrastructure backup."
 fi
 
 if is_true "$(read_env BACKUP_RECOVERY_ENABLED)"; then

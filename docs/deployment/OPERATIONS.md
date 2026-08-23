@@ -108,7 +108,7 @@ Operators can still use these commands directly on the target server:
 
 ```bash
 sudo /srv/rbf/current/infrastructure/scripts/services/logs.sh
-sudo journalctl -u rbf-hub.service -u rbf-hub-backup.service
+sudo journalctl -u rbf-hub.service -u rbf-hub-backup-pull.service -u rbf-hub-backup-admin.service
 ```
 
 ## Database changes

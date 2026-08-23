@@ -65,7 +65,8 @@ journal_since() {
 journal_logs() {
   printf '\n--- source=journal:rbf-hub ---\n'
   journalctl --no-pager --output=short-iso --since "$(journal_since)" --lines "$tail_lines" \
-    -u rbf-hub.service -u rbf-hub-backup.service -u rbf-hub-update.service 2>&1 | filter_stream
+    -u rbf-hub.service -u rbf-hub-backup-pull.service -u rbf-hub-backup-admin.service \
+    -u rbf-hub-update.service 2>&1 | filter_stream
 }
 
 release_version="$(cat "$install_root/current/VERSION" 2>/dev/null || echo unknown)"

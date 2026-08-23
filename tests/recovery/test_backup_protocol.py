@@ -69,6 +69,24 @@ def test_managed_backup_controller_reenrollment_reuses_keys_safely() -> None:
     assert '[[ -f "$KEY" && ! -L "$KEY" && -f "$KEY.pub"' in provisioner
     assert 'AGE_RECIPIENT="$(age-keygen -y "$AGE_IDENTITY")"' in provisioner
 
+
+def test_target_systemd_watcher_is_bound_to_one_environment() -> None:
+    watcher = (ROOT / 'infrastructure/systemd/rbf-hub-backup-pull.path').read_text()
+    installer = (ROOT / 'infrastructure/scripts/deployment/install-systemd.sh').read_text()
+
+    assert 'PathChanged=/var/lib/rbf-backup-pull/@BACKUP_ENVIRONMENT@/requests' in watcher
+    assert '/test/requests' not in watcher
+    assert '/production/requests' not in watcher
+    assert 's|@BACKUP_ENVIRONMENT@|$deployment_environment|g' in installer
+    assert 'DEPLOYMENT_ENVIRONMENT must be test or production' in installer
+
+
+def test_retired_scheduled_backup_dispatcher_is_not_packaged() -> None:
+    assert not (ROOT / 'infrastructure/scripts/backup/backup-all.sh').exists()
+    assert not (ROOT / 'infrastructure/scripts/backup/sync-backup-set-remote.py').exists()
+    assert not (ROOT / 'infrastructure/systemd/rbf-hub-backup.service').exists()
+    assert not (ROOT / 'infrastructure/systemd/rbf-hub-backup.timer').exists()
+
 def test_strategy_rows_and_backgrounds_remain_inside_full_recovery_scope() -> None:
     postgres_backup = (ROOT / 'infrastructure/scripts/backup/backup-postgres.sh').read_text()
     files_backup = (ROOT / 'infrastructure/scripts/backup/backup-data.sh').read_text()

@@ -261,8 +261,8 @@ a directory name alone.
   `/backups/wosb/<environment>`, and acknowledges the exact manifest. The website stores no
   backup-server address. Root-owned website exports are controller-readable but not writable;
   only request and acknowledgement directories are controller-writable. Test and production
-  use distinct accounts, keys, profiles, state, and storage; automatic controller timers are
-  disabled. Their separate origin deployment profiles own and reconcile the website SSH host
+  use distinct accounts, keys, profiles, state, and storage; each target installs only its own
+  request watcher and no scheduled backup unit. Automatic controller timers are disabled. Their separate origin deployment profiles own and reconcile the website SSH host
   and port on every update, with no `APP_HOSTNAME` fallback. Pre-update activation keeps its
   verified local backup and only requires controller acknowledgement when
   `BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE=true`.
