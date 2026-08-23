@@ -17,8 +17,9 @@ is deliberately never used as an SSH fallback.
 The provisioner creates a private Ed25519 controller key and age identity under
 `/etc/rbf-recovery-tool/<environment>`. It installs the embedded Recovery Tool,
 stores its profile root-only, creates `/backups/wosb/<environment>` mode 0700,
-and installs the environment-specific operational profile. Automatic timers are
-intentionally disabled; operators run the Recovery Tool manually. Re-enrollment reuses keys only
+and installs the environment-specific operational profile. A separate one-minute
+`sync` timer is enabled for each environment so published website and
+pre-deployment exports are collected automatically. Re-enrollment reuses keys only
 when existing state declares the matching managed environment; orphaned or
 foreign key material is rejected.
 
@@ -39,15 +40,17 @@ private key and stores no address for the backup server.
 
 ## Protocol
 
-1. The Recovery Tool atomically uploads a bounded request JSON.
+1. The operator confirms the selected website's one-time `backup` host
+   capability, and the Recovery Tool atomically uploads a bounded,
+   target-bound request JSON.
 2. A root-owned website path unit invokes the coordinated backup runner.
 3. The runner creates PostgreSQL and file archives, performs an isolated
    Spring/Flyway restore preflight, and creates an age-encrypted recovery bundle.
 4. The bundle, report, checksums, and set manifest are published to `exports/`,
    with the manifest last as the commit marker.
-5. The Recovery Tool downloads the newest complete set, checks every binding,
+5. The Recovery Tool downloads only the set reported for that request, checks every binding,
    decrypts and verifies the bundle, commits it under `/backups`, and uploads an
-   acknowledgement bound to the set-manifest SHA-256.
+   acknowledgement bound to the target and set-manifest SHA-256.
 6. A manual website operation reports success after that acknowledgement. A
    normal update always keeps the verified local set and attempts the same
    acknowledgement, but continues with a warning when the controller is
@@ -56,6 +59,9 @@ private key and stores no address for the backup server.
 Production and test use separate Unix identities, private keys, age keys,
 profiles, units, state, and storage roots. The environment comes from the
 website's deployed `.env`, never hostname inference or a browser choice.
+While the consistency boundary briefly stops the API, the website publishes a
+controlled maintenance response and the status client retries. This prevents an
+API-down window from being mistaken for a failed or unfinished backup.
 
 ## Re-enrollment and endpoint changes
 

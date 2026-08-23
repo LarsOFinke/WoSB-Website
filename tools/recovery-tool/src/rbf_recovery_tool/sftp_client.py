@@ -108,11 +108,17 @@ def connect(profile: Profile, password: str = ""):
 
 
 def _remote_bytes(sftp, path: PurePosixPath, *, limit: int) -> bytes:
-    attributes = sftp.stat(path.as_posix())
+    try:
+        attributes = sftp.stat(path.as_posix())
+    except Exception as exc:
+        raise RuntimeError(f"SFTP could not stat remote file {path.name}: {exc}") from exc
     if not stat.S_ISREG(attributes.st_mode) or attributes.st_size > limit:
         raise RuntimeError(f"Remote proof is not an allowed regular file: {path.name}")
-    with sftp.open(path.as_posix(), "rb") as handle:
-        data = handle.read(limit + 1)
+    try:
+        with sftp.open(path.as_posix(), "rb") as handle:
+            data = handle.read(limit + 1)
+    except Exception as exc:
+        raise RuntimeError(f"SFTP could not read remote file {path.name}: {exc}") from exc
     if len(data) > limit:
         raise RuntimeError(f"Remote proof is too large: {path.name}")
     return data
@@ -215,7 +221,12 @@ def latest_remote_bundle(
     sftp, remote_directory: str, *, set_filename: str | None = None
 ):
     root = PurePosixPath(_remote_directory(remote_directory))
-    attributes = sftp.listdir_attr(root.as_posix())
+    try:
+        attributes = sftp.listdir_attr(root.as_posix())
+    except Exception as exc:
+        raise RuntimeError(
+            f"SFTP could not list the export directory {root.as_posix()}: {exc}"
+        ) from exc
     by_name = {str(item.filename): item for item in attributes}
     candidates = [
         item for item in attributes
@@ -224,6 +235,7 @@ def latest_remote_bundle(
         and f"{item.filename}.sha256" in by_name
     ]
     candidates.sort(key=lambda item: (item.st_mtime, str(item.filename)), reverse=True)
+    last_error: Exception | None = None
     for candidate in candidates:
         try:
             set_name = str(candidate.filename)
@@ -258,9 +270,14 @@ def latest_remote_bundle(
                 report_sha256=hashlib.sha256(report_data).hexdigest(),
             )
             return root / bundle_name, int(bundle_attr.st_size), root / set_name, root / report_name
-        except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError, OSError, TypeError, ValueError):
+        except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError, OSError, TypeError, ValueError) as exc:
+            last_error = exc
             continue
-    raise RuntimeError("No committed bundle with a successful recovery preflight was found on the backup server.")
+    detail = f" Last candidate error: {last_error}" if last_error else ""
+    raise RuntimeError(
+        "No committed bundle with a successful recovery preflight was found on the "
+        f"backup server.{detail}"
+    )
 
 
 def download_latest(
@@ -311,7 +328,12 @@ def download_latest_with_proof(
                     callback = None
                     if progress and remote == remote_bundle:
                         callback = lambda transferred, total: progress(transferred, total or total_size)
-                    sftp.get(remote.as_posix(), str(partial), callback=callback)
+                    try:
+                        sftp.get(remote.as_posix(), str(partial), callback=callback)
+                    except Exception as exc:
+                        raise RuntimeError(
+                            f"SFTP could not download {remote.name}: {exc}"
+                        ) from exc
                     temporary.append(partial)
                     completed.append(local)
                 for partial, local in zip(temporary, completed, strict=True):

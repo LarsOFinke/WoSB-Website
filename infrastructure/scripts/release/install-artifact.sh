@@ -190,8 +190,14 @@ if [[ -n "$previous_release" && "$skip_backup" != true ]]; then
   [[ -f "$backup_postgres" && -f "$backup_files" && -s "$set_result" ]] \
     || die "Coordinated pre-deployment backup did not return all required artifacts."
   if grep -Eq '^BACKUP_PULL_ENROLLMENT_ID=.+$' "$previous_release/infrastructure/.env"; then
+    deployment_environment="$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$|^"|"$/, "", $2); print tolower($2); exit}' "$previous_release/infrastructure/.env")"
+    ack_timeout="$(awk -F= '$1 == "BACKUP_PULL_ACK_TIMEOUT_SECONDS" {gsub(/^\047|\047$|^"|"$/, "", $2); print $2; exit}' "$previous_release/infrastructure/.env")"
+    ack_timeout="${ack_timeout:-900}"
+    if [[ "$ack_timeout" =~ ^[0-9]+$ && "$ack_timeout" -lt 900 ]]; then ack_timeout=900; fi
+    echo "[release] Pre-deployment backup is committed; waiting up to ${ack_timeout}s for the ${deployment_environment:-selected} Recovery Tool ACK." >&2
+    echo "[release] Run now on the backup server: sudo rbf-recovery-tool sync --target ${deployment_environment:-test}" >&2
     if ! python3 "$SCRIPT_DIR/../backup/wait-for-pull-ack.py" \
-      "$previous_release/infrastructure" "$(cat "$set_result")"; then
+      "$previous_release/infrastructure" "$(cat "$set_result")" "$ack_timeout"; then
       require_ack="$(awk -F= '$1 == "BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE" {gsub(/^\047|\047$|^\"|\"$/, "", $2); print tolower($2); exit}' "$previous_release/infrastructure/.env")"
       if [[ "$require_ack" == true || "$require_ack" == 1 || "$require_ack" == yes || "$require_ack" == on ]]; then
         die "The local pre-deployment backup is complete, but the backup controller did not acknowledge it."

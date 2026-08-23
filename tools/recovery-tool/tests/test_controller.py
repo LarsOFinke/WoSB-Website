@@ -21,6 +21,7 @@ def profile(tmp_path: Path) -> Profile:
         age_identity_path=str(identity),
         host_fingerprint="SHA256:" + "A" * 43,
         enrollment_id="E" * 32,
+        target="test",
     )
 
 
@@ -59,3 +60,39 @@ def test_sync_reacknowledges_a_locally_verified_set_without_downloading(
 
     assert controller.sync_latest(target) == bundle
     assert acknowledged == [manifest]
+
+
+def test_sync_downloads_and_acknowledges_only_the_newest_set(tmp_path, monkeypatch) -> None:
+    target = profile(tmp_path)
+    older = "rbf-backup-set-20260822T120000Z-123.json"
+    newest = "rbf-backup-set-20260823T120000Z-456.json"
+    downloaded: list[str | None] = []
+    acknowledged: list[Path] = []
+
+    def download(_profile, *, set_filename=None, **_kwargs):
+        downloaded.append(set_filename)
+        selected = set_filename or newest
+        bundle = Path(target.destination_directory) / "rbf-recovery-new.tar.gz.age"
+        manifest = Path(target.destination_directory) / selected
+        Path(target.destination_directory).mkdir(parents=True, exist_ok=True)
+        bundle.write_bytes(b"encrypted")
+        manifest.write_text(
+            json.dumps({"artifacts": {"recovery": {"filename": bundle.name}}}),
+            encoding="utf-8",
+        )
+        return bundle, manifest
+
+    monkeypatch.setattr(controller, "_set_names", lambda *_args: {older, newest})
+    monkeypatch.setattr(controller, "download_latest_with_proof", download)
+    monkeypatch.setattr(controller, "verify_encrypted_bundle", lambda *_args: None)
+    monkeypatch.setattr(
+        controller,
+        "_acknowledge",
+        lambda _profile, path, **_kwargs: acknowledged.append(path),
+    )
+
+    assert controller.sync_latest(target).name == "rbf-recovery-new.tar.gz.age"
+    # Normal sync lets the SFTP validator select the newest complete set and
+    # fall back to an older committed set if the newest manifest is incomplete.
+    assert downloaded == [None]
+    assert [path.name for path in acknowledged] == [newest]

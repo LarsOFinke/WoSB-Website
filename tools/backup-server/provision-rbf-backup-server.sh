@@ -209,7 +209,7 @@ payload.setdefault("profiles", {})[target] = {
     "remote_directory": "/exports", "destination_directory": sys.argv[6],
     "ssh_key_path": sys.argv[7], "age_identity_path": sys.argv[8],
     "host_fingerprint": sys.argv[9], "enrollment_id": sys.argv[10],
-    "retention_days": int(sys.argv[11]),
+    "retention_days": int(sys.argv[11]), "target": target,
 }
 fd, temporary = tempfile.mkstemp(prefix=".profiles.", dir=path.parent)
 with os.fdopen(fd, "w") as handle:
@@ -269,10 +269,24 @@ RuntimeDirectoryMode=0750
 ReadWritePaths=${STORAGE}
 ProtectHome=true
 EOF_TRIGGER_SERVICE
+cat > "/etc/systemd/system/rbf-recovery-controller-${ENVIRONMENT}.timer" <<EOF_CONTROLLER_TIMER
+[Unit]
+Description=Automatically collect published ${ENVIRONMENT} recovery exports
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=rbf-recovery-controller-${ENVIRONMENT}.service
+
+[Install]
+WantedBy=timers.target
+EOF_CONTROLLER_TIMER
 systemctl daemon-reload
-systemctl disable --now "rbf-recovery-controller-${ENVIRONMENT}.timer" "rbf-recovery-trigger-${ENVIRONMENT}.timer" >/dev/null 2>&1 || true
-rm -f "/etc/systemd/system/rbf-recovery-controller-${ENVIRONMENT}.timer" "/etc/systemd/system/rbf-recovery-trigger-${ENVIRONMENT}.timer"
+systemctl disable --now "rbf-recovery-trigger-${ENVIRONMENT}.timer" >/dev/null 2>&1 || true
+rm -f "/etc/systemd/system/rbf-recovery-trigger-${ENVIRONMENT}.timer"
 systemctl daemon-reload
+systemctl enable --now "rbf-recovery-controller-${ENVIRONMENT}.timer"
 
 # Remove the superseded managed push/ingest control plane only after the new
 # controller is installed. Existing backup data is deliberately preserved.
@@ -342,5 +356,6 @@ fi
 echo "Backup controller installed for ${ENVIRONMENT}."
 echo "It connects outbound to ${WEBSITE_HOST}:${WEBSITE_PORT}; no backup-server endpoint is required."
 echo "Pinned website SSH fingerprint: ${WEBSITE_FINGERPRINT}"
-echo "Automatic timers are disabled. Manual fetch: rbf-recovery-tool run --target ${ENVIRONMENT}"
+echo "Automatic published-export sync is enabled every minute for ${ENVIRONMENT}."
+echo "Manual fresh backup: rbf-recovery-tool run --target ${ENVIRONMENT}"
 echo "Provisioning response: ${RESULT}"

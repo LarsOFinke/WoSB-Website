@@ -59,7 +59,8 @@ delete control files or backup directories manually.
    `apply_enrollment` approval command on the **website server**, paste its
    token, compare the website SSH fingerprint, and import the response.
 4. **Backup server:** verify the pinned endpoint, then request and collect one
-   fresh backup (automatic timers are intentionally disabled):
+   fresh backup to validate the enrollment. Published website and update
+   exports are collected automatically by the installed per-environment timer:
 
    ```bash
    sudo rbf-recovery-tool targets
@@ -111,9 +112,9 @@ sudo rbf-recovery-tool run --target test
 
 ## Normal operation
 
-- The **backup server** is operated manually for now. Use `run --target` when a
-  fresh backup is required and `sync --target` to collect an already-published
-  export.
+- The **backup server** automatically runs `sync --target` independently for
+  test and production every minute. Use `run --target` only when a deliberately
+  fresh backup is required.
 - A normal website update always creates a verified local backup first. It then
   attempts a remote controller acknowledgement; activation continues if the
   controller is temporarily unavailable unless

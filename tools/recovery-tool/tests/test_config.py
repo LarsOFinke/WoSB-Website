@@ -30,7 +30,30 @@ def test_test_and_production_profiles_are_saved_independently(tmp_path, monkeypa
     config = load_config()
     assert config.profile("test").host == "test-backup.example"
     assert config.profile("production").host == "production-backup.example"
+    assert config.profile("test").target == "test"
+    assert config.profile("production").target == "production"
     assert config.active_target == "production"
+
+
+def test_profile_bound_to_the_other_target_is_not_relabelled(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    path = tmp_path / "config" / "RBF Recovery Tool" / "profiles.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({
+        "schema_version": 2,
+        "active_target": "test",
+        "profiles": {
+            "test": {
+                "host": "production.example",
+                "target": "production",
+                "username": "rbf-backup-controller-production",
+            }
+        },
+    }), encoding="utf-8")
+
+    config = load_config()
+    assert config.profile("test").host == ""
+    assert config.profile("test").target == "test"
 
 
 def test_legacy_single_profile_is_imported_as_test_only(tmp_path, monkeypatch) -> None:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -73,12 +74,19 @@ def main() -> int:
                     or payload.get("kind") != "rbf-backup-pull-request"
                     or payload.get("request_id") != request_id
                     or payload.get("enrollment_id") != enrollment_id
+                    or payload.get("deployment_environment") != environment
+                    or payload.get("requested_controller_username") != username
+                    or payload.get("requested_storage_directory") != f"/backups/wosb/{environment}"
                 ):
-                    raise ValueError("Request does not match the pull protocol.")
+                    raise ValueError(
+                        "Request does not match the pull protocol: "
+                        "environment, controller identity, storage binding, or enrollment mismatch."
+                    )
                 atomic_json(
                     status_path,
                     {"schema_version": 1, "kind": "rbf-backup-pull-status", "request_id": request_id,
-                     "enrollment_id": enrollment_id, "state": "running",
+                     "enrollment_id": enrollment_id, "deployment_environment": environment,
+                     "state": "running",
                      "updated_at": datetime.now(timezone.utc).isoformat()},
                     group_id,
                 )
@@ -104,7 +112,8 @@ def main() -> int:
                     status_path,
                     {"schema_version": 1, "kind": "rbf-backup-pull-status", "request_id": request_id,
                      "state": "succeeded", "set_filename": set_path.name,
-                     "enrollment_id": enrollment_id,
+                     "set_sha256": hashlib.sha256(set_path.read_bytes()).hexdigest(),
+                     "enrollment_id": enrollment_id, "deployment_environment": environment,
                      "updated_at": datetime.now(timezone.utc).isoformat()},
                     group_id,
                 )
@@ -112,7 +121,8 @@ def main() -> int:
                 atomic_json(
                     status_path,
                     {"schema_version": 1, "kind": "rbf-backup-pull-status", "request_id": request_id,
-                     "enrollment_id": enrollment_id, "state": "failed",
+                     "enrollment_id": enrollment_id, "deployment_environment": environment,
+                     "state": "failed",
                      "updated_at": datetime.now(timezone.utc).isoformat()},
                     group_id,
                 )

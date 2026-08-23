@@ -191,7 +191,7 @@ def test_provisioner_isolates_test_and_production_resources() -> None:
     assert 'username != f"rbf-backup-controller-{environment}"' in provisioner
     assert 'storage != f"/backups/wosb/{environment}"' in provisioner
     assert 'TARGET_ROOT="$STATE_ROOT/$ENVIRONMENT"' in provisioner
-    assert 'Automatic timers are disabled.' in provisioner
+    assert 'Automatic published-export sync is enabled every minute' in provisioner
     assert 'must be run as root' in provisioner
     assert 'systemctl disable --now' in provisioner
     assert 'destination_directory": sys.argv[6]' in provisioner

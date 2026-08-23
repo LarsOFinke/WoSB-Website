@@ -9,7 +9,6 @@ from .backup_catalog import fetch_backup_catalog
 from .config import (
     TARGETS,
     Profile,
-    controller_username,
     load_config,
     load_profile,
     target_label,
@@ -27,11 +26,7 @@ def _target(value: str) -> str:
 
 def _profile_for(args: argparse.Namespace, *, files: bool = False) -> Profile:
     profile = load_profile(args.target).normalized()
-    if profile.username != controller_username(args.target):
-        raise ValueError(
-            f"The {args.target} profile is bound to {profile.username!r}; "
-            f"expected {controller_username(args.target)!r}."
-        )
+    profile.validate_target(args.target)
     profile.validate(require_fingerprint=True, require_files=files)
     return profile
 
@@ -75,6 +70,7 @@ def _catalog(args: argparse.Namespace) -> int:
 
 def _verify(args: argparse.Namespace) -> int:
     profile = load_profile(args.target)
+    profile.validate_target(args.target, require_enrollment=False)
     identity = Path(args.identity).expanduser() if args.identity else Path(profile.age_identity_path)
     result = verify_encrypted_bundle(args.bundle, identity)
     print(

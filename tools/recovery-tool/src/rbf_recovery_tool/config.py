@@ -39,6 +39,7 @@ class Profile:
     host_fingerprint: str = ""
     enrollment_id: str = ""
     retention_days: int = 30
+    target: str = ""
 
     @classmethod
     def defaults(cls, target: str) -> "Profile":
@@ -49,6 +50,7 @@ class Profile:
             destination_directory=str(root / "Backups"),
             ssh_key_path=str(root / "controller-ed25519"),
             age_identity_path=str(root / "recovery-age-identity.txt"),
+            target=target,
         )
 
     def normalized(self) -> "Profile":
@@ -61,6 +63,7 @@ class Profile:
         profile.age_identity_path = str(Path(profile.age_identity_path).expanduser()) if profile.age_identity_path else ""
         profile.host_fingerprint = profile.host_fingerprint.strip()
         profile.enrollment_id = profile.enrollment_id.strip()
+        profile.target = profile.target.strip().lower()
         profile.port = int(profile.port)
         profile.retention_days = int(profile.retention_days)
         return profile
@@ -95,6 +98,22 @@ class Profile:
             raise ValueError("The SSH host key has not been pinned and confirmed.")
         if not 1 <= profile.retention_days <= 3650:
             raise ValueError("Retention must be between 1 and 3650 days.")
+
+    def validate_target(self, target: str, *, require_enrollment: bool = True) -> None:
+        if target not in TARGETS or self.target != target:
+            raise ValueError("The recovery profile is not bound to the selected target.")
+        expected_username = controller_username(target)
+        if self.username != expected_username:
+            raise ValueError(
+                f"The {target} profile is bound to {self.username!r}; "
+                f"expected {expected_username!r}."
+            )
+        if self.remote_directory != "/exports":
+            raise ValueError("Managed recovery profiles must use the target export directory.")
+        if require_enrollment and not re.fullmatch(
+            r"[A-Za-z0-9_-]{24,128}", self.enrollment_id
+        ):
+            raise ValueError("The recovery profile has no valid target enrollment.")
 
 
 @dataclass
@@ -138,6 +157,10 @@ def _profile(value: object, target: str) -> Profile:
         return Profile.defaults(target)
     allowed = set(Profile.__dataclass_fields__)
     filtered = {key: item for key, item in value.items() if key in allowed}
+    stored_target = str(filtered.get("target") or "").strip().lower()
+    if stored_target and stored_target != target:
+        return Profile.defaults(target)
+    filtered["target"] = target
     # The first controller-pull release used one shared account name. Never
     # relabel that profile as a target-specific identity: its key may belong to
     # a different website/environment. Treat it as unconfigured and require a
@@ -219,6 +242,7 @@ def save_profile(profile: Profile, target: str, *, activate: bool = True) -> Pat
     if target not in TARGETS:
         raise ValueError(f"Unknown recovery target: {target}")
     normalized = profile.normalized()
+    normalized.target = target
     normalized.validate()
     config = load_config()
     config.profiles[target] = normalized

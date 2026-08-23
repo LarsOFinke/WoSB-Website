@@ -25,8 +25,23 @@ sudo rbf-recovery-tool verify /backups/wosb/production/rbf-recovery-....tar.gz.a
 pre-update export and safely does nothing when none exists. `test` verifies both
 the pinned website SSH host key and actual controller authentication. `catalog`
 lists committed sets and `verify` checks one local encrypted bundle. Production
-and test profiles, keys, and destinations are independent. Automatic timers are
-intentionally not managed by this tool.
+and test profiles, keys, and destinations are independent. The managed backup
+server provisioner installs a separate one-minute `sync` timer for each enrolled
+target, so website and pre-deployment exports are pulled automatically. The
+interactive tool remains available for manual checks and fresh `run` requests.
+
+The manual website flow is deliberately a three-way handshake. First, an
+operator arms the exact `backup` host capability on the selected website and
+confirms the operation in the website. Second, the website creates and publishes
+one target-bound committed export; the Recovery Tool must be run with the same
+target (`sync --target test` or `sync --target production`). Third, the tool
+verifies that exact manifest and encrypted recovery bundle, then acknowledges its
+SHA-256 digest. The website reports success only after that acknowledgement.
+Never use a production profile to pull test exports, or the reverse. The website
+keeps the pending operation open for the configured controller window
+(`BACKUP_PULL_ACK_TIMEOUT_SECONDS`, default 15 minutes). Start `sync` promptly
+after confirming the website operation; a 100 MiB production export may take
+longer to download and verify than a test export.
 
 Profiles from the former shared-account installation are intentionally treated
 as unconfigured. They must not be relabeled as test or production because that

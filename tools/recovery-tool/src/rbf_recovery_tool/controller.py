@@ -9,9 +9,26 @@ import secrets
 import stat
 import time
 
-from .config import Profile
+from .config import Profile, TARGETS
 from .sftp_client import connect, download_latest_with_proof
 from .verification import verify_encrypted_bundle
+
+
+_SET_NAME_RE = re.compile(r"^rbf-backup-set-\d{8}T\d{6}Z-\d+\.json$")
+
+
+def _validate_profile(profile: Profile) -> None:
+    if profile.target not in TARGETS:
+        raise RuntimeError("The recovery profile is not bound to test or production.")
+    try:
+        profile.validate_target(profile.target)
+    except ValueError as exc:
+        raise RuntimeError(str(exc)) from exc
+
+
+def _newest_set(names: set[str]) -> str | None:
+    valid = [name for name in names if _SET_NAME_RE.fullmatch(name)]
+    return max(valid) if valid else None
 
 
 def _write_json(sftp, directory: str, filename: str, payload: dict[str, object]) -> None:
@@ -31,15 +48,22 @@ def _write_json(sftp, directory: str, filename: str, payload: dict[str, object])
 
 
 def _set_names(profile: Profile, password: str) -> set[str]:
+    _validate_profile(profile)
     client = connect(profile, password=password)
     try:
         sftp = client.open_sftp()
         try:
+            try:
+                entries = sftp.listdir_attr(profile.remote_directory)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"SFTP could not list {profile.target} export directory "
+                    f"{profile.remote_directory}: {exc}"
+                ) from exc
             return {
                 str(item.filename)
-                for item in sftp.listdir_attr(profile.remote_directory)
-                if str(item.filename).startswith("rbf-backup-set-")
-                and str(item.filename).endswith(".json")
+                for item in entries
+                if _SET_NAME_RE.fullmatch(str(item.filename))
             }
         finally:
             sftp.close()
@@ -48,6 +72,7 @@ def _set_names(profile: Profile, password: str) -> set[str]:
 
 
 def request_backup(profile: Profile, *, password: str = "") -> str:
+    _validate_profile(profile)
     if not re.fullmatch(r"[A-Za-z0-9_-]{24,128}", profile.enrollment_id):
         raise RuntimeError("The controller profile has no valid enrollment ID.")
     request_id = secrets.token_urlsafe(24)
@@ -64,6 +89,9 @@ def request_backup(profile: Profile, *, password: str = "") -> str:
                     "kind": "rbf-backup-pull-request",
                     "request_id": request_id,
                     "enrollment_id": profile.enrollment_id,
+                    "deployment_environment": profile.target,
+                    "requested_controller_username": profile.username,
+                    "requested_storage_directory": f"/backups/wosb/{profile.target}",
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "reason": "backup-controller",
                 },
@@ -75,7 +103,10 @@ def request_backup(profile: Profile, *, password: str = "") -> str:
     return request_id
 
 
-def _request_state(profile: Profile, request_id: str, password: str) -> str | None:
+def _request_state(
+    profile: Profile, request_id: str, password: str
+) -> dict[str, object] | None:
+    _validate_profile(profile)
     client = connect(profile, password=password)
     try:
         sftp = client.open_sftp()
@@ -94,9 +125,10 @@ def _request_state(profile: Profile, request_id: str, password: str) -> str | No
                 or payload.get("kind") != "rbf-backup-pull-status"
                 or payload.get("request_id") != request_id
                 or payload.get("enrollment_id") != profile.enrollment_id
+                or payload.get("deployment_environment") != profile.target
             ):
                 raise RuntimeError("The website returned a mismatched backup status file.")
-            return str(payload.get("state") or "")
+            return payload
         finally:
             sftp.close()
     finally:
@@ -157,6 +189,7 @@ def _prune_local(profile: Profile) -> None:
 def _acknowledge(
     profile: Profile, set_manifest: Path, *, password: str = ""
 ) -> None:
+    _validate_profile(profile)
     digest = hashlib.sha256(set_manifest.read_bytes()).hexdigest()
     client = connect(profile, password=password)
     try:
@@ -170,6 +203,7 @@ def _acknowledge(
                     "schema_version": 1,
                     "kind": "rbf-backup-pull-acknowledgement",
                     "enrollment_id": profile.enrollment_id,
+                    "deployment_environment": profile.target,
                     "set_filename": set_manifest.name,
                     "set_sha256": digest,
                     "verified_at": datetime.now(timezone.utc).isoformat(),
@@ -189,17 +223,32 @@ def sync_latest(
     allow_empty: bool = False,
     timeout_seconds: int = 4 * 60 * 60,
 ) -> Path | None:
+    _validate_profile(profile)
     before = _set_names(profile, password) if trigger else set()
+    requested_set_name: str | None = None
+    requested_set_sha256: str | None = None
     if trigger:
         request_id = request_backup(profile, password=password)
         deadline = time.monotonic() + timeout_seconds
         while time.monotonic() < deadline:
-            if _set_names(profile, password) - before:
-                break
-            if _request_state(profile, request_id, password) == "failed":
+            available_after_request = _set_names(profile, password)
+            new_sets = available_after_request - before
+            request_status = _request_state(profile, request_id, password)
+            if request_status and request_status.get("state") == "failed":
                 raise RuntimeError(
                     "The website reported that the requested backup failed; review its protected host log."
                 )
+            reported_set = str((request_status or {}).get("set_filename") or "")
+            reported_sha256 = str((request_status or {}).get("set_sha256") or "")
+            if (
+                request_status
+                and request_status.get("state") == "succeeded"
+                and reported_set in new_sets
+                and re.fullmatch(r"[0-9a-f]{64}", reported_sha256)
+            ):
+                requested_set_name = reported_set
+                requested_set_sha256 = reported_sha256
+                break
             time.sleep(10)
         else:
             raise RuntimeError("The website did not publish the requested backup in time.")
@@ -208,18 +257,23 @@ def sync_latest(
         if allow_empty:
             return None
         raise RuntimeError("The website has not published a committed backup yet.")
-    bundle: Path | None = None
-    for set_name in sorted(available):
-        local = _local_verified_bundle(profile, set_name)
-        if local is not None:
-            bundle, set_manifest = local
-        else:
-            bundle, set_manifest = download_latest_with_proof(
-                profile, password=password, set_filename=set_name
-            )
-            verify_encrypted_bundle(bundle, Path(profile.age_identity_path))
-            _remember_verified(set_manifest)
-        _acknowledge(profile, set_manifest, password=password)
+    set_name = requested_set_name or _newest_set(available)
+    if set_name is None:
+        raise RuntimeError("The website has not published a valid committed backup set.")
+    local = _local_verified_bundle(profile, set_name)
+    if local is not None:
+        bundle, set_manifest = local
+    else:
+        bundle, set_manifest = download_latest_with_proof(
+            profile,
+            password=password,
+            set_filename=requested_set_name,
+        )
+        verify_encrypted_bundle(bundle, Path(profile.age_identity_path))
+        _remember_verified(set_manifest)
+    if requested_set_sha256 and hashlib.sha256(set_manifest.read_bytes()).hexdigest() != requested_set_sha256:
+        raise RuntimeError("The website reported a backup set digest that does not match the downloaded manifest.")
+    _acknowledge(profile, set_manifest, password=password)
     _prune_local(profile)
     if bundle is None:
         raise RuntimeError("No complete backup set was available.")

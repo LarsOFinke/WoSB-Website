@@ -16,6 +16,34 @@ from backup_runner_core import HOST_RE, REMOTE_RE, USER_RE, now
 
 
 class BackupTransferMixin:
+    def pull_ack_timeout_seconds(self) -> int:
+        """Return the configured manual-controller window for this target."""
+        value = ""
+        env_file = self.infra_dir / ".env"
+        if env_file.is_file():
+            for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, configured = line.split("=", 1)
+                    if key.strip() == "BACKUP_PULL_ACK_TIMEOUT_SECONDS":
+                        value = configured.strip().strip("\"'")
+                        break
+        try:
+            timeout = int(value or "900")
+        except ValueError as exc:
+            raise RuntimeError(
+                "BACKUP_PULL_ACK_TIMEOUT_SECONDS must be an integer."
+            ) from exc
+        if not 30 <= timeout <= 3600:
+            raise RuntimeError(
+                "BACKUP_PULL_ACK_TIMEOUT_SECONDS must be between 30 and 3600 seconds."
+            )
+        # 300 seconds was the old implicit default. It is not enough for the
+        # larger production export plus download, age verification and ACK;
+        # retain operator values above the safe floor while migrating older
+        # installations automatically.
+        return max(timeout, 900)
+
     @staticmethod
     def _artifact_summary(path: Path, artifact_type: str, remote_path: str) -> dict[str, Any]:
         """Return the complete public artifact contract used by the API status DTO."""
@@ -526,9 +554,11 @@ class BackupTransferMixin:
                     result_files["recovery"].read_text(encoding="utf-8").strip()
                 )
             if pull_controller:
+                ack_timeout = self.pull_ack_timeout_seconds()
                 self.write_status(
                     "running",
-                    "Verified export is ready; waiting for the backup controller to pull and acknowledge it.",
+                    "Verified export is ready; waiting for the backup controller to pull and acknowledge it "
+                    f"({ack_timeout // 60} minutes available).",
                     progress_percent=90,
                 )
                 acknowledgement = subprocess.run(
@@ -537,12 +567,16 @@ class BackupTransferMixin:
                         str(self.infra_dir / "scripts/backup/wait-for-pull-ack.py"),
                         str(self.infra_dir),
                         str(paths["set"]),
+                        str(ack_timeout),
                     ],
                     check=False,
                     text=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    timeout=360,
+                    # Keep a process-management margin around the protocol
+                    # timeout. A hard-coded six minutes made larger
+                    # production exports fail while test passed.
+                    timeout=ack_timeout + 30,
                 )
                 if acknowledgement.returncode != 0:
                     for line in (acknowledgement.stdout or "").splitlines():

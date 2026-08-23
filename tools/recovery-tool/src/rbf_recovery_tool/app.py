@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from .backup_catalog import fetch_backup_catalog
-from .config import TARGETS, controller_username, load_profile, target_label
+from .config import TARGETS, load_profile, target_label
 from .controller import sync_latest
 from .platform_support import open_directory
 from .sftp_client import connect, fetch_host_fingerprint
@@ -74,7 +74,7 @@ class RecoveryApp:
             button = ttk.Button(left, text=text, command=command, style="Primary.TButton" if primary else "TButton")
             button.pack(fill="x", pady=4)
             self.buttons.append(button)
-        ttk.Label(left, text="Test and production profiles, keys and storage are isolated.\nNo setup or automatic timers are managed here.", style="Muted.TLabel", wraplength=220).pack(anchor="w", pady=(14, 0))
+        ttk.Label(left, text="Test and production profiles, keys and storage are isolated.\nThe managed backup server syncs published exports automatically.", style="Muted.TLabel", wraplength=220).pack(anchor="w", pady=(14, 0))
         right = ttk.Frame(body)
         right.pack(side="left", fill="both", expand=True)
         catalog_frame = ttk.LabelFrame(right, text="Committed recovery sets", style="Section.TLabelframe", padding=8)
@@ -109,11 +109,7 @@ class RecoveryApp:
 
     def _profile(self, files: bool = True):
         profile = load_profile(self.target.get()).normalized()
-        if profile.username != controller_username(self.target.get()):
-            raise ValueError(
-                f"The {self.target.get()} profile is bound to {profile.username!r}; "
-                f"expected {controller_username(self.target.get())!r}."
-            )
+        profile.validate_target(self.target.get())
         profile.validate(require_fingerprint=True, require_files=files)
         return profile
 

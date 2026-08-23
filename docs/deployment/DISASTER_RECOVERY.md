@@ -66,5 +66,5 @@ sudo rbf-recovery-tool catalog --target production
 
 Test and production profiles use separate local directories and target-specific
 pinned SSH fingerprints. A host-key mismatch is a stop condition, not a prompt
-to accept a new key. Automatic timers are intentionally disabled; run `run` for
-a fresh website backup or `sync` to collect an already-published export.
+to accept a new key. The managed backup server automatically runs `sync` for
+each target; run `run` only when a fresh website backup is explicitly required.

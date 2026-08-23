@@ -18,8 +18,9 @@ require(json.loads(text('frontend/package.json'))['version']==version,'frontend 
 require(not (ROOT/'backend').exists(),'Python backend directory must not exist')
 require(not (ROOT/'scripts').exists(),'top-level scripts directory must not be recreated')
 root_shell_scripts={path.name for path in ROOT.glob('*.sh')}
-require(root_shell_scripts=={'deploy.sh','update.sh'},
-        f'root shell entrypoints must be deploy.sh/update.sh, found {sorted(root_shell_scripts)}')
+require(root_shell_scripts <= {'deploy.sh','update.sh','update-recovery-tool.sh'} and
+        {'deploy.sh','update.sh'} <= root_shell_scripts,
+        f'root shell entrypoints contain an unsupported script, found {sorted(root_shell_scripts)}')
 for path in ('spring-api/src/main/resources/db/migration/V1__current_schema_baseline.sql','spring-api/src/main/resources/application.yml','infrastructure/compose.yml','infrastructure/compose.release.yml','infrastructure/scripts/release/package_deployment_artifact.py','openapi/source/root.json','openapi/openapi.json','spring-api/src/main/reference/webhook-events.json'):
     text(path)
 require((ROOT/'openapi/source/operations').is_dir(),'missing modular OpenAPI operations')

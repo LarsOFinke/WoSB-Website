@@ -26,14 +26,19 @@ def main() -> int:
     values = read_env(infra / ".env")
     try:
         timeout = int(sys.argv[3]) if len(sys.argv) == 4 else int(
-            values.get("BACKUP_PULL_ACK_TIMEOUT_SECONDS", "300")
+            values.get("BACKUP_PULL_ACK_TIMEOUT_SECONDS", "900")
         )
     except ValueError as exc:
         raise SystemExit("Backup acknowledgement timeout must be an integer.") from exc
     if not 30 <= timeout <= 3600:
         raise SystemExit("Backup acknowledgement timeout must be between 30 and 3600 seconds.")
+    # Older deployments used 300 seconds, which is too short for a larger
+    # production export plus download, verification and acknowledgement.
+    timeout = max(timeout, 900)
     environment = values.get("DEPLOYMENT_ENVIRONMENT", "")
     enrollment_id = values.get("BACKUP_PULL_ENROLLMENT_ID", "")
+    if environment not in {"test", "production"} and enrollment_id:
+        raise SystemExit("Backup acknowledgement requires a test or production environment.")
     if not enrollment_id:
         return 0
     acknowledgement = Path(
@@ -48,6 +53,7 @@ def main() -> int:
                 if (
                     payload.get("kind") == "rbf-backup-pull-acknowledgement"
                     and payload.get("enrollment_id") == enrollment_id
+                    and payload.get("deployment_environment") == environment
                     and payload.get("set_filename") == manifest.name
                     and payload.get("set_sha256") == expected
                 ):

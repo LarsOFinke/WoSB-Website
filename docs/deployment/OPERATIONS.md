@@ -138,6 +138,14 @@ Panel-triggered backup operations use the same host approval boundary. For examp
 sudo /srv/rbf/current/infrastructure/scripts/services/arm-host-operation.sh backup
 ```
 
+For a manual website backup, select the correct deployed target, arm its one-time
+`backup` capability, confirm the operation in the panel, and then run the matching
+Recovery Tool profile (`sync --target test` or `sync --target production`). The
+website remains pending until the tool verifies and acknowledges the exact
+target-bound manifest. During the short consistency pause, status requests may
+receive the intentional maintenance response and should be retried; a 502 means
+the deployed maintenance-aware gateway has not been activated yet.
+
 Database and file restores retain their separate bootstrap-admin restore approval.
 
 ## Test/Production TLS and target isolation

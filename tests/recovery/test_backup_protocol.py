@@ -81,6 +81,22 @@ def test_target_systemd_watcher_is_bound_to_one_environment() -> None:
     assert 'DEPLOYMENT_ENVIRONMENT must be test or production' in installer
 
 
+def test_pull_handshake_and_consistency_window_are_target_bound() -> None:
+    pull_runner = (ROOT / 'infrastructure/scripts/backup/process-pull-requests.py').read_text()
+    ack_waiter = (ROOT / 'infrastructure/scripts/backup/wait-for-pull-ack.py').read_text()
+    coordinated_backup = (ROOT / 'infrastructure/scripts/backup/run-consistent-backup.sh').read_text()
+
+    assert 'requested_storage_directory' in pull_runner
+    assert 'set_sha256' in pull_runner
+    assert 'payload.get("deployment_environment") != environment' in pull_runner
+    assert 'payload.get("deployment_environment") == environment' in ack_waiter
+    assert 'source "$INFRA_DIR/scripts/lib/maintenance.sh"' in coordinated_backup
+    assert 'maintenance_enable backup 300' in coordinated_backup
+    assert 'maintenance_disable succeeded' in coordinated_backup
+    assert 'mapfile -t manifest_sources' in coordinated_backup
+    assert 'for source in "${manifest_sources[@]}"' in coordinated_backup
+
+
 def test_retired_scheduled_backup_dispatcher_is_not_packaged() -> None:
     assert not (ROOT / 'infrastructure/scripts/backup/backup-all.sh').exists()
     assert not (ROOT / 'infrastructure/scripts/backup/sync-backup-set-remote.py').exists()

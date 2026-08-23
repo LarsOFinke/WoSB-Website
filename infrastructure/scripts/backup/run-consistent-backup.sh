@@ -3,6 +3,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$(cd "$SCRIPT_DIR/../lib" && pwd)/docker.sh"
 source "$SCRIPT_DIR/common.sh"
+source "$INFRA_DIR/scripts/lib/maintenance.sh"
 
 usage() {
   cat <<'USAGE'
@@ -59,7 +60,7 @@ fi
 
 
 export_verified_recovery_set() {
-  local recovery="$1" verification="$2" set_manifest="$3"
+  local recovery="$1" verification="$2" set_manifest="$3" manifest_root="$4"
   local export_dir export_user export_group retention_days source target temporary
   export_dir="$(read_env BACKUP_PULL_EXPORT_DIR)"
   export_user="$(read_env BACKUP_PULL_EXPORT_USER)"
@@ -81,21 +82,54 @@ export_verified_recovery_set() {
     mv -f "$temporary" "$target"
   }
 
-  copy_atomic "$recovery"
-  copy_atomic "${recovery}.sha256"
-  copy_atomic "$verification"
-  copy_atomic "${verification}.sha256"
+  # The manifest is the commit marker, but every artifact it binds must be
+  # present in the export first. In particular, recovery bundles contain the
+  # files and PostgreSQL artifacts indirectly; publishing only recovery and
+  # verification made the remote set look committed while catalog/sync could
+  # not recover it.
+  mapfile -t manifest_sources < <(python3 - "$manifest_root" "$set_manifest" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1]).resolve()
+manifest = Path(sys.argv[2]).resolve()
+payload = json.loads(manifest.read_text(encoding="utf-8"))
+artifacts = payload.get("artifacts")
+if not isinstance(artifacts, dict):
+    raise SystemExit("Backup-set manifest has no artifact catalog.")
+for record in artifacts.values():
+    if not isinstance(record, dict):
+        raise SystemExit("Backup-set manifest contains an invalid artifact record.")
+    for value in (record, record.get("restore_metadata")):
+        if isinstance(value, dict):
+            relative = Path(str(value.get("path") or ""))
+            source = (root / relative).resolve()
+            try:
+                source.relative_to(root)
+            except ValueError as exc:
+                raise SystemExit("Backup-set artifact escaped the infrastructure tree.") from exc
+            print(source)
+            print(f"{source}.sha256")
+PY
+  )
+  ((${#manifest_sources[@]} > 0)) || die "Backup-set manifest contains no exportable artifacts."
+  for source in "${manifest_sources[@]}"; do
+    copy_atomic "$source"
+  done
   copy_atomic "${set_manifest}.sha256"
   copy_atomic "$set_manifest"
   (
     cd "$export_dir"
-    sha256sum -c "$(basename "${recovery}.sha256")" >/dev/null
-    sha256sum -c "$(basename "${verification}.sha256")" >/dev/null
+    for source in "${manifest_sources[@]}"; do
+      [[ "$source" == *.sha256 ]] || sha256sum -c "$(basename "$source.sha256")" >/dev/null
+    done
     sha256sum -c "$(basename "${set_manifest}.sha256")" >/dev/null
   )
   retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
   find "$export_dir" -maxdepth 1 -type f \
-    \( -name 'rbf-recovery-*.tar.gz.age' -o -name 'rbf-recovery-*.tar.gz.age.sha256' \
+    \( -name 'rbf-files-*.tar.gz*' -o -name 'rbf-postgres-*.dump*' \
+       -o -name 'rbf-recovery-*.tar.gz.age' -o -name 'rbf-recovery-*.tar.gz.age.sha256' \
        -o -name 'rbf-postgres-preflight-*.json' -o -name 'rbf-postgres-preflight-*.json.sha256' \
        -o -name 'rbf-backup-set-*.json' -o -name 'rbf-backup-set-*.json.sha256' \) \
     -mtime "+$retention_days" -delete
@@ -111,6 +145,7 @@ if [[ -z "$set_result" ]]; then set_result="$(mktemp "$run_dir/set-result.XXXXXX
 
 api_was_running=false
 api_stopped=false
+maintenance_owned=false
 backup_completed=false
 if bw_compose ps --status running -q api 2>/dev/null | grep -q .; then api_was_running=true; fi
 quiesce="$(read_env BACKUP_QUIESCE_APPLICATION)"; quiesce="${quiesce:-true}"
@@ -119,6 +154,10 @@ if [[ "$api_was_running" == true ]]; then
   if is_true "$quiesce"; then
     publish_progress 10 "Pausing the application briefly for a consistent snapshot."
     log "Briefly stop the API as the application-wide backup consistency boundary."
+    if [[ ! -f "$(maintenance_status_dir)/maintenance-mode.json" ]]; then
+      maintenance_enable backup 300
+      maintenance_owned=true
+    fi
     bw_compose stop api
     api_stopped=true
     consistency="application-quiesced"
@@ -135,6 +174,14 @@ restore_api() {
     bw_compose up -d --no-deps api >/dev/null 2>&1 || true
     wait_for_api >/dev/null 2>&1 || true
     api_stopped=false
+  fi
+  if [[ "$maintenance_owned" == true ]]; then
+    if [[ "$backup_completed" == true ]]; then
+      maintenance_disable succeeded "Backup snapshot completed; application is available again."
+    else
+      maintenance_disable failed "Backup consistency operation failed; application restored."
+    fi
+    maintenance_owned=false
   fi
   if [[ "$backup_completed" != true ]]; then
     warn "Coordinated backup run was aborted; no backup-set commit was created."
@@ -164,6 +211,10 @@ if [[ "$api_stopped" == true ]]; then
   bw_compose up -d --no-deps api
   wait_for_api
   api_stopped=false
+  if [[ "$maintenance_owned" == true ]]; then
+    maintenance_disable succeeded "Backup snapshot completed; application is available again."
+    maintenance_owned=false
+  fi
 fi
 
 verification_report=""
@@ -196,7 +247,7 @@ manifest_args=(create --root "$manifest_root" --output "$set_path" --files "$fil
 python3 "$SCRIPT_DIR/backup_set_manifest.py" "${manifest_args[@]}" >/dev/null
 backup_finalize "$set_path" "sets"
 python3 "$SCRIPT_DIR/backup_set_manifest.py" validate --root "$manifest_root" "$set_path" >/dev/null
-export_verified_recovery_set "$recovery_backup" "$verification_report" "$set_path"
+export_verified_recovery_set "$recovery_backup" "$verification_report" "$set_path" "$manifest_root"
 printf '%s\n' "$set_path" > "$set_result"; chmod 600 "$set_result"
 retention_days="$(read_env BACKUP_RETENTION_DAYS)"; retention_days="${retention_days:-14}"
 find "$INFRA_DIR/data/backups/sets" -type f -mtime "+$retention_days" -delete
