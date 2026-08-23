@@ -4,6 +4,7 @@ import importlib.util
 import base64
 import hashlib
 from pathlib import Path
+import subprocess
 import sys
 
 
@@ -18,7 +19,11 @@ def test_enrollment_preparation_hides_stale_request_until_replacement_is_ready(
 
     infra = tmp_path / "infrastructure"
     infra.mkdir()
-    (infra / ".env").write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
+    (infra / ".env").write_text(
+        "DEPLOYMENT_ENVIRONMENT=test\nAPP_HOSTNAME=royal-blackwater-fleet.eu\n"
+        "BACKUP_CONTROLLER_WEBSITE_HOST=test.example.net\n",
+        encoding="utf-8",
+    )
     request = tmp_path / "request.json"
     request.write_text(
         '{"operation":"prepare_enrollment","requested_by":"captain",'
@@ -64,36 +69,151 @@ def test_enrollment_request_contains_the_exact_deployed_provisioner(
     release = tmp_path / "release"
     infra = release / "infrastructure"
     provisioner_path = release / "tools/backup-server/provision-rbf-backup-server.sh"
-    ingest_path = release / "tools/backup-server/rbf-backup-ingest.py"
+    tool_source = release / "tools/recovery-tool/src/rbf_recovery_tool"
     provisioner_path.parent.mkdir(parents=True)
     infra.mkdir()
-    (infra / ".env").write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
+    (infra / ".env").write_text(
+        "DEPLOYMENT_ENVIRONMENT=test\nAPP_HOSTNAME=royal-blackwater-fleet.eu\n"
+        "BACKUP_CONTROLLER_WEBSITE_HOST=test.example.net\n",
+        encoding="utf-8",
+    )
     (release / "VERSION").write_text("1.8.0\n", encoding="utf-8")
     provisioner = b"#!/usr/bin/env bash\nset -Eeuo pipefail\n"
     provisioner_path.write_bytes(provisioner)
-    ingest = b"#!/usr/bin/env python3\n"
-    ingest_path.write_bytes(ingest)
+    tool_source.mkdir(parents=True)
+    (tool_source / "__init__.py").write_text("VERSION = 'test'\n", encoding="utf-8")
     request = tmp_path / "request.json"
     request.write_text("{}", encoding="utf-8")
     runner = module.Runner(infra, request)
     runner.prepare()
     monkeypatch.setattr(
         runner,
-        "_public_key",
-        lambda: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAITestUploadKey= rbf@test",
+        "_website_host_identity",
+        lambda: (
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIWebsiteHostKey=",
+            "SHA256:" + "W" * 43,
+        ),
     )
 
     result = runner.prepare_enrollment()["enrollment_request"]
 
     assert base64.b64decode(result["provisioner_base64"], validate=True) == provisioner
     assert result["provisioner_sha256"] == hashlib.sha256(provisioner).hexdigest()
-    assert base64.b64decode(result["ingest_script_base64"], validate=True) == ingest
-    assert result["ingest_script_sha256"] == hashlib.sha256(ingest).hexdigest()
-    assert result["requested_directory"] == "/incoming"
+    recovery_tool = base64.b64decode(result["recovery_tool_base64"], validate=True)
+    assert result["recovery_tool_sha256"] == hashlib.sha256(recovery_tool).hexdigest()
     assert result["deployment_environment"] == "test"
-    assert result["requested_username"] == "rbf-backup-test"
-    assert result["requested_recovery_username"] == "rbf-recovery-test"
+    assert result["requested_controller_username"] == "rbf-backup-controller-test"
     assert result["requested_storage_directory"] == "/backups/wosb/test"
+    assert result["website_host"] == "test.example.net"
+
+
+def test_deployment_reconciles_separate_test_and_production_controller_endpoints(
+    tmp_path,
+) -> None:
+    script = (
+        Path(__file__).parents[2]
+        / "infrastructure/scripts/release/prepare-website-env.sh"
+    )
+    credentials = tmp_path / "unused-credentials.txt"
+    cases = (
+        ("test", "test-ssh.example.net", "2222"),
+        ("production", "production-ssh.example.net", "22"),
+    )
+    for environment, host, port in cases:
+        env_file = tmp_path / f"{environment}.env"
+        env_file.write_text(
+            f"DEPLOYMENT_ENVIRONMENT={environment}\n"
+            "APP_HOSTNAME=royal-blackwater-fleet.eu\n"
+            "BACKUP_CONTROLLER_WEBSITE_HOST=stale.example.net\n"
+            "BACKUP_CONTROLLER_WEBSITE_SSH_PORT=2022\n",
+            encoding="utf-8",
+        )
+        subprocess.run(
+            [
+                "bash", str(script), str(env_file), str(credentials), environment,
+                "", "", "", host, port,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        values = dict(
+            line.split("=", 1)
+            for line in env_file.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#") and "=" in line
+        )
+        assert values["DEPLOYMENT_ENVIRONMENT"] == environment
+        assert values["BACKUP_CONTROLLER_WEBSITE_HOST"] == host
+        assert values["BACKUP_CONTROLLER_WEBSITE_SSH_PORT"] == port
+
+
+def test_environment_reconciliation_refuses_test_production_repurposing(tmp_path) -> None:
+    script = (
+        Path(__file__).parents[2]
+        / "infrastructure/scripts/release/prepare-website-env.sh"
+    )
+    env_file = tmp_path / "website.env"
+    env_file.write_text("DEPLOYMENT_ENVIRONMENT=test\n", encoding="utf-8")
+    result = subprocess.run(
+        [
+            "bash", str(script), str(env_file), str(tmp_path / "credentials"),
+            "production", "production.example.net", "", "admin@example.net",
+            "production.example.net", "22",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "cannot be repurposed" in result.stderr
+    assert "DEPLOYMENT_ENVIRONMENT=test" in env_file.read_text(encoding="utf-8")
+
+
+def test_origin_deployment_forwards_controller_host_and_port_per_target() -> None:
+    source = (
+        Path(__file__).parents[2]
+        / "infrastructure/scripts/release/deploy-from-origin.sh"
+    ).read_text(encoding="utf-8")
+    assert 'RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST' in source
+    assert 'RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_PORT' in source
+    assert 'remote_command+=(--backup-controller-website-host "$backup_controller_website_host")' in source
+    assert 'remote_command+=(--backup-controller-website-port "$backup_controller_website_port")' in source
+
+
+def test_managed_controller_account_is_sftp_only() -> None:
+    source = (
+        Path(__file__).parents[2]
+        / "infrastructure/scripts/backup/backup_runner_enrollment.py"
+    ).read_text()
+    assert "ForceCommand internal-sftp -u 0077 -d /" in source
+    assert "AllowTcpForwarding no" in source
+    assert "PasswordAuthentication no" in source
+    assert "KbdInteractiveAuthentication no" in source
+    assert 'f"restrict {public_key}\\n"' in source
+    assert 'chroot / "exports"' in source
+    assert 'chroot / "requests"' in source
+
+
+def test_pull_status_artifact_summary_matches_api_contract(tmp_path) -> None:
+    module_path = Path(__file__).parents[2] / "infrastructure/scripts/backup/backup_runner_transfer.py"
+    spec = importlib.util.spec_from_file_location("backup_runner_transfer_contract", module_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    artifact = tmp_path / "rbf-postgres-example.dump"
+    artifact.write_bytes(b"verified backup")
+    summary = module.BackupTransferMixin._artifact_summary(
+        artifact, "postgresql", f"/exports/{artifact.name}"
+    )
+
+    assert summary == {
+        "artifact_type": "postgresql",
+        "filename": artifact.name,
+        "size_bytes": artifact.stat().st_size,
+        "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
+        "remote_path": f"/exports/{artifact.name}",
+    }
 
 
 def test_enrollment_updates_shared_environment_without_replacing_release_symlink(

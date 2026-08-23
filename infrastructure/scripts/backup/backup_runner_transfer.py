@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import secrets
 import subprocess
+import sys
 import threading
 import time
 import tempfile
@@ -15,6 +16,21 @@ from backup_runner_core import HOST_RE, REMOTE_RE, USER_RE, now
 
 
 class BackupTransferMixin:
+    @staticmethod
+    def _artifact_summary(path: Path, artifact_type: str, remote_path: str) -> dict[str, Any]:
+        """Return the complete public artifact contract used by the API status DTO."""
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return {
+            "artifact_type": artifact_type,
+            "filename": path.name,
+            "size_bytes": path.stat().st_size,
+            "sha256": digest.hexdigest(),
+            "remote_path": remote_path,
+        }
+
     def load_connection(self) -> dict[str, Any]:
         if (
             not self.config_file.is_file()
@@ -427,9 +443,10 @@ class BackupTransferMixin:
         return False
 
     def create_and_transfer_backup(self) -> dict[str, Any]:
-        config = self.load_connection()
+        pull_controller = self._pull_controller_enabled()
+        config = None if pull_controller else self.load_connection()
         recovery_enabled = self.recovery_enabled()
-        if config.get("managed_server") is True and not self.recovery_configuration_ready():
+        if (pull_controller or config.get("managed_server") is True) and not self.recovery_configuration_ready():
             raise RuntimeError(
                 "Managed backup enrollment is incomplete; import a fresh enrollment response before running backups."
             )
@@ -508,6 +525,40 @@ class BackupTransferMixin:
                 paths["recovery"] = Path(
                     result_files["recovery"].read_text(encoding="utf-8").strip()
                 )
+            if pull_controller:
+                self.write_status(
+                    "running",
+                    "Verified export is ready; waiting for the backup controller to pull and acknowledge it.",
+                    progress_percent=90,
+                )
+                acknowledgement = subprocess.run(
+                    [
+                        sys.executable,
+                        str(self.infra_dir / "scripts/backup/wait-for-pull-ack.py"),
+                        str(self.infra_dir),
+                        str(paths["set"]),
+                    ],
+                    check=False,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    timeout=360,
+                )
+                if acknowledgement.returncode != 0:
+                    for line in (acknowledgement.stdout or "").splitlines():
+                        self.log(line)
+                    raise RuntimeError("The backup controller did not acknowledge the exported set.")
+                return {
+                    "artifacts": [
+                        self._artifact_summary(
+                            path,
+                            {"postgres": "postgresql", "files": "files", "recovery": "recovery"}[name],
+                            f"/exports/{path.name}",
+                        )
+                        for name, path in paths.items()
+                        if name in {"postgres", "files", "recovery"}
+                    ]
+                }
             self.write_status(
                 "running",
                 "Local backup set verified; transferring PostgreSQL and file artifacts.",
@@ -544,6 +595,16 @@ class BackupTransferMixin:
             progress_thread.join(timeout=2)
             for path in result_files.values():
                 path.unlink(missing_ok=True)
+
+    def _pull_controller_enabled(self) -> bool:
+        env_file = self.infra_dir / ".env"
+        if not env_file.is_file():
+            return False
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if line.startswith("BACKUP_PULL_ENROLLMENT_ID="):
+                return bool(line.split("=", 1)[1].strip().strip("\"'"))
+        return False
 
     def _watch_backup_progress(self, progress_file: Path, stop: threading.Event) -> None:
         previous = ""

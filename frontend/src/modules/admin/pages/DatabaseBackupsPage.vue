@@ -5,7 +5,7 @@ import { useDatabaseBackupsPage } from '@/modules/admin/composables/useDatabaseB
 
 const {
   t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
-  inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
+  inProgress, configured, connectionReady, showEnrollment, openEnrollment, canSubmit, hasHostApproval, stateLabel, operationLabel,
   operationElapsedSeconds, operationProgress,
   statusPollingDelayed,
   enrollmentFileName, enrollmentSetup, enrollmentRequest,
@@ -49,8 +49,11 @@ const {
           <article class="home-status-card refined-status-card">
             <span>{{ t('admin.backups.connection.label') }}</span>
             <strong>{{ configured ? t('admin.backups.connection.configured') : t('admin.backups.connection.missing') }}</strong>
-            <p v-if="configured">{{ status.connection.username }}@{{ status.connection.host }}:{{ status.connection.port }}</p>
-            <small v-if="configured">
+            <p v-if="configured && status.connection.mode === 'recovery-controller-pull'">
+              {{ status.connection.username }} · {{ status.connection.remote_directory }}
+            </p>
+            <p v-else-if="configured">{{ status.connection.username }}@{{ status.connection.host }}:{{ status.connection.port }}</p>
+            <small v-if="configured && status.connection.mode !== 'recovery-controller-pull'">
               {{ connectionReady
                 ? t('admin.backups.connection.writeVerified', { date: formatDateTime(status.connection.write_tested_at) })
                 : t('admin.backups.connection.writeUnverified') }}
@@ -72,6 +75,15 @@ const {
         </div>
         <p v-if="success" class="success-text table-state">{{ success }}</p>
         <p v-if="error" class="error-text table-state">{{ error }}</p>
+        <button
+          v-if="connectionReady && !showEnrollment"
+          class="small-action"
+          type="button"
+          :disabled="loading || inProgress"
+          @click="openEnrollment"
+        >
+          {{ t('admin.backups.actions.updateEnrollment') }}
+        </button>
         <div v-if="inProgress" class="backup-operation-progress" aria-live="polite">
           <div class="backup-operation-progress-heading">
             <strong>{{ status.message || t('admin.backups.states.running') }}</strong>
@@ -93,7 +105,7 @@ const {
         </div>
       </section>
 
-      <section v-if="!connectionReady" class="wire-section admin-panel backup-configuration-panel backup-enrollment-wizard">
+      <section v-if="showEnrollment" class="wire-section admin-panel backup-configuration-panel backup-enrollment-wizard">
         <div class="admin-panel-heading">
           <div>
             <h2>{{ t('admin.backups.enrollment.title') }}</h2>
@@ -137,7 +149,7 @@ const {
               <div>
                 <span>{{ enrollmentRequest.deployment_environment.toUpperCase() }}</span>
                 <strong>{{ enrollmentRequest.requested_storage_directory }}</strong>
-                <small>{{ enrollmentRequest.requested_username }}</small>
+                <small>{{ enrollmentRequest.requested_controller_username }}</small>
               </div>
             </div>
           </section>
@@ -145,17 +157,9 @@ const {
           <section class="input-panel embedded-field backup-directory-field backup-setup-step">
             <span>{{ t('admin.backups.enrollment.stepTwo') }}</span>
             <p>{{ t('admin.backups.enrollment.stepTwoText') }}</p>
-            <label>
-              <span>{{ t('admin.backups.enrollment.commandFields.host') }}</span>
-              <input v-model.trim="enrollmentSetup.host" placeholder="backup.example.net" maxlength="253" />
-            </label>
             <details>
               <summary>{{ t('admin.backups.enrollment.advanced') }}</summary>
               <div class="backup-enrollment-command-fields">
-                <label>
-                  <span>{{ t('admin.backups.enrollment.commandFields.port') }}</span>
-                  <input v-model.number="enrollmentSetup.port" type="number" min="1" max="65535" />
-                </label>
                 <label>
                   <span>{{ t('admin.backups.enrollment.commandFields.retention') }}</span>
                   <input v-model.number="enrollmentSetup.retentionDays" type="number" min="1" max="3650" />
@@ -163,10 +167,6 @@ const {
                 <label class="backup-enrollment-wide-field">
                   <span>{{ t('admin.backups.enrollment.commandFields.directory') }}</span>
                   <input v-model.trim="enrollmentSetup.directory" maxlength="512" readonly />
-                </label>
-                <label class="backup-enrollment-wide-field">
-                  <span>{{ t('admin.backups.enrollment.commandFields.allowFrom') }}</span>
-                  <input v-model.trim="enrollmentSetup.allowFrom" maxlength="64" />
                 </label>
               </div>
             </details>
@@ -215,7 +215,7 @@ const {
         </div>
         <HostCapabilityField v-if="connectionReady" v-model="hostApproval" operation="backup" />
         <div v-if="status.artifacts?.length" class="backup-artifact-list">
-          <article v-for="artifact in status.artifacts" :key="artifact.remote_path" class="home-status-card refined-status-card backup-artifact-card">
+          <article v-for="artifact in status.artifacts" :key="`${artifact.artifact_type}:${artifact.filename}`" class="home-status-card refined-status-card backup-artifact-card">
             <span>{{ t(`admin.backups.artifacts.${artifact.artifact_type}`) }}</span>
             <strong>{{ artifact.filename }}</strong>
             <p>{{ formatBytes(artifact.size_bytes) }}</p>

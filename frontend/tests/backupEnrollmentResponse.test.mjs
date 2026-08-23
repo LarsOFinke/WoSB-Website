@@ -18,29 +18,31 @@ function response(overrides = {}) {
     schema_version: 1,
     kind: 'rbf-backup-enrollment-response',
     enrollment_id: 'A'.repeat(32),
-    host: '192.168.2.107',
-    port: 22,
+    host: '127.0.0.1',
+    port: 22023,
     deployment_environment: 'production',
-    username: 'rbf-backup-production',
-    recovery_username: 'rbf-recovery-production',
+    username: 'rbf-backup-controller-production',
     storage_directory: '/backups/wosb/production',
-    remote_directory: '/incoming',
-    receipt_directory: '/receipts',
-    recovery_directory: '/data',
+    remote_directory: '/exports',
+    request_directory: '/requests',
+    status_directory: '/status',
+    acknowledgement_directory: '/acknowledgements',
     host_key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=',
     host_key_fingerprint: `SHA256:${'B'.repeat(43)}`,
     age_recipient: `age1${'a'.repeat(58)}`,
     managed_server: true,
-    trust_model: 'server-controlled-ingest-v1',
+    trust_model: 'backup-controller-pull-v1',
+    transport: 'recovery-controller-pull-v1',
+    controller_public_key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIControllerKey= controller',
     ...overrides,
   }
 }
 
 function targetFields(environment = 'test') {
   return {
+    enrollmentId: 'A'.repeat(32),
     deploymentEnvironment: environment,
-    requestedUsername: `rbf-backup-${environment}`,
-    requestedRecoveryUsername: `rbf-recovery-${environment}`,
+    requestedControllerUsername: `rbf-backup-controller-${environment}`,
     requestedStorageDirectory: `/backups/wosb/${environment}`,
     directory: `/backups/wosb/${environment}`,
   }
@@ -50,7 +52,7 @@ test('enrollment response parser accepts the provisioner response including UTF-
   const text = `\uFEFF${JSON.stringify(response())}\n`
   const result = parseBackupEnrollmentResponse(text, 'A'.repeat(32))
   assert.equal(result.error, null)
-  assert.equal(result.payload.host, '192.168.2.107')
+  assert.equal(result.payload.host, '127.0.0.1')
   assert.equal(normalizeBackupEnrollmentFile(text).startsWith('{'), true)
 })
 
@@ -78,16 +80,13 @@ test('enrollment response parser explains mismatched or incomplete files', () =>
 test('enrollment command builder produces a complete copy-and-paste provisioning block', () => {
   const result = buildBackupEnrollmentCommand({
     ...targetFields('production'),
-    host: '192.168.2.107',
-    port: 22,
     retentionDays: 30,
-    allowFrom: '192.168.2.36/32',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
     releaseVersion: '1.7.33',
     provisionerBase64: Buffer.from('#!/bin/sh\n').toString('base64'),
     provisionerSha256: 'b'.repeat(64),
-    ingestScriptBase64: Buffer.from('#!/usr/bin/env python3\n').toString('base64'),
-    ingestScriptSha256: 'c'.repeat(64),
+    recoveryToolBase64: Buffer.from('recovery-tool').toString('base64'),
+    recoveryToolSha256: 'c'.repeat(64),
   })
   assert.equal(result.error, null)
   assert.match(result.command, /REQUEST="\$HOME\/Downloads\/rbf-backup-enrollment-request-/)
@@ -100,11 +99,9 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
   assert.doesNotMatch(result.command, /github\.com|curl --fail/)
   assert.match(result.command, /sha256sum -c/)
   assert.match(result.command, /sudo bash \"\$PROVISIONER\"/)
-  assert.match(result.command, /--host '192\.168\.2\.107'/)
-  assert.match(result.command, /--user 'rbf-backup-production'/)
-  assert.match(result.command, /--recovery-user 'rbf-recovery-production'/)
-  assert.match(result.command, /--directory '\/backups\/wosb\/production'/)
-  assert.match(result.command, /--allow-from '192\.168\.2\.36\/32'/)
+  assert.doesNotMatch(result.command, /BACKUP_SERVER_HOST|BACKUP_SERVER_PORT/)
+  assert.match(result.command, /--retention-days 30/)
+  assert.doesNotMatch(result.command, /--allow-from|--host/)
   assert.match(result.command, /--result "\$RESPONSE"/)
   assert.match(result.command, /^\( # Run setup in an isolated shell/)
 })
@@ -112,13 +109,12 @@ test('enrollment command builder produces a complete copy-and-paste provisioning
 test('a provisioning failure cannot close the interactive parent shell', () => {
   const result = buildBackupEnrollmentCommand({
     ...targetFields(),
-    host: 'backup.local',
     releaseVersion: '1.7.33',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
     provisionerBase64: Buffer.from('#!/bin/sh\n').toString('base64'),
     provisionerSha256: 'b'.repeat(64),
-    ingestScriptBase64: Buffer.from('#!/usr/bin/env python3\n').toString('base64'),
-    ingestScriptSha256: 'c'.repeat(64),
+    recoveryToolBase64: Buffer.from('recovery-tool').toString('base64'),
+    recoveryToolSha256: 'c'.repeat(64),
   })
   const home = mkdtempSync(join(tmpdir(), 'rbf-enrollment-command-'))
   const execution = spawnSync('bash', ['-c', `${result.command}\nprintf 'PARENT_STILL_RUNNING\\n'`], {
@@ -139,17 +135,16 @@ done
 printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_id":"${enrollmentId}","deployment_environment":"test"}\\n' > "$result"
 `
   const provisionerSha256 = createHash('sha256').update(provisioner).digest('hex')
-  const ingestScript = '#!/usr/bin/env python3\n'
-  const ingestScriptSha256 = createHash('sha256').update(ingestScript).digest('hex')
+  const recoveryTool = Buffer.from('recovery-tool')
+  const recoveryToolSha256 = createHash('sha256').update(recoveryTool).digest('hex')
   const result = buildBackupEnrollmentCommand({
     ...targetFields(),
-    host: 'backup.local',
     releaseVersion: '1.8.1',
     requestFilename: `rbf-backup-enrollment-request-${enrollmentId}.json`,
     provisionerBase64: Buffer.from(provisioner).toString('base64'),
     provisionerSha256,
-    ingestScriptBase64: Buffer.from(ingestScript).toString('base64'),
-    ingestScriptSha256,
+    recoveryToolBase64: recoveryTool.toString('base64'),
+    recoveryToolSha256,
   })
   const home = mkdtempSync(join(tmpdir(), 'rbf-enrollment-self-contained-'))
   const downloads = join(home, 'Downloads')
@@ -163,8 +158,8 @@ printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_
     deployment_environment: 'test',
     provisioner_base64: Buffer.from(provisioner).toString('base64'),
     provisioner_sha256: provisionerSha256,
-    ingest_script_base64: Buffer.from(ingestScript).toString('base64'),
-    ingest_script_sha256: ingestScriptSha256,
+    recovery_tool_base64: recoveryTool.toString('base64'),
+    recovery_tool_sha256: recoveryToolSha256,
   }))
   writeFileSync(join(bin, 'sudo'), '#!/usr/bin/env bash\nexec "$@"\n')
   chmodSync(join(bin, 'sudo'), 0o700)
@@ -176,7 +171,6 @@ printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_
 
   assert.equal(execution.status, 0, execution.stderr)
   assert.equal(readFileSync(join(downloads, 'provision-rbf-backup-server.sh'), 'utf8'), provisioner)
-  assert.equal(readFileSync(join(downloads, 'rbf-backup-ingest.py'), 'utf8'), ingestScript)
   assert.match(execution.stdout, /provision-rbf-backup-server\.sh: OK/)
   assert.doesNotMatch(execution.stderr, /curl|404|GitHub/)
 })
@@ -184,16 +178,14 @@ printf '{"schema_version":1,"kind":"rbf-backup-enrollment-response","enrollment_
 test('enrollment setup validator blocks incomplete commands before copy', () => {
   const valid = {
     ...targetFields(),
-    host: 'backup.local',
     releaseVersion: '1.7.33',
     requestFilename: `rbf-backup-enrollment-request-${'A'.repeat(32)}.json`,
     provisionerBase64: Buffer.from('#!/bin/sh\n').toString('base64'),
     provisionerSha256: 'b'.repeat(64),
-    ingestScriptBase64: Buffer.from('#!/usr/bin/env python3\n').toString('base64'),
-    ingestScriptSha256: 'c'.repeat(64),
+    recoveryToolBase64: Buffer.from('recovery-tool').toString('base64'),
+    recoveryToolSha256: 'c'.repeat(64),
   }
-  assert.equal(validateBackupEnrollmentSetup({ ...valid, host: '' }).error, 'invalidHost')
-  assert.equal(validateBackupEnrollmentSetup({ ...valid, port: 70000 }).error, 'invalidPort')
+  assert.equal(validateBackupEnrollmentSetup(valid).error, null)
   assert.equal(validateBackupEnrollmentSetup({ ...valid, directory: '../backups' }).error, 'invalidDirectory')
   assert.equal(validateBackupEnrollmentSetup({ ...valid, retentionDays: 0 }).error, 'invalidRetention')
   assert.equal(validateBackupEnrollmentSetup({ ...valid, releaseVersion: 'latest' }).error, 'invalidReleaseVersion')

@@ -69,7 +69,7 @@ export_verified_recovery_set() {
   [[ "$export_dir" == /* ]] || die "BACKUP_PULL_EXPORT_DIR must be absolute."
   id "$export_user" >/dev/null 2>&1 || die "BACKUP_PULL_EXPORT_USER does not exist: $export_user"
   export_group="$(id -gn "$export_user")"
-  install -d -m 0700 -o "$export_user" -g "$export_group" "$export_dir"
+  install -d -m 0750 -o root -g "$export_group" "$export_dir"
 
   copy_atomic() {
     source="$1"
@@ -77,7 +77,7 @@ export_verified_recovery_set() {
     target="$export_dir/$(basename "$source")"
     temporary="$export_dir/.$(basename "$source").part.$$"
     rm -f "$temporary"
-    install -m 0600 -o "$export_user" -g "$export_group" "$source" "$temporary"
+    install -m 0640 -o root -g "$export_group" "$source" "$temporary"
     mv -f "$temporary" "$target"
   }
 

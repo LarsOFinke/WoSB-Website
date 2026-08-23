@@ -35,6 +35,9 @@ def test_spring_bundle_requires_exact_release_artifact(tmp_path: Path) -> None:
         ],
     }
     with tarfile.open(archive, "w:gz") as handle:
+        root = tarfile.TarInfo(".")
+        root.type = tarfile.DIRTYPE
+        handle.addfile(root)
         for name, data in files.items():
             info = tarfile.TarInfo(name)
             info.size = len(data)
@@ -47,4 +50,3 @@ def test_spring_bundle_requires_exact_release_artifact(tmp_path: Path) -> None:
     result = verify_plain_archive(archive, "a" * 64)
     assert result.version == "1.2.0"
     assert result.release_artifact == "rbf-release.tar.gz"
-

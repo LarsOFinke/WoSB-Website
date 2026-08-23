@@ -5,20 +5,17 @@ import json
 from pathlib import Path
 import sys
 
-from .automation import install_pull_timer, remove_pull_timer
 from .backup_catalog import fetch_backup_catalog
 from .config import (
     TARGETS,
     Profile,
-    RecoveryConfig,
+    controller_username,
     load_config,
     load_profile,
-    save_config,
-    save_profile,
     target_label,
 )
-from .enrollment import discover_response, load_response
-from .sftp_client import download_latest, fetch_host_fingerprint
+from .controller import sync_latest
+from .sftp_client import connect, fetch_host_fingerprint
 from .verification import verify_encrypted_bundle
 
 
@@ -28,80 +25,27 @@ def _target(value: str) -> str:
     return value
 
 
-def _profile_from_response(args: argparse.Namespace) -> Profile:
-    target = args.target
-    response_path = args.response or discover_response()
-    response = load_response(response_path)
-    if response["deployment_environment"] != target:
-        raise RuntimeError(
-            f"Enrollment response is for {response['deployment_environment']}, not {target}."
-        )
-    args.response = response_path
-    profile = load_profile(target)
-    if args.local_backup_host:
-        host = "127.0.0.1"
-        username = response.get("recovery_username") or "rbf-recovery"
-    else:
-        host = response["host"]
-        username = response["username"]
-    profile.host = args.host or host
-    profile.port = args.port or int(response["port"])
-    profile.username = args.username or username
-    profile.remote_directory = args.remote_directory or response["recovery_directory"]
-    profile.host_fingerprint = response["host_key_fingerprint"]
-    profile.enrollment_id = response["enrollment_id"]
-    if args.ssh_key:
-        profile.ssh_key_path = str(Path(args.ssh_key).expanduser())
-    if args.identity:
-        profile.age_identity_path = str(Path(args.identity).expanduser())
-    if args.destination:
-        profile.destination_directory = str(Path(args.destination).expanduser())
-    return profile.normalized()
-
-
-def _available_secret(candidate: Path, current: str) -> str:
-    if Path(current).is_file():
-        return current
-    return str(candidate) if candidate.is_file() else current
-
-
-def _setup(args: argparse.Namespace) -> int:
-    profile = _profile_from_response(args)
-    profile.ssh_key_path = _available_secret(
-        Path.home() / "RBF-Recovery" / args.target / "rbf-recovery-readonly-ed25519", profile.ssh_key_path
-    )
-    profile.age_identity_path = _available_secret(
-        Path.home() / "RBF-Recovery" / args.target / "rbf-recovery-identity.txt", profile.age_identity_path
-    )
-    profile.validate(require_fingerprint=True, require_files=True)
-    if not args.offline:
-        actual = fetch_host_fingerprint(profile)
-        if actual != profile.host_fingerprint:
-            raise RuntimeError(
-                "Live SSH host key does not match the enrollment response. "
-                "Do not continue until the change is independently verified."
-            )
-    path = save_profile(profile, args.target)
-    mode = "local backup-host access" if args.local_backup_host else "remote access"
-    print(f"Configured {target_label(args.target)} recovery target ({mode}).")
-    print(f"Enrollment response: {Path(args.response).expanduser().resolve()}")
-    print(f"Profile store: {path}")
-    print(f"Pinned host key: {profile.host_fingerprint}")
-    if args.offline:
-        print("WARNING: live host-key verification was skipped; run `test` before pulling.")
-    print(f"Next step: rbf-recovery-tool pull --target {args.target}")
-    return 0
-
-
 def _profile_for(args: argparse.Namespace, *, files: bool = False) -> Profile:
     profile = load_profile(args.target).normalized()
+    if profile.username != controller_username(args.target):
+        raise ValueError(
+            f"The {args.target} profile is bound to {profile.username!r}; "
+            f"expected {controller_username(args.target)!r}."
+        )
     profile.validate(require_fingerprint=True, require_files=files)
     return profile
 
 
 def _pull(args: argparse.Namespace) -> int:
     profile = _profile_for(args, files=True)
-    bundle = download_latest(profile, password=args.password or "")
+    bundle = sync_latest(
+        profile,
+        password=args.password or "",
+        trigger=bool(getattr(args, "trigger", False)),
+        allow_empty=args.command == "sync",
+    )
+    if bundle is None:
+        return 0
     result = verify_encrypted_bundle(bundle, Path(profile.age_identity_path))
     if not args.quiet:
         print(f"OK: {bundle}")
@@ -153,38 +97,15 @@ def _show_targets(_args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rbf-recovery-tool",
-        description="Pull and verify Spring/Flyway recovery bundles from a pinned backup target.",
+        description="Operate isolated test and production backup targets from the backup server.",
     )
     sub = parser.add_subparsers(dest="command")
-    setup = sub.add_parser("setup", help="Import one enrollment response into a named target")
-    setup.add_argument("--target", required=True, type=_target)
-    setup.add_argument(
-        "--response", type=Path,
-        help="Provisioning response JSON; defaults to the single valid response in ~/Downloads",
-    )
-    setup.add_argument("--ssh-key", type=Path, help="Private read-only recovery SSH key")
-    setup.add_argument("--identity", type=Path, help="Private age identity")
-    setup.add_argument("--destination", type=Path, help="Local backup destination")
-    setup.add_argument("--host", help="Override response host, e.g. 127.0.0.1")
-    setup.add_argument("--port", type=int, help="Override response SSH port")
-    setup.add_argument("--username", help="Override response SSH user")
-    setup.add_argument("--remote-directory", help="Override the SFTP directory")
-    setup.add_argument(
-        "--local-backup-host",
-        action="store_true",
-        help="Use the provisioned loopback-only rbf-recovery account on this backup host",
-    )
-    setup.add_argument(
-        "--offline",
-        action="store_true",
-        help="Save without a live host-key check; the pinned fingerprint is still required",
-    )
     targets = sub.add_parser("targets", help="List configured test and production targets")
-    for command in ("pull", "catalog", "verify"):
+    for command in ("run", "sync", "catalog", "verify"):
         target_parser = sub.add_parser(command, help=f"{command.title()} a recovery target")
         target_parser.add_argument("--target", type=_target, default=load_config().active_target)
         target_parser.add_argument("--password", help="SSH key passphrase (never stored)")
-        if command == "pull":
+        if command in {"run", "sync"}:
             target_parser.add_argument("--quiet", action="store_true")
         elif command == "catalog":
             target_parser.add_argument("--json", action="store_true", dest="as_json")
@@ -193,10 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
             target_parser.add_argument("--identity", type=Path)
     check = sub.add_parser("test", help="Verify the live SSH host key for a target")
     check.add_argument("--target", type=_target, default=load_config().active_target)
-    timer = sub.add_parser("timer", help="Manage the Linux automatic pull timer")
-    timer.add_argument("action", choices=("install", "remove"))
-    timer.add_argument("--target", type=_target, required=True)
-    timer.add_argument("--calendar", default="daily")
+    check.add_argument("--password", help="SSH key passphrase (never stored)")
     return parser
 
 
@@ -208,11 +126,10 @@ def main(argv: list[str] | None = None) -> int:
 
         gui_main()
         return 0
-    if args.command == "setup":
-        return _setup(args)
     if args.command == "targets":
         return _show_targets(args)
-    if args.command == "pull":
+    if args.command in {"run", "sync"}:
+        args.trigger = args.command == "run"
         return _pull(args)
     if args.command == "catalog":
         return _catalog(args)
@@ -225,15 +142,9 @@ def main(argv: list[str] | None = None) -> int:
             raise RuntimeError(
                 f"Host-key mismatch: pinned {profile.host_fingerprint}, live {actual}"
             )
-        print(f"OK: {target_label(args.target)} host key {actual}")
-        return 0
-    if args.command == "timer":
-        if args.action == "install":
-            service, timer = install_pull_timer(args.target, args.calendar)
-            print(f"Enabled {target_label(args.target)} timer: {service} / {timer}")
-        else:
-            remove_pull_timer(args.target)
-            print(f"Removed {target_label(args.target)} timer.")
+        client = connect(profile, password=args.password or "")
+        client.close()
+        print(f"OK: {target_label(args.target)} SSH host key and authentication verified ({actual})")
         return 0
     return 2
 

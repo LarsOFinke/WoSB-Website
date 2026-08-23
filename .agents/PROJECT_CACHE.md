@@ -256,12 +256,16 @@ a directory name alone.
   the public request containing the exact deployed provisioner, run the generated command on
   the backup host to extract and checksum-verify it, and import the public response with a
   fresh host capability. Enrollment does not depend on a separately published GitHub release.
-  Managed backup servers expose `/incoming` to the website and read-only receipts
-  under `/receipts`; root-owned ingest independently validates and copies complete
-  recoverable sets into website-inaccessible `/data`. The application-host
-  timer and release installer already provide nightly and pre-update uploads; the standalone
-  Recovery Tool is optional for listing, pulling, verifying, or restoring backup sets and is
-  not a prerequisite for automated backups.
+  The Recovery Tool on the backup server is the controller: it connects outbound to the
+  website's pinned SFTP-only endpoint, requests backups, verifies and retains them under
+  `/backups/wosb/<environment>`, and acknowledges the exact manifest. The website stores no
+  backup-server address. Root-owned website exports are controller-readable but not writable;
+  only request and acknowledgement directories are controller-writable. Test and production
+  use distinct accounts, keys, profiles, state, and storage; automatic controller timers are
+  disabled. Their separate origin deployment profiles own and reconcile the website SSH host
+  and port on every update, with no `APP_HOSTNAME` fallback. Pre-update activation keeps its
+  verified local backup and only requires controller acknowledgement when
+  `BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE=true`.
 - The cookie-consent UI opens automatically without a saved decision and remains reachable
   in a fail-closed settings state when initialization fails. Manual opening remains available
   through the footer and privacy center.

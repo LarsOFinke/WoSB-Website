@@ -6,6 +6,7 @@ public record BackupConnectionSummary(
         String host,
         String hostKeyFingerprint,
         Boolean managedServer,
+        String mode,
         Long port,
         Boolean privateKeyConfigured,
         String remoteDirectory,

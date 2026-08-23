@@ -12,11 +12,8 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
   const response = ref('')
   const responseFileName = ref('')
   const setup = reactive({
-    host: '',
-    port: 22,
     directory: '/backups/wosb',
     retentionDays: 30,
-    allowFrom: '',
   })
   const enrollmentPreparationActive = computed(() => (
     status.value.operation === 'prepare_enrollment'
@@ -65,15 +62,13 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     releaseVersion: enrollmentRequest.value?.release_version,
     provisionerBase64: enrollmentRequest.value?.provisioner_base64,
     provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
-    ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
-    ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
+    recoveryToolBase64: enrollmentRequest.value?.recovery_tool_base64,
+    recoveryToolSha256: enrollmentRequest.value?.recovery_tool_sha256,
     deploymentEnvironment: enrollmentRequest.value?.deployment_environment,
-    requestedUsername: enrollmentRequest.value?.requested_username,
-    requestedRecoveryUsername: enrollmentRequest.value?.requested_recovery_username,
+    requestedControllerUsername: enrollmentRequest.value?.requested_controller_username,
     requestedStorageDirectory: enrollmentRequest.value?.requested_storage_directory,
   }))
   const setupError = computed(() => {
-    if (!setup.host.trim()) return t('admin.backups.enrollment.errors.hostRequired')
     const errorKey = ['invalidReleaseVersion', 'invalidProvisioner'].includes(setupResult.value.error)
       ? 'invalidRequestFilename'
       : setupResult.value.error
@@ -88,11 +83,10 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     releaseVersion: enrollmentRequest.value?.release_version,
     provisionerBase64: enrollmentRequest.value?.provisioner_base64,
     provisionerSha256: enrollmentRequest.value?.provisioner_sha256,
-    ingestScriptBase64: enrollmentRequest.value?.ingest_script_base64,
-    ingestScriptSha256: enrollmentRequest.value?.ingest_script_sha256,
+    recoveryToolBase64: enrollmentRequest.value?.recovery_tool_base64,
+    recoveryToolSha256: enrollmentRequest.value?.recovery_tool_sha256,
     deploymentEnvironment: enrollmentRequest.value?.deployment_environment,
-    requestedUsername: enrollmentRequest.value?.requested_username,
-    requestedRecoveryUsername: enrollmentRequest.value?.requested_recovery_username,
+    requestedControllerUsername: enrollmentRequest.value?.requested_controller_username,
     requestedStorageDirectory: enrollmentRequest.value?.requested_storage_directory,
   }).command)
   watch(
@@ -109,8 +103,8 @@ export function useBackupEnrollment({ status, canSubmit, error, success, request
     requestCreated: Boolean(enrollmentRequest.value),
     responseSelected: Boolean(response.value.trim()),
     responseValid: Boolean(responsePreview.value),
-    connectionVerified: Boolean(status.value.connection?.write_tested_at)
-      && Boolean(status.value.connection?.managed_server),
+    connectionVerified: Boolean(status.value.age_recipient_configured)
+      && Boolean(status.value.enrollment_id),
   }))
   // Keep the action available while the page is idle. Its click handler can
   // then explain a missing file, mismatched response, or missing token instead

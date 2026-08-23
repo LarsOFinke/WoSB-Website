@@ -26,6 +26,7 @@ export function useDatabaseBackupsPage() {
   const error = ref('')
   const success = ref('')
   const hostApproval = ref('')
+  const enrollmentOpen = ref(false)
   const statusPollFailures = ref(0)
   const clock = ref(Date.now())
   let pollTimer = null
@@ -37,7 +38,8 @@ export function useDatabaseBackupsPage() {
   const configured = computed(() => Boolean(status.value.connection?.configured))
   const connectionReady = computed(() => (
     configured.value
-      && Boolean(status.value.connection?.write_tested_at)
+      && (status.value.connection?.mode === 'recovery-controller-pull'
+        || Boolean(status.value.connection?.write_tested_at))
       && (status.value.connection?.managed_server !== true
         || status.value.age_recipient_configured === true)
   ))
@@ -64,6 +66,7 @@ export function useDatabaseBackupsPage() {
     return inProgress.value ? null : (status.value.state === 'succeeded' ? 100 : 0)
   })
   const statusPollingDelayed = computed(() => statusPollFailures.value > 0)
+  const showEnrollment = computed(() => !connectionReady.value || enrollmentOpen.value)
 
   const formatDateTime = (value) => formatBackupDateTime(value, locale.value)
   const formatBytes = formatBackupBytes
@@ -129,6 +132,12 @@ export function useDatabaseBackupsPage() {
     }
   }
 
+  function openEnrollment() {
+    enrollmentOpen.value = true
+    error.value = ''
+    success.value = ''
+  }
+
   async function request(action, successKey) {
     if (!canSubmit.value) {
       error.value = status.value.message || t('admin.backups.errors.request')
@@ -186,13 +195,13 @@ export function useDatabaseBackupsPage() {
 
   return {
     t, isAdmin, user, navigationGroups, status, loading, error, success, hostApproval,
-    inProgress, configured, connectionReady, canSubmit, hasHostApproval, stateLabel, operationLabel,
+    inProgress, configured, connectionReady, showEnrollment, canSubmit, hasHostApproval, stateLabel, operationLabel,
     operationElapsedSeconds, operationProgress,
     statusPollingDelayed,
     enrollmentResponse, enrollmentFileName, enrollmentSetup, enrollmentRequest,
     enrollmentResponsePreview, enrollmentSetupError, enrollmentProgress,
     enrollmentResponseError, enrollmentCommand, canCopyEnrollmentCommand,
-    canApplyEnrollment, copyEnrollmentCommand, prepareEnrollment,
+    canApplyEnrollment, copyEnrollmentCommand, prepareEnrollment, openEnrollment,
     downloadEnrollmentRequest, loadEnrollmentResponse, applyEnrollment,
     formatDateTime, formatBytes, loadStatus, runBackup,
   }

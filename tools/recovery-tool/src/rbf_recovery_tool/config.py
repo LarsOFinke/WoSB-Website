@@ -10,6 +10,7 @@ from typing import Any
 
 TARGETS = ("test", "production")
 TARGET_LABELS = {"test": "Test", "production": "Production"}
+LEGACY_CONTROLLER_USERNAMES = {"rbf-backup-controller", "rbf-recovery"}
 CONFIG_SCHEMA_VERSION = 2
 _HOST_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
 _USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
@@ -18,6 +19,12 @@ _FINGERPRINT_RE = re.compile(r"^SHA256:[A-Za-z0-9+/]{40,64}$")
 
 def target_label(target: str) -> str:
     return TARGET_LABELS.get(target, target)
+
+
+def controller_username(target: str) -> str:
+    if target not in TARGETS:
+        raise ValueError(f"Unknown recovery target: {target}")
+    return f"rbf-backup-controller-{target}"
 
 
 @dataclass
@@ -31,6 +38,7 @@ class Profile:
     age_identity_path: str = ""
     host_fingerprint: str = ""
     enrollment_id: str = ""
+    retention_days: int = 30
 
     @classmethod
     def defaults(cls, target: str) -> "Profile":
@@ -39,8 +47,8 @@ class Profile:
         root = Path.home() / "RBF-Recovery" / target
         return cls(
             destination_directory=str(root / "Backups"),
-            ssh_key_path=str(root / "rbf-recovery-readonly-ed25519"),
-            age_identity_path=str(root / "rbf-recovery-identity.txt"),
+            ssh_key_path=str(root / "controller-ed25519"),
+            age_identity_path=str(root / "recovery-age-identity.txt"),
         )
 
     def normalized(self) -> "Profile":
@@ -54,6 +62,7 @@ class Profile:
         profile.host_fingerprint = profile.host_fingerprint.strip()
         profile.enrollment_id = profile.enrollment_id.strip()
         profile.port = int(profile.port)
+        profile.retention_days = int(profile.retention_days)
         return profile
 
     def validate(
@@ -84,6 +93,8 @@ class Profile:
             raise ValueError("The configured age identity file was not found.")
         if require_fingerprint and not _FINGERPRINT_RE.fullmatch(profile.host_fingerprint):
             raise ValueError("The SSH host key has not been pinned and confirmed.")
+        if not 1 <= profile.retention_days <= 3650:
+            raise ValueError("Retention must be between 1 and 3650 days.")
 
 
 @dataclass
@@ -127,6 +138,12 @@ def _profile(value: object, target: str) -> Profile:
         return Profile.defaults(target)
     allowed = set(Profile.__dataclass_fields__)
     filtered = {key: item for key, item in value.items() if key in allowed}
+    # The first controller-pull release used one shared account name. Never
+    # relabel that profile as a target-specific identity: its key may belong to
+    # a different website/environment. Treat it as unconfigured and require a
+    # fresh, target-bound enrollment instead.
+    if filtered.get("username") in LEGACY_CONTROLLER_USERNAMES:
+        return Profile.defaults(target)
     try:
         return Profile(**filtered).normalized()
     except (TypeError, ValueError):

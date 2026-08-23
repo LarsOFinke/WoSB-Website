@@ -168,7 +168,11 @@ class BackupRestoreMixin:
             "prepare_key": "The protected SSH upload key could not be prepared.",
             "discover": "SSH host-key discovery failed. Review the protected host log.",
             "configure": "The remote backup connection could not be saved. Review the protected host log.",
-            "prepare_enrollment": "The enrollment request could not be created.",
+            "prepare_enrollment": (
+                "The enrollment request could not be created. Verify that the latest "
+                "deployment reconciled this environment's website SSH endpoint, then "
+                "review the protected host log."
+            ),
             "apply_enrollment": "The enrollment response could not be applied or verified.",
             "test": "The remote backup connection test failed. Review the protected host log.",
             "backup": "The application backup failed. Review the protected host log.",

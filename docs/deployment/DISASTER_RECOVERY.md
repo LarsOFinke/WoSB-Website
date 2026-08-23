@@ -51,22 +51,20 @@ same current contract: backup-set schema 1, Spring/Flyway preflight schema 2,
 and recovery-bundle schema 2 with the exact release artifact. It does not use
 the old Python-backend repository or ask the website to perform routine pulls.
 
-Configure each backup target explicitly. The provisioner response is public;
-the private read-only SSH key and age identity stay on the recovery host:
+The website enrollment flow provisions each backup target explicitly. The
+provisioner response is public; the private read-only SSH key and age identity
+stay on the recovery host:
 
-```text
-rbf-recovery-tool setup --target test --local-backup-host
-rbf-recovery-tool setup --target production --local-backup-host
-rbf-recovery-tool targets
-rbf-recovery-tool pull --target production
+```bash
+# Backup server
+sudo rbf-recovery-tool targets
+sudo rbf-recovery-tool test --target production
+sudo rbf-recovery-tool run --target production
+sudo rbf-recovery-tool sync --target production
+sudo rbf-recovery-tool catalog --target production
 ```
 
-Setup selects a single valid response from `~/Downloads` by JSON content. If
-multiple responses exist, pass `--response /path/to/file.json` to select the
-intended target explicitly.
-
 Test and production profiles use separate local directories and target-specific
-Linux timers. The setup command performs a live comparison with the response's
-pinned SSH fingerprint. If an offline import is unavoidable, use `--offline`
-only temporarily and run `rbf-recovery-tool test --target <target>` before a
-pull. A host-key mismatch is a stop condition, not a prompt to accept a new key.
+pinned SSH fingerprints. A host-key mismatch is a stop condition, not a prompt
+to accept a new key. Automatic timers are intentionally disabled; run `run` for
+a fresh website backup or `sync` to collect an already-published export.

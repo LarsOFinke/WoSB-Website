@@ -78,6 +78,25 @@ class RunnerCore:
         return payload
 
     def connection_summary(self) -> dict[str, Any]:
+        env_file = self.infra_dir / ".env"
+        if env_file.is_file():
+            values: dict[str, str] = {}
+            for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    values[key.strip()] = value.strip().strip("\"'")
+            enrollment_id = values.get("BACKUP_PULL_ENROLLMENT_ID", "")
+            environment = values.get("DEPLOYMENT_ENVIRONMENT", "")
+            if enrollment_id and environment in {"test", "production"}:
+                return {
+                    "configured": True,
+                    "mode": "recovery-controller-pull",
+                    "username": f"rbf-backup-controller-{environment}",
+                    "remote_directory": "/exports",
+                    "managed_server": True,
+                    "write_tested_at": None,
+                }
         public_key, key_fingerprint = self._key_identity()
         if not self.config_file.is_file():
             return {

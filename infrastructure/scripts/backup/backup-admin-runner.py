@@ -76,7 +76,10 @@ class Runner(
                 message = "Enrollment request created. Provision the backup server with the Recovery Tool."
             elif operation == "apply_enrollment":
                 updates = self.apply_enrollment()
-                message = "Backup server enrolled, encrypted recovery enabled and SFTP connection verified."
+                message = (
+                    "Backup controller authorized for this environment and encrypted "
+                    "pull exports enabled."
+                )
             elif operation == "discover":
                 updates = self.discover()
                 message = "SSH host key discovered. Verify its fingerprint before saving the connection."

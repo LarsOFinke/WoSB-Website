@@ -31,6 +31,20 @@ existing host package path; `--skip-host` disables this explicitly. Both private
 files are maintained with mode `0600`. Templates: `.env.origin.test.example` and
 `.env.origin.production.example`.
 
+Each profile also owns the SSH endpoint through which the backup server reaches
+that website:
+
+```dotenv
+RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST=website-ssh.example.org
+RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_PORT=22
+```
+
+If omitted, these default to that profile's `RBF_DEPLOY_HOST` and
+`RBF_DEPLOY_PORT`. The selected values are reconciled into
+`BACKUP_CONTROLLER_WEBSITE_HOST` and `BACKUP_CONTROLLER_WEBSITE_SSH_PORT` in the
+target-local private environment on every deployment. Test and production never
+share an implicit hostname fallback.
+
 Run `deploy.sh` and `update.sh` on the origin machine as a normal user and without
 `sudo`. Once the selected profile exists, invocation is non-interactive. Configure test
 with `./deploy.sh --configure`; configure production deliberately only with
@@ -202,10 +216,14 @@ can legitimately take several minutes even when every bounded readiness check is
 making progress.
 
 The origin dispatcher does not pass `--skip-backup` or `--no-backup` for normal
-updates. The target installer therefore invokes the coordinated backup before
-the atomic release switch. Using the incoming runner allows a release to repair
-backup orchestration defects in its predecessor without mutating that immutable
-active release. On a genuinely empty target, `setup_website.sh`
+updates. The target installer therefore invokes the coordinated local backup
+before the atomic release switch. Using the incoming runner allows a release to
+repair backup orchestration defects in its predecessor without mutating that
+immutable active release. A remote Recovery Tool acknowledgement is attempted
+within a bounded timeout; if it is unavailable, the verified local backup still
+protects the update and activation continues. Set
+`BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE=true` when remote acknowledgement must be
+strictly fail closed. On a genuinely empty target, `setup_website.sh`
 automatically marks the run as a first installation without a backup; if
 release data or an active installation is present, it fails closed and keeps
 the backup requirement. `--skip-backup` remains an explicit emergency/operator

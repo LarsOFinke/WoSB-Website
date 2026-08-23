@@ -71,4 +71,18 @@ class AuditServicesTest {
                 .contains("active", "role")
                 .doesNotContain("role ");
     }
+
+    @Test
+    void recordPreservesDescriptiveActionsUsedByHostOperations() {
+        AuditDataRepository repository = mock(AuditDataRepository.class);
+        AuditService service = new AuditService(repository, new ObjectMapper(), CLOCK,
+                mock(org.springframework.context.ApplicationEventPublisher.class));
+
+        service.record(ACTOR, "backup_control", "apply_enrollment",
+                "enrollment_apply_requested", "Enrollment requested.", List.of("operation"));
+
+        ArgumentCaptor<Map<String, Object>> parameters = ArgumentCaptor.forClass(Map.class);
+        verify(repository).update(anyString(), parameters.capture());
+        assertThat(parameters.getValue()).containsEntry("action", "enrollment_apply_requested");
+    }
 }

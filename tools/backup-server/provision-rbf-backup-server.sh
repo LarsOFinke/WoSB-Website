@@ -4,644 +4,343 @@ umask 077
 
 [[ ${EUID:-$(id -u)} -eq 0 ]] || { echo "This provisioning requires root privileges." >&2; exit 1; }
 
-REQUEST=""
-HOST=""
-PORT=22
-USERNAME="rbf-backup"
-RECOVERY_USERNAME="rbf-recovery"
-RECOVERY_PUBLIC_KEY=""
-DIRECTORY="/backups/wosb"
-RESULT=""
-ALLOW_FROM=""
-SKIP_PACKAGE_INSTALL=false
-RETENTION_DAYS=30
-INGEST_SCRIPT=""
-
+REQUEST=""; RESULT=""; RETENTION_DAYS=30; SKIP_PACKAGE_INSTALL=false
 while (($#)); do
   case "$1" in
     --request) REQUEST="$2"; shift 2 ;;
-    --host) HOST="$2"; shift 2 ;;
-    --port) PORT="$2"; shift 2 ;;
-    --user) USERNAME="$2"; shift 2 ;;
-    --recovery-user) RECOVERY_USERNAME="$2"; shift 2 ;;
-    --recovery-public-key) RECOVERY_PUBLIC_KEY="$2"; shift 2 ;;
-    --directory) DIRECTORY="$2"; shift 2 ;;
     --result) RESULT="$2"; shift 2 ;;
-    --allow-from) ALLOW_FROM="$2"; shift 2 ;;
     --retention-days) RETENTION_DAYS="$2"; shift 2 ;;
-    --ingest-script) INGEST_SCRIPT="$2"; shift 2 ;;
     --skip-package-install) SKIP_PACKAGE_INSTALL=true; shift ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done
-
-[[ -f "$REQUEST" && -f "$INGEST_SCRIPT" && ! -L "$INGEST_SCRIPT" && -n "$HOST" && -n "$RESULT" ]] || {
-  echo "--request, --ingest-script, --host, and --result are required." >&2
+[[ -f "$REQUEST" && ! -L "$REQUEST" && -n "$RESULT" ]] || {
+  echo "--request and --result are required." >&2
   exit 2
 }
-[[ "$PORT" =~ ^[0-9]+$ ]] && ((PORT >= 1 && PORT <= 65535)) || { echo "Invalid SSH port." >&2; exit 2; }
-[[ "$RETENTION_DAYS" =~ ^[1-9][0-9]*$ ]] || { echo "Invalid retention period." >&2; exit 2; }
-[[ "$HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$ ]] || { echo "Invalid external hostname." >&2; exit 2; }
-[[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || { echo "Invalid upload username." >&2; exit 2; }
-[[ "$RECOVERY_USERNAME" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || { echo "Invalid recovery username." >&2; exit 2; }
-[[ "$USERNAME" != "$RECOVERY_USERNAME" ]] || { echo "Upload and recovery users must be separate." >&2; exit 2; }
-[[ "$DIRECTORY" =~ ^/[A-Za-z0-9._/-]+$ ]] && [[ "$DIRECTORY" != *'/../'* && "$DIRECTORY" != */.. && "$DIRECTORY" != *'/./'* ]] || {
-  echo "Invalid target directory." >&2
+[[ "$RETENTION_DAYS" =~ ^[1-9][0-9]*$ ]] && ((RETENTION_DAYS <= 3650)) || {
+  echo "Invalid retention period." >&2
   exit 2
 }
-case "$DIRECTORY" in
-  /|/bin|/bin/*|/boot|/boot/*|/dev|/dev/*|/etc|/etc/*|/lib|/lib/*|/lib32|/lib32/*|/lib64|/lib64/*|/proc|/proc/*|/root|/root/*|/run|/run/*|/sbin|/sbin/*|/sys|/sys/*|/tmp|/tmp/*|/usr|/usr/*)
-    echo "The target directory is located in a protected system path." >&2
-    exit 2
-    ;;
-esac
 
-if [[ -n "$ALLOW_FROM" ]]; then
-  python3 - "$ALLOW_FROM" <<'PY'
-import ipaddress
-import sys
-ipaddress.ip_network(sys.argv[1], strict=False)
-PY
-fi
-
-readarray -t request_fields < <(python3 - "$REQUEST" <<'PY'
+readarray -t fields < <(python3 - "$REQUEST" <<'PY'
+import base64
+import hashlib
 import json
 import re
 import sys
 from pathlib import Path
-path = Path(sys.argv[1])
-try:
-    payload = json.loads(path.read_text(encoding="utf-8-sig"))
-except FileNotFoundError as exc:
-    raise SystemExit(f"Enrollment request not found: {path.resolve()}") from exc
-except PermissionError as exc:
-    raise SystemExit(f"No read permission for the enrollment request: {path.resolve()}") from exc
-except json.JSONDecodeError as exc:
-    raise SystemExit(
-        f"Enrollment request is not valid JSON (line {exc.lineno}, column {exc.colno}): {path.resolve()}"
-    ) from exc
+
+payload = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8-sig"))
 if payload.get("schema_version") != 1 or payload.get("kind") != "rbf-backup-enrollment-request":
-    raise SystemExit("Invalid or unsupported enrollment request.")
+    raise SystemExit("Unsupported enrollment request.")
+environment = str(payload.get("deployment_environment") or "").strip().lower()
 enrollment_id = str(payload.get("enrollment_id") or "").strip()
-public_key = str(payload.get("ssh_public_key") or "").strip()
-requested_username = str(payload.get("requested_username") or "").strip()
-requested_recovery_username = str(payload.get("requested_recovery_username") or "").strip()
-requested_storage_directory = str(payload.get("requested_storage_directory") or "").strip().rstrip("/")
-requested_directory = str(payload.get("requested_directory") or "").strip().rstrip("/") or "/"
-deployment_environment = str(payload.get("deployment_environment") or "").strip().lower()
-ingest_script_sha256 = str(payload.get("ingest_script_sha256") or "").strip()
+username = str(payload.get("requested_controller_username") or "").strip()
+storage = str(payload.get("requested_storage_directory") or "").strip().rstrip("/")
+host = str(payload.get("website_host") or "").strip().lower()
+port = payload.get("website_ssh_port")
+host_key = str(payload.get("website_host_key") or "").strip()
+fingerprint = str(payload.get("website_host_key_fingerprint") or "").strip()
+encoded_tool = str(payload.get("recovery_tool_base64") or "")
+tool_sha = str(payload.get("recovery_tool_sha256") or "")
+if environment not in {"test", "production"}:
+    raise SystemExit("Invalid deployment environment.")
 if not re.fullmatch(r"[A-Za-z0-9_-]{24,128}", enrollment_id):
     raise SystemExit("Invalid enrollment ID.")
-if not re.fullmatch(
-    r"(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]+(?: [^\r\n]{1,128})?",
-    public_key,
-):
-    raise SystemExit("Invalid SSH public key.")
-if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_username):
-    raise SystemExit("Invalid requested SSH user.")
-if not re.fullmatch(r"[A-Za-z0-9._-]{1,64}", requested_recovery_username):
-    raise SystemExit("Invalid requested recovery SSH user.")
-if deployment_environment not in {"test", "production"}:
-    raise SystemExit("Invalid deployment environment.")
-if requested_username != f"rbf-backup-{deployment_environment}":
-    raise SystemExit("Requested SSH user does not match the deployment environment.")
-if requested_recovery_username != f"rbf-recovery-{deployment_environment}":
-    raise SystemExit("Requested recovery user does not match the deployment environment.")
-if requested_storage_directory != f"/backups/wosb/{deployment_environment}":
-    raise SystemExit("Requested storage directory does not match the deployment environment.")
-if requested_directory != "/incoming":
-    raise SystemExit("Unsupported requested SFTP path; expected /incoming.")
-if not re.fullmatch(r"[a-f0-9]{64}", ingest_script_sha256):
-    raise SystemExit("Invalid ingest script checksum.")
-print(enrollment_id)
-print(public_key)
-print(requested_username)
-print(requested_recovery_username)
-print(requested_storage_directory)
-print(requested_directory)
-print(deployment_environment)
-print(ingest_script_sha256)
+if username != f"rbf-backup-controller-{environment}":
+    raise SystemExit("Controller identity does not match the environment.")
+if storage != f"/backups/wosb/{environment}":
+    raise SystemExit("Storage directory does not match the environment.")
+if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?", host):
+    raise SystemExit("Invalid website SSH host.")
+if not isinstance(port, int) or not 1 <= port <= 65535:
+    raise SystemExit("Invalid website SSH port.")
+if not re.fullmatch(r"(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]+", host_key):
+    raise SystemExit("Invalid website SSH host key.")
+if not re.fullmatch(r"SHA256:[A-Za-z0-9+/]{40,64}", fingerprint):
+    raise SystemExit("Invalid website host-key fingerprint.")
+tool = base64.b64decode(encoded_tool, validate=True)
+if not tool or len(tool) > 1024 * 1024 or hashlib.sha256(tool).hexdigest() != tool_sha:
+    raise SystemExit("Embedded Recovery Tool verification failed.")
+for value in (enrollment_id, environment, username, storage, host, str(port), host_key, fingerprint, encoded_tool, tool_sha):
+    print(value)
 PY
 )
-(( ${#request_fields[@]} == 8 )) || { echo "Enrollment request could not be read completely." >&2; exit 1; }
-ENROLLMENT_ID="${request_fields[0]}"
-PUBLIC_KEY="${request_fields[1]}"
-REQUESTED_USERNAME="${request_fields[2]}"
-REQUESTED_RECOVERY_USERNAME="${request_fields[3]}"
-REQUESTED_STORAGE_DIRECTORY="${request_fields[4]}"
-REQUESTED_DIRECTORY="${request_fields[5]}"
-DEPLOYMENT_ENVIRONMENT="${request_fields[6]}"
-INGEST_SCRIPT_SHA256="${request_fields[7]}"
-[[ "$USERNAME" == "$REQUESTED_USERNAME" ]] || {
-  echo "The CLI user '$USERNAME' does not match the enrollment request '$REQUESTED_USERNAME'." >&2
-  exit 1
-}
-[[ "$RECOVERY_USERNAME" == "$REQUESTED_RECOVERY_USERNAME" ]] || {
-  echo "The CLI recovery user '$RECOVERY_USERNAME' does not match the enrollment request '$REQUESTED_RECOVERY_USERNAME'." >&2
-  exit 1
-}
-[[ "$DIRECTORY" == "$REQUESTED_STORAGE_DIRECTORY" ]] || {
-  echo "The CLI storage directory '$DIRECTORY' does not match the enrollment request '$REQUESTED_STORAGE_DIRECTORY'." >&2
-  exit 1
-}
-[[ "$REQUESTED_DIRECTORY" == "/incoming" ]] || {
-  echo "The enrollment request expects an unsupported SFTP path: $REQUESTED_DIRECTORY" >&2
-  exit 1
-}
-[[ "$(sha256sum "$INGEST_SCRIPT" | awk '{print $1}')" == "$INGEST_SCRIPT_SHA256" ]] || {
-  echo "The ingest script does not match the enrollment request checksum." >&2
-  exit 1
-}
+(( ${#fields[@]} == 10 )) || { echo "Enrollment request is incomplete." >&2; exit 1; }
+ENROLLMENT_ID="${fields[0]}"; ENVIRONMENT="${fields[1]}"; USERNAME="${fields[2]}"
+STORAGE="${fields[3]}"; WEBSITE_HOST="${fields[4]}"; WEBSITE_PORT="${fields[5]}"
+WEBSITE_HOST_KEY="${fields[6]}"; WEBSITE_FINGERPRINT="${fields[7]}"
+TOOL_BASE64="${fields[8]}"; TOOL_SHA="${fields[9]}"
 
-if [[ "$SKIP_PACKAGE_INSTALL" != true ]] && { ! command -v sshd >/dev/null 2>&1 || ! command -v age-keygen >/dev/null 2>&1; }; then
+if [[ "$SKIP_PACKAGE_INSTALL" != true ]] && {
+  ! /usr/bin/python3 -c 'import paramiko' >/dev/null 2>&1 || ! command -v age-keygen >/dev/null 2>&1
+}; then
   export DEBIAN_FRONTEND=noninteractive
   apt-get update
-  apt-get install -y openssh-server age
+  apt-get install -y python3-paramiko age openssh-client
 fi
-for command_name in python3 sshd ssh-keygen age-keygen sha256sum stat useradd usermod chpasswd groupadd getent; do
+for command_name in python3 ssh-keygen age-keygen flock systemctl; do
   command -v "$command_name" >/dev/null 2>&1 || { echo "Required tool is missing: $command_name" >&2; exit 1; }
 done
-ssh-keygen -A
-install -d -m 0755 /run/sshd
-sshd -T 2>/dev/null | awk '$1 == "port" {print $2}' | grep -qx "$PORT" || {
-  echo "sshd is not listening on the specified port $PORT. The global port configuration is not changed automatically for safety reasons." >&2
+/usr/bin/python3 -c 'import paramiko' >/dev/null 2>&1 || {
+  echo "The Python Paramiko package is required." >&2
   exit 1
 }
 
-OPERATOR_USER="${SUDO_USER:-root}"
-OPERATOR_HOME="$(getent passwd "$OPERATOR_USER" | cut -d: -f6)"
-[[ -n "$OPERATOR_HOME" && "$OPERATOR_HOME" == /* ]] || { echo "Operator home could not be determined." >&2; exit 1; }
-STATE_DIR="/etc/rbf-backup-server"
-STATE_FILE="$STATE_DIR/${USERNAME}.json"
-EXISTING_MANAGED=false
-install -d -m 0700 -o root -g root "$STATE_DIR"
-if [[ -e "$STATE_FILE" ]]; then
-  [[ -f "$STATE_FILE" && ! -L "$STATE_FILE" ]] || { echo "Unsafe provisioning state: $STATE_FILE" >&2; exit 1; }
-  python3 - "$STATE_FILE" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
-import json
-import os
-import stat
-import sys
+STATE_ROOT="/etc/rbf-recovery-tool"
+TARGET_ROOT="$STATE_ROOT/$ENVIRONMENT"
+TOOL_ROOT="/opt/rbf-recovery-tool"
+KEY="$TARGET_ROOT/controller-ed25519"
+AGE_IDENTITY="$TARGET_ROOT/recovery-age-identity.txt"
+KNOWN_HOSTS="$TARGET_ROOT/known_hosts"
+STATE_FILE="$TARGET_ROOT/state.json"
+install -d -m 0700 -o root -g root "$STATE_ROOT" "$TARGET_ROOT"
+install -d -m 0755 -o root -g root "$TOOL_ROOT" "$TOOL_ROOT/src"
+if [[ -f "$STATE_FILE" ]]; then
+  python3 - "$STATE_FILE" "$ENVIRONMENT" <<'PY'
+import json, sys
 from pathlib import Path
-path = Path(sys.argv[1])
-details = path.stat()
-if details.st_uid != 0 or stat.S_IMODE(details.st_mode) & 0o077:
-    raise SystemExit("Provisioning state must be owned by root with no group or world access.")
-payload = json.loads(path.read_text(encoding="utf-8"))
-expected = {
-    "managed_by": "rbf-backup-server-provisioner",
-    "upload_username": sys.argv[2],
-    "recovery_username": sys.argv[3],
-    "storage_directory": sys.argv[4],
-    "deployment_environment": sys.argv[5],
-}
-for key, value in expected.items():
-    if payload.get(key) != value:
-        raise SystemExit(f"Existing managed state does not match {key}.")
+payload = json.loads(Path(sys.argv[1]).read_text())
+if payload.get("managed_by") != "rbf-recovery-controller" or payload.get("deployment_environment") != sys.argv[2]:
+    raise SystemExit("Existing Recovery Tool state is not managed for this environment.")
 PY
-  EXISTING_MANAGED=true
+elif [[ -e "$KEY" || -e "$KEY.pub" || -e "$AGE_IDENTITY" || -e "$KNOWN_HOSTS" ]]; then
+  echo "Existing controller key material has no matching managed state." >&2
+  exit 1
 fi
-
-RECOVERY_DIR="${RBF_RECOVERY_DIRECTORY:-$OPERATOR_HOME/RBF-Recovery/$DEPLOYMENT_ENVIRONMENT}"
-install -d -m 0700 "$RECOVERY_DIR"
-if [[ -z "$RECOVERY_PUBLIC_KEY" ]]; then
-  RECOVERY_KEY="$RECOVERY_DIR/rbf-recovery-readonly-ed25519"
-  if [[ -e "$RECOVERY_KEY" || -e "$RECOVERY_KEY.pub" ]]; then
-    [[ "$EXISTING_MANAGED" == true && -f "$RECOVERY_KEY" && ! -L "$RECOVERY_KEY" \
-        && -f "$RECOVERY_KEY.pub" && ! -L "$RECOVERY_KEY.pub" ]] || {
-      echo "Existing recovery key material is incomplete or is not tied to this managed server." >&2
-      exit 1
-    }
-  else
-    ssh-keygen -q -t ed25519 -N '' -C 'rbf-recovery-readonly' -f "$RECOVERY_KEY"
-  fi
-  RECOVERY_PUBLIC_KEY="$(cat "$RECOVERY_KEY.pub")"
+if [[ ! -f "$KEY" ]]; then
+  ssh-keygen -q -t ed25519 -N '' -C "$USERNAME" -f "$KEY"
 fi
-python3 - "$RECOVERY_PUBLIC_KEY" <<'PY'
-import re,sys
-value=sys.argv[1].strip()
-if not re.fullmatch(r"(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(?:256|384|521)) [A-Za-z0-9+/=]+(?: [^\r\n]{1,128})?",value):
-    raise SystemExit("Invalid recovery public key.")
-PY
-AGE_IDENTITY="$RECOVERY_DIR/rbf-recovery-identity.txt"
-if [[ -e "$AGE_IDENTITY" ]]; then
-  [[ "$EXISTING_MANAGED" == true && -f "$AGE_IDENTITY" && ! -L "$AGE_IDENTITY" ]] || {
-    echo "Existing age identity is not tied to this managed server." >&2
-    exit 1
-  }
-else
+if [[ ! -f "$AGE_IDENTITY" ]]; then
   age-keygen -o "$AGE_IDENTITY" >/dev/null
 fi
+[[ -f "$KEY" && ! -L "$KEY" && -f "$KEY.pub" && ! -L "$KEY.pub" && -f "$AGE_IDENTITY" && ! -L "$AGE_IDENTITY" ]] || {
+  echo "Unsafe or incomplete controller key material." >&2
+  exit 1
+}
 AGE_RECIPIENT="$(age-keygen -y "$AGE_IDENTITY")"
-chmod 0600 "$AGE_IDENTITY" "${RECOVERY_KEY:-$AGE_IDENTITY}" 2>/dev/null || true
-chown -R "$OPERATOR_USER":"$(id -gn "$OPERATOR_USER")" "$RECOVERY_DIR"
-
-if [[ "$EXISTING_MANAGED" != true ]]; then
-  for account in "$USERNAME" "$RECOVERY_USERNAME"; do
-    if id "$account" >/dev/null 2>&1; then
-      echo "User $account already exists but was not registered by this tool. Aborting to protect the existing account." >&2
-      echo "The recovery tool creates the accounts itself. Deliberately remove an unused account created only for testing before provisioning again, or use the manual web fallback." >&2
-      exit 1
-    fi
-  done
-fi
-
-write_state() {
-  local status="$1"
-  python3 - "$STATE_FILE" "$status" "$ENROLLMENT_ID" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$RETENTION_DAYS" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
-import json
-import os
-import sys
-import tempfile
-from datetime import datetime, timezone
+CONTROLLER_PUBLIC_KEY="$(cat "$KEY.pub")"
+FINGERPRINT_FILE="$(mktemp)"
+trap 'rm -f "$FINGERPRINT_FILE"' EXIT
+printf '%s\n' "$WEBSITE_HOST_KEY" > "$FINGERPRINT_FILE"
+ACTUAL_FINGERPRINT="$(ssh-keygen -lf "$FINGERPRINT_FILE" -E sha256 | awk '{print $2}')"
+[[ "$ACTUAL_FINGERPRINT" == "$WEBSITE_FINGERPRINT" ]] || {
+  echo "Website host key does not match its pinned fingerprint." >&2
+  exit 1
+}
+if [[ "$WEBSITE_PORT" == 22 ]]; then HOST_TOKEN="$WEBSITE_HOST"; else HOST_TOKEN="[$WEBSITE_HOST]:$WEBSITE_PORT"; fi
+printf '%s %s\n' "$HOST_TOKEN" "$WEBSITE_HOST_KEY" > "$KNOWN_HOSTS"
+chmod 0600 "$KEY" "$AGE_IDENTITY" "$KNOWN_HOSTS"
+chmod 0644 "$KEY.pub"
+python3 - "$STATE_FILE" "$ENROLLMENT_ID" "$ENVIRONMENT" "$WEBSITE_HOST" "$WEBSITE_PORT" "$STORAGE" "$RETENTION_DAYS" <<'PY'
+import json, os, sys, tempfile
 from pathlib import Path
-out = Path(sys.argv[1])
+path = Path(sys.argv[1])
 payload = {
-    "schema_version": 1,
-    "managed_by": "rbf-backup-server-provisioner",
-    "status": sys.argv[2],
-    "updated_at": datetime.now(timezone.utc).isoformat(),
-    "enrollment_id": sys.argv[3],
-    "upload_username": sys.argv[4],
-    "recovery_username": sys.argv[5],
-    "storage_directory": sys.argv[6],
-    "data_directory": str(Path(sys.argv[6]) / "data"),
-    "incoming_directory": str(Path(sys.argv[6]) / "incoming"),
-    "receipt_directory": str(Path(sys.argv[6]) / "receipts"),
-    "trust_model": "server-controlled-ingest-v1",
-    "retention_days": int(sys.argv[7]),
-    "deployment_environment": sys.argv[8],
+    "schema_version": 1, "managed_by": "rbf-recovery-controller",
+    "enrollment_id": sys.argv[2], "deployment_environment": sys.argv[3],
+    "website_host": sys.argv[4], "website_port": int(sys.argv[5]),
+    "storage_directory": sys.argv[6], "retention_days": int(sys.argv[7]),
 }
-fd, name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".tmp", dir=out.parent, text=True)
-with os.fdopen(fd, "w", encoding="utf-8") as handle:
-    json.dump(payload, handle, sort_keys=True, indent=2)
-    handle.write("\n")
-os.chmod(name, 0o600)
-os.replace(name, out)
+fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+with os.fdopen(fd, "w") as handle:
+    json.dump(payload, handle, indent=2, sort_keys=True); handle.write("\n")
+os.chmod(temporary, 0o600); os.replace(temporary, path)
 PY
-}
-write_state provisioning
 
-READ_GROUP="${USERNAME}-readers"
-getent group "$READ_GROUP" >/dev/null 2>&1 || groupadd --system "$READ_GROUP"
-if ! id "$USERNAME" >/dev/null 2>&1; then
-  useradd --no-create-home --home-dir /data --shell /usr/sbin/nologin --user-group "$USERNAME"
-else
-  usermod --home /data --shell /usr/sbin/nologin "$USERNAME"
-fi
-if ! id "$RECOVERY_USERNAME" >/dev/null 2>&1; then
-  useradd --no-create-home --home-dir /data --shell /usr/sbin/nologin --user-group "$RECOVERY_USERNAME"
-else
-  usermod --home /data --shell /usr/sbin/nologin "$RECOVERY_USERNAME"
-fi
-usermod -a -G "$READ_GROUP" "$RECOVERY_USERNAME"
-
-# OpenSSH rejects locked accounts before public-key authentication. Give both
-# key-only SFTP accounts an unknown high-entropy password instead. Password and
-# keyboard-interactive SSH authentication remain disabled in the Match blocks,
-# and both accounts keep /usr/sbin/nologin as their shell.
-set_unknown_password() {
-  local account="$1"
-  python3 - "$account" <<'PY' | chpasswd
-import secrets
-import sys
-print(f"{sys.argv[1]}:{secrets.token_urlsafe(48)}")
-PY
-}
-set_unknown_password "$USERNAME"
-set_unknown_password "$RECOVERY_USERNAME"
-
-# OpenSSH requires every chroot path component to be root-owned and not writable
-# by group or others. The website can write only to incoming, can read only
-# server-issued receipts, and cannot traverse the protected committed store.
-CHROOT_DIRECTORY="$DIRECTORY"
-DATA_DIRECTORY="$DIRECTORY/data"
-INCOMING_DIRECTORY="$DIRECTORY/incoming"
-RECEIPT_DIRECTORY="$DIRECTORY/receipts"
-install -d -m 0755 -o root -g root "$CHROOT_DIRECTORY"
-python3 - "$CHROOT_DIRECTORY" <<'PY'
+python3 - "$TOOL_BASE64" "$TOOL_SHA" "$TOOL_ROOT/src" <<'PY'
+import base64
+import hashlib
+import io
 from pathlib import Path
-import stat
-import sys
-requested = Path(sys.argv[1])
-current = Path("/")
-for part in requested.parts[1:]:
-    current /= part
-    if current.is_symlink():
-        raise SystemExit(f"Unsafe chroot parent directory: symlinks are not allowed: {current}")
-    details = current.stat()
-    if details.st_uid != 0 or details.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
-        raise SystemExit(
-            f"Unsafe chroot parent directory: {current} must be owned by root and must not be group/world-writable."
-        )
-PY
-if [[ -d "$DATA_DIRECTORY" && ! -L "$DATA_DIRECTORY" && "$(stat -c %u "$DATA_DIRECTORY")" != 0 ]]; then
-  python3 - "$DATA_DIRECTORY" "$(getent group "$READ_GROUP" | cut -d: -f3)" <<'PY'
-from pathlib import Path
-import os
 import shutil
 import sys
+import tarfile
 import tempfile
 
-source = Path(sys.argv[1])
-group_id = int(sys.argv[2])
-stage = Path(tempfile.mkdtemp(prefix=".data-protected-", dir=source.parent))
-legacy = source.with_name(f".data-untrusted-{os.getpid()}")
+content = base64.b64decode(sys.argv[1], validate=True)
+if hashlib.sha256(content).hexdigest() != sys.argv[2]:
+    raise SystemExit("Recovery Tool checksum changed during provisioning.")
+target = Path(sys.argv[3])
+stage = Path(tempfile.mkdtemp(prefix="rbf-recovery-tool-", dir=target.parent))
 try:
-    for candidate in source.iterdir():
-        details = candidate.lstat()
-        if not candidate.is_file() or candidate.is_symlink() or details.st_nlink != 1:
-            raise RuntimeError(f"Cannot migrate unsafe legacy backup entry: {candidate.name}")
-        target = stage / candidate.name
-        shutil.copyfile(candidate, target)
-        os.chown(target, 0, group_id)
-        os.chmod(target, 0o640)
-    os.chown(stage, 0, group_id)
-    os.chmod(stage, 0o750)
-    os.rename(source, legacy)
-    try:
-        os.rename(stage, source)
-    except Exception:
-        os.rename(legacy, source)
-        raise
-    shutil.rmtree(legacy)
+    with tarfile.open(fileobj=io.BytesIO(content), mode="r:gz") as archive:
+        members = archive.getmembers()
+        for member in members:
+            path = Path(member.name)
+            if member.issym() or member.islnk() or member.isdev() or path.is_absolute() or ".." in path.parts:
+                raise SystemExit("Unsafe Recovery Tool archive member.")
+        archive.extractall(stage, members=members)
+    old = target.with_name(target.name + ".old")
+    shutil.rmtree(old, ignore_errors=True)
+    if target.exists():
+        target.rename(old)
+    stage.rename(target)
+    shutil.rmtree(old, ignore_errors=True)
 except Exception:
     shutil.rmtree(stage, ignore_errors=True)
     raise
 PY
-fi
-install -d -m 0750 -o root -g "$READ_GROUP" "$DATA_DIRECTORY"
-chown root:"$READ_GROUP" "$DATA_DIRECTORY"
-chmod 0750 "$DATA_DIRECTORY"
-find "$DATA_DIRECTORY" -mindepth 1 -maxdepth 1 -type f -exec chown root:"$READ_GROUP" {} +
-find "$DATA_DIRECTORY" -mindepth 1 -maxdepth 1 -type f -exec chmod 0640 {} +
-install -d -m 0700 -o "$USERNAME" -g "$USERNAME" "$INCOMING_DIRECTORY"
-chown "$USERNAME:$USERNAME" "$INCOMING_DIRECTORY"
-chmod 0700 "$INCOMING_DIRECTORY"
-install -d -m 0550 -o root -g "$USERNAME" "$RECEIPT_DIRECTORY"
-chown root:"$USERNAME" "$RECEIPT_DIRECTORY"
-chmod 0550 "$RECEIPT_DIRECTORY"
+find "$TOOL_ROOT/src" -type d -exec chmod 0755 {} +
+find "$TOOL_ROOT/src" -type f -exec chmod 0644 {} +
+chown -R root:root "$TOOL_ROOT"
+install -d -m 0700 -o root -g root "$STORAGE"
 
-AUTH_ROOT="/etc/ssh/authorized_keys"
-install -d -m 0755 -o root -g root "$AUTH_ROOT"
-AUTHORIZED_UPLOAD="$AUTH_ROOT/$USERNAME"
-AUTHORIZED_RECOVERY="$AUTH_ROOT/$RECOVERY_USERNAME"
-if [[ -n "$ALLOW_FROM" ]]; then
-  printf 'restrict,from="%s" %s\n' "$ALLOW_FROM" "$PUBLIC_KEY" > "$AUTHORIZED_UPLOAD"
-else
-  printf 'restrict %s\n' "$PUBLIC_KEY" > "$AUTHORIZED_UPLOAD"
-fi
-printf 'restrict,from="127.0.0.1,::1" %s\n' "$RECOVERY_PUBLIC_KEY" > "$AUTHORIZED_RECOVERY"
-chown root:"$USERNAME" "$AUTHORIZED_UPLOAD"
-chown root:"$RECOVERY_USERNAME" "$AUTHORIZED_RECOVERY"
-chmod 0640 "$AUTHORIZED_UPLOAD" "$AUTHORIZED_RECOVERY"
-
-SSHD_DROPIN_DIR="/etc/ssh/sshd_config.d"
-SSHD_DROPIN="$SSHD_DROPIN_DIR/90-${USERNAME}-managed.conf"
-install -d -m 0755 -o root -g root "$SSHD_DROPIN_DIR"
-SSHD_BACKUP="$(mktemp)"
-SSHD_EXISTED=false
-if [[ -f "$SSHD_DROPIN" && ! -L "$SSHD_DROPIN" ]]; then
-  cp --preserve=mode,ownership,timestamps "$SSHD_DROPIN" "$SSHD_BACKUP"
-  SSHD_EXISTED=true
-elif [[ -e "$SSHD_DROPIN" ]]; then
-  echo "Unsafe existing SSHD configuration: $SSHD_DROPIN" >&2
-  rm -f "$SSHD_BACKUP"
-  exit 1
-fi
-cat > "$SSHD_DROPIN" <<EOF_SSHD
-Match User $USERNAME
-    ChrootDirectory $CHROOT_DIRECTORY
-    ForceCommand internal-sftp -u 0077 -d /incoming
-    AuthorizedKeysFile $AUTH_ROOT/%u
-    PasswordAuthentication no
-    KbdInteractiveAuthentication no
-    PubkeyAuthentication yes
-    AllowAgentForwarding no
-    AllowTcpForwarding no
-    X11Forwarding no
-    PermitTunnel no
-    PermitTTY no
-
-Match User $RECOVERY_USERNAME
-    ChrootDirectory $CHROOT_DIRECTORY
-    ForceCommand internal-sftp -R -d /data
-    AuthorizedKeysFile $AUTH_ROOT/%u
-    PasswordAuthentication no
-    KbdInteractiveAuthentication no
-    PubkeyAuthentication yes
-    AllowAgentForwarding no
-    AllowTcpForwarding no
-    X11Forwarding no
-    PermitTunnel no
-    PermitTTY no
-EOF_SSHD
-chmod 0644 "$SSHD_DROPIN"
-chown root:root "$SSHD_DROPIN"
-if ! sshd -t; then
-  if [[ "$SSHD_EXISTED" == true ]]; then
-    install -m 0644 -o root -g root "$SSHD_BACKUP" "$SSHD_DROPIN"
-  else
-    rm -f "$SSHD_DROPIN"
-  fi
-  rm -f "$SSHD_BACKUP"
-  sshd -t >/dev/null 2>&1 || true
-  echo "The new SSHD configuration is invalid and was rolled back." >&2
-  exit 1
-fi
-rm -f "$SSHD_BACKUP"
-if command -v systemctl >/dev/null 2>&1; then
-  systemctl enable --now ssh.service >/dev/null 2>&1 || systemctl enable --now sshd.service >/dev/null 2>&1
-  systemctl reload ssh.service >/dev/null 2>&1 || systemctl reload sshd.service >/dev/null 2>&1
-fi
-
-INGEST_PROCESSOR="/usr/local/sbin/rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"
-python3 -m py_compile "$INGEST_SCRIPT"
-install -m 0755 -o root -g root "$INGEST_SCRIPT" "$INGEST_PROCESSOR"
-READ_GROUP_ID="$(getent group "$READ_GROUP" | cut -d: -f3)"
-UPLOAD_GROUP_ID="$(getent group "$USERNAME" | cut -d: -f3)"
-INGEST_UNIT="rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"
-RETENTION_UNIT="rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"
-cat > "/etc/systemd/system/${INGEST_UNIT}.service" <<EOF_INGEST_SERVICE
-[Unit]
-Description=Validate and commit RBF website backup submissions
-After=local-fs.target
-
-[Service]
-Type=oneshot
-ExecStart=$INGEST_PROCESSOR $INCOMING_DIRECTORY $DATA_DIRECTORY $RECEIPT_DIRECTORY --read-group-id $READ_GROUP_ID --upload-group-id $UPLOAD_GROUP_ID
-User=root
-Group=root
-UMask=0077
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ReadWritePaths=$INCOMING_DIRECTORY $DATA_DIRECTORY $RECEIPT_DIRECTORY
-ProtectHome=true
-MemoryMax=256M
-CPUQuota=50%
-TasksMax=32
-EOF_INGEST_SERVICE
-cat > "/etc/systemd/system/${INGEST_UNIT}.path" <<EOF_INGEST_PATH
-[Unit]
-Description=Watch for completed RBF website backup submissions
-
-[Path]
-PathChanged=$INCOMING_DIRECTORY
-Unit=${INGEST_UNIT}.service
-
-[Install]
-WantedBy=multi-user.target
-EOF_INGEST_PATH
-cat > "/etc/systemd/system/${INGEST_UNIT}.timer" <<'EOF_INGEST_TIMER'
-[Unit]
-Description=Fallback scan for RBF website backup submissions
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=1min
-AccuracySec=10s
-
-[Install]
-WantedBy=timers.target
-EOF_INGEST_TIMER
-
-RETENTION_SCRIPT="/usr/local/sbin/rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"
-cat > "$RETENTION_SCRIPT" <<'RETENTION'
-#!/usr/bin/env python3
-from __future__ import annotations
+CONFIG_DIR="$STATE_ROOT/RBF Recovery Tool"
+install -d -m 0700 -o root -g root "$CONFIG_DIR"
+python3 - "$CONFIG_DIR/profiles.json" "$ENVIRONMENT" "$WEBSITE_HOST" "$WEBSITE_PORT" "$USERNAME" "$STORAGE" "$KEY" "$AGE_IDENTITY" "$WEBSITE_FINGERPRINT" "$ENROLLMENT_ID" "$RETENTION_DAYS" <<'PY'
 import json
-from pathlib import Path
+import os
 import sys
-import time
+import tempfile
+from pathlib import Path
 
-root = Path(sys.argv[1]).resolve()
-days = int(sys.argv[2])
-receipts = Path(sys.argv[3]).resolve()
-cutoff = time.time() - days * 86400
-for manifest in sorted(root.glob("rbf-backup-set-*.json")):
-    try:
-        if manifest.is_symlink() or not manifest.is_file() or manifest.stat().st_mtime >= cutoff:
-            continue
-        payload = json.loads(manifest.read_text(encoding="utf-8"))
-        if payload.get("schema_version") != 1 or payload.get("committed") is not True:
-            continue
-        names = {manifest.name, manifest.name + ".sha256"}
-        artifacts = payload.get("artifacts")
-        if isinstance(artifacts, dict):
-            for record in artifacts.values():
-                if not isinstance(record, dict):
-                    continue
-                candidates = [record]
-                metadata = record.get("restore_metadata")
-                if isinstance(metadata, dict):
-                    candidates.append(metadata)
-                for candidate_record in candidates:
-                    name = str(candidate_record.get("filename") or "")
-                    if name and Path(name).name == name:
-                        names.update({name, name + ".sha256"})
-        for name in names:
-            candidate = (root / name).resolve()
-            if candidate.parent == root and candidate.is_file() and not candidate.is_symlink():
-                candidate.unlink()
-    except (OSError, ValueError, json.JSONDecodeError):
-        continue
-for receipt in receipts.glob("rbf-backup-set-*.json.receipt.json"):
-    try:
-        if receipt.is_file() and not receipt.is_symlink() and receipt.stat().st_mtime < cutoff:
-            receipt.unlink()
-    except OSError:
-        pass
-RETENTION
-chmod 0755 "$RETENTION_SCRIPT"
-chown root:root "$RETENTION_SCRIPT"
-cat > "/etc/systemd/system/${RETENTION_UNIT}.service" <<EOF_SERVICE
+path = Path(sys.argv[1])
+target = sys.argv[2]
+payload = {"schema_version": 2, "active_target": target, "profiles": {}}
+if path.is_file():
+    existing = json.loads(path.read_text())
+    if isinstance(existing, dict) and existing.get("schema_version") == 2:
+        payload = existing
+payload["active_target"] = target
+payload.setdefault("profiles", {})[target] = {
+    "host": sys.argv[3], "port": int(sys.argv[4]), "username": sys.argv[5],
+    "remote_directory": "/exports", "destination_directory": sys.argv[6],
+    "ssh_key_path": sys.argv[7], "age_identity_path": sys.argv[8],
+    "host_fingerprint": sys.argv[9], "enrollment_id": sys.argv[10],
+    "retention_days": int(sys.argv[11]),
+}
+fd, temporary = tempfile.mkstemp(prefix=".profiles.", dir=path.parent)
+with os.fdopen(fd, "w") as handle:
+    json.dump(payload, handle, indent=2, sort_keys=True)
+    handle.write("\n")
+os.chmod(temporary, 0o600)
+os.replace(temporary, path)
+PY
+
+cat > /usr/local/bin/rbf-recovery-tool <<'EOF_TOOL'
+#!/usr/bin/env bash
+if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+  echo "ERROR: rbf-recovery-tool must be run as root (use: sudo rbf-recovery-tool ...)." >&2
+  exit 77
+fi
+export XDG_CONFIG_HOME=/etc/rbf-recovery-tool
+export PYTHONPATH=/opt/rbf-recovery-tool/src
+export PYTHONDONTWRITEBYTECODE=1
+exec /usr/bin/python3 -m rbf_recovery_tool "$@"
+EOF_TOOL
+chmod 0755 /usr/local/bin/rbf-recovery-tool
+chown root:root /usr/local/bin/rbf-recovery-tool
+
+cat > "/etc/systemd/system/rbf-recovery-controller-${ENVIRONMENT}.service" <<EOF_SERVICE
 [Unit]
-Description=RBF backup-server retention cleanup
-After=local-fs.target
+Description=RBF ${ENVIRONMENT} backup-controller pull and verification
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=$RETENTION_SCRIPT $DATA_DIRECTORY $RETENTION_DAYS $RECEIPT_DIRECTORY
-User=root
-Group=root
+ExecStart=/usr/bin/flock --wait 30 /run/rbf-recovery-${ENVIRONMENT}/controller.lock /usr/local/bin/rbf-recovery-tool sync --target ${ENVIRONMENT} --quiet
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=$DATA_DIRECTORY $RECEIPT_DIRECTORY
+RuntimeDirectory=rbf-recovery-${ENVIRONMENT}
+RuntimeDirectoryMode=0750
+ReadWritePaths=${STORAGE}
 ProtectHome=true
 EOF_SERVICE
-cat > "/etc/systemd/system/${RETENTION_UNIT}.timer" <<'EOF_TIMER'
+cat > "/etc/systemd/system/rbf-recovery-trigger-${ENVIRONMENT}.service" <<EOF_TRIGGER_SERVICE
 [Unit]
-Description=Daily RBF backup-server retention cleanup
+Description=Trigger and pull the daily ${ENVIRONMENT} backup
+After=network-online.target
+Wants=network-online.target
 
-[Timer]
-OnCalendar=*-*-* 04:30:00
-RandomizedDelaySec=30m
-Persistent=true
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock --wait 30 /run/rbf-recovery-${ENVIRONMENT}/controller.lock /usr/local/bin/rbf-recovery-tool run --target ${ENVIRONMENT} --quiet
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+RuntimeDirectory=rbf-recovery-${ENVIRONMENT}
+RuntimeDirectoryMode=0750
+ReadWritePaths=${STORAGE}
+ProtectHome=true
+EOF_TRIGGER_SERVICE
+systemctl daemon-reload
+systemctl disable --now "rbf-recovery-controller-${ENVIRONMENT}.timer" "rbf-recovery-trigger-${ENVIRONMENT}.timer" >/dev/null 2>&1 || true
+rm -f "/etc/systemd/system/rbf-recovery-controller-${ENVIRONMENT}.timer" "/etc/systemd/system/rbf-recovery-trigger-${ENVIRONMENT}.timer"
+systemctl daemon-reload
 
-[Install]
-WantedBy=timers.target
-EOF_TIMER
-if command -v systemctl >/dev/null 2>&1; then
+# Remove the superseded managed push/ingest control plane only after the new
+# controller is installed. Existing backup data is deliberately preserved.
+LEGACY_STATE="/etc/rbf-backup-server/rbf-backup.json"
+if [[ -f "$LEGACY_STATE" ]] && python3 - "$LEGACY_STATE" <<'PY'
+import json, sys
+from pathlib import Path
+payload = json.loads(Path(sys.argv[1]).read_text())
+raise SystemExit(0 if payload.get("managed_by") == "rbf-recovery-tool" else 1)
+PY
+then
+  for legacy_unit in \
+    "rbf-backup-ingest-${ENVIRONMENT}.path" \
+    "rbf-backup-ingest-${ENVIRONMENT}.timer" \
+    "rbf-backup-ingest-${ENVIRONMENT}.service" \
+    "rbf-backup-retention-${ENVIRONMENT}.timer" \
+    "rbf-backup-retention-${ENVIRONMENT}.service" \
+    "rbf-backup-tunnel-${ENVIRONMENT}.service"; do
+    systemctl disable --now "$legacy_unit" >/dev/null 2>&1 || true
+    rm -f "/etc/systemd/system/$legacy_unit"
+  done
+  rm -f /etc/ssh/sshd_config.d/90-rbf-backup-managed.conf
+  rm -f /etc/ssh/authorized_keys/rbf-backup /etc/ssh/authorized_keys/rbf-recovery
+  userdel rbf-backup >/dev/null 2>&1 || true
+  userdel rbf-recovery >/dev/null 2>&1 || true
+  groupdel rbf-backup-readers >/dev/null 2>&1 || true
+  rm -f "$LEGACY_STATE"
+  rmdir /etc/rbf-backup-server >/dev/null 2>&1 || true
   systemctl daemon-reload
-  systemctl enable --now "${INGEST_UNIT}.path" "${INGEST_UNIT}.timer" >/dev/null
-  systemctl start "${INGEST_UNIT}.service"
-  systemctl enable --now "${RETENTION_UNIT}.timer" >/dev/null
+  sshd -t
+  systemctl reload ssh.service >/dev/null 2>&1 || systemctl reload sshd.service
 fi
 
-if [[ -n "$ALLOW_FROM" ]] && command -v ufw >/dev/null 2>&1 && ufw status | grep -q '^Status: active'; then
-  ufw allow from "$ALLOW_FROM" to any port "$PORT" proto tcp comment 'RBF backup enrollment'
-fi
-
-HOST_KEY_FILE="/etc/ssh/ssh_host_ed25519_key.pub"
-[[ -f "$HOST_KEY_FILE" ]] || { echo "Ed25519 host key is missing." >&2; exit 1; }
-HOST_KEY="$(awk '{print $1" "$2}' "$HOST_KEY_FILE")"
-FINGERPRINT="$(ssh-keygen -lf "$HOST_KEY_FILE" -E sha256 | awk '{print $2}')"
-write_state ready
-
-python3 - "$RESULT" "$ENROLLMENT_ID" "$HOST" "$PORT" "$USERNAME" "$RECOVERY_USERNAME" "$DIRECTORY" "$HOST_KEY" "$FINGERPRINT" "$RETENTION_DAYS" "$AGE_RECIPIENT" "$DEPLOYMENT_ENVIRONMENT" <<'PY'
+python3 - "$RESULT" "$ENROLLMENT_ID" "$ENVIRONMENT" "$WEBSITE_HOST" "$WEBSITE_PORT" "$USERNAME" "$STORAGE" "$WEBSITE_HOST_KEY" "$WEBSITE_FINGERPRINT" "$AGE_RECIPIENT" "$CONTROLLER_PUBLIC_KEY" <<'PY'
 import json
 import os
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-out = Path(sys.argv[1])
-payload = {
-    "schema_version": 1,
-    "kind": "rbf-backup-enrollment-response",
-    "enrollment_id": sys.argv[2],
-    "deployment_environment": sys.argv[12],
-    "created_at": datetime.now(timezone.utc).isoformat(),
-    "host": sys.argv[3],
-    "port": int(sys.argv[4]),
-    "username": sys.argv[5],
-    "recovery_username": sys.argv[6],
-    "remote_directory": "/incoming",
-    "receipt_directory": "/receipts",
-    "recovery_directory": "/data",
-    "storage_directory": sys.argv[7],
-    "host_key": sys.argv[8],
-    "host_key_fingerprint": sys.argv[9],
-    "managed_server": True,
-    "trust_model": "server-controlled-ingest-v1",
-    "retention_days": int(sys.argv[10]),
-    "age_recipient": sys.argv[11],
-}
-out.parent.mkdir(parents=True, exist_ok=True)
-fd, name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".tmp", dir=out.parent, text=True)
-with os.fdopen(fd, "w", encoding="utf-8") as handle:
-    json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
-    handle.write("\n")
-os.chmod(name, 0o644)
-os.replace(name, out)
-PY
 
-echo "Website-server submission ready: ${USERNAME}@${HOST}:${PORT}/incoming"
-echo "Website-server receipt access: ${USERNAME}@${HOST}:${PORT}/receipts (read-only by filesystem ownership)"
-echo "Local recovery read access: ${RECOVERY_USERNAME}@127.0.0.1:${PORT}/data (read-only)"
-echo "Host-Key-Fingerprint: ${FINGERPRINT}"
-echo "Provisioning-Ergebnis: ${RESULT}"
-echo "Private recovery files: ${RECOVERY_DIR} (also keep an encrypted offline backup)"
+path = Path(sys.argv[1])
+payload = {
+    "schema_version": 1, "kind": "rbf-backup-enrollment-response",
+    "enrollment_id": sys.argv[2], "deployment_environment": sys.argv[3],
+    "created_at": datetime.now(timezone.utc).isoformat(),
+    "host": sys.argv[4], "port": int(sys.argv[5]), "username": sys.argv[6],
+    "storage_directory": sys.argv[7], "remote_directory": "/exports",
+    "request_directory": "/requests", "status_directory": "/status",
+    "acknowledgement_directory": "/acknowledgements",
+    "host_key": sys.argv[8], "host_key_fingerprint": sys.argv[9],
+    "age_recipient": sys.argv[10], "controller_public_key": sys.argv[11],
+    "managed_server": True, "trust_model": "backup-controller-pull-v1",
+    "transport": "recovery-controller-pull-v1",
+}
+path.parent.mkdir(parents=True, exist_ok=True)
+fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+with os.fdopen(fd, "w") as handle:
+    json.dump(payload, handle, indent=2, sort_keys=True)
+    handle.write("\n")
+os.chmod(temporary, 0o644)
+os.replace(temporary, path)
+PY
+if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]]; then
+  chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$RESULT"
+fi
+echo "Backup controller installed for ${ENVIRONMENT}."
+echo "It connects outbound to ${WEBSITE_HOST}:${WEBSITE_PORT}; no backup-server endpoint is required."
+echo "Pinned website SSH fingerprint: ${WEBSITE_FINGERPRINT}"
+echo "Automatic timers are disabled. Manual fetch: rbf-recovery-tool run --target ${ENVIRONMENT}"
+echo "Provisioning response: ${RESULT}"

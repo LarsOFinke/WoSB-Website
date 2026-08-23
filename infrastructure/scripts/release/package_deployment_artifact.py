@@ -40,6 +40,7 @@ RUNTIME_DIRS = (
     "infrastructure/scripts/setup",
     "infrastructure/scripts/tls",
     "infrastructure/systemd",
+    "tools/recovery-tool/src",
 )
 
 

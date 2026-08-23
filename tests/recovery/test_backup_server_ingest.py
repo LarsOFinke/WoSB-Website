@@ -176,23 +176,32 @@ def test_backup_server_rejects_unknown_artifact_types(tmp_path, monkeypatch) -> 
     assert not any(committed.iterdir())
 
 
-def test_provisioner_denies_website_access_to_committed_storage() -> None:
+def test_provisioner_keeps_controller_storage_local_and_private() -> None:
     provisioner = (ROOT / "tools/backup-server/provision-rbf-backup-server.sh").read_text()
-    assert 'ForceCommand internal-sftp -u 0077 -d /incoming' in provisioner
-    assert 'install -d -m 0750 -o root -g "$READ_GROUP" "$DATA_DIRECTORY"' in provisioner
-    assert 'install -d -m 0700 -o "$USERNAME" -g "$USERNAME" "$INCOMING_DIRECTORY"' in provisioner
-    assert 'install -d -m 0550 -o root -g "$USERNAME" "$RECEIPT_DIRECTORY"' in provisioner
-    assert 'ForceCommand internal-sftp -R -d /data' in provisioner
+    assert 'install -d -m 0700 -o root -g root "$STORAGE"' in provisioner
+    assert 'destination_directory": sys.argv[6]' in provisioner
+    assert 'ReadWritePaths=${STORAGE}' in provisioner
+    assert '/run/rbf-recovery-${ENVIRONMENT}/controller.lock' in provisioner
+    assert 'RuntimeDirectory=rbf-recovery-${ENVIRONMENT}' in provisioner
+    assert 'requested_storage_directory' in provisioner
 
 
 def test_provisioner_isolates_test_and_production_resources() -> None:
     provisioner = (ROOT / "tools/backup-server/provision-rbf-backup-server.sh").read_text()
-    assert 'requested_username != f"rbf-backup-{deployment_environment}"' in provisioner
-    assert 'requested_storage_directory != f"/backups/wosb/{deployment_environment}"' in provisioner
-    assert 'STATE_FILE="$STATE_DIR/${USERNAME}.json"' in provisioner
-    assert 'READ_GROUP="${USERNAME}-readers"' in provisioner
-    assert 'SSHD_DROPIN="$SSHD_DROPIN_DIR/90-${USERNAME}-managed.conf"' in provisioner
-    assert 'INGEST_UNIT="rbf-backup-ingest-${DEPLOYMENT_ENVIRONMENT}"' in provisioner
-    assert 'RETENTION_UNIT="rbf-backup-retention-${DEPLOYMENT_ENVIRONMENT}"' in provisioner
-    assert '$OPERATOR_HOME/RBF-Recovery/$DEPLOYMENT_ENVIRONMENT' in provisioner
-    assert '90-rbf-backup-managed.conf' not in provisioner
+    assert 'username != f"rbf-backup-controller-{environment}"' in provisioner
+    assert 'storage != f"/backups/wosb/{environment}"' in provisioner
+    assert 'TARGET_ROOT="$STATE_ROOT/$ENVIRONMENT"' in provisioner
+    assert 'Automatic timers are disabled.' in provisioner
+    assert 'must be run as root' in provisioner
+    assert 'systemctl disable --now' in provisioner
+    assert 'destination_directory": sys.argv[6]' in provisioner
+
+
+def test_provisioner_uses_outbound_pinned_controller_connections() -> None:
+    provisioner = (ROOT / "tools/backup-server/provision-rbf-backup-server.sh").read_text()
+    assert 'WEBSITE_HOST_KEY' in provisioner
+    assert 'ACTUAL_FINGERPRINT="$(ssh-keygen -lf' in provisioner
+    assert '/usr/local/bin/rbf-recovery-tool run --target ${ENVIRONMENT}' in provisioner
+    assert 'transport": "recovery-controller-pull-v1"' in provisioner
+    assert 'curl ' not in provisioner
+    assert 'github.com' not in provisioner.lower()

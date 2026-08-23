@@ -151,6 +151,11 @@ def _validated_members(handle: tarfile.TarFile) -> dict[str, tarfile.TarInfo]:
     total = 0
     for member in members:
         path = PurePosixPath(member.name)
+        # Tar writers commonly include the archive's own directory entry as
+        # `.` or `./`. It carries no data or path authority and is safe to
+        # ignore; traversal and absolute paths remain rejected below.
+        if not path.parts and member.isdir():
+            continue
         if path.is_absolute() or not path.parts or ".." in path.parts:
             raise RuntimeError(f"Unsafe path in recovery archive: {member.name}")
         if path.parts[0] not in _ALLOWED_ROOTS:
@@ -257,4 +262,3 @@ def verify_encrypted_bundle(bundle: Path, identity: Path) -> VerificationResult:
         archive = Path(temporary) / "recovery.tar.gz"
         decrypt_bundle(bundle, identity, archive)
         return verify_plain_archive(archive, bundle_sha256)
-

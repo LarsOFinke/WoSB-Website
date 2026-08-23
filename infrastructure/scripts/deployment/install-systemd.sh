@@ -11,6 +11,8 @@ units=(
   rbf-hub-backup.timer
   rbf-hub-backup-admin.service
   rbf-hub-backup-admin.path
+  rbf-hub-backup-pull.service
+  rbf-hub-backup-pull.path
   rbf-hub-cert-renew.service
   rbf-hub-cert-renew.timer
   rbf-hub-update.service
@@ -42,7 +44,13 @@ done
 
 systemctl daemon-reload
 systemctl enable rbf-hub.service
-systemctl enable --now rbf-hub-backup.timer
+if [[ -n "$(read_env BACKUP_PULL_ENROLLMENT_ID)" ]]; then
+  systemctl disable --now rbf-hub-backup.timer >/dev/null 2>&1 || true
+  systemctl enable --now rbf-hub-backup-pull.path
+else
+  systemctl enable --now rbf-hub-backup.timer
+  systemctl disable --now rbf-hub-backup-pull.path >/dev/null 2>&1 || true
+fi
 systemctl enable --now rbf-hub-backup-admin.path
 systemctl enable --now rbf-hub-cert-renew.timer
 systemctl enable --now rbf-hub-update.path

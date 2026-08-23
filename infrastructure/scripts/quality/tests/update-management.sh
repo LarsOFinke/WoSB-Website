@@ -78,6 +78,10 @@ grep -q -- '--no-rotate-ssh-key' "$ROOT_DIR/infrastructure/scripts/release/deplo
 grep -q 'rotate-ssh-admin-key.sh' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'RBF_DEPLOY_ROTATE_SSH_KEY=true' "$ROOT_DIR/.env.origin.test.example"
 grep -q 'RBF_DEPLOY_ROTATE_SSH_KEY=true' "$ROOT_DIR/.env.origin.production.example"
+grep -q 'RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST=' "$ROOT_DIR/.env.origin.test.example"
+grep -q 'RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST=' "$ROOT_DIR/.env.origin.production.example"
+grep -q -- '--backup-controller-website-host "$backup_controller_website_host"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
+grep -q -- '--backup-controller-website-port "$backup_controller_website_port"' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'rbf_origin_default_identity_path' "$ROOT_DIR/infrastructure/scripts/release/deploy-from-origin.sh"
 grep -q 'SSH public-key material must be supplied from outside the repository' \
   "$ROOT_DIR/infrastructure/scripts/setup/provision-ssh-admin.sh"

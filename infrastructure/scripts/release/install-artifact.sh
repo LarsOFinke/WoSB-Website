@@ -175,15 +175,30 @@ if [[ -n "$previous_release" && "$skip_backup" != true ]]; then
   verification_result="$stage/verification.result"; recovery_result="$stage/recovery.result"
   backup_runner="$SCRIPT_DIR/../backup/run-consistent-backup.sh"
   [[ -x "$backup_runner" ]] || die "Incoming release has no coordinated backup runner."
-  RBF_INSTALL_ROOT="$install_root" RBF_RUNTIME_INFRA_DIR="$previous_release/infrastructure" \
-    "$backup_runner" \
-    --reason pre-deployment --postgres-result "$postgres_result" --files-result "$files_result" \
-    --verification-result "$verification_result" --recovery-result "$recovery_result" \
+  backup_args=(
+    --reason pre-deployment --postgres-result "$postgres_result" --files-result "$files_result"
+    --verification-result "$verification_result" --recovery-result "$recovery_result"
     --backup-set-result "$set_result"
+  )
+  if grep -Eiq '^BACKUP_RECOVERY_ENABLED=(1|true|yes|on)$' "$previous_release/infrastructure/.env"; then
+    backup_args+=(--include-recovery)
+  fi
+  RBF_INSTALL_ROOT="$install_root" RBF_RUNTIME_INFRA_DIR="$previous_release/infrastructure" \
+    "$backup_runner" "${backup_args[@]}"
   backup_postgres="$(cat "$postgres_result")"
   backup_files="$(cat "$files_result")"
   [[ -f "$backup_postgres" && -f "$backup_files" && -s "$set_result" ]] \
     || die "Coordinated pre-deployment backup did not return all required artifacts."
+  if grep -Eq '^BACKUP_PULL_ENROLLMENT_ID=.+$' "$previous_release/infrastructure/.env"; then
+    if ! python3 "$SCRIPT_DIR/../backup/wait-for-pull-ack.py" \
+      "$previous_release/infrastructure" "$(cat "$set_result")"; then
+      require_ack="$(awk -F= '$1 == "BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE" {gsub(/^\047|\047$|^\"|\"$/, "", $2); print tolower($2); exit}' "$previous_release/infrastructure/.env")"
+      if [[ "$require_ack" == true || "$require_ack" == 1 || "$require_ack" == yes || "$require_ack" == on ]]; then
+        die "The local pre-deployment backup is complete, but the backup controller did not acknowledge it."
+      fi
+      echo "[release] WARNING: local pre-deployment backup is complete, but the backup controller did not acknowledge it; continuing with local protection only." >&2
+    fi
+  fi
 fi
 [[ "$skip_backup" != true ]] || echo "[release] Coordinated pre-deployment backup is disabled for this run."
 

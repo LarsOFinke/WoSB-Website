@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; target_environment="${RBF_TARGET_ENVIRONMENT:-test}"; requested_hostname=""; requested_ip=""; requested_letsencrypt_email=""; no_backup=false; skip_backup=false; skip_host=false
-usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --target-environment test|production --hostname NAME --ip ADDRESS --letsencrypt-email EMAIL --no-backup --skip-host]" >&2; exit 2; }
+artifact=""; checksum=""; install_root="${RBF_INSTALL_ROOT:-/srv/rbf}"; env_source=""; target_environment="${RBF_TARGET_ENVIRONMENT:-test}"; requested_hostname=""; requested_ip=""; requested_letsencrypt_email=""; backup_controller_website_host=""; backup_controller_website_port=""; no_backup=false; skip_backup=false; skip_host=false
+usage() { echo "Usage: setup_website.sh [--artifact FILE --checksum FILE --install-root DIR --env FILE --target-environment test|production --hostname NAME --ip ADDRESS --backup-controller-website-host HOST --backup-controller-website-port PORT --letsencrypt-email EMAIL --no-backup --skip-host]" >&2; exit 2; }
 if (($# == 0)); then
   [[ -t 0 && -t 1 ]] || { echo "[website] Without flags, setup_website.sh requires an interactive terminal." >&2; exit 2; }
   cat <<'BANNER'
@@ -39,6 +39,8 @@ while (($#)); do
     --target-environment) target_environment="${2:-}"; shift 2;;
     --hostname|--domain) requested_hostname="${2:-}"; shift 2;;
     --ip) requested_ip="${2:-}"; shift 2;;
+    --backup-controller-website-host) backup_controller_website_host="${2:-}"; shift 2;;
+    --backup-controller-website-port) backup_controller_website_port="${2:-}"; shift 2;;
     --letsencrypt-email) requested_letsencrypt_email="${2:-}"; shift 2;;
     --no-backup) no_backup=true; shift;;
     --skip-backup) skip_backup=true; shift;;
@@ -55,6 +57,8 @@ artifact="$(realpath "$artifact")"; checksum="$(realpath "${checksum:-$artifact.
   [[ -z "$env_source" ]] || sudo_args+=(--env "$env_source")
   [[ -z "$requested_hostname" ]] || sudo_args+=(--hostname "$requested_hostname")
   [[ -z "$requested_ip" ]] || sudo_args+=(--ip "$requested_ip")
+  [[ -z "$backup_controller_website_host" ]] || sudo_args+=(--backup-controller-website-host "$backup_controller_website_host")
+  [[ -z "$backup_controller_website_port" ]] || sudo_args+=(--backup-controller-website-port "$backup_controller_website_port")
   [[ -z "$requested_letsencrypt_email" ]] || sudo_args+=(--letsencrypt-email "$requested_letsencrypt_email")
   [[ "$no_backup" == true ]] && sudo_args+=(--no-backup)
   [[ "$skip_backup" == true ]] && sudo_args+=(--skip-backup)
@@ -118,11 +122,9 @@ fi
 if [[ -z "$env_source" ]]; then
   env_source="$install_root/shared/.env"
 fi
-if [[ ! -f "$env_source" ]]; then
-  env_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-env.sh"
-  [[ -x "$env_prepare" ]] || { echo "[website] Release contains no environment bootstrap." >&2; exit 1; }
-  "$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt" "$target_environment" "$requested_hostname" "$requested_ip" "$requested_letsencrypt_email"
-fi
+env_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-env.sh"
+[[ -x "$env_prepare" ]] || { echo "[website] Release contains no environment bootstrap." >&2; exit 1; }
+"$env_prepare" "$env_source" "$install_root/shared/first-run-credentials.txt" "$target_environment" "$requested_hostname" "$requested_ip" "$requested_letsencrypt_email" "$backup_controller_website_host" "$backup_controller_website_port"
 [[ -f "$env_source" ]] || { echo "[website] Environment file is missing: $env_source" >&2; exit 1; }
 source "$stage/bundle/payload/infrastructure/scripts/lib/env.sh"
 export ENV_FILE="$env_source"

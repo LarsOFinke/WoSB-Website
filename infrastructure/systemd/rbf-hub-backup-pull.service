@@ -1,0 +1,14 @@
+[Unit]
+Description=Process Recovery Tool backup requests
+Requires=docker.service
+After=docker.service rbf-hub.service
+
+[Service]
+Type=oneshot
+UMask=0077
+TimeoutStartSec=4h
+WorkingDirectory=@INFRA_DIR@
+ExecStart=/usr/bin/python3 @INFRA_DIR@/scripts/backup/process-pull-requests.py @INFRA_DIR@
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6

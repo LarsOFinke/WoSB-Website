@@ -32,15 +32,15 @@ def test_backup_set_accepts_shared_data_behind_a_versioned_release_symlink(tmp_p
 
 def test_backup_enrollment_response_is_request_bound() -> None:
     provisioner=b'#!/usr/bin/env bash\nset -Eeuo pipefail\n'
-    ingest=b'#!/usr/bin/env python3\n'
-    request=validate_request({'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','deployment_environment':'production','requested_username':'rbf-backup-production','requested_recovery_username':'rbf-recovery-production','requested_storage_directory':'/backups/wosb/production','requested_directory':'/incoming','created_at':'2026-08-01T10:00:00+00:00','product_hostname':'rbf.example.net','release_version':'1.7.33','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':hashlib.sha256(provisioner).hexdigest(),'ingest_script_base64':base64.b64encode(ingest).decode(),'ingest_script_sha256':hashlib.sha256(ingest).hexdigest()})
-    response=validate_response({'schema_version':1,'kind':RESPONSE_KIND,'enrollment_id':request['enrollment_id'],'deployment_environment':'production','host':'backup.example.net','port':22,'username':'rbf-backup-production','recovery_username':'rbf-recovery-production','storage_directory':'/backups/wosb/production','remote_directory':'/incoming','receipt_directory':'/receipts','recovery_directory':'/data','host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBackupHostKey=','host_key_fingerprint':'SHA256:'+'A'*43,'age_recipient':'age1'+'a'*58,'managed_server':True,'trust_model':'server-controlled-ingest-v1'},expected_enrollment_id=str(request['enrollment_id']),expected_environment='production')
+    tool=b'recovery-tool'
+    request=validate_request({'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'deployment_environment':'production','requested_controller_username':'rbf-backup-controller-production','requested_storage_directory':'/backups/wosb/production','website_host':'rbf.example.net','website_ssh_port':22,'website_host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIWebsiteHostKey=','website_host_key_fingerprint':'SHA256:'+'W'*43,'created_at':'2026-08-01T10:00:00+00:00','product_hostname':'rbf.example.net','release_version':'1.7.33','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':hashlib.sha256(provisioner).hexdigest(),'recovery_tool_base64':base64.b64encode(tool).decode(),'recovery_tool_sha256':hashlib.sha256(tool).hexdigest()})
+    response=validate_response({'schema_version':1,'kind':RESPONSE_KIND,'enrollment_id':request['enrollment_id'],'deployment_environment':'production','host':'rbf.example.net','port':22,'username':'rbf-backup-controller-production','storage_directory':'/backups/wosb/production','remote_directory':'/exports','request_directory':'/requests','status_directory':'/status','acknowledgement_directory':'/acknowledgements','host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIWebsiteHostKey=','host_key_fingerprint':'SHA256:'+'W'*43,'age_recipient':'age1'+'a'*58,'controller_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIControllerKey= controller','managed_server':True,'trust_model':'backup-controller-pull-v1','transport':'recovery-controller-pull-v1'},expected_enrollment_id=str(request['enrollment_id']),expected_environment='production')
     assert response['managed_server'] is True
 
 def test_backup_enrollment_request_rejects_a_tampered_embedded_provisioner() -> None:
     provisioner=b'#!/usr/bin/env bash\n'
-    ingest=b'#!/usr/bin/env python3\n'
-    payload={'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','deployment_environment':'test','requested_username':'rbf-backup-test','requested_recovery_username':'rbf-recovery-test','requested_storage_directory':'/backups/wosb/test','requested_directory':'/incoming','release_version':'1.8.0','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':'0'*64,'ingest_script_base64':base64.b64encode(ingest).decode(),'ingest_script_sha256':hashlib.sha256(ingest).hexdigest()}
+    tool=b'recovery-tool'
+    payload={'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'deployment_environment':'test','requested_controller_username':'rbf-backup-controller-test','requested_storage_directory':'/backups/wosb/test','website_host':'rbf.example.net','website_ssh_port':22,'website_host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIWebsiteHostKey=','website_host_key_fingerprint':'SHA256:'+'W'*43,'release_version':'1.8.0','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':'0'*64,'recovery_tool_base64':base64.b64encode(tool).decode(),'recovery_tool_sha256':hashlib.sha256(tool).hexdigest()}
     try:
         validate_request(payload)
     except ValueError as exc:
@@ -50,8 +50,8 @@ def test_backup_enrollment_request_rejects_a_tampered_embedded_provisioner() -> 
 
 def test_backup_enrollment_request_rejects_cross_environment_identity() -> None:
     provisioner=b'#!/usr/bin/env bash\n'
-    ingest=b'#!/usr/bin/env python3\n'
-    payload={'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'ssh_public_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeEnrollmentKey= rbf@host','deployment_environment':'test','requested_username':'rbf-backup-production','requested_recovery_username':'rbf-recovery-production','requested_storage_directory':'/backups/wosb/production','requested_directory':'/incoming','release_version':'1.8.0','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':hashlib.sha256(provisioner).hexdigest(),'ingest_script_base64':base64.b64encode(ingest).decode(),'ingest_script_sha256':hashlib.sha256(ingest).hexdigest()}
+    tool=b'recovery-tool'
+    payload={'schema_version':1,'kind':REQUEST_KIND,'enrollment_id':'A'*32,'deployment_environment':'test','requested_controller_username':'rbf-backup-controller-production','requested_storage_directory':'/backups/wosb/production','website_host':'rbf.example.net','website_ssh_port':22,'website_host_key':'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIWebsiteHostKey=','website_host_key_fingerprint':'SHA256:'+'W'*43,'release_version':'1.8.0','provisioner_base64':base64.b64encode(provisioner).decode(),'provisioner_sha256':hashlib.sha256(provisioner).hexdigest(),'recovery_tool_base64':base64.b64encode(tool).decode(),'recovery_tool_sha256':hashlib.sha256(tool).hexdigest()}
     try:
         validate_request(payload)
     except ValueError as exc:
@@ -59,14 +59,14 @@ def test_backup_enrollment_request_rejects_cross_environment_identity() -> None:
     else:
         raise AssertionError('cross-environment identity was accepted')
 
-def test_managed_backup_server_reenrollment_reuses_recovery_keys_safely() -> None:
+def test_managed_backup_controller_reenrollment_reuses_keys_safely() -> None:
     provisioner = (ROOT / 'tools/backup-server/provision-rbf-backup-server.sh').read_text()
-    state_check = provisioner.index('EXISTING_MANAGED=false')
-    key_handling = provisioner.index('RECOVERY_KEY="$RECOVERY_DIR/rbf-recovery-readonly-ed25519"')
+    state_check = provisioner.index('if [[ -f "$STATE_FILE" ]]')
+    key_handling = provisioner.index('if [[ ! -f "$KEY" ]]')
     assert state_check < key_handling
-    assert 'Existing managed state does not match {key}.' in provisioner
-    assert '[[ "$EXISTING_MANAGED" == true && -f "$RECOVERY_KEY" && ! -L "$RECOVERY_KEY"' in provisioner
-    assert '[[ "$EXISTING_MANAGED" == true && -f "$AGE_IDENTITY" && ! -L "$AGE_IDENTITY" ]]' in provisioner
+    assert 'Existing controller key material has no matching managed state.' in provisioner
+    assert 'payload.get("managed_by") != "rbf-recovery-controller"' in provisioner
+    assert '[[ -f "$KEY" && ! -L "$KEY" && -f "$KEY.pub"' in provisioner
     assert 'AGE_RECIPIENT="$(age-keygen -y "$AGE_IDENTITY")"' in provisioner
 
 def test_strategy_rows_and_backgrounds_remain_inside_full_recovery_scope() -> None:

@@ -23,6 +23,18 @@ if ! /usr/bin/env bash "$SCRIPT_DIR/run-consistent-backup.sh" "${args[@]}"; then
   python3 "$SCRIPT_DIR/backup_status.py" "$health" --status failed --stage backup --reason scheduled --started-at "$started_at" --message "Coordinated backup or recovery verification failed."
   exit 1
 fi
+if [[ -n "$(read_env BACKUP_PULL_ENROLLMENT_ID)" ]]; then
+  if ! python3 "$SCRIPT_DIR/wait-for-pull-ack.py" "$INFRA_DIR" "$(cat "$set_result")"; then
+    python3 "$SCRIPT_DIR/backup_status.py" "$health" --status failed --stage controller-acknowledgement --reason scheduled --started-at "$started_at" --message "Verified export was not acknowledged by the backup controller."
+    exit 1
+  fi
+  python3 "$SCRIPT_DIR/backup_status.py" "$health" --status succeeded --stage committed --reason scheduled --started-at "$started_at" \
+    --postgres "$(cat "$postgres_result")" --files "$(cat "$files_result")" \
+    --recovery "$(cat "$recovery_result" 2>/dev/null || true)" \
+    --verification "$(cat "$verification_result")" --backup-set "$(cat "$set_result")" \
+    --message "Backup controller pulled, verified and acknowledged the encrypted set."
+  exit 0
+fi
 sync_args=(
   --infra "$INFRA_DIR"
   --postgres "$(cat "$postgres_result")"

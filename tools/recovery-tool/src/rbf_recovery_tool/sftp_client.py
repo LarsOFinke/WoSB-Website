@@ -211,13 +211,17 @@ def _validate_commit_payload(
                 raise RuntimeError(f"Recovery report source binding mismatch: {key}")
 
 
-def latest_remote_bundle(sftp, remote_directory: str):
+def latest_remote_bundle(
+    sftp, remote_directory: str, *, set_filename: str | None = None
+):
     root = PurePosixPath(_remote_directory(remote_directory))
     attributes = sftp.listdir_attr(root.as_posix())
     by_name = {str(item.filename): item for item in attributes}
     candidates = [
         item for item in attributes
-        if _SET_RE.fullmatch(str(item.filename)) and f"{item.filename}.sha256" in by_name
+        if _SET_RE.fullmatch(str(item.filename))
+        and (set_filename is None or str(item.filename) == set_filename)
+        and f"{item.filename}.sha256" in by_name
     ]
     candidates.sort(key=lambda item: (item.st_mtime, str(item.filename)), reverse=True)
     for candidate in candidates:
@@ -265,6 +269,19 @@ def download_latest(
     password: str = "",
     progress: Callable[[int, int], None] | None = None,
 ) -> Path:
+    bundle, _set_manifest = download_latest_with_proof(
+        profile, password=password, progress=progress
+    )
+    return bundle
+
+
+def download_latest_with_proof(
+    profile: Profile,
+    *,
+    password: str = "",
+    progress: Callable[[int, int], None] | None = None,
+    set_filename: str | None = None,
+) -> tuple[Path, Path]:
     profile = profile.normalized()
     profile.validate(require_fingerprint=True, require_files=True)
     destination = Path(profile.destination_directory)
@@ -274,7 +291,7 @@ def download_latest(
         sftp = client.open_sftp()
         try:
             remote_bundle, total_size, remote_set, remote_report = latest_remote_bundle(
-                sftp, profile.remote_directory
+                sftp, profile.remote_directory, set_filename=set_filename
             )
             remote_files = [
                 remote_bundle,
@@ -315,7 +332,7 @@ def download_latest(
                     report_size=local_report.stat().st_size,
                     report_sha256=_file_digest(local_report),
                 )
-                return local_bundle
+                return local_bundle, local_set
             except Exception:
                 for partial in temporary:
                     partial.unlink(missing_ok=True)
@@ -347,6 +364,7 @@ __all__ = [
     "_verified_remote_file",
     "connect",
     "download_latest",
+    "download_latest_with_proof",
     "fetch_host_fingerprint",
     "latest_remote_bundle",
 ]

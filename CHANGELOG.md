@@ -2,14 +2,18 @@
 
 ## Unreleased
 
-- Isolated test and production enrollment on a shared backup server. The
-  website's deployment environment now binds environment-specific SFTP
-  accounts, chroot storage, SSH policy, ingest and retention units, state, and
-  recovery keys; cross-environment requests and responses fail closed.
+- Isolated test and production controller enrollment on a shared backup server.
+  Each environment has separate SFTP identity, chroot, controller and age keys,
+  Recovery Tool profile, `/backups` storage, timers, state, and retention;
+  cross-environment requests and responses fail closed.
 - Preserved shared enrollment settings across versioned releases, refused
   managed backups before stopping the API when recovery encryption is missing,
   and exposed live backup-stage progress with resilient status polling during
   the planned consistency pause.
+- Made the Recovery Tool on the backup server the backup controller. It connects
+  outbound to a pinned website SFTP endpoint, requests and verifies encrypted
+  sets, controls retention, and acknowledges the exact manifest before updates;
+  the website stores no backup-server address and needs no outbound access to it.
 
 ## 1.8.1 - 2026-08-22
 

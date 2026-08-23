@@ -22,7 +22,7 @@ if [[ "$EUID" -eq 0 && -n "${SUDO_USER:-}" && "$SUDO_USER" != root ]]; then
   done
   exec sudo -u "$SUDO_USER" -H -- bash "$0" "$@"
 fi
-artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; app_hostname=""; letsencrypt_email=""; rotate_deploy_key=true; no_backup=false; automated=false
+artifact=""; host=""; user=""; bootstrap_user=""; bootstrap_identity_file=""; port=""; remote_dir=""; identity_file=""; source_revision=""; env_source=""; install_root=""; app_hostname=""; letsencrypt_email=""; backup_controller_website_host=""; backup_controller_website_port=""; rotate_deploy_key=true; no_backup=false; automated=false
 interactive=false; configure=false
 usage(){ echo "Usage: deploy.sh|update.sh [--test|--production] [--configure] [--artifact FILE] [--host HOST] [--user USER] [--bootstrap-user USER] [--bootstrap-identity-file FILE] [--identity-file FILE] [--port PORT] [--remote-dir DIR] [--config FILE] [--rotate-ssh-key|--no-rotate-ssh-key]" >&2; exit 2; }
 discover_identity_file() {
@@ -92,6 +92,11 @@ if [[ -e "$config_file" ]]; then
   [[ "$config_mode" == 600 ]] || { echo "$origin_prefix Unsafe permissions on $config_file ($config_mode); expected 600." >&2; exit 1; }
   config_owner="$(stat -c '%u' "$config_file")"
   [[ "$config_owner" == "$(id -u)" ]] || { echo "$origin_prefix Origin configuration is not owned by the invoking user." >&2; exit 1; }
+  if grep -Eq '(^|=)[[:space:]]*<[^>]+>[[:space:]]*$' "$config_file"; then
+    echo "$origin_prefix Origin configuration still contains a documentation placeholder: $config_file" >&2
+    echo "$origin_prefix Replace angle-bracket values with the real target values (for example RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST=test.example.org)." >&2
+    exit 2
+  fi
   # shellcheck disable=SC1090
   source "$config_file"
   host="${host:-${RBF_DEPLOY_HOST:-}}"; user="${user:-${RBF_DEPLOY_USER:-rbfadmin}}"
@@ -100,6 +105,8 @@ if [[ -e "$config_file" ]]; then
   rotate_deploy_key="${RBF_DEPLOY_ROTATE_SSH_KEY:-$rotate_deploy_key}"
   install_root="${install_root:-${RBF_DEPLOY_INSTALL_ROOT:-}}"; env_source="${env_source:-${RBF_DEPLOY_ENV_SOURCE:-}}"
   app_hostname="${app_hostname:-${RBF_DEPLOY_APP_HOSTNAME:-}}"; letsencrypt_email="${letsencrypt_email:-${RBF_DEPLOY_LETSENCRYPT_EMAIL:-}}"
+  backup_controller_website_host="${RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST:-}"
+  backup_controller_website_port="${RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_PORT:-}"
 fi
 port="${port:-22}"; remote_dir="${remote_dir:-/tmp/rbf-release}"
 if [[ "$configure" == true || ( "$target_environment" == test && "$initial_argument_count" -eq 0 && ! -f "$config_file" ) ]]; then
@@ -120,6 +127,10 @@ if [[ "$interactive" == true ]]; then
   configure_deploy_identity
   configure_bootstrap_access
   read -r -p "SSH-Port [${port:-22}]: " answer; port="${answer:-${port:-22}}"
+  read -r -p "Vom Backup-Server erreichbarer Website-SSH-Host [${backup_controller_website_host:-$host}]: " answer
+  backup_controller_website_host="${answer:-${backup_controller_website_host:-$host}}"
+  read -r -p "Website-SSH-Port für den Backup-Server [${backup_controller_website_port:-$port}]: " answer
+  backup_controller_website_port="${answer:-${backup_controller_website_port:-$port}}"
   read -r -p "Remote-Arbeitsverzeichnis [${remote_dir}]: " answer; remote_dir="${answer:-$remote_dir}"
   read -r -p "Vorhandenes Artefakt (leer = neu bauen): " artifact
   read -r -p "Quellrevision [HEAD]: " source_revision
@@ -144,6 +155,10 @@ fi
 [[ -z "$bootstrap_user" || "$bootstrap_user" =~ ^[A-Za-z_][A-Za-z0-9_.-]{2,39}$ ]] || { echo "[origin] Invalid bootstrap username: $bootstrap_user" >&2; exit 2; }
 [[ -z "$bootstrap_identity_file" || -f "$bootstrap_identity_file" ]] || { echo "[origin] Bootstrap identity file is missing: $bootstrap_identity_file" >&2; exit 2; }
 [[ "$port" =~ ^[0-9]+$ && "$port" -le 65535 ]] || { echo "[origin] Invalid SSH port: $port" >&2; exit 2; }
+backup_controller_website_host="${backup_controller_website_host:-$host}"
+backup_controller_website_port="${backup_controller_website_port:-$port}"
+[[ "$backup_controller_website_port" =~ ^[0-9]+$ && "$backup_controller_website_port" -ge 1 && "$backup_controller_website_port" -le 65535 ]] \
+  || { echo "[origin] Invalid backup-controller website SSH port: $backup_controller_website_port" >&2; exit 2; }
 [[ "$remote_dir" == /* ]] || { echo "[origin] Remote working directory must be absolute: $remote_dir" >&2; exit 2; }
 if [[ "$interactive" == true ]]; then
   umask 077; temporary="${config_file}.tmp.$$"
@@ -159,6 +174,8 @@ RBF_DEPLOY_INSTALL_ROOT=$(printf '%q' "$install_root")
 RBF_DEPLOY_ENV_SOURCE=$(printf '%q' "$env_source")
 RBF_DEPLOY_APP_HOSTNAME=$(printf '%q' "$app_hostname")
 RBF_DEPLOY_LETSENCRYPT_EMAIL=$(printf '%q' "$letsencrypt_email")
+RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_HOST=$(printf '%q' "$backup_controller_website_host")
+RBF_DEPLOY_BACKUP_CONTROLLER_WEBSITE_PORT=$(printf '%q' "$backup_controller_website_port")
 EOF
   mv -f "$temporary" "$config_file"
   chmod 0600 "$config_file"
@@ -320,6 +337,8 @@ ssh "${ssh_args[@]}" "$user@$host" "$cleanup_line"
 remote_command=(sudo -n bash "$remote_dir/setup_website.sh" --target-environment "$target_environment")
 remote_command+=(--artifact "$remote_dir/$(basename "$artifact")" --checksum "$remote_dir/$(basename "$checksum")")
 [[ -z "$app_hostname" ]] || remote_command+=(--hostname "$app_hostname")
+remote_command+=(--backup-controller-website-host "$backup_controller_website_host")
+remote_command+=(--backup-controller-website-port "$backup_controller_website_port")
 [[ -z "$letsencrypt_email" ]] || remote_command+=(--letsencrypt-email "$letsencrypt_email")
 if [[ "$automated" == true ]]; then
   [[ -z "$install_root" ]] || remote_command+=(--install-root "$install_root")

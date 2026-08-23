@@ -71,7 +71,7 @@ test('the browser surface does not expose recovery transfers or restore controls
   assert.match(page, /status\.artifacts/)
 })
 
-test('guided enrollment uses the host capability and keeps recovery tooling optional', async () => {
+test('guided enrollment installs the backup-server Recovery Tool controller', async () => {
   const [page, composable, pageComposable, enrollment, quickstart] = await Promise.all([
     read('src/modules/admin/pages/DatabaseBackupsPage.vue'),
     read('src/modules/admin/composables/useBackupEnrollment.js'),
@@ -80,7 +80,8 @@ test('guided enrollment uses the host capability and keeps recovery tooling opti
     read('../docs/deployment/BACKUP_SETUP_QUICKSTART.md'),
   ])
 
-  assert.match(page, /v-if="!connectionReady"/)
+  assert.match(page, /v-if="showEnrollment"/)
+  assert.match(page, /updateEnrollment/)
   assert.match(page, /operation="prepare_enrollment"/)
   assert.match(page, /operation="apply_enrollment"/)
   assert.match(page, /operation="backup"/)
@@ -93,8 +94,10 @@ test('guided enrollment uses the host capability and keeps recovery tooling opti
   assert.match(enrollment, /provisioner_base64/)
   assert.doesNotMatch(enrollment, /github\.com|curl --fail/)
   assert.match(enrollment, /sha256sum -c/)
-  assert.match(quickstart, /Recovery Tool is \*\*not\*\* required/)
-  assert.match(quickstart, /before every normal\s+update/)
+  assert.match(quickstart, /Recovery Tool runs on the\s+\*\*backup server\*\*/)
+  assert.match(quickstart, /normal website update always creates a verified local backup first/)
+  assert.match(quickstart, /BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE=true/)
+  assert.match(quickstart, /BACKUP_CONTROLLER_WEBSITE_HOST/)
 })
 
 test('host-approved requests retain CSRF and capability headers', async () => {

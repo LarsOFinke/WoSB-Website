@@ -32,6 +32,17 @@
       "title": "Managed Server",
       "type": "boolean"
     },
+    "mode": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Connection Mode"
+    },
     "port": {
       "anyOf": [
         {
