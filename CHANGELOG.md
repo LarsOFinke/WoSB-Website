@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.8.21 - 2026-08-25
+
 - Isolated test and production controller enrollment on a shared backup server.
   Each environment has separate SFTP identity, chroot, controller and age keys,
   Recovery Tool profile, `/backups` storage, timers, state, and retention;
@@ -14,6 +16,14 @@
   outbound to a pinned website SFTP endpoint, requests and verifies encrypted
   sets, controls retention, and acknowledges the exact manifest before updates;
   the website stores no backup-server address and needs no outbound access to it.
+- Enabled the backup server's separate one-minute synchronization timers, documented
+  narrowly scoped read-only backup replication, and added a root-level updater that
+  preserves enrolled test and production profiles while reconciling their services.
+- Restored Strategy Planner saves for the current version-2 document format, including
+  background presentation settings and the Oval formation produced by legacy document
+  migration, while continuing to reject unknown formation values.
+- Hardened frontend null handling, backend JDBC numeric boundaries, Build calculations,
+  and legacy Build restore diagnostics without weakening validation or authorization.
 
 ## 1.8.1 - 2026-08-22
 
