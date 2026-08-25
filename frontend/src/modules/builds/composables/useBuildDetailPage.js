@@ -88,6 +88,7 @@ export function useBuildDetailPage(props) {
   }
 
   async function shareBuild() {
+    if (!build.value) return
     shareStatus.value = ''
     try {
       await copyBuildShareLink(build.value.id)
@@ -128,8 +129,10 @@ export function useBuildDetailPage(props) {
     loading.value = true
     error.value = ''
     try {
-      build.value = await getBuild(props.id)
-      optionCatalog.value = await getBuildOptions(build.value?.ship?.id || build.value?.ship_id || null)
+      const loadedBuild = await getBuild(props.id)
+      if (!loadedBuild) throw new Error(t('builds.detail.loadError'))
+      build.value = loadedBuild
+      optionCatalog.value = await getBuildOptions(loadedBuild.ship?.id || loadedBuild.ship_id || null)
     } catch (err) {
       error.value = err.message || t('builds.detail.loadError')
     } finally {

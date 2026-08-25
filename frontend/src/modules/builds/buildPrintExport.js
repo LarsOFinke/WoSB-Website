@@ -204,7 +204,7 @@ function createBuildPrintDocument(build, helpers = {}) {
 
   if (model.equipmentRows.length || model.upgrades.length) {
     const rows = [
-      ...model.equipmentRows.map((row) => ({ ...row, iconHref: row.iconHref || PRINT_VISUALS[row.key] || PRINT_VISUALS.sail })),
+      ...model.equipmentRows.flatMap((row) => row ? [{ ...row, iconHref: row.iconHref || PRINT_VISUALS[row.key] || PRINT_VISUALS.sail }] : []),
       ...model.upgradeRows.map((upgrade, index) => ({ label: `${String(index + 1).padStart(2, '0')} · ${model.t('builds.detail.upgrades')}`, value: upgrade.value, iconHref: upgrade.iconHref || PRINT_VISUALS.upgrade })),
     ]
     const panel = renderRowsPanel({ x: leftX, y: leftY, width: COLUMN_WIDTH, index: sectionIndex++, eyebrow: model.t('builds.commandDeck.configurationEyebrow'), title: model.t('builds.print.configurationTitle'), iconHref: PRINT_VISUALS.sail, rows, colors })

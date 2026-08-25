@@ -176,9 +176,10 @@ public class BuildValidationService {
         }
     }
     private static BuildCatalogOption require(Map<String, BuildCatalogOption> options, String category,
-                                              String name, String label) {
+        String name, String label) {
         BuildCatalogOption option = options.get(key(category, name));
-        if (option == null) reject(label + ": '" + name + "' is not a valid option.");
+        if (option == null) throw new ResponseStatusException(BAD_REQUEST,
+                label + ": '" + name + "' is not a valid option.");
         return option;
     }
     private static String key(String category, String name) { return category + "\u0000" + name.strip().toLowerCase(Locale.ROOT); }

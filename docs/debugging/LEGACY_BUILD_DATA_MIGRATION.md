@@ -99,8 +99,8 @@ update and diagnostics. Test is the default target:
 infrastructure/scripts/migration/restore-builds-from-origin.sh
 ```
 
-The script discovers a portable `rbf-builds-partial-*.sql` artifact in
-`backups/`, asks how each historical owner maps to an existing target username,
+The script discovers a portable `rbf-builds-partial-*.sql` artifact in the
+repository's `backups/` directory, asks how each historical owner maps to an existing target username,
 uploads the exact artifact, verifies its SHA-256 checksum and runs the complete
 import as a transaction that is rolled back. If more than one matching artifact
 exists, select one explicitly with `--backup`.
@@ -162,6 +162,12 @@ exact-artifact guarantee:
 ```bash
 infrastructure/scripts/migration/restore-builds-from-origin.sh --production
 ```
+
+The repository does not contain operational backup data. A missing `backups/`
+directory therefore makes this migration command fail clearly; it must not
+block the normal build or release validation. For an alternate staging
+directory, set `RBF_BUILD_BACKUP_DIR`, or select one artifact directly with
+`--backup FILE`.
 
 Production selection and commit are separate explicit decisions: the command
 requires `--production`, performs another rollback-only dry run, and then asks

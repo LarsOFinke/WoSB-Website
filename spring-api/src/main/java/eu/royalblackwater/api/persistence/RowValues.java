@@ -9,8 +9,12 @@ public final class RowValues {
     private RowValues() { }
 
     public static long longValue(Map<String, Object> row, String key) {
+        return requiredNumber(row, key).longValue();
+    }
+
+    public static Number requiredNumber(Map<String, Object> row, String key) {
         Object value = row.get(key);
-        if (value instanceof Number number) return number.longValue();
+        if (value instanceof Number number) return number;
         throw new IllegalStateException("Expected numeric column: " + key);
     }
 

@@ -112,7 +112,7 @@ export function validateBackupEnrollmentSetup(options = {}) {
 
 export function buildBackupEnrollmentCommand(options = {}) {
   const validated = validateBackupEnrollmentSetup(options)
-  if (validated.error) return { command: '', error: validated.error }
+  if (validated.error || !validated.values) return { command: '', error: validated.error || 'invalidProvisioner' }
   const value = validated.values
   const command = `( # Run setup in an isolated shell so an error cannot close this terminal.
 set -e

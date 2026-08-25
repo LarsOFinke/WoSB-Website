@@ -6,6 +6,7 @@ import eu.royalblackwater.api.fleet.dto.FleetMembershipTargetDto;
 import eu.royalblackwater.api.fleet.mapper.FleetDtoMapper;
 import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetAccessQueries;
+import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,7 @@ public class FleetAccessPolicy {
         }
         Map<String, Object> membership = actorMembership(actor.id(), fleetId);
         if (membership != null && Boolean.TRUE.equals(membership.get("can_manage_members"))) {
-            long actorRank = ((Number) membership.get("rank")).longValue();
+            long actorRank = RowValues.longValue(membership, "rank");
             if (targetRank >= actorRank) return result(false, false, false, List.of(), "fleet_peer");
             return result(true, true, true, assignableRoles(actorRank), null);
         }
@@ -130,7 +131,7 @@ public class FleetAccessPolicy {
 
     private long roleRank(String code, long fallback) {
         return repository.optional(FleetAccessQueries.ROLE_RANK_SELECT_01, Map.of("code", code))
-                .map(row -> ((Number) row.get("rank")).longValue()).orElse(fallback);
+                .map(row -> RowValues.longValue(row, "rank")).orElse(fallback);
     }
 
     private List<String> assignableRoles(long belowRank) {

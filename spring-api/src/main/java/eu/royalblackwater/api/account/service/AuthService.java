@@ -43,10 +43,11 @@ public class AuthService {
     @Transactional
     public Optional<LoginResult> login(String username, String password) {
         Optional<UserEntity> found = users.findByUsername(username.strip().toLowerCase(Locale.ROOT));
-        if (found.isEmpty() || !found.get().isActive() || !passwords.verify(password, found.get().getPasswordHash())) {
+        if (found.isEmpty()) {
             return Optional.empty();
         }
-        UserEntity user = found.get();
+        UserEntity user = found.orElseThrow();
+        if (!user.isActive() || !passwords.verify(password, user.getPasswordHash())) return Optional.empty();
         if (passwords.needsRehash(user.getPasswordHash())) user.setPasswordHash(passwords.hash(password));
         return Optional.of(new LoginResult(user.getId(), createSession(user)));
     }
@@ -60,14 +61,16 @@ public class AuthService {
         if (rawToken == null || rawToken.isBlank()) return Optional.empty();
         Optional<AuthSessionEntity> found = sessions.findByTokenHash(tokens.hash(rawToken));
         if (found.isEmpty()) return Optional.empty();
-        AuthSessionEntity session = found.get();
+        AuthSessionEntity session = found.orElseThrow();
         if (!session.getExpiresAt().isAfter(UtcDateTimes.now(clock))) {
             sessions.delete(session);
             return Optional.empty();
         }
         Optional<UserEntity> user = users.findAuthenticatedById(session.getUser().getId());
-        if (user.isEmpty() || !user.get().isActive()) return Optional.empty();
-        return user;
+        if (user.isEmpty()) return Optional.empty();
+        UserEntity authenticatedUser = user.orElseThrow();
+        if (!authenticatedUser.isActive()) return Optional.empty();
+        return Optional.of(authenticatedUser);
     }
 
     @Transactional
@@ -83,10 +86,11 @@ public class AuthService {
     @Transactional
     public Optional<String> changePassword(String rawToken, String currentPassword, String newPassword) {
         Optional<UserEntity> authenticated = authenticatedEntity(rawToken);
-        if (authenticated.isEmpty() || !passwords.verify(currentPassword, authenticated.get().getPasswordHash())) {
+        if (authenticated.isEmpty()) return Optional.empty();
+        UserEntity user = authenticated.orElseThrow();
+        if (!passwords.verify(currentPassword, user.getPasswordHash())) {
             return Optional.empty();
         }
-        UserEntity user = authenticated.get();
         user.setPasswordHash(passwords.hash(newPassword));
         sessions.deleteByUserId(user.getId());
         return Optional.of(createSession(user));

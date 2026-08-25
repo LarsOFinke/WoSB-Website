@@ -15,9 +15,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class BuildCatalogRepositoryTest {
+    @Test
+    void missingFeatureIdIsHandledWithoutBuildingANullSqlParameter() {
+        JdbcQueryService jdbc = mock(JdbcQueryService.class);
+        BuildCatalogRepository repository = new BuildCatalogRepository(
+                jdbc, mock(ShipRepository.class), mock(ShipMapper.class));
+
+        assertThat(repository.feature(null)).isEmpty();
+        verifyNoInteractions(jdbc);
+    }
+
     @Test
     void featureEffectsKeepIntegralDatabaseValuesAsLongs() {
         JdbcQueryService jdbc = mock(JdbcQueryService.class);

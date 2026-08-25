@@ -9,6 +9,7 @@ import eu.royalblackwater.api.builds.dto.BuildPreparedPayload;
 import eu.royalblackwater.api.builds.dto.BuildSlotSelection;
 import eu.royalblackwater.api.builds.dto.BuildStoredSlot;
 import eu.royalblackwater.api.persistence.JdbcQueryService;
+import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -52,7 +53,7 @@ public class BuildRepository {
                 SqlParameters.ofNullable("ids", normalized, "viewer_id", viewerId)));
         Map<Long, BuildAggregate> byId = new LinkedHashMap<>();
         for (BuildAggregate value : values) {
-            byId.put(((Number) value.row().get("id")).longValue(), value);
+            byId.put(RowValues.longValue(value.row(), "id"), value);
         }
         return normalized.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
     }
@@ -139,12 +140,12 @@ public class BuildRepository {
 
     private List<BuildAggregate> hydrate(List<Map<String, Object>> rows) {
         if (rows.isEmpty()) return List.of();
-        List<Long> ids = rows.stream().map(row -> ((Number) row.get("id")).longValue()).toList();
+        List<Long> ids = rows.stream().map(row -> RowValues.longValue(row, "id")).toList();
         Map<Long, List<String>> classifications = new HashMap<>();
         for (Map<String, Object> row : jdbc.query("""
                 select build_id,tag from build_classifications where build_id in (:ids) order by tag
                 """, Map.of("ids", ids))) {
-            classifications.computeIfAbsent(((Number) row.get("build_id")).longValue(), ignored -> new ArrayList<>())
+            classifications.computeIfAbsent(RowValues.longValue(row, "build_id"), ignored -> new ArrayList<>())
                     .add(String.valueOf(row.get("tag")));
         }
         Map<Long, List<BuildStoredSlot>> slots = new HashMap<>();
@@ -153,14 +154,14 @@ public class BuildRepository {
                   from build_slots s join build_item_options o on o.id=s.option_id
                  where s.build_id in (:ids) order by s.build_id,s.slot_type,s.slot_index
                 """, Map.of("ids", ids))) {
-            long buildId = ((Number) row.get("build_id")).longValue();
+            long buildId = RowValues.longValue(row, "build_id");
             slots.computeIfAbsent(buildId, ignored -> new ArrayList<>()).add(new BuildStoredSlot(
-                    String.valueOf(row.get("slot_type")), ((Number) row.get("slot_index")).intValue(),
-                    ((Number) row.get("option_id")).longValue(), String.valueOf(row.get("name")),
+                    String.valueOf(row.get("slot_type")), RowValues.intValue(row, "slot_index"),
+                    RowValues.longValue(row, "option_id"), String.valueOf(row.get("name")),
                     row.get("quantity") instanceof Number quantity ? quantity.intValue() : 1));
         }
         return rows.stream().map(row -> {
-            long id = ((Number) row.get("id")).longValue();
+            long id = RowValues.longValue(row, "id");
             return new BuildAggregate(java.util.Collections.unmodifiableMap(new LinkedHashMap<>(row)), List.copyOf(classifications.getOrDefault(id, List.of())),
                     List.copyOf(slots.getOrDefault(id, List.of())));
         }).toList();

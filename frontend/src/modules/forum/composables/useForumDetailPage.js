@@ -136,10 +136,12 @@ export function useForumDetailPage(props) {
 
   async function submitReply() {
     if (!canReply.value) return
+    const currentThread = thread.value
+    if (!currentThread) return
     saving.value = true
     error.value = ''
     try {
-      await createPost(thread.value.id, {
+      await createPost(currentThread.id, {
         body: reply.body,
         file_ids: replyAttachments.value.map((file) => file.id),
       })

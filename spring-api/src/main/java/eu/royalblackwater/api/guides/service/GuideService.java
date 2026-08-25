@@ -84,7 +84,7 @@ public class GuideService {
         List<BuildRead> linkedBuilds = linkedBuilds(guideId, actor);
         GuideSummary summary = summary(row, users.readMany(List.of(RowValues.longValue(row, "owner_id"))));
         return GuideDtoMapper.detail(summary, attachments,
-                repository.required(GuideQueries.GET_SELECT_01, Map.of("id", guideId)).get("body").toString(),
+                RowValues.requiredString(repository.required(GuideQueries.GET_SELECT_01, Map.of("id", guideId)), "body"),
                 linkedBuilds);
     }
 

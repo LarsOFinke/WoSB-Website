@@ -15,6 +15,7 @@ import eu.royalblackwater.api.fleet.repository.FleetDataRepository;
 import eu.royalblackwater.api.fleet.repository.queries.FleetCommandQueries;
 import eu.royalblackwater.api.persistence.SqlParameters;
 import eu.royalblackwater.api.persistence.SqlUpdate;
+import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.util.List;
@@ -97,7 +98,7 @@ public class FleetCommandService {
     @Transactional
     public FleetMembershipRead join(FleetJoinRequest payload, AuthenticatedUser actor) {
         Map<String, Object> fleet = official();
-        long fleetId = ((Number) fleet.get("id")).longValue();
+        long fleetId = RowValues.longValue(fleet, "id");
         if (payload.fleetId() != null && payload.fleetId() != fleetId) {
             throw bad("Only the official fleet can be joined.");
         }
@@ -111,7 +112,7 @@ public class FleetCommandService {
                             "fleetId", fleetId, "userId", actor.id(), "roleId", roleId,
                             "note", blank(payload.note()), "now", UtcDateTimes.now(clock)));
         } else {
-            membershipId = ((Number) existing.get("id")).longValue();
+            membershipId = RowValues.longValue(existing, "id");
             String status = "inactive".equals(existing.get("status")) ? "pending" : String.valueOf(existing.get("status"));
             repository.update(FleetCommandQueries.JOIN_UPDATE_01, SqlParameters.ofNullable(
                             "fleetId", fleetId, "status", status, "note", blank(payload.note()),
@@ -148,7 +149,7 @@ public class FleetCommandService {
     public FleetMembershipRead assignLeader(long fleetId, long userId,
                                              FleetMembershipUpdate payload, AuthenticatedUser actor) {
         Map<String, Object> fleet = official();
-        if (((Number) fleet.get("id")).longValue() != fleetId) throw bad("Only the official fleet can be managed.");
+        if (RowValues.longValue(fleet, "id") != fleetId) throw bad("Only the official fleet can be managed.");
         if (repository.count(FleetCommandQueries.ASSIGN_LEADER_SELECT_01, Map.of("id", userId)) == 0) {
             throw bad("Fleet or user not found.");
         }
@@ -164,7 +165,7 @@ public class FleetCommandService {
         if (existing == null) {
             membershipId = repository.insertReturningId(FleetCommandQueries.ASSIGN_LEADER_INSERT_01, Map.of("fleetId", fleetId, "userId", userId, "roleId", roleId, "now", UtcDateTimes.now(clock)));
         } else {
-            membershipId = ((Number) existing.get("id")).longValue();
+            membershipId = RowValues.longValue(existing, "id");
             repository.update(FleetCommandQueries.ASSIGN_LEADER_UPDATE_01, Map.of("fleetId", fleetId, "roleId", roleId, "now", UtcDateTimes.now(clock), "id", membershipId));
         }
         audit.record(actor, "fleet_membership", membershipId, "update",
@@ -186,7 +187,7 @@ public class FleetCommandService {
 
     private long roleId(String code) {
         return repository.optional(FleetCommandQueries.ROLE_ID_SELECT_01, Map.of("code", code))
-                .map(row -> ((Number) row.get("id")).longValue())
+                .map(row -> RowValues.longValue(row, "id"))
                 .orElseThrow(() -> bad("Invalid or inactive fleet role."));
     }
 

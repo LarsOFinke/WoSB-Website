@@ -47,7 +47,7 @@ public class BuildEffectService {
             String[] dynamic = DYNAMIC_SPECIALIST_EFFECTS.get(entry.getKey());
             if (dynamic != null) {
                 long count = "boarders".equals(dynamic[1]) ? boarders : payload.sailors();
-                Number scaled = normalize(entry.getValue().doubleValue() * count);
+                Number scaled = normalize(numberOrZero(entry.getValue()) * count);
                 resolved.merge(dynamic[0], scaled, BuildEffectService::sum);
             } else if (entry.getKey().endsWith("_enabled")) {
                 resolved.put(entry.getKey(), 1L);
@@ -69,8 +69,10 @@ public class BuildEffectService {
     }
 
     private static Number sum(Number left, Number right) {
-        return normalize(left.doubleValue() + right.doubleValue());
+        return normalize(numberOrZero(left) + numberOrZero(right));
     }
+
+    private static double numberOrZero(Number value) { return value == null ? 0 : value.doubleValue(); }
 
     private static Number normalize(double value) {
         if (value == Math.rint(value)) return Long.valueOf((long) value);

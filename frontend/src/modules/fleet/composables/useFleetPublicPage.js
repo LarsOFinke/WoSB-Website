@@ -25,11 +25,13 @@ export function useFleetPublicPage() {
     loading.value = true
     error.value = ''
     try {
-      fleet.value = await getPublicOfficialFleet()
+      const loadedFleet = await getPublicOfficialFleet()
+      if (!loadedFleet) throw new Error(t('fleets.loadError'))
+      fleet.value = loadedFleet
       if (isAuthenticated.value) {
         try {
           const memberships = await listMyFleetMemberships()
-          membership.value = memberships.find((row) => row.fleet?.id === fleet.value.id) || memberships[0] || null
+          membership.value = memberships.find((row) => row.fleet?.id === loadedFleet.id) || memberships[0] || null
         } catch (membershipError) {
           applicationError.value = membershipError.message || t('fleets.application.statusError')
         }

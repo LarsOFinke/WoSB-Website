@@ -4,6 +4,7 @@ import eu.royalblackwater.api.account.repository.AccountDataRepository;
 import eu.royalblackwater.api.account.repository.queries.BootstrapAdministratorQueries;
 import eu.royalblackwater.api.config.BootstrapAdminProperties;
 import eu.royalblackwater.api.security.service.PasswordHasher;
+import eu.royalblackwater.api.persistence.RowValues;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -36,7 +37,7 @@ public class BootstrapAdministratorInitializer {
     public void initialize() {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         Map<String, Object> existing = repository.optional(BootstrapAdministratorQueries.INITIALIZE_SELECT_01, Map.of()).orElse(null);
-        long userId = existing == null ? createAdministrator(now) : ((Number) existing.get("id")).longValue();
+        long userId = existing == null ? createAdministrator(now) : RowValues.longValue(existing, "id");
         repository.update(BootstrapAdministratorQueries.INITIALIZE_INSERT_01, Map.of("userId", userId, "displayName", properties.displayName(), "now", now));
         ensureFleetLeadership(userId, now);
     }
@@ -64,7 +65,7 @@ public class BootstrapAdministratorInitializer {
             throw new IllegalArgumentException("Unsupported bootstrap seed lookup.");
         }
         return repository.optional(BootstrapAdministratorQueries.REQUIRED_SEED_ID_SELECT_01 + table + BootstrapAdministratorQueries.REQUIRED_SEED_ID_WHERE_01 + column + "=:value", Map.of("value", value))
-                .map(row -> ((Number) row.get("id")).longValue())
+                .map(row -> RowValues.longValue(row, "id"))
                 .orElseThrow(() -> new IllegalStateException("Required bootstrap seed is missing: " + value));
     }
 }

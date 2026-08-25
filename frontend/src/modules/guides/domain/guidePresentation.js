@@ -9,11 +9,12 @@ export function stripInlineMarkdown(value) {
 export function extractGuideHeadings(body) {
   return String(body || '')
     .split(/\r?\n/)
-    .map((line) => line.match(/^\s*(#{1,3})\s+(.+?)\s*#*\s*$/))
-    .filter(Boolean)
-    .map((match, index) => ({
-      level: match[1].length,
-      label: stripInlineMarkdown(match[2]),
+    .flatMap((line) => {
+      const match = line.match(/^\s*(#{1,3})\s+(.+?)\s*#*\s*$/)
+      return match ? [{ level: match[1].length, label: stripInlineMarkdown(match[2]) }] : []
+    })
+    .map((heading, index) => ({
+      ...heading,
       number: String(index + 1).padStart(2, '0'),
     }))
     .filter((heading) => heading.label)

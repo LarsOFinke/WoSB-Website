@@ -30,9 +30,11 @@ public class UserViewService {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
         FleetMembershipEntity primary = memberships.findProfileMemberships(userId).stream().findFirst().orElse(null);
         List<Long> shipIds = user.getProfile() == null ? List.of() : user.getProfile().getShipPreferences().stream()
-                .map(preference -> preference.getShipId().longValue()).toList();
+                .map(preference -> preference.getShipId())
+                .filter(java.util.Objects::nonNull).map(Integer::longValue).toList();
         List<Long> roleIds = user.getProfile() == null ? List.of() : user.getProfile().getRolePreferences().stream()
-                .map(preference -> preference.getFleetRoleId().longValue()).toList();
+                .map(preference -> preference.getFleetRoleId())
+                .filter(java.util.Objects::nonNull).map(Integer::longValue).toList();
         return mapper.toRead(user, primary, shipIds, roleIds);
     }
 }

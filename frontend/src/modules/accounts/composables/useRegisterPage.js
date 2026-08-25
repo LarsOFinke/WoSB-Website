@@ -40,12 +40,13 @@ export function useRegisterPage() {
     success.value = false
     try {
       const applyToFleet = wantsFleetMembership.value && Boolean(officialFleet.value?.id)
+      const fleetId = applyToFleet ? officialFleet.value?.id || null : null
       const response = await register({
         username: username.value,
         display_name: displayName.value,
         password: password.value,
         wants_fleet_membership: applyToFleet,
-        fleet_id: applyToFleet ? officialFleet.value.id : null,
+        fleet_id: fleetId,
         fleet_application_note: applyToFleet ? fleetApplicationNote.value : null,
       })
       submittedRequest.value = response.request

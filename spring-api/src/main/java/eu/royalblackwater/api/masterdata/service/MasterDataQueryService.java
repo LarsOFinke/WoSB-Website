@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import static eu.royalblackwater.api.persistence.RowValues.longValue;
+import static eu.royalblackwater.api.persistence.RowValues.requiredNumber;
 import static eu.royalblackwater.api.persistence.RowValues.requiredString;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -134,7 +135,7 @@ public class MasterDataQueryService {
         Map<Long, Map<String, Double>> result = new LinkedHashMap<>();
         for (Map<String, Object> row : repository.query(sql, parameters)) {
             result.computeIfAbsent(longValue(row, "option_id"), ignored -> new LinkedHashMap<>())
-                    .put(requiredString(row, "effect_key"), ((Number) row.get("effect_value")).doubleValue());
+                    .put(requiredString(row, "effect_key"), requiredNumber(row, "effect_value").doubleValue());
         }
         return result;
     }

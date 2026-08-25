@@ -144,19 +144,21 @@ public class BuildCatalogRepository {
     }
 
     private Optional<BuildFeatureSnapshot> feature(Long featureId, boolean activeResearchOnly) {
+        if (!activeResearchOnly && featureId == null) return Optional.empty();
         String sql = activeResearchOnly
                 ? "select id, upgrade_slots_granted from build_features where code='research_upgrade_slot' and is_active=true"
                 : "select id, upgrade_slots_granted from build_features where id=:id";
         Map<String, ?> parameters = activeResearchOnly ? Map.of() : Map.of("id", featureId);
         Optional<Map<String, Object>> feature = jdbc.optional(sql, parameters);
         if (feature.isEmpty()) return Optional.empty();
-        long id = number(feature.get().get("id")).longValue();
+        Map<String, Object> featureRow = feature.orElseThrow();
+        long id = number(featureRow.get("id")).longValue();
         Map<String, Number> effects = jdbc.query("""
                 select effect_key, effect_value from build_feature_effects where feature_id=:id
                 """, Map.of("id", id)).stream().collect(LinkedHashMap::new,
                         (map, row) -> map.put(string(row, "effect_key"), normalized(number(row.get("effect_value")))),
                         Map::putAll);
-        return Optional.of(new BuildFeatureSnapshot(id, integer(feature.get(), "upgrade_slots_granted"),
+        return Optional.of(new BuildFeatureSnapshot(id, integer(featureRow, "upgrade_slots_granted"),
                 Map.copyOf(effects)));
     }
 
@@ -210,7 +212,9 @@ public class BuildCatalogRepository {
         if (decimal == Math.rint(decimal)) return Long.valueOf(value.longValue());
         return Double.valueOf(decimal);
     }
-    private static Number number(Object value) { return (Number) value; }
+    private static Number number(Object value) {
+        return value instanceof Number number ? number : 0L;
+    }
     private static String string(Map<String, Object> row, String key) { return String.valueOf(row.get(key)); }
     private static String nullable(Map<String, Object> row, String key) {
         Object value = row.get(key); return value == null ? null : String.valueOf(value);

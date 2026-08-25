@@ -130,7 +130,7 @@ public class ReferenceDataSeeder {
         repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_DELETE_01, Map.of("id",optionId));
         for (Map.Entry<String,Object> effect : map(item.get("stat_effects")).entrySet()) {
             repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_INSERT_01, Map.of("id",optionId,"key",effect.getKey(),
-                    "value",((Number)effect.getValue()).doubleValue(),"now",UtcDateTimes.now(clock)));
+                    "value",requiredNumber(effect.getValue()),"now",UtcDateTimes.now(clock)));
         }
         repository.update(ReferenceDataQueries.REPLACE_OPTION_CHILDREN_DELETE_02, Map.of("id",optionId));
         for (String code : strings(item.get("allowed_slot_types"))) {
@@ -189,7 +189,7 @@ public class ReferenceDataSeeder {
             for (Map.Entry<String, Object> effect : map(override.get("stat_effects")).entrySet()) {
                 repository.update(ReferenceDataQueries.REPLACE_SHIP_CHILDREN_INSERT_03,
                         Map.of("ship", shipId, "option", optionId, "key", effect.getKey(),
-                                "value", ((Number) effect.getValue()).doubleValue(), "now", UtcDateTimes.now(clock)));
+                                "value", requiredNumber(effect.getValue()), "now", UtcDateTimes.now(clock)));
             }
         }
     }
@@ -203,7 +203,7 @@ public class ReferenceDataSeeder {
             repository.update(ReferenceDataQueries.SEED_BUILD_RULES_DELETE_01, Map.of("id",id));
             for (Map.Entry<String,Object> effect : map(item.get("stat_effects")).entrySet()) {
                 repository.update(ReferenceDataQueries.SEED_BUILD_RULES_INSERT_02,
-                        Map.of("id",id,"key",effect.getKey(),"value",((Number)effect.getValue()).doubleValue()));
+                        Map.of("id",id,"key",effect.getKey(),"value",requiredNumber(effect.getValue())));
             }
         }
         repository.update(ReferenceDataQueries.SEED_BUILD_RULES_DELETE_02, Map.of());
@@ -220,8 +220,10 @@ public class ReferenceDataSeeder {
                 Map.of("slug","boarding","label","Boarding","description","Boarding and crew pressure","sort",20),
                 Map.of("slug","gunnery","label","Gunnery","description","Weapon damage and reload","sort",30),
                 Map.of("slug","defensive","label","Defensive","description","Durability and survivability","sort",40));
-        for (Map<String,Object> role : roles) repository.update(ReferenceDataQueries.SEED_BUILD_ROLES_INSERT_01, Map.of("slug",role.get("slug"),"label",role.get("label"),"description",role.get("description"),
-                        "sort",role.get("sort"),"now",UtcDateTimes.now(clock)));
+        for (Map<String,Object> role : roles) repository.update(ReferenceDataQueries.SEED_BUILD_ROLES_INSERT_01,
+                SqlParameters.ofNullable("slug", text(role, "slug"), "label", text(role, "label"),
+                        "description", nullable(role, "description"), "sort", integer(role, "sort", 0),
+                        "now", UtcDateTimes.now(clock)));
     }
 
     private boolean overridden(String table, long id) {
@@ -264,6 +266,10 @@ public class ReferenceDataSeeder {
     static String nullable(Map<String,Object> map,String key) { Object value=map.get(key); return value==null?null:String.valueOf(value); }
     static int integer(Map<String,Object> map,String key,int fallback) { Object v=map.get(key); return v instanceof Number n?n.intValue():fallback; }
     static Double number(Map<String,Object> map,String key) { Object v=map.get(key); return v instanceof Number n?n.doubleValue():null; }
+    private static double requiredNumber(Object value) {
+        if (value instanceof Number number) return number.doubleValue();
+        throw new IllegalStateException("Expected numeric seed value.");
+    }
     static boolean flag(Map<String,Object> map,String key,boolean fallback) { Object v=map.get(key); return v instanceof Boolean b?b:fallback; }
     static Map<String,Object> map(Object value) {
         if (!(value instanceof Map<?,?> raw)) return Map.of();

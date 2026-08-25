@@ -83,11 +83,13 @@ export function useGroupDetailPage(props) {
   }
 
   async function submitJoin() {
+    const currentGroup = group.value
+    if (!currentGroup) return
     joining.value = true
     joinError.value = ''
     joinSuccess.value = ''
     try {
-      await joinGroup(group.value.id, groupJoinPayload(joinForm, user.value, selectedShip.value))
+      await joinGroup(currentGroup.id, groupJoinPayload(joinForm, user.value, selectedShip.value))
       joinSuccess.value = t('groups.detail.joined')
       joinForm.note = ''
       await loadGroup()
@@ -99,10 +101,12 @@ export function useGroupDetailPage(props) {
   }
 
   async function submitClose() {
+    const currentGroup = group.value
+    if (!currentGroup) return
     closing.value = true
     error.value = ''
     try {
-      await closeGroup(group.value.id)
+      await closeGroup(currentGroup.id)
       await loadGroup()
     } catch (err) {
       error.value = err.message || t('groups.detail.closeError')

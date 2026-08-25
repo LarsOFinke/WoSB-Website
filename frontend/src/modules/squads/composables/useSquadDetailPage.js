@@ -55,9 +55,11 @@ export function useSquadDetailPage(props) {
     loading.value = true
     error.value = ''
     try {
-      squad.value = await getSquad(props.id)
+      const loadedSquad = await getSquad(props.id)
+      if (!loadedSquad) throw new Error(t('squads.detail.loadError'))
+      squad.value = loadedSquad
       syncDrafts()
-      if (canManageFleet.value && squad.value.can_manage) {
+      if (canManageFleet.value && loadedSquad.can_manage) {
         try {
           roster.value = await listSquadRoster()
         } catch {

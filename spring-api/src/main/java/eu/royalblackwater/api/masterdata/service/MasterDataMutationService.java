@@ -21,6 +21,7 @@ import eu.royalblackwater.api.masterdata.mapper.MasterDataDtoMapper;
 import eu.royalblackwater.api.masterdata.repository.MasterDataRepository;
 import eu.royalblackwater.api.masterdata.repository.queries.MasterDataMutationQueries;
 import eu.royalblackwater.api.persistence.SqlParameters;
+import eu.royalblackwater.api.persistence.RowValues;
 import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import java.time.Clock;
 import java.util.List;
@@ -238,7 +239,8 @@ public class MasterDataMutationService {
         if(code==null||code.isBlank()) return null;
         if(!"weapon_classes".equals(table)) throw new IllegalArgumentException();
         return repository.optional(MasterDataMutationQueries.LOOKUP_SELECT_01,Map.of("code",code))
-                .map(row->((Number)row.get("id")).longValue()).orElseThrow(()->new ResponseStatusException(CONFLICT,"Unknown weapon class."));
+                .map(row -> RowValues.longValue(row, "id"))
+                .orElseThrow(()->new ResponseStatusException(CONFLICT,"Unknown weapon class."));
     }
     private static <T>T value(T value,T fallback){ return value==null?fallback:value; }
 }

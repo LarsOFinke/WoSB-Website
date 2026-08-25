@@ -125,13 +125,14 @@ export function calculateBuildStatRows({ ship, definitions = [], effects = {}, e
 
       let effective = base
       if (effective !== null && definition.pct_effect) {
+        const baseValue = effective
         const configuredPctBase = definition.pct_base_field
           ? numberOrNull(ship[definition.pct_base_field])
-          : base
-        const pctBase = configuredPctBase === null || (configuredPctBase <= 0 && base > 0)
-          ? base
-          : configuredPctBase
-        effective = base + (pctBase * percentModifier / 100)
+          : baseValue
+        const pctBase = configuredPctBase === null || (configuredPctBase <= 0 && baseValue > 0)
+          ? baseValue
+          : configuredPctBase ?? baseValue
+        effective = baseValue + (pctBase * percentModifier / 100)
       }
       if (effective !== null) {
         effective += flatModifier

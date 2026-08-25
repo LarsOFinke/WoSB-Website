@@ -55,7 +55,7 @@ public final class FileTypePolicy {
         }
         byte[] content = ".txt".equals(extension) ? Files.readAllBytes(path) : readHeader(path);
         String detected = detect(content, extension);
-        if (!ALLOWED.get(extension).contains(detected)) {
+        if (!ALLOWED.getOrDefault(extension, Set.of()).contains(detected)) {
             throw bad("File contents do not match the declared extension and content type.");
         }
         return detected;

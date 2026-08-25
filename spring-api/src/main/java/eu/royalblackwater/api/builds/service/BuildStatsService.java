@@ -59,7 +59,8 @@ public class BuildStatsService {
         Map<String, Number> debuffs = new LinkedHashMap<>();
         Map<String, Number> buffs = new LinkedHashMap<>();
         resolved.totals().forEach((key, value) -> {
-            if (value.doubleValue() < 0 || key.startsWith("debuff_") || DEBUFF_KEYS.contains(key) && value.doubleValue() < 0) {
+            double numeric = value == null ? 0 : value.doubleValue();
+            if (numeric < 0 || key.startsWith("debuff_") || DEBUFF_KEYS.contains(key) && numeric < 0) {
                 debuffs.put(key, value);
             } else if (!"extra_upgrade_slots".equals(key)) buffs.put(key, value);
         });
@@ -136,7 +137,7 @@ public class BuildStatsService {
         Map<String, Number> without = effects.resolve(payload, ship, feature, nonSpecialists).totals();
         Map<String, Number> result = new LinkedHashMap<>();
         all.totals().forEach((key, value) -> {
-            double difference = value.doubleValue() - decimal(without.get(key));
+            double difference = decimal(value) - decimal(without.get(key));
             if (difference != 0) result.put(key, normalized(difference));
         });
         return Map.copyOf(result);
@@ -171,5 +172,7 @@ public class BuildStatsService {
         if (value == Math.rint(value)) return Long.valueOf((long) value);
         return Double.valueOf(value);
     }
-    private static Number sum(Number left, Number right) { return normalized(left.doubleValue() + right.doubleValue()); }
+    private static Number sum(Number left, Number right) {
+        return normalized((left == null ? 0 : left.doubleValue()) + (right == null ? 0 : right.doubleValue()));
+    }
 }

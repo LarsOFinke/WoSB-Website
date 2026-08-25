@@ -11,7 +11,8 @@ const adminPage = readFileSync(new URL('../src/modules/admin/pages/AdminPage.vue
 
 test('registration can submit an optional official fleet application', () => {
   assert.match(registerPageModel, /wants_fleet_membership: applyToFleet/)
-  assert.match(registerPageModel, /fleet_id: applyToFleet \? officialFleet\.value\.id : null/)
+  assert.match(registerPageModel, /const fleetId = applyToFleet \? officialFleet\.value\?\.id \|\| null/)
+  assert.match(registerPageModel, /fleet_id: fleetId/)
   assert.match(registerPageModel, /fleet_application_note: applyToFleet \? fleetApplicationNote\.value : null/)
   assert.match(registerPage, /useRegisterPage/)
   assert.match(registerPage, /joinOfficialFleetExistingMemberHint/)

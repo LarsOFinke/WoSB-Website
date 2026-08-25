@@ -48,7 +48,7 @@ export function useNewcomerGuidePage() {
     try {
       const [guideRows, buildRows] = await Promise.all([listGuides(), listBuilds('', '', '', 100, 0)])
       guides.value = guideRows
-      builds.value = buildRows.items || []
+      builds.value = buildRows?.items || []
       resourceOptionsLoaded.value = true
     } catch (err) {
       resourceOptionsError.value = err.message || t('newcomerGuide.editor.resourceLoadError')
@@ -58,12 +58,14 @@ export function useNewcomerGuidePage() {
   }
 
   async function startEditing() {
-    draft.value = createGuideDraft(page.value)
+    if (!page.value) return
+    const currentDraft = createGuideDraft(page.value)
+    draft.value = currentDraft
     editing.value = true
     success.value = ''
     activeFolderIndex.value = activeFolderIndex.value < 0
       ? 0
-      : Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
+      : Math.min(activeFolderIndex.value, Math.max(0, currentDraft.blocks.length - 1))
     await loadResourceOptions()
   }
 
@@ -74,18 +76,24 @@ export function useNewcomerGuidePage() {
   }
 
   function addBlock(type) {
-    draft.value.blocks.push(createGuideBlock(type === 'resources' ? 'resources' : 'text'))
-    activeFolderIndex.value = draft.value.blocks.length - 1
+    const currentDraft = draft.value
+    if (!currentDraft) return
+    currentDraft.blocks.push(createGuideBlock(type === 'resources' ? 'resources' : 'text'))
+    activeFolderIndex.value = currentDraft.blocks.length - 1
   }
 
   function removeBlock(index) {
-    draft.value.blocks.splice(index, 1)
+    const currentDraft = draft.value
+    if (!currentDraft) return
+    currentDraft.blocks.splice(index, 1)
     if (activeFolderIndex.value > index) activeFolderIndex.value -= 1
-    activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, draft.value.blocks.length - 1))
+    activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, currentDraft.blocks.length - 1))
   }
 
   function moveBlock(index, delta) {
-    activeFolderIndex.value = moveSelectedItem(draft.value.blocks, activeFolderIndex.value, index, delta)
+    const currentDraft = draft.value
+    if (!currentDraft) return
+    activeFolderIndex.value = moveSelectedItem(currentDraft.blocks, activeFolderIndex.value, index, delta)
   }
 
   function addResource(block) {
@@ -118,12 +126,16 @@ export function useNewcomerGuidePage() {
   }
 
   async function savePage() {
+    const currentDraft = draft.value
+    if (!currentDraft) return
     saving.value = true
     error.value = ''
     success.value = ''
     try {
-      page.value = await updateNewcomerGuide(guidePayload(draft.value))
-      activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, page.value.blocks.length - 1))
+      const savedPage = await updateNewcomerGuide(guidePayload(currentDraft))
+      if (!savedPage) throw new Error(t('newcomerGuide.saveError'))
+      page.value = savedPage
+      activeFolderIndex.value = Math.min(activeFolderIndex.value, Math.max(0, savedPage.blocks.length - 1))
       editing.value = false
       draft.value = null
       success.value = t('newcomerGuide.saved')

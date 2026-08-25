@@ -29,7 +29,7 @@ export function useGuideCreatePage() {
 
   const categories = computed(() => localizedGuideCategoryItems(t))
   const guideId = computed(() => route.params.id ? Number(route.params.id) : null)
-  const isEditing = computed(() => Number.isInteger(guideId.value) && guideId.value > 0)
+  const isEditing = computed(() => Number.isInteger(guideId.value) && Number(guideId.value) > 0)
   const canSubmit = computed(() => form.title.trim() && form.body.trim() && !saving.value && !loading.value)
   const galleryAttachments = computed(() => unembeddedAttachments(attachments.value, form.body))
   const linkedBuildCards = computed(() => unembeddedBuilds(linkedBuilds.value, form.body))
@@ -86,10 +86,12 @@ export function useGuideCreatePage() {
 
   async function loadGuideForEditing() {
     if (!isEditing.value) return
+    const id = guideId.value
+    if (id === null) return
     loading.value = true
     error.value = ''
     try {
-      const guide = await getGuide(guideId.value)
+      const guide = await getGuide(id)
       form.title = guide.title
       form.category = guide.category
       form.summary = guide.summary || ''
@@ -116,8 +118,9 @@ export function useGuideCreatePage() {
       build_ids: linkedBuilds.value.map((build) => build.id),
     }
     try {
-      const saved = isEditing.value
-        ? await updateGuide(guideId.value, payload)
+      const id = guideId.value
+      const saved = isEditing.value && id !== null
+        ? await updateGuide(id, payload)
         : await createGuide(payload)
       await router.push(`/guides/${saved.id}`)
     } catch (err) {

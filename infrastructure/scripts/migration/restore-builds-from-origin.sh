@@ -21,6 +21,9 @@ Usage: infrastructure/scripts/migration/restore-builds-from-origin.sh [OPTIONS]
 Restores a portable build-only SQL backup from backups/ through the configured
 test server by default. A complete transactional dry run always runs first.
 
+Automatic discovery uses RBF_BUILD_BACKUP_DIR when set, or the repository's
+backups/ directory otherwise. Use --backup to select an explicit artifact.
+
   --test                 Use the test server (default)
   --production           Use the production server (explicit opt-in)
   --config FILE          Override the selected origin connection profile
@@ -52,9 +55,11 @@ validate_username() {
 }
 
 if [[ -z "$backup_file" ]]; then
-  mapfile -t candidates < <(find "$ROOT_DIR/backups" -maxdepth 1 -type f \
+  backup_directory="${RBF_BUILD_BACKUP_DIR:-$ROOT_DIR/backups}"
+  [[ -d "$backup_directory" ]] || fail "Backup directory is missing: $backup_directory (provide --backup FILE for an explicit artifact)."
+  mapfile -t candidates < <(find "$backup_directory" -maxdepth 1 -type f \
     -name 'rbf-builds-partial-*.sql' -print | sort)
-  ((${#candidates[@]} > 0)) || fail 'No portable build backup was found in backups/.'
+  ((${#candidates[@]} > 0)) || fail "No portable build backup was found in $backup_directory/."
   if ((${#candidates[@]} == 1)); then
     backup_file="${candidates[0]}"
   elif [[ -t 0 && -t 1 ]]; then

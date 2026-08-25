@@ -9,8 +9,20 @@ fail() { printf '[build-restore-test] %s\n' "$*" >&2; exit 1; }
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/bin"
+mkdir -p "$work/backups"
 touch "$work/identity"
 chmod 0600 "$work/identity"
+cat > "$work/backups/rbf-builds-partial-fixture.sql" <<'EOF'
+\set ON_ERROR_STOP on
+-- 27 builds
+-- 625 build slots
+-- 62 build classifications
+SELECT 'DRY RUN successful; rolling back all changes.';
+INSERT INTO build_restore_fixture (owner, target) VALUES
+('admin', :'owner_admin'),
+('puszpang', :'owner_puszpang'),
+('nostrapi', :'owner_nostrapi');
+EOF
 cat > "$work/origin.env" <<EOF
 RBF_DEPLOY_HOST=build-restore.example.test
 RBF_DEPLOY_USER=rbfadmin
@@ -39,6 +51,7 @@ EOF
 chmod +x "$work/bin/scp" "$work/bin/ssh"
 
 output="$(PATH="$work/bin:$PATH" RBF_BUILD_RESTORE_TEST_LOG="$work/calls.log" \
+  RBF_BUILD_BACKUP_DIR="$work/backups" \
   "$RESTORE" --config "$work/origin.env" --dry-run-only)"
 [[ "$output" == *'Owner mapping: admin -> admin'* ]] || fail 'default admin mapping was not presented'
 [[ "$output" == *'Dry run passed; no target data was changed.'* ]] || fail 'dry-run-only did not finish safely'
@@ -48,17 +61,20 @@ grep -q -- '--owner-variable owner_puszpang=puszpang' "$work/calls.log" || fail 
 grep -q -- '--owner-variable owner_nostrapi=nostrapi' "$work/calls.log" || fail 'nostrapi mapping was not transferred'
 
 if PATH="$work/bin:$PATH" RBF_BUILD_RESTORE_TEST_LOG="$work/calls.log" \
+  RBF_BUILD_BACKUP_DIR="$work/backups" \
   "$RESTORE" --config "$work/origin.env" --owner missing=admin --dry-run-only >/dev/null 2>&1; then
   fail 'an owner absent from the backup contract was accepted'
 fi
 
 if PATH="$work/bin:$PATH" RBF_BUILD_RESTORE_TEST_LOG="$work/missing-marker.log" \
+  RBF_BUILD_BACKUP_DIR="$work/backups" \
   RBF_BUILD_RESTORE_OMIT_MARKER=true "$RESTORE" --config "$work/origin.env" \
   --dry-run-only >/dev/null 2>&1; then
   fail 'a remote run without its completion marker was accepted'
 fi
 
 production_output="$(PATH="$work/bin:$PATH" RBF_BUILD_RESTORE_TEST_LOG="$work/production.log" \
+  RBF_BUILD_BACKUP_DIR="$work/backups" \
   "$RESTORE" --production --config "$work/origin.env" --dry-run-only)"
 [[ "$production_output" == *'[build-restore:production]'* ]] || fail 'explicit production target was not preserved'
 

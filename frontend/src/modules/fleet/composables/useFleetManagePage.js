@@ -101,10 +101,12 @@ export function useFleetManagePage() {
   }
 
   async function setMember(membership, payload) {
+    const fleet = selectedFleet.value
+    if (!fleet) return
     error.value = ''
     success.value = ''
     try {
-      await updateFleetMembership(selectedFleet.value.id, membership.id, payload)
+      await updateFleetMembership(fleet.id, membership.id, payload)
       success.value = t('fleets.manage.memberSaved')
       await loadFleetDetail()
     } catch (err) { error.value = err.message || t('fleets.manage.memberError') }

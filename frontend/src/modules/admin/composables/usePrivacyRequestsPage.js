@@ -6,7 +6,7 @@ export function usePrivacyRequestsPage({ t }) {
   const requests = ref([])
   const contacts = ref([])
   const loading = ref(false)
-  const busy = ref(null)
+  const busy = ref(/** @type {string|null} */ (null))
   const error = ref('')
   const notes = reactive({})
 

@@ -17,7 +17,7 @@ export function useForumCreatePage() {
   const categories = ['general', 'builds', 'events', 'support', 'training', 'logistics']
   const form = reactive({ title: '', category: 'general', body: '' })
   const threadId = computed(() => route.params.id ? Number(route.params.id) : null)
-  const isEditing = computed(() => Number.isInteger(threadId.value) && threadId.value > 0)
+  const isEditing = computed(() => Number.isInteger(threadId.value) && Number(threadId.value) > 0)
   const canSubmit = computed(() => form.title.trim() && form.body.trim() && !saving.value && !loading.value)
   const galleryAttachments = computed(() => unembeddedAttachments(attachments.value, form.body))
   const hasPreview = computed(() => form.body.trim() || attachments.value.length)
@@ -48,7 +48,9 @@ export function useForumCreatePage() {
     loading.value = true
     error.value = ''
     try {
-      const thread = await getThread(threadId.value)
+      const id = threadId.value
+      if (id === null) return
+      const thread = await getThread(id)
       const openingPost = thread.posts?.[0]
       form.title = thread.title
       form.category = thread.category
@@ -72,8 +74,9 @@ export function useForumCreatePage() {
       file_ids: attachments.value.map((file) => file.id),
     }
     try {
-      const saved = isEditing.value
-        ? await updateThread(threadId.value, payload)
+      const id = threadId.value
+      const saved = isEditing.value && id !== null
+        ? await updateThread(id, payload)
         : await createThread(payload)
       await router.push(`/forum/${saved.id}`)
     } catch (err) {
