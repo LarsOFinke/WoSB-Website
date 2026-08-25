@@ -3,6 +3,7 @@ package eu.royalblackwater.api.strategies.service;
 import eu.royalblackwater.api.strategies.dto.PreparedStrategyOverlay;
 import eu.royalblackwater.api.strategies.dto.StrategyBuildReference;
 import eu.royalblackwater.api.strategies.dto.StrategyOverlay;
+import eu.royalblackwater.api.strategies.dto.StrategyOverlayBackground;
 import eu.royalblackwater.api.strategies.dto.StrategyOverlayObject;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -17,7 +18,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @Service
 public class StrategyOverlayValidator {
     private static final Set<String> TYPES = Set.of("ship", "line", "arrow", "formation", "text", "freehand");
-    private static final Set<String> FORMATIONS = Set.of("line", "circle", "wedge", "column", "box");
+    private static final Set<String> FORMATIONS = Set.of("line", "circle", "oval", "wedge", "column", "box");
     private static final Pattern ID = Pattern.compile("[A-Za-z0-9_-]{1,64}");
     private static final Pattern COLOR = Pattern.compile("#[0-9a-fA-F]{6}");
     private final ObjectMapper json;
@@ -34,7 +35,8 @@ public class StrategyOverlayValidator {
         } catch (JacksonException exception) {
             throw bad("Strategy overlay must be valid JSON.");
         }
-        if (overlay.version() != 1) throw bad("Unsupported strategy overlay version.");
+        if (overlay.version() != 1 && overlay.version() != 2) throw bad("Unsupported strategy overlay version.");
+        if (overlay.version() == 2) validateBackground(overlay.background());
         if (overlay.objects().size() > 250) throw bad("A strategy can contain at most 250 objects.");
         Set<String> objectIds = new LinkedHashSet<>();
         Set<Long> ships = new LinkedHashSet<>();
@@ -99,6 +101,18 @@ public class StrategyOverlayValidator {
 
     private static void coordinate(double value) {
         if (!Double.isFinite(value) || value < 0 || value > 1) throw bad("Strategy coordinates must be normalized.");
+    }
+    private static void validateBackground(StrategyOverlayBackground background) {
+        if (background == null || !Set.of("stretch", "contain", "cover").contains(background.fit())) {
+            throw bad("Strategy background fit is invalid.");
+        }
+        bounded(background.scale(), 0.5, 2, "Strategy background scale is invalid.");
+        bounded(background.opacity(), 0.1, 1, "Strategy background opacity is invalid.");
+        bounded(background.brightness(), 0.5, 1.5, "Strategy background brightness is invalid.");
+        bounded(background.contrast(), 0.5, 2, "Strategy background contrast is invalid.");
+    }
+    private static void bounded(Double value, double minimum, double maximum, String message) {
+        if (value == null || !Double.isFinite(value) || value < minimum || value > maximum) throw bad(message);
     }
     private static void optionalCoordinate(Double value) { if (value != null) coordinate(value); }
     private static void optionalSize(Double value) {

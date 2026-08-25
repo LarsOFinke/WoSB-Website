@@ -115,6 +115,7 @@ test('legacy oval formations migrate without changing shape while new circles st
   const current = parseStrategyDocument('{"version":2,"objects":[{"id":"formation-2","type":"formation","formation":"circle","x":0.5,"y":0.5,"width":0.32,"height":0.24}]}')
   assert.equal(legacy.objects[0].formation, 'oval')
   assert.equal(current.objects[0].formation, 'circle')
+  assert.deepEqual(JSON.parse(serializeStrategyDocument(legacy)).objects.map((object) => object.formation), ['oval'])
   assert.match(strategyFormationPath(legacy.objects[0], 625), /A 160 75/)
   assert.match(strategyFormationPath(current.objects[0], 625), /A 75 75/)
 })

@@ -39,7 +39,7 @@ export function useStrategyPlannerPage() {
   const historyIndex = ref(0)
 
   const strategyId = computed(() => route.params.id ? Number(route.params.id) : null)
-  const isEditing = computed(() => Number.isInteger(strategyId.value) && strategyId.value > 0)
+  const isEditing = computed(() => Number.isInteger(strategyId.value) && Number(strategyId.value) > 0)
   const backgroundUrl = computed(() => absoluteFileUrl(background.value?.public_url || ''))
   const selectedObject = computed(() => document.value.objects.find((item) => item.id === selectedId.value) || null)
   const markerBuilds = computed(() => buildsForShip(builds.value, marker.shipId))
@@ -99,15 +99,16 @@ export function useStrategyPlannerPage() {
   }
 
   function updateSelectedShipReference() {
-    if (selectedObject.value?.type !== 'ship') return
-    const ship = ships.value.find((item) => Number(item.id) === Number(selectedObject.value.shipId))
+    const object = selectedObject.value
+    if (!object || object.type !== 'ship') return
+    const ship = ships.value.find((item) => Number(item.id) === Number(object.shipId))
     if (!ship) return
-    selectedObject.value.shipId = Number(ship.id)
-    selectedObject.value.shipName ||= ship.name
-    selectedObject.value.shipType = ship.ship_type
-    selectedObject.value.shipRate = Number(ship.rate)
-    const build = builds.value.find((item) => Number(item.id) === Number(selectedObject.value.buildId))
-    if (selectedObject.value.buildId && !buildMatchesShip(build, ship.id)) selectedObject.value.buildId = null
+    object.shipId = Number(ship.id)
+    object.shipName ||= ship.name
+    object.shipType = ship.ship_type
+    object.shipRate = Number(ship.rate)
+    const build = builds.value.find((item) => Number(item.id) === Number(object.buildId))
+    if (object.buildId && !buildMatchesShip(build, ship.id)) object.buildId = null
     recordHistory()
   }
 
@@ -126,7 +127,7 @@ export function useStrategyPlannerPage() {
     try {
       const [shipRows, buildPage, guideRows] = await Promise.all([listShips(), listBuilds('', '', '', 100, 0), listGuides('', '', 100, 0)])
       ships.value = shipRows || []
-      builds.value = buildPage.items || []
+      builds.value = buildPage?.items || []
       guides.value = guideRows || []
     } catch (exception) {
       error.value = exception.message || t('strategyPlanner.catalogError')
@@ -145,7 +146,8 @@ export function useStrategyPlannerPage() {
     error.value = ''
     try {
       await loadCatalogs()
-      if (isEditing.value) applyStrategy(await getStrategy(strategyId.value))
+      const id = strategyId.value
+      if (isEditing.value && id !== null) applyStrategy(await getStrategy(id))
     } catch (exception) {
       error.value = exception.message || t('strategyPlanner.loadError')
     } finally {
@@ -176,10 +178,12 @@ export function useStrategyPlannerPage() {
         background_file_id: Number(background.value.id),
         overlay_json: serializeStrategyDocument(document.value),
       }
-      const saved = isEditing.value ? await updateStrategy(strategyId.value, payload) : await createStrategy(payload)
+      const id = strategyId.value
+      const editing = Number.isInteger(id) && Number(id) > 0
+      const saved = editing ? await updateStrategy(id ?? 0, payload) : await createStrategy(payload)
       applyStrategy(saved)
       status.value = t('strategyPlanner.saved')
-      if (!isEditing.value) await router.replace(`/strategies/${saved.id}/edit`)
+      if (!editing) await router.replace(`/strategies/${saved.id}/edit`)
     } catch (exception) {
       error.value = exception.message || t('strategyPlanner.saveError')
     } finally {

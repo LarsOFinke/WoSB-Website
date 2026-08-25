@@ -9,6 +9,7 @@ import eu.royalblackwater.api.security.dto.AuthenticatedUser;
 import eu.royalblackwater.api.strategies.repository.StrategyRepository;
 import eu.royalblackwater.api.strategies.repository.queries.StrategyQueries;
 import eu.royalblackwater.api.strategies.dto.StrategyOverlay;
+import eu.royalblackwater.api.strategies.dto.StrategyOverlayBackground;
 import eu.royalblackwater.api.strategies.dto.StrategyOverlayObject;
 import eu.royalblackwater.api.strategies.mapper.StrategyMapper;
 import eu.royalblackwater.api.strategies.service.StrategyOverlayValidator;
@@ -90,6 +91,45 @@ class StrategyServiceTest {
         assertThat(prepared.guideIds()).containsExactly(31L);
         assertThat(prepared.json()).contains("\"shipId\":11", "\"shipName\":\"Leopard\"", "\"scale\":2.0")
                 .doesNotContain("ship_id", "ship_name", "editorViewport", "selected");
+    }
+
+    @Test
+    void overlayAcceptsCurrentBrowserVersionAndPreservesBackgroundSettings() {
+        StrategyOverlayBackground defaults = new StrategyOverlayBackground(null, null, null, null, null);
+        assertThat(defaults.fit()).isEqualTo("stretch");
+        assertThat(defaults.scale()).isEqualTo(1.0);
+        assertThat(defaults.opacity()).isEqualTo(0.82);
+        assertThat(defaults.brightness()).isEqualTo(1.0);
+        assertThat(defaults.contrast()).isEqualTo(1.0);
+
+        StrategyOverlayValidator validator = new StrategyOverlayValidator(new ObjectMapper());
+        var prepared = validator.prepare("""
+                {"version":2,"background":{"fit":"cover","scale":1.25,"opacity":0.7,
+                "brightness":1.1,"contrast":1.4},"objects":[]}
+                """);
+
+        assertThat(prepared.json()).contains("\"version\":2", "\"fit\":\"cover\"",
+                "\"scale\":1.25", "\"opacity\":0.7", "\"brightness\":1.1", "\"contrast\":1.4");
+    }
+
+    @Test
+    void overlayAcceptsEveryBrowserFormationAndRejectsUnknownValues() {
+        StrategyOverlayValidator validator = new StrategyOverlayValidator(new ObjectMapper());
+        for (String formation : List.of("line", "circle", "oval", "wedge", "column", "box")) {
+            String overlay = """
+                    {"version":2,"objects":[{"id":"formation-1","type":"formation","x":0.5,"y":0.5,
+                    "width":0.32,"height":0.24,"formation":"%s"}]}
+                    """.formatted(formation);
+
+            assertThat(validator.prepare(overlay).json()).contains("\"formation\":\"" + formation + "\"");
+        }
+
+        assertThatThrownBy(() -> validator.prepare("""
+                {"version":2,"objects":[{"id":"formation-1","type":"formation","x":0.5,"y":0.5,
+                "width":0.32,"height":0.24,"formation":"unsupported"}]}
+                """))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Unsupported formation type");
     }
 
     @Test

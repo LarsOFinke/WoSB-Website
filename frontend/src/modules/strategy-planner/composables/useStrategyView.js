@@ -46,8 +46,13 @@ export function useStrategyViewPage() {
     loading.value = true
     error.value = ''
     try {
-      const request = isShared.value ? getSharedStrategy(publicId.value) : getStrategy(strategyId.value)
+      const id = strategyId.value
+      if (!isShared.value && (!Number.isInteger(id) || id <= 0)) {
+        throw new Error(t('strategyPlanner.loadError'))
+      }
+      const request = isShared.value ? getSharedStrategy(publicId.value) : getStrategy(id ?? 0)
       const [value] = await Promise.all([request, loadCatalogs()])
+      if (!value || typeof value !== 'object') throw new Error(t('strategyPlanner.loadError'))
       strategy.value = value
       document.value = parseStrategyDocument(value.overlay_json)
     } catch (exception) {
