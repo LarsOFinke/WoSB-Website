@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 1.8.21 - 2026-08-25
+## 1.8.22 - 2026-08-25
 
 - Isolated test and production controller enrollment on a shared backup server.
   Each environment has separate SFTP identity, chroot, controller and age keys,
