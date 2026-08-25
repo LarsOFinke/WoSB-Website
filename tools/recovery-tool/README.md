@@ -52,6 +52,21 @@ The normal profile is under `/etc/rbf-recovery-tool`; its private age identity
 is required for disaster recovery. Back up that directory to a second encrypted
 offline medium. Never copy those private keys to the website.
 
+## Updating the installed tool
+
+From a trusted checkout on the backup server, update the installed Recovery Tool
+atomically with the repository helper:
+
+```bash
+sudo ./update-recovery-tool.sh
+```
+
+The helper preserves the target profiles, controller keys, age identities,
+enrollment state, and `/backups/wosb/<environment>` data. It reconciles only
+the enrolled `test` and `production` targets and keeps their one-minute sync
+timers separate. Do not replace the installation by copying files into
+`/opt/rbf-recovery-tool` manually.
+
 The shared source supports Python 3.11+, Paramiko, and native `age`. Desktop
 wrappers remain useful for offline inspection, but are not required for normal
 server automation.

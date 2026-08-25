@@ -53,8 +53,9 @@ delete control files or backup directories manually.
 2. **Backup server:** place that request JSON in `~/Downloads`, copy the one
    generated command from the website, and run it as your normal user. It asks
    for `sudo` once. The embedded, checksum-pinned installer creates controller
-   keys, installs the Recovery Tool without GitHub, and leaves scheduling under
-   explicit operator control. Backups are stored below `/backups/wosb/<environment>`.
+   keys, installs the Recovery Tool without GitHub, and enables the target-specific
+   one-minute synchronization timer. Backups are stored below
+   `/backups/wosb/<environment>`.
 3. **Website UI:** upload the response JSON created by step 2. Run the displayed
    `apply_enrollment` approval command on the **website server**, paste its
    token, compare the website SSH fingerprint, and import the response.
@@ -88,6 +89,45 @@ enrollment state, and retention setting. Responses
 are bound to the request and environment, so importing one into the other is
 rejected.
 
+## Optional backup-backup copy via SCP
+
+The durable backup roots live on the backup server and are deliberately owned by
+root with mode `0700`. A third host may keep a second copy, but it must connect
+to the backup server using an administrative SSH account; the website's
+chrooted `rbf-backup-controller-*` accounts can see only `/exports` and must not
+be used for this purpose.
+
+If the backup-backup host uses the account `lars-oliver-finke`, grant it
+read/traverse access on the backup server. Run these commands **on the backup
+server**:
+
+```bash
+sudo setfacl -m u:lars-oliver-finke:--x /backups /backups/wosb
+for target in test production; do
+  sudo setfacl -R -m u:lars-oliver-finke:rX /backups/wosb/"$target"
+  sudo setfacl -m d:u:lars-oliver-finke:r-x,d:m::r-x /backups/wosb/"$target"
+done
+```
+
+The default ACL keeps access available for newly created backup sets. This
+grants read-only access to encrypted backup artifacts and manifests; it does
+not grant the age identities or Recovery Tool configuration under
+`/etc/rbf-recovery-tool`.
+
+From the backup-backup host, verify and copy a target with:
+
+```bash
+ssh lars-oliver-finke@<backup-server> \
+  'find /backups/wosb/production -maxdepth 1 -type f | head'
+scp -r lars-oliver-finke@<backup-server>:/backups/wosb/production .
+```
+
+Repeat for `/backups/wosb/test` when required. Keep the second copy encrypted
+and restrict its storage and SSH key access. For a complete disaster-recovery
+copy, separately protect `/etc/rbf-recovery-tool`, which contains the private
+age identities needed to decrypt the bundles; do not expose that directory via
+SCP ACLs.
+
 ## Updating an older enrollment
 
 Deploy the corrected release to the selected website first. The deployment
@@ -96,6 +136,18 @@ fresh enrollment response for that environment. Re-enrollment updates the
 endpoint and pinned host key while preserving the environment's existing
 private controller key, age identity, and `/backups/wosb/<environment>` data.
 Do not edit `profiles.json`, `known_hosts`, or authorized-key files manually.
+
+If only the installed Recovery Tool needs updating, use the versioned helper
+from a trusted repository checkout on the backup server:
+
+```bash
+sudo ./update-recovery-tool.sh
+```
+
+This preserves the target-specific profiles, private keys, enrollment state and
+backup data, then reconciles the separate `test` and `production` sync timers.
+It does not replace website enrollment; endpoint, host-key, or environment
+changes still require a fresh enrollment response.
 
 Verify each side independently:
 

@@ -48,7 +48,8 @@ responsibility. Do not read files broadly one by one when the cache and primary
 source already identify the entry point.
 
 Place scripts according to executable responsibility inside the central module
-architecture: only `deploy.sh` and `update.sh` remain in the root; quality gates
+architecture: only `deploy.sh`, `update.sh`, and the separate Recovery Tool maintenance
+helper `update-recovery-tool.sh` remain in the root; quality gates
 live under `infrastructure/scripts/quality/`, generators under `generation/`,
 packaging/deployment under `release/`, and host/runtime/recovery logic in the
 respective domain modules. The runtime artifact includes only explicitly approved

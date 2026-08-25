@@ -68,3 +68,20 @@ Test and production profiles use separate local directories and target-specific
 pinned SSH fingerprints. A host-key mismatch is a stop condition, not a prompt
 to accept a new key. The managed backup server automatically runs `sync` for
 each target; run `run` only when a fresh website backup is explicitly required.
+
+## Third-host backup-backup copy
+
+For an additional encrypted copy, a third host may pull the verified artifacts
+from the backup server. The backup roots are `/backups/wosb/test` and
+`/backups/wosb/production`; they are root-owned and mode `0700` by default.
+Use a dedicated administrative SSH identity and a read-only ACL for the exact
+backup user if direct `scp -r` access is needed. Do not use the website's
+chrooted controller account, whose visible root is `/exports`.
+
+The ACL should grant only read/traverse access to the two backup roots and a
+default read ACL for future backup sets. It must not grant access to
+`/etc/rbf-recovery-tool`, because that directory contains the private age
+identities required for decryption. Keep the third-host copy encrypted at rest
+and verify checksums after transfer. A copy of the encrypted artifacts without
+the protected identities is intentionally useful as an independent storage
+copy, but it is not by itself a complete restore capability.

@@ -148,6 +148,35 @@ the deployed maintenance-aware gateway has not been activated yet.
 
 Database and file restores retain their separate bootstrap-admin restore approval.
 
+### Optional third-host backup copy
+
+The backup server stores verified encrypted sets in separate root-owned trees:
+`/backups/wosb/test` and `/backups/wosb/production`. A backup-backup host may
+pull a second copy with SCP using a normal administrative SSH account. The
+website controller accounts are chrooted to `/exports` and are not valid for
+this copy operation.
+
+The storage roots remain `0700` by default. To make them readable by the
+current backup-server user `lars-oliver-finke`, run on the backup server:
+
+```bash
+sudo setfacl -m u:lars-oliver-finke:--x /backups /backups/wosb
+for target in test production; do
+  sudo setfacl -R -m u:lars-oliver-finke:rX /backups/wosb/"$target"
+  sudo setfacl -m d:u:lars-oliver-finke:r-x,d:m::r-x /backups/wosb/"$target"
+done
+```
+
+Then pull from the third host with, for example:
+
+```bash
+scp -r lars-oliver-finke@<backup-server>:/backups/wosb/production .
+```
+
+This exposes only encrypted artifacts and manifests, not the private Recovery
+Tool configuration or age identities in `/etc/rbf-recovery-tool`. Keep the
+third-host copy encrypted at rest and verify its file checksums after transfer.
+
 ## Test/Production TLS and target isolation
 
 Origin deployment targets and website runtime identities are separate. `deploy.sh`/`update.sh` default to `test`; Production always requires `--production`. The selected target is written to the private website `.env` as `DEPLOYMENT_ENVIRONMENT` and must never be inferred from a certificate or hostname.

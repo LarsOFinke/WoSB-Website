@@ -185,8 +185,9 @@ behavior that static analysis cannot resolve.
 - Infrastructure scripts are idempotent orchestrators around focused helpers.
   Critical file changes are atomic where practical and failures have a non-zero
   exit code plus an actionable message.
-- Script ownership is explicit: only `deploy.sh` and `update.sh` are public root
-  wrappers. Shared scripts live in responsibility-based modules under
+- Script ownership is explicit: `deploy.sh` and `update.sh` are the public deployment
+  wrappers; `update-recovery-tool.sh` is the separate root-level Recovery Tool maintenance
+  helper. Shared scripts live in responsibility-based modules under
   `infrastructure/scripts/`: `quality/`, `generation/`, `release/` and focused
   runtime modules. The deployment packager uses an explicit allowlist, so
   repository-only quality/generation code does not ship to production. Do not

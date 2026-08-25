@@ -167,8 +167,10 @@ a directory name alone.
 
 ## Infrastructure and operational boundaries
 
-- The only public root entry points are `deploy.sh` and `update.sh`; both delegate
-  to `infrastructure/scripts/release/deploy-from-origin.sh`. Production diagnostics
+- The public deployment root entry points are `deploy.sh` and `update.sh`; both delegate
+  to `infrastructure/scripts/release/deploy-from-origin.sh`. The root-level
+  `update-recovery-tool.sh` is the separate backup-server maintenance helper.
+  Production diagnostics
   start directly through `infrastructure/scripts/diagnostics/debug.sh`.
 - `./deploy.sh --configure` is the complete interactive first run for the **test
   server**. Production is configured exclusively with
@@ -262,7 +264,9 @@ a directory name alone.
   backup-server address. Root-owned website exports are controller-readable but not writable;
   only request and acknowledgement directories are controller-writable. Test and production
   use distinct accounts, keys, profiles, state, and storage; each target installs only its own
-  request watcher and no scheduled backup unit. Automatic controller timers are disabled. Their separate origin deployment profiles own and reconcile the website SSH host
+  request watcher and its own one-minute synchronization timer. A third backup-backup host may use a
+  narrowly scoped read-only ACL and administrative SCP access to the encrypted local roots;
+  it must not receive `/etc/rbf-recovery-tool` through that ACL. Their separate origin deployment profiles own and reconcile the website SSH host
   and port on every update, with no `APP_HOSTNAME` fallback. Pre-update activation keeps its
   verified local backup and only requires controller acknowledgement when
   `BACKUP_REQUIRE_PULL_ACK_BEFORE_UPDATE=true`.

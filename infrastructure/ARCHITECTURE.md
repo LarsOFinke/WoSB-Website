@@ -8,6 +8,8 @@ The public commands live in the parent repository:
 - `<repo>/deploy.sh --production --configure` explicitly configures production.
 - `<repo>/deploy.sh` and `<repo>/update.sh` delegate to the origin transfer;
   `--production` is required for every production run.
+- `<repo>/update-recovery-tool.sh` updates the separately installed Recovery Tool on
+  the backup server and reconciles its enrolled synchronization timers.
 - `scripts/diagnostics/debug.sh` follows the same target selection and writes
   redacted output locally at the origin.
 
@@ -15,7 +17,8 @@ The targets inside `infrastructure/` intentionally remain in place. This allows 
 internal runtime and recovery workflows to be versioned and invoked from the dispatcher.
 All shared scripts live under `infrastructure/scripts/`. `quality/` and
 `generation/` are origin/CI-side modules; host and runtime modules are packaged
-through an explicit allowlist. Only `deploy.sh` and `update.sh` remain at the root.
+through an explicit allowlist. The deployment wrappers and the separate Recovery Tool
+maintenance helper are the only executable shell entry points at the root.
 Owner-bound helpers in `.agents/scripts/` and `frontend/scripts/` remain with their modules.
 
 ### Diagnostic Boundary

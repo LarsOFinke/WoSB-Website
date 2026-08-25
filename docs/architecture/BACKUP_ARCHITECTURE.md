@@ -35,10 +35,19 @@ strict fail-closed policy. Manual controller operation is supported with an
 explicit target selection.
 
 Test and production use separate accounts, chroots, keys, age identities,
-profiles, state files, and `/backups/wosb/<environment>` roots. Automatic
-controller timers are intentionally disabled; operators select the target for
-each manual run. A
-cross-environment request or response fails validation.
+profiles, state files, and `/backups/wosb/<environment>` roots. Each enrolled
+target has its own systemd synchronization timer running `sync` every minute;
+`run` remains the explicit command for requesting a deliberately fresh backup.
+A cross-environment request or response fails validation.
+
+The durable roots are root-owned with mode `0700` by default. An optional third
+backup-backup host can receive a read-only SCP copy when an administrator
+applies a narrowly scoped filesystem ACL to the selected target roots. This
+does not expose the website's chrooted SFTP account, the Recovery Tool private
+keys, or the age identities. The backup-backup host must use an administrative
+SSH account on the backup server, not `rbf-backup-controller-test` or
+`rbf-backup-controller-production`; those accounts see only `/exports` on the
+website.
 
 The origin deployment profiles are also separate. Each owns the website SSH
 host and port reachable by the backup server, and every deployment reconciles

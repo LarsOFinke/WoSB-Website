@@ -80,8 +80,9 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 | Security | `SecurityConfiguration`, `security/`, `infrastructure/scripts/quality/security_audit.py` |
 | Privacy | `privacy/`, `docs/reference/DATA_RETENTION.md` |
 
-Script ownership: only the public orchestrators `deploy.sh` and `update.sh` live in
-the repository root. All shared script logic is modularized under
+Script ownership: the public deployment orchestrators `deploy.sh` and `update.sh`
+and the root-level Recovery Tool maintenance helper `update-recovery-tool.sh` live
+in the repository root. All shared script logic is modularized under
 `infrastructure/scripts/`: `quality/` for gates and audits, `generation/` for
 generators, `release/` for packaging/deployment, plus domain-specific runtime
 modules. The release artifact uses an explicit runtime allowlist; `quality/` and
