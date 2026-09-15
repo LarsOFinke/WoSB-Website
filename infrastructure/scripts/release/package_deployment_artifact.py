@@ -20,6 +20,7 @@ RUNTIME_FILES = (
     "infrastructure/compose.release.yml",
     "infrastructure/.env.example",
     "infrastructure/nginx/default.conf",
+    "infrastructure/nginx/host-site.conf",
     "infrastructure/nginx/security-headers.conf",
     "infrastructure/nginx/upload-security-headers.conf",
     "infrastructure/docker/api-runtime.Dockerfile",
@@ -38,7 +39,6 @@ RUNTIME_DIRS = (
     "infrastructure/scripts/release",
     "infrastructure/scripts/services",
     "infrastructure/scripts/setup",
-    "infrastructure/scripts/tls",
     "infrastructure/systemd",
     "tools/recovery-tool/src",
 )

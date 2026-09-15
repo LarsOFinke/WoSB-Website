@@ -135,9 +135,6 @@ fi
 set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
 ensure_runtime_secrets
 validate_env
-tls_prepare="$stage/bundle/payload/infrastructure/scripts/release/prepare-website-tls.sh"
-[[ -x "$tls_prepare" ]] || { echo "[website] Release contains no TLS bootstrap." >&2; exit 1; }
-"$tls_prepare" "$env_source" "$install_root/shared"
 printf '\n[website] Verified. Preparing installation:\n  Artifact: %s\n  Target:   %s\n\n' "$artifact" "$install_root"
 installer_args=(--artifact "$artifact" --checksum "$checksum" --install-root "$install_root" --requested-by origin)
 [[ "$no_backup" == true ]] && installer_args+=(--no-backup)

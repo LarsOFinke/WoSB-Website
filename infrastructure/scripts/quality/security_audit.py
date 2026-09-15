@@ -65,8 +65,13 @@ for contract in ('Links and special entries are forbidden','Checksum mismatch','
 nginx=read('infrastructure/nginx/default.conf')
 for header in ('Content-Security-Policy','X-Content-Type-Options','Referrer-Policy'):
     require(header in read('infrastructure/nginx/security-headers.conf'),f'missing gateway header {header}')
-require('proxy_set_header X-Forwarded-For $remote_addr;' in nginx,'untrusted forwarded chain may not be propagated')
-require('limit_req_zone $binary_remote_addr zone=file_content:10m rate=600r/m;' in nginx,
+require('map $http_x_real_ip $rbf_client_ip' in nginx,
+        'project gateway must trust only the host NGINX client-IP header')
+require('map $http_x_forwarded_proto $rbf_forwarded_proto' in nginx,
+        'project gateway must preserve only the host NGINX public scheme')
+require('proxy_set_header X-Forwarded-For $rbf_client_ip;' in nginx,
+        'API proxy must receive the host-verified client address')
+require('limit_req_zone $rbf_client_ip zone=file_content:10m rate=600r/m;' in nginx,
         'build/master-data media must have a dedicated bounded download rate')
 media_location=re.search(r'location ~ \^/api/files/\[0-9\]\+/content\$ \{([\s\S]*?)\n    \}', nginx)
 require(media_location is not None,'dedicated file-content gateway location missing')

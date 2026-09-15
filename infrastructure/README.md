@@ -1,6 +1,6 @@
 # Infrastructure
 
-This directory contains the Spring-only Compose runtime, TLS/NGINX configuration, host-control runners, and release, update, backup, and restore scripts.
+This directory contains the Spring-only Compose runtime, project and shared-host NGINX site configuration, host-control runners, and release, update, backup, and restore scripts.
 
 The two deployment entry points intentionally live at repository level:
 `../deploy.sh` transfers the verified release artifact; the internal

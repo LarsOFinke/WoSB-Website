@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 prepare_data_directories() {
-  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,certs,backups,acme,control/inbox,control/status,control/run,control/secrets,recovered-config,runtime-secrets,letsencrypt/config,letsencrypt/work,letsencrypt/logs}
+  mkdir -p "$INFRA_DIR/data"/{postgres,uploads,nginx,backups,control/inbox,control/status,control/run,control/secrets,recovered-config,runtime-secrets}
   prepare_postgres_directory
   apply_runtime_ownership
   apply_runtime_permissions
@@ -39,12 +39,6 @@ apply_runtime_permissions() {
   chmod 700 "$INFRA_DIR/data/control/inbox" "$INFRA_DIR/data/control/run" "$INFRA_DIR/data/control/secrets" "$INFRA_DIR/data/recovered-config"
   chmod 700 "$INFRA_DIR/data/runtime-secrets"
   chmod 755 "$INFRA_DIR/data/control/status"
-  chmod 755 "$INFRA_DIR/data/acme" "$INFRA_DIR/data/certs"
-  chmod 700 \
-    "$INFRA_DIR/data/letsencrypt" \
-    "$INFRA_DIR/data/letsencrypt/config" \
-    "$INFRA_DIR/data/letsencrypt/work" \
-    "$INFRA_DIR/data/letsencrypt/logs"
 }
 
 materialize_runtime_secrets() {

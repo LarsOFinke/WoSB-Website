@@ -11,9 +11,7 @@ setup_options_reset() {
   VERIFY_BOOTSTRAP_LOGIN=false
   REQUESTED_HOSTNAME=""
   REQUESTED_IP=""
-  REQUESTED_TLS_MODE=""
   REQUESTED_LETSENCRYPT_EMAIL=""
-  REQUESTED_LETSENCRYPT_STAGING=""
   ADMIN_USERNAME=admin
   ADMIN_DISPLAY_NAME="RBF Command"
   SSH_ADMIN_USERNAME=rbfadmin
@@ -41,9 +39,7 @@ Options:
                            Host account for key-only SSH administration (default: rbfadmin)
   --ssh-admin-public-key-file PATH
                            External OpenSSH public-key file; repository paths are rejected
-  --tls-mode MODE           auto, letsencrypt or self-signed (default: auto)
   --letsencrypt-email MAIL  Contact email required for public certificates
-  --letsencrypt-staging     Use the Let's Encrypt staging CA for testing
   --skip-host               Skip apt, Docker, firewall and systemd provisioning
   --no-firewall             Do not enable/configure UFW
   --no-systemd              Do not install the boot service
@@ -68,9 +64,7 @@ setup_parse_options() {
       --admin-display-name) setup_require_option_value "$1" "${2:-}"; ADMIN_DISPLAY_NAME="$2"; shift 2 ;;
       --ssh-admin-username) setup_require_option_value "$1" "${2:-}"; SSH_ADMIN_USERNAME="$2"; shift 2 ;;
       --ssh-admin-public-key-file) setup_require_option_value "$1" "${2:-}"; SSH_ADMIN_PUBLIC_KEY_FILE="$2"; shift 2 ;;
-      --tls-mode) setup_require_option_value "$1" "${2:-}"; REQUESTED_TLS_MODE="$2"; shift 2 ;;
       --letsencrypt-email) setup_require_option_value "$1" "${2:-}"; REQUESTED_LETSENCRYPT_EMAIL="$2"; shift 2 ;;
-      --letsencrypt-staging) REQUESTED_LETSENCRYPT_STAGING=true; shift ;;
       --skip-host) SKIP_HOST=true; shift ;;
       --no-firewall) CONFIGURE_FIREWALL=false; shift ;;
       --no-systemd) INSTALL_SYSTEMD=false; shift ;;
@@ -89,8 +83,6 @@ setup_validate_options() {
   if [[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" && "$SKIP_HOST" == true ]]; then
     die "--ssh-admin-public-key-file requires host provisioning; remove --skip-host."
   fi
-  [[ -z "$REQUESTED_TLS_MODE" || "$REQUESTED_TLS_MODE" =~ ^(auto|letsencrypt|self-signed)$ ]] \
-    || die "--tls-mode must be auto, letsencrypt, or self-signed."
 }
 
 setup_require_root_if_needed() {

@@ -101,6 +101,7 @@ exec 9>"$shared/locks/release.lock"; flock 9
 stage="$(mktemp -d "$releases/.incoming.XXXXXX")"
 previous_release=""; previous_env=""; switched=false; backup_postgres=""; backup_files=""
 deployment_record=""; artifact_copy=""; maintenance_active=false; maintenance_runtime=""
+host_nginx_migration=false
 maintenance_enable_for() {
   local runtime="$1" reason="${2:-update}"
   [[ -f "$runtime/scripts/lib/maintenance.sh" ]] || die "Maintenance helper is missing from active release: $runtime"
@@ -144,6 +145,9 @@ if [[ -L "$install_root/current" ]]; then
   previous_release="$(readlink -f "$install_root/current")"
   [[ "$previous_release" == "$releases/"* && -d "$previous_release" ]] \
     || die "Current release link escapes the release root."
+  if [[ ! -f "$previous_release/infrastructure/nginx/host-site.conf" ]]; then
+    host_nginx_migration=true
+  fi
 elif [[ -e "$install_root/current" ]]; then
   die "Current installation entry is not a symbolic link."
 fi
@@ -228,6 +232,14 @@ rollback_failed_install() {
   } > "$failure_log" 2>&1 || true
   chmod 0600 "$failure_log" 2>/dev/null || true
   echo "[release] Activation diagnostics were saved: $failure_log" >&2
+  if [[ "$host_nginx_migration" == true && "$switched" == true ]]; then
+    echo "[release] Host-NGINX migration crossed the legacy rollback boundary. Keeping the loopback-only release selected; do not restore a release that publishes ports 80/443." >&2
+    [[ -z "$deployment_record" || ! -f "$deployment_record" ]] || \
+      python3 -c 'import json,sys; from pathlib import Path; p=Path(sys.argv[1]); d=json.loads(p.read_text()); d["state"]="failed"; p.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n"); p.chmod(0o600)' "$deployment_record"
+    maintenance_disable_for failed "Host-NGINX migration needs operator review; the loopback-only release remains selected."
+    trap - ERR
+    exit "$code"
+  fi
   if [[ "$switched" == true ]]; then
     if [[ -n "$previous_release" ]]; then
       ln -sfn "$previous_release" "$install_root/.current.rollback"
@@ -341,22 +353,17 @@ echo "[release] Restarting rbf-hub.service and waiting for Spring Boot/Compose."
 # initializing, Flyway is migrating, or Spring is still inside its readiness
 # budget.
 systemctl restart rbf-hub.service
+echo "[release] Connecting the private gateway to host NGINX."
+RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
+  set -Eeuo pipefail
+  source "$1/scripts/lib/env.sh"
+  source "$1/scripts/lib/host/nginx.sh"
+  configure_host_nginx
+' _ "$install_root/current/infrastructure"
 echo "[release] Running readiness and gateway smoke tests (max. 60 seconds)."
 smoke_args=()
 [[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
 timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
-
-if [[ "$(awk -F= '$1 == "DEPLOYMENT_ENVIRONMENT" {gsub(/^\047|\047$/, "", $2); gsub(/^"|"$/, "", $2); print $2; exit}' "$shared/.env")" == production ]]; then
-  echo "[release] Finalize public production TLS within the atomic activation."
-  RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
-    set -Eeuo pipefail
-    source "$1/scripts/lib/env.sh"
-    source "$1/scripts/lib/host/tls.sh"
-    configure_production_tls
-    [[ "$(read_env CERTIFICATE_PROVIDER)" == letsencrypt ]] || die "Production TLS was not activated."
-    "$1/scripts/checks/smoke-test.sh"
-  ' _ "$install_root/current/infrastructure"
-fi
 
 if [[ -z "$previous_release" ]]; then
   RBF_RUNTIME_INFRA_DIR="$release_dir/infrastructure" /usr/bin/env bash -c '

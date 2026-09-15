@@ -3,8 +3,8 @@ ARG GATEWAY_MAX_BODY_MB=90
 ARG MAINTENANCE_URL=/maintenance.html
 RUN apk upgrade --no-cache \
     && addgroup -S rbf && adduser -S -G rbf -u 10001 rbf \
-    && mkdir -p /var/cache/nginx /var/run /var/log/nginx /var/www/certbot \
-    && chown -R rbf:rbf /var/cache/nginx /var/run /var/log/nginx /var/www/certbot /etc/nginx/conf.d
+    && mkdir -p /var/cache/nginx /var/run /var/log/nginx \
+    && chown -R rbf:rbf /var/cache/nginx /var/run /var/log/nginx /etc/nginx/conf.d
 COPY infrastructure/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY infrastructure/nginx/security-headers.conf /etc/nginx/snippets/rbf-security-headers.conf
 COPY infrastructure/nginx/upload-security-headers.conf /etc/nginx/snippets/rbf-upload-security-headers.conf
@@ -16,4 +16,4 @@ RUN sed -i "s|__RBF_MAINTENANCE_URL__|\${MAINTENANCE_URL}|g" /usr/share/nginx/ht
 USER 101
 ENTRYPOINT ["nginx"]
 CMD ["-g", "daemon off;"]
-EXPOSE 8080 8443
+EXPOSE 8080

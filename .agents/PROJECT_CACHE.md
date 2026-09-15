@@ -12,7 +12,7 @@
 
 - Product: **Royal Blackwater Fleet**, a fleet operations portal for World of
   Sea Battle. Always read the current version from `VERSION`.
-- Runtime: `Browser -> NGINX -> Spring Boot API -> PostgreSQL`.
+- Runtime: `Browser -> shared host NGINX :80/:443 -> project NGINX on 127.0.0.1:18080 -> Spring Boot API -> PostgreSQL`. VPS-Gateway owns public listeners and host certificates; each project owns only its standard host site file and a unique loopback port.
 - Backend: Java 21, Spring Boot 4.1, Maven 3.9, Spring Security, JPA/JDBC,
   MapStruct, Flyway, PostgreSQL, and Testcontainers.
 - Frontend: Vue 3.5, Vue Router 4, Vite 8, Node 22, and Playwright Chromium;
@@ -434,7 +434,7 @@ review.
 
 ### 2026-08-08 security/TLS backlog closure
 
-The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. Production must use a public hostname, `TLS_MODE=letsencrypt` and `LETSENCRYPT_STAGING=false`; test may use staging/self-signed. Never copy certificates from test to production: each target owns `shared/data/{certs,letsencrypt}` and obtains its own certificate. `sync-certificate.sh` validates hostname, key pairing and remaining lifetime before atomic replacement. Hostname validation fails closed across OpenSSL versions: `x509 -checkhost` must both execute successfully and explicitly report a positive certificate match, because older versions may print a mismatch while returning status 0.
+The former `.agents/ToDo.txt` security items are closed as enforced invariants. Test is the default origin target; Production requires `--production`, and the selected runtime receives `DEPLOYMENT_ENVIRONMENT`. The shared VPS-Gateway NGINX owns public ports 80/443 and production certificate issuance/renewal. WoSB's project gateway binds only to `127.0.0.1:18080` by default; other projects require a different port. Test is HTTP by default; production's standard host site is upgraded to HTTPS through host Certbot. Project releases and backups do not own host certificate state.
 
 Release PostgreSQL is no longer host-published. Uploads are bounded at gateway, Spring multipart and service quota/type/signature layers. Frontend route guards and upload checks are defense-in-depth only; backend authorization and validation remain authoritative. Update activation still requires coordinated pre-deployment backups and restores the previous release/data on failed activation. Debug API 500s through the stateful HTTP integration suites and SQL runtime audit rather than ad-hoc production container sessions.
 

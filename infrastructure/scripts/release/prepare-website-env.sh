@@ -11,14 +11,15 @@ source "$INFRA_DIR/scripts/lib/env.sh"
 export ENV_FILE="$target_env"
 install -d -m 0700 "$(dirname "$target_env")"
 if [[ ! -f "$target_env" ]]; then
+  set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
   if [[ "$target_environment" == production ]]; then
     [[ -n "$requested_hostname" && -n "$requested_letsencrypt_email" ]] \
       || die "Production setup needs a public hostname and LETSENCRYPT_EMAIL."
-    initialize_env "$requested_hostname" "$requested_ip" false admin "RBF Command" letsencrypt "$requested_letsencrypt_email" false
+    initialize_env "$requested_hostname" "$requested_ip" false admin "RBF Command" "$requested_letsencrypt_email"
     install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$target_credentials"
     echo "[website] Production environment and first-run credentials were generated on the target."
   else
-    initialize_env "" "" false admin "RBF Command" auto "" true
+    initialize_env "" "" false admin "RBF Command"
     install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$target_credentials"
     echo "[website] New environment file and first-run credentials were generated."
   fi
@@ -30,6 +31,15 @@ else
   fi
 fi
 set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
+[[ -n "$(read_env RBF_LOOPBACK_PORT)" ]] || set_env_value RBF_LOOPBACK_PORT 18080
+runtime_hostname="$(read_env APP_HOSTNAME)"
+if [[ "$target_environment" == production ]]; then
+  set_env_value CORS_ORIGINS "https://${runtime_hostname}"
+  set_env_value SESSION_COOKIE_SECURE true
+else
+  set_env_value CORS_ORIGINS "http://${runtime_hostname}"
+  set_env_value SESSION_COOKIE_SECURE false
+fi
 if [[ -z "$backup_controller_website_host" ]]; then
   backup_controller_website_host="$(read_env BACKUP_CONTROLLER_WEBSITE_HOST)"
 fi

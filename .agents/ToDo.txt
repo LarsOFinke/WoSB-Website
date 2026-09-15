@@ -7,7 +7,7 @@
 - [x] Recovery compatibility: recovery artifacts are installation-root/environment independent; environment identity is now explicit in the private target .env, while secrets/certificates remain target-local.
 - [x] Container exposure: PostgreSQL is loopback-only, backend network is internal, API/gateway run read-only/non-root with dropped capabilities and no-new-privileges. Debugging uses bounded logs/diagnostics, never interactive production containers as a normal workflow.
 - [x] Deployment .env security: test/production origin profiles are separate and mode 0600; target environment files remain outside immutable release artifacts and are copied with mode 0600.
-- [x] TLS test/production separation: Production requires TLS_MODE=letsencrypt, public hostname and LETSENCRYPT_STAGING=false. Certificate/key/hostname/expiry are verified before atomic swap. Test may use self-signed or Let's Encrypt staging. Certificates are never promoted from test to production.
+- [x] TLS test/production separation: superseded by shared VPS-Gateway host NGINX ownership. Projects use unique loopback ports; only the host gateway provisions and renews production certificates.
 - [x] Fleet-management bootstrap / date-time / HTTP-500 investigation: covered by stateful integration tests, SQL runtime audit and bootstrap fleet-management smoke tests introduced in 1.0.2–1.0.5.
 
 See docs/deployment/OPERATIONS.md, docs/architecture/CONTAINER_SECURITY.md, docs/development/TESTING.md and .agents/PROJECT_CACHE.md for the durable rules.

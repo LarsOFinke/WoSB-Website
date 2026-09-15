@@ -48,20 +48,13 @@ setup_prepare_configuration() {
     "$REGENERATE_SECRETS" \
     "$ADMIN_USERNAME" \
     "$ADMIN_DISPLAY_NAME" \
-    "$REQUESTED_TLS_MODE" \
-    "$REQUESTED_LETSENCRYPT_EMAIL" \
-    "$REQUESTED_LETSENCRYPT_STAGING"
+    "${REQUESTED_LETSENCRYPT_EMAIL:-}"
 
   validate_env
 }
 
 setup_prepare_runtime() {
-  if [[ "$REGENERATE_SECRETS" == true ]]; then
-    rm -f "$INFRA_DIR/data/certs/fullchain.pem" "$INFRA_DIR/data/certs/privkey.pem"
-  fi
-
   prepare_data_directories
-  generate_self_signed_certificate
 
   if [[ "$SKIP_HOST" == false && "$CONFIGURE_FIREWALL" == true ]]; then
     configure_firewall
@@ -88,34 +81,30 @@ setup_deploy() {
   bw_compose_with_profiles pull postgres
   bw_compose build api gateway
   deploy_stack
-  smoke_args=(--insecure)
+  configure_host_nginx
+  smoke_args=()
   [[ "$VERIFY_BOOTSTRAP_LOGIN" == true ]] && smoke_args+=(--bootstrap-login)
   /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
-  configure_production_tls
-  /usr/bin/env bash "$INFRA_DIR/scripts/checks/smoke-test.sh"
 }
 
 setup_print_summary() {
-  local app_ip app_hostname
-  app_ip="$(read_env APP_IP)"
+  local app_hostname
   app_hostname="$(read_env APP_HOSTNAME)"
   cat <<SUMMARY
 
 ============================================================
  Royal Blackwater Fleet is configured
 ============================================================
- Fleet Hub:       https://${app_hostname}
- LAN fallback:    https://${app_ip}
- API readiness:  https://${app_hostname}/api/health/ready
+ Fleet Hub:       $([[ "$(read_env DEPLOYMENT_ENVIRONMENT)" == production ]] && echo https || echo http)://${app_hostname}
+ API readiness:  $([[ "$(read_env DEPLOYMENT_ENVIRONMENT)" == production ]] && echo https || echo http)://${app_hostname}/api/health/ready
  PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (loopback only)
  Monitoring:      removed (Uptime Kuma)
- TLS provider:    $(read_env CERTIFICATE_PROVIDER)
+ Host gateway:    /etc/nginx/sites-available/rbf-hub-$(read_env DEPLOYMENT_ENVIRONMENT)-$(read_env APP_HOSTNAME).conf
  Credentials:     $INFRA_DIR/first-run-credentials.txt
  SSH administration: $([[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" ]] && echo "$SSH_ADMIN_USERNAME (publickey)" || echo "not configured")
 
- For Let's Encrypt, DNS and TCP ports 80 and 443 must point to this Pi.
- Without successful domain validation, the bootstrap certificate remains active and
- the installation is not approved for public production operation.
+ Host NGINX owns ports 80 and 443. The project gateway is private on
+ 127.0.0.1:$(read_env RBF_LOOPBACK_PORT).
 
  Verbleibende Administrator-Gates:
  - Complete the first login and securely remove bootstrap credentials

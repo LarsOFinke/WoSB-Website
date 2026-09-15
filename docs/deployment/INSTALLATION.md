@@ -1,6 +1,6 @@
 # Installation
 
-Production requires a 64-bit Debian/Ubuntu-class host, Docker Engine with Compose v2, at least 2 GiB RAM, adequate backup storage, DNS and TCP 80/443.
+Production requires a 64-bit Debian/Ubuntu-class host with VPS-Gateway's standard host NGINX site directories available, Docker Engine with Compose v2, at least 2 GiB RAM, adequate backup storage, DNS, and TCP 80/443. Each project container must use a distinct loopback port; this project defaults to 18080.
 
 ## Prepare shared configuration
 

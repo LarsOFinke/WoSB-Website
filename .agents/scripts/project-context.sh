@@ -13,7 +13,7 @@ mapfile -t changes < <(git status --short)
 printf 'project=Royal Blackwater Fleet\n'
 printf 'version=%s\n' "$version"
 printf 'revision=%s@%s\n' "${branch:-detached}" "${revision:-unknown}"
-printf 'runtime=Browser -> NGINX -> Spring Boot -> PostgreSQL\n'
+printf 'runtime=Browser -> shared host NGINX :80/:443 -> project gateway loopback -> Spring Boot -> PostgreSQL\n'
 printf 'working_tree_changes=%d\n' "${#changes[@]}"
 printf 'primary_rules=AGENTS.md,docs/development/QUALITY_STANDARDS.md\n'
 printf 'deployment_docs=docs/deployment/DEPLOYMENT.md,docs/debugging/2026-08-04-update-path-review.md\n'

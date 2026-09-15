@@ -83,7 +83,6 @@ remain generated.
 | `infrastructure/scripts/release/` | build, transfer, verify, rollback | origin wrapper and artifact manifest |
 | `infrastructure/scripts/services/` | root-owned runtime runners | inbox/status/systemd |
 | `infrastructure/scripts/setup/` | first run | options → workflow → composition |
-| `infrastructure/scripts/tls/` | certificates | metadata; never print private keys |
 
 ## Cache rule
 

@@ -96,12 +96,12 @@ with the diagnostics module.
 | `infrastructure/scripts/diagnostics/` | Bounded remote collector and local redaction; use the [debugging runbook](../debugging/MODULE_DEBUGGING.md). |
 | `infrastructure/scripts/generation/` | Deterministic generators for API, Java, seed/build catalogs, and reference docs; always validate with `--check`. |
 | `infrastructure/scripts/lib/` | Reusable shell helpers and host modules; test callers, idempotency, and exit codes together. |
+| `infrastructure/scripts/lib/host/nginx.sh` | Installs this project's hostname site in the shared host NGINX and requests production TLS through host Certbot. |
 | `infrastructure/scripts/migration/` | Controlled legacy/data migrations outside immutable Flyway files. |
 | `infrastructure/scripts/quality/` | Canonical repository, security, documentation, and full gates; agent scripts delegate only here. |
 | `infrastructure/scripts/release/` | Artifact build, transfer, verification, rollback, and origin deployment. Never include production data in the artifact. |
 | `infrastructure/scripts/services/` | Root-owned target runners for controlled inbox actions and service lifecycle. |
 | `infrastructure/scripts/setup/` | Interactive first run and host composition; keep repeatable and fail-closed. |
-| `infrastructure/scripts/tls/` | Certificate provisioning and renewal; never read private keys into diagnostics or the repository. |
 
 ## Complete a module change fully
 

@@ -13,10 +13,6 @@ ENV_FILE="$INFRA_DIR/.env"
 COMPOSE_FILE="${RBF_COMPOSE_FILE:-$INFRA_DIR/compose.yml}"
 [[ -f "$COMPOSE_FILE" ]] || COMPOSE_FILE="$INFRA_DIR/compose.release.yml"
 RELEASE_ENV_FILE="$INFRA_DIR/.release.env"
-ACME_WEBROOT="$INFRA_DIR/data/acme"
-CERTBOT_CONFIG_DIR="$INFRA_DIR/data/letsencrypt/config"
-CERTBOT_WORK_DIR="$INFRA_DIR/data/letsencrypt/work"
-CERTBOT_LOGS_DIR="$INFRA_DIR/data/letsencrypt/logs"
 
 if [[ -t 1 ]]; then
   C_RESET='\033[0m'; C_BLUE='\033[0;34m'; C_GREEN='\033[0;32m'; C_YELLOW='\033[0;33m'; C_RED='\033[0;31m'

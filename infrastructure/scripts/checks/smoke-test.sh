@@ -26,15 +26,17 @@ json_escape() {
   printf '%s' "$value"
 }
 
-ip="$(read_env APP_IP)"
 hostname="$(read_env APP_HOSTNAME)"
-provider="$(read_env CERTIFICATE_PROVIDER)"
-base_args=(--silent --show-error --connect-timeout 3 --max-time 8 --resolve "${hostname}:443:${ip}")
-[[ "$force_insecure" == true || "$provider" != letsencrypt ]] && base_args+=(--insecure)
+environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
+if [[ "$environment" == production ]]; then scheme=https; public_port=443; else scheme=http; public_port=80; fi
+# Probe the host-published listener locally. This avoids depending on public
+# IPv4, IPv6, or hairpin routing while still exercising the hostname vhost.
+base_args=(--silent --show-error --connect-timeout 3 --max-time 8 --resolve "${hostname}:${public_port}:127.0.0.1")
+[[ "$force_insecure" == false ]] || base_args+=(--insecure)
 
 ready=false
 for _ in $(seq 1 20); do
-  if curl --fail "${base_args[@]}" "https://${hostname}/api/health/ready" >/dev/null 2>&1; then
+  if curl --fail "${base_args[@]}" "${scheme}://${hostname}/api/health/ready" >/dev/null 2>&1; then
     ready=true
     break
   fi
@@ -61,32 +63,32 @@ if [[ "$verify_bootstrap_login" == true ]]; then
   trap 'rm -f "$cookie_jar"' EXIT
   login_status="$(curl "${base_args[@]}" \
     --header 'Content-Type: application/json' \
-    --header "Origin: https://${hostname}" \
+    --header "Origin: ${scheme}://${hostname}" \
     --request POST \
     --data-binary "$payload" \
     --cookie-jar "$cookie_jar" \
     --output /dev/null \
     --write-out '%{http_code}' \
-    "https://${hostname}/api/auth/login")" \
+    "${scheme}://${hostname}/api/auth/login")" \
     || die "Bootstrap-admin login could not be executed during the first-run smoke test."
   [[ "$login_status" == 200 ]] \
     || die "Bootstrap-admin login failed (HTTP ${login_status}); SEED_ADMIN_USERNAME/SEED_ADMIN_PASSWORD do not match the initialized user."
   success "Bootstrap-admin credentials were verified through the public login API."
 
   manageable_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
-    "https://${hostname}/api/fleets/manageable")" \
+    "${scheme}://${hostname}/api/fleets/manageable")" \
     || die "Fleet-management preflight failed at /api/fleets/manageable."
   fleet_id="$(printf '%s' "$manageable_body" | grep -o '"id":[0-9][0-9]*' | head -n1 | cut -d: -f2 || true)"
   [[ -n "$fleet_id" ]] || die "Fleet-management preflight returned no manageable fleet."
 
   management_body="$(curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
-    "https://${hostname}/api/fleets/${fleet_id}/manage")" \
+    "${scheme}://${hostname}/api/fleets/${fleet_id}/manage")" \
     || die "Fleet-management preflight failed at /api/fleets/${fleet_id}/manage."
   [[ "$management_body" == *'"memberships":'* && "$management_body" == *'"protected":'* ]] \
     || die "Fleet-management response does not match the expected DTO contract."
 
   curl --fail "${base_args[@]}" --cookie "$cookie_jar" \
-    "https://${hostname}/api/fleets/${fleet_id}/roles?include_inactive=true" >/dev/null \
+    "${scheme}://${hostname}/api/fleets/${fleet_id}/roles?include_inactive=true" >/dev/null \
     || die "Fleet-management preflight failed while loading roles."
   success "Fleet-management API was verified end-to-end with the bootstrap administrator."
 fi

@@ -30,12 +30,11 @@ if [[ "$memory_kb" =~ ^[0-9]+$ ]] && ((memory_kb < 1800000)); then
   warn "Less than 2 GiB RAM detected. A 64-bit Raspberry Pi with at least 2 GiB is recommended."
 fi
 
-if command -v ss >/dev/null 2>&1; then
-  for port in 80 443; do
-    if ss -H -ltn "sport = :$port" 2>/dev/null | grep -q .; then
-      warn "TCP port $port is already in use. The gateway container cannot bind there."
-    fi
-  done
+if [[ "$mode" == setup ]]; then
+  command -v nginx >/dev/null 2>&1 \
+    || die "Host NGINX is missing. Install VPS-Gateway before deploying this project."
+  [[ -d /etc/nginx/sites-available && -d /etc/nginx/sites-enabled ]] \
+    || die "Standard host NGINX site directories are missing."
 fi
 
 if [[ "$mode" == runtime ]]; then

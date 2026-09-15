@@ -6,7 +6,8 @@ Spring Boot 4, PostgreSQL, Flyway, NGINX, and artifact-based deployment.
 ## Architecture at a glance
 
 ```text
-Browser → NGINX → Spring Boot API → PostgreSQL
+Browser → shared host NGINX (:80/:443) → project gateway (127.0.0.1:18080)
+        → Spring Boot API → PostgreSQL
 ```
 
 Spring Security is the sole security boundary. `openapi/source/` is the canonical
@@ -95,8 +96,11 @@ Diagnostics use the same safe target selection: test without a flag, and explici
 Output is redacted on the origin and stored locally under `.diagnostics/`; no persistent
 debug files are created on the target system.
 
-The target system needs neither Git nor Maven, npm, or access to package registries. It
-verifies the bundle and builds only the minimal runtime containers from the already
+The target system needs neither Git nor Maven, npm, or access to package registries. The
+project gateway binds only to loopback; the shared VPS-Gateway host NGINX owns public
+HTTP/HTTPS and routes this hostname to the configured project port. Production
+certificates are provisioned and renewed at host level. The target verifies the bundle
+and builds only the minimal runtime containers from the already
 compiled Spring Boot JAR and Vue `dist`:
 
 ```bash

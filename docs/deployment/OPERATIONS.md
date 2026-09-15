@@ -177,12 +177,12 @@ This exposes only encrypted artifacts and manifests, not the private Recovery
 Tool configuration or age identities in `/etc/rbf-recovery-tool`. Keep the
 third-host copy encrypted at rest and verify its file checksums after transfer.
 
-## Test/Production TLS and target isolation
+## Test/Production routing and target isolation
 
-Origin deployment targets and website runtime identities are separate. `deploy.sh`/`update.sh` default to `test`; Production always requires `--production`. The selected target is written to the private website `.env` as `DEPLOYMENT_ENVIRONMENT` and must never be inferred from a certificate or hostname.
+Origin deployment targets and website runtime identities are separate. `deploy.sh`/`update.sh` default to `test`; Production always requires `--production`. The selected target is written to the private website `.env` as `DEPLOYMENT_ENVIRONMENT` and must never be inferred from a hostname.
 
-Production is fail-closed: `TLS_MODE=letsencrypt`, a public `APP_HOSTNAME`, a configured `LETSENCRYPT_EMAIL`, and `LETSENCRYPT_STAGING=false` are mandatory. Test may use self-signed TLS or Let's Encrypt staging. Staging certificates are deliberately never promoted to Production. Each target obtains and renews its own certificate in its own shared data tree.
+VPS-Gateway owns the host NGINX installation and public ports 80/443. Each project contributes a site under standard `sites-available`/`sites-enabled` locations and binds its container gateway to a unique loopback port (`RBF_LOOPBACK_PORT`, default 18080). Test is HTTP by default; production obtains and renews its public certificate through the host Certbot integration. DNS for each project must point to this VPS, and the host site must use the matching hostname and loopback port. Never publish a project's container on host ports 80/443.
 
-Before `fullchain.pem`/`privkey.pem` are atomically replaced, the TLS helper verifies the certificate hostname, certificate/private-key match and at least seven days of remaining validity. The certificate renewal timer keeps using Certbot's deploy hook, so nginx is reloaded only after a successful validated renewal. Release artifacts contain neither target `.env` files nor certificates. Coordinated file backups include the target-local certificate and Let's Encrypt state for disaster recovery.
+Host certificates live and renew at VPS level, not in project data. Release artifacts and project backups do not contain host certificate state. Before onboarding a project, confirm its chosen loopback port is unique and that the gateway site is installed/enabled in the shared host NGINX.
 
 The release compose file does not publish PostgreSQL to the host. Database inspection uses bounded `docker compose exec -T`/diagnostic helpers; interactive production containers are not a normal debugging interface.

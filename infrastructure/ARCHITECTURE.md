@@ -48,7 +48,7 @@ restrictive permissions under `.diagnostics/` or an explicit local path.
 - `scripts/lib/host/packages.sh`: operating-system packages and Docker.
 - `scripts/lib/host/storage.sh`: runtime directories, owners, and permissions.
 - `scripts/lib/host/firewall.sh`: UFW rules.
-- `scripts/lib/host/tls.sh`: bootstrap and Let's Encrypt certificates.
+- `scripts/lib/host/nginx.sh`: installs the project site in the shared host NGINX and provisions its production certificate through Certbot.
 
 ### Quality and Generation
 

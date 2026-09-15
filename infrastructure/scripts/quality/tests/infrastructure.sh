@@ -33,6 +33,10 @@ for raw in sys.argv[1:]:
         for token in ('mem_limit:','cpus:','pids_limit:'):
             if token not in section: raise SystemExit(f'{path}: {service} missing {token}')
         if 'env_file:' in section: raise SystemExit(f'{path}: {service} receives the complete environment file')
+        if service == 'gateway' and '127.0.0.1:${RBF_LOOPBACK_PORT:-18080}:8080' not in section:
+            raise SystemExit(f'{path}: gateway must bind only its unique host loopback port')
+        if service == 'gateway' and ('80:8080' in section or '443:8443' in section):
+            raise SystemExit(f'{path}: project gateway must not publish public web ports')
 PY
 
 [[ ! -d "$ROOT_DIR/backend" ]] || fail 'Python backend directory still exists'

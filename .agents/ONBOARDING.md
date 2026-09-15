@@ -34,7 +34,7 @@ workflow in [REPOSITORY_SPRING_CLEANING.md](REPOSITORY_SPRING_CLEANING.md).
 
 ## Fixed system boundaries
 
-- Runtime: `Browser -> NGINX -> Spring Boot -> PostgreSQL`.
+- Runtime: `Browser -> shared host NGINX :80/:443 -> project NGINX on 127.0.0.1:18080 -> Spring Boot -> PostgreSQL`. Projects must use distinct loopback ports; VPS-Gateway owns the host NGINX installation and public listener.
 - `spring-api/` is the only backend; do not reconstruct a Python web backend.
 - Frontend: a page orchestrates, a composable owns flow/state, an API module makes
   network requests, and a domain module contains pure rules.
@@ -101,7 +101,10 @@ release notes, and commits are the durable history.
 - Determine the next version token-efficiently with `bash .agents/scripts/next-version.sh
   patch|minor|major`: patch for fixes, minor for compatible features, major for
   incompatible or explicitly large extensions.
-- The interactive first run is `./deploy.sh --configure` for test and
+- The shared VPS-Gateway host NGINX owns the public listeners and TLS. This
+  project's container gateway binds only to `127.0.0.1:18080` by default; assign
+  another unique `RBF_LOOPBACK_PORT` to every additional project. The interactive
+  first run is `./deploy.sh --configure` for test and
   `./deploy.sh --production --configure` for production. The production dialog asks
   for the public DNS name and Let's Encrypt email; the target generates its fresh
   runtime secrets and private environment locally, then deploys in the same run.

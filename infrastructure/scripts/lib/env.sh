@@ -52,7 +52,7 @@ detect_app_hostname() {
 
 initialize_env() {
   local requested_hostname="$1" requested_ip="$2" regenerate="$3" admin_username="$4" admin_display_name="$5"
-  local requested_tls_mode="${6:-}" requested_letsencrypt_email="${7:-}" requested_staging="${8:-}"
+  local requested_letsencrypt_email="${6:-}"
   local created=false
   if [[ ! -f "$ENV_FILE" ]]; then
     cp "$INFRA_DIR/.env.example" "$ENV_FILE"
@@ -101,23 +101,15 @@ initialize_env() {
     secrets_changed=true
   fi
 
-  local tls_mode letsencrypt_email
-  tls_mode="${requested_tls_mode:-$(read_env TLS_MODE)}"
-  [[ -n "$tls_mode" ]] || tls_mode=auto
+  local letsencrypt_email primary_scheme
   letsencrypt_email="${requested_letsencrypt_email:-$(read_env LETSENCRYPT_EMAIL)}"
+  primary_scheme=http
+  [[ "$(read_env DEPLOYMENT_ENVIRONMENT)" != production ]] || primary_scheme=https
 
   set_env_value APP_HOSTNAME "$app_hostname"
   set_env_value APP_IP "$app_ip"
-  set_env_value TLS_MODE "$tls_mode"
   set_env_value LETSENCRYPT_EMAIL "$letsencrypt_email"
-  local letsencrypt_staging
-  letsencrypt_staging="${requested_staging:-$(read_env LETSENCRYPT_STAGING)}"
-  [[ -n "$letsencrypt_staging" ]] || letsencrypt_staging=false
-  set_env_value LETSENCRYPT_STAGING "$letsencrypt_staging"
-  local certificate_name="$app_hostname"
-  is_true "$letsencrypt_staging" && certificate_name="${app_hostname}-staging"
-  set_env_value LETSENCRYPT_CERT_NAME "$certificate_name"
-  [[ -n "$(read_env CERTIFICATE_PROVIDER)" ]] || set_env_value CERTIFICATE_PROVIDER self-signed
+  [[ -n "$(read_env RBF_LOOPBACK_PORT)" ]] || set_env_value RBF_LOOPBACK_PORT 18080
   set_env_value CONTROL_DIR /var/lib/rbf/control
   [[ -n "$(read_env SESSION_COOKIE_NAME)" ]] || set_env_value SESSION_COOKIE_NAME rbf_hub_session
   [[ -n "$(read_env SESSION_COOKIE_SAMESITE)" ]] || set_env_value SESSION_COOKIE_SAMESITE Lax
@@ -131,7 +123,7 @@ initialize_env() {
   set_env_value APP_DATABASE_USER "$app_database_user"
   # Keep the canonical HTTPS origins and the local/IP fallbacks usable during
   # first-run setup and on test hosts without working DNS yet.
-  set_env_value CORS_ORIGINS "https://${app_hostname},https://${app_ip},http://${app_hostname},http://${app_ip},http://localhost,http://127.0.0.1,https://localhost,https://127.0.0.1"
+  set_env_value CORS_ORIGINS "${primary_scheme}://${app_hostname}"
   set_env_value SEED_ADMIN_USERNAME "$admin_username"
   set_env_value SEED_ADMIN_DISPLAY_NAME "$admin_display_name"
   chmod 600 "$ENV_FILE"
@@ -139,8 +131,7 @@ initialize_env() {
   if [[ "$created" == true || "$regenerate" == true || "$secrets_changed" == true || ! -f "$INFRA_DIR/first-run-credentials.txt" ]]; then
     cat > "$INFRA_DIR/first-run-credentials.txt" <<CREDS
 Royal Blackwater Fleet - First Run
-Primary URL: https://${app_hostname}
-LAN fallback: https://${app_ip}
+Primary URL: ${primary_scheme}://${app_hostname}
 Admin user: ${admin_username}
 Admin password: ${admin_password}
 
@@ -193,22 +184,18 @@ validate_env() {
   local maintenance_url="$(read_env MAINTENANCE_URL)"
   [[ -z "$maintenance_url" || "$maintenance_url" =~ ^(/|https://)[^[:space:]]*$ ]] || die "MAINTENANCE_URL must be an absolute path or HTTPS URL."
 
-  local tls_mode certificate_provider hostname deployment_environment
-  tls_mode="$(read_env TLS_MODE)"; certificate_provider="$(read_env CERTIFICATE_PROVIDER)"; hostname="$(read_env APP_HOSTNAME)"
+  local hostname deployment_environment loopback_port
+  hostname="$(read_env APP_HOSTNAME)"
   deployment_environment="$(read_env DEPLOYMENT_ENVIRONMENT)"
   [[ -z "$deployment_environment" || "$deployment_environment" =~ ^(test|production)$ ]] || die "DEPLOYMENT_ENVIRONMENT must be test or production."
-  [[ "$tls_mode" =~ ^(auto|letsencrypt|self-signed)$ ]] || die "TLS_MODE must be auto, letsencrypt, or self-signed."
-  [[ "$certificate_provider" =~ ^(self-signed|letsencrypt)$ ]] || die "CERTIFICATE_PROVIDER is invalid."
   [[ -n "$hostname" && "$hostname" != *" "* ]] || die "APP_HOSTNAME is invalid."
-  if [[ "$tls_mode" == letsencrypt ]]; then
-    [[ -n "$(read_env LETSENCRYPT_EMAIL)" ]] || die "TLS_MODE=letsencrypt requires LETSENCRYPT_EMAIL."
-    [[ "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Let's Encrypt requires a public domain name."
-  fi
-  [[ "$(read_env LETSENCRYPT_STAGING)" =~ ^(true|false)$ ]] || die "LETSENCRYPT_STAGING must be true or false."
+  loopback_port="$(read_env RBF_LOOPBACK_PORT)"
+  [[ "$loopback_port" =~ ^[1-9][0-9]{0,4}$ && "$loopback_port" -le 65535 ]] \
+    || die "RBF_LOOPBACK_PORT must be between 1 and 65535."
   if [[ "$deployment_environment" == production ]]; then
-    [[ "$tls_mode" == letsencrypt ]] || die "Production requires TLS_MODE=letsencrypt; auto/self-signed is not allowed there."
-    [[ "$(read_env LETSENCRYPT_STAGING)" == false ]] || die "Production must never use Let's Encrypt staging."
     [[ "$hostname" == *.* && "$hostname" != *.local && ! "$hostname" =~ ^[0-9.]+$ ]] || die "Production requires a public TLS hostname."
+    [[ "$(read_env LETSENCRYPT_EMAIL)" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] \
+      || die "Production requires a valid LETSENCRYPT_EMAIL."
   fi
   local retention="$(read_env BACKUP_RETENTION_DAYS)"
   [[ -z "$retention" || "$retention" =~ ^[1-9][0-9]*$ ]] || die "BACKUP_RETENTION_DAYS must be positive."

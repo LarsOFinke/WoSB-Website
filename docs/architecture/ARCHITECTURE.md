@@ -7,8 +7,10 @@ infrastructure module are consolidated in the [module catalog](MODULE_CATALOG.md
 
 ```text
 Browser
-  ↓ HTTPS
-NGINX gateway
+  ↓ HTTP/HTTPS
+Shared host NGINX (:80/:443; hostname routing and TLS)
+  ↓ 127.0.0.1:<project port>
+Project NGINX gateway (container; private)
   ↓ private Docker network
 Spring Boot API
   ├─ Spring Security / CSRF / request filters
@@ -20,7 +22,7 @@ Spring Boot API
   └─ PostgreSQL
 ```
 
-The gateway is the only public container. PostgreSQL binds to loopback for administration and otherwise lives on an internal network. The API has a separate outbound network only for explicitly allow-listed integrations.
+No project container is publicly published. The shared VPS-Gateway host NGINX owns ports 80/443 and routes each DNS hostname to a unique project loopback port (WoSB defaults to 18080). The project NGINX retains application-specific routing and protections. PostgreSQL binds to loopback for administration and otherwise lives on an internal network. The API has a separate outbound network only for explicitly allow-listed integrations.
 
 ## Backend boundaries
 
