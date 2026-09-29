@@ -99,7 +99,7 @@ setup_print_summary() {
  API readiness:  $([[ "$(read_env DEPLOYMENT_ENVIRONMENT)" == production ]] && echo https || echo http)://${app_hostname}/api/health/ready
  PostgreSQL:      localhost:$(read_env POSTGRES_LOCAL_PORT) (loopback only)
  Monitoring:      removed (Uptime Kuma)
- Host gateway:    /etc/nginx/sites-available/rbf-hub-$(read_env DEPLOYMENT_ENVIRONMENT)-$(read_env APP_HOSTNAME).conf
+ Host gateway:    /etc/nginx/sites-available/$(read_env APP_HOSTNAME).conf (or preserved legacy site)
  Credentials:     $INFRA_DIR/first-run-credentials.txt
  SSH administration: $([[ -n "$SSH_ADMIN_PUBLIC_KEY_FILE" ]] && echo "$SSH_ADMIN_USERNAME (publickey)" || echo "not configured")
 

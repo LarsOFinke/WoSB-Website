@@ -12,7 +12,7 @@
 
 - Product: **Royal Blackwater Fleet**, a fleet operations portal for World of
   Sea Battle. Always read the current version from `VERSION`.
-- Runtime: `Browser -> shared host NGINX :80/:443 -> project NGINX on 127.0.0.1:18080 -> Spring Boot API -> PostgreSQL`. VPS-Gateway owns public listeners and host certificates; each project owns only its standard host site file and a unique loopback port.
+- Runtime: `Browser -> shared host NGINX :80/:443 -> project NGINX on 127.0.0.1:18080 -> Spring Boot API -> PostgreSQL`. VPS-Gateway owns public listeners and host certificates; this project imports its hostname site through the gateway command, preserves existing custom sites, and uses a unique loopback port.
 - Backend: Java 21, Spring Boot 4.1, Maven 3.9, Spring Security, JPA/JDBC,
   MapStruct, Flyway, PostgreSQL, and Testcontainers.
 - Frontend: Vue 3.5, Vue Router 4, Vite 8, Node 22, and Playwright Chromium;

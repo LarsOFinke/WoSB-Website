@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 1.8.23 - 2026-09-29
+
+- Integrated new project host sites with the initialized VPS-Gateway importer,
+  while preserving existing custom sites and Certbot TLS changes on updates.
+- Applied the gateway's trusted proxy headers, query-free access logging, and
+  shared request limits to the project site template. Deployment now checks
+  gateway initialization before backup and release activation.
+
 ## 1.8.22 - 2026-08-25
 
 - Isolated test and production controller enrollment on a shared backup server.

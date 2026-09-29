@@ -87,6 +87,13 @@ if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>
 fi
 command -v docker >/dev/null 2>&1 || { echo "[website] Docker could not be installed." >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "[website] Docker Compose v2 is missing or unavailable." >&2; exit 1; }
+if ! command -v vps-gateway-site-import >/dev/null 2>&1 ||
+   [[ ! -f /etc/nginx/conf.d/vps-gateway.conf ||
+      ! -f /etc/nginx/snippets/vps-gateway-proxy-headers.conf ||
+      ! -L /etc/nginx/sites-enabled/vps-gateway-catch-all.conf ]]; then
+  echo "[website] VPS-Gateway is not initialized. Install and initialize its core and catch-all on this VPS before deploying." >&2
+  exit 1
+fi
 legacy_install_root="/opt/rbf"
 migration_helper="$stage/bundle/payload/infrastructure/scripts/release/migrate-install-root.sh"
 if [[ ! -x "$migration_helper" && -x "$SCRIPT_DIR/migrate-install-root.sh" ]]; then

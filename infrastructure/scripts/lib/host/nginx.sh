@@ -4,10 +4,9 @@ set -Eeuo pipefail
 configure_host_nginx() {
   [[ "$EUID" -eq 0 ]] || die "Host NGINX configuration requires root privileges."
   require_command nginx
-  require_command systemctl
 
   local hostname loopback_port max_body environment template site_name certificate_name
-  local available_site enabled_site rendered_site email
+  local available_site enabled_site rendered_site email legacy_site
   hostname="$(read_env APP_HOSTNAME)"
   loopback_port="$(read_env RBF_LOOPBACK_PORT)"
   max_body="$(read_env GATEWAY_MAX_BODY_MB)"
@@ -21,37 +20,48 @@ configure_host_nginx() {
   [[ "$environment" == test || "$environment" == production ]] \
     || die "DEPLOYMENT_ENVIRONMENT must be test or production."
   [[ -f "$template" ]] || die "Host NGINX site template is missing: $template"
-  [[ -d /etc/nginx/sites-available && -d /etc/nginx/sites-enabled ]] \
-    || die "Standard NGINX site directories are missing. Install VPS-Gateway first."
+  require_command vps-gateway-site-import
+  [[ -f /etc/nginx/conf.d/vps-gateway.conf &&
+     -f /etc/nginx/snippets/vps-gateway-proxy-headers.conf &&
+     -L /etc/nginx/sites-enabled/vps-gateway-catch-all.conf ]] \
+    || die "VPS-Gateway is not initialized. Initialize its core and catch-all before deploying this site."
 
-  site_name="rbf-hub-$environment-$hostname.conf"
+  site_name="$hostname.conf"
   certificate_name="rbf-hub-$environment-$hostname"
   available_site="/etc/nginx/sites-available/$site_name"
   enabled_site="/etc/nginx/sites-enabled/$site_name"
+  legacy_site="/etc/nginx/sites-available/rbf-hub-$environment-$hostname.conf"
+  if [[ -e "$legacy_site" || -L "$legacy_site" ]]; then
+    [[ ! -e "$available_site" && ! -L "$available_site" ]] \
+      || die "Both legacy and VPS-Gateway sites exist for $hostname; review the duplicate hostname."
+    available_site="$legacy_site"
+    enabled_site="/etc/nginx/sites-enabled/$(basename "$legacy_site")"
+  fi
   if [[ -e "$available_site" ]]; then
     [[ -f "$available_site" && ! -L "$available_site" ]] \
       || die "Existing host NGINX site is unsafe: $available_site"
+    [[ -L "$enabled_site" && "$(readlink -f "$enabled_site")" == "$available_site" ]] \
+      || die "Existing host NGINX site is not enabled as expected: $enabled_site"
     if ! grep -Fq "server_name $hostname;" "$available_site" || \
       ! grep -Fq "proxy_pass http://127.0.0.1:$loopback_port;" "$available_site"; then
-      die "Existing host NGINX site does not match this target: $available_site"
+      die "Existing host NGINX site does not match the hostname and loopback port. Update the custom site and rerun: $available_site"
     fi
+    nginx -t
   else
     rendered_site="$(mktemp)"
     sed -e "s/\${APP_HOSTNAME}/$hostname/g" \
       -e "s/\${RBF_LOOPBACK_PORT}/$loopback_port/g" \
       -e "s/\${GATEWAY_MAX_BODY_MB}/$max_body/g" \
       "$template" > "$rendered_site"
-    install -m 0644 -o root -g root "$rendered_site" "$available_site"
+    if ! vps-gateway-site-import --host "$hostname" --file "$rendered_site"; then
+      rm -f -- "$rendered_site"
+      die "VPS-Gateway could not import the project site for $hostname."
+    fi
     rm -f -- "$rendered_site"
   fi
-  ln -sfn "$available_site" "$enabled_site"
-  nginx -t
-  systemctl reload nginx 2>/dev/null || systemctl start nginx
 
-  if [[ "$environment" == production ]] && {
-    [[ ! -s "/etc/letsencrypt/live/$certificate_name/fullchain.pem" ]] ||
-      ! grep -Eq 'listen[[:space:]]+443[[:space:]]+ssl' "$available_site"
-  }; then
+  if [[ "$environment" == production ]] &&
+    ! grep -Eq 'listen[[:space:]]+443[[:space:]]+ssl' "$available_site"; then
     require_command certbot
     email="$(read_env LETSENCRYPT_EMAIL)"
     [[ "$email" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] \

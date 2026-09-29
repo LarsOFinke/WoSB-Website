@@ -19,12 +19,12 @@ grep -Fq 'listen 80;' "$host_site" || fail 'host site must accept HTTP for routi
 grep -Fq 'listen [::]:80;' "$host_site" || fail 'host site must support IPv6 DNS targets'
 grep -Fq 'proxy_pass http://127.0.0.1:${RBF_LOOPBACK_PORT};' "$host_site" \
   || fail 'host site must route to the private loopback port'
-grep -Fq 'proxy_set_header X-Real-IP $remote_addr;' "$host_site" \
-  || fail 'host site must replace the client IP header'
-grep -Fq 'proxy_set_header X-Forwarded-For $remote_addr;' "$host_site" \
-  || fail 'host site must replace the forwarded IP chain'
-grep -Fq 'proxy_set_header X-Forwarded-Proto $scheme;' "$host_site" \
-  || fail 'host site must forward the public scheme'
+grep -Fq 'include /etc/nginx/snippets/vps-gateway-proxy-headers.conf;' "$host_site" \
+  || fail 'host site must use the VPS-Gateway trusted proxy headers'
+grep -Fq 'access_log /var/log/nginx/access.log vps_gateway;' "$host_site" \
+  || fail 'host site must use the gateway query-free log format'
+grep -Fq 'limit_req zone=gateway_per_ip' "$host_site" \
+  || fail 'host site must participate in the gateway request limits'
 
 gateway_conf="$ROOT_DIR/infrastructure/nginx/default.conf"
 grep -Fq 'map $http_x_real_ip $rbf_client_ip' "$gateway_conf" \
@@ -36,14 +36,23 @@ grep -Fq 'X-Forwarded-Proto $rbf_forwarded_proto;' "$gateway_conf" \
 ! grep -Eq 'listen 8443|ssl_certificate|/var/www/certbot|return 308 https://' "$gateway_conf" \
   || fail 'project gateway must not own public TLS or redirects'
 
-grep -Fq 'nginx -t' "$ROOT_DIR/infrastructure/scripts/lib/host/nginx.sh" \
+host_integration="$ROOT_DIR/infrastructure/scripts/lib/host/nginx.sh"
+grep -Fq 'nginx -t' "$host_integration" \
   || fail 'host site provisioning must validate NGINX before reload'
-grep -Fq 'certbot --nginx --redirect' "$ROOT_DIR/infrastructure/scripts/lib/host/nginx.sh" \
+grep -Fq 'vps-gateway-site-import --host "$hostname" --file "$rendered_site"' "$host_integration" \
+  || fail 'new sites must be installed through VPS-Gateway'
+grep -Fq 'VPS-Gateway is not initialized' "$host_integration" \
+  || fail 'host site integration must check the gateway core'
+grep -Fq 'VPS-Gateway is not initialized' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
+  || fail 'the target must check VPS-Gateway before backup and release activation'
+grep -Fq 'legacy_site=' "$host_integration" \
+  || fail 'existing project sites must be preserved during migration'
+grep -Fq 'certbot --nginx --redirect' "$host_integration" \
   || fail 'production certificate must be installed by the host NGINX integration'
-grep -Fq "! grep -Eq 'listen[[:space:]]+443[[:space:]]+ssl' \"\$available_site\"" "$ROOT_DIR/infrastructure/scripts/lib/host/nginx.sh" \
+grep -Fq "! grep -Eq 'listen[[:space:]]+443[[:space:]]+ssl' \"\$available_site\"" "$host_integration" \
   || fail 'an existing certificate must still be installed into a site without TLS'
-grep -Fq 'site_name="rbf-hub-$environment-$hostname.conf"' "$ROOT_DIR/infrastructure/scripts/lib/host/nginx.sh" \
-  || fail 'host site names must not collide when multiple project hostnames share one VPS'
+grep -Fq 'site_name="$hostname.conf"' "$host_integration" \
+  || fail 'new sites must use VPS-Gateway hostname naming'
 grep -Fq 'RBF_LOOPBACK_PORT=18080' "$ROOT_DIR/infrastructure/.env.example" \
   || fail 'runtime needs a documented default private port'
 grep -Fq -- '--resolve "${hostname}:${public_port}:127.0.0.1"' "$ROOT_DIR/infrastructure/scripts/checks/smoke-test.sh" \

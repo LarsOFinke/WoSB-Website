@@ -31,6 +31,24 @@ existing host package path; `--skip-host` disables this explicitly. Both private
 files are maintained with mode `0600`. Templates: `.env.origin.test.example` and
 `.env.origin.production.example`.
 
+The target must have VPS-Gateway installed and initialized, including its HTTP core,
+proxy-header snippet, and catch-all site. Initialize it on the VPS before the first
+deployment (see the VPS-Gateway `vps-gateway-init` instructions). The project owns
+`infrastructure/nginx/host-site.conf` as its HTTP site template and publishes only
+`127.0.0.1:RBF_LOOPBACK_PORT` to the host. On a new hostname, deployment renders
+the template and installs it with `vps-gateway-site-import`, which validates NGINX
+and rolls back a failed import. VPS-Gateway remains responsible for host NGINX
+core configuration; this deployment does not modify it.
+
+On updates, the installed site is preserved, including custom directives and
+Certbot's TLS changes. Deployment checks that its hostname and loopback proxy
+port still match the target environment. If `RBF_LOOPBACK_PORT` changes, update
+the installed site intentionally before redeploying. Existing
+`rbf-hub-<environment>-<hostname>.conf` sites are recognized and preserved;
+do not enable a second site for the same hostname. Keep a reviewed copy of any
+host-side site customizations with the project's operational configuration so
+they can be restored after host loss.
+
 Each profile also owns the SSH endpoint through which the backup server reaches
 that website:
 

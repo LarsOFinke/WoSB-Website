@@ -103,7 +103,9 @@ release notes, and commits are the durable history.
   incompatible or explicitly large extensions.
 - The shared VPS-Gateway host NGINX owns the public listeners and TLS. This
   project's container gateway binds only to `127.0.0.1:18080` by default; assign
-  another unique `RBF_LOOPBACK_PORT` to every additional project. The interactive
+  another unique `RBF_LOOPBACK_PORT` to every additional project. Initialize
+  VPS-Gateway before the first deployment; new host sites are imported through
+  its command, while existing custom sites remain in place. The interactive
   first run is `./deploy.sh --configure` for test and
   `./deploy.sh --production --configure` for production. The production dialog asks
   for the public DNS name and Let's Encrypt email; the target generates its fresh
