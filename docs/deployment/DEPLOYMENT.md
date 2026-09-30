@@ -32,8 +32,9 @@ files are maintained with mode `0600`. Templates: `.env.origin.test.example` and
 `.env.origin.production.example`.
 
 The target must have VPS-Gateway installed and initialized, including its HTTP core,
-proxy-header snippet, and catch-all site. Initialize it on the VPS before the first
-deployment (see the VPS-Gateway `vps-gateway-init` instructions). The project owns
+proxy-header snippet, and catch-all site. On a fresh VPS, run
+`sudo vps-gateway-init --empty` before the first deployment; no project site is
+needed. The project owns
 `infrastructure/nginx/host-site.conf` as its HTTP site template and publishes only
 `127.0.0.1:RBF_LOOPBACK_PORT` to the host. On a new hostname, deployment renders
 the template and installs it with `vps-gateway-site-import`, which validates NGINX
