@@ -11,6 +11,7 @@ source "$INFRA_DIR/scripts/lib/env.sh"
 export ENV_FILE="$target_env"
 install -d -m 0700 "$(dirname "$target_env")"
 if [[ ! -f "$target_env" ]]; then
+  install -m 0600 "$INFRA_DIR/.env.example" "$target_env"
   set_env_value DEPLOYMENT_ENVIRONMENT "$target_environment"
   if [[ "$target_environment" == production ]]; then
     [[ -n "$requested_hostname" && -n "$requested_letsencrypt_email" ]] \
@@ -19,7 +20,7 @@ if [[ ! -f "$target_env" ]]; then
     install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$target_credentials"
     echo "[website] Production environment and first-run credentials were generated on the target."
   else
-    initialize_env "" "" false admin "RBF Command"
+    initialize_env "$requested_hostname" "$requested_ip" false admin "RBF Command"
     install -m 0600 "$INFRA_DIR/first-run-credentials.txt" "$target_credentials"
     echo "[website] New environment file and first-run credentials were generated."
   fi

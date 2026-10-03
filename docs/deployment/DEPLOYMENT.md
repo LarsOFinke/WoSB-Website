@@ -31,6 +31,12 @@ existing host package path; `--skip-host` disables this explicitly. Both private
 files are maintained with mode `0600`. Templates: `.env.origin.test.example` and
 `.env.origin.production.example`.
 
+For separate sites on a test server, set `RBF_DEPLOY_APP_HOSTNAME` in the private
+test profile and map that name in client DNS or the hosts file. First-run test
+setup honors this hostname and seeds the complete runtime defaults before
+generating credentials. Give every project a distinct loopback port; never use
+the bare server IP as an application hostname when the gateway should reject it.
+
 The target must have VPS-Gateway installed and initialized, including its HTTP core,
 proxy-header snippet, and catch-all site. On a fresh VPS, run
 `sudo vps-gateway-init --empty` before the first deployment; no project site is

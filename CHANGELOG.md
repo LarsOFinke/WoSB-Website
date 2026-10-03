@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve runtime defaults and the requested hostname during first-run test deployment.
+
 ## 1.8.23 - 2026-09-29
 
 - Integrated new project host sites with the initialized VPS-Gateway importer,
