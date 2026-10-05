@@ -101,6 +101,11 @@ release notes, and commits are the durable history.
 - Determine the next version token-efficiently with `bash .agents/scripts/next-version.sh
   patch|minor|major`: patch for fixes, minor for compatible features, major for
   incompatible or explicitly large extensions.
+- Legacy public-port gateway migration is coordinated by the incoming installer:
+  install VPS-Gateway commands first, then let the updater initialize its core only
+  after Compose replaces the old gateway. Selected failed migrations resume only
+  with the identical artifact, preserving the original backup. Manual rollback to
+  a public-port release is blocked. Procedure: `docs/deployment/DEPLOYMENT.md`.
 - The shared VPS-Gateway host NGINX owns the public listeners and TLS. This
   project's container gateway binds only to `127.0.0.1:18080` by default; assign
   another unique `RBF_LOOPBACK_PORT` to every additional project. Initialize

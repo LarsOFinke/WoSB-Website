@@ -97,6 +97,9 @@ public class IpBlockService {
     static String normalizeIp(String value,boolean required){
         if(value==null||value.isBlank()){if(required) throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"IP address is required.");return null;}
         String raw=value.strip();
+        // Spring's forwarded-header request wrapper may bracket an IPv6 client
+        // address even though the address itself has no port.
+        if(raw.startsWith("[")&&raw.endsWith("]")) raw=raw.substring(1,raw.length()-1);
         if(!raw.matches("[0-9a-fA-F:.]+")) throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Only literal IPv4 or IPv6 addresses may be blocked.");
         try{return InetAddress.getByName(raw).getHostAddress();}catch(UnknownHostException exception){throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST,"Invalid IP address.");}
     }

@@ -105,6 +105,10 @@ output under `.diagnostics/`.
   as dry-run -> commit -> UI/API verification, then in production as dry-run -> commit. Resolve
   ships/options/roles/features semantically; never import historical numeric IDs, user/auth data, or
   master data from the complete Python dump. Runbook: `docs/debugging/LEGACY_BUILD_DATA_MIGRATION.md`.
+- If a host-NGINX migration fails after switching, rerun the identical verified artifact
+  after fixing the reported host/TLS error. Do not delete the selected release: resume
+  retains its original pre-deployment backup and rejects changed payloads. Manual
+  rollback to the legacy public-port gateway is blocked to avoid a host port conflict.
 - Production data, volumes, `shared/data`, and active releases are never valid debug cleanup targets.
 - When Maven reports stale source lines or impossible old test behavior, trust the absolute path it
   prints for `target`/Surefire reports. Verify `pwd -P` and `realpath pom.xml`; a shell can remain

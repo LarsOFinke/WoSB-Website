@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 1.8.26 - 2026-10-05
+
+- Accept bracketed IPv6 client addresses from Spring's forwarded-header wrapper
+  when checking IP blocks, restoring API access through the host gateway over IPv6.
+
+## 1.8.25 - 2026-10-05
+
+- Coordinate the legacy public-port gateway handover after the verified backup and
+  private-stack startup, initializing VPS-Gateway only once public ports are free.
+- Resume failed/interrupted selected releases using the identical verified artifact,
+  preserving the original backups and rollback metadata; block manual rollback to
+  a legacy gateway that would conflict with host NGINX.
+- Add executable migration failure/retry and scoped container-cleanup regressions.
 - Preserve runtime defaults and the requested hostname during first-run test deployment.
 
 ## 1.8.23 - 2026-09-29

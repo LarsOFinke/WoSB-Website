@@ -43,7 +43,7 @@ grep -Fq 'vps-gateway-site-import --host "$hostname" --file "$rendered_site"' "$
   || fail 'new sites must be installed through VPS-Gateway'
 grep -Fq 'VPS-Gateway is not initialized' "$host_integration" \
   || fail 'host site integration must check the gateway core'
-grep -Fq 'VPS-Gateway is not initialized' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
+grep -Fq 'preflight_host_gateway' "$ROOT_DIR/infrastructure/scripts/release/setup_website.sh" \
   || fail 'the target must check VPS-Gateway before backup and release activation'
 grep -Fq 'legacy_site=' "$host_integration" \
   || fail 'existing project sites must be preserved during migration'

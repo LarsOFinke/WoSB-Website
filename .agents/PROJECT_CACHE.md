@@ -23,6 +23,12 @@
 - The former Python backend is no longer part of the runtime. Python is used for
   repository, infrastructure, packaging, and recovery tooling.
 
+- Legacy public-port gateway migration is coordinated by the incoming installer:
+  install VPS-Gateway commands first, then let the updater initialize its core only
+  after Compose replaces the old gateway. Selected failed migrations resume only
+  with the identical artifact, preserving the original backup. Manual rollback to
+  a public-port release is blocked. Procedure: `docs/deployment/DEPLOYMENT.md`.
+
 ## Authoritative entry points
 
 | Topic | Read first |

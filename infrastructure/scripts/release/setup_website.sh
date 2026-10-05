@@ -87,13 +87,24 @@ if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>
 fi
 command -v docker >/dev/null 2>&1 || { echo "[website] Docker could not be installed." >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "[website] Docker Compose v2 is missing or unavailable." >&2; exit 1; }
-if ! command -v vps-gateway-site-import >/dev/null 2>&1 ||
-   [[ ! -f /etc/nginx/conf.d/vps-gateway.conf ||
-      ! -f /etc/nginx/snippets/vps-gateway-proxy-headers.conf ||
-      ! -L /etc/nginx/sites-enabled/vps-gateway-catch-all.conf ]]; then
-  echo "[website] VPS-Gateway is not initialized. Install and initialize its core and catch-all on this VPS before deploying." >&2
-  exit 1
+source "$stage/bundle/payload/infrastructure/scripts/lib/host/gateway-migration.sh"
+allow_gateway_initialization=false
+if legacy_public_gateway "$install_root/current/infrastructure" ||
+   { [[ "$install_root" == /srv/rbf && ! -e "$install_root" ]] && legacy_public_gateway /opt/rbf/current/infrastructure; }; then
+  allow_gateway_initialization=true
 fi
+# Failed selected migrations may resume initialization after releasing public ports.
+if [[ -L "$install_root/current" ]]; then
+  current_version="$(basename "$(readlink -f "$install_root/current")")"
+  record="$install_root/shared/deployments/$current_version.json"
+  if [[ -f "$record" ]] && python3 - "$record" <<'PYRESUME'
+import json, sys
+record = json.load(open(sys.argv[1]))
+raise SystemExit(0 if record.get("host_nginx_migration") is True and record.get("state") in {"failed", "activating"} else 1)
+PYRESUME
+  then allow_gateway_initialization=true; fi
+fi
+preflight_host_gateway "$allow_gateway_initialization"
 legacy_install_root="/opt/rbf"
 migration_helper="$stage/bundle/payload/infrastructure/scripts/release/migrate-install-root.sh"
 if [[ ! -x "$migration_helper" && -x "$SCRIPT_DIR/migrate-install-root.sh" ]]; then

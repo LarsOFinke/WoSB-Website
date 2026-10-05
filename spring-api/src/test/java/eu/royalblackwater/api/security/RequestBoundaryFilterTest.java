@@ -1,14 +1,18 @@
 package eu.royalblackwater.api.security;
 
+import eu.royalblackwater.api.audit.service.AuditService;
 import eu.royalblackwater.api.config.SecurityProperties;
 import eu.royalblackwater.api.security.filter.RequestBoundaryFilter;
+import eu.royalblackwater.api.securityops.repository.SecurityOperationsRepository;
 import eu.royalblackwater.api.securityops.service.IpBlockService;
 import eu.royalblackwater.api.securityops.service.SecuritySignalService;
+import java.time.Clock;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -87,6 +91,26 @@ class RequestBoundaryFilterTest {
         assertThat(response.getStatus()).isEqualTo(403);
         assertThat(chain.getRequest()).isNull();
         verify(signals, never()).record(org.mockito.ArgumentMatchers.any(), anyString(), anyString());
+    }
+
+    @Test
+    void permitsIpv6ClientsThroughTheForwardedHeaderFilter() throws Exception {
+        IpBlockService realBlocks = new IpBlockService(mock(SecurityOperationsRepository.class),
+                mock(AuditService.class), Clock.systemUTC());
+        RequestBoundaryFilter boundary = new RequestBoundaryFilter(new SecurityProperties(
+                List.of("app.example"), List.of()), realBlocks, signals);
+        var request = request("GET", "app.example");
+        request.addHeader("X-Forwarded-For", "2001:db8::1");
+        request.addHeader("X-Forwarded-Proto", "https");
+        var response = new MockHttpServletResponse();
+        var chain = new MockFilterChain();
+
+        new ForwardedHeaderFilter().doFilter(request, response,
+                (forwardedRequest, forwardedResponse) -> boundary.doFilter(
+                        forwardedRequest, forwardedResponse, chain));
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(chain.getRequest()).isNotNull();
     }
 
     @Test

@@ -102,6 +102,7 @@ stage="$(mktemp -d "$releases/.incoming.XXXXXX")"
 previous_release=""; previous_env=""; switched=false; backup_postgres=""; backup_files=""
 deployment_record=""; artifact_copy=""; maintenance_active=false; maintenance_runtime=""
 host_nginx_migration=false
+source "$SCRIPT_DIR/../lib/host/gateway-migration.sh"
 maintenance_enable_for() {
   local runtime="$1" reason="${2:-update}"
   [[ -f "$runtime/scripts/lib/maintenance.sh" ]] || die "Maintenance helper is missing from active release: $runtime"
@@ -129,7 +130,10 @@ version="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["version"]
 release_dir="$releases/$version"
 if [[ -e "$release_dir" ]]; then
   current_target="$(readlink -f "$install_root/current" 2>/dev/null || true)"
-  [[ "$current_target" != "$release_dir" ]] || die "Immutable release already exists and is active: $release_dir"
+  if [[ "$current_target" == "$release_dir" ]]; then
+    "$SCRIPT_DIR/resume-release.sh" "$install_root" "$version" "$stage/bundle/manifest.json" "$actual"
+    exit 0
+  fi
   deployment_record_candidate="$shared/deployments/$version.json"
   deployment_state=""
   if [[ -f "$deployment_record_candidate" ]]; then
@@ -145,11 +149,16 @@ if [[ -L "$install_root/current" ]]; then
   previous_release="$(readlink -f "$install_root/current")"
   [[ "$previous_release" == "$releases/"* && -d "$previous_release" ]] \
     || die "Current release link escapes the release root."
-  if [[ ! -f "$previous_release/infrastructure/nginx/host-site.conf" ]]; then
+  if legacy_public_gateway "$previous_release/infrastructure"; then
     host_nginx_migration=true
   fi
 elif [[ -e "$install_root/current" ]]; then
   die "Current installation entry is not a symbolic link."
+fi
+
+preflight_host_gateway "$host_nginx_migration"
+if [[ "$host_nginx_migration" == true && "$skip_backup" == true ]]; then
+  die "A gateway migration requires the coordinated pre-deployment backup; do not use --skip-backup."
 fi
 
 if [[ -n "$previous_release" ]]; then
@@ -304,7 +313,14 @@ ENV
 chmod 0644 "$release_dir/infrastructure/.release.env"
 
 RBF_INSTALL_ROOT="$install_root" RBF_COMPOSE_FILE="$release_dir/infrastructure/compose.release.yml" \
-  bash -c 'source "$1/scripts/lib/env.sh"; validate_env; source "$1/scripts/lib/host/storage.sh"; prepare_data_directories' \
+  bash -c '
+    set -Eeuo pipefail
+    source "$1/scripts/lib/env.sh"
+    [[ -n "$(read_env RBF_LOOPBACK_PORT)" ]] || set_env_value RBF_LOOPBACK_PORT 18080
+    validate_env
+    source "$1/scripts/lib/host/storage.sh"
+    prepare_data_directories
+  ' \
   _ "$release_dir/infrastructure"
 
 compose=(docker compose --env-file "$shared/.env" --env-file "$release_dir/infrastructure/.release.env" \
@@ -318,7 +334,7 @@ chmod 0600 "$artifact_copy.sha256"
 
 deployment_record="$shared/deployments/$version.json"
 CURRENT="$release_dir" PREVIOUS="$previous_release" POSTGRES="$backup_postgres" FILES="$backup_files" \
-ENV_BACKUP="$previous_env" ARTIFACT="$artifact_copy" REQUESTED_BY="$requested_by" RECORD="$deployment_record" \
+HOST_NGINX_MIGRATION="$host_nginx_migration" ENV_BACKUP="$previous_env" ARTIFACT="$artifact_copy" REQUESTED_BY="$requested_by" RECORD="$deployment_record" \
 python3 <<'PY'
 import json, os
 from datetime import datetime, timezone
@@ -326,6 +342,7 @@ from pathlib import Path
 record = Path(os.environ["RECORD"])
 payload = {
     "schema_version": 1,
+    "host_nginx_migration": os.environ["HOST_NGINX_MIGRATION"] == "true",
     "state": "activating",
     "created_at": datetime.now(timezone.utc).isoformat(),
     "requested_by": os.environ["REQUESTED_BY"],
@@ -345,43 +362,7 @@ PY
 ln -sfn "$release_dir" "$install_root/.current.next"
 mv -Tf "$install_root/.current.next" "$install_root/current"
 switched=true
-RBF_SYSTEMD_INFRA_DIR="$install_root/current/infrastructure" \
-  "$install_root/current/infrastructure/scripts/deployment/install-systemd.sh"
-echo "[release] Restarting rbf-hub.service and waiting for Spring Boot/Compose."
-# rbf-hub.service owns its complete startup deadline. Wrapping systemctl in a
-# shorter timeout can cancel a healthy first activation while PostgreSQL is
-# initializing, Flyway is migrating, or Spring is still inside its readiness
-# budget.
-systemctl restart rbf-hub.service
-echo "[release] Connecting the private gateway to host NGINX."
-RBF_RUNTIME_INFRA_DIR="$install_root/current/infrastructure" /usr/bin/env bash -c '
-  set -Eeuo pipefail
-  source "$1/scripts/lib/env.sh"
-  source "$1/scripts/lib/host/nginx.sh"
-  configure_host_nginx
-' _ "$install_root/current/infrastructure"
-echo "[release] Running readiness and gateway smoke tests (max. 60 seconds)."
-smoke_args=()
-[[ -z "$previous_release" ]] && smoke_args+=(--bootstrap-login)
-timeout 60s "$install_root/current/infrastructure/scripts/checks/smoke-test.sh" "${smoke_args[@]}"
-
-if [[ -z "$previous_release" ]]; then
-  RBF_RUNTIME_INFRA_DIR="$release_dir/infrastructure" /usr/bin/env bash -c '
-    set -Eeuo pipefail
-    source "$1/scripts/lib/env.sh"
-    source "$1/scripts/lib/host/storage.sh"
-    set_env_value SEED_ADMIN_PASSWORD ""
-    materialize_runtime_secrets
-  ' _ "$release_dir/infrastructure"
-  echo "[release] Retired the bootstrap password from the persistent runtime environment."
-fi
-
-install -m 0600 "$artifact_copy" "$shared/release-artifacts/current.tar.gz"
-(cd "$shared/release-artifacts" && sha256sum current.tar.gz > current.tar.gz.sha256)
-printf '%s\n' "$version" > "$shared/current-version"
-chmod 0644 "$shared/current-version"
-python3 -c 'import json,sys; from pathlib import Path; p=Path(sys.argv[1]); d=json.loads(p.read_text()); d["state"]="active"; p.write_text(json.dumps(d,indent=2,sort_keys=True)+"\n"); p.chmod(0o600)' "$deployment_record"
-install -m 0600 "$deployment_record" "$shared/deployment-state.json"
+"$SCRIPT_DIR/activate-release.sh" "$install_root" "$version" "$previous_release" "$host_nginx_migration"
 maintenance_disable_for succeeded "Royal Blackwater Fleet update completed successfully."
 trap - ERR
 echo "[release] Activated Royal Blackwater Fleet $version from a verified compiled artifact."

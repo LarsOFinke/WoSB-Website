@@ -74,6 +74,19 @@ class SecurityOperationsServiceBehaviorTest {
     }
 
     @Test
+    void ipBlockChecksAcceptBracketedForwardedIpv6Addresses() {
+        SecurityOperationsRepository repository = mock(SecurityOperationsRepository.class);
+        IpBlockService service = new IpBlockService(repository, mock(AuditService.class), CLOCK);
+
+        assertFalse(service.isBlocked("[2001:db8::1]"));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, Object>> values = ArgumentCaptor.forClass(Map.class);
+        verify(repository).count(anyString(), values.capture());
+        assertEquals("2001:db8:0:0:0:0:0:1", values.getValue().get("ip"));
+    }
+
+    @Test
     void createRejectsExpiredBlocksBeforeWritingOrAuditing() {
         SecurityOperationsRepository repository = mock(SecurityOperationsRepository.class);
         IpBlockService service = new IpBlockService(repository, mock(AuditService.class), CLOCK);

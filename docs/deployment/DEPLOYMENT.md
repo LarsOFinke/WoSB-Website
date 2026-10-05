@@ -37,8 +37,9 @@ setup honors this hostname and seeds the complete runtime defaults before
 generating credentials. Give every project a distinct loopback port; never use
 the bare server IP as an application hostname when the gateway should reject it.
 
-The target must have VPS-Gateway installed and initialized, including its HTTP core,
-proxy-header snippet, and catch-all site. On a fresh VPS, run
+Fresh installations require VPS-Gateway installed and initialized, including its HTTP
+core, proxy-header snippet, and catch-all site. For an existing public-port container,
+follow the migration procedure below instead. On a fresh VPS, run
 `sudo vps-gateway-init --empty` before the first deployment; no project site is
 needed. The project owns
 `infrastructure/nginx/host-site.conf` as its HTTP site template and publishes only
@@ -55,6 +56,58 @@ the installed site intentionally before redeploying. Existing
 do not enable a second site for the same hostname. Keep a reviewed copy of any
 host-side site customizations with the project's operational configuration so
 they can be restored after host loss.
+
+### Migrating a public-port container gateway
+
+For the first update from the legacy container on ports 80/443, install the
+VPS-Gateway commands on the website host first, including `vps-gateway-init` and
+`vps-gateway-site-import`. Do **not** initialize/start host NGINX while the legacy
+container still owns those ports. Use the normal origin update command below;
+VPS-Gateway initialization is deferred automatically for this migration:
+
+```bash
+./update.sh                 # test target first
+./update.sh --production    # explicitly selected production target
+```
+
+Use a newly built artifact containing these migration fixes (1.8.25 or later).
+The updater checks gateway prerequisites before the backup or service changes.
+A partially initialized/custom host NGINX configuration is rejected before the
+handover; complete or repair that configuration deliberately rather than deleting
+other projects' sites. An already initialized gateway and its custom sites are
+preserved. Public DNS and ports 80/443 must reach this host for production Certbot
+issuance; each project needs an unused, unique `RBF_LOOPBACK_PORT`.
+
+The migration takes the coordinated backup (and configured Recovery Tool ACK),
+builds the images, selects the new release, and restarts the stack. Compose replaces
+the old gateway with its loopback-only successor and removes orphan containers
+**only within the same Compose project**. Keep `COMPOSE_PROJECT_NAME` unchanged.
+The project gateway remains necessary for frontend files and API routing. No
+Docker-wide prune, volume deletion, or deletion of old certificate/ACME data is
+performed. Retired project certificate-renewal units are disabled; host Certbot
+owns TLS after the handover.
+
+Once the private stack is ready and public ports are free, the updater runs
+`vps-gateway-init --empty` if needed, starts host NGINX, imports the project site,
+configures production TLS, and checks readiness through the public hostname.
+Plan a maintenance window: service restart, first host package installation and
+certificate issuance can interrupt access. `--skip-backup` is refused for this
+migration. Fresh installations still require an initialized VPS-Gateway.
+
+If activation fails after selecting the new release, correct the reported cause
+(e.g. DNS, Certbot or host configuration) and rerun **the identical artifact** via
+`./update.sh --artifact /absolute/path/rbf-deployment-1.8.25.tar.gz` (add
+`--production` for production). Do not rebuild the same version: retry checks the
+archive checksum and installed payload against the verified manifest. The retry
+preserves the original pre-migration backup, environment snapshot and previous
+release, repeats activation and smoke tests, and only then marks it active.
+An already successful release cannot be replaced; changed code requires a new
+version. Do not use `cleanup-failed-release.sh --replace-active` to bypass this.
+
+Both automatic and manual rollback refuse to restore the public-port release
+across this boundary. Repair/resume the selected loopback release; if data recovery
+is needed, use the coordinated backup and the reviewed disaster-recovery procedure.
+Subsequent updates between host-NGINX releases retain their normal rollback flow.
 
 Each profile also owns the SSH endpoint through which the backup server reaches
 that website:

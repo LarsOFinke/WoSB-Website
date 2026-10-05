@@ -26,6 +26,12 @@ files="${values[3]:-}"; previous_env="${values[4]:-}"
 [[ -f "$postgres" && -f "$postgres.sha256" ]] || die "Coordinated rollback database backup is unavailable."
 [[ -f "$files" && -f "$files.sha256" ]] || die "Coordinated rollback file backup is unavailable."
 
+# Check before stopping containers, restoring data, or changing the selected release.
+if [[ -f "$current/infrastructure/nginx/host-site.conf" &&
+      ! -f "$previous/infrastructure/nginx/host-site.conf" ]]; then
+  die "Rollback across the host-NGINX migration is unsafe: the previous gateway publishes public ports. Keep the loopback release and repair/retry it."
+fi
+
 install -d -m 0700 "$shared/data/control/run"
 exec 8>"$shared/data/control/run/update.lock"; flock 8
 maintenance_active=false
